@@ -1,0 +1,25 @@
+{
+  "name": "modularenigma-zander-web",
+  "version": "1.0.0",
+  "description": "The web component of the Zander project that contains database, API and website.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ModularEnigma/zander-web.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/ModularEnigma/zander-web/issues"
+  },
+  "homepage": "https://github.com/ModularEnigma/zander-web#readme",
+  "dependencies": {
+    "ejs": "^3.1.6",
+    "express": "^4.17.1",
+    "mysql": "^2.18.1"
+  }
+}
