@@ -1,5 +1,9 @@
 {
     "port": 8080,
+    "siteConfiguration": {
+        "siteName": "Crafting For Christ",
+        "tagline": "The home of the biggest Christian Minecraft Server in Australia."
+    },
     "database": {
         "host": "localhost",
         "port": "3306",
