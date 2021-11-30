@@ -5,10 +5,10 @@
         "tagline": "The home of the biggest Christian Minecraft Server in Australia."
     },
     "database": {
-        "host": "localhost",
-        "port": "3306",
-        "user": "root",
-        "password": "root",
-        "name": "zander"
+        "host": "database.craftingforchrist.net",
+        "port": "4052",
+        "user": "zanderDev",
+        "password": "PasswordZander321",
+        "name": "zanderDev"
     }
 }
