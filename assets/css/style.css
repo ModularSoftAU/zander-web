@@ -465,7 +465,7 @@ a:focus {
   position: relative;
   overflow: hidden;
   background: #fff;
-  background: url("../images/bg/slider-bg-1.jpg") no-repeat;
+  background: url("../images/bg/indexHeaderImage.png") no-repeat;
   background-size: cover;
   min-height: 550px;
 }

@@ -4,7 +4,7 @@ const config = require('../config.json');
 
 router.get('/', (req, res, next) => {
     res.render('index', {
-        "pageTitle": `Home`,
+        "pageTitle": `${config.siteConfiguration.siteName}`,
         config: config
     });
 });
