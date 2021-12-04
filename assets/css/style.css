@@ -57,7 +57,7 @@ p {
 }
 
 .navbar-toggle .icon-bar {
-  background: #223a66;
+  background: #2f508c;
 }
 
 input[type="email"], input[type="password"], input[type="text"], input[type="tel"] {
@@ -69,7 +69,7 @@ input[type="email"], input[type="password"], input[type="text"], input[type="tel
 
 input[type="email"]:focus, input[type="password"]:focus, input[type="text"]:focus, input[type="tel"]:focus {
   box-shadow: none;
-  border: 1px solid #223a66;
+  border: 1px solid #2f508c;
 }
 
 .form-control {
@@ -79,7 +79,7 @@ input[type="email"]:focus, input[type="password"]:focus, input[type="text"]:focu
 
 .form-control:focus {
   box-shadow: none;
-  border: 1px solid #223a66;
+  border: 1px solid #2f508c;
 }
 
 .py-7 {
@@ -111,39 +111,39 @@ input[type="email"]:focus, input[type="password"]:focus, input[type="text"]:focu
 }
 
 .btn-main {
-  background: #223a66;
+  background: #2f508c;
   color: #fff;
-  border-color: #223a66;
+  border-color: #2f508c;
 }
 
 .btn-main:hover {
-  background: #e12454;
-  border-color: #e12454;
+  background: #1c2f53;
+  border-color: #1c2f53;
   color: #fff;
 }
 
 .btn-main-2 {
-  background: #e12454;
+  background: #1c2f53;
   color: #fff;
-  border-color: #e12454;
+  border-color: #1c2f53;
 }
 
 .btn-main-2:hover {
-  background: #223a66;
+  background: #2f508c;
   color: #fff;
-  border-color: #223a66;
+  border-color: #2f508c;
 }
 
 .btn-solid-border {
-  border: 2px solid #223a66;
+  border: 2px solid #2f508c;
   background: transparent;
-  color: #223a66;
+  color: #2f508c;
 }
 
 .btn-solid-border:hover {
-  border: 2px solid #223a66;
+  border: 2px solid #2f508c;
   color: #fff;
-  background: #223a66;
+  background: #2f508c;
 }
 
 .btn-solid-border:hover.btn-icon i {
@@ -172,9 +172,9 @@ input[type="email"]:focus, input[type="password"]:focus, input[type="text"]:focu
 }
 
 .btn-white:hover {
-  background: #223a66;
+  background: #2f508c;
   color: #fff;
-  border-color: #223a66;
+  border-color: #2f508c;
 }
 
 .btn-solid-white {
@@ -204,7 +204,7 @@ input[type="email"]:focus, input[type="password"]:focus, input[type="text"]:focu
 }
 
 .bg-primary {
-  background: #223a66;
+  background: #2f508c;
 }
 
 .bg-primary-dark {
@@ -237,7 +237,7 @@ input[type="email"]:focus, input[type="password"]:focus, input[type="text"]:focu
 }
 
 .subtitle {
-  color: #223a66;
+  color: #2f508c;
   font-size: 14px;
   letter-spacing: 1px;
 }
@@ -252,7 +252,7 @@ input[type="email"]:focus, input[type="password"]:focus, input[type="text"]:focu
   width: 100%;
   height: 100%;
   opacity: 0.9;
-  background: #223a66;
+  background: #2f508c;
 }
 
 .overly-2 {
@@ -295,7 +295,7 @@ a {
 }
 
 a:focus, a:hover {
-  color: #e12454;
+  color: #1c2f53;
   text-decoration: none;
 }
 
@@ -339,11 +339,11 @@ a:focus {
 }
 
 .title-color {
-  color: #223a66;
+  color: #2f508c;
 }
 
 .secondary-bg {
-  background: #223a66;
+  background: #2f508c;
 }
 
 .section-title {
@@ -351,7 +351,7 @@ a:focus {
 }
 
 .section-title h2 {
-  color: #223a66;
+  color: #2f508c;
 }
 
 .text-lg {
@@ -409,7 +409,7 @@ a:focus {
   visibility: hidden;
   transition: all 0.3s ease-out 0s;
   border: 0px;
-  border-top: 5px solid #e12454;
+  border-top: 5px solid #1c2f53;
   border-radius: 0px;
 }
 
@@ -428,11 +428,11 @@ a:focus {
 }
 
 .dropdown .dropdown-item:hover {
-  color: #e12454;
+  color: #1c2f53;
 }
 
 .header-top-bar {
-  background: #223a66;
+  background: #2f508c;
   font-size: 14px;
   padding: 10px 0px;
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
@@ -479,7 +479,7 @@ a:focus {
   line-height: 1.2;
   letter-spacing: -1.2px;
   text-transform: capitalize;
-  color: #223a66;
+  color: #2f508c;
 }
 
 .letter-spacing {
@@ -487,17 +487,17 @@ a:focus {
 }
 
 .text-color {
-  color: #223a66;
+  color: #2f508c;
 }
 
 .text-color-2 {
-  color: #e12454;
+  color: #1c2f53;
 }
 
 .divider {
   width: 40px;
   height: 5px;
-  background: #e12454;
+  background: #1c2f53;
 }
 
 @media (max-width: 480px) {
@@ -565,7 +565,7 @@ a:focus {
   content: "";
   right: 10px;
   bottom: 20px;
-  background: #223a66;
+  background: #2f508c;
   padding: 48px;
 }
 
@@ -611,11 +611,11 @@ a:focus {
 
 .feature-item .feature-icon i {
   font-size: 50px;
-  color: #223a66;
+  color: #2f508c;
 }
 
 .feature-item h4 {
-  color: #223a66;
+  color: #2f508c;
 }
 
 .feature-item p {
@@ -679,7 +679,7 @@ a:focus {
 }
 
 .service i {
-  color: #e12454;
+  color: #1c2f53;
 }
 
 .service h4 {
@@ -712,7 +712,7 @@ a:focus {
 }
 
 .department-service li i {
-  color: #e12454;
+  color: #1c2f53;
 }
 
 .doctors .btn-group .btn {
@@ -727,7 +727,7 @@ a:focus {
 .doctors .btn-group .btn.active {
   box-shadow: none !important;
   border-color: transparent;
-  background: #e12454;
+  background: #1c2f53;
   color: #fff;
 }
 
@@ -739,14 +739,14 @@ a:focus {
 .doctors .btn-group .btn:focus {
   box-shadow: none !important;
   border-color: transparent;
-  background: #e12454;
+  background: #1c2f53;
   color: #fff;
 }
 
 .doctors .btn-group .btn:hover {
   box-shadow: none !important;
   border-color: transparent;
-  background: #e12454;
+  background: #1c2f53;
   color: #fff;
 }
 
@@ -784,11 +784,11 @@ a:focus {
 
 .doctor-info li i {
   margin-right: 20px;
-  color: #e12454;
+  color: #1c2f53;
 }
 
 .read-more {
-  color: #223a66;
+  color: #2f508c;
 }
 
 @media (max-width: 480px) {
@@ -839,7 +839,7 @@ a:focus {
 }
 
 .text-color-primary {
-  color: #223a66;
+  color: #2f508c;
 }
 
 .cta-section {
@@ -937,7 +937,7 @@ a:focus {
 
 .testimonial-block.style-2 i {
   bottom: -20px;
-  color: #e12454;
+  color: #1c2f53;
   opacity: .3;
 }
 
@@ -1033,7 +1033,7 @@ a:focus {
   font-size: 50px;
   margin-bottom: 15px;
   display: inline-block;
-  color: #e12454;
+  color: #1c2f53;
 }
 
 .blog-item-content h2 {
@@ -1057,12 +1057,12 @@ a:focus {
 }
 
 .nav-links .page-numbers:hover {
-  background: #223a66;
+  background: #2f508c;
   color: #fff;
 }
 
 .nav-links .page-numbers.current {
-  background: #223a66;
+  background: #2f508c;
   color: #fff;
 }
 
@@ -1086,10 +1086,10 @@ a:focus {
 
 .quote {
   font-size: 22px;
-  color: #223a66;
+  color: #2f508c;
   padding: 40px;
   font-style: italic;
-  border-left: 5px solid #e12454;
+  border-left: 5px solid #1c2f53;
   margin: 25px 0px;
 }
 
@@ -1151,7 +1151,7 @@ a:focus {
 }
 
 .post-comments .comment-author a {
-  color: #223a66;
+  color: #2f508c;
   font-size: 14px;
   text-transform: uppercase;
 }
@@ -1164,7 +1164,7 @@ a:focus {
 }
 
 .post-comments .comment-button {
-  color: #223a66;
+  color: #2f508c;
   display: inline-block;
   margin-left: 5px;
   font-size: 12px;
@@ -1176,7 +1176,7 @@ a:focus {
 }
 
 .post-comments .comment-button:hover {
-  color: #223a66;
+  color: #2f508c;
 }
 
 .post-excerpt {
@@ -1198,7 +1198,7 @@ a:focus {
 .post-excerpt blockquote.quote-post p {
   line-height: 30px;
   font-size: 20px;
-  color: #223a66;
+  color: #2f508c;
 }
 
 .comments-section {
@@ -1246,7 +1246,7 @@ a:focus {
 }
 
 .comment-wrap .media .media-heading a {
-  color: #223a66;
+  color: #2f508c;
   font-size: 13px;
 }
 
@@ -1271,7 +1271,7 @@ a:focus {
 
 .comment-reply-form input:focus, .comment-reply-form textarea:focus {
   box-shadow: none;
-  border: 1px solid #223a66;
+  border: 1px solid #2f508c;
 }
 
 .comment-reply-form textarea, .comment-reply-form .btn-main {
@@ -1296,7 +1296,7 @@ a:focus {
   bottom: 0px;
   width: 35px;
   height: 3px;
-  background: #e12454;
+  background: #1c2f53;
 }
 
 .sidebar-widget.latest-post .media img {
@@ -1322,7 +1322,7 @@ a:focus {
 }
 
 .sidebar-widget.category ul li a:hover {
-  color: #223a66;
+  color: #2f508c;
   padding-left: 5px;
 }
 
@@ -1348,7 +1348,7 @@ a:focus {
 
 .sidebar-widget.tags a:hover {
   color: #fff;
-  background: #223a66;
+  background: #2f508c;
 }
 
 .sidebar-widget.schedule-widget {
@@ -1389,11 +1389,11 @@ a:focus {
 }
 
 .logo h3 {
-  color: #223a66;
+  color: #2f508c;
 }
 
 .logo span {
-  color: #223a66;
+  color: #2f508c;
 }
 
 .widget .divider {
@@ -1401,7 +1401,7 @@ a:focus {
 }
 
 .widget h4 {
-  color: #223a66;
+  color: #2f508c;
 }
 
 .widget .footer-menu a {
@@ -1409,7 +1409,7 @@ a:focus {
 }
 
 .widget .footer-menu a:hover {
-  color: #e12454;
+  color: #1c2f53;
 }
 
 .footer-contact-block span {
@@ -1442,7 +1442,7 @@ a:focus {
 }
 
 .widget-contact h6 i {
-  color: #e12454;
+  color: #1c2f53;
 }
 
 .subscribe {
@@ -1464,7 +1464,7 @@ a:focus {
 
 .backtop {
   position: fixed;
-  background: #e12454;
+  background: #1c2f53;
   z-index: 9999;
   display: inline-block;
   right: 55px;
