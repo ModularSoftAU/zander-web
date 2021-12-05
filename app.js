@@ -20,8 +20,8 @@ var index = require('./routes/index');
 
 app.use('/', index);
 
-// const dashboardRoutes = require('./routes/dashboard');
-// app.use(dashboardRoutes);
+const policyRoutes = require('./routes/policyRoutes');
+app.use(policyRoutes);
 
 //
 // Controllers
