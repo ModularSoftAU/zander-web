@@ -9,4 +9,11 @@ router.get('/dashboard', (req, res, next) => {
     });
 });
 
+router.get('/dashboard/playercheck', (req, res, next) => {
+    res.render('dashboard/playerCheck', {
+        "pageTitle": `Dashboard - Player Check`,
+        config: config
+    });
+});
+
 module.exports = router;

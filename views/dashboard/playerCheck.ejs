@@ -1,0 +1,113 @@
+<%- include("../modules/dashboard/header.ejs", {
+    pageTitle: pageTitle,
+    pageDescription: "Check a players linked accounts via player name or IP address."
+}) %>
+
+<%- include("../modules/dashboard/sidebar.ejs") %>
+
+<%- include("../modules/dashboard/navigation.ejs") %>
+
+<div class="content-wrap">
+    <div class="main">
+        <div class="container-fluid">
+            <section id="main-content">
+                <div class="row">
+                    <div class="col-lg-4">
+                        <div class="card">
+                            <div class="card-title">
+                                <h4>Player Check</h4>
+                                
+                            </div>
+                            <div class="card-body">
+                                <div class="basic-form">
+                                    <form>
+                                        <!-- Name or Address -->
+                                        <div class="form-group">
+                                            <label for="reqUserORIP">Player Name or Address</label>
+                                            <input type="text" class="form-control input-default " name="reqUserORIP" placeholder="shadowolfyt" required>
+                                            <p class="text-muted m-b-15 f-s-12">The player name OR IP address you would like to check.</p>
+                                        </div>
+
+                                        <!-- Type of Search -->
+                                        <div class="form-group">
+                                            <label for="">Type of Search</label>
+                                            <select class="form-control" required>
+                                                <option selected>Search by Username</option>
+                                                <option>Search by IP Address</option>
+                                            </select>
+                                            <small>Please specify how to search for players.</small>
+                                        </div>
+
+                                        <div class="form-group">
+                                            <input class="form-control" type="text" placeholder="Helping text">
+                                            <span class="help-block">
+                                            <small>What type of search would you like to do?</small>
+                                        </span>
+                                        </div>
+
+                                        <button type="submit" class="btn btn-primary"><i class="fas fa-search"></i> Search</button>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- /# column -->
+                    <div class="col-lg-8">
+                        <div class="card">
+                            <div class="card-title">
+                                <h4>Results</h4>
+
+                                <table class="table">
+                                    <thead>
+                                        <tr>
+                                            <th>Username</th>
+                                            <th>IP Address</th>
+                                            <th>Action</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td>shadowolfyt</td>
+                                            <td><code>1.1.1.1</code></td>
+                                            <td>
+                                                <div class="btn-group" role="group" aria-label="Basic example">
+                                                    <button type="button" class="btn btn-warning">Ban</button>
+                                                    <button type="button" class="btn btn-danger">IP Ban</button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td>Camemes</td>
+                                            <td><code>192.168.20.34</code></td>
+                                            <td>
+                                                <div class="btn-group" role="group" aria-label="Basic example">
+                                                    <button type="button" class="btn btn-warning">Ban</button>
+                                                    <button type="button" class="btn btn-danger">IP Ban</button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td>Lego_archer_elf</td>
+                                            <td><code>8.8.8.8</code></td>
+                                            <td>
+                                                <div class="btn-group" role="group" aria-label="Basic example">
+                                                    <button type="button" class="btn btn-warning">Ban</button>
+                                                    <button type="button" class="btn btn-danger">IP Ban</button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                                
+                            </div>
+                            <div class="card-body">
+                                <table>
+                                    
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- /# column -->
+                </div>
+
+<%- include("../modules/dashboard/footer.ejs") %>
