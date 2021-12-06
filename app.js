@@ -23,6 +23,9 @@ app.use('/', index);
 const policyRoutes = require('./routes/policyRoutes');
 app.use(policyRoutes);
 
+const dashboardRoutes = require('./routes/dashboardRoutes');
+app.use(dashboardRoutes);
+
 //
 // Controllers
 //
