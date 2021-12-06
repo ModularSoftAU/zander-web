@@ -1,0 +1,75 @@
+<%- include("../../modules/dashboard/header.ejs", {
+    pageTitle: pageTitle,
+    pageDescription: "List and publish all events for the community to attend."
+}) %>
+
+<%- include("../../modules/dashboard/sidebar.ejs") %>
+
+<%- include("../../modules/dashboard/navigation.ejs") %>
+
+<div class="content-wrap">
+    <div class="main">
+        <div class="container-fluid">
+            <section id="main-content">
+                <div class="row">
+                    <div class="col-lg-12">
+                        <div class="card">
+                            <div class="card-title">
+                                <h4>Event Viewer</h4>
+                                <button type="button" class="btn btn-sm btn-info">Schedule Event</button>
+                            </div>
+                            <div class="card-body">
+                                <table class="table">
+                                    <thead>
+                                        <tr>
+                                            <th>Event ID</th>
+                                            <th>Display Name</th>
+                                            <th>Date & Time</th>
+                                            <th>Action</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td>1</td>
+                                            <td>Community Mixed Event</td>
+                                            <td><code>Sunday 15th of December 2024</code></td>
+                                            <td>
+                                                <div class="btn-group" role="group" aria-label="Basic example">
+                                                    <button type="button" class="btn btn-sm btn-info">Publish</button>
+                                                    <button type="button" class="btn btn-sm btn-warning">Edit</button>
+                                                    <button type="button" class="btn btn-sm btn-danger">Delete</button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td>2</td>
+                                            <td>Community XP Race</td>
+                                            <td><code>Sunday 21st of December 2022</code></td>
+                                            <td>
+                                                <div class="btn-group" role="group" aria-label="Basic example">
+                                                    <button type="button" class="btn btn-sm btn-info">Publish</button>
+                                                    <button type="button" class="btn btn-sm btn-warning">Edit</button>
+                                                    <button type="button" class="btn btn-sm btn-danger">Delete</button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td>3</td>
+                                            <td>Community Mixed PVP Event</td>
+                                            <td><code>Sunday 1st of September 2022</code></td>
+                                            <td>
+                                                <div class="btn-group" role="group" aria-label="Basic example">
+                                                    <button type="button" class="btn btn-sm btn-info">Publish</button>
+                                                    <button type="button" class="btn btn-sm btn-warning">Edit</button>
+                                                    <button type="button" class="btn btn-sm btn-danger">Delete</button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+<%- include("../../modules/dashboard/footer.ejs") %>
