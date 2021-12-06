@@ -16,7 +16,7 @@ router.get('/dashboard/playercheck', (req, res, next) => {
     });
 });
 
-router.get('/dashboard/events/list', (req, res, next) => {
+router.get('/dashboard/events', (req, res, next) => {
     res.render('dashboard/events/list', {
         "pageTitle": `Dashboard - Events`,
         config: config
@@ -26,6 +26,20 @@ router.get('/dashboard/events/list', (req, res, next) => {
 router.get('/dashboard/events/schedule', (req, res, next) => {
     res.render('dashboard/events/schedule', {
         "pageTitle": `Dashboard - Event Planner`,
+        config: config
+    });
+});
+
+router.get('/dashboard/ranks', (req, res, next) => {
+    res.render('dashboard/ranks/list', {
+        "pageTitle": `Dashboard - Ranks`,
+        config: config
+    });
+});
+
+router.get('/dashboard/ranks/create', (req, res, next) => {
+    res.render('dashboard/ranks/create', {
+        "pageTitle": `Dashboard - Rank Creator`,
         config: config
     });
 });

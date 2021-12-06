@@ -1,0 +1,63 @@
+<%- include("../../modules/dashboard/header.ejs", {
+    pageTitle: pageTitle,
+    pageDescription: "Create a rank"
+}) %>
+
+<%- include("../../modules/dashboard/sidebar.ejs") %>
+
+<%- include("../../modules/dashboard/navigation.ejs") %>
+
+<div class="content-wrap">
+    <div class="main">
+        <div class="container-fluid">
+            <section id="main-content">
+                <div class="row">
+                    <div class="col-lg-12">
+                        <div class="card">
+                            <div class="card-title">
+                                <h4>Rank Creator</h4>
+                            </div>
+                            <div class="card-body">
+                                <!-- Name of Rank -->
+                                <div class="form-group">
+                                    <label for="rankName">Rank Name</label>
+                                    <input type="text" class="form-control input-default " name="rankName" required>
+                                    <p class="text-muted m-b-15 f-s-12">The display name of the rank.</p>
+                                </div>
+
+                                <h6>Rank Display Formatting</h6>
+                                
+                                <!-- Rank Badge Colour -->
+                                <div class="form-group">
+                                    <label for="rankBadgeColour">Rank Badge Colour</label>
+                                    <input type="color" name="rankBadgeColour" value="#00ced1" required>
+                                    <p class="text-muted m-b-15 f-s-12">The background colour of the badge.</p>
+                                </div>
+                                
+                                <!-- Rank Badge Colour -->
+                                <div class="form-group">
+                                    <label for="rankBadgeTextColour">Rank Badge Colour</label>
+                                    <input type="color" name="rankBadgeTextColour" value="#000000" required>
+                                    <p class="text-muted m-b-15 f-s-12">The text colour of the badge.</p>
+                                </div>
+
+                                <!-- Rank Priority -->
+                                <div class="form-group">
+                                    <label for="rankPriority">Rank Priority</label>
+                                    <input type="text" class="form-control input-default " name="rankPriority" required>
+                                    <p class="text-muted m-b-15 f-s-12">The priority ranking of the rank.<br>Example:<br>Administrator: 5<br>Senior Staff: 10</p>
+                                </div>
+
+                                <!-- Rank Discord ID -->
+                                <div class="form-group">
+                                    <label for="rankPriority">Rank Discord ID</label>
+                                    <input type="text" class="form-control input-default " name="rankDiscordID" required>
+                                    <p class="text-muted m-b-15 f-s-12">The ID of the Discord role for the rank</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+
+<%- include("../../modules/dashboard/footer.ejs") %>

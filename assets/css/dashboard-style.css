@@ -164,7 +164,7 @@
   visibility: hidden;
   transition: all 0.5s ease-in-out;
 }
-.badge {
+/* .badge {
   padding: 5px 10px;
   font-weight: 400;
   border-radius: 4px;
@@ -200,7 +200,7 @@
 span.badge {
   color: #ffffff;
   font-size: 14px;
-}
+} */
 .vtabs {
   display: table;
 }
@@ -2734,9 +2734,9 @@ tbody tr td:last-child {
 .table {
   margin-bottom: 0;
 }
-.table .badge {
+/* .table .badge {
   text-transform: uppercase;
-}
+} */
 .student-data-table label {
   margin-right: 7px;
 }
