@@ -9,9 +9,36 @@ router.get('/', (req, res, next) => {
     });
 });
 
+// 
+// Play
+// 
 router.get('/play', (req, res, next) => {
     res.render('play', {
         "pageTitle": `Play`,
+        config: config
+    });
+});
+
+// 
+// Knowledgebase
+// 
+router.get('/knowledgebase', (req, res, next) => {
+    res.render('knowledgebase', {
+        "pageTitle": `Knowledgebase`,
+        config: config
+    });
+});
+
+router.get('/support', (req, res, next) => {
+    res.render('knowledgebase', {
+        "pageTitle": `Knowledgebase`,
+        config: config
+    });
+});
+
+router.get('/help', (req, res, next) => {
+    res.render('knowledgebase', {
+        "pageTitle": `Knowledgebase`,
         config: config
     });
 });
