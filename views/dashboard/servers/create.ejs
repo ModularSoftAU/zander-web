@@ -1,0 +1,46 @@
+<%- include("../../modules/dashboard/header.ejs", {
+    pageTitle: pageTitle,
+    pageDescription: "Create Servers for the /play page."
+}) %>
+
+<%- include("../../modules/dashboard/sidebar.ejs") %>
+
+<%- include("../../modules/dashboard/navigation.ejs") %>
+
+<div class="content-wrap">
+    <div class="main">
+        <div class="container-fluid">
+            <section id="main-content">
+                <div class="row">
+                    <div class="col-lg-12">
+                        <div class="card">
+                            <div class="card-title">
+                                <h4>Server Creator</h4>
+                                
+                            </div>
+                            <div class="card-body">
+                                <div class="basic-form">
+                                    <form>
+                                        <!-- Server Name -->
+                                        <div class="form-group">
+                                            <label for="serverName">Server Name</label>
+                                            <input type="text" class="form-control input-default " name="serverName" required>
+                                            <p class="text-muted m-b-15 f-s-12">The display name for the Server.</p>
+                                        </div>
+
+                                        <!-- Server Address -->
+                                        <div class="form-group">
+                                            <label for="serverAddress">Server Address</label>
+                                            <input type="text" class="form-control input-default " name="serverAddress" required>
+                                            <p class="text-muted m-b-15 f-s-12">The IP or connection address for the Server.</p>
+                                        </div>
+
+                                        <button type="submit" class="btn btn-primary">Create Server</button>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+<%- include("../../modules/dashboard/footer.ejs") %>
