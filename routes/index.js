@@ -9,4 +9,11 @@ router.get('/', (req, res, next) => {
     });
 });
 
+router.get('/play', (req, res, next) => {
+    res.render('play', {
+        "pageTitle": `Play`,
+        config: config
+    });
+});
+
 module.exports = router;
