@@ -19,28 +19,4 @@ router.get('/play', (req, res, next) => {
     });
 });
 
-// 
-// Knowledgebase
-// 
-router.get('/knowledgebase', (req, res, next) => {
-    res.render('knowledgebase', {
-        "pageTitle": `Knowledgebase`,
-        config: config
-    });
-});
-
-router.get('/support', (req, res, next) => {
-    res.render('knowledgebase', {
-        "pageTitle": `Knowledgebase`,
-        config: config
-    });
-});
-
-router.get('/help', (req, res, next) => {
-    res.render('knowledgebase', {
-        "pageTitle": `Knowledgebase`,
-        config: config
-    });
-});
-
 module.exports = router;

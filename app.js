@@ -26,6 +26,14 @@ app.use(policyRoutes);
 const dashboardRoutes = require('./routes/dashboardRoutes');
 app.use(dashboardRoutes);
 
+const knowledgebaseRoutes = require('./routes/knowledgebaseRoutes');
+app.use(knowledgebaseRoutes);
+
+// 
+// API
+// 
+// #soon
+
 //
 // Controllers
 //
@@ -37,5 +45,5 @@ const database = require('./controllers/databaseController'); // Database contro
 const port = process.env.PORT || config.port || 8080;
 app.listen(port, async function() {
     console.log(`\n// ${package.name} v.${package.version}\nGitHub Repository: ${package.homepage}\nCreated By: ${package.author}`);
-    console.log(`Web Application is listening to the port ${port}`);
+    console.log(`Site and API is listening to the port ${port}`);
 });
