@@ -19,4 +19,14 @@ router.get('/play', (req, res, next) => {
     });
 });
 
+// 
+// Community Creations
+// 
+router.get('/communityCreations', (req, res, next) => {
+    res.render('communityCreations', {
+        "pageTitle": `Community Creations`,
+        config: config
+    });
+});
+
 module.exports = router;
