@@ -6,7 +6,7 @@ const baseEndpoint = config.siteConfiguration.apiRoute + "/vote";
 
 router.post(baseEndpoint + '/cast', (req, res, next) => {
     const username = req.body.username;
-    const dateTime = req.body.dateTime;
+    const voteDateTime = req.body.voteDateTime;
     const service = req.body.service;
 
     // ...

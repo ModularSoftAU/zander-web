@@ -6,7 +6,7 @@ const baseEndpoint = config.siteConfiguration.apiRoute + "/anticheat";
 
 router.post(baseEndpoint + '/flag', (req, res, next) => {
     const username = req.body.username;
-    const dateTime = req.body.dateTime;
+    const anticheatDateTime = req.body.anticheatDateTime;
     const type = req.body.type;
 
     // ...

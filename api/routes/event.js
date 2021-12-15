@@ -12,7 +12,7 @@ router.get(baseEndpoint + '/get', (req, res, next) => {
 router.post(baseEndpoint + '/create', (req, res, next) => {
     const name = req.body.name;
     const icon = req.body.icon;
-    const dateTime = req.body.dateTime;
+    const eventDateTime = req.body.eventDateTime;
     const hostingServer = req.body.hostingServer;
     const information = req.body.information;
 
@@ -24,7 +24,7 @@ router.post(baseEndpoint + '/edit', (req, res, next) => {
     const eventId = req.body.eventId;
     const name = req.body.name;
     const icon = req.body.icon;
-    const dateTime = req.body.dateTime;
+    const eventDateTime = req.body.eventDateTime;
     const hostingServer = req.body.hostingServer;
     const information = req.body.information;
 
