@@ -46,4 +46,14 @@ router.get('/apply', (req, res, next) => {
     });
 });
 
+// 
+// Events
+// 
+router.get('/events', (req, res, next) => {
+    res.render('events', {
+        "pageTitle": `Events`,
+        config: config
+    });
+});
+
 module.exports = router;
