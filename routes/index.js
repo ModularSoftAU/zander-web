@@ -36,4 +36,14 @@ router.get('/communityCreation/submit', (req, res, next) => {
     });
 });
 
+// 
+// Apply
+// 
+router.get('/apply', (req, res, next) => {
+    res.render('apply', {
+        "pageTitle": `Apply`,
+        config: config
+    });
+});
+
 module.exports = router;
