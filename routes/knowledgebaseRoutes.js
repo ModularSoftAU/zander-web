@@ -6,21 +6,21 @@ const config = require('../config.json');
 // Knowledgebase
 // 
 router.get('/knowledgebase', (req, res, next) => {
-    res.render('knowledgebase', {
+    res.render('modules/knowledgebase/knowledgebase', {
         "pageTitle": `Knowledgebase`,
         config: config
     });
 });
 
 router.get('/support', (req, res, next) => {
-    res.render('knowledgebase', {
+    res.render('modules/knowledgebase/knowledgebase', {
         "pageTitle": `Knowledgebase`,
         config: config
     });
 });
 
 router.get('/help', (req, res, next) => {
-    res.render('knowledgebase', {
+    res.render('modules/knowledgebase/knowledgebase', {
         "pageTitle": `Knowledgebase`,
         config: config
     });
@@ -30,7 +30,7 @@ router.get('/help', (req, res, next) => {
 // Knowledgebase Article
 // 
 router.get('/generalStaff/newStaff', (req, res, next) => {
-    res.render('knowledgebaseArticle', {
+    res.render('modules/knowledgebase/knowledgebaseArticle', {
         "pageTitle": `Knowledgebase - KB Article Title`,
         config: config
     });

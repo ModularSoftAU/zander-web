@@ -13,7 +13,7 @@ router.get('/', (req, res, next) => {
 // Play
 // 
 router.get('/play', (req, res, next) => {
-    res.render('play', {
+    res.render('modules/play/play', {
         "pageTitle": `Play`,
         config: config
     });
@@ -23,8 +23,15 @@ router.get('/play', (req, res, next) => {
 // Community Creations
 // 
 router.get('/communityCreations', (req, res, next) => {
-    res.render('communityCreations', {
+    res.render('modules/communityCreation/communityCreation', {
         "pageTitle": `Community Creations`,
+        config: config
+    });
+});
+
+router.get('/communityCreation/submit', (req, res, next) => {
+    res.render('modules/communityCreation/submit', {
+        "pageTitle": `Submit a Community Creation`,
         config: config
     });
 });
