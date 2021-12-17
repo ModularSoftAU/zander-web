@@ -56,4 +56,14 @@ router.get('/events', (req, res, next) => {
     });
 });
 
+// 
+// Vote
+// 
+router.get('/vote', (req, res, next) => {
+    res.render('vote', {
+        "pageTitle": `Vote`,
+        config: config
+    });
+});
+
 module.exports = router;
