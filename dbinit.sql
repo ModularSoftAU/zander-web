@@ -266,7 +266,9 @@ CREATE TABLE applications (
     requirementsMarkdown TEXT,
     redirectUrl TEXT,
     position INT,
-    PRIMARY KEY (applicationId)
+    closed BOOLEAN DEFAULT 0,
+    PRIMARY KEY (applicationId),
+    INDEX applications_closed (closed)
 );
 
 CREATE TABLE knowledgebaseSections (
