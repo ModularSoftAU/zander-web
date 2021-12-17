@@ -32,7 +32,7 @@ app.use(knowledgebaseRoutes);
 // 
 // API
 // 
-// #soon
+require('./api/routes')(app);
 
 //
 // Controllers
