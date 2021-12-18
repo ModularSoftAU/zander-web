@@ -61,6 +61,7 @@ CREATE TABLE ranks (
 CREATE TABLE userRanks (
 	userId INT NOT NULL,
     rankId INT NOT NULL,
+    title TEXT,
     createdDate DATETIME NOT NULL DEFAULT NOW(),
     PRIMARY KEY (userId, rankId),
     CONSTRAINT userRanks_userId FOREIGN KEY (userId) REFERENCES users (userId) ON DELETE CASCADE,
@@ -222,14 +223,24 @@ CREATE TABLE anticheat (
     CONSTRAINT antichat_userId FOREIGN KEY (userId) REFERENCES users (userId) ON DELETE RESTRICT
 );
 
+CREATE TABLE voteSites (
+	voteSiteId INT NOT NULL AUTO_INCREMENT,
+    serverId INT NOT NULL,
+    name VARCHAR(30),
+    siteUrl TEXT,
+    PRIMARY KEY (voteSiteId),
+    CONSTRAINT voteSites_serverId FOREIGN KEY (serverId) REFERENCES servers (serverId) ON DELETE CASCADE
+);
+
 CREATE TABLE votes (
 	voteId INT NOT NULL AUTO_INCREMENT,
     userId INT NOT NULL,
-    service TEXT,
+    voteSiteId INT NOT NULL,
     createdDate DATETIME NOT NULL DEFAULT NOW(),
     PRIMARY KEY (voteId),
     INDEX votes_createdDate (createdDate),
-    CONSTRAINT votes_userId FOREIGN KEY (userId) REFERENCES users (userId) ON DELETE CASCADE
+    CONSTRAINT votes_userId FOREIGN KEY (userId) REFERENCES users (userId) ON DELETE CASCADE,
+    CONSTRAINT votes_voteSiteId FOREIGN KEY (voteSiteId) REFERENCES voteSites (voteSiteId) ON DELETE CASCADE
 );
 
 CREATE TABLE alerts (
@@ -266,7 +277,9 @@ CREATE TABLE applications (
     requirementsMarkdown TEXT,
     redirectUrl TEXT,
     position INT,
-    PRIMARY KEY (applicationId)
+    closed BOOLEAN DEFAULT 0,
+    PRIMARY KEY (applicationId),
+    INDEX applications_closed (closed)
 );
 
 CREATE TABLE knowledgebaseSections (
