@@ -34,13 +34,14 @@ CREATE TABLE userSettings (
 );
 
 CREATE TABLE userVerify (
-	verificationToken BIGINT UNSIGNED NOT NULL DEFAULT (UUID_SHORT()),
+    userVerifyId INT NOT NULL AUTO_INCREMENT,
+    verificationToken VARCHAR(16) UNIQUE, 
     username VARCHAR(16),
     email VARCHAR(200),
     createdDate DATETIME NOT NULL DEFAULT NOW(),
     verifiedOn DATETIME,
     verified BOOLEAN DEFAULT 0,
-    PRIMARY KEY (verificationToken)
+    PRIMARY KEY (userVerifyId)
 );
 
 CREATE TABLE ranks (
