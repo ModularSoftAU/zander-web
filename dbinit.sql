@@ -61,6 +61,7 @@ CREATE TABLE ranks (
 CREATE TABLE userRanks (
 	userId INT NOT NULL,
     rankId INT NOT NULL,
+    title TEXT,
     createdDate DATETIME NOT NULL DEFAULT NOW(),
     PRIMARY KEY (userId, rankId),
     CONSTRAINT userRanks_userId FOREIGN KEY (userId) REFERENCES users (userId) ON DELETE CASCADE,
