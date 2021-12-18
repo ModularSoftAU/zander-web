@@ -44,6 +44,15 @@ CREATE TABLE userVerify (
     PRIMARY KEY (userVerifyId)
 );
 
+-- Generate verificationToken before data is inserted if it NULL
+DELIMITER $$
+CREATE TRIGGER userVerify_generate_token_before_insert
+BEFORE INSERT ON userVerify FOR EACH ROW
+BEGIN
+	SET NEW.verificationToken = LEFT(REPLACE(UUID(), '-', ''), 16);
+END
+$$ DELIMITER ;
+
 CREATE TABLE ranks (
 	rankId INT NOT NULL AUTO_INCREMENT,
     rankSlug VARCHAR(15) UNIQUE NOT NULL,
