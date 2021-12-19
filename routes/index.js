@@ -3,7 +3,7 @@ const router = express.Router();
 const config = require('../config.json');
 
 router.get('/', (req, res, next) => {
-    res.render('index', {
+    res.render('modules/index/index', {
         "pageTitle": `${config.siteConfiguration.siteName}`,
         config: config
     });
