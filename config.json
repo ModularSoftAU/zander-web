@@ -22,7 +22,8 @@
             "youtube": "https://www.youtube.com/channel/UCeijz6MNnya85LprMjPmYag",
             "linkedin": "https://www.linkedin.com/company/68885022/",
             "tiktok": "https://www.tiktok.com/@craftingforchrist"
-        }
+        },
+        "apiRoute": "/api"
     },
     "database": {
         "host": "database.craftingforchrist.net",
