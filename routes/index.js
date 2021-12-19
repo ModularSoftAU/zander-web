@@ -66,4 +66,24 @@ router.get('/vote', (req, res, next) => {
     });
 });
 
+// 
+// Staff
+// 
+router.get('/staff', (req, res, next) => {
+    res.render('staff', {
+        "pageTitle": `Staff`,
+        config: config
+    });
+});
+
+// 
+// Staff
+// 
+router.get('/profile', (req, res, next) => {
+    res.render('profile', {
+        "pageTitle": `USERNAME's Profile`,
+        config: config
+    });
+});
+
 module.exports = router;

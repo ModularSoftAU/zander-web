@@ -478,7 +478,7 @@ a:focus {
   font-size: 60px;
   line-height: 1.2;
   letter-spacing: -1.2px;
-  text-transform: capitalize;
+  /* text-transform: capitalize; */
   color: #2f508c;
 }
 
