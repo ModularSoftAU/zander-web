@@ -96,4 +96,22 @@ router.get('/punishments', (req, res, next) => {
     });
 });
 
+// 
+// Session
+// 
+router.get('/login', (req, res, next) => {
+    res.render('login', {
+        "pageTitle": `Login`,
+        config: config
+    });
+});
+
+router.get('/register', (req, res, next) => {
+    res.render('register', {
+        "pageTitle": `Register`,
+        config: config
+    });
+});
+
+
 module.exports = router;
