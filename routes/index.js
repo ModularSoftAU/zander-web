@@ -77,11 +77,21 @@ router.get('/staff', (req, res, next) => {
 });
 
 // 
-// Staff
+// Profile
 // 
 router.get('/profile', (req, res, next) => {
     res.render('profile', {
         "pageTitle": `USERNAME's Profile`,
+        config: config
+    });
+});
+
+// 
+// Punishments
+// 
+router.get('/punishments', (req, res, next) => {
+    res.render('punishments', {
+        "pageTitle": `Punishments`,
         config: config
     });
 });

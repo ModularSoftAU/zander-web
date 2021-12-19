@@ -383,7 +383,7 @@ a:focus {
   padding: 10px 15px;
   color: #222;
   font-family: "Exo", sans-serif;
-  text-transform: capitalize;
+  /* text-transform: capitalize; */
   font-size: 16px;
   transition: all .25s ease;
 }
