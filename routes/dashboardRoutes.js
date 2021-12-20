@@ -12,9 +12,9 @@ router.get('/dashboard', (req, res, next) => {
 // 
 // Player Check
 // 
-router.get('/dashboard/playercheck', (req, res, next) => {
-    res.render('dashboard/playerCheck', {
-        "pageTitle": `Dashboard - Player Check`,
+router.get('/dashboard/usercheck', (req, res, next) => {
+    res.render('dashboard/usercheck', {
+        "pageTitle": `Dashboard - User Check`,
         config: config
     });
 });

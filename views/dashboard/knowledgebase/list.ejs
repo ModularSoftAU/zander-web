@@ -19,52 +19,92 @@
                                 <a href="/dashboard/knowledgebase/create/section"><button type="button" class="btn btn-sm btn-info">Create Knowledgebase Section</button></a>
                                 <a href="/dashboard/knowledgebase/create/article"><button type="button" class="btn btn-sm btn-info">Create Knowledgebase Article</button></a>
                             </div>
+                            <br>
                             <div class="card-body">
-                                <table class="table">
-                                    <thead>
-                                        <tr>
-                                            <th>Rank ID</th>
-                                            <th>Display Name</th>
-                                            <th>Number of Users in Rank</th>
-                                            <th>Action</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        <tr>
-                                            <td>1</td>
-                                            <td><span class="badge" style="background-color: #ffff00; color: black;">Administrator</span></td>
-                                            <td>2</td>
-                                            <td>
-                                                <div class="btn-group" role="group" >
-                                                    <button type="button" class="btn btn-sm btn-warning">Edit</button>
-                                                    <button type="button" class="btn btn-sm btn-danger">Delete</button>
+                                <div class="default-tab">
+                                    <ul class="nav nav-tabs" role="tablist">
+                                        <li class="nav-item">
+                                            <a class="nav-link" data-toggle="tab" href="#section">Sections</a>
+                                        </li>
+                                        <li class="nav-item">
+                                            <a class="nav-link" data-toggle="tab" href="#article">Articles</a>
+                                        </li>
+                                    </ul>
+                                    <div class="tab-content">
+                                        <div class="tab-pane fade" id="section" role="tabpanel">
+                                            <div class="pt-4">
+                                                <div class="table-responsive">
+                                                    <table class="table table-hover table-responsive-sm">
+                                                        <thead>
+                                                            <tr>
+                                                                <th>Icon</th>
+                                                                <th>Name</th>
+                                                                <th>Description</th>
+                                                                <th>Action</th>
+                                                            </tr>
+                                                        </thead>
+                                                        <tbody>
+                                                            <tr>
+                                                                <th><i class="fas fa-book"></i></th>
+                                                                <th>Getting Started</th>
+                                                                <td>Description goes here to describe this...</td>
+                                                                <td>
+                                                                    <div class="btn-group mb-2 btn-group-sm">
+                                                                        <button class="btn btn-warning" type="button">Edit</button>
+                                                                        <button class="btn btn-danger" type="button">Delete</button>
+                                                                    </div>
+                                                                </td>
+                                                            </tr>
+                                                        </tbody>
+                                                    </table>
                                                 </div>
-                                            </td>
-                                        </tr>
-                                        <tr>
-                                            <td>2</td>
-                                            <td><span class="badge" style="background-color: #ffa500; color: white;">Senior Staff</span></td>
-                                            <td>5</td>
-                                            <td>
-                                                <div class="btn-group" role="group" >
-                                                    <button type="button" class="btn btn-sm btn-warning">Edit</button>
-                                                    <button type="button" class="btn btn-sm btn-danger">Delete</button>
+                                            </div>
+                                        </div>
+                                        <div class="tab-pane fade" id="article">
+                                            <div class="pt-4">
+                                                <div class="table-responsive">
+                                                    <table class="table table-hover table-responsive-sm">
+                                                        <thead>
+                                                            <tr>
+                                                                <th>Icon</th>
+                                                                <th>Name</th>
+                                                                <th>Description</th>
+                                                                <th>Action</th>
+                                                            </tr>
+                                                        </thead>
+                                                        <tbody>
+                                                            <tr>
+                                                                <th>1<i class="fas fa-book"></i></th>
+                                                                <th>Getting Started</th>
+                                                                <td>Description goes here to describe this...</td>
+                                                                <div class="btn-group mb-2 btn-group-sm">
+                                                                    <button class="btn btn-warning" type="button">Edit</button>
+                                                                    <button class="btn btn-danger" type="button">Delete</button>
+                                                                </div>
+                                                            </tr>
+                                                            <tr>
+                                                                <th>2</th>
+                                                                <td>Kolor Tea Shirt For Women</td>
+                                                                <td><span class="badge badge-success">Tax</span>
+                                                                </td>
+                                                                <td>January 30</td>
+                                                                <td class="color-success">$55.32</td>
+                                                            </tr>
+                                                            <tr>
+                                                                <th>3</th>
+                                                                <td>Blue Backpack For Baby</td>
+                                                                <td><span class="badge badge-danger">Extended</span>
+                                                                </td>
+                                                                <td>January 25</td>
+                                                                <td class="color-danger">$14.85</td>
+                                                            </tr>
+                                                        </tbody>
+                                                    </table>
                                                 </div>
-                                            </td>
-                                        </tr>
-                                        <tr>
-                                            <td>3</td>
-                                            <td><span class="badge" style="background-color: #00ced1; color: white;">Event Staff</span></td>
-                                            <td>7</td>
-                                            <td>
-                                                <div class="btn-group" role="group" >
-                                                    <button type="button" class="btn btn-sm btn-warning">Edit</button>
-                                                    <button type="button" class="btn btn-sm btn-danger">Delete</button>
-                                                </div>
-                                            </td>
-                                        </tr>
-                                    </tbody>
-                                </table>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
