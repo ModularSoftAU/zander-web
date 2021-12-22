@@ -1,22 +1,14 @@
 <%- include("../../modules/header.ejs", {
     pageTitle: pageTitle,
-    pageDescription: "The Rules for the Network to abide by."
+    pageDescription: "A Knowledgebase Article"
 }) %>
 
 <%- include("../../modules/navigationBar.ejs") %>
 
-<section class="page-title bg-1">
-    <div class="overlay"></div>
-    <div class="container">
-      <div class="row">
-        <div class="col-md-12">
-          <div class="block text-center">
-            <h1 class="text-capitalize mb-5 text-lg">New Staff</h1>
-          </div>
-        </div>
-      </div>
-    </div>
-  </section>
+<%- include("miniHeader.ejs", {
+  headerTitle: "Article Title",
+  backgroundImage: "../images/banner/AronCrystalBuilding.png"
+}) %>
   
   
   <section class="section">

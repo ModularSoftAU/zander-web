@@ -113,5 +113,31 @@ router.get('/register', (req, res, next) => {
     });
 });
 
+// 
+// Appeal
+// 
+router.get('/appeal', (req, res, next) => {
+    res.render('appeal', {
+        "pageTitle": `Appeal`,
+        config: config
+    });
+});
+
+// 
+// Shopping District Directory
+// 
+router.get('/shoppingDistrictDirectory', (req, res, next) => {
+    res.render('modules/shoppingDistrictDirectory/shoppingDistrictDirectory', {
+        "pageTitle": `Shopping District Directory`,
+        config: config
+    });
+});
+
+router.get('/sdd', (req, res, next) => {
+    res.render('modules/shoppingDistrictDirectory/shoppingDistrictDirectory', {
+        "pageTitle": `Shopping District Directory`,
+        config: config
+    });
+});
 
 module.exports = router;
