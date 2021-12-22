@@ -1,6 +1,8 @@
 const express = require('express');
 const router = express.Router();
 const config = require('../config.json');
+const path = require('path');
+const fs = require('fs');
 
 router.get('/', (req, res, next) => {
     res.render('modules/index/index', {
@@ -137,6 +139,26 @@ router.get('/sdd', (req, res, next) => {
     res.render('modules/shoppingDistrictDirectory/shoppingDistrictDirectory', {
         "pageTitle": `Shopping District Directory`,
         config: config
+    });
+});
+
+router.get('/shoppingDistrictDirectory/create', (req, res, next) => {
+    fs.readdir(path.join(__dirname, '../assets/images/minecraftItemImages'), function(err, files) {
+        //handling error
+        if (err) {
+            return console.log('Unable to scan directory: ' + err);
+        }
+        //listing all files using forEach
+        files.forEach(function(file) {
+            // Do whatever you want to do with the file
+            // console.log(file);
+        });
+
+        res.render('modules/shoppingDistrictDirectory/create', {
+            "pageTitle": `Shopping District Directory`,
+            config: config,
+            minecraftItem: files
+        });
     });
 });
 
