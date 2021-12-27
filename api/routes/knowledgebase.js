@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const config = require('../../config.json');
+const db = require('../../controllers/databaseController');
 const baseEndpoint = config.siteConfiguration.apiRoute + "/knowledgebase";
 
 
@@ -15,8 +16,26 @@ router.post(baseEndpoint + '/section/create', (req, res, next) => {
     const sectionIcon = req.body.sectionIcon;
     const position = req.body.position;
 
-    // ...
-    res.json({ success: true });
+    try {
+        db.query(`INSERT INTO knowledgebaseSections (sectionSlug, sectionName, description, sectionIcon, position) VALUES (?, ?, ?, ?, ?)`, [sectionSlug, sectionName, description, sectionIcon, position], function (error, results, fields) {
+            if (error) {
+                return res.json({ 
+                    success: false,
+                    message: `${error}`
+                });
+            }
+            return res.json({ 
+                success: true,
+                message: `The knowledgebase section ${sectionName} has been successfully created!`
+            });
+        });
+        
+    } catch (error) {
+        res.json({ 
+            success: false,
+            message: `${error}`
+        });   
+    }
 });
 
 router.post(baseEndpoint + '/section/update', (req, res, next) => {

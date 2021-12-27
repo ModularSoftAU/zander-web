@@ -308,7 +308,7 @@ CREATE TABLE knowledgebaseSections (
     sectionSlug VARCHAR(30) UNIQUE NOT NULL,
     sectionName VARCHAR(30),
     description TEXT,
-    sectionIcon VARCHAR(20),
+    sectionIcon VARCHAR(30),
     position INT,
     PRIMARY KEY (sectionId)
 );
