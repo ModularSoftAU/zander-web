@@ -2,23 +2,60 @@ const express = require('express');
 const router = express.Router();
 const config = require('../../config.json');
 const baseEndpoint = config.siteConfiguration.apiRoute + "/shoppingdistrictdirectory";
-
+const db = require('../../controllers/databaseController');
 
 // Jaedan: Shops likely need a get route to obtain items from a specific shop
 
 
 router.get(baseEndpoint + '/get', (req, res, next) => {
-    // ...
-    res.json({ success: true });
+    try {
+        db.query(`SELECT * FROM shops;`, function (error, results, fields) {
+            if (error) {
+                return res.json({ 
+                    success: false,
+                    message: `${error}`
+                });
+            }
+            return res.json({ 
+                success: true,
+                data: results
+            });
+        });
+        
+    } catch (error) {
+        res.json({ 
+            success: false,
+            message: `${error}`
+        });   
+    }
 });
 
 router.post(baseEndpoint + '/create', (req, res, next) => {
+    const shopOwner = req.body.shopOwner;
     const shopName = req.body.shopName;
     const shopDescription = req.body.shopDescription;
-    const shopCreatorId = req.body.shopCreatorId;
+    const serverId = req.body.serverId;
 
-    // ...
-    res.json({ success: true });
+    try {
+        db.query(`INSERT INTO shops (shopCreatorId, shopName, shopDescription, serverId) VALUES ((select userId from users where username=?), ?, ?, ?)`, [shopOwner, shopName, shopDescription, serverId], function (error, results, fields) {
+            if (error) {
+                return res.json({ 
+                    success: false,
+                    message: `${error}`
+                });
+            }
+            return res.json({
+                success: true,
+                message: `${shopOwner}'s shop ${shopName} has been successfully created!`
+            });
+        });
+        
+    } catch (error) {
+        res.json({ 
+            success: false,
+            message: `${error}`
+        });   
+    }
 });
 
 router.post(baseEndpoint + '/edit', (req, res, next) => {
@@ -34,8 +71,26 @@ router.post(baseEndpoint + '/edit', (req, res, next) => {
 router.post(baseEndpoint + '/delete', (req, res, next) => {
     const shopId = req.body.shopId;
 
-    // ...
-    res.json({ success: true });
+    try {
+        db.query(`DELETE FROM shops WHERE shopId = ?;`, [shopId], function (error, results, fields) {
+            if (error) {
+                return res.json({ 
+                    success: false,
+                    message: `${error}`
+                });
+            }
+            return res.json({ 
+                success: true,
+                message: `Deletion of Shop ${shopId} has been successful`
+            });
+        });
+        
+    } catch (error) {
+        res.json({
+            success: false,
+            message: `${error}`
+        });   
+    }
 });
 
 router.post(baseEndpoint + '/:shopId/create/item', (req, res, next) => {

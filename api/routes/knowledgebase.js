@@ -8,6 +8,28 @@ const baseEndpoint = config.siteConfiguration.apiRoute + "/knowledgebase";
 // Jaedan: Some get routes should be added for the knowledgebase
 // Data goes in but none comes out currently
 
+router.get(baseEndpoint + '/section/get', (req, res, next) => {
+    try {
+        db.query(`SELECT * FROM knowledgebaseSections ORDER BY position ASC;`, function (error, results, fields) {
+            if (error) {
+                return res.json({ 
+                    success: false,
+                    message: `${error}`
+                });
+            }
+            return res.json({ 
+                success: true,
+                data: results
+            });
+        });
+        
+    } catch (error) {
+        res.json({ 
+            success: false,
+            message: `${error}`
+        });   
+    }
+});
 
 router.post(baseEndpoint + '/section/create', (req, res, next) => {
     const sectionSlug = req.body.sectionSlug;
@@ -74,6 +96,29 @@ router.post(baseEndpoint + '/section/delete', (req, res, next) => {
     }
 });
 
+router.get(baseEndpoint + '/article/get', (req, res, next) => {
+    try {
+        db.query(`SELECT * FROM knowledgebaseArticles ORDER BY position ASC;`, function (error, results, fields) {
+            if (error) {
+                return res.json({ 
+                    success: false,
+                    message: `${error}`
+                });
+            }
+            return res.json({ 
+                success: true,
+                data: results
+            });
+        });
+        
+    } catch (error) {
+        res.json({ 
+            success: false,
+            message: `${error}`
+        });   
+    }
+});
+
 router.post(baseEndpoint + '/article/create', (req, res, next) => {
     const articleSlug = req.body.articleSlug;
     const articleName = req.body.articleName;
@@ -117,8 +162,26 @@ router.post(baseEndpoint + '/article/update', (req, res, next) => {
 router.post(baseEndpoint + '/article/delete', (req, res, next) => {
     const articleSlug = req.body.articleSlug;
 
-    // ...
-    res.json({ success: true });
+    try {
+        db.query(`DELETE FROM knowledgebaseArticles WHERE articleSlug = ?;`, [articleSlug], function (error, results, fields) {
+            if (error) {
+                return res.json({ 
+                    success: false,
+                    message: `${error}`
+                });
+            }
+            return res.json({ 
+                success: true,
+                message: `Deletion of knowledgebase article with the slug of ${articleSlug} has been successful`
+            });
+        });
+        
+    } catch (error) {
+        res.json({
+            success: false,
+            message: `${error}`
+        });   
+    }
 });
 
 module.exports = router
