@@ -123,11 +123,11 @@ router.post(baseEndpoint + '/article/create', (req, res, next) => {
     const articleSlug = req.body.articleSlug;
     const articleName = req.body.articleName;
     const articleLink = req.body.articleLink;
-    const sectionId = req.body.sectionId;
+    const articleSection = req.body.articleSection;
     const position = req.body.position;
 
     try {
-        db.query(`INSERT INTO knowledgebaseArticles (articleSlug, articleName, articleLink, sectionId, position) VALUES (?, ?, ?, ?, ?)`, [articleSlug, articleName, articleLink, sectionId, position], function (error, results, fields) {
+        db.query(`INSERT INTO knowledgebaseArticles (articleSlug, articleName, articleLink, sectionId, position) VALUES (?, ?, ?, (select sectionId from knowledgebaseSections where sectionSlug=?), ?)`, [articleSlug, articleName, articleLink, articleSection, position], function (error, results, fields) {
             if (error) {
                 return res.json({ 
                     success: false,
