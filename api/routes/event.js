@@ -18,7 +18,7 @@ router.post(baseEndpoint + '/create', (req, res, next) => {
     const information = req.body.information;
 
     try {
-        db.query(`INSERT INTO events (name, icon, eventDateTime, hostingServer, information) VALUES (?, ?, ?, ?, ?)`, [name, icon, eventDateTime, hostingServer, information], function (error, results, fields) {
+        db.query(`INSERT INTO events (name, icon, eventDateTime, hostingServer, information) VALUES (?, ?, ?, (select serverId from servers where name=?), ?)`, [name, icon, eventDateTime, hostingServer, information], function (error, results, fields) {
             if (error) {
                 return res.json({ 
                     success: false,
@@ -54,15 +54,51 @@ router.post(baseEndpoint + '/edit', (req, res, next) => {
 router.post(baseEndpoint + '/delete', (req, res, next) => {
     const eventId = req.body.eventId;
 
-    // ...
-    res.json({ success: true });
+    try {
+        db.query(`DELETE FROM events WHERE eventId=?`, [eventId], function (error, results, fields) {
+            if (error) {
+                return res.json({ 
+                    success: false,
+                    message: `${error}`
+                });
+            }
+            return res.json({ 
+                success: true,
+                message: `The event with the id of ${eventId} has been successfully deleted.`
+            });
+        });
+        
+    } catch (error) {
+        res.json({ 
+            success: false,
+            message: `${error}`
+        });   
+    }
 });
 
 router.post(baseEndpoint + '/publish', (req, res, next) => {
     const eventId = req.body.eventId;
 
-    // ...
-    res.json({ success: true });
+    try {
+        db.query(`UPDATE events SET published=? WHERE eventId=?`, [`1`, eventId], function (error, results, fields) {
+            if (error) {
+                return res.json({ 
+                    success: false,
+                    message: `${error}`
+                });
+            }
+            return res.json({ 
+                success: true,
+                message: `The event with the id of ${eventId} has been successfully published.`
+            });
+        });
+        
+    } catch (error) {
+        res.json({ 
+            success: false,
+            message: `${error}`
+        });   
+    }
 });
 
 module.exports = router

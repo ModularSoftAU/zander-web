@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const config = require('../../config.json');
+const db = require('../../controllers/databaseController');
 const baseEndpoint = config.siteConfiguration.apiRoute + "/communitycreation";
 
 
@@ -15,7 +16,7 @@ router.post(baseEndpoint + '/submit', (req, res, next) => {
     const creationDescription = req.body.creationDescription;
 
     try {
-        db.query(`INSERT INTO communityCreations (creatorId, creationName, creationDescription) VALUES ((select userId where username=?), ?, ?)`, [creator, creationName, creationDescription], function (error, results, fields) {
+        db.query(`INSERT INTO communityCreations (creatorId, creationName, creationDescription) VALUES ((select userId from users where username=?), ?, ?)`, [creator, creationName, creationDescription], function (error, results, fields) {
             if (error) {
                 return res.json({ 
                     success: false,
