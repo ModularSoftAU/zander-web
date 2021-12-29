@@ -55,24 +55,19 @@ CREATE TABLE userVerify (
 );
 
 -- Generate verificationToken before data is inserted if it NULL
-DELIMITER $$
 CREATE TRIGGER userVerify_generate_token_before_insert
 BEFORE INSERT ON userVerify FOR EACH ROW
-BEGIN
 	SET NEW.verificationToken = LEFT(REPLACE(UUID(), '-', ''), 16);
-END
-$$ DELIMITER ;
+;
 
 -- Update verifiedOn to current date when verified is set to true (1)
-DELIMITER $$
 CREATE TRIGGER userVerify_insert_verifid_date_after_update
 BEFORE UPDATE ON userVerify FOR EACH ROW
-BEGIN
-	IF NEW.verified = 1 AND NEW.verifiedOn IS NULL THEN
-		SET NEW.verifiedOn = NOW();
-	END IF;
-END
-$$ DELIMITER ;
+	SET NEW.verifiedOn = CASE
+		WHEN NEW.verified = 1 AND NEW.verifiedOn IS NULL THEN NOW()
+        ELSE NEW.verifiedOn = NEW.verifiedOn
+    END
+;
 
 CREATE TABLE ranks (
 	rankId INT NOT NULL AUTO_INCREMENT,
