@@ -138,7 +138,7 @@ app.use(dashServersRoutes);
 // 
 // API
 // 
-require('./api/routes')(app);
+require('./api/routes')(app, DiscordClient);
 
 //
 // Controllers
