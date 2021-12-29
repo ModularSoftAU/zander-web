@@ -1,0 +1,104 @@
+<%- include("../../modules/dashboard/header.ejs", {
+    pageTitle: pageTitle,
+    pageDescription: "List all of the ranks currently on the Network."
+}) %>
+
+<%- include("../../modules/dashboard/sidebar.ejs") %>
+
+<%- include("../../modules/dashboard/navigation.ejs") %>
+
+<div class="content-wrap">
+    <div class="main">
+        <div class="container-fluid">
+            <section id="main-content">
+                <div class="row">
+                    <div class="col-lg-12">
+                        <div class="card">
+                            <div class="card-title">
+                                <h4>Knowledgebase</h4>
+                                <a href="/dashboard/knowledgebase/create/section"><button type="button" class="btn btn-sm btn-info">Create Knowledgebase Section</button></a>
+                                <a href="/dashboard/knowledgebase/create/article"><button type="button" class="btn btn-sm btn-info">Create Knowledgebase Article</button></a>
+                            </div>
+                            <br>
+                            <div class="card-body">
+                                <div class="default-tab">
+                                    <ul class="nav nav-tabs" role="tablist">
+                                        <li class="nav-item active">
+                                            <a class="nav-link" data-toggle="tab" href="#section">Sections</a>
+                                        </li>
+                                        <li class="nav-item">
+                                            <a class="nav-link" data-toggle="tab" href="#article">Articles</a>
+                                        </li>
+                                    </ul>
+                                    <div class="tab-content">
+                                        <div class="tab-pane fade" id="section" role="tabpanel">
+                                            <div class="pt-4">
+                                                <div class="table-responsive">
+                                                    <table class="table table-hover table-responsive-sm">
+                                                        <thead>
+                                                            <tr>
+                                                                <th>Icon</th>
+                                                                <th>Slug</th>
+                                                                <th>Name</th>
+                                                                <th>Description</th>
+                                                                <th>Action</th>
+                                                            </tr>
+                                                        </thead>
+                                                        <tbody>
+                                                            <tr>
+                                                                <th><i class="fas fa-book"></i></th>
+                                                                <th>gettingStarted</th>
+                                                                <th>Getting Started</th>
+                                                                <td>Description goes here to describe this...</td>
+                                                                <td>
+                                                                    <div class="btn-group mb-2 btn-group-sm">
+                                                                        <button class="btn btn-warning" type="button">Edit</button>
+                                                                        <button class="btn btn-danger" type="button">Delete</button>
+                                                                    </div>
+                                                                </td>
+                                                            </tr>
+                                                        </tbody>
+                                                    </table>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="tab-pane fade" id="article">
+                                            <div class="pt-4">
+                                                <div class="table-responsive">
+                                                    <table class="table table-hover table-responsive-sm">
+                                                        <thead>
+                                                            <tr>
+                                                                <th>Article Group</th>
+                                                                <th>Slug</th>
+                                                                <th>Name</th>
+                                                                <th>Markdown URL</th>
+                                                                <th>Action</th>
+                                                            </tr>
+                                                        </thead>
+                                                        <tbody>
+                                                            <tr>
+                                                                <th>gettingStarted</th>
+                                                                <th>joiningTheNetwork</th>
+                                                                <th>Joining the Network</th>
+                                                                <td>Markdown URL Location</td>
+                                                                <td>
+                                                                    <div class="btn-group mb-2 btn-group-sm">
+                                                                        <button class="btn btn-info" type="button">Publish</button>
+                                                                        <button class="btn btn-warning" type="button">Edit</button>
+                                                                        <button class="btn btn-danger" type="button">Delete</button>
+                                                                    </div>
+                                                                </td>
+                                                            </tr>
+                                                        </tbody>
+                                                    </table>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+<%- include("../../modules/dashboard/footer.ejs") %>

@@ -1,0 +1,55 @@
+<header>
+	<div class="header-top-bar">
+		<div class="container">
+			<div class="row align-items-center">
+				<div class="col-">
+					<ul class="top-bar-info list-inline-item pl-0 mb-0">
+						<li class="list-inline-item"><a href="mailto:<%= config.siteConfiguration.email %>"><i class="fas fa-info" style="margin-right: 5px;"></i> <%= config.siteConfiguration.email %></a></li>
+						<li class="list-inline-item"><a href="<%= config.siteConfiguration.platforms.discord %>"><i class="fab fa-discord" style="margin-right: 5px;"></i> Community Discord</a></li>
+						<li class="list-inline-item"><a href="#"><i class="fas fa-laptop" style="margin-right: 5px;"></i> play.craftingforchrist.net</a></li>
+						<li class="list-inline-item"><a href="#"><i class="fas fa-laptop" style="margin-right: 5px;"></i> bedrock.craftingforchrist.net</a></li>
+					</ul>
+				</div>
+			</div>
+		</div>
+	</div>
+	<nav class="navbar navbar-expand-lg navigation" id="navbar">
+		<div class="container">
+		 	 <a class="navbar-brand" href="/"><img src="/images/siteLogo.png" alt="<%= config.siteConfiguration.siteName %> Logo" class="img-fluid"></a>
+
+		  	<button class="navbar-toggler collapsed" type="button" data-toggle="collapse" data-target="#navbarmain" aria-controls="navbarmain" aria-expanded="false" aria-label="Toggle navigation">
+			<span class="icofont-navigation-menu"></span>
+		  </button>
+	  
+		  <div class="collapse navbar-collapse" id="navbarmain">
+			<ul class="navbar-nav ml-auto">
+			  <li class="nav-item"><a class="nav-link" href="/">Home</a></li>
+			  <li class="nav-item"><a class="nav-link" href="/play">Play</a></li>
+			  <li class="nav-item"><a class="nav-link" href="/apply">Apply</a></li>
+			  <li class="nav-item"><a class="nav-link" href="/support">Support</a></li>
+
+			  <li class="nav-item dropdown">
+				<a class="nav-link dropdown-toggle" href="#" id="dropdown02" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Community <i class="icofont-thin-down"></i></a>
+				<ul class="dropdown-menu" aria-labelledby="dropdown02">
+					<li><a class="dropdown-item" href="/communityCreations">Community Creations</a></li>
+					<li><a class="dropdown-item" href="/shoppingDistrictDirectory">Shopping District Directory</a></li>
+				</ul>
+			  </li>
+
+			  <li class="nav-item"><a class="nav-link" href="/login">Login</a></li>
+
+			  <!-- Logged in -->
+			  <li class="nav-item dropdown">
+				<a class="nav-link dropdown-toggle" href="#" id="dropdown02" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><img style="padding-right: 5px;" src="https://crafatar.com/avatars/0af03841-2894-434c-a4be-965b317244e8?helm" height="20px" draggable="false">  shadowolfyt <i class="icofont-thin-down"></i></a>
+				<ul class="dropdown-menu" aria-labelledby="dropdown02">
+					<li><a class="dropdown-item" href="/dashboard">Dashboard</a></li>
+					<li><a class="dropdown-item" href="#">Profile</a></li>
+					<li><a class="dropdown-item" href="#">Edit Profile</a></li>
+					<li><a class="dropdown-item" href="/logout">Logout</a></li>
+				</ul>
+			  </li>
+			</ul>
+		  </div>
+		</div>
+	</nav>
+</header>

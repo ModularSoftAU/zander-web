@@ -1,0 +1,45 @@
+<%- include("modules/header.ejs", {
+    pageTitle: pageTitle,
+    pageDescription: "Support and boost the Network while getting perks! Get on top of the leaderboard!"
+}) %>
+
+<%- include("modules/navigationBar.ejs") %>
+
+<section class="page-title bg-1">
+  <div class="overlay"></div>
+  <div class="container">
+    <div class="row">
+      <div class="col-md-12">
+        <div class="block text-center">
+          <h1 class="text-capitalize mb-5 text-lg">Staff</h1>
+        </div>
+        <small style="color: white;">Meet the Network Staff Team!<br>
+          These are the people to look for when you have problems, questions, etc.<br>
+          They work hard to ensure you you have the best experience possible during your stay.<br>
+          <b>People on here are 100% volunteers.</b> They set apart time to ensure that you get the best quality experience.<br><br>
+          
+          If you think any of these people are engaging in behavior that is unacceptable, please send an <a style="color: lightblue;" href="mailto:<%= config.siteConfiguration.email %>">e-mail to our Support Team</a> or <a style="color: lightblue;" href="/discord">join our Community Disocrd and open a ticket.</a>.</small>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<section class="section">
+    <div class="container">
+      <div style="font-size:12pt;">
+        <hr>
+        <h4 style="margin-bottom:15px;">Administrator <small style="font-size: 10pt; padding-left: 10px;">1</small></h4>
+          <div class="staffitem" style="display:inline-block;">
+            <ul style="list-style-type:none;">
+              <li style="text-align: center;">
+                <a href="/profile/#"><img class="staffimg" src="https://crafatar.com/avatars/0af03841-2894-434c-a4be-965b317244e8?helm" height="120px" draggable="false"></a><br>
+                <p class="staffname" style="margin-top:5px;"><a style="color:black; text-decoration:none;" href="/profile/#">shadowolfyt</a><br><small style="line-height:0pt;">WOW I AM ADMIN</small></p>
+          </div>
+          <br>
+      </div>
+    
+    </div>
+</section>
+
+<%- include("modules/footer.ejs") %>  
