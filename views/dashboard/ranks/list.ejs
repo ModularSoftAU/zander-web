@@ -19,51 +19,35 @@
                                 <a href="/dashboard/ranks/create"><button type="button" class="btn btn-sm btn-info">Create Rank</button></a>
                             </div>
                             <div class="card-body">
-                                <table class="table">
-                                    <thead>
-                                        <tr>
-                                            <th>Rank ID</th>
-                                            <th>Display Name</th>
-                                            <th>Number of Users in Rank</th>
-                                            <th>Action</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        <tr>
-                                            <td>1</td>
-                                            <td><span class="badge" style="background-color: #ffff00; color: black;">Administrator</span></td>
-                                            <td>2</td>
-                                            <td>
-                                                <div class="btn-group" role="group" >
-                                                    <button type="button" class="btn btn-sm btn-warning">Edit</button>
-                                                    <button type="button" class="btn btn-sm btn-danger">Delete</button>
-                                                </div>
-                                            </td>
-                                        </tr>
-                                        <tr>
-                                            <td>2</td>
-                                            <td><span class="badge" style="background-color: #ffa500; color: white;">Senior Staff</span></td>
-                                            <td>5</td>
-                                            <td>
-                                                <div class="btn-group" role="group" >
-                                                    <button type="button" class="btn btn-sm btn-warning">Edit</button>
-                                                    <button type="button" class="btn btn-sm btn-danger">Delete</button>
-                                                </div>
-                                            </td>
-                                        </tr>
-                                        <tr>
-                                            <td>3</td>
-                                            <td><span class="badge" style="background-color: #00ced1; color: white;">Event Staff</span></td>
-                                            <td>7</td>
-                                            <td>
-                                                <div class="btn-group" role="group" >
-                                                    <button type="button" class="btn btn-sm btn-warning">Edit</button>
-                                                    <button type="button" class="btn btn-sm btn-danger">Delete</button>
-                                                </div>
-                                            </td>
-                                        </tr>
-                                    </tbody>
-                                </table>
+                                <div class="table-responsive">
+                                    <table class="table table-hover table-responsive-sm">
+                                        <thead>
+                                            <tr>
+                                                <th>Rank Slug</th>
+                                                <th>Display Name</th>
+                                                <th>Badge Display</th>
+                                                <th>Is Staff</th>
+                                                <th>Is Donator</th>
+                                                <th>Actions</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr>
+                                                <td>administrator</td>
+                                                <td>Administrator</td>
+                                                <td><span class="badge" style="background-color: #ffff00; color: black;">Administrator</span></td>
+                                                <td>Yes</td>
+                                                <td>No</td>
+                                                <td>
+                                                    <div class="btn-group mb-2 btn-group-sm">
+                                                        <button class="btn btn-warning" type="button">Edit</button>
+                                                        <button class="btn btn-danger" type="button">Delete</button>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
                             </div>
                         </div>
                     </div>

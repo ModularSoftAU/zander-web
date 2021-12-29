@@ -3,7 +3,21 @@ const router = express.Router();
 const config = require('../config.json');
 
 router.get('/dashboard', (req, res, next) => {
-    res.render('dashboard/index', {
+    res.render('dashboard/indexViewNetwork', {
+        "pageTitle": `Dashboard`,
+        config: config
+    });
+});
+
+router.get('/dashboard/view/network', (req, res, next) => {
+    res.render('dashboard/indexViewNetwork', {
+        "pageTitle": `Dashboard`,
+        config: config
+    });
+});
+
+router.get('/dashboard/view/punishment', (req, res, next) => {
+    res.render('dashboard/indexViewPunishment', {
         "pageTitle": `Dashboard`,
         config: config
     });
@@ -12,9 +26,9 @@ router.get('/dashboard', (req, res, next) => {
 // 
 // Player Check
 // 
-router.get('/dashboard/playercheck', (req, res, next) => {
-    res.render('dashboard/playerCheck', {
-        "pageTitle": `Dashboard - Player Check`,
+router.get('/dashboard/usercheck', (req, res, next) => {
+    res.render('dashboard/usercheck', {
+        "pageTitle": `Dashboard - User Check`,
         config: config
     });
 });
