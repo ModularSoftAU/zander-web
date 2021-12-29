@@ -33,6 +33,16 @@ CREATE TABLE userSettings (
     CONSTRAINT userSettings_userId FOREIGN KEY (userId) REFERENCES users (userId) ON DELETE CASCADE
 );
 
+CREATE TABLE userStats (
+	statId INT NOT NULL,
+    userId INT NOT NULL,
+    statName TEXT,
+    statValue INT,
+    PRIMARY KEY (statId, userId),
+    INDEX userStats_statId (statId),
+    CONSTRAINT userStats_userId FOREIGN KEY (userId) REFERENCES users (userId) ON DELETE CASCADE
+);
+
 CREATE TABLE userVerify (
     userVerifyId INT NOT NULL AUTO_INCREMENT,
     verificationToken VARCHAR(16) UNIQUE, 
