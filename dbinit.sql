@@ -350,7 +350,7 @@ CREATE TABLE shopItems (
 );
 
 CREATE TABLE communityCreations (
-	creationid INT NOT NULL AUTO_INCREMENT,
+	creationId INT NOT NULL AUTO_INCREMENT,
     creatorId INT NOT NULL,
     creationName VARCHAR(30),
     creationDescription TEXT,
