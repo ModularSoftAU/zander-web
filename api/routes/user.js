@@ -1,14 +1,41 @@
 const express = require('express');
 const router = express.Router();
 const config = require('../../config.json');
+const db = require('../../controllers/databaseController');
 const baseEndpoint = config.siteConfiguration.apiRoute + "/user";
-
 
 router.post(baseEndpoint + '/create', (req, res, next) => {
     const uuid = req.body.uuid;
+    const username = req.body.username;
 
-    // ...
-    res.json({ success: true });
+    try {
+        // shadowolf
+         // Check if user does not exist, we do this in case of testing we create multiple users on accident
+        db.query(`SELECT * FROM users WHERE uuid=?`, [uuid], function (error, results, fields) {
+            if (results[0]) {
+                return res.json({ 
+                    success: false,
+                    message: `This user already exists (somehow), terminating creation.`
+                });
+            }
+
+            // If user does not exist, create them
+            db.query(`INSERT INTO users (uuid, username) VALUES (?, ?)`, [uuid, username], function (error, results, fields) {
+                if (error) {
+                    return res.json({ 
+                        success: false,
+                        message: `${error}`
+                    });
+                }
+                return res.send(`${username} (${uuid}) has been successfully created.`);
+            });
+        });     
+    } catch (error) {
+        return res.json({ 
+            success: false,
+            message: `${error}`
+        });
+    }
 });
 
 router.post(baseEndpoint + '/profile/:username/edit', (req, res, next) => {

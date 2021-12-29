@@ -5,7 +5,7 @@ USE zanderDev;
 CREATE TABLE users (
 	userId INT NOT NULL AUTO_INCREMENT,
 	uuid VARCHAR(36) NOT NULL,
-	username VARCHAR(16),
+	username VARCHAR(16) UNIQUE,
 	email VARCHAR(200),
 	password TEXT,
 	joined DATETIME NOT NULL DEFAULT NOW(),
@@ -308,7 +308,7 @@ CREATE TABLE knowledgebaseSections (
     sectionSlug VARCHAR(30) UNIQUE NOT NULL,
     sectionName VARCHAR(30),
     description TEXT,
-    sectionIcon VARCHAR(20),
+    sectionIcon VARCHAR(30),
     position INT,
     PRIMARY KEY (sectionId)
 );

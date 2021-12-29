@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const config = require('../../config.json');
+const db = require('../../controllers/databaseController');
 const baseEndpoint = config.siteConfiguration.apiRoute + "/event";
 
 
@@ -16,8 +17,26 @@ router.post(baseEndpoint + '/create', (req, res, next) => {
     const hostingServer = req.body.hostingServer;
     const information = req.body.information;
 
-    // ...
-    res.json({ success: true });
+    try {
+        db.query(`INSERT INTO events (name, icon, eventDateTime, hostingServer, information) VALUES (?, ?, ?, ?, ?)`, [name, icon, eventDateTime, hostingServer, information], function (error, results, fields) {
+            if (error) {
+                return res.json({ 
+                    success: false,
+                    message: `${error}`
+                });
+            }
+            return res.json({ 
+                success: true,
+                message: `The event ${name} has been successfully created!`
+            });
+        });
+        
+    } catch (error) {
+        res.json({ 
+            success: false,
+            message: `${error}`
+        });   
+    }
 });
 
 router.post(baseEndpoint + '/edit', (req, res, next) => {
