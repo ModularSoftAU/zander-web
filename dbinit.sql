@@ -57,7 +57,7 @@ CREATE TABLE userVerify (
 -- Generate verificationToken before data is inserted if it NULL
 CREATE TRIGGER userVerify_generate_token_before_insert
 BEFORE INSERT ON userVerify FOR EACH ROW
-	SET NEW.verificationToken = LEFT(REPLACE(UUID(), '-', ''), 16);
+	SET NEW.verificationToken = LEFT(REPLACE(UUID(), '-', ''), 16)
 ;
 
 -- Update verifiedOn to current date when verified is set to true (1)
@@ -211,6 +211,12 @@ CREATE TABLE appeals (
     CONSTRAINT appeals_playerId FOREIGN KEY (playerId) REFERENCES users (userId) ON DELETE CASCADE
 );
 
+-- Update the appeals.updatedDate when record is updated
+CREATE TRIGGER appeals_updatedDate_before_update
+BEFORE UPDATE ON appeals FOR EACH ROW
+	SET NEW.updatedDate = NOW()
+;
+
 CREATE TABLE appealActions (
 	appealActionId INT NOT NULL AUTO_INCREMENT,
     appealId INT NOT NULL,
@@ -224,6 +230,12 @@ CREATE TABLE appealActions (
     CONSTRAINT appealActions_staffId FOREIGN KEY (staffId) REFERENCES users (userId) ON DELETE CASCADE
 );
 
+-- Update the appealActions.updatedDate when record is updated
+CREATE TRIGGER appealActions_updatedDate_before_update
+BEFORE UPDATE ON appealActions FOR EACH ROW
+	SET NEW.updatedDate = NOW()
+;
+
 CREATE TABLE appealComments (
 	appealCommentId INT NOT NULL AUTO_INCREMENT,
     appealId INT NOT NULL,
@@ -232,13 +244,19 @@ CREATE TABLE appealComments (
     initialComment BOOLEAN DEFAULT 0,
     content TEXT,
     createdDate DATETIME NOT NULL DEFAULT NOW(),
-    updateDate DATETIME,
+    updatedDate DATETIME,
     PRIMARY KEY (appealCommentId),
     INDEX appealComments_createdDate (createdDate),
     INDEX appealComments_staffNote (staffNote),
     CONSTRAINT appealComments_userId FOREIGN KEY (userId) REFERENCES users (userId) ON DELETE CASCADE,
     CONSTRAINT appealComments_appealId FOREIGN KEY (appealId) REFERENCES appeals (appealId) ON DELETE CASCADE
 );
+
+-- Update the appealComments.updatedDate when record is updated
+CREATE TRIGGER appealComments_updatedDate_before_update
+BEFORE UPDATE ON appealComments FOR EACH ROW
+	SET NEW.updatedDate = NOW()
+;
 
 CREATE TABLE anticheat (
 	anticheatId INT NOT NULL AUTO_INCREMENT,
@@ -285,6 +303,12 @@ CREATE TABLE alerts (
     updatedDate DATETIME,
     PRIMARY KEY (alertId)
 );
+
+-- Update the alerts.updatedDate when record is updated
+CREATE TRIGGER alerts_updatedDate_before_update
+BEFORE UPDATE ON alerts FOR EACH ROW
+	SET NEW.updatedDate = NOW()
+;
 
 CREATE TABLE userAlerts (
 	userAlertId INT NOT NULL AUTO_INCREMENT,
