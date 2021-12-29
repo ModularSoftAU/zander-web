@@ -327,6 +327,16 @@ CREATE TABLE knowledgebaseArticles (
     CONSTRAINT knowledgebaseArticles_sectionId FOREIGN KEY (sectionId) REFERENCES knowledgebaseSections (sectionId) ON DELETE RESTRICT
 );
 
+CREATE TABLE minecraftItems (
+	`name` VARCHAR(70),
+    idName VARCHAR(50),
+    id INT NOT NULL,
+    dataValue INT NOT NULL,
+    imagePath VARCHAR(81),
+    PRIMARY KEY (id, dataValue),
+    INDEX minecraftItems_idName (idName)
+);
+
 CREATE TABLE shops (
 	shopId INT NOT NULL AUTO_INCREMENT,
     shopCreatorId INT NOT NULL,
@@ -341,12 +351,13 @@ CREATE TABLE shops (
 CREATE TABLE shopItems (
 	shopItemId INT NOT NULL AUTO_INCREMENT,
     shopId INT NOT NULL,
-    shopItem TEXT,
+    shopItem VARCHAR(50),
     shopPrice DECIMAL(5,2),
     shopBuyQuantity INT,
     PRIMARY KEY (shopItemId),
     INDEX shopItems_shopPrice (shopPrice),
-    CONSTRAINT shopItems_shopId FOREIGN KEY (shopId) REFERENCES shops (shopId) ON DELETE CASCADE
+    CONSTRAINT shopItems_shopId FOREIGN KEY (shopId) REFERENCES shops (shopId) ON DELETE CASCADE,
+    CONSTRAINT shopItems_shopItem FOREIGN KEY (shopItem) REFERENCES minecraftItems (idName) ON UPDATE CASCADE
 );
 
 CREATE TABLE communityCreations (
