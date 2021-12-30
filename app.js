@@ -39,11 +39,7 @@ DiscordClient.on('ready', () => {
         // How many seconds to keep error messages before deleting them
         // -1 means do not delete, defaults to -1
         delErrMsgCooldown: -1,
-        
-        // What language your bot should use
-        // Must be supported in your messages.json file
-        defaultLangauge: 'english',
-        
+                
         // If your commands should not be ran by a bot, default false
         ignoreBots: true,
         
@@ -51,12 +47,6 @@ DiscordClient.on('ready', () => {
         // Only used for when WOKCommands sends an interaction response
         // Default is true
         ephemeral: true,
-        
-        // Various options for your MongoDB database connection
-        dbOptions: {
-            // These are the default options
-            keepAlive: true
-        },
         
         // What server/guild IDs are used for testing only commands & features
         // Can be a single string if there is only 1 ID
@@ -98,8 +88,8 @@ DiscordClient.login('OTI1NjMyMjc0ODUzMTM0NDA3.Ycv8Ow.4agIwwI5RMKAh4Cq1KoCekSQDcE
 // 
 // Website Related
 // 
-const app = express();
-app.use(express.urlencoded());
+const app = express(DiscordClient);
+app.use(express.urlencoded({ extended: true }))
 app.use(express.json());
 
 app.set('view engine', 'ejs');
