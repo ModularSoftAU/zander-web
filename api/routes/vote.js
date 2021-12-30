@@ -1,21 +1,20 @@
-const express = require('express');
-const router = express.Router();
 const config = require('../../config.json');
 const baseEndpoint = config.siteConfiguration.apiRoute + "/vote";
 
+module.exports = (app) => {
 
-router.post(baseEndpoint + '/cast', (req, res, next) => {
-    const username = req.body.username;
-    const voteDateTime = req.body.voteDateTime;
-    const service = req.body.service;
+    app.post(baseEndpoint + '/cast', (req, res, next) => {
+        const username = req.body.username;
+        const voteDateTime = req.body.voteDateTime;
+        const service = req.body.service;
 
-    // ...
-    res.json({ success: true });
-});
+        // ...
+        res.json({ success: true });
+    });
 
-router.get(baseEndpoint + '/get', (req, res, next) => {
-    // ...
-    res.json({ success: true });
-});
+    app.get(baseEndpoint + '/get', (req, res, next) => {
+        // ...
+        res.json({ success: true });
+    });
 
-module.exports = router
+}

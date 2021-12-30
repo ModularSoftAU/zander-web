@@ -1,22 +1,22 @@
-module.exports = function (app) {
+module.exports = (app, DiscordClient) => {
 
-    app.use(require('./alert'));
-    app.use(require('./anticheat'));
-    app.use(require('./appeal'));
-    app.use(require('./application'));
-    app.use(require('./communitycreation'));
-    app.use(require('./discord'));
-    app.use(require('./event'));
-    app.use(require('./friend'));
-    app.use(require('./knowledgebase'));
-    app.use(require('./punishment'));
-    app.use(require('./rank'));
-    app.use(require('./report'));
-    app.use(require('./server'));
-    app.use(require('./session'));
-    app.use(require('./shoppingdistrictdirectory'));
-    app.use(require('./user'));
-    app.use(require('./vote'));
-    app.use(require('./web'));
+    require('./alert')(app);
+    require('./anticheat')(app);
+    require('./appeal')(app);
+    require('./application')(app);
+    require('./communitycreation')(app);
+    require('./discord')(app, DiscordClient);
+    require('./event')(app);
+    require('./friend')(app);
+    require('./knowledgebase')(app);
+    require('./punishment')(app);
+    require('./rank')(app);
+    require('./report')(app);
+    require('./server')(app);
+    require('./session')(app);
+    require('./shoppingdistrictdirectory')(app);
+    require('./user')(app);
+    require('./vote')(app);
+    require('./web')(app);
 
 }
