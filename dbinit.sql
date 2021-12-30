@@ -33,6 +33,16 @@ CREATE TABLE userSettings (
     CONSTRAINT userSettings_userId FOREIGN KEY (userId) REFERENCES users (userId) ON DELETE CASCADE
 );
 
+CREATE TABLE userStats (
+	statId INT NOT NULL,
+    userId INT NOT NULL,
+    statName TEXT,
+    statValue INT,
+    PRIMARY KEY (statId, userId),
+    INDEX userStats_statId (statId),
+    CONSTRAINT userStats_userId FOREIGN KEY (userId) REFERENCES users (userId) ON DELETE CASCADE
+);
+
 CREATE TABLE userVerify (
     userVerifyId INT NOT NULL AUTO_INCREMENT,
     verificationToken VARCHAR(16) UNIQUE, 
@@ -45,24 +55,19 @@ CREATE TABLE userVerify (
 );
 
 -- Generate verificationToken before data is inserted if it NULL
-DELIMITER $$
 CREATE TRIGGER userVerify_generate_token_before_insert
 BEFORE INSERT ON userVerify FOR EACH ROW
-BEGIN
-	SET NEW.verificationToken = LEFT(REPLACE(UUID(), '-', ''), 16);
-END
-$$ DELIMITER ;
+	SET NEW.verificationToken = LEFT(REPLACE(UUID(), '-', ''), 16)
+;
 
 -- Update verifiedOn to current date when verified is set to true (1)
-DELIMITER $$
 CREATE TRIGGER userVerify_insert_verifid_date_after_update
 BEFORE UPDATE ON userVerify FOR EACH ROW
-BEGIN
-	IF NEW.verified = 1 AND NEW.verifiedOn IS NULL THEN
-		SET NEW.verifiedOn = NOW();
-	END IF;
-END
-$$ DELIMITER ;
+	SET NEW.verifiedOn = CASE
+		WHEN NEW.verified = 1 AND NEW.verifiedOn IS NULL THEN NOW()
+        ELSE NEW.verifiedOn = NEW.verifiedOn
+    END
+;
 
 CREATE TABLE ranks (
 	rankId INT NOT NULL AUTO_INCREMENT,
@@ -206,6 +211,12 @@ CREATE TABLE appeals (
     CONSTRAINT appeals_playerId FOREIGN KEY (playerId) REFERENCES users (userId) ON DELETE CASCADE
 );
 
+-- Update the appeals.updatedDate when record is updated
+CREATE TRIGGER appeals_updatedDate_before_update
+BEFORE UPDATE ON appeals FOR EACH ROW
+	SET NEW.updatedDate = NOW()
+;
+
 CREATE TABLE appealActions (
 	appealActionId INT NOT NULL AUTO_INCREMENT,
     appealId INT NOT NULL,
@@ -219,6 +230,12 @@ CREATE TABLE appealActions (
     CONSTRAINT appealActions_staffId FOREIGN KEY (staffId) REFERENCES users (userId) ON DELETE CASCADE
 );
 
+-- Update the appealActions.updatedDate when record is updated
+CREATE TRIGGER appealActions_updatedDate_before_update
+BEFORE UPDATE ON appealActions FOR EACH ROW
+	SET NEW.updatedDate = NOW()
+;
+
 CREATE TABLE appealComments (
 	appealCommentId INT NOT NULL AUTO_INCREMENT,
     appealId INT NOT NULL,
@@ -227,13 +244,19 @@ CREATE TABLE appealComments (
     initialComment BOOLEAN DEFAULT 0,
     content TEXT,
     createdDate DATETIME NOT NULL DEFAULT NOW(),
-    updateDate DATETIME,
+    updatedDate DATETIME,
     PRIMARY KEY (appealCommentId),
     INDEX appealComments_createdDate (createdDate),
     INDEX appealComments_staffNote (staffNote),
     CONSTRAINT appealComments_userId FOREIGN KEY (userId) REFERENCES users (userId) ON DELETE CASCADE,
     CONSTRAINT appealComments_appealId FOREIGN KEY (appealId) REFERENCES appeals (appealId) ON DELETE CASCADE
 );
+
+-- Update the appealComments.updatedDate when record is updated
+CREATE TRIGGER appealComments_updatedDate_before_update
+BEFORE UPDATE ON appealComments FOR EACH ROW
+	SET NEW.updatedDate = NOW()
+;
 
 CREATE TABLE anticheat (
 	anticheatId INT NOT NULL AUTO_INCREMENT,
@@ -281,6 +304,12 @@ CREATE TABLE alerts (
     PRIMARY KEY (alertId)
 );
 
+-- Update the alerts.updatedDate when record is updated
+CREATE TRIGGER alerts_updatedDate_before_update
+BEFORE UPDATE ON alerts FOR EACH ROW
+	SET NEW.updatedDate = NOW()
+;
+
 CREATE TABLE userAlerts (
 	userAlertId INT NOT NULL AUTO_INCREMENT,
     userId INT NOT NULL,
@@ -327,6 +356,16 @@ CREATE TABLE knowledgebaseArticles (
     CONSTRAINT knowledgebaseArticles_sectionId FOREIGN KEY (sectionId) REFERENCES knowledgebaseSections (sectionId) ON DELETE RESTRICT
 );
 
+CREATE TABLE minecraftItems (
+	`name` VARCHAR(70),
+    idName VARCHAR(50),
+    id INT NOT NULL,
+    dataValue INT NOT NULL,
+    imagePath VARCHAR(81),
+    PRIMARY KEY (id, dataValue),
+    INDEX minecraftItems_idName (idName)
+);
+
 CREATE TABLE shops (
 	shopId INT NOT NULL AUTO_INCREMENT,
     shopCreatorId INT NOT NULL,
@@ -341,12 +380,13 @@ CREATE TABLE shops (
 CREATE TABLE shopItems (
 	shopItemId INT NOT NULL AUTO_INCREMENT,
     shopId INT NOT NULL,
-    shopItem TEXT,
+    shopItem VARCHAR(50),
     shopPrice DECIMAL(5,2),
     shopBuyQuantity INT,
     PRIMARY KEY (shopItemId),
     INDEX shopItems_shopPrice (shopPrice),
-    CONSTRAINT shopItems_shopId FOREIGN KEY (shopId) REFERENCES shops (shopId) ON DELETE CASCADE
+    CONSTRAINT shopItems_shopId FOREIGN KEY (shopId) REFERENCES shops (shopId) ON DELETE CASCADE,
+    CONSTRAINT shopItems_shopItem FOREIGN KEY (shopItem) REFERENCES minecraftItems (idName) ON UPDATE CASCADE
 );
 
 CREATE TABLE communityCreations (
@@ -372,6 +412,12 @@ CREATE TABLE communityCreationImages (
     INDEX communityCreationImages_cover (cover),
     CONSTRAINT communityCreationImages_creationId FOREIGN KEY (creationid) REFERENCES communityCreations (creationId) ON DELETE CASCADE
 );
+
+-- Trigger to automatically add the position column for newly inserted images of a community creatin.
+CREATE TRIGGER communityCreationImages_position_before_insert
+BEFORE INSERT ON communityCreationImages FOR EACH ROW
+	SET NEW.position = (SELECT COUNT(*) FROM communityCreationImages WHERE creationId = NEW.creationId) + 1
+;
 
 CREATE TABLE communityLikes (
 	creationId INT NOT NULL,
