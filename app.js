@@ -83,7 +83,7 @@ DiscordClient.on('ready', () => {
     .setColor(0xff0000)
 })
 
-DiscordClient.login('OTI1NjMyMjc0ODUzMTM0NDA3.Ycv8Ow.4agIwwI5RMKAh4Cq1KoCekSQDcE')
+DiscordClient.login(config.discord.apiKey);
 
 // 
 // Website Related

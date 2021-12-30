@@ -7,23 +7,16 @@ module.exports = (app, DiscordClient) => {
         const username = req.body.username;
         const server = req.body.server;
 
-        console.log("Username: " + username);
-        console.log("Server: " + server);
-
         try {
-            // console.log(DiscordClient.guilds.cache.get(config.discord.serverId));
-            console.log(DiscordClient);
-
             const guild = DiscordClient.guilds.cache.get(config.discord.serverId);
             const channel = guild.channels.cache.get(config.discord.channels.networkChatLog);
 
-            channel.send(`:twisted_rightwards_arrows:  |  \`${username}\` switched to \`${server}\`.`);
+            channel.send(`:twisted_rightwards_arrows:  |  \`${username}\` switched to \`${server}\``);
 
             res.json({
                 success: true
             });
         } catch (error) {
-            console.log(error);
             res.json({
                 success: false,
                 message: `${error}`
@@ -36,22 +29,61 @@ module.exports = (app, DiscordClient) => {
         const server = req.body.server;
         const content = req.body.content;
 
-        // ...
-        res.json({ success: true });
+        try {
+            const guild = DiscordClient.guilds.cache.get(config.discord.serverId);
+            const channel = guild.channels.cache.get(config.discord.channels.networkChatLog);
+
+            channel.send(`**${server}**  |  \`${username}\` :: ${content}`);
+
+            res.json({
+                success: true
+            });
+        } catch (error) {
+            res.json({
+                success: false,
+                message: `${error}`
+            });
+        }
     });
 
     app.post(baseEndpoint + '/join', (req, res, next) => {
         const username = req.body.username;
 
-        // ...
-        res.json({ success: true });
+        try {
+            const guild = DiscordClient.guilds.cache.get(config.discord.serverId);
+            const channel = guild.channels.cache.get(config.discord.channels.networkChatLog);
+
+            channel.send(`:ballot_box_with_check:  | \`${username}\` has joined the Network.`);
+
+            res.json({
+                success: true
+            });
+        } catch (error) {
+            res.json({
+                success: false,
+                message: `${error}`
+            });
+        }
     });
 
     app.post(baseEndpoint + '/leave', (req, res, next) => {
         const username = req.body.username;
 
-        // ...
-        res.json({ success: true });
+        try {
+            const guild = DiscordClient.guilds.cache.get(config.discord.serverId);
+            const channel = guild.channels.cache.get(config.discord.channels.networkChatLog);
+
+            channel.send(`:negative_squared_cross_mark:  | \`${username}\` has left the Network.`);
+
+            res.json({
+                success: true
+            });
+        } catch (error) {
+            res.json({
+                success: false,
+                message: `${error}`
+            });
+        }
     });
 
     app.post(baseEndpoint + '/directMessage', (req, res, next) => {
@@ -60,8 +92,21 @@ module.exports = (app, DiscordClient) => {
         const server = req.body.server;
         const content = req.body.content;
 
-        // ...
-        res.json({ success: true });
+        try {
+            const guild = DiscordClient.guilds.cache.get(config.discord.serverId);
+            const channel = guild.channels.cache.get(config.discord.channels.networkChatLog);
+
+            channel.send(`:e_mail: | **${server}** | \`${senderUsername}\` **=>** \`${recipientUsername}\` :: ${content}`);
+
+            res.json({
+                success: true
+            });
+        } catch (error) {
+            res.json({
+                success: false,
+                message: `${error}`
+            });
+        }
     });
 
 }
