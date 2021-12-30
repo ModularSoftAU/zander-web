@@ -2,18 +2,17 @@ const express = require('express');
 const router = express.Router();
 const config = require('../../config.json');
 const baseEndpoint = config.siteConfiguration.apiRoute + "/discord";
-
+const { DiscordClient } = require('../../app');
 
 module.exports = (app, DiscordClient) => {
-
-    router.post(baseEndpoint + '/switch', (req, res, next, DiscordClient) => {
-
-        console.log(`Working?`);
-
+    router.post(baseEndpoint + '/switch', (req, res, next) => {
         const username = req.body.username;
         const server = req.body.server;
     
         try {
+            // console.log(DiscordClient.guilds.cache.get(config.discord.serverId));
+            console.log(DiscordClient);
+            
             const guild = DiscordClient.guilds.cache.get(config.discord.serverId);
             const channel = guild.channels.cache.get(config.discord.channels.networkChatLog);
         
@@ -23,6 +22,7 @@ module.exports = (app, DiscordClient) => {
                 success: true
             });        
         } catch (error) {
+            console.log(error);
             res.json({ 
                 success: false,
                 message: `${error}`
@@ -62,7 +62,4 @@ module.exports = (app, DiscordClient) => {
         // ...
         res.json({ success: true });
     });
-    
 }
-
-// module.exports = router

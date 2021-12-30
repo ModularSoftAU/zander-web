@@ -14,7 +14,9 @@ const DiscordClient = new DiscordJS.Client({
   // These intents are recommended for the built in help menu
   intents: [
     Intents.FLAGS.GUILDS,
+    Intents.FLAGS.GUILD_MEMBERS,
     Intents.FLAGS.GUILD_MESSAGES,
+    Intents.FLAGS.DIRECT_MESSAGES,
     Intents.FLAGS.GUILD_MESSAGE_REACTIONS,
   ],
 })
@@ -139,6 +141,10 @@ app.use(dashServersRoutes);
 // API
 // 
 require('./api/routes')(app, DiscordClient);
+
+// const apiDiscordRoutes = require('./api/routes/discord');
+// app.use(apiDiscordRoutes)(DiscordClient);
+
 
 //
 // Controllers
