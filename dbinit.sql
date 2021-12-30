@@ -413,6 +413,12 @@ CREATE TABLE communityCreationImages (
     CONSTRAINT communityCreationImages_creationId FOREIGN KEY (creationid) REFERENCES communityCreations (creationId) ON DELETE CASCADE
 );
 
+-- Trigger to automatically add the position column for newly inserted images of a community creatin.
+CREATE TRIGGER communityCreationImages_position_before_insert
+BEFORE INSERT ON communityCreationImages FOR EACH ROW
+	SET NEW.position = (SELECT COUNT(*) FROM communityCreationImages WHERE creationId = NEW.creationId) + 1
+;
+
 CREATE TABLE communityLikes (
 	creationId INT NOT NULL,
     userId INT NOT NULL,
