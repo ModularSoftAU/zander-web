@@ -2,18 +2,17 @@
     "port": 8080,
     "siteConfiguration": {
         "siteName": "Crafting For Christ",
+        "siteAddress": "https://craftingforchrist.net",
         "tagline": "Home of one of the biggest Christian Minecraft Servers in Australia.",
         "email": "support@craftingforchrist.net",
-        "platforms": {
-            "discord": "https://discord.com/"
-        },
         "policy": {
             "termsOfService": "https://raw.githubusercontent.com/craftingforchrist/Legal/master/terms.md",
             "rules": "https://raw.githubusercontent.com/craftingforchrist/Legal/master/rules.md",
             "privacy": "https://raw.githubusercontent.com/craftingforchrist/Legal/master/privacy.md",
             "refund": "https://raw.githubusercontent.com/craftingforchrist/Legal/master/refund.md"
         },
-        "platform": {
+        "platforms": {
+            "discord": "https://discord.com/",
             "facebook": "https://www.facebook.com/craft4christ/",
             "twitter": "https://twitter.com/craft4christmc",
             "instagram": "https://instagram.com/craftingforchrist",
