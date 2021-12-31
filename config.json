@@ -30,6 +30,9 @@
         "serverId": "899441191416901632",
         "channels": {
             "networkChatLog": "925702393423859724"
+        },
+        "roles": {
+            "verified": ""
         }
     },
     "database": {
