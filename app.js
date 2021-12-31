@@ -4,6 +4,7 @@ const config = require('./config.json');
 const DiscordJS = require('discord.js');
 const WOKCommands = require('wokcommands');
 const path = require('path');
+const moment = require('moment');
 
 // 
 // Discord Related
@@ -100,7 +101,7 @@ app.use(express.static(__dirname + '/assets'));
 // Site Routes
 //
 require('./routes')(app)
-require('./api/routes')(app, DiscordClient);
+require('./api/routes')(app, DiscordClient, moment);
 
 //
 // Controllers

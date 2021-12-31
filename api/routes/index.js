@@ -1,4 +1,4 @@
-module.exports = (app, DiscordClient) => {
+module.exports = (app, DiscordClient, moment) => {
 
     require('./alert')(app);
     require('./anticheat')(app);
@@ -6,7 +6,7 @@ module.exports = (app, DiscordClient) => {
     require('./application')(app);
     require('./communitycreation')(app);
     require('./discord')(app, DiscordClient);
-    require('./event')(app);
+    require('./event')(app, DiscordClient, moment);
     require('./friend')(app);
     require('./knowledgebase')(app);
     require('./punishment')(app);
