@@ -5,8 +5,34 @@ const baseEndpoint = config.siteConfiguration.apiRoute + "/event";
 module.exports = (app) => {
 
     app.get(baseEndpoint + '/get', (req, res, next) => {
-        // ...
-        res.json({ success: true });
+        try {
+            db.query(`SELECT * FROM events WHERE published=? ORDER BY eventDateTime ASC;`, [1], function(error, results, fields) {
+                if (error) {
+                    return res.json({
+                        success: false,
+                        message: `${error}`
+                    });
+                }
+
+                if (!results.length) {
+                    return res.json({
+                        success: true,
+                        message: `There are currently no community events scheduled.`
+                    });
+                }
+
+                res.json({
+                    success: true,
+                    data: results
+                });
+            });
+
+        } catch (error) {
+            res.json({
+                success: false,
+                message: `${error}`
+            });
+        }
     });
 
     app.post(baseEndpoint + '/create', (req, res, next) => {
@@ -54,13 +80,21 @@ module.exports = (app) => {
         const eventId = req.body.eventId;
 
         try {
-            db.query(`DELETE FROM events WHERE eventId=?`, [eventId], function(error, results, fields) {
+            db.query(`SELECT eventId FROM events WHERE eventId=?; DELETE FROM events WHERE eventId=?`, [eventId, eventId], function(error, results, fields) {
                 if (error) {
                     return res.json({
                         success: false,
                         message: `${error}`
                     });
                 }
+                
+                if (!results[0].length) {
+                    return res.json({
+                        success: false,
+                        message: `The event with the id ${eventId} does not exist.`
+                    }); 
+                }
+
                 return res.json({
                     success: true,
                     message: `The event with the id of ${eventId} has been successfully deleted.`
@@ -79,17 +113,26 @@ module.exports = (app) => {
         const eventId = req.body.eventId;
 
         try {
-            db.query(`UPDATE events SET published=? WHERE eventId=?`, [`1`, eventId], function(error, results, fields) {
+            db.query(`SELECT eventId FROM events WHERE eventId=?; UPDATE events SET published=? WHERE eventId=?`, [eventId, `1`, eventId], function(error, results, fields) {
                 if (error) {
                     return res.json({
                         success: false,
                         message: `${error}`
                     });
                 }
+
+                if (!results[0].length) {
+                    return res.json({
+                        success: false,
+                        message: `The event with the id ${eventId} does not exist.`
+                    }); 
+                }
+
                 return res.json({
                     success: true,
                     message: `The event with the id of ${eventId} has been successfully published.`
                 });
+                
             });
 
         } catch (error) {
