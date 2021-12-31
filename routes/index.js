@@ -87,8 +87,8 @@ module.exports = (app) => {
     // Profile
     // 
     app.get('/profile', (req, res, next) => {
-        res.render('profile', {
-            "pageTitle": `USERNAME's Profile`,
+        res.render('modules/profile/profile', {
+            "pageTitle": `Steve's Profile`,
             config: config
         });
     });

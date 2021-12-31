@@ -35,7 +35,7 @@ DiscordClient.on('ready', () => {
             featuresDir: path.join(__dirname, 'discord/features'),
 
             // If WOKCommands warning should be shown or not, default true
-            showWarns: true,
+            showWarns: false,
 
             // How many seconds to keep error messages before deleting them
             // -1 means do not delete, defaults to -1
@@ -57,31 +57,9 @@ DiscordClient.on('ready', () => {
             // If you only have 1 ID then you can pass in a string instead
             botOwners: ['169978063478587392'],
 
-            // What built-in commands should be disabled.
-            // Note that you can overwrite a command as well by using
-            // the same name as the command file name.
-            disabledDefaultCommands: [
-                // 'help',
-                // 'command',
-                // 'language',
-                // 'prefix',
-                // 'requiredrole',
-                // 'channelonly'
-            ],
-
             // Provides additional debug logging
             debug: false
         })
-        // Here are some additional methods that you can chain
-        // onto the contrustor call. These will eventually be
-        // merged into the above object, but for now you can
-        // use them:
-
-    // The default is /
-    .setDefaultPrefix('/')
-
-    // Used for the color of embeds sent by WOKCommands
-    .setColor(0xff0000)
 })
 
 DiscordClient.login(config.discord.apiKey);
