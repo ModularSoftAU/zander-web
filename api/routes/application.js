@@ -1,98 +1,98 @@
-const express = require('express');
-const router = express.Router();
 const config = require('../../config.json');
 const db = require('../../controllers/databaseController');
 const baseEndpoint = config.siteConfiguration.apiRoute + "/application";
 
-router.get(baseEndpoint + '/get', (req, res, next) => {
-    try {
-        db.query(`SELECT * FROM applications ORDER BY position ASC;`, function (error, results, fields) {
-            if (error) {
-                return res.json({ 
-                    success: false,
-                    message: `${error}`
+module.exports = (app) => {
+
+    app.get(baseEndpoint + '/get', (req, res, next) => {
+        try {
+            db.query(`SELECT * FROM applications ORDER BY position ASC;`, function(error, results, fields) {
+                if (error) {
+                    return res.json({
+                        success: false,
+                        message: `${error}`
+                    });
+                }
+                return res.json({
+                    success: true,
+                    data: results
                 });
-            }
-            return res.json({ 
-                success: true,
-                data: results
             });
-        });
-        
-    } catch (error) {
-        res.json({ 
-            success: false,
-            message: `${error}`
-        });   
-    }
-});
 
-router.post(baseEndpoint + '/create', (req, res, next) => {
-    const displayName = req.body.displayName;
-    const description = req.body.description;
-    const displayIcon = req.body.displayIcon;
-    const requirementsMarkdown = req.body.requirementsMarkdown;
-    const redirectURL = req.body.redirectURL;
-    const position = req.body.position;
+        } catch (error) {
+            res.json({
+                success: false,
+                message: `${error}`
+            });
+        }
+    });
 
-    try {
-        db.query(`INSERT INTO applications (displayName, description, displayIcon, requirementsMarkdown, redirectURL, position) VALUES (?, ?, ?, ?, ?, ?)`, [displayName, description, displayIcon, requirementsMarkdown, redirectURL, position], function (error, results, fields) {
-            if (error) {
-                return res.json({ 
-                    success: false,
-                    message: `${error}`
+    app.post(baseEndpoint + '/create', (req, res, next) => {
+        const displayName = req.body.displayName;
+        const description = req.body.description;
+        const displayIcon = req.body.displayIcon;
+        const requirementsMarkdown = req.body.requirementsMarkdown;
+        const redirectURL = req.body.redirectURL;
+        const position = req.body.position;
+
+        try {
+            db.query(`INSERT INTO applications (displayName, description, displayIcon, requirementsMarkdown, redirectURL, position) VALUES (?, ?, ?, ?, ?, ?)`, [displayName, description, displayIcon, requirementsMarkdown, redirectURL, position], function(error, results, fields) {
+                if (error) {
+                    return res.json({
+                        success: false,
+                        message: `${error}`
+                    });
+                }
+                return res.json({
+                    success: true,
+                    message: `The application ${displayName} has been successfully created!`
                 });
-            }
-            return res.json({ 
-                success: true,
-                message: `The application ${displayName} has been successfully created!`
             });
-        });
-        
-    } catch (error) {
-        res.json({ 
-            success: false,
-            message: `${error}`
-        });   
-    }
-});
 
-router.post(baseEndpoint + '/edit', (req, res, next) => {
-    const applicationId = req.body.applicationId;
-    const displayName = req.body.displayName;
-    const description = req.body.description;
-    const displayIcon = req.body.displayIcon;
-    const requirementsMarkdown = req.body.requirementsMarkdown;
-    const redirectURL = req.body.redirectURL;
-    const position = req.body.position;
+        } catch (error) {
+            res.json({
+                success: false,
+                message: `${error}`
+            });
+        }
+    });
 
-    // ...
-    res.json({ success: true });
-});
+    app.post(baseEndpoint + '/edit', (req, res, next) => {
+        const applicationId = req.body.applicationId;
+        const displayName = req.body.displayName;
+        const description = req.body.description;
+        const displayIcon = req.body.displayIcon;
+        const requirementsMarkdown = req.body.requirementsMarkdown;
+        const redirectURL = req.body.redirectURL;
+        const position = req.body.position;
 
-router.post(baseEndpoint + '/delete', (req, res, next) => {
-    const applicationId = req.body.applicationId;
+        // ...
+        res.json({ success: true });
+    });
 
-    try {
-        db.query(`DELETE FROM applications WHERE applicationId = ?;`, [applicationId], function (error, results, fields) {
-            if (error) {
-                return res.json({ 
-                    success: false,
-                    message: `${error}`
+    app.post(baseEndpoint + '/delete', (req, res, next) => {
+        const applicationId = req.body.applicationId;
+
+        try {
+            db.query(`DELETE FROM applications WHERE applicationId = ?;`, [applicationId], function(error, results, fields) {
+                if (error) {
+                    return res.json({
+                        success: false,
+                        message: `${error}`
+                    });
+                }
+                return res.json({
+                    success: true,
+                    message: `Deletion of application with the id ${applicationId} has been successful`
                 });
-            }
-            return res.json({ 
-                success: true,
-                message: `Deletion of application with the id ${applicationId} has been successful`
             });
-        });
-        
-    } catch (error) {
-        res.json({
-            success: false,
-            message: `${error}`
-        });   
-    }
-});
 
-module.exports = router
+        } catch (error) {
+            res.json({
+                success: false,
+                message: `${error}`
+            });
+        }
+    });
+
+}

@@ -1,0 +1,116 @@
+<%- include("modules/header.ejs", {
+    pageTitle: pageTitle,
+    pageDescription: "If you have skills in our positions we are keen for you to join our ever-expanding team on the Network."
+}) %>
+
+<%- include("modules/navigationBar.ejs") %>
+
+<%- include("miniHeader.ejs", {
+  headerTitle: "Apply",
+  backgroundImage: "../images/banner/AronCrystalBuilding.png"
+}) %>
+
+
+<section class="section">
+    <div class="container">
+      <div>
+        <div class="row">
+          <!-- Staff Application Item -->
+          <div class="col-lg-4 col-md-6 col-sm-6">
+            <div class="service-item mb-4">
+              <div class="feature-item mb-5 mb-lg-0">
+                <div class="feature-icon mb-4">
+                  <i class="fas fa-users"></i>
+                </div>
+                <h4 class="mb-3">Staff</h4>
+                <p>Hello, this is application for staff</p>
+
+                <!-- Staff Modal -->
+                <button type="button" class="btn btn-primary" data-toggle="modal" data-target=".bd-staff-modal-lg">Apply</button>
+
+                <div class="modal fade bd-staff-modal-lg" tabindex="-1" role="dialog" aria-labelledby="myLargeModalLabel" aria-hidden="true">
+                  <div class="modal-dialog modal-lg">
+                    <div class="modal-content">
+                      <div class="container" style="padding:20px;">
+                        <h2>Applicant Requirements</h2>
+                        <small>You must read and be applicable for the following requirements to apply, when finished, click Apply at the bottom.</small>
+                          <br><br>
+                            <zero-md src="https://raw.githubusercontent.com/craftingforchrist/Web-Various/master/juniorstaff.md"></zero-md>
+                          <br><br>
+                          <a href="#" target="_blank"><button type="button" class="btn btn-info">Apply</button></a>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Content Creator Application Item -->
+          <div class="col-lg-4 col-md-6 col-sm-6">
+            <div class="service-item mb-4">
+              <div class="feature-item mb-5 mb-lg-0">
+                <div class="feature-icon mb-4">
+                  <i class="fas fa-video"></i>
+                </div>
+                <h4 class="mb-3">Content Creator</h4>
+                <p>Hello, this is application for Content Creator</p>
+
+                <!-- Content Creator Modal -->
+                <button type="button" class="btn btn-primary" data-toggle="modal" data-target=".bd-contentcreator-modal-lg">Apply</button>
+
+                <div class="modal fade bd-contentcreator-modal-lg" tabindex="-1" role="dialog" aria-labelledby="myLargeModalLabel" aria-hidden="true">
+                  <div class="modal-dialog modal-lg">
+                    <div class="modal-content">
+                      <div class="container" style="padding:20px;">
+                        <h2>Applicant Requirements</h2>
+                        <small>You must read and be applicable for the following requirements to apply, when finished, click Apply at the bottom.</small>
+                          <br><br>
+                            <zero-md src="https://raw.githubusercontent.com/craftingforchrist/Web-Various/master/contentcreator.md"></zero-md>
+                          <br><br>
+                          <a href="#" target="_blank"><button type="button" class="btn btn-info">Apply</button></a>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Developer Application Item -->
+          <div class="col-lg-4 col-md-6 col-sm-6">
+            <div class="service-item mb-4">
+              <div class="feature-item mb-5 mb-lg-0">
+                <div class="feature-icon mb-4">
+                  <i class="fas fa-code"></i>
+                </div>
+                <h4 class="mb-3">Developer</h4>
+                <p>Hello, this is application for Developer</p>
+
+                <!-- Developer Modal -->
+                <button type="button" class="btn btn-primary" data-toggle="modal" data-target=".bd-developer-modal-lg">Apply</button>
+
+                <div class="modal fade bd-developer-modal-lg" tabindex="-1" role="dialog" aria-labelledby="myLargeModalLabel" aria-hidden="true">
+                  <div class="modal-dialog modal-lg">
+                    <div class="modal-content">
+                      <div class="container" style="padding:20px;">
+                        <h2>Applicant Requirements</h2>
+                        <small>You must read and be applicable for the following requirements to apply, when finished, click Apply at the bottom.</small>
+                          <br><br>
+                            <zero-md src="https://raw.githubusercontent.com/craftingforchrist/Web-Various/master/developers.md"></zero-md>
+                          <br><br>
+                          <a href="#" target="_blank"><button type="button" class="btn btn-info">Apply</button></a>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+</section>
+
+<%- include("modules/footer.ejs") %>  
