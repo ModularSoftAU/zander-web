@@ -1,97 +1,97 @@
-const express = require('express');
-const router = express.Router();
 const config = require('../config.json');
 
-router.get('/dashboard', (req, res, next) => {
-    res.render('dashboard/index', {
-        "pageTitle": `Dashboard`,
-        config: config
-    });
-});
+module.exports = (app) => {
 
-// 
-// Player Check
-// 
-router.get('/dashboard/playercheck', (req, res, next) => {
-    res.render('dashboard/playerCheck', {
-        "pageTitle": `Dashboard - Player Check`,
-        config: config
+    app.get('/dashboard', (req, res, next) => {
+        res.render('dashboard/index', {
+            "pageTitle": `Dashboard`,
+            config: config
+        });
     });
-});
 
-// 
-// Events
-// 
-router.get('/dashboard/events', (req, res, next) => {
-    res.render('dashboard/events/list', {
-        "pageTitle": `Dashboard - Events`,
-        config: config
+    // 
+    // Player Check
+    // 
+    app.get('/dashboard/playercheck', (req, res, next) => {
+        res.render('dashboard/playerCheck', {
+            "pageTitle": `Dashboard - Player Check`,
+            config: config
+        });
     });
-});
 
-router.get('/dashboard/events/schedule', (req, res, next) => {
-    res.render('dashboard/events/schedule', {
-        "pageTitle": `Dashboard - Event Planner`,
-        config: config
+    // 
+    // Events
+    // 
+    app.get('/dashboard/events', (req, res, next) => {
+        res.render('dashboard/events/list', {
+            "pageTitle": `Dashboard - Events`,
+            config: config
+        });
     });
-});
 
-// 
-// Ranks
-// 
-router.get('/dashboard/ranks', (req, res, next) => {
-    res.render('dashboard/ranks/list', {
-        "pageTitle": `Dashboard - Ranks`,
-        config: config
+    app.get('/dashboard/events/schedule', (req, res, next) => {
+        res.render('dashboard/events/schedule', {
+            "pageTitle": `Dashboard - Event Planner`,
+            config: config
+        });
     });
-});
 
-router.get('/dashboard/ranks/create', (req, res, next) => {
-    res.render('dashboard/ranks/create', {
-        "pageTitle": `Dashboard - Rank Creator`,
-        config: config
+    // 
+    // Ranks
+    // 
+    app.get('/dashboard/ranks', (req, res, next) => {
+        res.render('dashboard/ranks/list', {
+            "pageTitle": `Dashboard - Ranks`,
+            config: config
+        });
     });
-});
 
-// 
-// Knowledgebase
-// 
-router.get('/dashboard/knowledgebase', (req, res, next) => {
-    res.render('dashboard/knowledgebase/list', {
-        "pageTitle": `Dashboard - Knowledgebase`,
-        config: config
+    app.get('/dashboard/ranks/create', (req, res, next) => {
+        res.render('dashboard/ranks/create', {
+            "pageTitle": `Dashboard - Rank Creator`,
+            config: config
+        });
     });
-});
 
-router.get('/dashboard/knowledgebase/create/section', (req, res, next) => {
-    res.render('dashboard/knowledgebase/createSection', {
-        "pageTitle": `Dashboard - Create Knowledgebase Section`,
-        config: config
+    // 
+    // Knowledgebase
+    // 
+    app.get('/dashboard/knowledgebase', (req, res, next) => {
+        res.render('dashboard/knowledgebase/list', {
+            "pageTitle": `Dashboard - Knowledgebase`,
+            config: config
+        });
     });
-});
 
-router.get('/dashboard/knowledgebase/create/article', (req, res, next) => {
-    res.render('dashboard/knowledgebase/createArticle', {
-        "pageTitle": `Dashboard - Create Knowledgebase Article`,
-        config: config
+    app.get('/dashboard/knowledgebase/create/section', (req, res, next) => {
+        res.render('dashboard/knowledgebase/createSection', {
+            "pageTitle": `Dashboard - Create Knowledgebase Section`,
+            config: config
+        });
     });
-});
 
-// 
-// Servers
-// 
-router.get('/dashboard/servers', (req, res, next) => {
-    res.render('dashboard/servers/list', {
-        "pageTitle": `Dashboard - Servers`,
-        config: config
+    app.get('/dashboard/knowledgebase/create/article', (req, res, next) => {
+        res.render('dashboard/knowledgebase/createArticle', {
+            "pageTitle": `Dashboard - Create Knowledgebase Article`,
+            config: config
+        });
     });
-});
 
-router.get('/dashboard/servers/create', (req, res, next) => {
-    res.render('dashboard/servers/create', {
-        "pageTitle": `Dashboard - Server Creator`,
-        config: config
+    // 
+    // Servers
+    // 
+    app.get('/dashboard/servers', (req, res, next) => {
+        res.render('dashboard/servers/list', {
+            "pageTitle": `Dashboard - Servers`,
+            config: config
+        });
     });
-});
 
-module.exports = router;
+    app.get('/dashboard/servers/create', (req, res, next) => {
+        res.render('dashboard/servers/create', {
+            "pageTitle": `Dashboard - Server Creator`,
+            config: config
+        });
+    });
+
+}

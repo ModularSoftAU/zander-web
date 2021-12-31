@@ -99,37 +99,7 @@ app.use(express.static(__dirname + '/assets'));
 //
 // Site Routes
 //
-var index = require('./routes/index');
-app.use('/', index);
-
-const knowledgebaseRoutes = require('./routes/knowledgebaseRoutes');
-app.use(knowledgebaseRoutes);
-
-const policyRoutes = require('./routes/policyRoutes');
-app.use(policyRoutes);
-
-// 
-// Dashboard Routes
-// 
-const dashboardRoutes = require('./routes/dashboard/dashboard');
-app.use(dashboardRoutes);
-
-const dashEventRoutes = require('./routes/dashboard/events');
-app.use(dashEventRoutes);
-
-const dashRankRoutes = require('./routes/dashboard/ranks');
-app.use(dashRankRoutes);
-
-const dashKnowledgebaseRoutes = require('./routes/dashboard/knowledgebase');
-app.use(dashKnowledgebaseRoutes);
-
-const dashServersRoutes = require('./routes/dashboard/servers');
-app.use(dashServersRoutes);
-
-
-// 
-// API
-// 
+require('./routes')(app)
 require('./api/routes')(app, DiscordClient);
 
 //

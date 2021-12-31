@@ -1,39 +1,39 @@
-const express = require('express');
-const router = express.Router();
 const config = require('../config.json');
 
-// 
-// Knowledgebase
-// 
-router.get('/knowledgebase', (req, res, next) => {
-    res.render('modules/knowledgebase/knowledgebase', {
-        "pageTitle": `Knowledgebase`,
-        config: config
-    });
-});
+module.exports = (app) => {
 
-router.get('/support', (req, res, next) => {
-    res.render('modules/knowledgebase/knowledgebase', {
-        "pageTitle": `Knowledgebase`,
-        config: config
+    // 
+    // Knowledgebase
+    // 
+    app.get('/knowledgebase', (req, res, next) => {
+        res.render('modules/knowledgebase/knowledgebase', {
+            "pageTitle": `Knowledgebase`,
+            config: config
+        });
     });
-});
 
-router.get('/help', (req, res, next) => {
-    res.render('modules/knowledgebase/knowledgebase', {
-        "pageTitle": `Knowledgebase`,
-        config: config
+    app.get('/support', (req, res, next) => {
+        res.render('modules/knowledgebase/knowledgebase', {
+            "pageTitle": `Knowledgebase`,
+            config: config
+        });
     });
-});
 
-// 
-// Knowledgebase Article
-// 
-router.get('/generalStaff/newStaff', (req, res, next) => {
-    res.render('modules/knowledgebase/knowledgebaseArticle', {
-        "pageTitle": `Knowledgebase - KB Article Title`,
-        config: config
+    app.get('/help', (req, res, next) => {
+        res.render('modules/knowledgebase/knowledgebase', {
+            "pageTitle": `Knowledgebase`,
+            config: config
+        });
     });
-});
 
-module.exports = router;
+    // 
+    // Knowledgebase Article
+    // 
+    app.get('/generalStaff/newStaff', (req, res, next) => {
+        res.render('modules/knowledgebase/knowledgebaseArticle', {
+            "pageTitle": `Knowledgebase - KB Article Title`,
+            config: config
+        });
+    });
+
+}
