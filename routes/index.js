@@ -20,10 +20,15 @@ module.exports = (app, moment) => {
     // 
     // Play
     // 
-    app.get('/play', (req, res, next) => {
+    app.get('/play', async (req, res, next) => {
+        const fetchURL = `${config.siteConfiguration.siteAddress}${config.siteConfiguration.apiRoute}/server/get?visability=all`;
+        const response = await fetch(fetchURL);
+        const apiData = await response.json();
+
         res.render('modules/play/play', {
             "pageTitle": `Play`,
-            config: config
+            config: config,
+            apiData: apiData
         });
     });
 
@@ -58,13 +63,9 @@ module.exports = (app, moment) => {
     // Events
     // 
     app.get('/events', async (req, res, next) => {
-        console.log();
-
         const fetchURL = `${config.siteConfiguration.siteAddress}${config.siteConfiguration.apiRoute}/event/get?published=show`;
         const response = await fetch(fetchURL);
         const apiData = await response.json();
-
-        console.log(apiData.success);
 
         res.render('events', {
             "pageTitle": `Events`,

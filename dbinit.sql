@@ -97,6 +97,7 @@ CREATE TABLE userRanks (
 CREATE TABLE servers (
 	serverId INT NOT NULL AUTO_INCREMENT,
     name TEXT,
+    fqdn VARCHAR(50),
     ipAddress VARCHAR(15),
     port SMALLINT,
     visible BOOLEAN DEFAULT 0,
