@@ -7,26 +7,52 @@ module.exports = (app, DiscordClient, moment) => {
 
     app.get(baseEndpoint + '/get', (req, res, next) => {
         try {
-            db.query(`SELECT * FROM events WHERE published=? ORDER BY eventDateTime ASC;`, [1], function(error, results, fields) {
-                if (error) {
-                    return res.json({
-                        success: false,
-                        message: `${error}`
-                    });
-                }
+            const published = req.query.published;
 
-                if (!results.length) {
-                    return res.json({
+            function getEvents(dbQuery) {
+                db.query(dbQuery, function(error, results, fields) {
+                    if (error) {
+                        return res.json({
+                            success: false,
+                            message: `${error}`
+                        });
+                    }
+    
+                    if (!results.length) {
+                        return res.json({
+                            success: false,
+                            message: `There are currently no community events scheduled.`
+                        });
+                    }
+    
+                    res.json({
                         success: true,
-                        message: `There are currently no community events scheduled.`
+                        data: results
                     });
-                }
-
-                res.json({
-                    success: true,
-                    data: results
                 });
-            });
+            }
+
+            if (!published) {
+                res.json({
+                    success: false,
+                    message: `You must select a publish indicator.`
+                });                
+            }
+
+            if (published === 'show') {
+                let dbQuery = `SELECT * FROM events WHERE published=1 ORDER BY eventDateTime ASC;`
+                getEvents(dbQuery);
+            }
+
+            if (published === 'hide') {
+                let dbQuery = `SELECT * FROM events WHERE published=0 ORDER BY eventDateTime ASC;`
+                getEvents(dbQuery);
+            }
+
+            if (published === 'all') {
+                let dbQuery = `SELECT * FROM events ORDER BY eventDateTime ASC;`
+                getEvents(dbQuery);
+            }
 
         } catch (error) {
             res.json({

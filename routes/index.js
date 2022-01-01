@@ -1,8 +1,9 @@
 const config = require('../config.json');
 const path = require('path');
 const fs = require('fs');
+const fetch = require('node-fetch');
 
-module.exports = (app) => {
+module.exports = (app, moment) => {
 
     require('./dashboard')(app);
     require('./dashboardRoutes')(app);
@@ -56,10 +57,20 @@ module.exports = (app) => {
     // 
     // Events
     // 
-    app.get('/events', (req, res, next) => {
+    app.get('/events', async (req, res, next) => {
+        console.log();
+
+        const fetchURL = `${config.siteConfiguration.siteAddress}${config.siteConfiguration.apiRoute}/event/get?published=show`;
+        const response = await fetch(fetchURL);
+        const apiData = await response.json();
+
+        console.log(apiData.success);
+
         res.render('events', {
             "pageTitle": `Events`,
-            config: config
+            config: config,
+            apiData: apiData,
+            moment: moment
         });
     });
 

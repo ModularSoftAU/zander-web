@@ -10,65 +10,38 @@
   backgroundImage: "../images/banner/AronCrystalBuilding.png"
 }) %>
 
-
 <section class="section">
     <div class="container">
-      <!-- Event Card -->
-      <div class="card">
-        <div class="card-body">
-          <div class="row">
-            <div class="col-sm-">
-              <img src="" width="250px" height="250px">
-            </div>
-            <div class="col">
-              <a href="#" style="color:black; text-decoration:none;"><h3>Event Title <a href="#" style="color:black; font-size:14pt;"><i class="fas fa-link"></i></a></h3></a>
-              <h6>eventDateTime</h6>
-              <div>
-                <p>Information</p>
+      <% if (apiData.success == false) { %>
+        <%- include("./partials/alert.ejs", {
+          alertType: "danger",
+          content: apiData.message
+        }) %>
+      <% } else { %>
+        <% apiData.data.forEach(function (event) { %>
+          <!-- <%= event.name %> Event Card -->
+          <div class="card">
+            <div class="card-body">
+              <div class="row">
+                <div class="col-sm-">
+                  <img src="<%= event.icon %>" width="250px" height="250px" draggable="false">
+                </div>
+                <div class="col">
+                  <a href="#" style="color:black; text-decoration:none;"><h3><%= event.name %></h3></a>
+                  <h6><%= moment(event.eventDateTime).format('MMMM Do YYYY, h:mm a') %></h6>
+                  <small>Event date and time is respective of the current Australian timezone.</small>
+                  <br><br>
+                  <div>
+                    <p><%= event.information %></p>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
-        </div>
-      </div>
-      <br>
+          <br>
+        <% }) %>
+      <% } %>
 
-      <!-- Event Card -->
-      <div class="card">
-        <div class="card-body">
-          <div class="row">
-            <div class="col-sm-">
-              <img src="" width="250px" height="250px">
-            </div>
-            <div class="col">
-              <a href="#" style="color:black; text-decoration:none;"><h3>Event Title <a href="#" style="color:black; font-size:14pt;"><i class="fas fa-link"></i></a></h3></a>
-              <h6>eventDateTime</h6>
-              <div>
-                <p>Information</p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-      <br>
-
-      <!-- Event Card -->
-      <div class="card">
-        <div class="card-body">
-          <div class="row">
-            <div class="col-sm-">
-              <img src="" width="250px" height="250px">
-            </div>
-            <div class="col">
-              <a href="#" style="color:black; text-decoration:none;"><h3>Event Title <a href="#" style="color:black; font-size:14pt;"><i class="fas fa-link"></i></a></h3></a>
-              <h6>eventDateTime</h6>
-              <div>
-                <p>Information</p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-      <br>
     </div>
 </section>
 

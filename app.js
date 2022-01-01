@@ -100,7 +100,7 @@ app.use(express.static(__dirname + '/assets'));
 //
 // Site Routes
 //
-require('./routes')(app)
+require('./routes')(app, moment)
 require('./api/routes')(app, DiscordClient, moment);
 
 //
