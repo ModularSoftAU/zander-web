@@ -21,7 +21,7 @@ module.exports = (app, moment) => {
     // Play
     // 
     app.get('/play', async (req, res, next) => {
-        const fetchURL = `${config.siteConfiguration.siteAddress}${config.siteConfiguration.apiRoute}/server/get?visability=all`;
+        const fetchURL = `${config.siteConfiguration.siteAddress}${config.siteConfiguration.apiRoute}/server/get?visible=true`;
         const response = await fetch(fetchURL);
         const apiData = await response.json();
 

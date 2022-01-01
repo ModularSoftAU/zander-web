@@ -6,7 +6,7 @@ module.exports = (app) => {
 
     app.get(baseEndpoint + '/get', (req, res, next) => {
         try {
-            const visability = req.query.visability;
+            const visible = req.query.visible;
 
             function getServers(dbQuery) {
                 db.query(dbQuery, function(error, results, fields) {
@@ -20,7 +20,7 @@ module.exports = (app) => {
                     if (!results.length) {
                         return res.json({
                             success: false,
-                            message: `There are currently no servers visable.`
+                            message: `There are currently no servers visible.`
                         });
                     }
 
@@ -31,24 +31,24 @@ module.exports = (app) => {
                 });
             }
 
-            if (!visability) {
+            if (!visible) {
                 res.json({
                     success: false,
-                    message: `You must select a visability indicator.`
+                    message: `You must select a visible indicator.`
                 });                
             }
 
-            if (visability === 'true') {
-                let dbQuery = `SELECT * FROM servers WHERE visable=1 ORDER BY position ASC;`
+            if (visible === 'true') {
+                let dbQuery = `SELECT * FROM servers WHERE visible=1 ORDER BY position ASC;`
                 getServers(dbQuery);
             }
 
-            if (visability === 'false') {
-                let dbQuery = `SELECT * FROM servers WHERE visable=0 ORDER BY position ASC;`
+            if (visible === 'false') {
+                let dbQuery = `SELECT * FROM servers WHERE visible=0 ORDER BY position ASC;`
                 getServers(dbQuery);
             }
 
-            if (visability === 'all') {
+            if (visible === 'all') {
                 let dbQuery = `SELECT * FROM servers ORDER BY position ASC;`
                 getServers(dbQuery);
             }
@@ -97,7 +97,7 @@ module.exports = (app) => {
         const fqdn = req.body.fqdn;
         const ipAddress = req.body.ipAddress;
         const port = req.body.port;
-        const visability = req.body.visability;
+        const visible = req.body.visible;
         const position = req.body.position;
 
         // ...
