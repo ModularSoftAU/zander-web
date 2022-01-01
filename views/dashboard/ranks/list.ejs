@@ -32,19 +32,40 @@
                                             </tr>
                                         </thead>
                                         <tbody>
-                                            <tr>
-                                                <td>administrator</td>
-                                                <td>Administrator</td>
-                                                <td><span class="badge" style="background-color: #ffff00; color: black;">Administrator</span></td>
-                                                <td>Yes</td>
-                                                <td>No</td>
-                                                <td>
-                                                    <div class="btn-group mb-2 btn-group-sm">
-                                                        <button class="btn btn-warning" type="button">Edit</button>
-                                                        <button class="btn btn-danger" type="button">Delete</button>
-                                                    </div>
-                                                </td>
-                                            </tr>
+                                            <% if (apiData.success == false) { %>
+                                                <%- include("../../partials/alert.ejs", {
+                                                  alertType: "danger",
+                                                  content: apiData.message
+                                                }) %>
+                                            <% } else { %>
+                                                <% apiData.data.forEach(function (rank) { %>
+                                                    <tr>
+                                                        <td><%= rank.rankSlug %></td>
+                                                        <td><%= rank.displayName %></td>
+                                                        <td><span class="badge" style="font-size: 10pt; background-color: <%= rank.rankBadgeColour %>; color: <%= rank.rankTextColour %>;"><%= rank.displayName %></span></td>
+                                                        <td>
+                                                            <% if (rank.isStaff === 1) { %>
+                                                                <i class="fas fa-check-circle" style="color:green"></i>
+                                                            <% } else { %>
+                                                                <i class="fas fa-times-circle" style="color: red;"></i>
+                                                            <% } %>
+                                                        </td>
+                                                        <td>
+                                                            <% if (rank.isDonator === 1) { %>
+                                                                <i class="fas fa-check-circle" style="color:green"></i>
+                                                            <% } else { %>
+                                                                <i class="fas fa-times-circle" style="color: red;"></i>
+                                                            <% } %>
+                                                        </td>
+                                                        <td>
+                                                            <div class="btn-group mb-2 btn-group-sm">
+                                                                <button class="btn btn-warning" type="button">Edit</button>
+                                                                <button class="btn btn-danger" type="button">Delete</button>
+                                                            </div>
+                                                        </td>
+                                                    </tr>
+                                                <% }) %>
+                                            <% } %>
                                         </tbody>
                                     </table>
                                 </div>

@@ -1,14 +1,21 @@
 const config = require('../../config.json');
 
-module.exports = (app) => {
+module.exports = (app, fetch) => {
 
     // 
     // Ranks
     // 
-    app.get('/dashboard/ranks', (req, res, next) => {
+    app.get('/dashboard/ranks', async (req, res, next) => {
+        const fetchURL = `${config.siteConfiguration.siteAddress}${config.siteConfiguration.apiRoute}/rank/get`;
+        const response = await fetch(fetchURL);
+        const apiData = await response.json();
+
+        console.log(apiData);
+
         res.render('dashboard/ranks/list', {
             "pageTitle": `Dashboard - Ranks`,
-            config: config
+            config: config,
+            apiData: apiData
         });
     });
 

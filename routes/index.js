@@ -1,12 +1,10 @@
 const config = require('../config.json');
 const path = require('path');
 const fs = require('fs');
-const fetch = require('node-fetch');
 
-module.exports = (app, moment) => {
+module.exports = (app, moment, fetch) => {
 
-    require('./dashboard')(app);
-    require('./dashboardRoutes')(app);
+    require('./dashboard')(app, fetch);
     require('./knowledgebaseRoutes')(app);
     require('./policyRoutes')(app);
 
