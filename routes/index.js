@@ -52,10 +52,15 @@ module.exports = (app, moment) => {
     // 
     // Apply
     // 
-    app.get('/apply', (req, res, next) => {
+    app.get('/apply', async (req, res, next) => {
+        const fetchURL = `${config.siteConfiguration.siteAddress}${config.siteConfiguration.apiRoute}/application/get`;
+        const response = await fetch(fetchURL);
+        const apiData = await response.json();
+
         res.render('apply', {
             "pageTitle": `Apply`,
-            config: config
+            config: config,
+            apiData: apiData
         });
     });
 
