@@ -1,0 +1,383 @@
+<%- include("../header.ejs", {
+    pageTitle: pageTitle,
+    pageDescription: "Check out Steves profile, punishments and stats"
+}) %>
+
+<%- include("../navigationBar.ejs") %>
+
+<%- include("profileHeader.ejs", {
+  profileUserTitle: "Steve",
+  backgroundImage: "https://i.imgur.com/PqNBnlS.png"
+}) %>
+
+<section class="section">
+  <div class="container">
+    <div class="row">
+      <div class="col-8">
+        <ul class="nav nav-tabs">
+          <a data-toggle="tab" href="#about"><li class="active selected btn" id="tabContent">About</li></a>
+          <a data-toggle="tab" href="#statistics"><li class="btn">Statistics</li></a>
+          <a data-toggle="tab" href="#punishments"><li class="btn">Punishments</li></a>
+          <a data-toggle="tab" href="#reports"><li class="btn">Reports</li></a>
+        </ul>
+        
+        <div class="tab-content profileSection">
+          <div id="about" class="tab-pane fade in active">
+            <h3>About</h3>
+            <p>Some content.</p>
+          </div>
+          <div id="statistics" class="tab-pane fade">
+            <h3>Statistics</h3>
+
+            <h4>Network Statistics</h4>
+            <table class="table">
+              <tr>
+                <td>####</td>
+                <td>####</td>
+
+                <td>####</td>
+                <td>####</td>
+              </tr>
+          </table>
+
+
+            <h4>Survival Statistics</h4>
+            <h5>Transportation</h5>
+
+            <table class="table">
+                <tr>
+                  <td>AVIATE_ONE_CM</td>
+                  <td>####</td>
+
+                  <td>BOAT_ONE_CM</td>
+                  <td>####</td>
+                </tr>
+
+                <tr>
+                  <td>CLIMB_ONE_CM</td>
+                  <td>####</td>
+
+                  <td>CROUCH_ONE_CM</td>
+                  <td>####</td>
+                </tr>
+
+                <tr>
+                  <td>FALL_ONE_CM</td>
+                  <td>####</td>
+
+                  <td>FLY_ONE_CM</td>
+                  <td>####</td>
+                </tr>
+
+                <tr>
+                  <td>HORSE_ONE_CM</td>
+                  <td>####</td>
+
+                  <td>MINECART_ONE_CM</td>
+                  <td>####</td>
+                </tr>
+
+                <tr>
+                  <td>PIG_ONE_CM</td>
+                  <td>####</td>
+
+                  <td>SPRINT_ONE_CM</td>
+                  <td>####</td>
+                </tr>
+
+                <tr>
+                  <td>STRIDER_ONE_CM</td>
+                  <td>####</td>
+
+                  <td>SWIM_ONE_CM</td>
+                  <td>####</td>
+                </tr>
+
+                <tr>
+                  <td>WALK_ON_WATER_ONE_CM</td>
+                  <td>####</td>
+
+                  <td>WALK_ONE_CM</td>
+                  <td>####</td>
+                </tr>
+
+
+                <tr>
+                  <td>WALK_UNDER_WATER_ONE_CM</td>
+                  <td>####</td>
+
+                  <td>####</td>
+                  <td>####</td>
+                </tr>
+            </table>
+
+            <h5>Misc</h5>
+
+            <table class="table">
+                <tr>
+                  <td>ANIMALS_BRED</td>
+                  <td>####</td>
+
+                  <td>BELL_RING</td>
+                  <td>####</td>
+                </tr>
+
+                <tr>
+                  <td>BREAK_ITEM</td>
+                  <td>####</td>
+
+                  <td>CRAFT_ITEM</td>
+                  <td>####</td>
+                </tr>
+
+                <tr>
+                  <td>DAMAGE_DEALT</td>
+                  <td>####</td>
+
+                  <td>DAMAGE_RESISTED</td>
+                  <td>####</td>
+                </tr>
+
+                <tr>
+                  <td>DAMAGE_TAKEN</td>
+                  <td>####</td>
+
+                  <td>DEATHS</td>
+                  <td>####</td>
+                </tr>
+
+                <tr>
+                  <td>ENTITY_KILLED_BY</td>
+                  <td>####</td>
+
+                  <td>FISH_CAUGHT</td>
+                  <td>####</td>
+                </tr>
+
+                <tr>
+                  <td>FLOWER_POTTED</td>
+                  <td>####</td>
+
+                  <td>ITEM_ENCHANTED</td>
+                  <td>####</td>
+                </tr>
+
+                <tr>
+                  <td>JUMP</td>
+                  <td>####</td>
+
+                  <td>KILL_ENTITY</td>
+                  <td>####</td>
+                </tr>
+
+
+                <tr>
+                  <td>LEAVE_GAME</td>
+                  <td>####</td>
+
+                  <td>MINE_BLOCK</td>
+                  <td>####</td>
+                </tr>
+
+                <tr>
+                  <td>MOB_KILLS</td>
+                  <td>####</td>
+
+                  <td>PLAYER_KILLS</td>
+                  <td>####</td>
+                </tr>
+
+                <tr>
+                  <td>SLEEP_IN_BED</td>
+                  <td>####</td>
+
+                  <td>####</td>
+                  <td>####</td>
+                </tr>
+            </table>
+
+            <h5>Villager Related</h5>
+
+            <table class="table">
+                <tr>
+                  <td>RAID_TRIGGER</td>
+                  <td>####</td>
+
+                  <td>RAID_WIN</td>
+                  <td>####</td>
+                </tr>
+
+                <tr>
+                  <td>TALKED_TO_VILLAGER</td>
+                  <td>####</td>
+
+                  <td>TRADED_WITH_VILLAGER</td>
+                  <td>####</td>
+                </tr>
+            </table>
+
+
+          </div>
+          
+          <div id="punishments" class="tab-pane fade">
+            <h3>Punishments</h3>
+
+            <table class="table table-hover">
+              <thead>
+                <tr>
+                  <th scope="col">#</th>
+                  <th scope="col">Punished</th>
+                  <th scope="col">Punished By</th>
+                  <th scope="col">Platform</th>
+                  <th scope="col">Type</th>
+                  <th scope="col">Reason</th>
+                  <th scope="col">Date</th>
+                  <th scope="col">Expires</th>
+                  <th scope="col">Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>1354</td>
+                  <td>Steve</td>
+                  <td>shadowolfyt</td>
+                  <td>INGAME</td>
+                  <td>BAN</td>
+                  <td>Breaking Blocks</td>
+                  <td>23 November 2021</td>
+                  <td>NULL</td>
+                  <td>APPEAL</td>
+                </tr>
+                <tr>
+                  <td>1354</td>
+                  <td>Steve</td>
+                  <td>shadowolfyt</td>
+                  <td>INGAME</td>
+                  <td>BAN</td>
+                  <td>Breaking Blocks</td>
+                  <td>23 November 2021</td>
+                  <td>NULL</td>
+                  <td>APPEAL</td>
+                </tr>
+                <tr>
+                  <td>1354</td>
+                  <td>Steve</td>
+                  <td>shadowolfyt</td>
+                  <td>INGAME</td>
+                  <td>BAN</td>
+                  <td>Breaking Blocks</td>
+                  <td>23 November 2021</td>
+                  <td>NULL</td>
+                  <td>APPEAL</td>
+                </tr>
+                <tr>
+                  <td>1354</td>
+                  <td>Steve</td>
+                  <td>shadowolfyt</td>
+                  <td>INGAME</td>
+                  <td>BAN</td>
+                  <td>Breaking Blocks</td>
+                  <td>23 November 2021</td>
+                  <td>NULL</td>
+                  <td>APPEAL</td>
+                </tr>
+              </tbody>
+            </table>
+
+          </div>
+          <div id="reports" class="tab-pane fade">
+            <h3>Reports</h3>
+            
+            <table class="table table-hover">
+              <thead>
+                <tr>
+                  <th scope="col">#</th>
+                  <th scope="col">Reported</th>
+                  <th scope="col">Reported By</th>
+                  <th scope="col">Platform</th>
+                  <th scope="col">Reason</th>
+                  <th scope="col">Date</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>1543</td>
+                  <td>Steve</td>
+                  <td>shadowolfyt</td>
+                  <td>DISCORD</td>
+                  <td>Scamming</td>
+                  <td>30 November 2021</td>
+                </tr>
+                <tr>
+                  <td>1543</td>
+                  <td>Steve</td>
+                  <td>shadowolfyt</td>
+                  <td>DISCORD</td>
+                  <td>Scamming</td>
+                  <td>30 November 2021</td>
+                </tr>
+                <tr>
+                  <td>1543</td>
+                  <td>Steve</td>
+                  <td>shadowolfyt</td>
+                  <td>DISCORD</td>
+                  <td>Scamming</td>
+                  <td>30 November 2021</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+
+      <div class="col-3">
+        <h3>First Join</h3>
+        <p>30th November 2020</p>
+        <hr>
+        <h3>Interests</h3>
+        <p>Crafting and Mining</p>
+        <hr>
+
+        <h3>Social Media</h3>
+        <table class="table table-borderless">
+          <tr>
+            <td>Twitter</td>
+            <td>@Steve_</td>
+          </tr>
+          <tr>
+            <td>Twitch</td>
+            <td>StevePlaysMinecraft</td>
+          </tr>
+          <tr>
+            <td>Steam</td>
+            <td>StevePlaysOtherGames</td>
+          </tr>
+          <tr>
+            <td>GitHub</td>
+            <td>SteveDevelops</td>
+          </tr>
+          <tr>
+            <td>Spotify</td>
+            <td>C418Only</td>
+          </tr>
+          <tr>
+            <td>Discord</td>
+            <td>@SteveisTheBest</td>
+          </tr>
+          <tr>
+            <td>YouTube</td>
+            <td>StevePlaysOnlyMinecraft</td>
+          </tr>
+          <tr>
+            <td>Instagram</td>
+            <td>SteveSnapsMinecraft</td>
+          </tr>
+        </table>
+        <hr>  
+      </div>
+    </div>
+  </div>
+</section>
+
+<%- include("../footer.ejs") %>  

@@ -1504,3 +1504,18 @@ a:focus {
 }
 
 /*# sourceMappingURL=maps/style.css.map */
+
+
+/* Profile */
+
+.profileHeader h4 {
+  color: white;
+}
+
+.profileHeader small {
+  color: white;
+}
+
+.profileSection {
+  padding-top: 30px;
+}
