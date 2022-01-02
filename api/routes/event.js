@@ -123,15 +123,6 @@ module.exports = (app, DiscordClient, moment) => {
                 }
 
                 return res.redirect(`${config.siteConfiguration.siteAddress}/dashboard/events`);
-
-                // if (req.useragent === 'PostmanRuntime') {
-                //     res.json({
-                //         success: true,
-                //         message: `The event with the id of ${eventId} has been successfully deleted.`
-                //     });
-                // } else {
-                //     return res.redirect(`${config.siteConfiguration.siteAddress}/dashboard/events`);
-                // }                
             });
 
         } catch (error) {
@@ -177,10 +168,7 @@ module.exports = (app, DiscordClient, moment) => {
 
                     channel.send({ embeds: [embed] });
 
-                    return res.json({
-                        success: true,
-                        message: `The event with the id of ${eventId} has been successfully published.`
-                    });                    
+                    return res.redirect(`${config.siteConfiguration.siteAddress}/dashboard/events`);                   
                 } catch (error) {
                     return res.json({
                         success: false,

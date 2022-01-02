@@ -46,7 +46,10 @@
                                                                 <% if (event.published === 1) { %>
                                                                     <button class="btn btn-sm btn-success" disabled type="button">Published</button>
                                                                 <% } else { %>
-                                                                    <button class="btn btn-sm btn-info" type="button">Publish</button>
+                                                                    <form action="<%= config.siteConfiguration.siteAddress %><%= config.siteConfiguration.apiRoute %>/event/publish" method="post">
+                                                                        <input type="hidden" name="eventId" value="<%= event.eventId %>">
+                                                                        <button class="btn btn-sm btn-info" type="submit">Publish</button>
+                                                                    </form>
                                                                 <% } %>
                                                                 <button class="btn btn-sm btn-warning" type="button">Edit</button>
 

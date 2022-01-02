@@ -9,9 +9,7 @@ module.exports = (app, fetch, moment) => {
         const fetchURL = `${config.siteConfiguration.siteAddress}${config.siteConfiguration.apiRoute}/event/get?published=all`;
         const response = await fetch(fetchURL);
         const apiData = await response.json();
-
-        console.log(apiData);
-        
+                
         res.render('dashboard/events/list', {
             "pageTitle": `Dashboard - Events`,
             config: config,
