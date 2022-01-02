@@ -1,9 +1,9 @@
-module.exports = (app) => {
+module.exports = (app, fetch, moment) => {
 
-    require('./dashboard')(app);
-    require('./events')(app);
-    require('./knowledgebase')(app);
-    require('./ranks')(app);
-    require('./servers')(app);
+    require('./dashboard')(app, fetch);
+    require('./events')(app, fetch, moment);
+    require('./knowledgebase')(app, fetch);
+    require('./ranks')(app, fetch);
+    require('./servers')(app, fetch);
 
 }
