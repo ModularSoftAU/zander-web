@@ -154,6 +154,8 @@ CREATE TABLE events (
     eventDateTime DATETIME,
     hostingServer INT NOT NULL,
     information TEXT,
+    guildEventId VARCHAR(18),
+    guildEventChannel VARCHAR(18),
     published BOOLEAN DEFAULT 0,
     PRIMARY KEY (eventId),
     INDEX events_eventDateTime (eventDateTime),
