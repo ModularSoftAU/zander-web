@@ -2,10 +2,9 @@ const config = require('../config.json');
 const path = require('path');
 const fs = require('fs');
 
-module.exports = (app) => {
+module.exports = (app, moment, fetch) => {
 
-    require('./dashboard')(app);
-    require('./dashboardRoutes')(app);
+    require('./dashboard')(app, fetch, moment);
     require('./knowledgebaseRoutes')(app);
     require('./policyRoutes')(app);
 
@@ -19,10 +18,15 @@ module.exports = (app) => {
     // 
     // Play
     // 
-    app.get('/play', (req, res, next) => {
+    app.get('/play', async (req, res, next) => {
+        const fetchURL = `${config.siteConfiguration.siteAddress}${config.siteConfiguration.apiRoute}/server/get?visible=true`;
+        const response = await fetch(fetchURL);
+        const apiData = await response.json();
+
         res.render('modules/play/play', {
             "pageTitle": `Play`,
-            config: config
+            config: config,
+            apiData: apiData
         });
     });
 
@@ -46,20 +50,31 @@ module.exports = (app) => {
     // 
     // Apply
     // 
-    app.get('/apply', (req, res, next) => {
+    app.get('/apply', async (req, res, next) => {
+        const fetchURL = `${config.siteConfiguration.siteAddress}${config.siteConfiguration.apiRoute}/application/get`;
+        const response = await fetch(fetchURL);
+        const apiData = await response.json();
+
         res.render('apply', {
             "pageTitle": `Apply`,
-            config: config
+            config: config,
+            apiData: apiData
         });
     });
 
     // 
     // Events
     // 
-    app.get('/events', (req, res, next) => {
+    app.get('/events', async (req, res, next) => {
+        const fetchURL = `${config.siteConfiguration.siteAddress}${config.siteConfiguration.apiRoute}/event/get?published=show`;
+        const response = await fetch(fetchURL);
+        const apiData = await response.json();
+
         res.render('events', {
             "pageTitle": `Events`,
-            config: config
+            config: config,
+            apiData: apiData,
+            moment: moment
         });
     });
 

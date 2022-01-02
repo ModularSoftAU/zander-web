@@ -2,7 +2,7 @@
     "port": 8080,
     "siteConfiguration": {
         "siteName": "Crafting For Christ",
-        "siteAddress": "https://craftingforchrist.net",
+        "siteAddress": "http://localhost:8080",
         "tagline": "Home of one of the biggest Christian Minecraft Servers in Australia.",
         "email": "support@craftingforchrist.net",
         "policy": {

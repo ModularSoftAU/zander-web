@@ -6,18 +6,52 @@ module.exports = (app) => {
 
     app.get(baseEndpoint + '/get', (req, res, next) => {
         try {
-            db.query(`SELECT * FROM servers ORDER BY position ASC;`, function(error, results, fields) {
-                if (error) {
+            const visible = req.query.visible;
+
+            function getServers(dbQuery) {
+                db.query(dbQuery, function(error, results, fields) {
+                    if (error) {
+                        return res.json({
+                            success: false,
+                            message: `${error}`
+                        });
+                    }
+
+                    if (!results.length) {
+                        return res.json({
+                            success: false,
+                            message: `There are currently no servers visible.`
+                        });
+                    }
+
                     return res.json({
-                        success: false,
-                        message: `${error}`
+                        success: true,
+                        data: results
                     });
-                }
-                return res.json({
-                    success: true,
-                    data: results
                 });
-            });
+            }
+
+            if (!visible) {
+                res.json({
+                    success: false,
+                    message: `You must select a visible indicator.`
+                });                
+            }
+
+            if (visible === 'true') {
+                let dbQuery = `SELECT * FROM servers WHERE visible=1 ORDER BY position ASC;`
+                getServers(dbQuery);
+            }
+
+            if (visible === 'false') {
+                let dbQuery = `SELECT * FROM servers WHERE visible=0 ORDER BY position ASC;`
+                getServers(dbQuery);
+            }
+
+            if (visible === 'all') {
+                let dbQuery = `SELECT * FROM servers ORDER BY position ASC;`
+                getServers(dbQuery);
+            }
 
         } catch (error) {
             res.json({
@@ -29,13 +63,14 @@ module.exports = (app) => {
 
     app.post(baseEndpoint + '/create', (req, res, next) => {
         const name = req.body.name;
+        const fqdn = req.body.fqdn;
         const ipAddress = req.body.ipAddress;
         const port = req.body.port;
         const visible = req.body.visible;
         const position = req.body.position;
 
         try {
-            db.query(`INSERT INTO servers (name, ipAddress, port, visible, position) VALUES (?, ?, ?, ?, ?)`, [name, ipAddress, port, visible, position], function(error, results, fields) {
+            db.query(`INSERT INTO servers (name, fqdn, ipAddress, port, visible, position) VALUES (?, ?, ?, ?, ?)`, [name, fqdn, ipAddress, port, visible, position], function(error, results, fields) {
                 if (error) {
                     return res.json({
                         success: false,
@@ -44,7 +79,7 @@ module.exports = (app) => {
                 }
                 return res.json({
                     success: true,
-                    message: `The server ${name} has been successfully created!`
+                    message: `The server ${name} (${fqdn}) has been successfully created!`
                 });
             });
 
@@ -59,9 +94,10 @@ module.exports = (app) => {
     app.post(baseEndpoint + '/edit', (req, res, next) => {
         const serverId = req.body.serverId;
         const name = req.body.name;
+        const fqdn = req.body.fqdn;
         const ipAddress = req.body.ipAddress;
         const port = req.body.port;
-        const visability = req.body.visability;
+        const visible = req.body.visible;
         const position = req.body.position;
 
         // ...
