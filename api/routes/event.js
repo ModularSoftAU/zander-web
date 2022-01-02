@@ -122,10 +122,16 @@ module.exports = (app, DiscordClient, moment) => {
                     }); 
                 }
 
-                return res.json({
-                    success: true,
-                    message: `The event with the id of ${eventId} has been successfully deleted.`
-                });
+                return res.redirect(`${config.siteConfiguration.siteAddress}/dashboard/events`);
+
+                // if (req.useragent === 'PostmanRuntime') {
+                //     res.json({
+                //         success: true,
+                //         message: `The event with the id of ${eventId} has been successfully deleted.`
+                //     });
+                // } else {
+                //     return res.redirect(`${config.siteConfiguration.siteAddress}/dashboard/events`);
+                // }                
             });
 
         } catch (error) {
@@ -157,9 +163,7 @@ module.exports = (app, DiscordClient, moment) => {
 
                 // shadowolf: 
                 // DONE: This is where the event will send a message to the `eventAnnouncements` indicated in config.json
-                // WAITING: It will also create a scheduled event and amend the link to the event announcement.
-
-                // TODO: Need to wait for Discord API to support the automation of scheduled event creation.     
+                // It will also create a scheduled event and amend the link to the event announcement.
                 
                 try {
                     const guild = DiscordClient.guilds.cache.get(config.discord.serverId);
@@ -178,8 +182,6 @@ module.exports = (app, DiscordClient, moment) => {
                         message: `The event with the id of ${eventId} has been successfully published.`
                     });                    
                 } catch (error) {
-                    console.log(error);
-
                     return res.json({
                         success: false,
                         message: `${error}`

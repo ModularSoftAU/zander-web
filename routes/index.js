@@ -4,7 +4,7 @@ const fs = require('fs');
 
 module.exports = (app, moment, fetch) => {
 
-    require('./dashboard')(app, fetch);
+    require('./dashboard')(app, fetch, moment);
     require('./knowledgebaseRoutes')(app);
     require('./policyRoutes')(app);
 

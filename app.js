@@ -6,6 +6,7 @@ const WOKCommands = require('wokcommands');
 const path = require('path');
 const moment = require('moment');
 const fetch = require('node-fetch');
+const useragent = require('express-useragent');
 
 // 
 // Discord Related
@@ -97,6 +98,7 @@ app.use(express.json());
 app.set('view engine', 'ejs');
 app.set('views', 'views');
 app.use(express.static(__dirname + '/assets'));
+app.use(useragent.express());
 
 //
 // Site Routes
