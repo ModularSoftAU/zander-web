@@ -1,4 +1,4 @@
-module.exports = (app, DiscordClient, moment) => {
+export default (app, DiscordClient, moment) => {
 
     require('./alert')(app);
     require('./anticheat')(app);

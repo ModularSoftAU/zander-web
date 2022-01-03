@@ -1,8 +1,8 @@
-const config = require('../config.json');
+import config from '../config.json'
 const path = require('path');
 const fs = require('fs');
 
-module.exports = (app, moment, fetch) => {
+export default (app, moment, fetch) => {
 
     require('./dashboard')(app, fetch, moment);
     require('./knowledgebaseRoutes')(app);

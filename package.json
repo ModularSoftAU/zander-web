@@ -4,7 +4,8 @@
   "description": "The web component of the Zander project that contains database, API and website.",
   "main": "app.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "nodemon --experimental-json-modules --experimental-specifier-resolution=node"
   },
   "repository": {
     "type": "git",

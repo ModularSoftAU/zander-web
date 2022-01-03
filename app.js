@@ -3,9 +3,14 @@ import packageData from './package.json'
 import config from './config.json'
 import DiscordJS from 'discord.js'
 import WOKCommands from 'wokcommands'
-import path from 'path'
 import moment from 'moment'
 import fetch from 'node-fetch'
+
+// Paths
+import path from 'path'
+import { fileURLToPath } from 'url'
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 // FastJS
 import Fastify from 'fastify'
@@ -84,10 +89,16 @@ app.set('views', 'views');
 app.use(express.static(__dirname + '/assets'));
 
 //
-// Site Routes
+// Routes
 //
-require('./routes')(app, moment, fetch);
-require('./api/routes')(app, DiscordClient, moment);
+
+// Site Routes
+import siteRoutes from './routes'
+siteRoutes(app, moment, fetch);
+
+// API Routes
+import apiRoutes from './api/routes'
+apiRoutes(app, DiscordClient, moment);
 
 //
 // Controllers
