@@ -1,4 +1,4 @@
-const config = require('../../config.json');
+import config from '../../config.json'
 const baseEndpoint = config.siteConfiguration.apiRoute + "/friend";
 
 export default function friendApiRoute(app) {

@@ -1,7 +1,7 @@
-const config = require('../../config.json');
-const db = require('../../controllers/databaseController');
+import config from '../../config.json'
+import db from '../../controllers/databaseController'
 const baseEndpoint = config.siteConfiguration.apiRoute + "/event";
-const { MessageEmbed } = require('discord.js');
+import { MessageEmbed } from 'discord.js'
 
 export default function eventApiRoute(app, DiscordClient, moment) {
 

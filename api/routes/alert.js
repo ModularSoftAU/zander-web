@@ -1,4 +1,4 @@
-const config = require('../../config.json');
+import config from '../../config.json'
 const baseEndpoint = config.siteConfiguration.apiRoute + "/alert";
 
 // Jaedan: A verifyUser function may need to be included for some of these routes

@@ -1,5 +1,5 @@
-const config = require('../../config.json');
-const db = require('../../controllers/databaseController');
+import config from '../../config.json'
+import db from '../../controllers/databaseController'
 const baseEndpoint = config.siteConfiguration.apiRoute + "/knowledgebase";
 
 export default function knowledgebaseApiRoute(app) {

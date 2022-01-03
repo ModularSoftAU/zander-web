@@ -1,6 +1,6 @@
-const config = require('../../config.json');
+import config from '../../config.json'
 const baseEndpoint = config.siteConfiguration.apiRoute + "/shoppingdistrictdirectory";
-const db = require('../../controllers/databaseController');
+import db from '../../controllers/databaseController'
 
 // Jaedan: Shops likely need a get route to obtain items from a specific shop
 

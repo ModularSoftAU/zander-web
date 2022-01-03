@@ -1,4 +1,4 @@
-const config = require('../../config.json');
+import config from '../../config.json'
 const baseEndpoint = config.siteConfiguration.apiRoute + "/anticheat";
 
 export default function anticheatApiRoute(app) {

@@ -1,4 +1,4 @@
-const config = require('../../config.json');
+import config from '../../config.json'
 const baseEndpoint = config.siteConfiguration.apiRoute + "/discord";
 
 export default function discordApiRoute(app, DiscordClient) {
