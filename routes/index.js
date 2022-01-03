@@ -3,14 +3,18 @@ import path from 'path'
 import fs from 'fs'
 
 import dashboardSiteRoutes from './dashboard'
+import knowledgebaseSiteRoutes from './knowledgebaseRoutes'
+import policySiteRoutes from './policyRoutes'
 
 export default function applicationSiteRoutes(app, moment, fetch) {
 
     dashboardSiteRoutes(app, moment, fetch);
+    knowledgebaseSiteRoutes(app);
+    policySiteRoutes(app);
 
     // require('./dashboard')(app, fetch, moment);
-    require('./knowledgebaseRoutes')(app);
-    require('./policyRoutes')(app);
+    // require('./knowledgebaseRoutes')(app);
+    // require('./policyRoutes')(app);
 
     app.get('/', (req, res, next) => {
         res.render('modules/index/index', {

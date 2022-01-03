@@ -1,6 +1,6 @@
-const config = require('../config.json');
+import config from '../config.json'
 
-module.exports = (app) => {
+export default function policySiteRoute(app) {
 
     app.get('/terms', (req, res, next) => {
         res.render('policy/termsOfService', {
