@@ -1,10 +1,14 @@
 import config from '../config.json'
-const path = require('path');
-const fs = require('fs');
+import path from 'path'
+import fs from 'fs'
 
-export default (app, moment, fetch) => {
+import dashboardSiteRoutes from './dashboard'
 
-    require('./dashboard')(app, fetch, moment);
+export default function applicationSiteRoutes(app, moment, fetch) {
+
+    dashboardSiteRoutes(app, moment, fetch);
+
+    // require('./dashboard')(app, fetch, moment);
     require('./knowledgebaseRoutes')(app);
     require('./policyRoutes')(app);
 

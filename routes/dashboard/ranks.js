@@ -1,6 +1,6 @@
-const config = require('../../config.json');
+import config from '../../config.json'
 
-module.exports = (app, fetch) => {
+export default function dashboardRanksSiteRoute(app, fetch) {
 
     // 
     // Ranks
