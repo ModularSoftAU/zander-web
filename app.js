@@ -1,12 +1,18 @@
-const express = require('express');
-const package = require('./package.json');
-const config = require('./config.json');
-const DiscordJS = require('discord.js');
-const WOKCommands = require('wokcommands');
-const path = require('path');
-const moment = require('moment');
-const fetch = require('node-fetch');
-const useragent = require('express-useragent');
+import express from 'express'
+import packageData from './package.json'
+import config from './config.json'
+import DiscordJS from 'discord.js'
+import WOKCommands from 'wokcommands'
+import path from 'path'
+import moment from 'moment'
+import fetch from 'node-fetch'
+
+// FastJS
+import Fastify from 'fastify'
+import ExpressPlugin from 'fastify-express'
+
+const fastify = Fastify();
+fastify.register(ExpressPlugin)
 
 // 
 // Discord Related
@@ -76,7 +82,6 @@ app.use(express.json());
 app.set('view engine', 'ejs');
 app.set('views', 'views');
 app.use(express.static(__dirname + '/assets'));
-app.use(useragent.express());
 
 //
 // Site Routes
@@ -94,6 +99,6 @@ const database = require('./controllers/databaseController'); // Database contro
 //
 const port = process.env.PORT || config.port || 8080;
 app.listen(port, async function() {
-    console.log(`\n// ${package.name} v.${package.version}\nGitHub Repository: ${package.homepage}\nCreated By: ${package.author}`);
+    console.log(`\n// ${packageData.name} v.${packageData.version}\nGitHub Repository: ${packageData.homepage}\nCreated By: ${packageData.author}`);
     console.log(`Site and API is listening to the port ${port}`);
 });

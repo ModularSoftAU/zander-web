@@ -12,6 +12,7 @@
   },
   "keywords": [],
   "author": "Ben Robson",
+  "type": "module",
   "license": "ISC",
   "bugs": {
     "url": "https://github.com/ModularEnigma/zander-web/issues"
@@ -22,6 +23,8 @@
     "ejs": "^3.1.6",
     "express": "^4.17.1",
     "express-useragent": "^1.0.15",
+    "fastify": "^3.25.3",
+    "fastify-express": "^0.3.3",
     "moment": "^2.29.1",
     "mysql": "^2.18.1",
     "node-cron": "^3.0.0",
