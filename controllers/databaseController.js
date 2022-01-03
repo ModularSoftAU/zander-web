@@ -1,7 +1,7 @@
 import mysql from 'mysql'
 import config from '../config.json'
 
-export default function databaseController(connection) {
+export default connection => {
   var connection = mysql.createConnection({
     host: config.database.host,
     port: config.database.port,

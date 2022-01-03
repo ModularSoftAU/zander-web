@@ -17,7 +17,7 @@
         <div class="row">
 
           <% if (apiData.success == false) { %>
-            <%- include("../../partials/alert.ejs", {
+            <%- include("partials/alert.ejs", {
               alertType: "danger",
               content: apiData.message
             }) %>

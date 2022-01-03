@@ -62,6 +62,8 @@ DiscordClient.on('ready', () => {
             // Default is true
             ephemeral: true,
 
+            typeScript: true,
+
             // What server/guild IDs are used for testing only commands & features
             // Can be a single string if there is only 1 ID
             testServers: ['899441191416901632', '581056239312568332'],
@@ -103,7 +105,7 @@ apiRoutes(app, DiscordClient, moment);
 //
 // Controllers
 //
-const database = require('./controllers/databaseController'); // Database controller
+import database from './controllers/databaseController' // Database controller
 
 //
 // Application Boot
