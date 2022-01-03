@@ -2,7 +2,7 @@ const config = require('../../config.json');
 const db = require('../../controllers/databaseController');
 const baseEndpoint = config.siteConfiguration.apiRoute + "/user";
 
-module.exports = (app) => {
+export default function userApiRoute(app) {
 
     app.post(baseEndpoint + '/create', (req, res, next) => {
         const uuid = req.body.uuid;

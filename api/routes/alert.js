@@ -3,7 +3,7 @@ const baseEndpoint = config.siteConfiguration.apiRoute + "/alert";
 
 // Jaedan: A verifyUser function may need to be included for some of these routes
 
-module.exports = (app) => {
+export default function alertApiRoute(app) {
 
     app.post(baseEndpoint + '/create', (req, res, next) => {
         // Some of these may not be const but have been assumed to be so thus far.

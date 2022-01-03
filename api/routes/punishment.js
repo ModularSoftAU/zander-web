@@ -1,7 +1,7 @@
 const config = require('../../config.json');
 const baseEndpoint = config.siteConfiguration.apiRoute + "/punishment";
 
-module.exports = (app) => {
+export default function punishmentApiRoute(app) {
 
     app.post(baseEndpoint + '/issue', (req, res, next) => {
         const playerUsername = req.body.playerUsername;

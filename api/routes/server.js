@@ -2,7 +2,7 @@ const config = require('../../config.json');
 const db = require('../../controllers/databaseController');
 const baseEndpoint = config.siteConfiguration.apiRoute + "/server";
 
-module.exports = (app) => {
+export default function serverApiRoute(app) {
 
     app.get(baseEndpoint + '/get', (req, res, next) => {
         try {

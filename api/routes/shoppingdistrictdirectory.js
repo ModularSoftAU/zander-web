@@ -4,7 +4,7 @@ const db = require('../../controllers/databaseController');
 
 // Jaedan: Shops likely need a get route to obtain items from a specific shop
 
-module.exports = (app) => {
+export default function shoppingDistrictDirectoryApiRoute(app) {
 
     app.get(baseEndpoint + '/get', (req, res, next) => {
         try {

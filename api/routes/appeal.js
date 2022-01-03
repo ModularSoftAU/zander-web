@@ -1,7 +1,7 @@
 const config = require('../../config.json');
 const baseEndpoint = config.siteConfiguration.apiRoute + "/appeal";
 
-module.exports = (app) => {
+export default function appealApiRoute(app) {
 
     app.post(baseEndpoint + '/create', (req, res, next) => {
         const punishmentId = req.body.punishmentId;

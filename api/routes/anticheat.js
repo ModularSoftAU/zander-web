@@ -1,7 +1,7 @@
 const config = require('../../config.json');
 const baseEndpoint = config.siteConfiguration.apiRoute + "/anticheat";
 
-module.exports = (app) => {
+export default function anticheatApiRoute(app) {
 
     app.post(baseEndpoint + '/flag', (req, res, next) => {
         const username = req.body.username;

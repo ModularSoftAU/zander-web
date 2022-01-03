@@ -1,7 +1,7 @@
 const config = require('../../config.json');
 const baseEndpoint = config.siteConfiguration.apiRoute + "/report";
 
-module.exports = (app) => {
+export default function reportApiRoute(app) {
 
     app.get(baseEndpoint + '/get', (req, res, next) => {
         // ...

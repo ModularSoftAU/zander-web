@@ -1,7 +1,7 @@
 const config = require('../../config.json');
 const baseEndpoint = config.siteConfiguration.apiRoute + "/friend";
 
-module.exports = (app) => {
+export default function friendApiRoute(app) {
 
     app.post(baseEndpoint + '/request', (req, res, next) => {
         const requestee = req.body.requestee;

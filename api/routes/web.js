@@ -1,7 +1,7 @@
 const config = require('../../config.json');
 const baseEndpoint = config.siteConfiguration.apiRoute + "/web";
 
-module.exports = (app) => {
+export default function webApiRoute(app) {
 
     app.post(baseEndpoint + '/login', (req, res, next) => {
         const username = req.body.username;

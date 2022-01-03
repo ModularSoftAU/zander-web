@@ -3,7 +3,7 @@ const db = require('../../controllers/databaseController');
 const baseEndpoint = config.siteConfiguration.apiRoute + "/event";
 const { MessageEmbed } = require('discord.js');
 
-module.exports = (app, DiscordClient, moment) => {
+export default function eventApiRoute(app, DiscordClient, moment) {
 
     app.get(baseEndpoint + '/get', (req, res, next) => {
         try {

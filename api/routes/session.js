@@ -1,7 +1,7 @@
 const config = require('../../config.json');
 const baseEndpoint = config.siteConfiguration.apiRoute + "/session";
 
-module.exports = (app) => {
+export default function sessionApiRoute(app) {
 
     app.post(baseEndpoint + '/create', (req, res, next) => {
         const uuid = req.body.uuid;

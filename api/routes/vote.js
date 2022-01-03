@@ -1,7 +1,7 @@
 const config = require('../../config.json');
 const baseEndpoint = config.siteConfiguration.apiRoute + "/vote";
 
-module.exports = (app) => {
+export default function voteApiRoute(app) {
 
     app.post(baseEndpoint + '/cast', (req, res, next) => {
         const username = req.body.username;

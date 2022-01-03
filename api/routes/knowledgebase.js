@@ -2,7 +2,7 @@ const config = require('../../config.json');
 const db = require('../../controllers/databaseController');
 const baseEndpoint = config.siteConfiguration.apiRoute + "/knowledgebase";
 
-module.exports = (app) => {
+export default function knowledgebaseApiRoute(app) {
 
     // Jaedan: Some get routes should be added for the knowledgebase
     // Data goes in but none comes out currently
