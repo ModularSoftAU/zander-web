@@ -1,25 +1,26 @@
 import config from '../../config.json'
 
-export default function dashbordSiteRoute(app) {
+export default function dashbordSiteRoute(fastify) {
+    // fastify.use(cors({ origin: true }));
 
     // 
     // Dashboard
     // 
-    app.get('/dashboard', (req, res, next) => {
+    fastify.get('/dashboard', async function(request, reply) {
+        reply.render('dashboard/indexViewNetwork', {
+            "pageTitle": `Dashboard`,
+            config: config
+        });
+    });
+
+    fastify.get('/dashboard/view/network', (req, res, next) => {
         res.render('dashboard/indexViewNetwork', {
             "pageTitle": `Dashboard`,
             config: config
         });
     });
 
-    app.get('/dashboard/view/network', (req, res, next) => {
-        res.render('dashboard/indexViewNetwork', {
-            "pageTitle": `Dashboard`,
-            config: config
-        });
-    });
-
-    app.get('/dashboard/view/punishment', (req, res, next) => {
+    fastify.get('/dashboard/view/punishment', (req, res, next) => {
         res.render('dashboard/indexViewPunishment', {
             "pageTitle": `Dashboard`,
             config: config
@@ -33,7 +34,7 @@ export default function dashbordSiteRoute(app) {
     // 
     // Player Check
     // 
-    app.get('/dashboard/usercheck', (req, res, next) => {
+    fastify.get('/dashboard/usercheck', (req, res, next) => {
         res.render('dashboard/usercheck', {
             "pageTitle": `Dashboard - User Check`,
             config: config

@@ -1,4 +1,4 @@
-import express from 'express'
+// import express from 'express'
 import packageData from './package.json'
 import config from './config.json'
 import DiscordJS from 'discord.js'
@@ -12,12 +12,10 @@ import { fileURLToPath } from 'url'
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// FastJS
-import Fastify from 'fastify'
-import ExpressPlugin from 'fastify-express'
-
-const fastify = Fastify();
-fastify.register(ExpressPlugin)
+// Fastify
+import Fastify from "fastify"
+import ExpressPlugin from "fastify-express";
+import cors from "cors";
 
 // 
 // Discord Related
@@ -82,13 +80,15 @@ DiscordClient.login(config.discord.apiKey);
 // 
 // Website Related
 // 
-const app = express();
-app.use(express.urlencoded({ extended: true }))
-app.use(express.json());
 
-app.set('view engine', 'ejs');
-app.set('views', 'views');
-app.use(express.static(__dirname + '/assets'));
+// const app = express();
+// app.use(express.urlencoded({ extended: true }))
+// app.use(express.json());
+// app.use(cors({ origin: true }));
+
+// app.set('view engine', 'ejs');
+// app.set('views', 'views');
+// app.use(express.static(__dirname + '/assets'));
 
 //
 // Routes
@@ -96,22 +96,35 @@ app.use(express.static(__dirname + '/assets'));
 
 // Site Routes
 import siteRoutes from './routes'
-siteRoutes(app, moment, fetch);
-
-// API Routes
 import apiRoutes from './api/routes'
-apiRoutes(app, DiscordClient, moment);
 
 //
 // Controllers
 //
-import database from './controllers/databaseController' // Database controller
+// import database from './controllers/databaseController' // Database controller
 
 //
 // Application Boot
 //
-const port = process.env.PORT || config.port || 8080;
-app.listen(port, async function() {
-    console.log(`\n// ${packageData.name} v.${packageData.version}\nGitHub Repository: ${packageData.homepage}\nCreated By: ${packageData.author}`);
-    console.log(`Site and API is listening to the port ${port}`);
-});
+const buildApp = async () => {
+    const fastify = Fastify({ logger: true });
+    const port = process.env.PORT || config.port || 8080;
+
+    await fastify.register(ExpressPlugin);
+    fastify.register(cors, { origin: true });
+
+    console.log(fastify.printRoutes());
+
+    siteRoutes(fastify, moment, fetch);
+    apiRoutes(fastify, DiscordClient, moment);
+  
+    try {
+      await fastify.listen(port);
+      console.log(`\n// ${packageData.name} v.${packageData.version}\nGitHub Repository: ${packageData.homepage}\nCreated By: ${packageData.author}`);
+      console.log(`Site and API is listening to the port ${port}`);
+    } catch (error) {
+        fastify.log.error(`Unable to start the server:\n${error}`);
+    }
+};
+
+buildApp();
