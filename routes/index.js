@@ -6,9 +6,9 @@ import dashboardSiteRoutes from './dashboard'
 import knowledgebaseSiteRoutes from './knowledgebaseRoutes'
 import policySiteRoutes from './policyRoutes'
 
-export default function applicationSiteRoutes(fastify, app, moment, fetch) {
+export default function applicationSiteRoutes(app, moment, fetch) {
 
-    // dashboardSiteRoutes(fastify, moment, fetch);
+    // dashboardSiteRoutes(app, moment, fetch);
     // knowledgebaseSiteRoutes(app);
     // policySiteRoutes(app);
 
@@ -16,7 +16,7 @@ export default function applicationSiteRoutes(fastify, app, moment, fetch) {
     // require('./knowledgebaseRoutes')(app);
     // require('./policyRoutes')(app);
 
-    fastify.route('/', async function(request, reply) {
+    app.get('/', async function(request, reply) {
         reply.render('modules/index/index', {
             "pageTitle": `${config.siteConfiguration.siteName}`,
             config: config
