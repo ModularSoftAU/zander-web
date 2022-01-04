@@ -4,12 +4,12 @@ const baseEndpoint = config.siteConfiguration.apiRoute + "/communitycreation";
 
 export default function communityCreationApiRoute(app) {
 
-    app.get(baseEndpoint + '/get', (req, res, next) => {
+    app.get(baseEndpoint + '/get', async function(req, res) {
         // ...
-        res.json({ success: true });
+        res.send({ success: true });
     });
 
-    app.post(baseEndpoint + '/submit', (req, res, next) => {
+    app.post(baseEndpoint + '/submit', async function(req, res) {
         const creator = req.body.creator;
         const creationName = req.body.creationName;
         const creationDescription = req.body.creationDescription;
@@ -17,30 +17,30 @@ export default function communityCreationApiRoute(app) {
         try {
             db.query(`INSERT INTO communityCreations (creatorId, creationName, creationDescription) VALUES ((select userId from users where username=?), ?, ?)`, [creator, creationName, creationDescription], function(error, results, fields) {
                 if (error) {
-                    return res.json({
+                    return res.send({
                         success: false,
                         message: `${error}`
                     });
                 }
-                return res.json({
+                return res.send({
                     success: true,
                     message: `The creation ${creationName} has been successfully submitted for approval.`
                 });
             });
 
         } catch (error) {
-            res.json({
+            res.send({
                 success: false,
                 message: `${error}`
             });
         }
     });
 
-    app.post(baseEndpoint + '/delete', (req, res, next) => {
+    app.post(baseEndpoint + '/delete', async function(req, res) {
         const creationId = req.body.creationId;
 
         // ...
-        res.json({ success: true });
+        res.send({ success: true });
     });
 
 }

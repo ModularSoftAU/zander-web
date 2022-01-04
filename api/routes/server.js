@@ -4,27 +4,27 @@ const baseEndpoint = config.siteConfiguration.apiRoute + "/server";
 
 export default function serverApiRoute(app) {
 
-    app.get(baseEndpoint + '/get', async function(request, reply) {
+    app.get(baseEndpoint + '/get', async function(req, res) {
         try {
-            const visible = request.query.visible;
+            const visible = req.query.visible;
 
             function getServers(dbQuery) {
                 db.query(dbQuery, function(error, results, fields) {
                     if (error) {
-                        return reply({
+                        return res.send({
                             success: false,
                             message: `${error}`
                         });
                     }
 
                     if (!results.length) {
-                        return reply({
+                        return res.send({
                             success: false,
                             message: `There are currently no servers visible.`
                         });
                     }
 
-                    return reply({
+                    return res.send({
                         success: true,
                         data: results
                     });
@@ -32,10 +32,10 @@ export default function serverApiRoute(app) {
             }
 
             if (!visible) {
-                res.json({
+                res.send({
                     success: false,
                     message: `You must select a visible indicator.`
-                });                
+                });
             }
 
             if (visible === 'true') {
@@ -54,14 +54,14 @@ export default function serverApiRoute(app) {
             }
 
         } catch (error) {
-            res.json({
+            res.send({
                 success: false,
                 message: `${error}`
             });
         }
     });
 
-    app.post(baseEndpoint + '/create', async function(request, reply) {
+    app.post(baseEndpoint + '/create', async function(req, res) {
         const name = req.body.name;
         const fqdn = req.body.fqdn;
         const ipAddress = req.body.ipAddress;
@@ -72,26 +72,26 @@ export default function serverApiRoute(app) {
         try {
             db.query(`INSERT INTO servers (name, fqdn, ipAddress, port, visible, position) VALUES (?, ?, ?, ?, ?)`, [name, fqdn, ipAddress, port, visible, position], function(error, results, fields) {
                 if (error) {
-                    return res.json({
+                    return res.send({
                         success: false,
                         message: `${error}`
                     });
                 }
-                return res.json({
+                return res.send({
                     success: true,
                     message: `The server ${name} (${fqdn}) has been successfully created!`
                 });
             });
 
         } catch (error) {
-            res.json({
+            res.send({
                 success: false,
                 message: `${error}`
             });
         }
     });
 
-    app.post(baseEndpoint + '/edit', async function(request, reply) {
+    app.post(baseEndpoint + '/edit', async function(req, res) {
         const serverId = req.body.serverId;
         const name = req.body.name;
         const fqdn = req.body.fqdn;
@@ -101,28 +101,28 @@ export default function serverApiRoute(app) {
         const position = req.body.position;
 
         // ...
-        res.json({ success: true });
+        res.send({ success: true });
     });
 
-    app.post(baseEndpoint + '/delete', async function(request, reply) {
+    app.post(baseEndpoint + '/delete', async function(req, res) {
         const serverId = req.body.serverId;
 
         try {
             db.query(`DELETE FROM servers WHERE serverId = ?;`, [serverId], function(error, results, fields) {
                 if (error) {
-                    return res.json({
+                    return res.send({
                         success: false,
                         message: `${error}`
                     });
                 }
-                return res.json({
+                return res.send({
                     success: true,
                     message: `Deletion of server with the id ${serverId} has been successful`
                 });
             });
 
         } catch (error) {
-            res.json({
+            res.send({
                 success: false,
                 message: `${error}`
             });

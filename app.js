@@ -113,6 +113,8 @@ const buildApp = async () => {
         prefix: '/',
     })
 
+    app.register(await import('fastify-formbody'))
+
     // Routes
     siteRoutes(app, moment, fetch);
     apiRoutes(app, DiscordClient, moment);

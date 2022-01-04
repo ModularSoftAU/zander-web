@@ -28,6 +28,7 @@
     "fastify": "^3.25.3",
     "fastify-cors": "^6.0.2",
     "fastify-express": "^0.3.3",
+    "fastify-formbody": "^5.2.0",
     "fastify-static": "^4.5.0",
     "moment": "^2.29.1",
     "mysql": "^2.18.1",

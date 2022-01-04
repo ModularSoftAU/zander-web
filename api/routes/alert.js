@@ -5,7 +5,7 @@ const baseEndpoint = config.siteConfiguration.apiRoute + "/alert";
 
 export default function alertApiRoute(app) {
 
-    app.post(baseEndpoint + '/create', (req, res, next) => {
+    app.post(baseEndpoint + '/create', async function(req, res) {
         // Some of these may not be const but have been assumed to be so thus far.
         const alertSlug = req.body.alertSlug;
         const body = req.body.body;
@@ -16,10 +16,10 @@ export default function alertApiRoute(app) {
         const motdFormat = req.body.motdFormat;
 
         // ...
-        res.json({ success: true });
+        res.send({ success: true });
     });
 
-    app.post(baseEndpoint + '/edit', (req, res, next) => {
+    app.post(baseEndpoint + '/edit', async function(req, res) {
         const alertSlug = req.body.alertSlug;
         const body = req.body.body;
         const motd = req.body.motd;
@@ -29,13 +29,13 @@ export default function alertApiRoute(app) {
         const motdFormat = req.body.motdFormat;
 
         // ...
-        res.json({ success: true });
+        res.send({ success: true });
     });
 
-    app.post(baseEndpoint + '/delete', (req, res, next) => {
+    app.post(baseEndpoint + '/delete', async function(req, res) {
         const alertSlug = req.body.alertSlug;
 
         // ...
-        res.json({ success: true });
+        res.send({ success: true });
     });
 }

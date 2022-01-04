@@ -3,7 +3,7 @@ const baseEndpoint = config.siteConfiguration.apiRoute + "/punishment";
 
 export default function punishmentApiRoute(app) {
 
-    app.post(baseEndpoint + '/issue', (req, res, next) => {
+    app.post(baseEndpoint + '/issue', async function(req, res) {
         const playerUsername = req.body.playerUsername;
         const staffUsername = req.body.staffUsername;
         const platform = req.body.platform;
@@ -12,28 +12,28 @@ export default function punishmentApiRoute(app) {
         const reason = req.body.reason;
 
         // ...
-        res.json({ success: true });
+        res.send({ success: true });
     });
 
-    app.post(baseEndpoint + '/delete', (req, res, next) => {
+    app.post(baseEndpoint + '/delete', async function(req, res) {
         const punishmentId = req.body.punishmentId;
 
         // ...
-        res.json({ success: true });
+        res.send({ success: true });
     });
 
-    app.get(baseEndpoint + '/user', (req, res, next) => {
+    app.get(baseEndpoint + '/user', async function(req, res) {
         const username = req.query.username;
 
         // ...
-        res.json({ success: true });
+        res.send({ success: true });
     });
 
-    app.post(baseEndpoint + '/latest', (req, res, next) => {
+    app.post(baseEndpoint + '/latest', async function(req, res) {
         const latest = req.body.latest;
 
         // ...
-        res.json({ success: true });
+        res.send({ success: true });
     });
 
 }
