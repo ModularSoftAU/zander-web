@@ -4,9 +4,9 @@ import dashboardKnowledgebaseSiteRoute from './knowledgebase'
 import dashboardRanksSiteRoute from './ranks'
 import dashboardServersSiteRoute from './servers'
 
-export default function dashbordSiteRoutes(fastify, fetch, moment) {
+export default function dashbordSiteRoutes(app, fetch, moment) {
 
-    // dashboardSiteRoute(fastify, fetch);
+    // dashboardSiteRoute(app, fetch);
     // dashboardEventSiteRoute(app, fetch, moment);
     // dashboardKnowledgebaseSiteRoute(app, fetch);
     // dashboardRanksSiteRoute(app, fetch);

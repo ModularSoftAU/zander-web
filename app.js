@@ -95,7 +95,7 @@ import apiRoutes from './api/routes'
 // Application Boot
 //
 const buildApp = async () => {
-    const app = fastify({ logger: true });
+    const app = fastify({ logger: false });
     const port = process.env.PORT || config.port || 8080;
 
     console.log(app.printRoutes());
@@ -110,7 +110,7 @@ const buildApp = async () => {
 
     app.register(await import('fastify-static'), {
         root: path.join(__dirname, 'assets'),
-        prefix: '/', // optional: default '/'
+        prefix: '/',
     })
 
     // Routes

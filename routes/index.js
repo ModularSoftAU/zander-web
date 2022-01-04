@@ -23,32 +23,32 @@ export default function applicationSiteRoutes(app, moment, fetch) {
         });
     });
 
-    // // 
-    // // Play
-    // // 
-    // app.get('/play', async (req, res, next) => {
-    //     const fetchURL = `${config.siteConfiguration.siteAddress}${config.siteConfiguration.apiRoute}/server/get?visible=true`;
-    //     const response = await fetch(fetchURL);
-    //     const apiData = await response.json();
+    // 
+    // Play
+    // 
+    app.get('/play', async function(request, reply) {
+        const fetchURL = `${config.siteConfiguration.siteAddress}${config.siteConfiguration.apiRoute}/server/get?visible=true`;
+        const response = await fetch(fetchURL);
+        const apiData = await response.json();
 
-    //     res.render('modules/play/play', {
-    //         "pageTitle": `Play`,
-    //         config: config,
-    //         apiData: apiData
-    //     });
-    // });
+        return reply.view('modules/play/play', {
+            "pageTitle": `Play`,
+            config: config,
+            apiData: apiData
+        });
+    });
 
     // // 
     // // Community Creations
     // // 
-    // app.get('/communityCreations', (req, res, next) => {
+    // app.get('/communityCreations', function(request, reply) => {
     //     res.render('modules/communityCreation/communityCreation', {
     //         "pageTitle": `Community Creations`,
     //         config: config
     //     });
     // });
 
-    // app.get('/communityCreation/submit', (req, res, next) => {
+    // app.get('/communityCreation/submit', function(request, reply) => {
     //     res.render('modules/communityCreation/submit', {
     //         "pageTitle": `Submit a Community Creation`,
     //         config: config
@@ -58,7 +58,7 @@ export default function applicationSiteRoutes(app, moment, fetch) {
     // // 
     // // Apply
     // // 
-    // app.get('/apply', async (req, res, next) => {
+    // app.get('/apply', async function(request, reply) => {
     //     const fetchURL = `${config.siteConfiguration.siteAddress}${config.siteConfiguration.apiRoute}/application/get`;
     //     const response = await fetch(fetchURL);
     //     const apiData = await response.json();
@@ -73,7 +73,7 @@ export default function applicationSiteRoutes(app, moment, fetch) {
     // // 
     // // Events
     // // 
-    // app.get('/events', async (req, res, next) => {
+    // app.get('/events', async function(request, reply) => {
     //     const fetchURL = `${config.siteConfiguration.siteAddress}${config.siteConfiguration.apiRoute}/event/get?published=show`;
     //     const response = await fetch(fetchURL);
     //     const apiData = await response.json();
@@ -89,7 +89,7 @@ export default function applicationSiteRoutes(app, moment, fetch) {
     // // 
     // // Vote
     // // 
-    // app.get('/vote', (req, res, next) => {
+    // app.get('/vote', function(request, reply) => {
     //     res.render('vote', {
     //         "pageTitle": `Vote`,
     //         config: config
@@ -99,7 +99,7 @@ export default function applicationSiteRoutes(app, moment, fetch) {
     // // 
     // // Staff
     // // 
-    // app.get('/staff', (req, res, next) => {
+    // app.get('/staff', function(request, reply) => {
     //     res.render('staff', {
     //         "pageTitle": `Staff`,
     //         config: config
@@ -109,7 +109,7 @@ export default function applicationSiteRoutes(app, moment, fetch) {
     // // 
     // // Profile
     // // 
-    // app.get('/profile', (req, res, next) => {
+    // app.get('/profile', function(request, reply) => {
     //     res.render('modules/profile/profile', {
     //         "pageTitle": `Steve's Profile`,
     //         config: config
@@ -119,7 +119,7 @@ export default function applicationSiteRoutes(app, moment, fetch) {
     // // 
     // // Punishments
     // // 
-    // app.get('/punishments', (req, res, next) => {
+    // app.get('/punishments', function(request, reply) => {
     //     res.render('punishments', {
     //         "pageTitle": `Punishments`,
     //         config: config
@@ -129,14 +129,14 @@ export default function applicationSiteRoutes(app, moment, fetch) {
     // // 
     // // Session
     // // 
-    // app.get('/login', (req, res, next) => {
+    // app.get('/login', function(request, reply) => {
     //     res.render('login', {
     //         "pageTitle": `Login`,
     //         config: config
     //     });
     // });
 
-    // app.get('/register', (req, res, next) => {
+    // app.get('/register', function(request, reply) => {
     //     res.render('register', {
     //         "pageTitle": `Register`,
     //         config: config
@@ -146,7 +146,7 @@ export default function applicationSiteRoutes(app, moment, fetch) {
     // // 
     // // Appeal
     // // 
-    // app.get('/appeal', (req, res, next) => {
+    // app.get('/appeal', function(request, reply) => {
     //     res.render('appeal', {
     //         "pageTitle": `Appeal`,
     //         config: config
@@ -156,21 +156,21 @@ export default function applicationSiteRoutes(app, moment, fetch) {
     // // 
     // // Shopping District Directory
     // // 
-    // app.get('/shoppingDistrictDirectory', (req, res, next) => {
+    // app.get('/shoppingDistrictDirectory', function(request, reply) => {
     //     res.render('modules/shoppingDistrictDirectory/shoppingDistrictDirectory', {
     //         "pageTitle": `Shopping District Directory`,
     //         config: config
     //     });
     // });
 
-    // app.get('/sdd', (req, res, next) => {
+    // app.get('/sdd', function(request, reply) => {
     //     res.render('modules/shoppingDistrictDirectory/shoppingDistrictDirectory', {
     //         "pageTitle": `Shopping District Directory`,
     //         config: config
     //     });
     // });
 
-    // app.get('/shoppingDistrictDirectory/create', (req, res, next) => {
+    // app.get('/shoppingDistrictDirectory/create', function(request, reply) => {
     //     fs.readdir(path.join(__dirname, '../assets/images/minecraftItemImages'), function(err, files) {
     //         //handling error
     //         if (err) {

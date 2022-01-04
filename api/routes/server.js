@@ -4,27 +4,27 @@ const baseEndpoint = config.siteConfiguration.apiRoute + "/server";
 
 export default function serverApiRoute(app) {
 
-    app.get(baseEndpoint + '/get', (req, res, next) => {
+    app.get(baseEndpoint + '/get', async function(request, reply) {
         try {
-            const visible = req.query.visible;
+            const visible = request.query.visible;
 
             function getServers(dbQuery) {
                 db.query(dbQuery, function(error, results, fields) {
                     if (error) {
-                        return res.json({
+                        return reply({
                             success: false,
                             message: `${error}`
                         });
                     }
 
                     if (!results.length) {
-                        return res.json({
+                        return reply({
                             success: false,
                             message: `There are currently no servers visible.`
                         });
                     }
 
-                    return res.json({
+                    return reply({
                         success: true,
                         data: results
                     });
@@ -61,7 +61,7 @@ export default function serverApiRoute(app) {
         }
     });
 
-    app.post(baseEndpoint + '/create', (req, res, next) => {
+    app.post(baseEndpoint + '/create', async function(request, reply) {
         const name = req.body.name;
         const fqdn = req.body.fqdn;
         const ipAddress = req.body.ipAddress;
@@ -91,7 +91,7 @@ export default function serverApiRoute(app) {
         }
     });
 
-    app.post(baseEndpoint + '/edit', (req, res, next) => {
+    app.post(baseEndpoint + '/edit', async function(request, reply) {
         const serverId = req.body.serverId;
         const name = req.body.name;
         const fqdn = req.body.fqdn;
@@ -104,7 +104,7 @@ export default function serverApiRoute(app) {
         res.json({ success: true });
     });
 
-    app.post(baseEndpoint + '/delete', (req, res, next) => {
+    app.post(baseEndpoint + '/delete', async function(request, reply) {
         const serverId = req.body.serverId;
 
         try {
