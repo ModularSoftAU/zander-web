@@ -6,14 +6,20 @@ import WOKCommands from 'wokcommands'
 import moment from 'moment'
 import fetch from 'node-fetch'
 
+import pointOfView from 'point-of-view'
+import ejs from 'ejs'
+
+
 // Paths
 import path from 'path'
 import { fileURLToPath } from 'url'
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
+import db from './controllers/databaseController'
+
 // Fastify
-import Fastify from "fastify"
+import fastify from "fastify"
 import ExpressPlugin from "fastify-express";
 import cors from "cors";
 
@@ -79,19 +85,6 @@ DiscordClient.login(config.discord.apiKey);
 
 // 
 // Website Related
-// 
-
-// const app = express();
-// app.use(express.urlencoded({ extended: true }))
-// app.use(express.json());
-// app.use(cors({ origin: true }));
-
-// app.set('view engine', 'ejs');
-// app.set('views', 'views');
-// app.use(express.static(__dirname + '/assets'));
-
-//
-// Routes
 //
 
 // Site Routes
@@ -99,31 +92,37 @@ import siteRoutes from './routes'
 import apiRoutes from './api/routes'
 
 //
-// Controllers
-//
-// import database from './controllers/databaseController' // Database controller
-
-//
 // Application Boot
 //
 const buildApp = async () => {
-    const fastify = Fastify({ logger: true });
+    const app = fastify({ logger: true });
     const port = process.env.PORT || config.port || 8080;
 
-    await fastify.register(ExpressPlugin);
-    fastify.register(cors, { origin: true });
+    console.log(app.printRoutes());
 
-    console.log(fastify.printRoutes());
+    // EJS Rendering Engine
+    app.register(await import("point-of-view"), {
+        engine: {
+          ejs: await import("ejs"),
+        },
+        root: path.join(__dirname, "views"),
+    });
 
-    siteRoutes(fastify, moment, fetch);
-    apiRoutes(fastify, DiscordClient, moment);
+    app.register(await import('fastify-static'), {
+        root: path.join(__dirname, 'assets'),
+        prefix: '/', // optional: default '/'
+    })
+
+    // Routes
+    siteRoutes(app, moment, fetch);
+    apiRoutes(app, DiscordClient, moment);
   
     try {
-      await fastify.listen(port);
+      await app.listen(port);
       console.log(`\n// ${packageData.name} v.${packageData.version}\nGitHub Repository: ${packageData.homepage}\nCreated By: ${packageData.author}`);
       console.log(`Site and API is listening to the port ${port}`);
     } catch (error) {
-        fastify.log.error(`Unable to start the server:\n${error}`);
+        app.log.error(`Unable to start the server:\n${error}`);
     }
 };
 

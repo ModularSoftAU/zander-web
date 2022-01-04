@@ -17,7 +17,7 @@ export default function applicationSiteRoutes(app, moment, fetch) {
     // require('./policyRoutes')(app);
 
     app.get('/', async function(request, reply) {
-        reply.render('modules/index/index', {
+        return reply.view("modules/index/index", {
             "pageTitle": `${config.siteConfiguration.siteName}`,
             config: config
         });
