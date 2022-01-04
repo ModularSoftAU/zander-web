@@ -91,6 +91,9 @@ DiscordClient.login(config.discord.apiKey);
 import siteRoutes from './routes'
 import apiRoutes from './api/routes'
 
+// API token authentication
+import verifyToken from './api/routes/verifyToken'
+
 //
 // Application Boot
 //
@@ -113,16 +116,25 @@ const buildApp = async () => {
         prefix: '/',
     })
 
-    app.register(await import('fastify-formbody'))
+    app.register(await import ('fastify-formbody'))
 
-    // Routes
-    siteRoutes(app, moment, fetch);
-    apiRoutes(app, DiscordClient, moment);
-  
+    app.register((instance, options, next) => {
+        // API routes (Token authenticated)
+        instance.addHook('preValidation', verifyToken);
+        apiRoutes(instance, DiscordClient, moment);
+        next();
+    });
+
+    app.register((instance, options, next) => {
+        // Routes
+        siteRoutes(instance, moment, fetch);
+        next();
+    });
+
     try {
-      await app.listen(port);
-      console.log(`\n// ${packageData.name} v.${packageData.version}\nGitHub Repository: ${packageData.homepage}\nCreated By: ${packageData.author}`);
-      console.log(`Site and API is listening to the port ${port}`);
+        await app.listen(port);
+        console.log(`\n// ${packageData.name} v.${packageData.version}\nGitHub Repository: ${packageData.homepage}\nCreated By: ${packageData.author}`);
+        console.log(`Site and API is listening to the port ${port}`);
     } catch (error) {
         app.log.error(`Unable to start the server:\n${error}`);
     }
