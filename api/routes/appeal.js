@@ -1,6 +1,5 @@
-const baseEndpoint = config.siteConfiguration.apiRoute + '/appeal';
-
 export default function appealApiRoute(app, config, db) {
+    const baseEndpoint = config.siteConfiguration.apiRoute + '/appeal';
 
     app.post(baseEndpoint + '/create', async function(req, res) {
         const punishmentId = req.body.punishmentId;

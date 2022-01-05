@@ -1,6 +1,5 @@
-const baseEndpoint = config.siteConfiguration.apiRoute + '/communitycreation';
-
 export default function communityCreationApiRoute(app, config, db) {
+    const baseEndpoint = config.siteConfiguration.apiRoute + '/communitycreation';
 
     app.get(baseEndpoint + '/get', async function(req, res) {
         // ...

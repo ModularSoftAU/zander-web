@@ -1,7 +1,7 @@
-const baseEndpoint = config.siteConfiguration.apiRoute + '/event';
 import { MessageEmbed } from 'discord.js'
 
 export default function eventApiRoute(app, DiscordClient, moment, config, db) {
+    const baseEndpoint = config.siteConfiguration.apiRoute + '/event';
 
     app.get(baseEndpoint + '/get', async function(req, res) {
         try {

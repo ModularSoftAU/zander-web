@@ -1,6 +1,5 @@
-const baseEndpoint = config.siteConfiguration.apiRoute + '/discord';
-
 export default function discordApiRoute(app, DiscordClient, config, db) {
+    const baseEndpoint = config.siteConfiguration.apiRoute + '/discord';
 
     app.post(baseEndpoint + '/switch', async function(req, res) {
         const username = req.body.username;

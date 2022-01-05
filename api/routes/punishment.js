@@ -1,6 +1,5 @@
-const baseEndpoint = config.siteConfiguration.apiRoute + '/punishment';
-
 export default function punishmentApiRoute(app, config, db) {
+    const baseEndpoint = config.siteConfiguration.apiRoute + '/punishment';
 
     app.post(baseEndpoint + '/issue', async function(req, res) {
         const playerUsername = req.body.playerUsername;

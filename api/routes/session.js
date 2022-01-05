@@ -1,6 +1,5 @@
-const baseEndpoint = config.siteConfiguration.apiRoute + '/session';
-
 export default function sessionApiRoute(app, config, db) {
+    const baseEndpoint = config.siteConfiguration.apiRoute + '/session';
 
     app.post(baseEndpoint + '/create', async function(req, res) {
         const uuid = req.body.uuid;

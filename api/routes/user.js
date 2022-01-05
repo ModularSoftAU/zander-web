@@ -1,6 +1,5 @@
-const baseEndpoint = config.siteConfiguration.apiRoute + '/user';
-
 export default function userApiRoute(app, config, db) {
+    const baseEndpoint = config.siteConfiguration.apiRoute + '/user';
 
     app.post(baseEndpoint + '/create', async function(req, res) {
         const uuid = req.body.uuid;

@@ -1,6 +1,5 @@
-const baseEndpoint = config.siteConfiguration.apiRoute + '/rank';
-
 export default function rankApiRoute(app, config, db) {
+    const baseEndpoint = config.siteConfiguration.apiRoute + '/rank';
 
     app.get(baseEndpoint + '/get', async function(req, res) {
         try {

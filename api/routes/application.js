@@ -1,6 +1,5 @@
-const baseEndpoint = config.siteConfiguration.apiRoute + '/application';
-
 export default function applicationApiRoute(app, config, db) {
+    const baseEndpoint = config.siteConfiguration.apiRoute + '/application';
 
     app.get(baseEndpoint + '/get', async function(req, res) {
         try {

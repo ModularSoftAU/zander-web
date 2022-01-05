@@ -1,6 +1,5 @@
-const baseEndpoint = config.siteConfiguration.apiRoute + '/vote';
-
 export default function voteApiRoute(app, config, db) {
+    const baseEndpoint = config.siteConfiguration.apiRoute + '/vote';
 
     app.post(baseEndpoint + '/cast', async function(req, res) {
         const username = req.body.username;

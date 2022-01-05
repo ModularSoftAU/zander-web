@@ -1,6 +1,5 @@
-const baseEndpoint = config.siteConfiguration.apiRoute + '/knowledgebase';
-
 export default function knowledgebaseApiRoute(app, config, db) {
+    const baseEndpoint = config.siteConfiguration.apiRoute + '/knowledgebase';
 
     // Jaedan: Some get routes should be added for the knowledgebase
     // Data goes in but none comes out currently

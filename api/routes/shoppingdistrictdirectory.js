@@ -1,8 +1,7 @@
-const baseEndpoint = config.siteConfiguration.apiRoute + '/shoppingdistrictdirectory';
-
 // Jaedan: Shops likely need a get route to obtain items from a specific shop
 
 export default function shoppingDistrictDirectoryApiRoute(app, config, db) {
+    const baseEndpoint = config.siteConfiguration.apiRoute + '/shoppingdistrictdirectory';
 
     app.get(baseEndpoint + '/get', async function(req, res) {
         try {
