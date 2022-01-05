@@ -88,9 +88,8 @@ const buildApp = async () => {
     const app = fastify({ logger: false });
     const port = process.env.PORT || config.port || 8080;
 
-    app.setErrorHandler((error, request, reply) => {
-        // reply.send(error);
-
+    // When app errors, render the error on a page, do not provide JSON
+    app.setErrorHandler((error, request, reply) => {        
         reply.view('error', {
             "pageTitle": `Server Error`,
             config: config,

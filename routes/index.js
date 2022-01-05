@@ -5,9 +5,9 @@ import dashboardSiteRoutes from './dashboard'
 import knowledgebaseSiteRoutes from './knowledgebaseRoutes'
 import policySiteRoutes from './policyRoutes'
 
-export default function applicationSiteRoutes(app, moment, fetch, config) {
+export default function applicationSiteRoutes(app, fetch, moment, config) {
 
-    dashboardSiteRoutes(app, moment, fetch, config);
+    dashboardSiteRoutes(app, fetch, moment, config);
     knowledgebaseSiteRoutes(app, fetch, config);
     policySiteRoutes(app, config);
 
