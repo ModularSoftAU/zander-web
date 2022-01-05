@@ -1,27 +1,18 @@
-// import express from 'express'
 import packageData from './package.json'
-import config from './config.json'
 import DiscordJS from 'discord.js'
 import WOKCommands from 'wokcommands'
 import moment from 'moment'
 import fetch from 'node-fetch'
+import fastify from "fastify"
 
-import pointOfView from 'point-of-view'
-import ejs from 'ejs'
-
+import config from './config.json'
+import db from './controllers/databaseController'
 
 // Paths
 import path from 'path'
 import { fileURLToPath } from 'url'
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-
-import db from './controllers/databaseController'
-
-// Fastify
-import fastify from "fastify"
-import ExpressPlugin from "fastify-express";
-import cors from "cors";
 
 // 
 // Discord Related

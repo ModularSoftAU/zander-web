@@ -1,5 +1,5 @@
 export default function verifyToken(req, res, done) {
-    console.log('Verifying that API request includes valid token...');
+    // console.log('Verifying that API request includes valid token...');
 
     // Below is the implementation. Currently disabled.
     done();

@@ -20,13 +20,9 @@
   },
   "homepage": "https://github.com/ModularEnigma/zander-web#readme",
   "dependencies": {
-    "cors": "^2.8.5",
     "discord.js": "^13.4.0",
     "ejs": "^3.1.6",
-    "express": "^4.17.1",
-    "express-useragent": "^1.0.15",
     "fastify": "^3.25.3",
-    "fastify-cors": "^6.0.2",
     "fastify-express": "^0.3.3",
     "fastify-formbody": "^5.2.0",
     "fastify-static": "^4.5.0",
