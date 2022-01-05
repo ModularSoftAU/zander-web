@@ -8,7 +8,7 @@ export default function dashboardRanksSiteRoute(app, fetch, config) {
         const response = await fetch(fetchURL);
         const apiData = await response.json();
         
-        reply.render('dashboard/ranks/list', {
+        reply.view('dashboard/ranks/list', {
             "pageTitle": `Dashboard - Ranks`,
             config: config,
             apiData: apiData
@@ -16,7 +16,7 @@ export default function dashboardRanksSiteRoute(app, fetch, config) {
     });
 
     app.get('/dashboard/ranks/editor', async function(request, reply) {
-        reply.render('dashboard/ranks/editor', {
+        reply.view('dashboard/ranks/editor', {
             "pageTitle": `Dashboard - Rank Editor`,
             config: config
         });
