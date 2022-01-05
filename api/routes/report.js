@@ -1,7 +1,6 @@
-import config from '../../config.json'
-const baseEndpoint = config.siteConfiguration.apiRoute + "/report";
+const baseEndpoint = config.siteConfiguration.apiRoute + '/report';
 
-export default function reportApiRoute(app) {
+export default function reportApiRoute(app, config, db) {
 
     app.get(baseEndpoint + '/get', async function(req, res) {
         // ...

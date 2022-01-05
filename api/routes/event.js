@@ -1,9 +1,7 @@
-import config from '../../config.json'
-import db from '../../controllers/databaseController'
-const baseEndpoint = config.siteConfiguration.apiRoute + "/event";
+const baseEndpoint = config.siteConfiguration.apiRoute + '/event';
 import { MessageEmbed } from 'discord.js'
 
-export default function eventApiRoute(app, DiscordClient, moment) {
+export default function eventApiRoute(app, DiscordClient, moment, config, db) {
 
     app.get(baseEndpoint + '/get', async function(req, res) {
         try {
@@ -166,9 +164,9 @@ export default function eventApiRoute(app, DiscordClient, moment) {
                         guild.scheduledEvents.create({
                             name: `${eventInfo.name}`,
                             scheduledStartTime: `${eventInfo.eventDateTime}`,
-                            privacyLevel: "GUILD_ONLY",
+                            privacyLevel: 'GUILD_ONLY',
                             description: `Hosted on ${eventInfo.hostingServerName}\n${eventInfo.information}`,
-                            entityType: "VOICE",
+                            entityType: 'VOICE',
                             channel: guild.channels.cache.get(`${eventInfo.guildEventChannel}`)
                         })
 

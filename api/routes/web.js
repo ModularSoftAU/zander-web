@@ -1,7 +1,6 @@
-import config from '../../config.json'
-const baseEndpoint = config.siteConfiguration.apiRoute + "/web";
+const baseEndpoint = config.siteConfiguration.apiRoute + '/web';
 
-export default function webApiRoute(app) {
+export default function webApiRoute(app, config, db) {
 
     app.post(baseEndpoint + '/login', async function(req, res) {
         const username = req.body.username;

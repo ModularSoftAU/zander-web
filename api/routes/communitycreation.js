@@ -1,8 +1,6 @@
-import config from '../../config.json'
-import db from '../../controllers/databaseController'
-const baseEndpoint = config.siteConfiguration.apiRoute + "/communitycreation";
+const baseEndpoint = config.siteConfiguration.apiRoute + '/communitycreation';
 
-export default function communityCreationApiRoute(app) {
+export default function communityCreationApiRoute(app, config, db) {
 
     app.get(baseEndpoint + '/get', async function(req, res) {
         // ...

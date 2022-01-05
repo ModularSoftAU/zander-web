@@ -1,7 +1,6 @@
-import config from '../../config.json'
-const baseEndpoint = config.siteConfiguration.apiRoute + "/vote";
+const baseEndpoint = config.siteConfiguration.apiRoute + '/vote';
 
-export default function voteApiRoute(app) {
+export default function voteApiRoute(app, config, db) {
 
     app.post(baseEndpoint + '/cast', async function(req, res) {
         const username = req.body.username;

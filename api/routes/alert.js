@@ -1,7 +1,6 @@
-import config from '../../config.json'
-const baseEndpoint = config.siteConfiguration.apiRoute + "/alert";
+const baseEndpoint = config.siteConfiguration.apiRoute + '/alert';
 
-export default function alertApiRoute(app) {
+export default function alertApiRoute(app, config, db) {
 
     app.post(baseEndpoint + '/create', async function(req, res) {
         const alertSlug = req.body.alertSlug;
@@ -35,4 +34,5 @@ export default function alertApiRoute(app) {
         // ...
         res.send({ success: true });
     });
+
 }

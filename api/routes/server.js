@@ -1,8 +1,6 @@
-import config from '../../config.json'
-import db from '../../controllers/databaseController'
-const baseEndpoint = config.siteConfiguration.apiRoute + "/server";
+const baseEndpoint = config.siteConfiguration.apiRoute + '/server';
 
-export default function serverApiRoute(app) {
+export default function serverApiRoute(app, config, db) {
 
     app.get(baseEndpoint + '/get', async function(req, res) {
         try {

@@ -1,8 +1,6 @@
-import config from '../../config.json'
-import db from '../../controllers/databaseController'
-const baseEndpoint = config.siteConfiguration.apiRoute + "/knowledgebase";
+const baseEndpoint = config.siteConfiguration.apiRoute + '/knowledgebase';
 
-export default function knowledgebaseApiRoute(app) {
+export default function knowledgebaseApiRoute(app, config, db) {
 
     // Jaedan: Some get routes should be added for the knowledgebase
     // Data goes in but none comes out currently

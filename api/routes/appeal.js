@@ -1,7 +1,6 @@
-import config from '../../config.json'
-const baseEndpoint = config.siteConfiguration.apiRoute + "/appeal";
+const baseEndpoint = config.siteConfiguration.apiRoute + '/appeal';
 
-export default function appealApiRoute(app) {
+export default function appealApiRoute(app, config, db) {
 
     app.post(baseEndpoint + '/create', async function(req, res) {
         const punishmentId = req.body.punishmentId;

@@ -1,7 +1,6 @@
-import config from '../../config.json'
-const baseEndpoint = config.siteConfiguration.apiRoute + "/friend";
+const baseEndpoint = config.siteConfiguration.apiRoute + '/friend';
 
-export default function friendApiRoute(app) {
+export default function friendApiRoute(app, config, db) {
 
     app.post(baseEndpoint + '/request', async function(req, res) {
         const requestee = req.body.requestee;

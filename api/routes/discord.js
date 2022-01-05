@@ -1,7 +1,6 @@
-import config from '../../config.json'
-const baseEndpoint = config.siteConfiguration.apiRoute + "/discord";
+const baseEndpoint = config.siteConfiguration.apiRoute + '/discord';
 
-export default function discordApiRoute(app, DiscordClient) {
+export default function discordApiRoute(app, DiscordClient, config, db) {
 
     app.post(baseEndpoint + '/switch', async function(req, res) {
         const username = req.body.username;

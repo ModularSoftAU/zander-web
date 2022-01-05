@@ -1,8 +1,6 @@
-import config from '../../config.json'
-import db from '../../controllers/databaseController'
-const baseEndpoint = config.siteConfiguration.apiRoute + "/rank";
+const baseEndpoint = config.siteConfiguration.apiRoute + '/rank';
 
-export default function rankApiRoute(app) {
+export default function rankApiRoute(app, config, db) {
 
     app.get(baseEndpoint + '/get', async function(req, res) {
         try {

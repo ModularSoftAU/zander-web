@@ -1,7 +1,6 @@
-import config from '../../config.json'
-const baseEndpoint = config.siteConfiguration.apiRoute + "/session";
+const baseEndpoint = config.siteConfiguration.apiRoute + '/session';
 
-export default function sessionApiRoute(app) {
+export default function sessionApiRoute(app, config, db) {
 
     app.post(baseEndpoint + '/create', async function(req, res) {
         const uuid = req.body.uuid;

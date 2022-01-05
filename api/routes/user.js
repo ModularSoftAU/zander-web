@@ -1,8 +1,6 @@
-import config from '../../config.json'
-import db from '../../controllers/databaseController'
-const baseEndpoint = config.siteConfiguration.apiRoute + "/user";
+const baseEndpoint = config.siteConfiguration.apiRoute + '/user';
 
-export default function userApiRoute(app) {
+export default function userApiRoute(app, config, db) {
 
     app.post(baseEndpoint + '/create', async function(req, res) {
         const uuid = req.body.uuid;
