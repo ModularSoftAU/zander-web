@@ -1,12 +1,18 @@
-const express = require('express');
-const package = require('./package.json');
-const config = require('./config.json');
-const DiscordJS = require('discord.js');
-const WOKCommands = require('wokcommands');
-const path = require('path');
-const moment = require('moment');
-const fetch = require('node-fetch');
-const useragent = require('express-useragent');
+import packageData from './package.json'
+import DiscordJS from 'discord.js'
+import WOKCommands from 'wokcommands'
+import moment from 'moment'
+import fetch from 'node-fetch'
+import fastify from "fastify"
+
+import config from './config.json'
+import db from './controllers/databaseController'
+
+// Paths
+import path from 'path'
+import { fileURLToPath } from 'url'
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 // 
 // Discord Related
@@ -51,6 +57,8 @@ DiscordClient.on('ready', () => {
             // Default is true
             ephemeral: true,
 
+            typeScript: true,
+
             // What server/guild IDs are used for testing only commands & features
             // Can be a single string if there is only 1 ID
             testServers: ['899441191416901632', '581056239312568332'],
@@ -68,32 +76,59 @@ DiscordClient.login(config.discord.apiKey);
 
 // 
 // Website Related
-// 
-const app = express();
-app.use(express.urlencoded({ extended: true }))
-app.use(express.json());
-
-app.set('view engine', 'ejs');
-app.set('views', 'views');
-app.use(express.static(__dirname + '/assets'));
-app.use(useragent.express());
-
 //
+
 // Site Routes
-//
-require('./routes')(app, moment, fetch);
-require('./api/routes')(app, DiscordClient, moment);
+import siteRoutes from './routes'
+import apiRoutes from './api/routes'
 
-//
-// Controllers
-//
-const database = require('./controllers/databaseController'); // Database controller
+// API token authentication
+import verifyToken from './api/routes/verifyToken'
 
 //
 // Application Boot
 //
-const port = process.env.PORT || config.port || 8080;
-app.listen(port, async function() {
-    console.log(`\n// ${package.name} v.${package.version}\nGitHub Repository: ${package.homepage}\nCreated By: ${package.author}`);
-    console.log(`Site and API is listening to the port ${port}`);
-});
+const buildApp = async () => {
+    const app = fastify({ logger: false });
+    const port = process.env.PORT || config.port || 8080;
+
+    console.log(app.printRoutes());
+
+    // EJS Rendering Engine
+    app.register(await import("point-of-view"), {
+        engine: {
+          ejs: await import("ejs"),
+        },
+        root: path.join(__dirname, "views"),
+    });
+
+    app.register(await import('fastify-static'), {
+        root: path.join(__dirname, 'assets'),
+        prefix: '/',
+    })
+
+    app.register(await import ('fastify-formbody'))
+
+    app.register((instance, options, next) => {
+        // API routes (Token authenticated)
+        instance.addHook('preValidation', verifyToken);
+        apiRoutes(instance, DiscordClient, moment, config, db);
+        next();
+    });
+
+    app.register((instance, options, next) => {
+        // Routes
+        siteRoutes(instance, moment, fetch, config);
+        next();
+    });
+
+    try {
+        await app.listen(port);
+        console.log(`\n// ${packageData.name} v.${packageData.version}\nGitHub Repository: ${packageData.homepage}\nCreated By: ${packageData.author}`);
+        console.log(`Site and API is listening to the port ${port}`);
+    } catch (error) {
+        app.log.error(`Unable to start the server:\n${error}`);
+    }
+};
+
+buildApp();

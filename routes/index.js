@@ -1,15 +1,18 @@
-const config = require('../config.json');
-const path = require('path');
-const fs = require('fs');
+import path from 'path'
+import fs from 'fs'
 
-module.exports = (app, moment, fetch) => {
+import dashboardSiteRoutes from './dashboard'
+import knowledgebaseSiteRoutes from './knowledgebaseRoutes'
+import policySiteRoutes from './policyRoutes'
 
-    require('./dashboard')(app, fetch, moment);
-    require('./knowledgebaseRoutes')(app);
-    require('./policyRoutes')(app);
+export default function applicationSiteRoutes(app, moment, fetch, config) {
 
-    app.get('/', (req, res, next) => {
-        res.render('modules/index/index', {
+    dashboardSiteRoutes(app, moment, fetch, config);
+    knowledgebaseSiteRoutes(app, config);
+    policySiteRoutes(app, config);
+
+    app.get('/', async function(request, reply) {
+        return reply.view("modules/index/index", {
             "pageTitle": `${config.siteConfiguration.siteName}`,
             config: config
         });
@@ -18,12 +21,12 @@ module.exports = (app, moment, fetch) => {
     // 
     // Play
     // 
-    app.get('/play', async (req, res, next) => {
+    app.get('/play', async function(request, reply) {
         const fetchURL = `${config.siteConfiguration.siteAddress}${config.siteConfiguration.apiRoute}/server/get?visible=true`;
         const response = await fetch(fetchURL);
         const apiData = await response.json();
 
-        res.render('modules/play/play', {
+        return reply.view('modules/play/play', {
             "pageTitle": `Play`,
             config: config,
             apiData: apiData
@@ -33,15 +36,15 @@ module.exports = (app, moment, fetch) => {
     // 
     // Community Creations
     // 
-    app.get('/communityCreations', (req, res, next) => {
-        res.render('modules/communityCreation/communityCreation', {
+    app.get('/communityCreations', async function(request, reply) {
+        return reply.view('modules/communityCreation/communityCreation', {
             "pageTitle": `Community Creations`,
             config: config
         });
     });
 
-    app.get('/communityCreation/submit', (req, res, next) => {
-        res.render('modules/communityCreation/submit', {
+    app.get('/communityCreation/submit', async function(request, reply) {
+        reply.view('modules/communityCreation/submit', {
             "pageTitle": `Submit a Community Creation`,
             config: config
         });
@@ -50,12 +53,12 @@ module.exports = (app, moment, fetch) => {
     // 
     // Apply
     // 
-    app.get('/apply', async (req, res, next) => {
+    app.get('/apply', async function(request, reply) {
         const fetchURL = `${config.siteConfiguration.siteAddress}${config.siteConfiguration.apiRoute}/application/get`;
         const response = await fetch(fetchURL);
         const apiData = await response.json();
 
-        res.render('apply', {
+        reply.view('apply', {
             "pageTitle": `Apply`,
             config: config,
             apiData: apiData
@@ -65,12 +68,12 @@ module.exports = (app, moment, fetch) => {
     // 
     // Events
     // 
-    app.get('/events', async (req, res, next) => {
+    app.get('/events', async function(request, reply) {
         const fetchURL = `${config.siteConfiguration.siteAddress}${config.siteConfiguration.apiRoute}/event/get?published=show`;
         const response = await fetch(fetchURL);
         const apiData = await response.json();
 
-        res.render('events', {
+        reply.view('events', {
             "pageTitle": `Events`,
             config: config,
             apiData: apiData,
@@ -81,8 +84,8 @@ module.exports = (app, moment, fetch) => {
     // 
     // Vote
     // 
-    app.get('/vote', (req, res, next) => {
-        res.render('vote', {
+    app.get('/vote', async function(request, reply) {
+        reply.view('vote', {
             "pageTitle": `Vote`,
             config: config
         });
@@ -91,8 +94,8 @@ module.exports = (app, moment, fetch) => {
     // 
     // Staff
     // 
-    app.get('/staff', (req, res, next) => {
-        res.render('staff', {
+    app.get('/staff', async function(request, reply) {
+        reply.view('staff', {
             "pageTitle": `Staff`,
             config: config
         });
@@ -101,8 +104,8 @@ module.exports = (app, moment, fetch) => {
     // 
     // Profile
     // 
-    app.get('/profile', (req, res, next) => {
-        res.render('modules/profile/profile', {
+    app.get('/profile', async function(request, reply) {
+        reply.view('modules/profile/profile', {
             "pageTitle": `Steve's Profile`,
             config: config
         });
@@ -111,8 +114,8 @@ module.exports = (app, moment, fetch) => {
     // 
     // Punishments
     // 
-    app.get('/punishments', (req, res, next) => {
-        res.render('punishments', {
+    app.get('/punishments', async function(request, reply) {
+        reply.view('punishments', {
             "pageTitle": `Punishments`,
             config: config
         });
@@ -121,15 +124,15 @@ module.exports = (app, moment, fetch) => {
     // 
     // Session
     // 
-    app.get('/login', (req, res, next) => {
-        res.render('login', {
+    app.get('/login', async function(request, reply) {
+        reply.view('login', {
             "pageTitle": `Login`,
             config: config
         });
     });
 
-    app.get('/register', (req, res, next) => {
-        res.render('register', {
+    app.get('/register', async function(request, reply) {
+        reply.view('register', {
             "pageTitle": `Register`,
             config: config
         });
@@ -138,8 +141,8 @@ module.exports = (app, moment, fetch) => {
     // 
     // Appeal
     // 
-    app.get('/appeal', (req, res, next) => {
-        res.render('appeal', {
+    app.get('/appeal', async function(request, reply) {
+        reply.view('appeal', {
             "pageTitle": `Appeal`,
             config: config
         });
@@ -148,38 +151,38 @@ module.exports = (app, moment, fetch) => {
     // 
     // Shopping District Directory
     // 
-    app.get('/shoppingDistrictDirectory', (req, res, next) => {
-        res.render('modules/shoppingDistrictDirectory/shoppingDistrictDirectory', {
+    app.get('/shoppingDistrictDirectory', async function(request, reply) {
+        reply.view('modules/shoppingDistrictDirectory/shoppingDistrictDirectory', {
             "pageTitle": `Shopping District Directory`,
             config: config
         });
     });
 
-    app.get('/sdd', (req, res, next) => {
-        res.render('modules/shoppingDistrictDirectory/shoppingDistrictDirectory', {
+    app.get('/sdd', async function(request, reply) {
+        reply.view('modules/shoppingDistrictDirectory/shoppingDistrictDirectory', {
             "pageTitle": `Shopping District Directory`,
             config: config
         });
     });
 
-    app.get('/shoppingDistrictDirectory/create', (req, res, next) => {
-        fs.readdir(path.join(__dirname, '../assets/images/minecraftItemImages'), function(err, files) {
-            //handling error
-            if (err) {
-                return console.log('Unable to scan directory: ' + err);
-            }
-            //listing all files using forEach
-            files.forEach(function(file) {
-                // Do whatever you want to do with the file
-                // console.log(file);
-            });
+    app.get('/shoppingDistrictDirectory/create', async function(request, reply) {
+        // fs.readdir(path.join(__dirname, '../assets/images/minecraftItemImages'), function(err, files) {
+        //     //handling error
+        //     if (err) {
+        //         return console.log('Unable to scan directory: ' + err);
+        //     }
+        //     //listing all files using forEach
+        //     files.forEach(function(file) {
+        //         // Do whatever you want to do with the file
+        //         // console.log(file);
+        //     });
 
-            res.render('modules/shoppingDistrictDirectory/create', {
-                "pageTitle": `Shopping District Directory`,
-                config: config,
-                minecraftItem: files
-            });
-        });
+        //     reply.view('modules/shoppingDistrictDirectory/create', {
+        //         "pageTitle": `Shopping District Directory`,
+        //         config: config,
+        //         minecraftItem: files
+        //     });
+        // });
     });
 
 }

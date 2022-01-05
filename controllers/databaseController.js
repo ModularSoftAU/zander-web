@@ -1,5 +1,5 @@
-const mysql = require('mysql');
-const config = require('../config.json');
+import mysql from 'mysql'
+import config from '../config.json'
 
 var connection = mysql.createConnection({
   host: config.database.host,
@@ -19,4 +19,4 @@ connection.connect(function(err) {
   console.log(`[CONSOLE] [DB] Database connection is successful. Your connection ID is ${connection.threadId}.`);
 });
 
-module.exports = connection;
+export default connection;

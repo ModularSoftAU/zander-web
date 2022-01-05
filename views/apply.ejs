@@ -5,7 +5,7 @@
 
 <%- include("modules/navigationBar.ejs") %>
 
-<%- include("miniHeader.ejs", {
+<%- include("partials/miniHeader.ejs", {
   headerTitle: "Apply",
   backgroundImage: "../images/banner/AronCrystalBuilding.png"
 }) %>
@@ -17,7 +17,7 @@
         <div class="row">
 
           <% if (apiData.success == false) { %>
-            <%- include("../../partials/alert.ejs", {
+            <%- include("partials/alert.ejs", {
               alertType: "danger",
               content: apiData.message
             }) %>

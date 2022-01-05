@@ -1,9 +1,7 @@
-const config = require('../../config.json');
-const baseEndpoint = config.siteConfiguration.apiRoute + "/discord";
+export default function discordApiRoute(app, DiscordClient, config, db) {
+    const baseEndpoint = config.siteConfiguration.apiRoute + '/discord';
 
-module.exports = (app, DiscordClient) => {
-
-    app.post(baseEndpoint + '/switch', (req, res, next) => {
+    app.post(baseEndpoint + '/switch', async function(req, res) {
         const username = req.body.username;
         const server = req.body.server;
 
@@ -13,18 +11,18 @@ module.exports = (app, DiscordClient) => {
 
             channel.send(`:twisted_rightwards_arrows:  |  \`${username}\` switched to \`${server}\``);
 
-            res.json({
+            res.send({
                 success: true
             });
         } catch (error) {
-            res.json({
+            res.send({
                 success: false,
                 message: `${error}`
             });
         }
     });
 
-    app.post(baseEndpoint + '/chat', (req, res, next) => {
+    app.post(baseEndpoint + '/chat', async function(req, res) {
         const username = req.body.username;
         const server = req.body.server;
         const content = req.body.content;
@@ -35,18 +33,18 @@ module.exports = (app, DiscordClient) => {
 
             channel.send(`**${server}**  |  \`${username}\` :: ${content}`);
 
-            res.json({
+            res.send({
                 success: true
             });
         } catch (error) {
-            res.json({
+            res.send({
                 success: false,
                 message: `${error}`
             });
         }
     });
 
-    app.post(baseEndpoint + '/join', (req, res, next) => {
+    app.post(baseEndpoint + '/join', async function(req, res) {
         const username = req.body.username;
 
         try {
@@ -55,18 +53,18 @@ module.exports = (app, DiscordClient) => {
 
             channel.send(`:ballot_box_with_check:  | \`${username}\` has joined the Network.`);
 
-            res.json({
+            res.send({
                 success: true
             });
         } catch (error) {
-            res.json({
+            res.send({
                 success: false,
                 message: `${error}`
             });
         }
     });
 
-    app.post(baseEndpoint + '/leave', (req, res, next) => {
+    app.post(baseEndpoint + '/leave', async function(req, res) {
         const username = req.body.username;
 
         try {
@@ -75,18 +73,18 @@ module.exports = (app, DiscordClient) => {
 
             channel.send(`:negative_squared_cross_mark:  | \`${username}\` has left the Network.`);
 
-            res.json({
+            res.send({
                 success: true
             });
         } catch (error) {
-            res.json({
+            res.send({
                 success: false,
                 message: `${error}`
             });
         }
     });
 
-    app.post(baseEndpoint + '/directMessage', (req, res, next) => {
+    app.post(baseEndpoint + '/directMessage', async function(req, res) {
         const senderUsername = req.body.senderUsername;
         const recipientUsername = req.body.recipientUsername;
         const server = req.body.server;
@@ -98,11 +96,11 @@ module.exports = (app, DiscordClient) => {
 
             channel.send(`:e_mail: | **${server}** | \`${senderUsername}\` **=>** \`${recipientUsername}\` :: ${content}`);
 
-            res.json({
+            res.send({
                 success: true
             });
         } catch (error) {
-            res.json({
+            res.send({
                 success: false,
                 message: `${error}`
             });

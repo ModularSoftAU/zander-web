@@ -1,21 +1,19 @@
-const config = require('../../config.json');
-const baseEndpoint = config.siteConfiguration.apiRoute + "/report";
+export default function reportApiRoute(app, config, db) {
+    const baseEndpoint = config.siteConfiguration.apiRoute + '/report';
 
-module.exports = (app) => {
-
-    app.get(baseEndpoint + '/get', (req, res, next) => {
+    app.get(baseEndpoint + '/get', async function(req, res) {
         // ...
-        res.json({ success: true });
+        res.send({ success: true });
     });
 
-    app.get(baseEndpoint + '/get/:username', (req, res, next) => {
+    app.get(baseEndpoint + '/get/:username', async function(req, res) {
         const username = req.params.username;
 
         // ...
-        res.json({ success: true });
+        res.send({ success: true });
     });
 
-    app.post(baseEndpoint + '/create', (req, res, next) => {
+    app.post(baseEndpoint + '/create', async function(req, res) {
         const reportedUser = req.body.reportedUser;
         const reporterUser = req.body.reporterUser;
         const reason = req.body.reason;
@@ -23,14 +21,14 @@ module.exports = (app) => {
         const server = req.body.server;
 
         // ...
-        res.json({ success: true });
+        res.send({ success: true });
     });
 
-    app.post(baseEndpoint + '/close', (req, res, next) => {
+    app.post(baseEndpoint + '/close', async function(req, res) {
         const reportId = req.body.reportId;
 
         // ...
-        res.json({ success: true });
+        res.send({ success: true });
     });
 
 }

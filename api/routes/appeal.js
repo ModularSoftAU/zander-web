@@ -1,69 +1,67 @@
-const config = require('../../config.json');
-const baseEndpoint = config.siteConfiguration.apiRoute + "/appeal";
+export default function appealApiRoute(app, config, db) {
+    const baseEndpoint = config.siteConfiguration.apiRoute + '/appeal';
 
-module.exports = (app) => {
-
-    app.post(baseEndpoint + '/create', (req, res, next) => {
+    app.post(baseEndpoint + '/create', async function(req, res) {
         const punishmentId = req.body.punishmentId;
 
         // ...
-        res.json({ success: true });
+        res.send({ success: true });
     });
 
-    app.get(baseEndpoint + '/:punishmentId', (req, res, next) => {
+    app.get(baseEndpoint + '/:punishmentId', async function(req, res) {
         const punishmentId = req.params.punishmentId;
 
         // ...
-        res.json({ success: true });
+        res.send({ success: true });
     });
 
-    app.post(baseEndpoint + '/comment', (req, res, next) => {
+    app.post(baseEndpoint + '/comment', async function(req, res) {
         const punishmentId = req.body.punishmentId;
         const staffId = req.body.staffId;
         const content = req.body.content;
 
         // ...
-        res.json({ success: true });
+        res.send({ success: true });
     });
 
-    app.post(baseEndpoint + '/accept', (req, res, next) => {
-        const punishmentId = req.body.punishmentId;
-        const staffId = req.body.staffId;
-        const content = req.body.content;
-        const action = req.body.action;
-
-        // ...
-        res.json({ success: true });
-    });
-
-    app.post(baseEndpoint + '/deny', (req, res, next) => {
+    app.post(baseEndpoint + '/accept', async function(req, res) {
         const punishmentId = req.body.punishmentId;
         const staffId = req.body.staffId;
         const content = req.body.content;
         const action = req.body.action;
 
         // ...
-        res.json({ success: true });
+        res.send({ success: true });
     });
 
-    app.post(baseEndpoint + '/escalate', (req, res, next) => {
+    app.post(baseEndpoint + '/deny', async function(req, res) {
         const punishmentId = req.body.punishmentId;
         const staffId = req.body.staffId;
         const content = req.body.content;
         const action = req.body.action;
 
         // ...
-        res.json({ success: true });
+        res.send({ success: true });
     });
 
-    app.post(baseEndpoint + '/deescalate', (req, res, next) => {
+    app.post(baseEndpoint + '/escalate', async function(req, res) {
         const punishmentId = req.body.punishmentId;
         const staffId = req.body.staffId;
         const content = req.body.content;
         const action = req.body.action;
 
         // ...
-        res.json({ success: true });
+        res.send({ success: true });
+    });
+
+    app.post(baseEndpoint + '/deescalate', async function(req, res) {
+        const punishmentId = req.body.punishmentId;
+        const staffId = req.body.staffId;
+        const content = req.body.content;
+        const action = req.body.action;
+
+        // ...
+        res.send({ success: true });
     });
 
 }

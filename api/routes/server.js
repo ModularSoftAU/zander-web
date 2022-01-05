@@ -1,30 +1,27 @@
-const config = require('../../config.json');
-const db = require('../../controllers/databaseController');
-const baseEndpoint = config.siteConfiguration.apiRoute + "/server";
+export default function serverApiRoute(app, config, db) {
+    const baseEndpoint = config.siteConfiguration.apiRoute + '/server';
 
-module.exports = (app) => {
-
-    app.get(baseEndpoint + '/get', (req, res, next) => {
+    app.get(baseEndpoint + '/get', async function(req, res) {
         try {
             const visible = req.query.visible;
 
             function getServers(dbQuery) {
                 db.query(dbQuery, function(error, results, fields) {
                     if (error) {
-                        return res.json({
+                        return res.send({
                             success: false,
                             message: `${error}`
                         });
                     }
 
                     if (!results.length) {
-                        return res.json({
+                        return res.send({
                             success: false,
                             message: `There are currently no servers visible.`
                         });
                     }
 
-                    return res.json({
+                    return res.send({
                         success: true,
                         data: results
                     });
@@ -32,10 +29,10 @@ module.exports = (app) => {
             }
 
             if (!visible) {
-                res.json({
+                res.send({
                     success: false,
                     message: `You must select a visible indicator.`
-                });                
+                });
             }
 
             if (visible === 'true') {
@@ -54,14 +51,14 @@ module.exports = (app) => {
             }
 
         } catch (error) {
-            res.json({
+            res.send({
                 success: false,
                 message: `${error}`
             });
         }
     });
 
-    app.post(baseEndpoint + '/create', (req, res, next) => {
+    app.post(baseEndpoint + '/create', async function(req, res) {
         const name = req.body.name;
         const fqdn = req.body.fqdn;
         const ipAddress = req.body.ipAddress;
@@ -72,26 +69,26 @@ module.exports = (app) => {
         try {
             db.query(`INSERT INTO servers (name, fqdn, ipAddress, port, visible, position) VALUES (?, ?, ?, ?, ?)`, [name, fqdn, ipAddress, port, visible, position], function(error, results, fields) {
                 if (error) {
-                    return res.json({
+                    return res.send({
                         success: false,
                         message: `${error}`
                     });
                 }
-                return res.json({
+                return res.send({
                     success: true,
                     message: `The server ${name} (${fqdn}) has been successfully created!`
                 });
             });
 
         } catch (error) {
-            res.json({
+            res.send({
                 success: false,
                 message: `${error}`
             });
         }
     });
 
-    app.post(baseEndpoint + '/edit', (req, res, next) => {
+    app.post(baseEndpoint + '/edit', async function(req, res) {
         const serverId = req.body.serverId;
         const name = req.body.name;
         const fqdn = req.body.fqdn;
@@ -101,28 +98,28 @@ module.exports = (app) => {
         const position = req.body.position;
 
         // ...
-        res.json({ success: true });
+        res.send({ success: true });
     });
 
-    app.post(baseEndpoint + '/delete', (req, res, next) => {
+    app.post(baseEndpoint + '/delete', async function(req, res) {
         const serverId = req.body.serverId;
 
         try {
             db.query(`DELETE FROM servers WHERE serverId = ?;`, [serverId], function(error, results, fields) {
                 if (error) {
-                    return res.json({
+                    return res.send({
                         success: false,
                         message: `${error}`
                     });
                 }
-                return res.json({
+                return res.send({
                     success: true,
                     message: `Deletion of server with the id ${serverId} has been successful`
                 });
             });
 
         } catch (error) {
-            res.json({
+            res.send({
                 success: false,
                 message: `${error}`
             });

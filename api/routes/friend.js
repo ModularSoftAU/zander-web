@@ -1,41 +1,39 @@
-const config = require('../../config.json');
-const baseEndpoint = config.siteConfiguration.apiRoute + "/friend";
+export default function friendApiRoute(app, config, db) {
+    const baseEndpoint = config.siteConfiguration.apiRoute + '/friend';
 
-module.exports = (app) => {
-
-    app.post(baseEndpoint + '/request', (req, res, next) => {
+    app.post(baseEndpoint + '/request', async function(req, res) {
         const requestee = req.body.requestee;
         const requestedUser = req.body.requestedUser;
 
         // ...
-        res.json({ success: true });
+        res.send({ success: true });
     });
 
-    app.post(baseEndpoint + '/accept', (req, res, next) => {
+    app.post(baseEndpoint + '/accept', async function(req, res) {
         const requestee = req.body.requestee;
         const requestedUser = req.body.requestedUser;
         const action = req.body.action;
 
         // ...
-        res.json({ success: true });
+        res.send({ success: true });
     });
 
-    app.post(baseEndpoint + '/deny', (req, res, next) => {
+    app.post(baseEndpoint + '/deny', async function(req, res) {
         const requestee = req.body.requestee;
         const requestedUser = req.body.requestedUser;
         const action = req.body.action;
 
         // ...
-        res.json({ success: true });
+        res.send({ success: true });
     });
 
-    app.post(baseEndpoint + '/block', (req, res, next) => {
+    app.post(baseEndpoint + '/block', async function(req, res) {
         const requestee = req.body.requestee;
         const requestedUser = req.body.requestedUser;
         const action = req.body.action;
 
         // ...
-        res.json({ success: true });
+        res.send({ success: true });
     });
 
 }

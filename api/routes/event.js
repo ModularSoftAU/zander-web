@@ -1,31 +1,29 @@
-const config = require('../../config.json');
-const db = require('../../controllers/databaseController');
-const baseEndpoint = config.siteConfiguration.apiRoute + "/event";
-const { MessageEmbed } = require('discord.js');
+import { MessageEmbed } from 'discord.js'
 
-module.exports = (app, DiscordClient, moment) => {
+export default function eventApiRoute(app, DiscordClient, moment, config, db) {
+    const baseEndpoint = config.siteConfiguration.apiRoute + '/event';
 
-    app.get(baseEndpoint + '/get', (req, res, next) => {
+    app.get(baseEndpoint + '/get', async function(req, res) {
         try {
             const published = req.query.published;
 
             function getEvents(dbQuery) {
                 db.query(dbQuery, function(error, results, fields) {
                     if (error) {
-                        return res.json({
+                        return res.send({
                             success: false,
                             message: `${error}`
                         });
                     }
-    
+
                     if (!results.length) {
-                        return res.json({
+                        return res.send({
                             success: false,
                             message: `There are currently no community events scheduled.`
                         });
                     }
-    
-                    res.json({
+
+                    res.send({
                         success: true,
                         data: results
                     });
@@ -33,10 +31,10 @@ module.exports = (app, DiscordClient, moment) => {
             }
 
             if (!published) {
-                res.json({
+                res.send({
                     success: false,
                     message: `You must select a publish indicator.`
-                });                
+                });
             }
 
             if (published === 'show') {
@@ -55,14 +53,14 @@ module.exports = (app, DiscordClient, moment) => {
             }
 
         } catch (error) {
-            res.json({
+            res.send({
                 success: false,
                 message: `${error}`
             });
         }
     });
 
-    app.post(baseEndpoint + '/create', (req, res, next) => {
+    app.post(baseEndpoint + '/create', async function(req, res) {
         const name = req.body.name;
         const icon = req.body.icon;
         const eventDateTime = req.body.eventDateTime;
@@ -73,26 +71,26 @@ module.exports = (app, DiscordClient, moment) => {
         try {
             db.query(`INSERT INTO events (name, icon, eventDateTime, hostingServer, guildEventChannel, information) VALUES (?, ?, ?, (select serverId from servers where name=?), ?, ?)`, [name, icon, eventDateTime, hostingServer, guildEventChannel, information], function(error, results, fields) {
                 if (error) {
-                    return res.json({
+                    return res.send({
                         success: false,
                         message: `${error}`
                     });
                 }
-                return res.json({
+                return res.send({
                     success: true,
                     message: `The event ${name} has been successfully created!`
                 });
             });
 
         } catch (error) {
-            res.json({
+            res.send({
                 success: false,
                 message: `${error}`
             });
         }
     });
 
-    app.post(baseEndpoint + '/edit', (req, res, next) => {
+    app.post(baseEndpoint + '/edit', async function(req, res) {
         const name = req.body.name;
         const icon = req.body.icon;
         const eventDateTime = req.body.eventDateTime;
@@ -101,46 +99,46 @@ module.exports = (app, DiscordClient, moment) => {
         const information = req.body.information;
 
         // ...
-        res.json({ success: true });
+        res.send({ success: true });
     });
 
-    app.post(baseEndpoint + '/delete', (req, res, next) => {
+    app.post(baseEndpoint + '/delete', async function(req, res) {
         const eventId = req.body.eventId;
 
         try {
             db.query(`SELECT eventId FROM events WHERE eventId=?; DELETE FROM events WHERE eventId=?`, [eventId, eventId], function(error, results, fields) {
                 if (error) {
-                    return res.json({
+                    return res.send({
                         success: false,
                         message: `${error}`
                     });
                 }
 
                 if (!results[0].length) {
-                    return res.json({
+                    return res.send({
                         success: false,
                         message: `The event with the id ${eventId} does not exist.`
-                    }); 
+                    });
                 }
 
                 return res.redirect(`${config.siteConfiguration.siteAddress}/dashboard/events`);
             });
 
         } catch (error) {
-            res.json({
+            res.send({
                 success: false,
                 message: `${error}`
             });
         }
     });
 
-    app.post(baseEndpoint + '/publish', async (req, res, next) => {
+    app.post(baseEndpoint + '/publish', async function(req, res) {
         const eventId = req.body.eventId;
 
         try {
             db.query(`SELECT * FROM events where eventId=? AND published=?; select name, icon, eventDateTime, information, (select name from servers where serverId=hostingServer) as 'hostingServerName' from events where eventId=?; UPDATE events SET published=? WHERE eventId=?`, [eventId, `1`, eventId, `1`, eventId], function(error, results, fields) {
                 if (error) {
-                    return res.json({
+                    return res.send({
                         success: false,
                         message: `${error}`
                     });
@@ -149,14 +147,14 @@ module.exports = (app, DiscordClient, moment) => {
                 // shadowolf: 
                 // DONE: This is where the event will send a message to the `eventAnnouncements` indicated in config.json
                 // It will also create a scheduled event and amend the link to the event announcement.
-                
+
                 try {
                     const guild = DiscordClient.guilds.cache.get(config.discord.serverId);
                     const eventInfo = results[1][0];
 
                     db.query(`SELECT * FROM events where eventId=? AND published=?; select name, icon, eventDateTime, information, (select name from servers where serverId=hostingServer) as 'hostingServerName' from events where eventId=?; UPDATE events SET published=? WHERE eventId=?`, [eventId, `1`, eventId, `1`, eventId], function(error, results, fields) {
                         if (error) {
-                            return res.json({
+                            return res.send({
                                 success: false,
                                 message: `${error}`
                             });
@@ -166,34 +164,34 @@ module.exports = (app, DiscordClient, moment) => {
                         guild.scheduledEvents.create({
                             name: `${eventInfo.name}`,
                             scheduledStartTime: `${eventInfo.eventDateTime}`,
-                            privacyLevel: "GUILD_ONLY",
+                            privacyLevel: 'GUILD_ONLY',
                             description: `Hosted on ${eventInfo.hostingServerName}\n${eventInfo.information}`,
-                            entityType: "VOICE",
+                            entityType: 'VOICE',
                             channel: guild.channels.cache.get(`${eventInfo.guildEventChannel}`)
                         })
-    
+
                         // Event will send a message to the `eventAnnouncements` indicated in config.json
                         const channel = guild.channels.cache.get(config.discord.channels.eventAnnouncements);
-    
+
                         const embed = new MessageEmbed()
-                        .setTitle(`:calendar: NEW EVENT: ${eventInfo.name}`)
-                        .setThumbnail(`${eventInfo.icon}`)
-                        .setDescription(`${eventInfo.information}\n\n Event starting at ${moment(eventInfo.eventDateTime).format('MMMM Do YYYY, h:mm:ss a')}\nHosted on ${eventInfo.hostingServerName}`)
-                        .setFooter(`To stay notified of when the event will begin, mark yourself as Interested in the Events tab on the sidebar.`)
-    
+                            .setTitle(`:calendar: NEW EVENT: ${eventInfo.name}`)
+                            .setThumbnail(`${eventInfo.icon}`)
+                            .setDescription(`${eventInfo.information}\n\n Event starting at ${moment(eventInfo.eventDateTime).format('MMMM Do YYYY, h:mm:ss a')}\nHosted on ${eventInfo.hostingServerName}`)
+                            .setFooter(`To stay notified of when the event will begin, mark yourself as Interested in the Events tab on the sidebar.`)
+
                         channel.send({ embeds: [embed] });
-    
-                        return res.redirect(`${config.siteConfiguration.siteAddress}/dashboard/events`);   
+
+                        return res.redirect(`${config.siteConfiguration.siteAddress}/dashboard/events`);
                     });
                 } catch (error) {
-                    return res.json({
+                    return res.send({
                         success: false,
                         message: `${error}`
-                    });                    
+                    });
                 }
             });
         } catch (error) {
-            res.json({
+            res.send({
                 success: false,
                 message: `${error}`
             });

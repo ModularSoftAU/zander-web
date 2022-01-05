@@ -1,30 +1,28 @@
-const config = require('../config.json');
+export default function policySiteRoute(app, config) {
 
-module.exports = (app) => {
-
-    app.get('/terms', (req, res, next) => {
-        res.render('policy/termsOfService', {
-            "pageTitle": `Network Terms Of Service Policy`,
+    app.get('/terms', async function(request, reply) {
+        reply.view('policy/termsOfService', {
+            "pageTitle": `Network Terms Of Service`,
             config: config
         });
     });
 
-    app.get('/rules', (req, res, next) => {
-        res.render('policy/rules', {
+    app.get('/rules', async function(request, reply) {
+        reply.view('policy/rules', {
             "pageTitle": `Network Rules`,
             config: config
         });
     });
 
-    app.get('/privacy', (req, res, next) => {
-        res.render('policy/privacy', {
+    app.get('/privacy', async function(request, reply) {
+        reply.view('policy/privacy', {
             "pageTitle": `Network Privacy Policy`,
             config: config
         });
     });
 
-    app.get('/refund', (req, res, next) => {
-        res.render('policy/refund', {
+    app.get('/refund', async function(request, reply) {
+        reply.view('policy/refund', {
             "pageTitle": `Network Refund Policy`,
             config: config
         });
