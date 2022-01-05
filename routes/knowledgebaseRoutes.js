@@ -1,26 +1,24 @@
-import config from '../config.json'
-
-export default function knowledgebaseSiteRoute(app) {
+export default function knowledgebaseSiteRoute(app, config) {
 
     // 
     // Knowledgebase
     // 
-    app.get('/knowledgebase', (req, res, next) => {
-        res.render('modules/knowledgebase/knowledgebase', {
+    app.get('/knowledgebase', async function(request, reply) {
+        reply.view('modules/knowledgebase/knowledgebase', {
             "pageTitle": `Knowledgebase`,
             config: config
         });
     });
 
-    app.get('/support', (req, res, next) => {
-        res.render('modules/knowledgebase/knowledgebase', {
+    app.get('/support', async function(request, reply) {
+        reply.view('modules/knowledgebase/knowledgebase', {
             "pageTitle": `Knowledgebase`,
             config: config
         });
     });
 
-    app.get('/help', (req, res, next) => {
-        res.render('modules/knowledgebase/knowledgebase', {
+    app.get('/help', async function(request, reply) {
+        reply.view('modules/knowledgebase/knowledgebase', {
             "pageTitle": `Knowledgebase`,
             config: config
         });
@@ -29,8 +27,8 @@ export default function knowledgebaseSiteRoute(app) {
     // 
     // Knowledgebase Article
     // 
-    app.get('/generalStaff/newStaff', (req, res, next) => {
-        res.render('modules/knowledgebase/knowledgebaseArticle', {
+    app.get('/generalStaff/newStaff', async function(request, reply) {
+        reply.view('modules/knowledgebase/knowledgebaseArticle', {
             "pageTitle": `Knowledgebase - KB Article Title`,
             config: config
         });

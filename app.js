@@ -112,13 +112,13 @@ const buildApp = async () => {
     app.register((instance, options, next) => {
         // API routes (Token authenticated)
         instance.addHook('preValidation', verifyToken);
-        apiRoutes(instance, DiscordClient, moment);
+        apiRoutes(instance, DiscordClient, moment, config, db);
         next();
     });
 
     app.register((instance, options, next) => {
         // Routes
-        siteRoutes(instance, moment, fetch);
+        siteRoutes(instance, moment, fetch, config);
         next();
     });
 

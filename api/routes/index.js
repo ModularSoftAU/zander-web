@@ -17,44 +17,25 @@ import userApiRoute from './user'
 import voteApiRoute from './vote'
 import webApiRoute from './web'
 
-export default (app, DiscordClient, moment) => {
+export default (app, DiscordClient, moment, config, db) => {
 
-    alertApiRoute(app);
-    anticheatApiRoute(app);
-    appealApiRoute(app);
-    applicationApiRoute(app);
-    communityCreationApiRoute(app);
-    discordApiRoute(app, DiscordClient);
-    eventApiRoute(app, DiscordClient, moment);
-    friendApiRoute(app);
-    knowledgebaseApiRoute(app);
-    punishmentApiRoute(app);
-    rankApiRoute(app);
-    reportApiRoute(app);
-    serverApiRoute(app);
-    sessionApiRoute(app);
-    shoppingDistrictDirectoryApiRoute(app);
-    userApiRoute(app);
-    voteApiRoute(app);
-    webApiRoute(app);
-
-    // require('./alert')(app);
-    // require('./anticheat')(app);
-    // require('./appeal')(app);
-    // require('./application')(app);
-    // require('./communitycreation')(app);
-    // require('./discord')(app, DiscordClient);
-    // require('./event')(app, DiscordClient, moment);
-    // require('./friend')(app);
-    // require('./knowledgebase')(app);
-    // require('./punishment')(app);
-    // require('./rank')(app);
-    // require('./report')(app);
-    // require('./server')(app);
-    // require('./session')(app);
-    // require('./shoppingdistrictdirectory')(app);
-    // require('./user')(app);
-    // require('./vote')(app);
-    // require('./web')(app);
+    alertApiRoute(app, config, db);
+    anticheatApiRoute(app, config, db);
+    appealApiRoute(app, config, db);
+    applicationApiRoute(app, config, db);
+    communityCreationApiRoute(app, config, db);
+    discordApiRoute(app, DiscordClient, config, db);
+    eventApiRoute(app, DiscordClient, moment, config, db);
+    friendApiRoute(app, config, db);
+    knowledgebaseApiRoute(app, config, db);
+    punishmentApiRoute(app, config, db);
+    rankApiRoute(app, config, db);
+    reportApiRoute(app, config, db);
+    serverApiRoute(app, config, db);
+    sessionApiRoute(app, config, db);
+    shoppingDistrictDirectoryApiRoute(app, config, db);
+    userApiRoute(app, config, db);
+    voteApiRoute(app, config, db);
+    webApiRoute(app, config, db);
 
 }

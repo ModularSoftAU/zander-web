@@ -4,18 +4,12 @@ import dashboardKnowledgebaseSiteRoute from './knowledgebase'
 import dashboardRanksSiteRoute from './ranks'
 import dashboardServersSiteRoute from './servers'
 
-export default function dashbordSiteRoutes(app, fetch, moment) {
+export default function dashbordSiteRoutes(app, fetch, moment, config) {
 
-    // dashboardSiteRoute(app, fetch);
-    // dashboardEventSiteRoute(app, fetch, moment);
-    // dashboardKnowledgebaseSiteRoute(app, fetch);
-    // dashboardRanksSiteRoute(app, fetch);
-    // dashboardServersSiteRoute(app, fetch);
-
-    // require('./dashboard')(app, fetch);
-    // require('./events')(app, fetch, moment);
-    // require('./knowledgebase')(app, fetch);
-    // require('./ranks')(app, fetch);
-    // require('./servers')(app, fetch);
+    dashboardSiteRoute(app, fetch, config);
+    dashboardEventSiteRoute(app, fetch, moment, config);
+    dashboardKnowledgebaseSiteRoute(app, fetch, config);
+    dashboardRanksSiteRoute(app, fetch, config);
+    dashboardServersSiteRoute(app, fetch, config);
 
 }
