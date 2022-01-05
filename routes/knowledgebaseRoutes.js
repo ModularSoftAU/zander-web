@@ -6,11 +6,10 @@ export default function knowledgebaseSiteRoute(app, fetch, config) {
     app.get('/knowledgebase', async function(request, reply) {
         const fetchURL = `${config.siteConfiguration.siteAddress}${config.siteConfiguration.apiRoute}/knowledgebase/section/get`;
         const response = await fetch(fetchURL);
-
-        console.log(response);
-
         const apiData = await response.json();
-                
+
+        console.log(apiData);
+
         reply.view('modules/knowledgebase/knowledgebase', {
             "pageTitle": `Knowledgebase`,
             config: config,
