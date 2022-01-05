@@ -1,27 +1,32 @@
-export default function knowledgebaseSiteRoute(app, config) {
+export default function knowledgebaseSiteRoute(app, moment, fetch, config) {
 
     // 
     // Knowledgebase
     // 
     app.get('/knowledgebase', async function(request, reply) {
+        const fetchURL = `${config.siteConfiguration.siteAddress}${config.siteConfiguration.apiRoute}/knowledgebase/section/get`;
+        const response = await fetch(fetchURL);
+        const apiData = await response.json();
+                
         reply.view('modules/knowledgebase/knowledgebase', {
             "pageTitle": `Knowledgebase`,
-            config: config
+            config: config,
+            apiData: apiData
         });
     });
 
     app.get('/support', async function(request, reply) {
-        reply.view('modules/knowledgebase/knowledgebase', {
-            "pageTitle": `Knowledgebase`,
-            config: config
-        });
+        // reply.view('modules/knowledgebase/knowledgebase', {
+        //     "pageTitle": `Knowledgebase`,
+        //     config: config
+        // });
     });
 
     app.get('/help', async function(request, reply) {
-        reply.view('modules/knowledgebase/knowledgebase', {
-            "pageTitle": `Knowledgebase`,
-            config: config
-        });
+        // reply.view('modules/knowledgebase/knowledgebase', {
+        //     "pageTitle": `Knowledgebase`,
+        //     config: config
+        // });
     });
 
     // 

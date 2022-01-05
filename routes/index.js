@@ -8,7 +8,7 @@ import policySiteRoutes from './policyRoutes'
 export default function applicationSiteRoutes(app, moment, fetch, config) {
 
     dashboardSiteRoutes(app, moment, fetch, config);
-    knowledgebaseSiteRoutes(app, config);
+    knowledgebaseSiteRoutes(app, moment, fetch, config);
     policySiteRoutes(app, config);
 
     app.get('/', async function(request, reply) {
