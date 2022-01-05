@@ -88,6 +88,16 @@ const buildApp = async () => {
     const app = fastify({ logger: false });
     const port = process.env.PORT || config.port || 8080;
 
+    app.setErrorHandler((error, request, reply) => {
+        // reply.send(error);
+
+        reply.view('error', {
+            "pageTitle": `Server Error`,
+            config: config,
+            error: error
+        });
+    });
+
     // EJS Rendering Engine
     app.register(await import("point-of-view"), {
         engine: {

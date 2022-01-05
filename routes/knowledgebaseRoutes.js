@@ -1,4 +1,4 @@
-export default function knowledgebaseSiteRoute(app, moment, fetch, config) {
+export default function knowledgebaseSiteRoute(app, fetch, config) {
 
     // 
     // Knowledgebase
@@ -6,6 +6,9 @@ export default function knowledgebaseSiteRoute(app, moment, fetch, config) {
     app.get('/knowledgebase', async function(request, reply) {
         const fetchURL = `${config.siteConfiguration.siteAddress}${config.siteConfiguration.apiRoute}/knowledgebase/section/get`;
         const response = await fetch(fetchURL);
+
+        console.log(response);
+
         const apiData = await response.json();
                 
         reply.view('modules/knowledgebase/knowledgebase', {
