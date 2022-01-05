@@ -31,10 +31,6 @@ const DiscordClient = new DiscordJS.Client({
 })
 
 DiscordClient.on('ready', () => {
-    // The client object is required as the first argument.
-    // The second argument is the options object.
-    // All properties of this object are optional.
-
     new WOKCommands(DiscordClient, {
             // The name of the local folder for your command files
             commandsDir: path.join(__dirname, 'discord/commands'),
@@ -92,8 +88,6 @@ const buildApp = async () => {
     const app = fastify({ logger: false });
     const port = process.env.PORT || config.port || 8080;
 
-    console.log(app.printRoutes());
-
     // EJS Rendering Engine
     app.register(await import("point-of-view"), {
         engine: {
@@ -118,7 +112,7 @@ const buildApp = async () => {
 
     app.register((instance, options, next) => {
         // Routes
-        siteRoutes(instance, moment, fetch, config);
+        siteRoutes(instance, fetch, moment, config);
         next();
     });
 

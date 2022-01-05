@@ -1,4 +1,4 @@
-export default function dashboardKnowledgebaseSiteRoute(app, config) {
+export default function dashboardKnowledgebaseSiteRoute(app, fetch, config) {
 
     // 
     // Knowledgebase

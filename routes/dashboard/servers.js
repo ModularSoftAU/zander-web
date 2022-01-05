@@ -1,4 +1,4 @@
-export default function dashboardServersSiteRoute(app, config) {
+export default function dashboardServersSiteRoute(app, fetch, config) {
 
     // 
     // Servers
