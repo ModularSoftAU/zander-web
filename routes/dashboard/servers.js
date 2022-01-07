@@ -1,12 +1,19 @@
-export default function dashboardServersSiteRoute(app, config) {
+export default function dashboardServersSiteRoute(app, fetch, config) {
 
     // 
     // Servers
     // 
     app.get('/dashboard/servers', async function(request, reply) {
+        const fetchURL = `${config.siteConfiguration.siteAddress}${config.siteConfiguration.apiRoute}/server/get?visible=all`;
+        const response = await fetch(fetchURL);
+        const apiData = await response.json();
+
+        console.log(apiData);
+
         reply.view('dashboard/servers/list', {
             "pageTitle": `Dashboard - Servers`,
-            config: config
+            config: config,
+            apiData: apiData
         });
     });
 

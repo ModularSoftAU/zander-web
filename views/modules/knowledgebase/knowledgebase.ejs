@@ -15,166 +15,34 @@
       <div class="container">
         <div>
           <div class="row">
-            <div class="col-lg-4 col-md-6 col-sm-6">
-              <div class="service-item mb-4">
-                <div class="feature-item mb-5 mb-lg-0">
-                  <div class="feature-icon mb-4">
-                    <i class="fas fa-users"></i>
+
+            <% if (apiData.success == false) { %>
+              <%- include("../../partials/alert.ejs", {
+                alertType: "danger",
+                content: apiData.message
+              }) %>
+              <% } else { %>
+              <% apiData.data.forEach(function (section) { %>
+                <!-- <%= section.sectionName %> -->
+                <div class="col-lg-4 col-md-6 col-sm-6">
+                  <div class="service-item mb-4">
+                    <div class="feature-item mb-5 mb-lg-0">
+                      <div class="feature-icon mb-4">
+                        <i class="<%= section.sectionIcon %>"></i>
+                      </div>
+                      <h4 class="mb-3"><%= section.sectionName %></h4>
+                      <small><%= section.description %></small>
+                      <br><br>
+
+                      <div><a href="">List Item</a></div>
+                      <div><a href="">List Item</a></div>
+                      <div><a href="">List Item</a></div>
+                    </div>
                   </div>
-                  <h4 class="mb-3">Getting Started</h4>
-                  <small>A small explaination of the section.</small>
-                  <br><br>
-
-                  <div><a href="">List Item</a></div>
-                  <div><a href="">List Item</a></div>
-                  <div><a href="">List Item</a></div>
-                  <div><a href="">List Item</a></div>
-                  <div><a href="">List Item</a></div>
-                  <div><a href="">List Item</a></div>
                 </div>
-              </div>
-            </div>
-
-            <div class="col-lg-4 col-md-6 col-sm-6">
-              <div class="service-item mb-4">
-                <div class="feature-item mb-5 mb-lg-0">
-                  <div class="feature-icon mb-4">
-                    <i class="fas fa-users"></i>
-                  </div>
-                  <h4 class="mb-3">Online Safety & Security</h4>
-                  <small>A small explaination of the section.</small>
-                  <br><br>
-
-                  <div><a href="">List Item</a></div>
-                  <div><a href="">List Item</a></div>
-                  <div><a href="">List Item</a></div>
-                  <div><a href="">List Item</a></div>
-                  <div><a href="">List Item</a></div>
-                  <div><a href="">List Item</a></div>
-                </div>
-              </div>
-            </div>
-
-            <div class="col-lg-4 col-md-6 col-sm-6">
-              <div class="service-item mb-4">
-                <div class="feature-item mb-5 mb-lg-0">
-                  <div class="feature-icon mb-4">
-                    <i class="fas fa-users"></i>
-                  </div>
-                  <h4 class="mb-3">Survival</h4>
-                  <small>A small explaination of the section.</small>
-                  <br><br>
-
-                  <div><a href="">List Item</a></div>
-                  <div><a href="">List Item</a></div>
-                  <div><a href="">List Item</a></div>
-                  <div><a href="">List Item</a></div>
-                  <div><a href="">List Item</a></div>
-                  <div><a href="">List Item</a></div>
-                </div>
-              </div>
-            </div>
-
-            <div class="col-lg-4 col-md-6 col-sm-6">
-              <div class="service-item mb-4">
-                <div class="feature-item mb-5 mb-lg-0">
-                  <div class="feature-icon mb-4">
-                    <i class="fas fa-users"></i>
-                  </div>
-                  <h4 class="mb-3">General Staff</h4>
-                  <small>A small explaination of the section.</small>
-                  <br><br>
-
-                  <div><a href="/generalStaff/newStaff">New Staff</a></div>
-                  <div><a href="">List Item</a></div>
-                  <div><a href="">List Item</a></div>
-                  <div><a href="">List Item</a></div>
-                  <div><a href="">List Item</a></div>
-                  <div><a href="">List Item</a></div>
-                </div>
-              </div>
-            </div>
-
-            <div class="col-lg-4 col-md-6 col-sm-6">
-              <div class="service-item mb-4">
-                <div class="feature-item mb-5 mb-lg-0">
-                  <div class="feature-icon mb-4">
-                    <i class="fas fa-users"></i>
-                  </div>
-                  <h4 class="mb-3">Events</h4>
-                  <small>A small explaination of the section.</small>
-                  <br><br>
-
-                  <div><a href="">List Item</a></div>
-                  <div><a href="">List Item</a></div>
-                  <div><a href="">List Item</a></div>
-                  <div><a href="">List Item</a></div>
-                  <div><a href="">List Item</a></div>
-                  <div><a href="">List Item</a></div>
-                </div>
-              </div>
-            </div>
-
-            <div class="col-lg-4 col-md-6 col-sm-6">
-              <div class="service-item mb-4">
-                <div class="feature-item mb-5 mb-lg-0">
-                  <div class="feature-icon mb-4">
-                    <i class="fas fa-users"></i>
-                  </div>
-                  <h4 class="mb-3">Builders</h4>
-                  <small>A small explaination of the section.</small>
-                  <br><br>
-
-                  <div><a href="">List Item</a></div>
-                  <div><a href="">List Item</a></div>
-                  <div><a href="">List Item</a></div>
-                  <div><a href="">List Item</a></div>
-                  <div><a href="">List Item</a></div>
-                  <div><a href="">List Item</a></div>
-                </div>
-              </div>
-            </div>
-
-            <div class="col-lg-4 col-md-6 col-sm-6">
-              <div class="service-item mb-4">
-                <div class="feature-item mb-5 mb-lg-0">
-                  <div class="feature-icon mb-4">
-                    <i class="fas fa-users"></i>
-                  </div>
-                  <h4 class="mb-3">Developers</h4>
-                  <small>A small explaination of the section.</small>
-                  <br><br>
-
-                  <div><a href="">List Item</a></div>
-                  <div><a href="">List Item</a></div>
-                  <div><a href="">List Item</a></div>
-                  <div><a href="">List Item</a></div>
-                  <div><a href="">List Item</a></div>
-                  <div><a href="">List Item</a></div>
-                </div>
-              </div>
-            </div>
-
-            <div class="col-lg-4 col-md-6 col-sm-6">
-              <div class="service-item mb-4">
-                <div class="feature-item mb-5 mb-lg-0">
-                  <div class="feature-icon mb-4">
-                    <i class="fas fa-users"></i>
-                  </div>
-                  <h4 class="mb-3">Administrators</h4>
-                  <small>A small explaination of the section.</small>
-                  <br><br>
-
-                  <div><a href="">List Item</a></div>
-                  <div><a href="">List Item</a></div>
-                  <div><a href="">List Item</a></div>
-                  <div><a href="">List Item</a></div>
-                  <div><a href="">List Item</a></div>
-                  <div><a href="">List Item</a></div>
-                </div>
-              </div>
-            </div>
-          </div>
+              <% }) %>
+              <% } %>
+              
         </div>
       </div>
   </section>

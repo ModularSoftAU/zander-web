@@ -10,8 +10,8 @@ export default function verifyToken(req, res, done) {
         // Token not included
         return res.status(403).send({ 'error': true });
     }
-
-    if (token === config.server.token) {
+  
+    if (token === config.siteConfiguration.apiKey) {
         // Passed
         done();
     } else {

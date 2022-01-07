@@ -41,10 +41,7 @@ export default function knowledgebaseApiRoute(app, config, db) {
                         message: `${error}`
                     });
                 }
-                return res.send({
-                    success: true,
-                    message: `The knowledgebase section ${sectionName} has been successfully created!`
-                });
+                return res.redirect(`${config.siteConfiguration.siteAddress}/dashboard/knowledgebase`)
             });
 
         } catch (error) {
@@ -77,10 +74,7 @@ export default function knowledgebaseApiRoute(app, config, db) {
                         message: `${error}`
                     });
                 }
-                return res.send({
-                    success: true,
-                    message: `Deletion of knowledgebase section with the slug of ${sectionSlug} has been successful`
-                });
+              return res.redirect(`${config.siteConfiguration.siteAddress}/dashboard/knowledgebase`)
             });
 
         } catch (error) {
@@ -129,10 +123,7 @@ export default function knowledgebaseApiRoute(app, config, db) {
                         message: `${error}`
                     });
                 }
-                return res.send({
-                    success: true,
-                    message: `The knowledgebase article ${articleName} has been successfully created!`
-                });
+              return res.redirect(`${config.siteConfiguration.siteAddress}/dashboard/knowledgebase`)
             });
 
         } catch (error) {
@@ -165,10 +156,7 @@ export default function knowledgebaseApiRoute(app, config, db) {
                         message: `${error}`
                     });
                 }
-                return res.send({
-                    success: true,
-                    message: `Deletion of knowledgebase article with the slug of ${articleSlug} has been successful`
-                });
+              return res.redirect(`${config.siteConfiguration.siteAddress}/dashboard/knowledgebase`);
             });
 
         } catch (error) {

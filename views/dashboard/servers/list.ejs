@@ -16,38 +16,53 @@
                         <div class="card">
                             <div class="card-title">
                                 <h4>Servers</h4>
-                                <a href="/dashboard/servers/create"><button type="button" class="btn btn-sm btn-info">Create a Server</button></a>
+                                <a href="/dashboard/servers/editor"><button type="button" class="btn btn-sm btn-info">Create a Server</button></a>
                             </div>
                             <div class="card-body">
                                 <table class="table">
                                     <thead>
                                         <tr>
-                                            <th>Display Name</th>
+                                            <th>Name</th>
+                                            <th>FQDN</th>
                                             <th>Address</th>
+                                            <th>Port</th>
+                                            <th>Visable</th>
                                             <th>Action</th>
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        <tr>
-                                            <td>play</td>
-                                            <td><code>play.craftingforchrist.net</code></td>
-                                            <td>
-                                                <div class="btn-group" role="group" >
-                                                    <button type="button" class="btn btn-sm btn-warning">Edit</button>
-                                                    <button type="button" class="btn btn-sm btn-danger">Delete</button>
-                                                </div>
-                                            </td>
-                                        </tr>
-                                        <tr>
-                                            <td>Bedrock</td>
-                                            <td><code>bedrock.craftingforchrist.net</code></td>
-                                            <td>
-                                                <div class="btn-group" role="group" >
-                                                    <button type="button" class="btn btn-sm btn-warning">Edit</button>
-                                                    <button type="button" class="btn btn-sm btn-danger">Delete</button>
-                                                </div>
-                                            </td>
-                                        </tr>
+                                        <% if (apiData.success == false) { %>
+                                            <%- include("../../partials/alert.ejs", {
+                                              alertType: "danger",
+                                              content: apiData.message
+                                            }) %>
+                                        <% } else { %>
+                                            <% apiData.data.forEach(function (server) { %>
+                                                <tr>
+                                                    <td><%= server.name %></td>
+                                                    <td><%= server.fqdn %></td>
+                                                    <td><%= server.ipAddress %></td>
+                                                    <td><%= server.port %></td>
+                                                    <td>
+                                                        <% if (server.visable === 1) { %>
+                                                            <i class="fas fa-check-circle" style="color:green"></i>
+                                                        <% } else { %>
+                                                            <i class="fas fa-times-circle" style="color: red;"></i>
+                                                        <% } %>
+                                                    </td>
+                                                    <td>
+                                                        <div class="btn-group">
+                                                            <button class="btn btn-sm btn-warning" type="button">Edit</button>
+
+                                                            <form action="<%= config.siteConfiguration.siteAddress %><%= config.siteConfiguration.apiRoute %>/server/delete" method="post">
+                                                                <input type="hidden" name="serverId" value="<%= server.serverId %>">
+                                                                <button class="btn btn-sm btn-danger" type="submit">Delete</button>
+                                                            </form>
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                            <% }) %>
+                                        <% } %>
                                     </tbody>
                                 </table>
                             </div>
