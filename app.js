@@ -87,7 +87,7 @@ import verifyToken from './api/routes/verifyToken'
 const buildApp = async () => {
     const app = fastify({ logger: false });
     const port = process.env.PORT || config.port || 8080;
-
+  
     // When app errors, render the error on a page, do not provide JSON
     app.setErrorHandler((error, request, reply) => {        
         reply.view('error', {

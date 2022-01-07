@@ -74,7 +74,7 @@ export default function knowledgebaseApiRoute(app, config, db) {
                         message: `${error}`
                     });
                 }
-                return res.redirect(`${config.siteConfiguration.siteAddress}/dashboard/knowledgebase`)
+              return res.redirect(`${config.siteConfiguration.siteAddress}/dashboard/knowledgebase`)
             });
 
         } catch (error) {
@@ -123,7 +123,7 @@ export default function knowledgebaseApiRoute(app, config, db) {
                         message: `${error}`
                     });
                 }
-                return res.redirect(`${config.siteConfiguration.siteAddress}/dashboard/knowledgebase`)
+              return res.redirect(`${config.siteConfiguration.siteAddress}/dashboard/knowledgebase`)
             });
 
         } catch (error) {
@@ -156,7 +156,7 @@ export default function knowledgebaseApiRoute(app, config, db) {
                         message: `${error}`
                     });
                 }
-                return res.redirect(`${config.siteConfiguration.siteAddress}/dashboard/knowledgebase`);
+              return res.redirect(`${config.siteConfiguration.siteAddress}/dashboard/knowledgebase`);
             });
 
         } catch (error) {

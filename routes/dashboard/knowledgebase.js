@@ -13,7 +13,7 @@ export default function dashboardKnowledgebaseSiteRoute(app, fetch, moment, conf
         const sectionFetchURL = `${config.siteConfiguration.siteAddress}${config.siteConfiguration.apiRoute}/knowledgebase/section/get`;
         const sectionResponse = await fetch(sectionFetchURL);
         const sectionApiData = await sectionResponse.json();
-
+      
         reply.view('dashboard/knowledgebase/list', {
             "pageTitle": `Dashboard - Knowledgebase`,
             config: config,
