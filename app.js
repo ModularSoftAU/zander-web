@@ -126,6 +126,7 @@ const buildApp = async () => {
     });
 
     try {
+        const port = process.env.PORT || config.port || 8080;
         await app.listen(port);
         console.log(`\n// ${packageData.name} v.${packageData.version}\nGitHub Repository: ${packageData.homepage}\nCreated By: ${packageData.author}`);
         console.log(`Site and API is listening to the port ${port}`);
