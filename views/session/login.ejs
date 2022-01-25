@@ -1,22 +1,21 @@
-<%- include("modules/header.ejs", {
+<%- include("../modules/header.ejs", {
     pageTitle: pageTitle,
     pageDescription: "Login and get involved in the community!"
 }) %>
 
-<%- include("modules/navigationBar.ejs") %>
+<%- include("../modules/navigationBar.ejs") %>
 
-<%- include("partials/miniHeader.ejs", {
+<%- include("../partials/miniHeader.ejs", {
   headerTitle: "Login",
   backgroundImage: "../images/banner/AronCrystalBuilding.png"
 }) %>
-
 
 <section class="section">
     <div class="container">
       <div class="row">
         <div class="col-sm" style="min-height:500px;">
           <div class="text-center">
-            <img class="floating" style="margin-top:10px;" src="images/elytraadmins.png" height="400px" draggable="false">
+            <img class="floating" style="margin-top:10px;" src="images/session/elytraadmins.png" height="400px" draggable="false">
           </div>
         </div>
         <div class="col-sm" style="margin-right:100px;">    
@@ -40,4 +39,4 @@
     </div>
 </section>
 
-<%- include("modules/footer.ejs") %>  
+<%- include("../modules/footer.ejs") %>  

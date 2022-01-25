@@ -87,10 +87,19 @@ import verifyToken from './api/routes/verifyToken'
 const buildApp = async () => {
     const app = fastify({ logger: false });
     const port = process.env.PORT || config.port || 8080;
+
+    // When app can't found route, render the not found on a page, do not provide JSON
+    // app.setNotFoundHandler((error, request, reply) => {        
+    //     reply.view('session/notFound', {
+    //         "pageTitle": `404: Not Found`,
+    //         config: config,
+    //         error: error
+    //     });
+    // });
   
     // When app errors, render the error on a page, do not provide JSON
     app.setErrorHandler((error, request, reply) => {        
-        reply.view('error', {
+        reply.view('session/error', {
             "pageTitle": `Server Error`,
             config: config,
             error: error

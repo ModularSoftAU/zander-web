@@ -125,14 +125,14 @@ export default function applicationSiteRoutes(app, fetch, moment, config) {
     // Session
     // 
     app.get('/login', async function(request, reply) {
-        reply.view('login', {
+        reply.view('session/login', {
             "pageTitle": `Login`,
             config: config
         });
     });
 
     app.get('/register', async function(request, reply) {
-        reply.view('register', {
+        reply.view('session/register', {
             "pageTitle": `Register`,
             config: config
         });
