@@ -135,10 +135,15 @@ const buildApp = async () => {
     });
 
     try {
-        const port = process.env.PORT || config.port || 8080;
-        await app.listen(port);
+        app.listen(process.env.PORT || 8080, '0.0.0.0', (err) => {
+            if (err) {
+                app.log.error(err)
+                process.exit(1)
+              }
+        })
+
         console.log(`\n// ${packageData.name} v.${packageData.version}\nGitHub Repository: ${packageData.homepage}\nCreated By: ${packageData.author}`);
-        console.log(`Site and API is listening to the port ${port}`);
+        console.log(`Site is listening to the port ${port}`);
     } catch (error) {
         app.log.error(`Unable to start the server:\n${error}`);
     }
