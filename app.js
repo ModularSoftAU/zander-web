@@ -143,7 +143,7 @@ const buildApp = async () => {
         })
 
         console.log(`\n// ${packageData.name} v.${packageData.version}\nGitHub Repository: ${packageData.homepage}\nCreated By: ${packageData.author}`);
-        console.log(`Site is listening to the port ${port}`);
+        console.log(`Site and API is listening to the port ${port}`);
     } catch (error) {
         app.log.error(`Unable to start the server:\n${error}`);
     }
