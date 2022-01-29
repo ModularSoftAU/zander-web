@@ -1,12 +1,12 @@
 <%- include("../header.ejs", {
     pageTitle: pageTitle,
-    pageDescription: "Check out Steves profile, punishments and stats"
+    pageDescription: "Check out apiData.data[0].username's profile, punishments and statistics."
 }) %>
 
 <%- include("../navigationBar.ejs") %>
 
 <%- include("profileHeader.ejs", {
-  profileUserTitle: "Steve",
+  profileUserTitle: apiData.data[0].username,
   backgroundImage: "https://i.imgur.com/PqNBnlS.png"
 }) %>
 
@@ -333,46 +333,79 @@
 
       <div class="col-3">
         <h3>First Join</h3>
-        <p>30th November 2020</p>
-        <hr>
-        <h3>Interests</h3>
-        <p>Crafting and Mining</p>
+        <p><%= apiData.data[0].joined %></p>
+
+        <% if (apiData.data[0].interests) { %>
+          <hr>
+          <h3>Interests</h3>
+          <p><%= apiData.data[0].interests %></p>
+        <% } %>
         <hr>
 
         <h3>Social Media</h3>
         <table class="table table-borderless">
-          <tr>
-            <td>Twitter</td>
-            <td>@Steve_</td>
-          </tr>
-          <tr>
-            <td>Twitch</td>
-            <td>StevePlaysMinecraft</td>
-          </tr>
-          <tr>
-            <td>Steam</td>
-            <td>StevePlaysOtherGames</td>
-          </tr>
-          <tr>
-            <td>GitHub</td>
-            <td>SteveDevelops</td>
-          </tr>
-          <tr>
-            <td>Spotify</td>
-            <td>C418Only</td>
-          </tr>
-          <tr>
-            <td>Discord</td>
-            <td>@SteveisTheBest</td>
-          </tr>
-          <tr>
-            <td>YouTube</td>
-            <td>StevePlaysOnlyMinecraft</td>
-          </tr>
-          <tr>
-            <td>Instagram</td>
-            <td>SteveSnapsMinecraft</td>
-          </tr>
+          <% if (apiData.data[0].twitter) { %>
+            <tr>
+              <td>Twitter</td>
+              <td><%= apiData.data[0].twitter %></td>
+            </tr>
+          <% } %>
+
+          <% if (apiData.data[0].twitch) { %>
+            <tr>
+              <td>Twitch</td>
+              <td><%= apiData.data[0].twitch %></td>
+            </tr>
+          <% } %>
+
+          <% if (apiData.data[0].steam) { %>
+            <tr>
+              <td>Steam</td>
+              <td><%= apiData.data[0].steam %></td>
+            </tr>
+          <% } %>
+
+          <% if (apiData.data[0].steam) { %>
+            <tr>
+              <td>Steam</td>
+              <td><%= apiData.data[0].steam %></td>
+            </tr>
+          <% } %>
+
+          <% if (apiData.data[0].github) { %>
+            <tr>
+              <td>GitHub</td>
+              <td><%= apiData.data[0].github %></td>
+            </tr>
+          <% } %>
+
+          <% if (apiData.data[0].spotify) { %>
+            <tr>
+              <td>Spotify</td>
+              <td><%= apiData.data[0].spotify %></td>
+            </tr>
+          <% } %>
+
+          <% if (apiData.data[0].discord) { %>
+            <tr>
+              <td>Discord</td>
+              <td><%= apiData.data[0].discord %></td>
+            </tr>
+          <% } %>
+
+          <% if (apiData.data[0].youtube) { %>
+            <tr>
+              <td>YouTube</td>
+              <td><%= apiData.data[0].youtube %></td>
+            </tr>
+          <% } %>
+
+          <% if (apiData.data[0].instagram) { %>
+            <tr>
+              <td>Instagram</td>
+              <td><%= apiData.data[0].instagram %></td>
+            </tr>
+          <% } %>
         </table>
         <hr>  
       </div>

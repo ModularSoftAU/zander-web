@@ -35,6 +35,31 @@ export default function userApiRoute(app, config, db) {
         }
     });
 
+    app.get(baseEndpoint + '/get', async function(req, res) {
+        const username = req.query.username;
+        
+        try {
+            db.query(`SELECT * FROM users WHERE uuid=(SELECT uuid FROM users WHERE username=?);`, [username], function(error, results, fields) {
+                if (!results || !results.length) {
+                    return res.send({
+                        success: false,
+                        message: `This user does not exist.`
+                    });
+                }
+                
+                res.send({
+                    success: true,
+                    data: results
+                });
+            });
+        } catch (error) {
+            return res.send({
+                success: false,
+                message: `${error}`
+            });
+        }
+    });
+
     app.post(baseEndpoint + '/profile/:username/edit', async function(req, res) {
         const username = req.params.username;
         // TODO

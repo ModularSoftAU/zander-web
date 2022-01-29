@@ -10,6 +10,7 @@ CREATE TABLE users (
 	password TEXT,
 	joined DATETIME NOT NULL DEFAULT NOW(),
 	disabled BOOLEAN DEFAULT 0,
+	interests TEXT,
 	twitter VARCHAR(15),
 	twitch TEXT,
 	steam VARCHAR(32),

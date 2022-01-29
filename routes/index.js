@@ -12,9 +12,6 @@ export default function applicationSiteRoutes(app, fetch, moment, config) {
     policySiteRoutes(app, config);
 
     app.get('/', async function(request, reply) {
-
-        console.log(request.session);
-
         return reply.view("modules/index/index", {
             "pageTitle": `${config.siteConfiguration.siteName}`,
             config: config,
@@ -33,6 +30,7 @@ export default function applicationSiteRoutes(app, fetch, moment, config) {
         return reply.view('modules/play/play', {
             "pageTitle": `Play`,
             config: config,
+            request: request,
             apiData: apiData
         });
     });
@@ -43,14 +41,16 @@ export default function applicationSiteRoutes(app, fetch, moment, config) {
     app.get('/communityCreations', async function(request, reply) {
         return reply.view('modules/communityCreation/communityCreation', {
             "pageTitle": `Community Creations`,
-            config: config
+            config: config,
+            request: request
         });
     });
 
     app.get('/communityCreation/submit', async function(request, reply) {
         reply.view('modules/communityCreation/submit', {
             "pageTitle": `Submit a Community Creation`,
-            config: config
+            config: config,
+            request: request
         });
     });
 
@@ -65,6 +65,7 @@ export default function applicationSiteRoutes(app, fetch, moment, config) {
         reply.view('apply', {
             "pageTitle": `Apply`,
             config: config,
+            request: request,
             apiData: apiData
         });
     });
@@ -81,7 +82,8 @@ export default function applicationSiteRoutes(app, fetch, moment, config) {
             "pageTitle": `Events`,
             config: config,
             apiData: apiData,
-            moment: moment
+            moment: moment,
+            request: request
         });
     });
 
@@ -91,7 +93,8 @@ export default function applicationSiteRoutes(app, fetch, moment, config) {
     app.get('/vote', async function(request, reply) {
         reply.view('vote', {
             "pageTitle": `Vote`,
-            config: config
+            config: config,
+            request: request
         });
     });
 
@@ -101,17 +104,25 @@ export default function applicationSiteRoutes(app, fetch, moment, config) {
     app.get('/staff', async function(request, reply) {
         reply.view('staff', {
             "pageTitle": `Staff`,
-            config: config
+            config: config,
+            request: request
         });
     });
 
     // 
     // Profile
     // 
-    app.get('/profile', async function(request, reply) {
+    app.get('/profile/:username', async function(request, reply) {
+        const fetchURL = `${config.siteConfiguration.siteAddress}${config.siteConfiguration.apiRoute}/user/get?username=${request.params.username}`;
+        const response = await fetch(fetchURL);
+        const apiData = await response.json();
+
         reply.view('modules/profile/profile', {
-            "pageTitle": `Steve's Profile`,
-            config: config
+            "pageTitle": `${apiData.data[0].username}'s Profile`,
+            config: config,
+            apiData: apiData,
+            moment: moment,
+            request: request
         });
     });
 
@@ -121,7 +132,8 @@ export default function applicationSiteRoutes(app, fetch, moment, config) {
     app.get('/punishments', async function(request, reply) {
         reply.view('punishments', {
             "pageTitle": `Punishments`,
-            config: config
+            config: config,
+            request: request
         });
     });
 
@@ -165,7 +177,8 @@ export default function applicationSiteRoutes(app, fetch, moment, config) {
     app.get('/appeal', async function(request, reply) {
         reply.view('appeal', {
             "pageTitle": `Appeal`,
-            config: config
+            config: config,
+            request: request
         });
     });
 
@@ -175,14 +188,16 @@ export default function applicationSiteRoutes(app, fetch, moment, config) {
     app.get('/shoppingDistrictDirectory', async function(request, reply) {
         reply.view('modules/shoppingDistrictDirectory/shoppingDistrictDirectory', {
             "pageTitle": `Shopping District Directory`,
-            config: config
+            config: config,
+            request: request
         });
     });
 
     app.get('/sdd', async function(request, reply) {
         reply.view('modules/shoppingDistrictDirectory/shoppingDistrictDirectory', {
             "pageTitle": `Shopping District Directory`,
-            config: config
+            config: config,
+            request: request
         });
     });
 
