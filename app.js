@@ -3,7 +3,10 @@ import DiscordJS from 'discord.js'
 import WOKCommands from 'wokcommands'
 import moment from 'moment'
 import fetch from 'node-fetch'
-import fastify from "fastify"
+
+import fastify from 'fastify';
+import fastifySession from 'fastify-session'
+import fastifyCookie from 'fastify-cookie'
 
 import config from './config.json'
 import db from './controllers/databaseController'
@@ -102,7 +105,8 @@ const buildApp = async () => {
         reply.view('session/error', {
             "pageTitle": `Server Error`,
             config: config,
-            error: error
+            error: error,
+            request: request
         });
     });
 
@@ -126,6 +130,15 @@ const buildApp = async () => {
         instance.addHook('preValidation', verifyToken);
         apiRoutes(instance, DiscordClient, moment, config, db);
         next();
+    });
+
+    // Sessions
+    app.register(fastifyCookie);
+    app.register(fastifySession, {
+        cookieName: 'sessionId',
+        secret: config.siteConfiguration.sessionCookieSecret,
+        cookie: { secure: false },
+        expires: 1800000
     });
 
     app.register((instance, options, next) => {

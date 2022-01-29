@@ -12,9 +12,13 @@ export default function applicationSiteRoutes(app, fetch, moment, config) {
     policySiteRoutes(app, config);
 
     app.get('/', async function(request, reply) {
+
+        console.log(request.session);
+
         return reply.view("modules/index/index", {
             "pageTitle": `${config.siteConfiguration.siteName}`,
-            config: config
+            config: config,
+            request: request
         });
     });
 
@@ -127,15 +131,32 @@ export default function applicationSiteRoutes(app, fetch, moment, config) {
     app.get('/login', async function(request, reply) {
         reply.view('session/login', {
             "pageTitle": `Login`,
-            config: config
+            config: config,
+            request: request
         });
     });
 
     app.get('/register', async function(request, reply) {
         reply.view('session/register', {
             "pageTitle": `Register`,
-            config: config
+            config: config,
+            request: request
         });
+    });
+
+    app.get('/logout', async function(request, reply) {
+        if (request.session.authenticated) {
+            request.destroySession((err) => {
+              if (err) {
+                  console.log(err);
+                throw err;
+              } else {
+                res.redirect('/')
+              }
+            })
+          } else {
+            reply.redirect('/')
+          }
     });
 
     // 
