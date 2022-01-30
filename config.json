@@ -32,7 +32,9 @@
         "channels": {
             "networkChatLog": "925702393423859724",
             "adminLog": "926380052155867146",
-            "eventAnnouncements": "926380005854957608"
+            "eventAnnouncements": "926380005854957608",
+            "reports": "936889292263936030",
+            "punishments": "936889228598587392"
         },
         "roles": {
             "verified": ""

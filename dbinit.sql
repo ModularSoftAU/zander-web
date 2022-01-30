@@ -137,6 +137,7 @@ CREATE TABLE reports (
     reporterUserId INT NOT NULL,
     reason TEXT,
     evidence TEXT,
+    platform TEXT,
     server INT NOT NULL,
     createdDate DATETIME NOT NULL DEFAULT NOW(),
     closed BOOLEAN DEFAULT 0,

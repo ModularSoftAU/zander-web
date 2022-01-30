@@ -110,19 +110,44 @@ export default function applicationSiteRoutes(app, fetch, moment, config) {
     });
 
     // 
-    // Profile
+    // Report Specific
     // 
-    app.get('/profile/:username', async function(request, reply) {
-        const fetchURL = `${config.siteConfiguration.siteAddress}${config.siteConfiguration.apiRoute}/user/get?username=${request.params.username}`;
+    app.get('/report/:id', async function(request, reply) {
+        const fetchURL = `${config.siteConfiguration.siteAddress}${config.siteConfiguration.apiRoute}/report/get?id=${request.params.id}`;
         const response = await fetch(fetchURL);
         const apiData = await response.json();
 
-        reply.view('modules/profile/profile', {
-            "pageTitle": `${apiData.data[0].username}'s Profile`,
+        reply.view('reportView', {
+            "pageTitle": `#${request.params.id} Report Card`,
             config: config,
-            apiData: apiData,
+            request: request,
             moment: moment,
-            request: request
+            apiData: apiData
+        });
+    });
+
+    // 
+    // Profile
+    // 
+    app.get('/profile/:username', async function(request, reply) {
+        // Get Player Profile Information
+        const profileFetchURL = `${config.siteConfiguration.siteAddress}${config.siteConfiguration.apiRoute}/user/get?username=${request.params.username}`;
+        const profileResponse = await fetch(profileFetchURL);
+        const profileApiData = await profileResponse.json();
+
+        // Get Player Report Information
+        const reportFetchURL = `${config.siteConfiguration.siteAddress}${config.siteConfiguration.apiRoute}/report/get?username=${request.params.username}`;
+        const reportResponse = await fetch(reportFetchURL);
+        const reportApiData = await reportResponse.json();
+
+        reply.view('modules/profile/profile', {
+            "pageTitle": `${profileApiData.data[0].username}'s Profile`,
+            config: config,
+            moment: moment,
+            request: request,
+            profileApiData: profileApiData,
+            reportApiData: reportApiData
+
         });
     });
 

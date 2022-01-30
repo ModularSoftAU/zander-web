@@ -1,13 +1,13 @@
 <%- include("../header.ejs", {
     pageTitle: pageTitle,
-    pageDescription: "Check out apiData.data[0].username's profile, punishments and statistics."
+    pageDescription: "Check out profileApiData.data[0].username's profile, punishments and statistics."
 }) %>
 
 <%- include("../navigationBar.ejs") %>
 
 <%- include("profileHeader.ejs", {
-  profileUserTitle: apiData.data[0].username,
-  backgroundImage: "https://i.imgur.com/PqNBnlS.png"
+  profileUserTitle: profileApiData.data[0].username,
+  backgroundImage: profileApiData.data[0].coverArt
 }) %>
 
 <section class="section">
@@ -18,7 +18,7 @@
           <a data-toggle="tab" href="#about"><li class="active selected btn" id="tabContent">About</li></a>
           <a data-toggle="tab" href="#statistics"><li class="btn">Statistics</li></a>
           <a data-toggle="tab" href="#punishments"><li class="btn">Punishments</li></a>
-          <a data-toggle="tab" href="#reports"><li class="btn">Reports</li></a>
+          <a data-toggle="tab" href="#reports"><li class="btn"><span class="badge badge-danger"><i class="fas fa-shield-alt"></i></span> Reports</li></a>
         </ul>
         
         <div class="tab-content profileSection">
@@ -246,7 +246,14 @@
                   <td>Breaking Blocks</td>
                   <td>23 November 2021</td>
                   <td>NULL</td>
-                  <td>APPEAL</td>
+                  <td>
+                    <div class="btn-group btn-sm">
+                      <form action="<%= config.siteConfiguration.siteAddress %><%= config.siteConfiguration.apiRoute %>/report/close" method="post">
+                        <input type="hidden" name="reportId" value="<%= %>">
+                        <button class="btn btn-sm btn-danger" type="submit">Close</button>
+                      </form>
+                    </div>
+                  </td>
                 </tr>
                 <tr>
                   <td>1354</td>
@@ -297,33 +304,44 @@
                   <th scope="col">Platform</th>
                   <th scope="col">Reason</th>
                   <th scope="col">Date</th>
+                  <th scope="col">Action</th>
                 </tr>
               </thead>
               <tbody>
-                <tr>
-                  <td>1543</td>
-                  <td>Steve</td>
-                  <td>shadowolfyt</td>
-                  <td>DISCORD</td>
-                  <td>Scamming</td>
-                  <td>30 November 2021</td>
-                </tr>
-                <tr>
-                  <td>1543</td>
-                  <td>Steve</td>
-                  <td>shadowolfyt</td>
-                  <td>DISCORD</td>
-                  <td>Scamming</td>
-                  <td>30 November 2021</td>
-                </tr>
-                <tr>
-                  <td>1543</td>
-                  <td>Steve</td>
-                  <td>shadowolfyt</td>
-                  <td>DISCORD</td>
-                  <td>Scamming</td>
-                  <td>30 November 2021</td>
-                </tr>
+                <% if (profileApiData.success == false) { %>
+                  <%- include("../../partials/alert.ejs", {
+                    alertType: "danger",
+                    content: profileApiData.message
+                  }) %>
+                <% } else { %>
+                    <% reportApiData.data.forEach(function (report) { %>
+
+                      <% if (report.closed) { %>
+                        <tr style="background-color: lightgreen;">
+                      <% } else { %>
+                        <tr>
+                      <% } %>
+                            <td>#<%= report.reportid %></td>
+                            <td><img style="padding-right: 5px; border-radius: 15px;" src="https://crafatar.com/avatars/<%= report.reportedUserUUID %>?helm" height="20px" draggable="false"> <%= report.reportedUser %></td>
+                            <td><img style="padding-right: 5px; border-radius: 15px;" src="https://crafatar.com/avatars/<%= report.reporterUserUUID %>?helm" height="20px" draggable="false"> <%= report.reporterUser %></td>
+                            <td><%= report.platform %></td>
+                            <td><%= report.reason %></td>
+                            <td><%= moment(report.createdDate).format('MMMM Do YYYY') %></td>
+                            <td>
+                              <div class="btn-group btn-sm">
+                                <button class="btn btn-sm btn-info" type="button">View</button>
+
+                                <% if (!report.closed) { %>
+                                  <form action="<%= config.siteConfiguration.siteAddress %><%= config.siteConfiguration.apiRoute %>/report/close" method="post">
+                                    <input type="hidden" name="reportId" value="<%= report.reportid %>">
+                                    <button class="btn btn-sm btn-danger" type="submit">Close</button>
+                                  </form>
+                                <% }%>
+                              </div>
+                          </td>
+                        </tr>
+                    <% }) %>
+                <% } %>
               </tbody>
             </table>
           </div>
@@ -333,77 +351,77 @@
 
       <div class="col-3">
         <h3>First Join</h3>
-        <p><%= apiData.data[0].joined %></p>
+        <p><%= profileApiData.data[0].joined %></p>
 
-        <% if (apiData.data[0].interests) { %>
+        <% if (profileApiData.data[0].interests) { %>
           <hr>
           <h3>Interests</h3>
-          <p><%= apiData.data[0].interests %></p>
+          <p><%= profileApiData.data[0].interests %></p>
         <% } %>
         <hr>
 
         <h3>Social Media</h3>
         <table class="table table-borderless">
-          <% if (apiData.data[0].twitter) { %>
+          <% if (profileApiData.data[0].twitter) { %>
             <tr>
               <td>Twitter</td>
-              <td><%= apiData.data[0].twitter %></td>
+              <td><%= profileApiData.data[0].twitter %></td>
             </tr>
           <% } %>
 
-          <% if (apiData.data[0].twitch) { %>
+          <% if (profileApiData.data[0].twitch) { %>
             <tr>
               <td>Twitch</td>
-              <td><%= apiData.data[0].twitch %></td>
+              <td><%= profileApiData.data[0].twitch %></td>
             </tr>
           <% } %>
 
-          <% if (apiData.data[0].steam) { %>
+          <% if (profileApiData.data[0].steam) { %>
             <tr>
               <td>Steam</td>
-              <td><%= apiData.data[0].steam %></td>
+              <td><%= profileApiData.data[0].steam %></td>
             </tr>
           <% } %>
 
-          <% if (apiData.data[0].steam) { %>
+          <% if (profileApiData.data[0].steam) { %>
             <tr>
               <td>Steam</td>
-              <td><%= apiData.data[0].steam %></td>
+              <td><%= profileApiData.data[0].steam %></td>
             </tr>
           <% } %>
 
-          <% if (apiData.data[0].github) { %>
+          <% if (profileApiData.data[0].github) { %>
             <tr>
               <td>GitHub</td>
-              <td><%= apiData.data[0].github %></td>
+              <td><%= profileApiData.data[0].github %></td>
             </tr>
           <% } %>
 
-          <% if (apiData.data[0].spotify) { %>
+          <% if (profileApiData.data[0].spotify) { %>
             <tr>
               <td>Spotify</td>
-              <td><%= apiData.data[0].spotify %></td>
+              <td><%= profileApiData.data[0].spotify %></td>
             </tr>
           <% } %>
 
-          <% if (apiData.data[0].discord) { %>
+          <% if (profileApiData.data[0].discord) { %>
             <tr>
               <td>Discord</td>
-              <td><%= apiData.data[0].discord %></td>
+              <td><%= profileApiData.data[0].discord %></td>
             </tr>
           <% } %>
 
-          <% if (apiData.data[0].youtube) { %>
+          <% if (profileApiData.data[0].youtube) { %>
             <tr>
               <td>YouTube</td>
-              <td><%= apiData.data[0].youtube %></td>
+              <td><%= profileApiData.data[0].youtube %></td>
             </tr>
           <% } %>
 
-          <% if (apiData.data[0].instagram) { %>
+          <% if (profileApiData.data[0].instagram) { %>
             <tr>
               <td>Instagram</td>
-              <td><%= apiData.data[0].instagram %></td>
+              <td><%= profileApiData.data[0].instagram %></td>
             </tr>
           <% } %>
         </table>
