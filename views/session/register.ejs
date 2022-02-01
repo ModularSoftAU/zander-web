@@ -19,7 +19,7 @@
         </div>
       </div>
       <div class="col-sm" style="margin-right:100px;">
-        <form method="post" action="/register">
+        <form method="post" action="<%= config.siteConfiguration.siteAddress %><%= config.siteConfiguration.apiRoute %>/web/register/create">
           <div class="form-group">
             <label for="username">Username</label>
             <input type="text" class="form-control" name="username" required>
@@ -31,6 +31,10 @@
           <div class="form-group">
             <label for="password">Password</label>
             <input type="password" class="form-control" name="password" required>
+          </div>
+          <div class="form-group">
+            <label for="confirmPassword">Confirm Password</label>
+            <input type="password" class="form-control" name="confirmPassword" required>
           </div>
           <div class="text-center">
             <button type="submit" class="btn btn-primary" style="margin:0 auto; width: 30%">Register</button>

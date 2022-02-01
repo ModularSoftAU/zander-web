@@ -3,7 +3,10 @@ import DiscordJS from 'discord.js'
 import WOKCommands from 'wokcommands'
 import moment from 'moment'
 import fetch from 'node-fetch'
-import fastify from "fastify"
+
+import fastify from 'fastify';
+import fastifySession from 'fastify-session'
+import fastifyCookie from 'fastify-cookie'
 
 import config from './config.json'
 import db from './controllers/databaseController'
@@ -102,7 +105,8 @@ const buildApp = async () => {
         reply.view('session/error', {
             "pageTitle": `Server Error`,
             config: config,
-            error: error
+            error: error,
+            request: request
         });
     });
 
@@ -128,6 +132,15 @@ const buildApp = async () => {
         next();
     });
 
+    // Sessions
+    app.register(fastifyCookie);
+    app.register(fastifySession, {
+        cookieName: 'sessionId',
+        secret: config.siteConfiguration.sessionCookieSecret,
+        cookie: { secure: false },
+        expires: 1800000
+    });
+
     app.register((instance, options, next) => {
         // Routes
         siteRoutes(instance, fetch, moment, config);
@@ -143,7 +156,7 @@ const buildApp = async () => {
         })
 
         console.log(`\n// ${packageData.name} v.${packageData.version}\nGitHub Repository: ${packageData.homepage}\nCreated By: ${packageData.author}`);
-        console.log(`Site is listening to the port ${port}`);
+        console.log(`Site and API is listening to the port ${port}`);
     } catch (error) {
         app.log.error(`Unable to start the server:\n${error}`);
     }
