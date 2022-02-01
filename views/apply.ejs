@@ -1,0 +1,73 @@
+<%- include("modules/header.ejs", {
+    pageTitle: pageTitle,
+    pageDescription: "If you have skills in our positions we are keen for you to join our ever-expanding team on the Network."
+}) %>
+
+<%- include("modules/navigationBar.ejs") %>
+
+<%- include("partials/miniHeader.ejs", {
+  headerTitle: "Apply",
+  backgroundImage: "../images/banner/AronCrystalBuilding.png"
+}) %>
+
+
+<section class="section">
+    <div class="container">
+      <div>
+        <div class="row">
+
+          <% if (apiData.success == false) { %>
+            <%- include("partials/alert.ejs", {
+              alertType: "danger",
+              content: apiData.message
+            }) %>
+          <% } else { %>
+            <% apiData.data.forEach(function (application) { %>
+              <!-- <%= application.displayName %> Application Item -->
+              <div class="col-lg-4 col-md-6 col-sm-6">
+                <div class="service-item mb-4">
+                  <div class="feature-item mb-5 mb-lg-0">
+                    <div class="feature-icon mb-4">
+                      <i class="<%= application.displayIcon %>"></i>
+                    </div>
+                    <h4 class="mb-3"><%= application.displayName %></h4>
+                    <p><%= application.description %></p>
+
+                    <!-- <%= application.displayName %> Modal -->
+                    <% if (application.closed === 1) { %>
+                      <a href="#" target="_blank"><button type="button" class="btn btn-danger" disabled>Closed</button></a>
+                    <% } else { %>
+                      <button type="button" class="btn btn-primary" data-toggle="modal" data-target=".bd-staff-modal-lg">Apply</button>
+                    <% } %>
+
+                    <div class="modal fade bd-staff-modal-lg" tabindex="-1" role="dialog" aria-labelledby="<%= application.applicationId %>Label" aria-hidden="true">
+                      <div class="modal-dialog modal-lg">
+                        <div class="modal-content">
+                          <div class="container" style="padding:20px;">
+                            <h2>Applicant Requirements</h2>
+                            <small>You must read and be applicable for the following requirements to apply, when finished, click Apply at the bottom.</small>
+                              <br><br>
+                                <zero-md src="<%= application.requirementsMarkdown %>"></zero-md>
+                              <br><br>
+
+                              <% if (application.closed === 1) { %>
+                                <a href="#" target="_blank"><button type="button" class="btn btn-danger" disabled>Applications Closed</button></a>
+                              <% } else { %>
+                                <a href="<%= application.redirectUrl %>" target="_blank"><button type="button" class="btn btn-info">Apply</button></a>
+                              <% } %>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            <% }) %>
+        <% } %>
+
+        </div>
+      </div>
+    </div>
+</section>
+
+<%- include("modules/footer.ejs") %>  

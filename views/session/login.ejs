@@ -1,0 +1,42 @@
+<%- include("../modules/header.ejs", {
+    pageTitle: pageTitle,
+    pageDescription: "Login and get involved in the community!"
+}) %>
+
+<%- include("../modules/navigationBar.ejs") %>
+
+<%- include("../partials/miniHeader.ejs", {
+  headerTitle: "Login",
+  backgroundImage: "../images/banner/AronCrystalBuilding.png"
+}) %>
+
+<section class="section">
+    <div class="container">
+      <div class="row">
+        <div class="col-sm" style="min-height:500px;">
+          <div class="text-center">
+            <img class="floating" style="margin-top:10px;" src="images/session/elytraadmins.png" height="400px" draggable="false">
+          </div>
+        </div>
+        <div class="col-sm" style="margin-right:100px;">    
+          <form method="post" action="<%= config.siteConfiguration.siteAddress %><%= config.siteConfiguration.apiRoute %>/web/login">
+            <div class="form-group">
+              <label for="username">Username</label>
+              <input type="text" class="form-control" name="username" required>
+            </div>
+            <div class="form-group">
+              <label for="password">Password</label>
+              <input type="password" class="form-control" name="password" required>
+            </div>
+            <div class="text-center">
+              <button type="submit" class="btn btn-primary" style="margin:0 auto; width: 30%">Sign In</button>
+            </div>
+          </form>
+          <br>
+          <small class="text-muted">Don't have an account? You can <a href="/register">register here</a>.</small>
+        </div>
+      </div>
+    </div>
+</section>
+
+<%- include("../modules/footer.ejs") %>  

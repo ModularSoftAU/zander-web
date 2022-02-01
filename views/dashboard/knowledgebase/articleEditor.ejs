@@ -1,0 +1,77 @@
+<%- include("../../modules/dashboard/header.ejs", {
+    pageTitle: pageTitle,
+    pageDescription: "Create a Knowledgebase article for a section."
+}) %>
+
+<%- include("../../modules/dashboard/sidebar.ejs") %>
+
+<%- include("../../modules/dashboard/navigation.ejs") %>
+
+<div class="content-wrap">
+    <div class="main">
+        <div class="container-fluid">
+            <section id="main-content">
+                <div class="row">
+                    <div class="col-lg-12">
+                        <div class="card">
+                            <div class="card-title">
+                                <h4>Create a Knowledgebase Article</h4>
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-sm">
+                                        <!-- Name of Section Slug -->
+                                        <div class="form-group">
+                                            <label for="knowledgebaseName">Knowledgebase Article Slug</label>
+                                            <input type="text" class="form-control input-default " name="knowledgebaseName" required>
+                                            <p class="text-muted m-b-15 f-s-12">The display name for the Knowledgebase section slug.</p>
+                                        </div>
+                                    </div>
+                                    <div class="col-sm">
+                                        <!-- Name of Article -->
+                                        <div class="form-group">
+                                            <label for="knowledgebaseArticleName">Knowledgebase Article Name</label>
+                                            <input type="text" class="form-control input-default " name="knowledgebaseArticleName" required>
+                                            <p class="text-muted m-b-15 f-s-12">The display name for the Knowledgebase article.</p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Link to Markdown -->
+                                <div class="form-group">
+                                    <label for="knowledgebaseArticleMarkdown">Knowledgebase Article Link</label>
+                                    <input type="text" class="form-control input-default " name="knowledgebaseDescription" required>
+                                    <p class="text-muted m-b-15 f-s-12">A link to the knowledgebase article, RAW Markdown.</p>
+                                </div>
+
+                                <div class="row">
+                                    <div class="col-lg-6">
+                                        <!-- Position -->
+                                        <div class="form-group">
+                                            <label for="knowledgebaseArticlePosition">Knowledgebase Article Position</label>
+                                            <input type="text" class="form-control input-default " name="knowledgebaseArticlePosition" required>
+                                            <p class="text-muted m-b-15 f-s-12">The position of where the article sits in the section.</p>
+                                        </div>
+                                    </div>
+                
+                                    <div class="col-lg-6">
+                                        <!-- Link To Section -->
+                                        <div class="form-group">
+                                            <label for="knowledgebaseArticleMarkdown">Knowledgebase Section</label>
+                                            <select class="form-control" name="knowledgebaseArticleMarkdown" required>
+                                                <option>Section 1</option>
+                                                <option>Section 2</option>
+                                                <option>Section 3</option>
+                                                <option>Section 4</option>
+                                            </select>
+                                            <small>Specify a section to link the article to.</small>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+
+<%- include("../../modules/dashboard/footer.ejs") %>
