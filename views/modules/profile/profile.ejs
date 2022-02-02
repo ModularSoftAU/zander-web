@@ -369,7 +369,9 @@
             </tr>
           <% } else if (request.session.user.username === profileApiData.data[0].username) { %>
               <tr>
-                <form action="" class="profileSocialIcon" method="post">
+                <form action="<%= config.siteConfiguration.siteAddress %><%= config.siteConfiguration.apiRoute %>/user/profile/authenticate/discord" class="profileSocialIcon" method="post">
+                  <input type="hidden" name="username" value="<%= request.session.user.username %>">
+                  <input type="hidden" name="userId" value="<%= request.session.user.userId %>">
                   <button type="submit" class="btn btn-sm btn-primary" style="background-color: #5865F2;"><i class="fab fa-discord"></i> Connect</button><br><br>
                 </form>
               </tr>

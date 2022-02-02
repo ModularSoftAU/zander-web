@@ -1,4 +1,5 @@
 import socialProfileStratagies from '../../socialProfileStratagies.json'
+import passport from 'passport';
 
 export default function userApiRoute(app, config, db) {
     const baseEndpoint = config.siteConfiguration.apiRoute + '/user';
@@ -62,7 +63,7 @@ export default function userApiRoute(app, config, db) {
         }
     });
 
-    app.post(baseEndpoint + '/profile/:username/edit', async function(req, res) {
+    app.post(baseEndpoint + '/profile/edit', async function(req, res) {
         const username = req.params.username;
         // TODO
 
@@ -70,7 +71,7 @@ export default function userApiRoute(app, config, db) {
         res.send({ success: true });
     });
 
-    app.post(baseEndpoint + '/profile/:username/about/update', async function(req, res) {
+    app.post(baseEndpoint + '/profile/about/update', async function(req, res) {
         const username = req.params.username;
         // TODO
 
@@ -78,7 +79,7 @@ export default function userApiRoute(app, config, db) {
         res.send({ success: true });
     });
 
-    app.post(baseEndpoint + '/profile/:username/authenticate/twitter', async function(req, res) {
+    app.post(baseEndpoint + '/profile/authenticate/twitter', async function(req, res) {
         const username = req.params.username;
         // TODO
 
@@ -86,7 +87,7 @@ export default function userApiRoute(app, config, db) {
         res.send({ success: true });
     });
 
-    app.post(baseEndpoint + '/profile/:username/authenticate/twitch', async function(req, res) {
+    app.post(baseEndpoint + '/profile/authenticate/twitch', async function(req, res) {
         const username = req.params.username;
         // TODO
 
@@ -94,7 +95,7 @@ export default function userApiRoute(app, config, db) {
         res.send({ success: true });
     });
 
-    app.post(baseEndpoint + '/profile/:username/authenticate/youtube', async function(req, res) {
+    app.post(baseEndpoint + '/profile/authenticate/youtube', async function(req, res) {
         const username = req.params.username;
         // TODO
 
@@ -102,7 +103,7 @@ export default function userApiRoute(app, config, db) {
         res.send({ success: true });
     });
 
-    app.post(baseEndpoint + '/profile/:username/authenticate/instagram', async function(req, res) {
+    app.post(baseEndpoint + '/profile/authenticate/instagram', async function(req, res) {
         const username = req.params.username;
         // TODO
 
@@ -110,7 +111,7 @@ export default function userApiRoute(app, config, db) {
         res.send({ success: true });
     });
 
-    app.post(baseEndpoint + '/profile/:username/authenticate/steam', async function(req, res) {
+    app.post(baseEndpoint + '/profile/authenticate/steam', async function(req, res) {
         const username = req.params.username;
         // TODO
 
@@ -118,7 +119,7 @@ export default function userApiRoute(app, config, db) {
         res.send({ success: true });
     });
 
-    app.post(baseEndpoint + '/profile/:username/authenticate/github', async function(req, res) {
+    app.post(baseEndpoint + '/profile/authenticate/github', async function(req, res) {
         const username = req.params.username;
         // TODO
 
@@ -126,7 +127,7 @@ export default function userApiRoute(app, config, db) {
         res.send({ success: true });
     });
 
-    app.post(baseEndpoint + '/profile/:username/authenticate/spotify', async function(req, res) {
+    app.post(baseEndpoint + '/profile/authenticate/spotify', async function(req, res) {
         const username = req.params.username;
         // TODO
 
@@ -140,27 +141,7 @@ export default function userApiRoute(app, config, db) {
     app.post(baseEndpoint + '/profile/authenticate/discord', async function(req, res) {
         const username = req.params.username;
 
-        const DiscordStrategy = import('passport-discord').Strategy;
-        passport.use(new DiscordStrategy({
-            clientID: socialProfileStratagies.discord.clientId,
-            clientSecret: socialProfileStratagies.discord.clientSecret,
-            callbackURL: 'callbackURL',
-            scope: socialProfileStratagies.discord.scopes
-        },
-        function(accessToken, refreshToken, profile, cb) {
-            console.log(`SUCCESS\n\n`);
-            
-        }));
-
         // res.send({ success: true });
-    });
-
-    app.post(baseEndpoint + '/profile/:username/authenticate/discord/callback', async function(req, res) {
-        const username = req.params.username;
-        // TODO
-
-        // ...
-        res.send({ success: true });
     });
 
     app.post(baseEndpoint + '/setting/:settingOption', async function(req, res) {
