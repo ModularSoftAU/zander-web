@@ -100,6 +100,12 @@ input[type="email"]:focus, input[type="password"]:focus, input[type="text"]:focu
   transition: all .35s ease;
 }
 
+.btn-sm {
+  padding: 0.25rem 0.5rem;
+  font-size: .875rem;
+  border-radius: 0.2rem;
+}
+
 .btn.btn-icon i {
   border-left: 1px solid rgba(255, 255, 255, 0.09);
   padding-left: 15px;
@@ -1519,3 +1525,8 @@ a:focus {
 .profileSection {
   padding-top: 30px;
 }
+
+/* .profileSocialIcon {
+  padding-bottom: 200px;
+  float: left;
+} */

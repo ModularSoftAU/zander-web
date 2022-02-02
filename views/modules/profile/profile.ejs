@@ -362,11 +362,17 @@
 
         <h3>Social Media</h3>
         <table class="table table-borderless">
-          <% if (profileApiData.data[0].twitter) { %>
+          <% if (profileApiData.data[0].discord) { %>
             <tr>
-              <td>Twitter</td>
-              <td><%= profileApiData.data[0].twitter %></td>
+              <td>Discord</td>
+              <td><%= profileApiData.data[0].discord %></td>
             </tr>
+          <% } else if (request.session.user.username === profileApiData.data[0].username) { %>
+              <tr>
+                <form action="" class="profileSocialIcon" method="post">
+                  <button type="submit" class="btn btn-sm btn-primary" style="background-color: #5865F2;"><i class="fab fa-discord"></i> Connect</button><br><br>
+                </form>
+              </tr>
           <% } %>
 
           <% if (profileApiData.data[0].twitch) { %>
@@ -374,12 +380,24 @@
               <td>Twitch</td>
               <td><%= profileApiData.data[0].twitch %></td>
             </tr>
-          <% } %>
+            <% } else if (request.session.user.username === profileApiData.data[0].username) { %>
+              <tr>
+                <form action="" class="profileSocialIcon" method="post">
+                  <button type="submit" class="btn btn-sm btn-primary" style="background-color: #6441a5;"><i class="fab fa-twitch"></i> Connect</button><br><br>
+                </form>
+              </tr>
+            <% } %>
 
-          <% if (profileApiData.data[0].steam) { %>
+          <% if (profileApiData.data[0].twitter) { %>
             <tr>
-              <td>Steam</td>
-              <td><%= profileApiData.data[0].steam %></td>
+              <td>Twitter</td>
+              <td><%= profileApiData.data[0].twitter %></td>
+            </tr>
+          <% } else if (request.session.user.username === profileApiData.data[0].username) { %>
+            <tr>
+              <form action="" class="profileSocialIcon" method="post">
+                <button type="submit" class="btn btn-sm btn-primary" style="background-color: #00acee;"><i class="fab fa-twitter"></i> Connect</button><br><br>
+              </form>
             </tr>
           <% } %>
 
@@ -388,12 +406,24 @@
               <td>Steam</td>
               <td><%= profileApiData.data[0].steam %></td>
             </tr>
-          <% } %>
+            <% } else if (request.session.user.username === profileApiData.data[0].username) { %>
+              <tr>
+                <form action="" class="profileSocialIcon" method="post">
+                  <button type="submit" class="btn btn-sm btn-primary" style="background-color: black;"><i class="fab fa-steam"></i> Connect</button><br><br>
+                </form>
+              </tr>
+            <% } %>
 
           <% if (profileApiData.data[0].github) { %>
             <tr>
               <td>GitHub</td>
               <td><%= profileApiData.data[0].github %></td>
+            </tr>
+          <% } else if (request.session.user.username === profileApiData.data[0].username) { %>
+            <tr>
+              <form action="" class="profileSocialIcon" method="post">
+                <button type="submit" class="btn btn-sm btn-primary" style="background-color: #171515;"><i class="fab fa-github"></i> Connect</button><br><br>
+              </form>
             </tr>
           <% } %>
 
@@ -402,13 +432,12 @@
               <td>Spotify</td>
               <td><%= profileApiData.data[0].spotify %></td>
             </tr>
-          <% } %>
-
-          <% if (profileApiData.data[0].discord) { %>
-            <tr>
-              <td>Discord</td>
-              <td><%= profileApiData.data[0].discord %></td>
-            </tr>
+          <% } else if (request.session.user.username === profileApiData.data[0].username) { %>
+              <tr>
+                <form action="" class="profileSocialIcon" method="post">
+                  <button type="submit" class="btn btn-sm btn-primary" style="background-color: #1DB954;"><i class="fab fa-spotify"></i> Connect</button><br><br>
+                </form>
+              </tr>
           <% } %>
 
           <% if (profileApiData.data[0].youtube) { %>
@@ -416,6 +445,12 @@
               <td>YouTube</td>
               <td><%= profileApiData.data[0].youtube %></td>
             </tr>
+          <% } else if (request.session.user.username === profileApiData.data[0].username) { %>
+              <tr>
+                <form action="" class="profileSocialIcon" method="post">
+                  <button type="submit" class="btn btn-sm btn-primary" style="background-color: #c4302b;"><i class="fab fa-youtube"></i> Connect</button><br><br>
+                </form>
+              </tr>
           <% } %>
 
           <% if (profileApiData.data[0].instagram) { %>
@@ -423,6 +458,12 @@
               <td>Instagram</td>
               <td><%= profileApiData.data[0].instagram %></td>
             </tr>
+            <% } else if (request.session.user.username === profileApiData.data[0].username) { %>
+              <tr>
+                <form action="" class="profileSocialIcon" method="post">
+                  <button type="submit" class="btn btn-sm btn-primary" style="background-color: #bc2a8d;"><i class="fab fa-instagram"></i> Connect</button><br><br>
+                </form>
+              </tr>
           <% } %>
         </table>
         <hr>  

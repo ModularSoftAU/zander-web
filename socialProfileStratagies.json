@@ -1,0 +1,10 @@
+{
+    "discord": {
+        "clientId": "938372608213258240",
+        "clientSecret": "dI3jvmERoVLd4TwY4ogUP-aMj_atrPmV",
+        "callbackUrl": "http://localhost:8080/api/user/profile/:username/authenticate/discord/callback",
+        "scopes": [
+            "identity"
+        ]
+    }
+}

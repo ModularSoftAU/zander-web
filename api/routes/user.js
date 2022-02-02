@@ -1,3 +1,5 @@
+import socialProfileStratagies from '../../socialProfileStratagies.json'
+
 export default function userApiRoute(app, config, db) {
     const baseEndpoint = config.siteConfiguration.apiRoute + '/user';
 
@@ -132,7 +134,28 @@ export default function userApiRoute(app, config, db) {
         res.send({ success: true });
     });
 
-    app.post(baseEndpoint + '/profile/:username/authenticate/discord', async function(req, res) {
+    // 
+    // Discord
+    // 
+    app.post(baseEndpoint + '/profile/authenticate/discord', async function(req, res) {
+        const username = req.params.username;
+
+        const DiscordStrategy = import('passport-discord').Strategy;
+        passport.use(new DiscordStrategy({
+            clientID: socialProfileStratagies.discord.clientId,
+            clientSecret: socialProfileStratagies.discord.clientSecret,
+            callbackURL: 'callbackURL',
+            scope: socialProfileStratagies.discord.scopes
+        },
+        function(accessToken, refreshToken, profile, cb) {
+            console.log(`SUCCESS\n\n`);
+            
+        }));
+
+        // res.send({ success: true });
+    });
+
+    app.post(baseEndpoint + '/profile/:username/authenticate/discord/callback', async function(req, res) {
         const username = req.params.username;
         // TODO
 
