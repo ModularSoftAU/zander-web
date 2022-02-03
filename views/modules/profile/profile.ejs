@@ -369,15 +369,19 @@
             </tr>
           <% } else if (request.session.user.username === profileApiData.data[0].username) { %>
               <tr>
-                <form action="<%= config.siteConfiguration.siteAddress %><%= config.siteConfiguration.apiRoute %>/user/profile/authenticate/discord" class="profileSocialIcon" method="post">
+                <a href="<%= config.siteConfiguration.siteAddress %><%= config.siteConfiguration.apiRoute %>/user/profile/authenticate/discord?username=<%= profileApiData.data[0].username %>">
+                  <button type="button" class="btn btn-sm btn-primary" style="background-color: #5865F2;"><i class="fab fa-discord"></i> Connect</button><br><br>
+                </a>
+
+                <!-- <form action="" class="profileSocialIcon" method="post">
                   <input type="hidden" name="username" value="<%= request.session.user.username %>">
                   <input type="hidden" name="userId" value="<%= request.session.user.userId %>">
                   <button type="submit" class="btn btn-sm btn-primary" style="background-color: #5865F2;"><i class="fab fa-discord"></i> Connect</button><br><br>
-                </form>
+                </form> -->
               </tr>
           <% } %>
 
-          <% if (profileApiData.data[0].twitch) { %>
+          <!-- <% if (profileApiData.data[0].twitch) { %>
             <tr>
               <td>Twitch</td>
               <td><%= profileApiData.data[0].twitch %></td>
@@ -466,7 +470,7 @@
                   <button type="submit" class="btn btn-sm btn-primary" style="background-color: #bc2a8d;"><i class="fab fa-instagram"></i> Connect</button><br><br>
                 </form>
               </tr>
-          <% } %>
+          <% } %> -->
         </table>
         <hr>  
       </div>
