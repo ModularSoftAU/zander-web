@@ -27,12 +27,12 @@ export default function knowledgebaseApiRoute(app, config, db) {
     });
 
     app.get(baseEndpoint + '/article/get', async function(req, res) {
-        const sectionSlug = req.query.sectionSlug;
+        const articleSlug = req.query.articleSlug;
 
-        // Search for all articles by section slug
-        if (sectionSlug) {
+        // Search for all individual article
+        if (articleSlug) {
             try {
-                db.query(`SELECT * FROM knowledgebaseArticles WHERE sectionId=(SELECT sectionId FROM knowledgebasesections WHERE sectionSlug=?) ORDER BY position ASC;`, [sectionSlug], function(error, results, fields) {
+                db.query(`SELECT * FROM knowledgebaseArticles WHERE articleSlug=? LIMIT 1`, [articleSlug], function(error, results, fields) {
                     if (error) {
                         return res.send({
                             success: false,

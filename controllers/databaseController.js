@@ -1,5 +1,5 @@
 import mysql from 'mysql'
-import config from '../config.json' assert { type: 'json' };
+import config from '../config.json'
 
 var connection = mysql.createConnection({
   host: config.database.host,

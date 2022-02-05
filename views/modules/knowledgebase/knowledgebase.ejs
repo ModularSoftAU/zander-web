@@ -41,7 +41,7 @@
                     <% } else { %>
                     <% articleApiData.data.forEach(function (article) { %>
                       <% if (article.sectionId == section.sectionId) { %>
-                        <div><a href="/knowledgebase/<%= section.sectionSlug %>/<%= article.articleSlug %>"><%= article.articleName %></a></div>
+                        <div class="kbLinks"><a href="/knowledgebase/<%= section.sectionSlug %>/<%= article.articleSlug %>"><%= article.articleName %></a></div>
                       <% } %>
                     <% }) %>
                   <% } %>

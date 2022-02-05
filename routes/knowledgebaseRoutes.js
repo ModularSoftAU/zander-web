@@ -30,16 +30,19 @@ export default function knowledgebaseSiteRoute(app, fetch, config) {
         const sectionSlug = request.params.sectionSlug;
         const articleSlug = request.params.articleSlug;
 
-        const articleFetchURL = `${config.siteConfiguration.siteAddress}${config.siteConfiguration.apiRoute}/knowledgebase/article/get`;
+        const articleFetchURL = `${config.siteConfiguration.siteAddress}${config.siteConfiguration.apiRoute}/knowledgebase/article/get?articleSlug=${articleSlug}`;
         const articleResponse = await fetch(articleFetchURL);
         const articleApiData = await articleResponse.json();
 
         console.log(sectionSlug);
         console.log(articleSlug);
 
+        console.log(articleApiData);
+
         reply.view('modules/knowledgebase/knowledgebaseArticle', {
-            "pageTitle": `Knowledgebase - KB Article Title`,
+            "pageTitle": articleApiData.data[0].articleName,
             config: config,
+            articleApiData: articleApiData,
             request: request
         });
     });

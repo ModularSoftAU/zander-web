@@ -6,8 +6,8 @@
 <%- include("../../modules/navigationBar.ejs") %>
 
 <%- include("../../partials/miniHeader.ejs", {
-  headerTitle: "Knowledgebase Article",
-  backgroundImage: "../images/banner/AronCrystalBuilding.png"
+  headerTitle: articleApiData.data[0].articleName,
+  backgroundImage: "../../images/banner/AronCrystalBuilding.png"
 }) %>
   
   
@@ -15,7 +15,7 @@
       <div class="container">
         <div>
             <div class="details mt-4 mt-lg-0 kbMarkdown">
-                <zero-md src="https://raw.githubusercontent.com/craftingforchrist/public-knowledgebase/staging/gettingStarted/loggingIntoTheServer.md"></zero-md>
+                <zero-md src="<%= articleApiData.data[0].articleLink %>"></zero-md>
             </div>
         </div>
       </div>
