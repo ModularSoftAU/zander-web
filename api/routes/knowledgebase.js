@@ -26,6 +26,55 @@ export default function knowledgebaseApiRoute(app, config, db) {
         }
     });
 
+    app.get(baseEndpoint + '/article/get', async function(req, res) {
+        const sectionSlug = req.query.sectionSlug;
+
+        // Search for all articles by section slug
+        if (sectionSlug) {
+            try {
+                db.query(`SELECT * FROM knowledgebaseArticles WHERE sectionId=(SELECT sectionId FROM knowledgebasesections WHERE sectionSlug=?) ORDER BY position ASC;`, [sectionSlug], function(error, results, fields) {
+                    if (error) {
+                        return res.send({
+                            success: false,
+                            message: `${error}`
+                        });
+                    }
+                    return res.send({
+                        success: true,
+                        data: results
+                    });
+                });
+    
+            } catch (error) {
+                res.send({
+                    success: false,
+                    message: `${error}`
+                });
+            }            
+        }
+
+        try {
+            db.query(`SELECT * FROM knowledgebaseArticles ORDER BY position ASC;`, function(error, results, fields) {
+                if (error) {
+                    return res.send({
+                        success: false,
+                        message: `${error}`
+                    });
+                }
+                return res.send({
+                    success: true,
+                    data: results
+                });
+            });
+
+        } catch (error) {
+            res.send({
+                success: false,
+                message: `${error}`
+            });
+        }
+    });
+
     app.post(baseEndpoint + '/section/create', async function(req, res) {
         const sectionSlug = req.body.sectionSlug;
         const sectionName = req.body.sectionName;
@@ -75,29 +124,6 @@ export default function knowledgebaseApiRoute(app, config, db) {
                     });
                 }
               return res.redirect(`${config.siteConfiguration.siteAddress}/dashboard/knowledgebase`)
-            });
-
-        } catch (error) {
-            res.send({
-                success: false,
-                message: `${error}`
-            });
-        }
-    });
-
-    app.get(baseEndpoint + '/article/get', async function(req, res) {
-        try {
-            db.query(`SELECT * FROM knowledgebaseArticles ORDER BY position ASC;`, function(error, results, fields) {
-                if (error) {
-                    return res.send({
-                        success: false,
-                        message: `${error}`
-                    });
-                }
-                return res.send({
-                    success: true,
-                    data: results
-                });
             });
 
         } catch (error) {
