@@ -12,7 +12,6 @@ export default function friendApiRoute(app, config, db) {
     app.post(baseEndpoint + '/accept', async function(req, res) {
         const requestee = req.body.requestee;
         const requestedUser = req.body.requestedUser;
-        const action = req.body.action;
 
         // ...
         res.send({ success: true });
@@ -21,7 +20,6 @@ export default function friendApiRoute(app, config, db) {
     app.post(baseEndpoint + '/deny', async function(req, res) {
         const requestee = req.body.requestee;
         const requestedUser = req.body.requestedUser;
-        const action = req.body.action;
 
         // ...
         res.send({ success: true });
@@ -30,7 +28,6 @@ export default function friendApiRoute(app, config, db) {
     app.post(baseEndpoint + '/block', async function(req, res) {
         const requestee = req.body.requestee;
         const requestedUser = req.body.requestedUser;
-        const action = req.body.action;
 
         // ...
         res.send({ success: true });
