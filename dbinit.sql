@@ -352,6 +352,7 @@ CREATE TABLE knowledgebaseArticles (
     sectionId INT NOT NULL,
     articleSlug VARCHAR(30) UNIQUE NOT NULL,
     articleName VARCHAR(30),
+    articleDescription TEXT,
     articleLink TEXT,
     position INT,
     published BOOLEAN DEFAULT 1,
