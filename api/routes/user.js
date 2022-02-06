@@ -76,14 +76,6 @@ export default function userApiRoute(app, config, db) {
         res.send({ success: true });
     });
 
-    app.post(baseEndpoint + '/profile/about/update', async function(req, res) {
-        const username = req.params.username;
-        // TODO
-
-        // ...
-        res.send({ success: true });
-    });
-
     app.post(baseEndpoint + '/profile/authenticate/twitter', async function(req, res) {
         const username = req.params.username;
         // TODO

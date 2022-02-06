@@ -147,7 +147,21 @@ export default function applicationSiteRoutes(app, fetch, moment, config) {
             request: request,
             profileApiData: profileApiData,
             reportApiData: reportApiData
+        });
+    });
 
+    app.get('/profile/edit', async function(request, reply) {
+        // Get Player Profile Information
+        const profileFetchURL = `${config.siteConfiguration.siteAddress}${config.siteConfiguration.apiRoute}/user/get?username=${request.session.user.username}`;
+        const profileResponse = await fetch(profileFetchURL);
+        const profileApiData = await profileResponse.json();
+
+        reply.view('modules/profile/editProfile', {
+            "pageTitle": `${profileApiData.data[0].username}'s Profile`,
+            config: config,
+            moment: moment,
+            request: request,
+            profileApiData: profileApiData
         });
     });
 
