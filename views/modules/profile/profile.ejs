@@ -321,7 +321,7 @@
                       <% } else { %>
                         <tr>
                       <% } %>
-                            <td>#<%= report.reportid %></td>
+                            <td>#<%= report.reportId %></td>
                             <td><img style="padding-right: 5px; border-radius: 15px;" src="https://crafatar.com/avatars/<%= report.reportedUserUUID %>?helm" height="20px" draggable="false"> <%= report.reportedUser %></td>
                             <td><img style="padding-right: 5px; border-radius: 15px;" src="https://crafatar.com/avatars/<%= report.reporterUserUUID %>?helm" height="20px" draggable="false"> <%= report.reporterUser %></td>
                             <td><%= report.platform %></td>
@@ -333,7 +333,7 @@
 
                                 <% if (!report.closed) { %>
                                   <form action="<%= config.siteConfiguration.siteAddress %><%= config.siteConfiguration.apiRoute %>/report/close" method="post">
-                                    <input type="hidden" name="reportId" value="<%= report.reportid %>">
+                                    <input type="hidden" name="reportId" value="<%= report.reportId %>">
                                     <button class="btn btn-sm btn-danger" type="submit">Close</button>
                                   </form>
                                 <% }%>
