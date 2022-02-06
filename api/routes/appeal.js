@@ -28,7 +28,6 @@ export default function appealApiRoute(app, config, db) {
         const punishmentId = req.body.punishmentId;
         const staffId = req.body.staffId;
         const content = req.body.content;
-        const action = req.body.action;
 
         // ...
         res.send({ success: true });
@@ -38,7 +37,6 @@ export default function appealApiRoute(app, config, db) {
         const punishmentId = req.body.punishmentId;
         const staffId = req.body.staffId;
         const content = req.body.content;
-        const action = req.body.action;
 
         // ...
         res.send({ success: true });
@@ -48,7 +46,6 @@ export default function appealApiRoute(app, config, db) {
         const punishmentId = req.body.punishmentId;
         const staffId = req.body.staffId;
         const content = req.body.content;
-        const action = req.body.action;
 
         // ...
         res.send({ success: true });
@@ -58,7 +55,6 @@ export default function appealApiRoute(app, config, db) {
         const punishmentId = req.body.punishmentId;
         const staffId = req.body.staffId;
         const content = req.body.content;
-        const action = req.body.action;
 
         // ...
         res.send({ success: true });

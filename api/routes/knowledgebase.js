@@ -1,11 +1,58 @@
 export default function knowledgebaseApiRoute(app, config, db) {
     const baseEndpoint = config.siteConfiguration.apiRoute + '/knowledgebase';
 
-    // Jaedan: Some get routes should be added for the knowledgebase
-    // Data goes in but none comes out currently
     app.get(baseEndpoint + '/section/get', async function(req, res) {
         try {
             db.query(`SELECT * FROM knowledgebaseSections ORDER BY position ASC;`, function(error, results, fields) {
+                if (error) {
+                    return res.send({
+                        success: false,
+                        message: `${error}`
+                    });
+                }
+                return res.send({
+                    success: true,
+                    data: results
+                });
+            });
+
+        } catch (error) {
+            res.send({
+                success: false,
+                message: `${error}`
+            });
+        }
+    });
+
+    app.get(baseEndpoint + '/article/get', async function(req, res) {
+        const articleSlug = req.query.articleSlug;
+
+        // Search for all individual article
+        if (articleSlug) {
+            try {
+                db.query(`SELECT * FROM knowledgebaseArticles WHERE articleSlug=? LIMIT 1`, [articleSlug], function(error, results, fields) {
+                    if (error) {
+                        return res.send({
+                            success: false,
+                            message: `${error}`
+                        });
+                    }
+                    return res.send({
+                        success: true,
+                        data: results
+                    });
+                });
+    
+            } catch (error) {
+                res.send({
+                    success: false,
+                    message: `${error}`
+                });
+            }            
+        }
+
+        try {
+            db.query(`SELECT * FROM knowledgebaseArticles ORDER BY position ASC;`, function(error, results, fields) {
                 if (error) {
                     return res.send({
                         success: false,
@@ -75,29 +122,6 @@ export default function knowledgebaseApiRoute(app, config, db) {
                     });
                 }
               return res.redirect(`${config.siteConfiguration.siteAddress}/dashboard/knowledgebase`)
-            });
-
-        } catch (error) {
-            res.send({
-                success: false,
-                message: `${error}`
-            });
-        }
-    });
-
-    app.get(baseEndpoint + '/article/get', async function(req, res) {
-        try {
-            db.query(`SELECT * FROM knowledgebaseArticles ORDER BY position ASC;`, function(error, results, fields) {
-                if (error) {
-                    return res.send({
-                        success: false,
-                        message: `${error}`
-                    });
-                }
-                return res.send({
-                    success: true,
-                    data: results
-                });
             });
 
         } catch (error) {
