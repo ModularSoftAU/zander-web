@@ -7,4 +7,4 @@ Secondary Colour: #1c2f53
 Use Node v16.6.2 
 
 Use NVM (Node Version Manager) to switch if you have troubles
-Guide: https://www.digitalocean.com/community/tutorials/nodejs-node-version-manager
+https://github.com/coreybutler/nvm-windows
