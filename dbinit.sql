@@ -56,13 +56,13 @@ CREATE TABLE userVerify (
 );
 
 -- Generate verificationToken before data is inserted if it NULL
-CREATE TRIGGER userVerify_generate_token_before_insert
+CREATE TRIGGER userVerify_generateTokenBeforeInsert
 BEFORE INSERT ON userVerify FOR EACH ROW
 	SET NEW.verificationToken = LEFT(REPLACE(UUID(), '-', ''), 16)
 ;
 
 -- Update verifiedOn to current date when verified is set to true (1)
-CREATE TRIGGER userVerify_insert_verifid_date_after_update
+CREATE TRIGGER userVerify_insertVerifiedDateAfterUpdate
 BEFORE UPDATE ON userVerify FOR EACH ROW
 	SET NEW.verifiedOn = CASE
 		WHEN NEW.verified = 1 AND NEW.verifiedOn IS NULL THEN NOW()
@@ -77,7 +77,7 @@ CREATE TABLE ranks (
     priority INT NOT NULL DEFAULT 900,
     rankBadgeColour VARCHAR(7) NOT NULL DEFAULT '#cd00cd',
     rankTextColour VARCHAR(7) NOT NULL DEFAULT '#000000',
-    discordRoleID INT,
+    discordRoleId INT,
     isStaff BOOLEAN DEFAULT 0,
     isDonator BOOLEAN DEFAULT 0,
     PRIMARY KEY (rankId),
@@ -132,7 +132,7 @@ CREATE TABLE friends (
 );
 
 CREATE TABLE reports (
-	reportid INT NOT NULL AUTO_INCREMENT,
+	reportId INT NOT NULL AUTO_INCREMENT,
     reportedUserId INT NOT NULL,
     reporterUserId INT NOT NULL,
     reason TEXT,
@@ -217,7 +217,7 @@ CREATE TABLE appeals (
 );
 
 -- Update the appeals.updatedDate when record is updated
-CREATE TRIGGER appeals_updatedDate_before_update
+CREATE TRIGGER appeals_updatedDateBeforeUpdate
 BEFORE UPDATE ON appeals FOR EACH ROW
 	SET NEW.updatedDate = NOW()
 ;
@@ -236,7 +236,7 @@ CREATE TABLE appealActions (
 );
 
 -- Update the appealActions.updatedDate when record is updated
-CREATE TRIGGER appealActions_updatedDate_before_update
+CREATE TRIGGER appealActions_updatedDateBeforeUpdate
 BEFORE UPDATE ON appealActions FOR EACH ROW
 	SET NEW.updatedDate = NOW()
 ;
@@ -258,7 +258,7 @@ CREATE TABLE appealComments (
 );
 
 -- Update the appealComments.updatedDate when record is updated
-CREATE TRIGGER appealComments_updatedDate_before_update
+CREATE TRIGGER appealComments_updatedDateBeforeUpdate
 BEFORE UPDATE ON appealComments FOR EACH ROW
 	SET NEW.updatedDate = NOW()
 ;
@@ -310,7 +310,7 @@ CREATE TABLE alerts (
 );
 
 -- Update the alerts.updatedDate when record is updated
-CREATE TRIGGER alerts_updatedDate_before_update
+CREATE TRIGGER alerts_updatedDateBeforeUpdate
 BEFORE UPDATE ON alerts FOR EACH ROW
 	SET NEW.updatedDate = NOW()
 ;
@@ -419,7 +419,7 @@ CREATE TABLE communityCreationImages (
 );
 
 -- Trigger to automatically add the position column for newly inserted images of a community creatin.
-CREATE TRIGGER communityCreationImages_position_before_insert
+CREATE TRIGGER communityCreationImages_positionBeforeInsert
 BEFORE INSERT ON communityCreationImages FOR EACH ROW
 	SET NEW.position = (SELECT COUNT(*) FROM communityCreationImages WHERE creationId = NEW.creationId) + 1
 ;
