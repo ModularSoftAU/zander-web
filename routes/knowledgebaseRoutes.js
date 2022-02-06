@@ -34,11 +34,6 @@ export default function knowledgebaseSiteRoute(app, fetch, config) {
         const articleResponse = await fetch(articleFetchURL);
         const articleApiData = await articleResponse.json();
 
-        console.log(sectionSlug);
-        console.log(articleSlug);
-
-        console.log(articleApiData);
-
         reply.view('modules/knowledgebase/knowledgebaseArticle', {
             "pageTitle": articleApiData.data[0].articleName,
             config: config,

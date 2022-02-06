@@ -1,8 +1,6 @@
 export default function knowledgebaseApiRoute(app, config, db) {
     const baseEndpoint = config.siteConfiguration.apiRoute + '/knowledgebase';
 
-    // Jaedan: Some get routes should be added for the knowledgebase
-    // Data goes in but none comes out currently
     app.get(baseEndpoint + '/section/get', async function(req, res) {
         try {
             db.query(`SELECT * FROM knowledgebaseSections ORDER BY position ASC;`, function(error, results, fields) {
