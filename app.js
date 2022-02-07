@@ -7,7 +7,6 @@ import fetch from 'node-fetch'
 import fastify from 'fastify';
 import fastifySession from 'fastify-session'
 import fastifyCookie from 'fastify-cookie'
-import fastifyPassport from 'fastify-passport'
 
 import config from './config.json';
 import db from './controllers/databaseController'
@@ -100,15 +99,6 @@ const buildApp = async () => {
     //         error: error
     //     });
     // });
-
-    // Passport
-    app.register(fastifyPassport.initialize())
-    app.register(fastifyPassport.secureSession())
-
-    // fastifyPassport.use('test', new SomePassportStrategy()) // you'd probably use some passport strategy from npm here
-  
-
-
 
     // When app errors, render the error on a page, do not provide JSON
     app.setErrorHandler((error, request, reply) => {        

@@ -1,6 +1,6 @@
 <%- include("../header.ejs", {
     pageTitle: pageTitle,
-    pageDescription: "Check out <%= profileApiData.data[0].username's %> profile, punishments and statistics."
+    pageDescription: "Check out profileApiData.data[0].username's profile, punishments and statistics."
 }) %>
 
 <%- include("../navigationBar.ejs") %>
@@ -370,7 +370,7 @@
           <% } %>
 
 
-          <!-- <% if (profileApiData.data[0].twitch) { %>
+          <% if (profileApiData.data[0].twitch) { %>
             <tr>
               <td>Twitch</td>
               <td><%= profileApiData.data[0].twitch %></td>
@@ -417,7 +417,7 @@
               <td>Instagram</td>
               <td><%= profileApiData.data[0].instagram %></td>
             </tr>
-          <% } %> -->
+          <% } %>
 
 
         </table>

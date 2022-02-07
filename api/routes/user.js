@@ -1,11 +1,3 @@
-import socialProfileStratagies from '../../socialProfileStratagies.json'
-import passport from 'passport';
-// import { Strategy as DiscordStrategy } from "passport-discord"
-import { Strategy as DiscordStrategy } from "@oauth-everything/passport-discord"
-
-import fastifyPassport from 'fastify-passport'
-import fastifySecureSession from 'fastify-secure-session'
-
 export default function userApiRoute(app, config, db) {
     const baseEndpoint = config.siteConfiguration.apiRoute + '/user';
 
@@ -135,37 +127,23 @@ export default function userApiRoute(app, config, db) {
     // 
     // Discord
     // 
-    passport.use(new DiscordStrategy({
-        clientID: socialProfileStratagies.discord.clientId,
-        clientSecret: socialProfileStratagies.discord.clientSecret,
-        callbackURL: 'callbackURL',
-        scope: socialProfileStratagies.discord.scopes,
-        prompt: socialProfileStratagies.discord.prompt
-    },
-    function(accessToken, refreshToken, profile, cb) {
-        console.log(`SUCCESS\n\n`);
-        console.log(profile)
-        console.log(cb)
-    }));
+    app.get(baseEndpoint + '/profile/authenticate/discord', async function(req, res) {
+        const username = req.params.username;
 
-    // app.get(baseEndpoint + '/profile/authenticate/discord', passport.authenticate("discord"));
+        // TODO
 
-    app.get(baseEndpoint + '/profile/authenticate/discord', { 
-        preValidation: fastifyPassport.authenticate('discord', { authInfo: false }) },
-        async () => 'hello world!'
-    )      
+        // ...
+        res.send({ success: true });
+    });      
 
 
     app.get(baseEndpoint + '/profile/authenticate/discord/callback', async function(req, res) {
         const username = req.params.username;
 
-        // passport.authenticate('discord', {
-        //     failureRedirect: '/'
-        // }), function(req, res) {
-        //     res.redirect('/secretstuff') // Successful auth
-        // };
+        // TODO
 
-        // res.send({ success: true });
+        // ...
+        res.send({ success: true });
     });
 
     app.post(baseEndpoint + '/setting/:settingOption', async function(req, res) {
