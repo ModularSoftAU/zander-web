@@ -1,0 +1,59 @@
+<%- include("../../modules/dashboard/header.ejs", {
+    pageTitle: pageTitle,
+    pageDescription: "Create a section of the Knowledgebase"
+}) %>
+
+<%- include("../../modules/dashboard/sidebar.ejs") %>
+
+<%- include("../../modules/dashboard/navigation.ejs") %>
+
+<div class="content-wrap">
+    <div class="main">
+        <div class="container-fluid">
+            <section id="main-content">
+                <div class="row">
+                    <div class="col-lg-12">
+                        <div class="card">
+                            <div class="card-title">
+                                <h4>Create a Knowledgebase Section</h4>
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-sm">
+                                        <!-- Name of Section Slug -->
+                                        <div class="form-group">
+                                            <label for="knowledgebaseName">Knowledgebase Section Slug</label>
+                                            <input type="text" class="form-control input-default " name="knowledgebaseName" required>
+                                            <p class="text-muted m-b-15 f-s-12">The display name for the Knowledgebase section slug.</p>
+                                        </div>
+                                    </div>
+                                    <div class="col-sm">
+                                        <!-- Name of Section -->
+                                        <div class="form-group">
+                                            <label for="knowledgebaseName">Knowledgebase Section Name</label>
+                                            <input type="text" class="form-control input-default " name="knowledgebaseName" required>
+                                            <p class="text-muted m-b-15 f-s-12">The display name for the Knowledgebase section.</p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Description of Section -->
+                                <div class="form-group">
+                                    <label for="knowledgebaseDescription">Knowledgebase Section Description</label>
+                                    <input type="text" class="form-control input-default " name="knowledgebaseDescription" required>
+                                    <p class="text-muted m-b-15 f-s-12">A description for the Knowledgebase section.</p>
+                                </div>
+
+                                <!-- Section Icon -->
+                                <div class="form-group">
+                                    <label for="knowledgebaseIcon">Knowledgebase Section Icon</label>
+                                    <input type="text" class="form-control input-default " name="knowledgebaseIcon" required>
+                                    <p class="text-muted m-b-15 f-s-12">The display icon for the Knowledgebase section, selection from <a href="https://fontawesome.com/">FontAwesome</a>.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+
+<%- include("../../modules/dashboard/footer.ejs") %>

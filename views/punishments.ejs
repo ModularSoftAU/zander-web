@@ -1,0 +1,50 @@
+<%- include("modules/header.ejs", {
+    pageTitle: pageTitle,
+    pageDescription: "Have a look at all of the punishments on the Network."
+}) %>
+
+<%- include("modules/navigationBar.ejs") %>
+
+<%- include("partials/miniHeader.ejs", {
+  headerTitle: "Punishments",
+  backgroundImage: "../images/banner/AronCrystalBuilding.png"
+}) %>
+
+
+<section class="section">
+    <div class="container">
+      <table class="table">
+        <thead>
+          <tr>
+            <th scope="col">ID</th>
+            <th scope="col">Punished User</th>
+            <th scope="col">Punished By</th>
+            <th scope="col">Type</th>
+            <th scope="col">Reason</th>
+            <th scope="col">Time</th>
+            <th scope="col">Action</th>
+          </tr>
+        </thead>
+
+        <tbody>
+          <tr>
+            <td><a href="/punishments/game/view/#">#0001</a></td>
+            <td>shadowolfyt</td>
+            <td>Camemes</td>
+            <td>WARNING</td>
+            <td>Spamming and Bad Admin</td>
+            <td style="font-size: 13px; max-width:180px;">Tuesday 29th September 2022</td>
+            <td>
+              <div class="btn-group btm-sm" role="group">
+                <button type="button" class="btn btm-sm btn-danger">Appeal</button>
+                <button type="button" class="btn btm-sm btn-warning">Edit</button>
+              </div>
+          </td>
+          </tr>
+        </tbody>
+        </tbody>
+      </table>     
+    </div>
+</section>
+
+<%- include("modules/footer.ejs") %>  

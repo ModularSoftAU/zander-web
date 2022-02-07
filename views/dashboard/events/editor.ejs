@@ -1,0 +1,77 @@
+<%- include("../../modules/dashboard/header.ejs", {
+    pageTitle: pageTitle,
+    pageDescription: "Schedule events for the community to attend."
+}) %>
+
+<%- include("../../modules/dashboard/sidebar.ejs") %>
+
+<%- include("../../modules/dashboard/navigation.ejs") %>
+
+<div class="content-wrap">
+    <div class="main">
+        <div class="container-fluid">
+            <section id="main-content">
+                <div class="row">
+                    <div class="col-lg-6">
+                        <div class="card">
+                            <div class="card-title">
+                                <h4>Event Planner</h4>
+                                
+                            </div>
+                            <div class="card-body">
+                                <div class="basic-form">
+                                    <form>
+                                        <!-- Name of Event -->
+                                        <div class="form-group">
+                                            <label for="eventName">Event Name</label>
+                                            <input type="text" class="form-control input-default " name="eventName" required>
+                                            <p class="text-muted m-b-15 f-s-12">The name of the event.</p>
+                                        </div>
+
+                                        <!-- Event Icon -->
+                                        <div class="form-group">
+                                            <label for="eventIcon">Event Icon</label>
+                                            <input type="text" class="form-control input-default " name="eventIcon" required>
+                                            <p class="text-muted m-b-15 f-s-12">The display icon for the event. This should be a .png file link from imgur.<br>The event icon MUST be 250px x 250px.</p>
+                                        </div>
+
+                                        <!-- Event Date and Time -->
+                                        <div class="form-group">
+                                            <label for="eventDateTime">Event Date and Time</label>
+                                            <input type="datetime-local" class="form-control input-default " name="eventDateTime" required>
+                                            <p class="text-muted m-b-15 f-s-12">The date and time for the event to begin.</p>
+                                        </div>
+
+                                        <!-- Event Information -->
+                                        <div class="form-group">
+                                            <label for="eventInformation">Event Information</label>
+                                            <textarea class="form-control" style="height: 150px;" rows="10" placeholder="Text input"></textarea>
+                                            <p class="text-muted m-b-15 f-s-12">Information for the event that the community needs to know.</p>
+                                        </div>
+
+                                        <button type="submit" class="btn btn-primary"><i class="fas fa-calendar"></i> Schedule Event</button>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- /# column -->
+                    <div class="col-lg-6">
+                        <div class="card">
+                            <div class="card-title">
+                                <h4>Event Preview</h4>
+                            </div>
+                            <hr>
+                            <div class="card-body">
+                                <h5>Event Title</h5>
+                                <small>Saturday, 9th of December 2022</small><br>
+                                <img src="" alt="" height="250px" width="250px">
+                                
+                                <p>Event information goes here that you are required to know as a community member.</p>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- /# column -->
+                </div>
+
+<%- include("../../modules/dashboard/footer.ejs") %>
