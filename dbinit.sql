@@ -124,6 +124,8 @@ CREATE TABLE friends (
 	userId INT NOT NULL,
     friendId INT NOT NULL,
     accepted BOOLEAN DEFAULT 0,
+    pending BOOLEAN DEFAULT 0,
+    blocked BOOLEAN DEFAULT 0,
     createdDate DATETIME NOT NULL DEFAULT NOW(),
     PRIMARY KEY (userId, friendId),
     INDEX friends_accepted (accepted),
@@ -318,6 +320,7 @@ BEFORE UPDATE ON alerts FOR EACH ROW
 CREATE TABLE userAlerts (
 	userAlertId INT NOT NULL AUTO_INCREMENT,
     userId INT NOT NULL,
+    icon TEXT,
     body TEXT,
     link TEXT,
     PRIMARY KEY (userAlertId),
