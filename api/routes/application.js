@@ -10,6 +10,15 @@ export default function applicationApiRoute(app, config, db) {
                         message: `${error}`
                     });
                 }
+
+                // Send error is there are no applications.
+                if (!results.length) {
+                    return res.send({
+                        success: false,
+                        message: `There are no applications visable.`
+                    });
+                }
+
                 return res.send({
                     success: true,
                     data: results
