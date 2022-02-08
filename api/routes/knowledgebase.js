@@ -10,6 +10,15 @@ export default function knowledgebaseApiRoute(app, config, db) {
                         message: `${error}`
                     });
                 }
+
+                // Send error is there are no kb sections.
+                if (!results.length) {
+                    return res.send({
+                        success: false,
+                        message: `There are no sections visable.`
+                    });
+                }
+
                 return res.send({
                     success: true,
                     data: results
@@ -37,6 +46,15 @@ export default function knowledgebaseApiRoute(app, config, db) {
                             message: `${error}`
                         });
                     }
+
+                    // Send error is there are no kb articles.
+                    if (!results.length) {
+                        return res.send({
+                            success: false,
+                            message: `There are no articles visable.`
+                        });
+                    }
+
                     return res.send({
                         success: true,
                         data: results
