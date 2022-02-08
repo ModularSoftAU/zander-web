@@ -317,14 +317,14 @@ BEFORE UPDATE ON announcements FOR EACH ROW
 	SET NEW.updatedDate = NOW()
 ;
 
-CREATE TABLE userAlerts (
-	userAlertId INT NOT NULL AUTO_INCREMENT,
+CREATE TABLE notifications (
+	notificationId INT NOT NULL AUTO_INCREMENT,
     userId INT NOT NULL,
     icon TEXT,
     body TEXT,
     link TEXT,
-    PRIMARY KEY (userAlertId),
-    CONSTRAINT userAlerts_userId FOREIGN KEY (userId) REFERENCES users (userId) ON DELETE CASCADE
+    PRIMARY KEY (notificationId),
+    CONSTRAINT notifications_userId FOREIGN KEY (userId) REFERENCES users (userId) ON DELETE CASCADE
 );
 
 CREATE TABLE applications (
