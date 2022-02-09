@@ -24,7 +24,10 @@ export default function userApiRoute(app, config, db) {
                             message: `${error}`
                         });
                     }
-                    return res.send(`${username} (${uuid}) has been successfully created.`);
+                    return res.send({
+                        success: true,
+                        message: `${username} (${uuid}) has been successfully created.`
+                    });
                 });
             });
         } catch (error) {
