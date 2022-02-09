@@ -303,7 +303,6 @@ CREATE TABLE announcements (
     motdFormat BOOLEAN DEFAULT 0,
     tips BOOLEAN DEFAULT 0,
     web BOOLEAN DEFAULT 0,
-    announcementIcon VARCHAR(20),
     link TEXT,
     popUp BOOLEAN DEFAULT 0,
     createdDate DATETIME NOT NULL DEFAULT NOW(),
