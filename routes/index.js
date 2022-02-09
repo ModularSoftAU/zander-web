@@ -152,6 +152,23 @@ export default function applicationSiteRoutes(app, fetch, moment, config) {
     });
 
     // 
+    // User Notifications
+    // 
+    app.get('/notifications', async function(request, reply) {
+        const fetchURL = `${config.siteConfiguration.siteAddress}${config.siteConfiguration.apiRoute}/user/notifications/get?username=${request.params.username}`;
+        const response = await fetch(fetchURL);
+        const apiData = await response.json();
+
+        reply.view('notifications', {
+            "pageTitle": `Notifications`,
+            config: config,
+            apiData: apiData,
+            moment: moment,
+            request: request
+        });
+    });
+
+    // 
     // Punishments
     // 
     app.get('/punishments', async function(request, reply) {
