@@ -56,9 +56,10 @@ export default function shoppingDistrictDirectoryApiRoute(app, config, db) {
 
     app.post(baseEndpoint + '/edit', async function(req, res) {
         const shopId = req.body.shopId;
+        const shopOwner = req.body.shopOwner;
         const shopName = req.body.shopName;
         const shopDescription = req.body.shopDescription;
-        const shopCreatorId = req.body.shopCreatorId;
+        const serverId = req.body.serverId;
 
         // ...
         res.send({ success: true });
