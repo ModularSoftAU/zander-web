@@ -294,37 +294,36 @@ CREATE TABLE votes (
     CONSTRAINT votes_voteSiteId FOREIGN KEY (voteSiteId) REFERENCES voteSites (voteSiteId) ON DELETE CASCADE
 );
 
-CREATE TABLE alerts (
-	alertId INT NOT NULL AUTO_INCREMENT,
-    alertSlug VARCHAR(30) UNIQUE NOT NULL,
+CREATE TABLE announcements (
+	announcementId INT NOT NULL AUTO_INCREMENT,
+    announcementSlug VARCHAR(30) UNIQUE NOT NULL,
     enabled BOOLEAN DEFAULT 1,
     body TEXT,
     motd BOOLEAN DEFAULT 0,
     motdFormat BOOLEAN DEFAULT 0,
     tips BOOLEAN DEFAULT 0,
     web BOOLEAN DEFAULT 0,
-    alertIcon VARCHAR(20),
     link TEXT,
     popUp BOOLEAN DEFAULT 0,
     createdDate DATETIME NOT NULL DEFAULT NOW(),
     updatedDate DATETIME,
-    PRIMARY KEY (alertId)
+    PRIMARY KEY (announcementId)
 );
 
--- Update the alerts.updatedDate when record is updated
-CREATE TRIGGER alerts_updatedDateBeforeUpdate
-BEFORE UPDATE ON alerts FOR EACH ROW
+-- Update the announcements.updatedDate when record is updated
+CREATE TRIGGER announcements_updatedDateBeforeUpdate
+BEFORE UPDATE ON announcements FOR EACH ROW
 	SET NEW.updatedDate = NOW()
 ;
 
-CREATE TABLE userAlerts (
-	userAlertId INT NOT NULL AUTO_INCREMENT,
+CREATE TABLE notifications (
+	notificationId INT NOT NULL AUTO_INCREMENT,
     userId INT NOT NULL,
     icon TEXT,
     body TEXT,
     link TEXT,
-    PRIMARY KEY (userAlertId),
-    CONSTRAINT userAlerts_userId FOREIGN KEY (userId) REFERENCES users (userId) ON DELETE CASCADE
+    PRIMARY KEY (notificationId),
+    CONSTRAINT notifications_userId FOREIGN KEY (userId) REFERENCES users (userId) ON DELETE CASCADE
 );
 
 CREATE TABLE applications (

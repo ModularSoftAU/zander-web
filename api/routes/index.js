@@ -1,4 +1,4 @@
-import alertApiRoute from './alert'
+import announcementApiRoute from './announcement'
 import anticheatApiRoute from './anticheat'
 import appealApiRoute from './appeal'
 import applicationApiRoute from './application'
@@ -19,7 +19,7 @@ import webApiRoute from './web'
 
 export default (app, DiscordClient, moment, config, db) => {
 
-    alertApiRoute(app, config, db);
+    announcementApiRoute(app, config, db);
     anticheatApiRoute(app, config, db);
     appealApiRoute(app, config, db);
     applicationApiRoute(app, config, db);
