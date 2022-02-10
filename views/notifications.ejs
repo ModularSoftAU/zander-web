@@ -18,7 +18,15 @@
           content: apiData.message
         }) %>
       <% } else { %>
-        <% apiData.data.forEach(function (event) { %>
+        <% apiData.data.forEach(function (notification) { %>
+          <table class="table">
+            <tbody>
+              <tr>
+                <td>Mark</td>
+              </tr>
+            </tbody>
+          </table>
+
           <!-- <%= event.name %> Event Card -->
           <div class="card">
             <div class="card-body">

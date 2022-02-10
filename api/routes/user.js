@@ -151,4 +151,61 @@ export default function userApiRoute(app, config, db) {
         res.send({ success: true });
     });
 
+    app.get(baseEndpoint + '/notification/get', async function(req, res) {
+        const username = req.session.user;
+
+        console.log(username);
+        
+        try {
+            db.query(`SELECT * FROM notifications WHERE userId=(SELECT userId FROM users WHERE username=?);`, [username], function(error, results, fields) {
+                if (!results || !results.length) {
+                    return res.send({
+                        success: false,
+                        message: `You do not have any notifications.`
+                    });
+                }
+                
+                res.send({
+                    success: true,
+                    data: results
+                });
+            });
+        } catch (error) {
+            return res.send({
+                success: false,
+                message: `${error}`
+            });
+        }
+    });
+
+    app.post(baseEndpoint + '/notification/create', async function(req, res) {
+        const username = req.body.username;
+        const body = req.body.body;
+        const link = req.body.link;
+        const icon = req.body.icon;
+
+        try {
+            db.query(`INSERT INTO`, [username], function(error, results, fields) {
+                if (!results || !results.length) {
+                    return res.send({
+                        success: false,
+                        message: `You do not have any notifications.`
+                    });
+                }
+                
+                res.send({
+                    success: true,
+                    data: results
+                });
+            });
+        } catch (error) {
+            return res.send({
+                success: false,
+                message: `${error}`
+            });
+        }
+
+        
+    });
+
 }

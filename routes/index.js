@@ -155,9 +155,13 @@ export default function applicationSiteRoutes(app, fetch, moment, config) {
     // User Notifications
     // 
     app.get('/notifications', async function(request, reply) {
-        const fetchURL = `${config.siteConfiguration.siteAddress}${config.siteConfiguration.apiRoute}/user/notifications/get?username=${request.params.username}`;
+        console.log(request.query.username);
+
+        const fetchURL = `${config.siteConfiguration.siteAddress}${config.siteConfiguration.apiRoute}/user/notification/get?username=${request.params.username}`;
         const response = await fetch(fetchURL);
         const apiData = await response.json();
+
+        console.log(apiData);
 
         reply.view('notifications', {
             "pageTitle": `Notifications`,
