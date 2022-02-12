@@ -58,7 +58,75 @@
                                 <h4 class="card-title">Player Activity</h4>
                             </div>
                             <div class="card-body">
+                                <div>
+                                    <canvas id="playerActivityChart"></canvas>
+                                </div>
 
+                                <script>
+                                    const playerActivityLabels = [
+                                      'January',
+                                      'February',
+                                      'March',
+                                      'April',
+                                      'May',
+                                      'June',
+                                    ];
+                                  
+                                    const playerActivityData = {
+                                        labels: playerActivityLabels,
+                                        datasets: [
+                                            {
+                                                label: 'Proxy',
+                                                backgroundColor: 'purple',
+                                                borderColor: 'purple',
+                                                data: [5, 20, 5, 2, 20, 30, 45],
+                                            },
+                                            {
+                                                label: 'Hub',
+                                                backgroundColor: 'green',
+                                                borderColor: 'green',
+                                                data: [0, 10, 5, 2, 20, 30, 45],
+                                            },
+                                            {
+                                                label: 'Survival',
+                                                backgroundColor: 'orange',
+                                                borderColor: 'orange',
+                                                data: [0, 10, 5, 2, 25, 40, 50],
+                                            },
+                                            {
+                                                label: 'Mixed',
+                                                backgroundColor: 'brown',
+                                                borderColor: 'brown',
+                                                data: [50, 15, 50, 22, 25, 30, 45],
+                                            },
+                                            {
+                                                label: 'Build',
+                                                backgroundColor: 'rgb(255, 99, 132)',
+                                                borderColor: 'rgb(255, 99, 132)',
+                                                data: [0, 10, 5, 2, 20, 30, 45],
+                                            },
+                                            {
+                                                label: 'Development',
+                                                backgroundColor: 'yellow',
+                                                borderColor: 'yellow',
+                                                data: [30, 10, 25, 32, 10, 20, 45],
+                                            }
+                                        ]
+                                    };
+                                  
+                                    const config = {
+                                      type: 'line',
+                                      data: playerActivityData,
+                                      options: {}
+                                    };
+                                </script>
+
+                                <script>
+                                    const playerActivityChart = new Chart(
+                                        document.getElementById('playerActivityChart'),
+                                        config
+                                    );
+                                </script>
                             </div>
                         </div>
                     </div>
@@ -70,7 +138,75 @@
                                 <h4 class="card-title">Server Activity</h4>
                             </div>
                             <div class="card-body">
+                                <div>
+                                    <canvas id="serverActivityChart"></canvas>
+                                </div>
 
+                                <script>
+                                    const serverActivityLabels = [
+                                      'January',
+                                      'February',
+                                      'March',
+                                      'April',
+                                      'May',
+                                      'June',
+                                    ];
+                                  
+                                    const serverActivityData = {
+                                        labels: serverActivityLabels,
+                                        datasets: [
+                                            {
+                                                label: 'Proxy',
+                                                backgroundColor: 'purple',
+                                                borderColor: 'purple',
+                                                data: [5, 20, 5, 2, 20, 30, 45],
+                                            },
+                                            {
+                                                label: 'Hub',
+                                                backgroundColor: 'green',
+                                                borderColor: 'green',
+                                                data: [0, 10, 5, 2, 20, 30, 45],
+                                            },
+                                            {
+                                                label: 'Survival',
+                                                backgroundColor: 'orange',
+                                                borderColor: 'orange',
+                                                data: [0, 10, 5, 2, 25, 40, 50],
+                                            },
+                                            {
+                                                label: 'Mixed',
+                                                backgroundColor: 'brown',
+                                                borderColor: 'brown',
+                                                data: [50, 15, 50, 22, 25, 30, 45],
+                                            },
+                                            {
+                                                label: 'Build',
+                                                backgroundColor: 'rgb(255, 99, 132)',
+                                                borderColor: 'rgb(255, 99, 132)',
+                                                data: [0, 10, 5, 2, 20, 30, 45],
+                                            },
+                                            {
+                                                label: 'Development',
+                                                backgroundColor: 'yellow',
+                                                borderColor: 'yellow',
+                                                data: [30, 10, 25, 32, 10, 20, 45],
+                                            }
+                                        ]
+                                    };
+                                  
+                                    const config = {
+                                      type: 'line',
+                                      data: serverActivityData,
+                                      options: {}
+                                    };
+                                </script>
+
+                                <script>
+                                    const serverActivityChart = new Chart(
+                                        document.getElementById('serverActivityChart'),
+                                        config
+                                    );
+                                </script>
                             </div>
                         </div>
                     </div>
