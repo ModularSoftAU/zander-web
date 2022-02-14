@@ -114,7 +114,7 @@
                                         ]
                                     };
                                   
-                                    const config = {
+                                    const playerActivityConfig = {
                                       type: 'line',
                                       data: playerActivityData,
                                       options: {}
@@ -124,89 +124,20 @@
                                 <script>
                                     const playerActivityChart = new Chart(
                                         document.getElementById('playerActivityChart'),
-                                        config
+                                        playerActivityConfig
                                     );
                                 </script>
                             </div>
                         </div>
                     </div>
 
-                    <!-- Server Activity -->
                     <div class="col-lg-6 col-sm-6">
                         <div class="card">
                             <div class="card-header">
-                                <h4 class="card-title">Server Activity</h4>
+                                <h4 class="card-title">Title</h4>
                             </div>
                             <div class="card-body">
-                                <div>
-                                    <canvas id="serverActivityChart"></canvas>
-                                </div>
-
-                                <script>
-                                    const serverActivityLabels = [
-                                      'January',
-                                      'February',
-                                      'March',
-                                      'April',
-                                      'May',
-                                      'June',
-                                    ];
-                                  
-                                    const serverActivityData = {
-                                        labels: serverActivityLabels,
-                                        datasets: [
-                                            {
-                                                label: 'Proxy',
-                                                backgroundColor: 'purple',
-                                                borderColor: 'purple',
-                                                data: [5, 20, 5, 2, 20, 30, 45],
-                                            },
-                                            {
-                                                label: 'Hub',
-                                                backgroundColor: 'green',
-                                                borderColor: 'green',
-                                                data: [0, 10, 5, 2, 20, 30, 45],
-                                            },
-                                            {
-                                                label: 'Survival',
-                                                backgroundColor: 'orange',
-                                                borderColor: 'orange',
-                                                data: [0, 10, 5, 2, 25, 40, 50],
-                                            },
-                                            {
-                                                label: 'Mixed',
-                                                backgroundColor: 'brown',
-                                                borderColor: 'brown',
-                                                data: [50, 15, 50, 22, 25, 30, 45],
-                                            },
-                                            {
-                                                label: 'Build',
-                                                backgroundColor: 'rgb(255, 99, 132)',
-                                                borderColor: 'rgb(255, 99, 132)',
-                                                data: [0, 10, 5, 2, 20, 30, 45],
-                                            },
-                                            {
-                                                label: 'Development',
-                                                backgroundColor: 'yellow',
-                                                borderColor: 'yellow',
-                                                data: [30, 10, 25, 32, 10, 20, 45],
-                                            }
-                                        ]
-                                    };
-                                  
-                                    const config = {
-                                      type: 'line',
-                                      data: serverActivityData,
-                                      options: {}
-                                    };
-                                </script>
-
-                                <script>
-                                    const serverActivityChart = new Chart(
-                                        document.getElementById('serverActivityChart'),
-                                        config
-                                    );
-                                </script>
+                                
                             </div>
                         </div>
                     </div>
