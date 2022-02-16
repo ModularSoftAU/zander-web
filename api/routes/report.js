@@ -8,7 +8,23 @@ export default function reportApiRoute(app, config, db) {
         // If the ?id= is used, search by ID instead.
         if (reportId) {
             try {
-                db.query(`SELECT reportId, (SELECT username FROM users WHERE userID=reportedUserId) as 'reportedUser', (SELECT uuid FROM users WHERE userID=reportedUserId) as 'reportedUserUUID', (SELECT username FROM users WHERE userID=reporterUserId) as 'reporterUser', (SELECT uuid FROM users WHERE userID=reporterUserId) as 'reporterUserUUID', reason, evidence, (SELECT name FROM servers WHERE serverId=server) as 'reportedServer', createdDate, closed FROM reports WHERE reportId=?;`, [reportId], function(error, results, fields) {
+                db.query(`
+					SELECT r.reportId
+						,reported.username AS 'reportedUser'
+						,reported.uuid AS 'reportedUserUUID'
+						,reporter.username AS 'reporterUser'
+						,reporter.uuid AS 'reporterUserUUID'
+						,reason
+						,evidence
+						,name AS 'reportedServer'
+						,createdDate
+						,closed
+					FROM reports r
+						LEFT JOIN users reported ON reported.userId = r.reportedUserId
+						LEFT JOIN users reporter ON reporter.userId = r.reporterUserId
+						LEFT JOIN servers s ON r.server = s.serverId
+					WHERE r.reportId = ?;
+				`, [reportId], function(error, results, fields) {
                     if (error) {
                         return res.send({
                             success: false,
@@ -32,7 +48,23 @@ export default function reportApiRoute(app, config, db) {
         // If the ?username= is used, search by username instead.
         if (reportId) {
             try {
-                db.query(`SELECT reportId, (SELECT username FROM users WHERE userID=reportedUserId) as 'reportedUser', (SELECT uuid FROM users WHERE userID=reportedUserId) as 'reportedUserUUID', (SELECT username FROM users WHERE userID=reporterUserId) as 'reporterUser', (SELECT uuid FROM users WHERE userID=reporterUserId) as 'reporterUserUUID', reason, evidence, (SELECT name FROM servers WHERE serverId=server) as 'reportedServer', createdDate, closed FROM reports WHERE reportedUserId=(SELECT userId FROM users WHERE username=?);`, [username], function(error, results, fields) {
+                db.query(`
+					SELECT r.reportId
+						,reported.username AS 'reportedUser'
+						,reported.uuid AS 'reportedUserUUID'
+						,reporter.username AS 'reporterUser'
+						,reporter.uuid AS 'reporterUserUUID'
+						,reason
+						,evidence
+						,name AS 'reportedServer'
+						,createdDate
+						,closed
+					FROM reports r
+						LEFT JOIN users reported ON reported.userId = r.reportedUserId
+						LEFT JOIN users reporter ON reporter.userId = r.reporterUserId
+						LEFT JOIN servers s ON r.server = s.serverId
+					WHERE reported.username = ?;
+				`, [username], function(error, results, fields) {
                     if (error) {
                         return res.send({
                             success: false,
@@ -54,7 +86,22 @@ export default function reportApiRoute(app, config, db) {
         }
 
         try {
-            db.query(`SELECT reportId, (SELECT username FROM users WHERE userID=reportedUserId) as 'reportedUser', (SELECT uuid FROM users WHERE userID=reportedUserId) as 'reportedUserUUID', (SELECT username FROM users WHERE userID=reporterUserId) as 'reporterUser', (SELECT uuid FROM users WHERE userID=reporterUserId) as 'reporterUserUUID', reason, evidence, (SELECT name FROM servers WHERE serverId=server) as 'reportedServer', createdDate, closed FROM reports`, function(error, results, fields) {
+            db.query(`
+				SELECT r.reportId
+					,reported.username AS 'reportedUser'
+					,reported.uuid AS 'reportedUserUUID'
+					,reporter.username AS 'reporterUser'
+					,reporter.uuid AS 'reporterUserUUID'
+					,reason
+					,evidence
+					,name AS 'reportedServer'
+					,createdDate
+					,closed
+				FROM reports r
+					LEFT JOIN users reported ON reported.userId = r.reportedUserId
+					LEFT JOIN users reporter ON reporter.userId = r.reporterUserId
+					LEFT JOIN servers s ON r.server = s.serverId;
+			`, function(error, results, fields) {
                 if (error) {
                     return res.send({
                         success: false,
