@@ -25,6 +25,9 @@ CREATE TABLE users (
 	INDEX users (uuid(8))
 );
 
+CREATE VIEW zanderdev.luckPermsPlayers AS
+SELECT * FROM luckperms.luckperms_players;
+
 CREATE TABLE userSettings (
 	userSettingsId INT NOT NULL AUTO_INCREMENT,
     userId INT,
