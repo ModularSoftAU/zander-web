@@ -134,7 +134,6 @@ FROM luckperms.luckperms_user_permissions lpUserPermissions
         AND lpUserTitle.value = 1
 	LEFT JOIN zanderdev.users zdUsers ON lpUserPermissions.uuid = zdUsers.uuid
 WHERE lpUserPermissions.permission like 'group.%'
-	AND lpUserPermissions.permission <> 'group.default'
 	AND lpUserPermissions.value = 1;
 
 CREATE TABLE servers (
