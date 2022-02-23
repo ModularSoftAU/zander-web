@@ -5,7 +5,7 @@ export default function reportApiRoute(app, config, db) {
         const reportId = req.query.id;
         const username = req.query.username;
 
-        // If the ?id= is used, search by ID instead.
+        // If the ?reportId= is used, search by ID instead.
         if (reportId) {
             try {
                 db.query(`
@@ -46,7 +46,7 @@ export default function reportApiRoute(app, config, db) {
         }
 
         // If the ?username= is used, search by username instead.
-        if (reportId) {
+        if (username) {
             try {
                 db.query(`
 					SELECT r.reportId
