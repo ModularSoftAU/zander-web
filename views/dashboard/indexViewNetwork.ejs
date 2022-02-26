@@ -58,19 +58,137 @@
                                 <h4 class="card-title">Player Activity</h4>
                             </div>
                             <div class="card-body">
+                                <div>
+                                    <canvas id="playerActivityChart"></canvas>
+                                </div>
 
+                                <script>
+                                    const playerActivityLabels = [
+                                      'January',
+                                      'February',
+                                      'March',
+                                      'April',
+                                      'May',
+                                      'June',
+                                    ];
+                                  
+                                    const playerActivityData = {
+                                        labels: playerActivityLabels,
+                                        datasets: [
+                                            {
+                                                label: 'Proxy',
+                                                backgroundColor: 'purple',
+                                                borderColor: 'purple',
+                                                data: [5, 20, 5, 2, 20, 30, 45],
+                                            },
+                                            {
+                                                label: 'Hub',
+                                                backgroundColor: 'green',
+                                                borderColor: 'green',
+                                                data: [0, 10, 5, 2, 20, 30, 45],
+                                            },
+                                            {
+                                                label: 'Survival',
+                                                backgroundColor: 'orange',
+                                                borderColor: 'orange',
+                                                data: [0, 10, 5, 2, 25, 40, 50],
+                                            },
+                                            {
+                                                label: 'Mixed',
+                                                backgroundColor: 'brown',
+                                                borderColor: 'brown',
+                                                data: [50, 15, 50, 22, 25, 30, 45],
+                                            },
+                                            {
+                                                label: 'Build',
+                                                backgroundColor: 'rgb(255, 99, 132)',
+                                                borderColor: 'rgb(255, 99, 132)',
+                                                data: [0, 10, 5, 2, 20, 30, 45],
+                                            },
+                                            {
+                                                label: 'Development',
+                                                backgroundColor: 'yellow',
+                                                borderColor: 'yellow',
+                                                data: [30, 10, 25, 32, 10, 20, 45],
+                                            }
+                                        ]
+                                    };
+                                  
+                                    const playerActivityConfig = {
+                                      type: 'line',
+                                      data: playerActivityData,
+                                      options: {}
+                                    };
+                                </script>
+
+                                <script>
+                                    const playerActivityChart = new Chart(
+                                        document.getElementById('playerActivityChart'),
+                                        playerActivityConfig
+                                    );
+                                </script>
                             </div>
                         </div>
                     </div>
 
-                    <!-- Server Activity -->
+                    <!-- Voting Activity -->
                     <div class="col-lg-6 col-sm-6">
                         <div class="card">
                             <div class="card-header">
-                                <h4 class="card-title">Server Activity</h4>
+                                <h4 class="card-title">Voting Activity</h4>
                             </div>
                             <div class="card-body">
+                                <div>
+                                    <canvas id="votingActivityChart"></canvas>
+                                </div>
 
+                                <script>
+                                    const votingActivityLabels = [
+                                      'January',
+                                      'February',
+                                      'March',
+                                      'April',
+                                      'May',
+                                      'June',
+                                    ];
+                                  
+                                    const votingActivityData = {
+                                        labels: votingActivityLabels,
+                                        datasets: [
+                                            {
+                                                label: 'shadowolfyt',
+                                                backgroundColor: 'purple',
+                                                borderColor: 'purple',
+                                                data: [5, 20, 5, 2, 20, 30, 45],
+                                            },
+                                            {
+                                                label: 'CammyMD',
+                                                backgroundColor: 'green',
+                                                borderColor: 'green',
+                                                data: [0, 10, 5, 2, 20, 30, 45],
+                                            },
+                                            {
+                                                label: 'Egore990',
+                                                backgroundColor: 'orange',
+                                                borderColor: 'orange',
+                                                data: [0, 10, 5, 2, 25, 40, 50],
+                                            }
+                                        ]
+                                    };
+                                  
+                                    const votingActivityConfig = {
+                                      type: 'line',
+                                      data: votingActivityData,
+                                      options: {}
+                                    };
+                                </script>
+
+                                <script>
+                                    const votingActivityChart = new Chart(
+                                        document.getElementById('votingActivityChart'),
+                                        votingActivityConfig
+                                    );
+                                </script>
                             </div>
                         </div>
                     </div>
