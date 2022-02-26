@@ -71,9 +71,26 @@ export default function applicationApiRoute(app, config, db) {
         const requirementsMarkdown = req.body.requirementsMarkdown;
         const redirectURL = req.body.redirectURL;
         const position = req.body.position;
-
-        // ...
-        res.send({ success: true });
+		
+		try {
+			db.query(`UPDATE applications SET displayName = ?, description = ?, displayIcon = ?, requirementsMarkdown = ?, redirectURL = ?, position = ? WHERE applicationId = ?`, [displayName, description, displayIcon, requirementsMarkdown, redirectURL, position, applicationId], function(error, results, fields) {
+				if (error) {
+					return res.send({
+						success: false,
+						message: `${error}`
+					});
+				}
+				return res.send({
+					success: true,
+					message: `The application ${displayName} has been successfully updated!`
+				});
+			});
+		} catch (error) {
+			res.send({
+				success: false,
+				message: `${error}`
+			});
+		}
     });
 
     app.post(baseEndpoint + '/delete', async function(req, res) {

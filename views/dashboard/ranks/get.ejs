@@ -16,7 +16,6 @@
                         <div class="card">
                             <div class="card-title">
                                 <h4>Ranks</h4>
-                                <a href="/dashboard/ranks/editor"><button type="button" class="btn btn-sm btn-info">Create Rank</button></a>
                                 <a href="#"><button type="button" class="btn btn-sm btn-primary">Rank Manager</button></a>
                             </div>
                             
@@ -39,7 +38,7 @@
                                                   alertType: "danger",
                                                   content: apiData.message
                                                 }) %>
-                                            <% } else { %>
+                                            <% } else if (apiData.data.length > 0) { %>
                                                 <% apiData.data.forEach(function (rank) { %>
                                                     <tr>
                                                         <td><%= rank.rankSlug %></td>
@@ -61,8 +60,7 @@
                                                         </td>
                                                         <td>
                                                             <div class="btn-group mb-2 btn-group-sm">
-                                                                <button class="btn btn-warning" type="button">Edit</button>
-                                                                <button class="btn btn-danger" type="button">Delete</button>
+                                                                <a href="/dashboard/ranks/users?rank=<%= rank.rankSlug %>"><button class="btn btn-info" type="button">View Users</button></a>
                                                             </div>
                                                         </td>
                                                     </tr>
