@@ -131,13 +131,64 @@
                         </div>
                     </div>
 
+                    <!-- Voting Activity -->
                     <div class="col-lg-6 col-sm-6">
                         <div class="card">
                             <div class="card-header">
-                                <h4 class="card-title">Title</h4>
+                                <h4 class="card-title">Voting Activity</h4>
                             </div>
                             <div class="card-body">
-                                
+                                <div>
+                                    <canvas id="votingActivityChart"></canvas>
+                                </div>
+
+                                <script>
+                                    const votingActivityLabels = [
+                                      'January',
+                                      'February',
+                                      'March',
+                                      'April',
+                                      'May',
+                                      'June',
+                                    ];
+                                  
+                                    const votingActivityData = {
+                                        labels: votingActivityLabels,
+                                        datasets: [
+                                            {
+                                                label: 'shadowolfyt',
+                                                backgroundColor: 'purple',
+                                                borderColor: 'purple',
+                                                data: [5, 20, 5, 2, 20, 30, 45],
+                                            },
+                                            {
+                                                label: 'CammyMD',
+                                                backgroundColor: 'green',
+                                                borderColor: 'green',
+                                                data: [0, 10, 5, 2, 20, 30, 45],
+                                            },
+                                            {
+                                                label: 'Egore990',
+                                                backgroundColor: 'orange',
+                                                borderColor: 'orange',
+                                                data: [0, 10, 5, 2, 25, 40, 50],
+                                            }
+                                        ]
+                                    };
+                                  
+                                    const votingActivityConfig = {
+                                      type: 'line',
+                                      data: votingActivityData,
+                                      options: {}
+                                    };
+                                </script>
+
+                                <script>
+                                    const votingActivityChart = new Chart(
+                                        document.getElementById('votingActivityChart'),
+                                        votingActivityConfig
+                                    );
+                                </script>
                             </div>
                         </div>
                     </div>
