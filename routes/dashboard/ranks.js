@@ -4,21 +4,34 @@ export default function dashboardRanksSiteRoute(app, fetch, config) {
     // Ranks
     // 
     app.get('/dashboard/ranks', async function(request, reply) {
+		// Note: One or more of these could be null.
+        const username = request.query.username;
+        const rank = request.query.rank;
+		
         const fetchURL = `${config.siteConfiguration.siteAddress}${config.siteConfiguration.apiRoute}/rank/get`;
         const response = await fetch(fetchURL);
         const apiData = await response.json();
         
-        reply.view('dashboard/ranks/list', {
+        reply.view('dashboard/ranks/get', {
             "pageTitle": `Dashboard - Ranks`,
             config: config,
             apiData: apiData
         });
     });
 
-    app.get('/dashboard/ranks/editor', async function(request, reply) {
-        reply.view('dashboard/ranks/editor', {
-            "pageTitle": `Dashboard - Rank Editor`,
-            config: config
+    app.get('/dashboard/ranks/users', async function(request, reply) {
+		const rank = request.query.rank;
+		
+		const fetchURL = `${config.siteConfiguration.siteAddress}${config.siteConfiguration.apiRoute}/rank/get?rank=${rank}`;
+		const response = await fetch(fetchURL);
+		const apiData = await response.json();
+		const rankDisplayName = (apiData.data.length > 0 ? apiData.data[0].displayName : rank)
+		
+        reply.view('dashboard/ranks/users', {
+            "pageTitle": `Dashboard - Rank Users`,
+			"rankDisplayName": rankDisplayName,
+            config: config,
+			apiData: apiData
         });
     });
 
