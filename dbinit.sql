@@ -208,23 +208,6 @@ CREATE TABLE events (
     CONSTRAINT events_hostingServer FOREIGN KEY (hostingServer) REFERENCES servers (serverId) ON DELETE CASCADE
 );
 
-CREATE TABLE punishments (
-	punishmentId INT NOT NULL AUTO_INCREMENT,
-    playerId INT NOT NULL,
-    staffId INT NOT NULL,
-    platform VARCHAR(10),
-    type VARCHAR(20),
-    reason VARCHAR(50),
-    createdDate DATETIME NOT NULL DEFAULT NOW(),
-    expires DATETIME,
-    appealed BOOLEAN DEFAULT 0,
-    PRIMARY KEY (punishmentId),
-    INDEX punishments_createdDate (createdDate),
-    INDEX punishments_expires (expires),
-    CONSTRAINT punishments_playerId FOREIGN KEY (playerId) REFERENCES users (userId) ON DELETE RESTRICT,
-    CONSTRAINT punishments_staffId FOREIGN KEY (staffId) REFERENCES users (userId) ON DELETE RESTRICT
-);
-
 CREATE TABLE ipBans (
 	ipBanId INT NOT NULL AUTO_INCREMENT,
     staffId INT NOT NULL,
@@ -255,7 +238,6 @@ CREATE TABLE appeals (
     updatedDate DATETIME,
     PRIMARY KEY (appealId),
     INDEX appeals_createdDate (createdDate),
-    CONSTRAINT appeals_punishmentId FOREIGN KEY (punishmentId) REFERENCES punishments (punishmentId) ON DELETE CASCADE,
     CONSTRAINT appeals_playerId FOREIGN KEY (playerId) REFERENCES users (userId) ON DELETE CASCADE
 );
 
@@ -305,6 +287,26 @@ CREATE TRIGGER appealComments_updatedDateBeforeUpdate
 BEFORE UPDATE ON appealComments FOR EACH ROW
 	SET NEW.updatedDate = NOW()
 ;
+
+CREATE VIEW punishments as
+SELECT
+	id AS punishmentId,
+    zu.userId AS playerId,
+    COALESCE(zu.username, lp.username) AS playerUsername,
+    zs.userId AS staffId,
+    COALESCE(zs.username, ls.username, abp.operator) AS staffUsername,
+    'server' AS platform, /* No Idea How to get this info */
+    abp.punishmentType AS type,
+    abp.reason,
+    CAST(FROM_UNIXTIME(abp.start / 1000) AS DATETIME) AS createdDate,
+    CAST(FROM_UNIXTIME(abp.end / 1000) AS DATETIME) AS expires,
+    za.appealId
+FROM advancedban.punishments abp
+	LEFT JOIN zanderdev.users zu ON abp.uuid = REPLACE(zu.uuid, '-', '')
+    LEFT JOIN luckperms.luckperms_players lp ON abp.uuid = REPLACE(lp.uuid, '-', '')
+    LEFT JOIN zanderdev.users zs ON abp.operator = zs.username
+    LEFT JOIN luckperms.luckperms_players ls ON abp.operator = ls.username
+    LEFT JOIN zanderdev.appeals za ON abp.id = za.punishmentId;
 
 CREATE TABLE anticheat (
 	anticheatId INT NOT NULL AUTO_INCREMENT,
