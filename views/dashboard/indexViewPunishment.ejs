@@ -70,7 +70,65 @@
                                 <h4 class="card-title">Punishments by Users</h4>
                             </div>
                             <div class="card-body">
-                                
+
+                                <div>
+                                    <canvas id="punishmentByUsersChart"></canvas>
+                                </div>
+
+                                <script>
+                                    const punishmentByUsersLabels = [
+                                      'January',
+                                      'February',
+                                      'March',
+                                      'April',
+                                      'May',
+                                      'June',
+                                    ];
+                                  
+                                    const punishmentByUsersData = {
+                                        labels: punishmentByUsersLabels,
+                                        datasets: [
+                                            {
+                                                label: 'shadowolfyt',
+                                                backgroundColor: 'purple',
+                                                borderColor: 'purple',
+                                                data: [5, 20, 5, 2, 20, 30, 45],
+                                            },
+                                            {
+                                                label: 'CammyMD',
+                                                backgroundColor: 'green',
+                                                borderColor: 'green',
+                                                data: [0, 10, 5, 2, 20, 30, 45],
+                                            },
+                                            {
+                                                label: 'Egore1995',
+                                                backgroundColor: 'orange',
+                                                borderColor: 'orange',
+                                                data: [0, 10, 5, 2, 25, 40, 50],
+                                            },
+                                            {
+                                                label: 'VenomousViper',
+                                                backgroundColor: 'brown',
+                                                borderColor: 'brown',
+                                                data: [50, 15, 50, 22, 25, 30, 45],
+                                            }
+                                        ]
+                                    };
+                                  
+                                    const punishmentByUsersConfig = {
+                                      type: 'bar',
+                                      data: punishmentByUsersData,
+                                      options: {}
+                                    };
+                                </script>
+
+                                <script>
+                                    const punishmentByUsersChart = new Chart(
+                                        document.getElementById('punishmentByUsersChart'),
+                                        punishmentByUsersConfig
+                                    );
+                                </script>
+
                             </div>
                         </div>
                     </div>

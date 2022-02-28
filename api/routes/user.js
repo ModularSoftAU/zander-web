@@ -153,8 +153,6 @@ export default function userApiRoute(app, config, db) {
 
     app.get(baseEndpoint + '/notification/get', async function(req, res) {
         const username = req.session.user;
-
-        console.log(username);
         
         try {
             db.query(`SELECT * FROM notifications WHERE userId=(SELECT userId FROM users WHERE username=?);`, [username], function(error, results, fields) {
