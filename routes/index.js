@@ -4,11 +4,13 @@ import fs from 'fs'
 import dashboardSiteRoutes from './dashboard'
 import knowledgebaseSiteRoutes from './knowledgebaseRoutes'
 import policySiteRoutes from './policyRoutes'
+import communityCreationsRoutes from './communityCreationsRoutes'
 
 export default function applicationSiteRoutes(app, fetch, moment, config) {
 
     dashboardSiteRoutes(app, fetch, moment, config);
     knowledgebaseSiteRoutes(app, fetch, config);
+    communityCreationsRoutes(app, fetch, moment, config);
     policySiteRoutes(app, config);
 
     app.get('/', async function(request, reply) {
@@ -38,21 +40,21 @@ export default function applicationSiteRoutes(app, fetch, moment, config) {
     // 
     // Community Creations
     // 
-    app.get('/communityCreations', async function(request, reply) {
-        return reply.view('modules/communityCreation/communityCreation', {
-            "pageTitle": `Community Creations`,
-            config: config,
-            request: request
-        });
-    });
+    // app.get('/communityCreations', async function(request, reply) {
+    //     return reply.view('modules/communityCreation/communityCreation', {
+    //         "pageTitle": `Community Creations`,
+    //         config: config,
+    //         request: request
+    //     });
+    // });
 
-    app.get('/communityCreation/submit', async function(request, reply) {
-        reply.view('modules/communityCreation/submit', {
-            "pageTitle": `Submit a Community Creation`,
-            config: config,
-            request: request
-        });
-    });
+    // app.get('/communityCreation/submit', async function(request, reply) {
+    //     reply.view('modules/communityCreation/submit', {
+    //         "pageTitle": `Submit a Community Creation`,
+    //         config: config,
+    //         request: request
+    //     });
+    // });
 
     // 
     // Apply
