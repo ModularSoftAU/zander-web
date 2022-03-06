@@ -5,12 +5,14 @@ import dashboardSiteRoutes from './dashboard'
 import knowledgebaseSiteRoutes from './knowledgebaseRoutes'
 import policySiteRoutes from './policyRoutes'
 import communityCreationsRoutes from './communityCreationsRoutes'
+import sessionRoutes from './sessionRoutes'
 
 export default function applicationSiteRoutes(app, fetch, moment, config) {
 
     dashboardSiteRoutes(app, fetch, moment, config);
     knowledgebaseSiteRoutes(app, fetch, config);
     communityCreationsRoutes(app, fetch, moment, config);
+    sessionRoutes(app, fetch, moment, config);
     policySiteRoutes(app, config);
 
     app.get('/', async function(request, reply) {
@@ -36,25 +38,6 @@ export default function applicationSiteRoutes(app, fetch, moment, config) {
             apiData: apiData
         });
     });
-
-    // 
-    // Community Creations
-    // 
-    // app.get('/communityCreations', async function(request, reply) {
-    //     return reply.view('modules/communityCreation/communityCreation', {
-    //         "pageTitle": `Community Creations`,
-    //         config: config,
-    //         request: request
-    //     });
-    // });
-
-    // app.get('/communityCreation/submit', async function(request, reply) {
-    //     reply.view('modules/communityCreation/submit', {
-    //         "pageTitle": `Submit a Community Creation`,
-    //         config: config,
-    //         request: request
-    //     });
-    // });
 
     // 
     // Apply
@@ -186,40 +169,6 @@ export default function applicationSiteRoutes(app, fetch, moment, config) {
     });
 
     // 
-    // Session
-    // 
-    app.get('/login', async function(request, reply) {
-        reply.view('session/login', {
-            "pageTitle": `Login`,
-            config: config,
-            request: request
-        });
-    });
-
-    app.get('/register', async function(request, reply) {
-        reply.view('session/register', {
-            "pageTitle": `Register`,
-            config: config,
-            request: request
-        });
-    });
-
-    app.get('/logout', async function(request, reply) {
-        if (request.session.authenticated) {
-            request.destroySession((err) => {
-              if (err) {
-                  console.log(err);
-                throw err;
-              } else {
-                res.redirect('/')
-              }
-            })
-          } else {
-            reply.redirect('/')
-          }
-    });
-
-    // 
     // Appeal
     // 
     app.get('/appeal', async function(request, reply) {
@@ -240,15 +189,7 @@ export default function applicationSiteRoutes(app, fetch, moment, config) {
             request: request
         });
     });
-
-    app.get('/sdd', async function(request, reply) {
-        reply.view('modules/shoppingDistrictDirectory/shoppingDistrictDirectory', {
-            "pageTitle": `Shopping District Directory`,
-            config: config,
-            request: request
-        });
-    });
-
+    
     app.get('/shoppingDistrictDirectory/create', async function(request, reply) {
         // fs.readdir(path.join(__dirname, '../assets/images/minecraftItemImages'), function(err, files) {
         //     //handling error
