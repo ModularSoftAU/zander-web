@@ -46,14 +46,14 @@
                                                                 <% if (event.published === 1) { %>
                                                                     <button class="btn btn-sm btn-success" disabled type="button">Published</button>
                                                                 <% } else { %>
-                                                                    <form action="<%= config.siteConfiguration.siteAddress %><%= config.siteConfiguration.apiRoute %>/event/publish" method="post">
+                                                                    <form action="/dashboard/events/publish" method="post">
                                                                         <input type="hidden" name="eventId" value="<%= event.eventId %>">
                                                                         <button class="btn btn-sm btn-info" type="submit">Publish</button>
                                                                     </form>
                                                                 <% } %>
                                                                 <button class="btn btn-sm btn-warning" type="button">Edit</button>
 
-                                                                <form action="<%= config.siteConfiguration.siteAddress %><%= config.siteConfiguration.apiRoute %>/event/delete" method="post">
+                                                                <form action="/dashboard/events/delete" method="post">
                                                                     <input type="hidden" name="eventId" value="<%= event.eventId %>">
                                                                     <button class="btn btn-sm btn-danger" type="submit">Delete</button>
                                                                 </form>

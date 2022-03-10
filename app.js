@@ -88,7 +88,7 @@ import verifyToken from './api/routes/verifyToken'
 // Application Boot
 //
 const buildApp = async () => {
-    const app = fastify({ logger: false });
+    const app = fastify({ logger: config.debug });
     const port = process.env.PORT || config.port || 8080;
 
     // When app can't found route, render the not found on a page, do not provide JSON
