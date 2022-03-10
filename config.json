@@ -1,5 +1,6 @@
 {
     "port": 8080,
+    "debug": false,
     "siteConfiguration": {
         "siteName": "Crafting For Christ",
         "siteAddress": "http://localhost:8080",

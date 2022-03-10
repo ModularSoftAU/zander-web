@@ -19,21 +19,6 @@ export default function sessionSiteRoute(app, fetch, moment, config) {
         });
     });
 
-    app.get('/logout', async function(request, reply) {
-        if (request.session.authenticated) {
-            request.destroySession((err) => {
-              if (err) {
-                  console.log(err);
-                throw err;
-              } else {
-                res.redirect('/')
-              }
-            })
-          } else {
-            reply.redirect('/')
-          }
-    });
-
     app.post('/login', async function(req, res) {
       const username = req.body.username;
       const email = req.body.email;
