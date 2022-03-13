@@ -7,12 +7,12 @@ import policySiteRoutes from './policyRoutes'
 import communityCreationsRoutes from './communityCreationsRoutes'
 import sessionRoutes from './sessionRoutes'
 
-export default function applicationSiteRoutes(app, fetch, moment, config) {
+export default function applicationSiteRoutes(app, fetch, moment, config, db) {
 
     dashboardSiteRoutes(app, fetch, moment, config);
     knowledgebaseSiteRoutes(app, fetch, config);
     communityCreationsRoutes(app, fetch, moment, config);
-    sessionRoutes(app, fetch, moment, config);
+    sessionRoutes(app, fetch, moment, config, db);
     policySiteRoutes(app, config);
 
     app.get('/', async function(request, reply) {

@@ -143,7 +143,7 @@ const buildApp = async () => {
 
     app.register((instance, options, next) => {
         // Routes
-        siteRoutes(instance, fetch, moment, config);
+        siteRoutes(instance, fetch, moment, config, db);
         next();
     });
 

@@ -1,4 +1,6 @@
-export default function sessionSiteRoute(app, fetch, moment, config) {
+import bcrypt from 'bcrypt';
+
+export default function sessionSiteRoute(app, fetch, moment, config, db) {
 
     // 
     // Session
