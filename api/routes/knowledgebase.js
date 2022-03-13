@@ -128,28 +128,6 @@ export default function knowledgebaseApiRoute(app, config, db) {
         res.send({ success: true });
     });
 
-    app.post(baseEndpoint + '/section/delete', async function(req, res) {
-        const sectionSlug = req.body.sectionSlug;
-
-        try {
-            db.query(`DELETE FROM knowledgebaseSections WHERE sectionSlug = ?;`, [sectionSlug], function(error, results, fields) {
-                if (error) {
-                    return res.send({
-                        success: false,
-                        message: `${error}`
-                    });
-                }
-              return res.redirect(`${config.siteConfiguration.siteAddress}/dashboard/knowledgebase`)
-            });
-
-        } catch (error) {
-            res.send({
-                success: false,
-                message: `${error}`
-            });
-        }
-    });
-
     app.post(baseEndpoint + '/article/create', async function(req, res) {
         const articleSlug = req.body.articleSlug;
         const articleName = req.body.articleName;
@@ -185,28 +163,6 @@ export default function knowledgebaseApiRoute(app, config, db) {
 
         // ...
         res.send({ success: true });
-    });
-
-    app.post(baseEndpoint + '/article/delete', async function(req, res) {
-        const articleSlug = req.body.articleSlug;
-
-        try {
-            db.query(`DELETE FROM knowledgebaseArticles WHERE articleSlug = ?;`, [articleSlug], function(error, results, fields) {
-                if (error) {
-                    return res.send({
-                        success: false,
-                        message: `${error}`
-                    });
-                }
-              return res.redirect(`${config.siteConfiguration.siteAddress}/dashboard/knowledgebase`);
-            });
-
-        } catch (error) {
-            res.send({
-                success: false,
-                message: `${error}`
-            });
-        }
     });
 
 }
