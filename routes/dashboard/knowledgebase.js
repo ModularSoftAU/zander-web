@@ -29,11 +29,55 @@ export default function dashboardKnowledgebaseSiteRoute(app, fetch, moment, conf
         });
     });
 
+    app.post('/dashboard/knowledgebase/delete/section', async function(req, res) {
+        const sectionSlug = req.body.sectionSlug;
+
+        try {
+            db.query(`DELETE FROM knowledgebaseSections WHERE sectionSlug = ?;`, [sectionSlug], function(error, results, fields) {
+                if (error) {
+                    return res.send({
+                        success: false,
+                        message: `${error}`
+                    });
+                }
+              return res.redirect(`${config.siteConfiguration.siteAddress}/dashboard/knowledgebase`)
+            });
+
+        } catch (error) {
+            res.send({
+                success: false,
+                message: `${error}`
+            });
+        }
+    });
+
     app.get('/dashboard/knowledgebase/create/article', async function(request, reply) {
         reply.view('dashboard/knowledgebase/createArticle', {
             "pageTitle": `Dashboard - Create Knowledgebase Article`,
             config: config
         });
+    });
+
+    app.post('/dashboard/knowledgebase/delete/article', async function(req, res) {
+        const articleSlug = req.body.articleSlug;
+
+        try {
+            db.query(`DELETE FROM knowledgebaseArticles WHERE articleSlug = ?;`, [articleSlug], function(error, results, fields) {
+                if (error) {
+                    return res.send({
+                        success: false,
+                        message: `${error}`
+                    });
+                }
+              return res.redirect(`${config.siteConfiguration.siteAddress}/dashboard/knowledgebase`);
+            });
+
+        } catch (error) {
+            res.send({
+                success: false,
+                message: `${error}`
+            });
+        }
     });
 
 }
