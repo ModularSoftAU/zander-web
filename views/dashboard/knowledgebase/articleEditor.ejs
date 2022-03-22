@@ -1,0 +1,138 @@
+<%- include("../../modules/dashboard/header.ejs", {
+    pageTitle: pageTitle,
+    pageDescription: "Editor for the Knowledgebase article Manager."
+}) %>
+
+<%- include("../../modules/dashboard/sidebar.ejs") %>
+
+<%- include("../../modules/dashboard/navigation.ejs") %>
+
+<div class="content-wrap">
+    <div class="main">
+        <div class="container-fluid">
+            <article id="main-content">
+                <div class="row">
+                    <div class="col-lg-12">
+                        <div class="card">
+                            <div class="card-title">
+                                <h4>Article Editor</h4>
+                            </div>
+                            <div class="card-body">
+                                <div class="basic-form">
+                                    <% if (type === 'create') { %>
+                                        <form method="post" action="<%= config.siteConfiguration.siteAddress %><%= config.siteConfiguration.apiRoute %>/knowledgebase/article/create">
+                                    <% } %>
+                                    <% if (type === 'edit') { %>
+                                        <form method="post" action="<%= config.siteConfiguration.siteAddress %><%= config.siteConfiguration.apiRoute %>/knowledgebase/article/update">
+                                            <input type="hidden" name="slug" value="<%= kbApiData.articleSlug %>">
+                                    <% } %>
+                                            <div class="row">
+                                                <!-- Name of Article Slug -->
+                                                <div class="form-group col">
+                                                    <label for="articleSlug">Article Slug</label>
+
+                                                    <% if (type === 'create') { %>
+                                                        <input type="text" class="form-control input-default " name="articleSlug" required>
+                                                    <% } %>
+                                                    <% if (type === 'edit') { %>
+                                                        <input type="text" class="form-control input-default " name="articleSlug" value="<%= kbApiData.articleSlug %>" required>
+                                                    <% } %>
+
+                                                    <p class="text-muted m-b-15 f-s-12">The slug for the article of the knowledgebase (primary use for accessing kb articles via URL /knowledgebase/gettingStarted/joiningTheNetwork).</p>
+                                                </div>
+
+                                                <!-- Name of Article -->
+                                                <div class="form-group col">
+                                                    <label for="articleName">Article Display Name</label>
+
+                                                    <% if (type === 'create') { %>
+                                                        <input type="text" class="form-control input-default " name="articleName" required>
+                                                    <% } %>
+                                                    <% if (type === 'edit') { %>
+                                                        <input type="text" class="form-control input-default " name="articleName" value="<%= kbApiData.articleName %>" required>
+                                                    <% } %>
+
+                                                    <p class="text-muted m-b-15 f-s-12">The display name for the article.</p>
+                                                </div>
+                                            </div>
+
+                                            <!-- Link to Markdown -->
+                                            <div class="form-group">
+                                                <label for="articleMarkdown">Article Markdown Link</label>
+                                                <input type="text" class="form-control input-default " name="articleMarkdown" required>
+                                                <p class="text-muted m-b-15 f-s-12">A link to the knowledgebase article, RAW Markdown.</p>
+                                            </div>
+
+                                            <div class="row">
+                                                <!-- Article Section -->
+                                                <div class="form-group col">
+                                                    <label for="articleSection">Article Section</label>
+
+                                                    <% if (type === 'create') { %>
+                                                        <select class="form-control" name="articleSection" required>
+                                                            <option selected disabled>Select a Section</option>
+                                                            <option>Section 2</option>
+                                                            <option>Section 3</option>
+                                                            <option>Section 4</option>
+                                                        </select>
+                                                    <% } %>
+                                                    <% if (type === 'edit') { %>
+                                                        <select class="form-control" name="articleSection" required>
+                                                            <option selected disabled>Select a Section</option>
+                                                            <option>Section 2</option>
+                                                            <option>Section 3</option>
+                                                            <option>Section 4</option>
+                                                        </select>
+                                                    <% } %>
+
+                                                    <p class="text-muted m-b-15 f-s-12">Specify a section to link the article to.</p>
+                                                </div>
+
+                                                <!-- Article Position -->
+                                                <div class="form-group col">
+                                                    <label for="articlePosition">Article Position</label>
+
+                                                    <% if (type === 'create') { %>
+                                                        <input type="text" class="form-control input-default " name="articlePosition" required>
+                                                    <% } %>
+                                                    <% if (type === 'edit') { %>
+                                                        <input type="text" class="form-control input-default " name="articlePosition" value="<%= kbApiData.position %>" required>
+                                                    <% } %>
+                                                </div>
+
+                                                <!-- Article Visability -->
+                                                <div class="form-group col">
+                                                    <label for="articlePosition">Article Visability</label>
+
+                                                    <% if (type === 'create') { %>
+                                                        <select class="form-control" name="articleVisability" required>
+                                                            <option selected disabled>Select a Visability</option>
+                                                            <option value="0">Not Visable</option>
+                                                            <option value="1">Visable</option>
+                                                        </select>
+                                                    <% } %>
+                                                    <% if (type === 'edit') { %>
+                                                        <select class="form-control" name="articleVisability" required>
+                                                            <option selected disabled>Select a Visability</option>
+                                                            <option value="0">Not Visable</option>
+                                                            <option value="1">Visable</option>
+                                                        </select>
+                                                    <% } %>
+                                                </div>
+                                            </div>
+
+                                            <% if (type === 'create') { %>
+                                                <button type="submit" class="btn btn-primary"><i class="fas fa-book"></i> Create Article</button>
+                                            <% } %>
+
+                                            <% if (type === 'edit') { %>
+                                                <button type="submit" class="btn btn-warning"><i class="fas fa-book"></i> Edit Article</button>
+                                            <% } %>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+<%- include("../../modules/dashboard/footer.ejs") %>

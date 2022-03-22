@@ -196,7 +196,11 @@ export default function knowledgebaseApiRoute(app, config, db) {
                         message: `${error}`
                     });
                 }
-              return res.redirect(`${config.siteConfiguration.siteAddress}/dashboard/knowledgebase`)
+
+                return res.send({
+                    success: true,
+                    message: `Article called ${articleName} has been created.`
+                });
             });
 
         } catch (error) {
