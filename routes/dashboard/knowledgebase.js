@@ -1,4 +1,4 @@
-export default function dashboardKnowledgebaseSiteRoute(app, fetch, moment, config) {
+export default function dashboardKnowledgebaseSiteRoute(app, fetch, moment, config, db) {
 
     // 
     // Knowledgebase
@@ -22,14 +22,15 @@ export default function dashboardKnowledgebaseSiteRoute(app, fetch, moment, conf
         });
     });
 
-    app.get('/dashboard/knowledgebase/create/section', async function(request, reply) {
-        reply.view('dashboard/knowledgebase/createSection', {
+    app.get('/dashboard/knowledgebase/section/create', async function(request, reply) {
+        reply.view('dashboard/knowledgebase/sectionEditor', {
             "pageTitle": `Dashboard - Create Knowledgebase Section`,
-            config: config
+            config: config,
+            type: "create"
         });
     });
 
-    app.post('/dashboard/knowledgebase/delete/section', async function(req, res) {
+    app.post('/dashboard/knowledgebase/section/delete', async function(req, res) {
         const sectionSlug = req.body.sectionSlug;
 
         try {
@@ -51,14 +52,15 @@ export default function dashboardKnowledgebaseSiteRoute(app, fetch, moment, conf
         }
     });
 
-    app.get('/dashboard/knowledgebase/create/article', async function(request, reply) {
-        reply.view('dashboard/knowledgebase/createArticle', {
+    app.get('/dashboard/knowledgebase/article/create', async function(request, reply) {
+        reply.view('dashboard/knowledgebase/articleEditor', {
             "pageTitle": `Dashboard - Create Knowledgebase Article`,
-            config: config
+            config: config,
+            type: "create"
         });
     });
 
-    app.post('/dashboard/knowledgebase/delete/article', async function(req, res) {
+    app.post('/dashboard/knowledgebase/article/delete', async function(req, res) {
         const articleSlug = req.body.articleSlug;
 
         try {

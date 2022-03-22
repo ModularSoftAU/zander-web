@@ -16,8 +16,8 @@
                         <div class="card">
                             <div class="card-title">
                                 <h4>Knowledgebase</h4>
-                                <a href="/dashboard/knowledgebase/editor/section"><button type="button" class="btn btn-sm btn-info">Create Knowledgebase Section</button></a>
-                                <a href="/dashboard/knowledgebase/editor/section"><button type="button" class="btn btn-sm btn-info">Create Knowledgebase section</button></a>
+                                <a href="/dashboard/knowledgebase/section/create"><button type="button" class="btn btn-sm btn-info">Create Knowledgebase Section</button></a>
+                                <a href="/dashboard/knowledgebase/article/create"><button type="button" class="btn btn-sm btn-info">Create Knowledgebase Article</button></a>
                             </div>
                             <br>
                             <div class="card-body">
@@ -62,7 +62,7 @@
                                                                             <div class="btn-group">
                                                                                 <button class="btn btn-sm btn-warning" type="button">Edit</button>
                     
-                                                                                <form action="/dashboard/knowledgebase/delete/section" method="post">
+                                                                                <form action="/dashboard/knowledgebase/section/delete" method="post">
                                                                                     <input type="hidden" name="sectionSlug" value="<%= section.sectionSlug %>">
                                                                                     <button class="btn btn-sm btn-danger" type="submit">Delete</button>
                                                                                 </form>
@@ -114,7 +114,7 @@
                                                                             <div class="btn-group">
                                                                                 <button class="btn btn-sm btn-warning" type="button">Edit</button>
                     
-                                                                                <form action="/dashboard/knowledgebase/delete/article" method="post">
+                                                                                <form action="/dashboard/knowledgebase/article/delete" method="post">
                                                                                     <input type="hidden" name="articleSlug" value="<%= article.articleSlug %>">
                                                                                     <button class="btn btn-sm btn-danger" type="submit">Delete</button>
                                                                                 </form>
