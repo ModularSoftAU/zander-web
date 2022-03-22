@@ -6,6 +6,7 @@ export default function eventApiRoute(app, DiscordClient, moment, config, db) {
     app.get(baseEndpoint + '/get', async function(req, res) {
         try {
             const published = req.query.published;
+            const id = req.query.id;
 
             function getEvents(dbQuery) {
                 db.query(dbQuery, function(error, results, fields) {
@@ -30,12 +31,18 @@ export default function eventApiRoute(app, DiscordClient, moment, config, db) {
                 });
             }
 
-            if (!published) {
-                res.send({
-                    success: false,
-                    message: `You must select a publish indicator.`
-                });
+            // Get Event by specific ID.
+            if (id) {
+                let dbQuery = `SELECT * FROM events WHERE eventId=${id};`
+                getEvents(dbQuery);                
             }
+
+            // if (!published) {
+            //     res.send({
+            //         success: false,
+            //         message: `You must select a publish indicator.`
+            //     });
+            // }
 
             if (published === 'show') {
                 let dbQuery = `SELECT * FROM events WHERE published=1 ORDER BY eventDateTime ASC;`
@@ -61,12 +68,12 @@ export default function eventApiRoute(app, DiscordClient, moment, config, db) {
     });
 
     app.post(baseEndpoint + '/create', async function(req, res) {
-        const name = req.body.name;
-        const icon = req.body.icon;
+        const name = req.body.eventName;
+        const icon = req.body.eventIcon;
         const eventDateTime = req.body.eventDateTime;
-        const hostingServer = req.body.hostingServer;
+        const hostingServer = req.body.eventHostingServer;
         const guildEventChannel = req.body.guildEventChannel;
-        const information = req.body.information;
+        const information = req.body.eventInformation;
 
         try {
             db.query(`INSERT INTO events (name, icon, eventDateTime, hostingServer, guildEventChannel, information) VALUES (?, ?, ?, (select serverId from servers where name=?), ?, ?)`, [name, icon, eventDateTime, hostingServer, guildEventChannel, information], function(error, results, fields) {

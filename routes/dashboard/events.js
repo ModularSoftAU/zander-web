@@ -1,5 +1,4 @@
-export default function dashboardEventSiteRoute(app, fetch, moment, config) {
-
+export default function dashboardEventSiteRoute(app, fetch, moment, config, db) {
     // 
     // Events
     // 
@@ -16,50 +15,92 @@ export default function dashboardEventSiteRoute(app, fetch, moment, config) {
         });
     });
 
-    app.get('/dashboard/events/editor', async function(request, reply) {
+    // 
+    // Events
+    // Create Event
+    // 
+    app.get('/dashboard/events/create', async function(request, reply) {
+        const fetchURL = `${config.siteConfiguration.siteAddress}${config.siteConfiguration.apiRoute}/server/get?visible=all`;
+        const response = await fetch(fetchURL);
+        const serverApiData = await response.json();
+                
         reply.view('dashboard/events/editor', {
-            "pageTitle": `Dashboard - Event Editor`,
-            config: config
+            "pageTitle": `Dashboard - Event Creator`,
+            config: config,
+            serverApiData: serverApiData.data,
+            type: "create"
         });
     });
 
-    app.post('/dashboard/events/delete', async function(req, res) {
-        const eventId = req.body.eventId;
+    // 
+    // Events
+    // Edit an existing event
+    // 
+    app.get('/dashboard/events/edit', async function(request, reply) {
+        const eventId = request.query.id;
+        const fetchURL = `${config.siteConfiguration.siteAddress}${config.siteConfiguration.apiRoute}/event/get?id=${eventId}`;
+        const response = await fetch(fetchURL);
+        const eventApiData = await response.json();
+
+        const serverFetchURL = `${config.siteConfiguration.siteAddress}${config.siteConfiguration.apiRoute}/server/get?visible=all`;
+        const serverResponse = await fetch(serverFetchURL);
+        const serverApiData = await serverResponse.json();
+
+        reply.view('dashboard/events/editor', {
+            "pageTitle": `Dashboard - Event Editor`,
+            config: config,
+            eventApiData: eventApiData.data[0],
+            serverApiData: serverApiData.data,
+            moment: moment,
+            type: "edit"
+        });
+    });
+
+    // 
+    // Events
+    // Delete an existing event
+    // 
+    app.post('/dashboard/events/delete', async function(request, reply, db) {
+        // db object can't reach here?
+        const eventId = request.body.eventId;
 
         try {
-            db.query(`SELECT eventId FROM events WHERE eventId=?; DELETE FROM events WHERE eventId=?`, [eventId, eventId], function(error, results, fields) {
+            db.query(`SELECT eventId FROM events WHERE eventId=?; DELETE FROM events WHERE eventId=?;`, [eventId, eventId], function(error, results, fields) {
                 if (error) {
-                    return res.send({
+                    console.log(error);
+                    return reply.send({
                         success: false,
                         message: `${error}`
                     });
                 }
 
-                if (!results[0].length) {
-                    return res.send({
-                        success: false,
-                        message: `The event with the id ${eventId} does not exist.`
-                    });
-                }
-
-                return res.redirect(`${config.siteConfiguration.siteAddress}/dashboard/events`);
+                return reply.send({
+                    success: true,
+                    message: `The event with the id ${eventId} has been deleted.`
+                });
             });
 
         } catch (error) {
-            res.send({
+            console.log(error);
+            reply.send({
                 success: false,
                 message: `${error}`
             });
         }
     });
 
-    app.post('/dashboard/events/publish', async function(req, res) {
-        const eventId = req.body.eventId;
+    // 
+    // Events
+    // Publish an existing event
+    // NOTE: Once an event is published, it cannot be unpublished, it would have to be deleted.
+    // 
+    app.post('/dashboard/events/publish', async function(request, reply) {
+        const eventId = request.body.eventId;
 
         try {
             db.query(`SELECT * FROM events where eventId=? AND published=?; select name, icon, eventDateTime, information, (select name from servers where serverId=hostingServer) as 'hostingServerName' from events where eventId=?; UPDATE events SET published=? WHERE eventId=?`, [eventId, `1`, eventId, `1`, eventId], function(error, results, fields) {
                 if (error) {
-                    return res.send({
+                    return reply.send({
                         success: false,
                         message: `${error}`
                     });
@@ -75,7 +116,7 @@ export default function dashboardEventSiteRoute(app, fetch, moment, config) {
 
                     db.query(`SELECT * FROM events where eventId=? AND published=?; select name, icon, eventDateTime, information, (select name from servers where serverId=hostingServer) as 'hostingServerName' from events where eventId=?; UPDATE events SET published=? WHERE eventId=?`, [eventId, `1`, eventId, `1`, eventId], function(error, results, fields) {
                         if (error) {
-                            return res.send({
+                            return reply.send({
                                 success: false,
                                 message: `${error}`
                             });
@@ -102,21 +143,20 @@ export default function dashboardEventSiteRoute(app, fetch, moment, config) {
 
                         channel.send({ embeds: [embed] });
 
-                        return res.redirect(`${config.siteConfiguration.siteAddress}/dashboard/events`);
+                        return reply.redirect(`${config.siteConfiguration.siteAddress}/dashboard/events`);
                     });
                 } catch (error) {
-                    return res.send({
+                    return reply.send({
                         success: false,
                         message: `${error}`
                     });
                 }
             });
         } catch (error) {
-            res.send({
+            reply.send({
                 success: false,
                 message: `${error}`
             });
         }
     });
-
 }
