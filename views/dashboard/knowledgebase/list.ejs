@@ -60,7 +60,7 @@
                                                                         <td><%= section.description %></td>
                                                                         <td>
                                                                             <div class="btn-group">
-                                                                                <button class="btn btn-sm btn-warning" type="button">Edit</button>
+                                                                                <a href="/dashboard/knowledgebase/section/edit?slug=<%= section.sectionSlug %>"><button class="btn btn-sm btn-warning" type="button">Edit</button></a>
                     
                                                                                 <form action="/dashboard/knowledgebase/section/delete" method="post">
                                                                                     <input type="hidden" name="sectionSlug" value="<%= section.sectionSlug %>">

@@ -23,102 +23,86 @@
                                         <form method="post" action="<%= config.siteConfiguration.siteAddress %><%= config.siteConfiguration.apiRoute %>/knowledgebase/section/create">
                                     <% } %>
                                     <% if (type === 'edit') { %>
-                                        <form method="post" action="<%= config.siteConfiguration.siteAddress %><%= config.siteConfiguration.apiRoute %>knowledgebase/section/edit">
-                                            <input type="hidden" name="sectionSlug" value="<%= eventApiData.id %>">
+                                        <form method="post" action="<%= config.siteConfiguration.siteAddress %><%= config.siteConfiguration.apiRoute %>/knowledgebase/section/update">
+                                            <input type="hidden" name="slug" value="<%= kbApiData.sectionSlug %>">
                                     <% } %>
-                                            <!-- Name of Event -->
+                                            <!-- Name of Section Slug -->
                                             <div class="form-group">
-                                                <label for="eventName">Event Name</label>
+                                                <label for="sectionSlug">Section Slug</label>
 
                                                 <% if (type === 'create') { %>
-                                                    <input type="text" class="form-control input-default " name="eventName" required>
+                                                    <input type="text" class="form-control input-default " name="sectionSlug" required>
                                                 <% } %>
                                                 <% if (type === 'edit') { %>
-                                                    <input type="text" class="form-control input-default " name="eventName" value="<%= eventApiData.name %>" required>
+                                                    <input type="text" class="form-control input-default " name="sectionSlug" value="<%= kbApiData.sectionSlug %>" required>
                                                 <% } %>
 
-                                                <p class="text-muted m-b-15 f-s-12">The name of the event.</p>
+                                                <p class="text-muted m-b-15 f-s-12">The slug for the section of the knowledgebase (primary use for accessing kb articles via URL /knowledgebase/gettingStarted/joiningTheNetwork).</p>
                                             </div>
 
-                                            <!-- Event Icon -->
+                                            <!-- Name of Section -->
                                             <div class="form-group">
-                                                <label for="eventIcon">Event Icon</label>
+                                                <label for="sectionName">Section Display Name</label>
 
                                                 <% if (type === 'create') { %>
-                                                    <input type="text" class="form-control input-default " name="eventIcon" required>
+                                                    <input type="text" class="form-control input-default " name="sectionName" required>
                                                 <% } %>
                                                 <% if (type === 'edit') { %>
-                                                    <input type="text" class="form-control input-default " name="eventIcon" value="<%= eventApiData.icon %>" required>
+                                                    <input type="text" class="form-control input-default " name="sectionName" value="<%= kbApiData.sectionName %>" required>
                                                 <% } %>
 
-                                                <p class="text-muted m-b-15 f-s-12">The display icon for the event. This should be a .png file link from imgur.<br>The event icon MUST be 250px x 250px.</p>
+                                                <p class="text-muted m-b-15 f-s-12">The display name for the section.</p>
                                             </div>
 
-                                            <!-- Event Guild Event -->
+                                            <!-- Section Description -->
                                             <div class="form-group">
-                                                <label for="guildEventChannel">Guild Event Channel</label>
+                                                <label for="sectionDescription">Section Description</label>
 
                                                 <% if (type === 'create') { %>
-                                                    <input type="text" class="form-control input-default " name="guildEventChannel" required>
-                                                <% } %>
-                                                <% if (type === 'edit') { %>
-                                                    <input type="text" class="form-control input-default " name="guildEventChannel" value="<%= eventApiData.guildEventChannel %>" required>
-                                                <% } %>
-
-                                                <p class="text-muted m-b-15 f-s-12">The voice channel ID for where the event will be held.</p>
-                                            </div>
-
-                                            <!-- Event Hosting Server -->
-                                            <div class="form-group">
-                                                <label for="eventHostingServer">Event Hosting Server</label>
-
-                                                <select name="eventHostingServer" class="form-control input-default " required>
-                                                    <option value="disabled" selected disabled>Select a Server</option>
-                                                    <% serverApiData.forEach(function(server) { %>
-                                                        <h2><%= server.name %></h2>
-                                                        <option value="<%= server.name %>"><%= server.name %></option>
-                                                    <% }); %>
-                                                </select>
-
-                                                <p class="text-muted m-b-15 f-s-12">The Server for where the event will be held.</p>
-                                            </div>
-
-                                            <!-- Event Date and Time -->
-                                            <div class="form-group">
-                                                <label for="eventDateTime">Event Date and Time</label>
-
-                                                <% if (type === 'create') { %>
-                                                    <input type="datetime-local" class="form-control input-default " name="eventDateTime" required>
-                                                <% } %>
-                                                <% if (type === 'edit') { %>
-                                                    <!-- Moment Setting the Date and Time doesn't work in edit mode -->
-                                                    <input type="datetime-local" class="form-control input-default " name="eventDateTime" value="<%= moment(eventApiData.eventDateTime).format('YYYY-MM-DDTh:mm') %>" required>
-                                                <% } %>
-
-                                                <p class="text-muted m-b-15 f-s-12">The date and time for the event to begin.</p>
-                                            </div>
-
-                                            <!-- Event Information -->
-                                            <div class="form-group">
-                                                <label for="eventInformation">Event Information</label>
-
-                                                <% if (type === 'create') { %>
-                                                    <textarea class="form-control" style="height: 150px;" rows="10" name="eventInformation" placeholder="Text input"></textarea>
+                                                    <textarea class="form-control" style="height: 150px;" rows="10" name="sectionDescription" placeholder="Text input"></textarea>
                                                 <% } %>
                                                 <% if (type === 'edit') { %>
 
-                                                    <textarea class="form-control" style="height: 150px;" rows="10" name="eventInformation" value="<%= eventApiData.information %>" placeholder="Text input"></textarea>
+                                                    <textarea class="form-control" style="height: 150px;" rows="10" name="sectionDescription" placeholder="Text input"><%= kbApiData.description %></textarea>
                                                 <% } %>
 
                                                 <p class="text-muted m-b-15 f-s-12">Information for the event that the community needs to know.</p>
                                             </div>
 
+                                            <div class="row">
+                                                <!-- Section Icon -->
+                                                <div class="form-group col">
+                                                    <label for="sectionIcon">Section Icon</label>
+
+                                                    <% if (type === 'create') { %>
+                                                        <input type="text" class="form-control input-default " name="sectionIcon" required>
+                                                    <% } %>
+                                                    <% if (type === 'edit') { %>
+                                                        <input type="text" class="form-control input-default " name="sectionIcon" value="<%= kbApiData.sectionIcon %>" required>
+                                                    <% } %>
+
+                                                    <p class="text-muted m-b-15 f-s-12">The display icon for the section. Please select one from <a href="https://fontawesome.com/v5/search">FontAwesome</a></p>
+                                                </div>
+
+                                                <!-- Section Position -->
+                                                <div class="form-group col">
+                                                    <label for="sectionPosition">Section Position</label>
+
+                                                    <% if (type === 'create') { %>
+                                                        <input type="text" class="form-control input-default " name="sectionPosition" required>
+                                                    <% } %>
+                                                    <% if (type === 'edit') { %>
+                                                        <input type="text" class="form-control input-default " name="sectionPosition" value="<%= kbApiData.position %>" required>
+                                                    <% } %>
+                                                </div>
+                                            </div>
+
                                             <% if (type === 'create') { %>
-                                                <button type="submit" class="btn btn-primary"><i class="fas fa-calendar"></i> Schedule Event</button>
+                                                <button type="submit" class="btn btn-primary"><i class="fas fa-book"></i> Create Section</button>
                                             <% } %>
 
                                             <% if (type === 'edit') { %>
-                                                <button type="submit" class="btn btn-warning"><i class="fas fa-calendar"></i> Edit Event</button>
+                                                <button type="submit" class="btn btn-warning"><i class="fas fa-book"></i> Edit Section</button>
                                             <% } %>
                                     </form>
                                 </div>
