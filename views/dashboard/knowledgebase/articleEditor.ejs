@@ -56,10 +56,31 @@
                                                 </div>
                                             </div>
 
+                                            <!-- Description of Article -->
+                                            <div class="form-group">
+                                                <label for="articleName">Article Description</label>
+
+                                                <% if (type === 'create') { %>
+                                                    <textarea class="form-control" style="height: 150px;" rows="10" name="articleDescription" placeholder="Text input"></textarea>
+                                                <% } %>
+                                                <% if (type === 'edit') { %>
+                                                    <textarea class="form-control" style="height: 150px;" rows="10" name="articleDescription" placeholder="Text input"><%= kbApiData.articleDescription %></textarea>
+                                                <% } %>
+
+                                                <p class="text-muted m-b-15 f-s-12">A small description for the article. Typically used for SSO. <i>Not required</i></p>
+                                            </div>
+
                                             <!-- Link to Markdown -->
                                             <div class="form-group">
-                                                <label for="articleMarkdown">Article Markdown Link</label>
-                                                <input type="text" class="form-control input-default " name="articleMarkdown" required>
+                                                <label for="articleLink">Article Markdown Link</label>
+
+                                                <% if (type === 'create') { %>
+                                                    <input type="text" class="form-control input-default " name="articleLink" required>
+                                                <% } %>
+                                                <% if (type === 'edit') { %>
+                                                    <input type="text" class="form-control input-default " name="articleLink" value="<%= kbApiData.articleLink %>" required>
+                                                <% } %>
+
                                                 <p class="text-muted m-b-15 f-s-12">A link to the knowledgebase article, RAW Markdown.</p>
                                             </div>
 
@@ -69,19 +90,19 @@
                                                     <label for="articleSection">Article Section</label>
 
                                                     <% if (type === 'create') { %>
-                                                        <select class="form-control" name="articleSection" required>
-                                                            <option selected disabled>Select a Section</option>
-                                                            <option>Section 2</option>
-                                                            <option>Section 3</option>
-                                                            <option>Section 4</option>
+                                                        <select name="articleSection" class="form-control input-default " required>
+                                                            <option value="disabled" selected disabled>Select a Section</option>
+                                                            <% sectionApiData.forEach(function(section) { %>
+                                                                <option value="<%= section.sectionId %>"><%= section.sectionName %></option>
+                                                            <% }); %>
                                                         </select>
                                                     <% } %>
                                                     <% if (type === 'edit') { %>
-                                                        <select class="form-control" name="articleSection" required>
-                                                            <option selected disabled>Select a Section</option>
-                                                            <option>Section 2</option>
-                                                            <option>Section 3</option>
-                                                            <option>Section 4</option>
+                                                        <select name="articleSection" class="form-control input-default " required>
+                                                            <option value="disabled" selected disabled>Select a Section</option>
+                                                            <% sectionApiData.forEach(function(section) { %>
+                                                                <option value="<%= section.sectionId %>"><%= section.sectionName %></option>
+                                                            <% }); %>
                                                         </select>
                                                     <% } %>
 
@@ -102,17 +123,17 @@
 
                                                 <!-- Article Visability -->
                                                 <div class="form-group col">
-                                                    <label for="articlePosition">Article Visability</label>
+                                                    <label for="articleVisibility">Article Visability</label>
 
                                                     <% if (type === 'create') { %>
-                                                        <select class="form-control" name="articleVisability" required>
+                                                        <select class="form-control" name="articleVisibility" required>
                                                             <option selected disabled>Select a Visability</option>
                                                             <option value="0">Not Visable</option>
                                                             <option value="1">Visable</option>
                                                         </select>
                                                     <% } %>
                                                     <% if (type === 'edit') { %>
-                                                        <select class="form-control" name="articleVisability" required>
+                                                        <select class="form-control" name="articleVisibility" required>
                                                             <option selected disabled>Select a Visability</option>
                                                             <option value="0">Not Visable</option>
                                                             <option value="1">Visable</option>

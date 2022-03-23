@@ -184,12 +184,14 @@ export default function knowledgebaseApiRoute(app, config, db) {
     app.post(baseEndpoint + '/article/create', async function(req, res) {
         const articleSlug = req.body.articleSlug;
         const articleName = req.body.articleName;
+        const articleDescription = req.body.articleDescription;
         const articleLink = req.body.articleLink;
         const articleSection = req.body.articleSection;
         const position = req.body.position;
+        const published = req.body.articleVisibility;
 
         try {
-            db.query(`INSERT INTO knowledgebaseArticles (articleSlug, articleName, articleLink, sectionId, position) VALUES (?, ?, ?, (select sectionId from knowledgebaseSections where sectionSlug=?), ?)`, [articleSlug, articleName, articleLink, articleSection, position], function(error, results, fields) {
+            db.query(`INSERT INTO knowledgebaseArticles (articleSlug, articleName, articleDescription, articleLink, sectionId, position, published) VALUES (?, ?, ?, ?, (select sectionId from knowledgebaseSections where sectionSlug=?), ?, ?)`, [articleSlug, articleName, articleDescription, articleLink, articleSection, position, published], function(error, results, fields) {
                 if (error) {
                     return res.send({
                         success: false,
@@ -199,7 +201,7 @@ export default function knowledgebaseApiRoute(app, config, db) {
 
                 return res.send({
                     success: true,
-                    message: `Article called ${articleName} has been created.`
+                    message: `The article called ${articleName} has been created.`
                 });
             });
 
@@ -212,14 +214,36 @@ export default function knowledgebaseApiRoute(app, config, db) {
     });
 
     app.post(baseEndpoint + '/article/update', async function(req, res) {
+        const slug = req.body.slug;
         const articleSlug = req.body.articleSlug;
         const articleName = req.body.articleName;
+        const articleDescription = req.body.articleDescription;
         const articleLink = req.body.articleLink;
-        const section = req.body.section;
-        const position = req.body.position;
+        const articleSection = req.body.articleSection;
+        const position = req.body.articlePosition;
+        const published = req.body.articleVisibility;
 
-        // ...
-        res.send({ success: true });
+        try {
+            db.query(`UPDATE knowledgebaseArticles SET articleSlug=?, articleName=?, articleDescription=?, articleLink=?, sectionId=?, position=?, published=? WHERE articleSlug=?`, [articleSlug, articleName, articleDescription, articleLink, articleSection, position, published, slug], function(error, results, fields) {
+                if (error) {
+                    return res.send({
+                        success: false,
+                        message: `${error}`
+                    });
+                }
+
+                return res.send({
+                    success: true,
+                    message: `The article called ${slug} has been updated.`
+                });
+            });
+
+        } catch (error) {
+            res.send({
+                success: false,
+                message: `${error}`
+            });
+        }
     });
 
 }

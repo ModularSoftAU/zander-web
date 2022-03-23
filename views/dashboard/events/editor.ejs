@@ -75,7 +75,6 @@
                                                 <select name="eventHostingServer" class="form-control input-default " required>
                                                     <option value="disabled" selected disabled>Select a Server</option>
                                                     <% serverApiData.forEach(function(server) { %>
-                                                        <h2><%= server.name %></h2>
                                                         <option value="<%= server.name %>"><%= server.name %></option>
                                                     <% }); %>
                                                 </select>
@@ -106,8 +105,7 @@
                                                     <textarea class="form-control" style="height: 150px;" rows="10" name="eventInformation" placeholder="Text input"></textarea>
                                                 <% } %>
                                                 <% if (type === 'edit') { %>
-
-                                                    <textarea class="form-control" style="height: 150px;" rows="10" name="eventInformation" value="<%= eventApiData.information %>" placeholder="Text input"></textarea>
+                                                    <textarea class="form-control" style="height: 150px;" rows="10" name="eventInformation" placeholder="Text input"><%= eventApiData.information %></textarea>
                                                 <% } %>
 
                                                 <p class="text-muted m-b-15 f-s-12">Information for the event that the community needs to know.</p>

@@ -87,19 +87,47 @@ export default function dashboardKnowledgebaseSiteRoute(app, fetch, moment, conf
     // Create an article
     // 
     app.get('/dashboard/knowledgebase/article/create', async function(request, reply) {
+        const fetchURL = `${config.siteConfiguration.siteAddress}${config.siteConfiguration.apiRoute}/knowledgebase/section/get`;
+        const response = await fetch(fetchURL);
+        const kbSectionApiData = await response.json();
+
         reply.view('dashboard/knowledgebase/articleEditor', {
-            "pageTitle": `Dashboard - Create Knowledgebase Article`,
+            "pageTitle": `Dashboard - Article Creator`,
             config: config,
+            sectionApiData: kbSectionApiData.data,
             type: "create"
         });
     });
 
     // 
     // Knowledgebase
-    // Delete an article
+    // Edit a Article
+    // 
+    app.get('/dashboard/knowledgebase/article/edit', async function(request, reply) {
+        const articleSlug = request.query.slug;
+        const fetchURL = `${config.siteConfiguration.siteAddress}${config.siteConfiguration.apiRoute}/knowledgebase/article/get?slug=${articleSlug}`;
+        const response = await fetch(fetchURL);
+        const kbApiData = await response.json();
+
+        const kbSectionFetchURL = `${config.siteConfiguration.siteAddress}${config.siteConfiguration.apiRoute}/knowledgebase/section/get`;
+        const kbSectionResponse = await fetch(kbSectionFetchURL);
+        const kbSectionApiData = await kbSectionResponse.json();
+
+        reply.view('dashboard/knowledgebase/articleEditor', {
+            "pageTitle": `Dashboard - Article Editor`,
+            config: config,
+            kbApiData: kbApiData.data[0],
+            sectionApiData: kbSectionApiData.data,
+            type: "edit"
+        });
+    });
+
+    // 
+    // Knowledgebase
+    // Delete an Article
     // 
     app.post('/dashboard/knowledgebase/article/delete', async function(req, res) {
-        const articleSlug = req.body.articleSlug;
+        const articleSlug = req.body.slug;
 
         try {
             db.query(`DELETE FROM knowledgebaseArticles WHERE articleSlug = ?;`, [articleSlug], function(error, results, fields) {
@@ -109,7 +137,11 @@ export default function dashboardKnowledgebaseSiteRoute(app, fetch, moment, conf
                         message: `${error}`
                     });
                 }
-              return res.redirect(`${config.siteConfiguration.siteAddress}/dashboard/knowledgebase`);
+              
+                return res.send({
+                    success: true,
+                    message: `The article with the slug ${articleSlug} has been deleted.`
+                });
             });
 
         } catch (error) {
