@@ -84,6 +84,8 @@ export default function applicationApiRoute(app, config, db) {
         const requirementsMarkdown = req.body.requirementsMarkdown;
         const redirectUrl = req.body.redirectUrl;
         const position = req.body.position;
+
+        console.log(req.body);
 		
 		try {
 			db.query(`UPDATE applications SET displayName = ?, description = ?, displayIcon = ?, requirementsMarkdown = ?, redirectUrl = ?, position = ? WHERE applicationId = ?`, [displayName, description, displayIcon, requirementsMarkdown, redirectUrl, position, applicationId], function(error, results, fields) {
