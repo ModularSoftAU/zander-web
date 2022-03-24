@@ -371,7 +371,7 @@ CREATE TABLE applications (
 	applicationId INT NOT NULL AUTO_INCREMENT,
     displayName VARCHAR(30),
     description TEXT,
-    displayIcon VARCHAR(20),
+    displayIcon VARCHAR(40),
     requirementsMarkdown TEXT,
     redirectUrl TEXT,
     position INT,

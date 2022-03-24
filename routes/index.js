@@ -1,6 +1,3 @@
-import path from 'path'
-import fs from 'fs'
-
 import dashboardSiteRoutes from './dashboard'
 import knowledgebaseSiteRoutes from './knowledgebaseRoutes'
 import policySiteRoutes from './policyRoutes'
@@ -9,9 +6,9 @@ import sessionRoutes from './sessionRoutes'
 
 export default function applicationSiteRoutes(app, fetch, moment, config, db) {
 
-    dashboardSiteRoutes(app, fetch, moment, config);
-    knowledgebaseSiteRoutes(app, fetch, config);
-    communityCreationsRoutes(app, fetch, moment, config);
+    dashboardSiteRoutes(app, fetch, moment, config, db);
+    knowledgebaseSiteRoutes(app, fetch, config, db);
+    communityCreationsRoutes(app, fetch, moment, config, db);
     sessionRoutes(app, fetch, moment, config, db);
     policySiteRoutes(app, config);
 

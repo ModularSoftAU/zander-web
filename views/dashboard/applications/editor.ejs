@@ -1,0 +1,153 @@
+<%- include("../../modules/dashboard/header.ejs", {
+    pageTitle: pageTitle,
+    pageDescription: "Add applications for community to apply for."
+}) %>
+
+<%- include("../../modules/dashboard/sidebar.ejs") %>
+
+<%- include("../../modules/dashboard/navigation.ejs") %>
+
+<div class="content-wrap">
+    <div class="main">
+        <div class="container-fluid">
+            <section id="main-content">
+                <div class="row">
+                    <div class="col-lg-12">
+                        <div class="card">
+                            <div class="card-title">
+                                <h4>Application Editor</h4>
+                            </div>
+                            <div class="card-body">
+                                <div class="basic-form">
+                                    <% if (type === 'create') { %>
+                                        <form method="post" action="<%= config.siteConfiguration.siteAddress %><%= config.siteConfiguration.apiRoute %>/application/create">
+                                    <% } %>
+                                    <% if (type === 'edit') { %>
+                                        <form method="post" action="<%= config.siteConfiguration.siteAddress %><%= config.siteConfiguration.apiRoute %>/application/edit">
+                                            <input type="hidden" name="serverId" value="<%= applicationApiData.applicationId %>">
+                                    <% } %>
+                                            <div class="row">
+                                                <!-- Display Name -->
+                                                <div class="form-group col">
+                                                    <label for="displayName">Display Name</label>
+
+                                                    <% if (type === 'create') { %>
+                                                        <input type="text" class="form-control input-default " name="displayName" required>
+                                                    <% } %>
+                                                    <% if (type === 'edit') { %>
+                                                        <input type="text" class="form-control input-default " name="displayName" value="<%= applicationApiData.displayName %>" required>
+                                                    <% } %>
+
+                                                    <p class="text-muted m-b-15 f-s-12">The display name for the application.</p>
+                                                </div>
+
+                                                <!-- Application Icon -->
+                                                <div class="form-group col">
+                                                    <label for="displayIcon">Application Icon</label>
+
+                                                    <% if (type === 'create') { %>
+                                                        <input type="text" class="form-control input-default " name="displayIcon" required>
+                                                    <% } %>
+                                                    <% if (type === 'edit') { %>
+                                                        <input type="text" class="form-control input-default " name="displayIcon" value="<%= applicationApiData.displayIcon %>" required>
+                                                    <% } %>
+
+                                                    <p class="text-muted m-b-15 f-s-12">The display icon for the application. Please select one from <a href="https://fontawesome.com/v5/search">FontAwesome</a></p>
+                                                </div>
+                                            </div>                                            
+
+                                            <!-- Application Description -->
+                                            <div class="form-group">
+                                                <label for="description">Application Description</label>
+
+                                                <% if (type === 'create') { %>
+                                                    <textarea class="form-control" style="height: 150px;" rows="10" name="description" placeholder="Text input"></textarea>
+                                                <% } %>
+                                                <% if (type === 'edit') { %>
+                                                    <textarea class="form-control" style="height: 150px;" rows="10" name="description" placeholder="Text input"><%= applicationApiData.description %></textarea>
+                                                <% } %>
+
+                                                <p class="text-muted m-b-15 f-s-12">Small description and information for the role.</p>
+                                            </div>
+
+                                            <div class="row">
+                                                <!-- Application Requirements Markdown Link -->
+                                                <div class="form-group col">
+                                                    <label for="requirementsMarkdown">Application Requirements Markdown Link</label>
+
+                                                    <% if (type === 'create') { %>
+                                                        <input type="text" class="form-control input-default " name="requirementsMarkdown" required>
+                                                    <% } %>
+                                                    <% if (type === 'edit') { %>
+                                                        <input type="text" class="form-control input-default " name="requirementsMarkdown" value="<%= applicationApiData.requirementsMarkdown %>" required>
+                                                    <% } %>
+
+                                                    <p class="text-muted m-b-15 f-s-12">A link to the application's requirments markdown, RAW Markdown.</p>
+                                                </div>
+
+                                                <!-- Application URL Redirect -->
+                                                <div class="form-group col">
+                                                    <label for="redirectUrl">Application URL Redirect</label>
+
+                                                    <% if (type === 'create') { %>
+                                                        <input type="text" class="form-control input-default " name="redirectUrl" required>
+                                                    <% } %>
+                                                    <% if (type === 'edit') { %>
+                                                        <input type="text" class="form-control input-default " name="redirectUrl" value="<%= applicationApiData.redirectUrl %>" required>
+                                                    <% } %>
+
+                                                    <p class="text-muted m-b-15 f-s-12">The URL to redirect to for the applicant to fill out (for example like a Google Form or TypeForm)</p>
+                                                </div>
+                                            </div>
+
+                                            <div class="row">
+                                                <!-- Application Position -->
+                                                <div class="form-group col">
+                                                    <label for="position">Application Position</label>
+
+                                                    <% if (type === 'create') { %>
+                                                        <input type="text" class="form-control input-default " name="position" required>
+                                                    <% } %>
+                                                    <% if (type === 'edit') { %>
+                                                        <input type="text" class="form-control input-default " name="position" value="<%= applicationApiData.position %>" required>
+                                                    <% } %>
+                                                </div>
+
+                                                <!-- Application Status -->
+                                                <div class="form-group col">
+                                                    <label for="closed">Application Status</label>
+
+                                                    <% if (type === 'create') { %>
+                                                        <select name="closed" class="form-control input-default " required>
+                                                            <option value="disabled" selected disabled>Select a Status</option>
+                                                            <option value="0">Closed</option>
+                                                            <option value="1">Open</option>
+                                                        </select>
+                                                    <% } %>
+                                                    <% if (type === 'edit') { %>
+                                                        <select name="closed" class="form-control input-default " required>
+                                                            <option value="disabled" selected disabled>Select a Status</option>
+                                                            <option value="0">Closed</option>
+                                                            <option value="1">Open</option>
+                                                        </select>
+                                                    <% } %>
+
+                                                    <p class="text-muted m-b-15 f-s-12">Specify if the application is Open or Closed.</p>
+                                                </div>
+                                            </div>
+
+                                            <% if (type === 'create') { %>
+                                                <button type="submit" class="btn btn-primary"><i class="fal fa-copy"></i> Create Application</button>
+                                            <% } %>
+
+                                            <% if (type === 'edit') { %>
+                                                <button type="submit" class="btn btn-warning"><i class="fal fa-copy"></i> Edit Application</button>
+                                            <% } %>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+<%- include("../../modules/dashboard/footer.ejs") %>

@@ -1,6 +1,6 @@
 <%- include("../../modules/dashboard/header.ejs", {
     pageTitle: pageTitle,
-    pageDescription: "Create Servers for the /play page."
+    pageDescription: "Add Servers for monitoring and display for community purposes."
 }) %>
 
 <%- include("../../modules/dashboard/sidebar.ejs") %>
@@ -16,49 +16,117 @@
                         <div class="card">
                             <div class="card-title">
                                 <h4>Server Editor</h4>
-                                
                             </div>
                             <div class="card-body">
                                 <div class="basic-form">
-                                    <form>
-                                        <!-- Server Name -->
-                                        <div class="form-group">
-                                            <label for="serverName">Server Name</label>
-                                            <input type="text" class="form-control input-default " name="serverName" required>
-                                            <p class="text-muted m-b-15 f-s-12">The display name for the Server.</p>
-                                        </div>
+                                    <% if (type === 'create') { %>
+                                        <form method="post" action="<%= config.siteConfiguration.siteAddress %><%= config.siteConfiguration.apiRoute %>/server/create">
+                                    <% } %>
+                                    <% if (type === 'edit') { %>
+                                        <form method="post" action="<%= config.siteConfiguration.siteAddress %><%= config.siteConfiguration.apiRoute %>/server/edit">
+                                            <input type="hidden" name="serverId" value="<%= serverApiData.serverId %>">
+                                    <% } %>
+                                            <!-- Server Name -->
+                                            <div class="form-group">
+                                                <label for="name">Server Name</label>
 
-                                        <div class="row">
-                                            <div class="col-sm">
-                                                <!-- Server Address -->
-                                                <div class="form-group">
-                                                    <label for="serverAddress">Server Address</label>
-                                                    <input type="text" class="form-control input-default " name="serverAddress" required>
-                                                    <p class="text-muted m-b-15 f-s-12">The IP or connection address for the Server.</p>
-                                                </div>
+                                                <% if (type === 'create') { %>
+                                                    <input type="text" class="form-control input-default " name="name" required>
+                                                <% } %>
+                                                <% if (type === 'edit') { %>
+                                                    <input type="text" class="form-control input-default " name="name" value="<%= serverApiData.name %>" required>
+                                                <% } %>
+
+                                                <p class="text-muted m-b-15 f-s-12">The display name for the Server.</p>
                                             </div>
-                                            <div class="col-sm">
+
+                                            <div class="row">
+                                                <!-- Server Name -->
+                                                <div class="form-group col">
+                                                    <label for="ipAddress">Server Address</label>
+
+                                                    <% if (type === 'create') { %>
+                                                        <input type="text" class="form-control input-default " name="ipAddress" required>
+                                                    <% } %>
+                                                    <% if (type === 'edit') { %>
+                                                        <input type="text" class="form-control input-default " name="ipAddress" value="<%= serverApiData.ipAddress %>" required>
+                                                    <% } %>
+
+                                                    <p class="text-muted m-b-15 f-s-12">The IP or connection address for the Server.</p> 
+                                                </div>
+
                                                 <!-- Server Port -->
-                                                <div class="form-group">
-                                                    <label for="serverAddress">Server Port</label>
-                                                    <input type="text" class="form-control input-default " name="serverPort" required>
+                                                <div class="form-group col">
+                                                    <label for="port">Server Port</label>
+
+                                                    <% if (type === 'create') { %>
+                                                        <input type="text" class="form-control input-default " name="port" required>
+                                                    <% } %>
+                                                    <% if (type === 'edit') { %>
+                                                        <input type="text" class="form-control input-default " name="port" value="<%= serverApiData.port %>" required>
+                                                    <% } %>
+
                                                     <p class="text-muted m-b-15 f-s-12">The port for the Server.</p>
                                                 </div>
-                                            </div>
-                                            <div class="col-sm">
-                                                <!-- Server Public -->
-                                                <div class="form-group">
-                                                    <label for="serverPublic">Server Public</label>
-                                                    <select class="form-control" name="serverPublic" required>
-                                                        <option selected>Yes</option>
-                                                        <option>No</option>
-                                                    </select>
-                                                    <small>Whether the Server should be public or not on <a href="/play">/play</a></small>
+
+                                                <!-- Server FQDN -->
+                                                <div class="form-group col">
+                                                    <label for="fqdn">Server FQDN</label>
+
+                                                    <% if (type === 'create') { %>
+                                                        <input type="text" class="form-control input-default " name="fqdn" required>
+                                                    <% } %>
+                                                    <% if (type === 'edit') { %>
+                                                        <input type="text" class="form-control input-default " name="fqdn" value="<%= serverApiData.fqdn %>" required>
+                                                    <% } %>
+
+                                                    <p class="text-muted m-b-15 f-s-12">The fully qualified domain name (usually for main servers).</p>
                                                 </div>
                                             </div>
-                                        </div>
 
-                                        <button type="submit" class="btn btn-primary">Create Server</button>
+                                            <div class="row">
+                                                <!-- Server Position -->
+                                                <div class="form-group col">
+                                                    <label for="position">Server Position</label>
+
+                                                    <% if (type === 'create') { %>
+                                                        <input type="text" class="form-control input-default " name="position" required>
+                                                    <% } %>
+                                                    <% if (type === 'edit') { %>
+                                                        <input type="text" class="form-control input-default " name="position" value="<%= serverApiData.position %>" required>
+                                                    <% } %>
+                                                </div>
+
+                                                <!-- Server Visability -->
+                                                <div class="form-group col">
+                                                    <label for="visible">Server Visability</label>
+
+                                                    <% if (type === 'create') { %>
+                                                        <select class="form-control" name="visible" required>
+                                                            <option selected disabled>Select a Visability</option>
+                                                            <option value="1">Visable</option>
+                                                            <option value="0">Not Visable</option>
+                                                        </select>
+                                                    <% } %>
+                                                    <% if (type === 'edit') { %>
+                                                        <select class="form-control" name="visible" required>
+                                                            <option selected disabled>Select a Visability</option>
+                                                            <option value="1">Visable</option>
+                                                            <option value="0">Not Visable</option>
+                                                        </select>
+                                                    <% } %>
+
+                                                    <p class="text-muted m-b-15 f-s-12">Whether the Server should be public or not on <a href="/play">/play</a></p>
+                                                </div>
+                                            </div>
+
+                                            <% if (type === 'create') { %>
+                                                <button type="submit" class="btn btn-primary"><i class="fas fa-server"></i> Create Server</button>
+                                            <% } %>
+
+                                            <% if (type === 'edit') { %>
+                                                <button type="submit" class="btn btn-warning"><i class="fas fa-server"></i> Edit Server</button>
+                                            <% } %>
                                     </form>
                                 </div>
                             </div>
