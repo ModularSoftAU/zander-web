@@ -1,52 +1,67 @@
-export default function applicationApiRoute(app, config, db) {
+export default function applicationApiRoute(app, config, db, features, lang) {
     const baseEndpoint = config.siteConfiguration.apiRoute + '/application';
 
     app.get(baseEndpoint + '/get', async function(req, res) {
-        const id = req.query.id;
-
-        try {
-            function getApplications(dbQuery) {
-                db.query(dbQuery, function(error, results, fields) {
-                    if (error) {
-                        return res.send({
-                            success: false,
-                            message: `${error}`
-                        });
-                    }
-
-                    if (!results.length) {
-                        return res.send({
-                            success: false,
-                            message: `There are currently no applications.`
-                        });
-                    }
-
-                    return res.send({
-                        success: true,
-                        data: results
-                    });
-                });
-            }
-
-            // Get Server by ID
-            if (id) {
-                let dbQuery = `SELECT * FROM applications WHERE applicationId=${id};`
-                getApplications(dbQuery);
-            }
-
-            // Return all Servers by default
-            let dbQuery = `SELECT * FROM applications ORDER BY position ASC;`
-            getApplications(dbQuery);
-
-        } catch (error) {
-            res.send({
+        if (features.applications == false) {
+            return res.send({
                 success: false,
-                message: `${error}`
+                message: `${lang.api.featureDisabled}`
             });
         }
+
+        const id = req.query.id;
+
+            try {
+                function getApplications(dbQuery) {
+                    db.query(dbQuery, function(error, results, fields) {
+                        if (error) {
+                            return res.send({
+                                success: false,
+                                message: `${error}`
+                            });
+                        }
+
+                        if (!results.length) {
+                            return res.send({
+                                success: false,
+                                message: `There are currently no applications.`
+                            });
+                        }
+
+                        return res.send({
+                            success: true,
+                            data: results
+                        });
+                    });
+                }
+
+                // Get Server by ID
+                if (id) {
+                    let dbQuery = `SELECT * FROM applications WHERE applicationId=${id};`
+                    getApplications(dbQuery);
+                }
+
+                // Return all Servers by default
+                let dbQuery = `SELECT * FROM applications ORDER BY position ASC;`
+                getApplications(dbQuery);
+
+            } catch (error) {
+                res.send({
+                    success: false,
+                    message: `${error}`
+                });
+            }
+        
     });
 
     app.post(baseEndpoint + '/create', async function(req, res) {
+        if (features.applications == false) {
+            return res.send({
+                success: false,
+                message: `${lang.api.featureDisabled}`
+            });
+        }
+
         const displayName = req.body.displayName;
         const description = req.body.description;
         const displayIcon = req.body.displayIcon;
@@ -77,6 +92,13 @@ export default function applicationApiRoute(app, config, db) {
     });
 
     app.post(baseEndpoint + '/edit', async function(req, res) {
+        if (features.applications == false) {
+            return res.send({
+                success: false,
+                message: `${lang.api.featureDisabled}`
+            });
+        }
+
         const applicationId = req.body.applicationId;
         const displayName = req.body.displayName;
         const description = req.body.description;
@@ -109,6 +131,13 @@ export default function applicationApiRoute(app, config, db) {
     });
 
     app.post(baseEndpoint + '/delete', async function(req, res) {
+        if (features.applications == false) {
+            return res.send({
+                success: false,
+                message: `${lang.api.featureDisabled}`
+            });
+        }
+        
         const applicationId = req.body.applicationId;
 
         try {
