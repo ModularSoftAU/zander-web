@@ -6,6 +6,7 @@
     "events": true,
     "friends": true,
     "knowledgebase": true,
+    "punishments": true,
     "ranks": true,
     "report": true,
     "servers": true,
