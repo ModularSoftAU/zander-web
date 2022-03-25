@@ -71,7 +71,7 @@ DiscordClient.on('ready', () => {
         })
 })
 
-DiscordClient.login(config.discord.apiKey);
+// DiscordClient.login(config.discord.apiKey);
 
 // 
 // Website Related
