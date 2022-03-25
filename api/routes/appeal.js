@@ -1,7 +1,14 @@
-export default function appealApiRoute(app, config, db) {
+export default function appealApiRoute(app, config, db, features, lang) {
     const baseEndpoint = config.siteConfiguration.apiRoute + '/appeal';
 
     app.post(baseEndpoint + '/create', async function(req, res) {
+        if (features.appeals == false) {
+            return res.send({
+                success: false,
+                message: `${lang.api.featureDisabled}`
+            });
+        }
+
         const punishmentId = req.body.punishmentId;
 
         // ...
@@ -9,6 +16,13 @@ export default function appealApiRoute(app, config, db) {
     });
 
     app.get(baseEndpoint + '/:punishmentId', async function(req, res) {
+        if (features.appeals == false) {
+            return res.send({
+                success: false,
+                message: `${lang.api.featureDisabled}`
+            });
+        }
+
         const punishmentId = req.params.punishmentId;
 
         // ...
@@ -16,6 +30,13 @@ export default function appealApiRoute(app, config, db) {
     });
 
     app.post(baseEndpoint + '/comment', async function(req, res) {
+        if (features.appeals == false) {
+            return res.send({
+                success: false,
+                message: `${lang.api.featureDisabled}`
+            });
+        }
+
         const punishmentId = req.body.punishmentId;
         const staffId = req.body.staffId;
         const content = req.body.content;
@@ -25,6 +46,13 @@ export default function appealApiRoute(app, config, db) {
     });
 
     app.post(baseEndpoint + '/accept', async function(req, res) {
+        if (features.appeals == false) {
+            return res.send({
+                success: false,
+                message: `${lang.api.featureDisabled}`
+            });
+        }
+
         const punishmentId = req.body.punishmentId;
         const staffId = req.body.staffId;
         const content = req.body.content;
@@ -34,6 +62,13 @@ export default function appealApiRoute(app, config, db) {
     });
 
     app.post(baseEndpoint + '/deny', async function(req, res) {
+        if (features.appeals == false) {
+            return res.send({
+                success: false,
+                message: `${lang.api.featureDisabled}`
+            });
+        }
+
         const punishmentId = req.body.punishmentId;
         const staffId = req.body.staffId;
         const content = req.body.content;
@@ -43,6 +78,13 @@ export default function appealApiRoute(app, config, db) {
     });
 
     app.post(baseEndpoint + '/escalate', async function(req, res) {
+        if (features.appeals == false) {
+            return res.send({
+                success: false,
+                message: `${lang.api.featureDisabled}`
+            });
+        }
+
         const punishmentId = req.body.punishmentId;
         const staffId = req.body.staffId;
         const content = req.body.content;
@@ -52,6 +94,13 @@ export default function appealApiRoute(app, config, db) {
     });
 
     app.post(baseEndpoint + '/deescalate', async function(req, res) {
+        if (features.appeals == false) {
+            return res.send({
+                success: false,
+                message: `${lang.api.featureDisabled}`
+            });
+        }
+        
         const punishmentId = req.body.punishmentId;
         const staffId = req.body.staffId;
         const content = req.body.content;

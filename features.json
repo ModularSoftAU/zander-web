@@ -1,4 +1,6 @@
 {
+    "announcements": true,
+    "appeals": true,
     "applications": true,
     "discord": true,
     "events": true,
