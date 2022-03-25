@@ -1,7 +1,14 @@
-export default function reportApiRoute(app, config, db) {
+export default function reportApiRoute(app, config, db, features, lang) {
     const baseEndpoint = config.siteConfiguration.apiRoute + '/report';
 
     app.get(baseEndpoint + '/get', async function(req, res) {
+        if (features.report == false) {
+            return res.send({
+                success: false,
+                message: `${lang.api.featureDisabled}`
+            });
+        }
+
         const reportId = req.query.id;
         const username = req.query.username;
 
@@ -123,6 +130,13 @@ export default function reportApiRoute(app, config, db) {
     });
 
     app.post(baseEndpoint + '/create', async function(req, res) {
+        if (features.report == false) {
+            return res.send({
+                success: false,
+                message: `${lang.api.featureDisabled}`
+            });
+        }
+
         const reportedUser = req.body.reportedUser;
         const reporterUser = req.body.reporterUser;
         const reason = req.body.reason;
@@ -152,6 +166,13 @@ export default function reportApiRoute(app, config, db) {
     });
 
     app.post(baseEndpoint + '/close', async function(req, res) {
+        if (features.report == false) {
+            return res.send({
+                success: false,
+                message: `${lang.api.featureDisabled}`
+            });
+        }
+
         const reportId = req.body.reportId;
 
         try {

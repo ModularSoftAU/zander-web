@@ -1,7 +1,14 @@
-export default function rankApiRoute(app, config, db) {
+export default function rankApiRoute(app, config, db, features, lang) {
     const baseEndpoint = config.siteConfiguration.apiRoute + '/rank';
 
     app.get(baseEndpoint + '/get', async function(req, res) {
+		if (features.ranks == false) {
+            return res.send({
+                success: false,
+                message: `${lang.api.featureDisabled}`
+            });
+        }
+
 		// Note: One or more of these could be null.
         const username = req.query.username;
         const rank = req.query.rank;

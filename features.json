@@ -1,3 +1,16 @@
 {
-    "applications": false
+    "applications": true,
+    "discord": true,
+    "events": true,
+    "friends": true,
+    "knowledgebase": true,
+    "ranks": true,
+    "report": true,
+    "servers": true,
+    "sessions": true,
+    "shops": true,
+    "user": true,
+    "userProfiles": true,
+    "vote": true,
+    "web": true
 }

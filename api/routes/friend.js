@@ -1,7 +1,14 @@
-export default function friendApiRoute(app, config, db) {
+export default function friendApiRoute(app, config, db, features, lang) {
     const baseEndpoint = config.siteConfiguration.apiRoute + '/friend';
 
     app.post(baseEndpoint + '/get', async function(req, res) {
+        if (features.friends == false) {
+            return res.send({
+                success: false,
+                message: `${lang.api.featureDisabled}`
+            });
+        }
+
         try {
             const username = req.query.username;
 
@@ -34,6 +41,13 @@ export default function friendApiRoute(app, config, db) {
     });
 
     app.post(baseEndpoint + '/request', async function(req, res) {
+        if (features.friends == false) {
+            return res.send({
+                success: false,
+                message: `${lang.api.featureDisabled}`
+            });
+        }
+
         const requestee = req.body.requestee;
         const requestedUser = req.body.requestedUser;
 
@@ -42,6 +56,13 @@ export default function friendApiRoute(app, config, db) {
     });
 
     app.post(baseEndpoint + '/accept', async function(req, res) {
+        if (features.friends == false) {
+            return res.send({
+                success: false,
+                message: `${lang.api.featureDisabled}`
+            });
+        }
+
         const requestee = req.body.requestee;
         const requestedUser = req.body.requestedUser;
 
@@ -50,6 +71,13 @@ export default function friendApiRoute(app, config, db) {
     });
 
     app.post(baseEndpoint + '/deny', async function(req, res) {
+        if (features.friends == false) {
+            return res.send({
+                success: false,
+                message: `${lang.api.featureDisabled}`
+            });
+        }
+
         const requestee = req.body.requestee;
         const requestedUser = req.body.requestedUser;
 
@@ -58,6 +86,13 @@ export default function friendApiRoute(app, config, db) {
     });
 
     app.post(baseEndpoint + '/block', async function(req, res) {
+        if (features.friends == false) {
+            return res.send({
+                success: false,
+                message: `${lang.api.featureDisabled}`
+            });
+        }
+        
         const requestee = req.body.requestee;
         const requestedUser = req.body.requestedUser;
 

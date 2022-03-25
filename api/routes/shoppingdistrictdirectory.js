@@ -4,6 +4,13 @@ export default function shoppingDistrictDirectoryApiRoute(app, config, db) {
     const baseEndpoint = config.siteConfiguration.apiRoute + '/shop';
 
     app.get(baseEndpoint + '/get', async function(req, res) {
+        if (features.shops == false) {
+            return res.send({
+                success: false,
+                message: `${lang.api.featureDisabled}`
+            });
+        }
+
         try {
             db.query(`SELECT * FROM shops;`, function(error, results, fields) {
                 if (error) {
@@ -27,6 +34,13 @@ export default function shoppingDistrictDirectoryApiRoute(app, config, db) {
     });
 
     app.post(baseEndpoint + '/create', async function(req, res) {
+        if (features.shops == false) {
+            return res.send({
+                success: false,
+                message: `${lang.api.featureDisabled}`
+            });
+        }
+
         const shopOwner = req.body.shopOwner;
         const shopName = req.body.shopName;
         const shopDescription = req.body.shopDescription;
@@ -55,6 +69,13 @@ export default function shoppingDistrictDirectoryApiRoute(app, config, db) {
     });
 
     app.post(baseEndpoint + '/edit', async function(req, res) {
+        if (features.shops == false) {
+            return res.send({
+                success: false,
+                message: `${lang.api.featureDisabled}`
+            });
+        }
+
         const shopId = req.body.shopId;
         const shopOwner = req.body.shopOwner;
         const shopName = req.body.shopName;
@@ -66,6 +87,13 @@ export default function shoppingDistrictDirectoryApiRoute(app, config, db) {
     });
 
     app.post(baseEndpoint + '/delete', async function(req, res) {
+        if (features.shops == false) {
+            return res.send({
+                success: false,
+                message: `${lang.api.featureDisabled}`
+            });
+        }
+
         const shopId = req.body.shopId;
 
         try {
@@ -91,6 +119,13 @@ export default function shoppingDistrictDirectoryApiRoute(app, config, db) {
     });
 
     app.post(baseEndpoint + '/:shopId/create/item', async function(req, res) {
+        if (features.shops == false) {
+            return res.send({
+                success: false,
+                message: `${lang.api.featureDisabled}`
+            });
+        }
+
         const shopId = req.params.shopId;
         const shopItem = req.body.shopItem;
         const shopPrice = req.body.shopPrice;
@@ -101,6 +136,13 @@ export default function shoppingDistrictDirectoryApiRoute(app, config, db) {
     });
 
     app.post(baseEndpoint + '/:shopId/edit/item', async function(req, res) {
+        if (features.shops == false) {
+            return res.send({
+                success: false,
+                message: `${lang.api.featureDisabled}`
+            });
+        }
+
         const shopId = req.params.shopId;
         const shopItemId = req.body.shopItemId;
         const shopItem = req.body.shopItem;
@@ -112,6 +154,13 @@ export default function shoppingDistrictDirectoryApiRoute(app, config, db) {
     });
 
     app.post(baseEndpoint + '/:shopId/delete/item', async function(req, res) {
+        if (features.shops == false) {
+            return res.send({
+                success: false,
+                message: `${lang.api.featureDisabled}`
+            });
+        }
+        
         const shopId = req.params.shopId;
         const shopItemId = req.body.shopItemId;
 

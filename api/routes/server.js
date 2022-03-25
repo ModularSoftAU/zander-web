@@ -2,6 +2,13 @@ export default function serverApiRoute(app, config, db) {
     const baseEndpoint = config.siteConfiguration.apiRoute + '/server';
 
     app.get(baseEndpoint + '/get', async function(req, res) {
+        if (features.servers == false) {
+            return res.send({
+                success: false,
+                message: `${lang.api.featureDisabled}`
+            });
+        }
+
         try {
             const visible = req.query.visible;
             const id = req.query.id;
@@ -60,6 +67,13 @@ export default function serverApiRoute(app, config, db) {
     });
 
     app.post(baseEndpoint + '/create', async function(req, res) {
+        if (features.servers == false) {
+            return res.send({
+                success: false,
+                message: `${lang.api.featureDisabled}`
+            });
+        }
+
         const name = req.body.name;
         const fqdn = req.body.fqdn;
         const ipAddress = req.body.ipAddress;
@@ -90,6 +104,13 @@ export default function serverApiRoute(app, config, db) {
     });
 
     app.post(baseEndpoint + '/edit', async function(req, res) {
+        if (features.servers == false) {
+            return res.send({
+                success: false,
+                message: `${lang.api.featureDisabled}`
+            });
+        }
+
         const serverId = req.body.serverId;
         const name = req.body.name;
         const fqdn = req.body.fqdn;
@@ -121,6 +142,13 @@ export default function serverApiRoute(app, config, db) {
     });
 
     app.post(baseEndpoint + '/delete', async function(req, res) {
+        if (features.servers == false) {
+            return res.send({
+                success: false,
+                message: `${lang.api.featureDisabled}`
+            });
+        }
+        
         const serverId = req.body.serverId;
 
         try {

@@ -1,9 +1,16 @@
 import { MessageEmbed } from 'discord.js'
 
-export default function eventApiRoute(app, DiscordClient, moment, config, db) {
+export default function eventApiRoute(app, DiscordClient, moment, config, db, features, lang) {
     const baseEndpoint = config.siteConfiguration.apiRoute + '/event';
 
     app.get(baseEndpoint + '/get', async function(req, res) {
+        if (features.events == false) {
+            return res.send({
+                success: false,
+                message: `${lang.api.featureDisabled}`
+            });
+        }
+
         try {
             const published = req.query.published;
             const id = req.query.id;
@@ -68,6 +75,13 @@ export default function eventApiRoute(app, DiscordClient, moment, config, db) {
     });
 
     app.post(baseEndpoint + '/create', async function(req, res) {
+        if (features.events == false) {
+            return res.send({
+                success: false,
+                message: `${lang.api.featureDisabled}`
+            });
+        }
+
         const name = req.body.eventName;
         const icon = req.body.eventIcon;
         const eventDateTime = req.body.eventDateTime;
@@ -98,6 +112,13 @@ export default function eventApiRoute(app, DiscordClient, moment, config, db) {
     });
 
     app.post(baseEndpoint + '/edit', async function(req, res) {
+        if (features.events == false) {
+            return res.send({
+                success: false,
+                message: `${lang.api.featureDisabled}`
+            });
+        }
+        
         const name = req.body.name;
         const icon = req.body.icon;
         const eventDateTime = req.body.eventDateTime;

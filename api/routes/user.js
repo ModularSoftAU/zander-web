@@ -1,7 +1,14 @@
-export default function userApiRoute(app, config, db) {
+export default function userApiRoute(app, config, db, features, lang) {
     const baseEndpoint = config.siteConfiguration.apiRoute + '/user';
 
     app.post(baseEndpoint + '/create', async function(req, res) {
+        if (features.user == false) {
+            return res.send({
+                success: false,
+                message: `${lang.api.featureDisabled}`
+            });
+        }
+
         const uuid = req.body.uuid;
         const username = req.body.username;
 
@@ -39,6 +46,13 @@ export default function userApiRoute(app, config, db) {
     });
 
     app.get(baseEndpoint + '/get', async function(req, res) {
+        if (features.user == false) {
+            return res.send({
+                success: false,
+                message: `${lang.api.featureDisabled}`
+            });
+        }
+
         const username = req.query.username;
         
         try {
@@ -64,6 +78,13 @@ export default function userApiRoute(app, config, db) {
     });
 
     app.post(baseEndpoint + '/profile/:username/edit', async function(req, res) {
+        if (features.userProfiles == false) {
+            return res.send({
+                success: false,
+                message: `${lang.api.featureDisabled}`
+            });
+        }
+
         const username = req.params.username;
         // TODO
 
@@ -72,6 +93,13 @@ export default function userApiRoute(app, config, db) {
     });
 
     app.post(baseEndpoint + '/profile/:username/about/update', async function(req, res) {
+        if (features.userProfiles == false) {
+            return res.send({
+                success: false,
+                message: `${lang.api.featureDisabled}`
+            });
+        }
+
         const username = req.params.username;
         // TODO
 
@@ -80,6 +108,13 @@ export default function userApiRoute(app, config, db) {
     });
 
     app.post(baseEndpoint + '/profile/:username/authenticate/twitter', async function(req, res) {
+        if (features.userProfiles == false) {
+            return res.send({
+                success: false,
+                message: `${lang.api.featureDisabled}`
+            });
+        }
+
         const username = req.params.username;
         // TODO
 
@@ -88,6 +123,13 @@ export default function userApiRoute(app, config, db) {
     });
 
     app.post(baseEndpoint + '/profile/:username/authenticate/twitch', async function(req, res) {
+        if (features.userProfiles == false) {
+            return res.send({
+                success: false,
+                message: `${lang.api.featureDisabled}`
+            });
+        }
+
         const username = req.params.username;
         // TODO
 
@@ -96,6 +138,13 @@ export default function userApiRoute(app, config, db) {
     });
 
     app.post(baseEndpoint + '/profile/:username/authenticate/youtube', async function(req, res) {
+        if (features.userProfiles == false) {
+            return res.send({
+                success: false,
+                message: `${lang.api.featureDisabled}`
+            });
+        }
+
         const username = req.params.username;
         // TODO
 
@@ -104,6 +153,13 @@ export default function userApiRoute(app, config, db) {
     });
 
     app.post(baseEndpoint + '/profile/:username/authenticate/instagram', async function(req, res) {
+        if (features.userProfiles == false) {
+            return res.send({
+                success: false,
+                message: `${lang.api.featureDisabled}`
+            });
+        }
+
         const username = req.params.username;
         // TODO
 
@@ -112,6 +168,13 @@ export default function userApiRoute(app, config, db) {
     });
 
     app.post(baseEndpoint + '/profile/:username/authenticate/steam', async function(req, res) {
+        if (features.userProfiles == false) {
+            return res.send({
+                success: false,
+                message: `${lang.api.featureDisabled}`
+            });
+        }
+
         const username = req.params.username;
         // TODO
 
@@ -120,6 +183,13 @@ export default function userApiRoute(app, config, db) {
     });
 
     app.post(baseEndpoint + '/profile/:username/authenticate/github', async function(req, res) {
+        if (features.userProfiles == false) {
+            return res.send({
+                success: false,
+                message: `${lang.api.featureDisabled}`
+            });
+        }
+
         const username = req.params.username;
         // TODO
 
@@ -128,6 +198,13 @@ export default function userApiRoute(app, config, db) {
     });
 
     app.post(baseEndpoint + '/profile/:username/authenticate/spotify', async function(req, res) {
+        if (features.userProfiles == false) {
+            return res.send({
+                success: false,
+                message: `${lang.api.featureDisabled}`
+            });
+        }
+
         const username = req.params.username;
         // TODO
 
@@ -136,6 +213,13 @@ export default function userApiRoute(app, config, db) {
     });
 
     app.post(baseEndpoint + '/profile/:username/authenticate/discord', async function(req, res) {
+        if (features.userProfiles == false) {
+            return res.send({
+                success: false,
+                message: `${lang.api.featureDisabled}`
+            });
+        }
+
         const username = req.params.username;
         // TODO
 
@@ -144,6 +228,13 @@ export default function userApiRoute(app, config, db) {
     });
 
     app.post(baseEndpoint + '/setting/:settingOption', async function(req, res) {
+        if (features.userProfiles == false) {
+            return res.send({
+                success: false,
+                message: `${lang.api.featureDisabled}`
+            });
+        }
+
         const settingOption = req.params.settingOption;
         // TODO
 
@@ -152,6 +243,13 @@ export default function userApiRoute(app, config, db) {
     });
 
     app.get(baseEndpoint + '/notification/get', async function(req, res) {
+        if (features.user == false) {
+            return res.send({
+                success: false,
+                message: `${lang.api.featureDisabled}`
+            });
+        }
+
         const username = req.session.user;
         
         try {
@@ -177,6 +275,13 @@ export default function userApiRoute(app, config, db) {
     });
 
     app.post(baseEndpoint + '/notification/create', async function(req, res) {
+        if (features.user == false) {
+            return res.send({
+                success: false,
+                message: `${lang.api.featureDisabled}`
+            });
+        }
+
         const username = req.body.username;
         const body = req.body.body;
         const link = req.body.link;
@@ -201,9 +306,7 @@ export default function userApiRoute(app, config, db) {
                 success: false,
                 message: `${error}`
             });
-        }
-
-        
+        }        
     });
 
 }

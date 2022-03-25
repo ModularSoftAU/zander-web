@@ -1,9 +1,16 @@
 import bcrypt from 'bcrypt';
 
-export default function webApiRoute(app, config, db) {
+export default function webApiRoute(app, config, db, features, lang) {
     const baseEndpoint = config.siteConfiguration.apiRoute + '/web';
 
     app.post(baseEndpoint + '/register/create', async function(req, res) {
+        if (features.web == false) {
+            return res.send({
+                success: false,
+                message: `${lang.api.featureDisabled}`
+            });
+        }
+
         const username = req.body.username;
         const email = req.body.email;
         const password = req.body.password;
@@ -72,6 +79,13 @@ export default function webApiRoute(app, config, db) {
     });
 
     app.post(baseEndpoint + '/register/verify', async function(req, res) {
+        if (features.web == false) {
+            return res.send({
+                success: false,
+                message: `${lang.api.featureDisabled}`
+            });
+        }
+
         const username = req.body.username;
         const verificationToken = req.body.verificationToken;
 
@@ -80,6 +94,13 @@ export default function webApiRoute(app, config, db) {
     });
 
     app.post(baseEndpoint + '/forgot', async function(req, res) {
+        if (features.web == false) {
+            return res.send({
+                success: false,
+                message: `${lang.api.featureDisabled}`
+            });
+        }
+        
         const username = req.body.username;
         // TODO
 

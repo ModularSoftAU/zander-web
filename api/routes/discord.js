@@ -1,7 +1,14 @@
-export default function discordApiRoute(app, DiscordClient, config, db) {
+export default function discordApiRoute(app, DiscordClient, config, db, features, lang) {
     const baseEndpoint = config.siteConfiguration.apiRoute + '/discord';
 
     app.post(baseEndpoint + '/switch', async function(req, res) {
+        if (features.discord == false) {
+            return res.send({
+                success: false,
+                message: `${lang.api.featureDisabled}`
+            });
+        }
+
         const username = req.body.username;
         const server = req.body.server;
 
@@ -23,6 +30,13 @@ export default function discordApiRoute(app, DiscordClient, config, db) {
     });
 
     app.post(baseEndpoint + '/chat', async function(req, res) {
+        if (features.discord == false) {
+            return res.send({
+                success: false,
+                message: `${lang.api.featureDisabled}`
+            });
+        }
+
         const username = req.body.username;
         const server = req.body.server;
         const content = req.body.content;
@@ -45,6 +59,13 @@ export default function discordApiRoute(app, DiscordClient, config, db) {
     });
 
     app.post(baseEndpoint + '/join', async function(req, res) {
+        if (features.discord == false) {
+            return res.send({
+                success: false,
+                message: `${lang.api.featureDisabled}`
+            });
+        }
+
         const username = req.body.username;
 
         try {
@@ -65,6 +86,13 @@ export default function discordApiRoute(app, DiscordClient, config, db) {
     });
 
     app.post(baseEndpoint + '/leave', async function(req, res) {
+        if (features.discord == false) {
+            return res.send({
+                success: false,
+                message: `${lang.api.featureDisabled}`
+            });
+        }
+
         const username = req.body.username;
 
         try {
@@ -85,6 +113,13 @@ export default function discordApiRoute(app, DiscordClient, config, db) {
     });
 
     app.post(baseEndpoint + '/directMessage', async function(req, res) {
+        if (features.discord == false) {
+            return res.send({
+                success: false,
+                message: `${lang.api.featureDisabled}`
+            });
+        }
+        
         const senderUsername = req.body.senderUsername;
         const recipientUsername = req.body.recipientUsername;
         const server = req.body.server;

@@ -1,7 +1,14 @@
-export default function knowledgebaseApiRoute(app, config, db) {
+export default function knowledgebaseApiRoute(app, config, db, features, lang) {
     const baseEndpoint = config.siteConfiguration.apiRoute + '/knowledgebase';
 
     app.get(baseEndpoint + '/section/get', async function(req, res) {
+        if (features.knowledgebase == false) {
+            return res.send({
+                success: false,
+                message: `${lang.api.featureDisabled}`
+            });
+        }
+
         const sectionSlug = req.query.slug;
 
         try {
@@ -62,6 +69,13 @@ export default function knowledgebaseApiRoute(app, config, db) {
     });
 
     app.get(baseEndpoint + '/article/get', async function(req, res) {
+        if (features.knowledgebase == false) {
+            return res.send({
+                success: false,
+                message: `${lang.api.featureDisabled}`
+            });
+        }
+
         const articleSlug = req.query.slug;
 
         // Search for all individual article using ?slug=
@@ -121,6 +135,13 @@ export default function knowledgebaseApiRoute(app, config, db) {
     });
 
     app.post(baseEndpoint + '/section/create', async function(req, res) {
+        if (features.knowledgebase == false) {
+            return res.send({
+                success: false,
+                message: `${lang.api.featureDisabled}`
+            });
+        }
+
         const sectionSlug = req.body.sectionSlug;
         const sectionName = req.body.sectionName;
         const description = req.body.sectionDescription;
@@ -151,6 +172,13 @@ export default function knowledgebaseApiRoute(app, config, db) {
     });
 
     app.post(baseEndpoint + '/section/update', async function(req, res) {
+        if (features.knowledgebase == false) {
+            return res.send({
+                success: false,
+                message: `${lang.api.featureDisabled}`
+            });
+        }
+
         const slug = req.body.slug;
         const sectionSlug = req.body.sectionSlug;
         const sectionName = req.body.sectionName;
@@ -182,6 +210,13 @@ export default function knowledgebaseApiRoute(app, config, db) {
     });
 
     app.post(baseEndpoint + '/article/create', async function(req, res) {
+        if (features.knowledgebase == false) {
+            return res.send({
+                success: false,
+                message: `${lang.api.featureDisabled}`
+            });
+        }
+
         const articleSlug = req.body.articleSlug;
         const articleName = req.body.articleName;
         const articleDescription = req.body.articleDescription;
@@ -214,6 +249,13 @@ export default function knowledgebaseApiRoute(app, config, db) {
     });
 
     app.post(baseEndpoint + '/article/update', async function(req, res) {
+        if (features.knowledgebase == false) {
+            return res.send({
+                success: false,
+                message: `${lang.api.featureDisabled}`
+            });
+        }
+        
         const slug = req.body.slug;
         const articleSlug = req.body.articleSlug;
         const articleName = req.body.articleName;
