@@ -218,7 +218,7 @@ export default function communityCreationApiRoute(app, config, db) {
         const creationId = req.body.creationId;
 
         try {
-            db.query(`UPDATE communitycreations SET approved = ? WHERE creationId;`, [1], function(error, creationInsertResults, fields) {
+            db.query(`UPDATE communitycreations SET approved = ? WHERE creationId;`, [1], function(error, results, fields) {
                 if (error) {
                     return res.send({
                         success: false,
@@ -244,7 +244,7 @@ export default function communityCreationApiRoute(app, config, db) {
         const creationId = req.body.creationId;
 
         try {
-            db.query(`DELETE FROM communityCreations WHERE creationId=?; DELETE FROM communityCreationImages WHERE creationId=?;`, [creationId, creationId], function(error, creationInsertResults, fields) {
+            db.query(`DELETE FROM communityCreations WHERE creationId=?; DELETE FROM communityCreationImages WHERE creationId=?;`, [creationId, creationId], function(error, results, fields) {
                 if (error) {
                     return res.send({
                         success: false,
@@ -267,10 +267,57 @@ export default function communityCreationApiRoute(app, config, db) {
     });
 
     app.post(baseEndpoint + '/like', async function(req, res) {
+        const userId = req.body.userId;
         const creationId = req.body.creationId;
 
-        // ...
-        res.send({ success: true });
+        try {
+            db.query(`INSERT INTO communityLikes (creationId, userId) VALUES (?, ?);`, [creationId, userId], function(error, results, fields) {
+                if (error) {
+                    return res.send({
+                        success: false,
+                        message: `${error}`
+                    });
+                }
+
+                res.send({
+					success: true,
+					message: `Creation a new like.`
+				});
+            });
+
+        } catch (error) {
+            res.send({
+                success: false,
+                message: `${error}`
+            });
+        }
+    });
+
+    app.post(baseEndpoint + '/unlike', async function(req, res) {
+        const userId = req.body.userId;
+        const creationId = req.body.creationId;
+
+        try {
+            db.query(`DELETE FROM communityLikes WHERE creationId = ? AND userId = ?;`, [creationId, userId], function(error, results, fields) {
+                if (error) {
+                    return res.send({
+                        success: false,
+                        message: `${error}`
+                    });
+                }
+
+                res.send({
+					success: true,
+					message: `Creation has been unliked.`
+				});
+            });
+
+        } catch (error) {
+            res.send({
+                success: false,
+                message: `${error}`
+            });
+        }
     });
 
 }
