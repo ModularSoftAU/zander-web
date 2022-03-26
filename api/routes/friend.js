@@ -1,17 +1,14 @@
+import {isFeatureEnabled, required, optional} from '../common'
+
 export default function friendApiRoute(app, config, db, features, lang) {
     const baseEndpoint = config.siteConfiguration.apiRoute + '/friend';
 
+    // TODO: Update docs
     app.post(baseEndpoint + '/get', async function(req, res) {
-        if (features.friends == false) {
-            return res.send({
-                success: false,
-                message: `${lang.api.featureDisabled}`
-            });
-        }
+        isFeatureEnabled(features.friends, res, lang);
+        const username = optional(req.query, "username");
 
         try {
-            const username = req.query.username;
-
             db.query(`SELECT * FROM events WHERE published=1 ORDER BY eventDateTime ASC;`, function(error, results, fields) {
                 if (error) {
                     return res.send({
@@ -41,60 +38,45 @@ export default function friendApiRoute(app, config, db, features, lang) {
     });
 
     app.post(baseEndpoint + '/request', async function(req, res) {
-        if (features.friends == false) {
-            return res.send({
-                success: false,
-                message: `${lang.api.featureDisabled}`
-            });
-        }
-
-        const requestee = req.body.requestee;
-        const requestedUser = req.body.requestedUser;
+        isFeatureEnabled(features.friends, res, lang);
+        const requestee = required(req.body, "requestee", res);
+        const requestedUser = required(req.body, "requestedUser", res);
 
         // ...
         res.send({ success: true });
     });
 
     app.post(baseEndpoint + '/accept', async function(req, res) {
-        if (features.friends == false) {
-            return res.send({
-                success: false,
-                message: `${lang.api.featureDisabled}`
-            });
-        }
-
-        const requestee = req.body.requestee;
-        const requestedUser = req.body.requestedUser;
+        isFeatureEnabled(features.friends, res, lang);
+        const requestee = required(req.body, "requestee", res);
+        const requestedUser = required(req.body, "requestedUser", res);
 
         // ...
         res.send({ success: true });
     });
 
     app.post(baseEndpoint + '/deny', async function(req, res) {
-        if (features.friends == false) {
-            return res.send({
-                success: false,
-                message: `${lang.api.featureDisabled}`
-            });
-        }
+        isFeatureEnabled(features.friends, res, lang);
+        const requestee = required(req.body, "requestee", res);
+        const requestedUser = required(req.body, "requestedUser", res);
 
-        const requestee = req.body.requestee;
-        const requestedUser = req.body.requestedUser;
+        // ...
+        res.send({ success: true });
+    });
+
+    app.post(baseEndpoint + '/remove', async function(req, res) {
+        isFeatureEnabled(features.friends, res, lang);
+        const requestee = required(req.body, "requestee", res);
+        const requestedUser = required(req.body, "requestedUser", res);
 
         // ...
         res.send({ success: true });
     });
 
     app.post(baseEndpoint + '/block', async function(req, res) {
-        if (features.friends == false) {
-            return res.send({
-                success: false,
-                message: `${lang.api.featureDisabled}`
-            });
-        }
-        
-        const requestee = req.body.requestee;
-        const requestedUser = req.body.requestedUser;
+        isFeatureEnabled(features.friends, res, lang);
+        const requestee = required(req.body, "requestee", res);
+        const requestedUser = required(req.body, "requestedUser", res);
 
         // ...
         res.send({ success: true });
