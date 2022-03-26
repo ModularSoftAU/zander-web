@@ -7,9 +7,7 @@ export default function communityCreationSiteRoute(app, fetch, moment, config) {
         const fetchURL = `${config.siteConfiguration.siteAddress}${config.siteConfiguration.apiRoute}/communitycreation/get`;
         const response = await fetch(fetchURL);
         const apiData = await response.json();
-
-        console.log(apiData);
-
+        
         return reply.view('modules/communityCreation/communityCreation', {
             "pageTitle": `Community Creations`,
             config: config,

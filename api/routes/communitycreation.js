@@ -8,7 +8,7 @@ export default function communityCreationApiRoute(app, config, db) {
 		const approvedOnly = req.query.approvedOnly;
 
 		// Whether or not to /get unapproved creations
-		var approved = '0';
+		var approved = '1';
 		if (approvedOnly === false) {
 			approved = '0,1';
 		}
@@ -217,15 +217,53 @@ export default function communityCreationApiRoute(app, config, db) {
     app.post(baseEndpoint + '/approve', async function(req, res) {
         const creationId = req.body.creationId;
 
-        // ...
-        res.send({ success: true });
+        try {
+            db.query(`UPDATE communitycreations SET approved = ? WHERE creationId;`, [1], function(error, creationInsertResults, fields) {
+                if (error) {
+                    return res.send({
+                        success: false,
+                        message: `${error}`
+                    });
+                }
+
+                res.send({
+					success: true,
+					message: `Creation has been approved and broadcasted.`
+				});
+            });
+
+        } catch (error) {
+            res.send({
+                success: false,
+                message: `${error}`
+            });
+        }
     });
 
     app.post(baseEndpoint + '/delete', async function(req, res) {
         const creationId = req.body.creationId;
 
-        // ...
-        res.send({ success: true });
+        try {
+            db.query(`DELETE FROM communityCreations WHERE creationId=?; DELETE FROM communityCreationImages WHERE creationId=?;`, [creationId, creationId], function(error, creationInsertResults, fields) {
+                if (error) {
+                    return res.send({
+                        success: false,
+                        message: `${error}`
+                    });
+                }
+
+                res.send({
+					success: true,
+					message: `Creation has been denied and deleted.`
+				});
+            });
+
+        } catch (error) {
+            res.send({
+                success: false,
+                message: `${error}`
+            });
+        }
     });
 
     app.post(baseEndpoint + '/like', async function(req, res) {
