@@ -1,34 +1,31 @@
-export default function punishmentApiRoute(app, config, db) {
+import {isFeatureEnabled, required, optional} from '../common'
+
+export default function punishmentApiRoute(app, config, db, features, lang) {
     const baseEndpoint = config.siteConfiguration.apiRoute + '/punishment';
 
     app.post(baseEndpoint + '/issue', async function(req, res) {
-        const playerUsername = req.body.playerUsername;
-        const staffUsername = req.body.staffUsername;
-        const platform = req.body.platform;
-        const type = req.body.type;
-        const length = req.body.length;
-        const reason = req.body.reason;
+        isFeatureEnabled(features.punishments, res, lang);
+        const playerUsername = required(req.body, "playerUsername", res);
+        const staffUsername = required(req.body, "staffUsername", res);
+        const platform = required(req.body, "platform", res);
+        const type = required(req.body, "type", res);
+        const length = optional(req.body, "length");
+        const reason = required(req.body, "reason", res);
 
         // ...
         res.send({ success: true });
     });
 
     app.post(baseEndpoint + '/delete', async function(req, res) {
-        const punishmentId = req.body.punishmentId;
+        isFeatureEnabled(features.punishments, res, lang);
+        const punishmentId = required(req.body, "punishmentId", res);
 
         // ...
         res.send({ success: true });
     });
 
-    app.get(baseEndpoint + '/user', async function(req, res) {
-        const username = req.query.username;
-
-        // ...
-        res.send({ success: true });
-    });
-
-    app.post(baseEndpoint + '/latest', async function(req, res) {
-        const latest = req.body.latest;
+    app.get(baseEndpoint + '/get', async function(req, res) {
+        isFeatureEnabled(features.punishments, res, lang);
 
         // ...
         res.send({ success: true });
