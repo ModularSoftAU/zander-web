@@ -9,8 +9,8 @@ import fastifySession from 'fastify-session'
 import fastifyCookie from 'fastify-cookie'
 
 import config from './config.json' assert {type: "json"};
-import features from './features.json';
-import lang from './lang.json';
+import features from './features.json' assert {type: "json"};
+import lang from './lang.json' assert {type: "json"};
 import db from './controllers/databaseController'
 
 // Paths
