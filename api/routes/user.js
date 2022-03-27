@@ -1,9 +1,12 @@
-export default function userApiRoute(app, config, db) {
+import {isFeatureEnabled, required, optional} from '../common'
+
+export default function userApiRoute(app, config, db, features, lang) {
     const baseEndpoint = config.siteConfiguration.apiRoute + '/user';
 
     app.post(baseEndpoint + '/create', async function(req, res) {
-        const uuid = req.body.uuid;
-        const username = req.body.username;
+        isFeatureEnabled(features.user, res, lang);
+        const uuid = required(req.body, "uuid", res);
+        const username = required(req.body, "username", res);
 
         try {
             // shadowolf
@@ -38,8 +41,10 @@ export default function userApiRoute(app, config, db) {
         }
     });
 
+    // TODO: Update docs
     app.get(baseEndpoint + '/get', async function(req, res) {
-        const username = req.query.username;
+        isFeatureEnabled(features.user, res, lang);
+        const username = optional(req.query, "username");
         
         try {
             db.query(`SELECT * FROM users WHERE uuid=(SELECT uuid FROM users WHERE username=?);`, [username], function(error, results, fields) {
@@ -63,95 +68,9 @@ export default function userApiRoute(app, config, db) {
         }
     });
 
-    app.post(baseEndpoint + '/profile/:username/edit', async function(req, res) {
-        const username = req.params.username;
-        // TODO
-
-        // ...
-        res.send({ success: true });
-    });
-
-    app.post(baseEndpoint + '/profile/:username/about/update', async function(req, res) {
-        const username = req.params.username;
-        // TODO
-
-        // ...
-        res.send({ success: true });
-    });
-
-    app.post(baseEndpoint + '/profile/:username/authenticate/twitter', async function(req, res) {
-        const username = req.params.username;
-        // TODO
-
-        // ...
-        res.send({ success: true });
-    });
-
-    app.post(baseEndpoint + '/profile/:username/authenticate/twitch', async function(req, res) {
-        const username = req.params.username;
-        // TODO
-
-        // ...
-        res.send({ success: true });
-    });
-
-    app.post(baseEndpoint + '/profile/:username/authenticate/youtube', async function(req, res) {
-        const username = req.params.username;
-        // TODO
-
-        // ...
-        res.send({ success: true });
-    });
-
-    app.post(baseEndpoint + '/profile/:username/authenticate/instagram', async function(req, res) {
-        const username = req.params.username;
-        // TODO
-
-        // ...
-        res.send({ success: true });
-    });
-
-    app.post(baseEndpoint + '/profile/:username/authenticate/steam', async function(req, res) {
-        const username = req.params.username;
-        // TODO
-
-        // ...
-        res.send({ success: true });
-    });
-
-    app.post(baseEndpoint + '/profile/:username/authenticate/github', async function(req, res) {
-        const username = req.params.username;
-        // TODO
-
-        // ...
-        res.send({ success: true });
-    });
-
-    app.post(baseEndpoint + '/profile/:username/authenticate/spotify', async function(req, res) {
-        const username = req.params.username;
-        // TODO
-
-        // ...
-        res.send({ success: true });
-    });
-
-    app.post(baseEndpoint + '/profile/:username/authenticate/discord', async function(req, res) {
-        const username = req.params.username;
-        // TODO
-
-        // ...
-        res.send({ success: true });
-    });
-
-    app.post(baseEndpoint + '/setting/:settingOption', async function(req, res) {
-        const settingOption = req.params.settingOption;
-        // TODO
-
-        // ...
-        res.send({ success: true });
-    });
-
+    // TODO: Update docs
     app.get(baseEndpoint + '/notification/get', async function(req, res) {
+        isFeatureEnabled(features.user, res, lang);
         const username = req.session.user;
         
         try {
@@ -176,11 +95,13 @@ export default function userApiRoute(app, config, db) {
         }
     });
 
+    // TODO: Update docs
     app.post(baseEndpoint + '/notification/create', async function(req, res) {
-        const username = req.body.username;
-        const body = req.body.body;
-        const link = req.body.link;
-        const icon = req.body.icon;
+        isFeatureEnabled(features.user, res, lang);
+        const username = required(req.body, "username", res);
+        const body = required(req.body, "body", res);
+        const link = required(req.body, "link", res);
+        const icon = required(req.body, "icon", res);
 
         try {
             db.query(`INSERT INTO`, [username], function(error, results, fields) {
@@ -201,9 +122,7 @@ export default function userApiRoute(app, config, db) {
                 success: false,
                 message: `${error}`
             });
-        }
-
-        
+        }        
     });
 
 }

@@ -95,7 +95,7 @@ export default function applicationSiteRoutes(app, fetch, moment, config, db) {
     // Report Specific
     // 
     app.get('/report/:id', async function(request, reply) {
-        const fetchURL = `${config.siteConfiguration.siteAddress}${config.siteConfiguration.apiRoute}/report/get?id=${request.params.id}`;
+        const fetchURL = `${config.siteConfiguration.siteAddress}${config.siteConfiguration.apiRoute}/report/get?reportId=${request.params.id}`;
         const response = await fetch(fetchURL);
         const apiData = await response.json();
 

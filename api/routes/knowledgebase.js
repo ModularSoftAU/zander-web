@@ -1,8 +1,12 @@
-export default function knowledgebaseApiRoute(app, config, db) {
+import {isFeatureEnabled, required, optional} from '../common'
+
+export default function knowledgebaseApiRoute(app, config, db, features, lang) {
     const baseEndpoint = config.siteConfiguration.apiRoute + '/knowledgebase';
 
+    // TODO: Update docs
     app.get(baseEndpoint + '/section/get', async function(req, res) {
-        const sectionSlug = req.query.slug;
+        isFeatureEnabled(features.knowledgebase, res, lang);
+        const sectionSlug = optional(req.query, "slug");
 
         try {
             // Search by slug using ?slug=
@@ -62,7 +66,8 @@ export default function knowledgebaseApiRoute(app, config, db) {
     });
 
     app.get(baseEndpoint + '/article/get', async function(req, res) {
-        const articleSlug = req.query.slug;
+        isFeatureEnabled(features.knowledgebase, res, lang);
+        const articleSlug = optional(req.query, "slug");
 
         // Search for all individual article using ?slug=
         if (articleSlug) {
@@ -121,11 +126,12 @@ export default function knowledgebaseApiRoute(app, config, db) {
     });
 
     app.post(baseEndpoint + '/section/create', async function(req, res) {
-        const sectionSlug = req.body.sectionSlug;
-        const sectionName = req.body.sectionName;
-        const description = req.body.sectionDescription;
-        const sectionIcon = req.body.sectionIcon;
-        const position = req.body.sectionPosition;
+        isFeatureEnabled(features.knowledgebase, res, lang);
+        const sectionSlug = required(req.body, "sectionSlug", res);
+        const sectionName = required(req.body, "sectionName", res);
+        const description = required(req.body, "description", res);
+        const sectionIcon = required(req.body, "sectionIcon", res);
+        const position = required(req.body, "position", res);
 
         try {
             db.query(`INSERT INTO knowledgebaseSections (sectionSlug, sectionName, description, sectionIcon, position) VALUES (?, ?, ?, ?, ?)`, [sectionSlug, sectionName, description, sectionIcon, position], function(error, results, fields) {
@@ -151,12 +157,13 @@ export default function knowledgebaseApiRoute(app, config, db) {
     });
 
     app.post(baseEndpoint + '/section/update', async function(req, res) {
-        const slug = req.body.slug;
-        const sectionSlug = req.body.sectionSlug;
-        const sectionName = req.body.sectionName;
-        const description = req.body.sectionDescription;
-        const sectionIcon = req.body.sectionIcon;
-        const position = req.body.sectionPosition;
+        isFeatureEnabled(features.knowledgebase, res, lang);
+        const slug = required(req.body, "slug", res);
+        const sectionSlug = required(req.body, "sectionSlug", res);
+        const sectionName = required(req.body, "sectionName", res);
+        const description = required(req.body, "description", res);
+        const sectionIcon = required(req.body, "sectionIcon", res);
+        const position = required(req.body, "position", res);
 
         try {
             db.query(`UPDATE knowledgebaseSections SET sectionSlug=?, sectionName=?, description=?, sectionIcon=?, position=? WHERE sectionSlug=?;`, [sectionSlug, sectionName, description, sectionIcon, position, slug], function(error, results, fields) {
@@ -182,13 +189,14 @@ export default function knowledgebaseApiRoute(app, config, db) {
     });
 
     app.post(baseEndpoint + '/article/create', async function(req, res) {
-        const articleSlug = req.body.articleSlug;
-        const articleName = req.body.articleName;
-        const articleDescription = req.body.articleDescription;
-        const articleLink = req.body.articleLink;
-        const articleSection = req.body.articleSection;
-        const position = req.body.position;
-        const published = req.body.articleVisibility;
+        isFeatureEnabled(features.knowledgebase, res, lang);
+        const articleSlug = required(req.body, "articleSlug", res);
+        const articleName = required(req.body, "articleName", res);
+        const articleDescription = required(req.body, "articleDescription", res);
+        const articleLink = required(req.body, "articleLink", res);
+        const articleSection = required(req.body, "articleSection", res);
+        const position = required(req.body, "position", res);
+        const published = required(req.body, "published", res);
 
         try {
             db.query(`INSERT INTO knowledgebaseArticles (articleSlug, articleName, articleDescription, articleLink, sectionId, position, published) VALUES (?, ?, ?, ?, (select sectionId from knowledgebaseSections where sectionSlug=?), ?, ?)`, [articleSlug, articleName, articleDescription, articleLink, articleSection, position, published], function(error, results, fields) {
@@ -214,14 +222,16 @@ export default function knowledgebaseApiRoute(app, config, db) {
     });
 
     app.post(baseEndpoint + '/article/update', async function(req, res) {
-        const slug = req.body.slug;
-        const articleSlug = req.body.articleSlug;
-        const articleName = req.body.articleName;
-        const articleDescription = req.body.articleDescription;
-        const articleLink = req.body.articleLink;
-        const articleSection = req.body.articleSection;
-        const position = req.body.articlePosition;
-        const published = req.body.articleVisibility;
+        isFeatureEnabled(features.knowledgebase, res, lang);
+                
+        const slug = required(req.body, "slug", res);
+        const articleSlug = required(req.body, "articleSlug", res);
+        const articleName = required(req.body, "articleName", res);
+        const articleDescription = required(req.body, "articleDescription", res);
+        const articleLink = required(req.body, "articleLink", res);
+        const articleSection = required(req.body, "articleSection", res);
+        const position = required(req.body, "position", res);
+        const published = required(req.body, "published", res);
 
         try {
             db.query(`UPDATE knowledgebaseArticles SET articleSlug=?, articleName=?, articleDescription=?, articleLink=?, sectionId=?, position=?, published=? WHERE articleSlug=?`, [articleSlug, articleName, articleDescription, articleLink, articleSection, position, published, slug], function(error, results, fields) {
