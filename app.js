@@ -9,6 +9,8 @@ import fastifySession from 'fastify-session'
 import fastifyCookie from 'fastify-cookie'
 
 import config from './config.json';
+import features from './features.json';
+import lang from './lang.json';
 import db from './controllers/databaseController'
 
 // Paths
@@ -128,7 +130,7 @@ const buildApp = async () => {
     app.register((instance, options, next) => {
         // API routes (Token authenticated)
         instance.addHook('preValidation', verifyToken);
-        apiRoutes(instance, DiscordClient, moment, config, db);
+        apiRoutes(instance, DiscordClient, moment, config, db, features, lang);
         next();
     });
 
@@ -143,7 +145,7 @@ const buildApp = async () => {
 
     app.register((instance, options, next) => {
         // Routes
-        siteRoutes(instance, fetch, moment, config, db);
+        siteRoutes(instance, fetch, moment, config, db, features, lang);
         next();
     });
 

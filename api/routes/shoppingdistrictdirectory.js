@@ -1,9 +1,12 @@
-// Jaedan: Shops likely need a get route to obtain items from a specific shop
+import {isFeatureEnabled, required, optional} from '../common'
 
+// Jaedan: Shops likely need a get route to obtain items from a specific shop
 export default function shoppingDistrictDirectoryApiRoute(app, config, db) {
     const baseEndpoint = config.siteConfiguration.apiRoute + '/shop';
 
     app.get(baseEndpoint + '/get', async function(req, res) {
+        isFeatureEnabled(features.shops, res, lang);
+
         try {
             db.query(`SELECT * FROM shops;`, function(error, results, fields) {
                 if (error) {
@@ -27,10 +30,11 @@ export default function shoppingDistrictDirectoryApiRoute(app, config, db) {
     });
 
     app.post(baseEndpoint + '/create', async function(req, res) {
-        const shopOwner = req.body.shopOwner;
-        const shopName = req.body.shopName;
-        const shopDescription = req.body.shopDescription;
-        const serverId = req.body.serverId;
+        isFeatureEnabled(features.shops, res, lang);
+        const shopOwner = required(req.body, "shopOwner", res);
+        const shopName = required(req.body, "shopName", res);
+        const shopDescription = required(req.body, "shopDescription", res);
+        const serverId = required(req.body, "serverId", res);
 
         try {
             db.query(`INSERT INTO shops (shopCreatorId, shopName, shopDescription, serverId) VALUES ((select userId from users where username=?), ?, ?, ?)`, [shopOwner, shopName, shopDescription, serverId], function(error, results, fields) {
@@ -55,18 +59,20 @@ export default function shoppingDistrictDirectoryApiRoute(app, config, db) {
     });
 
     app.post(baseEndpoint + '/edit', async function(req, res) {
-        const shopId = req.body.shopId;
-        const shopOwner = req.body.shopOwner;
-        const shopName = req.body.shopName;
-        const shopDescription = req.body.shopDescription;
-        const serverId = req.body.serverId;
+        isFeatureEnabled(features.shops, res, lang);
+        const shopId = required(req.body, "shopId", res);
+        const shopOwner = required(req.body, "shopOwner", res);
+        const shopName = required(req.body, "shopName", res);
+        const shopDescription = required(req.body, "shopDescription", res);
+        const serverId = required(req.body, "serverId", res);
 
         // ...
         res.send({ success: true });
     });
 
     app.post(baseEndpoint + '/delete', async function(req, res) {
-        const shopId = req.body.shopId;
+        isFeatureEnabled(features.shops, res, lang);
+        const shopId = required(req.body, "shopId", res);
 
         try {
             db.query(`DELETE FROM shops WHERE shopId = ?;`, [shopId], function(error, results, fields) {
@@ -90,30 +96,33 @@ export default function shoppingDistrictDirectoryApiRoute(app, config, db) {
         }
     });
 
-    app.post(baseEndpoint + '/:shopId/create/item', async function(req, res) {
-        const shopId = req.params.shopId;
-        const shopItem = req.body.shopItem;
-        const shopPrice = req.body.shopPrice;
-        const shopBuyQuantity = req.body.shopBuyQuantity;
+    app.post(baseEndpoint + '/items/create', async function(req, res) {
+        isFeatureEnabled(features.shops, res, lang);
+        const shopId = required(req.body, "shopId");
+        const shopItem = required(req.body, "shopItem", res);
+        const shopPrice = required(req.body, "shopPrice", res);
+        const shopBuyQuantity = required(req.body, "shopBuyQuantity", res);
 
         // ...
         res.send({ success: true });
     });
 
-    app.post(baseEndpoint + '/:shopId/edit/item', async function(req, res) {
-        const shopId = req.params.shopId;
-        const shopItemId = req.body.shopItemId;
-        const shopItem = req.body.shopItem;
-        const shopPrice = req.body.shopPrice;
-        const shopBuyQuantity = req.body.shopBuyQuantity;
+    app.post(baseEndpoint + '/items/edit', async function(req, res) {
+        isFeatureEnabled(features.shops, res, lang);
+        const shopId = required(req.body, "shopId")
+        const shopItemId = required(req.body, "shopItemId", res);
+        const shopItem = required(req.body, "shopItem", res);
+        const shopPrice = required(req.body, "shopPrice", res);
+        const shopBuyQuantity = required(req.body, "shopBuyQuantity", res);
 
         // ...
         res.send({ success: true });
     });
 
-    app.post(baseEndpoint + '/:shopId/delete/item', async function(req, res) {
-        const shopId = req.params.shopId;
-        const shopItemId = req.body.shopItemId;
+    app.post(baseEndpoint + '/items/delete', async function(req, res) {
+        isFeatureEnabled(features.shops, res, lang);
+        const shopId = required(req.body, "shopId")
+        const shopItemId = required(req.body, "shopItemId", res);
 
         // ...
         res.send({ success: true });
