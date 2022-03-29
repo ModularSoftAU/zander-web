@@ -1,6 +1,5 @@
 import packageData from './package.json' assert {type: "json"};
 import DiscordJS from 'discord.js'
-import WOKCommands from 'wokcommands'
 import moment from 'moment'
 import fetch from 'node-fetch'
 

@@ -217,7 +217,7 @@ export default function communityCreationApiRoute(app, config, db) {
     });
     
     app.post(baseEndpoint + '/approve', async function(req, res) {
-        const creationId = req.body.creationId;
+        const id = required(req.body, "id", res);
 
         try {
             db.query(`UPDATE communitycreations SET approved = ? WHERE creationId;`, [1], function(error, results, fields) {
@@ -240,20 +240,6 @@ export default function communityCreationApiRoute(app, config, db) {
                 message: `${error}`
             });
         }
-    });
-
-    app.post(baseEndpoint + '/approve', async function(req, res) {
-        const id = required(req.body, "id", res);
-         
-        // ...
-        res.send({ success: true });
-    });
-
-    app.post(baseEndpoint + '/deny', async function(req, res) {
-        const id = required(req.body, "id", res);
-         
-        // ...
-        res.send({ success: true });
     });
 
     app.post(baseEndpoint + '/delete', async function(req, res) {
