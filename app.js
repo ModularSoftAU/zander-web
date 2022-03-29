@@ -1,4 +1,4 @@
-import packageData from './package.json';
+import packageData from './package.json' assert {type: "json"};
 import DiscordJS from 'discord.js'
 import WOKCommands from 'wokcommands'
 import moment from 'moment'
@@ -8,9 +8,9 @@ import fastify from 'fastify';
 import fastifySession from 'fastify-session'
 import fastifyCookie from 'fastify-cookie'
 
-import config from './config.json';
-import features from './features.json';
-import lang from './lang.json';
+import config from './config.json' assert {type: "json"};
+import features from './features.json' assert {type: "json"};
+import lang from './lang.json' assert {type: "json"};
 import db from './controllers/databaseController'
 
 // Paths
