@@ -63,22 +63,24 @@
                   <br>
 
                   <div class="btn-group">
-                    <% if (creation.approved === 0) { %>
-                      <small><i class="fas fa-info-square" style="color: blue;"></i> This creation won't be public until this creation is Approved.</small>
-                      <form action="<%= config.siteConfiguration.siteAddress %><%= config.siteConfiguration.apiRoute %>/communitycreation/approve" method="post">
-                        <input type="hidden" name="creationId" value="<%= creation.creationId %>">
-                        <button type="submit" class="btn btn-sm btn-outline-success"><i class="far fa-thumbs-up"></i> Approve</button>
-                      </form>
-  
-                      <form action="<%= config.siteConfiguration.siteAddress %><%= config.siteConfiguration.apiRoute %>/communitycreation/delete" method="post">
-                        <input type="hidden" name="creationId" value="<%= creation.creationId %>">
-                        <button type="submit" class="btn btn-sm btn-outline-danger"><i class="far fa-thumbs-up"></i> Deny</button>
-                      </form>
-                    <% } else { %>
-                      <form action="<%= config.siteConfiguration.siteAddress %><%= config.siteConfiguration.apiRoute %>/communitycreation/like" method="post">
-                        <input type="hidden" name="creationId" value="<%= creation.creationId %>">
-                        <button type="submit" class="btn btn-sm btn-outline-primary"><i class="far fa-thumbs-up"></i> Like (???)</button>
-                      </form>
+                    <% if (request.session.authenticated) { %>
+                      <% if (creation.approved === 0) { %>
+                        <small><i class="fas fa-info-square" style="color: blue;"></i> This creation won't be public until this creation is Approved.</small>
+                        <form action="<%= config.siteConfiguration.siteAddress %><%= config.siteConfiguration.apiRoute %>/communitycreation/approve" method="post">
+                          <input type="hidden" name="creationId" value="<%= creation.creationId %>">
+                          <button type="submit" class="btn btn-sm btn-outline-success"><i class="far fa-thumbs-up"></i> Approve</button>
+                        </form>
+    
+                        <form action="<%= config.siteConfiguration.siteAddress %><%= config.siteConfiguration.apiRoute %>/communitycreation/delete" method="post">
+                          <input type="hidden" name="creationId" value="<%= creation.creationId %>">
+                          <button type="submit" class="btn btn-sm btn-outline-danger"><i class="far fa-thumbs-up"></i> Deny</button>
+                        </form>
+                      <% } else { %>
+                        <form action="<%= config.siteConfiguration.siteAddress %><%= config.siteConfiguration.apiRoute %>/communitycreation/like" method="post">
+                          <input type="hidden" name="creationId" value="<%= creation.creationId %>">
+                          <button type="submit" class="btn btn-sm btn-outline-primary"><i class="far fa-thumbs-up"></i> Like (???)</button>
+                        </form>
+                      <% } %>
                     <% } %>
                   </div>
                 </div>
