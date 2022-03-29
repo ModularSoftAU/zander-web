@@ -21,12 +21,21 @@ const __dirname = path.dirname(__filename);
 // 
 // Discord
 // 
-const DiscordClient = new SapphireClient({
+const client = new SapphireClient({
     intents: ['GUILDS', 'GUILD_MESSAGES'],
-    loadMessageCommandListeners: true
+    presence: {
+        status: "online",
+        activities: [{
+            name: `Type ${config.discord.prefix}help for more.`,
+            type: 'PLAYING',
+            url: config.siteConfiguration.siteAddress
+        }]
+    },
+    loadMessageCommandListeners: true,
+    defaultPrefix: config.discord.prefix,
 });
 
-DiscordClient.login(config.discord.apiKey);
+client.login(config.discord.apiKey);
 
 // 
 // Website Related
@@ -83,7 +92,7 @@ const buildApp = async () => {
     app.register((instance, options, next) => {
         // API routes (Token authenticated)
         instance.addHook('preValidation', verifyToken);
-        apiRoutes(instance, DiscordClient, moment, config, db, features, lang);
+        apiRoutes(instance, client, moment, config, db, features, lang);
         next();
     });
 
