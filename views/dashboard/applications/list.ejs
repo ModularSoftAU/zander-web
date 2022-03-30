@@ -1,6 +1,6 @@
 <%- include("../../modules/dashboard/header.ejs", {
     pageTitle: pageTitle,
-    pageDescription: "List all Servers that the Network currently offers."
+    pageDescription: "List of all applications for Network roles"
 }) %>
 
 <%- include("../../modules/dashboard/sidebar.ejs") %>
@@ -15,18 +15,17 @@
                     <div class="col-lg-12">
                         <div class="card">
                             <div class="card-title">
-                                <h4>Servers</h4>
-                                <a href="/dashboard/servers/create"><button type="button" class="btn btn-sm btn-info">Create a Server</button></a>
+                                <h4>Applications</h4>
+                                <a href="/dashboard/applications/create"><button type="button" class="btn btn-sm btn-info">Create a Application</button></a>
                             </div>
                             <div class="card-body">
                                 <table class="table">
                                     <thead>
                                         <tr>
+                                            <th></th>
                                             <th>Name</th>
-                                            <th>FQDN</th>
-                                            <th>Address</th>
-                                            <th>Port</th>
-                                            <th>Visable</th>
+                                            <th>Description</th>
+                                            <th>Status</th>
                                             <th>Action</th>
                                         </tr>
                                     </thead>
@@ -37,14 +36,13 @@
                                               content: apiData.message
                                             }) %>
                                         <% } else { %>
-                                            <% apiData.data.forEach(function (server) { %>
+                                            <% apiData.data.forEach(function (application) { %>
                                                 <tr>
-                                                    <td><%= server.name %></td>
-                                                    <td><%= server.fqdn %></td>
-                                                    <td><%= server.ipAddress %></td>
-                                                    <td><%= server.port %></td>
+                                                    <td><i class="<%= application.displayIcon %>"></i></td>
+                                                    <td><%= application.displayName %></td>
+                                                    <td><%= application.description %></td>
                                                     <td>
-                                                        <% if (server.visible === 1) { %>
+                                                        <% if (application.closed === 0) { %>
                                                             <i class="fas fa-check-circle" style="color:green"></i>
                                                         <% } else { %>
                                                             <i class="fas fa-times-circle" style="color: red;"></i>
@@ -52,11 +50,11 @@
                                                     </td>
                                                     <td>
                                                         <div class="btn-group">
-                                                            <a href="/dashboard/servers/edit?id=<%= server.serverId %>"><button class="btn btn-sm btn-warning" type="button">Edit</button></a>
+                                                            <a href="/dashboard/applications/edit?id=<%= application.applicationId %>"><button class="btn btn-sm btn-warning" type="button">Edit</button></a>
 
-                                                            <form action="<%= config.siteConfiguration.siteAddress %><%= config.siteConfiguration.apiRoute %>/server/delete" method="post">
-                                                                <input type="hidden" name="serverId" value="<%= server.serverId %>">
-                                                                <button class="btn btn-sm btn-danger" type="submit" onclick="window.location='/dashboard/servers/'">Delete</button>
+                                                            <form action="<%= config.siteConfiguration.siteAddress %><%= config.siteConfiguration.apiRoute %>/applications/delete" method="post">
+                                                                <input type="hidden" name="serverId" value="<%= application.applicationId %>">
+                                                                <button class="btn btn-sm btn-danger" type="submit">Delete</button>
                                                             </form>
                                                         </div>
                                                     </td>

@@ -1,9 +1,12 @@
-export default function reportApiRoute(app, config, db) {
+import {isFeatureEnabled, required, optional} from '../common'
+
+export default function reportApiRoute(app, config, db, features, lang) {
     const baseEndpoint = config.siteConfiguration.apiRoute + '/report';
 
     app.get(baseEndpoint + '/get', async function(req, res) {
-        const reportId = req.query.id;
-        const username = req.query.username;
+        isFeatureEnabled(features.report, res, lang);
+        const reportId = optional(req.query, "reportId");
+        const username = optional(req.query, "username");
 
         // If the ?reportId= is used, search by ID instead.
         if (reportId) {
@@ -123,11 +126,12 @@ export default function reportApiRoute(app, config, db) {
     });
 
     app.post(baseEndpoint + '/create', async function(req, res) {
-        const reportedUser = req.body.reportedUser;
-        const reporterUser = req.body.reporterUser;
-        const reason = req.body.reason;
-        const evidence = req.body.evidence;
-        const server = req.body.server;
+        isFeatureEnabled(features.report, res, lang);
+        const reportedUser = required(req.body, "reportedUser", res);
+        const reporterUser = required(req.body, "reporterUser", res);
+        const reason = required(req.body, "reason", res);
+        const evidence = optional(req.body, "evidence");
+        const server = required(req.body, "server", res);
 
         try {
             db.query(`INSERT INTO reports (reportedUserId, reporterUserId, reason, evidence, server) VALUES ((SELECT userId FROM users WHERE username=?), (SELECT userId FROM users WHERE username=?), ?, ?, (SELECT serverId FROM servers WHERE name=?))`, [reportedUser, reporterUser, reason, evidence, server], function(error, results, fields) {
@@ -152,7 +156,8 @@ export default function reportApiRoute(app, config, db) {
     });
 
     app.post(baseEndpoint + '/close', async function(req, res) {
-        const reportId = req.body.reportId;
+        isFeatureEnabled(features.report, res, lang);
+        const reportId = required(req.body, "reportId", res);
 
         try {
             db.query(`UPDATE reports SET closed=? WHERE reportId=?`, [1, reportId], function(error, results, fields) {

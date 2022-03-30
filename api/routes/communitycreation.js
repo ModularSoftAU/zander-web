@@ -1,3 +1,5 @@
+import {isFeatureEnabled, required, optional} from '../common'
+
 export default function communityCreationApiRoute(app, config, db) {
     const baseEndpoint = config.siteConfiguration.apiRoute + '/communitycreation';
 
@@ -148,9 +150,10 @@ export default function communityCreationApiRoute(app, config, db) {
     });
 
     app.post(baseEndpoint + '/submit', async function(req, res) {
-        const creator = req.body.creator;
-        const creationName = req.body.creationName;
-        const creationDescription = req.body.creationDescription;
+        const creator = required(req.body, "creator", res);
+        const creationName = optional(req.body, "creationName");
+        const creationDescription = optional(req.body, "creationDescription");
+        const creationLink = required(req.body, "creationLink", res);
 
         try {
             db.query(`INSERT INTO communityCreations (creatorId, creationName, creationDescription) VALUES ((select userId from users where username=?), ?, ?)`, [creator, creationName, creationDescription], function(error, results, fields) {
@@ -174,8 +177,22 @@ export default function communityCreationApiRoute(app, config, db) {
         }
     });
 
+    app.post(baseEndpoint + '/approve', async function(req, res) {
+        const id = required(req.body, "id", res);
+         
+        // ...
+        res.send({ success: true });
+    });
+
+    app.post(baseEndpoint + '/deny', async function(req, res) {
+        const id = required(req.body, "id", res);
+         
+        // ...
+        res.send({ success: true });
+    });
+
     app.post(baseEndpoint + '/delete', async function(req, res) {
-        const creationId = req.body.creationId;
+        const creationId = required(req.body, "creationId", res);
 
         // ...
         res.send({ success: true });

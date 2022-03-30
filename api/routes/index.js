@@ -16,24 +16,24 @@ import userApiRoute from './user'
 import voteApiRoute from './vote'
 import webApiRoute from './web'
 
-export default (app, DiscordClient, moment, config, db) => {
+export default (app, DiscordClient, moment, config, db, features, lang) => {
 
-    announcementApiRoute(app, config, db);
-    appealApiRoute(app, config, db);
-    applicationApiRoute(app, config, db);
-    communityCreationApiRoute(app, config, db);
-    discordApiRoute(app, DiscordClient, config, db);
-    eventApiRoute(app, DiscordClient, moment, config, db);
-    friendApiRoute(app, config, db);
-    knowledgebaseApiRoute(app, config, db);
-    punishmentApiRoute(app, config, db);
-    rankApiRoute(app, config, db);
-    reportApiRoute(app, config, db);
-    serverApiRoute(app, config, db);
-    sessionApiRoute(app, config, db);
-    shoppingDistrictDirectoryApiRoute(app, config, db);
-    userApiRoute(app, config, db);
-    voteApiRoute(app, config, db);
-    webApiRoute(app, config, db);
+    announcementApiRoute(app, config, db, features, lang);
+    appealApiRoute(app, config, db, features, lang);
+    applicationApiRoute(app, config, db, features, lang);
+    communityCreationApiRoute(app, config, db, features, lang);
+    discordApiRoute(app, DiscordClient, config, db, features, lang);
+    eventApiRoute(app, DiscordClient, moment, config, db, features, lang);
+    friendApiRoute(app, config, db, features, lang);
+    knowledgebaseApiRoute(app, config, db, features, lang);
+    punishmentApiRoute(app, config, db, features, lang);
+    rankApiRoute(app, config, db, features, lang);
+    reportApiRoute(app, config, db, features, lang);
+    serverApiRoute(app, config, db, features, lang);
+    sessionApiRoute(app, config, db, features, lang);
+    shoppingDistrictDirectoryApiRoute(app, config, db, features, lang);
+    userApiRoute(app, config, db, features, lang);
+    voteApiRoute(app, config, db, features, lang);
+    webApiRoute(app, config, db, features, lang);
 
 }

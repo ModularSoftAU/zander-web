@@ -11,6 +11,10 @@
     "type": "git",
     "url": "git+https://github.com/ModularEnigma/zander-web.git"
   },
+  "engines" : { 
+    "npm" : ">=8.5.0",
+    "node" : ">=16.14.2"
+  },
   "keywords": [],
   "author": "Ben Robson",
   "type": "module",
@@ -37,7 +41,7 @@
     "nodemon": "^2.0.15",
     "path": "^0.12.7",
     "point-of-view": "^5.0.0",
-    "wokcommands": "^1.5.3",
+    "wokcommands": "github:AlexzanderFlores/WOKCommands#dev",
     "zero-md": "^2.3.1"
   }
 }
