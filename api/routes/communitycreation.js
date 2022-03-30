@@ -59,7 +59,9 @@ export default function communityCreationApiRoute(app, config, db) {
                     
 					return res.send({
 						success: true,
-						data: results.map(row => (row.imageLinks = JSON.parse(row.imageLinks.replace('\"', '"')), row))
+						data: results.map(row => (row.imageLinks = JSON.parse(row.imageLinks.replace('\"', '"')), row)),
+						page: page,
+						limit: limit
 					});
 				});
 			} catch (error) {
@@ -116,7 +118,9 @@ export default function communityCreationApiRoute(app, config, db) {
 
 					return res.send({
 						success: true,
-						data: results.map(row => (row.imageLinks = JSON.parse(row.imageLinks.replace('\"', '"')), row))
+						data: results.map(row => (row.imageLinks = JSON.parse(row.imageLinks.replace('\"', '"')), row)),
+						page: page,
+						limit: limit
 					});
 				});
 			} catch (error) {
@@ -171,7 +175,9 @@ export default function communityCreationApiRoute(app, config, db) {
 
                 return res.send({
                     success: true,
-                    data: results.map(row => (row.imageLinks = JSON.parse(row.imageLinks.replace('\"', '"')), row))
+                    data: results.map(row => (row.imageLinks = JSON.parse(row.imageLinks.replace('\"', '"')), row)),
+					page: page,
+					limit: limit
                 });
             });
 
