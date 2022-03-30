@@ -29,7 +29,7 @@ INSERT INTO users (uuid, username, disabled)
 VALUES ('f78a4d8d-d51b-4b39-98a3-230f2de0c670','CONSOLE',0);
 
 CREATE VIEW zanderdev.luckPermsPlayers AS
-SELECT * FROM luckperms.luckperms_players;
+SELECT * FROM cfcdev_luckperms.luckperms_players;
 
 CREATE TABLE userSettings (
 	userSettingsId INT NOT NULL AUTO_INCREMENT,
@@ -108,20 +108,20 @@ SELECT
     '' AS discordRoleId,
     COALESCE(RIGHT(lpGroupStaff.permission, 1),'0') AS isStaff,
     COALESCE(RIGHT(lpGroupDonator.permission, 1),'0') AS isDonator
-FROM luckperms.luckperms_groups lpGroups
-	LEFT JOIN luckperms.luckperms_group_permissions lpGroupDisplayName ON lpGroups.name = lpGroupDisplayName.name
+FROM cfcdev_luckperms.luckperms_groups lpGroups
+	LEFT JOIN cfcdev_luckperms.luckperms_group_permissions lpGroupDisplayName ON lpGroups.name = lpGroupDisplayName.name
 		AND lpGroupDisplayName.permission LIKE 'displayname.%'
         AND lpGroupDisplayName.value = 1
-	LEFT JOIN luckperms.luckperms_group_permissions lpGroupWeight ON lpGroups.name = lpGroupWeight.name
+	LEFT JOIN cfcdev_luckperms.luckperms_group_permissions lpGroupWeight ON lpGroups.name = lpGroupWeight.name
 		AND lpGroupWeight.permission LIKE 'weight.%'
         AND lpGroupWeight.value = 1
-	LEFT JOIN luckperms.luckperms_group_permissions lpGroupPrefix ON lpGroups.name = lpGroupPrefix.name
+	LEFT JOIN cfcdev_luckperms.luckperms_group_permissions lpGroupPrefix ON lpGroups.name = lpGroupPrefix.name
 		AND lpGroupPrefix.permission LIKE 'prefix.%'
         AND lpGroupPrefix.value = 1
-	LEFT JOIN luckperms.luckperms_group_permissions lpGroupStaff On lpGroups.name = lpGroupStaff.name
+	LEFT JOIN cfcdev_luckperms.luckperms_group_permissions lpGroupStaff On lpGroups.name = lpGroupStaff.name
 		AND lpGroupStaff.permission LIKE 'meta.staff.%'
         AND lpGroupStaff.value = 1
-	LEFT JOIN luckperms.luckperms_group_permissions lpGroupDonator On lpGroups.name = lpGroupDonator.name
+	LEFT JOIN cfcdev_luckperms.luckperms_group_permissions lpGroupDonator On lpGroups.name = lpGroupDonator.name
 		AND lpGroupDonator.permission LIKE 'meta.donator.%'
         AND lpGroupDonator.value = 1;
 
@@ -131,8 +131,8 @@ SELECT
 	lpUserPermissions.uuid,
 	SUBSTRING_INDEX(lpUserPermissions.permission ,'.', -1) AS rankSlug,
     SUBSTRING_INDEX(lpUserTitle.permission, 'title.', -1) AS title
-FROM luckperms.luckperms_user_permissions lpUserPermissions
-	LEFT JOIN luckperms.luckperms_user_permissions lpUserTitle On lpUserPermissions.uuid = lpUserTitle.uuid
+FROM cfcdev_luckperms.luckperms_user_permissions lpUserPermissions
+	LEFT JOIN cfcdev_luckperms.luckperms_user_permissions lpUserTitle On lpUserPermissions.uuid = lpUserTitle.uuid
 		AND lpUserTitle.permission LIKE CONCAT('meta.group\\\\.',SUBSTRING_INDEX(lpUserPermissions.permission ,'.', -1),'\\\\.title.%')
         AND lpUserTitle.value = 1
 	LEFT JOIN zanderdev.users zdUsers ON lpUserPermissions.uuid = zdUsers.uuid
@@ -374,7 +374,7 @@ CREATE TABLE applications (
 	applicationId INT NOT NULL AUTO_INCREMENT,
     displayName VARCHAR(30),
     description TEXT,
-    displayIcon VARCHAR(20),
+    displayIcon VARCHAR(40),
     requirementsMarkdown TEXT,
     redirectUrl TEXT,
     position INT,

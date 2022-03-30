@@ -1,29 +1,45 @@
-export default function applicationApiRoute(app, config, db) {
+import {isFeatureEnabled, required, optional} from '../common'
+
+export default function applicationApiRoute(app, config, db, features, lang) {
     const baseEndpoint = config.siteConfiguration.apiRoute + '/application';
 
     app.get(baseEndpoint + '/get', async function(req, res) {
+        isFeatureEnabled(features.applications, res, lang);
+        const id = optional(req.query, "id");
+
         try {
-            db.query(`SELECT * FROM applications ORDER BY position ASC;`, function(error, results, fields) {
-                if (error) {
-                    return res.send({
-                        success: false,
-                        message: `${error}`
-                    });
-                }
+            function getApplications(dbQuery) {
+                db.query(dbQuery, function(error, results, fields) {
+                    if (error) {
+                        return res.send({
+                            success: false,
+                            message: `${error}`
+                        });
+                    }
 
-                // Send error is there are no applications.
-                if (!results.length) {
-                    return res.send({
-                        success: false,
-                        message: `There are no applications visable.`
-                    });
-                }
+                    if (!results.length) {
+                        return res.send({
+                            success: false,
+                            message: `There are currently no applications.`
+                        });
+                    }
 
-                return res.send({
-                    success: true,
-                    data: results
+                    return res.send({
+                        success: true,
+                        data: results
+                    });
                 });
-            });
+            }
+
+            // Get Server by ID
+            if (id) {
+                let dbQuery = `SELECT * FROM applications WHERE applicationId=${id};`
+                getApplications(dbQuery);
+            }
+
+            // Return all Servers by default
+            let dbQuery = `SELECT * FROM applications ORDER BY position ASC;`
+            getApplications(dbQuery);
 
         } catch (error) {
             res.send({
@@ -34,15 +50,16 @@ export default function applicationApiRoute(app, config, db) {
     });
 
     app.post(baseEndpoint + '/create', async function(req, res) {
-        const displayName = req.body.displayName;
-        const description = req.body.description;
-        const displayIcon = req.body.displayIcon;
-        const requirementsMarkdown = req.body.requirementsMarkdown;
-        const redirectURL = req.body.redirectURL;
-        const position = req.body.position;
+        isFeatureEnabled(features.applications, res, lang);
+        const displayName = required(req.body, "displayName", res);
+        const description = required(req.body, "description", res);
+        const displayIcon = required(req.body, "displayIcon", res);
+        const requirementsMarkdown = required(req.body, "requirementsMarkdown", res);
+        const redirectUrl = required(req.body, "redirectUrl", res);
+        const position = required(req.body, "position", res);
 
         try {
-            db.query(`INSERT INTO applications (displayName, description, displayIcon, requirementsMarkdown, redirectURL, position) VALUES (?, ?, ?, ?, ?, ?)`, [displayName, description, displayIcon, requirementsMarkdown, redirectURL, position], function(error, results, fields) {
+            db.query(`INSERT INTO applications (displayName, description, displayIcon, requirementsMarkdown, redirectUrl, position) VALUES (?, ?, ?, ?, ?, ?)`, [displayName, description, displayIcon, requirementsMarkdown, redirectUrl, position], function(error, results, fields) {
                 if (error) {
                     return res.send({
                         success: false,
@@ -64,16 +81,19 @@ export default function applicationApiRoute(app, config, db) {
     });
 
     app.post(baseEndpoint + '/edit', async function(req, res) {
-        const applicationId = req.body.applicationId;
-        const displayName = req.body.displayName;
-        const description = req.body.description;
-        const displayIcon = req.body.displayIcon;
-        const requirementsMarkdown = req.body.requirementsMarkdown;
-        const redirectURL = req.body.redirectURL;
-        const position = req.body.position;
+        isFeatureEnabled(features.applications, res, lang);
+        const applicationId = required(req.body, "applicationId", res);
+        const displayName = required(req.body, "displayName", res);
+        const description = required(req.body, "description", res);
+        const displayIcon = required(req.body, "displayIcon", res);
+        const requirementsMarkdown = required(req.body, "requirementsMarkdown", res);
+        const redirectUrl = required(req.body, "redirectUrl", res);
+        const position = required(req.body, "position", res);
+
+        console.log(req.body);
 		
 		try {
-			db.query(`UPDATE applications SET displayName = ?, description = ?, displayIcon = ?, requirementsMarkdown = ?, redirectURL = ?, position = ? WHERE applicationId = ?`, [displayName, description, displayIcon, requirementsMarkdown, redirectURL, position, applicationId], function(error, results, fields) {
+			db.query(`UPDATE applications SET displayName = ?, description = ?, displayIcon = ?, requirementsMarkdown = ?, redirectUrl = ?, position = ? WHERE applicationId = ?`, [displayName, description, displayIcon, requirementsMarkdown, redirectUrl, position, applicationId], function(error, results, fields) {
 				if (error) {
 					return res.send({
 						success: false,
@@ -94,7 +114,8 @@ export default function applicationApiRoute(app, config, db) {
     });
 
     app.post(baseEndpoint + '/delete', async function(req, res) {
-        const applicationId = req.body.applicationId;
+        isFeatureEnabled(features.applications, res, lang);
+        const applicationId = required(req.body, "applicationId", res);
 
         try {
             db.query(`DELETE FROM applications WHERE applicationId = ?;`, [applicationId], function(error, results, fields) {

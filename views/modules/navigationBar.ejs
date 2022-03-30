@@ -26,7 +26,7 @@
 			  <li class="nav-item"><a class="nav-link" href="/">Home</a></li>
 			  <li class="nav-item"><a class="nav-link" href="/play">Play</a></li>
 			  <li class="nav-item"><a class="nav-link" href="/apply">Apply</a></li>
-			  <li class="nav-item"><a class="nav-link" href="/knowledgebase">Support</a></li>
+			  <li class="nav-item"><a class="nav-link" href="/knowledgebase">Knowledgebase</a></li>
 
 			  <li class="nav-item dropdown">
 				<a class="nav-link dropdown-toggle" href="#" id="dropdown02" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Community <i class="icofont-thin-down"></i></a>
@@ -37,7 +37,7 @@
 			  </li>
 
 			  <% if (request.session.authenticated) { %>
-				<li class="nav-item"><a class="nav-link" href="/notifications"><i class="fas-fa-solid fa-bell"></i></a></li>
+				<li class="nav-item"><a class="nav-link" href="/notifications"><i class="fas fa-bell"></i></a></li>
 
 				<li class="nav-item dropdown">
 					<a class="nav-link dropdown-toggle" href="#" id="dropdown02" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><img style="padding-right: 5px;" src="https://crafatar.com/avatars/<%= request.session.user.uuid %>?helm" height="20px" draggable="false">  <%= request.session.user.username %> <i class="icofont-thin-down"></i></a>

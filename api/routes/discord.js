@@ -1,9 +1,12 @@
-export default function discordApiRoute(app, DiscordClient, config, db) {
+import {isFeatureEnabled, required, optional} from '../common'
+
+export default function discordApiRoute(app, DiscordClient, config, db, features, lang) {
     const baseEndpoint = config.siteConfiguration.apiRoute + '/discord';
 
     app.post(baseEndpoint + '/switch', async function(req, res) {
-        const username = req.body.username;
-        const server = req.body.server;
+        isFeatureEnabled(features.discord, res, lang);
+        const username = required(req.body, "username", res);
+        const server = required(req.body, "server", res);
 
         try {
             const guild = DiscordClient.guilds.cache.get(config.discord.serverId);
@@ -23,9 +26,10 @@ export default function discordApiRoute(app, DiscordClient, config, db) {
     });
 
     app.post(baseEndpoint + '/chat', async function(req, res) {
-        const username = req.body.username;
-        const server = req.body.server;
-        const content = req.body.content;
+        isFeatureEnabled(features.discord, res, lang);
+        const username = required(req.body, "username", res);
+        const server = required(req.body, "server", res);
+        const content = required(req.body, "content", res);
 
         try {
             const guild = DiscordClient.guilds.cache.get(config.discord.serverId);
@@ -45,7 +49,8 @@ export default function discordApiRoute(app, DiscordClient, config, db) {
     });
 
     app.post(baseEndpoint + '/join', async function(req, res) {
-        const username = req.body.username;
+        isFeatureEnabled(features.discord, res, lang);
+        const username = required(req.body, "username", res);
 
         try {
             const guild = DiscordClient.guilds.cache.get(config.discord.serverId);
@@ -65,7 +70,8 @@ export default function discordApiRoute(app, DiscordClient, config, db) {
     });
 
     app.post(baseEndpoint + '/leave', async function(req, res) {
-        const username = req.body.username;
+        isFeatureEnabled(features.discord, res, lang);
+        const username = required(req.body, "username", res);
 
         try {
             const guild = DiscordClient.guilds.cache.get(config.discord.serverId);
@@ -85,10 +91,12 @@ export default function discordApiRoute(app, DiscordClient, config, db) {
     });
 
     app.post(baseEndpoint + '/directMessage', async function(req, res) {
-        const senderUsername = req.body.senderUsername;
-        const recipientUsername = req.body.recipientUsername;
-        const server = req.body.server;
-        const content = req.body.content;
+        isFeatureEnabled(features.discord, res, lang);
+                
+        const senderUsername = required(req.body, "senderUsername", res);
+        const recipientUsername = required(req.body, "recipientUsername", res);
+        const server = required(req.body, "server", res);
+        const content = required(req.body, "content", res);
 
         try {
             const guild = DiscordClient.guilds.cache.get(config.discord.serverId);

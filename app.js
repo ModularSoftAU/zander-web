@@ -1,4 +1,4 @@
-import packageData from './package.json';
+import packageData from './package.json' assert {type: "json"};
 import DiscordJS from 'discord.js'
 import WOKCommands from 'wokcommands'
 import moment from 'moment'
@@ -8,7 +8,9 @@ import fastify from 'fastify';
 import fastifySession from 'fastify-session'
 import fastifyCookie from 'fastify-cookie'
 
-import config from './config.json';
+import config from './config.json' assert {type: "json"};
+import features from './features.json' assert {type: "json"};
+import lang from './lang.json' assert {type: "json"};
 import db from './controllers/databaseController'
 
 // Paths
@@ -71,7 +73,7 @@ DiscordClient.on('ready', () => {
         })
 })
 
-DiscordClient.login(config.discord.apiKey);
+// DiscordClient.login(config.discord.apiKey);
 
 // 
 // Website Related
@@ -128,7 +130,7 @@ const buildApp = async () => {
     app.register((instance, options, next) => {
         // API routes (Token authenticated)
         instance.addHook('preValidation', verifyToken);
-        apiRoutes(instance, DiscordClient, moment, config, db);
+        apiRoutes(instance, DiscordClient, moment, config, db, features, lang);
         next();
     });
 
@@ -143,7 +145,7 @@ const buildApp = async () => {
 
     app.register((instance, options, next) => {
         // Routes
-        siteRoutes(instance, fetch, moment, config, db);
+        siteRoutes(instance, fetch, moment, config, db, features, lang);
         next();
     });
 

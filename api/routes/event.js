@@ -1,12 +1,15 @@
 import { MessageEmbed } from 'discord.js'
+import {isFeatureEnabled, required, optional} from '../common'
 
-export default function eventApiRoute(app, DiscordClient, moment, config, db) {
+export default function eventApiRoute(app, DiscordClient, moment, config, db, features, lang) {
     const baseEndpoint = config.siteConfiguration.apiRoute + '/event';
 
     app.get(baseEndpoint + '/get', async function(req, res) {
-        try {
-            const published = req.query.published;
+        isFeatureEnabled(features.events, res, lang);
+        const published = optional(req.query, "published");
+        const id = optional(req.query, "id");
 
+        try {
             function getEvents(dbQuery) {
                 db.query(dbQuery, function(error, results, fields) {
                     if (error) {
@@ -30,12 +33,18 @@ export default function eventApiRoute(app, DiscordClient, moment, config, db) {
                 });
             }
 
-            if (!published) {
-                res.send({
-                    success: false,
-                    message: `You must select a publish indicator.`
-                });
+            // Get Event by specific ID.
+            if (id) {
+                let dbQuery = `SELECT * FROM events WHERE eventId=${id};`
+                getEvents(dbQuery);                
             }
+
+            // if (!published) {
+            //     res.send({
+            //         success: false,
+            //         message: `You must select a publish indicator.`
+            //     });
+            // }
 
             if (published === 'show') {
                 let dbQuery = `SELECT * FROM events WHERE published=1 ORDER BY eventDateTime ASC;`
@@ -61,12 +70,13 @@ export default function eventApiRoute(app, DiscordClient, moment, config, db) {
     });
 
     app.post(baseEndpoint + '/create', async function(req, res) {
-        const name = req.body.name;
-        const icon = req.body.icon;
-        const eventDateTime = req.body.eventDateTime;
-        const hostingServer = req.body.hostingServer;
-        const guildEventChannel = req.body.guildEventChannel;
-        const information = req.body.information;
+        isFeatureEnabled(features.events, res, lang);
+        const name = required(req.body, "name", res);
+        const icon = required(req.body, "icon", res);
+        const eventDateTime = required(req.body, "eventDateTime", res);
+        const hostingServer = required(req.body, "hostingServer", res);
+        const guildEventChannel = required(req.body, "guildEventChannel", res);
+        const information = required(req.body, "information", res);
 
         try {
             db.query(`INSERT INTO events (name, icon, eventDateTime, hostingServer, guildEventChannel, information) VALUES (?, ?, ?, (select serverId from servers where name=?), ?, ?)`, [name, icon, eventDateTime, hostingServer, guildEventChannel, information], function(error, results, fields) {
@@ -91,12 +101,29 @@ export default function eventApiRoute(app, DiscordClient, moment, config, db) {
     });
 
     app.post(baseEndpoint + '/edit', async function(req, res) {
-        const name = req.body.name;
-        const icon = req.body.icon;
-        const eventDateTime = req.body.eventDateTime;
-        const hostingServer = req.body.hostingServer;
-        const guildEventChannel = req.body.guildEventChannel;
-        const information = req.body.information;
+        isFeatureEnabled(features.events, res, lang);
+        const name = required(req.body, "name", res);
+        const icon = required(req.body, "icon", res);
+        const eventDateTime = required(req.body, "eventDateTime", res);
+        const hostingServer = required(req.body, "hostingServer", res);
+        const guildEventChannel = required(req.body, "guildEventChannel", res);
+        const information = required(req.body, "information", res);
+
+        // ...
+        res.send({ success: true });
+    });
+
+    app.post(baseEndpoint + '/publish', async function(req, res) {
+        isFeatureEnabled(features.events, res, lang);
+        const eventId = required(req.body, "eventId", res);
+
+        // ...
+        res.send({ success: true });
+    });
+
+    app.post(baseEndpoint + '/delete', async function(req, res) {
+        isFeatureEnabled(features.events, res, lang);
+        const eventId = required(req.body, "eventId", res);
 
         // ...
         res.send({ success: true });

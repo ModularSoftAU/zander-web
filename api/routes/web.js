@@ -1,13 +1,15 @@
 import bcrypt from 'bcrypt';
+import {isFeatureEnabled, required, optional} from '../common'
 
-export default function webApiRoute(app, config, db) {
+export default function webApiRoute(app, config, db, features, lang) {
     const baseEndpoint = config.siteConfiguration.apiRoute + '/web';
 
     app.post(baseEndpoint + '/register/create', async function(req, res) {
-        const username = req.body.username;
-        const email = req.body.email;
-        const password = req.body.password;
-        const confirmPassword = req.body.confirmPassword;
+        isFeatureEnabled(features.web, res, lang);
+        const username = required(req.body, "username", res);
+        const email = required(req.body, "email", res);
+        const password = required(req.body, "password", res);
+        const confirmPassword = required(req.body, "confirmPassword", res);
 
         db.query(`select * from users where username=?; select * from users where email=?;`, [username, email], async function (err, results) {
             if (err) {
@@ -72,16 +74,17 @@ export default function webApiRoute(app, config, db) {
     });
 
     app.post(baseEndpoint + '/register/verify', async function(req, res) {
-        const username = req.body.username;
-        const verificationToken = req.body.verificationToken;
+        isFeatureEnabled(features.web, res, lang);
+        const username = required(req.body, "username", res);
+        const verificationToken = required(req.body, "verificationToken", res);
 
         // ...
         res.send({ success: true });
     });
 
     app.post(baseEndpoint + '/forgot', async function(req, res) {
-        const username = req.body.username;
-        // TODO
+        isFeatureEnabled(features.web, res, lang);
+        const username = required(req.body, "username", res);
 
         // ...
         res.send({ success: true });

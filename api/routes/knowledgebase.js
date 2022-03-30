@@ -1,8 +1,40 @@
-export default function knowledgebaseApiRoute(app, config, db) {
+import {isFeatureEnabled, required, optional} from '../common'
+
+export default function knowledgebaseApiRoute(app, config, db, features, lang) {
     const baseEndpoint = config.siteConfiguration.apiRoute + '/knowledgebase';
 
+    // TODO: Update docs
     app.get(baseEndpoint + '/section/get', async function(req, res) {
+        isFeatureEnabled(features.knowledgebase, res, lang);
+        const sectionSlug = optional(req.query, "slug");
+
         try {
+            // Search by slug using ?slug=
+            if (sectionSlug) {
+                db.query(`SELECT * FROM knowledgebaseSections WHERE sectionSlug=?;`, [sectionSlug], function(error, results, fields) {
+                    if (error) {
+                        return res.send({
+                            success: false,
+                            message: `${error}`
+                        });
+                    }
+    
+                    // Send error is there are no kb sections.
+                    if (!results.length) {
+                        return res.send({
+                            success: false,
+                            message: `There are none`
+                        });
+                    }
+    
+                    return res.send({
+                        success: true,
+                        data: results
+                    });
+                });
+            }
+
+            // If no queries, return all.
             db.query(`SELECT * FROM knowledgebaseSections ORDER BY position ASC;`, function(error, results, fields) {
                 if (error) {
                     return res.send({
@@ -34,12 +66,13 @@ export default function knowledgebaseApiRoute(app, config, db) {
     });
 
     app.get(baseEndpoint + '/article/get', async function(req, res) {
-        const articleSlug = req.query.articleSlug;
+        isFeatureEnabled(features.knowledgebase, res, lang);
+        const articleSlug = optional(req.query, "slug");
 
-        // Search for all individual article
+        // Search for all individual article using ?slug=
         if (articleSlug) {
             try {
-                db.query(`SELECT * FROM knowledgebaseArticles WHERE articleSlug=? LIMIT 1`, [articleSlug], function(error, results, fields) {
+                db.query(`SELECT * FROM knowledgebaseArticles WHERE articleSlug=?;`, [articleSlug], function(error, results, fields) {
                     if (error) {
                         return res.send({
                             success: false,
@@ -69,6 +102,7 @@ export default function knowledgebaseApiRoute(app, config, db) {
             }            
         }
 
+        // If there is no query, return all.
         try {
             db.query(`SELECT * FROM knowledgebaseArticles ORDER BY position ASC;`, function(error, results, fields) {
                 if (error) {
@@ -92,11 +126,12 @@ export default function knowledgebaseApiRoute(app, config, db) {
     });
 
     app.post(baseEndpoint + '/section/create', async function(req, res) {
-        const sectionSlug = req.body.sectionSlug;
-        const sectionName = req.body.sectionName;
-        const description = req.body.description;
-        const sectionIcon = req.body.sectionIcon;
-        const position = req.body.position;
+        isFeatureEnabled(features.knowledgebase, res, lang);
+        const sectionSlug = required(req.body, "sectionSlug", res);
+        const sectionName = required(req.body, "sectionName", res);
+        const description = required(req.body, "description", res);
+        const sectionIcon = required(req.body, "sectionIcon", res);
+        const position = required(req.body, "position", res);
 
         try {
             db.query(`INSERT INTO knowledgebaseSections (sectionSlug, sectionName, description, sectionIcon, position) VALUES (?, ?, ?, ?, ?)`, [sectionSlug, sectionName, description, sectionIcon, position], function(error, results, fields) {
@@ -106,7 +141,11 @@ export default function knowledgebaseApiRoute(app, config, db) {
                         message: `${error}`
                     });
                 }
-                return res.redirect(`${config.siteConfiguration.siteAddress}/dashboard/knowledgebase`)
+
+                res.send({
+                    success: true,
+                    message: `Section ${sectionName} has been successfully created.`
+                });
             });
 
         } catch (error) {
@@ -118,32 +157,60 @@ export default function knowledgebaseApiRoute(app, config, db) {
     });
 
     app.post(baseEndpoint + '/section/update', async function(req, res) {
-        const sectionSlug = req.body.sectionSlug;
-        const sectionName = req.body.sectionName;
-        const description = req.body.description;
-        const sectionIcon = req.body.sectionIcon;
-        const position = req.body.position;
-
-        // ...
-        res.send({ success: true });
-    });
-
-    app.post(baseEndpoint + '/article/create', async function(req, res) {
-        const articleSlug = req.body.articleSlug;
-        const articleName = req.body.articleName;
-        const articleLink = req.body.articleLink;
-        const articleSection = req.body.articleSection;
-        const position = req.body.position;
+        isFeatureEnabled(features.knowledgebase, res, lang);
+        const slug = required(req.body, "slug", res);
+        const sectionSlug = required(req.body, "sectionSlug", res);
+        const sectionName = required(req.body, "sectionName", res);
+        const description = required(req.body, "description", res);
+        const sectionIcon = required(req.body, "sectionIcon", res);
+        const position = required(req.body, "position", res);
 
         try {
-            db.query(`INSERT INTO knowledgebaseArticles (articleSlug, articleName, articleLink, sectionId, position) VALUES (?, ?, ?, (select sectionId from knowledgebaseSections where sectionSlug=?), ?)`, [articleSlug, articleName, articleLink, articleSection, position], function(error, results, fields) {
+            db.query(`UPDATE knowledgebaseSections SET sectionSlug=?, sectionName=?, description=?, sectionIcon=?, position=? WHERE sectionSlug=?;`, [sectionSlug, sectionName, description, sectionIcon, position, slug], function(error, results, fields) {
                 if (error) {
                     return res.send({
                         success: false,
                         message: `${error}`
                     });
                 }
-              return res.redirect(`${config.siteConfiguration.siteAddress}/dashboard/knowledgebase`)
+
+                res.send({
+                    success: true,
+                    message: `Section ${sectionName} has been successfully updated.`
+                });
+            });
+
+        } catch (error) {
+            res.send({
+                success: false,
+                message: `${error}`
+            });
+        }
+    });
+
+    app.post(baseEndpoint + '/article/create', async function(req, res) {
+        isFeatureEnabled(features.knowledgebase, res, lang);
+        const articleSlug = required(req.body, "articleSlug", res);
+        const articleName = required(req.body, "articleName", res);
+        const articleDescription = required(req.body, "articleDescription", res);
+        const articleLink = required(req.body, "articleLink", res);
+        const articleSection = required(req.body, "articleSection", res);
+        const position = required(req.body, "position", res);
+        const published = required(req.body, "published", res);
+
+        try {
+            db.query(`INSERT INTO knowledgebaseArticles (articleSlug, articleName, articleDescription, articleLink, sectionId, position, published) VALUES (?, ?, ?, ?, (select sectionId from knowledgebaseSections where sectionSlug=?), ?, ?)`, [articleSlug, articleName, articleDescription, articleLink, articleSection, position, published], function(error, results, fields) {
+                if (error) {
+                    return res.send({
+                        success: false,
+                        message: `${error}`
+                    });
+                }
+
+                return res.send({
+                    success: true,
+                    message: `The article called ${articleName} has been created.`
+                });
             });
 
         } catch (error) {
@@ -155,14 +222,38 @@ export default function knowledgebaseApiRoute(app, config, db) {
     });
 
     app.post(baseEndpoint + '/article/update', async function(req, res) {
-        const articleSlug = req.body.articleSlug;
-        const articleName = req.body.articleName;
-        const articleLink = req.body.articleLink;
-        const section = req.body.section;
-        const position = req.body.position;
+        isFeatureEnabled(features.knowledgebase, res, lang);
+                
+        const slug = required(req.body, "slug", res);
+        const articleSlug = required(req.body, "articleSlug", res);
+        const articleName = required(req.body, "articleName", res);
+        const articleDescription = required(req.body, "articleDescription", res);
+        const articleLink = required(req.body, "articleLink", res);
+        const articleSection = required(req.body, "articleSection", res);
+        const position = required(req.body, "position", res);
+        const published = required(req.body, "published", res);
 
-        // ...
-        res.send({ success: true });
+        try {
+            db.query(`UPDATE knowledgebaseArticles SET articleSlug=?, articleName=?, articleDescription=?, articleLink=?, sectionId=?, position=?, published=? WHERE articleSlug=?`, [articleSlug, articleName, articleDescription, articleLink, articleSection, position, published, slug], function(error, results, fields) {
+                if (error) {
+                    return res.send({
+                        success: false,
+                        message: `${error}`
+                    });
+                }
+
+                return res.send({
+                    success: true,
+                    message: `The article called ${slug} has been updated.`
+                });
+            });
+
+        } catch (error) {
+            res.send({
+                success: false,
+                message: `${error}`
+            });
+        }
     });
 
 }

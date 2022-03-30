@@ -1,4 +1,4 @@
-export default function dashboardKnowledgebaseSiteRoute(app, fetch, moment, config) {
+export default function dashboardKnowledgebaseSiteRoute(app, fetch, moment, config, db) {
 
     // 
     // Knowledgebase
@@ -22,14 +22,41 @@ export default function dashboardKnowledgebaseSiteRoute(app, fetch, moment, conf
         });
     });
 
-    app.get('/dashboard/knowledgebase/create/section', async function(request, reply) {
-        reply.view('dashboard/knowledgebase/createSection', {
-            "pageTitle": `Dashboard - Create Knowledgebase Section`,
-            config: config
+    // 
+    // Knowledgebase
+    // Create a Section
+    // 
+    app.get('/dashboard/knowledgebase/section/create', async function(request, reply) {
+        reply.view('dashboard/knowledgebase/sectionEditor', {
+            "pageTitle": `Dashboard - Section Creator`,
+            config: config,
+            type: "create"
         });
     });
 
-    app.post('/dashboard/knowledgebase/delete/section', async function(req, res) {
+    // 
+    // Knowledgebase
+    // Edit a Section
+    // 
+    app.get('/dashboard/knowledgebase/section/edit', async function(request, reply) {
+        const sectionSlug = request.query.slug;
+        const fetchURL = `${config.siteConfiguration.siteAddress}${config.siteConfiguration.apiRoute}/knowledgebase/section/get?slug=${sectionSlug}`;
+        const response = await fetch(fetchURL);
+        const kbApiData = await response.json();
+
+        reply.view('dashboard/knowledgebase/sectionEditor', {
+            "pageTitle": `Dashboard - Section Editor`,
+            config: config,
+            kbApiData: kbApiData.data[0],
+            type: "edit"
+        });
+    });
+
+    // 
+    // Knowledgebase
+    // Delete a section
+    // 
+    app.post('/dashboard/knowledgebase/section/delete', async function(req, res) {
         const sectionSlug = req.body.sectionSlug;
 
         try {
@@ -40,7 +67,11 @@ export default function dashboardKnowledgebaseSiteRoute(app, fetch, moment, conf
                         message: `${error}`
                     });
                 }
-              return res.redirect(`${config.siteConfiguration.siteAddress}/dashboard/knowledgebase`)
+
+                res.send({
+                    success: true,
+                    message: `Section ${sectionSlug} has been successfully deleted.`
+                });              
             });
 
         } catch (error) {
@@ -51,15 +82,52 @@ export default function dashboardKnowledgebaseSiteRoute(app, fetch, moment, conf
         }
     });
 
-    app.get('/dashboard/knowledgebase/create/article', async function(request, reply) {
-        reply.view('dashboard/knowledgebase/createArticle', {
-            "pageTitle": `Dashboard - Create Knowledgebase Article`,
-            config: config
+    // 
+    // Knowledgebase
+    // Create an article
+    // 
+    app.get('/dashboard/knowledgebase/article/create', async function(request, reply) {
+        const fetchURL = `${config.siteConfiguration.siteAddress}${config.siteConfiguration.apiRoute}/knowledgebase/section/get`;
+        const response = await fetch(fetchURL);
+        const kbSectionApiData = await response.json();
+
+        reply.view('dashboard/knowledgebase/articleEditor', {
+            "pageTitle": `Dashboard - Article Creator`,
+            config: config,
+            sectionApiData: kbSectionApiData.data,
+            type: "create"
         });
     });
 
-    app.post('/dashboard/knowledgebase/delete/article', async function(req, res) {
-        const articleSlug = req.body.articleSlug;
+    // 
+    // Knowledgebase
+    // Edit a Article
+    // 
+    app.get('/dashboard/knowledgebase/article/edit', async function(request, reply) {
+        const articleSlug = request.query.slug;
+        const fetchURL = `${config.siteConfiguration.siteAddress}${config.siteConfiguration.apiRoute}/knowledgebase/article/get?slug=${articleSlug}`;
+        const response = await fetch(fetchURL);
+        const kbApiData = await response.json();
+
+        const kbSectionFetchURL = `${config.siteConfiguration.siteAddress}${config.siteConfiguration.apiRoute}/knowledgebase/section/get`;
+        const kbSectionResponse = await fetch(kbSectionFetchURL);
+        const kbSectionApiData = await kbSectionResponse.json();
+
+        reply.view('dashboard/knowledgebase/articleEditor', {
+            "pageTitle": `Dashboard - Article Editor`,
+            config: config,
+            kbApiData: kbApiData.data[0],
+            sectionApiData: kbSectionApiData.data,
+            type: "edit"
+        });
+    });
+
+    // 
+    // Knowledgebase
+    // Delete an Article
+    // 
+    app.post('/dashboard/knowledgebase/article/delete', async function(req, res) {
+        const articleSlug = req.body.slug;
 
         try {
             db.query(`DELETE FROM knowledgebaseArticles WHERE articleSlug = ?;`, [articleSlug], function(error, results, fields) {
@@ -69,7 +137,11 @@ export default function dashboardKnowledgebaseSiteRoute(app, fetch, moment, conf
                         message: `${error}`
                     });
                 }
-              return res.redirect(`${config.siteConfiguration.siteAddress}/dashboard/knowledgebase`);
+              
+                return res.send({
+                    success: true,
+                    message: `The article with the slug ${articleSlug} has been deleted.`
+                });
             });
 
         } catch (error) {
