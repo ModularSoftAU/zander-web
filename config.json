@@ -32,6 +32,7 @@
         "prefix": "!",
         "serverId": "899441191416901632",
         "channels": {
+            "welcomeChannel": "926380663953821736",
             "networkChatLog": "925702393423859724",
             "adminLog": "926380052155867146",
             "eventAnnouncements": "926380005854957608",
@@ -39,7 +40,7 @@
             "punishments": "936889228598587392"
         },
         "roles": {
-            "verified": ""
+            "verified": "926259482319794246"
         }
     },
     "database": {

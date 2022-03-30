@@ -1,13 +1,28 @@
 import { Listener } from '@sapphire/framework';
 import joinMessages from '../joinMessages.json' assert {type: "json"};
+import config from '../config.json' assert {type: "json"};
 
-export class GuildMemberAddListener extends Listener {
+export class GuildMemberUpdateListener extends Listener {
+  constructor(context, options) {
+    super(context, {
+      ...options,
+      once: false,
+      event: 'guildMemberUpdate'
+    });
+  }
+
   run(oldMember, newMember) {
+    console.log(oldMember);
+    console.log(newMember);
+
+
     if (!newMember.guild) return;
     // if (member.author.bot) return;
 
-    const oldRole = oldMember.roles.cache.find(role => role.name === 'Verified');
-    const newRole = newMember.roles.cache.find(role => role.name === 'Verified');
+    const oldRole = oldMember.roles.cache.find(role => role.id === config.discord.roles.verified);
+    const newRole = newMember.roles.cache.find(role => role.id === config.discord.roles.verified);
+
+    console.log(oldRole);
 
     let welcomechannel = newMember.guild.channels.cache.find(c => c.name === config.welcomechannel);
     if (!welcomechannel) return;
