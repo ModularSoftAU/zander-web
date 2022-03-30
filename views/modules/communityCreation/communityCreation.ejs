@@ -26,19 +26,15 @@
           <% if (!apiData.success == false) { %>
             <% apiData.data.forEach(function (creation) { %>
               <div class="col-sm-4" style="padding: 10px; padding-bottom: 5px;">
-
                 <!-- Image Slider -->
                 <div id="carousel<%= creation.creationId %>" class="carousel slide" data-interval="false">
                   <div class="carousel-inner">
-                    <div class="carousel-item active">
-                      <img class="d-block w-100" src="https://media.discordapp.net/attachments/869465358086570054/957871064438939699/2022-03-27_22.16.29.png?width=1178&height=662" alt="First slide">
-                    </div>
-                    <div class="carousel-item">
-                      <img class="d-block w-100" src="https://media.discordapp.net/attachments/869465358086570054/956813983963316224/2022-03-25_00.16.12.png?width=1178&height=662" alt="Second slide">
-                    </div>
-                    <div class="carousel-item">
-                      <img class="d-block w-100" src="https://media.discordapp.net/attachments/869465358086570054/956817472584048660/WoWScrnShot_032522_002904.jpg?width=1178&height=662" alt="Third slide">
-                    </div>
+					<% creation.imageLinks.forEach(function (imageLink, index) { %>
+						<div class="carousel-item<%= (index == 0 ? ' active' : '') %>">
+							<img class="d-block w-100" src="<%= imageLink %>" alt="Slide <%= (index + 1) %>">
+						</div>
+					<% }) %>
+                    
                   </div>
                   <a class="carousel-control-prev" href="#carousel<%= creation.creationId %>" role="button" data-slide="prev">
                     <span class="carousel-control-prev-icon" aria-hidden="true"></span>
