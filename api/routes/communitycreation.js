@@ -8,6 +8,11 @@ export default function communityCreationApiRoute(app, config, db) {
         const username = req.query.username;
         const creationId = req.query.id;
 		const approvedOnly = req.query.approvedOnly;
+		
+		// set the number of items to display per page
+		const limit = parseInt((req.query.limit) ? req.query.limit : 6);
+		const page = (req.query.page) ? req.query.page : 1;
+		const offset = (page - 1) * limit;
 
 		// Whether or not to /get unapproved creations
 		var approved = '1';
@@ -21,25 +26,30 @@ export default function communityCreationApiRoute(app, config, db) {
 				db.query(`
 					SELECT
 						cc.*,
-						imagesUnapproved.count AS totalImagesUnapproved,
-						cci.imageLink AS coverImageLink,
-						u.username
+						u.username,
+						COALESCE(likes.count, 0) AS likes,
+						CONCAT('["', cci.imageLinks, '"]') AS imageLinks
 					FROM communityCreations cc
 						JOIN users u ON cc.creatorId = u.userId
-						LEFT JOIN communityCreationImages cci ON cc.creationId = cci.creationId
-							AND cci.cover = 1
-							AND cci.approved IN (?)
+						LEFT JOIN (
+							SELECT
+								creationId,
+								GROUP_CONCAT(imageLink ORDER BY position ASC SEPARATOR '","') AS imageLinks
+							FROM communityCreationImages
+							GROUP BY creationId
+						) cci ON cc.creationId = cci.creationId
 						LEFT JOIN (
 							SELECT
 								creationId,
 								COUNT(*) AS count
-							FROM communityCreationImages
-							WHERE approved = 0
+							FROM communityLikes
 							GROUP BY creationId
-						) imagesUnapproved ON cc.creationId = imagesUnapproved.creationId
+						) likes ON cc.creationId = likes.creationId
 					WHERE u.username = ?
 						AND cc.approved IN (?)
-				`, [approved, username, approved], function(error, results, fields) {
+					ORDER BY cc.submittedDate DESC
+					LIMIT ?, ?
+				`, [username, approved, offset, limit], function(error, results, fields) {
 					if (error) {
 						return res.send({
 							success: false,
@@ -47,16 +57,9 @@ export default function communityCreationApiRoute(app, config, db) {
 						});
 					}
                     
-                    if (!results.length) {
-                        return res.send({
-                            success: false,
-                            message: `There are no results`
-                        });
-                    }
-                    
 					return res.send({
 						success: true,
-						data: results
+						data: results.map(row => (row.imageLinks = JSON.parse(row.imageLinks.replace('\"', '"')), row))
 					});
 				});
 			} catch (error) {
@@ -73,28 +76,30 @@ export default function communityCreationApiRoute(app, config, db) {
 				db.query(`
 					SELECT
 						cc.*,
-						imagesUnapproved.count AS totalImagesUnapproved,
-						cci.imageLink,
-						cci.cover,
-						cci.position,
-						cci.approved AS imageApproved,
-						u.username
+						u.username,
+						COALESCE(likes.count, 0) AS likes,
+						CONCAT('["', cci.imageLinks, '"]') JSON AS imageLinks
 					FROM communityCreations cc
 						JOIN users u ON cc.creatorId = u.userId
-						LEFT JOIN communityCreationImages cci ON cc.creationId = cci.creationId
-							AND cci.approved IN (?)
+						LEFT JOIN (
+							SELECT
+								creationId,
+								GROUP_CONCAT(imageLink ORDER BY position ASC SEPARATOR '","') AS imageLinks
+							FROM communityCreationImages
+							GROUP BY creationId
+						) cci ON cc.creationId = cci.creationId
 						LEFT JOIN (
 							SELECT
 								creationId,
 								COUNT(*) AS count
-							FROM communityCreationImages
-							WHERE approved = 0
+							FROM communityLikes
 							GROUP BY creationId
-						) imagesUnapproved ON cc.creationId = imagesUnapproved.creationId
+						) likes ON cc.creationId = likes.creationId
 					WHERE cc.creationId = ?
 						AND cc.approved IN (?)
-					ORDER BY cci.position ASC
-				`, [approved, creationId, approved], function(error, results, fields) {
+					ORDER BY cc.submittedDate DESC
+					LIMIT ?, ?
+				`, [creationId, approved, offset, limit], function(error, results, fields) {
 					if (error) {
 						return res.send({
 							success: false,
@@ -111,7 +116,7 @@ export default function communityCreationApiRoute(app, config, db) {
 
 					return res.send({
 						success: true,
-						data: results
+						data: results.map(row => (row.imageLinks = JSON.parse(row.imageLinks.replace('\"', '"')), row))
 					});
 				});
 			} catch (error) {
@@ -127,24 +132,29 @@ export default function communityCreationApiRoute(app, config, db) {
             db.query(`
 				SELECT
 					cc.*,
-					imagesUnapproved.count AS totalImagesUnapproved,
-					cci.imageLink AS coverImageLink,
-					u.username
+					u.username,
+					COALESCE(likes.count, 0) AS likes,
+					CONCAT('["', cci.imageLinks, '"]') AS imageLinks
 				FROM communityCreations cc
 					JOIN users u ON cc.creatorId = u.userId
-					LEFT JOIN communityCreationImages cci ON cc.creationId = cci.creationId
-						AND cci.cover = 1
-						AND cci.approved IN (?)
+					LEFT JOIN (
+						SELECT
+							creationId,
+							GROUP_CONCAT(imageLink ORDER BY position ASC SEPARATOR '","') AS imageLinks
+						FROM communityCreationImages
+						GROUP BY creationId
+					) cci ON cc.creationId = cci.creationId
 					LEFT JOIN (
 						SELECT
 							creationId,
 							COUNT(*) AS count
-						FROM communityCreationImages
-						WHERE approved = 0
+						FROM communityLikes
 						GROUP BY creationId
-					) imagesUnapproved ON cc.creationId = imagesUnapproved.creationId
+					) likes ON cc.creationId = likes.creationId
 				WHERE cc.approved IN (?)
-			`, [approved, approved], function(error, results, fields) {
+				ORDER BY cc.submittedDate DESC
+				LIMIT ?, ?
+			`, [approved, offset, limit], function(error, results, fields) {
                 if (error) {
                     return res.send({
                         success: false,
@@ -161,7 +171,7 @@ export default function communityCreationApiRoute(app, config, db) {
 
                 return res.send({
                     success: true,
-                    data: results
+                    data: results.map(row => (row.imageLinks = JSON.parse(row.imageLinks.replace('\"', '"')), row))
                 });
             });
 
