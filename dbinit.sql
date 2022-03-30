@@ -25,6 +25,9 @@ CREATE TABLE users (
 	INDEX users (uuid(8))
 );
 
+INSERT INTO users (uuid, username, disabled)
+VALUES ('f78a4d8d-d51b-4b39-98a3-230f2de0c670','CONSOLE',0);
+
 CREATE VIEW zanderdev.luckPermsPlayers AS
 SELECT * FROM cfcdev_luckperms.luckperms_players;
 
