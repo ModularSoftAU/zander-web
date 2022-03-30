@@ -109,13 +109,6 @@ export default function communityCreationApiRoute(app, config, db) {
 						});
 					}
 
-                    if (!results.length) {
-                        return res.send({
-                            success: false,
-                            message: `There are no results`
-                        });
-                    }
-
 					return res.send({
 						success: true,
 						data: results.map(row => (row.imageLinks = JSON.parse(row.imageLinks.replace('\"', '"')), row)),
@@ -163,13 +156,6 @@ export default function communityCreationApiRoute(app, config, db) {
                     return res.send({
                         success: false,
                         message: `${error}`
-                    });
-                }
-
-                if (!results.length) {
-                    return res.send({
-                        success: false,
-                        message: `There are no results`
                     });
                 }
 
