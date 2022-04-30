@@ -5,7 +5,7 @@ export class GuildMessageListener extends Listener {
     super(context, {
       ...options,
       once: false,
-      event: 'message'
+      event: 'messageCreate'
     });
   }
 

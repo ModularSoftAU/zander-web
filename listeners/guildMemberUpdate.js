@@ -11,7 +11,7 @@ export class GuildMemberUpdateListener extends Listener {
     });
   }
 
-  run(oldMember, newMember) {
+  run(client, oldMember, newMember) {
     console.log(oldMember);
     console.log(newMember);
 
@@ -19,8 +19,8 @@ export class GuildMemberUpdateListener extends Listener {
     if (!newMember.guild) return;
     // if (member.author.bot) return;
 
-    const oldRole = oldMember.roles.cache.find(role => role.id === config.discord.roles.verified);
-    const newRole = newMember.roles.cache.find(role => role.id === config.discord.roles.verified);
+    const oldRole = oldMember.roles.cache.find(role => role.name === 'Verified');
+    const newRole = newMember.roles.cache.find(role => role.name === 'Verified');
 
     console.log(oldRole);
 
