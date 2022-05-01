@@ -11,9 +11,9 @@
     "type": "git",
     "url": "git+https://github.com/ModularEnigma/zander-web.git"
   },
-  "engines" : { 
-    "npm" : ">=8.5.0",
-    "node" : ">=16.14.2"
+  "engines": {
+    "npm": ">=8.5.0",
+    "node": ">=16.14.2"
   },
   "keywords": [],
   "author": "Ben Robson",
