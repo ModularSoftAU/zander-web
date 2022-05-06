@@ -16,14 +16,14 @@ import userApiRoute from './user'
 import voteApiRoute from './vote'
 import webApiRoute from './web'
 
-export default (app, DiscordClient, moment, config, db, features, lang) => {
+export default (app, client, moment, config, db, features, lang) => {
 
     announcementApiRoute(app, config, db, features, lang);
     appealApiRoute(app, config, db, features, lang);
     applicationApiRoute(app, config, db, features, lang);
     communityCreationApiRoute(app, config, db, features, lang);
-    discordApiRoute(app, DiscordClient, config, db, features, lang);
-    eventApiRoute(app, DiscordClient, moment, config, db, features, lang);
+    discordApiRoute(app, client, config, db, features, lang);
+    eventApiRoute(app, client, moment, config, db, features, lang);
     friendApiRoute(app, config, db, features, lang);
     knowledgebaseApiRoute(app, config, db, features, lang);
     punishmentApiRoute(app, config, db, features, lang);

@@ -1,6 +1,6 @@
 import {isFeatureEnabled, required, optional} from '../common'
 
-export default function discordApiRoute(app, DiscordClient, config, db, features, lang) {
+export default function discordApiRoute(app, client, config, db, features, lang) {
     const baseEndpoint = config.siteConfiguration.apiRoute + '/discord';
 
     app.post(baseEndpoint + '/switch', async function(req, res) {
@@ -9,7 +9,7 @@ export default function discordApiRoute(app, DiscordClient, config, db, features
         const server = required(req.body, "server", res);
 
         try {
-            const guild = DiscordClient.guilds.cache.get(config.discord.serverId);
+            const guild = client.guilds.cache.get(config.discord.guildId);
             const channel = guild.channels.cache.get(config.discord.channels.networkChatLog);
 
             channel.send(`:twisted_rightwards_arrows:  |  \`${username}\` switched to \`${server}\``);
@@ -32,7 +32,7 @@ export default function discordApiRoute(app, DiscordClient, config, db, features
         const content = required(req.body, "content", res);
 
         try {
-            const guild = DiscordClient.guilds.cache.get(config.discord.serverId);
+            const guild = client.guilds.cache.get(config.discord.guildId);
             const channel = guild.channels.cache.get(config.discord.channels.networkChatLog);
 
             channel.send(`**${server}**  |  \`${username}\` :: ${content}`);
@@ -53,7 +53,7 @@ export default function discordApiRoute(app, DiscordClient, config, db, features
         const username = required(req.body, "username", res);
 
         try {
-            const guild = DiscordClient.guilds.cache.get(config.discord.serverId);
+            const guild = client.guilds.cache.get(config.discord.guildId);
             const channel = guild.channels.cache.get(config.discord.channels.networkChatLog);
 
             channel.send(`:ballot_box_with_check:  | \`${username}\` has joined the Network.`);
@@ -74,7 +74,7 @@ export default function discordApiRoute(app, DiscordClient, config, db, features
         const username = required(req.body, "username", res);
 
         try {
-            const guild = DiscordClient.guilds.cache.get(config.discord.serverId);
+            const guild = client.guilds.cache.get(config.discord.guildId);
             const channel = guild.channels.cache.get(config.discord.channels.networkChatLog);
 
             channel.send(`:negative_squared_cross_mark:  | \`${username}\` has left the Network.`);
@@ -99,7 +99,7 @@ export default function discordApiRoute(app, DiscordClient, config, db, features
         const content = required(req.body, "content", res);
 
         try {
-            const guild = DiscordClient.guilds.cache.get(config.discord.serverId);
+            const guild = client.guilds.cache.get(config.discord.guildId);
             const channel = guild.channels.cache.get(config.discord.channels.networkChatLog);
 
             channel.send(`:e_mail: | **${server}** | \`${senderUsername}\` **=>** \`${recipientUsername}\` :: ${content}`);

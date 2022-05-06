@@ -1,7 +1,7 @@
 import { MessageEmbed } from 'discord.js'
 import {isFeatureEnabled, required, optional} from '../common'
 
-export default function eventApiRoute(app, DiscordClient, moment, config, db, features, lang) {
+export default function eventApiRoute(app, client, moment, config, db, features, lang) {
     const baseEndpoint = config.siteConfiguration.apiRoute + '/event';
 
     app.get(baseEndpoint + '/get', async function(req, res) {
