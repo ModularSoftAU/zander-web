@@ -1,6 +1,6 @@
 import bcrypt from 'bcrypt';
 
-export default function sessionSiteRoute(app, fetch, moment, config, db) {
+export default function sessionSiteRoute(app, fetch, moment, config, db, features) {
 
     // 
     // Session
