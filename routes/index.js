@@ -4,19 +4,20 @@ import policySiteRoutes from './policyRoutes'
 import communityCreationsRoutes from './communityCreationsRoutes'
 import sessionRoutes from './sessionRoutes'
 
-export default function applicationSiteRoutes(app, fetch, moment, config, db) {
+export default function applicationSiteRoutes(app, fetch, moment, config, db, features, lang) {
 
-    dashboardSiteRoutes(app, fetch, moment, config, db);
-    knowledgebaseSiteRoutes(app, fetch, config, db);
-    communityCreationsRoutes(app, fetch, moment, config, db);
-    sessionRoutes(app, fetch, moment, config, db);
+    dashboardSiteRoutes(app, fetch, moment, config, db, features, lang);
+    knowledgebaseSiteRoutes(app, fetch, config, db, features, lang);
+    communityCreationsRoutes(app, fetch, moment, config, db, features, lang);
+    sessionRoutes(app, fetch, moment, config, db, features, lang);
     policySiteRoutes(app, config);
 
     app.get('/', async function(request, reply) {
         return reply.view("modules/index/index", {
             "pageTitle": `${config.siteConfiguration.siteName}`,
             config: config,
-            request: request
+            request: request,
+            features: features
         });
     });
 
@@ -32,7 +33,8 @@ export default function applicationSiteRoutes(app, fetch, moment, config, db) {
             "pageTitle": `Play`,
             config: config,
             request: request,
-            apiData: apiData
+            apiData: apiData,
+            features: features
         });
     });
 
@@ -48,7 +50,8 @@ export default function applicationSiteRoutes(app, fetch, moment, config, db) {
             "pageTitle": `Apply`,
             config: config,
             request: request,
-            apiData: apiData
+            apiData: apiData,
+            features: features
         });
     });
 
@@ -65,7 +68,8 @@ export default function applicationSiteRoutes(app, fetch, moment, config, db) {
             config: config,
             apiData: apiData,
             moment: moment,
-            request: request
+            request: request,
+            features: features,
         });
     });
 
@@ -76,7 +80,8 @@ export default function applicationSiteRoutes(app, fetch, moment, config, db) {
         reply.view('vote', {
             "pageTitle": `Vote`,
             config: config,
-            request: request
+            request: request,
+            features: features
         });
     });
 
@@ -87,7 +92,8 @@ export default function applicationSiteRoutes(app, fetch, moment, config, db) {
         reply.view('staff', {
             "pageTitle": `Staff`,
             config: config,
-            request: request
+            request: request,
+            features: features
         });
     });
 
@@ -104,7 +110,8 @@ export default function applicationSiteRoutes(app, fetch, moment, config, db) {
             config: config,
             request: request,
             moment: moment,
-            apiData: apiData
+            apiData: apiData,
+            features: features
         });
     });
 
@@ -128,7 +135,8 @@ export default function applicationSiteRoutes(app, fetch, moment, config, db) {
             moment: moment,
             request: request,
             profileApiData: profileApiData,
-            reportApiData: reportApiData
+            reportApiData: reportApiData,
+            features: features
 
         });
     });
@@ -150,7 +158,8 @@ export default function applicationSiteRoutes(app, fetch, moment, config, db) {
             config: config,
             apiData: apiData,
             moment: moment,
-            request: request
+            request: request,
+            features: features
         });
     });
 
@@ -161,7 +170,8 @@ export default function applicationSiteRoutes(app, fetch, moment, config, db) {
         reply.view('punishments', {
             "pageTitle": `Punishments`,
             config: config,
-            request: request
+            request: request,
+            features: features
         });
     });
 
@@ -172,7 +182,8 @@ export default function applicationSiteRoutes(app, fetch, moment, config, db) {
         reply.view('appeal', {
             "pageTitle": `Appeal`,
             config: config,
-            request: request
+            request: request,
+            features: features
         });
     });
 
@@ -183,7 +194,8 @@ export default function applicationSiteRoutes(app, fetch, moment, config, db) {
         reply.view('modules/shoppingDistrictDirectory/shoppingDistrictDirectory', {
             "pageTitle": `Shopping District Directory`,
             config: config,
-            request: request
+            request: request,
+            features: features
         });
     });
     

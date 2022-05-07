@@ -1,4 +1,4 @@
-export default function dashbordSiteRoute(app, config) {
+export default function dashbordSiteRoute(app, config, features) {
 
     // 
     // Dashboard
@@ -6,21 +6,24 @@ export default function dashbordSiteRoute(app, config) {
     app.get('/dashboard', async function(request, reply) {
         reply.view('dashboard/indexViewNetwork', {
             "pageTitle": `Dashboard`,
-            config: config
+            config: config,
+            features: features
         });
     });
 
     app.get('/dashboard/view/network', async function(request, reply) {
         reply.view('dashboard/indexViewNetwork', {
             "pageTitle": `Dashboard`,
-            config: config
+            config: config,
+            features: features
         });
     });
 
     app.get('/dashboard/view/punishment', async function(request, reply) {
         reply.view('dashboard/indexViewPunishment', {
             "pageTitle": `Dashboard`,
-            config: config
+            config: config,
+            features: features
         });
     }); 
 
@@ -30,7 +33,8 @@ export default function dashbordSiteRoute(app, config) {
     app.get('/dashboard/usercheck', async function(request, reply) {
         reply.view('dashboard/usercheck', {
             "pageTitle": `Dashboard - User Check`,
-            config: config
+            config: config,
+            features: features
         });
     });
 

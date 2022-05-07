@@ -1,4 +1,4 @@
-export default function knowledgebaseSiteRoute(app, fetch, config) {
+export default function knowledgebaseSiteRoute(app, fetch, config, features) {
 
     // 
     // Knowledgebase
@@ -19,7 +19,8 @@ export default function knowledgebaseSiteRoute(app, fetch, config) {
             sectionApiData: sectionApiData,
             articleApiData: articleApiData,
             request: request,
-            fetch: fetch
+            fetch: fetch,
+            features: features
         });
     });
 
@@ -38,7 +39,8 @@ export default function knowledgebaseSiteRoute(app, fetch, config) {
             "pageTitle": articleApiData.data[0].articleName,
             config: config,
             articleApiData: articleApiData,
-            request: request
+            request: request,
+            features: features
         });
     });
 
