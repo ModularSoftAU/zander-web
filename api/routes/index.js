@@ -28,7 +28,7 @@ export default (app, client, moment, config, db, features, lang) => {
     knowledgebaseApiRoute(app, config, db, features, lang);
     punishmentApiRoute(app, config, db, features, lang);
     rankApiRoute(app, config, db, features, lang);
-    reportApiRoute(app, config, db, features, lang);
+    reportApiRoute(app, client, config, db, features, lang);
     serverApiRoute(app, config, db, features, lang);
     sessionApiRoute(app, config, db, features, lang);
     shoppingDistrictDirectoryApiRoute(app, config, db, features, lang);
