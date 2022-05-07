@@ -153,7 +153,7 @@ CREATE TABLE servers (
 
 CREATE TABLE gameSessions (
 	sessionId INT NOT NULL AUTO_INCREMENT,
-    uuid VARCHAR(36) NOT NULL,
+    userId INT NOT NULL,
     sessionStart DATETIME NOT NULL DEFAULT NOW(),
     sessionEnd DATETIME,
     ipAddress VARCHAR(45),

@@ -1,15 +1,17 @@
-const { MessageEmbed } = require('discord.js');
-const config = require('../../config.json');
+import { Command } from '@sapphire/framework';
+import { MessageEmbed } from 'discord.js';
+import config from '../config.json' assert {type: "json"};
 
-module.exports = {
-  name: 'policy',
-  description: 'List all Network policies for the user to view.',
-  category: 'Information',
-  slash: true,
-  guildOnly: true,
-  testOnly: false,
+export class PolicyCommand extends Command {
+  constructor(context, options) {
+    super(context, {
+      ...options,
+      name: 'policy',
+      description: 'Display Network policy (Rules, Terms, Privacy and Refund)'
+    });
+  }
 
-  callback: ({ interaction }) => {
+  async messageRun(message) {
     try {
       const embed = new MessageEmbed()
       .setTitle(`Network Policy`)
@@ -20,7 +22,7 @@ module.exports = {
       .addField(`Privacy Policy`, `${config.siteConfiguration.siteAddress}/privacy`)
       .addField(`Refund Policy`, `${config.siteConfiguration.siteAddress}/refund`)
 
-      interaction.reply({
+      message.reply({
         embeds: [embed],
         empheral: true
       });                      
@@ -28,5 +30,5 @@ module.exports = {
       console.log(error);
       return                      
     }
-  },
+  }
 }
