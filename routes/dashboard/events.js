@@ -1,4 +1,4 @@
-export default function dashboardEventSiteRoute(app, fetch, moment, config, db) {
+export default function dashboardEventSiteRoute(app, fetch, moment, config, db, features) {
     // 
     // Events
     // 
@@ -11,7 +11,8 @@ export default function dashboardEventSiteRoute(app, fetch, moment, config, db) 
             "pageTitle": `Dashboard - Events`,
             config: config,
             apiData: apiData,
-            moment: moment
+            moment: moment,
+            features: features
         });
     });
 
@@ -28,7 +29,8 @@ export default function dashboardEventSiteRoute(app, fetch, moment, config, db) 
             "pageTitle": `Dashboard - Event Creator`,
             config: config,
             serverApiData: serverApiData.data,
-            type: "create"
+            type: "create",
+            features: features
         });
     });
 
@@ -52,7 +54,8 @@ export default function dashboardEventSiteRoute(app, fetch, moment, config, db) 
             eventApiData: eventApiData.data[0],
             serverApiData: serverApiData.data,
             moment: moment,
-            type: "edit"
+            type: "edit",
+            features: features
         });
     });
 

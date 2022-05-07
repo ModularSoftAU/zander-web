@@ -5,13 +5,13 @@ import dashboardRanksSiteRoute from './ranks'
 import dashboardServersSiteRoute from './servers'
 import dashboardApplicationsSiteRoute from './applications'
 
-export default function dashbordSiteRoutes(app, fetch, moment, config, db) {
+export default function dashbordSiteRoutes(app, fetch, moment, config, db, features) {
   
-    dashboardSiteRoute(app, config);
-    dashboardEventSiteRoute(app, fetch, moment, config, db);
-    dashboardKnowledgebaseSiteRoute(app, fetch, moment, config, db);
-    dashboardRanksSiteRoute(app, fetch, config);
-    dashboardServersSiteRoute(app, fetch, config, db);
-    dashboardApplicationsSiteRoute(app, fetch, config, db);
+    dashboardSiteRoute(app, config, features);
+    dashboardEventSiteRoute(app, fetch, moment, config, db, features);
+    dashboardKnowledgebaseSiteRoute(app, fetch, moment, config, db, features);
+    dashboardRanksSiteRoute(app, fetch, config, features);
+    dashboardServersSiteRoute(app, fetch, config, db, features);
+    dashboardApplicationsSiteRoute(app, fetch, config, db, features);
 
 }

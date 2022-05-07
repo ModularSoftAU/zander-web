@@ -1,4 +1,4 @@
-export default function dashboardApplicationsSiteRoute(app, fetch, config) {
+export default function dashboardApplicationsSiteRoute(app, fetch, config, features) {
 
     // 
     // Applications
@@ -13,7 +13,8 @@ export default function dashboardApplicationsSiteRoute(app, fetch, config) {
         reply.view('dashboard/applications/list', {
             "pageTitle": `Dashboard - Applications`,
             config: config,
-            apiData: apiData
+            apiData: apiData,
+            features: features
         });
     });
 
@@ -21,7 +22,8 @@ export default function dashboardApplicationsSiteRoute(app, fetch, config) {
         reply.view('dashboard/applications/editor', {
             "pageTitle": `Dashboard - Application Creator`,
             config: config,
-            type: "create"
+            type: "create",
+            features: features
         });
     });
 
@@ -37,7 +39,8 @@ export default function dashboardApplicationsSiteRoute(app, fetch, config) {
             "pageTitle": `Dashboard - Application Editor`,
             config: config,
             applicationApiData: applicationApiData.data[0],
-            type: "edit"
+            type: "edit",
+            features: features
         });
     });
 

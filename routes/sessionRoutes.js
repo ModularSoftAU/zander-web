@@ -9,7 +9,8 @@ export default function sessionSiteRoute(app, fetch, moment, config, db) {
         reply.view('session/login', {
             "pageTitle": `Login`,
             config: config,
-            request: request
+            request: request,
+            features: features
         });
     });
 
@@ -17,7 +18,8 @@ export default function sessionSiteRoute(app, fetch, moment, config, db) {
         reply.view('session/register', {
             "pageTitle": `Register`,
             config: config,
-            request: request
+            request: request,
+            features: features
         });
     });
 

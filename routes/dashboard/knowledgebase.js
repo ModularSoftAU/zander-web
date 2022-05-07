@@ -1,4 +1,4 @@
-export default function dashboardKnowledgebaseSiteRoute(app, fetch, moment, config, db) {
+export default function dashboardKnowledgebaseSiteRoute(app, fetch, moment, config, db, features) {
 
     // 
     // Knowledgebase
@@ -18,7 +18,8 @@ export default function dashboardKnowledgebaseSiteRoute(app, fetch, moment, conf
             "pageTitle": `Dashboard - Knowledgebase`,
             config: config,
             articleApiData: articleApiData,
-            sectionApiData: sectionApiData
+            sectionApiData: sectionApiData,
+            features: features
         });
     });
 
@@ -30,7 +31,8 @@ export default function dashboardKnowledgebaseSiteRoute(app, fetch, moment, conf
         reply.view('dashboard/knowledgebase/sectionEditor', {
             "pageTitle": `Dashboard - Section Creator`,
             config: config,
-            type: "create"
+            type: "create",
+            features: features
         });
     });
 
@@ -48,7 +50,8 @@ export default function dashboardKnowledgebaseSiteRoute(app, fetch, moment, conf
             "pageTitle": `Dashboard - Section Editor`,
             config: config,
             kbApiData: kbApiData.data[0],
-            type: "edit"
+            type: "edit",
+            features: features
         });
     });
 
@@ -95,7 +98,8 @@ export default function dashboardKnowledgebaseSiteRoute(app, fetch, moment, conf
             "pageTitle": `Dashboard - Article Creator`,
             config: config,
             sectionApiData: kbSectionApiData.data,
-            type: "create"
+            type: "create",
+            features: features
         });
     });
 
@@ -118,7 +122,8 @@ export default function dashboardKnowledgebaseSiteRoute(app, fetch, moment, conf
             config: config,
             kbApiData: kbApiData.data[0],
             sectionApiData: kbSectionApiData.data,
-            type: "edit"
+            type: "edit",
+            features: features
         });
     });
 

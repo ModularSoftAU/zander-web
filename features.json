@@ -1,19 +1,20 @@
 {
     "announcements": true,
     "appeals": true,
-    "applications": true,
+    "applications": false,
+    "communitycreations": false,
     "discord": true,
     "events": true,
     "friends": true,
-    "knowledgebase": true,
+    "knowledgebase": false,
     "punishments": true,
     "ranks": true,
     "report": true,
-    "servers": true,
+    "servers": false,
     "sessions": true,
-    "shops": true,
+    "shops": false,
     "user": true,
     "userProfiles": true,
     "vote": true,
-    "web": true
+    "web": false
 }
