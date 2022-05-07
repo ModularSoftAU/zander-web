@@ -1,4 +1,4 @@
-export default function communityCreationSiteRoute(app, fetch, moment, config, features) {
+export default function communityCreationSiteRoute(app, fetch, moment, config, features, lang) {
 
     // 
     // Community Creations

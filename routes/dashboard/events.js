@@ -1,4 +1,4 @@
-export default function dashboardEventSiteRoute(app, fetch, moment, config, db, features) {
+export default function dashboardEventSiteRoute(app, fetch, moment, config, db, features, lang) {
     // 
     // Events
     // 

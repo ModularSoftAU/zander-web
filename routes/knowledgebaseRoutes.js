@@ -1,4 +1,4 @@
-export default function knowledgebaseSiteRoute(app, fetch, config, features) {
+export default function knowledgebaseSiteRoute(app, fetch, config, features, lang) {
 
     // 
     // Knowledgebase

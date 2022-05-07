@@ -1,4 +1,4 @@
-export default function dashbordSiteRoute(app, config, features) {
+export default function dashbordSiteRoute(app, config, features, lang) {
 
     // 
     // Dashboard

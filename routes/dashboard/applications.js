@@ -1,4 +1,4 @@
-export default function dashboardApplicationsSiteRoute(app, fetch, config, features) {
+export default function dashboardApplicationsSiteRoute(app, fetch, config, features, lang) {
 
     // 
     // Applications
