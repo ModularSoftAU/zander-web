@@ -90,4 +90,16 @@ export default function webApiRoute(app, config, db, features, lang) {
         res.send({ success: true });
     });
 
+    app.get(baseEndpoint + '/configuration', async function(req, res) {
+        // There is no isFeatureEnabled() due to being a critical endpoint.
+
+        return res.send({
+            success: true,
+            data: {
+                "siteName": config.siteConfiguration.siteName,
+                "siteAddress": config.siteConfiguration.siteAddress
+            }
+        });
+    });
+
 }
