@@ -1,4 +1,4 @@
-export default function dashboardEventSiteRoute(app, fetch, moment, config, db, features, lang) {
+export default function dashboardEventSiteRoute(app, client, fetch, moment, config, db, features, lang) {
     // 
     // Events
     // 
@@ -63,7 +63,7 @@ export default function dashboardEventSiteRoute(app, fetch, moment, config, db, 
     // Events
     // Delete an existing event
     // 
-    app.post('/dashboard/events/delete', async function(request, reply, db) {
+    app.post('/dashboard/events/delete', async function(request, reply) {
         // db object can't reach here?
         const eventId = request.body.eventId;
 
@@ -114,7 +114,7 @@ export default function dashboardEventSiteRoute(app, fetch, moment, config, db, 
                 // It will also create a scheduled event and amend the link to the event announcement.
 
                 try {
-                    const guild = DiscordClient.guilds.cache.get(config.discord.serverId);
+                    const guild = client.guilds.cache.get(config.discord.serverId);
                     const eventInfo = results[1][0];
 
                     db.query(`SELECT * FROM events where eventId=? AND published=?; select name, icon, eventDateTime, information, (select name from servers where serverId=hostingServer) as 'hostingServerName' from events where eventId=?; UPDATE events SET published=? WHERE eventId=?`, [eventId, `1`, eventId, `1`, eventId], function(error, results, fields) {

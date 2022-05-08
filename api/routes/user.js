@@ -15,7 +15,7 @@ export default function userApiRoute(app, config, db, features, lang) {
                 if (results[0]) {
                     return res.send({
                         success: false,
-                        message: `This user already exists (somehow), terminating creation.`
+                        message: `This user already exists, terminating creation.`
                     });
                 }
 

@@ -4,9 +4,9 @@ import policySiteRoutes from './policyRoutes'
 import communityCreationsRoutes from './communityCreationsRoutes'
 import sessionRoutes from './sessionRoutes'
 
-export default function applicationSiteRoutes(app, fetch, moment, config, db, features, lang) {
+export default function applicationSiteRoutes(app, client, fetch, moment, config, db, features, lang) {
 
-    dashboardSiteRoutes(app, fetch, moment, config, db, features, lang);
+    dashboardSiteRoutes(app, client, fetch, moment, config, db, features, lang);
     knowledgebaseSiteRoutes(app, fetch, config, db, features, lang);
     communityCreationsRoutes(app, fetch, moment, config, db, features, lang);
     sessionRoutes(app, fetch, moment, config, db, features, lang);
