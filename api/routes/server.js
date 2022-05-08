@@ -1,6 +1,6 @@
 import {isFeatureEnabled, required, optional} from '../common'
 
-export default function serverApiRoute(app, config, db) {
+export default function serverApiRoute(app, config, db, features, lang) {
     const baseEndpoint = config.siteConfiguration.apiRoute + '/server';
 
     // TODO: Update docs
