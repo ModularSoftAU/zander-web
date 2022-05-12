@@ -28,9 +28,11 @@
         "sessionCookieSecret": "nnjFYawzxPJCgEs7tm4kYQdZKv9EJ5b4"
     },
     "discord": {
-        "apiKey": "OTI1NjMyMjc0ODUzMTM0NDA3.Ycv8Ow.4agIwwI5RMKAh4Cq1KoCekSQDcE",
-        "serverId": "899441191416901632",
+        "apiKey": "OTI1NjMyMjc0ODUzMTM0NDA3.Ycv8Ow.HSvby5uYnpTaAlb8ijxsgz0LRcM",
+        "prefix": "!",
+        "guildId": "899441191416901632",
         "channels": {
+            "welcomeChannel": "926380663953821736",
             "networkChatLog": "925702393423859724",
             "adminLog": "926380052155867146",
             "eventAnnouncements": "926380005854957608",
@@ -38,7 +40,7 @@
             "punishments": "936889228598587392"
         },
         "roles": {
-            "verified": ""
+            "verified": "926259482319794246"
         }
     },
     "database": {

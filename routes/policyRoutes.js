@@ -1,4 +1,4 @@
-export default function policySiteRoute(app, config) {
+export default function policySiteRoute(app, config, features, lang) {
 
     app.get('/terms', async function(request, reply) {
         reply.view('policy/termsOfService', {

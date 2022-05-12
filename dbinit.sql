@@ -25,6 +25,9 @@ CREATE TABLE users (
 	INDEX users (uuid(8))
 );
 
+INSERT INTO users (uuid, username, disabled)
+VALUES ('f78a4d8d-d51b-4b39-98a3-230f2de0c670','CONSOLE',0);
+
 CREATE VIEW zanderdev.luckPermsPlayers AS
 SELECT * FROM cfcdev_luckperms.luckperms_players;
 
@@ -150,7 +153,7 @@ CREATE TABLE servers (
 
 CREATE TABLE gameSessions (
 	sessionId INT NOT NULL AUTO_INCREMENT,
-    uuid VARCHAR(36) NOT NULL,
+    userId INT NOT NULL,
     sessionStart DATETIME NOT NULL DEFAULT NOW(),
     sessionEnd DATETIME,
     ipAddress VARCHAR(45),

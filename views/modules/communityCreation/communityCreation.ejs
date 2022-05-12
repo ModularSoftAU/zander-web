@@ -11,42 +11,81 @@
 
 <section class="section">
     <div class="container-fluid">
+
+      <div class="container">
+        <% if (apiData.success == false) { %>
+          <%- include("../../partials/alert.ejs", {
+            alertType: "danger",
+            content: apiData.message
+          }) %>
+        <% } %>
+      </div>
+      
         <div class="row">
-            <!-- Image -->
-            <div class="card col-sm-4 communityCreationItem">
-              <img class="card-img-top" src="https://media.discordapp.net/attachments/869465358086570054/921260594982686720/2021-12-17_14.57.59.png" alt="Card image cap">
-              <div class="card-body">
-                <h5 class="card-title">The Mine</h5>
-                <p class="card-text">This is a description of a restyled villager house made by a player on the servers.</p>
-                <button type="button" class="btn btn-sm btn-outline-primary"><i class="far fa-thumbs-up"></i> Like (42)</button>
-                <small><img style="padding-right: 5px;" src="https://crafatar.com/avatars/0af03841-2894-434c-a4be-965b317244e8?helm" height="20px" draggable="false"> Submitted by <a href="http://localhost:8080/profile/shadowolfyt">shadowolfyt</a></small>
-              </div>
-            </div>
 
-            <!-- Image -->
-            <div class="card col-sm-4 communityCreationItem">
-              <img class="card-img-top" src="https://media.discordapp.net/attachments/869465358086570054/921260594982686720/2021-12-17_14.57.59.png" alt="Card image cap">
-              <div class="card-body">
-                <h5 class="card-title">The Mine</h5>
-                <p class="card-text">This is a description of a restyled villager house made by a player on the servers.</p>
-                <button type="button" class="btn btn-sm btn-outline-primary"><i class="far fa-thumbs-up"></i> Like (42)</button>
-                <small><img style="padding-right: 5px;" src="https://crafatar.com/avatars/0af03841-2894-434c-a4be-965b317244e8?helm" height="20px" draggable="false"> Submitted by <a href="http://localhost:8080/profile/shadowolfyt">shadowolfyt</a></small>
-              </div>
-            </div>
+          <% if (!apiData.success == false) { %>
+            <% apiData.data.forEach(function (creation) { %>
+              <div class="col-sm-4" style="padding: 10px; padding-bottom: 5px;">
+                <!-- Image Slider -->
+                <div id="carousel<%= creation.creationId %>" class="carousel slide" data-interval="false">
+                  <div class="carousel-inner">
+					<% creation.imageLinks.forEach(function (imageLink, index) { %>
+						<div class="carousel-item<%= (index == 0 ? ' active' : '') %>">
+							<img class="d-block w-100" src="<%= imageLink %>" alt="Slide <%= (index + 1) %>">
+						</div>
+					<% }) %>
+                    
+                  </div>
+                  <a class="carousel-control-prev" href="#carousel<%= creation.creationId %>" role="button" data-slide="prev">
+                    <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                    <span class="sr-only">Previous</span>
+                  </a>
+                  <a class="carousel-control-next" href="#carousel<%= creation.creationId %>" role="button" data-slide="next">
+                    <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                    <span class="sr-only">Next</span>
+                  </a>
+                </div>
 
-            <!-- Image -->
-            <div class="card col-sm-4 communityCreationItem">
-              <img class="card-img-top" src="https://media.discordapp.net/attachments/869465358086570054/921260594982686720/2021-12-17_14.57.59.png" alt="Card image cap">
-              <div class="card-body">
-                <h5 class="card-title">The Mine</h5>
-                <p class="card-text">This is a description of a restyled villager house made by a player on the servers.</p>
-                <button type="button" class="btn btn-sm btn-outline-primary"><i class="far fa-thumbs-up"></i> Like (42)</button>
-                <small><img style="padding-right: 5px;" src="https://crafatar.com/avatars/0af03841-2894-434c-a4be-965b317244e8?helm" height="20px" draggable="false"> Submitted by <a href="http://localhost:8080/profile/shadowolfyt">shadowolfyt</a></small>
+                <!-- <img 
+                src="https://media.discordapp.net/attachments/869465358086570054/921260594982686720/2021-12-17_14.57.59.png" 
+                class="card-img-top"> -->
+
+                <div class="card-body">
+                  <h5 class="card-title"><%= creation.creationName %></h5>
+                  <p class="card-text"><small><%= creation.creationDescription %></small></p>
+                </div>
+                <div class="card-footer text-muted">
+                  <small>Submitted by <a href="/profile/<%= creation.username %>"><%= creation.username %></a> <%- moment(creation.submittedDate).startOf('day').fromNow(); %></small>
+                  <br>
+
+                  <div class="btn-group">
+                    <% if (request.session.authenticated) { %>
+                      <% if (creation.approved === 0) { %>
+                        <small><i class="fas fa-info-square" style="color: blue;"></i> This creation won't be public until this creation is Approved.</small>
+                        <form action="<%= config.siteConfiguration.siteAddress %><%= config.siteConfiguration.apiRoute %>/communitycreation/approve" method="post">
+                          <input type="hidden" name="creationId" value="<%= creation.creationId %>">
+                          <button type="submit" class="btn btn-sm btn-outline-success"><i class="far fa-thumbs-up"></i> Approve</button>
+                        </form>
+    
+                        <form action="<%= config.siteConfiguration.siteAddress %><%= config.siteConfiguration.apiRoute %>/communitycreation/delete" method="post">
+                          <input type="hidden" name="creationId" value="<%= creation.creationId %>">
+                          <button type="submit" class="btn btn-sm btn-outline-danger"><i class="far fa-thumbs-up"></i> Deny</button>
+                        </form>
+                      <% } else { %>
+                        <form action="<%= config.siteConfiguration.siteAddress %><%= config.siteConfiguration.apiRoute %>/communitycreation/like" method="post">
+                          <input type="hidden" name="creationId" value="<%= creation.creationId %>">
+                          <button type="submit" class="btn btn-sm btn-outline-primary"><i class="far fa-thumbs-up"></i> Like (???)</button>
+                        </form>
+                      <% } %>
+                    <% } %>
+                  </div>
+                </div>
               </div>
-            </div>
+            <% }) %>
+          <% } %>
         </div>
+		<%- include("../../partials/pagination.ejs") %>
     </div>
 </section>
-
 
 <%- include("../../modules/footer.ejs") %>  

@@ -1,6 +1,7 @@
 import {isFeatureEnabled, required, optional} from '../common'
+import { MessageEmbed } from 'discord.js';
 
-export default function reportApiRoute(app, config, db, features, lang) {
+export default function reportApiRoute(app, client, config, db, features, lang) {
     const baseEndpoint = config.siteConfiguration.apiRoute + '/report';
 
     app.get(baseEndpoint + '/get', async function(req, res) {
@@ -131,16 +132,52 @@ export default function reportApiRoute(app, config, db, features, lang) {
         const reporterUser = required(req.body, "reporterUser", res);
         const reason = required(req.body, "reason", res);
         const evidence = optional(req.body, "evidence");
+        const platform = optional(req.body, "platform");
         const server = required(req.body, "server", res);
 
         try {
-            db.query(`INSERT INTO reports (reportedUserId, reporterUserId, reason, evidence, server) VALUES ((SELECT userId FROM users WHERE username=?), (SELECT userId FROM users WHERE username=?), ?, ?, (SELECT serverId FROM servers WHERE name=?))`, [reportedUser, reporterUser, reason, evidence, server], function(error, results, fields) {
+            // Insert new report into database
+            db.query(`
+                INSERT INTO reports 
+                    (
+                        reportedUserId, 
+                        reporterUserId, 
+                        reason, 
+                        platform, 
+                        evidence, 
+                        server
+                    ) VALUES (
+                        (SELECT userId FROM users WHERE username=?), 
+                        (SELECT userId FROM users WHERE username=?), 
+                        ?, 
+                        ?, 
+                        ?, 
+                        (SELECT serverId FROM servers WHERE name=?)
+                    )`, [reportedUser, reporterUser, reason, platform, evidence, server], function(error, results, fields) {
                 if (error) {
                     return res.send({
                         success: false,
                         message: `${error}`
                     });
                 }
+
+                const guild = client.guilds.cache.get(config.discord.guildId);
+                const channel = guild.channels.cache.get(config.discord.channels.reports);
+
+                const embed = new MessageEmbed()
+                    .setTitle(`Incoming ${platform} Report from ${reporterUser}`)
+                    .setColor('#FFA500')
+
+                    .addField(`Reported User`, `${reportedUser}`, true)
+                    .addField(`Reporter User`, `${reporterUser}`, true)
+                    .addField(`Reason`, `${reason}`)
+                    .addField(`Server`, `${server}`)
+                    .addField(`Evidence`, `${evidence}`)
+
+                channel.send({
+                    embeds: [embed]
+                }); 
+
                 return res.send({
                     success: true,
                     message: `The report against ${reportedUser} has been successfully created!`

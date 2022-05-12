@@ -6,29 +6,47 @@
 <%- include("../../modules/navigationBar.ejs") %>
 
 <%- include("../../partials/miniHeader.ejs", {
-  headerTitle: "Submit A Creation",
+  headerTitle: "Submit a Creation",
   backgroundImage: "../../images/banner/AronCrystalBuilding.png"
 }) %>
 
 <section class="section">
   <div class="container">
-    <form action="" method="post">
-      <div class="form-group">
-        <h3>Creation Information</h3>
-          <label for="creationName">Creation Name</label>
-          <input type="text" class="form-control" name="creationName">
 
-          <label for="creationDescription">Creation Description</label>
-          <input type="text" class="form-control" name="creationDescription">
+    <form method="post" action="<%= config.siteConfiguration.siteAddress %><%= config.siteConfiguration.apiRoute %>/communitycreation/submit">
+      <input type="hidden" name="creatorId" value="<%= request.session.user.userId %>">
+
+      <h3>Creation Information</h3>
+      <!-- Creation Name -->
+      <div class="mb-3">
+        <label for="creationName" class="form-label">Creation Name</label>
+          <input type="text" class="form-control" name="creationName" required>
+          <small class="disabled">The name for your creation.</small>
       </div>
-      <div class="form-group">
-        <h3>Creation Submission Content</h3>
-        <small>List a image or video item. If there is an additional item, select the green plus.</small>
-        <br>
 
-        <!-- After this needs a multi section implementation -->
-
+      <!-- Creation Description -->
+      <div class="mb-3">
+        <label for="creationDescription" class="form-label">Creation Description</label>
+          <textarea class="form-control" style="height: 150px;" rows="10" name="creationDescription" placeholder="Text input"></textarea>
+          <small class="disabled">A description for your creation.</small>
       </div>
+
+      <h3>Creation Images</h3>
+      <!-- Creation Images -->
+      <input class="form-control input-default" type="text" name="creationImage" /><br>
+      <input class="form-control input-default" type="text" name="creationImage" /><br>
+      <input class="form-control input-default" type="text" name="creationImage" /><br>
+      <input class="form-control input-default" type="text" name="creationImage" /><br>
+      <input class="form-control input-default" type="text" name="creationImage" /><br>
+
+      <small class="disabled">Attach all of your creation images here. Please upload the images to <a href="https://imgur.com/">Imgur</a> as that is the only site we take uploads from.<br>You can upload a maximum of 5.</small>
+
+      <br><br>
+      <button type="submit" class="btn btn-primary">Submit Creation</button>
+    </form>
+
+  </div>
+</section>
 
       <button type="submit" class="btn btn-primary">Submit</button>
     </form>
