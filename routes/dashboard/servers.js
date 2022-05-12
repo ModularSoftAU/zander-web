@@ -1,4 +1,4 @@
-export default function dashboardServersSiteRoute(app, fetch, config) {
+export default function dashboardServersSiteRoute(app, fetch, config, features, lang) {
 
     // 
     // Servers
@@ -8,12 +8,11 @@ export default function dashboardServersSiteRoute(app, fetch, config) {
         const response = await fetch(fetchURL);
         const apiData = await response.json();
 
-        console.log(apiData);
-
         reply.view('dashboard/servers/list', {
             "pageTitle": `Dashboard - Servers`,
             config: config,
-            apiData: apiData
+            apiData: apiData,
+            features: features
         });
     });
 
@@ -21,7 +20,8 @@ export default function dashboardServersSiteRoute(app, fetch, config) {
         reply.view('dashboard/servers/editor', {
             "pageTitle": `Dashboard - Server Creator`,
             config: config,
-            type: "create"
+            type: "create",
+            features: features
         });
     });
 
@@ -31,13 +31,12 @@ export default function dashboardServersSiteRoute(app, fetch, config) {
         const response = await fetch(fetchURL);
         const serverApiData = await response.json();
 
-        console.log(serverApiData);
-
         reply.view('dashboard/servers/editor', {
             "pageTitle": `Dashboard - Server Editor`,
             config: config,
             serverApiData: serverApiData.data[0],
-            type: "edit"
+            type: "edit",
+            features: features
         });
     });
 

@@ -1,6 +1,6 @@
 import {isFeatureEnabled, required, optional} from '../common'
 
-export default function serverApiRoute(app, config, db) {
+export default function serverApiRoute(app, config, db, features, lang) {
     const baseEndpoint = config.siteConfiguration.apiRoute + '/server';
 
     // TODO: Update docs
@@ -113,6 +113,7 @@ export default function serverApiRoute(app, config, db) {
                         message: `${error}`
                     });
                 }
+
                 return res.send({
                     success: true,
                     message: `The server with the ID of ${serverId} has been successfully updated!`

@@ -1,6 +1,6 @@
 import {isFeatureEnabled, required, optional} from '../common'
 
-export default function communityCreationApiRoute(app, config, db) {
+export default function communityCreationApiRoute(app, config, db, features) {
     const baseEndpoint = config.siteConfiguration.apiRoute + '/communitycreation';
 
     app.get(baseEndpoint + '/get', async function(req, res) {

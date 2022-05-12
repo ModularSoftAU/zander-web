@@ -1,4 +1,4 @@
-export function isFeatureEnabled(isFeatureEnabled, res, lang) {
+export function isFeatureEnabled(isFeatureEnabled, res, features, lang) {
     if (isFeatureEnabled)
         return;
 

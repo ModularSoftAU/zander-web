@@ -1,4 +1,4 @@
-export default function dashboardRanksSiteRoute(app, fetch, config) {
+export default function dashboardRanksSiteRoute(app, fetch, config, features, lang) {
 
     // 
     // Ranks
@@ -15,7 +15,8 @@ export default function dashboardRanksSiteRoute(app, fetch, config) {
         reply.view('dashboard/ranks/get', {
             "pageTitle": `Dashboard - Ranks`,
             config: config,
-            apiData: apiData
+            apiData: apiData,
+            features: features
         });
     });
 
@@ -31,7 +32,8 @@ export default function dashboardRanksSiteRoute(app, fetch, config) {
             "pageTitle": `Dashboard - Rank Users`,
 			"rankDisplayName": rankDisplayName,
             config: config,
-			apiData: apiData
+			apiData: apiData,
+            features: features
         });
     });
 

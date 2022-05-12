@@ -1,4 +1,4 @@
-export default function communityCreationSiteRoute(app, fetch, moment, config) {
+export default function communityCreationSiteRoute(app, fetch, moment, config, features, lang) {
 
     // 
     // Community Creations
@@ -13,7 +13,8 @@ export default function communityCreationSiteRoute(app, fetch, moment, config) {
             config: config,
             request: request,
             moment: moment,
-            apiData: apiData
+            apiData: apiData,
+            features: features
         });
     });
 
@@ -21,7 +22,8 @@ export default function communityCreationSiteRoute(app, fetch, moment, config) {
         reply.view('modules/communityCreation/submit', {
             "pageTitle": `Submit a Community Creation`,
             config: config,
-            request: request
+            request: request,
+            features: features
         });
     });
 

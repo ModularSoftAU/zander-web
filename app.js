@@ -1,7 +1,7 @@
 import packageData from './package.json' assert {type: "json"};
-import DiscordJS from 'discord.js'
 import moment from 'moment'
 import fetch from 'node-fetch'
+import { SapphireClient } from '@sapphire/framework';
 
 import fastify from 'fastify';
 import fastifySession from 'fastify-session'
@@ -19,60 +19,29 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 // 
-// Discord Related
+// Discord
 // 
-const { Intents } = DiscordJS
+const client = new SapphireClient({
+    intents: ['GUILDS', 'GUILD_MESSAGES'],
+    presence: {
+        status: "online",
+        activities: [{
+            name: `Type ${config.discord.prefix}help for more.`,
+            type: 'PLAYING',
+            url: config.siteConfiguration.siteAddress
+        }]
+    },
+    loadMessageCommandListeners: true,
+    defaultPrefix: config.discord.prefix,
+});
 
-const DiscordClient = new DiscordJS.Client({
-    // These intents are recommended for the built in help menu
-    intents: [
-        Intents.FLAGS.GUILDS,
-        Intents.FLAGS.GUILD_MEMBERS,
-        Intents.FLAGS.GUILD_MESSAGES,
-        Intents.FLAGS.DIRECT_MESSAGES,
-        Intents.FLAGS.GUILD_MESSAGE_REACTIONS,
-    ],
-})
+client.login(config.discord.apiKey);
 
-DiscordClient.on('ready', () => {
-    new WOKCommands(DiscordClient, {
-            // The name of the local folder for your command files
-            commandsDir: path.join(__dirname, 'discord/commands'),
-
-            // The name of the local folder for your feature files
-            featuresDir: path.join(__dirname, 'discord/features'),
-
-            // If WOKCommands warning should be shown or not, default true
-            showWarns: false,
-
-            // How many seconds to keep error messages before deleting them
-            // -1 means do not delete, defaults to -1
-            delErrMsgCooldown: -1,
-
-            // If your commands should not be ran by a bot, default false
-            ignoreBots: true,
-
-            // If interactions should only be shown to the one user
-            // Only used for when WOKCommands sends an interaction response
-            // Default is true
-            ephemeral: true,
-
-            typeScript: true,
-
-            // What server/guild IDs are used for testing only commands & features
-            // Can be a single string if there is only 1 ID
-            testServers: ['899441191416901632', '581056239312568332'],
-
-            // User your own ID
-            // If you only have 1 ID then you can pass in a string instead
-            botOwners: ['169978063478587392'],
-
-            // Provides additional debug logging
-            debug: false
-        })
-})
-
-// DiscordClient.login(config.discord.apiKey);
+//
+// Cron Jobs
+//
+import('./cron/daily.js');
+// import('./cron/monthly.js')(client);
 
 // 
 // Website Related
@@ -129,7 +98,7 @@ const buildApp = async () => {
     app.register((instance, options, next) => {
         // API routes (Token authenticated)
         instance.addHook('preValidation', verifyToken);
-        apiRoutes(instance, DiscordClient, moment, config, db, features, lang);
+        apiRoutes(instance, client, moment, config, db, features, lang);
         next();
     });
 
@@ -144,7 +113,7 @@ const buildApp = async () => {
 
     app.register((instance, options, next) => {
         // Routes
-        siteRoutes(instance, fetch, moment, config, db, features, lang);
+        siteRoutes(instance, client, fetch, moment, config, db, features, lang);
         next();
     });
 
