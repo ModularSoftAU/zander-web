@@ -37,6 +37,12 @@ const client = new SapphireClient({
 
 client.login(config.discord.apiKey);
 
+//
+// Cron Jobs
+//
+import('./cron/daily.js');
+// import('./cron/monthly.js')(client);
+
 // 
 // Website Related
 //
@@ -107,7 +113,7 @@ const buildApp = async () => {
 
     app.register((instance, options, next) => {
         // Routes
-        siteRoutes(instance, fetch, moment, config, db, features, lang);
+        siteRoutes(instance, client, fetch, moment, config, db, features, lang);
         next();
     });
 

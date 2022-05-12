@@ -1,4 +1,4 @@
-export default function dashboardRanksSiteRoute(app, fetch, config, features) {
+export default function dashboardRanksSiteRoute(app, fetch, config, features, lang) {
 
     // 
     // Ranks

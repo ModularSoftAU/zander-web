@@ -1,4 +1,4 @@
-export default function dashboardServersSiteRoute(app, fetch, config, features) {
+export default function dashboardServersSiteRoute(app, fetch, config, features, lang) {
 
     // 
     // Servers
@@ -7,8 +7,6 @@ export default function dashboardServersSiteRoute(app, fetch, config, features) 
         const fetchURL = `${config.siteConfiguration.siteAddress}${config.siteConfiguration.apiRoute}/server/get?visible=all`;
         const response = await fetch(fetchURL);
         const apiData = await response.json();
-
-        console.log(apiData);
 
         reply.view('dashboard/servers/list', {
             "pageTitle": `Dashboard - Servers`,
@@ -32,8 +30,6 @@ export default function dashboardServersSiteRoute(app, fetch, config, features) 
         const fetchURL = `${config.siteConfiguration.siteAddress}${config.siteConfiguration.apiRoute}/server/get?id=${id}`;
         const response = await fetch(fetchURL);
         const serverApiData = await response.json();
-
-        console.log(serverApiData);
 
         reply.view('dashboard/servers/editor', {
             "pageTitle": `Dashboard - Server Editor`,
