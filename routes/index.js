@@ -98,6 +98,23 @@ export default function applicationSiteRoutes(app, client, fetch, moment, config
     });
 
     // 
+    // Report
+    // 
+    app.get('/report', async function(request, reply) {
+        const fetchURL = `${config.siteConfiguration.siteAddress}${config.siteConfiguration.apiRoute}/server/get?visable=true`;
+        const response = await fetch(fetchURL);
+        const serverApiData = await response.json();
+
+        reply.view('report', {
+            "pageTitle": `Report a Player`,
+            config: config,
+            request: request,
+            serverApiData: serverApiData.data,
+            features: features
+        });
+    });
+
+    // 
     // Report Specific
     // 
     app.get('/report/:id', async function(request, reply) {
