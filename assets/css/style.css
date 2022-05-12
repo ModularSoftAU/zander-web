@@ -1528,3 +1528,8 @@ a:focus {
 .kbLinks a {
   color: dodgerblue
 }
+
+/* Community Creations */
+.communityCreationItem {
+  padding: 20px;
+}

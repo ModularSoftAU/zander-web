@@ -459,6 +459,7 @@ CREATE TABLE communityCreationImages (
     creationId INT NOT NULL,
     imageLink TEXT,
     cover BOOLEAN DEFAULT 0,
+	approved BOOLEAN DEFAULT 0,
     position INT,
     PRIMARY KEY (creationImageId),
     INDEX communityCreationImages_cover (cover),
