@@ -3,11 +3,17 @@ export default function communityCreationSiteRoute(app, fetch, moment, config, f
     // 
     // Community Creations
     // 
-    app.get('/communityCreations', async function(request, reply) {
+    app.get('/communityCreations/:page?', async function(request, reply) {
+	const fetchURL = `${config.siteConfiguration.siteAddress}${config.siteConfiguration.apiRoute}/communitycreation/get?page=${request.params.page || 1}`;
+        const response = await fetch(fetchURL);
+        const apiData = await response.json();
+        
         return reply.view('modules/communityCreation/communityCreation', {
             "pageTitle": `Community Creations`,
             config: config,
             request: request,
+            moment: moment,
+            apiData: apiData,
             features: features
         });
     });
