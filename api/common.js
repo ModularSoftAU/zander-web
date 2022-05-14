@@ -10,8 +10,8 @@ export function isFeatureEnabled(isFeatureEnabled, res, features, lang) {
 
 export function required(body, field, res) {
     // Prematurely exits an API request if a required field has not been
-    // defined or not null. If the body is defined then we error as well. This
-    // can happen when no parameters exist.
+    // defined or null. If the body is not defined then we error as well.
+    // This can happen when no parameters exist.
     if (!body || !(field in body))
         return res.send({
             success: false,
