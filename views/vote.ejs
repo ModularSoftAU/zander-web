@@ -51,10 +51,12 @@
         </div>
   
         <table class="table" style="line-height:13px;">
-          <tr>
-            <td>shadowolfyt</td>
-            <td><code>23</code></td>
-          </tr>
+          <% apiData.data.forEach(function (voteUser) { %>
+            <tr>
+              <td><%= voteUser.username %></td>
+              <td><code><%= voteUser.votes %></code></td>
+            </tr>
+          <% }) %>
         </table>
       </div>
     </div>      

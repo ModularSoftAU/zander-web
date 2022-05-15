@@ -318,24 +318,23 @@ CREATE TABLE anticheat (
     CONSTRAINT antichat_userId FOREIGN KEY (userId) REFERENCES users (userId) ON DELETE RESTRICT
 );
 
-CREATE TABLE voteSites (
-	voteSiteId INT NOT NULL AUTO_INCREMENT,
-    serverId INT NOT NULL,
-    name VARCHAR(30),
-    siteUrl TEXT,
-    PRIMARY KEY (voteSiteId),
-    CONSTRAINT voteSites_serverId FOREIGN KEY (serverId) REFERENCES servers (serverId) ON DELETE CASCADE
-);
+-- CREATE TABLE voteSites (
+-- 	voteSiteId INT NOT NULL AUTO_INCREMENT,
+--     serverId INT NOT NULL,
+--     name VARCHAR(30),
+--     siteUrl TEXT,
+--     PRIMARY KEY (voteSiteId),
+--     CONSTRAINT voteSites_serverId FOREIGN KEY (serverId) REFERENCES servers (serverId) ON DELETE CASCADE
+-- );
 
 CREATE TABLE votes (
 	voteId INT NOT NULL AUTO_INCREMENT,
     userId INT NOT NULL,
-    voteSiteId INT NOT NULL,
+    voteSite VARCHAR(50),
     createdDate DATETIME NOT NULL DEFAULT NOW(),
     PRIMARY KEY (voteId),
     INDEX votes_createdDate (createdDate),
-    CONSTRAINT votes_userId FOREIGN KEY (userId) REFERENCES users (userId) ON DELETE CASCADE,
-    CONSTRAINT votes_voteSiteId FOREIGN KEY (voteSiteId) REFERENCES voteSites (voteSiteId) ON DELETE CASCADE
+    CONSTRAINT votes_userId FOREIGN KEY (userId) REFERENCES users (userId) ON DELETE CASCADE
 );
 
 CREATE TABLE announcements (
