@@ -77,11 +77,16 @@ export default function applicationSiteRoutes(app, client, fetch, moment, config
     // Vote
     // 
     app.get('/vote', async function(request, reply) {
+        const fetchURL = `${config.siteConfiguration.siteAddress}${config.siteConfiguration.apiRoute}/vote/get`;
+        const response = await fetch(fetchURL);
+        const apiData = await response.json();
+
         reply.view('vote', {
             "pageTitle": `Vote`,
             config: config,
             request: request,
-            features: features
+            features: features,
+            apiData: apiData
         });
     });
 
