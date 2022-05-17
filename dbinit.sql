@@ -155,6 +155,17 @@ RIGHT JOIN zanderdev.users u ON up.uuid = u.uuid
 WHERE up.permission IS NOT NULL
 	AND up.permission NOT LIKE 'group.%';
 
+CREATE VIEW zanderdev.rankPermissions AS
+SELECT
+	name AS rankSlug,
+    permission,
+    value,
+    server,
+    world,
+    expiry,
+    contexts
+FROM cfcdev_luckperms.luckperms_group_permissions;
+
 CREATE TABLE servers (
 	serverId INT NOT NULL AUTO_INCREMENT,
     name TEXT,
