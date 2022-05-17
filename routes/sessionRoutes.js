@@ -27,6 +27,30 @@ export default function sessionSiteRoute(app, fetch, moment, config, db, feature
       const username = req.body.username;
       const email = req.body.email;
       const password = req.body.password;
+	  
+	  async function getUserRanks(userData, userRanks = null) {
+		  // First call to recursive function, get ranks directly assigned to user
+		  //if (userRanks === null) {
+			db.query(`SELECT * FROM userRanks WHERE userId = ?`, [userData.userId], async function (err, results) {
+				if (err) {
+					throw err;
+				}
+				let userRanks = results;
+				return userRanks;
+			});
+		  //}
+	  }
+	  
+	  function getRankPermissions (userRanks) {
+		  
+	  }
+	  
+	  async function getUserPermissions(userData) {
+		userData.userRanks = await getUserRanks(userData);
+		userData.test = 'test';
+		console.log(userData);
+		return userData;
+	  }
 
       db.query(`select * from users where username=?`, [username], async function (err, results) {
           if (err) {
@@ -45,19 +69,21 @@ export default function sessionSiteRoute(app, fetch, moment, config, db, feature
           const salt = await bcrypt.genSalt();
           let hashedPassword = results[0].password;
 
-          bcrypt.compare(password, hashedPassword, function(err, result) {
+          bcrypt.compare(password, hashedPassword, async function(err, result) {
               if (err) {
                   throw err;
               }
 
               if (result) {
-                  req.session.authenticated = true
-
-                  let userData = results[0];
+				  req.session.authenticated = true;
+				  
+				  let userData = await getUserPermissions(results[0]);
                   req.session.user = {
                       userId: userData.userId,
                       username: userData.username,
                       uuid: userData.uuid,
+					  ranks: userData.userRanks,
+					  test: userData.test
                   };
 
                   return res.redirect(`${config.siteConfiguration.siteAddress}/`)
