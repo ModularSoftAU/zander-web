@@ -164,7 +164,10 @@ SELECT
     world,
     expiry,
     contexts
-FROM cfcdev_luckperms.luckperms_group_permissions;
+FROM cfcdev_luckperms.luckperms_group_permissions gp
+WHERE gp.permission IS NOT NULL
+	AND gp.permission NOT LIKE 'group.%'
+    AND gp.value = 1;
 
 CREATE TABLE servers (
 	serverId INT NOT NULL AUTO_INCREMENT,
