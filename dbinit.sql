@@ -153,7 +153,8 @@ SELECT
 FROM  cfcdev_luckperms.luckperms_user_permissions up
 RIGHT JOIN zanderdev.users u ON up.uuid = u.uuid
 WHERE up.permission IS NOT NULL
-	AND up.permission NOT LIKE 'group.%';
+	AND up.permission NOT LIKE 'group.%'
+    AND up.value = 1;
 
 CREATE VIEW zanderdev.rankPermissions AS
 SELECT
