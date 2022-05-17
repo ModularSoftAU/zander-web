@@ -156,6 +156,15 @@ WHERE up.permission IS NOT NULL
 	AND up.permission NOT LIKE 'group.%'
     AND up.value = 1;
 
+CREATE VIEW zanderdev.rankRanks AS
+SELECT
+	gp.name AS parentRankSlug,
+    SUBSTRING_INDEX(gp.permission, '.', -1) AS rankSlug
+FROM cfcdev_luckperms.luckperms_group_permissions gp
+WHERE gp.permission IS NOT NULL
+	AND gp.permission LIKE 'group.%'
+    AND gp.value = 1;
+
 CREATE VIEW zanderdev.rankPermissions AS
 SELECT
 	name AS rankSlug,
