@@ -139,6 +139,22 @@ FROM cfcdev_luckperms.luckperms_user_permissions lpUserPermissions
 WHERE lpUserPermissions.permission like 'group.%'
 	AND lpUserPermissions.value = 1;
 
+CREATE VIEW zanderdev.userPermissions AS
+SELECT
+    u.uuid,
+    u.userId,
+	up.permission,
+	up.value,
+    up.server,
+    up.world,
+    up.expiry,
+    up.contexts,
+	u.username
+FROM  cfcdev_luckperms.luckperms_user_permissions up
+RIGHT JOIN zanderdev.users u ON up.uuid = u.uuid
+WHERE up.permission IS NOT NULL
+	AND up.permission NOT LIKE 'group.%';
+
 CREATE TABLE servers (
 	serverId INT NOT NULL AUTO_INCREMENT,
     name TEXT,
