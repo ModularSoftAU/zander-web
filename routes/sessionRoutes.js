@@ -29,26 +29,80 @@ export default function sessionSiteRoute(app, fetch, moment, config, db, feature
       const password = req.body.password;
 	  
 	  async function getUserRanks(userData, userRanks = null) {
-		  // First call to recursive function, get ranks directly assigned to user
-		  //if (userRanks === null) {
-			db.query(`SELECT * FROM userRanks WHERE userId = ?`, [userData.userId], async function (err, results) {
+		  return new Promise((resolve) => {
+			  // Call with just userData only get directly assigned Ranks
+			  if (userRanks === null) {
+				db.query(`SELECT rankSlug, title FROM userRanks WHERE userId = ?`, [userData.userId], async function (err, results) {
+					if (err) {
+						throw err;
+					}
+					
+					let userRanks = results.map(a => ({['rankSlug']:a.rankSlug, ['title']:a.title}));
+					resolve(userRanks);
+				});
+			  // Ranks were passed in meaning we are looking for nested ranks
+			  } else {
+				db.query(`SELECT rankSlug FROM rankRanks WHERE FIND_IN_SET(parentRankSlug, ?)`, [userRanks.join()], async function (err, results) {
+					if (err) {
+						throw err;
+					}
+					
+					let childRanks = results.map(a => a.rankSlug);
+					let allRanks = userRanks.concat(childRanks);
+					//Using a set of the array removes duplicates and prevents infinite loops
+					let removeDuplicates = [...new Set(allRanks)];
+					
+					//If after removing duplicates the length of the new list is not longer than the old list we are done simply resolve
+					if(userRanks.length <= removeDuplicates.length) {
+						resolve(removeDuplicates);
+					} else {
+						resolve(getUserRanks(userData, removeDuplicates));
+					}
+				});
+			  }
+		  });
+	  }
+	  
+	  async function getRankPermissions (allRanks) {
+		return new Promise((resolve) => {
+			db.query(`SELECT DISTINCT permission FROM rankpermissions WHERE FIND_IN_SET(rankSlug, ?)`, [allRanks.join()], async function (err, results) {
 				if (err) {
 					throw err;
 				}
-				let userRanks = results;
-				return userRanks;
+				
+				let rankPermissions = results.map(a => a.permission);
+				resolve(rankPermissions);
 			});
-		  //}
-	  }
-	  
-	  function getRankPermissions (userRanks) {
-		  
+		});
 	  }
 	  
 	  async function getUserPermissions(userData) {
+		return new Promise((resolve) => {
+			//Get permissions assigned directly to user
+			db.query(`SELECT DISTINCT permission FROM userPermissions WHERE userId = ?`, [userData.userId], async function (err, results) {
+				if (err) {
+					throw err;
+				}
+				
+				let userPermissions = results.map(a => a.permission);
+				resolve(userPermissions);
+			});
+		});			
+	  }
+	  
+	  async function getPermissions(userData) {
+		//Get directly assigned User Ranks
 		userData.userRanks = await getUserRanks(userData);
-		userData.test = 'test';
-		console.log(userData);
+		//get all the ranks including children
+		let allRanks = await getUserRanks(userData, userData.userRanks.map(a => a.rankSlug));
+		//get permissions assigned to all the ranks
+		let rankPermissions = await getRankPermissions(allRanks);
+		//Get permissions assigned directly to user
+		let userPermissions = await getUserPermissions(userData);
+		//Combine into 1 permissions array
+		let permissions = rankPermissions.concat(userPermissions);
+		//Using a set of the array removes duplicates and prevents infinite loops
+		userData.permissions = [...new Set(permissions)];
 		return userData;
 	  }
 
@@ -77,13 +131,12 @@ export default function sessionSiteRoute(app, fetch, moment, config, db, feature
               if (result) {
 				  req.session.authenticated = true;
 				  
-				  let userData = await getUserPermissions(results[0]);
+				  let userData = await getPermissions(results[0]);
                   req.session.user = {
                       userId: userData.userId,
                       username: userData.username,
                       uuid: userData.uuid,
-					  ranks: userData.userRanks,
-					  test: userData.test
+					  ranks: userData.userRanks
                   };
 
                   return res.redirect(`${config.siteConfiguration.siteAddress}/`)
