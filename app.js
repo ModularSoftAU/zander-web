@@ -2,6 +2,8 @@ import packageData from './package.json' assert {type: "json"};
 import moment from 'moment'
 import fetch from 'node-fetch'
 import { SapphireClient } from '@sapphire/framework';
+import dotenv from 'dotenv';
+dotenv.config()
 
 import fastify from 'fastify';
 import fastifySession from 'fastify-session'
@@ -35,7 +37,7 @@ const client = new SapphireClient({
     defaultPrefix: config.discord.prefix,
 });
 
-client.login(config.discord.apiKey);
+client.login(process.env.discordAPIKey);
 
 //
 // Cron Jobs
@@ -106,7 +108,7 @@ const buildApp = async () => {
     app.register(fastifyCookie);
     app.register(fastifySession, {
         cookieName: 'sessionId',
-        secret: config.siteConfiguration.sessionCookieSecret,
+        secret: process.env.sessionCookieSecret,
         cookie: { secure: false },
         expires: 1800000
     });

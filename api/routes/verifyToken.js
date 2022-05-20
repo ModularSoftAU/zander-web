@@ -11,7 +11,7 @@ export default function verifyToken(req, res, done) {
         return res.status(403).send({ 'error': true });
     }
   
-    if (token === config.siteConfiguration.apiKey) {
+    if (token === process.env.apiKey) {
         // Passed
         done();
     } else {
