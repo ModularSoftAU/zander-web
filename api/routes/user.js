@@ -12,7 +12,19 @@ export default function userApiRoute(app, config, db, features, lang) {
             // shadowolf
             // Check if user does not exist, we do this in case of testing we create multiple users on accident
             db.query(`SELECT * FROM users WHERE uuid=?`, [uuid], function(error, results, fields) {
+                // If user exists, check that they haven't changed their username since their last login.
+                // If they have we update it in the database, so the display name is accurate.
                 if (results[0]) {
+                    db.query(`UPDATE users SET username=? WHERE uuid=?;`, [username, uuid], function(error, results, fields) {
+                        if (error) {
+                            return res.send({
+                                success: false,
+                                message: `${error}`
+                            });
+                        }
+                    });
+
+                    // If the user already exists, we terminate the creation of the user
                     return res.send({
                         success: false,
                         message: `This user already exists, terminating creation.`
@@ -27,6 +39,7 @@ export default function userApiRoute(app, config, db, features, lang) {
                             message: `${error}`
                         });
                     }
+
                     return res.send({
                         success: true,
                         message: `${username} (${uuid}) has been successfully created.`
