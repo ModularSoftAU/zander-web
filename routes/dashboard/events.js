@@ -101,7 +101,7 @@ export default function dashboardEventSiteRoute(app, client, fetch, moment, conf
         const eventId = request.body.eventId;
 
         try {
-            db.query(`SELECT * FROM events where eventId=? AND published=?; select name, icon, eventDateTime, information, (select name from servers where serverId=hostingServer) as 'hostingServerName' from events where eventId=?; UPDATE events SET published=? WHERE eventId=?`, [eventId, `1`, eventId, `1`, eventId], function(error, results, fields) {
+            db.query(`SELECT * FROM events where eventId=? AND published=?; select name, icon, eventDateTime, information, (select name from servers where guildId=hostingServer) as 'hostingServerName' from events where eventId=?; UPDATE events SET published=? WHERE eventId=?`, [eventId, `1`, eventId, `1`, eventId], function(error, results, fields) {
                 if (error) {
                     return reply.send({
                         success: false,
@@ -114,10 +114,10 @@ export default function dashboardEventSiteRoute(app, client, fetch, moment, conf
                 // It will also create a scheduled event and amend the link to the event announcement.
 
                 try {
-                    const guild = client.guilds.cache.get(config.discord.serverId);
+                    const guild = client.guilds.cache.get(config.discord.guildId);
                     const eventInfo = results[1][0];
 
-                    db.query(`SELECT * FROM events where eventId=? AND published=?; select name, icon, eventDateTime, information, (select name from servers where serverId=hostingServer) as 'hostingServerName' from events where eventId=?; UPDATE events SET published=? WHERE eventId=?`, [eventId, `1`, eventId, `1`, eventId], function(error, results, fields) {
+                    db.query(`SELECT * FROM events where eventId=? AND published=?; select name, icon, eventDateTime, information, (select name from servers where guildId=hostingServer) as 'hostingServerName' from events where eventId=?; UPDATE events SET published=? WHERE eventId=?`, [eventId, `1`, eventId, `1`, eventId], function(error, results, fields) {
                         if (error) {
                             return reply.send({
                                 success: false,

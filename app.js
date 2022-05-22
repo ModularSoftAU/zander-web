@@ -27,11 +27,11 @@ const client = new SapphireClient({
     intents: ['GUILDS', 'GUILD_MESSAGES'],
     presence: {
         status: "online",
-        activities: [{
-            name: `Type ${config.discord.prefix}help for more.`,
-            type: 'PLAYING',
-            url: config.siteConfiguration.siteAddress
-        }]
+        // activities: [{
+        //     name: `Type ${config.discord.prefix}help for more.`,
+        //     type: 'PLAYING',
+        //     url: config.siteConfiguration.siteAddress
+        // }]
     },
     loadMessageCommandListeners: true,
     defaultPrefix: config.discord.prefix,
@@ -43,7 +43,8 @@ client.login(process.env.discordAPIKey);
 // Cron Jobs
 //
 import('./cron/daily.js');
-// import('./cron/monthly.js')(client);
+import monthlyCron from './cron/monthly.js';
+setTimeout(function name() { monthlyCron(client); }, 5000)
 
 // 
 // Website Related
@@ -55,6 +56,7 @@ import apiRoutes from './api/routes'
 
 // API token authentication
 import verifyToken from './api/routes/verifyToken'
+import { setTimeout } from 'timers';
 
 //
 // Application Boot

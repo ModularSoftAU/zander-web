@@ -34,7 +34,8 @@
             "adminLog": "926380052155867146",
             "eventAnnouncements": "926380005854957608",
             "reports": "936889292263936030",
-            "punishments": "936889228598587392"
+            "punishments": "936889228598587392",
+            "topVoterBroadcast": "926380005854957608"
         },
         "roles": {
             "verified": "926259482319794246"
