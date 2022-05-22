@@ -46,8 +46,7 @@ export default function voteApiRoute(app, config, db, features, lang) {
         try {
             db.query(`
                 SELECT 
-                    (SELECT username FROM users WHERE votes.userId=users.userId) AS 'username', 
-                    count(*) AS votes 
+                    (SELECT username FROM users WHERE votes.userId=users.userId) AS 'username', count(*) AS votes 
                 FROM votes 
                 GROUP BY username 
                 ORDER BY votes DESC;
