@@ -1,12 +1,12 @@
 <%- include("../modules/header.ejs", {
     pageTitle: pageTitle,
-    pageDescription: "An error has occured and cannot load this page."
+    pageDescription: "This feature on this site has been disabled by the System Administator."
 }) %>
 
 <%- include("../modules/navigationBar.ejs") %>
 
 <%- include("../partials/miniHeader.ejs", {
-  headerTitle: "404: Not Found",
+  headerTitle: "Feature Disabled",
   backgroundImage: "../images/banner/error.png"
 }) %>
 
@@ -16,13 +16,12 @@
       <div class="row">
         <div class="col-sm" style="min-height:500px;">
           <div class="text-center">
-            <img class="floating" style="margin-top:10px;" src="images/session/notFoundSideImage.png" height="400px" draggable="false">
+            <img class="floating" style="margin-top:10px;" src="images/session/errorSideImage.png" height="400px" draggable="false">
           </div>
         </div>
         <div class="col-sm" style="margin-right:100px;">    
-          <h3>Page cannot be found</h3>
-          <p>Looks like you've been greeted by the <b>404 Horse</b>. It's okay, he won't bite, but he will guide you back to safety. Press the big green button...</p>
-          <small>Sorry, the page you are looking for no longer exists or has been moved to another location.</small>
+          <h3>This feature is disabled</h3>
+          <p>This feature has been disabled by the System Administator.</p>
 
           <br><br><br>
           <a href="/"><button type="button" class="btn btn-success">Back to Safety</button></a>

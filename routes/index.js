@@ -241,4 +241,15 @@ export default function applicationSiteRoutes(app, client, fetch, moment, config
         // });
     });
 
+
+    app.get('/noPermission', async function(request, reply) {
+        reply.view('session/noPermission', {
+            "pageTitle": `Feature Disabled`,
+            config: config,
+            moment: moment,
+            request: request,
+            features: features
+        });
+    });
+
 }
