@@ -1,3 +1,6 @@
+import config from '../config.json' assert {type: "json"};
+import request from "node-fetch";
+
 export function isFeatureEnabled(isFeatureEnabled, res, features, lang) {
     if (isFeatureEnabled)
         return;
@@ -17,13 +20,13 @@ export function required(body, field, res) {
             success: false,
             message: `Body requires field '${field}'`
         });
-    
+
     if (body[field] === null)
         return res.send({
             success: false,
             message: `Field ${field} cannot be null`
         });
-    
+
     return body[field];
 }
 
@@ -34,6 +37,18 @@ export function optional(body, field) {
     // cause a null object to be referenced, causing an error.
     if (!body || !(field in body) || body[field] === null)
         return null;
-    
+
     return body[field];
+}
+
+export function isFeatureWebRouteEnabled(isFeatureEnabled, res, features) {
+    if (isFeatureEnabled)
+        return;
+
+    return res.view('session/notFound', {
+        "pageTitle": `Feature Disabled`,
+        config: config,
+        request: request,
+        features: features
+    });
 }
