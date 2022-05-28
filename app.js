@@ -66,12 +66,17 @@ const buildApp = async () => {
     const port = process.env.PORT || config.port || 8080;
 
     // When app can't found route, render the not found on a page, do not provide JSON
-    // app.setNotFoundHandler((error, request, reply) => {        
-    //     reply.view('session/notFound', {
-    //         "pageTitle": `404: Not Found`,
-    //         config: config,
-    //         error: error
-    //     });
+    // app.setNotFoundHandler((error, request, reply) => {
+    //     if (error) {
+    //         reply.code(404);
+    //         reply.view('session/notFound', {
+    //             "pageTitle": `404 : Not Found`,
+    //             config: config,
+    //             moment: moment,
+    //             request: request,
+    //             features: features
+    //         });
+    //     }
     // });
   
     // When app errors, render the error on a page, do not provide JSON
