@@ -51,3 +51,28 @@ export function isFeatureWebRouteEnabled(isFeatureEnabled, res, features) {
         features: features
     });
 }
+
+export function isLoggedIn(request) {
+    if (request.session.user) {
+        return true;
+    } else {
+        return false
+    }
+}
+
+export function hasPermission(permissionNode, request, reply) {
+    if (!isLoggedIn(request)) {
+        return reply.view('session/noPermission', {
+            "pageTitle": `Access Restricted`,
+            config: config,
+            request: request
+        });        
+    }
+
+    const userPermissions = request.session.user.permissions;
+    console.log(userPermissions);
+    if (userPermissions.includes(permissionNode)) {
+        return reply.send(`You have permission`);
+    }   
+
+}

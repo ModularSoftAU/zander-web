@@ -1,14 +1,16 @@
+import { hasPermission } from "../../api/common";
+
 export default function dashboardApplicationsSiteRoute(app, fetch, config, features, lang) {
 
     // 
     // Applications
     // 
     app.get('/dashboard/applications', async function(request, reply) {
+        hasPermission('zander.web.application', request, reply);
+
         const fetchURL = `${config.siteConfiguration.siteAddress}${config.siteConfiguration.apiRoute}/application/get`;
         const response = await fetch(fetchURL);
         const apiData = await response.json();
-
-        console.log(apiData);
 
         reply.view('dashboard/applications/list', {
             "pageTitle": `Dashboard - Applications`,
@@ -19,6 +21,8 @@ export default function dashboardApplicationsSiteRoute(app, fetch, config, featu
     });
 
     app.get('/dashboard/applications/create', async function(request, reply) {
+        hasPermission('zander.web.application', request, reply);
+
         reply.view('dashboard/applications/editor', {
             "pageTitle": `Dashboard - Application Creator`,
             config: config,
@@ -28,12 +32,12 @@ export default function dashboardApplicationsSiteRoute(app, fetch, config, featu
     });
 
     app.get('/dashboard/applications/edit', async function(request, reply) {
+        hasPermission('zander.web.application', request, reply);
+
         const id = request.query.id;
         const fetchURL = `${config.siteConfiguration.siteAddress}${config.siteConfiguration.apiRoute}/application/get?id=${id}`;
         const response = await fetch(fetchURL);
         const applicationApiData = await response.json();
-
-        console.log(applicationApiData);
 
         reply.view('dashboard/applications/editor', {
             "pageTitle": `Dashboard - Application Editor`,

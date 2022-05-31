@@ -132,11 +132,14 @@ export default function sessionSiteRoute(app, fetch, moment, config, db, feature
 				  req.session.authenticated = true;
 				  
 				  let userData = await getPermissions(results[0]);
+				//   console.log(userData);
+
                   req.session.user = {
                       userId: userData.userId,
                       username: userData.username,
                       uuid: userData.uuid,
-					  ranks: userData.userRanks
+					  ranks: userData.userRanks,
+					  permissions: userData.permissions
                   };
 
                   return res.redirect(`${config.siteConfiguration.siteAddress}/`)

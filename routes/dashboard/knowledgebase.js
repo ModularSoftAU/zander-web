@@ -1,9 +1,12 @@
-export default function dashboardKnowledgebaseSiteRoute(app, fetch, moment, config, db, features, lang) {
+import { hasPermission } from "../../api/common";
 
+export default function dashboardKnowledgebaseSiteRoute(app, fetch, moment, config, db, features, lang) {
     // 
     // Knowledgebase
     // 
     app.get('/dashboard/knowledgebase', async function(request, reply) {
+        hasPermission('zander.web.knowledgebase', request, reply);
+
         // KB Article Data
         const articleFetchURL = `${config.siteConfiguration.siteAddress}${config.siteConfiguration.apiRoute}/knowledgebase/article/get`;
         const articleResponse = await fetch(articleFetchURL);
@@ -28,6 +31,8 @@ export default function dashboardKnowledgebaseSiteRoute(app, fetch, moment, conf
     // Create a Section
     // 
     app.get('/dashboard/knowledgebase/section/create', async function(request, reply) {
+        hasPermission('zander.web.knowledgebase', request, reply);
+
         reply.view('dashboard/knowledgebase/sectionEditor', {
             "pageTitle": `Dashboard - Section Creator`,
             config: config,
@@ -41,6 +46,8 @@ export default function dashboardKnowledgebaseSiteRoute(app, fetch, moment, conf
     // Edit a Section
     // 
     app.get('/dashboard/knowledgebase/section/edit', async function(request, reply) {
+        hasPermission('zander.web.knowledgebase', request, reply);
+
         const sectionSlug = request.query.slug;
         const fetchURL = `${config.siteConfiguration.siteAddress}${config.siteConfiguration.apiRoute}/knowledgebase/section/get?slug=${sectionSlug}`;
         const response = await fetch(fetchURL);
@@ -90,6 +97,8 @@ export default function dashboardKnowledgebaseSiteRoute(app, fetch, moment, conf
     // Create an article
     // 
     app.get('/dashboard/knowledgebase/article/create', async function(request, reply) {
+        hasPermission('zander.web.knowledgebase', request, reply);
+
         const fetchURL = `${config.siteConfiguration.siteAddress}${config.siteConfiguration.apiRoute}/knowledgebase/section/get`;
         const response = await fetch(fetchURL);
         const kbSectionApiData = await response.json();
@@ -108,6 +117,8 @@ export default function dashboardKnowledgebaseSiteRoute(app, fetch, moment, conf
     // Edit a Article
     // 
     app.get('/dashboard/knowledgebase/article/edit', async function(request, reply) {
+        hasPermission('zander.web.knowledgebase', request, reply);
+        
         const articleSlug = request.query.slug;
         const fetchURL = `${config.siteConfiguration.siteAddress}${config.siteConfiguration.apiRoute}/knowledgebase/article/get?slug=${articleSlug}`;
         const response = await fetch(fetchURL);
