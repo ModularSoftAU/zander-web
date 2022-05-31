@@ -1,5 +1,4 @@
 import config from '../config.json' assert {type: "json"};
-import request from "node-fetch";
 
 export function isFeatureEnabled(isFeatureEnabled, res, features, lang) {
     if (isFeatureEnabled)
@@ -43,12 +42,12 @@ export function optional(body, field) {
 
 export function isFeatureWebRouteEnabled(isFeatureEnabled, res, features) {
     if (isFeatureEnabled)
-        return;
+        return res.send(`Feature is enabled`);
 
-    return res.view('session/notFound', {
+    return res.view('session/featureDisabled', {
         "pageTitle": `Feature Disabled`,
         config: config,
-        request: request,
+        request: res,
         features: features
     });
 }

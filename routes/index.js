@@ -3,6 +3,9 @@ import knowledgebaseSiteRoutes from './knowledgebaseRoutes'
 import policySiteRoutes from './policyRoutes'
 import communityCreationsRoutes from './communityCreationsRoutes'
 import sessionRoutes from './sessionRoutes'
+import {
+    isFeatureWebRouteEnabled
+} from "../api/common";
 
 export default function applicationSiteRoutes(app, client, fetch, moment, config, db, features, lang) {
 
@@ -25,6 +28,8 @@ export default function applicationSiteRoutes(app, client, fetch, moment, config
     // Play
     // 
     app.get('/play', async function(request, reply) {
+        isFeatureWebRouteEnabled(features.servers.view, reply);
+
         const fetchURL = `${config.siteConfiguration.siteAddress}${config.siteConfiguration.apiRoute}/server/get?visible=true`;
         const response = await fetch(fetchURL);
         const apiData = await response.json();

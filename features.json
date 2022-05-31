@@ -10,7 +10,10 @@
     "punishments": true,
     "ranks": true,
     "report": true,
-    "servers": true,
+    "servers": {
+        "enabled": true,
+        "view": false
+    },
     "sessions": true,
     "shops": false,
     "user": true,

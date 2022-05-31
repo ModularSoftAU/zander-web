@@ -126,6 +126,11 @@ const buildApp = async () => {
         next();
     });
 
+    app.addHook('preHandler', (request, reply, next) => {
+        request.session.authenticated = false;
+        next();
+    });
+
     try {
         app.listen(process.env.PORT || config.port, '0.0.0.0', (err) => {
             if (err) {
