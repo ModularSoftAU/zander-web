@@ -5,6 +5,7 @@ export default function dashboardEventSiteRoute(app, client, fetch, moment, conf
     // Events
     // 
     app.get('/dashboard/events', async function(request, reply) {
+        isFeatureWebRouteEnabled(features.events, reply);
         hasPermission('zander.web.event', request, reply);
 
         const fetchURL = `${config.siteConfiguration.siteAddress}${config.siteConfiguration.apiRoute}/event/get?published=all`;
@@ -25,6 +26,7 @@ export default function dashboardEventSiteRoute(app, client, fetch, moment, conf
     // Create Event
     // 
     app.get('/dashboard/events/create', async function(request, reply) {
+        isFeatureWebRouteEnabled(features.events, reply);
         hasPermission('zander.web.event', request, reply);
 
         const fetchURL = `${config.siteConfiguration.siteAddress}${config.siteConfiguration.apiRoute}/server/get?visible=all`;
@@ -45,6 +47,7 @@ export default function dashboardEventSiteRoute(app, client, fetch, moment, conf
     // Edit an existing event
     // 
     app.get('/dashboard/events/edit', async function(request, reply) {
+        isFeatureWebRouteEnabled(features.events, reply);
         hasPermission('zander.web.event', request, reply);
         
         const eventId = request.query.id;

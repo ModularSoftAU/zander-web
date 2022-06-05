@@ -53,11 +53,8 @@ export function isFeatureWebRouteEnabled(isFeatureEnabled, res, features) {
 }
 
 export function isLoggedIn(request) {
-    if (request.session.user) {
-        return true;
-    } else {
-        return false
-    }
+    if (request.session.user) return true;
+    else return false;
 }
 
 export function hasPermission(permissionNode, request, reply) {
@@ -71,8 +68,26 @@ export function hasPermission(permissionNode, request, reply) {
 
     const userPermissions = request.session.user.permissions;
     console.log(userPermissions);
-    if (userPermissions.includes(permissionNode)) {
-        return reply.send(`You have permission`);
-    }   
+    console.log(permissionNode);
 
+    // userPermissions.forEach(node => {
+    //     console.log(node);
+    //     if (node === permissionNode) {
+    //         return;
+    //     } else {
+    //         return reply.view('session/noPermission', {
+    //             "pageTitle": `Access Restricted`,
+    //             config: config,
+    //             request: request
+    //         });
+    //     }
+    // });
+
+    if (!userPermissions.indexOf(permissionNode) || !userPermissions || !userPermissions instanceof Array) {
+        reply.view('session/noPermission', {
+            "pageTitle": `Access Restricted`,
+            config: config,
+            request: request
+        });
+    }
 }
