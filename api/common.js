@@ -40,12 +40,13 @@ export function optional(body, field) {
     return body[field];
 }
 
-export function isFeatureWebRouteEnabled(isFeatureEnabled, res, features) {
+export function isFeatureWebRouteEnabled(isFeatureEnabled, request, reply, features) {
     if (!isFeatureEnabled) {
-        return res.view('session/featureDisabled', {
+        return reply.view('session/featureDisabled', {
             "pageTitle": `Feature Disabled`,
             config: config,
-            request: res,
+            request: request,
+            reply: reply,
             features: features
         });
     }
@@ -66,25 +67,10 @@ export function hasPermission(permissionNode, request, reply) {
     }
 
     const userPermissions = request.session.user.permissions;
-    console.log(userPermissions);
-    console.log(permissionNode);
 
     function hasSpecificPerm(node, permissionArray) {
         return userPermissions.some(node => node === permissionNode);
     }
-
-    // userPermissions.forEach(node => {
-    //     console.log(node);
-    //     if (node === permissionNode) {
-    //         return;
-    //     } else {
-    //         return reply.view('session/noPermission', {
-    //             "pageTitle": `Access Restricted`,
-    //             config: config,
-    //             request: request
-    //         });
-    //     }
-    // });
 
     if (!hasSpecificPerm(permissionNode, userPermissions)) {
         return reply.view('session/noPermission', {

@@ -7,7 +7,7 @@ export default function sessionSiteRoute(app, fetch, moment, config, db, feature
     // Session
     // 
     app.get('/login', async function(request, reply) {
-		isFeatureWebRouteEnabled(features.web, reply);
+		isFeatureWebRouteEnabled(features.web, request, reply);
 
         reply.view('session/login', {
             "pageTitle": `Login`,
@@ -18,7 +18,7 @@ export default function sessionSiteRoute(app, fetch, moment, config, db, feature
     });
 
     app.get('/register', async function(request, reply) {
-		isFeatureWebRouteEnabled(features.web, reply);
+		isFeatureWebRouteEnabled(features.web, request, reply);
 		
         reply.view('session/register', {
             "pageTitle": `Register`,

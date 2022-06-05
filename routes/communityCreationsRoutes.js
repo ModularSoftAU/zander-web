@@ -8,7 +8,7 @@ export default function communityCreationSiteRoute(app, fetch, moment, config, f
     // Community Creations
     // 
     app.get('/communityCreations/:page?', async function (request, reply) {
-        isFeatureWebRouteEnabled(features.communitycreations, reply);
+        isFeatureWebRouteEnabled(features.communitycreations, request, reply);
 
         const fetchURL = `${config.siteConfiguration.siteAddress}${config.siteConfiguration.apiRoute}/communitycreation/get?page=${request.params.page || 1}`;
         const response = await fetch(fetchURL);
@@ -25,7 +25,7 @@ export default function communityCreationSiteRoute(app, fetch, moment, config, f
     });
 
     app.get('/communityCreation/submit', async function (request, reply) {
-        isFeatureWebRouteEnabled(features.communitycreations, reply);
+        isFeatureWebRouteEnabled(features.communitycreations, request, reply);
         
         reply.view('modules/communityCreation/submit', {
             "pageTitle": `Submit a Community Creation`,
