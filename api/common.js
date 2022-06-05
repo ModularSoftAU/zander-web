@@ -69,6 +69,10 @@ export function hasPermission(permissionNode, request, reply) {
     console.log(userPermissions);
     console.log(permissionNode);
 
+    function hasSpecificPerm(node, permissionArray) {
+        return userPermissions.some(node => node === permissionNode);
+    }
+
     // userPermissions.forEach(node => {
     //     console.log(node);
     //     if (node === permissionNode) {
@@ -82,8 +86,8 @@ export function hasPermission(permissionNode, request, reply) {
     //     }
     // });
 
-    if (!userPermissions.indexOf(permissionNode) || !userPermissions || !userPermissions instanceof Array) {
-        reply.view('session/noPermission', {
+    if (!hasSpecificPerm(permissionNode, userPermissions)) {
+        return reply.view('session/noPermission', {
             "pageTitle": `Access Restricted`,
             config: config,
             request: request

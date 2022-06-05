@@ -1,4 +1,5 @@
 import bcrypt from 'bcrypt';
+import { isFeatureWebRouteEnabled } from "../api/common";
 
 export default function sessionSiteRoute(app, fetch, moment, config, db, features, lang) {
 

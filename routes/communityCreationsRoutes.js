@@ -25,6 +25,8 @@ export default function communityCreationSiteRoute(app, fetch, moment, config, f
     });
 
     app.get('/communityCreation/submit', async function (request, reply) {
+        isFeatureWebRouteEnabled(features.communitycreations, reply);
+        
         reply.view('modules/communityCreation/submit', {
             "pageTitle": `Submit a Community Creation`,
             config: config,
