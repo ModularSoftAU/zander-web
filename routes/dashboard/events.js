@@ -1,4 +1,4 @@
-import { hasPermission } from "../../api/common";
+import { hasPermission, isFeatureWebRouteEnabled } from "../../api/common";
 
 export default function dashboardEventSiteRoute(app, client, fetch, moment, config, db, features, lang) {
     // 

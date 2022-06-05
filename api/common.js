@@ -41,15 +41,14 @@ export function optional(body, field) {
 }
 
 export function isFeatureWebRouteEnabled(isFeatureEnabled, res, features) {
-    if (isFeatureEnabled)
-        return res.send(`Feature is enabled`);
-
-    return res.view('session/featureDisabled', {
-        "pageTitle": `Feature Disabled`,
-        config: config,
-        request: res,
-        features: features
-    });
+    if (!isFeatureEnabled) {
+        return res.view('session/featureDisabled', {
+            "pageTitle": `Feature Disabled`,
+            config: config,
+            request: res,
+            features: features
+        });
+    }
 }
 
 export function isLoggedIn(request) {

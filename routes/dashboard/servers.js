@@ -1,4 +1,4 @@
-import { hasPermission } from "../../api/common";
+import { hasPermission, isFeatureWebRouteEnabled } from "../../api/common";
 
 export default function dashboardServersSiteRoute(app, fetch, config, features, lang) {
 

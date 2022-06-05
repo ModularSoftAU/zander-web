@@ -28,7 +28,7 @@ export default function applicationSiteRoutes(app, client, fetch, moment, config
     // Play
     // 
     app.get('/play', async function(request, reply) {
-        isFeatureWebRouteEnabled(features.servers.view, reply);
+        isFeatureWebRouteEnabled(features.servers, reply);
 
         const fetchURL = `${config.siteConfiguration.siteAddress}${config.siteConfiguration.apiRoute}/server/get?visible=true`;
         const response = await fetch(fetchURL);
@@ -47,6 +47,8 @@ export default function applicationSiteRoutes(app, client, fetch, moment, config
     // Apply
     // 
     app.get('/apply', async function(request, reply) {
+        isFeatureWebRouteEnabled(features.applications, reply);
+
         const fetchURL = `${config.siteConfiguration.siteAddress}${config.siteConfiguration.apiRoute}/application/get`;
         const response = await fetch(fetchURL);
         const apiData = await response.json();
@@ -64,6 +66,8 @@ export default function applicationSiteRoutes(app, client, fetch, moment, config
     // Events
     // 
     app.get('/events', async function(request, reply) {
+        isFeatureWebRouteEnabled(features.events, reply);
+
         const fetchURL = `${config.siteConfiguration.siteAddress}${config.siteConfiguration.apiRoute}/event/get?published=show`;
         const response = await fetch(fetchURL);
         const apiData = await response.json();
@@ -111,6 +115,8 @@ export default function applicationSiteRoutes(app, client, fetch, moment, config
     // Report
     // 
     app.get('/report', async function(request, reply) {
+        isFeatureWebRouteEnabled(features.report, reply);
+
         const fetchURL = `${config.siteConfiguration.siteAddress}${config.siteConfiguration.apiRoute}/server/get?visable=true`;
         const response = await fetch(fetchURL);
         const serverApiData = await response.json();
@@ -128,6 +134,8 @@ export default function applicationSiteRoutes(app, client, fetch, moment, config
     // Report Specific
     // 
     app.get('/report/:id', async function(request, reply) {
+        isFeatureWebRouteEnabled(features.report, reply);
+
         const fetchURL = `${config.siteConfiguration.siteAddress}${config.siteConfiguration.apiRoute}/report/get?reportId=${request.params.id}`;
         const response = await fetch(fetchURL);
         const apiData = await response.json();
@@ -146,6 +154,8 @@ export default function applicationSiteRoutes(app, client, fetch, moment, config
     // Profile
     // 
     app.get('/profile/:username', async function(request, reply) {
+        isFeatureWebRouteEnabled(features.userProfiles, reply);
+
         // Get Player Profile Information
         const profileFetchURL = `${config.siteConfiguration.siteAddress}${config.siteConfiguration.apiRoute}/user/get?username=${request.params.username}`;
         const profileResponse = await fetch(profileFetchURL);
@@ -190,6 +200,8 @@ export default function applicationSiteRoutes(app, client, fetch, moment, config
     // Punishments
     // 
     app.get('/punishments', async function(request, reply) {
+        isFeatureWebRouteEnabled(features.punishments, reply);
+
         reply.view('punishments', {
             "pageTitle": `Punishments`,
             config: config,
@@ -202,6 +214,8 @@ export default function applicationSiteRoutes(app, client, fetch, moment, config
     // Appeal
     // 
     app.get('/appeal', async function(request, reply) {
+        isFeatureWebRouteEnabled(features.appeals, reply);
+
         reply.view('appeal', {
             "pageTitle": `Appeal`,
             config: config,
@@ -214,6 +228,8 @@ export default function applicationSiteRoutes(app, client, fetch, moment, config
     // Shopping District Directory
     // 
     app.get('/shoppingDistrictDirectory', async function(request, reply) {
+        isFeatureWebRouteEnabled(features.shops, reply);
+
         reply.view('modules/shoppingDistrictDirectory/shoppingDistrictDirectory', {
             "pageTitle": `Shopping District Directory`,
             config: config,
@@ -223,6 +239,8 @@ export default function applicationSiteRoutes(app, client, fetch, moment, config
     });
     
     app.get('/shoppingDistrictDirectory/create', async function(request, reply) {
+        isFeatureWebRouteEnabled(features.shops, reply);
+
         // fs.readdir(path.join(__dirname, '../assets/images/minecraftItemImages'), function(err, files) {
         //     //handling error
         //     if (err) {
@@ -241,16 +259,4 @@ export default function applicationSiteRoutes(app, client, fetch, moment, config
         //     });
         // });
     });
-
-
-    app.get('/noPermission', async function(request, reply) {
-        reply.view('session/noPermission', {
-            "pageTitle": `Feature Disabled`,
-            config: config,
-            moment: moment,
-            request: request,
-            features: features
-        });
-    });
-
 }
