@@ -50,6 +50,7 @@ export function isFeatureWebRouteEnabled(isFeatureEnabled, request, reply, featu
             features: features
         });
     }
+    return
 }
 
 export function isLoggedIn(request) {
@@ -62,7 +63,8 @@ export function hasPermission(permissionNode, request, reply) {
         return reply.view('session/noPermission', {
             "pageTitle": `Access Restricted`,
             config: config,
-            request: request
+            request: request,
+            reply: reply
         });        
     }
 
@@ -76,7 +78,9 @@ export function hasPermission(permissionNode, request, reply) {
         return reply.view('session/noPermission', {
             "pageTitle": `Access Restricted`,
             config: config,
-            request: request
+            request: request,
+            reply: reply
         });
     }
+    return
 }
