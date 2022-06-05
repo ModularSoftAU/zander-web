@@ -3,6 +3,9 @@ import knowledgebaseSiteRoutes from './knowledgebaseRoutes'
 import policySiteRoutes from './policyRoutes'
 import communityCreationsRoutes from './communityCreationsRoutes'
 import sessionRoutes from './sessionRoutes'
+import {
+    isFeatureWebRouteEnabled
+} from "../api/common";
 
 export default function applicationSiteRoutes(app, client, fetch, moment, config, db, features, lang) {
 
@@ -25,6 +28,8 @@ export default function applicationSiteRoutes(app, client, fetch, moment, config
     // Play
     // 
     app.get('/play', async function(request, reply) {
+        isFeatureWebRouteEnabled(features.servers, request, reply);
+
         const fetchURL = `${config.siteConfiguration.siteAddress}${config.siteConfiguration.apiRoute}/server/get?visible=true`;
         const response = await fetch(fetchURL);
         const apiData = await response.json();
@@ -42,6 +47,8 @@ export default function applicationSiteRoutes(app, client, fetch, moment, config
     // Apply
     // 
     app.get('/apply', async function(request, reply) {
+        isFeatureWebRouteEnabled(features.applications, request, reply);
+
         const fetchURL = `${config.siteConfiguration.siteAddress}${config.siteConfiguration.apiRoute}/application/get`;
         const response = await fetch(fetchURL);
         const apiData = await response.json();
@@ -59,6 +66,8 @@ export default function applicationSiteRoutes(app, client, fetch, moment, config
     // Events
     // 
     app.get('/events', async function(request, reply) {
+        isFeatureWebRouteEnabled(features.events, request, reply);
+
         const fetchURL = `${config.siteConfiguration.siteAddress}${config.siteConfiguration.apiRoute}/event/get?published=show`;
         const response = await fetch(fetchURL);
         const apiData = await response.json();
@@ -106,6 +115,8 @@ export default function applicationSiteRoutes(app, client, fetch, moment, config
     // Report
     // 
     app.get('/report', async function(request, reply) {
+        isFeatureWebRouteEnabled(features.report, request, reply);
+
         const fetchURL = `${config.siteConfiguration.siteAddress}${config.siteConfiguration.apiRoute}/server/get?visable=true`;
         const response = await fetch(fetchURL);
         const serverApiData = await response.json();
@@ -123,6 +134,8 @@ export default function applicationSiteRoutes(app, client, fetch, moment, config
     // Report Specific
     // 
     app.get('/report/:id', async function(request, reply) {
+        isFeatureWebRouteEnabled(features.report, request, reply);
+
         const fetchURL = `${config.siteConfiguration.siteAddress}${config.siteConfiguration.apiRoute}/report/get?reportId=${request.params.id}`;
         const response = await fetch(fetchURL);
         const apiData = await response.json();
@@ -141,6 +154,8 @@ export default function applicationSiteRoutes(app, client, fetch, moment, config
     // Profile
     // 
     app.get('/profile/:username', async function(request, reply) {
+        isFeatureWebRouteEnabled(features.userProfiles, request, reply);
+
         // Get Player Profile Information
         const profileFetchURL = `${config.siteConfiguration.siteAddress}${config.siteConfiguration.apiRoute}/user/get?username=${request.params.username}`;
         const profileResponse = await fetch(profileFetchURL);
@@ -167,14 +182,10 @@ export default function applicationSiteRoutes(app, client, fetch, moment, config
     // User Notifications
     // 
     app.get('/notifications', async function(request, reply) {
-        console.log(request.query.username);
-
         const fetchURL = `${config.siteConfiguration.siteAddress}${config.siteConfiguration.apiRoute}/user/notification/get?username=${request.params.username}`;
         const response = await fetch(fetchURL);
         const apiData = await response.json();
-
-        console.log(apiData);
-
+        
         reply.view('notifications', {
             "pageTitle": `Notifications`,
             config: config,
@@ -189,6 +200,8 @@ export default function applicationSiteRoutes(app, client, fetch, moment, config
     // Punishments
     // 
     app.get('/punishments', async function(request, reply) {
+        isFeatureWebRouteEnabled(features.punishments, request, reply);
+
         reply.view('punishments', {
             "pageTitle": `Punishments`,
             config: config,
@@ -201,6 +214,8 @@ export default function applicationSiteRoutes(app, client, fetch, moment, config
     // Appeal
     // 
     app.get('/appeal', async function(request, reply) {
+        isFeatureWebRouteEnabled(features.appeals, request, reply);
+
         reply.view('appeal', {
             "pageTitle": `Appeal`,
             config: config,
@@ -213,6 +228,8 @@ export default function applicationSiteRoutes(app, client, fetch, moment, config
     // Shopping District Directory
     // 
     app.get('/shoppingDistrictDirectory', async function(request, reply) {
+        isFeatureWebRouteEnabled(features.shops, request, reply);
+
         reply.view('modules/shoppingDistrictDirectory/shoppingDistrictDirectory', {
             "pageTitle": `Shopping District Directory`,
             config: config,
@@ -222,6 +239,8 @@ export default function applicationSiteRoutes(app, client, fetch, moment, config
     });
     
     app.get('/shoppingDistrictDirectory/create', async function(request, reply) {
+        isFeatureWebRouteEnabled(features.shops, request, reply);
+
         // fs.readdir(path.join(__dirname, '../assets/images/minecraftItemImages'), function(err, files) {
         //     //handling error
         //     if (err) {
@@ -240,5 +259,4 @@ export default function applicationSiteRoutes(app, client, fetch, moment, config
         //     });
         // });
     });
-
 }

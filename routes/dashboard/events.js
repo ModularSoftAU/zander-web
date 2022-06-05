@@ -1,8 +1,13 @@
+import { hasPermission, isFeatureWebRouteEnabled } from "../../api/common";
+
 export default function dashboardEventSiteRoute(app, client, fetch, moment, config, db, features, lang) {
     // 
     // Events
     // 
     app.get('/dashboard/events', async function(request, reply) {
+        isFeatureWebRouteEnabled(features.events, request, reply);
+        hasPermission('zander.web.event', request, reply);
+
         const fetchURL = `${config.siteConfiguration.siteAddress}${config.siteConfiguration.apiRoute}/event/get?published=all`;
         const response = await fetch(fetchURL);
         const apiData = await response.json();
@@ -21,6 +26,9 @@ export default function dashboardEventSiteRoute(app, client, fetch, moment, conf
     // Create Event
     // 
     app.get('/dashboard/events/create', async function(request, reply) {
+        isFeatureWebRouteEnabled(features.events, request, reply);
+        hasPermission('zander.web.event', request, reply);
+
         const fetchURL = `${config.siteConfiguration.siteAddress}${config.siteConfiguration.apiRoute}/server/get?visible=all`;
         const response = await fetch(fetchURL);
         const serverApiData = await response.json();
@@ -39,6 +47,9 @@ export default function dashboardEventSiteRoute(app, client, fetch, moment, conf
     // Edit an existing event
     // 
     app.get('/dashboard/events/edit', async function(request, reply) {
+        isFeatureWebRouteEnabled(features.events, request, reply);
+        hasPermission('zander.web.event', request, reply);
+        
         const eventId = request.query.id;
         const fetchURL = `${config.siteConfiguration.siteAddress}${config.siteConfiguration.apiRoute}/event/get?id=${eventId}`;
         const response = await fetch(fetchURL);

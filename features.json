@@ -1,7 +1,7 @@
 {
     "announcements": true,
     "appeals": false,
-    "applications": true,
+    "applications": false,
     "communitycreations": false,
     "discord": true,
     "events": true,
@@ -10,11 +10,11 @@
     "punishments": true,
     "ranks": true,
     "report": true,
-    "servers": true,
+    "servers": false,
     "sessions": true,
     "shops": false,
     "user": true,
     "userProfiles": false,
-    "vote": true,
+    "vote": false,
     "web": true
 }
