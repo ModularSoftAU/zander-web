@@ -40,17 +40,15 @@ export function optional(body, field) {
     return body[field];
 }
 
-export function isFeatureWebRouteEnabled(isFeatureEnabled, request, reply, features) {
+export function isFeatureWebRouteEnabled(isFeatureEnabled, request, reply) {
     if (!isFeatureEnabled) {
         return reply.view('session/featureDisabled', {
             "pageTitle": `Feature Disabled`,
             config: config,
             request: request,
-            reply: reply,
-            features: features
+            reply: reply
         });
     }
-    return
 }
 
 export function isLoggedIn(request) {

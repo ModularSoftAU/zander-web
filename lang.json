@@ -1,5 +1,10 @@
 {
     "api": {
         "featureDisabled": "This action could not be completed because the feature has been disabled by the System Administrator."
+    },
+    "applications": {
+        "noApplicationsFound": "No applications could be found at this time.",
+        "applicationCreated": "The application %DISPLAYNAME% has been created.",
+        "applicationEdited": "The application %DISPLAYNAME% has been updated."
     }
 }
