@@ -36,6 +36,8 @@ export default function shoppingDistrictDirectoryApiRoute(app, config, db, featu
         const shopDescription = required(req.body, "shopDescription", res);
         const serverId = required(req.body, "serverId", res);
 
+        const shopCreatedLang = lang.shop.shopCreated
+
         try {
             db.query(`INSERT INTO shops (shopCreatorId, shopName, shopDescription, serverId) VALUES ((select userId from users where username=?), ?, ?, ?)`, [shopOwner, shopName, shopDescription, serverId], function(error, results, fields) {
                 if (error) {
@@ -46,7 +48,7 @@ export default function shoppingDistrictDirectoryApiRoute(app, config, db, featu
                 }
                 return res.send({
                     success: true,
-                    message: `${shopOwner}'s shop ${shopName} has been successfully created!`
+                    message: shopCreatedLang.replace('%SHOPOWNER%', shopOwner).replace("%SHOPNAME%", shopName)
                 });
             });
 
@@ -84,7 +86,7 @@ export default function shoppingDistrictDirectoryApiRoute(app, config, db, featu
                 }
                 return res.send({
                     success: true,
-                    message: `Deletion of Shop ${shopId} has been successful`
+                    message: lang.shop.shopDeleted
                 });
             });
 

@@ -23,7 +23,7 @@ export default function serverApiRoute(app, config, db, features, lang) {
                     if (!results.length) {
                         return res.send({
                             success: false,
-                            message: `There are currently no servers visible.`
+                            message: lang.server.noServers
                         });
                     }
 
@@ -110,6 +110,8 @@ export default function serverApiRoute(app, config, db, features, lang) {
         const visible = required(req.body, "visible", res);
         const position = required(req.body, "position", res);
 
+        const serverCreatedLang = lang.server.serverCreated
+
         try {
             db.query(`INSERT INTO servers (name, fqdn, ipAddress, port, visible, position) VALUES (?, ?, ?, ?, ?, ?)`, [name, fqdn, ipAddress, port, visible, position], function(error, results, fields) {
                 if (error) {
@@ -120,7 +122,7 @@ export default function serverApiRoute(app, config, db, features, lang) {
                 }
                 return res.send({
                     success: true,
-                    message: `The server ${name} (${fqdn}) has been successfully created!`
+                    message: serverCreatedLang.replace("%NAME%", name)
                 });
             });
 
@@ -153,7 +155,7 @@ export default function serverApiRoute(app, config, db, features, lang) {
 
                 return res.send({
                     success: true,
-                    message: `The server with the ID of ${serverId} has been successfully updated!`
+                    message: lang.server.serverEdited
                 });
             });
 
@@ -179,7 +181,7 @@ export default function serverApiRoute(app, config, db, features, lang) {
                 }
                 return res.send({
                     success: true,
-                    message: `Deletion of server with the id ${serverId} has been successful`
+                    message: lang.server.serverDeleted
                 });
             });
 

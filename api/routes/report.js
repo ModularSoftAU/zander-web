@@ -135,6 +135,8 @@ export default function reportApiRoute(app, client, config, db, features, lang) 
         const platform = optional(req.body, "platform");
         const server = required(req.body, "server", res);
 
+        const reportCreatedLang = lang.report.reportCreated
+
         try {
             // Insert new report into database
             db.query(`
@@ -180,7 +182,7 @@ export default function reportApiRoute(app, client, config, db, features, lang) 
 
                 return res.send({
                     success: true,
-                    message: `The report against ${reportedUser} has been successfully created!`
+                    message: reportCreatedLang.replace('%REPORTEDUSER%', reportedUser)
                 });
             });
 
@@ -206,7 +208,7 @@ export default function reportApiRoute(app, client, config, db, features, lang) 
                 }
                 return res.send({
                     success: true,
-                    message: `The report with the ID of ${reportId} has been successfully closed.`
+                    message: lang.report.reportClosed
                 });
             });
 
