@@ -6,5 +6,26 @@
         "noApplicationsFound": "No applications could be found at this time.",
         "applicationCreated": "The application %DISPLAYNAME% has been created.",
         "applicationEdited": "The application %DISPLAYNAME% has been updated."
+    },
+    "communityCreation": {
+        "creationApproval": "Creation has been approved and in the process of broadcasting.",
+        "creationDenied": "Creation has been denied and in the process being deleted.",
+        "creationLike": "You liked this creation!",
+        "creationUnlike": "You unliked this creation."
+    },
+    "event": {
+        "noEventsScheduled": "There are currently no events scheduled, come back later.",
+        "eventCreated": "The event %NAME% has been successfully created!"
+    },
+    "friend": {
+        "noFriends": "You have no friends."
+    },
+    "knowledgebase": {
+        "noSections": "There are no knowledgebase sections to display.",
+        "noArticles": "There are no knowledgebase articles to display.",
+        "sectionCreated": "The section %SECTIONNAME% has been successfully created in the knowledgebase.",
+        "sectionUpdated": "The section %SECTIONNAME% has been successfully updated in the knowledgebase.",
+        "articleCreated": "The article %ARTICLENAME% has been successfully created in the knowledgebase.",
+        "articleUpdated": "The article %ARTICLENAME% has been successfully updated in the knowledgebase."
     }
 }

@@ -22,7 +22,7 @@ export default function eventApiRoute(app, client, moment, config, db, features,
                     if (!results.length) {
                         return res.send({
                             success: false,
-                            message: `There are currently no community events scheduled.`
+                            message: lang.event.noEventsScheduled
                         });
                     }
 
@@ -38,13 +38,6 @@ export default function eventApiRoute(app, client, moment, config, db, features,
                 let dbQuery = `SELECT * FROM events WHERE eventId=${id};`
                 getEvents(dbQuery);                
             }
-
-            // if (!published) {
-            //     res.send({
-            //         success: false,
-            //         message: `You must select a publish indicator.`
-            //     });
-            // }
 
             if (published === 'show') {
                 let dbQuery = `SELECT * FROM events WHERE published=1 ORDER BY eventDateTime ASC;`
@@ -78,6 +71,8 @@ export default function eventApiRoute(app, client, moment, config, db, features,
         const guildEventChannel = required(req.body, "guildEventChannel", res);
         const information = required(req.body, "information", res);
 
+        const eventCreatedLang = lang.event.eventCreated;
+
         try {
             db.query(`INSERT INTO events (name, icon, eventDateTime, hostingServer, guildEventChannel, information) VALUES (?, ?, ?, (select serverId from servers where name=?), ?, ?)`, [name, icon, eventDateTime, hostingServer, guildEventChannel, information], function(error, results, fields) {
                 if (error) {
@@ -88,7 +83,7 @@ export default function eventApiRoute(app, client, moment, config, db, features,
                 }
                 return res.send({
                     success: true,
-                    message: `The event ${name} has been successfully created!`
+                    message: eventCreatedLang.replace("%NAME%", name)
                 });
             });
 

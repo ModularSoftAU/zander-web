@@ -1,6 +1,6 @@
 import {isFeatureEnabled, required, optional} from '../common'
 
-export default function communityCreationApiRoute(app, config, db, features) {
+export default function communityCreationApiRoute(app, config, db, features, lang) {
     const baseEndpoint = config.siteConfiguration.apiRoute + '/communitycreation';
 
     app.get(baseEndpoint + '/get', async function(req, res) {
@@ -232,7 +232,7 @@ export default function communityCreationApiRoute(app, config, db, features) {
 
                 res.send({
 					success: true,
-					message: `Creation has been approved and broadcasted.`
+					message: lang.communityCreation.creationApproval
 				});
             });
 
@@ -258,7 +258,7 @@ export default function communityCreationApiRoute(app, config, db, features) {
 
                 res.send({
 					success: true,
-					message: `Creation has been denied and deleted.`
+					message: lang.communityCreation.creationDenied
 				});
             });
 
@@ -285,7 +285,7 @@ export default function communityCreationApiRoute(app, config, db, features) {
 
                 res.send({
 					success: true,
-					message: `Creation a new like.`
+					message: lang.communityCreation.creationLike
 				});
             });
 
@@ -312,7 +312,7 @@ export default function communityCreationApiRoute(app, config, db, features) {
 
                 res.send({
 					success: true,
-					message: `Creation has been unliked.`
+					message: lang.communityCreation.creationUnlike
 				});
             });
 
