@@ -8,6 +8,8 @@ export default function userApiRoute(app, config, db, features, lang) {
         const uuid = required(req.body, "uuid", res);
         const username = required(req.body, "username", res);
 
+        const userCreatedLang = lang.api.userCreated
+
         try {
             // shadowolf
             // Check if user does not exist, we do this in case of testing we create multiple users on accident
@@ -27,7 +29,7 @@ export default function userApiRoute(app, config, db, features, lang) {
                     // If the user already exists, we terminate the creation of the user
                     return res.send({
                         success: false,
-                        message: `This user already exists, terminating creation.`
+                        message: lang.api.userAlreadyExists
                     });
                 }
 
@@ -42,7 +44,7 @@ export default function userApiRoute(app, config, db, features, lang) {
 
                     return res.send({
                         success: true,
-                        message: `${username} (${uuid}) has been successfully created.`
+                        message: userCreatedLang.replace('%USERNAME%', username).replace('%UUID%', uuid)
                     });
                 });
             });
@@ -64,7 +66,7 @@ export default function userApiRoute(app, config, db, features, lang) {
                 if (!results || !results.length) {
                     return res.send({
                         success: false,
-                        message: `This user does not exist.`
+                        message: lang.api.userDoesNotExist
                     });
                 }
                 
@@ -91,7 +93,7 @@ export default function userApiRoute(app, config, db, features, lang) {
                 if (!results || !results.length) {
                     return res.send({
                         success: false,
-                        message: `You do not have any notifications.`
+                        message: lang.api.noNotifications
                     });
                 }
                 
@@ -121,7 +123,7 @@ export default function userApiRoute(app, config, db, features, lang) {
                 if (!results || !results.length) {
                     return res.send({
                         success: false,
-                        message: `You do not have any notifications.`
+                        message: lang.api.noNotifications
                     });
                 }
                 

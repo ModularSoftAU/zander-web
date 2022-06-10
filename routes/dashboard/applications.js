@@ -6,7 +6,7 @@ export default function dashboardApplicationsSiteRoute(app, fetch, config, featu
     // Applications
     // 
     app.get('/dashboard/applications', async function(request, reply) {
-        isFeatureWebRouteEnabled(features.applications, request, reply);
+        // isFeatureWebRouteEnabled(features.applications, request, reply);
         hasPermission('zander.web.application', request, reply);
 
         const fetchURL = `${config.siteConfiguration.siteAddress}${config.siteConfiguration.apiRoute}/application/get`;
@@ -22,7 +22,7 @@ export default function dashboardApplicationsSiteRoute(app, fetch, config, featu
     });
 
     app.get('/dashboard/applications/create', async function(request, reply) {
-        isFeatureWebRouteEnabled(features.applications, request, reply);
+        // isFeatureWebRouteEnabled(features.application, request, reply);
         hasPermission('zander.web.application', request, reply);
 
         reply.view('dashboard/applications/editor', {
@@ -34,7 +34,7 @@ export default function dashboardApplicationsSiteRoute(app, fetch, config, featu
     });
 
     app.get('/dashboard/applications/edit', async function(request, reply) {
-        isFeatureWebRouteEnabled(features.applications, request, reply);
+        // isFeatureWebRouteEnabled(features.applications, request, reply);
         hasPermission('zander.web.application', request, reply);
 
         const id = request.query.id;

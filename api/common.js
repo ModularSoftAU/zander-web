@@ -40,14 +40,13 @@ export function optional(body, field) {
     return body[field];
 }
 
-export function isFeatureWebRouteEnabled(isFeatureEnabled, request, reply, features) {
+export function isFeatureWebRouteEnabled(isFeatureEnabled, request, reply) {
     if (!isFeatureEnabled) {
         return reply.view('session/featureDisabled', {
             "pageTitle": `Feature Disabled`,
             config: config,
             request: request,
-            reply: reply,
-            features: features
+            reply: reply
         });
     }
 }
@@ -62,7 +61,8 @@ export function hasPermission(permissionNode, request, reply) {
         return reply.view('session/noPermission', {
             "pageTitle": `Access Restricted`,
             config: config,
-            request: request
+            request: request,
+            reply: reply
         });        
     }
 
@@ -76,7 +76,9 @@ export function hasPermission(permissionNode, request, reply) {
         return reply.view('session/noPermission', {
             "pageTitle": `Access Restricted`,
             config: config,
-            request: request
+            request: request,
+            reply: reply
         });
     }
+    return
 }

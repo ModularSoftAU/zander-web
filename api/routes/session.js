@@ -9,6 +9,8 @@ export default function sessionApiRoute(app, config, db, features, lang) {
         const ipAddress = required(req.body, "ipAddress", res);
         const server = required(req.body, "server", res);
 
+        const newSessionCreatedLang = lang.session.newSessionCreated
+
         try {
             // Insert newly started session into database
             db.query(`
@@ -31,7 +33,7 @@ export default function sessionApiRoute(app, config, db, features, lang) {
 
                 return res.send({
                     success: true,
-                    message: `New session for ${uuid} has been created.`
+                    message: newSessionCreatedLang.replace("%UUID%", uuid)
                 });
             });
 
@@ -47,6 +49,8 @@ export default function sessionApiRoute(app, config, db, features, lang) {
     app.post(baseEndpoint + '/destroy', async function(req, res) {
         isFeatureEnabled(features.sessions, res, lang);
         const uuid = required(req.body, "uuid", res);
+
+        const sessionClosedLang = lang.session.allSessionsClosed
 
         try {
             // Update any open sessions for the specified user to close them
@@ -69,7 +73,7 @@ export default function sessionApiRoute(app, config, db, features, lang) {
 
                 return res.send({
                     success: true,
-                    message: `All sessions for ${uuid} has been closed.`
+                    message: sessionClosedLang.replace("%UUID%", uuid)
                 });
             });
 
@@ -86,6 +90,8 @@ export default function sessionApiRoute(app, config, db, features, lang) {
         isFeatureEnabled(features.sessions, res, lang);
         const uuid = required(req.body, "uuid", res);
         const server = required(req.body, "server", res);
+
+        const sessionSwitchLang = lang.session.sessionSwitch
 
         try {
             // Update any open sessions for the specified user to change to the specified server
@@ -109,7 +115,7 @@ export default function sessionApiRoute(app, config, db, features, lang) {
 
                 return res.send({
                     success: true,
-                    message: `${uuid} has switched server to ${server}.`
+                    message: sessionSwitchLang.replace("%UUID%", uuid).replace("%SERVER%", server)
                 });
             });
 

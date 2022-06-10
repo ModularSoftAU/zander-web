@@ -1,5 +1,65 @@
 {
     "api": {
-        "featureDisabled": "This action could not be completed because the feature has been disabled by the System Administrator."
+        "featureDisabled": "This action could not be completed because the feature has been disabled by the System Administrator.",
+        "userCreated": "The user %USERNAME% with the unique identifier of %UUID% is new, profile created.",
+        "userAlreadyExists": "The requested user already exists in the database, the user creation is being terminated.",
+        "userDoesNotExist": "The requested user does not exist.",
+        "noNotifications": "You do not have any notifications, good day!"
+    },
+    "web": {
+        "notLoggedInBefore": "You have not logged in before. You are required to login before becoming a community site member. You can jump on and play here: %SITEADDRESS%/play",
+        "emailAlreadyInUse": "The email you have provided is already in use, please enter another email and try again.",
+        "passwordDoesNotMatch": "The password you have provided does not match. Please try again.",
+        "registrationError": "There was an error in registration, please try again later.",
+        "registrationSuccess": "You are now successfully registered. Please go back and login to get started!"
+    },
+    "applications": {
+        "noApplicationsFound": "No applications could be found at this time.",
+        "applicationCreated": "The application %DISPLAYNAME% has been created.",
+        "applicationEdited": "The application %DISPLAYNAME% has been updated."
+    },
+    "communityCreation": {
+        "creationApproval": "Creation has been approved and in the process of broadcasting.",
+        "creationDenied": "Creation has been denied and in the process being deleted.",
+        "creationLike": "You liked this creation!",
+        "creationUnlike": "You unliked this creation."
+    },
+    "event": {
+        "noEventsScheduled": "There are currently no events scheduled, come back later.",
+        "eventCreated": "The event %NAME% has been successfully created!"
+    },
+    "friend": {
+        "noFriends": "You have no friends."
+    },
+    "knowledgebase": {
+        "noSections": "There are no knowledgebase sections to display.",
+        "noArticles": "There are no knowledgebase articles to display.",
+        "sectionCreated": "The section %SECTIONNAME% has been successfully created in the knowledgebase.",
+        "sectionUpdated": "The section %SECTIONNAME% has been successfully updated in the knowledgebase.",
+        "articleCreated": "The article %ARTICLENAME% has been successfully created in the knowledgebase.",
+        "articleUpdated": "The article %ARTICLENAME% has been successfully updated in the knowledgebase."
+    },
+    "report": {
+        "reportCreated": "The report against %REPORTEDUSER% has been successfully created!",
+        "reportClosed": "This report has been closed."
+    },
+    "server": {
+        "noServers": "There are currently no Servers that can be displayed at this time.",
+        "serverCreated": "The Server %NAME% has been successfully created!",
+        "serverEdited": "The Server record has been edited successfully.",
+        "serverDeleted": "This Server has now been deleted."
+    },
+    "session": {
+        "newSessionCreated": "A new session has been created for %UUID%",
+        "allSessionsClosed": "All sessions for %UUID% have now been closed.",
+        "sessionSwitch": "%UUID% has switched to %SERVER%"
+    },
+    "shop": {
+        "shopCreated": "%SHOPOWNER%'s shop %SHOPNAME% has been successfully created.",
+        "shopDeleted": "The shop has been deleted successfully."
+    },
+    "vote": {
+        "newVoteCast": "New vote cast entry has been successfully entered for %USERNAME%",
+        "noVotes": "There are currently no votes! You can be the first!"
     }
 }

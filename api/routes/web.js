@@ -11,6 +11,8 @@ export default function webApiRoute(app, config, db, features, lang) {
         const password = required(req.body, "password", res);
         const confirmPassword = required(req.body, "confirmPassword", res);
 
+        const notLoggedInBeforeLang = lang.web.notLoggedInBefore
+
         db.query(`select * from users where username=?; select * from users where email=?;`, [username, email], async function (err, results) {
             if (err) {
                 throw err;
@@ -20,7 +22,7 @@ export default function webApiRoute(app, config, db, features, lang) {
             if (!results[0].length) {
                 return res.send({
                     success: false,
-                    message: `You have not logged in before. You are required to login before becoming a community site member. You can jump on and play here: ${config.siteConfiguration.siteAddress}/play`
+                    message: notLoggedInBeforeLang.replace("%SITEADDRESS%", config.siteConfiguration.siteAddress)
                 });
             }
 
@@ -28,7 +30,7 @@ export default function webApiRoute(app, config, db, features, lang) {
             if (!results[1]) {
                 return res.send({
                     success: false,
-                    message: `The email you have provided is already in use, please enter another email and try again.`
+                    message: lang.web.emailAlreadyInUse
                 });
             }
 
@@ -36,7 +38,7 @@ export default function webApiRoute(app, config, db, features, lang) {
             if (password != confirmPassword) {
                 return res.send({
                     success: false,
-                    message: `The password you have provided does not match. Please try again.`
+                    message: lang.web.passwordDoesNotMatch
                 });                
             }
 
@@ -51,14 +53,14 @@ export default function webApiRoute(app, config, db, features, lang) {
 
                         return res.send({
                             success: false,
-                            message: `There was an error in registration, please try again later.`
+                            message: lang.web.registrationError
                         });
                     }
 
                     // Success, generating account now.
                     return res.send({
                         success: true,
-                        message: `You are now successfully registered. Please go back and login to get started!`
+                        message: lang.web.registrationSuccess
                     });
                 });
 
@@ -67,7 +69,7 @@ export default function webApiRoute(app, config, db, features, lang) {
 
                 return res.send({
                     success: false,
-                    message: `There was an error in registration, please try again later.`
+                    message: lang.web.registrationError
                 });
             }
         });
