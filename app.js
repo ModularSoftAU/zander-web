@@ -53,6 +53,7 @@ setTimeout(function name() { monthlyCron(client); }, 5000)
 // Site Routes
 import siteRoutes from './routes'
 import apiRoutes from './api/routes'
+import apiRedirectRoutes from './api/internal_redirect'
 
 // API token authentication
 import verifyToken from './api/routes/verifyToken'
@@ -108,6 +109,7 @@ const buildApp = async () => {
         // API routes (Token authenticated)
         instance.addHook('preValidation', verifyToken);
         apiRoutes(instance, client, moment, config, db, features, lang);
+        apiRedirectRoutes(instance, config);
         next();
     });
 

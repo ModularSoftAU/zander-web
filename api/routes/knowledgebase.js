@@ -129,14 +129,14 @@ export default function knowledgebaseApiRoute(app, config, db, features, lang) {
         isFeatureEnabled(features.knowledgebase, res, lang);
         const sectionSlug = required(req.body, "sectionSlug", res);
         const sectionName = required(req.body, "sectionName", res);
-        const description = required(req.body, "description", res);
+        const sectionDescription = required(req.body, "sectionDescription", res);
         const sectionIcon = required(req.body, "sectionIcon", res);
-        const position = required(req.body, "position", res);
+        const sectionPosition = required(req.body, "sectionPosition", res);
 
         const sectionCreatedLang = lang.knowledgebase.sectionCreated
 
         try {
-            db.query(`INSERT INTO knowledgebaseSections (sectionSlug, sectionName, description, sectionIcon, position) VALUES (?, ?, ?, ?, ?)`, [sectionSlug, sectionName, description, sectionIcon, position], function(error, results, fields) {
+            db.query(`INSERT INTO knowledgebaseSections (sectionSlug, sectionName, description, sectionIcon, position) VALUES (?, ?, ?, ?, ?)`, [sectionSlug, sectionName, sectionDescription, sectionIcon, sectionPosition], function(error, results, fields) {
                 if (error) {
                     return res.send({
                         success: false,
@@ -146,7 +146,7 @@ export default function knowledgebaseApiRoute(app, config, db, features, lang) {
 
                 res.send({
                     success: true,
-                    message: sectionCreatedLang.replace("%SECTIONAME%", sectionName)
+                    message: sectionCreatedLang.replace("%SECTIONNAME%", sectionName)
                 });
             });
 

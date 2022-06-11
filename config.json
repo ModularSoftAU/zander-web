@@ -23,7 +23,8 @@
             "linkedin": "https://www.linkedin.com/company/68885022/",
             "tiktok": "https://www.tiktok.com/@craftingforchrist"
         },
-        "apiRoute": "/api"
+        "apiRoute": "/api",
+        "redirectRoute": "/redirect"
     },
     "discord": {
         "prefix": "!",
