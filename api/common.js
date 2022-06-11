@@ -41,14 +41,15 @@ export function optional(body, field) {
 }
 
 export function isFeatureWebRouteEnabled(isFeatureEnabled, request, reply) {
-    if (!isFeatureEnabled) {
-        return reply.view('session/featureDisabled', {
-            "pageTitle": `Feature Disabled`,
-            config: config,
-            request: request,
-            reply: reply
-        });
-    }
+    // console.log(isFeatureEnabled);
+    // if (!isFeatureEnabled) {
+    //     return reply.view('session/featureDisabled', {
+    //         "pageTitle": `Feature Disabled`,
+    //         config: config,
+    //         request: request,
+    //         reply: reply
+    //     });
+    // }
 }
 
 export function isLoggedIn(request) {
