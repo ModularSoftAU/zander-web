@@ -9,9 +9,11 @@ export default function dashboardServersSiteRoute(app, fetch, config, features, 
         isFeatureWebRouteEnabled(features.servers, request, reply);
         hasPermission('zander.web.server', request, reply);
 
-        const fetchURL = `${config.siteConfiguration.siteAddress}${config.siteConfiguration.apiRoute}/server/get?visible=all`;
+        const fetchURL = `${config.siteConfiguration.siteAddress}${config.siteConfiguration.apiRoute}/server/get`;
         const response = await fetch(fetchURL);
         const apiData = await response.json();
+
+        console.log(apiData);
 
         reply.view('dashboard/servers/list', {
             "pageTitle": `Dashboard - Servers`,

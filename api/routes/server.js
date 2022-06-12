@@ -10,7 +10,6 @@ export default function serverApiRoute(app, config, db, features, lang) {
         const id = optional(req.query, "id");
 
         try {
-
             function getServers(dbQuery) {
                 db.query(dbQuery, function(error, results, fields) {
                     if (error) {
@@ -103,6 +102,7 @@ export default function serverApiRoute(app, config, db, features, lang) {
 
     app.post(baseEndpoint + '/create', async function(req, res) {
         isFeatureEnabled(features.servers, res, lang);
+
         const name = required(req.body, "name", res);
         const fqdn = required(req.body, "fqdn", res);
         const ipAddress = required(req.body, "ipAddress", res);
@@ -136,6 +136,7 @@ export default function serverApiRoute(app, config, db, features, lang) {
 
     app.post(baseEndpoint + '/edit', async function(req, res) {
         isFeatureEnabled(features.servers, res, lang);
+
         const serverId = required(req.body, "serverId", res);
         const name = required(req.body, "name", res);
         const fqdn = required(req.body, "fqdn", res);

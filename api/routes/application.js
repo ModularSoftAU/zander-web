@@ -2,7 +2,6 @@ import {isFeatureEnabled, required, optional} from '../common'
 
 export default function applicationApiRoute(app, config, db, features, lang) {
     const baseEndpoint = config.siteConfiguration.apiRoute + '/application';
-    const baseRedirect = config.siteConfiguration.apiRoute + '/dashboard/applications'
 
     app.get(baseEndpoint + '/get', async function(req, res) {
         isFeatureEnabled(features.application, res, lang);
@@ -14,8 +13,6 @@ export default function applicationApiRoute(app, config, db, features, lang) {
                     if (error) {
                         res.send({
                             success: false,
-                            redirectUrl: baseRedirect,
-                            messageType: `alert-danger`,
                             message: `${error}`
                         });
                     }
@@ -23,8 +20,6 @@ export default function applicationApiRoute(app, config, db, features, lang) {
                     if (!results.length) {
                         return res.send({
                             success: false,
-                            redirectUrl: baseRedirect,
-                            messageType: `alert-danger`,
                             message: lang.applications.noApplicationsFound
                         });
                     }
@@ -49,8 +44,6 @@ export default function applicationApiRoute(app, config, db, features, lang) {
         } catch (error) {
             res.send({
 				success: false,
-                redirectUrl: baseRedirect,
-                messageType: `alert-danger`,
 				message: `${error}`
 			});
         }
@@ -68,19 +61,19 @@ export default function applicationApiRoute(app, config, db, features, lang) {
         let applicationCreatedLang = lang.applications.applicationCreated;
 
         try {
-            db.query(`INSERT INTO applications (displayName, description, displayIcon, requirementsMarkdown, redirectUrl, position) VALUES (?, ?, ?, ?, ?, ?)`, [displayName, description, displayIcon, requirementsMarkdown, redirectUrl, position], function(error, results, fields) {
+            db.query(`
+                INSERT INTO applications 
+                    (displayName, description, displayIcon, requirementsMarkdown, redirectUrl, position) 
+                VALUES (?, ?, ?, ?, ?, ?)`, 
+                [displayName, description, displayIcon, requirementsMarkdown, redirectUrl, position], function(error, results, fields) {
                 if (error) {
                     return res.send({
                         success: false,
-                        redirectUrl: baseRedirect,
-                        messageType: `alert-danger`,
                         message: `${error}`
                     });
                 }
                 return res.send({
                     success: true,
-                    redirectUrl: baseRedirect,
-                    messageType: `alert-success`,
                     message: applicationCreatedLang.replace("%DISPLAYNAME%", displayName)
                 });
             });
@@ -88,8 +81,6 @@ export default function applicationApiRoute(app, config, db, features, lang) {
         } catch (error) {
             res.send({
                 success: false,
-                redirectUrl: baseRedirect,
-                messageType: `alert-danger`,
                 message: `${error}`
             });
         }
@@ -108,27 +99,30 @@ export default function applicationApiRoute(app, config, db, features, lang) {
         let applicationEditedLang = lang.applications.applicationEdited;
 		
 		try {
-			db.query(`UPDATE applications SET displayName = ?, description = ?, displayIcon = ?, requirementsMarkdown = ?, redirectUrl = ?, position = ? WHERE applicationId = ?`, [displayName, description, displayIcon, requirementsMarkdown, redirectUrl, position, applicationId], function(error, results, fields) {
+			db.query(`
+                UPDATE applications SET 
+                    displayName=?, 
+                    description=?, 
+                    displayIcon=?, 
+                    requirementsMarkdown=?, 
+                    redirectUrl=?, 
+                    position=? 
+                WHERE applicationId = ?`, 
+                [displayName, description, displayIcon, requirementsMarkdown, redirectUrl, position, applicationId], function(error, results, fields) {
 				if (error) {
 					return res.send({
 						success: false,
-                        redirectUrl: baseRedirect,
-                        messageType: `alert-danger`,
 						message: `${error}`
 					});
 				}
 				return res.send({
 					success: true,
-                    redirectUrl: ``,
-                    messageType: ``,
 					message: applicationEditedLang.replace("%DISPLAYNAME%", displayName)
 				});
 			});
 		} catch (error) {
 			res.send({
 				success: false,
-                redirectUrl: baseRedirect,
-                messageType: `alert-danger`,
 				message: `${error}`
 			});
 		}
@@ -143,8 +137,6 @@ export default function applicationApiRoute(app, config, db, features, lang) {
                 if (error) {
                     res.send({
                         success: false,
-                        redirectUrl: baseRedirect,
-                        messageType: `alert-danger`,
                         message: `${error}`
                     });
                 }
@@ -157,8 +149,6 @@ export default function applicationApiRoute(app, config, db, features, lang) {
         } catch (error) {
             res.send({
 				success: false,
-                redirectUrl: baseRedirect,
-                messageType: `alert-danger`,
 				message: `${error}`
 			});
         }

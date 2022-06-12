@@ -260,7 +260,8 @@ export default function knowledgebaseApiRoute(app, config, db, features, lang) {
                     position=?, 
                     published=? 
                 WHERE articleSlug=?`, 
-            [articleSlug, articleName, articleDescription, articleLink, articleSection, articlePosition, articleVisibility, slug], function(error, results, fields) {
+                [articleSlug, articleName, articleDescription, articleLink, articleSection, articlePosition, articleVisibility, slug], function(error, results, fields) {
+                
                 if (error) {
                     return res.send({
                         success: false,
