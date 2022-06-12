@@ -5,8 +5,6 @@ export default function knowledgebaseApiRoute(app, config) {
     const baseEndpoint = config.siteConfiguration.redirectRoute + '/knowledgebase';
 
     app.post(baseEndpoint + '/section/create', async function(req, res) {
-        console.log(req.body)
-
         const sectionCreateURL = `${config.siteConfiguration.siteAddress}${config.siteConfiguration.apiRoute}/knowledgebase/section/create`;
         fetch(sectionCreateURL, {
             method: 'POST',
@@ -20,11 +18,41 @@ export default function knowledgebaseApiRoute(app, config) {
     });
 
     app.post(baseEndpoint + '/section/update', async function(req, res) {
-        const slug = required(req.body, "slug", res);
-        const sectionSlug = required(req.body, "sectionSlug", res);
-        const sectionName = required(req.body, "sectionName", res);
-        const description = required(req.body, "description", res);
-        const sectionIcon = required(req.body, "sectionIcon", res);
-        const position = required(req.body, "position", res);
+        const sectionUpdateURL = `${config.siteConfiguration.siteAddress}${config.siteConfiguration.apiRoute}/knowledgebase/section/update`;
+        fetch(sectionUpdateURL, {
+            method: 'POST',
+            body: JSON.stringify(req.body),
+            headers: { 'Content-Type': 'application/json' }
+        })
+        .then(res => res.json())
+        .then(json => console.log(json));
+
+        res.redirect(`${config.siteConfiguration.siteAddress}/dashboard/knowledgebase`);
+    });
+
+    app.post(baseEndpoint + '/article/create', async function(req, res) {
+        const articleCreateURL = `${config.siteConfiguration.siteAddress}${config.siteConfiguration.apiRoute}/knowledgebase/article/create`;
+        fetch(articleCreateURL, {
+            method: 'POST',
+            body: JSON.stringify(req.body),
+            headers: { 'Content-Type': 'application/json' }
+        })
+        .then(res => res.json())
+        .then(json => console.log(json));
+
+        res.redirect(`${config.siteConfiguration.siteAddress}/dashboard/knowledgebase`);
+    });
+
+    app.post(baseEndpoint + '/article/update', async function(req, res) {
+        const articleUpdateURL = `${config.siteConfiguration.siteAddress}${config.siteConfiguration.apiRoute}/knowledgebase/article/update`;
+        fetch(articleUpdateURL, {
+            method: 'POST',
+            body: JSON.stringify(req.body),
+            headers: { 'Content-Type': 'application/json' }
+        })
+        .then(res => res.json())
+        .then(json => console.log(json));
+
+        res.redirect(`${config.siteConfiguration.siteAddress}/dashboard/knowledgebase`);
     });
 }
