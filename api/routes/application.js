@@ -87,7 +87,7 @@ export default function applicationApiRoute(app, config, db, features, lang) {
     });
 
     app.post(baseEndpoint + '/edit', async function(req, res) {
-        isFeatureEnabled(features.applications, res, lang);
+        isFeatureEnabled(features.application, res, lang);
         const applicationId = required(req.body, "applicationId", res);
         const displayName = required(req.body, "displayName", res);
         const description = required(req.body, "description", res);
