@@ -14,7 +14,7 @@ export default function serverRedirectRoute(app, config) {
         .then(res => res.json())
         .then(json => console.log(json));
 
-        res.redirect(`${config.siteConfiguration.siteAddress}/dashboard/server`);
+        res.redirect(`${config.siteConfiguration.siteAddress}/dashboard/servers`);
     });
 
     app.post(baseEndpoint + '/edit', async function(req, res) {
@@ -27,7 +27,7 @@ export default function serverRedirectRoute(app, config) {
         .then(res => res.json())
         .then(json => console.log(json));
 
-        res.redirect(`${config.siteConfiguration.siteAddress}/dashboard/server`);
+        res.redirect(`${config.siteConfiguration.siteAddress}/dashboard/servers`);
     });
 
     app.post(baseEndpoint + '/delete', async function(req, res) {
@@ -40,7 +40,7 @@ export default function serverRedirectRoute(app, config) {
         .then(res => res.json())
         .then(json => console.log(json));
 
-        res.redirect(`${config.siteConfiguration.siteAddress}/dashboard/server`);
+        res.redirect(`${config.siteConfiguration.siteAddress}/dashboard/servers`);
     });
 
 }

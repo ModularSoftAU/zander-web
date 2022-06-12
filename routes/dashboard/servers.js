@@ -13,8 +13,6 @@ export default function dashboardServersSiteRoute(app, fetch, config, features, 
         const response = await fetch(fetchURL);
         const apiData = await response.json();
 
-        console.log(apiData);
-
         reply.view('dashboard/servers/list', {
             "pageTitle": `Dashboard - Servers`,
             config: config,
