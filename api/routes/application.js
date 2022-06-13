@@ -2,7 +2,6 @@ import {isFeatureEnabled, required, optional} from '../common'
 
 export default function applicationApiRoute(app, config, db, features, lang) {
     const baseEndpoint = config.siteConfiguration.apiRoute + '/application';
-    const baseRedirect = config.siteConfiguration.apiRoute + '/dashboard/applications'
 
     app.get(baseEndpoint + '/get', async function(req, res) {
         isFeatureEnabled(features.application, res, lang);
@@ -14,8 +13,6 @@ export default function applicationApiRoute(app, config, db, features, lang) {
                     if (error) {
                         res.send({
                             success: false,
-                            redirectUrl: baseRedirect,
-                            messageType: `alert-danger`,
                             message: `${error}`
                         });
                     }
@@ -23,8 +20,6 @@ export default function applicationApiRoute(app, config, db, features, lang) {
                     if (!results.length) {
                         return res.send({
                             success: false,
-                            redirectUrl: baseRedirect,
-                            messageType: `alert-danger`,
                             message: lang.applications.noApplicationsFound
                         });
                     }
@@ -49,8 +44,6 @@ export default function applicationApiRoute(app, config, db, features, lang) {
         } catch (error) {
             res.send({
 				success: false,
-                redirectUrl: baseRedirect,
-                messageType: `alert-danger`,
 				message: `${error}`
 			});
         }
@@ -64,23 +57,24 @@ export default function applicationApiRoute(app, config, db, features, lang) {
         const requirementsMarkdown = required(req.body, "requirementsMarkdown", res);
         const redirectUrl = required(req.body, "redirectUrl", res);
         const position = required(req.body, "position", res);
+        const applicationStatus = required(req.body, "applicationStatus", res);
 
         let applicationCreatedLang = lang.applications.applicationCreated;
 
         try {
-            db.query(`INSERT INTO applications (displayName, description, displayIcon, requirementsMarkdown, redirectUrl, position) VALUES (?, ?, ?, ?, ?, ?)`, [displayName, description, displayIcon, requirementsMarkdown, redirectUrl, position], function(error, results, fields) {
+            db.query(`
+                INSERT INTO applications 
+                    (displayName, description, displayIcon, requirementsMarkdown, redirectUrl, position, closed) 
+                VALUES (?, ?, ?, ?, ?, ?, ?)`, 
+                [displayName, description, displayIcon, requirementsMarkdown, redirectUrl, position, applicationStatus], function(error, results, fields) {
                 if (error) {
                     return res.send({
                         success: false,
-                        redirectUrl: baseRedirect,
-                        messageType: `alert-danger`,
                         message: `${error}`
                     });
                 }
                 return res.send({
                     success: true,
-                    redirectUrl: baseRedirect,
-                    messageType: `alert-success`,
                     message: applicationCreatedLang.replace("%DISPLAYNAME%", displayName)
                 });
             });
@@ -88,15 +82,13 @@ export default function applicationApiRoute(app, config, db, features, lang) {
         } catch (error) {
             res.send({
                 success: false,
-                redirectUrl: baseRedirect,
-                messageType: `alert-danger`,
                 message: `${error}`
             });
         }
     });
 
     app.post(baseEndpoint + '/edit', async function(req, res) {
-        isFeatureEnabled(features.applications, res, lang);
+        isFeatureEnabled(features.application, res, lang);
         const applicationId = required(req.body, "applicationId", res);
         const displayName = required(req.body, "displayName", res);
         const description = required(req.body, "description", res);
@@ -104,31 +96,36 @@ export default function applicationApiRoute(app, config, db, features, lang) {
         const requirementsMarkdown = required(req.body, "requirementsMarkdown", res);
         const redirectUrl = required(req.body, "redirectUrl", res);
         const position = required(req.body, "position", res);
+        const applicationStatus = required(req.body, "applicationStatus", res);
 
         let applicationEditedLang = lang.applications.applicationEdited;
 		
 		try {
-			db.query(`UPDATE applications SET displayName = ?, description = ?, displayIcon = ?, requirementsMarkdown = ?, redirectUrl = ?, position = ? WHERE applicationId = ?`, [displayName, description, displayIcon, requirementsMarkdown, redirectUrl, position, applicationId], function(error, results, fields) {
+			db.query(`
+                UPDATE applications SET 
+                    displayName=?, 
+                    description=?, 
+                    displayIcon=?, 
+                    requirementsMarkdown=?, 
+                    redirectUrl=?, 
+                    position=?,
+                    closed=?,
+                WHERE applicationId = ?`,
+                [displayName, description, displayIcon, requirementsMarkdown, redirectUrl, position, applicationStatus, applicationId], function(error, results, fields) {
 				if (error) {
 					return res.send({
 						success: false,
-                        redirectUrl: baseRedirect,
-                        messageType: `alert-danger`,
 						message: `${error}`
 					});
 				}
 				return res.send({
 					success: true,
-                    redirectUrl: ``,
-                    messageType: ``,
 					message: applicationEditedLang.replace("%DISPLAYNAME%", displayName)
 				});
 			});
 		} catch (error) {
 			res.send({
 				success: false,
-                redirectUrl: baseRedirect,
-                messageType: `alert-danger`,
 				message: `${error}`
 			});
 		}
@@ -143,8 +140,6 @@ export default function applicationApiRoute(app, config, db, features, lang) {
                 if (error) {
                     res.send({
                         success: false,
-                        redirectUrl: baseRedirect,
-                        messageType: `alert-danger`,
                         message: `${error}`
                     });
                 }
@@ -157,8 +152,6 @@ export default function applicationApiRoute(app, config, db, features, lang) {
         } catch (error) {
             res.send({
 				success: false,
-                redirectUrl: baseRedirect,
-                messageType: `alert-danger`,
 				message: `${error}`
 			});
         }

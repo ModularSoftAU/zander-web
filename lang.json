@@ -1,10 +1,15 @@
 {
     "api": {
+        "noToken": "There was no token included in this request.",
+        "invalidToken": "The token that was provided is not valid or incorrect.",
         "featureDisabled": "This action could not be completed because the feature has been disabled by the System Administrator.",
         "userCreated": "The user %USERNAME% with the unique identifier of %UUID% is new, profile created.",
         "userAlreadyExists": "The requested user already exists in the database, the user creation is being terminated.",
         "userDoesNotExist": "The requested user does not exist.",
         "noNotifications": "You do not have any notifications, good day!"
+    },
+    "error": {
+        "noReportServers": "The report feature could not be loaded because no public servers are avaliable. Consider asking your System Administrator to add one."
     },
     "web": {
         "notLoggedInBefore": "You have not logged in before. You are required to login before becoming a community site member. You can jump on and play here: %SITEADDRESS%/play",

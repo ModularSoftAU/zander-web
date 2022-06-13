@@ -6,7 +6,7 @@ export default function dashboardApplicationsSiteRoute(app, fetch, config, featu
     // Applications
     // 
     app.get('/dashboard/applications', async function(request, reply) {
-        // isFeatureWebRouteEnabled(features.applications, request, reply);
+        isFeatureWebRouteEnabled(features.applications, request, reply);
         hasPermission('zander.web.application', request, reply);
 
         const fetchURL = `${config.siteConfiguration.siteAddress}${config.siteConfiguration.apiRoute}/application/get`;

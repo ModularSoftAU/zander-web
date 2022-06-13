@@ -1,12 +1,12 @@
 <%- include("../modules/header.ejs", {
     pageTitle: pageTitle,
-    pageDescription: "An error has occured and cannot load this page."
+    pageDescription: "You must be logged in to use this feature."
 }) %>
 
 <%- include("../modules/navigationBar.ejs") %>
 
 <%- include("../partials/miniHeader.ejs", {
-  headerTitle: "Server Error",
+  headerTitle: "Not Logged In",
   backgroundImage: "../images/banner/error.png"
 }) %>
 
@@ -20,17 +20,12 @@
           </div>
         </div>
         <div class="col-sm" style="margin-right:100px;">    
-          <h3>There was an error ;-;</h3>
-          <% if (error.message) { %>
-            <code><%= error.message %></code>
-          <% } %>
-
-          <% if (error) { %>
-            <code><%= error %></code>
-          <% } %>
+          <h3>You must be logged in to use this feature.</h3>
+          <p>Permission to this page is restricted, please ensure you are logged in to use this feature.</p>
 
           <br><br><br>
-          <small class="text-muted">If this continues to happen, please report this by either <a style="color: rgb(75, 64, 224);" href="mailto:<%= config.siteConfiguration.email %>">e-mailing our Support Team</a> or <a style="color: rgb(75, 64, 224);" href="/discord">join our Community Discord and open a ticket</a>.</small>
+          <a href="/login"><button type="button" class="btn btn-primary">Login</button></a>
+          <a href="/"><button type="button" class="btn btn-success">Back to Safety</button></a>
         </div>
       </div>
     </div>

@@ -1,3 +1,5 @@
+import lang from "../../lang.json" assert {type: "json"};
+
 export default function verifyToken(req, res, done) {
     // console.log('Verifying that API request includes valid token...');
 
@@ -8,7 +10,10 @@ export default function verifyToken(req, res, done) {
     var token = req.body.token || req.query.token || req.headers['x-access-token'];
     if (!token) {
         // Token not included
-        return res.status(403).send({ 'error': true });
+        return res.send({
+            success: false,
+            message: lang.api.noToken
+        });
     }
   
     if (token === process.env.apiKey) {
@@ -16,6 +21,9 @@ export default function verifyToken(req, res, done) {
         done();
     } else {
         // Token was incorrect.
-        return res.status(403).send({ 'error': true });
+        return res.send({
+            success: false,
+            message: lang.api.invalidToken
+        });
     }
 }
