@@ -3,9 +3,7 @@ import knowledgebaseSiteRoutes from './knowledgebaseRoutes'
 import policySiteRoutes from './policyRoutes'
 import communityCreationsRoutes from './communityCreationsRoutes'
 import sessionRoutes from './sessionRoutes'
-import {
-    isFeatureWebRouteEnabled
-} from "../api/common";
+import { isFeatureWebRouteEnabled, isLoggedIn } from "../api/common";
 
 export default function applicationSiteRoutes(app, client, fetch, moment, config, db, features, lang) {
 
@@ -117,6 +115,15 @@ export default function applicationSiteRoutes(app, client, fetch, moment, config
     app.get('/report', async function(request, reply) {
         isFeatureWebRouteEnabled(features.report, request, reply);
 
+        if (!isLoggedIn(request)) {
+            return reply.view('session/notLoggedIn', {
+                "pageTitle": `Access Restricted`,
+                config: config,
+                request: request,
+                reply: reply
+            });        
+        }
+
         const fetchURL = `${config.siteConfiguration.siteAddress}${config.siteConfiguration.apiRoute}/server/get?visable=true`;
         const response = await fetch(fetchURL);
         const serverApiData = await response.json();
@@ -182,6 +189,15 @@ export default function applicationSiteRoutes(app, client, fetch, moment, config
     // User Notifications
     // 
     app.get('/notifications', async function(request, reply) {
+        if (!isLoggedIn(request)) {
+            return reply.view('session/notLoggedIn', {
+                "pageTitle": `Access Restricted`,
+                config: config,
+                request: request,
+                reply: reply
+            });        
+        }
+
         const fetchURL = `${config.siteConfiguration.siteAddress}${config.siteConfiguration.apiRoute}/user/notification/get?username=${request.params.username}`;
         const response = await fetch(fetchURL);
         const apiData = await response.json();
@@ -214,6 +230,15 @@ export default function applicationSiteRoutes(app, client, fetch, moment, config
     // Appeal
     // 
     app.get('/appeal', async function(request, reply) {
+        if (!isLoggedIn(request)) {
+            return reply.view('session/notLoggedIn', {
+                "pageTitle": `Access Restricted`,
+                config: config,
+                request: request,
+                reply: reply
+            });        
+        }
+        
         isFeatureWebRouteEnabled(features.appeals, request, reply);
 
         reply.view('appeal', {
