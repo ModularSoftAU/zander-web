@@ -57,15 +57,16 @@ export default function applicationApiRoute(app, config, db, features, lang) {
         const requirementsMarkdown = required(req.body, "requirementsMarkdown", res);
         const redirectUrl = required(req.body, "redirectUrl", res);
         const position = required(req.body, "position", res);
+        const applicationStatus = required(req.body, "applicationStatus", res);
 
         let applicationCreatedLang = lang.applications.applicationCreated;
 
         try {
             db.query(`
                 INSERT INTO applications 
-                    (displayName, description, displayIcon, requirementsMarkdown, redirectUrl, position) 
-                VALUES (?, ?, ?, ?, ?, ?)`, 
-                [displayName, description, displayIcon, requirementsMarkdown, redirectUrl, position], function(error, results, fields) {
+                    (displayName, description, displayIcon, requirementsMarkdown, redirectUrl, position, closed) 
+                VALUES (?, ?, ?, ?, ?, ?, ?)`, 
+                [displayName, description, displayIcon, requirementsMarkdown, redirectUrl, position, applicationStatus], function(error, results, fields) {
                 if (error) {
                     return res.send({
                         success: false,
@@ -95,6 +96,7 @@ export default function applicationApiRoute(app, config, db, features, lang) {
         const requirementsMarkdown = required(req.body, "requirementsMarkdown", res);
         const redirectUrl = required(req.body, "redirectUrl", res);
         const position = required(req.body, "position", res);
+        const applicationStatus = required(req.body, "applicationStatus", res);
 
         let applicationEditedLang = lang.applications.applicationEdited;
 		
@@ -106,9 +108,10 @@ export default function applicationApiRoute(app, config, db, features, lang) {
                     displayIcon=?, 
                     requirementsMarkdown=?, 
                     redirectUrl=?, 
-                    position=? 
-                WHERE applicationId = ?`, 
-                [displayName, description, displayIcon, requirementsMarkdown, redirectUrl, position, applicationId], function(error, results, fields) {
+                    position=?,
+                    closed=?,
+                WHERE applicationId = ?`,
+                [displayName, description, displayIcon, requirementsMarkdown, redirectUrl, position, applicationStatus, applicationId], function(error, results, fields) {
 				if (error) {
 					return res.send({
 						success: false,

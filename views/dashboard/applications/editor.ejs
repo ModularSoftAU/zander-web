@@ -24,7 +24,7 @@
                                     <% } %>
                                     <% if (type === 'edit') { %>
                                         <form method="post" action="<%= config.siteConfiguration.siteAddress %><%= config.siteConfiguration.redirectRoute %>/application/edit">
-                                            <input type="hidden" name="serverId" value="<%= applicationApiData.applicationId %>">
+                                            <input type="hidden" name="applicationId" value="<%= applicationApiData.applicationId %>">
                                     <% } %>
                                             <div class="row">
                                                 <!-- Display Name -->
@@ -96,7 +96,7 @@
                                                         <input type="text" class="form-control input-default " name="redirectUrl" value="<%= applicationApiData.redirectUrl %>" required>
                                                     <% } %>
 
-                                                    <p class="text-muted m-b-15 f-s-12">The URL to redirect to for the applicant to fill out (for example like a Google Form or TypeForm)</p>
+                                                    <p class="text-muted m-b-15 f-s-12">The URL to redirect to for the applicant to fill out (for example like a form)</p>
                                                 </div>
                                             </div>
 
@@ -115,17 +115,17 @@
 
                                                 <!-- Application Status -->
                                                 <div class="form-group col">
-                                                    <label for="closed">Application Status</label>
+                                                    <label for="applicationStatus">Application Status</label>
 
                                                     <% if (type === 'create') { %>
-                                                        <select name="closed" class="form-control input-default " required>
+                                                        <select name="applicationStatus" class="form-control input-default " required>
                                                             <option value="disabled" selected disabled>Select a Status</option>
                                                             <option value="0">Closed</option>
                                                             <option value="1">Open</option>
                                                         </select>
                                                     <% } %>
                                                     <% if (type === 'edit') { %>
-                                                        <select name="closed" class="form-control input-default " required>
+                                                        <select name="applicationStatus" class="form-control input-default " required>
                                                             <option value="disabled" selected disabled>Select a Status</option>
                                                             <option value="0">Closed</option>
                                                             <option value="1">Open</option>
