@@ -14,7 +14,7 @@ export default function reportRedirectRoute(app, config) {
         .then(res => res.json())
         .then(json => console.log(json));
 
-        res.redirect(`${config.siteConfiguration.siteAddress}/dashboard`);
+        res.redirect(`${config.siteConfiguration.siteAddress}/`);
     });
 
     app.post(baseEndpoint + '/close', async function(req, res) {
@@ -27,7 +27,7 @@ export default function reportRedirectRoute(app, config) {
         .then(res => res.json())
         .then(json => console.log(json));
 
-        res.redirect(`${config.siteConfiguration.siteAddress}/dashboard`);
+        res.redirect(`${config.siteConfiguration.siteAddress}/`);
     });
 
 }

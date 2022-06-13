@@ -128,6 +128,17 @@ export default function applicationSiteRoutes(app, client, fetch, moment, config
         const response = await fetch(fetchURL);
         const serverApiData = await response.json();
 
+        console.log(serverApiData);
+
+        if (!serverApiData.success) {
+            reply.view('session/error', {
+                "pageTitle": `Server Error`,
+                config: config,
+                error: lang.error.noReportServers,
+                request: request
+            });
+        }
+
         reply.view('report', {
             "pageTitle": `Report a Player`,
             config: config,

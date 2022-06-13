@@ -21,7 +21,13 @@
         </div>
         <div class="col-sm" style="margin-right:100px;">    
           <h3>There was an error ;-;</h3>
-          <code><%= error.message %></code>
+          <% if (error.message) { %>
+            <code><%= error.message %></code>
+          <% } %>
+
+          <% if (error) { %>
+            <code><%= error %></code>
+          <% } %>
 
           <br><br><br>
           <small class="text-muted">If this continues to happen, please report this by either <a style="color: rgb(75, 64, 224);" href="mailto:<%= config.siteConfiguration.email %>">e-mailing our Support Team</a> or <a style="color: rgb(75, 64, 224);" href="/discord">join our Community Discord and open a ticket</a>.</small>

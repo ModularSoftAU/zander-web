@@ -8,6 +8,9 @@
         "userDoesNotExist": "The requested user does not exist.",
         "noNotifications": "You do not have any notifications, good day!"
     },
+    "error": {
+        "noReportServers": "The report feature could not be loaded because no public servers are avaliable. Consider asking your System Administrator to add one."
+    },
     "web": {
         "notLoggedInBefore": "You have not logged in before. You are required to login before becoming a community site member. You can jump on and play here: %SITEADDRESS%/play",
         "emailAlreadyInUse": "The email you have provided is already in use, please enter another email and try again.",
