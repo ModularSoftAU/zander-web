@@ -42,7 +42,7 @@
                                                     <td><%= application.displayName %></td>
                                                     <td><%= application.description %></td>
                                                     <td>
-                                                        <% if (application.closed === 0) { %>
+                                                        <% if (application.closed === 1) { %>
                                                             <i class="fas fa-check-circle" style="color:green"></i>
                                                         <% } else { %>
                                                             <i class="fas fa-times-circle" style="color: red;"></i>
@@ -52,7 +52,7 @@
                                                         <div class="btn-group">
                                                             <a href="/dashboard/applications/edit?id=<%= application.applicationId %>"><button class="btn btn-sm btn-warning" type="button">Edit</button></a>
 
-                                                            <form action="<%= config.siteConfiguration.siteAddress %><%= config.siteConfiguration.apiRoute %>/applications/delete" method="post">
+                                                            <form action="<%= config.siteConfiguration.siteAddress %><%= config.siteConfiguration.redirectRoute %>/application/delete" method="post">
                                                                 <input type="hidden" name="serverId" value="<%= application.applicationId %>">
                                                                 <button class="btn btn-sm btn-danger" type="submit">Delete</button>
                                                             </form>

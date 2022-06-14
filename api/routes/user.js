@@ -8,14 +8,28 @@ export default function userApiRoute(app, config, db, features, lang) {
         const uuid = required(req.body, "uuid", res);
         const username = required(req.body, "username", res);
 
+        const userCreatedLang = lang.api.userCreated
+
         try {
             // shadowolf
             // Check if user does not exist, we do this in case of testing we create multiple users on accident
             db.query(`SELECT * FROM users WHERE uuid=?`, [uuid], function(error, results, fields) {
+                // If user exists, check that they haven't changed their username since their last login.
+                // If they have we update it in the database, so the display name is accurate.
                 if (results[0]) {
+                    db.query(`UPDATE users SET username=? WHERE uuid=?;`, [username, uuid], function(error, results, fields) {
+                        if (error) {
+                            return res.send({
+                                success: false,
+                                message: `${error}`
+                            });
+                        }
+                    });
+
+                    // If the user already exists, we terminate the creation of the user
                     return res.send({
                         success: false,
-                        message: `This user already exists, terminating creation.`
+                        message: lang.api.userAlreadyExists
                     });
                 }
 
@@ -27,9 +41,10 @@ export default function userApiRoute(app, config, db, features, lang) {
                             message: `${error}`
                         });
                     }
+
                     return res.send({
                         success: true,
-                        message: `${username} (${uuid}) has been successfully created.`
+                        message: userCreatedLang.replace('%USERNAME%', username).replace('%UUID%', uuid)
                     });
                 });
             });
@@ -51,7 +66,7 @@ export default function userApiRoute(app, config, db, features, lang) {
                 if (!results || !results.length) {
                     return res.send({
                         success: false,
-                        message: `This user does not exist.`
+                        message: lang.api.userDoesNotExist
                     });
                 }
                 
@@ -78,7 +93,7 @@ export default function userApiRoute(app, config, db, features, lang) {
                 if (!results || !results.length) {
                     return res.send({
                         success: false,
-                        message: `You do not have any notifications.`
+                        message: lang.api.noNotifications
                     });
                 }
                 
@@ -108,7 +123,7 @@ export default function userApiRoute(app, config, db, features, lang) {
                 if (!results || !results.length) {
                     return res.send({
                         success: false,
-                        message: `You do not have any notifications.`
+                        message: lang.api.noNotifications
                     });
                 }
                 

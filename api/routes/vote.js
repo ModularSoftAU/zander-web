@@ -8,6 +8,8 @@ export default function voteApiRoute(app, config, db, features, lang) {
         const username = required(req.body, "username", res);
         const voteSite = required(req.body, "voteSite", res);
 
+        const newVoteCastLang = lang.vote.newVoteCast
+
         try {
             // Insert newly started session into database
             db.query(`
@@ -28,7 +30,7 @@ export default function voteApiRoute(app, config, db, features, lang) {
 
                 return res.send({
                     success: true,
-                    message: `New vote cast entry has been entered for ${username}.`
+                    message: newVoteCastLang.replace("%USERNAME%", username)
                 });
             });
 
@@ -46,8 +48,7 @@ export default function voteApiRoute(app, config, db, features, lang) {
         try {
             db.query(`
                 SELECT 
-                    (SELECT username FROM users WHERE votes.userId=users.userId) AS 'username', 
-                    count(*) AS votes 
+                    (SELECT username FROM users WHERE votes.userId=users.userId) AS 'username', count(*) AS votes 
                 FROM votes 
                 GROUP BY username 
                 ORDER BY votes DESC;
@@ -62,7 +63,7 @@ export default function voteApiRoute(app, config, db, features, lang) {
                 if (!results.length) {
                     return res.send({
                         success: false,
-                        message: `There currently are no votes.`
+                        message: lang.vote.noVotes
                     });
                 }
 

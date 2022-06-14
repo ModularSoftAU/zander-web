@@ -10,7 +10,6 @@ export default function serverApiRoute(app, config, db, features, lang) {
         const id = optional(req.query, "id");
 
         try {
-
             function getServers(dbQuery) {
                 db.query(dbQuery, function(error, results, fields) {
                     if (error) {
@@ -23,7 +22,7 @@ export default function serverApiRoute(app, config, db, features, lang) {
                     if (!results.length) {
                         return res.send({
                             success: false,
-                            message: `There are currently no servers visible.`
+                            message: lang.server.noServers
                         });
                     }
 
@@ -64,14 +63,54 @@ export default function serverApiRoute(app, config, db, features, lang) {
         }
     });
 
+    app.get(baseEndpoint + '/users/get', async function(req, res) {
+        try {
+            db.query(`
+                SELECT
+                    s.name,
+                    c.playersOnline
+                FROM servers s
+                RIGHT JOIN (
+                    SELECT
+                        COUNT(serverId) AS playersOnline,
+                        serverId
+                    FROM gamesessions
+                    WHERE sessionEnd IS NULL
+                        OR sessionEnd > NOW()
+                    GROUP BY serverId
+                ) c ON s.serverId = c.serverId
+            `, function(error, results, fields) {
+                if (error) {
+                    return res.send({
+                        success: false,
+                        message: `${error}`
+                    });
+                }
+
+                return res.send({
+                    success: true,
+                    data: results
+                });
+            });
+        } catch (error) {
+            res.send({
+                success: false,
+                message: `${error}`
+            });
+        }
+    });
+
     app.post(baseEndpoint + '/create', async function(req, res) {
         isFeatureEnabled(features.servers, res, lang);
+
         const name = required(req.body, "name", res);
         const fqdn = required(req.body, "fqdn", res);
         const ipAddress = required(req.body, "ipAddress", res);
         const port = required(req.body, "port", res);
         const visible = required(req.body, "visible", res);
         const position = required(req.body, "position", res);
+
+        const serverCreatedLang = lang.server.serverCreated
 
         try {
             db.query(`INSERT INTO servers (name, fqdn, ipAddress, port, visible, position) VALUES (?, ?, ?, ?, ?, ?)`, [name, fqdn, ipAddress, port, visible, position], function(error, results, fields) {
@@ -83,7 +122,7 @@ export default function serverApiRoute(app, config, db, features, lang) {
                 }
                 return res.send({
                     success: true,
-                    message: `The server ${name} (${fqdn}) has been successfully created!`
+                    message: serverCreatedLang.replace("%NAME%", name)
                 });
             });
 
@@ -97,6 +136,7 @@ export default function serverApiRoute(app, config, db, features, lang) {
 
     app.post(baseEndpoint + '/edit', async function(req, res) {
         isFeatureEnabled(features.servers, res, lang);
+
         const serverId = required(req.body, "serverId", res);
         const name = required(req.body, "name", res);
         const fqdn = required(req.body, "fqdn", res);
@@ -116,7 +156,7 @@ export default function serverApiRoute(app, config, db, features, lang) {
 
                 return res.send({
                     success: true,
-                    message: `The server with the ID of ${serverId} has been successfully updated!`
+                    message: lang.server.serverEdited
                 });
             });
 
@@ -142,7 +182,7 @@ export default function serverApiRoute(app, config, db, features, lang) {
                 }
                 return res.send({
                     success: true,
-                    message: `Deletion of server with the id ${serverId} has been successful`
+                    message: lang.server.serverDeleted
                 });
             });
 

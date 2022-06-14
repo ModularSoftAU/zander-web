@@ -20,7 +20,7 @@ export default function friendApiRoute(app, config, db, features, lang) {
                 if (!results.length) {
                     return res.send({
                         success: false,
-                        message: `You have no friends.`
+                        message: lang.friend.noFriends
                     });
                 }
 

@@ -11,7 +11,10 @@
 
 <%- include("../../modules/index/features.ejs") %>
 
-<%- include("../../modules/index/communityCreations.ejs") %>
+<% if (features.communitycreations) { %>
+    <%- include("../../modules/index/communityCreations.ejs") %>
+<%  } %>
+<br>
 
 <%- include("../../modules/index/stats.ejs") %>
 <br><br><br><br><br><br>

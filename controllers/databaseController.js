@@ -1,12 +1,13 @@
-import mysql from 'mysql'
-import config from '../config.json' assert {type: "json"};
+import mysql from 'mysql';
+import dotenv from 'dotenv';
+dotenv.config()
 
 var connection = mysql.createConnection({
-  host: config.database.host,
-  port: config.database.port,
-  user: config.database.user,
-  password: config.database.password,
-  database: config.database.name,
+  host: process.env.databaseHost,
+  port: process.env.databasePort,
+  user: process.env.databaseUser,
+  password: process.env.databasePassword,
+  database: process.env.databaseName,
   multipleStatements: true
 });
 

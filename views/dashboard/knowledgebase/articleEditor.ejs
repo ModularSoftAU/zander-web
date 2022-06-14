@@ -20,10 +20,10 @@
                             <div class="card-body">
                                 <div class="basic-form">
                                     <% if (type === 'create') { %>
-                                        <form method="post" action="<%= config.siteConfiguration.siteAddress %><%= config.siteConfiguration.apiRoute %>/knowledgebase/article/create">
+                                        <form method="post" action="<%= config.siteConfiguration.siteAddress %><%= config.siteConfiguration.redirectRoute %>/knowledgebase/article/create">
                                     <% } %>
                                     <% if (type === 'edit') { %>
-                                        <form method="post" action="<%= config.siteConfiguration.siteAddress %><%= config.siteConfiguration.apiRoute %>/knowledgebase/article/update">
+                                        <form method="post" action="<%= config.siteConfiguration.siteAddress %><%= config.siteConfiguration.redirectRoute %>/knowledgebase/article/update">
                                             <input type="hidden" name="slug" value="<%= kbApiData.articleSlug %>">
                                     <% } %>
                                             <div class="row">
@@ -98,7 +98,7 @@
                                                         </select>
                                                     <% } %>
                                                     <% if (type === 'edit') { %>
-                                                        <select name="articleSection" class="form-control input-default " required>
+                                                        <select name="articleSection" id="articleSection" class="form-control input-default " onload="selectArticleSection()" required>
                                                             <option value="disabled" selected disabled>Select a Section</option>
                                                             <% sectionApiData.forEach(function(section) { %>
                                                                 <option value="<%= section.sectionId %>"><%= section.sectionName %></option>
@@ -133,7 +133,7 @@
                                                         </select>
                                                     <% } %>
                                                     <% if (type === 'edit') { %>
-                                                        <select class="form-control" name="articleVisibility" required>
+                                                        <select class="form-control" id="articleVisibility" name="articleVisibility" required>
                                                             <option selected disabled>Select a Visability</option>
                                                             <option value="0">Not Visable</option>
                                                             <option value="1">Visable</option>

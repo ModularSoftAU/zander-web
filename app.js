@@ -2,6 +2,8 @@ import packageData from './package.json' assert {type: "json"};
 import moment from 'moment'
 import fetch from 'node-fetch'
 import { SapphireClient } from '@sapphire/framework';
+import dotenv from 'dotenv';
+dotenv.config()
 
 import fastify from 'fastify';
 import fastifySession from 'fastify-session'
@@ -25,23 +27,24 @@ const client = new SapphireClient({
     intents: ['GUILDS', 'GUILD_MESSAGES'],
     presence: {
         status: "online",
-        activities: [{
-            name: `Type ${config.discord.prefix}help for more.`,
-            type: 'PLAYING',
-            url: config.siteConfiguration.siteAddress
-        }]
+        // activities: [{
+        //     name: `Type ${config.discord.prefix}help for more.`,
+        //     type: 'PLAYING',
+        //     url: config.siteConfiguration.siteAddress
+        // }]
     },
     loadMessageCommandListeners: true,
     defaultPrefix: config.discord.prefix,
 });
 
-client.login(config.discord.apiKey);
+client.login(process.env.discordAPIKey);
 
 //
 // Cron Jobs
 //
 import('./cron/daily.js');
-// import('./cron/monthly.js')(client);
+import monthlyCron from './cron/monthly.js';
+setTimeout(function name() { monthlyCron(client); }, 5000)
 
 // 
 // Website Related
@@ -50,9 +53,11 @@ import('./cron/daily.js');
 // Site Routes
 import siteRoutes from './routes'
 import apiRoutes from './api/routes'
+import apiRedirectRoutes from './api/internal_redirect'
 
 // API token authentication
 import verifyToken from './api/routes/verifyToken'
+import { setTimeout } from 'timers';
 
 //
 // Application Boot
@@ -62,12 +67,17 @@ const buildApp = async () => {
     const port = process.env.PORT || config.port || 8080;
 
     // When app can't found route, render the not found on a page, do not provide JSON
-    // app.setNotFoundHandler((error, request, reply) => {        
-    //     reply.view('session/notFound', {
-    //         "pageTitle": `404: Not Found`,
-    //         config: config,
-    //         error: error
-    //     });
+    // app.setNotFoundHandler((error, request, reply) => {
+    //     if (error) {
+    //         reply.code(404);
+    //         reply.view('session/notFound', {
+    //             "pageTitle": `404 : Not Found`,
+    //             config: config,
+    //             moment: moment,
+    //             request: request,
+    //             features: features
+    //         });
+    //     }
     // });
   
     // When app errors, render the error on a page, do not provide JSON
@@ -99,6 +109,7 @@ const buildApp = async () => {
         // API routes (Token authenticated)
         instance.addHook('preValidation', verifyToken);
         apiRoutes(instance, client, moment, config, db, features, lang);
+        apiRedirectRoutes(instance, config);
         next();
     });
 
@@ -106,7 +117,7 @@ const buildApp = async () => {
     app.register(fastifyCookie);
     app.register(fastifySession, {
         cookieName: 'sessionId',
-        secret: config.siteConfiguration.sessionCookieSecret,
+        secret: process.env.sessionCookieSecret,
         cookie: { secure: false },
         expires: 1800000
     });
@@ -114,6 +125,11 @@ const buildApp = async () => {
     app.register((instance, options, next) => {
         // Routes
         siteRoutes(instance, client, fetch, moment, config, db, features, lang);
+        next();
+    });
+
+    app.addHook('preHandler', (request, reply, next) => {
+        request.session.authenticated = false;
         next();
     });
 

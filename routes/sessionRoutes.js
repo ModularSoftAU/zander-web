@@ -1,4 +1,5 @@
 import bcrypt from 'bcrypt';
+import { isFeatureWebRouteEnabled } from "../api/common";
 
 export default function sessionSiteRoute(app, fetch, moment, config, db, features, lang) {
 
@@ -6,6 +7,8 @@ export default function sessionSiteRoute(app, fetch, moment, config, db, feature
     // Session
     // 
     app.get('/login', async function(request, reply) {
+		isFeatureWebRouteEnabled(features.web, request, reply);
+
         reply.view('session/login', {
             "pageTitle": `Login`,
             config: config,
@@ -15,6 +18,8 @@ export default function sessionSiteRoute(app, fetch, moment, config, db, feature
     });
 
     app.get('/register', async function(request, reply) {
+		isFeatureWebRouteEnabled(features.web, request, reply);
+		
         reply.view('session/register', {
             "pageTitle": `Register`,
             config: config,
@@ -132,11 +137,14 @@ export default function sessionSiteRoute(app, fetch, moment, config, db, feature
 				  req.session.authenticated = true;
 				  
 				  let userData = await getPermissions(results[0]);
+				//   console.log(userData);
+
                   req.session.user = {
                       userId: userData.userId,
                       username: userData.username,
                       uuid: userData.uuid,
-					  ranks: userData.userRanks
+					  ranks: userData.userRanks,
+					  permissions: userData.permissions
                   };
 
                   return res.redirect(`${config.siteConfiguration.siteAddress}/`)
