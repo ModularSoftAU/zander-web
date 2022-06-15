@@ -105,7 +105,7 @@ SELECT
 			LEFT(SUBSTRING_INDEX(lpGroupPrefix.permission, '[&', -1), 1) IN ('0','1','2','3','4','5','8','9') THEN '#FFFFFF'
         ELSE '#000000'
 	END AS rankTextColour,
-    '' AS discordRoleId,
+    COALESCE(SUBSTRING_INDEX(lpDiscordId.permission, '.', -1),null) AS discordRoleId,
     COALESCE(RIGHT(lpGroupStaff.permission, 1),'0') AS isStaff,
     COALESCE(RIGHT(lpGroupDonator.permission, 1),'0') AS isDonator
 FROM cfcdev_luckperms.luckperms_groups lpGroups
@@ -123,7 +123,10 @@ FROM cfcdev_luckperms.luckperms_groups lpGroups
         AND lpGroupStaff.value = 1
 	LEFT JOIN cfcdev_luckperms.luckperms_group_permissions lpGroupDonator On lpGroups.name = lpGroupDonator.name
 		AND lpGroupDonator.permission LIKE 'meta.donator.%'
-        AND lpGroupDonator.value = 1;
+        AND lpGroupDonator.value = 1
+	LEFT JOIN cfcdev_luckperms.luckperms_group_permissions lpDiscordId ON lpGroups.name = lpDiscordId.name
+		AND lpDiscordId.permission LIKE 'meta.discordid.%'
+        AND lpDiscordId.value = 1;
 
 CREATE VIEW zanderdev.userRanks AS
 SELECT
