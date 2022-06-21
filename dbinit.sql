@@ -263,7 +263,6 @@ CREATE TABLE webPunishments (
     reason VARCHAR(50),
     createdDate DATETIME NOT NULL DEFAULT NOW(),
     expires DATETIME,
-    appealed BOOLEAN DEFAULT 0,
     PRIMARY KEY (webPunishmentId),
     INDEX webPunishments_createdDate (createdDate),
     INDEX webPunishments_expires (expires),
@@ -280,7 +279,6 @@ CREATE TABLE discordPunishments (
     reason VARCHAR(50),
     createdDate DATETIME NOT NULL DEFAULT NOW(),
     expires DATETIME,
-    appealed BOOLEAN DEFAULT 0,
     PRIMARY KEY (discordPunishmentId),
     INDEX discordPunishments_createdDate (createdDate),
     INDEX discordPunishments_expires (expires),
@@ -310,7 +308,7 @@ CREATE TABLE ipBanUserExclusions (
 
 CREATE TABLE appeals (
 	appealId INT NOT NULL AUTO_INCREMENT,
-    punishmentId INT NOT NULL,
+    punishmentId TEXT,
     playerId INT NOT NULL,
     closed BOOLEAN DEFAULT 0,
     escalated BOOLEAN DEFAULT 0,
