@@ -254,8 +254,8 @@ CREATE TABLE events (
     CONSTRAINT events_hostingServer FOREIGN KEY (hostingServer) REFERENCES servers (serverId) ON DELETE CASCADE
 );
 
-CREATE TABLE punishments (
-	punishmentId INT NOT NULL AUTO_INCREMENT,
+CREATE TABLE webPunishments (
+	webPunishmentId INT NOT NULL AUTO_INCREMENT,
     playerId INT NOT NULL,
     staffId INT NOT NULL,
     platform VARCHAR(10),
@@ -264,11 +264,28 @@ CREATE TABLE punishments (
     createdDate DATETIME NOT NULL DEFAULT NOW(),
     expires DATETIME,
     appealed BOOLEAN DEFAULT 0,
-    PRIMARY KEY (punishmentId),
-    INDEX punishments_createdDate (createdDate),
-    INDEX punishments_expires (expires),
-    CONSTRAINT punishments_playerId FOREIGN KEY (playerId) REFERENCES users (userId) ON DELETE RESTRICT,
-    CONSTRAINT punishments_staffId FOREIGN KEY (staffId) REFERENCES users (userId) ON DELETE RESTRICT
+    PRIMARY KEY (webPunishmentId),
+    INDEX webPunishments_createdDate (createdDate),
+    INDEX webPunishments_expires (expires),
+    CONSTRAINT webPunishments_playerId FOREIGN KEY (playerId) REFERENCES users (userId) ON DELETE RESTRICT,
+    CONSTRAINT webPunishments_staffId FOREIGN KEY (staffId) REFERENCES users (userId) ON DELETE RESTRICT
+);
+
+CREATE TABLE discordPunishments (
+	discordPunishmentId INT NOT NULL AUTO_INCREMENT,
+    playerId INT NOT NULL,
+    staffId INT NOT NULL,
+    platform VARCHAR(10),
+    type VARCHAR(20),
+    reason VARCHAR(50),
+    createdDate DATETIME NOT NULL DEFAULT NOW(),
+    expires DATETIME,
+    appealed BOOLEAN DEFAULT 0,
+    PRIMARY KEY (discordPunishmentId),
+    INDEX discordPunishments_createdDate (createdDate),
+    INDEX discordPunishments_expires (expires),
+    CONSTRAINT discordPunishments_playerId FOREIGN KEY (playerId) REFERENCES users (userId) ON DELETE RESTRICT,
+    CONSTRAINT discordPunishments_staffId FOREIGN KEY (staffId) REFERENCES users (userId) ON DELETE RESTRICT
 );
 
 CREATE TABLE ipBans (
@@ -301,7 +318,6 @@ CREATE TABLE appeals (
     updatedDate DATETIME,
     PRIMARY KEY (appealId),
     INDEX appeals_createdDate (createdDate),
-    CONSTRAINT appeals_punishmentId FOREIGN KEY (punishmentId) REFERENCES punishments (punishmentId) ON DELETE CASCADE,
     CONSTRAINT appeals_playerId FOREIGN KEY (playerId) REFERENCES users (userId) ON DELETE CASCADE
 );
 
