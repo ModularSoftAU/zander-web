@@ -319,6 +319,53 @@ CREATE TABLE appeals (
     CONSTRAINT appeals_playerId FOREIGN KEY (playerId) REFERENCES users (userId) ON DELETE CASCADE
 );
 
+CREATE VIEW zanderdev.punishments AS
+SELECT
+	CONCAT('S-', p.id) AS punishmentId,
+    u.userId AS playerId,
+    s.userId AS staffId,
+    p.operator AS staffUsername,
+    'server' AS platform,
+    p.punishmentType AS type,
+    p.reason,
+    CAST(FROM_UNIXTIME(CAST(p.start AS UNSIGNED) / 1000) AS DATETIME) AS createdDate,
+    CASE p.end
+		WHEN -1 THEN null
+        ELSE CAST(FROM_UNIXTIME(CAST(p.end AS UNSIGNED) / 1000) AS DATETIME)
+	END AS expires,
+    CASE WHEN EXISTS (SELECT '' FROM zanderdev.appeals WHERE punishmentId = CONCAT('S-', p.id)) THEN 1 ELSE 0 END AS appealed
+FROM cfcdev_advancedban.punishments p
+	JOIN zanderdev.users u ON u.uuid = p.uuid
+    JOIN zanderdev.users s ON UPPER(s.username) = UPPER(p.operator)
+UNION ALL
+SELECT
+	CONCAT('W-', p.webPunishmentId) AS punishmentId,
+    p.playerId,
+    p.staffId,
+    s.username AS staffUsername,
+    'web' AS platform,
+    p.type,
+    p.reason,
+    p.createdDate,
+    p.expires,
+    CASE WHEN EXISTS (SELECT '' FROM zanderdev.appeals WHERE punishmentId = CONCAT('W-', p.webPunishmentId)) THEN 1 ELSE 0 END AS appealed
+FROM zanderdev.webPunishments p
+	JOIN zanderdev.users s ON s.userId = p.staffId
+UNION ALL
+SELECT
+	CONCAT('D-', p.discordPunishmentId) AS punishmentId,
+    p.playerId,
+    p.staffId,
+    s.username AS staffUsername,
+    'discord' AS platform,
+    p.type,
+    p.reason,
+    p.createdDate,
+    p.expires,
+    CASE WHEN EXISTS (SELECT '' FROM zanderdev.appeals WHERE punishmentId = CONCAT('D-', p.discordPunishmentId)) THEN 1 ELSE 0 END AS appealed
+FROM zanderdev.discordPunishments p
+	JOIN zanderdev.users s ON s.userId = p.staffId;
+
 -- Update the appeals.updatedDate when record is updated
 CREATE TRIGGER appeals_updatedDateBeforeUpdate
 BEFORE UPDATE ON appeals FOR EACH ROW
