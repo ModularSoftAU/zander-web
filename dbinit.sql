@@ -254,8 +254,8 @@ CREATE TABLE events (
     CONSTRAINT events_hostingServer FOREIGN KEY (hostingServer) REFERENCES servers (serverId) ON DELETE CASCADE
 );
 
-CREATE TABLE punishments (
-	punishmentId INT NOT NULL AUTO_INCREMENT,
+CREATE TABLE webPunishments (
+	webPunishmentId INT NOT NULL AUTO_INCREMENT,
     playerId INT NOT NULL,
     staffId INT NOT NULL,
     platform VARCHAR(10),
@@ -263,12 +263,27 @@ CREATE TABLE punishments (
     reason VARCHAR(50),
     createdDate DATETIME NOT NULL DEFAULT NOW(),
     expires DATETIME,
-    appealed BOOLEAN DEFAULT 0,
-    PRIMARY KEY (punishmentId),
-    INDEX punishments_createdDate (createdDate),
-    INDEX punishments_expires (expires),
-    CONSTRAINT punishments_playerId FOREIGN KEY (playerId) REFERENCES users (userId) ON DELETE RESTRICT,
-    CONSTRAINT punishments_staffId FOREIGN KEY (staffId) REFERENCES users (userId) ON DELETE RESTRICT
+    PRIMARY KEY (webPunishmentId),
+    INDEX webPunishments_createdDate (createdDate),
+    INDEX webPunishments_expires (expires),
+    CONSTRAINT webPunishments_playerId FOREIGN KEY (playerId) REFERENCES users (userId) ON DELETE RESTRICT,
+    CONSTRAINT webPunishments_staffId FOREIGN KEY (staffId) REFERENCES users (userId) ON DELETE RESTRICT
+);
+
+CREATE TABLE discordPunishments (
+	discordPunishmentId INT NOT NULL AUTO_INCREMENT,
+    playerId INT NOT NULL,
+    staffId INT NOT NULL,
+    platform VARCHAR(10),
+    type VARCHAR(20),
+    reason VARCHAR(50),
+    createdDate DATETIME NOT NULL DEFAULT NOW(),
+    expires DATETIME,
+    PRIMARY KEY (discordPunishmentId),
+    INDEX discordPunishments_createdDate (createdDate),
+    INDEX discordPunishments_expires (expires),
+    CONSTRAINT discordPunishments_playerId FOREIGN KEY (playerId) REFERENCES users (userId) ON DELETE RESTRICT,
+    CONSTRAINT discordPunishments_staffId FOREIGN KEY (staffId) REFERENCES users (userId) ON DELETE RESTRICT
 );
 
 CREATE TABLE ipBans (
@@ -293,7 +308,7 @@ CREATE TABLE ipBanUserExclusions (
 
 CREATE TABLE appeals (
 	appealId INT NOT NULL AUTO_INCREMENT,
-    punishmentId INT NOT NULL,
+    punishmentId TEXT,
     playerId INT NOT NULL,
     closed BOOLEAN DEFAULT 0,
     escalated BOOLEAN DEFAULT 0,
@@ -301,9 +316,55 @@ CREATE TABLE appeals (
     updatedDate DATETIME,
     PRIMARY KEY (appealId),
     INDEX appeals_createdDate (createdDate),
-    CONSTRAINT appeals_punishmentId FOREIGN KEY (punishmentId) REFERENCES punishments (punishmentId) ON DELETE CASCADE,
     CONSTRAINT appeals_playerId FOREIGN KEY (playerId) REFERENCES users (userId) ON DELETE CASCADE
 );
+
+CREATE VIEW zanderdev.punishments AS
+SELECT
+	CONCAT('S-', p.id) AS punishmentId,
+    u.userId AS playerId,
+    s.userId AS staffId,
+    p.operator AS staffUsername,
+    'server' AS platform,
+    p.punishmentType AS type,
+    p.reason,
+    CAST(FROM_UNIXTIME(CAST(p.start AS UNSIGNED) / 1000) AS DATETIME) AS createdDate,
+    CASE p.end
+		WHEN -1 THEN null
+        ELSE CAST(FROM_UNIXTIME(CAST(p.end AS UNSIGNED) / 1000) AS DATETIME)
+	END AS expires,
+    CASE WHEN EXISTS (SELECT '' FROM zanderdev.appeals WHERE punishmentId = CONCAT('S-', p.id)) THEN 1 ELSE 0 END AS appealed
+FROM cfcdev_advancedban.punishments p
+	JOIN zanderdev.users u ON u.uuid = p.uuid
+    JOIN zanderdev.users s ON UPPER(s.username) = UPPER(p.operator)
+UNION ALL
+SELECT
+	CONCAT('W-', p.webPunishmentId) AS punishmentId,
+    p.playerId,
+    p.staffId,
+    s.username AS staffUsername,
+    'web' AS platform,
+    p.type,
+    p.reason,
+    p.createdDate,
+    p.expires,
+    CASE WHEN EXISTS (SELECT '' FROM zanderdev.appeals WHERE punishmentId = CONCAT('W-', p.webPunishmentId)) THEN 1 ELSE 0 END AS appealed
+FROM zanderdev.webPunishments p
+	JOIN zanderdev.users s ON s.userId = p.staffId
+UNION ALL
+SELECT
+	CONCAT('D-', p.discordPunishmentId) AS punishmentId,
+    p.playerId,
+    p.staffId,
+    s.username AS staffUsername,
+    'discord' AS platform,
+    p.type,
+    p.reason,
+    p.createdDate,
+    p.expires,
+    CASE WHEN EXISTS (SELECT '' FROM zanderdev.appeals WHERE punishmentId = CONCAT('D-', p.discordPunishmentId)) THEN 1 ELSE 0 END AS appealed
+FROM zanderdev.discordPunishments p
+	JOIN zanderdev.users s ON s.userId = p.staffId;
 
 -- Update the appeals.updatedDate when record is updated
 CREATE TRIGGER appeals_updatedDateBeforeUpdate
