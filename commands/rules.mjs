@@ -1,4 +1,4 @@
-import { Command } from '@sapphire/framework';
+import { Command, RegisterBehavior } from '@sapphire/framework';
 import { MessageEmbed } from 'discord.js';
 import config from '../config.json' assert {type: "json"};
 
@@ -7,23 +7,22 @@ export class RulesCommand extends Command {
     super(context, {
       ...options,
       name: 'rules',
-      description: 'Display Network Rules'
+      description: 'Display link to the Network Rules',
+      chatInputCommand: {
+        register: true,
+        behaviorWhenNotIdentical: RegisterBehavior.Overwrite
+      }      
     });
   }
 
-  async messageRun(message) {
-    try {
-      const embed = new MessageEmbed()
+  async chatInputRun(interaction) {
+    const embed = new MessageEmbed()
       .setTitle(`Network Rules`)
       .setDescription(`Please ensure you follow and abide by the rules which you can read here: ${config.siteConfiguration.siteAddress}/rules`)
 
-      message.reply({
+      interaction.reply({
         embeds: [embed],
         empheral: true
-      });                      
-    } catch (error) {
-      console.log(error);
-      return
-    }
+      });
   }
 }

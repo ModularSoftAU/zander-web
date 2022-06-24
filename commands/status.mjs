@@ -1,18 +1,22 @@
-import { Command } from '@sapphire/framework';
+import { Command, RegisterBehavior } from '@sapphire/framework';
 import { MessageEmbed } from 'discord.js';
 import config from '../config.json' assert {type: "json"};
 import fetch from 'node-fetch';
 
-export class RulesCommand extends Command {
+export class StatusCommand extends Command {
   constructor(context, options) {
     super(context, {
       ...options,
       name: 'status',
-      description: 'Display Servers and number of users online'
+      description: 'Display Servers and number of users online',
+      chatInputCommand: {
+        register: true,
+        behaviorWhenNotIdentical: RegisterBehavior.Overwrite
+      }
     });
   }
 
-  async messageRun(message) {
+  async chatInputRun(interaction) {
     try {
       const fetchURL = `${config.siteConfiguration.siteAddress}${config.siteConfiguration.apiRoute}/server/users/get`;
       const response = await fetch(fetchURL);
@@ -27,13 +31,14 @@ export class RulesCommand extends Command {
         embed.addField(`${server.name}`, `${server.playersOnline}`, true)
       });
 
-      message.reply({
+      interaction.reply({
         embeds: [embed],
         empheral: true
       });                      
     } catch (error) {
-      console.log(error);
+      interaction.reply(error)
       return
     }
   }
+
 }

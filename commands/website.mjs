@@ -1,4 +1,4 @@
-import { Command } from '@sapphire/framework';
+import { Command, RegisterBehavior } from '@sapphire/framework';
 import { MessageEmbed } from 'discord.js';
 import config from '../config.json' assert {type: "json"};
 
@@ -7,23 +7,22 @@ export class WebsiteCommand extends Command {
     super(context, {
       ...options,
       name: 'website',
-      description: 'Display Network Website'
+      description: 'Display Network Website',
+      chatInputCommand: {
+        register: true,
+        behaviorWhenNotIdentical: RegisterBehavior.Overwrite
+      }
     });
   }
 
-  async messageRun(message) {
-    try {
-      const embed = new MessageEmbed()
+  async chatInputRun(interaction) {
+    const embed = new MessageEmbed()
       .setTitle(`Network Website`)
       .setDescription(`For more info and to get involved with the community, jump on our website ${config.siteConfiguration.siteAddress}`)
 
-      message.reply({
+      interaction.reply({
         embeds: [embed],
         empheral: true
-      });                      
-    } catch (error) {
-      console.log(error);
-      return                      
-    }
+      });
   }
 }

@@ -1,29 +1,29 @@
-import { Command } from '@sapphire/framework';
+import { Command, RegisterBehavior } from '@sapphire/framework';
 import { MessageEmbed } from 'discord.js';
 import config from '../config.json' assert {type: "json"};
 
-export class RulesCommand extends Command {
+export class ReportCommand extends Command {
   constructor(context, options) {
     super(context, {
       ...options,
       name: 'report',
-      description: 'Display link to reporting players'
+      description: 'Display link to reporting players',
+      chatInputCommand: {
+        register: true,
+        behaviorWhenNotIdentical: RegisterBehavior.Overwrite
+      }
     });
   }
 
-  async messageRun(message) {
-    try {
-      const embed = new MessageEmbed()
-      .setTitle(`Report a Player`)
-      .setDescription(`See a player breaking the rules, report them to Staff here: ${config.siteConfiguration.siteAddress}/report`)
+  async chatInputRun(interaction) {
+    const embed = new MessageEmbed()
+    .setTitle(`Report a Player`)
+    .setDescription(`See a player breaking the rules, report them to Staff here: ${config.siteConfiguration.siteAddress}/report`)
 
-      message.reply({
-        embeds: [embed],
-        empheral: true
-      });                      
-    } catch (error) {
-      console.log(error);
-      return
-    }
+    interaction.reply({
+      embeds: [embed],
+      empheral: true
+    });
   }
+
 }

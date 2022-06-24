@@ -27,7 +27,6 @@
         "redirectRoute": "/redirect"
     },
     "discord": {
-        "prefix": "!",
         "guildId": "899441191416901632",
         "channels": {
             "welcomeChannel": "926380663953821736",
