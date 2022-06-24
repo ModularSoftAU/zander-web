@@ -27,14 +27,12 @@ const client = new SapphireClient({
     intents: ['GUILDS', 'GUILD_MESSAGES'],
     presence: {
         status: "online",
-        // activities: [{
-        //     name: `Type ${config.discord.prefix}help for more.`,
-        //     type: 'PLAYING',
-        //     url: config.siteConfiguration.siteAddress
-        // }]
-    },
-    loadMessageCommandListeners: true,
-    defaultPrefix: config.discord.prefix,
+        activities: [{
+            name: `Status`,
+            type: 'PLAYING',
+            url: config.siteConfiguration.siteAddress
+        }]
+    }
 });
 
 client.login(process.env.discordAPIKey);
