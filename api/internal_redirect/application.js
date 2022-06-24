@@ -8,7 +8,10 @@ export default function applicationRedirectRoute(app, config) {
         fetch(applicationCreateURL, {
             method: 'POST',
             body: JSON.stringify(req.body),
-            headers: { 'Content-Type': 'application/json' }
+            headers: {
+                'Content-Type': 'application/json',
+                'x-access-token': process.env.apiKey
+            }
         })
         .then(res => res.json())
         .then(json => console.log(json));
@@ -21,7 +24,10 @@ export default function applicationRedirectRoute(app, config) {
         fetch(applicationEditURL, {
             method: 'POST',
             body: JSON.stringify(req.body),
-            headers: { 'Content-Type': 'application/json' }
+            headers: {
+                'Content-Type': 'application/json',
+                'x-access-token': process.env.apiKey
+            }
         })
         .then(res => res.json())
         .then(json => console.log(json));
@@ -37,7 +43,10 @@ export default function applicationRedirectRoute(app, config) {
             fetch(applicationDeleteURL, {
                 method: 'POST',
                 body: JSON.stringify(req.body),
-                headers: { 'Content-Type': 'application/json' }
+                headers: {
+                    'Content-Type': 'application/json',
+                    'x-access-token': process.env.apiKey
+                }
             })
             .then(res => res.json())
             .then(json => console.log(json));

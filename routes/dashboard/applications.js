@@ -10,7 +10,9 @@ export default function dashboardApplicationsSiteRoute(app, fetch, config, featu
         hasPermission('zander.web.application', request, reply);
 
         const fetchURL = `${config.siteConfiguration.siteAddress}${config.siteConfiguration.apiRoute}/application/get`;
-        const response = await fetch(fetchURL);
+        const response = await fetch(fetchURL, {
+            headers: { 'x-access-token': process.env.apiKey }
+        });
         const apiData = await response.json();
 
         reply.view('dashboard/applications/list', {
@@ -39,7 +41,9 @@ export default function dashboardApplicationsSiteRoute(app, fetch, config, featu
 
         const id = request.query.id;
         const fetchURL = `${config.siteConfiguration.siteAddress}${config.siteConfiguration.apiRoute}/application/get?id=${id}`;
-        const response = await fetch(fetchURL);
+        const response = await fetch(fetchURL, {
+            headers: { 'x-access-token': process.env.apiKey }
+        });
         const applicationApiData = await response.json();
 
         reply.view('dashboard/applications/editor', {

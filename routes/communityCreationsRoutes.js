@@ -11,7 +11,9 @@ export default function communityCreationSiteRoute(app, fetch, moment, config, f
         isFeatureWebRouteEnabled(features.communitycreations, request, reply);
 
         const fetchURL = `${config.siteConfiguration.siteAddress}${config.siteConfiguration.apiRoute}/communitycreation/get?page=${request.params.page || 1}`;
-        const response = await fetch(fetchURL);
+        const response = await fetch(fetchURL, {
+            headers: { 'x-access-token': process.env.apiKey }
+        });
         const apiData = await response.json();
 
         return reply.view('modules/communityCreation/communityCreation', {

@@ -10,7 +10,9 @@ export default function dashboardServersSiteRoute(app, fetch, config, features, 
         hasPermission('zander.web.server', request, reply);
 
         const fetchURL = `${config.siteConfiguration.siteAddress}${config.siteConfiguration.apiRoute}/server/get`;
-        const response = await fetch(fetchURL);
+        const response = await fetch(fetchURL, {
+            headers: { 'x-access-token': process.env.apiKey }
+        });
         const apiData = await response.json();
 
         reply.view('dashboard/servers/list', {
@@ -39,7 +41,9 @@ export default function dashboardServersSiteRoute(app, fetch, config, features, 
         
         const id = request.query.id;
         const fetchURL = `${config.siteConfiguration.siteAddress}${config.siteConfiguration.apiRoute}/server/get?id=${id}`;
-        const response = await fetch(fetchURL);
+        const response = await fetch(fetchURL, {
+            headers: { 'x-access-token': process.env.apiKey }
+        });
         const serverApiData = await response.json();
 
         reply.view('dashboard/servers/editor', {

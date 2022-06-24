@@ -9,7 +9,10 @@ export default function reportRedirectRoute(app, config) {
         fetch(reportCreateURL, {
             method: 'POST',
             body: JSON.stringify(req.body),
-            headers: { 'Content-Type': 'application/json' }
+            headers: {
+                'Content-Type': 'application/json',
+                'x-access-token': process.env.apiKey
+            }
         })
         .then(res => res.json())
         .then(json => console.log(json));
@@ -22,7 +25,10 @@ export default function reportRedirectRoute(app, config) {
         fetch(reportCloseURL, {
             method: 'POST',
             body: JSON.stringify(req.body),
-            headers: { 'Content-Type': 'application/json' }
+            headers: {
+                'Content-Type': 'application/json',
+                'x-access-token': process.env.apiKey
+            }
         })
         .then(res => res.json())
         .then(json => console.log(json));

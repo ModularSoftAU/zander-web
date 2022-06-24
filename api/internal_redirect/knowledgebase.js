@@ -9,7 +9,10 @@ export default function knowledgebaseApiRoute(app, config) {
         fetch(sectionCreateURL, {
             method: 'POST',
             body: JSON.stringify(req.body),
-            headers: { 'Content-Type': 'application/json' }
+            headers: {
+                'Content-Type': 'application/json',
+                'x-access-token': process.env.apiKey
+            }
         })
         .then(res => res.json())
         .then(json => console.log(json));
@@ -22,7 +25,10 @@ export default function knowledgebaseApiRoute(app, config) {
         fetch(sectionUpdateURL, {
             method: 'POST',
             body: JSON.stringify(req.body),
-            headers: { 'Content-Type': 'application/json' }
+            headers: {
+                'Content-Type': 'application/json',
+                'x-access-token': process.env.apiKey
+            }
         })
         .then(res => res.json())
         .then(json => console.log(json));
@@ -35,7 +41,10 @@ export default function knowledgebaseApiRoute(app, config) {
         fetch(articleCreateURL, {
             method: 'POST',
             body: JSON.stringify(req.body),
-            headers: { 'Content-Type': 'application/json' }
+            headers: {
+                'Content-Type': 'application/json',
+                'x-access-token': process.env.apiKey
+            }
         })
         .then(res => res.json())
         .then(json => console.log(json));
@@ -48,7 +57,10 @@ export default function knowledgebaseApiRoute(app, config) {
         fetch(articleUpdateURL, {
             method: 'POST',
             body: JSON.stringify(req.body),
-            headers: { 'Content-Type': 'application/json' }
+            headers: {
+                'Content-Type': 'application/json',
+                'x-access-token': process.env.apiKey
+            }
         })
         .then(res => res.json())
         .then(json => console.log(json));

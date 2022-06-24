@@ -9,7 +9,9 @@ export default function dashboardEventSiteRoute(app, client, fetch, moment, conf
         hasPermission('zander.web.event', request, reply);
 
         const fetchURL = `${config.siteConfiguration.siteAddress}${config.siteConfiguration.apiRoute}/event/get?published=all`;
-        const response = await fetch(fetchURL);
+        const response = await fetch(fetchURL, {
+            headers: { 'x-access-token': process.env.apiKey }
+        });
         const apiData = await response.json();
                 
         reply.view('dashboard/events/list', {
@@ -30,7 +32,9 @@ export default function dashboardEventSiteRoute(app, client, fetch, moment, conf
         hasPermission('zander.web.event', request, reply);
 
         const fetchURL = `${config.siteConfiguration.siteAddress}${config.siteConfiguration.apiRoute}/server/get?visible=all`;
-        const response = await fetch(fetchURL);
+        const response = await fetch(fetchURL, {
+            headers: { 'x-access-token': process.env.apiKey }
+        });
         const serverApiData = await response.json();
                 
         reply.view('dashboard/events/editor', {
@@ -52,11 +56,15 @@ export default function dashboardEventSiteRoute(app, client, fetch, moment, conf
         
         const eventId = request.query.id;
         const fetchURL = `${config.siteConfiguration.siteAddress}${config.siteConfiguration.apiRoute}/event/get?id=${eventId}`;
-        const response = await fetch(fetchURL);
+        const response = await fetch(fetchURL, {
+            headers: { 'x-access-token': process.env.apiKey }
+        });
         const eventApiData = await response.json();
 
         const serverFetchURL = `${config.siteConfiguration.siteAddress}${config.siteConfiguration.apiRoute}/server/get?visible=all`;
-        const serverResponse = await fetch(serverFetchURL);
+        const serverResponse = await fetch(serverFetchURL, {
+            headers: { 'x-access-token': process.env.apiKey }
+        });
         const serverApiData = await serverResponse.json();
 
         reply.view('dashboard/events/editor', {
