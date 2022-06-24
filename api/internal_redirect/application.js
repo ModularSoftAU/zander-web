@@ -1,4 +1,3 @@
-import {required, optional} from '../common'
 import fetch from 'node-fetch';
 
 export default function applicationRedirectRoute(app, config) {
@@ -31,14 +30,21 @@ export default function applicationRedirectRoute(app, config) {
     });
 
     app.post(baseEndpoint + '/delete', async function(req, res) {
-        const applicationCreateURL = `${config.siteConfiguration.siteAddress}${config.siteConfiguration.apiRoute}/application/delete`;
-        fetch(applicationCreateURL, {
-            method: 'POST',
-            body: JSON.stringify(req.body),
-            headers: { 'Content-Type': 'application/json' }
-        })
-        .then(res => res.json())
-        .then(json => console.log(json));
+        console.log(req.body);
+
+        try {
+            const applicationDeleteURL = `${config.siteConfiguration.siteAddress}${config.siteConfiguration.apiRoute}/application/delete`;
+            fetch(applicationDeleteURL, {
+                method: 'POST',
+                body: JSON.stringify(req.body),
+                headers: { 'Content-Type': 'application/json' }
+            })
+            .then(res => res.json())
+            .then(json => console.log(json));
+            
+        } catch (error) {
+            console.log(error);
+        }
 
         res.redirect(`${config.siteConfiguration.siteAddress}/dashboard/applications`);
     });

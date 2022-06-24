@@ -99,19 +99,21 @@ export default function applicationApiRoute(app, config, db, features, lang) {
         const applicationStatus = required(req.body, "applicationStatus", res);
 
         let applicationEditedLang = lang.applications.applicationEdited;
+
+        console.log(req.body);
 		
 		try {
 			db.query(`
                 UPDATE applications SET 
                     displayName=?, 
-                    description=?, 
                     displayIcon=?, 
+                    description=?, 
                     requirementsMarkdown=?, 
                     redirectUrl=?, 
                     position=?,
                     closed=?,
-                WHERE applicationId = ?`,
-                [displayName, description, displayIcon, requirementsMarkdown, redirectUrl, position, applicationStatus, applicationId], function(error, results, fields) {
+                WHERE applicationId=?`,
+                [displayName, displayIcon, description, requirementsMarkdown, redirectUrl, position, applicationStatus, applicationId], function(error, results, fields) {
 				if (error) {
 					return res.send({
 						success: false,
@@ -135,8 +137,10 @@ export default function applicationApiRoute(app, config, db, features, lang) {
         isFeatureEnabled(features.applications, res, lang);
         const applicationId = required(req.body, "applicationId", res);
 
+        console.log(applicationId);
+
         try {
-            db.query(`DELETE FROM applications WHERE applicationId = ?;`, [applicationId], function(error, results, fields) {
+            db.query(`DELETE FROM applications WHERE applicationId=?;`, [applicationId], function(error, results, fields) {
                 if (error) {
                     res.send({
                         success: false,

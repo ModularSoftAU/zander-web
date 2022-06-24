@@ -53,7 +53,7 @@
                                                             <a href="/dashboard/applications/edit?id=<%= application.applicationId %>"><button class="btn btn-sm btn-warning" type="button">Edit</button></a>
 
                                                             <form action="<%= config.siteConfiguration.siteAddress %><%= config.siteConfiguration.redirectRoute %>/application/delete" method="post">
-                                                                <input type="hidden" name="serverId" value="<%= application.applicationId %>">
+                                                                <input type="hidden" name="applicationId" value="<%= application.applicationId %>">
                                                                 <button class="btn btn-sm btn-danger" type="submit">Delete</button>
                                                             </form>
                                                         </div>
