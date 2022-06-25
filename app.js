@@ -139,7 +139,7 @@ const buildApp = async () => {
     });
 
     try {
-        app.listen(process.env.PORT || config.port, (err) => {
+        app.listen(process.env.PORT, (err) => {
             if (err) {
                 app.log.error(err)
                 process.exit(1)
