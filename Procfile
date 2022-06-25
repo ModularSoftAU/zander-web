@@ -1,1 +1,1 @@
-web: npm start
+web: node --experimental-modules --experimental-json-modules --experimental-specifier-resolution=node app.js
