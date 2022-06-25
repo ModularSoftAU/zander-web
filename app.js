@@ -24,13 +24,12 @@ const __dirname = path.dirname(__filename);
 // Discord
 // 
 const client = new SapphireClient({
-    intents: ['GUILDS', 'GUILD_MESSAGES'],
+    intents: ['GUILDS', 'GUILD_MESSAGES', 'GUILD_MEMBERS'],
     presence: {
         status: "online",
         activities: [{
-            name: `Status`,
-            type: 'PLAYING',
-            url: config.siteConfiguration.siteAddress
+            name: config.siteConfiguration.siteAddress,
+            type: 'PLAYING'
         }]
     }
 });
