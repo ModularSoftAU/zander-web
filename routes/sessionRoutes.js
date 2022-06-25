@@ -120,6 +120,8 @@ export default function sessionSiteRoute(app, fetch, moment, config, db, feature
 
           // User has not logged in before.
           if (!results.length) {
+			return res.redirect(`${config.siteConfiguration.siteAddress}/`)
+
               return res.send({
                   success: false,
                   message: `You have not logged in before. You are required to register before becoming a community site member. You can jump on and play here: ${config.siteConfiguration.siteAddress}/play`
@@ -137,9 +139,7 @@ export default function sessionSiteRoute(app, fetch, moment, config, db, feature
 
               if (result) {
 				  req.session.authenticated = true;
-				  
 				  let userData = await getPermissions(results[0]);
-				//   console.log(userData);
 
                   req.session.user = {
                       userId: userData.userId,
@@ -156,20 +156,14 @@ export default function sessionSiteRoute(app, fetch, moment, config, db, feature
   });
 
   app.get('/logout', async function(req, res) {
-      if (req.session.authenticated) {
-          req.destroySession((err) => {
-            if (err) {
-                console.log(err);
-              throw err;
-            } else {
-              req.session.authenticated = false
-              res.redirect('/')
-            }
-          })
-        } else {
-          req.session.authenticated = false
-          req.redirect('/')
-        }
+	req.destroySession((err) => {
+		if (err) {
+			console.log(err);
+		  throw err;
+		} else {
+		  return res.redirect(`${config.siteConfiguration.siteAddress}/`)
+		}
+	})
   });
 
 }

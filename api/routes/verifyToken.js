@@ -1,12 +1,7 @@
 import lang from "../../lang.json" assert {type: "json"};
 
 export default function verifyToken(req, res, done) {
-    console.log('Verifying that API request includes valid token...');
-
-    // Below is the implementation. Currently disabled.
-    // done();
-    // return;
-
+    
     var token = req.headers['x-access-token'];
 
     if (!token) {
