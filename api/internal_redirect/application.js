@@ -1,3 +1,4 @@
+import {required, optional, hasPermission} from '../common'
 import fetch from 'node-fetch';
 
 export default function applicationRedirectRoute(app, config) {

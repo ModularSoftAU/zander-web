@@ -1,4 +1,4 @@
-import {required, optional} from '../common'
+import {required, optional, hasPermission} from '../common'
 import fetch from 'node-fetch';
 
 export default function knowledgebaseApiRoute(app, config) {
