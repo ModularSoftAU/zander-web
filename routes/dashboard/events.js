@@ -5,8 +5,11 @@ export default function dashboardEventSiteRoute(app, client, fetch, moment, conf
     // Events
     // 
     app.get('/dashboard/events', async function(request, reply) {
-        isFeatureWebRouteEnabled(features.events, request, reply);
-        hasPermission('zander.web.event', request, reply);
+        if (!isFeatureWebRouteEnabled(features.events, request, reply))
+            return;
+        
+        if (!hasPermission('zander.web.event', request, reply))
+            return;
 
         const fetchURL = `${config.siteConfiguration.siteAddress}${config.siteConfiguration.apiRoute}/event/get?published=all`;
         const response = await fetch(fetchURL, {
@@ -28,8 +31,11 @@ export default function dashboardEventSiteRoute(app, client, fetch, moment, conf
     // Create Event
     // 
     app.get('/dashboard/events/create', async function(request, reply) {
-        isFeatureWebRouteEnabled(features.events, request, reply);
-        hasPermission('zander.web.event', request, reply);
+        if (!isFeatureWebRouteEnabled(features.events, request, reply))
+            return;
+        
+        if (!hasPermission('zander.web.event', request, reply))
+            return;
 
         const fetchURL = `${config.siteConfiguration.siteAddress}${config.siteConfiguration.apiRoute}/server/get?visible=all`;
         const response = await fetch(fetchURL, {
@@ -51,8 +57,11 @@ export default function dashboardEventSiteRoute(app, client, fetch, moment, conf
     // Edit an existing event
     // 
     app.get('/dashboard/events/edit', async function(request, reply) {
-        isFeatureWebRouteEnabled(features.events, request, reply);
-        hasPermission('zander.web.event', request, reply);
+        if (!isFeatureWebRouteEnabled(features.events, request, reply))
+            return;
+        
+        if (!hasPermission('zander.web.event', request, reply))
+            return;
         
         const eventId = request.query.id;
         const fetchURL = `${config.siteConfiguration.siteAddress}${config.siteConfiguration.apiRoute}/event/get?id=${eventId}`;

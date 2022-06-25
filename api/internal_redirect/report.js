@@ -5,6 +5,9 @@ export default function reportRedirectRoute(app, config) {
     const baseEndpoint = config.siteConfiguration.redirectRoute + '/report';
 
     app.post(baseEndpoint + '/create', async function(req, res) {
+        if (!hasPermission('zander.web.application', req, res))
+            return;
+
         const reportCreateURL = `${config.siteConfiguration.siteAddress}${config.siteConfiguration.apiRoute}/report/create`;
         fetch(reportCreateURL, {
             method: 'POST',
@@ -21,6 +24,9 @@ export default function reportRedirectRoute(app, config) {
     });
 
     app.post(baseEndpoint + '/close', async function(req, res) {
+        if (!hasPermission('zander.web.application', req, res))
+            return;
+
         const reportCloseURL = `${config.siteConfiguration.siteAddress}${config.siteConfiguration.apiRoute}/report/close`;
         fetch(reportCloseURL, {
             method: 'POST',

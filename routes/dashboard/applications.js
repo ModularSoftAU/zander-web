@@ -6,8 +6,11 @@ export default function dashboardApplicationsSiteRoute(app, fetch, config, featu
     // Applications
     // 
     app.get('/dashboard/applications', async function(request, reply) {
-        isFeatureWebRouteEnabled(features.applications, request, reply);
-        hasPermission('zander.web.application', request, reply);
+        // if (!isFeatureWebRouteEnabled(features.applications, request, reply))
+        //     return;
+        
+        if (!hasPermission('zander.web.application', request, reply))
+            return;
 
         const fetchURL = `${config.siteConfiguration.siteAddress}${config.siteConfiguration.apiRoute}/application/get`;
         const response = await fetch(fetchURL, {
@@ -24,8 +27,11 @@ export default function dashboardApplicationsSiteRoute(app, fetch, config, featu
     });
 
     app.get('/dashboard/applications/create', async function(request, reply) {
-        // isFeatureWebRouteEnabled(features.application, request, reply);
-        hasPermission('zander.web.application', request, reply);
+        // if (!isFeatureWebRouteEnabled(features.applications, request, reply))
+        //     return;
+
+        if (!hasPermission('zander.web.application', request, reply))
+            return;
 
         reply.view('dashboard/applications/editor', {
             "pageTitle": `Dashboard - Application Creator`,
@@ -36,8 +42,10 @@ export default function dashboardApplicationsSiteRoute(app, fetch, config, featu
     });
 
     app.get('/dashboard/applications/edit', async function(request, reply) {
-        // isFeatureWebRouteEnabled(features.applications, request, reply);
-        hasPermission('zander.web.application', request, reply);
+        // if (!isFeatureWebRouteEnabled(features.applications, request, reply))
+        //     return;
+        if (!hasPermission('zander.web.application', request, reply))
+            return;
 
         const id = request.query.id;
         const fetchURL = `${config.siteConfiguration.siteAddress}${config.siteConfiguration.apiRoute}/application/get?id=${id}`;

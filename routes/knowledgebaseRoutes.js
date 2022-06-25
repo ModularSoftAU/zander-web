@@ -6,7 +6,8 @@ export default function knowledgebaseSiteRoute(app, fetch, config, features, lan
     // Knowledgebase
     // 
     app.get('/knowledgebase', async function(request, reply) {
-        isFeatureWebRouteEnabled(features.knowledgebase, request, reply);
+        if (!isFeatureWebRouteEnabled(features.knowledgebase, request, reply))
+            return;
 
         const sectionFetchURL = `${config.siteConfiguration.siteAddress}${config.siteConfiguration.apiRoute}/knowledgebase/section/get`;
         const sectionResponse = await fetch(sectionFetchURL, {
@@ -36,7 +37,8 @@ export default function knowledgebaseSiteRoute(app, fetch, config, features, lan
     // Knowledgebase Article
     // 
     app.get('/knowledgebase/:sectionSlug/:articleSlug', async function(request, reply) {
-        isFeatureWebRouteEnabled(features.knowledgebase, request, reply);
+        if (!isFeatureWebRouteEnabled(features.knowledgebase, request, reply))
+            return;
         
         const sectionSlug = request.params.sectionSlug;
         const articleSlug = request.params.articleSlug;

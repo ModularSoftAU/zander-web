@@ -5,6 +5,9 @@ export default function knowledgebaseApiRoute(app, config) {
     const baseEndpoint = config.siteConfiguration.redirectRoute + '/knowledgebase';
 
     app.post(baseEndpoint + '/section/create', async function(req, res) {
+        if (!hasPermission('zander.web.application', req, res))
+            return;
+
         const sectionCreateURL = `${config.siteConfiguration.siteAddress}${config.siteConfiguration.apiRoute}/knowledgebase/section/create`;
         fetch(sectionCreateURL, {
             method: 'POST',
@@ -21,6 +24,9 @@ export default function knowledgebaseApiRoute(app, config) {
     });
 
     app.post(baseEndpoint + '/section/update', async function(req, res) {
+        if (!hasPermission('zander.web.application', req, res))
+            return;
+
         const sectionUpdateURL = `${config.siteConfiguration.siteAddress}${config.siteConfiguration.apiRoute}/knowledgebase/section/update`;
         fetch(sectionUpdateURL, {
             method: 'POST',
@@ -37,6 +43,9 @@ export default function knowledgebaseApiRoute(app, config) {
     });
 
     app.post(baseEndpoint + '/article/create', async function(req, res) {
+        if (!hasPermission('zander.web.application', req, res))
+            return;
+
         const articleCreateURL = `${config.siteConfiguration.siteAddress}${config.siteConfiguration.apiRoute}/knowledgebase/article/create`;
         fetch(articleCreateURL, {
             method: 'POST',
@@ -53,6 +62,9 @@ export default function knowledgebaseApiRoute(app, config) {
     });
 
     app.post(baseEndpoint + '/article/update', async function(req, res) {
+        if (!hasPermission('zander.web.application', req, res))
+            return;
+
         const articleUpdateURL = `${config.siteConfiguration.siteAddress}${config.siteConfiguration.apiRoute}/knowledgebase/article/update`;
         fetch(articleUpdateURL, {
             method: 'POST',
