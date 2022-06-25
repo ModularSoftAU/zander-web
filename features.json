@@ -1,7 +1,7 @@
 {
     "announcements": true,
     "appeals": false,
-    "application": true,
+    "applications": true,
     "communitycreations": false,
     "discord": true,
     "events": false,

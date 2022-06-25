@@ -1,16 +1,20 @@
 import { hasPermission, isFeatureWebRouteEnabled } from "../../api/common";
 
-export default function dashboardServersSiteRoute(app, fetch, config, features, lang) {
-
+export default function dashboardServersSiteRoute(app, fetch, config, db, features, lang) {
     // 
     // Servers
     // 
     app.get('/dashboard/servers', async function(request, reply) {
-        isFeatureWebRouteEnabled(features.servers, request, reply);
-        hasPermission('zander.web.server', request, reply);
+        if (!isFeatureWebRouteEnabled(features.servers, request, reply))
+            return;
+        
+        if (!hasPermission('zander.web.server', request, reply))
+            return;
 
         const fetchURL = `${config.siteConfiguration.siteAddress}${config.siteConfiguration.apiRoute}/server/get`;
-        const response = await fetch(fetchURL);
+        const response = await fetch(fetchURL, {
+            headers: { 'x-access-token': process.env.apiKey }
+        });
         const apiData = await response.json();
 
         reply.view('dashboard/servers/list', {
@@ -22,8 +26,11 @@ export default function dashboardServersSiteRoute(app, fetch, config, features, 
     });
 
     app.get('/dashboard/servers/create', async function(request, reply) {
-        isFeatureWebRouteEnabled(features.servers, request, reply);
-        hasPermission('zander.web.server', request, reply);
+        if (!isFeatureWebRouteEnabled(features.servers, request, reply))
+            return;
+        
+        if (!hasPermission('zander.web.server', request, reply))
+            return;
         
         reply.view('dashboard/servers/editor', {
             "pageTitle": `Dashboard - Server Creator`,
@@ -34,12 +41,17 @@ export default function dashboardServersSiteRoute(app, fetch, config, features, 
     });
 
     app.get('/dashboard/servers/edit', async function(request, reply) {
-        isFeatureWebRouteEnabled(features.servers, request, reply);
-        hasPermission('zander.web.server', request, reply);
+        if (!isFeatureWebRouteEnabled(features.servers, request, reply))
+            return;
+        
+        if (!hasPermission('zander.web.server', request, reply))
+            return;
         
         const id = request.query.id;
         const fetchURL = `${config.siteConfiguration.siteAddress}${config.siteConfiguration.apiRoute}/server/get?id=${id}`;
-        const response = await fetch(fetchURL);
+        const response = await fetch(fetchURL, {
+            headers: { 'x-access-token': process.env.apiKey }
+        });
         const serverApiData = await response.json();
 
         reply.view('dashboard/servers/editor', {

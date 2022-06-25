@@ -41,15 +41,16 @@ export function optional(body, field) {
 }
 
 export function isFeatureWebRouteEnabled(isFeatureEnabled, request, reply) {
-    // console.log(isFeatureEnabled);
-    // if (!isFeatureEnabled) {
-    //     return reply.view('session/featureDisabled', {
-    //         "pageTitle": `Feature Disabled`,
-    //         config: config,
-    //         request: request,
-    //         reply: reply
-    //     });
-    // }
+    if (!isFeatureEnabled) {
+        reply.view('session/featureDisabled', {
+            "pageTitle": `Feature Disabled`,
+            config: config,
+            request: request,
+            reply: reply
+        });
+        return false;
+    }
+    return true;
 }
 
 export function isLoggedIn(request) {
@@ -59,12 +60,13 @@ export function isLoggedIn(request) {
 
 export function hasPermission(permissionNode, request, reply) {
     if (!isLoggedIn(request)) {
-        return reply.view('session/noPermission', {
+        reply.view('session/noPermission', {
             "pageTitle": `Access Restricted`,
             config: config,
             request: request,
             reply: reply
         });        
+        return false;
     }
 
     const userPermissions = request.session.user.permissions;
@@ -74,12 +76,13 @@ export function hasPermission(permissionNode, request, reply) {
     }
 
     if (!hasSpecificPerm(permissionNode, userPermissions)) {
-        return reply.view('session/noPermission', {
+        reply.view('session/noPermission', {
             "pageTitle": `Access Restricted`,
             config: config,
             request: request,
             reply: reply
         });
+        return false;
     }
-    return
+    return true;
 }

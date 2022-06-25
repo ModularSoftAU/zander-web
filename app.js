@@ -61,6 +61,7 @@ import { setTimeout } from 'timers';
 // Application Boot
 //
 const buildApp = async () => {
+    
     const app = fastify({ logger: config.debug });
     const port = process.env.PORT || config.port || 8080;
 
@@ -102,11 +103,17 @@ const buildApp = async () => {
     })
 
     app.register(await import ('fastify-formbody'))
-
+    
     app.register((instance, options, next) => {
         // API routes (Token authenticated)
         instance.addHook('preValidation', verifyToken);
         apiRoutes(instance, client, moment, config, db, features, lang);
+        next();
+    });
+
+    app.register((instance, options, next) => {
+        // Don't authenticate the Redirect routes. These are
+        // protected by 
         apiRedirectRoutes(instance, config);
         next();
     });

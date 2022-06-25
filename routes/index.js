@@ -29,7 +29,9 @@ export default function applicationSiteRoutes(app, client, fetch, moment, config
         isFeatureWebRouteEnabled(features.servers, request, reply);
 
         const fetchURL = `${config.siteConfiguration.siteAddress}${config.siteConfiguration.apiRoute}/server/get?visible=true`;
-        const response = await fetch(fetchURL);
+        const response = await fetch(fetchURL, {
+            headers: { 'x-access-token': process.env.apiKey }
+        });
         const apiData = await response.json();
 
         return reply.view('modules/play/play', {
@@ -48,7 +50,9 @@ export default function applicationSiteRoutes(app, client, fetch, moment, config
         isFeatureWebRouteEnabled(features.applications, request, reply);
 
         const fetchURL = `${config.siteConfiguration.siteAddress}${config.siteConfiguration.apiRoute}/application/get`;
-        const response = await fetch(fetchURL);
+        const response = await fetch(fetchURL, {
+            headers: { 'x-access-token': process.env.apiKey }
+        });
         const apiData = await response.json();
 
         reply.view('apply', {
@@ -67,7 +71,9 @@ export default function applicationSiteRoutes(app, client, fetch, moment, config
         isFeatureWebRouteEnabled(features.events, request, reply);
 
         const fetchURL = `${config.siteConfiguration.siteAddress}${config.siteConfiguration.apiRoute}/event/get?published=show`;
-        const response = await fetch(fetchURL);
+        const response = await fetch(fetchURL, {
+            headers: { 'x-access-token': process.env.apiKey }
+        });
         const apiData = await response.json();
 
         reply.view('events', {
@@ -85,7 +91,9 @@ export default function applicationSiteRoutes(app, client, fetch, moment, config
     // 
     app.get('/vote', async function(request, reply) {
         const fetchURL = `${config.siteConfiguration.siteAddress}${config.siteConfiguration.apiRoute}/vote/get`;
-        const response = await fetch(fetchURL);
+        const response = await fetch(fetchURL, {
+            headers: { 'x-access-token': process.env.apiKey }
+        });
         const apiData = await response.json();
 
         reply.view('vote', {
@@ -125,7 +133,9 @@ export default function applicationSiteRoutes(app, client, fetch, moment, config
         }
 
         const fetchURL = `${config.siteConfiguration.siteAddress}${config.siteConfiguration.apiRoute}/server/get?visable=true`;
-        const response = await fetch(fetchURL);
+        const response = await fetch(fetchURL, {
+            headers: { 'x-access-token': process.env.apiKey }
+        });
         const serverApiData = await response.json();
 
         console.log(serverApiData);
@@ -155,7 +165,9 @@ export default function applicationSiteRoutes(app, client, fetch, moment, config
         isFeatureWebRouteEnabled(features.report, request, reply);
 
         const fetchURL = `${config.siteConfiguration.siteAddress}${config.siteConfiguration.apiRoute}/report/get?reportId=${request.params.id}`;
-        const response = await fetch(fetchURL);
+        const response = await fetch(fetchURL, {
+            headers: { 'x-access-token': process.env.apiKey }
+        });
         const apiData = await response.json();
 
         reply.view('reportView', {
@@ -176,12 +188,16 @@ export default function applicationSiteRoutes(app, client, fetch, moment, config
 
         // Get Player Profile Information
         const profileFetchURL = `${config.siteConfiguration.siteAddress}${config.siteConfiguration.apiRoute}/user/get?username=${request.params.username}`;
-        const profileResponse = await fetch(profileFetchURL);
+        const profileResponse = await fetch(profileFetchURL, {
+            headers: { 'x-access-token': process.env.apiKey }
+        });
         const profileApiData = await profileResponse.json();
 
         // Get Player Report Information
         const reportFetchURL = `${config.siteConfiguration.siteAddress}${config.siteConfiguration.apiRoute}/report/get?username=${request.params.username}`;
-        const reportResponse = await fetch(reportFetchURL);
+        const reportResponse = await fetch(reportFetchURL, {
+            headers: { 'x-access-token': process.env.apiKey }
+        });
         const reportApiData = await reportResponse.json();
 
         reply.view('modules/profile/profile', {
@@ -210,7 +226,9 @@ export default function applicationSiteRoutes(app, client, fetch, moment, config
         }
 
         const fetchURL = `${config.siteConfiguration.siteAddress}${config.siteConfiguration.apiRoute}/user/notification/get?username=${request.params.username}`;
-        const response = await fetch(fetchURL);
+        const response = await fetch(fetchURL, {
+            headers: { 'x-access-token': process.env.apiKey }
+        });
         const apiData = await response.json();
         
         reply.view('notifications', {

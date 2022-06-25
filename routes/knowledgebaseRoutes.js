@@ -6,14 +6,19 @@ export default function knowledgebaseSiteRoute(app, fetch, config, features, lan
     // Knowledgebase
     // 
     app.get('/knowledgebase', async function(request, reply) {
-        isFeatureWebRouteEnabled(features.knowledgebase, request, reply);
+        if (!isFeatureWebRouteEnabled(features.knowledgebase, request, reply))
+            return;
 
         const sectionFetchURL = `${config.siteConfiguration.siteAddress}${config.siteConfiguration.apiRoute}/knowledgebase/section/get`;
-        const sectionResponse = await fetch(sectionFetchURL);
+        const sectionResponse = await fetch(sectionFetchURL, {
+            headers: { 'x-access-token': process.env.apiKey }
+        });
         const sectionApiData = await sectionResponse.json();
 
         const articleFetchURL = `${config.siteConfiguration.siteAddress}${config.siteConfiguration.apiRoute}/knowledgebase/article/get`;
-        const articleResponse = await fetch(articleFetchURL);
+        const articleResponse = await fetch(articleFetchURL, {
+            headers: { 'x-access-token': process.env.apiKey }
+        });
         const articleApiData = await articleResponse.json();
       
         reply.view('modules/knowledgebase/knowledgebase', {
@@ -32,7 +37,8 @@ export default function knowledgebaseSiteRoute(app, fetch, config, features, lan
     // Knowledgebase Article
     // 
     app.get('/knowledgebase/:sectionSlug/:articleSlug', async function(request, reply) {
-        isFeatureWebRouteEnabled(features.knowledgebase, request, reply);
+        if (!isFeatureWebRouteEnabled(features.knowledgebase, request, reply))
+            return;
         
         const sectionSlug = request.params.sectionSlug;
         const articleSlug = request.params.articleSlug;
