@@ -1,13 +1,13 @@
 import { hasPermission, isFeatureWebRouteEnabled } from "../../api/common";
 
-export default function dashboardApplicationsSiteRoute(app, fetch, config, features, lang) {
+export default function dashboardApplicationsSiteRoute(app, fetch, config, db, features, lang) {
 
     // 
     // Applications
     // 
     app.get('/dashboard/applications', async function(request, reply) {
-        // if (!isFeatureWebRouteEnabled(features.applications, request, reply))
-        //     return;
+        if (!isFeatureWebRouteEnabled(features.applications, request, reply))
+            return;
         
         if (!hasPermission('zander.web.application', request, reply))
             return;
@@ -27,8 +27,8 @@ export default function dashboardApplicationsSiteRoute(app, fetch, config, featu
     });
 
     app.get('/dashboard/applications/create', async function(request, reply) {
-        // if (!isFeatureWebRouteEnabled(features.applications, request, reply))
-        //     return;
+        if (!isFeatureWebRouteEnabled(features.applications, request, reply))
+            return;
 
         if (!hasPermission('zander.web.application', request, reply))
             return;
@@ -42,8 +42,9 @@ export default function dashboardApplicationsSiteRoute(app, fetch, config, featu
     });
 
     app.get('/dashboard/applications/edit', async function(request, reply) {
-        // if (!isFeatureWebRouteEnabled(features.applications, request, reply))
-        //     return;
+        if (!isFeatureWebRouteEnabled(features.applications, request, reply))
+            return;
+        
         if (!hasPermission('zander.web.application', request, reply))
             return;
 
