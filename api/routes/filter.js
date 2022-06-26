@@ -15,12 +15,19 @@ export default function webApiRoute(app, config, db, features, lang) {
             console.log(wordContent);
             console.log(phrases);
 
-            var 
+            var bannedshouldBreak = false;
 
-            wordContent.forEach(word => {
-                if (word.toLowerCase().equals(phrases.toLowerCase())) {
-                    bannedshouldBreak = true;
-                }              
+            phrases.forEach(phrase => {
+                wordContent.forEach(word => {
+                    if (word.toLowerCase() === phrase.toLowerCase()) {
+                        bannedshouldBreak = true;
+                        
+                        return res.send({
+                            success: false,
+                            message: `Content Unclean: Phrase '${phrase}' matched`
+                        });
+                    }              
+                });
             });
 
             return res.send({
@@ -40,12 +47,33 @@ export default function webApiRoute(app, config, db, features, lang) {
     app.post(baseEndpoint + '/link', async function(req, res) {
         isFeatureEnabled(features.filter.link, res, lang);
         const content = required(req.body, "content", res);
-        const links = filter.links;
+        const phrases = filter.phrases;
 
         try {
-            console.log(content);
-            console.log(links);
+            const wordContent = content.split(" ");
 
+            console.log(wordContent);
+            console.log(phrases);
+
+            var bannedshouldBreak = false;
+
+            phrases.forEach(phrase => {
+                wordContent.forEach(word => {
+                    if (word.toLowerCase() === phrase.toLowerCase()) {
+                        bannedshouldBreak = true;
+                        
+                        return res.send({
+                            success: false,
+                            message: `Content Unclean: Phrase '${phrase}' matched`
+                        });
+                    }              
+                });
+            });
+
+            return res.send({
+                success: true,
+                message: `Content Clean`
+            });
         } catch (error) {
             console.log(error);
 
