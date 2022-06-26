@@ -16,5 +16,9 @@
     "user": true,
     "userProfiles": false,
     "vote": true,
-    "web": true
+    "web": true,
+    "filter": {
+        "link": true,
+        "phrase": true
+    }
 }
