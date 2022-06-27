@@ -1,6 +1,6 @@
 import { isFeatureWebRouteEnabled } from "../api/common";
 
-export default function knowledgebaseSiteRoute(app, fetch, config, features, lang) {
+export default function knowledgebaseSiteRoute(app, client, fetch, moment, config, db, features, lang) {
 
     // 
     // Knowledgebase
@@ -44,7 +44,9 @@ export default function knowledgebaseSiteRoute(app, fetch, config, features, lan
         const articleSlug = request.params.articleSlug;
 
         const articleFetchURL = `${config.siteConfiguration.siteAddress}${config.siteConfiguration.apiRoute}/knowledgebase/article/get?articleSlug=${articleSlug}`;
-        const articleResponse = await fetch(articleFetchURL);
+        const articleResponse = await fetch(articleFetchURL, {
+            headers: { 'x-access-token': process.env.apiKey }
+        });
         const articleApiData = await articleResponse.json();
 
         reply.view('modules/knowledgebase/knowledgebaseArticle', {

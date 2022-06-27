@@ -8,9 +8,9 @@ import { isFeatureWebRouteEnabled, isLoggedIn } from "../api/common";
 export default function applicationSiteRoutes(app, client, fetch, moment, config, db, features, lang) {
 
     dashboardSiteRoutes(app, client, fetch, moment, config, db, features, lang);
-    knowledgebaseSiteRoutes(app, fetch, config, db, features, lang);
-    communityCreationsRoutes(app, fetch, moment, config, db, features, lang);
-    sessionRoutes(app, fetch, moment, config, db, features, lang);
+    knowledgebaseSiteRoutes(app, client, fetch, moment, config, db, features, lang);
+    communityCreationsRoutes(app, client, fetch, moment, config, db, features, lang);
+    sessionRoutes(app, client, fetch, moment, config, db, features, lang);
     policySiteRoutes(app, config);
 
     app.get('/', async function(request, reply) {

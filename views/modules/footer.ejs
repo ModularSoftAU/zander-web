@@ -8,16 +8,35 @@
 						<img src="images/siteLogo.png" alt="" class="img-fluid">
 					</div>
 
-					<!-- <ul class="list-inline footer-socials mt-4">
-						<li class="list-inline-item" style="margin-bottom: 10px;"><a href="#"><i class="icofont-facebook"></i></a></li>
-						<li class="list-inline-item" style="margin-bottom: 10px;"><a href="#"><i class="icofont-facebook"></i></a></li>
-						<li class="list-inline-item" style="margin-bottom: 10px;"><a href="#"><i class="icofont-facebook"></i></a></li>
-						<li class="list-inline-item" style="margin-bottom: 10px;"><a href="#"><i class="icofont-facebook"></i></a></li>
-						<li class="list-inline-item" style="margin-bottom: 10px;"><a href="#"><i class="icofont-facebook"></i></a></li>
-						<li class="list-inline-item" style="margin-bottom: 10px;"><a href="#"><i class="icofont-facebook"></i></a></li>
-						<li class="list-inline-item" style="margin-bottom: 10px;"><a href="#"><i class="icofont-twitter"></i></a></li>
-						<li class="list-inline-item" style="margin-bottom: 10px;"><a href="#"><i class="icofont-linkedin"></i></a></li>
-					</ul> -->
+					<ul class="list-inline footer-socials mt-4">
+						<% if (features.smDiscord) { %>
+							<li class="list-inline-item" style="margin-bottom: 10px;"><a href="<%= config.siteConfiguration.platforms.discord %>"><i class="fab fa-discord"></i></a></li>
+						<% } %>
+						<% if (features.smFacebook) { %>
+							<li class="list-inline-item" style="margin-bottom: 10px;"><a href="<%= config.siteConfiguration.platforms.facebook %>"><i class="fab fa-facebook"></i></a></li>
+						<% } %>
+						<% if (features.smTwitter) { %>
+							<li class="list-inline-item" style="margin-bottom: 10px;"><a href="<%= config.siteConfiguration.platforms.twitter %>"><i class="fab fa-twitter"></i></a></li>
+						<% } %>
+						<% if (features.smInstagram) { %>
+							<li class="list-inline-item" style="margin-bottom: 10px;"><a href="<%= config.siteConfiguration.platforms.instagram %>"><i class="fab fa-instagram"></i></a></li>
+						<% } %>
+						<% if (features.smReddit) { %>
+							<li class="list-inline-item" style="margin-bottom: 10px;"><a href="<%= config.siteConfiguration.platforms.reddit %>"><i class="fab fa-reddit-alien"></i></a></li>
+						<% } %>
+						<% if (features.smTwitch) { %>
+							<li class="list-inline-item" style="margin-bottom: 10px;"><a href="<%= config.siteConfiguration.platforms.twitch %>"><i class="fab fa-twitch"></i></a></li>
+						<% } %>
+						<% if (features.smYouTube) { %>
+							<li class="list-inline-item" style="margin-bottom: 10px;"><a href="<%= config.siteConfiguration.platforms.youtube %>"><i class="fab fa-youtube"></i></a></li>
+						<% } %>
+						<% if (features.smLinkedIn) { %>
+							<li class="list-inline-item" style="margin-bottom: 10px;"><a href="<%= config.siteConfiguration.platforms.linkedin %>"><i class="fab fa-linkedin-in"></i></a></li>
+						<% } %>
+						<% if (features.smTikTok) { %>
+							<li class="list-inline-item" style="margin-bottom: 10px;"><a href="<%= config.siteConfiguration.platforms.tiktok %>"><i class="fab fa-tiktok"></i></a></li>
+						<% } %>
+					</ul>
 				</div>
 			</div>
 

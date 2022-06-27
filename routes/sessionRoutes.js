@@ -1,7 +1,7 @@
 import bcrypt from 'bcrypt';
 import { isFeatureWebRouteEnabled } from "../api/common";
 
-export default function sessionSiteRoute(app, fetch, moment, config, db, features, lang) {
+export default function sessionSiteRoute(app, client, fetch, moment, config, db, features, lang) {
 
     // 
     // Session
@@ -120,8 +120,6 @@ export default function sessionSiteRoute(app, fetch, moment, config, db, feature
 
           // User has not logged in before.
           if (!results.length) {
-			return res.redirect(`${config.siteConfiguration.siteAddress}/`)
-
               return res.send({
                   success: false,
                   message: `You have not logged in before. You are required to register before becoming a community site member. You can jump on and play here: ${config.siteConfiguration.siteAddress}/play`
