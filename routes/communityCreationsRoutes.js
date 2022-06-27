@@ -2,7 +2,7 @@ import {
     isFeatureWebRouteEnabled
 } from "../api/common";
 
-export default function communityCreationSiteRoute(app, fetch, moment, config, features, lang) {
+export default function communityCreationSiteRoute(app, client, fetch, moment, config, db, features, lang) {
 
     // 
     // Community Creations

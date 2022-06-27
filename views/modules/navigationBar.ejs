@@ -24,17 +24,29 @@
 		  <div class="collapse navbar-collapse" id="navbarmain">
 			<ul class="navbar-nav ml-auto">
 			  <li class="nav-item"><a class="nav-link" href="/">Home</a></li>
-			  <li class="nav-item"><a class="nav-link" href="/play">Play</a></li>
-			  <li class="nav-item"><a class="nav-link" href="/apply">Apply</a></li>
-			  <li class="nav-item"><a class="nav-link" href="/knowledgebase">Knowledgebase</a></li>
+			  <% if (features.servers) { %>
+				<li class="nav-item"><a class="nav-link" href="/play">Play</a></li>
+			  <% } %>
+			  <% if (features.applications) { %>
+				<li class="nav-item"><a class="nav-link" href="/apply">Apply</a></li>
+			  <% } %>
+			  <% if (features.knowledgebase) { %>
+				<li class="nav-item"><a class="nav-link" href="/knowledgebase">Knowledgebase</a></li>
+			  <% } %>
 
-			  <li class="nav-item dropdown">
-				<a class="nav-link dropdown-toggle" href="#" id="dropdown02" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Community <i class="icofont-thin-down"></i></a>
-				<ul class="dropdown-menu" aria-labelledby="dropdown02">
-					<li><a class="dropdown-item" href="/communityCreations">Community Creations</a></li>
-					<li><a class="dropdown-item" href="/shoppingDistrictDirectory">Shopping District Directory</a></li>
-				</ul>
-			  </li>
+			  <% if (features.communityCreations || features.shops) { %>
+				<li class="nav-item dropdown">
+					<a class="nav-link dropdown-toggle" href="#" id="dropdown02" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Community <i class="icofont-thin-down"></i></a>
+					<ul class="dropdown-menu" aria-labelledby="dropdown02">
+						<% if (features.communityCreations) { %>
+							<li><a class="dropdown-item" href="/communityCreations">Community Creations</a></li>
+						<% } %>
+						<% if (features.shops) { %>
+							<li><a class="dropdown-item" href="/shoppingDistrictDirectory">Shopping District Directory</a></li>
+						<% } %>
+					</ul>
+				</li>
+			  <% } %>
 			  
 			  <% if (request.session?.user) { %>
 				<li class="nav-item"><a class="nav-link" href="/notifications"><i class="fas fa-bell"></i></a></li>
@@ -43,8 +55,12 @@
 					<a class="nav-link dropdown-toggle" href="#" id="dropdown02" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><img style="padding-right: 5px;" src="https://crafatar.com/avatars/<%= request.session.user.uuid %>?helm" height="20px" draggable="false">  <%= request.session.user.username %> <i class="icofont-thin-down"></i></a>
 					<ul class="dropdown-menu" aria-labelledby="dropdown02">
 						<li><a class="dropdown-item" href="/dashboard">Dashboard</a></li>
-						<li><a class="dropdown-item" href="/profile/<%= request.session.user.username %>">Profile</a></li>
-						<li><a class="dropdown-item" href="/profile/edit">Edit Profile</a></li>
+						<% if (features.userProfiles) { %>
+							<li><a class="dropdown-item" href="/profile/<%= request.session.user.username %>">Profile</a></li>
+						<% } %>
+						<% if (features.userProfiles) { %>
+							<li><a class="dropdown-item" href="/profile/edit">Edit Profile</a></li>
+						<% } %>
 						<li><a class="dropdown-item" href="/logout">Logout</a></li>
 					</ul>
 				  </li>
