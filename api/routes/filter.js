@@ -34,22 +34,6 @@ export default function webApiRoute(app, config, db, features, lang) {
                     }
                 });
             });
-                            // if (word.toLowerCase() === phrase.toLowerCase()) {
-                            //     bannedshouldBreak = true;
-                                
-                            //     return res.send({
-                            //         success: false,
-                            //         message: `Content Unclean: Phrase '${phrase}' matched`
-                            //     });
-                            // }              
-                    // if (word.toLowerCase() === phrase.toLowerCase()) {
-                    //     bannedshouldBreak = true;
-                        
-                    //     return res.send({
-                    //         success: false,
-                    //         message: `Content Unclean: Phrase '${phrase}' matched`
-                    //     });
-                    // }              
             return res.send({
                 success: true,
                 message: `Content Clean`
