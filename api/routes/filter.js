@@ -11,10 +11,6 @@ export default function webApiRoute(app, config, db, features, lang) {
 
         try {
             const wordContent = content.split(" ");
-
-            console.log(wordContent);
-            console.log(phrases);
-
             var bannedshouldBreak = false;
 
             phrases.forEach(phrase => {
@@ -47,24 +43,20 @@ export default function webApiRoute(app, config, db, features, lang) {
     app.post(baseEndpoint + '/link', async function(req, res) {
         isFeatureEnabled(features.filter.link, res, lang);
         const content = required(req.body, "content", res);
-        const phrases = filter.phrases;
+        const links = filter.links;
 
         try {
-            const wordContent = content.split(" ");
+            const linkWordContent = content.split(" ");
+            var linkshouldBreak = false;
 
-            console.log(wordContent);
-            console.log(phrases);
-
-            var bannedshouldBreak = false;
-
-            phrases.forEach(phrase => {
-                wordContent.forEach(word => {
-                    if (word.toLowerCase() === phrase.toLowerCase()) {
-                        bannedshouldBreak = true;
+            links.forEach(link => {
+                linkWordContent.forEach(word => {
+                    if (word.toLowerCase() === link.toLowerCase()) {
+                        linkshouldBreak = true;
                         
                         return res.send({
                             success: false,
-                            message: `Content Unclean: Phrase '${phrase}' matched`
+                            message: `Content Unclean: Link '${link}' matched`
                         });
                     }              
                 });
