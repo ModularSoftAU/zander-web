@@ -10,7 +10,7 @@
     "punishments": false,
     "ranks": false,
     "report": true,
-    "servers": true,
+    "servers": false,
     "sessions": true,
     "shops": false,
     "user": true,
