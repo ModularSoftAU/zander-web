@@ -86,3 +86,21 @@ export function hasPermission(permissionNode, request, reply) {
     }
     return true;
 }
+
+export function setBannerCookie(alertType, alertContent, reply) {
+    var expiryTime = new Date();
+    expiryTime.setSeconds(expiryTime.getSeconds() + 5);
+
+    // Set Alert Type
+    reply.setCookie('alertType', alertType, {
+        path: '/',
+        expires: expiryTime
+    })
+
+    // Set Content Type
+    reply.setCookie('alertContent', alertContent, {
+        path: '/',
+        expires: expiryTime
+    })
+    return true
+}
