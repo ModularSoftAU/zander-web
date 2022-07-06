@@ -113,7 +113,7 @@ const buildApp = async () => {
     app.register((instance, options, next) => {
         // Don't authenticate the Redirect routes. These are
         // protected by 
-        apiRedirectRoutes(instance, config);
+        apiRedirectRoutes(instance, config, lang);
         next();
     });
 

@@ -1,6 +1,14 @@
 <!-- Slider Start -->
 <section class="banner" style="background: url(<%= backgroundImage %>) no-repeat 50% 50%;">
 	<div class="container">
+		<% if (request.cookies.alertType) { %>
+			<br>
+			<%- include("../../partials/alert.ejs", {
+				alertType: request.cookies.alertType,
+				content: request.cookies.alertContent
+			}) %>
+		<% } %>
+
 		<div class="row">
 			<div class="col-lg-8">
 				<div class="block">

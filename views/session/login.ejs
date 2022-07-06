@@ -18,8 +18,15 @@
             <img class="floating" style="margin-top:10px;" src="images/session/elytraadmins.png" height="400px" draggable="false">
           </div>
         </div>
-        <div class="col-sm" style="margin-right:100px;">    
-          <form method="post" action="<%= config.siteConfiguration.siteAddress %>/login">
+        <div class="col-sm" style="margin-right:100px;">
+          <% if (request.cookies.alertType) { %>
+            <%- include("../partials/alert.ejs", {
+              alertType: request.cookies.alertType,
+              content: request.cookies.alertContent
+            }) %>
+          <% } %>
+
+          <form method="post" action="<%= config.siteConfiguration.siteAddress %><%= config.siteConfiguration.redirectRoute %>/session/login">
             <div class="form-group">
               <label for="username">Username</label>
               <input type="text" class="form-control" name="username" required>

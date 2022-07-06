@@ -89,7 +89,7 @@ export function hasPermission(permissionNode, request, reply) {
 
 export function setBannerCookie(alertType, alertContent, reply) {
     var expiryTime = new Date();
-    expiryTime.setSeconds(expiryTime.getSeconds() + 5);
+    expiryTime.setSeconds(expiryTime.getSeconds() + 1);
 
     // Set Alert Type
     reply.setCookie('alertType', alertType, {

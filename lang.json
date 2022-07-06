@@ -57,7 +57,9 @@
     "session": {
         "newSessionCreated": "A new session has been created for %UUID%",
         "allSessionsClosed": "All sessions for %UUID% have now been closed.",
-        "sessionSwitch": "%UUID% has switched to %SERVER%"
+        "sessionSwitch": "%UUID% has switched to %SERVER%",
+        "userSuccessLogin": "Sign in successful, welcome.",
+        "userFailedLogin": "The username or password you have entered is incorrect, please try again."
     },
     "shop": {
         "shopCreated": "%SHOPOWNER%'s shop %SHOPNAME% has been successfully created.",
