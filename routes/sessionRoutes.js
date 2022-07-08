@@ -19,7 +19,7 @@ export default function sessionSiteRoute(app, client, fetch, moment, config, db,
     });
 
     app.get('/register', async function(request, reply) {
-		if (!isFeatureWebRouteEnabled(features.web, request, reply))
+		if (!isFeatureWebRouteEnabled(features.web.register, request, reply))
 			return;
 		
         reply.view('session/register', {
@@ -31,9 +31,13 @@ export default function sessionSiteRoute(app, client, fetch, moment, config, db,
     });
 
     app.post('/login', async function(req, res) {
+	  if (!isFeatureWebRouteEnabled(features.web.login, req, res))
+		return;
+
       const username = req.body.username;
       const email = req.body.email;
       const password = req.body.password;
+
 	  
 	  async function getUserRanks(userData, userRanks = null) {
 		  return new Promise((resolve) => {
