@@ -16,7 +16,10 @@
     "user": true,
     "userProfiles": false,
     "vote": true,
-    "web": true,
+    "web": {
+        "login": true,
+        "register": true
+    },
 
     "smDiscord": true,
     "smFacebook": true,

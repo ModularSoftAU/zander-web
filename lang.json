@@ -6,7 +6,8 @@
         "userCreated": "The user %USERNAME% with the unique identifier of %UUID% is new, profile created.",
         "userAlreadyExists": "The requested user already exists in the database, the user creation is being terminated.",
         "userDoesNotExist": "The requested user does not exist.",
-        "noNotifications": "You do not have any notifications, good day!"
+        "noNotifications": "You do not have any notifications, good day!",
+        "databaseError": "A database error has occured trying to process this request. Please try again later."
     },
     "error": {
         "noReportServers": "The report feature could not be loaded because no public servers are avaliable. Consider asking your System Administrator to add one."
@@ -59,7 +60,8 @@
         "allSessionsClosed": "All sessions for %UUID% have now been closed.",
         "sessionSwitch": "%UUID% has switched to %SERVER%",
         "userSuccessLogin": "Sign in successful, welcome.",
-        "userFailedLogin": "The username or password you have entered is incorrect, please try again."
+        "userFailedLogin": "The username or password you have entered is incorrect, please try again.",
+        "userLogout": "You have been successfully logged out."
     },
     "shop": {
         "shopCreated": "%SHOPOWNER%'s shop %SHOPNAME% has been successfully created.",

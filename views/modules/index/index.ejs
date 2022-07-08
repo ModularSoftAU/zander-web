@@ -5,13 +5,6 @@
 
 <%- include("../../modules/navigationBar.ejs") %>
 
-<% if (request.cookies.alertType) { %>
-    <%- include("../../partials/alert.ejs", {
-        alertType: request.cookies.alertType,
-        content: request.cookies.alertContent
-    }) %>
-<% } %>
-
 <%- include("../../modules/index/indexHeroHeader.ejs", {
     backgroundImage: "../images/banner/VennyBlackBuilding.png"
 }) %>

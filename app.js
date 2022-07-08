@@ -84,7 +84,8 @@ const buildApp = async () => {
             "pageTitle": `Server Error`,
             config: config,
             error: error,
-            request: request
+            request: request,
+            features: features
         });
     });
 
