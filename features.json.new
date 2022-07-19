@@ -1,0 +1,41 @@
+{
+    "announcements": true,
+    "applications": true,
+    "discord": {
+        "commands": {
+
+        },
+        "events": {
+            "generalKenobi": true,
+            "guildMemberBoost": true,
+            "guildMemberVerify": true
+        }
+    },
+    "moderation": {
+        "altCheck": true,
+        "ipCheck": true,
+        "nameHistory": true
+    },
+    "knowledgebase": true,
+    "servers": false,
+    "report": true,
+    "filter": {
+        "link": true,
+        "phrase": true
+    },
+    "web": {
+        "login": true,
+        "register": true
+    },
+    "vote": true,
+    
+    "smDiscord": true,
+    "smFacebook": true,
+    "smTwitter": true,
+    "smInstagram": true,
+    "smReddit": false,
+    "smTwitch": true,
+    "smYouTube": true,
+    "smLinkedIn": true,
+    "smTikTok": true
+}
