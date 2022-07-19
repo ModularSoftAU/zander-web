@@ -10,8 +10,7 @@ export class GuildMessageListener extends Listener {
   }
 
   run(message) {
-    const msgcontent = message.content;
-    if (msgcontent.toLowerCase().includes("hello there")) {
+    if (message.content.toLowerCase().includes("hello there")) {
       message.channel.send('General Kenobi');
       return;
     };

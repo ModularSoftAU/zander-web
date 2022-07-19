@@ -1,5 +1,6 @@
 import bcrypt from 'bcrypt';
 import {isFeatureEnabled, required, optional, setBannerCookie} from '../common'
+import filter from '../../filter.json' assert {type: "json"};
 
 export default function webApiRoute(app, config, db, features, lang) {
     const baseEndpoint = config.siteConfiguration.apiRoute + '/web';
