@@ -21,6 +21,8 @@ CREATE TABLE users (
     interests TEXT,
 	aboutPage TEXT,
     profilePictureType ENUM('craftatar', 'gravatar', 'microsoft'),
+    timezone TEXT,
+    country TEXT,
 	coverArt VARCHAR(54),
 	PRIMARY KEY (userId),
 	INDEX users (uuid(8))

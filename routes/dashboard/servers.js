@@ -31,6 +31,8 @@ export default function dashboardServersSiteRoute(app, fetch, config, db, featur
         
         if (!hasPermission('zander.web.server', request, reply))
             return;
+
+        console.log(features);
         
         reply.view('dashboard/servers/editor', {
             "pageTitle": `Dashboard - Server Creator`,
