@@ -7,7 +7,7 @@ export default function sessionSiteRoute(app, client, fetch, moment, config, db,
     // Session
     // 
     app.get('/login', async function(request, reply) {
-		if (!isFeatureWebRouteEnabled(features.web.login, request, reply))
+		if (!isFeatureWebRouteEnabled(features.web.login, request, reply, features))
 			return;
 
         reply.view('session/login', {
@@ -19,7 +19,7 @@ export default function sessionSiteRoute(app, client, fetch, moment, config, db,
     });
 
     app.get('/register', async function(request, reply) {
-		if (!isFeatureWebRouteEnabled(features.web.register, request, reply))
+		if (!isFeatureWebRouteEnabled(features.web.register, request, reply, features))
 			return;
 		
         reply.view('session/register', {
@@ -31,7 +31,7 @@ export default function sessionSiteRoute(app, client, fetch, moment, config, db,
     });
 
     app.post('/login', async function(req, res) {
-	  if (!isFeatureWebRouteEnabled(features.web.login, req, res))
+	  if (!isFeatureWebRouteEnabled(features.web.login, req, res, features))
 		return;
 
       const username = req.body.username;

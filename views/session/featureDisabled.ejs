@@ -3,7 +3,9 @@
   pageDescription: "This feature has been disabled and is not accessible."
 }) %>
 
-<%- include("../modules/navigationBar.ejs") %>
+<%- include("../modules/navigationBar.ejs", {
+  features: features
+}) %>
 
 <%- include("../partials/miniHeader.ejs", {
   headerTitle: "Feature Disabled",

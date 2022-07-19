@@ -40,13 +40,14 @@ export function optional(body, field) {
     return body[field];
 }
 
-export function isFeatureWebRouteEnabled(isFeatureEnabled, request, reply) {
+export function isFeatureWebRouteEnabled(isFeatureEnabled, request, reply, features) {
     if (!isFeatureEnabled) {
         reply.view('session/featureDisabled', {
             "pageTitle": `Feature Disabled`,
             config: config,
             request: request,
-            reply: reply
+            reply: reply,
+            features: features
         });
         return false;
     }
@@ -64,8 +65,9 @@ export function hasPermission(permissionNode, request, reply) {
             "pageTitle": `Access Restricted`,
             config: config,
             request: request,
-            reply: reply
-        });        
+            reply: reply,
+            features: features
+        });
         return false;
     }
 
