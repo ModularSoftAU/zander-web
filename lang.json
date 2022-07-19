@@ -70,5 +70,9 @@
     "vote": {
         "newVoteCast": "New vote cast entry has been successfully entered for %USERNAME%",
         "noVotes": "There are currently no votes! You can be the first!"
+    },
+    "annnouncement": {
+        "annnouncementCreated": "Annnouncement has been created.",
+        "noAnnouncements": "There are currently no annnouncements set for this category."
     }
 }
