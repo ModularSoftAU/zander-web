@@ -1,7 +1,7 @@
-import {isFeatureEnabled, required, optional} from '../common';
+import {isFeatureEnabled, required} from '../common';
 import filter from '../../filter.json' assert {type: "json"};
 
-export default function webApiRoute(app, config, db, features, lang) {
+export default function filterApiRoute(app, config, db, features, lang) {
     const baseEndpoint = config.siteConfiguration.apiRoute + '/filter';
 
     app.post(baseEndpoint + '/phrase', async function(req, res) {
@@ -29,7 +29,7 @@ export default function webApiRoute(app, config, db, features, lang) {
                     if (re.test(word)) {
                         return res.send({
                             success: false,
-                            message: `Content Unclean: Phrase '${phrase}' matched`
+                            message: lang.filter.phraseCaught
                         });
                     }
                 });
@@ -64,7 +64,7 @@ export default function webApiRoute(app, config, db, features, lang) {
                         
                         return res.send({
                             success: false,
-                            message: `Content Unclean: Link '${link}' matched`
+                            message: lang.filter.linkCaught
                         });
                     }              
                 });

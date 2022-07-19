@@ -19,11 +19,12 @@
     "filter": {
         "link": true,
         "phrase": true
-    }
+    },
     "web": {
         "login": true,
         "register": true
     },
+    
     "smDiscord": true,
     "smFacebook": true,
     "smTwitter": true,
