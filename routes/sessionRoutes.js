@@ -118,46 +118,47 @@ export default function sessionSiteRoute(app, client, fetch, moment, config, db,
 	  }
 
       db.query(`select * from users where username=?`, [username], async function (err, results) {
-          if (err) {
-              throw err;
-          }
+		let hashedPassword = results[0].password;
 
-          // User has not logged in before.
-          if (!results.length) {
-			let notLoggedInBeforeLang = lang.web.notLoggedInBefore;
+		if (err) {
+			throw err;
+		}
 
-			setBannerCookie("warning", notLoggedInBeforeLang.replace("%SITEADDRESS%", config.siteConfiguration.siteAddress), res);
-			return res.redirect(`${config.siteConfiguration.siteAddress}/login`);
-          }
+		// User has not logged in before.
+		if (!results.length || hashedPassword == null) {
+		  let notLoggedInBeforeLang = lang.web.notLoggedInBefore;
 
-          // Check if passwords match
-          const salt = await bcrypt.genSalt();
-          let hashedPassword = results[0].password;
+		  setBannerCookie("warning", notLoggedInBeforeLang.replace("%SITEADDRESS%", config.siteConfiguration.siteAddress), res);
+		  return res.redirect(`${config.siteConfiguration.siteAddress}/login`);
+		}
 
-          bcrypt.compare(password, hashedPassword, async function(err, result) {
-              if (err) {
-                  throw err;
-              }
+		// Check if passwords match
+		const salt = await bcrypt.genSalt();
 
-              if (result) {
-				  req.session.authenticated = true;
-				  let userData = await getPermissions(results[0]);
+		bcrypt.compare(password, hashedPassword, async function(err, result) {
+			if (err) {
+				throw err;
+			}
 
-                  req.session.user = {
-                      userId: userData.userId,
-                      username: userData.username,
-                      uuid: userData.uuid,
-					  ranks: userData.userRanks,
-					  permissions: userData.permissions
-                  };
+			if (result) {
+				req.session.authenticated = true;
+				let userData = await getPermissions(results[0]);
 
-				  setBannerCookie("success", lang.session.userSuccessLogin, res);
-                  return res.redirect(`${config.siteConfiguration.siteAddress}/`);
-              } else {
-				setBannerCookie("warning", lang.session.userFailedLogin, res);
-                return res.redirect(`${config.siteConfiguration.siteAddress}/login`);
-			  }
-          });
+				req.session.user = {
+					userId: userData.userId,
+					username: userData.username,
+					uuid: userData.uuid,
+					ranks: userData.userRanks,
+					permissions: userData.permissions
+				};
+
+				setBannerCookie("success", lang.session.userSuccessLogin, res);
+				return res.redirect(`${config.siteConfiguration.siteAddress}/`);
+			} else {
+			  setBannerCookie("warning", lang.session.userFailedLogin, res);
+			  return res.redirect(`${config.siteConfiguration.siteAddress}/login`);
+			}
+		});
       });
   });
 
