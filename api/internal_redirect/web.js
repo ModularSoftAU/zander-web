@@ -1,12 +1,12 @@
-import {required, optional, hasPermission} from '../common'
+import { setBannerCookie } from '../common'
 import fetch from 'node-fetch';
 
 export default function applicationRedirectRoute(app, config) {
     const baseEndpoint = config.siteConfiguration.redirectRoute + '/web';
 
-    app.post(baseEndpoint + '/create', async function(req, res) {
-        const registerCreateURL = `${config.siteConfiguration.siteAddress}${config.siteConfiguration.apiRoute}/register/create`;
-        fetch(registerCreateURL, {
+    app.post(baseEndpoint + '/register', async function(req, res) {
+        const registerCreateURL = `${config.siteConfiguration.siteAddress}${config.siteConfiguration.apiRoute}/web/register/create`;
+        await fetch(registerCreateURL, {
             method: 'POST',
             body: JSON.stringify(req.body),
             headers: {
@@ -15,9 +15,9 @@ export default function applicationRedirectRoute(app, config) {
             }
         })
         .then(res => res.json())
-        .then(json => console.log(json));
+        .then(json => setBannerCookie(json.alertType, json.alertContent, res));
 
-        res.redirect(`${config.siteConfiguration.siteAddress}/`);
+        res.redirect(`${config.siteConfiguration.siteAddress}/register`);
     });
 
 }

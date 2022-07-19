@@ -1,5 +1,5 @@
 import bcrypt from 'bcrypt';
-import { isFeatureWebRouteEnabled } from "../api/common";
+import { isFeatureWebRouteEnabled, setBannerCookie } from "../api/common";
 
 export default function sessionSiteRoute(app, client, fetch, moment, config, db, features, lang) {
 
@@ -7,7 +7,7 @@ export default function sessionSiteRoute(app, client, fetch, moment, config, db,
     // Session
     // 
     app.get('/login', async function(request, reply) {
-		if (!isFeatureWebRouteEnabled(features.web, request, reply))
+		if (!isFeatureWebRouteEnabled(features.web.login, request, reply))
 			return;
 
         reply.view('session/login', {
@@ -19,7 +19,7 @@ export default function sessionSiteRoute(app, client, fetch, moment, config, db,
     });
 
     app.get('/register', async function(request, reply) {
-		if (!isFeatureWebRouteEnabled(features.web, request, reply))
+		if (!isFeatureWebRouteEnabled(features.web.register, request, reply))
 			return;
 		
         reply.view('session/register', {
@@ -31,9 +31,13 @@ export default function sessionSiteRoute(app, client, fetch, moment, config, db,
     });
 
     app.post('/login', async function(req, res) {
+	  if (!isFeatureWebRouteEnabled(features.web.login, req, res))
+		return;
+
       const username = req.body.username;
       const email = req.body.email;
       const password = req.body.password;
+
 	  
 	  async function getUserRanks(userData, userRanks = null) {
 		  return new Promise((resolve) => {
@@ -120,10 +124,10 @@ export default function sessionSiteRoute(app, client, fetch, moment, config, db,
 
           // User has not logged in before.
           if (!results.length) {
-              return res.send({
-                  success: false,
-                  message: `You have not logged in before. You are required to register before becoming a community site member. You can jump on and play here: ${config.siteConfiguration.siteAddress}/play`
-              });
+			let notLoggedInBeforeLang = lang.web.notLoggedInBefore;
+
+			setBannerCookie("warning", notLoggedInBeforeLang.replace("%SITEADDRESS%", config.siteConfiguration.siteAddress), res);
+			return res.redirect(`${config.siteConfiguration.siteAddress}/login`);
           }
 
           // Check if passwords match
@@ -147,8 +151,12 @@ export default function sessionSiteRoute(app, client, fetch, moment, config, db,
 					  permissions: userData.permissions
                   };
 
-                  return res.redirect(`${config.siteConfiguration.siteAddress}/`)
-              }
+				  setBannerCookie("success", lang.session.userSuccessLogin, res);
+                  return res.redirect(`${config.siteConfiguration.siteAddress}/`);
+              } else {
+				setBannerCookie("warning", lang.session.userFailedLogin, res);
+                return res.redirect(`${config.siteConfiguration.siteAddress}/login`);
+			  }
           });
       });
   });
@@ -157,9 +165,10 @@ export default function sessionSiteRoute(app, client, fetch, moment, config, db,
 	req.destroySession((err) => {
 		if (err) {
 			console.log(err);
-		  throw err;
+		  	throw err;
 		} else {
-		  return res.redirect(`${config.siteConfiguration.siteAddress}/`)
+			setBannerCookie("success", lang.session.userLogout, res);
+		  	return res.redirect(`${config.siteConfiguration.siteAddress}/`)
 		}
 	})
   });
