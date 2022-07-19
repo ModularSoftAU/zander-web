@@ -4,13 +4,12 @@ USE zanderDev;
 
 CREATE TABLE users (
 	userId INT NOT NULL AUTO_INCREMENT,
-	uuid VARCHAR(36) NOT NULL,
+	uuid VARCHAR(36) NOT NULL UNIQUE,
 	username VARCHAR(16) UNIQUE,
-	email VARCHAR(200),
+	email VARCHAR(200) UNIQUE,
 	password TEXT,
 	joined DATETIME NOT NULL DEFAULT NOW(),
 	disabled BOOLEAN DEFAULT 0,
-	interests TEXT,
 	twitter VARCHAR(15),
 	twitch TEXT,
 	steam VARCHAR(32),
@@ -19,7 +18,11 @@ CREATE TABLE users (
 	discord TEXT,
 	youtube TEXT,
 	instagram VARCHAR(30),
+    interests TEXT,
 	aboutPage TEXT,
+    profilePictureType ENUM('craftatar', 'gravatar', 'microsoft'),
+    timezone TEXT,
+    country TEXT,
 	coverArt VARCHAR(54),
 	PRIMARY KEY (userId),
 	INDEX users (uuid(8))
@@ -199,8 +202,9 @@ CREATE TABLE gameSessions (
     userId INT NOT NULL,
     sessionStart DATETIME NOT NULL DEFAULT NOW(),
     sessionEnd DATETIME,
+    vanished BOOLEAN DEFAULT 0,
     ipAddress VARCHAR(45),
-    serverId INT NOT NULL,
+    serverId INT,
     PRIMARY KEY (sessionId),
     INDEX gameSessions_sessionStart (sessionStart),
     INDEX gameSessions_sessionEnd (sessionEnd),
@@ -247,6 +251,7 @@ CREATE TABLE events (
     information TEXT,
     guildEventId VARCHAR(18),
     guildEventChannel VARCHAR(18),
+    guildAnnouncementMessage VARCHAR(18),
     published BOOLEAN DEFAULT 0,
     PRIMARY KEY (eventId),
     INDEX events_eventDateTime (eventDateTime),
@@ -413,15 +418,6 @@ BEFORE UPDATE ON appealComments FOR EACH ROW
 	SET NEW.updatedDate = NOW()
 ;
 
-CREATE TABLE anticheat (
-	anticheatId INT NOT NULL AUTO_INCREMENT,
-    userId INT NOT NULL,
-    type TEXT,
-    createdDate DATETIME NOT NULL DEFAULT NOW(),
-    PRIMARY KEY (anticheatId),
-    CONSTRAINT antichat_userId FOREIGN KEY (userId) REFERENCES users (userId) ON DELETE RESTRICT
-);
-
 -- CREATE TABLE voteSites (
 -- 	voteSiteId INT NOT NULL AUTO_INCREMENT,
 --     serverId INT NOT NULL,
@@ -445,13 +441,10 @@ CREATE TABLE announcements (
 	announcementId INT NOT NULL AUTO_INCREMENT,
     announcementSlug VARCHAR(30) UNIQUE NOT NULL,
     enabled BOOLEAN DEFAULT 1,
+    announcementType ENUM('motd', 'tip', 'web'),
     body TEXT,
-    motd BOOLEAN DEFAULT 0,
-    motdFormat BOOLEAN DEFAULT 0,
-    tips BOOLEAN DEFAULT 0,
-    web BOOLEAN DEFAULT 0,
+    colourMessageFormat TEXT,
     link TEXT,
-    popUp BOOLEAN DEFAULT 0,
     createdDate DATETIME NOT NULL DEFAULT NOW(),
     updatedDate DATETIME,
     PRIMARY KEY (announcementId)

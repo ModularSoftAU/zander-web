@@ -29,11 +29,11 @@
                 <!-- Image Slider -->
                 <div id="carousel<%= creation.creationId %>" class="carousel slide" data-interval="false">
                   <div class="carousel-inner">
-					<% creation.imageLinks.forEach(function (imageLink, index) { %>
-						<div class="carousel-item<%= (index == 0 ? ' active' : '') %>">
-							<img class="d-block w-100" src="<%= imageLink %>" alt="Slide <%= (index + 1) %>">
-						</div>
-					<% }) %>
+                  <% creation.imageLinks.forEach(function (imageLink, index) { %>
+                    <div class="carousel-item<%= (index == 0 ? ' active' : '') %>">
+                      <img class="d-block w-100" src="<%= imageLink %>" alt="Slide <%= (index + 1) %>">
+                    </div>
+                  <% }) %>
                     
                   </div>
                   <a class="carousel-control-prev" href="#carousel<%= creation.creationId %>" role="button" data-slide="prev">

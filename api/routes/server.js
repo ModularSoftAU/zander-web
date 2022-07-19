@@ -87,6 +87,13 @@ export default function serverApiRoute(app, config, db, features, lang) {
                     });
                 }
 
+                if (!results.length) {
+                    return res.send({
+                        success: false,
+                        message: `There are no users online.`
+                    });
+                }
+
                 return res.send({
                     success: true,
                     data: results

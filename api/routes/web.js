@@ -1,12 +1,13 @@
 import bcrypt from 'bcrypt';
-import {isFeatureEnabled, required, optional} from '../common';
+import {isFeatureEnabled, required, optional, setBannerCookie} from '../common'
 import filter from '../../filter.json' assert {type: "json"};
 
 export default function webApiRoute(app, config, db, features, lang) {
     const baseEndpoint = config.siteConfiguration.apiRoute + '/web';
 
     app.post(baseEndpoint + '/register/create', async function(req, res) {
-        isFeatureEnabled(features.web, res, lang);
+        isFeatureEnabled(features.web.register, res, lang);
+
         const username = required(req.body, "username", res);
         const email = required(req.body, "email", res);
         const password = required(req.body, "password", res);
@@ -20,18 +21,22 @@ export default function webApiRoute(app, config, db, features, lang) {
             }
 
             // User has not logged in before.
-            if (!results[0].length) {
+            if (results[0].length < 1) {
                 return res.send({
                     success: false,
-                    message: notLoggedInBeforeLang.replace("%SITEADDRESS%", config.siteConfiguration.siteAddress)
+                    alertType: "warning",
+                    alertContent: notLoggedInBeforeLang.replace("%SITEADDRESS%", config.siteConfiguration.siteAddress)
                 });
             }
 
             // Make sure email is not being used on another account
-            if (!results[1]) {
+            console.log(results[1]);
+
+            if (!results[1].length > 1) {
                 return res.send({
                     success: false,
-                    message: lang.web.emailAlreadyInUse
+                    alertType: "warning",
+                    alertContent: lang.web.emailAlreadyInUse
                 });
             }
 
@@ -39,7 +44,8 @@ export default function webApiRoute(app, config, db, features, lang) {
             if (password != confirmPassword) {
                 return res.send({
                     success: false,
-                    message: lang.web.passwordDoesNotMatch
+                    alertType: "danger",
+                    alertContent: lang.web.passwordDoesNotMatch
                 });                
             }
 
@@ -54,14 +60,16 @@ export default function webApiRoute(app, config, db, features, lang) {
 
                         return res.send({
                             success: false,
-                            message: lang.web.registrationError
+                            alertType: "danger",
+                            alertContent: lang.web.registrationError
                         });
                     }
 
                     // Success, generating account now.
                     return res.send({
                         success: true,
-                        message: lang.web.registrationSuccess
+                        alertType: "success",
+                        alertContent: lang.web.registrationSuccess
                     });
                 });
 
@@ -70,7 +78,8 @@ export default function webApiRoute(app, config, db, features, lang) {
 
                 return res.send({
                     success: false,
-                    message: lang.web.registrationError
+                    alertType: "danger",
+                    alertContent: lang.web.registrationError
                 });
             }
         });

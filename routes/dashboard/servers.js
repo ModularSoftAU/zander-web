@@ -5,7 +5,7 @@ export default function dashboardServersSiteRoute(app, fetch, config, db, featur
     // Servers
     // 
     app.get('/dashboard/servers', async function(request, reply) {
-        if (!isFeatureWebRouteEnabled(features.servers, request, reply))
+        if (!isFeatureWebRouteEnabled(features.servers, request, reply, features))
             return;
         
         if (!hasPermission('zander.web.server', request, reply))
@@ -26,11 +26,13 @@ export default function dashboardServersSiteRoute(app, fetch, config, db, featur
     });
 
     app.get('/dashboard/servers/create', async function(request, reply) {
-        if (!isFeatureWebRouteEnabled(features.servers, request, reply))
+        if (!isFeatureWebRouteEnabled(features.servers, request, reply, features))
             return;
         
         if (!hasPermission('zander.web.server', request, reply))
             return;
+
+        console.log(features);
         
         reply.view('dashboard/servers/editor', {
             "pageTitle": `Dashboard - Server Creator`,
@@ -41,7 +43,7 @@ export default function dashboardServersSiteRoute(app, fetch, config, db, featur
     });
 
     app.get('/dashboard/servers/edit', async function(request, reply) {
-        if (!isFeatureWebRouteEnabled(features.servers, request, reply))
+        if (!isFeatureWebRouteEnabled(features.servers, request, reply, features))
             return;
         
         if (!hasPermission('zander.web.server', request, reply))

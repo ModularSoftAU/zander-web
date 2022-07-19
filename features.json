@@ -10,15 +10,27 @@
     "punishments": false,
     "ranks": false,
     "report": true,
-    "servers": true,
+    "servers": false,
     "sessions": true,
     "shops": false,
     "user": true,
     "userProfiles": false,
     "vote": true,
-    "web": true,
     "filter": {
         "link": true,
         "phrase": true
     }
+    "web": {
+        "login": true,
+        "register": true
+    },
+    "smDiscord": true,
+    "smFacebook": true,
+    "smTwitter": true,
+    "smInstagram": true,
+    "smReddit": false,
+    "smTwitch": true,
+    "smYouTube": true,
+    "smLinkedIn": true,
+    "smTikTok": true
 }
