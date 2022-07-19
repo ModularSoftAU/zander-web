@@ -82,7 +82,7 @@ export default function applicationSiteRoutes(app, client, fetch, moment, config
             apiData: apiData,
             moment: moment,
             request: request,
-            features: features,
+            features: features
         });
     });
 
@@ -128,7 +128,8 @@ export default function applicationSiteRoutes(app, client, fetch, moment, config
                 "pageTitle": `Access Restricted`,
                 config: config,
                 request: request,
-                reply: reply
+                reply: reply,
+                features: features
             });        
         }
 
@@ -145,7 +146,8 @@ export default function applicationSiteRoutes(app, client, fetch, moment, config
                 "pageTitle": `Server Error`,
                 config: config,
                 error: lang.error.noReportServers,
-                request: request
+                request: request,
+                features: features
             });
         }
 
@@ -208,7 +210,6 @@ export default function applicationSiteRoutes(app, client, fetch, moment, config
             profileApiData: profileApiData,
             reportApiData: reportApiData,
             features: features
-
         });
     });
 
@@ -221,7 +222,8 @@ export default function applicationSiteRoutes(app, client, fetch, moment, config
                 "pageTitle": `Access Restricted`,
                 config: config,
                 request: request,
-                reply: reply
+                reply: reply,
+                features: features
             });        
         }
 
@@ -264,7 +266,8 @@ export default function applicationSiteRoutes(app, client, fetch, moment, config
                 "pageTitle": `Access Restricted`,
                 config: config,
                 request: request,
-                reply: reply
+                reply: reply,
+                features: features
             });        
         }
         
