@@ -11,7 +11,7 @@ export default function applicationSiteRoutes(app, client, fetch, moment, config
     knowledgebaseSiteRoutes(app, client, fetch, moment, config, db, features, lang);
     communityCreationsRoutes(app, client, fetch, moment, config, db, features, lang);
     sessionRoutes(app, client, fetch, moment, config, db, features, lang);
-    policySiteRoutes(app, config);
+    policySiteRoutes(app, config, features);
 
     app.get('/', async function(request, reply) {
 
