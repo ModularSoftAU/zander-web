@@ -8,7 +8,7 @@ export default function dashboardKnowledgebaseSiteRoute(app, fetch, moment, conf
         if (!isFeatureWebRouteEnabled(features.knowledgebase, request, reply, features))
             return;
         
-        if (!hasPermission('zander.web.knowledgebase', request, reply))
+        if (!hasPermission('zander.web.knowledgebase', request, reply, features))
             return;
 
         // KB Article Data
@@ -42,7 +42,7 @@ export default function dashboardKnowledgebaseSiteRoute(app, fetch, moment, conf
         if (!isFeatureWebRouteEnabled(features.knowledgebase, request, reply, features))
             return;
         
-        if (!hasPermission('zander.web.knowledgebase', request, reply))
+        if (!hasPermission('zander.web.knowledgebase', request, reply, features))
             return;
 
         reply.view('dashboard/knowledgebase/sectionEditor', {
@@ -61,7 +61,7 @@ export default function dashboardKnowledgebaseSiteRoute(app, fetch, moment, conf
         if (!isFeatureWebRouteEnabled(features.knowledgebase, request, reply, features))
             return;
         
-        if (!hasPermission('zander.web.knowledgebase', request, reply))
+        if (!hasPermission('zander.web.knowledgebase', request, reply, features))
             return;
 
         const sectionSlug = request.query.slug;
@@ -118,7 +118,7 @@ export default function dashboardKnowledgebaseSiteRoute(app, fetch, moment, conf
         if (!isFeatureWebRouteEnabled(features.knowledgebase, request, reply, features))
             return;
         
-        if (!hasPermission('zander.web.knowledgebase', request, reply))
+        if (!hasPermission('zander.web.knowledgebase', request, reply, features))
             return;
 
         const fetchURL = `${config.siteConfiguration.siteAddress}${config.siteConfiguration.apiRoute}/knowledgebase/section/get`;
@@ -144,7 +144,7 @@ export default function dashboardKnowledgebaseSiteRoute(app, fetch, moment, conf
         if (!isFeatureWebRouteEnabled(features.knowledgebase, request, reply, features))
             return;
         
-        if (!hasPermission('zander.web.knowledgebase', request, reply))
+        if (!hasPermission('zander.web.knowledgebase', request, reply, features))
             return;
         
         const articleSlug = request.query.slug;

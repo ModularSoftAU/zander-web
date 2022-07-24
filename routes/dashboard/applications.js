@@ -9,7 +9,7 @@ export default function dashboardApplicationsSiteRoute(app, fetch, config, db, f
         if (!isFeatureWebRouteEnabled(features.applications, request, reply, features))
             return;
         
-        if (!hasPermission('zander.web.application', request, reply))
+        if (!hasPermission('zander.web.application', request, reply, features))
             return;
 
         const fetchURL = `${config.siteConfiguration.siteAddress}${config.siteConfiguration.apiRoute}/application/get`;
@@ -30,7 +30,7 @@ export default function dashboardApplicationsSiteRoute(app, fetch, config, db, f
         if (!isFeatureWebRouteEnabled(features.applications, request, reply, features))
             return;
 
-        if (!hasPermission('zander.web.application', request, reply))
+        if (!hasPermission('zander.web.application', request, reply, features))
             return;
 
         reply.view('dashboard/applications/editor', {
@@ -45,7 +45,7 @@ export default function dashboardApplicationsSiteRoute(app, fetch, config, db, f
         if (!isFeatureWebRouteEnabled(features.applications, request, reply, features))
             return;
         
-        if (!hasPermission('zander.web.application', request, reply))
+        if (!hasPermission('zander.web.application', request, reply, features))
             return;
 
         const id = request.query.id;

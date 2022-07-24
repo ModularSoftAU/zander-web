@@ -59,7 +59,7 @@ export function isLoggedIn(request) {
     else return false;
 }
 
-export function hasPermission(permissionNode, request, reply) {
+export function hasPermission(permissionNode, request, reply, features) {
     if (!isLoggedIn(request)) {
         reply.view('session/noPermission', {
             "pageTitle": `Access Restricted`,
@@ -82,7 +82,8 @@ export function hasPermission(permissionNode, request, reply) {
             "pageTitle": `Access Restricted`,
             config: config,
             request: request,
-            reply: reply
+            reply: reply,
+            features: features
         });
         return false;
     }

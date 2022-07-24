@@ -8,7 +8,7 @@ export default function dashboardEventSiteRoute(app, client, fetch, moment, conf
         if (!isFeatureWebRouteEnabled(features.events, request, reply, features))
             return;
         
-        if (!hasPermission('zander.web.event', request, reply))
+        if (!hasPermission('zander.web.event', request, reply, features))
             return;
 
         const fetchURL = `${config.siteConfiguration.siteAddress}${config.siteConfiguration.apiRoute}/event/get?published=all`;
@@ -34,7 +34,7 @@ export default function dashboardEventSiteRoute(app, client, fetch, moment, conf
         if (!isFeatureWebRouteEnabled(features.events, request, reply, features))
             return;
         
-        if (!hasPermission('zander.web.event', request, reply))
+        if (!hasPermission('zander.web.event', request, reply, features))
             return;
 
         const fetchURL = `${config.siteConfiguration.siteAddress}${config.siteConfiguration.apiRoute}/server/get?visible=all`;
@@ -60,7 +60,7 @@ export default function dashboardEventSiteRoute(app, client, fetch, moment, conf
         if (!isFeatureWebRouteEnabled(features.events, request, reply, features))
             return;
         
-        if (!hasPermission('zander.web.event', request, reply))
+        if (!hasPermission('zander.web.event', request, reply, features))
             return;
         
         const eventId = request.query.id;

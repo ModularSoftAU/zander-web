@@ -1,7 +1,7 @@
 import {isFeatureEnabled, required, optional} from '../common'
 
 export default function announcementApiRoute(app, config, db, features, lang) {
-    const baseEndpoint = config.siteConfiguration.apiRoute + '/announcement';
+    const baseEndpoint = config.siteConfiguration.apiRoute + '/announcements';
 
     app.get(baseEndpoint + '/get', async function(req, res) {
         isFeatureEnabled(features.announcements, res, lang);
@@ -70,10 +70,8 @@ export default function announcementApiRoute(app, config, db, features, lang) {
             }
 
             // Show all announcements
-            if (enabled === 'all') {
-                let dbQuery = `SELECT * FROM announcements;`
-                getAnnouncements(dbQuery);
-            }
+            let dbQuery = `SELECT * FROM announcements;`
+            getAnnouncements(dbQuery);
 
         } catch (error) {
             res.send({
@@ -121,23 +119,59 @@ export default function announcementApiRoute(app, config, db, features, lang) {
     app.post(baseEndpoint + '/edit', async function(req, res) {
         isFeatureEnabled(features.announcements, res, lang);
         const announcementSlug = required(req.body, "announcementSlug", res);
-        const body = required(req.body, "body", res);
-        const motd = required(req.body, "motd", res);
-        const tips = required(req.body, "tips", res);
-        const web = required(req.body, "web", res);
-        const link = optional(req.body, "link");
-        const motdFormat = optional(req.body, "motdFormat");
+        const enabled = required(req.body, "enabled", res);
+        const announcementType = required(req.body, "announcementType", res);
+        const body = optional(req.body, "body", res);
+        const colourMessageFormat = optional(req.body, "colourMessageFormat", res);
+        const link = optional(req.body, "link", res);
 
-        // ...
-        res.send({ success: true });
+        try {
+            db.query(`UPDATE announcements SET announcementSlug=?, enabled=?, announcementType=?, body=?, colourMessageFormat=?, link=? WHERE announcementSlug=?`, [announcementSlug, enabled, announcementType, body, colourMessageFormat, link, announcementSlug], function(error, results, fields) {
+                if (error) {
+                    return res.send({
+                        success: false,
+                        message: `${error}`
+                    });
+                }
+
+                return res.send({
+                    success: true,
+                    message: lang.server.serverEdited
+                });
+            });
+
+        } catch (error) {
+            res.send({
+                success: false,
+                message: `${error}`
+            });
+        }
     });
 
     app.post(baseEndpoint + '/delete', async function(req, res) {
         isFeatureEnabled(features.announcements, res, lang);
         const announcementSlug = required(req.body, "announcementSlug", res);
 
-        // ...
-        res.send({ success: true });
+        try {
+            db.query(`DELETE FROM announcements WHERE announcementSlug=?;`, [announcementSlug], function(error, results, fields) {
+                if (error) {
+                    return res.send({
+                        success: false,
+                        message: `${error}`
+                    });
+                }
+                return res.send({
+                    success: true,
+                    message: lang.annnouncement.announcementDeleted
+                });
+            });
+
+        } catch (error) {
+            res.send({
+                success: false,
+                message: `${error}`
+            });
+        }
     });
 
 }

@@ -1,0 +1,141 @@
+<%- include("../../modules/dashboard/header.ejs", {
+    pageTitle: pageTitle,
+    pageDescription: "Add and edit Announcements for displaying information around the Network."
+}) %>
+
+<%- include("../../modules/dashboard/sidebar.ejs") %>
+
+<%- include("../../modules/dashboard/navigation.ejs") %>
+
+<div class="content-wrap">
+    <div class="main">
+        <div class="container-fluid">
+            <section id="main-content">
+                <div class="row">
+                    <div class="col-lg-12">
+                        <div class="card">
+                            <div class="card-title">
+                                <h4>Announcement Editor</h4>
+                            </div>
+                            <div class="card-body">
+                                <div class="basic-form">
+                                    <% if (type === 'create') { %>
+                                        <form method="post" action="<%= config.siteConfiguration.siteAddress %><%= config.siteConfiguration.redirectRoute %>/announcements/create">
+                                    <% } %>
+                                    <% if (type === 'edit') { %>
+                                        <form method="post" action="<%= config.siteConfiguration.siteAddress %><%= config.siteConfiguration.redirectRoute %>/announcements/edit">
+                                            <input type="hidden" name="announcementSlug" value="<%= announcementApiData.announcementSlug %>">
+                                    <% } %>
+                                            <div class="row">
+                                                <!-- Announcement Slug -->
+                                                <div class="form-group col">
+                                                    <label for="name">Announcement Slug</label>
+
+                                                    <% if (type === 'create') { %>
+                                                        <input type="text" class="form-control input-default " name="announcementSlug" required>
+                                                    <% } %>
+                                                    <% if (type === 'edit') { %>
+                                                        <input type="text" class="form-control input-default " name="announcementSlug" value="<%= announcementApiData.announcementSlug %>" required>
+                                                    <% } %>
+
+                                                    <p class="text-muted m-b-15 f-s-12">The unique slug name for the announcement.</p>
+                                                </div>
+
+                                                <!-- Announcement Type -->
+                                                <div class="form-group col">
+                                                    <label for="announcementType">Announcement Type</label>
+
+                                                    <% if (type === 'create') { %>
+                                                        <select class="form-control" name="announcementType" required>
+                                                            <option selected disabled>Select a Type</option>
+                                                            <option value="motd">Server Ping MOTD</option>
+                                                            <option value="tip">In-Game Tip</option>
+                                                            <option value="web">Website Banner</option>
+                                                        </select>
+                                                    <% } %>
+                                                    <% if (type === 'edit') { %>
+                                                        <select class="form-control" name="announcementType" required>
+                                                            <option selected disabled>Select a Type</option>
+                                                            <option value="motd">Server Ping MOTD</option>
+                                                            <option value="tip">In-Game Tip</option>
+                                                            <option value="web">Website Banner</option>
+                                                        </select>
+                                                    <% } %>
+                                                </div>
+                                            </div>
+
+                                            <!-- Banner Body -->
+                                            <div class="form-group">
+                                                <label for="body">Banner Body</label>
+
+                                                <% if (type === 'create') { %>
+                                                    <input type="text" class="form-control input-default " name="body">
+                                                <% } %>
+                                                <% if (type === 'edit') { %>
+                                                    <input type="text" class="form-control input-default " name="body" value="<%= announcementApiData.body %>">
+                                                <% } %>
+                                            </div>
+
+                                            <!-- Colour Message Body Format -->
+                                            <div class="form-group">
+                                                <label for="colourMessageFormat">Colour Message Format</label>
+
+                                                <% if (type === 'create') { %>
+                                                    <input type="text" class="form-control input-default " name="colourMessageFormat">
+                                                <% } %>
+                                                <% if (type === 'edit') { %>
+                                                    <input type="text" class="form-control input-default " name="colourMessageFormat" value="<%= announcementApiData.colourMessageFormat %>">
+                                                <% } %>
+                                            </div>
+
+                                            
+
+                                            <div class="row">
+                                                <!-- Announcement Link -->
+                                                <div class="form-group col">
+                                                    <label for="position">Announcement Link</label>
+
+                                                    <% if (type === 'create') { %>
+                                                        <input type="text" class="form-control input-default " name="link">
+                                                    <% } %>
+                                                    <% if (type === 'edit') { %>
+                                                        <input type="text" class="form-control input-default " name="link" value="<%= announcementApiData.link %>">
+                                                    <% } %>
+                                                </div>
+
+                                                <!-- Announcement Visability -->
+                                                <div class="form-group col">
+                                                    <label for="enabled">Announcement Visability</label>
+
+                                                    <% if (type === 'create') { %>
+                                                        <select class="form-control" name="enabled" required>
+                                                            <option selected disabled>Select a Visability</option>
+                                                            <option value="1">Enabled</option>
+                                                            <option value="0">Disabled</option>
+                                                        </select>
+                                                    <% } %>
+                                                    <% if (type === 'edit') { %>
+                                                        <select class="form-control" name="enabled" required>
+                                                            <option selected disabled>Select a Visability</option>
+                                                            <option value="1">Enabled</option>
+                                                            <option value="0">Disabled</option>
+                                                        </select>
+                                                    <% } %>
+                                                </div>
+                                            </div>
+
+                                            <% if (type === 'create') { %>
+                                                <button type="submit" class="btn btn-primary"><i class="fas fa-server"></i> Create Announcement</button>
+                                            <% } %>
+
+                                            <% if (type === 'edit') { %>
+                                                <button type="submit" class="btn btn-warning"><i class="fas fa-server"></i> Edit Announcement</button>
+                                            <% } %>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+<%- include("../../modules/dashboard/footer.ejs") %>

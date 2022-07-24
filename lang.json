@@ -73,7 +73,9 @@
     },
     "annnouncement": {
         "annnouncementCreated": "Annnouncement has been created.",
-        "noAnnouncements": "There are currently no annnouncements set for this category."
+        "noAnnouncements": "There are currently no annnouncements set for this category.",
+        "annnouncementEdited": "Announcement has been successfully edited",
+        "annnouncementDeleted": "Announcement has been successfully deleted."
     },
     "filter": {
         "phraseCaught": "This message was blocked due to the usage of blocked words/phrases.",

@@ -8,7 +8,7 @@ export default function dashboardServersSiteRoute(app, fetch, config, db, featur
         if (!isFeatureWebRouteEnabled(features.servers, request, reply, features))
             return;
         
-        if (!hasPermission('zander.web.server', request, reply))
+        if (!hasPermission('zander.web.server', request, reply, features))
             return;
 
         const fetchURL = `${config.siteConfiguration.siteAddress}${config.siteConfiguration.apiRoute}/server/get`;
@@ -29,7 +29,7 @@ export default function dashboardServersSiteRoute(app, fetch, config, db, featur
         if (!isFeatureWebRouteEnabled(features.servers, request, reply, features))
             return;
         
-        if (!hasPermission('zander.web.server', request, reply))
+        if (!hasPermission('zander.web.server', request, reply, features))
             return;
 
         console.log(features);
@@ -46,7 +46,7 @@ export default function dashboardServersSiteRoute(app, fetch, config, db, featur
         if (!isFeatureWebRouteEnabled(features.servers, request, reply, features))
             return;
         
-        if (!hasPermission('zander.web.server', request, reply))
+        if (!hasPermission('zander.web.server', request, reply, features))
             return;
         
         const id = request.query.id;
