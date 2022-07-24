@@ -4,9 +4,9 @@ USE zanderDev;
 
 CREATE TABLE users (
 	userId INT NOT NULL AUTO_INCREMENT,
-	uuid VARCHAR(36) NOT NULL UNIQUE,
-	username VARCHAR(16) UNIQUE,
-	email VARCHAR(200) UNIQUE,
+	uuid VARCHAR(36) NOT NULL,
+	username VARCHAR(16),
+	email VARCHAR(200),
 	password TEXT,
 	joined DATETIME NOT NULL DEFAULT NOW(),
 	disabled BOOLEAN DEFAULT 0,
@@ -22,7 +22,7 @@ CREATE TABLE users (
 	aboutPage TEXT,
     profilePictureType ENUM('craftatar', 'gravatar', 'microsoft'),
     timezone TEXT,
-    country TEXT,
+    userLanguage TEXT,
 	coverArt VARCHAR(54),
 	PRIMARY KEY (userId),
 	INDEX users (uuid(8))
