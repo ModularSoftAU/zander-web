@@ -70,5 +70,13 @@
     "vote": {
         "newVoteCast": "New vote cast entry has been successfully entered for %USERNAME%",
         "noVotes": "There are currently no votes! You can be the first!"
+    },
+    "annnouncement": {
+        "annnouncementCreated": "Annnouncement has been created.",
+        "noAnnouncements": "There are currently no annnouncements set for this category."
+    },
+    "filter": {
+        "phraseCaught": "This message was blocked due to the usage of blocked words/phrases.",
+        "linkCaught": "This message was blocked due to the usage of blocked links/sites."
     }
 }

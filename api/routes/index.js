@@ -15,6 +15,7 @@ import shoppingDistrictDirectoryApiRoute from './shoppingdistrictdirectory'
 import userApiRoute from './user'
 import voteApiRoute from './vote'
 import webApiRoute from './web'
+import filterApiRoute from './filter'
 
 export default (app, client, moment, config, db, features, lang) => {
 
@@ -35,5 +36,6 @@ export default (app, client, moment, config, db, features, lang) => {
     userApiRoute(app, config, db, features, lang);
     voteApiRoute(app, config, db, features, lang);
     webApiRoute(app, config, db, features, lang);
+    filterApiRoute(app, config, db, features, lang);   
 
 }
