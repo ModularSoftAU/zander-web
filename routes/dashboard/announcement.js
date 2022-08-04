@@ -11,14 +11,12 @@ export default function dashboardAnnouncementSiteRoute(app, fetch, config, db, f
         if (!hasPermission('zander.web.announcements', request, reply, features))
             return;
 
-        const fetchURL = `${config.siteConfiguration.siteAddress}${config.siteConfiguration.apiRoute}/announcements/get`;
+        const fetchURL = `${config.siteConfiguration.siteAddress}${config.siteConfiguration.apiRoute}/announcement/get`;
         const response = await fetch(fetchURL, {
             headers: { 'x-access-token': process.env.apiKey }
         });
         const apiData = await response.json();
-
-        console.log(apiData);
-
+        
         reply.view('dashboard/announcements/list', {
             "pageTitle": `Dashboard - Announcements`,
             config: config,
@@ -50,17 +48,19 @@ export default function dashboardAnnouncementSiteRoute(app, fetch, config, db, f
         if (!hasPermission('zander.web.announcements', request, reply, features))
             return;
         
-        const id = request.query.id;
-        const fetchURL = `${config.siteConfiguration.siteAddress}${config.siteConfiguration.apiRoute}/announcement/get?id=${id}`;
+        const announcementSlug = request.query.announcementSlug;
+        const fetchURL = `${config.siteConfiguration.siteAddress}${config.siteConfiguration.apiRoute}/announcement/get?announcementSlug=${announcementSlug}`;
         const response = await fetch(fetchURL, {
             headers: { 'x-access-token': process.env.apiKey }
         });
-        const serverApiData = await response.json();
+        const announcementApiData = await response.json();
+
+        console.log(announcementApiData);
 
         reply.view('dashboard/announcements/editor', {
             "pageTitle": `Dashboard - Announcement Editor`,
             config: config,
-            serverApiData: serverApiData.data[0],
+            announcementApiData: announcementApiData.data[0],
             type: "edit",
             features: features
         });

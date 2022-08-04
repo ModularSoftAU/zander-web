@@ -1,7 +1,7 @@
 import {isFeatureEnabled, required, optional} from '../common'
 
 export default function announcementApiRoute(app, config, db, features, lang) {
-    const baseEndpoint = config.siteConfiguration.apiRoute + '/announcements';
+    const baseEndpoint = config.siteConfiguration.apiRoute + '/announcement';
 
     app.get(baseEndpoint + '/get', async function(req, res) {
         isFeatureEnabled(features.announcements, res, lang);
@@ -19,6 +19,7 @@ export default function announcementApiRoute(app, config, db, features, lang) {
                         });
                     }
 
+
                     if (!results.length) {
                         return res.send({
                             success: false,
@@ -34,7 +35,7 @@ export default function announcementApiRoute(app, config, db, features, lang) {
             }
 
             // Get Announcement by specific ID.
-            if (announcementSlug) {
+            if (req.query === 'announcementSlug') {
                 let dbQuery = `SELECT * FROM announcements WHERE announcementSlug=${announcementSlug};`
                 getAnnouncements(dbQuery);
             }
@@ -125,6 +126,8 @@ export default function announcementApiRoute(app, config, db, features, lang) {
         const colourMessageFormat = optional(req.body, "colourMessageFormat", res);
         const link = optional(req.body, "link", res);
 
+        console.log(req.body);
+
         try {
             db.query(`UPDATE announcements SET announcementSlug=?, enabled=?, announcementType=?, body=?, colourMessageFormat=?, link=? WHERE announcementSlug=?`, [announcementSlug, enabled, announcementType, body, colourMessageFormat, link, announcementSlug], function(error, results, fields) {
                 if (error) {
@@ -136,7 +139,7 @@ export default function announcementApiRoute(app, config, db, features, lang) {
 
                 return res.send({
                     success: true,
-                    message: lang.server.serverEdited
+                    message: lang.annnouncement.annnouncementEdited
                 });
             });
 

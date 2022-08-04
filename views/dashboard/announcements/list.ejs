@@ -57,11 +57,11 @@
                                                     </td>
                                                     <td>
                                                         <div class="btn-group">
-                                                            <a href="/dashboard/announcements/edit?id=<%= announcement.announcementSlug %>"><button class="btn btn-sm btn-warning" type="button">Edit</button></a>
+                                                            <a href="/dashboard/announcements/edit?announcementSlug=<%= announcement.announcementSlug %>"><button class="btn btn-sm btn-warning" type="button">Edit</button></a>
 
                                                             <form action="<%= config.siteConfiguration.siteAddress %><%= config.siteConfiguration.redirectRoute %>/announcements/delete" method="post">
                                                                 <input type="hidden" name="announcementSlug" value="<%= announcement.announcementSlug %>">
-                                                                <button class="btn btn-sm btn-danger" type="submit" onclick="window.location='/dashboard/announcements/'">Delete</button>
+                                                                <button class="btn btn-sm btn-danger" type="submit">Delete</button>
                                                             </form>
                                                         </div>
                                                     </td>

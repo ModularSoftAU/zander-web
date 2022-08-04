@@ -20,10 +20,10 @@
                             <div class="card-body">
                                 <div class="basic-form">
                                     <% if (type === 'create') { %>
-                                        <form method="post" action="<%= config.siteConfiguration.siteAddress %><%= config.siteConfiguration.redirectRoute %>/announcements/create">
+                                        <form method="post" action="<%= config.siteConfiguration.siteAddress %><%= config.siteConfiguration.redirectRoute %>/announcement/create">
                                     <% } %>
                                     <% if (type === 'edit') { %>
-                                        <form method="post" action="<%= config.siteConfiguration.siteAddress %><%= config.siteConfiguration.redirectRoute %>/announcements/edit">
+                                        <form method="post" action="<%= config.siteConfiguration.siteAddress %><%= config.siteConfiguration.redirectRoute %>/announcement/edit">
                                             <input type="hidden" name="announcementSlug" value="<%= announcementApiData.announcementSlug %>">
                                     <% } %>
                                             <div class="row">
@@ -46,7 +46,7 @@
                                                     <label for="announcementType">Announcement Type</label>
 
                                                     <% if (type === 'create') { %>
-                                                        <select class="form-control" name="announcementType" required>
+                                                        <select class="form-control" name="announcementType" id="announcementType" required>
                                                             <option selected disabled>Select a Type</option>
                                                             <option value="motd">Server Ping MOTD</option>
                                                             <option value="tip">In-Game Tip</option>
