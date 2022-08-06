@@ -1,7 +1,7 @@
 import {required, optional, hasPermission} from '../common'
 import fetch from 'node-fetch';
 
-export default function serverRedirectRoute(app, config) {
+export default function serverRedirectRoute(app, config, lang) {
     const baseEndpoint = config.siteConfiguration.redirectRoute + '/server';
     
     app.post(baseEndpoint + '/create', async function(req, res) {

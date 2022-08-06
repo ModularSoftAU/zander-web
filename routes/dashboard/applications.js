@@ -22,7 +22,8 @@ export default function dashboardApplicationsSiteRoute(app, fetch, config, db, f
             "pageTitle": `Dashboard - Applications`,
             config: config,
             apiData: apiData,
-            features: features
+            features: features,
+            request: request
         });
     });
 

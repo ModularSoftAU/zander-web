@@ -1,7 +1,7 @@
 import {hasPermission, setBannerCookie, postAPIRequest} from '../common'
 import fetch from 'node-fetch';
 
-export default function applicationRedirectRoute(app, config) {
+export default function applicationRedirectRoute(app, config, lang) {
     const baseEndpoint = config.siteConfiguration.redirectRoute + '/application';
 
     app.post(baseEndpoint + '/create', async function(req, res) {

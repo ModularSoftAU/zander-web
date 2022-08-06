@@ -1,7 +1,7 @@
 import {hasPermission, setBannerCookie, postAPIRequest} from '../common'
 import fetch from 'node-fetch';
 
-export default function knowledgebaseApiRoute(app, config) {
+export default function knowledgebaseApiRoute(app, config, lang) {
     const baseEndpoint = config.siteConfiguration.redirectRoute + '/knowledgebase';
 
     app.post(baseEndpoint + '/section/create', async function(req, res) {

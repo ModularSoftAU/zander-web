@@ -1,7 +1,7 @@
 import { setBannerCookie } from '../common'
 import fetch from 'node-fetch';
 
-export default function applicationRedirectRoute(app, config) {
+export default function applicationRedirectRoute(app, config, lang) {
     const baseEndpoint = config.siteConfiguration.redirectRoute + '/web';
 
     app.post(baseEndpoint + '/register', async function(req, res) {

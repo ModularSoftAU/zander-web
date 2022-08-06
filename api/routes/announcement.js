@@ -117,6 +117,7 @@ export default function announcementApiRoute(app, config, db, features, lang) {
 
     app.post(baseEndpoint + '/edit', async function(req, res) {
         isFeatureEnabled(features.announcements, res, lang);
+        const slug = required(req.body, "slug", res);
         const announcementSlug = required(req.body, "announcementSlug", res);
         const enabled = required(req.body, "enabled", res);
         const announcementType = required(req.body, "announcementType", res);
