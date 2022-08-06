@@ -486,6 +486,7 @@ CREATE TABLE knowledgebaseSections (
     description TEXT,
     sectionIcon VARCHAR(30),
     position INT,
+    privateSection BOOLEAN DEFAULT 0,
     PRIMARY KEY (sectionId)
 );
 
@@ -497,6 +498,7 @@ CREATE TABLE knowledgebaseArticles (
     articleDescription TEXT,
     articleLink TEXT,
     position INT,
+    unlisted BOOLEAN DEFAULT 0,
     published BOOLEAN DEFAULT 1,
     createdDate DATETIME NOT NULL DEFAULT NOW(),
     PRIMARY KEY (articleId),

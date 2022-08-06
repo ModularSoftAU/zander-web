@@ -1,4 +1,4 @@
-import {required, optional, hasPermission} from '../common'
+import {hasPermission, setBannerCookie, postAPIRequest} from '../common'
 import fetch from 'node-fetch';
 
 export default function applicationRedirectRoute(app, config) {
@@ -7,38 +7,30 @@ export default function applicationRedirectRoute(app, config) {
     app.post(baseEndpoint + '/create', async function(req, res) {
         if (!hasPermission('zander.web.application', req, res))
             return;
+        
+        postAPIRequest(
+            `${config.siteConfiguration.siteAddress}${config.siteConfiguration.apiRoute}/application/create`,
+            req.body,
+            `${config.siteConfiguration.siteAddress}/dashboard/applications`,
+            res
+        )
 
-        const applicationCreateURL = `${config.siteConfiguration.siteAddress}${config.siteConfiguration.apiRoute}/application/create`;
-        fetch(applicationCreateURL, {
-            method: 'POST',
-            body: JSON.stringify(req.body),
-            headers: {
-                'Content-Type': 'application/json',
-                'x-access-token': process.env.apiKey
-            }
-        })
-        .then(res => res.json())
-        .then(json => console.log(json));
-
+        setBannerCookie("success", lang.applications.applicationCreated, res);
         res.redirect(`${config.siteConfiguration.siteAddress}/dashboard/applications`);
     });
 
     app.post(baseEndpoint + '/edit', async function(req, res) {
         if (!hasPermission('zander.web.application', req, res))
             return;
+        
+        postAPIRequest(
+            `${config.siteConfiguration.siteAddress}${config.siteConfiguration.apiRoute}/application/edit`,
+            req.body,
+            `${config.siteConfiguration.siteAddress}/dashboard/applications`,
+            res
+        )
 
-        const applicationEditURL = `${config.siteConfiguration.siteAddress}${config.siteConfiguration.apiRoute}/application/edit`;
-        fetch(applicationEditURL, {
-            method: 'POST',
-            body: JSON.stringify(req.body),
-            headers: {
-                'Content-Type': 'application/json',
-                'x-access-token': process.env.apiKey
-            }
-        })
-        .then(res => res.json())
-        .then(json => console.log(json));
-
+        setBannerCookie("success", lang.applications.applicationEdited, res);
         res.redirect(`${config.siteConfiguration.siteAddress}/dashboard/applications`);
     });
 
@@ -46,23 +38,14 @@ export default function applicationRedirectRoute(app, config) {
         if (!hasPermission('zander.web.application', req, res))
             return;
 
-        try {
-            const applicationDeleteURL = `${config.siteConfiguration.siteAddress}${config.siteConfiguration.apiRoute}/application/delete`;
-            fetch(applicationDeleteURL, {
-                method: 'POST',
-                body: JSON.stringify(req.body),
-                headers: {
-                    'Content-Type': 'application/json',
-                    'x-access-token': process.env.apiKey
-                }
-            })
-            .then(res => res.json())
-            .then(json => console.log(json));
-            
-        } catch (error) {
-            console.log(error);
-        }
+        postAPIRequest(
+            `${config.siteConfiguration.siteAddress}${config.siteConfiguration.apiRoute}/application/delete`,
+            req.body,
+            `${config.siteConfiguration.siteAddress}/dashboard/applications`,
+            res
+        )
 
+        setBannerCookie("success", lang.applications.applicationDeleted, res);
         res.redirect(`${config.siteConfiguration.siteAddress}/dashboard/applications`);
     });
 

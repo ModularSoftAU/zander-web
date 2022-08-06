@@ -22,7 +22,8 @@
     "applications": {
         "noApplicationsFound": "No applications could be found at this time.",
         "applicationCreated": "The application %DISPLAYNAME% has been created.",
-        "applicationEdited": "The application %DISPLAYNAME% has been updated."
+        "applicationEdited": "The application %DISPLAYNAME% has been updated.",
+        "applicationDeleted": "The application has been deleted."
     },
     "communityCreation": {
         "creationApproval": "Creation has been approved and in the process of broadcasting.",

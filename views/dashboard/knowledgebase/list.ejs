@@ -21,6 +21,12 @@
                             </div>
                             <br>
                             <div class="card-body">
+                                <% if (request.cookies.alertType) { %>
+                                    <%- include("../../partials/alert.ejs", {
+                                      alertType: request.cookies.alertType,
+                                      content: request.cookies.alertContent
+                                    }) %>
+                                <% } %>
                                 <div class="default-tab">
                                     <ul class="nav nav-tabs" role="tablist">
                                         <li class="nav-item active">
