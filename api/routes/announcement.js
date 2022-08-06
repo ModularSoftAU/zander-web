@@ -127,18 +127,36 @@ export default function announcementApiRoute(app, config, db, features, lang) {
         console.log(req.body);
 
         try {
-            db.query(`UPDATE announcements SET announcementSlug=?, enabled=?, announcementType=?, body=?, colourMessageFormat=?, link=? WHERE announcementSlug=?`, [announcementSlug, enabled, announcementType, body, colourMessageFormat, link, announcementSlug], function(error, results, fields) {
-                if (error) {
-                    return res.send({
-                        success: false,
-                        message: `${error}`
-                    });
-                }
+            db.query(`
+                UPDATE announcements 
+                    SET 
+                        announcementSlug=?,
+                        enabled=?,
+                        announcementType=?,
+                        body=?,
+                        colourMessageFormat=?,
+                        link=?
+                    WHERE announcementSlug=?;`,
+                [
+                    announcementSlug,
+                    enabled,
+                    announcementType,
+                    body,
+                    colourMessageFormat,
+                    link,
+                    slug
+                ], function(error, results, fields) {
+                    if (error) {
+                        return res.send({
+                            success: false,
+                            message: `${error}`
+                        });
+                    }
 
-                return res.send({
-                    success: true,
-                    message: lang.announcement.announcementEdited
-                });
+                    return res.send({
+                        success: true,
+                        message: lang.announcement.announcementEdited
+                    });
             });
 
         } catch (error) {

@@ -22,18 +22,13 @@ export default function announcementRedirectRoute(app, config, lang) {
     app.post(baseEndpoint + '/edit', async function(req, res) {
         if (!hasPermission('zander.web.announcements', req, res))
             return;
-
-        const announcementEditURL = `${config.siteConfiguration.siteAddress}${config.siteConfiguration.apiRoute}/announcement/edit`;
-        fetch(announcementEditURL, {
-            method: 'POST',
-            body: JSON.stringify(req.body),
-            headers: {
-                'Content-Type': 'application/json',
-                'x-access-token': process.env.apiKey
-            }
-        })
-        .then(res => res.json())
-        .then(json => console.log(json));
+        
+        postAPIRequest(
+            `${config.siteConfiguration.siteAddress}${config.siteConfiguration.apiRoute}/announcement/edit`,
+            req.body,
+            `${config.siteConfiguration.siteAddress}/dashboard/announcements`,
+            res
+        )
 
         setBannerCookie("success", lang.announcement.announcementEdited, res);
         res.redirect(`${config.siteConfiguration.siteAddress}/dashboard/announcements`);
