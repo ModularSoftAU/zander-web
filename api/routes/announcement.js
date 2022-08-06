@@ -23,7 +23,7 @@ export default function announcementApiRoute(app, config, db, features, lang) {
                     if (!results.length) {
                         return res.send({
                             success: false,
-                            message: lang.annnouncement.noAnnouncements
+                            message: lang.announcement.noAnnouncements
                         });
                     }
 
@@ -91,8 +91,6 @@ export default function announcementApiRoute(app, config, db, features, lang) {
         const colourMessageFormat = optional(req.body, "colourMessageFormat", res);
         const link = optional(req.body, "link", res);
 
-        const annnouncementCreatedLang = lang.annnouncement.annnouncementCreated;
-
         try {
             db.query(`INSERT INTO announcements (announcementSlug, enabled, body, announcementType, link, colourMessageFormat) VALUES (?, ?, ?, ?, ?, ?)`, [announcementSlug, enabled, body, announcementType, link, colourMessageFormat], function(error, results, fields) {
                 if (error) {
@@ -105,7 +103,7 @@ export default function announcementApiRoute(app, config, db, features, lang) {
                 res.send({
                     success: true,
                     alertType: "success",
-                    content: annnouncementCreatedLang
+                    content: lang.announcement.announcementCreated
                 });
             });
 
@@ -139,7 +137,7 @@ export default function announcementApiRoute(app, config, db, features, lang) {
 
                 return res.send({
                     success: true,
-                    message: lang.annnouncement.annnouncementEdited
+                    message: lang.announcement.announcementEdited
                 });
             });
 
@@ -165,7 +163,59 @@ export default function announcementApiRoute(app, config, db, features, lang) {
                 }
                 return res.send({
                     success: true,
-                    message: lang.annnouncement.announcementDeleted
+                    message: lang.announcement.announcementDeleted
+                });
+            });
+
+        } catch (error) {
+            res.send({
+                success: false,
+                message: `${error}`
+            });
+        }
+    });
+
+    app.post(baseEndpoint + '/enable', async function(req, res) {
+        isFeatureEnabled(features.announcements, res, lang);
+        const announcementSlug = required(req.body, "announcementSlug", res);
+
+        try {
+            db.query(`UPDATE announcements SET enabled=? WHERE announcementSlug=?`, [1, announcementSlug], function(error, results, fields) {
+                if (error) {
+                    return res.send({
+                        success: false,
+                        message: `${error}`
+                    });
+                }
+                return res.send({
+                    success: true,
+                    message: lang.announcement.announcementEnabled
+                });
+            });
+
+        } catch (error) {
+            res.send({
+                success: false,
+                message: `${error}`
+            });
+        }
+    });
+
+    app.post(baseEndpoint + '/disable', async function(req, res) {
+        isFeatureEnabled(features.announcements, res, lang);
+        const announcementSlug = required(req.body, "announcementSlug", res);
+
+        try {
+            db.query(`UPDATE announcements SET enabled=? WHERE announcementSlug=?`, [0, announcementSlug], function(error, results, fields) {
+                if (error) {
+                    return res.send({
+                        success: false,
+                        message: `${error}`
+                    });
+                }
+                return res.send({
+                    success: true,
+                    message: lang.announcement.announcementDisabled
                 });
             });
 

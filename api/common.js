@@ -1,4 +1,5 @@
 import config from '../config.json' assert {type: "json"};
+import fetch from 'node-fetch';
 
 export function isFeatureEnabled(isFeatureEnabled, res, features, lang) {
     if (isFeatureEnabled)
@@ -106,4 +107,23 @@ export function setBannerCookie(alertType, alertContent, reply) {
         expires: expiryTime
     })
     return true
+}
+
+export async function postAPIRequest(postURL, apiPostBody, failureRedirectURL, reply) {
+    const response = await fetch(postURL, {
+        method: 'POST',
+        body: JSON.stringify(apiPostBody),
+        headers: {
+            'Content-Type': 'application/json',
+            'x-access-token': process.env.apiKey
+        }
+    });
+    const data = await response.json();
+
+    if (!data.success) {
+        setBannerCookie("danger", `Failed to Process: ${data.message}`, reply);
+        return reply.redirect(failureRedirectURL);
+    }
+
+    return console.log(data);
 }

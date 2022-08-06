@@ -71,11 +71,13 @@
         "newVoteCast": "New vote cast entry has been successfully entered for %USERNAME%",
         "noVotes": "There are currently no votes! You can be the first!"
     },
-    "annnouncement": {
-        "annnouncementCreated": "Annnouncement has been created.",
-        "noAnnouncements": "There are currently no annnouncements set for this category.",
-        "annnouncementEdited": "Announcement has been successfully edited",
-        "annnouncementDeleted": "Announcement has been successfully deleted."
+    "announcement": {
+        "announcementCreated": "Announcement has been created.",
+        "noAnnouncements": "There are currently no announcements set.",
+        "announcementEdited": "Announcement has been successfully edited",
+        "announcementDeleted": "Announcement has been successfully deleted.",
+        "announcementEnabled": "Announcement has been enabled.",
+        "announcementDisabled": "Announcement has been disabled."
     },
     "filter": {
         "phraseCaught": "This message was blocked due to the usage of blocked words/phrases.",

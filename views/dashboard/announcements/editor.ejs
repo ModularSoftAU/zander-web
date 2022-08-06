@@ -24,7 +24,10 @@
                                     <% } %>
                                     <% if (type === 'edit') { %>
                                         <form method="post" action="<%= config.siteConfiguration.siteAddress %><%= config.siteConfiguration.redirectRoute %>/announcement/edit">
-                                            <input type="hidden" name="announcementSlug" value="<%= announcementApiData.announcementSlug %>">
+                                            <%- include("../../partials/form/inputHidden.ejs", {
+                                                elementName: "announcementSlug",
+                                                elementValue: announcementApiData.announcementSlug
+                                            }) %>
                                     <% } %>
                                             <div class="row">
                                                 <!-- Announcement Slug -->
@@ -32,10 +35,17 @@
                                                     <label for="name">Announcement Slug</label>
 
                                                     <% if (type === 'create') { %>
-                                                        <input type="text" class="form-control input-default " name="announcementSlug" required>
+                                                        <%- include("../../partials/form/inputText.ejs", {
+                                                            elementName: "announcementSlug",
+                                                            required: true
+                                                        }) %>
                                                     <% } %>
                                                     <% if (type === 'edit') { %>
-                                                        <input type="text" class="form-control input-default " name="announcementSlug" value="<%= announcementApiData.announcementSlug %>" required>
+                                                        <%- include("../../partials/form/inputText.ejs", {
+                                                            elementName: "announcementSlug",
+                                                            elementValue: announcementApiData.announcementSlug,
+                                                            required: true
+                                                        }) %>
                                                     <% } %>
 
                                                     <p class="text-muted m-b-15 f-s-12">The unique slug name for the announcement.</p>
@@ -69,10 +79,14 @@
                                                 <label for="body">Banner Body</label>
 
                                                 <% if (type === 'create') { %>
-                                                    <input type="text" class="form-control input-default " name="body">
+                                                    <textarea class="form-control input-default " name="body" cols="30" rows="10"></textarea>
+
+                                                    <%- include("../../partials/form/inputTextArea.ejs", {
+                                                        elementName: "body"
+                                                    }) %>
                                                 <% } %>
                                                 <% if (type === 'edit') { %>
-                                                    <input type="text" class="form-control input-default " name="body" value="<%= announcementApiData.body %>">
+                                                    <textarea class="form-control input-default " name="body" cols="30" rows="10"><%= announcementApiData.body %></textarea>
                                                 <% } %>
                                             </div>
 
@@ -81,14 +95,12 @@
                                                 <label for="colourMessageFormat">Colour Message Format</label>
 
                                                 <% if (type === 'create') { %>
-                                                    <input type="text" class="form-control input-default " name="colourMessageFormat">
+                                                    <textarea class="form-control input-default " name="colourMessageFormat" cols="30" rows="10"></textarea>
                                                 <% } %>
                                                 <% if (type === 'edit') { %>
-                                                    <input type="text" class="form-control input-default " name="colourMessageFormat" value="<%= announcementApiData.colourMessageFormat %>">
+                                                    <textarea class="form-control input-default " name="colourMessageFormat" cols="30" rows="10"><%= announcementApiData.colourMessageFormat %></textarea>
                                                 <% } %>
                                             </div>
-
-                                            
 
                                             <div class="row">
                                                 <!-- Announcement Link -->
