@@ -37,6 +37,7 @@
                                                     <% if (type === 'create') { %>
                                                         <%- include("../../partials/form/inputText.ejs", {
                                                             elementName: "announcementSlug",
+                                                            elementValue: null,
                                                             required: true
                                                         }) %>
                                                     <% } %>
@@ -56,20 +57,70 @@
                                                     <label for="announcementType">Announcement Type</label>
 
                                                     <% if (type === 'create') { %>
-                                                        <select class="form-control" name="announcementType" id="announcementType" required>
-                                                            <option selected disabled>Select a Type</option>
-                                                            <option value="motd">Server Ping MOTD</option>
-                                                            <option value="tip">In-Game Tip</option>
-                                                            <option value="web">Website Banner</option>
-                                                        </select>
+                                                        <%- include("../../partials/form/inputSelect.ejs", {
+                                                            elementName: "announcementType",
+                                                            elementValue: "null",
+                                                            required: true,
+                                                            optionElements: [
+                                                                {
+                                                                    optionName: "Select a Type",
+                                                                    optionValue: "null",
+                                                                    selected: true,
+                                                                    disabled: true
+                                                                },
+                                                                {
+                                                                    optionName: "Server Ping MOTD",
+                                                                    optionValue: "motd",
+                                                                    selected: false,
+                                                                    disabled: false
+                                                                },
+                                                                {
+                                                                    optionName: "In-Game Tip",
+                                                                    optionValue: "tip",
+                                                                    selected: false,
+                                                                    disabled: false
+                                                                },
+                                                                {
+                                                                    optionName: "Website Banner",
+                                                                    optionValue: "web",
+                                                                    selected: false,
+                                                                    disabled: false
+                                                                }
+                                                            ]
+                                                        }) %>
                                                     <% } %>
                                                     <% if (type === 'edit') { %>
-                                                        <select class="form-control" name="announcementType" required>
-                                                            <option selected disabled>Select a Type</option>
-                                                            <option value="motd">Server Ping MOTD</option>
-                                                            <option value="tip">In-Game Tip</option>
-                                                            <option value="web">Website Banner</option>
-                                                        </select>
+                                                        <%- include("../../partials/form/inputSelect.ejs", {
+                                                            elementName: "announcementType",
+                                                            elementValue: announcementApiData.announcementType,
+                                                            required: true,
+                                                            optionElements: [
+                                                                {
+                                                                    optionName: "Select a Type",
+                                                                    optionValue: null,
+                                                                    selected: true,
+                                                                    disabled: true
+                                                                },
+                                                                {
+                                                                    optionName: "Server Ping MOTD",
+                                                                    optionValue: "motd",
+                                                                    selected: false,
+                                                                    disabled: false
+                                                                },
+                                                                {
+                                                                    optionName: "In-Game Tip",
+                                                                    optionValue: "tip",
+                                                                    selected: false,
+                                                                    disabled: false
+                                                                },
+                                                                {
+                                                                    optionName: "Website Banner",
+                                                                    optionValue: "web",
+                                                                    selected: false,
+                                                                    disabled: false
+                                                                }
+                                                            ]
+                                                        }) %>
                                                     <% } %>
                                                 </div>
                                             </div>
@@ -79,14 +130,18 @@
                                                 <label for="body">Banner Body</label>
 
                                                 <% if (type === 'create') { %>
-                                                    <textarea class="form-control input-default " name="body" cols="30" rows="10"></textarea>
-
                                                     <%- include("../../partials/form/inputTextArea.ejs", {
-                                                        elementName: "body"
+                                                        elementName: "body",
+                                                        elementValue: null,
+                                                        required: false
                                                     }) %>
                                                 <% } %>
                                                 <% if (type === 'edit') { %>
-                                                    <textarea class="form-control input-default " name="body" cols="30" rows="10"><%= announcementApiData.body %></textarea>
+                                                    <%- include("../../partials/form/inputTextArea.ejs", {
+                                                        elementName: "body",
+                                                        elementValue: announcementApiData.body,
+                                                        required: false
+                                                    }) %>
                                                 <% } %>
                                             </div>
 
@@ -95,10 +150,18 @@
                                                 <label for="colourMessageFormat">Colour Message Format</label>
 
                                                 <% if (type === 'create') { %>
-                                                    <textarea class="form-control input-default " name="colourMessageFormat" cols="30" rows="10"></textarea>
+                                                    <%- include("../../partials/form/inputTextArea.ejs", {
+                                                        elementName: "colourMessageFormat",
+                                                        elementValue: null,
+                                                        required: false
+                                                    }) %>
                                                 <% } %>
                                                 <% if (type === 'edit') { %>
-                                                    <textarea class="form-control input-default " name="colourMessageFormat" cols="30" rows="10"><%= announcementApiData.colourMessageFormat %></textarea>
+                                                    <%- include("../../partials/form/inputTextArea.ejs", {
+                                                        elementName: "colourMessageFormat",
+                                                        elementValue: announcementApiData.colourMessageFormat,
+                                                        required: false
+                                                    }) %>
                                                 <% } %>
                                             </div>
 
@@ -108,10 +171,18 @@
                                                     <label for="position">Announcement Link</label>
 
                                                     <% if (type === 'create') { %>
-                                                        <input type="text" class="form-control input-default " name="link">
+                                                        <%- include("../../partials/form/inputText.ejs", {
+                                                            elementName: "link",
+                                                            elementValue: null,
+                                                            required: false
+                                                        }) %>
                                                     <% } %>
                                                     <% if (type === 'edit') { %>
-                                                        <input type="text" class="form-control input-default " name="link" value="<%= announcementApiData.link %>">
+                                                        <%- include("../../partials/form/inputText.ejs", {
+                                                            elementName: "link",
+                                                            elementValue: announcementApiData.link,
+                                                            required: false
+                                                        }) %>
                                                     <% } %>
                                                 </div>
 
@@ -120,18 +191,58 @@
                                                     <label for="enabled">Announcement Visability</label>
 
                                                     <% if (type === 'create') { %>
-                                                        <select class="form-control" name="enabled" required>
-                                                            <option selected disabled>Select a Visability</option>
-                                                            <option value="1">Enabled</option>
-                                                            <option value="0">Disabled</option>
-                                                        </select>
+                                                        <%- include("../../partials/form/inputSelect.ejs", {
+                                                            elementName: "enabled",
+                                                            elementValue: "null",
+                                                            required: true,
+                                                            optionElements: [
+                                                                {
+                                                                    optionName: "Select a Visability",
+                                                                    optionValue: "null",
+                                                                    selected: true,
+                                                                    disabled: true
+                                                                },
+                                                                {
+                                                                    optionName: "Enabled",
+                                                                    optionValue: "1",
+                                                                    selected: false,
+                                                                    disabled: false
+                                                                },
+                                                                {
+                                                                    optionName: "Disabled",
+                                                                    optionValue: "0",
+                                                                    selected: false,
+                                                                    disabled: false
+                                                                }
+                                                            ]
+                                                        }) %>
                                                     <% } %>
                                                     <% if (type === 'edit') { %>
-                                                        <select class="form-control" name="enabled" required>
-                                                            <option selected disabled>Select a Visability</option>
-                                                            <option value="1">Enabled</option>
-                                                            <option value="0">Disabled</option>
-                                                        </select>
+                                                        <%- include("../../partials/form/inputSelect.ejs", {
+                                                            elementName: "enabled",
+                                                            elementValue: announcementApiData.enabled,
+                                                            required: true,
+                                                            optionElements: [
+                                                                {
+                                                                    optionName: "Select a Visability",
+                                                                    optionValue: "null",
+                                                                    selected: true,
+                                                                    disabled: true
+                                                                },
+                                                                {
+                                                                    optionName: "Enabled",
+                                                                    optionValue: "1",
+                                                                    selected: false,
+                                                                    disabled: false
+                                                                },
+                                                                {
+                                                                    optionName: "Disabled",
+                                                                    optionValue: "0",
+                                                                    selected: false,
+                                                                    disabled: false
+                                                                }
+                                                            ]
+                                                        }) %>
                                                     <% } %>
                                                 </div>
                                             </div>
