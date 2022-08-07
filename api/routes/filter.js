@@ -31,13 +31,12 @@ export default function filterApiRoute(app, config, db, features, lang) {
                             success: false,
                             message: lang.filter.phraseCaught
                         });
-                    } else {
-                        return res.send({
-                            success: true,
-                            message: `Content Clean`
-                        });
                     }
                 });
+            });
+            return res.send({
+                success: true,
+                message: `Content Clean`
             });
         } catch (error) {
             console.log(error);
