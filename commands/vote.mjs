@@ -2,6 +2,7 @@ import { Command, RegisterBehavior } from '@sapphire/framework';
 import { MessageEmbed } from 'discord.js';
 import config from '../config.json' assert {type: "json"};
 import fetch from 'node-fetch';
+import features from '../features.json' assert {type: "json"};
 
 export class VoteCommand extends Command {
   constructor(context, options) {
@@ -17,7 +18,8 @@ export class VoteCommand extends Command {
   }
 
   async chatInputRun(interaction) {
-    const voteFetchURL = `${config.siteConfiguration.siteAddress}${config.siteConfiguration.apiRoute}/vote/get`;
+    if (features.vote) {
+      const voteFetchURL = `${config.siteConfiguration.siteAddress}${config.siteConfiguration.apiRoute}/vote/get`;
       const voteResponse = await fetch(voteFetchURL);
       const voteApiData = await voteResponse.json();
       console.log(voteApiData);
@@ -44,6 +46,9 @@ export class VoteCommand extends Command {
             embeds: [voteWithNotVotesEmbed],
             empheral: true
           });
-      }
+      } 
+    } else {
+      interaction.reply("This feature has been disabled by the System Administrator.");
+    }
   }
 }

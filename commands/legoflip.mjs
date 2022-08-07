@@ -1,6 +1,5 @@
 import { Command, RegisterBehavior } from '@sapphire/framework';
 import { MessageEmbed } from 'discord.js';
-import config from '../config.json' assert {type: "json"};
 import features from '../features.json' assert {type: "json"};
 
 export class LegoFlipCommand extends Command {
@@ -36,7 +35,7 @@ export class LegoFlipCommand extends Command {
         });        
       }
     } else {
-      interaction.reply("This command has been disabled by the System Administrator.");
+      interaction.reply("This feature has been disabled by the System Administrator.");
     }
   }
 }
