@@ -65,8 +65,8 @@ export default function filterApiRoute(app, config, db, features, lang) {
             const linkContent = content.split(" ");
             links.forEach(link => {
                 const re = new RegExp(expandString(link, filter))
-                linkContent.forEach(word => {
-                    if (re.test(word)) {
+                linkContent.forEach(link => {
+                    if (re.test(link)) {
                         return res.send({
                             success: false,
                             message: lang.filter.linkCaught
