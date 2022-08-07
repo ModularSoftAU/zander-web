@@ -55,8 +55,6 @@ export default function dashboardAnnouncementSiteRoute(app, fetch, config, db, f
         });
         const announcementApiData = await response.json();
 
-        console.log(announcementApiData);
-
         reply.view('dashboard/announcements/editor', {
             "pageTitle": `Dashboard - Announcement Editor`,
             config: config,
