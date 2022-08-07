@@ -5,7 +5,7 @@ export default function reportRedirectRoute(app, config, lang) {
     const baseEndpoint = config.siteConfiguration.redirectRoute + '/report';
 
     app.post(baseEndpoint + '/create', async function(req, res) {
-        if (!hasPermission('zander.web.application', req, res))
+        if (!hasPermission('zander.web.report', req, res))
             return;
         
         postAPIRequest(
@@ -20,7 +20,7 @@ export default function reportRedirectRoute(app, config, lang) {
     });
 
     app.post(baseEndpoint + '/close', async function(req, res) {
-        if (!hasPermission('zander.web.application', req, res))
+        if (!hasPermission('zander.web.report', req, res))
             return;
 
         postAPIRequest(

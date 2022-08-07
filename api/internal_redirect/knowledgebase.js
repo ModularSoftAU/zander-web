@@ -5,7 +5,7 @@ export default function knowledgebaseApiRoute(app, config, lang) {
     const baseEndpoint = config.siteConfiguration.redirectRoute + '/knowledgebase';
 
     app.post(baseEndpoint + '/section/create', async function(req, res) {
-        if (!hasPermission('zander.web.application', req, res))
+        if (!hasPermission('zander.web.knowledgebase', req, res))
             return;
 
         postAPIRequest(
@@ -20,7 +20,7 @@ export default function knowledgebaseApiRoute(app, config, lang) {
     });
 
     app.post(baseEndpoint + '/section/update', async function(req, res) {
-        if (!hasPermission('zander.web.application', req, res))
+        if (!hasPermission('zander.web.knowledgebase', req, res))
             return;
 
             postAPIRequest(
@@ -35,7 +35,7 @@ export default function knowledgebaseApiRoute(app, config, lang) {
     });
 
     app.post(baseEndpoint + '/article/create', async function(req, res) {
-        if (!hasPermission('zander.web.application', req, res))
+        if (!hasPermission('zander.web.knowledgebase', req, res))
             return;
 
             postAPIRequest(
@@ -50,7 +50,7 @@ export default function knowledgebaseApiRoute(app, config, lang) {
     });
 
     app.post(baseEndpoint + '/article/update', async function(req, res) {
-        if (!hasPermission('zander.web.application', req, res))
+        if (!hasPermission('zander.web.knowledgebase', req, res))
             return;
         
         postAPIRequest(
