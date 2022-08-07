@@ -1,4 +1,4 @@
-import {required, optional, hasPermission} from '../common'
+import {hasPermission, setBannerCookie, postAPIRequest} from '../common'
 import fetch from 'node-fetch';
 
 export default function reportRedirectRoute(app, config, lang) {

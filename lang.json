@@ -21,8 +21,8 @@
     },
     "applications": {
         "noApplicationsFound": "No applications could be found at this time.",
-        "applicationCreated": "The application %DISPLAYNAME% has been created.",
-        "applicationEdited": "The application %DISPLAYNAME% has been updated.",
+        "applicationCreated": "The application has been created.",
+        "applicationEdited": "The application has been updated.",
         "applicationDeleted": "The application has been deleted."
     },
     "communityCreation": {
@@ -41,10 +41,10 @@
     "knowledgebase": {
         "noSections": "There are no knowledgebase sections to display.",
         "noArticles": "There are no knowledgebase articles to display.",
-        "sectionCreated": "The section %SECTIONNAME% has been successfully created in the knowledgebase.",
-        "sectionUpdated": "The section %SECTIONNAME% has been successfully updated in the knowledgebase.",
-        "articleCreated": "The article %ARTICLENAME% has been successfully created in the knowledgebase.",
-        "articleUpdated": "The article %ARTICLENAME% has been successfully updated in the knowledgebase."
+        "sectionCreated": "The section has been successfully created in the knowledgebase.",
+        "sectionUpdated": "The section has been successfully updated in the knowledgebase.",
+        "articleCreated": "The article has been successfully created in the knowledgebase.",
+        "articleUpdated": "The article has been successfully updated in the knowledgebase."
     },
     "report": {
         "reportCreated": "The report against %REPORTEDUSER% has been successfully created!",
@@ -52,7 +52,7 @@
     },
     "server": {
         "noServers": "There are currently no Servers that can be displayed at this time.",
-        "serverCreated": "The Server %NAME% has been successfully created!",
+        "serverCreated": "The Server has been successfully created!",
         "serverEdited": "The Server record has been edited successfully.",
         "serverDeleted": "This Server has now been deleted."
     },

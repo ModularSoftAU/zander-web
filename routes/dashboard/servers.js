@@ -21,7 +21,8 @@ export default function dashboardServersSiteRoute(app, fetch, config, db, featur
             "pageTitle": `Dashboard - Servers`,
             config: config,
             apiData: apiData,
-            features: features
+            features: features,
+            request: request
         });
     });
 
@@ -31,9 +32,7 @@ export default function dashboardServersSiteRoute(app, fetch, config, db, featur
         
         if (!hasPermission('zander.web.server', request, reply, features))
             return;
-
-        console.log(features);
-        
+                
         reply.view('dashboard/servers/editor', {
             "pageTitle": `Dashboard - Server Creator`,
             config: config,
