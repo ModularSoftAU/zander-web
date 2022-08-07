@@ -49,27 +49,31 @@ export default function filterApiRoute(app, config, db, features, lang) {
     });
 
     app.post(baseEndpoint + '/link', async function(req, res) {
+        function expandString(string, filter) {
+            var regexString = "";
+            for (var i = 0; i < string.length; i++) {
+                regexString += "[" + filter.alias[string[i]] + "]";
+            }
+            return regexString
+        }
+
         isFeatureEnabled(features.filter.link, res, lang);
         const content = required(req.body, "content", res);
         const links = filter.links;
 
         try {
-            const linkWordContent = content.split(" ");
-            var linkshouldBreak = false;
-
+            const linkContent = content.split(" ");
             links.forEach(link => {
-                linkWordContent.forEach(word => {
-                    if (word.toLowerCase() === link.toLowerCase()) {
-                        linkshouldBreak = true;
-                        
+                const re = new RegExp(expandString(link, filter))
+                linkContent.forEach(word => {
+                    if (re.test(word)) {
                         return res.send({
                             success: false,
                             message: lang.filter.linkCaught
                         });
-                    }              
+                    }
                 });
             });
-
             return res.send({
                 success: true,
                 message: `Content Clean`
