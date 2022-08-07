@@ -1,14 +1,12 @@
-import {isFeatureEnabled, required, optional} from '../common'
+import {required} from '../common'
 
 export default function sessionApiRoute(app, config, db, features, lang) {
     const baseEndpoint = config.siteConfiguration.apiRoute + '/session';
 
     app.post(baseEndpoint + '/create', async function(req, res) {
-        isFeatureEnabled(features.sessions, res, lang);
         const uuid = required(req.body, "uuid", res);
         const ipAddress = required(req.body, "ipAddress", res);
-        // const server = required(req.body, "server", res);
-
+        
         const newSessionCreatedLang = lang.session.newSessionCreated
 
         try {
@@ -45,7 +43,6 @@ export default function sessionApiRoute(app, config, db, features, lang) {
     });
 
     app.post(baseEndpoint + '/destroy', async function(req, res) {
-        isFeatureEnabled(features.sessions, res, lang);
         const uuid = required(req.body, "uuid", res);
 
         const sessionClosedLang = lang.session.allSessionsClosed
@@ -85,7 +82,6 @@ export default function sessionApiRoute(app, config, db, features, lang) {
     });
 
     app.post(baseEndpoint + '/switch', async function(req, res) {
-        isFeatureEnabled(features.sessions, res, lang);
         const uuid = required(req.body, "uuid", res);
         const server = required(req.body, "server", res);
 
