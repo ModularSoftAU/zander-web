@@ -11,6 +11,8 @@ export class GuildMessageListener extends Listener {
   }
 
   run(message) {
+    if (message.author.isbot) return
+    
     if (features.discord.events.generalKenobi) {
       if (message.content.toLowerCase().includes("hello there")) {
         message.channel.send('General Kenobi');

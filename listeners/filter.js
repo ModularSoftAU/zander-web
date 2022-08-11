@@ -14,12 +14,12 @@ export class GuildMessageListener extends Listener {
   }
 
   async run(message) {
-    if (features.filter.phrase) {
+    if (features.filter.link || features.filter.phrase) {
       try {
-        const phraseFilterURL = `${config.siteConfiguration.siteAddress}${config.siteConfiguration.apiRoute}/filter/phrase`;
+        const filterURL = `${config.siteConfiguration.siteAddress}${config.siteConfiguration.apiRoute}/filter`;
         const bodyJSON = { content: message.content };
   
-        const response = await fetch(phraseFilterURL, {
+        const response = await fetch(filterURL, {
           method: 'POST',
           body: JSON.stringify(bodyJSON),
           headers: {
@@ -35,8 +35,8 @@ export class GuildMessageListener extends Listener {
   
         if (dataResponse.success == false) {
           let embed = new MessageEmbed()
-          .setTitle(`Swearing has been detected`)
-          .setDescription(`${message.author.username} please don't swear. If you continue, you will be punished.`)
+          .setTitle(`Prohibited content has been detected!`)
+          .setDescription(`${message.author.username} please don't advertise or say prohibited content/phrases. If you continue, you will be punished.`)
           .setColor(`#ff3333`)
           message.reply({embeds: [embed]});
         }

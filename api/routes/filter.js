@@ -18,7 +18,7 @@ export default function filterApiRoute(app, config, db, features, lang) {
         return regexString
     }
 
-    app.post(baseEndpoint + '/phrase', async function(req, res) {
+    app.post(baseEndpoint, async function(req, res) {
         // Hack to show the error we expect when both are disabled
         if (!features.filter.phrase && !features.filter.link)
             return isFeatureEnabled(false, res, lang)
@@ -48,38 +48,6 @@ export default function filterApiRoute(app, config, db, features, lang) {
                         return res.send({
                             success: false,
                             message: lang.filter.phraseCaught
-                        });
-                    }
-                });
-            });
-            return res.send({
-                success: true,
-                message: `Content Clean`
-            });
-        } catch (error) {
-            console.log(error);
-
-            return res.send({
-                success: false,
-                message: lang.web.registrationError
-            });
-        }
-    });
-
-    app.post(baseEndpoint + '/link', async function(req, res) {
-        isFeatureEnabled(features.filter.link, res, lang);
-        const content = required(req.body, "content", res);
-        const links = filter.links;
-
-        try {
-            const wordList = content.split(" ");
-            links.forEach(bannedLink => {
-                const re = new RegExp(expandString(bannedLink, filter))
-                wordList.forEach(word => {
-                    if (re.test(word)) {
-                        return res.send({
-                            success: false,
-                            message: lang.filter.linkCaught
                         });
                     }
                 });
