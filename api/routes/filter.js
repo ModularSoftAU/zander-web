@@ -4,28 +4,46 @@ import filter from '../../filter.json' assert {type: "json"};
 export default function filterApiRoute(app, config, db, features, lang) {
     const baseEndpoint = config.siteConfiguration.apiRoute + '/filter';
 
-    app.post(baseEndpoint + '/phrase', async function(req, res) {
-        function expandString(string, filter) {
-            var regexString = "";
-            for (var i = 0; i < string.length; i++) {
+    function expandString(string, filter) {
+        var regexString = "";
+        for (var i = 0; i < string.length; i++) {
+            // If the character does not have any aliases then just
+            // use the character. Note, this is a regex character.
+            if (string[i] in filter.alias)
                 regexString += "[" + filter.alias[string[i]] + "]";
-            }
-            return regexString
+            else
+                regexString += string[i]
         }
+        regexString = regexString.replace(".", "\\.")
+        return regexString
+    }
 
-        isFeatureEnabled(features.filter.phrase, res, lang);
+    app.post(baseEndpoint + '/phrase', async function(req, res) {
+        // Hack to show the error we expect when both are disabled
+        if (!features.filter.phrase && !features.filter.link)
+            return isFeatureEnabled(false, res, lang)
+        
         const content = required(req.body, "content", res);
-        const phrases = filter.phrases;
+
+        var bannedWords = []
+        if (features.filter.phrase)
+            bannedWords = bannedWords.concat(filter.phrases)
+        if (features.filter.link)
+            bannedWords = bannedWords.concat(filter.links)
+        
+        var bannedRegex = []
+        // Usually compiling regex on the fly like this isn't recommended.
+        // You can compile regex once and then reuse it. Since performance
+        // isn't a big deal and the word list is yet to expand, this will
+        // suffice for now.
+        bannedWords.forEach(bannedWord => {
+            bannedRegex.push(new RegExp(expandString(bannedWord, filter)))
+        })
 
         try {
-            const wordContent = content.split(" ");
-            phrases.forEach(phrase => {
-                // Usually compiling rehex on the fly like this isn't recommended.
-                // You can compile regex once and then reuse it. Since performance
-                // isn't a big deal and the word list is yet to expand, this will
-                // suffice for now.
-                const re = new RegExp(expandString(phrase, filter))
-                wordContent.forEach(word => {
+            const wordList = content.split(" ");
+            bannedRegex.forEach(re => {
+                wordList.forEach(word => {
                     if (re.test(word)) {
                         return res.send({
                             success: false,
@@ -49,24 +67,16 @@ export default function filterApiRoute(app, config, db, features, lang) {
     });
 
     app.post(baseEndpoint + '/link', async function(req, res) {
-        function expandString(string, filter) {
-            var regexString = "";
-            for (var i = 0; i < string.length; i++) {
-                regexString += "[" + filter.alias[string[i]] + "]";
-            }
-            return regexString
-        }
-
         isFeatureEnabled(features.filter.link, res, lang);
         const content = required(req.body, "content", res);
         const links = filter.links;
 
         try {
-            const linkContent = content.split(" ");
-            links.forEach(link => {
-                const re = new RegExp(expandString(link, filter))
-                linkContent.forEach(link => {
-                    if (re.test(link)) {
+            const wordList = content.split(" ");
+            links.forEach(bannedLink => {
+                const re = new RegExp(expandString(bannedLink, filter))
+                wordList.forEach(word => {
+                    if (re.test(word)) {
                         return res.send({
                             success: false,
                             message: lang.filter.linkCaught
