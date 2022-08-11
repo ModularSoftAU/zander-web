@@ -1,10 +1,11 @@
-export default function policySiteRoute(app, config, features, lang) {
+export default function policySiteRoute(app, config, features) {
 
     app.get('/terms', async function(request, reply) {
         reply.view('policy/termsOfService', {
             "pageTitle": `Network Terms Of Service`,
             config: config,
-            request: request
+            request: request,
+            features: features
         });
     });
 
@@ -12,7 +13,8 @@ export default function policySiteRoute(app, config, features, lang) {
         reply.view('policy/rules', {
             "pageTitle": `Network Rules`,
             config: config,
-            request: request
+            request: request,
+            features: features
         });
     });
 
@@ -20,7 +22,8 @@ export default function policySiteRoute(app, config, features, lang) {
         reply.view('policy/privacy', {
             "pageTitle": `Network Privacy Policy`,
             config: config,
-            request: request
+            request: request,
+            features: features
         });
     });
 
@@ -28,7 +31,8 @@ export default function policySiteRoute(app, config, features, lang) {
         reply.view('policy/refund', {
             "pageTitle": `Network Refund Policy`,
             config: config,
-            request: request
+            request: request,
+            features: features
         });
     });
 

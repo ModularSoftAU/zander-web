@@ -26,18 +26,51 @@
                                         <form method="post" action="<%= config.siteConfiguration.siteAddress %><%= config.siteConfiguration.redirectRoute %>/server/edit">
                                             <input type="hidden" name="serverId" value="<%= serverApiData.serverId %>">
                                     <% } %>
-                                            <!-- Server Name -->
-                                            <div class="form-group">
-                                                <label for="name">Server Name</label>
+                                            
+                                            <div class="row">
+                                                <!-- Server Name -->
+                                                <div class="form-group col">
+                                                    <label for="name">Server Name</label>
 
-                                                <% if (type === 'create') { %>
-                                                    <input type="text" class="form-control input-default " name="name" required>
-                                                <% } %>
-                                                <% if (type === 'edit') { %>
-                                                    <input type="text" class="form-control input-default " name="name" value="<%= serverApiData.name %>" required>
-                                                <% } %>
+                                                    <% if (type === 'create') { %>
+                                                        <%- include("../../partials/form/inputText.ejs", {
+                                                            elementName: "name",
+                                                            elementValue: null,
+                                                            required: true
+                                                        }) %>
+                                                    <% } %>
+                                                    <% if (type === 'edit') { %>
+                                                        <%- include("../../partials/form/inputText.ejs", {
+                                                            elementName: "name",
+                                                            elementValue: serverApiData.name,
+                                                            required: true
+                                                        }) %>
+                                                    <% } %>
 
-                                                <p class="text-muted m-b-15 f-s-12">The display name for the Server.</p>
+                                                    <p class="text-muted m-b-15 f-s-12">The display name for the Server.</p>
+                                                </div>
+
+                                                <!-- Server FQDN -->
+                                                <div class="form-group col">
+                                                    <label for="fqdn">Server FQDN</label>
+
+                                                    <% if (type === 'create') { %>
+                                                        <%- include("../../partials/form/inputText.ejs", {
+                                                            elementName: "fqdn",
+                                                            elementValue: null,
+                                                            required: false
+                                                        }) %>
+                                                    <% } %>
+                                                    <% if (type === 'edit') { %>
+                                                        <%- include("../../partials/form/inputText.ejs", {
+                                                            elementName: "fqdn",
+                                                            elementValue: serverApiData.fqdn,
+                                                            required: false
+                                                        }) %>
+                                                    <% } %>
+
+                                                    <p class="text-muted m-b-15 f-s-12">The fully qualified domain name (usually for main servers).</p>
+                                                </div>
                                             </div>
 
                                             <div class="row">
@@ -46,10 +79,18 @@
                                                     <label for="ipAddress">Server Address</label>
 
                                                     <% if (type === 'create') { %>
-                                                        <input type="text" class="form-control input-default " name="ipAddress" required>
+                                                        <%- include("../../partials/form/inputText.ejs", {
+                                                            elementName: "ipAddress",
+                                                            elementValue: null,
+                                                            required: true
+                                                        }) %>
                                                     <% } %>
                                                     <% if (type === 'edit') { %>
-                                                        <input type="text" class="form-control input-default " name="ipAddress" value="<%= serverApiData.ipAddress %>" required>
+                                                        <%- include("../../partials/form/inputText.ejs", {
+                                                            elementName: "ipAddress",
+                                                            elementValue: serverApiData.ipAddress,
+                                                            required: true
+                                                        }) %>
                                                     <% } %>
 
                                                     <p class="text-muted m-b-15 f-s-12">The IP or connection address for the Server.</p> 
@@ -60,27 +101,21 @@
                                                     <label for="port">Server Port</label>
 
                                                     <% if (type === 'create') { %>
-                                                        <input type="text" class="form-control input-default " name="port" required>
+                                                        <%- include("../../partials/form/inputText.ejs", {
+                                                            elementName: "port",
+                                                            elementValue: null,
+                                                            required: true
+                                                        }) %>
                                                     <% } %>
                                                     <% if (type === 'edit') { %>
-                                                        <input type="text" class="form-control input-default " name="port" value="<%= serverApiData.port %>" required>
+                                                        <%- include("../../partials/form/inputText.ejs", {
+                                                            elementName: "port",
+                                                            elementValue: serverApiData.port,
+                                                            required: true
+                                                        }) %>
                                                     <% } %>
 
                                                     <p class="text-muted m-b-15 f-s-12">The port for the Server.</p>
-                                                </div>
-
-                                                <!-- Server FQDN -->
-                                                <div class="form-group col">
-                                                    <label for="fqdn">Server FQDN</label>
-
-                                                    <% if (type === 'create') { %>
-                                                        <input type="text" class="form-control input-default " name="fqdn" required>
-                                                    <% } %>
-                                                    <% if (type === 'edit') { %>
-                                                        <input type="text" class="form-control input-default " name="fqdn" value="<%= serverApiData.fqdn %>" required>
-                                                    <% } %>
-
-                                                    <p class="text-muted m-b-15 f-s-12">The fully qualified domain name (usually for main servers).</p>
                                                 </div>
                                             </div>
 
@@ -90,10 +125,18 @@
                                                     <label for="position">Server Position</label>
 
                                                     <% if (type === 'create') { %>
-                                                        <input type="text" class="form-control input-default " name="position" required>
+                                                        <%- include("../../partials/form/inputText.ejs", {
+                                                            elementName: "position",
+                                                            elementValue: null,
+                                                            required: true
+                                                        }) %>
                                                     <% } %>
                                                     <% if (type === 'edit') { %>
-                                                        <input type="text" class="form-control input-default " name="position" value="<%= serverApiData.position %>" required>
+                                                        <%- include("../../partials/form/inputText.ejs", {
+                                                            elementName: "position",
+                                                            elementValue: serverApiData.position,
+                                                            required: true
+                                                        }) %>
                                                     <% } %>
                                                 </div>
 
@@ -102,18 +145,58 @@
                                                     <label for="visible">Server Visability</label>
 
                                                     <% if (type === 'create') { %>
-                                                        <select class="form-control" name="visible" required>
-                                                            <option selected disabled>Select a Visability</option>
-                                                            <option value="1">Visable</option>
-                                                            <option value="0">Not Visable</option>
-                                                        </select>
+                                                        <%- include("../../partials/form/inputSelect.ejs", {
+                                                            elementName: "visible",
+                                                            elementValue: "null",
+                                                            required: true,
+                                                            optionElements: [
+                                                                {
+                                                                    optionName: "Select a Visability",
+                                                                    optionValue: "null",
+                                                                    selected: true,
+                                                                    disabled: true
+                                                                },
+                                                                {
+                                                                    optionName: "Show",
+                                                                    optionValue: "1",
+                                                                    selected: false,
+                                                                    disabled: false
+                                                                },
+                                                                {
+                                                                    optionName: "Hide",
+                                                                    optionValue: "0",
+                                                                    selected: false,
+                                                                    disabled: false
+                                                                }
+                                                            ]
+                                                        }) %>
                                                     <% } %>
                                                     <% if (type === 'edit') { %>
-                                                        <select class="form-control" name="visible" required>
-                                                            <option selected disabled>Select a Visability</option>
-                                                            <option value="1">Visable</option>
-                                                            <option value="0">Not Visable</option>
-                                                        </select>
+                                                        <%- include("../../partials/form/inputSelect.ejs", {
+                                                            elementName: "visible",
+                                                            elementValue: serverApiData.visible,
+                                                            required: true,
+                                                            optionElements: [
+                                                                {
+                                                                    optionName: "Select a Visability",
+                                                                    optionValue: "null",
+                                                                    selected: true,
+                                                                    disabled: true
+                                                                },
+                                                                {
+                                                                    optionName: "Show",
+                                                                    optionValue: "1",
+                                                                    selected: false,
+                                                                    disabled: false
+                                                                },
+                                                                {
+                                                                    optionName: "Hide",
+                                                                    optionValue: "0",
+                                                                    selected: false,
+                                                                    disabled: false
+                                                                }
+                                                            ]
+                                                        }) %>
                                                     <% } %>
 
                                                     <p class="text-muted m-b-15 f-s-12">Whether the Server should be public or not on <a href="/play">/play</a></p>

@@ -1,5 +1,5 @@
 import bcrypt from 'bcrypt';
-import { isFeatureWebRouteEnabled } from "../api/common";
+import { isFeatureWebRouteEnabled, setBannerCookie } from "../api/common";
 
 export default function sessionSiteRoute(app, client, fetch, moment, config, db, features, lang) {
 
@@ -7,7 +7,7 @@ export default function sessionSiteRoute(app, client, fetch, moment, config, db,
     // Session
     // 
     app.get('/login', async function(request, reply) {
-		if (!isFeatureWebRouteEnabled(features.web, request, reply))
+		if (!isFeatureWebRouteEnabled(features.web.login, request, reply, features))
 			return;
 
         reply.view('session/login', {
@@ -19,7 +19,7 @@ export default function sessionSiteRoute(app, client, fetch, moment, config, db,
     });
 
     app.get('/register', async function(request, reply) {
-		if (!isFeatureWebRouteEnabled(features.web, request, reply))
+		if (!isFeatureWebRouteEnabled(features.web.register, request, reply, features))
 			return;
 		
         reply.view('session/register', {
@@ -31,9 +31,13 @@ export default function sessionSiteRoute(app, client, fetch, moment, config, db,
     });
 
     app.post('/login', async function(req, res) {
+	  if (!isFeatureWebRouteEnabled(features.web.login, req, res, features))
+		return;
+
       const username = req.body.username;
       const email = req.body.email;
       const password = req.body.password;
+
 	  
 	  async function getUserRanks(userData, userRanks = null) {
 		  return new Promise((resolve) => {
@@ -114,42 +118,47 @@ export default function sessionSiteRoute(app, client, fetch, moment, config, db,
 	  }
 
       db.query(`select * from users where username=?`, [username], async function (err, results) {
-          if (err) {
-              throw err;
-          }
+		let hashedPassword = results[0].password;
 
-          // User has not logged in before.
-          if (!results.length) {
-              return res.send({
-                  success: false,
-                  message: `You have not logged in before. You are required to register before becoming a community site member. You can jump on and play here: ${config.siteConfiguration.siteAddress}/play`
-              });
-          }
+		if (err) {
+			throw err;
+		}
 
-          // Check if passwords match
-          const salt = await bcrypt.genSalt();
-          let hashedPassword = results[0].password;
+		// User has not logged in before.
+		if (!results.length || hashedPassword == null) {
+		  let notLoggedInBeforeLang = lang.web.notLoggedInBefore;
 
-          bcrypt.compare(password, hashedPassword, async function(err, result) {
-              if (err) {
-                  throw err;
-              }
+		  setBannerCookie("warning", notLoggedInBeforeLang.replace("%SITEADDRESS%", config.siteConfiguration.siteAddress), res);
+		  return res.redirect(`${config.siteConfiguration.siteAddress}/login`);
+		}
 
-              if (result) {
-				  req.session.authenticated = true;
-				  let userData = await getPermissions(results[0]);
+		// Check if passwords match
+		const salt = await bcrypt.genSalt();
 
-                  req.session.user = {
-                      userId: userData.userId,
-                      username: userData.username,
-                      uuid: userData.uuid,
-					  ranks: userData.userRanks,
-					  permissions: userData.permissions
-                  };
+		bcrypt.compare(password, hashedPassword, async function(err, result) {
+			if (err) {
+				throw err;
+			}
 
-                  return res.redirect(`${config.siteConfiguration.siteAddress}/`)
-              }
-          });
+			if (result) {
+				req.session.authenticated = true;
+				let userData = await getPermissions(results[0]);
+
+				req.session.user = {
+					userId: userData.userId,
+					username: userData.username,
+					uuid: userData.uuid,
+					ranks: userData.userRanks,
+					permissions: userData.permissions
+				};
+
+				setBannerCookie("success", lang.session.userSuccessLogin, res);
+				return res.redirect(`${config.siteConfiguration.siteAddress}/`);
+			} else {
+			  setBannerCookie("warning", lang.session.userFailedLogin, res);
+			  return res.redirect(`${config.siteConfiguration.siteAddress}/login`);
+			}
+		});
       });
   });
 
@@ -157,9 +166,10 @@ export default function sessionSiteRoute(app, client, fetch, moment, config, db,
 	req.destroySession((err) => {
 		if (err) {
 			console.log(err);
-		  throw err;
+		  	throw err;
 		} else {
-		  return res.redirect(`${config.siteConfiguration.siteAddress}/`)
+			setBannerCookie("success", lang.session.userLogout, res);
+		  	return res.redirect(`${config.siteConfiguration.siteAddress}/`)
 		}
 	})
   });

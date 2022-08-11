@@ -1,14 +1,12 @@
-import {isFeatureEnabled, required, optional} from '../common'
+import {required} from '../common'
 
 export default function sessionApiRoute(app, config, db, features, lang) {
     const baseEndpoint = config.siteConfiguration.apiRoute + '/session';
 
     app.post(baseEndpoint + '/create', async function(req, res) {
-        isFeatureEnabled(features.sessions, res, lang);
         const uuid = required(req.body, "uuid", res);
         const ipAddress = required(req.body, "ipAddress", res);
-        const server = required(req.body, "server", res);
-
+        
         const newSessionCreatedLang = lang.session.newSessionCreated
 
         try {
@@ -17,13 +15,11 @@ export default function sessionApiRoute(app, config, db, features, lang) {
                 INSERT INTO gameSessions 
                     (
                         userId, 
-                        ipAddress, 
-                        serverId
+                        ipAddress
                     ) VALUES (
                         (SELECT userId FROM users WHERE uuid=?), 
-                        ?,
-                        (SELECT serverId FROM servers WHERE name=?)
-                    )`, [uuid, ipAddress, server], function(error, results, fields) {
+                        ?
+                    )`, [uuid, ipAddress], function(error, results, fields) {
                 if (error) {
                     return res.send({
                         success: false,
@@ -47,7 +43,6 @@ export default function sessionApiRoute(app, config, db, features, lang) {
     });
 
     app.post(baseEndpoint + '/destroy', async function(req, res) {
-        isFeatureEnabled(features.sessions, res, lang);
         const uuid = required(req.body, "uuid", res);
 
         const sessionClosedLang = lang.session.allSessionsClosed
@@ -87,7 +82,6 @@ export default function sessionApiRoute(app, config, db, features, lang) {
     });
 
     app.post(baseEndpoint + '/switch', async function(req, res) {
-        isFeatureEnabled(features.sessions, res, lang);
         const uuid = required(req.body, "uuid", res);
         const server = required(req.body, "server", res);
 

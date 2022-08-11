@@ -1,63 +1,51 @@
-import {required, optional, hasPermission} from '../common'
+import {hasPermission, setBannerCookie, postAPIRequest} from '../common'
 import fetch from 'node-fetch';
 
-export default function serverRedirectRoute(app, config) {
+export default function serverRedirectRoute(app, config, lang) {
     const baseEndpoint = config.siteConfiguration.redirectRoute + '/server';
     
     app.post(baseEndpoint + '/create', async function(req, res) {
-        if (!hasPermission('zander.web.application', req, res))
+        if (!hasPermission('zander.web.server', req, res))
             return;
 
-        const serverCreateURL = `${config.siteConfiguration.siteAddress}${config.siteConfiguration.apiRoute}/server/create`;
-        fetch(serverCreateURL, {
-            method: 'POST',
-            body: JSON.stringify(req.body),
-            headers: {
-                'Content-Type': 'application/json',
-                'x-access-token': process.env.apiKey
-            }
-        })
-        .then(res => res.json())
-        .then(json => console.log(json));
+        postAPIRequest(
+            `${config.siteConfiguration.siteAddress}${config.siteConfiguration.apiRoute}/server/create`,
+            req.body,
+            `${config.siteConfiguration.siteAddress}/dashboard/servers`,
+            res
+        )
 
+        setBannerCookie("success", lang.server.serverCreated, res);
         res.redirect(`${config.siteConfiguration.siteAddress}/dashboard/servers`);
     });
 
     app.post(baseEndpoint + '/edit', async function(req, res) {
-        if (!hasPermission('zander.web.application', req, res))
+        if (!hasPermission('zander.web.server', req, res))
             return;
 
-        const serverEditURL = `${config.siteConfiguration.siteAddress}${config.siteConfiguration.apiRoute}/server/edit`;
-        fetch(serverEditURL, {
-            method: 'POST',
-            body: JSON.stringify(req.body),
-            headers: {
-                'Content-Type': 'application/json',
-                'x-access-token': process.env.apiKey
-            }
-        })
-        .then(res => res.json())
-        .then(json => console.log(json));
+        postAPIRequest(
+            `${config.siteConfiguration.siteAddress}${config.siteConfiguration.apiRoute}/server/edit`,
+            req.body,
+            `${config.siteConfiguration.siteAddress}/dashboard/servers`,
+            res
+        )
 
+        setBannerCookie("success", lang.server.serverEdited, res);
         res.redirect(`${config.siteConfiguration.siteAddress}/dashboard/servers`);
     });
 
     app.post(baseEndpoint + '/delete', async function(req, res) {
-        if (!hasPermission('zander.web.application', req, res))
+        if (!hasPermission('zander.web.server', req, res))
             return;
 
-        const articleCreateURL = `${config.siteConfiguration.siteAddress}${config.siteConfiguration.apiRoute}/server/delete`;
-        fetch(articleCreateURL, {
-            method: 'POST',
-            body: JSON.stringify(req.body),
-            headers: {
-                'Content-Type': 'application/json',
-                'x-access-token': process.env.apiKey
-            }
-        })
-        .then(res => res.json())
-        .then(json => console.log(json));
+        postAPIRequest(
+            `${config.siteConfiguration.siteAddress}${config.siteConfiguration.apiRoute}/server/delete`,
+            req.body,
+            `${config.siteConfiguration.siteAddress}/dashboard/servers`,
+            res
+        )
 
+        setBannerCookie("success", lang.server.serverDeleted, res);
         res.redirect(`${config.siteConfiguration.siteAddress}/dashboard/servers`);
     });
 

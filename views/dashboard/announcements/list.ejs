@@ -1,6 +1,6 @@
 <%- include("../../modules/dashboard/header.ejs", {
     pageTitle: pageTitle,
-    pageDescription: "List of all applications for Network roles"
+    pageDescription: "List all Announcements that the Network is currently cyling and broadcasting."
 }) %>
 
 <%- include("../../modules/dashboard/sidebar.ejs") %>
@@ -15,8 +15,8 @@
                     <div class="col-lg-12">
                         <div class="card">
                             <div class="card-title">
-                                <h4>Applications</h4>
-                                <a href="/dashboard/applications/create"><button type="button" class="btn btn-sm btn-info">Create a Application</button></a>
+                                <h4>Announcements</h4>
+                                <a href="/dashboard/announcements/create"><button type="button" class="btn btn-sm btn-info">Create an Announcement</button></a>
                             </div>
                             <div class="card-body">
                                 <% if (request.cookies.alertType) { %>
@@ -25,13 +25,14 @@
                                       content: request.cookies.alertContent
                                     }) %>
                                 <% } %>
+                                
                                 <table class="table">
                                     <thead>
                                         <tr>
-                                            <th></th>
-                                            <th>Name</th>
-                                            <th>Description</th>
-                                            <th>Status</th>
+                                            <th>Slug Name</th>
+                                            <th>Type</th>
+                                            <th>Format</th>
+                                            <th>Enabled</th>
                                             <th>Action</th>
                                         </tr>
                                     </thead>
@@ -42,13 +43,13 @@
                                               content: apiData.message
                                             }) %>
                                         <% } else { %>
-                                            <% apiData.data.forEach(function (application) { %>
+                                            <% apiData.data.forEach(function (announcement) { %>
                                                 <tr>
-                                                    <td><i class="<%= application.displayIcon %>"></i></td>
-                                                    <td><%= application.displayName %></td>
-                                                    <td><%= application.description %></td>
+                                                    <td><%= announcement.announcementSlug %></td>
+                                                    <td><span class="badge badge-primary"><%= announcement.announcementType %></span></td>
+                                                    <td><%= announcement.colourMessageFormat %></td>
                                                     <td>
-                                                        <% if (application.closed === 1) { %>
+                                                        <% if (announcement.enabled === 1) { %>
                                                             <i class="fas fa-check-circle" style="color:green"></i>
                                                         <% } else { %>
                                                             <i class="fas fa-times-circle" style="color: red;"></i>
@@ -56,10 +57,22 @@
                                                     </td>
                                                     <td>
                                                         <div class="btn-group">
-                                                            <a href="/dashboard/applications/edit?id=<%= application.applicationId %>"><button class="btn btn-sm btn-warning" type="button">Edit</button></a>
+                                                            <% if (announcement.enabled === 0) { %>
+                                                                <form action="<%= config.siteConfiguration.siteAddress %><%= config.siteConfiguration.redirectRoute %>/announcement/enable" method="post">
+                                                                    <input type="hidden" name="announcementSlug" value="<%= announcement.announcementSlug %>">
+                                                                    <button class="btn btn-sm btn-success" type="submit">Enable</button>
+                                                                </form>
+                                                            <% } else { %>
+                                                                <form action="<%= config.siteConfiguration.siteAddress %><%= config.siteConfiguration.redirectRoute %>/announcement/disable" method="post">
+                                                                    <input type="hidden" name="announcementSlug" value="<%= announcement.announcementSlug %>">
+                                                                    <button class="btn btn-sm btn-danger" type="submit">Disable</button>
+                                                                </form>
+                                                            <% } %>
 
-                                                            <form action="<%= config.siteConfiguration.siteAddress %><%= config.siteConfiguration.redirectRoute %>/application/delete" method="post">
-                                                                <input type="hidden" name="applicationId" value="<%= application.applicationId %>">
+                                                            <a href="/dashboard/announcements/edit?announcementSlug=<%= announcement.announcementSlug %>"><button class="btn btn-sm btn-warning" type="button">Edit</button></a>
+
+                                                            <form action="<%= config.siteConfiguration.siteAddress %><%= config.siteConfiguration.redirectRoute %>/announcement/delete" method="post">
+                                                                <input type="hidden" name="announcementSlug" value="<%= announcement.announcementSlug %>">
                                                                 <button class="btn btn-sm btn-danger" type="submit">Delete</button>
                                                             </form>
                                                         </div>

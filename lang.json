@@ -6,7 +6,8 @@
         "userCreated": "The user %USERNAME% with the unique identifier of %UUID% is new, profile created.",
         "userAlreadyExists": "The requested user already exists in the database, the user creation is being terminated.",
         "userDoesNotExist": "The requested user does not exist.",
-        "noNotifications": "You do not have any notifications, good day!"
+        "noNotifications": "You do not have any notifications, good day!",
+        "databaseError": "A database error has occured trying to process this request. Please try again later."
     },
     "error": {
         "noReportServers": "The report feature could not be loaded because no public servers are avaliable. Consider asking your System Administrator to add one."
@@ -20,8 +21,9 @@
     },
     "applications": {
         "noApplicationsFound": "No applications could be found at this time.",
-        "applicationCreated": "The application %DISPLAYNAME% has been created.",
-        "applicationEdited": "The application %DISPLAYNAME% has been updated."
+        "applicationCreated": "The application has been created.",
+        "applicationEdited": "The application has been updated.",
+        "applicationDeleted": "The application has been deleted."
     },
     "communityCreation": {
         "creationApproval": "Creation has been approved and in the process of broadcasting.",
@@ -39,10 +41,10 @@
     "knowledgebase": {
         "noSections": "There are no knowledgebase sections to display.",
         "noArticles": "There are no knowledgebase articles to display.",
-        "sectionCreated": "The section %SECTIONNAME% has been successfully created in the knowledgebase.",
-        "sectionUpdated": "The section %SECTIONNAME% has been successfully updated in the knowledgebase.",
-        "articleCreated": "The article %ARTICLENAME% has been successfully created in the knowledgebase.",
-        "articleUpdated": "The article %ARTICLENAME% has been successfully updated in the knowledgebase."
+        "sectionCreated": "The section has been successfully created in the knowledgebase.",
+        "sectionUpdated": "The section has been successfully updated in the knowledgebase.",
+        "articleCreated": "The article has been successfully created in the knowledgebase.",
+        "articleUpdated": "The article has been successfully updated in the knowledgebase."
     },
     "report": {
         "reportCreated": "The report against %REPORTEDUSER% has been successfully created!",
@@ -50,14 +52,17 @@
     },
     "server": {
         "noServers": "There are currently no Servers that can be displayed at this time.",
-        "serverCreated": "The Server %NAME% has been successfully created!",
+        "serverCreated": "The Server has been successfully created!",
         "serverEdited": "The Server record has been edited successfully.",
         "serverDeleted": "This Server has now been deleted."
     },
     "session": {
         "newSessionCreated": "A new session has been created for %UUID%",
         "allSessionsClosed": "All sessions for %UUID% have now been closed.",
-        "sessionSwitch": "%UUID% has switched to %SERVER%"
+        "sessionSwitch": "%UUID% has switched to %SERVER%",
+        "userSuccessLogin": "Sign in successful, welcome.",
+        "userFailedLogin": "The username or password you have entered is incorrect, please try again.",
+        "userLogout": "You have been successfully logged out."
     },
     "shop": {
         "shopCreated": "%SHOPOWNER%'s shop %SHOPNAME% has been successfully created.",
@@ -66,5 +71,17 @@
     "vote": {
         "newVoteCast": "New vote cast entry has been successfully entered for %USERNAME%",
         "noVotes": "There are currently no votes! You can be the first!"
+    },
+    "announcement": {
+        "announcementCreated": "Announcement has been created.",
+        "noAnnouncements": "There are currently no announcements set.",
+        "announcementEdited": "Announcement has been successfully edited",
+        "announcementDeleted": "Announcement has been successfully deleted.",
+        "announcementEnabled": "Announcement has been enabled.",
+        "announcementDisabled": "Announcement has been disabled."
+    },
+    "filter": {
+        "phraseCaught": "This message was blocked due to the usage of blocked words/phrases.",
+        "linkCaught": "This message was blocked due to the usage of blocked links/sites."
     }
 }

@@ -1,4 +1,5 @@
 import config from '../config.json' assert {type: "json"};
+import fetch from 'node-fetch';
 
 export function isFeatureEnabled(isFeatureEnabled, res, features, lang) {
     if (isFeatureEnabled)
@@ -40,13 +41,14 @@ export function optional(body, field) {
     return body[field];
 }
 
-export function isFeatureWebRouteEnabled(isFeatureEnabled, request, reply) {
+export function isFeatureWebRouteEnabled(isFeatureEnabled, request, reply, features) {
     if (!isFeatureEnabled) {
         reply.view('session/featureDisabled', {
             "pageTitle": `Feature Disabled`,
             config: config,
             request: request,
-            reply: reply
+            reply: reply,
+            features: features
         });
         return false;
     }
@@ -58,14 +60,15 @@ export function isLoggedIn(request) {
     else return false;
 }
 
-export function hasPermission(permissionNode, request, reply) {
+export function hasPermission(permissionNode, request, reply, features) {
     if (!isLoggedIn(request)) {
         reply.view('session/noPermission', {
             "pageTitle": `Access Restricted`,
             config: config,
             request: request,
-            reply: reply
-        });        
+            reply: reply,
+            features: features
+        });
         return false;
     }
 
@@ -80,9 +83,47 @@ export function hasPermission(permissionNode, request, reply) {
             "pageTitle": `Access Restricted`,
             config: config,
             request: request,
-            reply: reply
+            reply: reply,
+            features: features
         });
         return false;
     }
     return true;
+}
+
+export function setBannerCookie(alertType, alertContent, reply) {
+    var expiryTime = new Date();
+    expiryTime.setSeconds(expiryTime.getSeconds() + 1);
+
+    // Set Alert Type
+    reply.setCookie('alertType', alertType, {
+        path: '/',
+        expires: expiryTime
+    })
+
+    // Set Content Type
+    reply.setCookie('alertContent', alertContent, {
+        path: '/',
+        expires: expiryTime
+    })
+    return true
+}
+
+export async function postAPIRequest(postURL, apiPostBody, failureRedirectURL, reply) {
+    const response = await fetch(postURL, {
+        method: 'POST',
+        body: JSON.stringify(apiPostBody),
+        headers: {
+            'Content-Type': 'application/json',
+            'x-access-token': process.env.apiKey
+        }
+    });
+    const data = await response.json();
+
+    if (!data.success) {
+        setBannerCookie("danger", `Failed to Process: ${data.message}`, reply);
+        return reply.redirect(failureRedirectURL);
+    }
+
+    return console.log(data);
 }

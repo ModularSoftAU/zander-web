@@ -24,17 +24,28 @@
                                     <% } %>
                                     <% if (type === 'edit') { %>
                                         <form method="post" action="<%= config.siteConfiguration.siteAddress %><%= config.siteConfiguration.apiRoute %>/event/edit">
-                                            <input type="hidden" name="eventId" value="<%= eventApiData.id %>">
+                                            <%- include("../../partials/form/inputHidden.ejs", {
+                                                elementName: "eventId",
+                                                elementValue: eventApiData.id
+                                            }) %>
                                     <% } %>
                                             <!-- Name of Event -->
                                             <div class="form-group">
                                                 <label for="eventName">Event Name</label>
 
                                                 <% if (type === 'create') { %>
-                                                    <input type="text" class="form-control input-default " name="eventName" required>
+                                                    <%- include("../../partials/form/inputText.ejs", {
+                                                        elementName: "eventName",
+                                                        elementValue: null,
+                                                        required: true
+                                                    }) %>
                                                 <% } %>
                                                 <% if (type === 'edit') { %>
-                                                    <input type="text" class="form-control input-default " name="eventName" value="<%= eventApiData.name %>" required>
+                                                    <%- include("../../partials/form/inputText.ejs", {
+                                                        elementName: "eventName",
+                                                        elementValue: eventApiData.name,
+                                                        required: true
+                                                    }) %>
                                                 <% } %>
 
                                                 <p class="text-muted m-b-15 f-s-12">The name of the event.</p>
@@ -45,41 +56,21 @@
                                                 <label for="eventIcon">Event Icon</label>
 
                                                 <% if (type === 'create') { %>
-                                                    <input type="text" class="form-control input-default " name="eventIcon" required>
+                                                    <%- include("../../partials/form/inputText.ejs", {
+                                                        elementName: "eventIcon",
+                                                        elementValue: null,
+                                                        required: true
+                                                    }) %>
                                                 <% } %>
                                                 <% if (type === 'edit') { %>
-                                                    <input type="text" class="form-control input-default " name="eventIcon" value="<%= eventApiData.icon %>" required>
+                                                    <%- include("../../partials/form/inputText.ejs", {
+                                                        elementName: "eventIcon",
+                                                        elementValue: eventApiData.icon,
+                                                        required: true
+                                                    }) %>
                                                 <% } %>
 
                                                 <p class="text-muted m-b-15 f-s-12">The display icon for the event. This should be a .png file link from imgur.<br>The event icon MUST be 250px x 250px.</p>
-                                            </div>
-
-                                            <!-- Event Guild Event -->
-                                            <div class="form-group">
-                                                <label for="guildEventChannel">Guild Event Channel</label>
-
-                                                <% if (type === 'create') { %>
-                                                    <input type="text" class="form-control input-default " name="guildEventChannel" required>
-                                                <% } %>
-                                                <% if (type === 'edit') { %>
-                                                    <input type="text" class="form-control input-default " name="guildEventChannel" value="<%= eventApiData.guildEventChannel %>" required>
-                                                <% } %>
-
-                                                <p class="text-muted m-b-15 f-s-12">The voice channel ID for where the event will be held.</p>
-                                            </div>
-
-                                            <!-- Event Hosting Server -->
-                                            <div class="form-group">
-                                                <label for="eventHostingServer">Event Hosting Server</label>
-
-                                                <select name="eventHostingServer" class="form-control input-default " required>
-                                                    <option value="disabled" selected disabled>Select a Server</option>
-                                                    <% serverApiData.forEach(function(server) { %>
-                                                        <option value="<%= server.name %>"><%= server.name %></option>
-                                                    <% }); %>
-                                                </select>
-
-                                                <p class="text-muted m-b-15 f-s-12">The Server for where the event will be held.</p>
                                             </div>
 
                                             <!-- Event Date and Time -->
@@ -102,10 +93,18 @@
                                                 <label for="eventInformation">Event Information</label>
 
                                                 <% if (type === 'create') { %>
-                                                    <textarea class="form-control" style="height: 150px;" rows="10" name="eventInformation" placeholder="Text input"></textarea>
+                                                    <%- include("../../partials/form/inputTextArea.ejs", {
+                                                        elementName: "eventInformation",
+                                                        elementValue: null,
+                                                        required: true
+                                                    }) %>
                                                 <% } %>
                                                 <% if (type === 'edit') { %>
-                                                    <textarea class="form-control" style="height: 150px;" rows="10" name="eventInformation" placeholder="Text input"><%= eventApiData.information %></textarea>
+                                                    <%- include("../../partials/form/inputTextArea.ejs", {
+                                                        elementName: "eventInformation",
+                                                        elementValue: eventApiData.information,
+                                                        required: true
+                                                    }) %>
                                                 <% } %>
 
                                                 <p class="text-muted m-b-15 f-s-12">Information for the event that the community needs to know.</p>

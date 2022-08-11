@@ -2,7 +2,7 @@
     "debug": false,
     "siteConfiguration": {
         "siteName": "Crafting For Christ",
-        "siteAddress": "http://staging.craftingforchrist.net",
+        "siteAddress": "http://localhost:8080",
         "tagline": "Home of one of the biggest Christian Minecraft Servers in Australia.",
         "email": "support@craftingforchrist.net",
         "policy": {

@@ -1,23 +1,19 @@
-import {required, optional, hasPermission} from '../common'
+import {setBannerCookie, postAPIRequest} from '../common'
 import fetch from 'node-fetch';
 
-export default function applicationRedirectRoute(app, config) {
+export default function applicationRedirectRoute(app, config, lang) {
     const baseEndpoint = config.siteConfiguration.redirectRoute + '/web';
 
-    app.post(baseEndpoint + '/create', async function(req, res) {
-        const registerCreateURL = `${config.siteConfiguration.siteAddress}${config.siteConfiguration.apiRoute}/register/create`;
-        fetch(registerCreateURL, {
-            method: 'POST',
-            body: JSON.stringify(req.body),
-            headers: {
-                'Content-Type': 'application/json',
-                'x-access-token': process.env.apiKey
-            }
-        })
-        .then(res => res.json())
-        .then(json => console.log(json));
+    app.post(baseEndpoint + '/register', async function(req, res) {
+        postAPIRequest(
+            `${config.siteConfiguration.siteAddress}${config.siteConfiguration.apiRoute}/web/register/create`,
+            req.body,
+            `${config.siteConfiguration.siteAddress}/register`,
+            res
+        )
 
-        res.redirect(`${config.siteConfiguration.siteAddress}/`);
+        setBannerCookie("success", lang.report.reportCreated, res);
+        res.redirect(`${config.siteConfiguration.siteAddress}/register`);
     });
 
 }

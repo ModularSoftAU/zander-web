@@ -1,6 +1,6 @@
 import { Command, RegisterBehavior } from '@sapphire/framework';
 import { MessageEmbed } from 'discord.js';
-import config from '../config.json' assert {type: "json"};
+import features from '../features.json' assert {type: "json"};
 
 export class LegoFlipCommand extends Command {
   constructor(context, options) {
@@ -16,23 +16,26 @@ export class LegoFlipCommand extends Command {
   }
 
   async chatInputRun(interaction) {
-
-    if (Math.random() < 0.50) {
-      const embed = new MessageEmbed()
-      .setTitle(`Lego Flip!`)
-      .setImage(`https://i.imgur.com/vb4TlPx.png`)
-
-      interaction.reply({
-        embeds: [embed]
-      });
+    if (features.discord.commands.legoFlip) {
+      if (Math.random() < 0.50) {
+        const embed = new MessageEmbed()
+        .setTitle(`Lego Flip!`)
+        .setImage(`https://crafatar.com/avatars/2a881594693543c99c39ec31374d46fe?overlay`)
+  
+        interaction.reply({
+          embeds: [embed]
+        });
+      } else {
+        const embed = new MessageEmbed()
+        .setTitle(`Lego Flip!`)
+        .setImage(`https://crafatar.com/avatars/21a6469871f04578830a2ab0ac2f4d48?overlay`)
+  
+        interaction.reply({
+          embeds: [embed]
+        });        
+      }
     } else {
-      const embed = new MessageEmbed()
-      .setTitle(`Lego Flip!`)
-      .setImage(`https://i.imgur.com/s1qzAYM.png`)
-
-      interaction.reply({
-        embeds: [embed]
-      });
+      interaction.reply("This feature has been disabled by the System Administrator.");
     }
   }
 }

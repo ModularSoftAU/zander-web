@@ -24,7 +24,10 @@
                                     <% } %>
                                     <% if (type === 'edit') { %>
                                         <form method="post" action="<%= config.siteConfiguration.siteAddress %><%= config.siteConfiguration.redirectRoute %>/application/edit">
-                                            <input type="hidden" name="applicationId" value="<%= applicationApiData.applicationId %>">
+                                            <%- include("../../partials/form/inputHidden.ejs", {
+                                                elementName: "applicationId",
+                                                elementValue: applicationApiData.applicationId
+                                            }) %>
                                     <% } %>
                                             <div class="row">
                                                 <!-- Display Name -->
@@ -32,10 +35,18 @@
                                                     <label for="displayName">Display Name</label>
 
                                                     <% if (type === 'create') { %>
-                                                        <input type="text" class="form-control input-default " name="displayName" required>
+                                                        <%- include("../../partials/form/inputText.ejs", {
+                                                            elementName: "displayName",
+                                                            elementValue: null,
+                                                            required: true
+                                                        }) %>
                                                     <% } %>
                                                     <% if (type === 'edit') { %>
-                                                        <input type="text" class="form-control input-default " name="displayName" value="<%= applicationApiData.displayName %>" required>
+                                                        <%- include("../../partials/form/inputText.ejs", {
+                                                            elementName: "displayName",
+                                                            elementValue: applicationApiData.displayName,
+                                                            required: true
+                                                        }) %>
                                                     <% } %>
 
                                                     <p class="text-muted m-b-15 f-s-12">The display name for the application.</p>
@@ -46,10 +57,18 @@
                                                     <label for="displayIcon">Application Icon</label>
 
                                                     <% if (type === 'create') { %>
-                                                        <input type="text" class="form-control input-default " name="displayIcon" required>
+                                                        <%- include("../../partials/form/inputText.ejs", {
+                                                            elementName: "displayIcon",
+                                                            elementValue: null,
+                                                            required: true
+                                                        }) %>
                                                     <% } %>
                                                     <% if (type === 'edit') { %>
-                                                        <input type="text" class="form-control input-default " name="displayIcon" value="<%= applicationApiData.displayIcon %>" required>
+                                                        <%- include("../../partials/form/inputText.ejs", {
+                                                            elementName: "displayIcon",
+                                                            elementValue: applicationApiData.displayIcon,
+                                                            required: true
+                                                        }) %>
                                                     <% } %>
 
                                                     <p class="text-muted m-b-15 f-s-12">The display icon for the application. Please select one from <a href="https://fontawesome.com/v5/search">FontAwesome</a></p>
@@ -61,10 +80,18 @@
                                                 <label for="description">Application Description</label>
 
                                                 <% if (type === 'create') { %>
-                                                    <textarea class="form-control" style="height: 150px;" rows="10" name="description" placeholder="Text input"></textarea>
+                                                    <%- include("../../partials/form/inputTextArea.ejs", {
+                                                        elementName: "description",
+                                                        elementValue: null,
+                                                        required: false
+                                                    }) %>
                                                 <% } %>
                                                 <% if (type === 'edit') { %>
-                                                    <textarea class="form-control" style="height: 150px;" rows="10" name="description" placeholder="Text input"><%= applicationApiData.description %></textarea>
+                                                    <%- include("../../partials/form/inputTextArea.ejs", {
+                                                        elementName: "description",
+                                                        elementValue: applicationApiData.description,
+                                                        required: false
+                                                    }) %>
                                                 <% } %>
 
                                                 <p class="text-muted m-b-15 f-s-12">Small description and information for the role.</p>
@@ -76,10 +103,18 @@
                                                     <label for="requirementsMarkdown">Application Requirements Markdown Link</label>
 
                                                     <% if (type === 'create') { %>
-                                                        <input type="text" class="form-control input-default " name="requirementsMarkdown" required>
+                                                        <%- include("../../partials/form/inputText.ejs", {
+                                                            elementName: "requirementsMarkdown",
+                                                            elementValue: null,
+                                                            required: true
+                                                        }) %>
                                                     <% } %>
                                                     <% if (type === 'edit') { %>
-                                                        <input type="text" class="form-control input-default " name="requirementsMarkdown" value="<%= applicationApiData.requirementsMarkdown %>" required>
+                                                        <%- include("../../partials/form/inputText.ejs", {
+                                                            elementName: "requirementsMarkdown",
+                                                            elementValue: applicationApiData.requirementsMarkdown,
+                                                            required: true
+                                                        }) %>
                                                     <% } %>
 
                                                     <p class="text-muted m-b-15 f-s-12">A link to the application's requirments markdown, RAW Markdown.</p>
@@ -90,10 +125,18 @@
                                                     <label for="redirectUrl">Application URL Redirect</label>
 
                                                     <% if (type === 'create') { %>
-                                                        <input type="text" class="form-control input-default " name="redirectUrl" required>
+                                                        <%- include("../../partials/form/inputText.ejs", {
+                                                            elementName: "redirectUrl",
+                                                            elementValue: null,
+                                                            required: true
+                                                        }) %>
                                                     <% } %>
                                                     <% if (type === 'edit') { %>
-                                                        <input type="text" class="form-control input-default " name="redirectUrl" value="<%= applicationApiData.redirectUrl %>" required>
+                                                        <%- include("../../partials/form/inputText.ejs", {
+                                                            elementName: "redirectUrl",
+                                                            elementValue: applicationApiData.redirectUrl,
+                                                            required: true
+                                                        }) %>
                                                     <% } %>
 
                                                     <p class="text-muted m-b-15 f-s-12">The URL to redirect to for the applicant to fill out (for example like a form)</p>
@@ -106,10 +149,18 @@
                                                     <label for="position">Application Position</label>
 
                                                     <% if (type === 'create') { %>
-                                                        <input type="text" class="form-control input-default " name="position" required>
+                                                        <%- include("../../partials/form/inputText.ejs", {
+                                                            elementName: "position",
+                                                            elementValue: null,
+                                                            required: true
+                                                        }) %>
                                                     <% } %>
                                                     <% if (type === 'edit') { %>
-                                                        <input type="text" class="form-control input-default " name="position" value="<%= applicationApiData.position %>" required>
+                                                        <%- include("../../partials/form/inputText.ejs", {
+                                                            elementName: "position",
+                                                            elementValue: applicationApiData.position,
+                                                            required: true
+                                                        }) %>
                                                     <% } %>
                                                 </div>
 
@@ -118,18 +169,58 @@
                                                     <label for="applicationStatus">Application Status</label>
 
                                                     <% if (type === 'create') { %>
-                                                        <select name="applicationStatus" class="form-control input-default " required>
-                                                            <option value="disabled" selected disabled>Select a Status</option>
-                                                            <option value="0">Closed</option>
-                                                            <option value="1">Open</option>
-                                                        </select>
+                                                        <%- include("../../partials/form/inputSelect.ejs", {
+                                                            elementName: "closed",
+                                                            elementValue: "null",
+                                                            required: true,
+                                                            optionElements: [
+                                                                {
+                                                                    optionName: "Select a Status",
+                                                                    optionValue: "null",
+                                                                    selected: true,
+                                                                    disabled: true
+                                                                },
+                                                                {
+                                                                    optionName: "Open",
+                                                                    optionValue: "1",
+                                                                    selected: false,
+                                                                    disabled: false
+                                                                },
+                                                                {
+                                                                    optionName: "Closed",
+                                                                    optionValue: "0",
+                                                                    selected: false,
+                                                                    disabled: false
+                                                                }
+                                                            ]
+                                                        }) %>
                                                     <% } %>
                                                     <% if (type === 'edit') { %>
-                                                        <select name="applicationStatus" class="form-control input-default " required>
-                                                            <option value="disabled" selected disabled>Select a Status</option>
-                                                            <option value="0">Closed</option>
-                                                            <option value="1">Open</option>
-                                                        </select>
+                                                        <%- include("../../partials/form/inputSelect.ejs", {
+                                                            elementName: "closed",
+                                                            elementValue: applicationApiData.closed,
+                                                            required: true,
+                                                            optionElements: [
+                                                                {
+                                                                    optionName: "Select a Status",
+                                                                    optionValue: "null",
+                                                                    selected: true,
+                                                                    disabled: true
+                                                                },
+                                                                {
+                                                                    optionName: "Open",
+                                                                    optionValue: "1",
+                                                                    selected: false,
+                                                                    disabled: false
+                                                                },
+                                                                {
+                                                                    optionName: "Closed",
+                                                                    optionValue: "0",
+                                                                    selected: false,
+                                                                    disabled: false
+                                                                }
+                                                            ]
+                                                        }) %>
                                                     <% } %>
 
                                                     <p class="text-muted m-b-15 f-s-12">Specify if the application is Open or Closed.</p>

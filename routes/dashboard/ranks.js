@@ -6,7 +6,7 @@ export default function dashboardRanksSiteRoute(app, fetch, config, features, la
     // Ranks
     // 
     app.get('/dashboard/ranks', async function(request, reply) {
-        hasPermission('zander.web.rank', request, reply);
+        hasPermission('zander.web.rank', request, reply, features);
 
 		// Note: One or more of these could be null.
         const username = request.query.username;
@@ -27,7 +27,7 @@ export default function dashboardRanksSiteRoute(app, fetch, config, features, la
     });
 
     app.get('/dashboard/ranks/users', async function(request, reply) {
-        hasPermission('zander.web.rank', request, reply);
+        hasPermission('zander.web.rank', request, reply, features);
 
 		const rank = request.query.rank;
 		

@@ -19,8 +19,12 @@ export class StatusCommand extends Command {
   async chatInputRun(interaction) {
     try {
       const fetchURL = `${config.siteConfiguration.siteAddress}${config.siteConfiguration.apiRoute}/server/users/get`;
-      const response = await fetch(fetchURL);
+      const response = await fetch(fetchURL, {
+        headers: { 'x-access-token': process.env.apiKey }
+      });
       const apiData = await response.json();
+
+      console.log(apiData);
 
       const embed = new MessageEmbed()
       .setTitle(`Network Status`)

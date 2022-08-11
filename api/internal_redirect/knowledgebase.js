@@ -1,82 +1,68 @@
-import {required, optional, hasPermission} from '../common'
+import {hasPermission, setBannerCookie, postAPIRequest} from '../common'
 import fetch from 'node-fetch';
 
-export default function knowledgebaseApiRoute(app, config) {
+export default function knowledgebaseApiRoute(app, config, lang) {
     const baseEndpoint = config.siteConfiguration.redirectRoute + '/knowledgebase';
 
     app.post(baseEndpoint + '/section/create', async function(req, res) {
-        if (!hasPermission('zander.web.application', req, res))
+        if (!hasPermission('zander.web.knowledgebase', req, res))
             return;
 
-        const sectionCreateURL = `${config.siteConfiguration.siteAddress}${config.siteConfiguration.apiRoute}/knowledgebase/section/create`;
-        fetch(sectionCreateURL, {
-            method: 'POST',
-            body: JSON.stringify(req.body),
-            headers: {
-                'Content-Type': 'application/json',
-                'x-access-token': process.env.apiKey
-            }
-        })
-        .then(res => res.json())
-        .then(json => console.log(json));
+        postAPIRequest(
+            `${config.siteConfiguration.siteAddress}${config.siteConfiguration.apiRoute}/knowledgebase/section/create`,
+            req.body,
+            `${config.siteConfiguration.siteAddress}/dashboard/knowledgebase`,
+            res
+        )
 
+        setBannerCookie("success", lang.knowledgebase.sectionCreated, res);
         res.redirect(`${config.siteConfiguration.siteAddress}/dashboard/knowledgebase`);
     });
 
     app.post(baseEndpoint + '/section/update', async function(req, res) {
-        if (!hasPermission('zander.web.application', req, res))
+        if (!hasPermission('zander.web.knowledgebase', req, res))
             return;
 
-        const sectionUpdateURL = `${config.siteConfiguration.siteAddress}${config.siteConfiguration.apiRoute}/knowledgebase/section/update`;
-        fetch(sectionUpdateURL, {
-            method: 'POST',
-            body: JSON.stringify(req.body),
-            headers: {
-                'Content-Type': 'application/json',
-                'x-access-token': process.env.apiKey
-            }
-        })
-        .then(res => res.json())
-        .then(json => console.log(json));
-
-        res.redirect(`${config.siteConfiguration.siteAddress}/dashboard/knowledgebase`);
+            postAPIRequest(
+                `${config.siteConfiguration.siteAddress}${config.siteConfiguration.apiRoute}/knowledgebase/section/update`,
+                req.body,
+                `${config.siteConfiguration.siteAddress}/dashboard/knowledgebase`,
+                res
+            )
+    
+            setBannerCookie("success", lang.knowledgebase.sectionUpdated, res);
+            res.redirect(`${config.siteConfiguration.siteAddress}/dashboard/knowledgebase`);
     });
 
     app.post(baseEndpoint + '/article/create', async function(req, res) {
-        if (!hasPermission('zander.web.application', req, res))
+        if (!hasPermission('zander.web.knowledgebase', req, res))
             return;
 
-        const articleCreateURL = `${config.siteConfiguration.siteAddress}${config.siteConfiguration.apiRoute}/knowledgebase/article/create`;
-        fetch(articleCreateURL, {
-            method: 'POST',
-            body: JSON.stringify(req.body),
-            headers: {
-                'Content-Type': 'application/json',
-                'x-access-token': process.env.apiKey
-            }
-        })
-        .then(res => res.json())
-        .then(json => console.log(json));
-
-        res.redirect(`${config.siteConfiguration.siteAddress}/dashboard/knowledgebase`);
+            postAPIRequest(
+                `${config.siteConfiguration.siteAddress}${config.siteConfiguration.apiRoute}/knowledgebase/article/create`,
+                req.body,
+                `${config.siteConfiguration.siteAddress}/dashboard/knowledgebase`,
+                res
+            )
+    
+            setBannerCookie("success", lang.knowledgebase.articleCreated, res);
+            res.redirect(`${config.siteConfiguration.siteAddress}/dashboard/knowledgebase`);
     });
 
     app.post(baseEndpoint + '/article/update', async function(req, res) {
-        if (!hasPermission('zander.web.application', req, res))
+        if (!hasPermission('zander.web.knowledgebase', req, res))
             return;
+        
+        postAPIRequest(
+            `${config.siteConfiguration.siteAddress}${config.siteConfiguration.apiRoute}/knowledgebase/article/update`,
+            req.body,
+            `${config.siteConfiguration.siteAddress}/dashboard/knowledgebase`,
+            res
+        )
 
-        const articleUpdateURL = `${config.siteConfiguration.siteAddress}${config.siteConfiguration.apiRoute}/knowledgebase/article/update`;
-        fetch(articleUpdateURL, {
-            method: 'POST',
-            body: JSON.stringify(req.body),
-            headers: {
-                'Content-Type': 'application/json',
-                'x-access-token': process.env.apiKey
-            }
-        })
-        .then(res => res.json())
-        .then(json => console.log(json));
-
+        setBannerCookie("success", lang.knowledgebase.articleUpdated, res);
         res.redirect(`${config.siteConfiguration.siteAddress}/dashboard/knowledgebase`);
+
+
     });
 }

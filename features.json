@@ -1,23 +1,34 @@
 {
     "announcements": true,
-    "appeals": false,
     "applications": true,
-    "communitycreations": false,
-    "discord": true,
-    "events": false,
-    "friends": false,
+    "discord": {
+        "commands": {
+            "legoFlip": false
+        },
+        "events": {
+            "generalKenobi": true,
+            "guildMemberBoost": true,
+            "guildMemberVerify": true
+        }
+    },
+    "moderation": {
+        "altCheck": true,
+        "ipCheck": true,
+        "nameHistory": true
+    },
     "knowledgebase": true,
-    "punishments": false,
-    "ranks": false,
+    "servers": true,
     "report": true,
-    "servers": false,
-    "sessions": true,
-    "shops": false,
-    "user": true,
-    "userProfiles": false,
+    "filter": {
+        "link": true,
+        "phrase": true
+    },
+    "web": {
+        "login": true,
+        "register": true
+    },
     "vote": true,
-    "web": true,
-
+    
     "smDiscord": true,
     "smFacebook": true,
     "smTwitter": true,

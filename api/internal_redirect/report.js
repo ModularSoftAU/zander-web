@@ -1,45 +1,37 @@
-import {required, optional, hasPermission} from '../common'
+import {hasPermission, setBannerCookie, postAPIRequest} from '../common'
 import fetch from 'node-fetch';
 
-export default function reportRedirectRoute(app, config) {
+export default function reportRedirectRoute(app, config, lang) {
     const baseEndpoint = config.siteConfiguration.redirectRoute + '/report';
 
     app.post(baseEndpoint + '/create', async function(req, res) {
-        if (!hasPermission('zander.web.application', req, res))
+        if (!hasPermission('zander.web.report', req, res))
             return;
+        
+        postAPIRequest(
+            `${config.siteConfiguration.siteAddress}${config.siteConfiguration.apiRoute}/report/create`,
+            req.body,
+            `${config.siteConfiguration.siteAddress}/dashboard`,
+            res
+        )
 
-        const reportCreateURL = `${config.siteConfiguration.siteAddress}${config.siteConfiguration.apiRoute}/report/create`;
-        fetch(reportCreateURL, {
-            method: 'POST',
-            body: JSON.stringify(req.body),
-            headers: {
-                'Content-Type': 'application/json',
-                'x-access-token': process.env.apiKey
-            }
-        })
-        .then(res => res.json())
-        .then(json => console.log(json));
-
-        res.redirect(`${config.siteConfiguration.siteAddress}/`);
+        setBannerCookie("success", lang.report.reportCreated, res);
+        res.redirect(`${config.siteConfiguration.siteAddress}/dashboard`);
     });
 
     app.post(baseEndpoint + '/close', async function(req, res) {
-        if (!hasPermission('zander.web.application', req, res))
+        if (!hasPermission('zander.web.report', req, res))
             return;
 
-        const reportCloseURL = `${config.siteConfiguration.siteAddress}${config.siteConfiguration.apiRoute}/report/close`;
-        fetch(reportCloseURL, {
-            method: 'POST',
-            body: JSON.stringify(req.body),
-            headers: {
-                'Content-Type': 'application/json',
-                'x-access-token': process.env.apiKey
-            }
-        })
-        .then(res => res.json())
-        .then(json => console.log(json));
+        postAPIRequest(
+            `${config.siteConfiguration.siteAddress}${config.siteConfiguration.apiRoute}/report/close`,
+            req.body,
+            `${config.siteConfiguration.siteAddress}/dashboard`,
+            res
+        )
 
-        res.redirect(`${config.siteConfiguration.siteAddress}/`);
+        setBannerCookie("success", lang.report.reportClosed, res);
+        res.redirect(`${config.siteConfiguration.siteAddress}/dashboard`);
     });
 
 }

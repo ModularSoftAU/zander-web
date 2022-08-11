@@ -5,10 +5,10 @@ export default function dashboardServersSiteRoute(app, fetch, config, db, featur
     // Servers
     // 
     app.get('/dashboard/servers', async function(request, reply) {
-        if (!isFeatureWebRouteEnabled(features.servers, request, reply))
+        if (!isFeatureWebRouteEnabled(features.servers, request, reply, features))
             return;
         
-        if (!hasPermission('zander.web.server', request, reply))
+        if (!hasPermission('zander.web.server', request, reply, features))
             return;
 
         const fetchURL = `${config.siteConfiguration.siteAddress}${config.siteConfiguration.apiRoute}/server/get`;
@@ -21,17 +21,18 @@ export default function dashboardServersSiteRoute(app, fetch, config, db, featur
             "pageTitle": `Dashboard - Servers`,
             config: config,
             apiData: apiData,
-            features: features
+            features: features,
+            request: request
         });
     });
 
     app.get('/dashboard/servers/create', async function(request, reply) {
-        if (!isFeatureWebRouteEnabled(features.servers, request, reply))
+        if (!isFeatureWebRouteEnabled(features.servers, request, reply, features))
             return;
         
-        if (!hasPermission('zander.web.server', request, reply))
+        if (!hasPermission('zander.web.server', request, reply, features))
             return;
-        
+                
         reply.view('dashboard/servers/editor', {
             "pageTitle": `Dashboard - Server Creator`,
             config: config,
@@ -41,10 +42,10 @@ export default function dashboardServersSiteRoute(app, fetch, config, db, featur
     });
 
     app.get('/dashboard/servers/edit', async function(request, reply) {
-        if (!isFeatureWebRouteEnabled(features.servers, request, reply))
+        if (!isFeatureWebRouteEnabled(features.servers, request, reply, features))
             return;
         
-        if (!hasPermission('zander.web.server', request, reply))
+        if (!hasPermission('zander.web.server', request, reply, features))
             return;
         
         const id = request.query.id;

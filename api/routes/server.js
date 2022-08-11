@@ -87,6 +87,13 @@ export default function serverApiRoute(app, config, db, features, lang) {
                     });
                 }
 
+                if (!results.length) {
+                    return res.send({
+                        success: false,
+                        message: `There are no users online.`
+                    });
+                }
+
                 return res.send({
                     success: true,
                     data: results
@@ -112,8 +119,20 @@ export default function serverApiRoute(app, config, db, features, lang) {
 
         const serverCreatedLang = lang.server.serverCreated
 
+        console.log(req.body);
+
         try {
-            db.query(`INSERT INTO servers (name, fqdn, ipAddress, port, visible, position) VALUES (?, ?, ?, ?, ?, ?)`, [name, fqdn, ipAddress, port, visible, position], function(error, results, fields) {
+            db.query(`
+                INSERT INTO 
+                    servers
+                (
+                    name, 
+                    fqdn, 
+                    ipAddress, 
+                    port, 
+                    visible, 
+                    position
+                ) VALUES (?, ?, ?, ?, ?, ?)`, [name, fqdn, ipAddress, port, visible, position], function(error, results, fields) {
                 if (error) {
                     return res.send({
                         success: false,
@@ -146,7 +165,27 @@ export default function serverApiRoute(app, config, db, features, lang) {
         const position = required(req.body, "position", res);
 
         try {
-            db.query(`UPDATE servers SET name=?, fqdn=?, ipAddress=?, port=?, visible=?, position=? WHERE serverId=?`, [name, fqdn, ipAddress, port, visible, position, serverId], function(error, results, fields) {
+            db.query(`
+            UPDATE 
+                servers 
+            SET 
+                name=?, 
+                fqdn=?, 
+                ipAddress=?, 
+                port=?, 
+                visible=?, 
+                position=? 
+            WHERE 
+                serverId=?`, 
+            [
+                name, 
+                fqdn, 
+                ipAddress, 
+                port, 
+                visible, 
+                position, 
+                serverId
+            ], function(error, results, fields) {
                 if (error) {
                     return res.send({
                         success: false,

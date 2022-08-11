@@ -57,7 +57,7 @@ export default function applicationApiRoute(app, config, db, features, lang) {
         const requirementsMarkdown = required(req.body, "requirementsMarkdown", res);
         const redirectUrl = required(req.body, "redirectUrl", res);
         const position = required(req.body, "position", res);
-        const applicationStatus = required(req.body, "applicationStatus", res);
+        const applicationStatus = required(req.body, "closed", res);
 
         let applicationCreatedLang = lang.applications.applicationCreated;
 
@@ -96,7 +96,7 @@ export default function applicationApiRoute(app, config, db, features, lang) {
         const requirementsMarkdown = required(req.body, "requirementsMarkdown", res);
         const redirectUrl = required(req.body, "redirectUrl", res);
         const position = required(req.body, "position", res);
-        const applicationStatus = required(req.body, "applicationStatus", res);
+        const applicationStatus = required(req.body, "closed", res);
 
         let applicationEditedLang = lang.applications.applicationEdited;
 
@@ -104,15 +104,17 @@ export default function applicationApiRoute(app, config, db, features, lang) {
 		
 		try {
 			db.query(`
-                UPDATE applications SET 
+                UPDATE 
+                    applications 
+                SET 
                     displayName=?, 
                     displayIcon=?, 
                     description=?, 
                     requirementsMarkdown=?, 
                     redirectUrl=?, 
                     position=?,
-                    closed=?,
-                WHERE applicationId=?`,
+                    closed=?
+                WHERE applicationId=?;`,
                 [displayName, displayIcon, description, requirementsMarkdown, redirectUrl, position, applicationStatus, applicationId], function(error, results, fields) {
 				if (error) {
 					return res.send({

@@ -19,6 +19,12 @@
                                 <a href="/dashboard/events/create"><button type="button" class="btn btn-sm btn-info">Schedule Event</button></a>
                             </div>
                             <div class="card-body">
+                                <% if (request.cookies.alertType) { %>
+                                    <%- include("../../partials/alert.ejs", {
+                                      alertType: request.cookies.alertType,
+                                      content: request.cookies.alertContent
+                                    }) %>
+                                <% } %>
                                 <div class="table-responsive">
                                     <table class="table table-hover table-responsive-sm">
                                         <thead>
