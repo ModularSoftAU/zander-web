@@ -27,6 +27,7 @@
     "@discordjs/builders": "^0.13.0",
     "@fortawesome/fontawesome-free": "^6.0.0",
     "@sapphire/framework": "^3.0.0-next.0ea9553.0",
+    "@xboxreplay/xboxlive-auth": "^4.0.0",
     "bcrypt": "^5.0.1",
     "discord.js": "^13.7.0",
     "dotenv": "^16.0.1",
