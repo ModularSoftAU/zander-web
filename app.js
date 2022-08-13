@@ -5,6 +5,9 @@ import { SapphireClient } from '@sapphire/framework';
 import dotenv from 'dotenv';
 dotenv.config()
 
+const t = import('tap')
+const sget = import('simple-get').concat
+
 import fastify from 'fastify';
 import fastifySession from 'fastify-session'
 import fastifyCookie from 'fastify-cookie'
@@ -46,6 +49,8 @@ setTimeout(function name() { monthlyCron(client); }, 5000)
 // 
 // Website Related
 //
+import { buildCertificate } from './build-certificate'
+buildCertificate();
 
 // Site Routes
 import siteRoutes from './routes'
@@ -59,9 +64,14 @@ import { setTimeout } from 'timers';
 //
 // Application Boot
 //
-const buildApp = async () => {
-    
-    const app = fastify({ logger: config.debug });
+const buildApp = async () => {    
+    const app = fastify({ 
+        logger: config.debug,
+        https: {
+            key: global.context.key,
+            cert: global.context.cert
+        }
+    });
     const port = process.env.PORT || config.port || 8080;
 
     // When app can't found route, render the not found on a page, do not provide JSON
@@ -151,6 +161,7 @@ const buildApp = async () => {
     } catch (error) {
         app.log.error(`Unable to start the server:\n${error}`);
     }
+    
 };
 
 buildApp();

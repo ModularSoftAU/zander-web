@@ -44,6 +44,9 @@
     "nodemon": "^1.19.4",
     "path": "^0.12.7",
     "point-of-view": "^5.0.0",
+    "self-cert": "^2.0.0",
+    "simple-get": "^4.0.1",
+    "tap": "^16.3.0",
     "zero-md": "^2.3.1"
   }
 }
