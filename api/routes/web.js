@@ -84,23 +84,6 @@ export default function webApiRoute(app, config, db, features, lang) {
         });
     });
 
-    app.post(baseEndpoint + '/register/verify', async function(req, res) {
-        isFeatureEnabled(features.web.register, res, lang);
-        const username = required(req.body, "username", res);
-        const verificationToken = required(req.body, "verificationToken", res);
-
-        // ...
-        res.send({ success: true });
-    });
-
-    app.post(baseEndpoint + '/forgot', async function(req, res) {
-        isFeatureEnabled(features.web.register, res, lang);
-        const username = required(req.body, "username", res);
-
-        // ...
-        res.send({ success: true });
-    });
-
     app.get(baseEndpoint + '/configuration', async function(req, res) {
         // There is no isFeatureEnabled() due to being a critical endpoint.
 
