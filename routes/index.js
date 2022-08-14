@@ -3,7 +3,7 @@ import knowledgebaseSiteRoutes from './knowledgebaseRoutes'
 import policySiteRoutes from './policyRoutes'
 import communityCreationsRoutes from './communityCreationsRoutes'
 import sessionRoutes from './sessionRoutes'
-import { isFeatureWebRouteEnabled, isLoggedIn, setBannerCookie } from "../api/common";
+import { isFeatureWebRouteEnabled, isLoggedIn, getGlobalImage } from "../api/common";
 
 export default function applicationSiteRoutes(app, client, fetch, moment, config, db, features, lang) {
 
@@ -14,14 +14,12 @@ export default function applicationSiteRoutes(app, client, fetch, moment, config
     policySiteRoutes(app, config, features);
 
     app.get('/', async function(request, reply) {
-
-        setBannerCookie("primary", "This is a primary alert.", reply);
-
         return reply.view("modules/index/index", {
             "pageTitle": `${config.siteConfiguration.siteName}`,
             config: config,
             request: request,
-            features: features
+            features: features,
+            globalImage: await getGlobalImage(),
         });
     });
 
@@ -42,7 +40,8 @@ export default function applicationSiteRoutes(app, client, fetch, moment, config
             config: config,
             request: request,
             apiData: apiData,
-            features: features
+            features: features,
+            globalImage: await getGlobalImage(),
         });
     });
 
@@ -63,7 +62,8 @@ export default function applicationSiteRoutes(app, client, fetch, moment, config
             config: config,
             request: request,
             apiData: apiData,
-            features: features
+            features: features,
+            globalImage: await getGlobalImage(),
         });
     });
 
@@ -85,7 +85,8 @@ export default function applicationSiteRoutes(app, client, fetch, moment, config
             apiData: apiData,
             moment: moment,
             request: request,
-            features: features
+            features: features,
+            globalImage: await getGlobalImage(),
         });
     });
 
@@ -104,7 +105,8 @@ export default function applicationSiteRoutes(app, client, fetch, moment, config
             config: config,
             request: request,
             features: features,
-            apiData: apiData
+            apiData: apiData,
+            globalImage: await getGlobalImage(),
         });
     });
 
@@ -116,7 +118,8 @@ export default function applicationSiteRoutes(app, client, fetch, moment, config
             "pageTitle": `Staff`,
             config: config,
             request: request,
-            features: features
+            features: features,
+            globalImage: await getGlobalImage(),
         });
     });
 
@@ -132,7 +135,8 @@ export default function applicationSiteRoutes(app, client, fetch, moment, config
                 config: config,
                 request: request,
                 reply: reply,
-                features: features
+                features: features,
+                globalImage: await getGlobalImage(),
             });        
         }
 
@@ -142,15 +146,14 @@ export default function applicationSiteRoutes(app, client, fetch, moment, config
         });
         const serverApiData = await response.json();
 
-        console.log(serverApiData);
-
         if (!serverApiData.success) {
             reply.view('session/error', {
                 "pageTitle": `Server Error`,
                 config: config,
                 error: lang.error.noReportServers,
                 request: request,
-                features: features
+                features: features,
+                globalImage: await getGlobalImage(),
             });
         }
 
@@ -159,7 +162,8 @@ export default function applicationSiteRoutes(app, client, fetch, moment, config
             config: config,
             request: request,
             serverApiData: serverApiData.data,
-            features: features
+            features: features,
+            globalImage: await getGlobalImage(),
         });
     });
 
@@ -181,7 +185,8 @@ export default function applicationSiteRoutes(app, client, fetch, moment, config
             request: request,
             moment: moment,
             apiData: apiData,
-            features: features
+            features: features,
+            globalImage: await getGlobalImage(),
         });
     });
 
@@ -212,7 +217,8 @@ export default function applicationSiteRoutes(app, client, fetch, moment, config
             request: request,
             profileApiData: profileApiData,
             reportApiData: reportApiData,
-            features: features
+            features: features,
+            globalImage: await getGlobalImage(),
         });
     });
 
@@ -226,7 +232,8 @@ export default function applicationSiteRoutes(app, client, fetch, moment, config
                 config: config,
                 request: request,
                 reply: reply,
-                features: features
+                features: features,
+                globalImage: await getGlobalImage(),
             });        
         }
 
@@ -242,7 +249,8 @@ export default function applicationSiteRoutes(app, client, fetch, moment, config
             apiData: apiData,
             moment: moment,
             request: request,
-            features: features
+            features: features,
+            globalImage: await getGlobalImage(),
         });
     });
 
@@ -256,7 +264,8 @@ export default function applicationSiteRoutes(app, client, fetch, moment, config
             "pageTitle": `Punishments`,
             config: config,
             request: request,
-            features: features
+            features: features,
+            globalImage: await getGlobalImage(),
         });
     });
 
@@ -270,7 +279,8 @@ export default function applicationSiteRoutes(app, client, fetch, moment, config
                 config: config,
                 request: request,
                 reply: reply,
-                features: features
+                features: features,
+                globalImage: await getGlobalImage(),
             });        
         }
         
@@ -280,7 +290,8 @@ export default function applicationSiteRoutes(app, client, fetch, moment, config
             "pageTitle": `Appeal`,
             config: config,
             request: request,
-            features: features
+            features: features,
+            globalImage: await getGlobalImage(),
         });
     });
 
@@ -294,7 +305,8 @@ export default function applicationSiteRoutes(app, client, fetch, moment, config
             "pageTitle": `Shopping District Directory`,
             config: config,
             request: request,
-            features: features
+            features: features,
+            globalImage: await getGlobalImage(),
         });
     });
     

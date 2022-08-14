@@ -1,5 +1,6 @@
 import config from '../config.json' assert {type: "json"};
 import fetch from 'node-fetch';
+import { readdirSync } from 'fs';
 
 export function isFeatureEnabled(isFeatureEnabled, res, features, lang) {
     if (isFeatureEnabled)
@@ -126,4 +127,14 @@ export async function postAPIRequest(postURL, apiPostBody, failureRedirectURL, r
     }
 
     return console.log(data);
+}
+
+export async function getGlobalImage() {
+    var path = './assets/images/globalImages/';
+    var files = await readdirSync(path);
+
+    // Now files is an Array of the name of the files in the folder and you can pick a random name inside of that array.
+    let chosenFile = await files[Math.floor(Math.random() * files.length)] 
+
+    return "../images/globalImages/" + chosenFile;
 }

@@ -5,9 +5,7 @@
 
 <%- include("../../modules/navigationBar.ejs") %>
 
-<%- include("../../modules/index/indexHeroHeader.ejs", {
-    backgroundImage: "../images/banner/VennyBlackBuilding.png"
-}) %>
+<%- include("../../modules/index/indexHeroHeader.ejs") %>
 
 <%- include("../../modules/index/features.ejs") %>
 
@@ -16,7 +14,9 @@
 <%  } %>
 <br>
 
-<%- include("../../modules/index/stats.ejs") %>
+<%- include("../../modules/index/stats.ejs", {
+    globalImage: globalImage
+}) %>
 <br><br><br><br><br><br>
 
 <%- include("../../modules/footer.ejs") %>  
