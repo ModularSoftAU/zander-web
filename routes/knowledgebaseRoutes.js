@@ -1,4 +1,4 @@
-import { isFeatureWebRouteEnabled } from "../api/common";
+import { isFeatureWebRouteEnabled, getGlobalImage } from "../api/common";
 
 export default function knowledgebaseSiteRoute(app, client, fetch, moment, config, db, features, lang) {
 
@@ -29,7 +29,8 @@ export default function knowledgebaseSiteRoute(app, client, fetch, moment, confi
             articleApiData: articleApiData,
             request: request,
             fetch: fetch,
-            features: features
+            features: features,
+            globalImage: await getGlobalImage(),
         });
     });
 
@@ -54,7 +55,8 @@ export default function knowledgebaseSiteRoute(app, client, fetch, moment, confi
             config: config,
             articleApiData: articleApiData,
             request: request,
-            features: features
+            features: features,
+            globalImage: await getGlobalImage(),
         });
     });
 

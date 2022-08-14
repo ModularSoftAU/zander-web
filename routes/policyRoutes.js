@@ -1,3 +1,5 @@
+import { getGlobalImage } from "../api/common";
+
 export default function policySiteRoute(app, config, features) {
 
     app.get('/terms', async function(request, reply) {
@@ -5,7 +7,8 @@ export default function policySiteRoute(app, config, features) {
             "pageTitle": `Network Terms Of Service`,
             config: config,
             request: request,
-            features: features
+            features: features,
+            globalImage: await getGlobalImage(),
         });
     });
 
@@ -14,7 +17,8 @@ export default function policySiteRoute(app, config, features) {
             "pageTitle": `Network Rules`,
             config: config,
             request: request,
-            features: features
+            features: features,
+            globalImage: await getGlobalImage(),
         });
     });
 
@@ -23,7 +27,8 @@ export default function policySiteRoute(app, config, features) {
             "pageTitle": `Network Privacy Policy`,
             config: config,
             request: request,
-            features: features
+            features: features,
+            globalImage: await getGlobalImage(),
         });
     });
 
@@ -32,7 +37,8 @@ export default function policySiteRoute(app, config, features) {
             "pageTitle": `Network Refund Policy`,
             config: config,
             request: request,
-            features: features
+            features: features,
+            globalImage: await getGlobalImage(),
         });
     });
 

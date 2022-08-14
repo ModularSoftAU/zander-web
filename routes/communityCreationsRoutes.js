@@ -1,6 +1,4 @@
-import {
-    isFeatureWebRouteEnabled
-} from "../api/common";
+import { isFeatureWebRouteEnabled, getGlobalImage} from "../api/common";
 
 export default function communityCreationSiteRoute(app, client, fetch, moment, config, db, features, lang) {
 
@@ -23,7 +21,8 @@ export default function communityCreationSiteRoute(app, client, fetch, moment, c
             request: request,
             moment: moment,
             apiData: apiData,
-            features: features
+            features: features,
+            globalImage: await getGlobalImage(),
         });
     });
 
@@ -35,7 +34,8 @@ export default function communityCreationSiteRoute(app, client, fetch, moment, c
             "pageTitle": `Submit a Community Creation`,
             config: config,
             request: request,
-            features: features
+            features: features,
+            globalImage: await getGlobalImage(),
         });
     });
 

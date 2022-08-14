@@ -1,5 +1,5 @@
 import bcrypt from 'bcrypt';
-import { isFeatureWebRouteEnabled, setBannerCookie } from "../api/common";
+import { isFeatureWebRouteEnabled, setBannerCookie, getGlobalImage } from "../api/common";
 
 export default function sessionSiteRoute(app, client, fetch, moment, config, db, features, lang) {
 
@@ -14,7 +14,8 @@ export default function sessionSiteRoute(app, client, fetch, moment, config, db,
             "pageTitle": `Login`,
             config: config,
             request: request,
-            features: features
+            features: features,
+			globalImage: await getGlobalImage(),
         });
     });
 
@@ -26,7 +27,8 @@ export default function sessionSiteRoute(app, client, fetch, moment, config, db,
             "pageTitle": `Register`,
             config: config,
             request: request,
-            features: features
+            features: features,
+			globalImage: await getGlobalImage(),
         });
     });
 
