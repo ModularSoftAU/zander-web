@@ -14,7 +14,9 @@
 <%  } %>
 <br>
 
-<%- include("../../modules/index/stats.ejs") %>
+<%- include("../../modules/index/stats.ejs", {
+    globalImage: globalImage
+}) %>
 <br><br><br><br><br><br>
 
 <%- include("../../modules/footer.ejs") %>  

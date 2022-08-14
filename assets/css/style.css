@@ -459,7 +459,6 @@ a:focus {
   Banners
 */
 .bg-1 {
-  /* background: url("../images/bg/22.jpg") no-repeat 50% 50%; */
   background-size: cover;
   position: relative;
 }
@@ -468,7 +467,6 @@ a:focus {
   position: relative;
   overflow: hidden;
   background: #fff;
-  /* background: url("../images/bg/indexHeaderImage.png") no-repeat; */
   background-size: cover;
   min-height: 550px;
 }
