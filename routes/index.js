@@ -3,7 +3,7 @@ import knowledgebaseSiteRoutes from './knowledgebaseRoutes'
 import policySiteRoutes from './policyRoutes'
 import communityCreationsRoutes from './communityCreationsRoutes'
 import sessionRoutes from './sessionRoutes'
-import { isFeatureWebRouteEnabled, isLoggedIn, setBannerCookie } from "../api/common";
+import { isFeatureWebRouteEnabled, isLoggedIn, getGlobalImage } from "../api/common";
 
 export default function applicationSiteRoutes(app, client, fetch, moment, config, db, features, lang) {
 
@@ -14,14 +14,14 @@ export default function applicationSiteRoutes(app, client, fetch, moment, config
     policySiteRoutes(app, config, features);
 
     app.get('/', async function(request, reply) {
-
-        setBannerCookie("primary", "This is a primary alert.", reply);
+        console.log(await getGlobalImage());
 
         return reply.view("modules/index/index", {
             "pageTitle": `${config.siteConfiguration.siteName}`,
             config: config,
             request: request,
-            features: features
+            features: features,
+            globalImage: await getGlobalImage()
         });
     });
 
