@@ -1,22 +1,22 @@
 import packageData from './package.json' assert {type: "json"};
-import moment from 'moment'
-import fetch from 'node-fetch'
+import moment from 'moment';
+import fetch from 'node-fetch';
 import { SapphireClient } from '@sapphire/framework';
 import dotenv from 'dotenv';
 dotenv.config()
 
 import fastify from 'fastify';
-import fastifySession from 'fastify-session'
-import fastifyCookie from 'fastify-cookie'
+import fastifySession from 'fastify-session';
+import fastifyCookie from 'fastify-cookie';
 
 import config from './config.json' assert {type: "json"};
 import features from './features.json' assert {type: "json"};
 import lang from './lang.json' assert {type: "json"};
-import db from './controllers/databaseController'
+import db from './controllers/databaseController';
 
 // Paths
-import path from 'path'
-import { fileURLToPath } from 'url'
+import path from 'path';
+import { fileURLToPath } from 'url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
