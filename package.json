@@ -1,6 +1,6 @@
 {
   "name": "modularenigma-zander-web",
-  "version": "1.0.0",
+  "version": "1.0",
   "description": "The web component of the Zander project that contains database, API and website.",
   "main": "app.js",
   "scripts": {
