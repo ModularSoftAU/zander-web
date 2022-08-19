@@ -40,6 +40,7 @@
 				</div>
 			</div>
 
+			<% if (features.communityCreations || features.events) { %>
 			<!-- Community -->
 			<div class="col-lg-2 col-md-6 col-sm-6">
 				<div class="widget mb-5 mb-lg-0">
@@ -47,11 +48,16 @@
 					<div class="divider mb-4"></div>
 
 					<ul class="list-unstyled footer-menu lh-35">
-						<li><a href="/communityCreations">Community Creations</a></li>
-						<li><a href="/events">Events</a></li>
+						<% if (features.communityCreations) { %>
+							<li><a href="/communityCreations">Community Creations</a></li>
+						<% } %>
+						<% if (features.events) { %>
+							<li><a href="/events">Events</a></li>
+						<% } %>
 					</ul>
 				</div>
 			</div>
+			<% } %>
 
 			<!-- Quick Access -->
 			<div class="col-lg-2 col-md-6 col-sm-6">
@@ -60,10 +66,16 @@
 					<div class="divider mb-4"></div>
 
 					<ul class="list-unstyled footer-menu lh-35">
-						<li><a href="/apply">Apply</a></li>
-						<li><a href="/vote">Vote</a></li>
+						<% if (features.applications) { %>
+							<li><a href="/apply">Apply</a></li>
+						<% } %>
+						<% if (features.communityCreations) { %>
+							<li><a href="/vote">Vote</a></li>
+						<% } %>
 						<li><a href="/punishments">Punishments</a></li>
-						<li><a href="/report">Report</a></li>
+						<% if (features.report) { %>
+							<li><a href="/report">Report</a></li>
+						<% } %>
 						<li><a href="/support">Support</a></li>
 					</ul>
 				</div>

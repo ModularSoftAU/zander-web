@@ -14,12 +14,19 @@ export default function applicationSiteRoutes(app, client, fetch, moment, config
     policySiteRoutes(app, config, features);
 
     app.get('/', async function(request, reply) {
+        const fetchURL = `${config.siteConfiguration.siteAddress}${config.siteConfiguration.apiRoute}/web/statistics`;
+        const response = await fetch(fetchURL, {
+            headers: { 'x-access-token': process.env.apiKey }
+        });
+        const statApiData = await response.json();
+
         return reply.view("modules/index/index", {
             "pageTitle": `${config.siteConfiguration.siteName}`,
             config: config,
             request: request,
             features: features,
             globalImage: await getGlobalImage(),
+            statApiData: statApiData
         });
     });
 

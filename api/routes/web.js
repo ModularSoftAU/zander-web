@@ -116,48 +116,19 @@ export default function webApiRoute(app, config, db, features, lang) {
     app.get(baseEndpoint + '/statistics', async function(req, res) {
         // There is no isFeatureEnabled() due to being a critical endpoint.
 
-        function getCommunityMemberNumber() {
-            db.query(`SELECT COUNT(*) as communityMembers FROM users;`, async function (err, results) {
-                if (err) {
-                    console.log(err);
-                }
-                
-                return results[0].communityMembers
-            });
-
-            return
-        }
-
-        function getStaffMemberNumber() {
-            db.query(`SELECT COUNT(*) as communityMembers FROM users;`, async function (err, results) {
-                if (err) {
-                    console.log(err);
-                }
-                
-                return results[0].communityMembers
-            });
-
-            return
-        }
-
-        function getCommunityPlayedHours() {
-            db.query(`SELECT COUNT(*) as communityMembers FROM users;`, async function (err, results) {
-                if (err) {
-                    console.log(err);
-                }
-                
-                return results[0].communityMembers
-            });
-
-            return
-        }
-
-        return res.send({
-            success: true,
-            data: {
-                "communityMembers": getCommunityMemberNumber(),
-                "siteAddress": config.siteConfiguration.siteAddress
+        db.query(`SELECT COUNT(*) AS communityMembers FROM users;`, async function (err, results) {
+            if (err) {
+                console.log(err);
             }
+
+            let communityMembers = results[0].communityMembers;
+            
+            return res.send({
+                success: true,
+                data: {
+                    "communityMembers": communityMembers
+                }
+            });
         });
     });
 

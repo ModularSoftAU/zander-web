@@ -4,7 +4,7 @@ import features from '../features.json' assert {type: "json"};
 import config from '../config.json' assert {type: "json"};
 import fetch from 'node-fetch';
 
-export class NameHistoryCommand extends Command {
+export class IPCheckCommand extends Command {
   constructor(context, options) {
     super(context, {
       ...options,
