@@ -113,4 +113,23 @@ export default function webApiRoute(app, config, db, features, lang) {
         });
     });
 
+    app.get(baseEndpoint + '/statistics', async function(req, res) {
+        // There is no isFeatureEnabled() due to being a critical endpoint.
+
+        db.query(`SELECT COUNT(*) AS communityMembers FROM users;`, async function (err, results) {
+            if (err) {
+                console.log(err);
+            }
+
+            let communityMembers = results[0].communityMembers;
+            
+            return res.send({
+                success: true,
+                data: {
+                    "communityMembers": communityMembers
+                }
+            });
+        });
+    });
+
 }

@@ -28,6 +28,9 @@
         "register": true
     },
     "vote": true,
+
+    "communityCreations": false,
+    "events": false,
     
     "smDiscord": true,
     "smFacebook": true,

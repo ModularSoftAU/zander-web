@@ -30,39 +30,44 @@ export class NameHistoryCommand extends Command {
   }
 
   async chatInputRun(interaction) {
-    const username = interaction.options.getString('username');
+    if (features.moderation.nameHistory) {
+      const username = interaction.options.getString('username');
 
-    const UUIDFetchURL = `https://api.mojang.com/users/profiles/minecraft/${username}`;
-    const UUIDResponse = await fetch(UUIDFetchURL);
-    const UUIDApiData = await UUIDResponse.json();
+      const UUIDFetchURL = `https://api.mojang.com/users/profiles/minecraft/${username}`;
+      const UUIDResponse = await fetch(UUIDFetchURL);
+      const UUIDApiData = await UUIDResponse.json();
 
-    const uuid = UUIDApiData.id;
+      const uuid = UUIDApiData.id;
 
-    const NameHistoryFetchURL = `https://api.mojang.com/user/profiles/${uuid}/names`;
-    const NameHistoryResponse = await fetch(NameHistoryFetchURL);
-    const NameHistoryApiData = await NameHistoryResponse.json();
+      const NameHistoryFetchURL = `https://api.mojang.com/user/profiles/${uuid}/names`;
+      const NameHistoryResponse = await fetch(NameHistoryFetchURL);
+      const NameHistoryApiData = await NameHistoryResponse.json();
 
-    const embed = new MessageEmbed()
-      .setTitle(`Name History for ${username}`)
+      const embed = new MessageEmbed()
+        .setTitle(`Name History for ${username}`)
 
-      NameHistoryApiData
-        .slice()
-        .reverse()
-        .forEach(name => {
-          let nameChangeTime = null;
+        NameHistoryApiData
+          .slice()
+          .reverse()
+          .forEach(name => {
+            let nameChangeTime = null;
 
-          if (name.changedToAt) {
-            nameChangeTime = `${moment(name.changedToAt ?? null).format('MMMM Do YYYY')} (${moment(name.changedToAt ?? null).fromNow()})`
-            embed.addField(name.name, `${nameChangeTime}`)            
-          } else {
-            nameChangeTime = `*First Username*`;
-            embed.addField(name.name, `${nameChangeTime}`)
-          }
-        });
+            if (name.changedToAt) {
+              nameChangeTime = `${moment(name.changedToAt ?? null).format('MMMM Do YYYY')} (${moment(name.changedToAt ?? null).fromNow()})`
+              embed.addField(name.name, `${nameChangeTime}`)            
+            } else {
+              nameChangeTime = `*First Username*`;
+              embed.addField(name.name, `${nameChangeTime}`)
+            }
+          });
 
-      interaction.reply({
-        embeds: [embed],
-        empheral: true
-      });
+        interaction.reply({
+          embeds: [embed],
+          empheral: true
+        });      
+    } else {
+      interaction.reply("This feature has been disabled by the System Administrator.");
+    }
+    
   }
 }
