@@ -2,6 +2,7 @@ import packageData from './package.json' assert {type: "json"};
 import moment from 'moment';
 import fetch from 'node-fetch';
 import { SapphireClient } from '@sapphire/framework';
+import { getGlobalImage } from './api/common';
 import dotenv from 'dotenv';
 dotenv.config()
 
@@ -65,7 +66,7 @@ const buildApp = async () => {
     const port = process.env.PORT || config.port || 8080;
 
     // When app can't found route, render the not found on a page, do not provide JSON
-    // app.setNotFoundHandler((error, request, reply) => {
+    // app.setNotFoundHandler(async (error, request, reply) => {
     //     if (error) {
     //         reply.code(404);
     //         reply.view('session/notFound', {
@@ -73,19 +74,21 @@ const buildApp = async () => {
     //             config: config,
     //             moment: moment,
     //             request: request,
-    //             features: features
+    //             features: features,
+    //             globalImage: await getGlobalImage(),
     //         });
     //     }
     // });
   
     // When app errors, render the error on a page, do not provide JSON
-    app.setErrorHandler((error, request, reply) => {        
+    app.setErrorHandler(async (error, request, reply) => {        
         reply.view('session/error', {
             "pageTitle": `Server Error`,
             config: config,
             error: error,
             request: request,
-            features: features
+            features: features,
+            globalImage: await getGlobalImage(),
         });
     });
 

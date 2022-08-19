@@ -1,0 +1,172 @@
+<%- include("modules/header.ejs", {
+    pageTitle: pageTitle,
+    pageDescription: "If you're looking to contribute to the Network and get some cool perks in exchange, have a look!"
+}) %>
+
+<%- include("modules/navigationBar.ejs") %>
+
+<%- include("partials/miniHeader.ejs", {
+  headerTitle: "Ranks",
+  backgroundImage: globalImage
+}) %>
+
+<style media="screen">
+  .ranktitle {
+    text-align:center;
+    vertical-align:sub;
+
+    text-shadow: 2px 2px 0px rgba(0, 0, 0, 0.6));
+    background-size: 140px 140px;
+    margin: 0 auto;
+    margin-bottom:20px;
+    height:140px;
+    border-radius:30px 60px;
+  }
+
+  .ranktitle img {
+    height:100px;
+  }
+
+  .rankperks {
+    font-size:10pt;
+  }
+
+  .ranksectiontitle {
+    font-size:12pt;
+    text-align:left;
+  }
+</style>
+
+<section class="section">
+    <div class="container">
+
+      <div class="alert alert-info" role="alert">
+        Visit the Shop to buy any of our ranks to support our Server and operations <a href="/shop">click me to be directed to the shop.</a>
+      </div>
+    
+      <div class="row">
+        <!-- Iron -->
+          <div class="col text-center">
+            <h3 class="ranktitle" style="background-color: rgba(203, 205, 205, 0.7);"><img src="./img/rank-icons/iron.png" alt=""><br>Iron</h3>
+            <div class="text-muted">
+              <h2><b>$1</b><small style="font-size:12pt">(monthly)</small></h2>
+            </div>
+            <br>
+    
+            <div class="rankperks">
+              <p><span class="badge badge-pill badge-secondary">Iron</span> on our Server, Forums and Discord</p>
+              <p class="ranksectiontitle">Server</p>
+                <p>Ability to join full games during Events.</p>
+    
+              <p class="ranksectiontitle">Discord</p>
+                <p>Access to exclusive Donator channels on Discord.</p>
+                <p>Access to using the Discord Music Bot.</p>
+    
+              <p class="ranksectiontitle">Hub</p>
+                <p>A player statue in the Hall of Patrons.</p>
+                <p>Access to /fly in the Hub.</p>
+    
+              <p class="ranksectiontitle">Survival</p>
+                <p>Access to /sethome, maximum of 2.</p>
+            </div>
+    
+            <div class="alert alert-info rankperks" role="alert">
+              <p>Current <span class="badge badge-pill badge-secondary">Iron</span> Members</p>
+            </div>
+          </div>
+    
+          <!-- Gold -->
+          <div class="col text-center">
+            <h3 class="ranktitle" style="background-color: rgba(243, 204, 0, 0.7);"><img src="./img/rank-icons/gold.png" alt=""><br>Gold</h3>
+            <div class="text-muted">
+              <h2><b>$25</b> or <b>$5</b><small style="font-size:12pt">(monthly)</small></h2>
+            </div>
+            <br>
+    
+            <div class="rankperks">
+              <p><span class="badge badge-pill badge-warning">Gold</span> on our Server, Forums and Discord</p>
+              <p>Inherit all perks from <span class="badge badge-pill badge-secondary">Iron</span></p>
+
+              <p class="ranksectiontitle">Survival</p>
+                <p>Access to /hat, wear the block that you’re holding.</p>
+                <p>Ability to customise armour stands using <a href="https://www.youtube.com/watch?v=A25hSBnM7dM">armour statues</a>.</p>
+                <p>Access to /sethome, maximum of 3.</p>
+            </div>
+    
+            <div class="alert alert-info rankperks" role="alert">
+              <p>Current <span class="badge badge-pill badge-warning">Gold</span> Members</p>
+                  <img class="staffimg" style="display: inline-block;" src="https://crafatar.com/avatars/d073bbe0-fa3f-42e4-838e-ea810c9e55b0?helm" height="20px" draggable="false"> xmeatysteakx
+                  <img class="staffimg" style="display: inline-block;" src="https://crafatar.com/avatars/57f7c98c-f560-461a-9e54-b512120f1502?helm" height="20px" draggable="false"> fathercarlos
+                  <img class="staffimg" style="display: inline-block;" src="https://crafatar.com/avatars/dd433651-7384-4304-996e-bc6896cb4fe2?helm" height="20px" draggable="false"> ivy609
+                  <img class="staffimg" style="display: inline-block;" src="https://crafatar.com/avatars/cea16f88-e9bc-4d17-ba43-c1c7b23f6d23?helm" height="20px" draggable="false"> aron_with_an_a
+                  <img class="staffimg" style="display: inline-block;" src="https://crafatar.com/avatars/790eb4a0-394c-4ea6-8a0b-c1e9952a5c9d?helm" height="20px" draggable="false"> googleh0me
+            </div>
+          </div>
+    
+          <!-- Diamond -->
+          <div class="col text-center">
+            <h3 class="ranktitle" style="background-color: rgba(0, 165, 218, 0.9);"><img src="./img/rank-icons/diamond.png" alt=""><br>Diamond</h3>
+            <div class="text-muted">
+              <h2><b>$50</b> or <b>$10</b><small style="font-size:12pt">(monthly)</small></h2>
+            </div>
+            <br>
+    
+            <div class="rankperks">
+              <p><span class="badge badge-pill badge-primary">Diamond</span> on our Server, Forums and Discord</p>
+              <p>Inherit all perks from <span class="badge badge-pill badge-secondary">Iron</span> and <span class="badge badge-pill badge-warning">Gold</span></p>
+              <p class="ranksectiontitle">Server</p>
+                <p>Access to the exclusive donator Creative Server.</p>
+    
+              <p class="ranksectiontitle">Survival</p>
+                <p>Use an alternate account for a Camera account.</p>
+                <p>Ability to put <a href="https://www.youtube.com/watch?v=mZ1KdfzdgBE">images on maps</a>.</p>
+                <p>Access to /sethome, maximum of 4.</p>
+            </div>
+    
+            <div class="alert alert-info rankperks" role="alert">
+              <p>Current <span class="badge badge-pill badge-primary">Diamond</span> Members</p>
+                  <img class="staffimg" style="display: inline-block;" src="https://crafatar.com/avatars/9eb8e4c4-bb11-4bab-b1cd-0180ea64ff74?helm" height="20px" draggable="false"> thatguy268
+                  <img class="staffimg" style="display: inline-block;" src="https://crafatar.com/avatars/fbe5ebee-8eec-4440-8e35-86cf27a469a6?helm" height="20px" draggable="false"> rosstle
+            </div>
+          </div>
+      </div>
+      <br>
+    
+      <div style="line-height:25px;">
+        <h2>Frequently Asked Questions</h2>
+        <hr>
+    
+        <h4>Where does my money go?</h4>
+        <p>Any money directed towards Crafting For Christ will primarily go towards the costs to maintain and run the Servers. In addition to server costs, money may also go towards Social Media advertising, giveaways and in the future Developers whom make the server possible.<br>By purchasing anything from Crafting For Christ you are helping us keep the servers up and running!</p>
+        <hr>
+    
+        <h4>What can I pay with?</h4>
+        <p>PayPal is the only way to pay in the webstore at this point in time, we do not plan to add any additional payment methods at this time.</p>
+        <hr>
+    
+        <h4>I didn't get my rank!</h4>
+        <p>If you have waited 24 hours and haven't received your rank or other purchased items, it is likely there was an issue handling your payment. Be sure to contact our <a href="/cdn-cgi/l/email-protection#3b484e4b4b54494f7b58495a5d4f52555c5d544958534952484f15555e4f">Support Team</a> if you are in this position and we'll be sure to sort it out as soon as possible.</p>
+        <hr>
+    
+        <h4>Can I transfer my rank to a different account?</h4>
+        <p>Ranks purchased are strictly not transferable.<br>You may not move your rank from one Minecraft account to another.</p>
+        <hr>
+    
+        <h4>I didn't get my rank in Discord!</h4>
+        <p>To get your rank in Discord, type <code>!tebex:claim</code>.<br>If in the event that this doesn't work, please contact an Administrator to ask for your rank to be assigned.</p>
+        <hr>
+    
+        <h4>I want a refund!</h4>
+        <p>If your situation complies with our <a href="/refund">Refund Policy</a> then you can ask for a full refund of your purchase, simply contact an Administrator to start the process.</p>
+      </div>
+    
+      <br>
+    </div>
+    
+
+
+
+    </div>
+</section>
+
+<%- include("modules/footer.ejs") %>  

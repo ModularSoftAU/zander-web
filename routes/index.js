@@ -310,8 +310,8 @@ export default function applicationSiteRoutes(app, client, fetch, moment, config
         });
     });
     
-    app.get('/shoppingDistrictDirectory/create', async function(request, reply) {
-        isFeatureWebRouteEnabled(features.shops, request, reply, features);
+    // app.get('/shoppingDistrictDirectory/create', async function(request, reply) {
+    //     isFeatureWebRouteEnabled(features.shops, request, reply, features);
 
         // fs.readdir(path.join(__dirname, '../assets/images/minecraftItemImages'), function(err, files) {
         //     //handling error
@@ -330,5 +330,20 @@ export default function applicationSiteRoutes(app, client, fetch, moment, config
         //         minecraftItem: files
         //     });
         // });
+    // });
+
+    // 
+    // Ranks
+    // 
+    app.get('/ranks', async function(request, reply) {
+        // isFeatureWebRouteEnabled(features.shops, request, reply, features);
+
+        reply.view('ranks', {
+            "pageTitle": `Ranks`,
+            config: config,
+            request: request,
+            features: features,
+            globalImage: await getGlobalImage(),
+        });
     });
 }
