@@ -3,3 +3,4 @@ node_modules
 package-lock.json
 sslCert.cert
 sslPrivate.key
+config.json
