@@ -346,4 +346,11 @@ export default function applicationSiteRoutes(app, client, fetch, moment, config
             globalImage: await getGlobalImage(),
         });
     });
+
+    // 
+    // Shop
+    // 
+    app.get('/shop', async function(request, reply) {
+        reply.redirect(config.platforms.shop)
+    });
 }
