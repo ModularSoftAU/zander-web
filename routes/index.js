@@ -303,6 +303,13 @@ export default function applicationSiteRoutes(app, client, fetch, moment, config
     });
 
     // 
+    // Discord Redirect
+    // 
+    app.get('/discord', async function(request, reply) {
+        reply.redirect(config.siteConfiguration.platforms.discord)
+    });
+
+    // 
     // Shopping District Directory
     // 
     app.get('/shoppingDistrictDirectory', async function(request, reply) {
