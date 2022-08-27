@@ -79,8 +79,6 @@ export default function rankApiRoute(app, config, db, features, lang) {
 		
         try {
             db.query(`SELECT * FROM ranks`, function(error, results, fields) {
-				console.log(results);
-
                 if (error) {
                     return res.send({
                         success: false,
