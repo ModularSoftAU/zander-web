@@ -5,7 +5,7 @@ export default function reportApiRoute(app, client, config, db, features, lang) 
     const baseEndpoint = config.siteConfiguration.apiRoute + '/report';
 
     app.get(baseEndpoint + '/get', async function(req, res) {
-        isFeatureEnabled(features.report, res, lang);
+        isFeatureEnabled(features.report, res, features, lang);
         const reportId = optional(req.query, "reportId");
         const username = optional(req.query, "username");
 
@@ -127,7 +127,7 @@ export default function reportApiRoute(app, client, config, db, features, lang) 
     });
 
     app.post(baseEndpoint + '/create', async function(req, res) {
-        isFeatureEnabled(features.report, res, lang);
+        isFeatureEnabled(features.report, res, features, lang);
         const reportedUser = required(req.body, "reportedUser", res);
         const reporterUser = required(req.body, "reporterUser", res);
         const reason = required(req.body, "reason", res);
@@ -195,7 +195,7 @@ export default function reportApiRoute(app, client, config, db, features, lang) 
     });
 
     app.post(baseEndpoint + '/close', async function(req, res) {
-        isFeatureEnabled(features.report, res, lang);
+        isFeatureEnabled(features.report, res, features, lang);
         const reportId = required(req.body, "reportId", res);
 
         try {

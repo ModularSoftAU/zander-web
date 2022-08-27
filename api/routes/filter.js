@@ -21,7 +21,7 @@ export default function filterApiRoute(app, config, db, features, lang) {
     app.post(baseEndpoint, async function(req, res) {
         // Hack to show the error we expect when both are disabled
         if (!features.filter.phrase && !features.filter.link)
-            return isFeatureEnabled(false, res, lang)
+            return isFeatureEnabled(false, res, features, lang)
         
         const content = required(req.body, "content", res);
 

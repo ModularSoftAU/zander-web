@@ -5,7 +5,7 @@ export default function eventApiRoute(app, client, moment, config, db, features,
     const baseEndpoint = config.siteConfiguration.apiRoute + '/event';
 
     app.get(baseEndpoint + '/get', async function(req, res) {
-        isFeatureEnabled(features.events, res, lang);
+        isFeatureEnabled(features.events, res, features, lang);
         const published = optional(req.query, "published");
         const id = optional(req.query, "id");
 
@@ -63,7 +63,7 @@ export default function eventApiRoute(app, client, moment, config, db, features,
     });
 
     app.post(baseEndpoint + '/create', async function(req, res) {
-        isFeatureEnabled(features.events, res, lang);
+        isFeatureEnabled(features.events, res, features, lang);
         const name = required(req.body, "name", res);
         const icon = required(req.body, "icon", res);
         const eventDateTime = required(req.body, "eventDateTime", res);
@@ -96,7 +96,7 @@ export default function eventApiRoute(app, client, moment, config, db, features,
     });
 
     app.post(baseEndpoint + '/edit', async function(req, res) {
-        isFeatureEnabled(features.events, res, lang);
+        isFeatureEnabled(features.events, res, features, lang);
         const name = required(req.body, "name", res);
         const icon = required(req.body, "icon", res);
         const eventDateTime = required(req.body, "eventDateTime", res);
@@ -109,7 +109,7 @@ export default function eventApiRoute(app, client, moment, config, db, features,
     });
 
     app.post(baseEndpoint + '/publish', async function(req, res) {
-        isFeatureEnabled(features.events, res, lang);
+        isFeatureEnabled(features.events, res, features, lang);
         const eventId = required(req.body, "eventId", res);
 
         // ...
@@ -117,7 +117,7 @@ export default function eventApiRoute(app, client, moment, config, db, features,
     });
 
     app.post(baseEndpoint + '/delete', async function(req, res) {
-        isFeatureEnabled(features.events, res, lang);
+        isFeatureEnabled(features.events, res, features, lang);
         const eventId = required(req.body, "eventId", res);
 
         // ...

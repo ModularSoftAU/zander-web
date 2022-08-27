@@ -4,7 +4,7 @@ export default function announcementApiRoute(app, config, db, features, lang) {
     const baseEndpoint = config.siteConfiguration.apiRoute + '/announcement';
 
     app.get(baseEndpoint + '/get', async function(req, res) {
-        isFeatureEnabled(features.announcements, res, lang);
+        isFeatureEnabled(features.announcements, res, features, lang);
         const announcementSlug = optional(req.query, "announcementSlug");
         const announcementType = optional(req.query, "announcementType");
         const enabled = optional(req.query, "enabled");
@@ -83,7 +83,7 @@ export default function announcementApiRoute(app, config, db, features, lang) {
     });
 
     app.post(baseEndpoint + '/create', async function(req, res) {
-        isFeatureEnabled(features.announcements, res, lang);
+        isFeatureEnabled(features.announcements, res, features, lang);
         const announcementSlug = required(req.body, "announcementSlug", res);
         const enabled = required(req.body, "enabled", res);
         const announcementType = required(req.body, "announcementType", res);
@@ -116,7 +116,7 @@ export default function announcementApiRoute(app, config, db, features, lang) {
     });
 
     app.post(baseEndpoint + '/edit', async function(req, res) {
-        isFeatureEnabled(features.announcements, res, lang);
+        isFeatureEnabled(features.announcements, res, features, lang);
         const slug = required(req.body, "slug", res);
         const announcementSlug = required(req.body, "announcementSlug", res);
         const enabled = required(req.body, "enabled", res);
@@ -169,7 +169,7 @@ export default function announcementApiRoute(app, config, db, features, lang) {
     });
 
     app.post(baseEndpoint + '/delete', async function(req, res) {
-        isFeatureEnabled(features.announcements, res, lang);
+        isFeatureEnabled(features.announcements, res, features, lang);
         const announcementSlug = required(req.body, "announcementSlug", res);
 
         try {
@@ -195,7 +195,7 @@ export default function announcementApiRoute(app, config, db, features, lang) {
     });
 
     app.post(baseEndpoint + '/enable', async function(req, res) {
-        isFeatureEnabled(features.announcements, res, lang);
+        isFeatureEnabled(features.announcements, res, features, lang);
         const announcementSlug = required(req.body, "announcementSlug", res);
 
         try {
@@ -221,7 +221,7 @@ export default function announcementApiRoute(app, config, db, features, lang) {
     });
 
     app.post(baseEndpoint + '/disable', async function(req, res) {
-        isFeatureEnabled(features.announcements, res, lang);
+        isFeatureEnabled(features.announcements, res, features, lang);
         const announcementSlug = required(req.body, "announcementSlug", res);
 
         try {

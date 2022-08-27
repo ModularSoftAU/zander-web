@@ -5,7 +5,7 @@ export default function serverApiRoute(app, config, db, features, lang) {
 
     // TODO: Update docs
     app.get(baseEndpoint + '/get', async function(req, res) {
-        isFeatureEnabled(features.servers, res, lang);
+        isFeatureEnabled(features.servers, res, features, lang);
         const visible = optional(req.query, "visible");
         const id = optional(req.query, "id");
 
@@ -108,7 +108,7 @@ export default function serverApiRoute(app, config, db, features, lang) {
     });
 
     app.post(baseEndpoint + '/create', async function(req, res) {
-        isFeatureEnabled(features.servers, res, lang);
+        isFeatureEnabled(features.servers, res, features, lang);
 
         const name = required(req.body, "name", res);
         const fqdn = required(req.body, "fqdn", res);
@@ -154,7 +154,7 @@ export default function serverApiRoute(app, config, db, features, lang) {
     });
 
     app.post(baseEndpoint + '/edit', async function(req, res) {
-        isFeatureEnabled(features.servers, res, lang);
+        isFeatureEnabled(features.servers, res, features, lang);
 
         const serverId = required(req.body, "serverId", res);
         const name = required(req.body, "name", res);
@@ -208,7 +208,7 @@ export default function serverApiRoute(app, config, db, features, lang) {
     });
 
     app.post(baseEndpoint + '/delete', async function(req, res) {
-        isFeatureEnabled(features.servers, res, lang);
+        isFeatureEnabled(features.servers, res, features, lang);
         const serverId = required(req.body, "serverId", res);
 
         try {

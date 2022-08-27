@@ -18,6 +18,7 @@
     },
     "knowledgebase": true,
     "servers": true,
+    "ranks": true,
     "report": true,
     "filter": {
         "link": true,
@@ -28,6 +29,9 @@
         "register": true
     },
     "vote": true,
+
+    "communityCreations": false,
+    "events": false,
     
     "smDiscord": true,
     "smFacebook": true,

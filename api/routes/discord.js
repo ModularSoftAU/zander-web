@@ -4,7 +4,7 @@ export default function discordApiRoute(app, client, config, db, features, lang)
     const baseEndpoint = config.siteConfiguration.apiRoute + '/discord';
 
     app.post(baseEndpoint + '/switch', async function(req, res) {
-        isFeatureEnabled(features.discord, res, lang);
+        isFeatureEnabled(features.discord, res, features, lang);
         const username = required(req.body, "username", res);
         const server = required(req.body, "server", res);
 
@@ -26,7 +26,7 @@ export default function discordApiRoute(app, client, config, db, features, lang)
     });
 
     app.post(baseEndpoint + '/chat', async function(req, res) {
-        isFeatureEnabled(features.discord, res, lang);
+        isFeatureEnabled(features.discord, res, features, lang);
         const username = required(req.body, "username", res);
         const server = required(req.body, "server", res);
         const content = required(req.body, "content", res);
@@ -49,7 +49,7 @@ export default function discordApiRoute(app, client, config, db, features, lang)
     });
 
     app.post(baseEndpoint + '/join', async function(req, res) {
-        isFeatureEnabled(features.discord, res, lang);
+        isFeatureEnabled(features.discord, res, features, lang);
         const username = required(req.body, "username", res);
 
         try {
@@ -70,7 +70,7 @@ export default function discordApiRoute(app, client, config, db, features, lang)
     });
 
     app.post(baseEndpoint + '/leave', async function(req, res) {
-        isFeatureEnabled(features.discord, res, lang);
+        isFeatureEnabled(features.discord, res, features, lang);
         const username = required(req.body, "username", res);
 
         try {
@@ -91,7 +91,7 @@ export default function discordApiRoute(app, client, config, db, features, lang)
     });
 
     app.post(baseEndpoint + '/directMessage', async function(req, res) {
-        isFeatureEnabled(features.discord, res, lang);
+        isFeatureEnabled(features.discord, res, features, lang);
                 
         const senderUsername = required(req.body, "senderUsername", res);
         const recipientUsername = required(req.body, "recipientUsername", res);

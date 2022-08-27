@@ -4,7 +4,7 @@ export default function voteApiRoute(app, config, db, features, lang) {
     const baseEndpoint = config.siteConfiguration.apiRoute + '/vote';
 
     app.post(baseEndpoint + '/cast', async function(req, res) {
-        isFeatureEnabled(features.vote, res, lang);
+        isFeatureEnabled(features.vote, res, features, lang);
         const username = required(req.body, "username", res);
         const voteSite = required(req.body, "voteSite", res);
 
@@ -43,7 +43,7 @@ export default function voteApiRoute(app, config, db, features, lang) {
     });
 
     app.get(baseEndpoint + '/get', async function(req, res) {
-        isFeatureEnabled(features.vote, res, lang);
+        isFeatureEnabled(features.vote, res, features, lang);
 
         try {
             db.query(`

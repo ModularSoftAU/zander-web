@@ -4,7 +4,7 @@ export default function userApiRoute(app, config, db, features, lang) {
     const baseEndpoint = config.siteConfiguration.apiRoute + '/user';
 
     app.post(baseEndpoint + '/create', async function(req, res) {
-        isFeatureEnabled(features.user, res, lang);
+        isFeatureEnabled(features.user, res, features, lang);
         const uuid = required(req.body, "uuid", res);
         const username = required(req.body, "username", res);
 
@@ -58,11 +58,18 @@ export default function userApiRoute(app, config, db, features, lang) {
 
     // TODO: Update docs
     app.get(baseEndpoint + '/get', async function(req, res) {
-        isFeatureEnabled(features.user, res, lang);
-        const username = optional(req.query, "username");
+        isFeatureEnabled(features.user, res, features, lang);
+        const username = required(req.query, "username");
         
         try {
             db.query(`SELECT * FROM users WHERE uuid=(SELECT uuid FROM users WHERE username=?);`, [username], function(error, results, fields) {
+                if (error) {
+                    return res.send({
+                        success: false,
+                        message: error
+                    });
+                }
+                
                 if (!results || !results.length) {
                     return res.send({
                         success: false,
@@ -85,7 +92,7 @@ export default function userApiRoute(app, config, db, features, lang) {
 
     // TODO: Update docs
     app.get(baseEndpoint + '/notification/get', async function(req, res) {
-        isFeatureEnabled(features.user, res, lang);
+        isFeatureEnabled(features.user, res, features, lang);
         const username = req.session.user;
         
         try {
@@ -112,7 +119,7 @@ export default function userApiRoute(app, config, db, features, lang) {
 
     // TODO: Update docs
     app.post(baseEndpoint + '/notification/create', async function(req, res) {
-        isFeatureEnabled(features.user, res, lang);
+        isFeatureEnabled(features.user, res, features, lang);
         const username = required(req.body, "username", res);
         const body = required(req.body, "body", res);
         const link = required(req.body, "link", res);
@@ -138,6 +145,80 @@ export default function userApiRoute(app, config, db, features, lang) {
                 message: `${error}`
             });
         }        
+    });
+
+    // 
+    // IP Check
+    // Find all users that connected from a specific IP
+    // 
+    app.get(baseEndpoint + '/check/ip', async function(req, res) {
+        isFeatureEnabled(features.moderation.ipCheck, res, features, lang);
+        const ipAddress = required(req.query, "ipAddress");
+        
+        try {
+            db.query(`SELECT u.userId, u.uuid, u.username, gs.ipAddress FROM gamesessions gs LEFT JOIN users u ON gs.userId = u.userId WHERE gs.ipAddress = ?`, [ipAddress], function(error, results, fields) {
+                if (error) {
+                    return res.send({
+                        success: false,
+                        message: error
+                    });
+                }
+
+                if (!results || !results.length) {
+                    return res.send({
+                        success: false,
+                        message: `User has not logged in or IP address has not been used.`
+                    });
+                }
+                
+                res.send({
+                    success: true,
+                    data: results
+                });
+            });
+        } catch (error) {
+            return res.send({
+                success: false,
+                message: `${error}`
+            });
+        }
+    });
+
+    // 
+    // Alt Check
+    // Find all IP addresses a user has used to connect
+    // 
+    app.get(baseEndpoint + '/check/alts', async function(req, res) {
+        isFeatureEnabled(features.moderation.ipCheck, res, features, lang);
+        const username = required(req.query, "username");
+        
+        try {
+            db.query(`SELECT u.userId, u.uuid, u.username, gs.ipAddress FROM gamesessions gs LEFT JOIN users u ON gs.userId = u.userId WHERE u.username = ?;`, [username], function(error, results, fields) {
+                if (error) {
+                    return res.send({
+                        success: false,
+                        message: error
+                    });
+                }
+
+                if (!results || !results.length) {
+                    return res.send({
+                        success: false,
+                        message: `User has not logged in or IP address has not been used.`
+                    });
+                }
+                
+                res.send({
+                    success: true,
+                    data: results
+                });
+            });
+        } catch (error) {
+            return res.send({
+                success: false,
+                message: `${error}`
+            });
+        }
     });
 
 }

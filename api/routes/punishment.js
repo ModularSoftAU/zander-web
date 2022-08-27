@@ -4,7 +4,7 @@ export default function punishmentApiRoute(app, config, db, features, lang) {
     const baseEndpoint = config.siteConfiguration.apiRoute + '/punishment';
 
     app.post(baseEndpoint + '/issue', async function(req, res) {
-        isFeatureEnabled(features.punishments, res, lang);
+        isFeatureEnabled(features.punishments, res, features, lang);
         const playerUsername = required(req.body, "playerUsername", res);
         const staffUsername = required(req.body, "staffUsername", res);
         const platform = required(req.body, "platform", res);
@@ -17,7 +17,7 @@ export default function punishmentApiRoute(app, config, db, features, lang) {
     });
 
     app.post(baseEndpoint + '/delete', async function(req, res) {
-        isFeatureEnabled(features.punishments, res, lang);
+        isFeatureEnabled(features.punishments, res, features, lang);
         const punishmentId = required(req.body, "punishmentId", res);
 
         // ...
@@ -25,7 +25,7 @@ export default function punishmentApiRoute(app, config, db, features, lang) {
     });
 
     app.get(baseEndpoint + '/get', async function(req, res) {
-        isFeatureEnabled(features.punishments, res, lang);
+        isFeatureEnabled(features.punishments, res, features, lang);
 
         // ...
         res.send({ success: true });

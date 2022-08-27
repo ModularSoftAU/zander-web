@@ -4,6 +4,7 @@ export default function communityCreationApiRoute(app, config, db, features, lan
     const baseEndpoint = config.siteConfiguration.apiRoute + '/communitycreation';
 
     app.get(baseEndpoint + '/get', async function(req, res) {
+		isFeatureEnabled(features.communityCreations, res, features, lang);
         // Note: One or more of these could be null.
         const username = req.query.username;
         const creationId = req.query.id;
@@ -176,6 +177,7 @@ export default function communityCreationApiRoute(app, config, db, features, lan
     });
 
     app.post(baseEndpoint + '/submit', async function(req, res) {
+		isFeatureEnabled(features.communityCreations, res, features, lang);
         const creatorId = required(req.body, "creatorId", res);
         const creationName = optional(req.body, "creationName");
         const creationDescription = optional(req.body, "creationDescription");
@@ -219,6 +221,7 @@ export default function communityCreationApiRoute(app, config, db, features, lan
     });
     
     app.post(baseEndpoint + '/approve', async function(req, res) {
+		isFeatureEnabled(features.communityCreations, res, features, lang);
         const id = required(req.body, "id", res);
 
         try {
@@ -245,6 +248,7 @@ export default function communityCreationApiRoute(app, config, db, features, lan
     });
 
     app.post(baseEndpoint + '/delete', async function(req, res) {
+		isFeatureEnabled(features.communityCreations, res, features, lang);
         const creationId = required(req.body, "creationId", res);
 
         try {
@@ -271,6 +275,7 @@ export default function communityCreationApiRoute(app, config, db, features, lan
     });
 
     app.post(baseEndpoint + '/like', async function(req, res) {
+		isFeatureEnabled(features.communityCreations, res, features, lang);
         const userId = req.body.userId;
         const creationId = req.body.creationId;
 
@@ -298,6 +303,7 @@ export default function communityCreationApiRoute(app, config, db, features, lan
     });
 
     app.post(baseEndpoint + '/unlike', async function(req, res) {
+		isFeatureEnabled(features.communityCreations, res, features, lang);
         const userId = req.body.userId;
         const creationId = req.body.creationId;
 

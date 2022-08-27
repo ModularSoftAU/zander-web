@@ -5,7 +5,7 @@ export default function knowledgebaseApiRoute(app, config, db, features, lang) {
 
     // TODO: Update docs
     app.get(baseEndpoint + '/section/get', async function(req, res) {
-        isFeatureEnabled(features.knowledgebase, res, lang);
+        isFeatureEnabled(features.knowledgebase, res, features, lang);
         const sectionSlug = optional(req.query, "slug");
 
         try {
@@ -66,7 +66,7 @@ export default function knowledgebaseApiRoute(app, config, db, features, lang) {
     });
 
     app.get(baseEndpoint + '/article/get', async function(req, res) {
-        isFeatureEnabled(features.knowledgebase, res, lang);
+        isFeatureEnabled(features.knowledgebase, res, features, lang);
         const articleSlug = optional(req.query, "slug");
 
         // Search for all individual article using ?slug=
@@ -126,7 +126,7 @@ export default function knowledgebaseApiRoute(app, config, db, features, lang) {
     });
 
     app.post(baseEndpoint + '/section/create', async function(req, res) {
-        isFeatureEnabled(features.knowledgebase, res, lang);
+        isFeatureEnabled(features.knowledgebase, res, features, lang);
         const sectionSlug = required(req.body, "sectionSlug", res);
         const sectionName = required(req.body, "sectionName", res);
         const sectionDescription = required(req.body, "sectionDescription", res);
@@ -160,7 +160,7 @@ export default function knowledgebaseApiRoute(app, config, db, features, lang) {
     });
 
     app.post(baseEndpoint + '/section/update', async function(req, res) {
-        isFeatureEnabled(features.knowledgebase, res, lang);
+        isFeatureEnabled(features.knowledgebase, res, features, lang);
         const slug = required(req.body, "slug", res);
         const sectionSlug = required(req.body, "sectionSlug", res);
         const sectionName = required(req.body, "sectionName", res);
@@ -194,7 +194,7 @@ export default function knowledgebaseApiRoute(app, config, db, features, lang) {
     });
 
     app.post(baseEndpoint + '/article/create', async function(req, res) {
-        isFeatureEnabled(features.knowledgebase, res, lang);
+        isFeatureEnabled(features.knowledgebase, res, features, lang);
         const articleSlug = required(req.body, "articleSlug", res);
         const articleName = required(req.body, "articleName", res);
         const articleDescription = required(req.body, "articleDescription", res);
@@ -234,7 +234,7 @@ export default function knowledgebaseApiRoute(app, config, db, features, lang) {
     });
 
     app.post(baseEndpoint + '/article/update', async function(req, res) {
-        isFeatureEnabled(features.knowledgebase, res, lang);
+        isFeatureEnabled(features.knowledgebase, res, features, lang);
                 
         const slug = required(req.body, "slug", res);
         const articleSlug = required(req.body, "articleSlug", res);
