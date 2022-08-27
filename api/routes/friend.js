@@ -5,7 +5,7 @@ export default function friendApiRoute(app, config, db, features, lang) {
 
     // TODO: Update docs
     app.post(baseEndpoint + '/get', async function(req, res) {
-        isFeatureEnabled(features.friends, res, lang);
+        isFeatureEnabled(features.friends, res, features, lang);
         const username = optional(req.query, "username");
 
         try {
@@ -38,7 +38,7 @@ export default function friendApiRoute(app, config, db, features, lang) {
     });
 
     app.post(baseEndpoint + '/request', async function(req, res) {
-        isFeatureEnabled(features.friends, res, lang);
+        isFeatureEnabled(features.friends, res, features, lang);
         const requestee = required(req.body, "requestee", res);
         const requestedUser = required(req.body, "requestedUser", res);
 
@@ -47,7 +47,7 @@ export default function friendApiRoute(app, config, db, features, lang) {
     });
 
     app.post(baseEndpoint + '/accept', async function(req, res) {
-        isFeatureEnabled(features.friends, res, lang);
+        isFeatureEnabled(features.friends, res, features, lang);
         const requestee = required(req.body, "requestee", res);
         const requestedUser = required(req.body, "requestedUser", res);
 
@@ -56,7 +56,7 @@ export default function friendApiRoute(app, config, db, features, lang) {
     });
 
     app.post(baseEndpoint + '/deny', async function(req, res) {
-        isFeatureEnabled(features.friends, res, lang);
+        isFeatureEnabled(features.friends, res, features, lang);
         const requestee = required(req.body, "requestee", res);
         const requestedUser = required(req.body, "requestedUser", res);
 
@@ -65,7 +65,7 @@ export default function friendApiRoute(app, config, db, features, lang) {
     });
 
     app.post(baseEndpoint + '/remove', async function(req, res) {
-        isFeatureEnabled(features.friends, res, lang);
+        isFeatureEnabled(features.friends, res, features, lang);
         const requestee = required(req.body, "requestee", res);
         const requestedUser = required(req.body, "requestedUser", res);
 
@@ -74,7 +74,7 @@ export default function friendApiRoute(app, config, db, features, lang) {
     });
 
     app.post(baseEndpoint + '/block', async function(req, res) {
-        isFeatureEnabled(features.friends, res, lang);
+        isFeatureEnabled(features.friends, res, features, lang);
         const requestee = required(req.body, "requestee", res);
         const requestedUser = required(req.body, "requestedUser", res);
 

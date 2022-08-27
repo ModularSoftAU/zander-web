@@ -55,6 +55,7 @@ import apiRedirectRoutes from './api/internal_redirect'
 // API token authentication
 import verifyToken from './api/routes/verifyToken'
 import { setTimeout } from 'timers';
+import { getGlobalImage } from './api/common';
 
 //
 // Application Boot
@@ -85,7 +86,8 @@ const buildApp = async () => {
             config: config,
             error: error,
             request: request,
-            features: features
+            features: features,
+            globalImage: getGlobalImage()
         });
     });
 

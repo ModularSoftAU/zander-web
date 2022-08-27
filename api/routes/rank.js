@@ -4,12 +4,12 @@ export default function rankApiRoute(app, config, db, features, lang) {
     const baseEndpoint = config.siteConfiguration.apiRoute + '/rank';
 
     app.get(baseEndpoint + '/get', async function(req, res) {
-		isFeatureEnabled(features.ranks, res, lang);
+		isFeatureEnabled(features.ranks, res, features, lang);
         const username = optional(req.query, "username");
         const rank = optional(req.query, "rank");
 		
 		// If the ?username= is used, get all ranks for that user
-		if(username) {
+		if (username) {
 			try {
 				db.query(`
 					SELECT
@@ -40,7 +40,7 @@ export default function rankApiRoute(app, config, db, features, lang) {
 		}
 		
 		// If the ?rank= is used, get all users with that rank
-		if(rank) {
+		if (rank) {
 			try {
 				db.query(`
 					SELECT
@@ -79,6 +79,8 @@ export default function rankApiRoute(app, config, db, features, lang) {
 		
         try {
             db.query(`SELECT * FROM ranks`, function(error, results, fields) {
+				console.log(results);
+
                 if (error) {
                     return res.send({
                         success: false,

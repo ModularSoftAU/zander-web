@@ -4,7 +4,7 @@ export default function applicationApiRoute(app, config, db, features, lang) {
     const baseEndpoint = config.siteConfiguration.apiRoute + '/application';
 
     app.get(baseEndpoint + '/get', async function(req, res) {
-        isFeatureEnabled(features.applications, res, lang);
+        isFeatureEnabled(features.applications, res, features, lang);
         const id = optional(req.query, "id");
 
         try {
@@ -50,7 +50,7 @@ export default function applicationApiRoute(app, config, db, features, lang) {
     });
 
     app.post(baseEndpoint + '/create', async function(req, res) {
-        isFeatureEnabled(features.applications, res, lang);
+        isFeatureEnabled(features.applications, res, features, lang);
         const displayName = required(req.body, "displayName", res);
         const description = required(req.body, "description", res);
         const displayIcon = required(req.body, "displayIcon", res);
@@ -88,7 +88,7 @@ export default function applicationApiRoute(app, config, db, features, lang) {
     });
 
     app.post(baseEndpoint + '/edit', async function(req, res) {
-        isFeatureEnabled(features.applications, res, lang);
+        isFeatureEnabled(features.applications, res, features, lang);
         const applicationId = required(req.body, "applicationId", res);
         const displayName = required(req.body, "displayName", res);
         const description = required(req.body, "description", res);
@@ -136,7 +136,7 @@ export default function applicationApiRoute(app, config, db, features, lang) {
     });
 
     app.post(baseEndpoint + '/delete', async function(req, res) {
-        isFeatureEnabled(features.applications, res, lang);
+        isFeatureEnabled(features.applications, res, features, lang);
         const applicationId = required(req.body, "applicationId", res);
 
         console.log(applicationId);

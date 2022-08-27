@@ -4,7 +4,7 @@ export default function appealApiRoute(app, config, db, features, lang) {
     const baseEndpoint = config.siteConfiguration.apiRoute + '/appeal';
 
     app.post(baseEndpoint + '/create', async function(req, res) {
-        isFeatureEnabled(features.appeals, res, lang);
+        isFeatureEnabled(features.appeals, res, features, lang);
         const punishmentId = required(req.body, "punishmentId", res);
 
         // ...
@@ -12,7 +12,7 @@ export default function appealApiRoute(app, config, db, features, lang) {
     });
 
     app.get(baseEndpoint + '/get', async function(req, res) {
-        isFeatureEnabled(features.appeals, res, lang);
+        isFeatureEnabled(features.appeals, res, features, lang);
         const punishmentId = optional(req.query, "punishmentId");
 
         // ...
@@ -20,7 +20,7 @@ export default function appealApiRoute(app, config, db, features, lang) {
     });
 
     app.post(baseEndpoint + '/comment', async function(req, res) {
-        isFeatureEnabled(features.appeals, res, lang);
+        isFeatureEnabled(features.appeals, res, features, lang);
         const punishmentId = required(req.body, "punishmentId", res);
         const staffId = optional(req.body, "staffId");
         const content = required(req.body, "content", res);
@@ -30,7 +30,7 @@ export default function appealApiRoute(app, config, db, features, lang) {
     });
 
     app.post(baseEndpoint + '/accept', async function(req, res) {
-        isFeatureEnabled(features.appeals, res, lang);
+        isFeatureEnabled(features.appeals, res, features, lang);
         const punishmentId = required(req.body, "punishmentId", res);
         const staffId = required(req.body, "staffId", res);
         const content = optional(req.body, "content");
@@ -40,7 +40,7 @@ export default function appealApiRoute(app, config, db, features, lang) {
     });
 
     app.post(baseEndpoint + '/deny', async function(req, res) {
-        isFeatureEnabled(features.appeals, res, lang);
+        isFeatureEnabled(features.appeals, res, features, lang);
         const punishmentId = required(req.body, "punishmentId", res);
         const staffId = required(req.body, "staffId", res);
         const content = optional(req.body, "content");
@@ -50,7 +50,7 @@ export default function appealApiRoute(app, config, db, features, lang) {
     });
 
     app.post(baseEndpoint + '/escalate', async function(req, res) {
-        isFeatureEnabled(features.appeals, res, lang);
+        isFeatureEnabled(features.appeals, res, features, lang);
         const punishmentId = required(req.body, "punishmentId", res);
         const staffId = required(req.body, "staffId", res);
         const content = optional(req.body, "content");
@@ -60,7 +60,7 @@ export default function appealApiRoute(app, config, db, features, lang) {
     });
 
     app.post(baseEndpoint + '/deescalate', async function(req, res) {
-        isFeatureEnabled(features.appeals, res, lang);
+        isFeatureEnabled(features.appeals, res, features, lang);
         const punishmentId = required(req.body, "punishmentId", res);
         const staffId = required(req.body, "staffId", res);
         const content = optional(req.body, "content");

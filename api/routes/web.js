@@ -5,7 +5,7 @@ export default function webApiRoute(app, config, db, features, lang) {
     const baseEndpoint = config.siteConfiguration.apiRoute + '/web';
 
     app.post(baseEndpoint + '/register/create', async function(req, res) {
-        isFeatureEnabled(features.web.register, res, lang);
+        isFeatureEnabled(features.web.register, res, features, lang);
 
         const username = required(req.body, "username", res);
         const email = required(req.body, "email", res);
@@ -85,7 +85,7 @@ export default function webApiRoute(app, config, db, features, lang) {
     });
 
     app.post(baseEndpoint + '/register/verify', async function(req, res) {
-        isFeatureEnabled(features.web.register, res, lang);
+        isFeatureEnabled(features.web.register, res, features, lang);
         const username = required(req.body, "username", res);
         const verificationToken = required(req.body, "verificationToken", res);
 
@@ -94,7 +94,7 @@ export default function webApiRoute(app, config, db, features, lang) {
     });
 
     app.post(baseEndpoint + '/forgot', async function(req, res) {
-        isFeatureEnabled(features.web.register, res, lang);
+        isFeatureEnabled(features.web.register, res, features, lang);
         const username = required(req.body, "username", res);
 
         // ...

@@ -18,6 +18,7 @@
     },
     "knowledgebase": true,
     "servers": true,
+    "ranks": false,
     "report": true,
     "filter": {
         "link": true,

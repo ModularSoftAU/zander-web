@@ -5,7 +5,7 @@ export default function shoppingDistrictDirectoryApiRoute(app, config, db, featu
     const baseEndpoint = config.siteConfiguration.apiRoute + '/shop';
 
     app.get(baseEndpoint + '/get', async function(req, res) {
-        isFeatureEnabled(features.shops, res, lang);
+        isFeatureEnabled(features.shops, res, features, lang);
 
         try {
             db.query(`SELECT * FROM shops;`, function(error, results, fields) {
@@ -30,7 +30,7 @@ export default function shoppingDistrictDirectoryApiRoute(app, config, db, featu
     });
 
     app.post(baseEndpoint + '/create', async function(req, res) {
-        isFeatureEnabled(features.shops, res, lang);
+        isFeatureEnabled(features.shops, res, features, lang);
         const shopOwner = required(req.body, "shopOwner", res);
         const shopName = required(req.body, "shopName", res);
         const shopDescription = required(req.body, "shopDescription", res);
@@ -61,7 +61,7 @@ export default function shoppingDistrictDirectoryApiRoute(app, config, db, featu
     });
 
     app.post(baseEndpoint + '/edit', async function(req, res) {
-        isFeatureEnabled(features.shops, res, lang);
+        isFeatureEnabled(features.shops, res, features, lang);
         const shopId = required(req.body, "shopId", res);
         const shopOwner = required(req.body, "shopOwner", res);
         const shopName = required(req.body, "shopName", res);
@@ -73,7 +73,7 @@ export default function shoppingDistrictDirectoryApiRoute(app, config, db, featu
     });
 
     app.post(baseEndpoint + '/delete', async function(req, res) {
-        isFeatureEnabled(features.shops, res, lang);
+        isFeatureEnabled(features.shops, res, features, lang);
         const shopId = required(req.body, "shopId", res);
 
         try {
@@ -99,7 +99,7 @@ export default function shoppingDistrictDirectoryApiRoute(app, config, db, featu
     });
 
     app.post(baseEndpoint + '/items/create', async function(req, res) {
-        isFeatureEnabled(features.shops, res, lang);
+        isFeatureEnabled(features.shops, res, features, lang);
         const shopId = required(req.body, "shopId");
         const shopItem = required(req.body, "shopItem", res);
         const shopPrice = required(req.body, "shopPrice", res);
@@ -110,7 +110,7 @@ export default function shoppingDistrictDirectoryApiRoute(app, config, db, featu
     });
 
     app.post(baseEndpoint + '/items/edit', async function(req, res) {
-        isFeatureEnabled(features.shops, res, lang);
+        isFeatureEnabled(features.shops, res, features, lang);
         const shopId = required(req.body, "shopId")
         const shopItemId = required(req.body, "shopItemId", res);
         const shopItem = required(req.body, "shopItem", res);
@@ -122,7 +122,7 @@ export default function shoppingDistrictDirectoryApiRoute(app, config, db, featu
     });
 
     app.post(baseEndpoint + '/items/delete', async function(req, res) {
-        isFeatureEnabled(features.shops, res, lang);
+        isFeatureEnabled(features.shops, res, features, lang);
         const shopId = required(req.body, "shopId")
         const shopItemId = required(req.body, "shopItemId", res);
 
