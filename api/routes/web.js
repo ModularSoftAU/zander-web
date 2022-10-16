@@ -119,15 +119,18 @@ export default function webApiRoute(app, config, db, features, lang) {
         db.query(`
             SELECT COUNT(*) AS communityMembers FROM users;
             SELECT CONVERT(SUM(TIMESTAMPDIFF(minute, sessionStart, sessionEnd)), time) AS timePlayed FROM gamesessions;
+            SELECT COUNT(DISTINCT(u.uuid)) totalStaff FROM userRanks ur JOIN ranks r ON ur.rankSlug = r.rankSlug JOIN users u ON u.uuid = ur.uuid WHERE r.isStaff = 1 AND u.disabled = 0;
         `, async function (err, results) {
             if (err) {
                 console.log(err);
             }
 
+            console.log(results[2]);
+
             // General
             let communityMembers = results[0][0].communityMembers;
-            let timePlayed = results[0][0].timePlayed;
-            let staffMembers = results[0][0].staffMembers;
+            let timePlayed = results[1][0].timePlayed;
+            let staffMembers = results[2][0].totalStaff;
 
             // Punishments
 
