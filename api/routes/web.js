@@ -124,14 +124,29 @@ export default function webApiRoute(app, config, db, features, lang) {
                 console.log(err);
             }
 
-            let communityMembers = results[0].communityMembers;
-            let timePlayed = results[0].timePlayed;
+            // General
+            let communityMembers = results[0][0].communityMembers;
+            let timePlayed = results[0][0].timePlayed;
+            let staffMembers = results[0][0].staffMembers;
+
+            // Punishments
+
+            // Appeal
             
             return res.send({
                 success: true,
                 data: {
-                    "communityMembers": communityMembers,
-                    "timePlayed": timePlayed,
+                    general: {
+                        "communityMembers": communityMembers,
+                        "timePlayed": timePlayed,
+                        "staffMembers": staffMembers,
+                    },
+                    punishments: {
+
+                    },
+                    appeal: {
+
+                    }
                 }
             });
         });
