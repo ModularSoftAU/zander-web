@@ -125,16 +125,13 @@ export default function webApiRoute(app, config, db, features, lang) {
                 console.log(err);
             }
 
-            console.log(results[2]);
-
             // General
             let communityMembers = results[0][0].communityMembers;
             let timePlayed = results[1][0].timePlayed;
             let staffMembers = results[2][0].totalStaff;
 
             // Punishments
-
-            // Appeal
+            
             
             return res.send({
                 success: true,
@@ -145,9 +142,6 @@ export default function webApiRoute(app, config, db, features, lang) {
                         "staffMembers": staffMembers,
                     },
                     punishments: {
-
-                    },
-                    appeal: {
 
                     }
                 }
