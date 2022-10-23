@@ -42,14 +42,15 @@ export function optional(body, field) {
     return body[field];
 }
 
-export function isFeatureWebRouteEnabled(isFeatureEnabled, request, reply, features) {
+export async function isFeatureWebRouteEnabled(isFeatureEnabled, request, reply, features) {
     if (!isFeatureEnabled) {
         reply.view('session/featureDisabled', {
             "pageTitle": `Feature Disabled`,
             config: config,
             request: request,
             reply: reply,
-            features: features
+            features: features,
+            globalImage: await getGlobalImage(),
         });
         return false;
     }
