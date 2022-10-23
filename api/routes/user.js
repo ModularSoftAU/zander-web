@@ -218,4 +218,79 @@ export default function userApiRoute(app, config, db, features, lang) {
         }
     });
 
+    // 
+    // Profile Update
+    // Update the specified users profile
+    // 
+    app.post(baseEndpoint + '/profile/update', async function (req, res) {
+        isFeatureEnabled(features.web.profiles, res, lang);
+        const username = required(req.body, "username");
+
+        try {
+            // db.query(`SELECT u.userId, u.uuid, u.username, gs.ipAddress FROM gamesessions gs LEFT JOIN users u ON gs.userId = u.userId WHERE u.username = ?;`, [username], function (error, results, fields) {
+                
+
+            //     res.send({
+            //         success: true,
+            //         data: results
+            //     });
+            // });
+        } catch (error) {
+            return res.send({
+                success: false,
+                message: `${error}`
+            });
+        }
+    });
+
+    // 
+    // Profile Platform
+    // Link Discord account to profile
+    // 
+    app.post(baseEndpoint + '/profile/platform/discord', async function (req, res) {
+        isFeatureEnabled(features.web.profilePlatform.discord, res, lang);
+        // const username = required(req.body, "username");
+
+        // try {
+        //     // db.query(`SELECT u.userId, u.uuid, u.username, gs.ipAddress FROM gamesessions gs LEFT JOIN users u ON gs.userId = u.userId WHERE u.username = ?;`, [username], function (error, results, fields) {
+
+
+        //     //     res.send({
+        //     //         success: true,
+        //     //         data: results
+        //     //     });
+        //     // });
+        // } catch (error) {
+        //     return res.send({
+        //         success: false,
+        //         message: `${error}`
+        //     });
+        // }
+    });
+
+    app.get(baseEndpoint + '/profile/platform/discord/callback', async function (req, res) {
+        isFeatureEnabled(features.web.profilePlatform.discord, res, lang);
+
+        console.log(req.body);
+        // const username = required(req.body, "username");
+
+        // try {
+        //     // db.query(`SELECT u.userId, u.uuid, u.username, gs.ipAddress FROM gamesessions gs LEFT JOIN users u ON gs.userId = u.userId WHERE u.username = ?;`, [username], function (error, results, fields) {
+
+
+        //     //     res.send({
+        //     //         success: true,
+        //     //         data: results
+        //     //     });
+        //     // });
+        // } catch (error) {
+        //     return res.send({
+        //         success: false,
+        //         message: `${error}`
+        //     });
+        // }
+    });
+
+
+
 }

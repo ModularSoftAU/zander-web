@@ -230,6 +230,31 @@ export default function applicationSiteRoutes(app, client, fetch, moment, config
     });
 
     // 
+    // Profile Editor
+    // 
+    app.get('/profile/edit', async function (request, reply) {
+        isFeatureWebRouteEnabled(features.web.profileEditor, request, reply, features);
+
+        // Get Player Profile Information
+        const profileFetchURL = `${config.siteConfiguration.siteAddress}${config.siteConfiguration.apiRoute}/user/get?username=${request.session.user.username}`;
+        const profileResponse = await fetch(profileFetchURL, {
+            headers: { 'x-access-token': process.env.apiKey }
+        });
+        const profileApiData = await profileResponse.json();
+
+        reply.view('modules/profile/profile-editor', {
+            "pageTitle": `${request.session.user.username}'s Profile`,
+            config: config,
+            moment: moment,
+            request: request,
+            profileApiData: profileApiData,
+            features: features,
+            globalImage: await getGlobalImage(),
+        });
+    });
+
+
+    // 
     // User Notifications
     // 
     app.get('/notifications', async function(request, reply) {
