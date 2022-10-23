@@ -58,11 +58,10 @@ export default function userApiRoute(app, config, db, features, lang) {
 
     // TODO: Update docs
     app.get(baseEndpoint + '/get', async function(req, res) {
-        isFeatureEnabled(features.user, res, lang);
         const username = required(req.query, "username");
         
         try {
-            db.query(`SELECT * FROM users WHERE uuid=(SELECT uuid FROM users WHERE username=?);`, [username], function(error, results, fields) {
+            db.query(`SELECT * FROM users WHERE username=?;`, [username], function(error, results, fields) {
                 if (error) {
                     return res.send({
                         success: false,
@@ -92,7 +91,6 @@ export default function userApiRoute(app, config, db, features, lang) {
 
     // TODO: Update docs
     app.get(baseEndpoint + '/notification/get', async function(req, res) {
-        isFeatureEnabled(features.user, res, lang);
         const username = req.session.user;
         
         try {
@@ -119,7 +117,6 @@ export default function userApiRoute(app, config, db, features, lang) {
 
     // TODO: Update docs
     app.post(baseEndpoint + '/notification/create', async function(req, res) {
-        isFeatureEnabled(features.user, res, lang);
         const username = required(req.body, "username", res);
         const body = required(req.body, "body", res);
         const link = required(req.body, "link", res);
@@ -189,7 +186,7 @@ export default function userApiRoute(app, config, db, features, lang) {
     // Find all IP addresses a user has used to connect
     // 
     app.get(baseEndpoint + '/check/alts', async function(req, res) {
-        isFeatureEnabled(features.moderation.ipCheck, res, lang);
+        isFeatureEnabled(features.moderation.altCheck, res, lang);
         const username = required(req.query, "username");
         
         try {

@@ -201,7 +201,7 @@ export default function applicationSiteRoutes(app, client, fetch, moment, config
     // Profile
     // 
     app.get('/profile/:username', async function(request, reply) {
-        isFeatureWebRouteEnabled(features.userProfiles, request, reply, features);
+        isFeatureWebRouteEnabled(features.web.profiles, request, reply, features);
 
         // Get Player Profile Information
         const profileFetchURL = `${config.siteConfiguration.siteAddress}${config.siteConfiguration.apiRoute}/user/get?username=${request.params.username}`;

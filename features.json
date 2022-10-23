@@ -25,7 +25,8 @@
     },
     "web": {
         "login": true,
-        "register": true
+        "register": true,
+        "profiles": true
     },
     "vote": true,
 

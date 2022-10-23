@@ -55,6 +55,7 @@ import apiRedirectRoutes from './api/internal_redirect'
 // API token authentication
 import verifyToken from './api/routes/verifyToken'
 import { setTimeout } from 'timers';
+import { getGlobalImage } from './api/common';
 
 //
 // Application Boot
@@ -79,13 +80,14 @@ const buildApp = async () => {
     // });
   
     // When app errors, render the error on a page, do not provide JSON
-    app.setErrorHandler((error, request, reply) => {        
+    app.setErrorHandler(async function (error, request, reply) {        
         reply.view('session/error', {
             "pageTitle": `Server Error`,
             config: config,
             error: error,
             request: request,
-            features: features
+            features: features,
+            globalImage: await getGlobalImage(),
         });
     });
 
