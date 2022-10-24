@@ -4,56 +4,63 @@ export default function userApiRoute(app, config, db, features, lang) {
     const baseEndpoint = config.siteConfiguration.apiRoute + '/user';
 
     app.post(baseEndpoint + '/create', async function(req, res) {
-        isFeatureEnabled(features.user, res, lang);
         const uuid = required(req.body, "uuid", res);
         const username = required(req.body, "username", res);
 
-        const userCreatedLang = lang.api.userCreated
+        const userCreatedLang = lang.api.userCreated;
 
-        try {
-            // shadowolf
-            // Check if user does not exist, we do this in case of testing we create multiple users on accident
-            db.query(`SELECT * FROM users WHERE uuid=?`, [uuid], function(error, results, fields) {
-                // If user exists, check that they haven't changed their username since their last login.
-                // If they have we update it in the database, so the display name is accurate.
-                if (results[0]) {
-                    db.query(`UPDATE users SET username=? WHERE uuid=?;`, [username, uuid], function(error, results, fields) {
-                        if (error) {
-                            return res.send({
-                                success: false,
-                                message: `${error}`
-                            });
-                        }
-                    });
+        console.log(uuid);
+        console.log(username);
 
-                    // If the user already exists, we terminate the creation of the user
-                    return res.send({
-                        success: false,
-                        message: lang.api.userAlreadyExists
-                    });
-                }
+        // shadowolf
+        // Check if user does not exist, we do this in case of testing we create multiple users on accident
+        db.query(`SELECT * FROM users WHERE uuid=?`, [uuid], function (error, results, fields) {
+            if (error) {
+                console.log(error);
+            }
 
-                // If user does not exist, create them
-                db.query(`INSERT INTO users (uuid, username) VALUES (?, ?)`, [uuid, username], function(error, results, fields) {
+            if (results[0]) {
+                // To ensure usernames are always accurate we set the username just in case the username changes.
+                db.query(`UPDATE users SET username=? WHERE uuid=?;`, [username, uuid], function (error, results, fields) {
                     if (error) {
                         return res.send({
                             success: false,
                             message: `${error}`
                         });
                     }
+                });
 
+                // If the user already exists, we terminate the creation of the user
+                return res.send({
+                    success: false,
+                    message: lang.api.userAlreadyExists
+                });
+            }
+
+            // If user does not exist, create them
+            db.query(`INSERT INTO users (uuid, username) VALUES (?, ?)`, [uuid, username], function (error, results, fields) {
+                if (error) {
                     return res.send({
-                        success: true,
-                        message: userCreatedLang.replace('%USERNAME%', username).replace('%UUID%', uuid)
+                        success: false,
+                        message: `${error}`
                     });
+                }
+
+                return res.send({
+                    success: true,
+                    message: userCreatedLang.replace('%USERNAME%', username).replace('%UUID%', uuid)
                 });
             });
-        } catch (error) {
-            return res.send({
-                success: false,
-                message: `${error}`
-            });
-        }
+        });
+
+        // try {
+            
+        // } catch (error) {
+        //     return res.send({
+        //         success: false,
+        //         message: `${error}`
+        //     });
+        // }
     });
 
     // TODO: Update docs
