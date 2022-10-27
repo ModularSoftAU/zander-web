@@ -224,7 +224,7 @@ export default function userApiRoute(app, config, db, features, lang) {
             });
         }
     });
-
+    
     // 
     // Profile Update
     // Update the specified users profile
@@ -278,7 +278,9 @@ export default function userApiRoute(app, config, db, features, lang) {
     app.get(baseEndpoint + '/profile/platform/discord/callback', async function (req, res) {
         isFeatureEnabled(features.web.profilePlatform.discord, res, lang);
 
-        console.log(req.body);
+        console.log(req);
+
+
         // const username = required(req.body, "username");
 
         // try {
@@ -297,7 +299,4 @@ export default function userApiRoute(app, config, db, features, lang) {
         //     });
         // }
     });
-
-
-
 }

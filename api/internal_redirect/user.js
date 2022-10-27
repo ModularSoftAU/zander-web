@@ -12,12 +12,11 @@ export default function userRedirectRoute(app, config, lang) {
         //     res
         // )
 
-        const tokenType = null;
+        const tokenType = "Bearer";
         const accessToken = req.query.code;
 
         console.log(req.query);
-        console.log(`Route is operational`);
-
+        
         const response = await fetch('https://discord.com/api/users/@me', {
             headers: {
                 authorization: `${tokenType} ${accessToken}`,
