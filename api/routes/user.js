@@ -4,9 +4,10 @@ export default function userApiRoute(app, config, db, features, lang) {
     const baseEndpoint = config.siteConfiguration.apiRoute + '/user';
 
     app.post(baseEndpoint + '/create', async function(req, res) {
-        isFeatureEnabled(features.user, res, lang);
+        isFeatureEnabled(features.web.login, res, features, lang);
         const uuid = required(req.body, "uuid", res);
         const username = required(req.body, "username", res);
+
 
         const userCreatedLang = lang.api.userCreated
 
@@ -149,7 +150,7 @@ export default function userApiRoute(app, config, db, features, lang) {
     // Find all users that connected from a specific IP
     // 
     app.get(baseEndpoint + '/check/ip', async function(req, res) {
-        isFeatureEnabled(features.moderation.ipCheck, res, lang);
+        isFeatureEnabled(features.moderation.ipCheck, res, features, lang);
         const ipAddress = required(req.query, "ipAddress");
         
         try {

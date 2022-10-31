@@ -120,18 +120,25 @@ export default function sessionSiteRoute(app, client, fetch, moment, config, db,
 	  }
 
       db.query(`select * from users where username=?`, [username], async function (err, results) {
-		let hashedPassword = results[0].password;
-
 		if (err) {
 			throw err;
 		}
+		
+		let hashedPassword = null;
+
+		let loginFailed = false;
+		if (!results.length) {
+			loginFailed = true;
+		} else {
+			hashedPassword = results[0].password;
+		}
 
 		// User has not logged in before.
-		if (!results.length || hashedPassword == null) {
-		  let notLoggedInBeforeLang = lang.web.notLoggedInBefore;
+		if (loginFailed || hashedPassword == null) {
+			let notLoggedInBeforeLang = lang.web.notLoggedInBefore;
 
-		  setBannerCookie("warning", notLoggedInBeforeLang.replace("%SITEADDRESS%", config.siteConfiguration.siteAddress), res);
-		  return res.redirect(`${config.siteConfiguration.siteAddress}/login`);
+			setBannerCookie("warning", notLoggedInBeforeLang.replace("%SITEADDRESS%", config.siteConfiguration.siteAddress), res);
+			return res.redirect(`${config.siteConfiguration.siteAddress}/login`);
 		}
 
 		// Check if passwords match
