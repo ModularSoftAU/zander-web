@@ -16,15 +16,15 @@ export default function userSiteRoute(app, client, fetch, moment, config, db, fe
 			auth: oauth2.DISCORD_CONFIGURATION
 		},
 		scope: ['identify'],
-		startRedirectPath: '/discord',
-		callbackUri: 'http://localhost:3000/user/oauth/discord/callback' // this URL must be exposed
+		startRedirectPath: '/user/oauth/discord',
+		callbackUri: `${config.siteConfiguration.siteAddress}/user/oauth/discord/callback` // this URL must be exposed
 	})
 
 
 	// 
 	// 
 	// 
-	app.get('/user/profile/oauth/discord/callback', async function (request, reply) {
+	app.get('/user/oauth/discord/callback', async function (request, reply) {
 		if (!isFeatureWebRouteEnabled(features.web.login, request, reply, features))
 			return;
 		
@@ -36,10 +36,10 @@ export default function userSiteRoute(app, client, fetch, moment, config, db, fe
 		return token
 	});
 
-	app.post('/login', async function (req, res) {
-		if (!isFeatureWebRouteEnabled(features.web.login, req, res, features))
-			return;
+	// app.post('/login', async function (req, res) {
+	// 	if (!isFeatureWebRouteEnabled(features.web.login, req, res, features))
+	// 		return;
 
-	});
+	// });
 
 }
