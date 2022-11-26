@@ -1,8 +1,8 @@
 import db from '../controllers/databaseController';
 
-export function linkUserDiscordID(discordID, request, reply) {    
+export function linkUserDiscordID(discordID, req, reply) {    
     try {        
-        db.query(`UPDATE users SET discordID=? WHERE username=?;`, [discordID, request.session.user.username], function (error, results, fields) {
+        db.query(`UPDATE users SET discordID=? WHERE username=?;`, [discordID, req.session.user.username], function (error, results, fields) {
             if (error) {
                 return reply.send({
                     success: false,
@@ -10,7 +10,7 @@ export function linkUserDiscordID(discordID, request, reply) {
                 });
             }
             
-            request.session.user.discordID = discordID;
+            req.session.user.discordID = discordID;
 
             if (!results || !results.length) {
                 return reply.send({
@@ -33,9 +33,9 @@ export function linkUserDiscordID(discordID, request, reply) {
     }
 }
 
-export function unlinkUserDiscordID(discordID, request, reply) {
+export function unlinkUserDiscordID(discordID, req, reply) {
     try {
-        db.query(`UPDATE users SET discordID=? WHERE username=? AND discordID=?;`, [null, request.session.user.username, discordID], function (error, results, fields) {
+        db.query(`UPDATE users SET discordID=? WHERE username=? AND discordID=?;`, [null, req.session.user.username, discordID], function (error, results, fields) {
             if (error) {
                 return reply.send({
                     success: false,
@@ -43,7 +43,7 @@ export function unlinkUserDiscordID(discordID, request, reply) {
                 });
             }
 
-            request.session.user.discordID = null;
+            req.session.user.discordID = null;
 
             if (!results || !results.length) {
                 return reply.send({

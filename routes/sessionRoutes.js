@@ -6,27 +6,27 @@ export default function sessionSiteRoute(app, client, fetch, moment, config, db,
     // 
     // Session
     // 
-    app.get('/login', async function(request, reply) {
-		if (!isFeatureWebRouteEnabled(features.web.login, request, reply, features))
+	app.get('/login', async function (req, reply) {
+		if (!isFeatureWebRouteEnabled(features.web.login, req, reply, features))
 			return;
 
         reply.view('session/login', {
             "pageTitle": `Login`,
             config: config,
-            request: request,
+			req: req,
             features: features,
 			globalImage: await getGlobalImage(),
         });
     });
 
-    app.get('/register', async function(request, reply) {
-		if (!isFeatureWebRouteEnabled(features.web.register, request, reply, features))
+	app.get('/register', async function (req, reply) {
+		if (!isFeatureWebRouteEnabled(features.web.register, req, reply, features))
 			return;
 		
         reply.view('session/register', {
             "pageTitle": `Register`,
             config: config,
-            request: request,
+			req: req,
             features: features,
 			globalImage: await getGlobalImage(),
         });

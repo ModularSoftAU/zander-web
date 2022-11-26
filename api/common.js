@@ -42,12 +42,12 @@ export function optional(body, field) {
     return body[field];
 }
 
-export async function isFeatureWebRouteEnabled(isFeatureEnabled, request, reply, features) {
+export async function isFeatureWebRouteEnabled(isFeatureEnabled, req, reply, features) {
     if (!isFeatureEnabled) {
         reply.view('session/featureDisabled', {
             "pageTitle": `Feature Disabled`,
             config: config,
-            request: request,
+            req: req,
             reply: reply,
             features: features,
             globalImage: await getGlobalImage(),
@@ -57,24 +57,24 @@ export async function isFeatureWebRouteEnabled(isFeatureEnabled, request, reply,
     return true;
 }
 
-export function isLoggedIn(request) {
-    if (request.session.user) return true;
+export function isLoggedIn(req) {
+    if (req.session.user) return true;
     else return false;
 }
 
-export function hasPermission(permissionNode, request, reply, features) {
-    if (!isLoggedIn(request)) {
+export function hasPermission(permissionNode, req, reply, features) {
+    if (!isLoggedIn(req)) {
         reply.view('session/noPermission', {
             "pageTitle": `Access Restricted`,
             config: config,
-            request: request,
+            req: req,
             reply: reply,
             features: features
         });
         return false;
     }
 
-    const userPermissions = request.session.user.permissions;
+    const userPermissions = req.session.user.permissions;
 
     function hasSpecificPerm(node, permissionArray) {
         return userPermissions.some(node => node === permissionNode);
@@ -84,7 +84,7 @@ export function hasPermission(permissionNode, request, reply, features) {
         reply.view('session/noPermission', {
             "pageTitle": `Access Restricted`,
             config: config,
-            request: request,
+            req: req,
             reply: reply,
             features: features
         });

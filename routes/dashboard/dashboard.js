@@ -5,8 +5,8 @@ export default function dashbordSiteRoute(app, config, features, lang) {
     // 
     // Dashboard
     // 
-    app.get('/dashboard', async function(request, reply) {
-        if (!hasPermission('zander.web.dashboard', request, reply, features))
+    app.get('/dashboard', async function (req, reply) {
+        if (!hasPermission('zander.web.dashboard', req, reply, features))
             return;
 
         reply.view('dashboard/indexViewNetwork', {
@@ -16,8 +16,8 @@ export default function dashbordSiteRoute(app, config, features, lang) {
         });
     });
 
-    app.get('/dashboard/view/network', async function(request, reply) {
-        if (!hasPermission('zander.web.dashboard', request, reply, features))
+    app.get('/dashboard/view/network', async function (req, reply) {
+        if (!hasPermission('zander.web.dashboard', req, reply, features))
             return;
 
         reply.view('dashboard/indexViewNetwork', {
@@ -27,8 +27,8 @@ export default function dashbordSiteRoute(app, config, features, lang) {
         });
     });
 
-    app.get('/dashboard/view/punishment', async function(request, reply) {
-        if (!hasPermission('zander.web.dashboard', request, reply, features))
+    app.get('/dashboard/view/punishment', async function (req, reply) {
+        if (!hasPermission('zander.web.dashboard', req, reply, features))
             return;
 
         reply.view('dashboard/indexViewPunishment', {
@@ -41,8 +41,8 @@ export default function dashbordSiteRoute(app, config, features, lang) {
     // 
     // Player Check
     // 
-    app.get('/dashboard/user/check', async function(request, reply) {
-        if (!hasPermission('zander.web.moderation.user', request, reply, features))
+    app.get('/dashboard/user/check', async function (req, reply) {
+        if (!hasPermission('zander.web.moderation.user', req, reply, features))
             return;
 
         reply.view('dashboard/usercheck', {

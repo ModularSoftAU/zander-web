@@ -4,11 +4,11 @@ export default function dashboardAnnouncementSiteRoute(app, fetch, config, db, f
     // 
     // Servers
     // 
-    app.get('/dashboard/announcements', async function(request, reply) {
-        if (!isFeatureWebRouteEnabled(features.announcements, request, reply, features))
+    app.get('/dashboard/announcements', async function (req, reply) {
+        if (!isFeatureWebRouteEnabled(features.announcements, req, reply, features))
             return;
         
-        if (!hasPermission('zander.web.announcements', request, reply, features))
+        if (!hasPermission('zander.web.announcements', req, reply, features))
             return;
 
         const fetchURL = `${config.siteConfiguration.siteAddress}${config.siteConfiguration.apiRoute}/announcement/get`;
@@ -22,15 +22,15 @@ export default function dashboardAnnouncementSiteRoute(app, fetch, config, db, f
             config: config,
             apiData: apiData,
             features: features,
-            request: request
+            req: req
         });
     });
 
-    app.get('/dashboard/announcements/create', async function(request, reply) {
-        if (!isFeatureWebRouteEnabled(features.announcements, request, reply, features))
+    app.get('/dashboard/announcements/create', async function (req, reply) {
+        if (!isFeatureWebRouteEnabled(features.announcements, req, reply, features))
             return;
         
-        if (!hasPermission('zander.web.announcements', request, reply, features))
+        if (!hasPermission('zander.web.announcements', req, reply, features))
             return;
                 
         reply.view('dashboard/announcements/editor', {
@@ -41,14 +41,14 @@ export default function dashboardAnnouncementSiteRoute(app, fetch, config, db, f
         });
     });
 
-    app.get('/dashboard/announcements/edit', async function(request, reply) {
-        if (!isFeatureWebRouteEnabled(features.announcements, request, reply, features))
+    app.get('/dashboard/announcements/edit', async function (req, reply) {
+        if (!isFeatureWebRouteEnabled(features.announcements, req, reply, features))
             return;
         
-        if (!hasPermission('zander.web.announcements', request, reply, features))
+        if (!hasPermission('zander.web.announcements', req, reply, features))
             return;
         
-        const announcementSlug = request.query.announcementSlug;
+        const announcementSlug = req.query.announcementSlug;
         const fetchURL = `${config.siteConfiguration.siteAddress}${config.siteConfiguration.apiRoute}/announcement/get?announcementSlug=${announcementSlug}`;
         const response = await fetch(fetchURL, {
             headers: { 'x-access-token': process.env.apiKey }

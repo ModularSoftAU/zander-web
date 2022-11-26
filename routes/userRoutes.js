@@ -26,11 +26,11 @@ export default function userSiteRoute(app, client, fetch, moment, config, db, fe
 	// Discord
 	// Callback to connect ID to profile
 	// 
-	app.get('/user/oauth/discord/callback', async function (request, reply) {
-		if (!isFeatureWebRouteEnabled(features.web.login, request, reply, features))
+	app.get('/user/oauth/discord/callback', async function (req, reply) {
+		if (!isFeatureWebRouteEnabled(features.web.login, req, reply, features))
 			return;
 		
-		const token = await this.discordOAuth2.getAccessTokenFromAuthorizationCodeFlow(request);
+		const token = await this.discordOAuth2.getAccessTokenFromAuthorizationCodeFlow(req);
 
 		const response = await fetch(`https://discord.com/api/users/@me`, {
 			method: 'GET',
@@ -43,7 +43,7 @@ export default function userSiteRoute(app, client, fetch, moment, config, db, fe
 		let discordID = data.id;
 
 		if (discordID) {
-			linkUserDiscordID(discordID, request, reply);
+			linkUserDiscordID(discordID, req, reply);
 			setBannerCookie("success", "The Discord account is now connected.", reply);
 			reply.redirect(`${config.siteConfiguration.siteAddress}/profile/edit`);
 		} else {
@@ -56,13 +56,13 @@ export default function userSiteRoute(app, client, fetch, moment, config, db, fe
 	// Discord
 	// Callback to disconnect ID to profile
 	// 
-	app.get(`/user/oauth/discord/disconnect/:discordId`, async function (request, reply) {
-		if (!isFeatureWebRouteEnabled(features.web.login, request, reply, features))
+	app.get(`/user/oauth/discord/disconnect/:discordId`, async function (req, reply) {
+		if (!isFeatureWebRouteEnabled(features.web.login, req, reply, features))
 			return;
 
-		const userDiscordId = request.params.discordId;
+		const userDiscordId = req.params.discordId;
 		
-		unlinkUserDiscordID(userDiscordId, request, reply);
+		unlinkUserDiscordID(userDiscordId, req, reply);
 		setBannerCookie("success", "The Discord account is now connected.", reply);
 		reply.redirect(`${config.siteConfiguration.siteAddress}/profile/edit`);
 	});

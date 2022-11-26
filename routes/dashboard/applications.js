@@ -5,11 +5,11 @@ export default function dashboardApplicationsSiteRoute(app, fetch, config, db, f
     // 
     // Applications
     // 
-    app.get('/dashboard/applications', async function(request, reply) {
-        if (!isFeatureWebRouteEnabled(features.applications, request, reply, features))
+    app.get('/dashboard/applications', async function (req, reply) {
+        if (!isFeatureWebRouteEnabled(features.applications, req, reply, features))
             return;
         
-        if (!hasPermission('zander.web.application', request, reply, features))
+        if (!hasPermission('zander.web.application', req, reply, features))
             return;
 
         const fetchURL = `${config.siteConfiguration.siteAddress}${config.siteConfiguration.apiRoute}/application/get`;
@@ -23,15 +23,15 @@ export default function dashboardApplicationsSiteRoute(app, fetch, config, db, f
             config: config,
             apiData: apiData,
             features: features,
-            request: request
+            req: req
         });
     });
 
-    app.get('/dashboard/applications/create', async function(request, reply) {
-        if (!isFeatureWebRouteEnabled(features.applications, request, reply, features))
+    app.get('/dashboard/applications/create', async function (req, reply) {
+        if (!isFeatureWebRouteEnabled(features.applications, req, reply, features))
             return;
 
-        if (!hasPermission('zander.web.application', request, reply, features))
+        if (!hasPermission('zander.web.application', req, reply, features))
             return;
 
         reply.view('dashboard/applications/editor', {
@@ -42,14 +42,14 @@ export default function dashboardApplicationsSiteRoute(app, fetch, config, db, f
         });
     });
 
-    app.get('/dashboard/applications/edit', async function(request, reply) {
-        if (!isFeatureWebRouteEnabled(features.applications, request, reply, features))
+    app.get('/dashboard/applications/edit', async function (req, reply) {
+        if (!isFeatureWebRouteEnabled(features.applications, req, reply, features))
             return;
         
-        if (!hasPermission('zander.web.application', request, reply, features))
+        if (!hasPermission('zander.web.application', req, reply, features))
             return;
 
-        const id = request.query.id;
+        const id = req.query.id;
         const fetchURL = `${config.siteConfiguration.siteAddress}${config.siteConfiguration.apiRoute}/application/get?id=${id}`;
         const response = await fetch(fetchURL, {
             headers: { 'x-access-token': process.env.apiKey }

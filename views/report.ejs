@@ -13,7 +13,7 @@
 <section class="section">
   <div class="container" style="width: 50%;">
       <form method="post" action="<%= config.siteConfiguration.siteAddress %><%= config.siteConfiguration.redirectRoute %>/report/create">
-        <input type="hidden" name="reporterUser" value="<%= request.session.user.username %>">
+        <input type="hidden" name="reporterUser" value="<%= req.session.user.username %>">
 
         <!-- Reported User -->
         <label for="reportedUser">User to Report</label>

@@ -4,11 +4,11 @@ export default function dashboardKnowledgebaseSiteRoute(app, fetch, moment, conf
     // 
     // Knowledgebase
     // 
-    app.get('/dashboard/knowledgebase', async function(request, reply) {
-        if (!isFeatureWebRouteEnabled(features.knowledgebase, request, reply, features))
+    app.get('/dashboard/knowledgebase', async function (req, reply) {
+        if (!isFeatureWebRouteEnabled(features.knowledgebase, req, reply, features))
             return;
         
-        if (!hasPermission('zander.web.knowledgebase', request, reply, features))
+        if (!hasPermission('zander.web.knowledgebase', req, reply, features))
             return;
 
         // KB Article Data
@@ -38,11 +38,11 @@ export default function dashboardKnowledgebaseSiteRoute(app, fetch, moment, conf
     // Knowledgebase
     // Create a Section
     // 
-    app.get('/dashboard/knowledgebase/section/create', async function(request, reply) {
-        if (!isFeatureWebRouteEnabled(features.knowledgebase, request, reply, features))
+    app.get('/dashboard/knowledgebase/section/create', async function (req, reply) {
+        if (!isFeatureWebRouteEnabled(features.knowledgebase, req, reply, features))
             return;
         
-        if (!hasPermission('zander.web.knowledgebase', request, reply, features))
+        if (!hasPermission('zander.web.knowledgebase', req, reply, features))
             return;
 
         reply.view('dashboard/knowledgebase/sectionEditor', {
@@ -57,14 +57,14 @@ export default function dashboardKnowledgebaseSiteRoute(app, fetch, moment, conf
     // Knowledgebase
     // Edit a Section
     // 
-    app.get('/dashboard/knowledgebase/section/edit', async function(request, reply) {
-        if (!isFeatureWebRouteEnabled(features.knowledgebase, request, reply, features))
+    app.get('/dashboard/knowledgebase/section/edit', async function (req, reply) {
+        if (!isFeatureWebRouteEnabled(features.knowledgebase, req, reply, features))
             return;
         
-        if (!hasPermission('zander.web.knowledgebase', request, reply, features))
+        if (!hasPermission('zander.web.knowledgebase', req, reply, features))
             return;
 
-        const sectionSlug = request.query.slug;
+        const sectionSlug = req.query.slug;
         const fetchURL = `${config.siteConfiguration.siteAddress}${config.siteConfiguration.apiRoute}/knowledgebase/section/get?slug=${sectionSlug}`;
         const response = await fetch(fetchURL, {
             headers: { 'x-access-token': process.env.apiKey }
@@ -114,11 +114,11 @@ export default function dashboardKnowledgebaseSiteRoute(app, fetch, moment, conf
     // Knowledgebase
     // Create an article
     // 
-    app.get('/dashboard/knowledgebase/article/create', async function(request, reply) {
-        if (!isFeatureWebRouteEnabled(features.knowledgebase, request, reply, features))
+    app.get('/dashboard/knowledgebase/article/create', async function (req, reply) {
+        if (!isFeatureWebRouteEnabled(features.knowledgebase, req, reply, features))
             return;
         
-        if (!hasPermission('zander.web.knowledgebase', request, reply, features))
+        if (!hasPermission('zander.web.knowledgebase', req, reply, features))
             return;
 
         const fetchURL = `${config.siteConfiguration.siteAddress}${config.siteConfiguration.apiRoute}/knowledgebase/section/get`;
@@ -140,14 +140,14 @@ export default function dashboardKnowledgebaseSiteRoute(app, fetch, moment, conf
     // Knowledgebase
     // Edit a Article
     // 
-    app.get('/dashboard/knowledgebase/article/edit', async function(request, reply) {
-        if (!isFeatureWebRouteEnabled(features.knowledgebase, request, reply, features))
+    app.get('/dashboard/knowledgebase/article/edit', async function (req, reply) {
+        if (!isFeatureWebRouteEnabled(features.knowledgebase, req, reply, features))
             return;
         
-        if (!hasPermission('zander.web.knowledgebase', request, reply, features))
+        if (!hasPermission('zander.web.knowledgebase', req, reply, features))
             return;
         
-        const articleSlug = request.query.slug;
+        const articleSlug = req.query.slug;
         const fetchURL = `${config.siteConfiguration.siteAddress}${config.siteConfiguration.apiRoute}/knowledgebase/article/get?slug=${articleSlug}`;
         const response = await fetch(fetchURL, {
             headers: { 'x-access-token': process.env.apiKey }

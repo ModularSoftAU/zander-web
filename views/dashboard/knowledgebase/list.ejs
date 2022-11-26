@@ -21,10 +21,10 @@
                             </div>
                             <br>
                             <div class="card-body">
-                                <% if (request.cookies.alertType) { %>
+                                <% if (req.cookies.alertType) { %>
                                     <%- include("../../partials/alert.ejs", {
-                                      alertType: request.cookies.alertType,
-                                      content: request.cookies.alertContent
+                                      alertType: req.cookies.alertType,
+                                      content: req.cookies.alertContent
                                     }) %>
                                 <% } %>
                                 <div class="default-tab">

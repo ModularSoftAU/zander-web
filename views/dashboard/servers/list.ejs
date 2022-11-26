@@ -19,10 +19,10 @@
                                 <a href="/dashboard/servers/create"><button type="button" class="btn btn-sm btn-info">Create a Server</button></a>
                             </div>
                             <div class="card-body">
-                                <% if (request.cookies.alertType) { %>
+                                <% if (req.cookies.alertType) { %>
                                     <%- include("../../partials/alert.ejs", {
-                                      alertType: request.cookies.alertType,
-                                      content: request.cookies.alertContent
+                                      alertType: req.cookies.alertType,
+                                      content: req.cookies.alertContent
                                     }) %>
                                 <% } %>
                                 <table class="table">

@@ -15,7 +15,7 @@ export default function applicationSiteRoutes(app, client, fetch, moment, config
     userRoutes(app, client, fetch, moment, config, db, features, lang);
     policySiteRoutes(app, config, features);
 
-    app.get('/', async function(request, reply) {
+    app.get('/', async function (req, reply) {
         const fetchURL = `${config.siteConfiguration.siteAddress}${config.siteConfiguration.apiRoute}/web/statistics`;
         const response = await fetch(fetchURL, {
             headers: { 'x-access-token': process.env.apiKey }
@@ -25,7 +25,7 @@ export default function applicationSiteRoutes(app, client, fetch, moment, config
         return reply.view("modules/index/index", {
             "pageTitle": `${config.siteConfiguration.siteName}`,
             config: config,
-            request: request,
+            req: req,
             features: features,
             globalImage: await getGlobalImage(),
             statApiData: statApiData
@@ -35,8 +35,8 @@ export default function applicationSiteRoutes(app, client, fetch, moment, config
     // 
     // Play
     // 
-    app.get('/play', async function(request, reply) {
-        isFeatureWebRouteEnabled(features.servers, request, reply, features);
+    app.get('/play', async function (req, reply) {
+        isFeatureWebRouteEnabled(features.servers, req, reply, features);
 
         const fetchURL = `${config.siteConfiguration.siteAddress}${config.siteConfiguration.apiRoute}/server/get?visible=true`;
         const response = await fetch(fetchURL, {
@@ -47,7 +47,7 @@ export default function applicationSiteRoutes(app, client, fetch, moment, config
         return reply.view('modules/play/play', {
             "pageTitle": `Play`,
             config: config,
-            request: request,
+            req: req,
             apiData: apiData,
             features: features,
             globalImage: await getGlobalImage(),
@@ -57,8 +57,8 @@ export default function applicationSiteRoutes(app, client, fetch, moment, config
     // 
     // Apply
     // 
-    app.get('/apply', async function(request, reply) {
-        isFeatureWebRouteEnabled(features.applications, request, reply, features);
+    app.get('/apply', async function (req, reply) {
+        isFeatureWebRouteEnabled(features.applications, req, reply, features);
 
         const fetchURL = `${config.siteConfiguration.siteAddress}${config.siteConfiguration.apiRoute}/application/get`;
         const response = await fetch(fetchURL, {
@@ -69,7 +69,7 @@ export default function applicationSiteRoutes(app, client, fetch, moment, config
         reply.view('apply', {
             "pageTitle": `Apply`,
             config: config,
-            request: request,
+            req: req,
             apiData: apiData,
             features: features,
             globalImage: await getGlobalImage(),
@@ -79,8 +79,8 @@ export default function applicationSiteRoutes(app, client, fetch, moment, config
     // 
     // Events
     // 
-    app.get('/events', async function(request, reply) {
-        isFeatureWebRouteEnabled(features.events, request, reply, features);
+    app.get('/events', async function (req, reply) {
+        isFeatureWebRouteEnabled(features.events, req, reply, features);
 
         const fetchURL = `${config.siteConfiguration.siteAddress}${config.siteConfiguration.apiRoute}/event/get?published=show`;
         const response = await fetch(fetchURL, {
@@ -93,7 +93,7 @@ export default function applicationSiteRoutes(app, client, fetch, moment, config
             config: config,
             apiData: apiData,
             moment: moment,
-            request: request,
+            req: req,
             features: features,
             globalImage: await getGlobalImage(),
         });
@@ -102,7 +102,7 @@ export default function applicationSiteRoutes(app, client, fetch, moment, config
     // 
     // Vote
     // 
-    app.get('/vote', async function(request, reply) {
+    app.get('/vote', async function (req, reply) {
         const fetchURL = `${config.siteConfiguration.siteAddress}${config.siteConfiguration.apiRoute}/vote/get`;
         const response = await fetch(fetchURL, {
             headers: { 'x-access-token': process.env.apiKey }
@@ -112,7 +112,7 @@ export default function applicationSiteRoutes(app, client, fetch, moment, config
         reply.view('vote', {
             "pageTitle": `Vote`,
             config: config,
-            request: request,
+            req: req,
             features: features,
             apiData: apiData,
             globalImage: await getGlobalImage(),
@@ -122,11 +122,11 @@ export default function applicationSiteRoutes(app, client, fetch, moment, config
     // 
     // Staff
     // 
-    app.get('/staff', async function(request, reply) {
+    app.get('/staff', async function (req, reply) {
         reply.view('staff', {
             "pageTitle": `Staff`,
             config: config,
-            request: request,
+            req: req,
             features: features,
             globalImage: await getGlobalImage(),
         });
@@ -135,14 +135,14 @@ export default function applicationSiteRoutes(app, client, fetch, moment, config
     // 
     // Report
     // 
-    app.get('/report', async function(request, reply) {
-        isFeatureWebRouteEnabled(features.report, request, reply, features);
+    app.get('/report', async function (req, reply) {
+        isFeatureWebRouteEnabled(features.report, req, reply, features);
 
-        if (!isLoggedIn(request)) {
+        if (!isLoggedIn(req)) {
             return reply.view('session/notLoggedIn', {
                 "pageTitle": `Access Restricted`,
                 config: config,
-                request: request,
+                req: req,
                 reply: reply,
                 features: features,
                 globalImage: await getGlobalImage(),
@@ -160,7 +160,7 @@ export default function applicationSiteRoutes(app, client, fetch, moment, config
                 "pageTitle": `Server Error`,
                 config: config,
                 error: lang.error.noReportServers,
-                request: request,
+                req: req,
                 features: features,
                 globalImage: await getGlobalImage(),
             });
@@ -169,7 +169,7 @@ export default function applicationSiteRoutes(app, client, fetch, moment, config
         reply.view('report', {
             "pageTitle": `Report a Player`,
             config: config,
-            request: request,
+            req: req,
             serverApiData: serverApiData.data,
             features: features,
             globalImage: await getGlobalImage(),
@@ -179,19 +179,19 @@ export default function applicationSiteRoutes(app, client, fetch, moment, config
     // 
     // Report Specific
     // 
-    app.get('/report/:id', async function(request, reply) {
-        isFeatureWebRouteEnabled(features.report, request, reply, features);
+    app.get('/report/:id', async function (req, reply) {
+        isFeatureWebRouteEnabled(features.report, req, reply, features);
 
-        const fetchURL = `${config.siteConfiguration.siteAddress}${config.siteConfiguration.apiRoute}/report/get?reportId=${request.params.id}`;
+        const fetchURL = `${config.siteConfiguration.siteAddress}${config.siteConfiguration.apiRoute}/report/get?reportId=${req.params.id}`;
         const response = await fetch(fetchURL, {
             headers: { 'x-access-token': process.env.apiKey }
         });
         const apiData = await response.json();
 
         reply.view('reportView', {
-            "pageTitle": `#${request.params.id} Report Card`,
+            "pageTitle": `#${req.params.id} Report Card`,
             config: config,
-            request: request,
+            req: req,
             moment: moment,
             apiData: apiData,
             features: features,
@@ -202,18 +202,18 @@ export default function applicationSiteRoutes(app, client, fetch, moment, config
     // 
     // Profile
     // 
-    app.get('/profile/:username', async function(request, reply) {
-        isFeatureWebRouteEnabled(features.web.profiles, request, reply, features);
+    app.get('/profile/:username', async function (req, reply) {
+        isFeatureWebRouteEnabled(features.web.profiles, req, reply, features);
 
         // Get Player Profile Information
-        const profileFetchURL = `${config.siteConfiguration.siteAddress}${config.siteConfiguration.apiRoute}/user/get?username=${request.params.username}`;
+        const profileFetchURL = `${config.siteConfiguration.siteAddress}${config.siteConfiguration.apiRoute}/user/get?username=${req.params.username}`;
         const profileResponse = await fetch(profileFetchURL, {
             headers: { 'x-access-token': process.env.apiKey }
         });
         const profileApiData = await profileResponse.json();
 
         // Get Player Report Information
-        const reportFetchURL = `${config.siteConfiguration.siteAddress}${config.siteConfiguration.apiRoute}/report/get?username=${request.params.username}`;
+        const reportFetchURL = `${config.siteConfiguration.siteAddress}${config.siteConfiguration.apiRoute}/report/get?username=${req.params.username}`;
         const reportResponse = await fetch(reportFetchURL, {
             headers: { 'x-access-token': process.env.apiKey }
         });
@@ -223,7 +223,7 @@ export default function applicationSiteRoutes(app, client, fetch, moment, config
             "pageTitle": `${profileApiData.data[0].username}'s Profile`,
             config: config,
             moment: moment,
-            request: request,
+            req: req,
             profileApiData: profileApiData,
             reportApiData: reportApiData,
             features: features,
@@ -234,21 +234,21 @@ export default function applicationSiteRoutes(app, client, fetch, moment, config
     // 
     // Profile Editor
     // 
-    app.get('/profile/edit', async function (request, reply) {
-        isFeatureWebRouteEnabled(features.web.profileEditor, request, reply, features);
+    app.get('/profile/edit', async function (req, reply) {
+        isFeatureWebRouteEnabled(features.web.profileEditor, req, reply, features);
 
         // Get Player Profile Information
-        const profileFetchURL = `${config.siteConfiguration.siteAddress}${config.siteConfiguration.apiRoute}/user/get?username=${request.session.user.username}`;
+        const profileFetchURL = `${config.siteConfiguration.siteAddress}${config.siteConfiguration.apiRoute}/user/get?username=${req.session.user.username}`;
         const profileResponse = await fetch(profileFetchURL, {
             headers: { 'x-access-token': process.env.apiKey }
         });
         const profileApiData = await profileResponse.json();
 
         reply.view('modules/profile/profile-editor', {
-            "pageTitle": `${request.session.user.username}'s Profile`,
+            "pageTitle": `${req.session.user.username}'s Profile`,
             config: config,
             moment: moment,
-            request: request,
+            req: req,
             profileApiData: profileApiData,
             features: features,
             globalImage: await getGlobalImage(),
@@ -259,19 +259,19 @@ export default function applicationSiteRoutes(app, client, fetch, moment, config
     // 
     // User Notifications
     // 
-    app.get('/notifications', async function(request, reply) {
-        if (!isLoggedIn(request)) {
+    app.get('/notifications', async function (req, reply) {
+        if (!isLoggedIn(req)) {
             return reply.view('session/notLoggedIn', {
                 "pageTitle": `Access Restricted`,
                 config: config,
-                request: request,
+                req: req,
                 reply: reply,
                 features: features,
                 globalImage: await getGlobalImage(),
             });        
         }
 
-        const fetchURL = `${config.siteConfiguration.siteAddress}${config.siteConfiguration.apiRoute}/user/notification/get?username=${request.params.username}`;
+        const fetchURL = `${config.siteConfiguration.siteAddress}${config.siteConfiguration.apiRoute}/user/notification/get?username=${req.params.username}`;
         const response = await fetch(fetchURL, {
             headers: { 'x-access-token': process.env.apiKey }
         });
@@ -282,7 +282,7 @@ export default function applicationSiteRoutes(app, client, fetch, moment, config
             config: config,
             apiData: apiData,
             moment: moment,
-            request: request,
+            req: req,
             features: features,
             globalImage: await getGlobalImage(),
         });
@@ -291,13 +291,13 @@ export default function applicationSiteRoutes(app, client, fetch, moment, config
     // 
     // Punishments
     // 
-    app.get('/punishments', async function(request, reply) {
-        isFeatureWebRouteEnabled(features.punishments, request, reply, features);
+    app.get('/punishments', async function (req, reply) {
+        isFeatureWebRouteEnabled(features.punishments, req, reply, features);
 
         reply.view('punishments', {
             "pageTitle": `Punishments`,
             config: config,
-            request: request,
+            req: req,
             features: features,
             globalImage: await getGlobalImage(),
         });
@@ -306,24 +306,24 @@ export default function applicationSiteRoutes(app, client, fetch, moment, config
     // 
     // Appeal
     // 
-    app.get('/appeal', async function(request, reply) {
-        if (!isLoggedIn(request)) {
+    app.get('/appeal', async function (req, reply) {
+        if (!isLoggedIn(req)) {
             return reply.view('session/notLoggedIn', {
                 "pageTitle": `Access Restricted`,
                 config: config,
-                request: request,
+                req: req,
                 reply: reply,
                 features: features,
                 globalImage: await getGlobalImage(),
             });        
         }
         
-        isFeatureWebRouteEnabled(features.appeals, request, reply, features);
+        isFeatureWebRouteEnabled(features.appeals, req, reply, features);
 
         reply.view('appeal', {
             "pageTitle": `Appeal`,
             config: config,
-            request: request,
+            req: req,
             features: features,
             globalImage: await getGlobalImage(),
         });
@@ -332,27 +332,27 @@ export default function applicationSiteRoutes(app, client, fetch, moment, config
     // 
     // Discord Redirect
     // 
-    app.get('/discord', async function(request, reply) {
+    app.get('/discord', async function (req, reply) {
         reply.redirect(config.siteConfiguration.platforms.discord)
     });
 
     // 
     // Shopping District Directory
     // 
-    app.get('/shoppingDistrictDirectory', async function(request, reply) {
-        isFeatureWebRouteEnabled(features.shops, request, reply, features);
+    app.get('/shoppingDistrictDirectory', async function (req, reply) {
+        isFeatureWebRouteEnabled(features.shops, req, reply, features);
 
         reply.view('modules/shoppingDistrictDirectory/shoppingDistrictDirectory', {
             "pageTitle": `Shopping District Directory`,
             config: config,
-            request: request,
+            req: req,
             features: features,
             globalImage: await getGlobalImage(),
         });
     });
     
-    app.get('/shoppingDistrictDirectory/create', async function(request, reply) {
-        isFeatureWebRouteEnabled(features.shops, request, reply, features);
+    app.get('/shoppingDistrictDirectory/create', async function (req, reply) {
+        isFeatureWebRouteEnabled(features.shops, req, reply, features);
 
         // fs.readdir(path.join(__dirname, '../assets/images/minecraftItemImages'), function(err, files) {
         //     //handling error

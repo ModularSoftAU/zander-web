@@ -4,11 +4,11 @@ export default function dashboardServersSiteRoute(app, fetch, config, db, featur
     // 
     // Servers
     // 
-    app.get('/dashboard/servers', async function(request, reply) {
-        if (!isFeatureWebRouteEnabled(features.servers, request, reply, features))
+    app.get('/dashboard/servers', async function (req, reply) {
+        if (!isFeatureWebRouteEnabled(features.servers, req, reply, features))
             return;
         
-        if (!hasPermission('zander.web.server', request, reply, features))
+        if (!hasPermission('zander.web.server', req, reply, features))
             return;
 
         const fetchURL = `${config.siteConfiguration.siteAddress}${config.siteConfiguration.apiRoute}/server/get`;
@@ -22,15 +22,15 @@ export default function dashboardServersSiteRoute(app, fetch, config, db, featur
             config: config,
             apiData: apiData,
             features: features,
-            request: request
+            req: req
         });
     });
 
-    app.get('/dashboard/servers/create', async function(request, reply) {
-        if (!isFeatureWebRouteEnabled(features.servers, request, reply, features))
+    app.get('/dashboard/servers/create', async function (req, reply) {
+        if (!isFeatureWebRouteEnabled(features.servers, req, reply, features))
             return;
         
-        if (!hasPermission('zander.web.server', request, reply, features))
+        if (!hasPermission('zander.web.server', req, reply, features))
             return;
                 
         reply.view('dashboard/servers/editor', {
@@ -41,14 +41,14 @@ export default function dashboardServersSiteRoute(app, fetch, config, db, featur
         });
     });
 
-    app.get('/dashboard/servers/edit', async function(request, reply) {
-        if (!isFeatureWebRouteEnabled(features.servers, request, reply, features))
+    app.get('/dashboard/servers/edit', async function (req, reply) {
+        if (!isFeatureWebRouteEnabled(features.servers, req, reply, features))
             return;
         
-        if (!hasPermission('zander.web.server', request, reply, features))
+        if (!hasPermission('zander.web.server', req, reply, features))
             return;
         
-        const id = request.query.id;
+        const id = req.query.id;
         const fetchURL = `${config.siteConfiguration.siteAddress}${config.siteConfiguration.apiRoute}/server/get?id=${id}`;
         const response = await fetch(fetchURL, {
             headers: { 'x-access-token': process.env.apiKey }

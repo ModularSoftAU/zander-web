@@ -48,15 +48,15 @@
 				</li>
 			  <% } %>
 			  
-			  <% if (request.session?.user) { %>
+			  <% if (req.session?.user) { %>
 				<li class="nav-item"><a class="nav-link" href="/notifications"><i class="fas fa-bell"></i></a></li>
 
 				<li class="nav-item dropdown">
-					<a class="nav-link dropdown-toggle" href="#" id="dropdown02" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><img style="padding-right: 5px;" src="https://crafatar.com/avatars/<%= request.session.user.uuid %>?helm" height="20px" draggable="false">  <%= request.session.user.username %> <i class="icofont-thin-down"></i></a>
+					<a class="nav-link dropdown-toggle" href="#" id="dropdown02" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><img style="padding-right: 5px;" src="https://crafatar.com/avatars/<%= req.session.user.uuid %>?helm" height="20px" draggable="false">  <%= req.session.user.username %> <i class="icofont-thin-down"></i></a>
 					<ul class="dropdown-menu" aria-labelledby="dropdown02">
 						<li><a class="dropdown-item" href="/dashboard">Dashboard</a></li>
 						<% if (features.web.profiles) { %>
-							<li><a class="dropdown-item" href="/profile/<%= request.session.user.username %>">Profile</a></li>
+							<li><a class="dropdown-item" href="/profile/<%= req.session.user.username %>">Profile</a></li>
 						<% } %>
 						<% if (features.web.profileEditor) { %>
 							<li><a class="dropdown-item" href="/profile/edit">Edit Profile</a></li>

@@ -1,11 +1,11 @@
 <!-- Slider Start -->
 <section class="banner" style="background: url(<%= globalImage %>) no-repeat 50% 50%;">
 	<div class="container">
-		<% if (request.cookies.alertType) { %>
+		<% if (req.cookies.alertType) { %>
 			<br>
 			<%- include("../../partials/alert.ejs", {
-				alertType: request.cookies.alertType,
-				content: request.cookies.alertContent
+				alertType: req.cookies.alertType,
+				content: req.cookies.alertContent
 			}) %>
 		<% } %>
 

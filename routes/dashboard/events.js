@@ -4,11 +4,11 @@ export default function dashboardEventSiteRoute(app, client, fetch, moment, conf
     // 
     // Events
     // 
-    app.get('/dashboard/events', async function(request, reply) {
-        if (!isFeatureWebRouteEnabled(features.events, request, reply, features))
+    app.get('/dashboard/events', async function (req, reply) {
+        if (!isFeatureWebRouteEnabled(features.events, req, reply, features))
             return;
         
-        if (!hasPermission('zander.web.event', request, reply, features))
+        if (!hasPermission('zander.web.event', req, reply, features))
             return;
 
         const fetchURL = `${config.siteConfiguration.siteAddress}${config.siteConfiguration.apiRoute}/event/get?published=all`;
@@ -30,11 +30,11 @@ export default function dashboardEventSiteRoute(app, client, fetch, moment, conf
     // Events
     // Create Event
     // 
-    app.get('/dashboard/events/create', async function(request, reply) {
-        if (!isFeatureWebRouteEnabled(features.events, request, reply, features))
+    app.get('/dashboard/events/create', async function (req, reply) {
+        if (!isFeatureWebRouteEnabled(features.events, req, reply, features))
             return;
         
-        if (!hasPermission('zander.web.event', request, reply, features))
+        if (!hasPermission('zander.web.event', req, reply, features))
             return;
 
         const fetchURL = `${config.siteConfiguration.siteAddress}${config.siteConfiguration.apiRoute}/server/get?visible=all`;
@@ -56,14 +56,14 @@ export default function dashboardEventSiteRoute(app, client, fetch, moment, conf
     // Events
     // Edit an existing event
     // 
-    app.get('/dashboard/events/edit', async function(request, reply) {
-        if (!isFeatureWebRouteEnabled(features.events, request, reply, features))
+    app.get('/dashboard/events/edit', async function (req, reply) {
+        if (!isFeatureWebRouteEnabled(features.events, req, reply, features))
             return;
         
-        if (!hasPermission('zander.web.event', request, reply, features))
+        if (!hasPermission('zander.web.event', req, reply, features))
             return;
         
-        const eventId = request.query.id;
+        const eventId = req.query.id;
         const fetchURL = `${config.siteConfiguration.siteAddress}${config.siteConfiguration.apiRoute}/event/get?id=${eventId}`;
         const response = await fetch(fetchURL, {
             headers: { 'x-access-token': process.env.apiKey }
@@ -91,9 +91,9 @@ export default function dashboardEventSiteRoute(app, client, fetch, moment, conf
     // Events
     // Delete an existing event
     // 
-    app.post('/dashboard/events/delete', async function(request, reply) {
+    app.post('/dashboard/events/delete', async function (req, reply) {
         // db object can't reach here?
-        const eventId = request.body.eventId;
+        const eventId = req.body.eventId;
 
         try {
             db.query(`SELECT eventId FROM events WHERE eventId=?; DELETE FROM events WHERE eventId=?;`, [eventId, eventId], function(error, results, fields) {
@@ -125,8 +125,8 @@ export default function dashboardEventSiteRoute(app, client, fetch, moment, conf
     // Publish an existing event
     // NOTE: Once an event is published, it cannot be unpublished, it would have to be deleted.
     // 
-    app.post('/dashboard/events/publish', async function(request, reply) {
-        const eventId = request.body.eventId;
+    app.post('/dashboard/events/publish', async function (req, reply) {
+        const eventId = req.body.eventId;
 
         try {
             db.query(`SELECT * FROM events where eventId=? AND published=?; select name, icon, eventDateTime, information, (select name from servers where guildId=hostingServer) as 'hostingServerName' from events where eventId=?; UPDATE events SET published=? WHERE eventId=?`, [eventId, `1`, eventId, `1`, eventId], function(error, results, fields) {

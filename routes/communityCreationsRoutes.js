@@ -5,11 +5,11 @@ export default function communityCreationSiteRoute(app, client, fetch, moment, c
     // 
     // Community Creations
     // 
-    app.get('/communityCreations/:page?', async function (request, reply) {
-        if (!isFeatureWebRouteEnabled(features.communitycreations, request, reply))
+    app.get('/communityCreations/:page?', async function (req, reply) {
+        if (!isFeatureWebRouteEnabled(features.communitycreations, req, reply))
             return;
 
-        const fetchURL = `${config.siteConfiguration.siteAddress}${config.siteConfiguration.apiRoute}/communitycreation/get?page=${request.params.page || 1}`;
+        const fetchURL = `${config.siteConfiguration.siteAddress}${config.siteConfiguration.apiRoute}/communitycreation/get?page=${req.params.page || 1}`;
         const response = await fetch(fetchURL, {
             headers: { 'x-access-token': process.env.apiKey }
         });
@@ -18,7 +18,7 @@ export default function communityCreationSiteRoute(app, client, fetch, moment, c
         return reply.view('modules/communityCreation/communityCreation', {
             "pageTitle": `Community Creations`,
             config: config,
-            request: request,
+            req: req,
             moment: moment,
             apiData: apiData,
             features: features,
@@ -26,14 +26,14 @@ export default function communityCreationSiteRoute(app, client, fetch, moment, c
         });
     });
 
-    app.get('/communityCreation/submit', async function (request, reply) {
-        if (!isFeatureWebRouteEnabled(features.communitycreations, request, reply))
+    app.get('/communityCreation/submit', async function (req, reply) {
+        if (!isFeatureWebRouteEnabled(features.communitycreations, req, reply))
             return;
         
         reply.view('modules/communityCreation/submit', {
             "pageTitle": `Submit a Community Creation`,
             config: config,
-            request: request,
+            req: req,
             features: features,
             globalImage: await getGlobalImage(),
         });

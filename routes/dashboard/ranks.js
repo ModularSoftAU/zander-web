@@ -5,12 +5,12 @@ export default function dashboardRanksSiteRoute(app, fetch, config, features, la
     // 
     // Ranks
     // 
-    app.get('/dashboard/ranks', async function(request, reply) {
-        hasPermission('zander.web.rank', request, reply, features);
+    app.get('/dashboard/ranks', async function (req, reply) {
+        hasPermission('zander.web.rank', req, reply, features);
 
 		// Note: One or more of these could be null.
-        const username = request.query.username;
-        const rank = request.query.rank;
+        const username = req.query.username;
+        const rank = req.query.rank;
 		
         const fetchURL = `${config.siteConfiguration.siteAddress}${config.siteConfiguration.apiRoute}/rank/get`;
         const response = await fetch(fetchURL, {
@@ -26,10 +26,10 @@ export default function dashboardRanksSiteRoute(app, fetch, config, features, la
         });
     });
 
-    app.get('/dashboard/ranks/users', async function(request, reply) {
-        hasPermission('zander.web.rank', request, reply, features);
+    app.get('/dashboard/ranks/users', async function (req, reply) {
+        hasPermission('zander.web.rank', req, reply, features);
 
-		const rank = request.query.rank;
+        const rank = req.query.rank;
 		
 		const fetchURL = `${config.siteConfiguration.siteAddress}${config.siteConfiguration.apiRoute}/rank/get?rank=${rank}`;
 		const response = await fetch(fetchURL, {
