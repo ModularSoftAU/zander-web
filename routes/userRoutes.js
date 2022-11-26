@@ -26,8 +26,8 @@ export default function userSiteRoute(app, client, fetch, moment, config, db, fe
 	// Discord
 	// Callback to connect ID to profile
 	// 
-	app.get('/user/oauth/discord/callback', async function (req, reply) {
-		if (!isFeatureWebRouteEnabled(features.web.login, req, reply, features))
+	app.get('/user/oauth/discord/callback', async function (req, res) {
+		if (!isFeatureWebRouteEnabled(features.web.login, req, res, features))
 			return;
 		
 		const token = await this.discordOAuth2.getAccessTokenFromAuthorizationCodeFlow(req);
@@ -43,12 +43,12 @@ export default function userSiteRoute(app, client, fetch, moment, config, db, fe
 		let discordID = data.id;
 
 		if (discordID) {
-			linkUserDiscordID(discordID, req, reply);
-			setBannerCookie("success", "The Discord account is now connected.", reply);
-			reply.redirect(`${config.siteConfiguration.siteAddress}/profile/edit`);
+			linkUserDiscordID(discordID, req, res);
+			setBannerCookie("success", "The Discord account is now connected.", res);
+			res.redirect(`${config.siteConfiguration.siteAddress}/profile/edit`);
 		} else {
-			setBannerCookie("danger", "This didn't work, try again later.", reply);
-			reply.redirect(`${config.siteConfiguration.siteAddress}/profile/edit`);
+			setBannerCookie("danger", "This didn't work, try again later.", res);
+			res.redirect(`${config.siteConfiguration.siteAddress}/profile/edit`);
 		}
 	});
 
@@ -56,15 +56,15 @@ export default function userSiteRoute(app, client, fetch, moment, config, db, fe
 	// Discord
 	// Callback to disconnect ID to profile
 	// 
-	app.get(`/user/oauth/discord/disconnect/:discordId`, async function (req, reply) {
-		if (!isFeatureWebRouteEnabled(features.web.login, req, reply, features))
+	app.get(`/user/oauth/discord/disconnect/:discordId`, async function (req, res) {
+		if (!isFeatureWebRouteEnabled(features.web.login, req, res, features))
 			return;
 
 		const userDiscordId = req.params.discordId;
 		
-		unlinkUserDiscordID(userDiscordId, req, reply);
-		setBannerCookie("success", "The Discord account is now connected.", reply);
-		reply.redirect(`${config.siteConfiguration.siteAddress}/profile/edit`);
+		unlinkUserDiscordID(userDiscordId, req, res);
+		setBannerCookie("success", "The Discord account is now connected.", res);
+		res.redirect(`${config.siteConfiguration.siteAddress}/profile/edit`);
 	});
 
 }

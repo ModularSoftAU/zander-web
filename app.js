@@ -66,10 +66,10 @@ const buildApp = async () => {
     const port = process.env.PORT || config.port || 8080;
 
     // When app can't found route, render the not found on a page, do not provide JSON
-    // app.setNotFoundHandler((error, req, reply) => {
+    // app.setNotFoundHandler((error, req, res) => {
     //     if (error) {
-    //         reply.code(404);
-    //         reply.view('session/notFound', {
+    //         res.code(404);
+    //         res.view('session/notFound', {
     //             "pageTitle": `404 : Not Found`,
     //             config: config,
     //             moment: moment,
@@ -80,8 +80,8 @@ const buildApp = async () => {
     // });
   
     // When app errors, render the error on a page, do not provide JSON
-    app.setErrorHandler(async function (error, req, reply) {        
-        reply.view('session/error', {
+    app.setErrorHandler(async function (error, req, res) {        
+        res.view('session/error', {
             "pageTitle": `Server Error`,
             config: config,
             error: error,
@@ -135,7 +135,7 @@ const buildApp = async () => {
         next();
     });
 
-    app.addHook('preHandler', (req, reply, next) => {
+    app.addHook('preHandler', (req, res, next) => {
         req.session.authenticated = false;
         next();
     });

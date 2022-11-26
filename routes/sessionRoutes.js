@@ -6,11 +6,11 @@ export default function sessionSiteRoute(app, client, fetch, moment, config, db,
     // 
     // Session
     // 
-	app.get('/login', async function (req, reply) {
-		if (!isFeatureWebRouteEnabled(features.web.login, req, reply, features))
+	app.get('/login', async function (req, res) {
+		if (!isFeatureWebRouteEnabled(features.web.login, req, res, features))
 			return;
 
-        reply.view('session/login', {
+		res.view('session/login', {
             "pageTitle": `Login`,
             config: config,
 			req: req,
@@ -19,11 +19,11 @@ export default function sessionSiteRoute(app, client, fetch, moment, config, db,
         });
     });
 
-	app.get('/register', async function (req, reply) {
-		if (!isFeatureWebRouteEnabled(features.web.register, req, reply, features))
+	app.get('/register', async function (req, res) {
+		if (!isFeatureWebRouteEnabled(features.web.register, req, res, features))
 			return;
 		
-        reply.view('session/register', {
+		res.view('session/register', {
             "pageTitle": `Register`,
             config: config,
 			req: req,

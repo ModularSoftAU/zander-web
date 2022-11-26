@@ -5,8 +5,8 @@ export default function communityCreationSiteRoute(app, client, fetch, moment, c
     // 
     // Community Creations
     // 
-    app.get('/communityCreations/:page?', async function (req, reply) {
-        if (!isFeatureWebRouteEnabled(features.communitycreations, req, reply))
+    app.get('/communityCreations/:page?', async function (req, res) {
+        if (!isFeatureWebRouteEnabled(features.communitycreations, req, res))
             return;
 
         const fetchURL = `${config.siteConfiguration.siteAddress}${config.siteConfiguration.apiRoute}/communitycreation/get?page=${req.params.page || 1}`;
@@ -15,7 +15,7 @@ export default function communityCreationSiteRoute(app, client, fetch, moment, c
         });
         const apiData = await response.json();
 
-        return reply.view('modules/communityCreation/communityCreation', {
+        return res.view('modules/communityCreation/communityCreation', {
             "pageTitle": `Community Creations`,
             config: config,
             req: req,
@@ -26,11 +26,11 @@ export default function communityCreationSiteRoute(app, client, fetch, moment, c
         });
     });
 
-    app.get('/communityCreation/submit', async function (req, reply) {
-        if (!isFeatureWebRouteEnabled(features.communitycreations, req, reply))
+    app.get('/communityCreation/submit', async function (req, res) {
+        if (!isFeatureWebRouteEnabled(features.communitycreations, req, res))
             return;
         
-        reply.view('modules/communityCreation/submit', {
+        res.view('modules/communityCreation/submit', {
             "pageTitle": `Submit a Community Creation`,
             config: config,
             req: req,

@@ -5,8 +5,8 @@ export default function knowledgebaseSiteRoute(app, client, fetch, moment, confi
     // 
     // Knowledgebase
     // 
-    app.get('/knowledgebase', async function (req, reply) {
-        if (!isFeatureWebRouteEnabled(features.knowledgebase, req, reply, features))
+    app.get('/knowledgebase', async function (req, res) {
+        if (!isFeatureWebRouteEnabled(features.knowledgebase, req, res, features))
             return;
 
         const sectionFetchURL = `${config.siteConfiguration.siteAddress}${config.siteConfiguration.apiRoute}/knowledgebase/section/get`;
@@ -21,7 +21,7 @@ export default function knowledgebaseSiteRoute(app, client, fetch, moment, confi
         });
         const articleApiData = await articleResponse.json();
       
-        reply.view('modules/knowledgebase/knowledgebase', {
+        res.view('modules/knowledgebase/knowledgebase', {
             "pageTitle": `Knowledgebase`,
             async: true,
             config: config,
@@ -37,8 +37,8 @@ export default function knowledgebaseSiteRoute(app, client, fetch, moment, confi
     // 
     // Knowledgebase Article
     // 
-    app.get('/knowledgebase/:sectionSlug/:articleSlug', async function (req, reply) {
-        if (!isFeatureWebRouteEnabled(features.knowledgebase, req, reply, features))
+    app.get('/knowledgebase/:sectionSlug/:articleSlug', async function (req, res) {
+        if (!isFeatureWebRouteEnabled(features.knowledgebase, req, res, features))
             return;
         
         const sectionSlug = req.params.sectionSlug;
@@ -50,7 +50,7 @@ export default function knowledgebaseSiteRoute(app, client, fetch, moment, confi
         });
         const articleApiData = await articleResponse.json();
 
-        reply.view('modules/knowledgebase/knowledgebaseArticle', {
+        res.view('modules/knowledgebase/knowledgebaseArticle', {
             "pageTitle": articleApiData.data[0].articleName,
             config: config,
             articleApiData: articleApiData,

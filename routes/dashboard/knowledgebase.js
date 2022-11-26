@@ -4,11 +4,11 @@ export default function dashboardKnowledgebaseSiteRoute(app, fetch, moment, conf
     // 
     // Knowledgebase
     // 
-    app.get('/dashboard/knowledgebase', async function (req, reply) {
-        if (!isFeatureWebRouteEnabled(features.knowledgebase, req, reply, features))
+    app.get('/dashboard/knowledgebase', async function (req, res) {
+        if (!isFeatureWebRouteEnabled(features.knowledgebase, req, res, features))
             return;
         
-        if (!hasPermission('zander.web.knowledgebase', req, reply, features))
+        if (!hasPermission('zander.web.knowledgebase', req, res, features))
             return;
 
         // KB Article Data
@@ -25,7 +25,7 @@ export default function dashboardKnowledgebaseSiteRoute(app, fetch, moment, conf
         });
         const sectionApiData = await sectionResponse.json();
       
-        reply.view('dashboard/knowledgebase/list', {
+        res.view('dashboard/knowledgebase/list', {
             "pageTitle": `Dashboard - Knowledgebase`,
             config: config,
             articleApiData: articleApiData,
@@ -38,14 +38,14 @@ export default function dashboardKnowledgebaseSiteRoute(app, fetch, moment, conf
     // Knowledgebase
     // Create a Section
     // 
-    app.get('/dashboard/knowledgebase/section/create', async function (req, reply) {
-        if (!isFeatureWebRouteEnabled(features.knowledgebase, req, reply, features))
+    app.get('/dashboard/knowledgebase/section/create', async function (req, res) {
+        if (!isFeatureWebRouteEnabled(features.knowledgebase, req, res, features))
             return;
         
-        if (!hasPermission('zander.web.knowledgebase', req, reply, features))
+        if (!hasPermission('zander.web.knowledgebase', req, res, features))
             return;
 
-        reply.view('dashboard/knowledgebase/sectionEditor', {
+        res.view('dashboard/knowledgebase/sectionEditor', {
             "pageTitle": `Dashboard - Section Creator`,
             config: config,
             type: "create",
@@ -57,11 +57,11 @@ export default function dashboardKnowledgebaseSiteRoute(app, fetch, moment, conf
     // Knowledgebase
     // Edit a Section
     // 
-    app.get('/dashboard/knowledgebase/section/edit', async function (req, reply) {
-        if (!isFeatureWebRouteEnabled(features.knowledgebase, req, reply, features))
+    app.get('/dashboard/knowledgebase/section/edit', async function (req, res) {
+        if (!isFeatureWebRouteEnabled(features.knowledgebase, req, res, features))
             return;
         
-        if (!hasPermission('zander.web.knowledgebase', req, reply, features))
+        if (!hasPermission('zander.web.knowledgebase', req, res, features))
             return;
 
         const sectionSlug = req.query.slug;
@@ -71,7 +71,7 @@ export default function dashboardKnowledgebaseSiteRoute(app, fetch, moment, conf
         });
         const kbApiData = await response.json();
 
-        reply.view('dashboard/knowledgebase/sectionEditor', {
+        res.view('dashboard/knowledgebase/sectionEditor', {
             "pageTitle": `Dashboard - Section Editor`,
             config: config,
             kbApiData: kbApiData.data[0],
@@ -114,11 +114,11 @@ export default function dashboardKnowledgebaseSiteRoute(app, fetch, moment, conf
     // Knowledgebase
     // Create an article
     // 
-    app.get('/dashboard/knowledgebase/article/create', async function (req, reply) {
-        if (!isFeatureWebRouteEnabled(features.knowledgebase, req, reply, features))
+    app.get('/dashboard/knowledgebase/article/create', async function (req, res) {
+        if (!isFeatureWebRouteEnabled(features.knowledgebase, req, res, features))
             return;
         
-        if (!hasPermission('zander.web.knowledgebase', req, reply, features))
+        if (!hasPermission('zander.web.knowledgebase', req, res, features))
             return;
 
         const fetchURL = `${config.siteConfiguration.siteAddress}${config.siteConfiguration.apiRoute}/knowledgebase/section/get`;
@@ -127,7 +127,7 @@ export default function dashboardKnowledgebaseSiteRoute(app, fetch, moment, conf
         });
         const kbSectionApiData = await response.json();
 
-        reply.view('dashboard/knowledgebase/articleEditor', {
+        res.view('dashboard/knowledgebase/articleEditor', {
             "pageTitle": `Dashboard - Article Creator`,
             config: config,
             sectionApiData: kbSectionApiData.data,
@@ -140,11 +140,11 @@ export default function dashboardKnowledgebaseSiteRoute(app, fetch, moment, conf
     // Knowledgebase
     // Edit a Article
     // 
-    app.get('/dashboard/knowledgebase/article/edit', async function (req, reply) {
-        if (!isFeatureWebRouteEnabled(features.knowledgebase, req, reply, features))
+    app.get('/dashboard/knowledgebase/article/edit', async function (req, res) {
+        if (!isFeatureWebRouteEnabled(features.knowledgebase, req, res, features))
             return;
         
-        if (!hasPermission('zander.web.knowledgebase', req, reply, features))
+        if (!hasPermission('zander.web.knowledgebase', req, res, features))
             return;
         
         const articleSlug = req.query.slug;
@@ -160,7 +160,7 @@ export default function dashboardKnowledgebaseSiteRoute(app, fetch, moment, conf
         });
         const kbSectionApiData = await kbSectionResponse.json();
 
-        reply.view('dashboard/knowledgebase/articleEditor', {
+        res.view('dashboard/knowledgebase/articleEditor', {
             "pageTitle": `Dashboard - Article Editor`,
             config: config,
             kbApiData: kbApiData.data[0],

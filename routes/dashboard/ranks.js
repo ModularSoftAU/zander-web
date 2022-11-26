@@ -5,8 +5,8 @@ export default function dashboardRanksSiteRoute(app, fetch, config, features, la
     // 
     // Ranks
     // 
-    app.get('/dashboard/ranks', async function (req, reply) {
-        hasPermission('zander.web.rank', req, reply, features);
+    app.get('/dashboard/ranks', async function (req, res) {
+        hasPermission('zander.web.rank', req, res, features);
 
 		// Note: One or more of these could be null.
         const username = req.query.username;
@@ -18,7 +18,7 @@ export default function dashboardRanksSiteRoute(app, fetch, config, features, la
         });
         const apiData = await response.json();
         
-        reply.view('dashboard/ranks/get', {
+        res.view('dashboard/ranks/get', {
             "pageTitle": `Dashboard - Ranks`,
             config: config,
             apiData: apiData,
@@ -26,8 +26,8 @@ export default function dashboardRanksSiteRoute(app, fetch, config, features, la
         });
     });
 
-    app.get('/dashboard/ranks/users', async function (req, reply) {
-        hasPermission('zander.web.rank', req, reply, features);
+    app.get('/dashboard/ranks/users', async function (req, res) {
+        hasPermission('zander.web.rank', req, res, features);
 
         const rank = req.query.rank;
 		
@@ -38,7 +38,7 @@ export default function dashboardRanksSiteRoute(app, fetch, config, features, la
 		const apiData = await response.json();
 		const rankDisplayName = (apiData.data.length > 0 ? apiData.data[0].displayName : rank)
 		
-        reply.view('dashboard/ranks/users', {
+        res.view('dashboard/ranks/users', {
             "pageTitle": `Dashboard - Rank Users`,
 			"rankDisplayName": rankDisplayName,
             config: config,
