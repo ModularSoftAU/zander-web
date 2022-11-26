@@ -4,40 +4,31 @@ import fetch from 'node-fetch';
 export default function userRedirectRoute(app, config, lang) {
     const baseEndpoint = config.siteConfiguration.redirectRoute + '/user';
 
-    app.get(baseEndpoint + '/profile/platform/discord', async function(req, res) {
-        const code = req.query.code;
+    // app.get(baseEndpoint + '/profile/platform/discord', async function(req, res) {
+    //     const code = req.query.code;
 
-        console.log(req.body);
+    //     let postBody = {
+    //         "client_id": process.env.discordClientId,
+    //         "client_secret": process.env.discordClientSecret,
+    //         "grant_type": "authorization_code",
+    //         "code": code,
+    //         "redirect_uri": config.siteConfiguration.siteAddress + config.siteConfiguration.redirectRoute + '/user/profile/platform/discord/attach'
+    //     }
 
-        let postBody = {
-            "client_id": process.env.discordClientId,
-            "client_secret": process.env.discordClientSecret,
-            "grant_type": "authorization_code",
-            "code": code,
-            "redirect_uri": config.siteConfiguration.siteAddress + config.siteConfiguration.redirectRoute + '/user/profile/platform/discord/attach'
-        }
+    //     const response = await fetch(`https://discord.com/api/oauth2/token`, {
+    //         method: 'POST',
+    //         body: JSON.stringify(postBody),
+    //         headers: {
+    //             'Content-Type': 'application/x-www-form-urlencoded',
+    //             'Accept': 'application/json'
+    //         }
+    //     });
 
-        const response = await fetch(`https://discord.com/api/oauth2/token`, {
-            method: 'POST',
-            body: JSON.stringify(postBody),
-            headers: {
-                'Content-Type': 'application/x-www-form-urlencoded',
-                'Accept': 'application/json'
-            }
-        });
+    //     const data = await response.json();
 
-        const data = await response.json();
+    //     console.log(data);
 
-        console.log(data);
-
-        setBannerCookie("success", lang.report.reportCreated, res);
-        res.redirect(`${config.siteConfiguration.siteAddress}/`);
-    });
-
-    app.get(baseEndpoint + '/profile/platform/discord/attach', async function (req, res) {
-
-        console.log(req.body);
-        console.log(req.query);
-    });
-
+    //     setBannerCookie("success", lang.report.reportCreated, res);
+    //     res.redirect(`${config.siteConfiguration.siteAddress}/`);
+    // });
 }

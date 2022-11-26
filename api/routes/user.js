@@ -8,11 +8,7 @@ export default function userApiRoute(app, config, db, features, lang) {
         const uuid = required(req.body, "uuid", res);
         const username = required(req.body, "username", res);
 
-
         const userCreatedLang = lang.api.userCreated
-
-        console.log(uuid);
-        console.log(username);
 
         // shadowolf
         // Check if user does not exist, we do this in case of testing we create multiple users on accident
@@ -32,10 +28,10 @@ export default function userApiRoute(app, config, db, features, lang) {
                     }
                 });
 
-                // If the user already exists, we terminate the creation of the user
+                // If the user already exists, we alert the console that the user wasn't created because it doesn't exist.
                 return res.send({
-                    success: false,
-                    message: lang.api.userAlreadyExists
+                    success: null,
+                    message: `${lang.api.userAlreadyExists}`
                 });
             }
 
@@ -54,15 +50,6 @@ export default function userApiRoute(app, config, db, features, lang) {
                 });
             });
         });
-
-        // try {
-            
-        // } catch (error) {
-        //     return res.send({
-        //         success: false,
-        //         message: `${error}`
-        //     });
-        // }
     });
 
     // TODO: Update docs

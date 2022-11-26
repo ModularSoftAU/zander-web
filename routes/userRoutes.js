@@ -1,5 +1,6 @@
 import { isFeatureWebRouteEnabled, setBannerCookie, getGlobalImage } from "../api/common";
 import oauth2 from "@fastify/oauth2";
+import { linkUserDiscordID, unlinkUserDiscordID } from "../interfaces/userInterface";
 
 export default function userSiteRoute(app, client, fetch, moment, config, db, features, lang) {
 
@@ -22,24 +23,48 @@ export default function userSiteRoute(app, client, fetch, moment, config, db, fe
 
 
 	// 
-	// 
+	// Discord
+	// Callback to connect ID to profile
 	// 
 	app.get('/user/oauth/discord/callback', async function (request, reply) {
 		if (!isFeatureWebRouteEnabled(features.web.login, request, reply, features))
 			return;
 		
-		console.log(`this is discord oauth callback`);
+		const token = await this.discordOAuth2.getAccessTokenFromAuthorizationCodeFlow(request);
 
-		const token = await this.discordOAuth2.getAccessTokenFromAuthorizationCodeFlow(request)
+		const response = await fetch(`https://discord.com/api/users/@me`, {
+			method: 'GET',
+			headers: {
+				'Authorization': `Bearer ${token.access_token}`
+			}
+		});
 
-		// in async handler it is possible to just return the payload!
-		return token
+		const data = await response.json();
+		let discordID = data.id;
+
+		if (discordID) {
+			linkUserDiscordID(discordID, request, reply);
+			setBannerCookie("success", "The Discord account is now connected.", reply);
+			reply.redirect(`${config.siteConfiguration.siteAddress}/profile/edit`);
+		} else {
+			setBannerCookie("danger", "This didn't work, try again later.", reply);
+			reply.redirect(`${config.siteConfiguration.siteAddress}/profile/edit`);
+		}
 	});
 
-	// app.post('/login', async function (req, res) {
-	// 	if (!isFeatureWebRouteEnabled(features.web.login, req, res, features))
-	// 		return;
+	// 
+	// Discord
+	// Callback to disconnect ID to profile
+	// 
+	app.get(`/user/oauth/discord/disconnect/:discordId`, async function (request, reply) {
+		if (!isFeatureWebRouteEnabled(features.web.login, request, reply, features))
+			return;
 
-	// });
+		const userDiscordId = request.params.discordId;
+		
+		unlinkUserDiscordID(userDiscordId, request, reply);
+		setBannerCookie("success", "The Discord account is now connected.", reply);
+		reply.redirect(`${config.siteConfiguration.siteAddress}/profile/edit`);
+	});
 
 }

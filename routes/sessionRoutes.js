@@ -152,10 +152,11 @@ export default function sessionSiteRoute(app, client, fetch, moment, config, db,
 			if (result) {
 				req.session.authenticated = true;
 				let userData = await getPermissions(results[0]);
-
+				
 				req.session.user = {
 					userId: userData.userId,
 					username: userData.username,
+					discordID: userData.discordID,
 					uuid: userData.uuid,
 					ranks: userData.userRanks,
 					permissions: userData.permissions

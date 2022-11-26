@@ -19,7 +19,11 @@
       
       <div class="col-3">
         <h3>Discord</h3>
-          <a href="/user/oauth/discord"><button class="btn btn-primary btn-sm" type="button"><i class="fa-brands fa-discord"></i> Connect Discord</button></a>
+          <% if (!request.session.user.discordID) { %>
+            <a href="/user/oauth/discord"><button class="btn btn-primary btn-sm" type="button"><i class="fa-brands fa-discord"></i> Connect Discord</button></a>
+          <% } else { %>
+            <a href="/user/oauth/discord/disconnect/<%= request.session.user.discordID %>"><button class="btn btn-danger btn-sm" type="button"><i class="fa-brands fa-discord"></i> Disconnect Discord</button></a>
+          <% } %>
       </div>
     </div>
   </div>
