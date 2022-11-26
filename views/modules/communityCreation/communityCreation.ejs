@@ -59,7 +59,7 @@
                   <br>
 
                   <div class="btn-group">
-                    <% if (request.session.authenticated) { %>
+                    <% if (req.session.authenticated) { %>
                       <% if (creation.approved === 0) { %>
                         <small><i class="fas fa-info-square" style="color: blue;"></i> This creation won't be public until this creation is Approved.</small>
                         <form action="<%= config.siteConfiguration.siteAddress %><%= config.siteConfiguration.apiRoute %>/communitycreation/approve" method="post">

@@ -14,7 +14,7 @@
   <div class="container">
 
     <form method="post" action="<%= config.siteConfiguration.siteAddress %><%= config.siteConfiguration.apiRoute %>/communitycreation/submit">
-      <input type="hidden" name="creatorId" value="<%= request.session.user.userId %>">
+      <input type="hidden" name="creatorId" value="<%= req.session.user.userId %>">
 
       <h3>Creation Information</h3>
       <!-- Creation Name -->

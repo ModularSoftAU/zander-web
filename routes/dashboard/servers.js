@@ -4,11 +4,11 @@ export default function dashboardServersSiteRoute(app, fetch, config, db, featur
     // 
     // Servers
     // 
-    app.get('/dashboard/servers', async function(request, reply) {
-        if (!isFeatureWebRouteEnabled(features.servers, request, reply, features))
+    app.get('/dashboard/servers', async function (req, res) {
+        if (!isFeatureWebRouteEnabled(features.servers, req, res, features))
             return;
         
-        if (!hasPermission('zander.web.server', request, reply, features))
+        if (!hasPermission('zander.web.server', req, res, features))
             return;
 
         const fetchURL = `${config.siteConfiguration.siteAddress}${config.siteConfiguration.apiRoute}/server/get`;
@@ -17,23 +17,23 @@ export default function dashboardServersSiteRoute(app, fetch, config, db, featur
         });
         const apiData = await response.json();
 
-        reply.view('dashboard/servers/list', {
+        res.view('dashboard/servers/list', {
             "pageTitle": `Dashboard - Servers`,
             config: config,
             apiData: apiData,
             features: features,
-            request: request
+            req: req
         });
     });
 
-    app.get('/dashboard/servers/create', async function(request, reply) {
-        if (!isFeatureWebRouteEnabled(features.servers, request, reply, features))
+    app.get('/dashboard/servers/create', async function (req, res) {
+        if (!isFeatureWebRouteEnabled(features.servers, req, res, features))
             return;
         
-        if (!hasPermission('zander.web.server', request, reply, features))
+        if (!hasPermission('zander.web.server', req, res, features))
             return;
                 
-        reply.view('dashboard/servers/editor', {
+        res.view('dashboard/servers/editor', {
             "pageTitle": `Dashboard - Server Creator`,
             config: config,
             type: "create",
@@ -41,21 +41,21 @@ export default function dashboardServersSiteRoute(app, fetch, config, db, featur
         });
     });
 
-    app.get('/dashboard/servers/edit', async function(request, reply) {
-        if (!isFeatureWebRouteEnabled(features.servers, request, reply, features))
+    app.get('/dashboard/servers/edit', async function (req, res) {
+        if (!isFeatureWebRouteEnabled(features.servers, req, res, features))
             return;
         
-        if (!hasPermission('zander.web.server', request, reply, features))
+        if (!hasPermission('zander.web.server', req, res, features))
             return;
         
-        const id = request.query.id;
+        const id = req.query.id;
         const fetchURL = `${config.siteConfiguration.siteAddress}${config.siteConfiguration.apiRoute}/server/get?id=${id}`;
         const response = await fetch(fetchURL, {
             headers: { 'x-access-token': process.env.apiKey }
         });
         const serverApiData = await response.json();
 
-        reply.view('dashboard/servers/editor', {
+        res.view('dashboard/servers/editor', {
             "pageTitle": `Dashboard - Server Editor`,
             config: config,
             serverApiData: serverApiData.data[0],

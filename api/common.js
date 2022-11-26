@@ -42,13 +42,13 @@ export function optional(body, field) {
     return body[field];
 }
 
-export async function isFeatureWebRouteEnabled(isFeatureEnabled, request, reply, features) {
+export async function isFeatureWebRouteEnabled(isFeatureEnabled, req, res, features) {
     if (!isFeatureEnabled) {
-        reply.view('session/featureDisabled', {
+        res.view('session/featureDisabled', {
             "pageTitle": `Feature Disabled`,
             config: config,
-            request: request,
-            reply: reply,
+            req: req,
+            res: res,
             features: features,
             globalImage: await getGlobalImage(),
         });
@@ -57,35 +57,35 @@ export async function isFeatureWebRouteEnabled(isFeatureEnabled, request, reply,
     return true;
 }
 
-export function isLoggedIn(request) {
-    if (request.session.user) return true;
+export function isLoggedIn(req) {
+    if (req.session.user) return true;
     else return false;
 }
 
-export function hasPermission(permissionNode, request, reply, features) {
-    if (!isLoggedIn(request)) {
-        reply.view('session/noPermission', {
+export function hasPermission(permissionNode, req, res, features) {
+    if (!isLoggedIn(req)) {
+        res.view('session/noPermission', {
             "pageTitle": `Access Restricted`,
             config: config,
-            request: request,
-            reply: reply,
+            req: req,
+            res: res,
             features: features
         });
         return false;
     }
 
-    const userPermissions = request.session.user.permissions;
+    const userPermissions = req.session.user.permissions;
 
     function hasSpecificPerm(node, permissionArray) {
         return userPermissions.some(node => node === permissionNode);
     }
 
     if (!hasSpecificPerm(permissionNode, userPermissions)) {
-        reply.view('session/noPermission', {
+        res.view('session/noPermission', {
             "pageTitle": `Access Restricted`,
             config: config,
-            request: request,
-            reply: reply,
+            req: req,
+            res: res,
             features: features
         });
         return false;
@@ -93,25 +93,25 @@ export function hasPermission(permissionNode, request, reply, features) {
     return true;
 }
 
-export function setBannerCookie(alertType, alertContent, reply) {
+export function setBannerCookie(alertType, alertContent, res) {
     var expiryTime = new Date();
     expiryTime.setSeconds(expiryTime.getSeconds() + 1);
 
     // Set Alert Type
-    reply.setCookie('alertType', alertType, {
+    res.setCookie('alertType', alertType, {
         path: '/',
         expires: expiryTime
     })
 
     // Set Content Type
-    reply.setCookie('alertContent', alertContent, {
+    res.setCookie('alertContent', alertContent, {
         path: '/',
         expires: expiryTime
     })
     return true
 }
 
-export async function postAPIRequest(postURL, apiPostBody, failureRedirectURL, reply) {
+export async function postAPIRequest(postURL, apiPostBody, failureRedirectURL, res) {
     const response = await fetch(postURL, {
         method: 'POST',
         body: JSON.stringify(apiPostBody),
@@ -123,8 +123,8 @@ export async function postAPIRequest(postURL, apiPostBody, failureRedirectURL, r
     const data = await response.json();
 
     if (!data.success) {
-        setBannerCookie("danger", `Failed to Process: ${data.message}`, reply);
-        return reply.redirect(failureRedirectURL);
+        setBannerCookie("danger", `Failed to Process: ${data.message}`, res);
+        return res.redirect(failureRedirectURL);
     }
 
     return console.log(data);

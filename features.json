@@ -26,7 +26,18 @@
     "web": {
         "login": true,
         "register": true,
-        "profiles": true
+        "profiles": true,
+        "profileEditor": true,
+        "profilePlatform": {
+            "twitter": false,
+            "twitch": false,
+            "steam": false,
+            "github": false,
+            "spotify": false,
+            "discord": true,
+            "youtube": false,
+            "instagram": false
+        }
     },
     "vote": true,
 

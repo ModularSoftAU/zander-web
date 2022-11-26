@@ -19,10 +19,10 @@
           </div>
         </div>
         <div class="col-sm" style="margin-right:100px;">
-          <% if (request.cookies.alertType) { %>
+          <% if (req.cookies.alertType) { %>
             <%- include("../partials/alert.ejs", {
-              alertType: request.cookies.alertType,
-              content: request.cookies.alertContent
+              alertType: req.cookies.alertType,
+              content: req.cookies.alertContent
             }) %>
           <% } %>
 

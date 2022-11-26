@@ -6,27 +6,27 @@ export default function sessionSiteRoute(app, client, fetch, moment, config, db,
     // 
     // Session
     // 
-    app.get('/login', async function(request, reply) {
-		if (!isFeatureWebRouteEnabled(features.web.login, request, reply, features))
+	app.get('/login', async function (req, res) {
+		if (!isFeatureWebRouteEnabled(features.web.login, req, res, features))
 			return;
 
-        reply.view('session/login', {
+		res.view('session/login', {
             "pageTitle": `Login`,
             config: config,
-            request: request,
+			req: req,
             features: features,
 			globalImage: await getGlobalImage(),
         });
     });
 
-    app.get('/register', async function(request, reply) {
-		if (!isFeatureWebRouteEnabled(features.web.register, request, reply, features))
+	app.get('/register', async function (req, res) {
+		if (!isFeatureWebRouteEnabled(features.web.register, req, res, features))
 			return;
 		
-        reply.view('session/register', {
+		res.view('session/register', {
             "pageTitle": `Register`,
             config: config,
-            request: request,
+			req: req,
             features: features,
 			globalImage: await getGlobalImage(),
         });
@@ -120,18 +120,25 @@ export default function sessionSiteRoute(app, client, fetch, moment, config, db,
 	  }
 
       db.query(`select * from users where username=?`, [username], async function (err, results) {
-		let hashedPassword = results[0].password;
-
 		if (err) {
 			throw err;
 		}
+		
+		let hashedPassword = null;
+
+		let loginFailed = false;
+		if (!results.length) {
+			loginFailed = true;
+		} else {
+			hashedPassword = results[0].password;
+		}
 
 		// User has not logged in before.
-		if (!results.length || hashedPassword == null) {
-		  let notLoggedInBeforeLang = lang.web.notLoggedInBefore;
+		if (loginFailed || hashedPassword == null) {
+			let notLoggedInBeforeLang = lang.web.notLoggedInBefore;
 
-		  setBannerCookie("warning", notLoggedInBeforeLang.replace("%SITEADDRESS%", config.siteConfiguration.siteAddress), res);
-		  return res.redirect(`${config.siteConfiguration.siteAddress}/login`);
+			setBannerCookie("warning", notLoggedInBeforeLang.replace("%SITEADDRESS%", config.siteConfiguration.siteAddress), res);
+			return res.redirect(`${config.siteConfiguration.siteAddress}/login`);
 		}
 
 		// Check if passwords match
@@ -145,10 +152,11 @@ export default function sessionSiteRoute(app, client, fetch, moment, config, db,
 			if (result) {
 				req.session.authenticated = true;
 				let userData = await getPermissions(results[0]);
-
+				
 				req.session.user = {
 					userId: userData.userId,
 					username: userData.username,
+					discordID: userData.discordID,
 					uuid: userData.uuid,
 					ranks: userData.userRanks,
 					permissions: userData.permissions

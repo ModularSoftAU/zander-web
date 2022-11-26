@@ -4,56 +4,52 @@ export default function userApiRoute(app, config, db, features, lang) {
     const baseEndpoint = config.siteConfiguration.apiRoute + '/user';
 
     app.post(baseEndpoint + '/create', async function(req, res) {
-        isFeatureEnabled(features.user, res, lang);
+        isFeatureEnabled(features.web.login, res, features, lang);
         const uuid = required(req.body, "uuid", res);
         const username = required(req.body, "username", res);
 
         const userCreatedLang = lang.api.userCreated
 
-        try {
-            // shadowolf
-            // Check if user does not exist, we do this in case of testing we create multiple users on accident
-            db.query(`SELECT * FROM users WHERE uuid=?`, [uuid], function(error, results, fields) {
-                // If user exists, check that they haven't changed their username since their last login.
-                // If they have we update it in the database, so the display name is accurate.
-                if (results[0]) {
-                    db.query(`UPDATE users SET username=? WHERE uuid=?;`, [username, uuid], function(error, results, fields) {
-                        if (error) {
-                            return res.send({
-                                success: false,
-                                message: `${error}`
-                            });
-                        }
-                    });
+        // shadowolf
+        // Check if user does not exist, we do this in case of testing we create multiple users on accident
+        db.query(`SELECT * FROM users WHERE uuid=?`, [uuid], function (error, results, fields) {
+            if (error) {
+                console.log(error);
+            }
 
-                    // If the user already exists, we terminate the creation of the user
-                    return res.send({
-                        success: false,
-                        message: lang.api.userAlreadyExists
-                    });
-                }
-
-                // If user does not exist, create them
-                db.query(`INSERT INTO users (uuid, username) VALUES (?, ?)`, [uuid, username], function(error, results, fields) {
+            if (results[0]) {
+                // To ensure usernames are always accurate we set the username just in case the username changes.
+                db.query(`UPDATE users SET username=? WHERE uuid=?;`, [username, uuid], function (error, results, fields) {
                     if (error) {
                         return res.send({
                             success: false,
                             message: `${error}`
                         });
                     }
+                });
 
+                // If the user already exists, we alert the console that the user wasn't created because it doesn't exist.
+                return res.send({
+                    success: null,
+                    message: `${lang.api.userAlreadyExists}`
+                });
+            }
+
+            // If user does not exist, create them
+            db.query(`INSERT INTO users (uuid, username) VALUES (?, ?)`, [uuid, username], function (error, results, fields) {
+                if (error) {
                     return res.send({
-                        success: true,
-                        message: userCreatedLang.replace('%USERNAME%', username).replace('%UUID%', uuid)
+                        success: false,
+                        message: `${error}`
                     });
+                }
+
+                return res.send({
+                    success: true,
+                    message: userCreatedLang.replace('%USERNAME%', username).replace('%UUID%', uuid)
                 });
             });
-        } catch (error) {
-            return res.send({
-                success: false,
-                message: `${error}`
-            });
-        }
+        });
     });
 
     // TODO: Update docs
@@ -149,7 +145,7 @@ export default function userApiRoute(app, config, db, features, lang) {
     // Find all users that connected from a specific IP
     // 
     app.get(baseEndpoint + '/check/ip', async function(req, res) {
-        isFeatureEnabled(features.moderation.ipCheck, res, lang);
+        isFeatureEnabled(features.moderation.ipCheck, res, features, lang);
         const ipAddress = required(req.query, "ipAddress");
         
         try {
@@ -218,4 +214,28 @@ export default function userApiRoute(app, config, db, features, lang) {
         }
     });
 
+    // 
+    // Profile Update
+    // Update the specified users profile
+    // 
+    app.post(baseEndpoint + '/profile/update', async function (req, res) {
+        isFeatureEnabled(features.web.profiles, res, lang);
+        const username = required(req.body, "username");
+
+        try {
+            // db.query(`SELECT u.userId, u.uuid, u.username, gs.ipAddress FROM gamesessions gs LEFT JOIN users u ON gs.userId = u.userId WHERE u.username = ?;`, [username], function (error, results, fields) {
+                
+
+            //     res.send({
+            //         success: true,
+            //         data: results
+            //     });
+            // });
+        } catch (error) {
+            return res.send({
+                success: false,
+                message: `${error}`
+            });
+        }
+    });
 }
