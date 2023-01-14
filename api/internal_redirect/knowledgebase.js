@@ -9,7 +9,7 @@ export default function knowledgebaseApiRoute(app, config, lang) {
             return;
 
         postAPIRequest(
-            `${process.env.siteAddress}${config.siteConfiguration.apiRoute}/knowledgebase/section/create`,
+            `${process.env.siteAddress}/api/knowledgebase/section/create`,
             req.body,
             `${process.env.siteAddress}/dashboard/knowledgebase`,
             res
@@ -24,7 +24,7 @@ export default function knowledgebaseApiRoute(app, config, lang) {
             return;
 
             postAPIRequest(
-                `${process.env.siteAddress}${config.siteConfiguration.apiRoute}/knowledgebase/section/update`,
+                `${process.env.siteAddress}/api/knowledgebase/section/update`,
                 req.body,
                 `${process.env.siteAddress}/dashboard/knowledgebase`,
                 res
@@ -39,7 +39,7 @@ export default function knowledgebaseApiRoute(app, config, lang) {
             return;
 
             postAPIRequest(
-                `${process.env.siteAddress}${config.siteConfiguration.apiRoute}/knowledgebase/article/create`,
+                `${process.env.siteAddress}/api/knowledgebase/article/create`,
                 req.body,
                 `${process.env.siteAddress}/dashboard/knowledgebase`,
                 res
@@ -54,7 +54,7 @@ export default function knowledgebaseApiRoute(app, config, lang) {
             return;
         
         postAPIRequest(
-            `${process.env.siteAddress}${config.siteConfiguration.apiRoute}/knowledgebase/article/update`,
+            `${process.env.siteAddress}/api/knowledgebase/article/update`,
             req.body,
             `${process.env.siteAddress}/dashboard/knowledgebase`,
             res

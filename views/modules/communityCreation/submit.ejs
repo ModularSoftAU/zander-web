@@ -13,7 +13,7 @@
 <section class="section">
   <div class="container">
 
-    <form method="post" action="<%= config.siteConfiguration.siteAddress %><%= config.siteConfiguration.apiRoute %>/communitycreation/submit">
+    <form method="post" action="<%= config.siteConfiguration.siteAddress %>/api/communitycreation/submit">
       <input type="hidden" name="creatorId" value="<%= req.session.user.userId %>">
 
       <h3>Creation Information</h3>

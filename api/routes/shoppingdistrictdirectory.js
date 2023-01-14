@@ -2,7 +2,7 @@ import {isFeatureEnabled, required, optional} from '../common'
 
 // Jaedan: Shops likely need a get route to obtain items from a specific shop
 export default function shoppingDistrictDirectoryApiRoute(app, config, db, features) {
-    const baseEndpoint = config.siteConfiguration.apiRoute + '/shop';
+    const baseEndpoint = '/api/shop';
 
     app.get(baseEndpoint + '/get', async function(req, res) {
         isFeatureEnabled(features.shops, res, lang);

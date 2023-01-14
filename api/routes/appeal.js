@@ -1,7 +1,7 @@
 import {isFeatureEnabled, required, optional} from '../common'
 
 export default function appealApiRoute(app, config, db, features, lang) {
-    const baseEndpoint = config.siteConfiguration.apiRoute + '/appeal';
+    const baseEndpoint = '/api/appeal';
 
     app.post(baseEndpoint + '/create', async function(req, res) {
         isFeatureEnabled(features.appeals, res, lang);

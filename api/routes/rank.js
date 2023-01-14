@@ -1,7 +1,7 @@
 import {isFeatureEnabled, required, optional} from '../common'
 
 export default function rankApiRoute(app, config, db, features, lang) {
-    const baseEndpoint = config.siteConfiguration.apiRoute + '/rank';
+    const baseEndpoint = '/api/rank';
 
     app.get(baseEndpoint + '/get', async function(req, res) {
 		isFeatureEnabled(features.ranks, res, lang);
@@ -9,7 +9,7 @@ export default function rankApiRoute(app, config, db, features, lang) {
         const rank = optional(req.query, "rank");
 		
 		// If the ?username= is used, get all ranks for that user
-		if(username) {
+		if (username) {
 			try {
 				db.query(`
 					SELECT

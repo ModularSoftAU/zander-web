@@ -19,7 +19,7 @@ export class VoteCommand extends Command {
 
   async chatInputRun(interaction) {
     if (features.vote) {
-      const voteFetchURL = `${process.env.siteAddress}${config.siteConfiguration.apiRoute}/vote/get`;
+      const voteFetchURL = `${process.env.siteAddress}/api/vote/get`;
       const voteResponse = await fetch(voteFetchURL);
       const voteApiData = await voteResponse.json();
       console.log(voteApiData);

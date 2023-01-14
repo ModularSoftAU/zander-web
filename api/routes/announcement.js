@@ -1,7 +1,7 @@
 import {isFeatureEnabled, required, optional} from '../common'
 
 export default function announcementApiRoute(app, config, db, features, lang) {
-    const baseEndpoint = config.siteConfiguration.apiRoute + '/announcement';
+    const baseEndpoint = '/api/announcement';
 
     app.get(baseEndpoint + '/get', async function(req, res) {
         isFeatureEnabled(features.announcements, res, lang);

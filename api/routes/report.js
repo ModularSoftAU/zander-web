@@ -2,7 +2,7 @@ import {isFeatureEnabled, required, optional} from '../common'
 import { MessageEmbed } from 'discord.js';
 
 export default function reportApiRoute(app, client, config, db, features, lang) {
-    const baseEndpoint = config.siteConfiguration.apiRoute + '/report';
+    const baseEndpoint = '/api/report';
 
     app.get(baseEndpoint + '/get', async function(req, res) {
         isFeatureEnabled(features.report, res, lang);

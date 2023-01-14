@@ -1,7 +1,7 @@
 import {isFeatureEnabled, required, optional} from '../common'
 
 export default function userApiRoute(app, config, db, features, lang) {
-    const baseEndpoint = config.siteConfiguration.apiRoute + '/user';
+    const baseEndpoint = '/api/user';
 
     app.post(baseEndpoint + '/create', async function(req, res) {
         isFeatureEnabled(features.web.login, res, features, lang);

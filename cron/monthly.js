@@ -12,7 +12,7 @@ export default async function monthlyCron(client) {
         // This will fire on the first of every month at 7:00am and will clear all votes from the votes table.
 
         try {
-            const voteFetchURL = `${process.env.siteAddress}${config.siteConfiguration.apiRoute}/vote/get`;
+            const voteFetchURL = `${process.env.siteAddress}/api/vote/get`;
             const voteResponse = await fetch(voteFetchURL);
             const voteApiData = await voteResponse.json();
             const topVoterEntry = voteApiData.data[0];

@@ -9,13 +9,13 @@ export default function knowledgebaseSiteRoute(app, client, fetch, moment, confi
         if (!isFeatureWebRouteEnabled(features.knowledgebase, req, res, features))
             return;
 
-        const sectionFetchURL = `${process.env.siteAddress}${config.siteConfiguration.apiRoute}/knowledgebase/section/get`;
+        const sectionFetchURL = `${process.env.siteAddress}/api/knowledgebase/section/get`;
         const sectionResponse = await fetch(sectionFetchURL, {
             headers: { 'x-access-token': process.env.apiKey }
         });
         const sectionApiData = await sectionResponse.json();
 
-        const articleFetchURL = `${process.env.siteAddress}${config.siteConfiguration.apiRoute}/knowledgebase/article/get`;
+        const articleFetchURL = `${process.env.siteAddress}/api/knowledgebase/article/get`;
         const articleResponse = await fetch(articleFetchURL, {
             headers: { 'x-access-token': process.env.apiKey }
         });
@@ -44,7 +44,7 @@ export default function knowledgebaseSiteRoute(app, client, fetch, moment, confi
         const sectionSlug = req.params.sectionSlug;
         const articleSlug = req.params.articleSlug;
 
-        const articleFetchURL = `${process.env.siteAddress}${config.siteConfiguration.apiRoute}/knowledgebase/article/get?articleSlug=${articleSlug}`;
+        const articleFetchURL = `${process.env.siteAddress}/api/knowledgebase/article/get?articleSlug=${articleSlug}`;
         const articleResponse = await fetch(articleFetchURL, {
             headers: { 'x-access-token': process.env.apiKey }
         });

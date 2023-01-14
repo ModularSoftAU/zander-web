@@ -2,7 +2,7 @@ import {isFeatureEnabled, required} from '../common';
 import filter from '../../filter.json' assert {type: "json"};
 
 export default function filterApiRoute(app, config, db, features, lang) {
-    const baseEndpoint = config.siteConfiguration.apiRoute + '/filter';
+    const baseEndpoint = '/api/filter';
 
     function expandString(string, filter) {
         var regexString = "";

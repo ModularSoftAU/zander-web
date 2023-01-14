@@ -1,7 +1,7 @@
 import {isFeatureEnabled, required, optional} from '../common'
 
 export default function friendApiRoute(app, config, db, features, lang) {
-    const baseEndpoint = config.siteConfiguration.apiRoute + '/friend';
+    const baseEndpoint = '/api/friend';
 
     // TODO: Update docs
     app.post(baseEndpoint + '/get', async function(req, res) {

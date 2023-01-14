@@ -12,7 +12,7 @@ export default function dashboardRanksSiteRoute(app, fetch, config, features, la
         const username = req.query.username;
         const rank = req.query.rank;
 		
-        const fetchURL = `${process.env.siteAddress}${config.siteConfiguration.apiRoute}/rank/get`;
+        const fetchURL = `${process.env.siteAddress}/api/rank/get`;
         const response = await fetch(fetchURL, {
             headers: { 'x-access-token': process.env.apiKey }
         });
@@ -31,7 +31,7 @@ export default function dashboardRanksSiteRoute(app, fetch, config, features, la
 
         const rank = req.query.rank;
 		
-		const fetchURL = `${process.env.siteAddress}${config.siteConfiguration.apiRoute}/rank/get?rank=${rank}`;
+		const fetchURL = `${process.env.siteAddress}/api/rank/get?rank=${rank}`;
 		const response = await fetch(fetchURL, {
             headers: { 'x-access-token': process.env.apiKey }
         });

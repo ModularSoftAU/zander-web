@@ -1,7 +1,7 @@
 import {isFeatureEnabled, required, optional} from '../common'
 
 export default function applicationApiRoute(app, config, db, features, lang) {
-    const baseEndpoint = config.siteConfiguration.apiRoute + '/application';
+    const baseEndpoint = '/api/application';
 
     app.get(baseEndpoint + '/get', async function(req, res) {
         isFeatureEnabled(features.applications, res, lang);

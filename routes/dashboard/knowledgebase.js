@@ -12,14 +12,14 @@ export default function dashboardKnowledgebaseSiteRoute(app, fetch, moment, conf
             return;
 
         // KB Article Data
-        const articleFetchURL = `${process.env.siteAddress}${config.siteConfiguration.apiRoute}/knowledgebase/article/get`;
+        const articleFetchURL = `${process.env.siteAddress}/api/knowledgebase/article/get`;
         const articleResponse = await fetch(articleFetchURL, {
             headers: { 'x-access-token': process.env.apiKey }
         });
         const articleApiData = await articleResponse.json();
 
         // KB Section Data
-        const sectionFetchURL = `${process.env.siteAddress}${config.siteConfiguration.apiRoute}/knowledgebase/section/get`;
+        const sectionFetchURL = `${process.env.siteAddress}/api/knowledgebase/section/get`;
         const sectionResponse = await fetch(sectionFetchURL, {
             headers: { 'x-access-token': process.env.apiKey }
         });
@@ -65,7 +65,7 @@ export default function dashboardKnowledgebaseSiteRoute(app, fetch, moment, conf
             return;
 
         const sectionSlug = req.query.slug;
-        const fetchURL = `${process.env.siteAddress}${config.siteConfiguration.apiRoute}/knowledgebase/section/get?slug=${sectionSlug}`;
+        const fetchURL = `${process.env.siteAddress}/api/knowledgebase/section/get?slug=${sectionSlug}`;
         const response = await fetch(fetchURL, {
             headers: { 'x-access-token': process.env.apiKey }
         });
@@ -121,7 +121,7 @@ export default function dashboardKnowledgebaseSiteRoute(app, fetch, moment, conf
         if (!hasPermission('zander.web.knowledgebase', req, res, features))
             return;
 
-        const fetchURL = `${process.env.siteAddress}${config.siteConfiguration.apiRoute}/knowledgebase/section/get`;
+        const fetchURL = `${process.env.siteAddress}/api/knowledgebase/section/get`;
         const response = await fetch(fetchURL, {
             headers: { 'x-access-token': process.env.apiKey }
         });
@@ -148,13 +148,13 @@ export default function dashboardKnowledgebaseSiteRoute(app, fetch, moment, conf
             return;
         
         const articleSlug = req.query.slug;
-        const fetchURL = `${process.env.siteAddress}${config.siteConfiguration.apiRoute}/knowledgebase/article/get?slug=${articleSlug}`;
+        const fetchURL = `${process.env.siteAddress}/api/knowledgebase/article/get?slug=${articleSlug}`;
         const response = await fetch(fetchURL, {
             headers: { 'x-access-token': process.env.apiKey }
         });
         const kbApiData = await response.json();
 
-        const kbSectionFetchURL = `${process.env.siteAddress}${config.siteConfiguration.apiRoute}/knowledgebase/section/get`;
+        const kbSectionFetchURL = `${process.env.siteAddress}/api/knowledgebase/section/get`;
         const kbSectionResponse = await fetch(kbSectionFetchURL, {
             headers: { 'x-access-token': process.env.apiKey }
         });

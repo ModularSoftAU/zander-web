@@ -16,7 +16,7 @@ export class GuildMessageListener extends Listener {
   async run(message) {
     if (features.filter.link || features.filter.phrase) {
       try {
-        const filterURL = `${process.env.siteAddress}${config.siteConfiguration.apiRoute}/filter`;
+        const filterURL = `${process.env.siteAddress}/api/filter`;
         const bodyJSON = { content: message.content };
   
         const response = await fetch(filterURL, {

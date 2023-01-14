@@ -8,7 +8,7 @@ export default function announcementRedirectRoute(app, config, lang) {
             return;
         
         postAPIRequest(
-            `${process.env.siteAddress}${config.siteConfiguration.apiRoute}/announcement/create`,
+            `${process.env.siteAddress}/api/announcement/create`,
             req.body,
             `${process.env.siteAddress}/dashboard/announcements`,
             res
@@ -23,7 +23,7 @@ export default function announcementRedirectRoute(app, config, lang) {
             return;
         
         postAPIRequest(
-            `${process.env.siteAddress}${config.siteConfiguration.apiRoute}/announcement/edit`,
+            `${process.env.siteAddress}/api/announcement/edit`,
             req.body,
             `${process.env.siteAddress}/dashboard/announcements`,
             res
@@ -38,7 +38,7 @@ export default function announcementRedirectRoute(app, config, lang) {
             return;
         
         postAPIRequest(
-            `${process.env.siteAddress}${config.siteConfiguration.apiRoute}/announcement/delete`,
+            `${process.env.siteAddress}/api/announcement/delete`,
             req.body,
             `${process.env.siteAddress}/dashboard/announcements`,
             res
@@ -53,7 +53,7 @@ export default function announcementRedirectRoute(app, config, lang) {
             return;
         
         postAPIRequest(
-            `${process.env.siteAddress}${config.siteConfiguration.apiRoute}/announcement/enable`,
+            `${process.env.siteAddress}/api/announcement/enable`,
             req.body,
             `${process.env.siteAddress}/dashboard/announcements`,
             res
@@ -68,7 +68,7 @@ export default function announcementRedirectRoute(app, config, lang) {
             return;
         
         postAPIRequest(
-            `${process.env.siteAddress}${config.siteConfiguration.apiRoute}/announcement/disable`,
+            `${process.env.siteAddress}/api/announcement/disable`,
             req.body,
             `${process.env.siteAddress}/dashboard/announcements`,
             res

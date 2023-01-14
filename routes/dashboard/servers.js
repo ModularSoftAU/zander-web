@@ -11,7 +11,7 @@ export default function dashboardServersSiteRoute(app, fetch, config, db, featur
         if (!hasPermission('zander.web.server', req, res, features))
             return;
 
-        const fetchURL = `${process.env.siteAddress}${config.siteConfiguration.apiRoute}/server/get`;
+        const fetchURL = `${process.env.siteAddress}/api/server/get`;
         const response = await fetch(fetchURL, {
             headers: { 'x-access-token': process.env.apiKey }
         });
@@ -49,7 +49,7 @@ export default function dashboardServersSiteRoute(app, fetch, config, db, featur
             return;
         
         const id = req.query.id;
-        const fetchURL = `${process.env.siteAddress}${config.siteConfiguration.apiRoute}/server/get?id=${id}`;
+        const fetchURL = `${process.env.siteAddress}/api/server/get?id=${id}`;
         const response = await fetch(fetchURL, {
             headers: { 'x-access-token': process.env.apiKey }
         });

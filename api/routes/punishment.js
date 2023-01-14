@@ -1,7 +1,7 @@
 import {isFeatureEnabled, required, optional} from '../common'
 
 export default function punishmentApiRoute(app, config, db, features, lang) {
-    const baseEndpoint = config.siteConfiguration.apiRoute + '/punishment';
+    const baseEndpoint = '/api/punishment';
 
     app.post(baseEndpoint + '/issue', async function(req, res) {
         isFeatureEnabled(features.punishments, res, lang);

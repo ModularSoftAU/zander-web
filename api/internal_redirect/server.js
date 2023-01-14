@@ -9,7 +9,7 @@ export default function serverRedirectRoute(app, config, lang) {
             return;
 
         postAPIRequest(
-            `${process.env.siteAddress}${config.siteConfiguration.apiRoute}/server/create`,
+            `${process.env.siteAddress}/api/server/create`,
             req.body,
             `${process.env.siteAddress}/dashboard/servers`,
             res
@@ -24,7 +24,7 @@ export default function serverRedirectRoute(app, config, lang) {
             return;
 
         postAPIRequest(
-            `${process.env.siteAddress}${config.siteConfiguration.apiRoute}/server/edit`,
+            `${process.env.siteAddress}/api/server/edit`,
             req.body,
             `${process.env.siteAddress}/dashboard/servers`,
             res
@@ -39,7 +39,7 @@ export default function serverRedirectRoute(app, config, lang) {
             return;
 
         postAPIRequest(
-            `${process.env.siteAddress}${config.siteConfiguration.apiRoute}/server/delete`,
+            `${process.env.siteAddress}/api/server/delete`,
             req.body,
             `${process.env.siteAddress}/dashboard/servers`,
             res

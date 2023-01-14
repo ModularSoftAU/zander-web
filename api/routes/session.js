@@ -1,7 +1,7 @@
 import {required} from '../common'
 
 export default function sessionApiRoute(app, config, db, features, lang) {
-    const baseEndpoint = config.siteConfiguration.apiRoute + '/session';
+    const baseEndpoint = '/api/session';
 
     app.post(baseEndpoint + '/create', async function(req, res) {
         const uuid = required(req.body, "uuid", res);

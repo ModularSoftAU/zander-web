@@ -9,7 +9,7 @@ export default function communityCreationSiteRoute(app, client, fetch, moment, c
         if (!isFeatureWebRouteEnabled(features.communitycreations, req, res))
             return;
 
-        const fetchURL = `${config.siteConfiguration.siteAddress}${config.siteConfiguration.apiRoute}/communitycreation/get?page=${req.params.page || 1}`;
+        const fetchURL = `${config.siteConfiguration.siteAddress}/api/communitycreation/get?page=${req.params.page || 1}`;
         const response = await fetch(fetchURL, {
             headers: { 'x-access-token': process.env.apiKey }
         });

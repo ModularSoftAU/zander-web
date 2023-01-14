@@ -9,7 +9,7 @@ export default function reportRedirectRoute(app, config, lang) {
             return;
         
         postAPIRequest(
-            `${process.env.siteAddress}${config.siteConfiguration.apiRoute}/report/create`,
+            `${process.env.siteAddress}/api/report/create`,
             req.body,
             `${process.env.siteAddress}/dashboard`,
             res
@@ -24,7 +24,7 @@ export default function reportRedirectRoute(app, config, lang) {
             return;
 
         postAPIRequest(
-            `${process.env.siteAddress}${config.siteConfiguration.apiRoute}/report/close`,
+            `${process.env.siteAddress}/api/report/close`,
             req.body,
             `${process.env.siteAddress}/dashboard`,
             res

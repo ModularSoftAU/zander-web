@@ -2,7 +2,7 @@ import bcrypt from 'bcrypt';
 import {isFeatureEnabled, required, optional, setBannerCookie} from '../common'
 
 export default function webApiRoute(app, config, db, features, lang) {
-    const baseEndpoint = config.siteConfiguration.apiRoute + '/web';
+    const baseEndpoint = '/api/web';
 
     app.post(baseEndpoint + '/register/create', async function(req, res) {
         isFeatureEnabled(features.web.register, res, lang);

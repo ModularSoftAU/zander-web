@@ -1,7 +1,7 @@
 import {isFeatureEnabled, required, optional} from '../common'
 
 export default function voteApiRoute(app, config, db, features, lang) {
-    const baseEndpoint = config.siteConfiguration.apiRoute + '/vote';
+    const baseEndpoint = '/api/vote';
 
     app.post(baseEndpoint + '/cast', async function(req, res) {
         isFeatureEnabled(features.vote, res, lang);

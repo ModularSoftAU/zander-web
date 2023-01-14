@@ -5,7 +5,7 @@ export default function webRedirectRoute(app, config, lang) {
 
     app.post(baseEndpoint + '/register', async function(req, res) {
         postAPIRequest(
-            `${process.env.siteAddress}${config.siteConfiguration.apiRoute}/web/register/create`,
+            `${process.env.siteAddress}/api/web/register/create`,
             req.body,
             `${process.env.siteAddress}/register`,
             res

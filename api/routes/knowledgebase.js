@@ -1,7 +1,7 @@
 import {isFeatureEnabled, required, optional} from '../common'
 
 export default function knowledgebaseApiRoute(app, config, db, features, lang) {
-    const baseEndpoint = config.siteConfiguration.apiRoute + '/knowledgebase';
+    const baseEndpoint = '/api/knowledgebase';
 
     // TODO: Update docs
     app.get(baseEndpoint + '/section/get', async function(req, res) {

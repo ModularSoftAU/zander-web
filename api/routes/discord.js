@@ -1,7 +1,7 @@
 import {isFeatureEnabled, required, optional} from '../common'
 
 export default function discordApiRoute(app, client, config, db, features, lang) {
-    const baseEndpoint = config.siteConfiguration.apiRoute + '/discord';
+    const baseEndpoint = '/api/discord';
 
     app.post(baseEndpoint + '/switch', async function(req, res) {
         isFeatureEnabled(features.discord, res, lang);
