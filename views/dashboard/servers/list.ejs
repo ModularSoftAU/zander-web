@@ -60,7 +60,7 @@
                                                         <div class="btn-group">
                                                             <a href="/dashboard/servers/edit?id=<%= server.serverId %>"><button class="btn btn-sm btn-warning" type="button">Edit</button></a>
 
-                                                            <form action="<%= config.siteConfiguration.siteAddress %><%= config.siteConfiguration.redirectRoute %>/server/delete" method="post">
+                                                            <form action="<%= config.siteConfiguration.siteAddress %>/redirect/server/delete" method="post">
                                                                 <input type="hidden" name="serverId" value="<%= server.serverId %>">
                                                                 <button class="btn btn-sm btn-danger" type="submit" onclick="window.location='/dashboard/servers/'">Delete</button>
                                                             </form>

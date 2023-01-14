@@ -1,7 +1,7 @@
 import {hasPermission, setBannerCookie, postAPIRequest} from '../common'
 
 export default function announcementRedirectRoute(app, config, lang) {
-    const baseEndpoint = config.siteConfiguration.redirectRoute + '/announcement';
+    const baseEndpoint = '/redirect/announcement';
     
     app.post(baseEndpoint + '/create', async function(req, res) {
         if (!hasPermission('zander.web.announcements', req, res))

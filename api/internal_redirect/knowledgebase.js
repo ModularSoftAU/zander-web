@@ -1,8 +1,7 @@
 import {hasPermission, setBannerCookie, postAPIRequest} from '../common'
-import fetch from 'node-fetch';
 
 export default function knowledgebaseApiRoute(app, config, lang) {
-    const baseEndpoint = config.siteConfiguration.redirectRoute + '/knowledgebase';
+    const baseEndpoint = '/redirect/knowledgebase';
 
     app.post(baseEndpoint + '/section/create', async function(req, res) {
         if (!hasPermission('zander.web.knowledgebase', req, res))

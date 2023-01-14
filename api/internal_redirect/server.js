@@ -1,8 +1,7 @@
 import {hasPermission, setBannerCookie, postAPIRequest} from '../common'
-import fetch from 'node-fetch';
 
 export default function serverRedirectRoute(app, config, lang) {
-    const baseEndpoint = config.siteConfiguration.redirectRoute + '/server';
+    const baseEndpoint = '/redirect/server';
     
     app.post(baseEndpoint + '/create', async function(req, res) {
         if (!hasPermission('zander.web.server', req, res))

@@ -1,8 +1,7 @@
 import {setBannerCookie, postAPIRequest} from '../common'
-import fetch from 'node-fetch';
 
 export default function userRedirectRoute(app, config, lang) {
-    const baseEndpoint = config.siteConfiguration.redirectRoute + '/user';
+    const baseEndpoint = '/redirect/user';
 
     // app.get(baseEndpoint + '/profile/platform/discord', async function(req, res) {
     //     const code = req.query.code;
@@ -12,7 +11,7 @@ export default function userRedirectRoute(app, config, lang) {
     //         "client_secret": process.env.discordClientSecret,
     //         "grant_type": "authorization_code",
     //         "code": code,
-    //         "redirect_uri": process.env.siteAddress + config.siteConfiguration.redirectRoute + '/user/profile/platform/discord/attach'
+    //         "redirect_uri": process.env.siteAddress + '/redirect/user/profile/platform/discord/attach'
     //     }
 
     //     const response = await fetch(`https://discord.com/api/oauth2/token`, {

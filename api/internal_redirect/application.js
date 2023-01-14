@@ -1,7 +1,7 @@
 import {hasPermission, setBannerCookie, postAPIRequest} from '../common'
 
 export default function applicationRedirectRoute(app, config, lang) {
-    const baseEndpoint = config.siteConfiguration.redirectRoute + '/application';
+    const baseEndpoint = '/redirect/application';
 
     app.post(baseEndpoint + '/create', async function(req, res) {
         if (!hasPermission('zander.web.application', req, res))

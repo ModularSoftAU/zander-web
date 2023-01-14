@@ -21,9 +21,7 @@
             "youtube": "https://www.youtube.com/channel/UCeijz6MNnya85LprMjPmYag",
             "linkedin": "https://www.linkedin.com/company/68885022/",
             "tiktok": "https://www.tiktok.com/@craftingforchrist"
-        },
-        "apiRoute": "/api",
-        "redirectRoute": "/redirect"
+        }
     },
     "discord": {
         "guildId": "899441191416901632",

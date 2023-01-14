@@ -58,7 +58,7 @@
                                                         <div class="btn-group">
                                                             <a href="/dashboard/applications/edit?id=<%= application.applicationId %>"><button class="btn btn-sm btn-warning" type="button">Edit</button></a>
 
-                                                            <form action="<%= process.env.siteAddress %><%= config.siteConfiguration.redirectRoute %>/application/delete" method="post">
+                                                            <form action="<%= process.env.siteAddress %>/redirect/application/delete" method="post">
                                                                 <input type="hidden" name="applicationId" value="<%= application.applicationId %>">
                                                                 <button class="btn btn-sm btn-danger" type="submit">Delete</button>
                                                             </form>
