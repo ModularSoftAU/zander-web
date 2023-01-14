@@ -11,7 +11,7 @@ export default function dashboardAnnouncementSiteRoute(app, fetch, config, db, f
         if (!hasPermission('zander.web.announcements', req, res, features))
             return;
 
-        const fetchURL = `${config.siteConfiguration.siteAddress}${config.siteConfiguration.apiRoute}/announcement/get`;
+        const fetchURL = `${process.env.siteAddress}${config.siteConfiguration.apiRoute}/announcement/get`;
         const response = await fetch(fetchURL, {
             headers: { 'x-access-token': process.env.apiKey }
         });
@@ -49,7 +49,7 @@ export default function dashboardAnnouncementSiteRoute(app, fetch, config, db, f
             return;
         
         const announcementSlug = req.query.announcementSlug;
-        const fetchURL = `${config.siteConfiguration.siteAddress}${config.siteConfiguration.apiRoute}/announcement/get?announcementSlug=${announcementSlug}`;
+        const fetchURL = `${process.env.siteAddress}${config.siteConfiguration.apiRoute}/announcement/get?announcementSlug=${announcementSlug}`;
         const response = await fetch(fetchURL, {
             headers: { 'x-access-token': process.env.apiKey }
         });

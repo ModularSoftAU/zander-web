@@ -58,12 +58,12 @@
                                                     <td>
                                                         <div class="btn-group">
                                                             <% if (announcement.enabled === 0) { %>
-                                                                <form action="<%= config.siteConfiguration.siteAddress %><%= config.siteConfiguration.redirectRoute %>/announcement/enable" method="post">
+                                                                <form action="<%= process.env.siteAddress %><%= config.siteConfiguration.redirectRoute %>/announcement/enable" method="post">
                                                                     <input type="hidden" name="announcementSlug" value="<%= announcement.announcementSlug %>">
                                                                     <button class="btn btn-sm btn-success" type="submit">Enable</button>
                                                                 </form>
                                                             <% } else { %>
-                                                                <form action="<%= config.siteConfiguration.siteAddress %><%= config.siteConfiguration.redirectRoute %>/announcement/disable" method="post">
+                                                                <form action="<%= process.env.siteAddress %><%= config.siteConfiguration.redirectRoute %>/announcement/disable" method="post">
                                                                     <input type="hidden" name="announcementSlug" value="<%= announcement.announcementSlug %>">
                                                                     <button class="btn btn-sm btn-danger" type="submit">Disable</button>
                                                                 </form>
@@ -71,7 +71,7 @@
 
                                                             <a href="/dashboard/announcements/edit?announcementSlug=<%= announcement.announcementSlug %>"><button class="btn btn-sm btn-warning" type="button">Edit</button></a>
 
-                                                            <form action="<%= config.siteConfiguration.siteAddress %><%= config.siteConfiguration.redirectRoute %>/announcement/delete" method="post">
+                                                            <form action="<%= process.env.siteAddress %><%= config.siteConfiguration.redirectRoute %>/announcement/delete" method="post">
                                                                 <input type="hidden" name="announcementSlug" value="<%= announcement.announcementSlug %>">
                                                                 <button class="btn btn-sm btn-danger" type="submit">Delete</button>
                                                             </form>

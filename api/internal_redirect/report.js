@@ -9,14 +9,14 @@ export default function reportRedirectRoute(app, config, lang) {
             return;
         
         postAPIRequest(
-            `${config.siteConfiguration.siteAddress}${config.siteConfiguration.apiRoute}/report/create`,
+            `${process.env.siteAddress}${config.siteConfiguration.apiRoute}/report/create`,
             req.body,
-            `${config.siteConfiguration.siteAddress}/dashboard`,
+            `${process.env.siteAddress}/dashboard`,
             res
         )
 
         setBannerCookie("success", lang.report.reportCreated, res);
-        res.redirect(`${config.siteConfiguration.siteAddress}/dashboard`);
+        res.redirect(`${process.env.siteAddress}/dashboard`);
     });
 
     app.post(baseEndpoint + '/close', async function(req, res) {
@@ -24,14 +24,14 @@ export default function reportRedirectRoute(app, config, lang) {
             return;
 
         postAPIRequest(
-            `${config.siteConfiguration.siteAddress}${config.siteConfiguration.apiRoute}/report/close`,
+            `${process.env.siteAddress}${config.siteConfiguration.apiRoute}/report/close`,
             req.body,
-            `${config.siteConfiguration.siteAddress}/dashboard`,
+            `${process.env.siteAddress}/dashboard`,
             res
         )
 
         setBannerCookie("success", lang.report.reportClosed, res);
-        res.redirect(`${config.siteConfiguration.siteAddress}/dashboard`);
+        res.redirect(`${process.env.siteAddress}/dashboard`);
     });
 
 }

@@ -18,7 +18,7 @@ export default function userSiteRoute(app, client, fetch, moment, config, db, fe
 		},
 		scope: ['identify'],
 		startRedirectPath: '/user/oauth/discord',
-		callbackUri: `${config.siteConfiguration.siteAddress}/user/oauth/discord/callback` // this URL must be exposed
+		callbackUri: `${process.env.siteAddress}/user/oauth/discord/callback` // this URL must be exposed
 	})
 
 
@@ -45,10 +45,10 @@ export default function userSiteRoute(app, client, fetch, moment, config, db, fe
 		if (discordID) {
 			linkUserDiscordID(discordID, req, res);
 			setBannerCookie("success", "The Discord account is now connected.", res);
-			res.redirect(`${config.siteConfiguration.siteAddress}/profile/edit`);
+			res.redirect(`${process.env.siteAddress}/profile/edit`);
 		} else {
 			setBannerCookie("danger", "This didn't work, try again later.", res);
-			res.redirect(`${config.siteConfiguration.siteAddress}/profile/edit`);
+			res.redirect(`${process.env.siteAddress}/profile/edit`);
 		}
 	});
 
@@ -64,7 +64,7 @@ export default function userSiteRoute(app, client, fetch, moment, config, db, fe
 		
 		unlinkUserDiscordID(userDiscordId, req, res);
 		setBannerCookie("success", "The Discord account is now connected.", res);
-		res.redirect(`${config.siteConfiguration.siteAddress}/profile/edit`);
+		res.redirect(`${process.env.siteAddress}/profile/edit`);
 	});
 
 }

@@ -5,14 +5,14 @@ export default function webRedirectRoute(app, config, lang) {
 
     app.post(baseEndpoint + '/register', async function(req, res) {
         postAPIRequest(
-            `${config.siteConfiguration.siteAddress}${config.siteConfiguration.apiRoute}/web/register/create`,
+            `${process.env.siteAddress}${config.siteConfiguration.apiRoute}/web/register/create`,
             req.body,
-            `${config.siteConfiguration.siteAddress}/register`,
+            `${process.env.siteAddress}/register`,
             res
         )
 
         setBannerCookie("success", lang.report.reportCreated, res);
-        res.redirect(`${config.siteConfiguration.siteAddress}/register`);
+        res.redirect(`${process.env.siteAddress}/register`);
     });
 
 }

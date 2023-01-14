@@ -33,7 +33,7 @@ export class IPCheckCommand extends Command {
     if (features.moderation.ipCheck) {
       const ipaddress = interaction.options.getString('ipaddress');
 
-      const response = await fetch(`${config.siteConfiguration.siteAddress}${config.siteConfiguration.apiRoute}/user/check/ip?ipAddress=${ipaddress}`, {
+      const response = await fetch(`${process.env.siteAddress}${config.siteConfiguration.apiRoute}/user/check/ip?ipAddress=${ipaddress}`, {
         method: 'GET',
         headers: {
             'Content-Type': 'application/json',

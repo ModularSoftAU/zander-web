@@ -137,8 +137,8 @@ export default function sessionSiteRoute(app, client, fetch, moment, config, db,
 		if (loginFailed || hashedPassword == null) {
 			let notLoggedInBeforeLang = lang.web.notLoggedInBefore;
 
-			setBannerCookie("warning", notLoggedInBeforeLang.replace("%SITEADDRESS%", config.siteConfiguration.siteAddress), res);
-			return res.redirect(`${config.siteConfiguration.siteAddress}/login`);
+			setBannerCookie("warning", notLoggedInBeforeLang.replace("%SITEADDRESS%", process.env.siteAddress), res);
+			return res.redirect(`${process.env.siteAddress}/login`);
 		}
 
 		// Check if passwords match
@@ -163,10 +163,10 @@ export default function sessionSiteRoute(app, client, fetch, moment, config, db,
 				};
 
 				setBannerCookie("success", lang.session.userSuccessLogin, res);
-				return res.redirect(`${config.siteConfiguration.siteAddress}/`);
+				return res.redirect(`${process.env.siteAddress}/`);
 			} else {
 			  setBannerCookie("warning", lang.session.userFailedLogin, res);
-			  return res.redirect(`${config.siteConfiguration.siteAddress}/login`);
+			  return res.redirect(`${process.env.siteAddress}/login`);
 			}
 		});
       });
@@ -179,7 +179,7 @@ export default function sessionSiteRoute(app, client, fetch, moment, config, db,
 		  	throw err;
 		} else {
 			setBannerCookie("success", lang.session.userLogout, res);
-		  	return res.redirect(`${config.siteConfiguration.siteAddress}/`)
+		  	return res.redirect(`${process.env.siteAddress}/`)
 		}
 	})
   });

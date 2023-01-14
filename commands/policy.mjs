@@ -20,10 +20,10 @@ export class PolicyCommand extends Command {
       .setTitle(`Network Policy`)
       .setDescription(`For user reference, here is a link to all Network polices.\nBy joining the Network and using our services you agree to all our polices.`)
 
-      .addField(`Rules`, `${config.siteConfiguration.siteAddress}/rules`)
-      .addField(`Terms Of Service`, `${config.siteConfiguration.siteAddress}/terms`)
-      .addField(`Privacy Policy`, `${config.siteConfiguration.siteAddress}/privacy`)
-      .addField(`Refund Policy`, `${config.siteConfiguration.siteAddress}/refund`)
+      .addField(`Rules`, `${process.env.siteAddress}/rules`)
+      .addField(`Terms Of Service`, `${process.env.siteAddress}/terms`)
+      .addField(`Privacy Policy`, `${process.env.siteAddress}/privacy`)
+      .addField(`Refund Policy`, `${process.env.siteAddress}/refund`)
 
       interaction.reply({
         embeds: [embed],

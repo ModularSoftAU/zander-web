@@ -18,7 +18,7 @@ export class RulesCommand extends Command {
   async chatInputRun(interaction) {
     const embed = new MessageEmbed()
       .setTitle(`Network Rules`)
-      .setDescription(`Please ensure you follow and abide by the rules which you can read here: ${config.siteConfiguration.siteAddress}/rules`)
+      .setDescription(`Please ensure you follow and abide by the rules which you can read here: ${process.env.siteAddress}/rules`)
 
       interaction.reply({
         embeds: [embed],

@@ -24,7 +24,7 @@ export default function webApiRoute(app, config, db, features, lang) {
                 return res.send({
                     success: false,
                     alertType: "warning",
-                    alertContent: notLoggedInBeforeLang.replace("%SITEADDRESS%", config.siteConfiguration.siteAddress)
+                    alertContent: notLoggedInBeforeLang.replace("%SITEADDRESS%", process.env.siteAddress)
                 });
             }
 
@@ -108,7 +108,7 @@ export default function webApiRoute(app, config, db, features, lang) {
             success: true,
             data: {
                 "siteName": config.siteConfiguration.siteName,
-                "siteAddress": config.siteConfiguration.siteAddress
+                "siteAddress": process.env.siteAddress
             }
         });
     });

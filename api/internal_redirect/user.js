@@ -12,7 +12,7 @@ export default function userRedirectRoute(app, config, lang) {
     //         "client_secret": process.env.discordClientSecret,
     //         "grant_type": "authorization_code",
     //         "code": code,
-    //         "redirect_uri": config.siteConfiguration.siteAddress + config.siteConfiguration.redirectRoute + '/user/profile/platform/discord/attach'
+    //         "redirect_uri": process.env.siteAddress + config.siteConfiguration.redirectRoute + '/user/profile/platform/discord/attach'
     //     }
 
     //     const response = await fetch(`https://discord.com/api/oauth2/token`, {
@@ -29,6 +29,6 @@ export default function userRedirectRoute(app, config, lang) {
     //     console.log(data);
 
     //     setBannerCookie("success", lang.report.reportCreated, res);
-    //     res.redirect(`${config.siteConfiguration.siteAddress}/`);
+    //     res.redirect(`${process.env.siteAddress}/`);
     // });
 }

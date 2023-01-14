@@ -19,7 +19,7 @@ export class VoteCommand extends Command {
 
   async chatInputRun(interaction) {
     if (features.vote) {
-      const voteFetchURL = `${config.siteConfiguration.siteAddress}${config.siteConfiguration.apiRoute}/vote/get`;
+      const voteFetchURL = `${process.env.siteAddress}${config.siteConfiguration.apiRoute}/vote/get`;
       const voteResponse = await fetch(voteFetchURL);
       const voteApiData = await voteResponse.json();
       console.log(voteApiData);
@@ -29,8 +29,8 @@ export class VoteCommand extends Command {
         
         const voteWithTopVoterEmbed = new MessageEmbed()
           .setTitle(`Voting`)
-          .setDescription(`You can help our Network grow, along with getting awesome perks being the Top Voter! Visit ${config.siteConfiguration.siteAddress}/vote to start voting!\nYou need to beat ${topVoterEntry.username} with **${topVoterEntry.votes}**.\nGood Luck!`)
-          .setURL(`${config.siteConfiguration.siteAddress}/vote`) 
+          .setDescription(`You can help our Network grow, along with getting awesome perks being the Top Voter! Visit ${process.env.siteAddress}/vote to start voting!\nYou need to beat ${topVoterEntry.username} with **${topVoterEntry.votes}**.\nGood Luck!`)
+          .setURL(`${process.env.siteAddress}/vote`) 
         
           interaction.reply({
             embeds: [voteWithTopVoterEmbed],
@@ -39,8 +39,8 @@ export class VoteCommand extends Command {
       } else {
         const voteWithNotVotesEmbed = new MessageEmbed()
           .setTitle(`Voting`)
-          .setDescription(`You can help our Network grow long with getting awesome perks being the Top Voter! Visit ${config.siteConfiguration.siteAddress}/vote to start voting!\n**There are no votes yet! You could be the first!**`)
-          .setURL(`${config.siteConfiguration.siteAddress}/vote`)
+          .setDescription(`You can help our Network grow long with getting awesome perks being the Top Voter! Visit ${process.env.siteAddress}/vote to start voting!\n**There are no votes yet! You could be the first!**`)
+          .setURL(`${process.env.siteAddress}/vote`)
 
           interaction.reply({
             embeds: [voteWithNotVotesEmbed],

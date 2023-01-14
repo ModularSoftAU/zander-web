@@ -18,7 +18,7 @@ export class StatusCommand extends Command {
 
   async chatInputRun(interaction) {
     try {
-      const fetchURL = `${config.siteConfiguration.siteAddress}${config.siteConfiguration.apiRoute}/server/users/get`;
+      const fetchURL = `${process.env.siteAddress}${config.siteConfiguration.apiRoute}/server/users/get`;
       const response = await fetch(fetchURL, {
         headers: { 'x-access-token': process.env.apiKey }
       });

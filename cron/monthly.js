@@ -12,7 +12,7 @@ export default async function monthlyCron(client) {
         // This will fire on the first of every month at 7:00am and will clear all votes from the votes table.
 
         try {
-            const voteFetchURL = `${config.siteConfiguration.siteAddress}${config.siteConfiguration.apiRoute}/vote/get`;
+            const voteFetchURL = `${process.env.siteAddress}${config.siteConfiguration.apiRoute}/vote/get`;
             const voteResponse = await fetch(voteFetchURL);
             const voteApiData = await voteResponse.json();
             const topVoterEntry = voteApiData.data[0];
@@ -23,7 +23,7 @@ export default async function monthlyCron(client) {
 
             const embed = new MessageEmbed()
                 .setTitle(`:ballot_box: Voting Winner :ballot_box:`)
-                .setDescription(`The votes are in! **${topVoterEntry.username}** has gained Top Voter for this month with **${topVoterEntry.votes} votes**.\nThe votes have started again! Go to ${config.siteConfiguration.siteAddress}/vote to get started!`)
+                .setDescription(`The votes are in! **${topVoterEntry.username}** has gained Top Voter for this month with **${topVoterEntry.votes} votes**.\nThe votes have started again! Go to ${process.env.siteAddress}/vote to get started!`)
                 .setColor('#cbff7c')
             topVoterBroadcastChannel.send({ embeds: [embed] });
 

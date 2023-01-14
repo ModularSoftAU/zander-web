@@ -9,14 +9,14 @@ export default function serverRedirectRoute(app, config, lang) {
             return;
 
         postAPIRequest(
-            `${config.siteConfiguration.siteAddress}${config.siteConfiguration.apiRoute}/server/create`,
+            `${process.env.siteAddress}${config.siteConfiguration.apiRoute}/server/create`,
             req.body,
-            `${config.siteConfiguration.siteAddress}/dashboard/servers`,
+            `${process.env.siteAddress}/dashboard/servers`,
             res
         )
 
         setBannerCookie("success", lang.server.serverCreated, res);
-        res.redirect(`${config.siteConfiguration.siteAddress}/dashboard/servers`);
+        res.redirect(`${process.env.siteAddress}/dashboard/servers`);
     });
 
     app.post(baseEndpoint + '/edit', async function(req, res) {
@@ -24,14 +24,14 @@ export default function serverRedirectRoute(app, config, lang) {
             return;
 
         postAPIRequest(
-            `${config.siteConfiguration.siteAddress}${config.siteConfiguration.apiRoute}/server/edit`,
+            `${process.env.siteAddress}${config.siteConfiguration.apiRoute}/server/edit`,
             req.body,
-            `${config.siteConfiguration.siteAddress}/dashboard/servers`,
+            `${process.env.siteAddress}/dashboard/servers`,
             res
         )
 
         setBannerCookie("success", lang.server.serverEdited, res);
-        res.redirect(`${config.siteConfiguration.siteAddress}/dashboard/servers`);
+        res.redirect(`${process.env.siteAddress}/dashboard/servers`);
     });
 
     app.post(baseEndpoint + '/delete', async function(req, res) {
@@ -39,14 +39,14 @@ export default function serverRedirectRoute(app, config, lang) {
             return;
 
         postAPIRequest(
-            `${config.siteConfiguration.siteAddress}${config.siteConfiguration.apiRoute}/server/delete`,
+            `${process.env.siteAddress}${config.siteConfiguration.apiRoute}/server/delete`,
             req.body,
-            `${config.siteConfiguration.siteAddress}/dashboard/servers`,
+            `${process.env.siteAddress}/dashboard/servers`,
             res
         )
 
         setBannerCookie("success", lang.server.serverDeleted, res);
-        res.redirect(`${config.siteConfiguration.siteAddress}/dashboard/servers`);
+        res.redirect(`${process.env.siteAddress}/dashboard/servers`);
     });
 
 }

@@ -18,7 +18,7 @@ export class WebsiteCommand extends Command {
   async chatInputRun(interaction) {
     const embed = new MessageEmbed()
       .setTitle(`Network Website`)
-      .setDescription(`For more info and to get involved with the community, jump on our website ${config.siteConfiguration.siteAddress}`)
+      .setDescription(`For more info and to get involved with the community, jump on our website ${process.env.siteAddress}`)
 
       interaction.reply({
         embeds: [embed],

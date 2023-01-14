@@ -11,7 +11,7 @@ export default function dashboardEventSiteRoute(app, client, fetch, moment, conf
         if (!hasPermission('zander.web.event', req, res, features))
             return;
 
-        const fetchURL = `${config.siteConfiguration.siteAddress}${config.siteConfiguration.apiRoute}/event/get?published=all`;
+        const fetchURL = `${process.env.siteAddress}${config.siteConfiguration.apiRoute}/event/get?published=all`;
         const response = await fetch(fetchURL, {
             headers: { 'x-access-token': process.env.apiKey }
         });
@@ -37,7 +37,7 @@ export default function dashboardEventSiteRoute(app, client, fetch, moment, conf
         if (!hasPermission('zander.web.event', req, res, features))
             return;
 
-        const fetchURL = `${config.siteConfiguration.siteAddress}${config.siteConfiguration.apiRoute}/server/get?visible=all`;
+        const fetchURL = `${process.env.siteAddress}${config.siteConfiguration.apiRoute}/server/get?visible=all`;
         const response = await fetch(fetchURL, {
             headers: { 'x-access-token': process.env.apiKey }
         });
@@ -64,13 +64,13 @@ export default function dashboardEventSiteRoute(app, client, fetch, moment, conf
             return;
         
         const eventId = req.query.id;
-        const fetchURL = `${config.siteConfiguration.siteAddress}${config.siteConfiguration.apiRoute}/event/get?id=${eventId}`;
+        const fetchURL = `${process.env.siteAddress}${config.siteConfiguration.apiRoute}/event/get?id=${eventId}`;
         const response = await fetch(fetchURL, {
             headers: { 'x-access-token': process.env.apiKey }
         });
         const eventApiData = await response.json();
 
-        const serverFetchURL = `${config.siteConfiguration.siteAddress}${config.siteConfiguration.apiRoute}/server/get?visible=all`;
+        const serverFetchURL = `${process.env.siteAddress}${config.siteConfiguration.apiRoute}/server/get?visible=all`;
         const serverResponse = await fetch(serverFetchURL, {
             headers: { 'x-access-token': process.env.apiKey }
         });
@@ -174,7 +174,7 @@ export default function dashboardEventSiteRoute(app, client, fetch, moment, conf
 
                         channel.send({ embeds: [embed] });
 
-                        return res.redirect(`${config.siteConfiguration.siteAddress}/dashboard/events`);
+                        return res.redirect(`${process.env.siteAddress}/dashboard/events`);
                     });
                 } catch (error) {
                     return res.send({

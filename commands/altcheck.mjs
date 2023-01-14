@@ -33,7 +33,7 @@ export class AltCheckCommand extends Command {
     if (features.moderation.ipCheck) {
       const username = interaction.options.getString('username');
 
-      const response = await fetch(`${config.siteConfiguration.siteAddress}${config.siteConfiguration.apiRoute}/user/check/alts?username=${username}`, {
+      const response = await fetch(`${process.env.siteAddress}${config.siteConfiguration.apiRoute}/user/check/alts?username=${username}`, {
         method: 'GET',
         headers: {
             'Content-Type': 'application/json',

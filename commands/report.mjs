@@ -18,7 +18,7 @@ export class ReportCommand extends Command {
   async chatInputRun(interaction) {
     const embed = new MessageEmbed()
     .setTitle(`Report a Player`)
-    .setDescription(`See a player breaking the rules, report them to Staff here: ${config.siteConfiguration.siteAddress}/report`)
+    .setDescription(`See a player breaking the rules, report them to Staff here: ${process.env.siteAddress}/report`)
 
     interaction.reply({
       embeds: [embed],

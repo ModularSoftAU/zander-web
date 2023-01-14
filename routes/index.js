@@ -16,7 +16,7 @@ export default function applicationSiteRoutes(app, client, fetch, moment, config
     policySiteRoutes(app, config, features);
 
     app.get('/', async function (req, res) {
-        const fetchURL = `${config.siteConfiguration.siteAddress}${config.siteConfiguration.apiRoute}/web/statistics`;
+        const fetchURL = `${process.env.siteAddress}${config.siteConfiguration.apiRoute}/web/statistics`;
         const response = await fetch(fetchURL, {
             headers: { 'x-access-token': process.env.apiKey }
         });
@@ -38,7 +38,7 @@ export default function applicationSiteRoutes(app, client, fetch, moment, config
     app.get('/play', async function (req, res) {
         isFeatureWebRouteEnabled(features.servers, req, res, features);
 
-        const fetchURL = `${config.siteConfiguration.siteAddress}${config.siteConfiguration.apiRoute}/server/get?visible=true`;
+        const fetchURL = `${process.env.siteAddress}${config.siteConfiguration.apiRoute}/server/get?visible=true`;
         const response = await fetch(fetchURL, {
             headers: { 'x-access-token': process.env.apiKey }
         });
@@ -60,7 +60,7 @@ export default function applicationSiteRoutes(app, client, fetch, moment, config
     app.get('/apply', async function (req, res) {
         isFeatureWebRouteEnabled(features.applications, req, res, features);
 
-        const fetchURL = `${config.siteConfiguration.siteAddress}${config.siteConfiguration.apiRoute}/application/get`;
+        const fetchURL = `${process.env.siteAddress}${config.siteConfiguration.apiRoute}/application/get`;
         const response = await fetch(fetchURL, {
             headers: { 'x-access-token': process.env.apiKey }
         });
@@ -82,7 +82,7 @@ export default function applicationSiteRoutes(app, client, fetch, moment, config
     app.get('/events', async function (req, res) {
         isFeatureWebRouteEnabled(features.events, req, res, features);
 
-        const fetchURL = `${config.siteConfiguration.siteAddress}${config.siteConfiguration.apiRoute}/event/get?published=show`;
+        const fetchURL = `${process.env.siteAddress}${config.siteConfiguration.apiRoute}/event/get?published=show`;
         const response = await fetch(fetchURL, {
             headers: { 'x-access-token': process.env.apiKey }
         });
@@ -103,7 +103,7 @@ export default function applicationSiteRoutes(app, client, fetch, moment, config
     // Vote
     // 
     app.get('/vote', async function (req, res) {
-        const fetchURL = `${config.siteConfiguration.siteAddress}${config.siteConfiguration.apiRoute}/vote/get`;
+        const fetchURL = `${process.env.siteAddress}${config.siteConfiguration.apiRoute}/vote/get`;
         const response = await fetch(fetchURL, {
             headers: { 'x-access-token': process.env.apiKey }
         });
@@ -149,7 +149,7 @@ export default function applicationSiteRoutes(app, client, fetch, moment, config
             });        
         }
 
-        const fetchURL = `${config.siteConfiguration.siteAddress}${config.siteConfiguration.apiRoute}/server/get?visable=true`;
+        const fetchURL = `${process.env.siteAddress}${config.siteConfiguration.apiRoute}/server/get?visable=true`;
         const response = await fetch(fetchURL, {
             headers: { 'x-access-token': process.env.apiKey }
         });
@@ -182,7 +182,7 @@ export default function applicationSiteRoutes(app, client, fetch, moment, config
     app.get('/report/:id', async function (req, res) {
         isFeatureWebRouteEnabled(features.report, req, res, features);
 
-        const fetchURL = `${config.siteConfiguration.siteAddress}${config.siteConfiguration.apiRoute}/report/get?reportId=${req.params.id}`;
+        const fetchURL = `${process.env.siteAddress}${config.siteConfiguration.apiRoute}/report/get?reportId=${req.params.id}`;
         const response = await fetch(fetchURL, {
             headers: { 'x-access-token': process.env.apiKey }
         });
@@ -206,14 +206,14 @@ export default function applicationSiteRoutes(app, client, fetch, moment, config
         isFeatureWebRouteEnabled(features.web.profiles, req, res, features);
 
         // Get Player Profile Information
-        const profileFetchURL = `${config.siteConfiguration.siteAddress}${config.siteConfiguration.apiRoute}/user/get?username=${req.params.username}`;
+        const profileFetchURL = `${process.env.siteAddress}${config.siteConfiguration.apiRoute}/user/get?username=${req.params.username}`;
         const profileResponse = await fetch(profileFetchURL, {
             headers: { 'x-access-token': process.env.apiKey }
         });
         const profileApiData = await profileResponse.json();
 
         // Get Player Report Information
-        const reportFetchURL = `${config.siteConfiguration.siteAddress}${config.siteConfiguration.apiRoute}/report/get?username=${req.params.username}`;
+        const reportFetchURL = `${process.env.siteAddress}${config.siteConfiguration.apiRoute}/report/get?username=${req.params.username}`;
         const reportResponse = await fetch(reportFetchURL, {
             headers: { 'x-access-token': process.env.apiKey }
         });
@@ -238,7 +238,7 @@ export default function applicationSiteRoutes(app, client, fetch, moment, config
         isFeatureWebRouteEnabled(features.web.profileEditor, req, res, features);
 
         // Get Player Profile Information
-        const profileFetchURL = `${config.siteConfiguration.siteAddress}${config.siteConfiguration.apiRoute}/user/get?username=${req.session.user.username}`;
+        const profileFetchURL = `${process.env.siteAddress}${config.siteConfiguration.apiRoute}/user/get?username=${req.session.user.username}`;
         const profileResponse = await fetch(profileFetchURL, {
             headers: { 'x-access-token': process.env.apiKey }
         });
@@ -271,7 +271,7 @@ export default function applicationSiteRoutes(app, client, fetch, moment, config
             });        
         }
 
-        const fetchURL = `${config.siteConfiguration.siteAddress}${config.siteConfiguration.apiRoute}/user/notification/get?username=${req.params.username}`;
+        const fetchURL = `${process.env.siteAddress}${config.siteConfiguration.apiRoute}/user/notification/get?username=${req.params.username}`;
         const response = await fetch(fetchURL, {
             headers: { 'x-access-token': process.env.apiKey }
         });
