@@ -41,22 +41,22 @@
 			</div>
 
 			<% if (features.communityCreations || features.events) { %>
-			<!-- Community -->
-			<div class="col-lg-2 col-md-6 col-sm-6">
-				<div class="widget mb-5 mb-lg-0">
-					<h4 class="text-capitalize mb-3">Community</h4>
-					<div class="divider mb-4"></div>
+				<!-- Community -->
+				<div class="col-lg-2 col-md-6 col-sm-6">
+					<div class="widget mb-5 mb-lg-0">
+						<h4 class="text-capitalize mb-3">Community</h4>
+						<div class="divider mb-4"></div>
 
-					<ul class="list-unstyled footer-menu lh-35">
-						<% if (features.communityCreations) { %>
-							<li><a href="/communityCreations">Community Creations</a></li>
-						<% } %>
-						<% if (features.events) { %>
-							<li><a href="/events">Events</a></li>
-						<% } %>
-					</ul>
+						<ul class="list-unstyled footer-menu lh-35">
+							<% if (features.communityCreations) { %>
+								<li><a href="/communityCreations">Community Creations</a></li>
+							<% } %>
+							<% if (features.events) { %>
+								<li><a href="/events">Events</a></li>
+							<% } %>
+						</ul>
+					</div>
 				</div>
-			</div>
 			<% } %>
 
 			<!-- Quick Access -->
@@ -101,7 +101,7 @@
 			<div class="row align-items-center justify-content-between">
 				<div class="col-lg-6">
 					<div class="copyright">
-						&copy; Copyright 2018 - 2022 Crafting For Christ<br>
+						&copy; Copyright 2018 - <%= new Date().getFullYear() %> Crafting For Christ<br>
 						Designed by <a href="https://themefisher.com/">Themefisher</a> and Developed by <a href="https://modularenigma.com" target="_blank">ModularEnigma</a>
 					</div>
 				</div>

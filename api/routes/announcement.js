@@ -19,7 +19,6 @@ export default function announcementApiRoute(app, config, db, features, lang) {
                         });
                     }
 
-
                     if (!results.length) {
                         return res.send({
                             success: false,
