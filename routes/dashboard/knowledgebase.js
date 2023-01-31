@@ -30,7 +30,8 @@ export default function dashboardKnowledgebaseSiteRoute(app, fetch, moment, conf
             config: config,
             articleApiData: articleApiData,
             sectionApiData: sectionApiData,
-            features: features
+            features: features,
+            req: req
         });
     });
 

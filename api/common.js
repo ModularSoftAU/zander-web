@@ -62,14 +62,15 @@ export function isLoggedIn(req) {
     else return false;
 }
 
-export function hasPermission(permissionNode, req, res, features) {
+export async function hasPermission(permissionNode, req, res, features) {
     if (!isLoggedIn(req)) {
         res.view('session/noPermission', {
             "pageTitle": `Access Restricted`,
             config: config,
             req: req,
             res: res,
-            features: features
+            features: features,
+            globalImage: await getGlobalImage(),
         });
         return false;
     }
@@ -86,7 +87,8 @@ export function hasPermission(permissionNode, req, res, features) {
             config: config,
             req: req,
             res: res,
-            features: features
+            features: features,
+            globalImage: await getGlobalImage(),
         });
         return false;
     }
