@@ -1,5 +1,13 @@
-import db from '../controllers/databaseController';
+import db from './databaseController';
 
+/*
+    Update the Discord ID of a user in the database
+    that links the discordID field for the user with the matching username.
+
+    @param discordID The Discord ID of the user.
+    @param req Passing through req.
+    @param res Passing through res.
+*/
 export function linkUserDiscordID(discordID, req, res) {    
     try {        
         db.query(`UPDATE users SET discordID=? WHERE username=?;`, [discordID, req.session.user.username], function (error, results, fields) {
@@ -33,6 +41,14 @@ export function linkUserDiscordID(discordID, req, res) {
     }
 }
 
+/*
+    Update the Discord ID of a user in the database
+    that unlinks the discordID field for the user with the matching username.
+
+    @param discordID The Discord ID of the user.
+    @param req Passing through req.
+    @param res Passing through res.
+*/
 export function unlinkUserDiscordID(discordID, req, res) {
     try {
         db.query(`UPDATE users SET discordID=? WHERE username=? AND discordID=?;`, [null, req.session.user.username, discordID], function (error, results, fields) {
