@@ -2,7 +2,14 @@ import config from '../config.json' assert {type: "json"};
 import fetch from 'node-fetch';
 import { readdirSync } from 'fs';
 
-export function isFeatureEnabled(isFeatureEnabled, res, features, lang) {
+/*
+    Check if a specific feature is enabled
+
+    @param isFeatureEnabled The feature to check if enabled.
+    @param res Passing through res.
+    @param lang Passing through lang.
+*/
+export function isFeatureEnabled(isFeatureEnabled, res, lang) {
     if (isFeatureEnabled)
         return;
 
@@ -12,6 +19,14 @@ export function isFeatureEnabled(isFeatureEnabled, res, features, lang) {
     });
 }
 
+/*
+    Ensure that a required field is present and has a non-null value, 
+    and to return an error message if this is not the case.
+
+    @param body
+    @param field 
+    @param res Passing through res.
+*/
 export function required(body, field, res) {
     // Prematurely exits an API request if a required field has not been
     // defined or null. If the body is not defined then we error as well.
