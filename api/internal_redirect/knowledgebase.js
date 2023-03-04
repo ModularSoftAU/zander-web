@@ -14,7 +14,6 @@ export default function knowledgebaseApiRoute(app, config, lang) {
             res
         )
 
-        setBannerCookie("success", lang.knowledgebase.sectionCreated, res);
         res.redirect(`${process.env.siteAddress}/dashboard/knowledgebase`);
     });
 
@@ -29,7 +28,6 @@ export default function knowledgebaseApiRoute(app, config, lang) {
                 res
             )
     
-            setBannerCookie("success", lang.knowledgebase.sectionUpdated, res);
             res.redirect(`${process.env.siteAddress}/dashboard/knowledgebase`);
     });
 
@@ -44,7 +42,6 @@ export default function knowledgebaseApiRoute(app, config, lang) {
                 res
             )
     
-            setBannerCookie("success", lang.knowledgebase.articleCreated, res);
             res.redirect(`${process.env.siteAddress}/dashboard/knowledgebase`);
     });
 
@@ -59,7 +56,6 @@ export default function knowledgebaseApiRoute(app, config, lang) {
             res
         )
 
-        setBannerCookie("success", lang.knowledgebase.articleUpdated, res);
         res.redirect(`${process.env.siteAddress}/dashboard/knowledgebase`);
 
 

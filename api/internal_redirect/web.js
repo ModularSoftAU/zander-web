@@ -11,7 +11,6 @@ export default function webRedirectRoute(app, config, lang) {
             res
         )
 
-        setBannerCookie("success", lang.report.reportCreated, res);
         res.redirect(`${process.env.siteAddress}/register`);
     });
 

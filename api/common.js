@@ -151,17 +151,28 @@ export function setBannerCookie(alertType, alertContent, res) {
     expiryTime.setSeconds(expiryTime.getSeconds() + 1);
 
     // Set Alert Type
-    res.setCookie('alertType', alertType, {
-        path: '/',
-        expires: expiryTime
-    })
+    // res.setCookie('alertType', alertType, {
+    //     path: '/',
+    //     expires: expiryTime
+    // })
 
-    // Set Content Type
-    res.setCookie('alertContent', alertContent, {
+    // // Set Content Type
+    // res.setCookie('alertContent', alertContent, {
+    //     path: '/',
+    //     expires: expiryTime
+    // })
+
+    res.cookie('alertType', alertType, {
         path: '/',
         expires: expiryTime
-    })
-    return true
+    });
+
+    res.cookie('alertContent', alertContent, {
+        path: '/',
+        expires: expiryTime
+    });
+
+    // return true;
 }
 
 /*
@@ -187,8 +198,13 @@ export async function postAPIRequest(postURL, apiPostBody, failureRedirectURL, r
     });
     const data = await response.json();
 
+    console.log(data);
+
+    if (data.alertType) {
+        setBannerCookie(`${data.alertType}`, `${data.alertContent}`, res);   
+    }
+
     if (!data.success) {
-        setBannerCookie("danger", `Failed to Process: ${data.message}`, res);
         return res.redirect(failureRedirectURL);
     }
 

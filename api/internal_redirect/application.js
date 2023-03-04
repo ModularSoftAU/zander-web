@@ -14,7 +14,6 @@ export default function applicationRedirectRoute(app, config, lang) {
             res
         )
 
-        setBannerCookie("success", lang.applications.applicationCreated, res);
         res.redirect(`${process.env.siteAddress}/dashboard/applications`);
     });
 
@@ -29,7 +28,6 @@ export default function applicationRedirectRoute(app, config, lang) {
             res
         )
 
-        setBannerCookie("success", lang.applications.applicationEdited, res);
         res.redirect(`${process.env.siteAddress}/dashboard/applications`);
     });
 
@@ -44,7 +42,6 @@ export default function applicationRedirectRoute(app, config, lang) {
             res
         )
 
-        setBannerCookie("success", lang.applications.applicationDeleted, res);
         res.redirect(`${process.env.siteAddress}/dashboard/applications`);
     });
 

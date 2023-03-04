@@ -1,7 +1,8 @@
 import bcrypt from 'bcrypt';
-import {isFeatureEnabled, required, optional, setBannerCookie} from '../common'
+import { doesPasswordMatch, hasEmailBeenUsed, hasUserJoinedBefore } from '../../controllers/userController';
+import {isFeatureEnabled, required, setBannerCookie} from '../common'
 
-export default function webApiRoute(app, config, db, features, lang) {
+export default async function webApiRoute(app, config, db, features, lang) {
     const baseEndpoint = '/api/web';
 
     app.post(baseEndpoint + '/register/create', async function(req, res) {
@@ -20,7 +21,8 @@ export default function webApiRoute(app, config, db, features, lang) {
             }
 
             // User has not logged in before.
-            if (results[0].length < 1) {
+            let userJoinBefore = await hasUserJoinedBefore(username);
+            if (!userJoinBefore) {
                 return res.send({
                     success: false,
                     alertType: "warning",
@@ -28,10 +30,8 @@ export default function webApiRoute(app, config, db, features, lang) {
                 });
             }
 
-            // Make sure email is not being used on another account
-            console.log(results[1]);
-
-            if (!results[1].length > 1) {
+            let emailBeenUsed = await hasEmailBeenUsed(email)
+            if (emailBeenUsed) {
                 return res.send({
                     success: false,
                     alertType: "warning",
@@ -40,7 +40,8 @@ export default function webApiRoute(app, config, db, features, lang) {
             }
 
             // Check if passwords match
-            if (password != confirmPassword) {
+            let passwordMatch = await doesPasswordMatch(password, confirmPassword);
+            if (!passwordMatch) {
                 return res.send({
                     success: false,
                     alertType: "danger",
