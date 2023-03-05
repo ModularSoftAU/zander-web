@@ -164,7 +164,8 @@ export async function postAPIRequest(postURL, apiPostBody, failureRedirectURL, r
     console.log(data);
 
     if (data.alertType) {
-        setBannerCookie(`${data.alertType}`, `${data.alertContent}`, res);
+        // setBannerCookie(`${data.alertType}`, `${data.alertContent}`, res);
+        setBannerCookie('warning', 'Content', res);
     }
 
     if (!data.success) {
@@ -201,34 +202,27 @@ export async function getGlobalImage() {
 export function setBannerCookie(alertType, alertContent, res) {
     try {
         var expiryTime = new Date();
-        expiryTime.setSeconds(expiryTime.getSeconds() + 1);
+        expiryTime.setSeconds(expiryTime.getSeconds() + 3);
 
         // Set Alert Type
-        // res.setCookie('alertType', alertType, {
-        //     path: '/',
-        //     expires: expiryTime
-        // })
-
-        // // Set Content Type
-        // res.setCookie('alertContent', alertContent, {
-        //     path: '/',
-        //     expires: expiryTime
-        // })
-
-        console.log(`setBannerCookie is being called.`);
-
         res.setCookie('alertType', alertType, {
             path: '/',
+            signed: true,
             expires: expiryTime
-        });
+        })
 
+        // Set Content Type
         res.setCookie('alertContent', alertContent, {
             path: '/',
+            signed: true,
             expires: expiryTime
-        });
+        })
 
-        // return true;
+        res.cookie('test', 'testing');
+        
+        console.log(`setBannerCookie is being called.`);
 
+        return true;
     } catch (error) {
         console.log(error);
     }

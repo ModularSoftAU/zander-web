@@ -71,7 +71,7 @@ const buildApp = async () => {
     //         res.code(404);
     //         res.view('session/notFound', {
     //             "pageTitle": `404 : Not Found`,
-    //             config: config,
+    //             config: config,s
     //             moment: moment,
     //             req: req,
     //             features: features
@@ -121,7 +121,9 @@ const buildApp = async () => {
     });
 
     // Sessions
-    app.register(fastifyCookie);
+    await app.register(fastifyCookie, {
+        secret: 'my-secret', // for cookies signature
+    });
     app.register(fastifySession, {
         cookieName: 'sessionId',
         secret: process.env.sessionCookieSecret,
