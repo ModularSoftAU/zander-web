@@ -247,12 +247,14 @@ CREATE TABLE events (
 	eventId INT NOT NULL AUTO_INCREMENT,
     name TEXT,
     icon TEXT,
-    eventDateTime DATETIME,
+    eventStartDateTime DATETIME,
+    eventEndDateTime DATETIME,
     information TEXT,
     guildEventId VARCHAR(18),
     published BOOLEAN DEFAULT 0,
     PRIMARY KEY (eventId),
-    INDEX events_eventDateTime (eventDateTime),
+    INDEX events_eventStartDateTime (eventStartDateTime),
+    INDEX events_eventEndDateTime (eventEndDateTime),
     INDEX events_published (published)
 );
 

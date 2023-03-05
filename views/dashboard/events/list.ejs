@@ -31,7 +31,8 @@
                                             <tr>
                                                 <th>Display Name</th>
                                                 <th>Icon</th>
-                                                <th>Date & Time</th>
+                                                <th>Date & Time Start</th>
+                                                <th>Date & Time End</th>
                                                 <th>Action</th>
                                             </tr>
                                         </thead>
@@ -46,7 +47,8 @@
                                                     <tr>
                                                         <td><%= event.name %></td>
                                                         <td><img src="<%= event.icon %>" height="40px" alt="" draggable="false"></td>
-                                                        <td><code><%= moment(event.eventDateTime).format('MMMM Do YYYY, h:mm a') %></code></td>
+                                                        <td><code><%= moment(event.eventStartDateTime).format('MMMM Do YYYY, h:mm a') %></code></td>
+                                                        <td><code><%= moment(event.eventEndDateTime).format('MMMM Do YYYY, h:mm a') %></code></td>
                                                         <td>
                                                             <div class="btn-group">
                                                                 <% if (event.published === 1) { %>

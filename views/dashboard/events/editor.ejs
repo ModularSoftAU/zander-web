@@ -73,16 +73,31 @@
                                                 <p class="text-muted m-b-15 f-s-12">The display icon for the event. This should be a .png file link from imgur.<br>The event icon MUST be 250px x 250px.</p>
                                             </div>
 
-                                            <!-- Event Date and Time -->
+                                            <!-- Event Date and Time Start -->
                                             <div class="form-group">
-                                                <label for="eventDateTime">Event Date and Time</label>
+                                                <label for="eventStartDateTime">Event Date/Time Start</label>
 
                                                 <% if (type === 'create') { %>
-                                                    <input type="datetime-local" class="form-control input-default " name="eventDateTime" required>
+                                                    <input type="datetime-local" class="form-control input-default " name="eventStartDateTime" required>
                                                 <% } %>
                                                 <% if (type === 'edit') { %>
                                                     <!-- Moment Setting the Date and Time doesn't work in edit mode -->
-                                                    <input type="datetime-local" class="form-control input-default " name="eventDateTime" value="<%= moment(eventApiData.eventDateTime).format('YYYY-MM-DDTh:mm') %>" required>
+                                                    <input type="datetime-local" class="form-control input-default " name="eventStartDateTime" value="<%= moment(eventApiData.eventDateTime).format('YYYY-MM-DDTh:mm') %>" required>
+                                                <% } %>
+
+                                                <p class="text-muted m-b-15 f-s-12">The date and time for the event to begin.</p>
+                                            </div>
+
+                                            <!-- Event Date and Time End -->
+                                            <div class="form-group">
+                                                <label for="eventEndDateTime">Event Date/Time End</label>
+
+                                                <% if (type === 'create') { %>
+                                                    <input type="datetime-local" class="form-control input-default " name="eventEndDateTime" required>
+                                                <% } %>
+                                                <% if (type === 'edit') { %>
+                                                    <!-- Moment Setting the Date and Time doesn't work in edit mode -->
+                                                    <input type="datetime-local" class="form-control input-default " name="eventEndDateTime" value="<%= moment(eventApiData.eventDateTime).format('YYYY-MM-DDTh:mm') %>" required>
                                                 <% } %>
 
                                                 <p class="text-muted m-b-15 f-s-12">The date and time for the event to begin.</p>
