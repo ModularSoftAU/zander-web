@@ -139,43 +139,6 @@ export async function hasPermission(permissionNode, req, res, features) {
 }
 
 /*
-    Sets two cookies (alertType and alertContent) with specified values and an expiration time of one second. 
-    These cookies are set on the root path and are returned by the function.
-
-    @param alertType The alert content type and colour according to https://getbootstrap.com/docs/4.0/components/alerts/#examples
-    @param alertContent The alert content text.
-    @param res Passing through res
-*/
-export function setBannerCookie(alertType, alertContent, res) {
-    var expiryTime = new Date();
-    expiryTime.setSeconds(expiryTime.getSeconds() + 1);
-
-    // Set Alert Type
-    // res.setCookie('alertType', alertType, {
-    //     path: '/',
-    //     expires: expiryTime
-    // })
-
-    // // Set Content Type
-    // res.setCookie('alertContent', alertContent, {
-    //     path: '/',
-    //     expires: expiryTime
-    // })
-
-    res.cookie('alertType', alertType, {
-        path: '/',
-        expires: expiryTime
-    });
-
-    res.cookie('alertContent', alertContent, {
-        path: '/',
-        expires: expiryTime
-    });
-
-    // return true;
-}
-
-/*
     Makes a POST API request to the specified postURL with the provided apiPostBody.
     It includes a header with the x-access-token value taken from an environment variable named apiKey.
     If the request is successful, it logs the response data.
@@ -201,7 +164,7 @@ export async function postAPIRequest(postURL, apiPostBody, failureRedirectURL, r
     console.log(data);
 
     if (data.alertType) {
-        setBannerCookie(`${data.alertType}`, `${data.alertContent}`, res);   
+        setBannerCookie(`${data.alertType}`, `${data.alertContent}`, res);
     }
 
     if (!data.success) {
@@ -225,4 +188,48 @@ export async function getGlobalImage() {
     let chosenFile = await files[Math.floor(Math.random() * files.length)] 
 
     return "../images/globalImages/" + chosenFile;
+}
+
+/*
+    Sets two cookies (alertType and alertContent) with specified values and an expiration time of one second. 
+    These cookies are set on the root path and are returned by the function.
+
+    @param alertType The alert content type and colour according to https://getbootstrap.com/docs/4.0/components/alerts/#examples
+    @param alertContent The alert content text.
+    @param res Passing through res
+*/
+export function setBannerCookie(alertType, alertContent, res) {
+    try {
+        var expiryTime = new Date();
+        expiryTime.setSeconds(expiryTime.getSeconds() + 1);
+
+        // Set Alert Type
+        // res.setCookie('alertType', alertType, {
+        //     path: '/',
+        //     expires: expiryTime
+        // })
+
+        // // Set Content Type
+        // res.setCookie('alertContent', alertContent, {
+        //     path: '/',
+        //     expires: expiryTime
+        // })
+
+        console.log(`setBannerCookie is being called.`);
+
+        res.setCookie('alertType', alertType, {
+            path: '/',
+            expires: expiryTime
+        });
+
+        res.setCookie('alertContent', alertContent, {
+            path: '/',
+            expires: expiryTime
+        });
+
+        // return true;
+
+    } catch (error) {
+        console.log(error);
+    }
 }
