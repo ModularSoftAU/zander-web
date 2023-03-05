@@ -1,6 +1,7 @@
 import moment from 'moment';
 import db from './databaseController';
 import config from '../config.json' assert {type: "json"};
+import { MessageEmbed } from 'discord.js';
 
 /*
     Clears old events from the database by running a SQL query that 
@@ -134,6 +135,9 @@ export function createDiscordEvent(eventInfo, client, res) {
             scheduledEndTime: `${eventInfo.eventEndDateTime}`,
             privacyLevel: 'GUILD_ONLY',
             entityType: 'EXTERNAL',
+            entityMetadata: {
+                location: `${eventInfo.location}`
+            },
             description: `${eventInfo.information}`
         })
 
@@ -145,7 +149,7 @@ export function createDiscordEvent(eventInfo, client, res) {
         const embed = new MessageEmbed()
             .setTitle(`:calendar: NEW EVENT: ${eventInfo.name}`)
             .setThumbnail(`${eventInfo.icon}`)
-            .setDescription(`${eventInfo.information}\n\n Event starting at ${moment(eventInfo.eventDateTime).format('MMMM Do YYYY, h:mm:ss a')}\nHosted on ${eventInfo.hostingServerName}`)
+            .setDescription(`${eventInfo.information}\n\n Event starting at ${moment(eventInfo.eventDateTime).format('MMMM Do YYYY, h:mm:ss a')}`)
             .setFooter(`To stay notified of when the event will begin, mark yourself as Interested in the Events tab on the sidebar.`)
 
         channel.send({ embeds: [embed] });

@@ -249,6 +249,7 @@ CREATE TABLE events (
     icon TEXT,
     eventStartDateTime DATETIME,
     eventEndDateTime DATETIME,
+    location TEXT,
     information TEXT,
     guildEventId VARCHAR(18),
     published BOOLEAN DEFAULT 0,

@@ -68,12 +68,13 @@ export default function eventApiRoute(app, client, moment, config, db, features,
         const icon = required(req.body, "eventIcon", res);
         const eventStartDateTime = required(req.body, "eventStartDateTime", res);
         const eventEndDateTime = required(req.body, "eventEndDateTime", res);
+        const location = required(req.body, "eventLocation", res);
         const information = required(req.body, "eventInformation", res);
 
         const eventCreatedLang = lang.event.eventCreated;
 
         try {
-            db.query(`INSERT INTO events (name, icon, eventStartDateTime, eventEndDateTime, information) VALUES (?, ?, ?, ?, ?)`, [name, icon, eventStartDateTime, eventEndDateTime, information], function(error, results, fields) {
+            db.query(`INSERT INTO events (name, icon, eventStartDateTime, eventEndDateTime, location, information) VALUES (?, ?, ?, ?, ?, ?)`, [name, icon, eventStartDateTime, eventEndDateTime, location, information], function(error, results, fields) {
                 if (error) {
                     return res.send({
                         success: false,
@@ -174,22 +175,22 @@ export default function eventApiRoute(app, client, moment, config, db, features,
                     success: false,
                     message: `Event does not exist.`
                 });
-            }
+            } else {
+                db.query(`DELETE FROM events WHERE eventId=?;`, [eventId], function (error, results, fields) {
+                    if (error) {
+                        console.log(error);
+                        return res.send({
+                            success: false,
+                            message: `${error}`
+                        });
+                    }
 
-            db.query(`SELECT eventId FROM events WHERE eventId=?; DELETE FROM events WHERE eventId=?;`, [eventId, eventId], function (error, results, fields) {
-                if (error) {
-                    console.log(error);
                     return res.send({
-                        success: false,
-                        message: `${error}`
+                        success: true,
+                        message: `The event with the id ${eventId} has been deleted.`
                     });
-                }
-
-                return res.send({
-                    success: true,
-                    message: `The event with the id ${eventId} has been deleted.`
                 });
-            });
+            }
 
         } catch (error) {
             console.log(error);

@@ -62,7 +62,7 @@
 
                                                                 <a href="/dashboard/events/edit?id=<%= event.eventId %>"><button class="btn btn-sm btn-warning" type="button">Edit</button></a>
 
-                                                                <form action="/dashboard/events/delete" method="post">
+                                                                <form action="<%= config.siteConfiguration.siteAddress %>/redirect/event/delete" method="post">
                                                                     <input type="hidden" name="eventId" value="<%= event.eventId %>">
                                                                     <button class="btn btn-sm btn-danger" type="submit">Delete</button>
                                                                 </form>

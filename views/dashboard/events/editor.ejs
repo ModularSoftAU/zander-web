@@ -103,6 +103,28 @@
                                                 <p class="text-muted m-b-15 f-s-12">The date and time for the event to begin.</p>
                                             </div>
 
+                                            <!-- Event Location -->
+                                            <div class="form-group">
+                                                <label for="eventLocation">Event Location</label>
+
+                                                <% if (type === 'create') { %>
+                                                    <%- include("../../partials/form/inputText.ejs", {
+                                                        elementName: "eventLocation",
+                                                        elementValue: null,
+                                                        required: true
+                                                    }) %>
+                                                <% } %>
+                                                <% if (type === 'edit') { %>
+                                                    <%- include("../../partials/form/inputText.ejs", {
+                                                        elementName: "eventLocation",
+                                                        elementValue: eventApiData.eventLocation,
+                                                        required: true
+                                                    }) %>
+                                                <% } %>
+
+                                                <p class="text-muted m-b-15 f-s-12">The location for the event.</p>
+                                            </div>
+
                                             <!-- Event Information -->
                                             <div class="form-group">
                                                 <label for="eventInformation">Event Information</label>
