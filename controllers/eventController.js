@@ -78,7 +78,10 @@ export async function doesEventExist(eventId) {
 }
 
 /*
-    
+    Runs a database query to select all columns from a table called "events" 
+    where the eventId matches the provided eventId parameter. 
+    If the query returns an error, the promise is rejected with the error. 
+    If the query returns results, the promise is resolved with the first result object in the results array.
 
     @param eventId The ID of the Event.
 */
@@ -95,7 +98,7 @@ export function getEventInfo(eventId) {
 }
 
 /*
-    
+    Updates the corresponding event's published column to 1 in the database.
 
     @param eventId The ID of the Event.
 */
@@ -118,7 +121,17 @@ export function setEventAsPublished(eventId) {
 }
 
 /*
+    Creates a new scheduled event in a Discord guild and sends an announcement message in a specific channel. 
+    The function takes in eventInfo, client, and res as parameters. 
+    The eventInfo parameter contains information about the event such as name, start and end times, location, description, and icon. 
+    The client parameter is the Discord bot client used to create and send messages. 
+    The res parameter is the response object used to send responses back to the client.
     
+    Inside the function, the scheduled event is created using the guild.scheduledEvents.create() method, 
+    passing in the event information, privacy level, entity type, entity metadata (including location), and description. 
+    A message is then created using the MessageEmbed() constructor, 
+    and the event details are added to the message. Finally, the message is sent to the eventAnnouncements channel in the 
+    guild using the channel.send() method. If an error occurs, it is caught and a response object is sent back with an error message.
 
     @param eventInfo The object that provides all of the event information.
 */
