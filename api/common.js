@@ -203,10 +203,8 @@ export function setBannerCookie(alertType, alertContent, res) {
         var expiryTime = new Date();
         expiryTime.setSeconds(expiryTime.getSeconds() + 3);
 
-        // console.log(res.cookie);
-
         // Set Alert Type
-        res.cookie.setCookie('alertType', alertType, {
+        res.setCookie('alertType', alertType, {
             path: '/',
             expires: expiryTime
         })

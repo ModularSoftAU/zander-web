@@ -248,16 +248,12 @@ CREATE TABLE events (
     name TEXT,
     icon TEXT,
     eventDateTime DATETIME,
-    hostingServer INT NOT NULL,
     information TEXT,
     guildEventId VARCHAR(18),
-    guildEventChannel VARCHAR(18),
-    guildAnnouncementMessage VARCHAR(18),
     published BOOLEAN DEFAULT 0,
     PRIMARY KEY (eventId),
     INDEX events_eventDateTime (eventDateTime),
-    INDEX events_published (published),
-    CONSTRAINT events_hostingServer FOREIGN KEY (hostingServer) REFERENCES servers (serverId) ON DELETE CASCADE
+    INDEX events_published (published)
 );
 
 CREATE TABLE webPunishments (

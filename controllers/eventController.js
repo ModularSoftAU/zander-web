@@ -25,3 +25,17 @@ export function clearOldEvents() {
         });
     }
 }
+
+export function isEventPublished() {
+    try {
+        db.query(`SELECT * FROM events where eventId=? AND published=?;`, function (err, results) {
+            
+        });
+    } catch (error) {
+        console.log(error);
+        return res.send({
+            success: false,
+            message: `${error}`
+        });
+    }
+}
