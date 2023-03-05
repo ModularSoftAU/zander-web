@@ -31,7 +31,8 @@
                                             <tr>
                                                 <th>Display Name</th>
                                                 <th>Icon</th>
-                                                <th>Date & Time</th>
+                                                <th>Date & Time Start</th>
+                                                <th>Date & Time End</th>
                                                 <th>Action</th>
                                             </tr>
                                         </thead>
@@ -46,13 +47,14 @@
                                                     <tr>
                                                         <td><%= event.name %></td>
                                                         <td><img src="<%= event.icon %>" height="40px" alt="" draggable="false"></td>
-                                                        <td><code><%= moment(event.eventDateTime).format('MMMM Do YYYY, h:mm a') %></code></td>
+                                                        <td><code><%= moment(event.eventStartDateTime).format('MMMM Do YYYY, h:mm a') %></code></td>
+                                                        <td><code><%= moment(event.eventEndDateTime).format('MMMM Do YYYY, h:mm a') %></code></td>
                                                         <td>
                                                             <div class="btn-group">
                                                                 <% if (event.published === 1) { %>
                                                                     <button class="btn btn-sm btn-success" disabled type="button">Published</button>
                                                                 <% } else { %>
-                                                                    <form action="/dashboard/events/publish" method="post">
+                                                                    <form action="<%= config.siteConfiguration.siteAddress %>/redirect/event/publish" method="post">
                                                                         <input type="hidden" name="eventId" value="<%= event.eventId %>">
                                                                         <button class="btn btn-sm btn-info" type="submit">Publish</button>
                                                                     </form>
@@ -60,7 +62,7 @@
 
                                                                 <a href="/dashboard/events/edit?id=<%= event.eventId %>"><button class="btn btn-sm btn-warning" type="button">Edit</button></a>
 
-                                                                <form action="/dashboard/events/delete" method="post">
+                                                                <form action="<%= config.siteConfiguration.siteAddress %>/redirect/event/delete" method="post">
                                                                     <input type="hidden" name="eventId" value="<%= event.eventId %>">
                                                                     <button class="btn btn-sm btn-danger" type="submit">Delete</button>
                                                                 </form>

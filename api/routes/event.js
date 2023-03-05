@@ -1,4 +1,4 @@
-import { MessageEmbed } from 'discord.js'
+import { createDiscordEvent, doesEventExist, getEventInfo, isEventPublished, setEventAsPublished } from '../../controllers/eventController';
 import {isFeatureEnabled, required, optional} from '../common'
 
 export default function eventApiRoute(app, client, moment, config, db, features, lang) {
@@ -40,17 +40,17 @@ export default function eventApiRoute(app, client, moment, config, db, features,
             }
 
             if (published === 'show') {
-                let dbQuery = `SELECT * FROM events WHERE published=1 ORDER BY eventDateTime ASC;`
+                let dbQuery = `SELECT * FROM events WHERE published=1 ORDER BY eventStartDateTime ASC;`
                 getEvents(dbQuery);
             }
 
             if (published === 'hide') {
-                let dbQuery = `SELECT * FROM events WHERE published=0 ORDER BY eventDateTime ASC;`
+                let dbQuery = `SELECT * FROM events WHERE published=0 ORDER BY eventStartDateTime ASC;`
                 getEvents(dbQuery);
             }
 
             if (published === 'all') {
-                let dbQuery = `SELECT * FROM events ORDER BY eventDateTime ASC;`
+                let dbQuery = `SELECT * FROM events ORDER BY eventStartDateTime ASC;`
                 getEvents(dbQuery);
             }
 
@@ -64,17 +64,17 @@ export default function eventApiRoute(app, client, moment, config, db, features,
 
     app.post(baseEndpoint + '/create', async function(req, res) {
         isFeatureEnabled(features.events, res, lang);
-        const name = required(req.body, "name", res);
-        const icon = required(req.body, "icon", res);
-        const eventDateTime = required(req.body, "eventDateTime", res);
-        const hostingServer = required(req.body, "hostingServer", res);
-        const guildEventChannel = required(req.body, "guildEventChannel", res);
-        const information = required(req.body, "information", res);
+        const name = required(req.body, "eventName", res);
+        const icon = required(req.body, "eventIcon", res);
+        const eventStartDateTime = required(req.body, "eventStartDateTime", res);
+        const eventEndDateTime = required(req.body, "eventEndDateTime", res);
+        const location = required(req.body, "eventLocation", res);
+        const information = required(req.body, "eventInformation", res);
 
         const eventCreatedLang = lang.event.eventCreated;
 
         try {
-            db.query(`INSERT INTO events (name, icon, eventDateTime, hostingServer, guildEventChannel, information) VALUES (?, ?, ?, (select serverId from servers where name=?), ?, ?)`, [name, icon, eventDateTime, hostingServer, guildEventChannel, information], function(error, results, fields) {
+            db.query(`INSERT INTO events (name, icon, eventStartDateTime, eventEndDateTime, location, information) VALUES (?, ?, ?, ?, ?, ?)`, [name, icon, eventStartDateTime, eventEndDateTime, location, information], function(error, results, fields) {
                 if (error) {
                     return res.send({
                         success: false,
@@ -97,14 +97,20 @@ export default function eventApiRoute(app, client, moment, config, db, features,
 
     app.post(baseEndpoint + '/edit', async function(req, res) {
         isFeatureEnabled(features.events, res, lang);
-        const name = required(req.body, "name", res);
-        const icon = required(req.body, "icon", res);
+        const name = required(req.body, "eventName", res);
+        const icon = required(req.body, "eventIcon", res);
         const eventDateTime = required(req.body, "eventDateTime", res);
-        const hostingServer = required(req.body, "hostingServer", res);
-        const guildEventChannel = required(req.body, "guildEventChannel", res);
-        const information = required(req.body, "information", res);
+        const information = required(req.body, "eventInformation", res);
 
-        // ...
+        // Check if event exists
+        let eventExists = await doesEventExist(eventId);
+        if (!eventExists) {
+            return res.send({
+                success: false,
+                message: `Event does not exist.`
+            });
+        }
+
         res.send({ success: true });
     });
 
@@ -112,15 +118,96 @@ export default function eventApiRoute(app, client, moment, config, db, features,
         isFeatureEnabled(features.events, res, lang);
         const eventId = required(req.body, "eventId", res);
 
-        // ...
-        res.send({ success: true });
+        // Check if event exists
+        let eventExists = await doesEventExist(eventId);
+        if (!eventExists) {
+            return res.send({
+                success: false,
+                message: `Event does not exist.`
+            });
+        }
+
+        // Check if event has been published
+        let eventPublished = await isEventPublished(eventId);
+        if (eventPublished) {
+            return res.send({
+                success: false,
+                message: `Event is already published, you cannot publish this again.`
+            });
+        }
+
+        try {
+            db.query(`SELECT * FROM events where eventId=? AND published=?; UPDATE events SET published=? WHERE eventId=?`, [eventId, `1`, eventId, `1`, eventId], function (error, results, fields) {
+                if (error) {
+                    return res.send({
+                        success: false,
+                        message: `${error}`
+                    });
+                }
+
+                // shadowolf: 
+                // DONE: This is where the event will send a message to the `eventAnnouncements` indicated in config.json
+                // It will also create a scheduled event and amend the link to the event announcement.
+                try {
+                    getEventInfo(eventId)
+                        .then(eventInfo => {
+                            // Create Discord Event using the Event Info
+                            createDiscordEvent(eventInfo, client, res);
+                            setEventAsPublished(eventId);
+                        })
+                        .catch(err => {
+                            console.log(err);
+                        });
+                } catch (error) {
+                    return res.send({
+                        success: false,
+                        message: `${error}`
+                    });
+                }
+            });
+        } catch (error) {
+            res.send({
+                success: false,
+                message: `${error}`
+            });
+        }
     });
 
     app.post(baseEndpoint + '/delete', async function(req, res) {
         isFeatureEnabled(features.events, res, lang);
         const eventId = required(req.body, "eventId", res);
 
-        // ...
-        res.send({ success: true });
+        try {
+            // Check if event exists
+            let eventExists = await doesEventExist(eventId);
+            if (!eventExists) {
+                return res.send({
+                    success: false,
+                    message: `Event does not exist.`
+                });
+            } else {
+                db.query(`DELETE FROM events WHERE eventId=?;`, [eventId], function (error, results, fields) {
+                    if (error) {
+                        console.log(error);
+                        return res.send({
+                            success: false,
+                            message: `${error}`
+                        });
+                    }
+
+                    return res.send({
+                        success: true,
+                        message: `The event with the id ${eventId} has been deleted.`
+                    });
+                });
+            }
+
+        } catch (error) {
+            console.log(error);
+            res.send({
+                success: false,
+                message: `${error}`
+            });
+        }
     });
 }

@@ -42,7 +42,7 @@
     "vote": true,
 
     "communityCreations": false,
-    "events": false,
+    "events": true,
     
     "smDiscord": true,
     "smFacebook": true,
