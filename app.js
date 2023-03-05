@@ -56,7 +56,6 @@ import apiRedirectRoutes from './api/internal_redirect'
 import verifyToken from './api/routes/verifyToken'
 import { setTimeout } from 'timers';
 import { getGlobalImage } from './api/common';
-import { doesPasswordMatch, hasEmailBeenUsed, hasUserJoinedBefore } from './controllers/userController';
 
 //
 // Application Boot
@@ -148,8 +147,6 @@ const buildApp = async () => {
                 process.exit(1)
               }
         })
-
-        // console.log(await doesPasswordMatch(`123`, `123456`));
 
         console.log(`\n// ${packageData.name} v.${packageData.version}\nGitHub Repository: ${packageData.homepage}\nCreated By: ${packageData.author}`);
         console.log(`Site and API is listening to the port ${port}`);
