@@ -4,7 +4,7 @@ import policySiteRoutes from './policyRoutes'
 import communityCreationsRoutes from './communityCreationsRoutes'
 import sessionRoutes from './sessionRoutes'
 import userRoutes from './userRoutes'
-import { isFeatureWebRouteEnabled, isLoggedIn, getGlobalImage } from "../api/common";
+import { isFeatureWebRouteEnabled, isLoggedIn, getGlobalImage, setBannerCookie } from "../api/common";
 
 export default function applicationSiteRoutes(app, client, fetch, moment, config, db, features, lang) {
 

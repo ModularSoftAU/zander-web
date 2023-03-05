@@ -23,6 +23,8 @@ export default async function webApiRoute(app, config, db, features, lang) {
             // User has not logged in before.
             let userJoinBefore = await hasUserJoinedBefore(username);
             if (!userJoinBefore) {
+                setBannerCookie(`warning`, `This is a test`, res);
+                
                 return res.send({
                     success: false,
                     alertType: "warning",
