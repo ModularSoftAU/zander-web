@@ -1,4 +1,4 @@
-import { createDiscordEvent, doesEventExist, getEventInfo, isEventPublished } from '../../controllers/eventController';
+import { createDiscordEvent, doesEventExist, getEventInfo, isEventPublished, setEventAsPublished } from '../../controllers/eventController';
 import {isFeatureEnabled, required, optional} from '../common'
 
 export default function eventApiRoute(app, client, moment, config, db, features, lang) {
@@ -127,6 +127,15 @@ export default function eventApiRoute(app, client, moment, config, db, features,
             });
         }
 
+        // Check if event has been published
+        let eventPublished = await isEventPublished(eventId);
+        if (eventPublished) {
+            return res.send({
+                success: false,
+                message: `Event is already published, you cannot publish this again.`
+            });
+        }
+
         try {
             db.query(`SELECT * FROM events where eventId=? AND published=?; UPDATE events SET published=? WHERE eventId=?`, [eventId, `1`, eventId, `1`, eventId], function (error, results, fields) {
                 if (error) {
@@ -144,6 +153,7 @@ export default function eventApiRoute(app, client, moment, config, db, features,
                         .then(eventInfo => {
                             // Create Discord Event using the Event Info
                             createDiscordEvent(eventInfo, client, res);
+                            setEventAsPublished(eventId);
                         })
                         .catch(err => {
                             console.log(err);
