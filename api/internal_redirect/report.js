@@ -14,7 +14,6 @@ export default function reportRedirectRoute(app, config, lang) {
             res
         )
 
-        setBannerCookie("success", lang.report.reportCreated, res);
         res.redirect(`${process.env.siteAddress}/dashboard`);
     });
 
@@ -29,7 +28,6 @@ export default function reportRedirectRoute(app, config, lang) {
             res
         )
 
-        setBannerCookie("success", lang.report.reportClosed, res);
         res.redirect(`${process.env.siteAddress}/dashboard`);
     });
 

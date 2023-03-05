@@ -1,6 +1,6 @@
 import { isFeatureWebRouteEnabled, setBannerCookie, getGlobalImage } from "../api/common";
 import oauth2 from "@fastify/oauth2";
-import { linkUserDiscordID, unlinkUserDiscordID } from "../interfaces/userInterface";
+import { linkUserDiscordID, unlinkUserDiscordID } from "../controllers/userController";
 
 export default function userSiteRoute(app, client, fetch, moment, config, db, features, lang) {
 

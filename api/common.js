@@ -2,7 +2,14 @@ import config from '../config.json' assert {type: "json"};
 import fetch from 'node-fetch';
 import { readdirSync } from 'fs';
 
-export function isFeatureEnabled(isFeatureEnabled, res, features, lang) {
+/*
+    Check if a specific feature is enabled.
+
+    @param isFeatureEnabled The feature to check if enabled.
+    @param res Passing through res.
+    @param lang Passing through lang.
+*/
+export function isFeatureEnabled(isFeatureEnabled, res, lang) {
     if (isFeatureEnabled)
         return;
 
@@ -12,6 +19,14 @@ export function isFeatureEnabled(isFeatureEnabled, res, features, lang) {
     });
 }
 
+/*
+    Ensure that a required field is present and has a non-null value, 
+    and to return an error message if this is not the case.
+
+    @param body Passing through the req.body
+    @param field The name of the field.
+    @param res Passing through res.
+*/
 export function required(body, field, res) {
     // Prematurely exits an API request if a required field has not been
     // defined or null. If the body is not defined then we error as well.
@@ -31,6 +46,13 @@ export function required(body, field, res) {
     return body[field];
 }
 
+
+/*
+    Check if an optional field is present in the body object, and return its value if it is.
+
+    @param body Passing through the req.body
+    @param field The name of the field.
+*/
 export function optional(body, field) {
     // Jaedan: I am aware that this is pretty much default behaviour, however
     // this takes into consideration times where no body is included. Without
@@ -42,6 +64,14 @@ export function optional(body, field) {
     return body[field];
 }
 
+/*
+    Check if a specific web feature is enabled.
+
+    @param isFeatureEnabled The feature to check if enabled.
+    @param req Passing through req
+    @param res Passing through res
+    @param features Passing through features
+*/
 export async function isFeatureWebRouteEnabled(isFeatureEnabled, req, res, features) {
     if (!isFeatureEnabled) {
         res.view('session/featureDisabled', {
@@ -57,11 +87,24 @@ export async function isFeatureWebRouteEnabled(isFeatureEnabled, req, res, featu
     return true;
 }
 
+/*
+    Check if a user is logged in or not.
+
+    @param req Passing through req
+*/
 export function isLoggedIn(req) {
     if (req.session.user) return true;
     else return false;
 }
 
+/*
+    Check if the user has a specific permission.
+
+    @param permissionNode The permission node to check permission of.
+    @param req Passing through req
+    @param res Passing through res
+    @param features Passing through features
+*/
 export async function hasPermission(permissionNode, req, res, features) {
     if (!isLoggedIn(req)) {
         res.view('session/noPermission', {
@@ -95,24 +138,18 @@ export async function hasPermission(permissionNode, req, res, features) {
     return true;
 }
 
-export function setBannerCookie(alertType, alertContent, res) {
-    var expiryTime = new Date();
-    expiryTime.setSeconds(expiryTime.getSeconds() + 1);
+/*
+    Makes a POST API request to the specified postURL with the provided apiPostBody.
+    It includes a header with the x-access-token value taken from an environment variable named apiKey.
+    If the request is successful, it logs the response data.
+    If the request fails, it sets a cookie with a "danger" alert type and an error message, 
+    then redirects the user to the specified failureRedirectURL.
 
-    // Set Alert Type
-    res.setCookie('alertType', alertType, {
-        path: '/',
-        expires: expiryTime
-    })
-
-    // Set Content Type
-    res.setCookie('alertContent', alertContent, {
-        path: '/',
-        expires: expiryTime
-    })
-    return true
-}
-
+    @param postURL The POST url that the apiPostBody will go to in the API.
+    @param apiPostBody The request body for the postURL.
+    @param failureRedirectURL If the request returns false, where the API will redirect the user to.
+    @param res Passing through res.
+*/
 export async function postAPIRequest(postURL, apiPostBody, failureRedirectURL, res) {
     const response = await fetch(postURL, {
         method: 'POST',
@@ -124,14 +161,25 @@ export async function postAPIRequest(postURL, apiPostBody, failureRedirectURL, r
     });
     const data = await response.json();
 
+    console.log(data);
+
+    if (data.alertType) {
+        setBannerCookie(`${data.alertType}`, `${data.alertContent}`, res);
+    }
+
     if (!data.success) {
-        setBannerCookie("danger", `Failed to Process: ${data.message}`, res);
         return res.redirect(failureRedirectURL);
     }
 
     return console.log(data);
 }
 
+/*
+    Returns the path of a randomly chosen image file from a specified directory. 
+    The function first reads the names of the files in the directory using the readdirSync function and 
+    then selects a random file from the list using the Math.random() function. 
+    Finally, the function returns the path of the chosen file by concatenating the file name with the relative path to the directory.
+*/
 export async function getGlobalImage() {
     var path = './assets/images/globalImages/';
     var files = await readdirSync(path);
@@ -140,4 +188,39 @@ export async function getGlobalImage() {
     let chosenFile = await files[Math.floor(Math.random() * files.length)] 
 
     return "../images/globalImages/" + chosenFile;
+}
+
+/*
+    Sets two cookies (alertType and alertContent) with specified values and an expiration time of one second. 
+    These cookies are set on the root path and are returned by the function.
+
+    @param alertType The alert content type and colour according to https://getbootstrap.com/docs/4.0/components/alerts/#examples
+    @param alertContent The alert content text.
+    @param res Passing through res
+*/
+export function setBannerCookie(alertType, alertContent, res) {
+    try {
+        var expiryTime = new Date();
+        expiryTime.setSeconds(expiryTime.getSeconds() + 3);
+
+        // console.log(res.cookie);
+
+        // Set Alert Type
+        res.cookie.setCookie('alertType', alertType, {
+            path: '/',
+            expires: expiryTime
+        })
+
+        // Set Content Type
+        res.setCookie('alertContent', alertContent, {
+            path: '/',
+            expires: expiryTime
+        })
+
+        console.log(`setBannerCookie is being called.`);
+
+        return true;
+    } catch (error) {
+        console.log(error);
+    }
 }

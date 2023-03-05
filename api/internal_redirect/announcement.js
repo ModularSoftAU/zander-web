@@ -14,7 +14,6 @@ export default function announcementRedirectRoute(app, config, lang) {
             res
         )
 
-        setBannerCookie("success", lang.announcement.announcementCreated, res);
         res.redirect(`${process.env.siteAddress}/dashboard/announcements`);
     });
 
@@ -29,7 +28,6 @@ export default function announcementRedirectRoute(app, config, lang) {
             res
         )
 
-        setBannerCookie("success", lang.announcement.announcementEdited, res);
         res.redirect(`${process.env.siteAddress}/dashboard/announcements`);
     });
 
@@ -44,7 +42,6 @@ export default function announcementRedirectRoute(app, config, lang) {
             res
         )
 
-        setBannerCookie("success", lang.announcement.announcementDeleted, res);
         res.redirect(`${process.env.siteAddress}/dashboard/announcements`);
     });
 
@@ -59,7 +56,6 @@ export default function announcementRedirectRoute(app, config, lang) {
             res
         )
 
-        setBannerCookie("success", lang.announcement.announcementEnabled, res);
         res.redirect(`${process.env.siteAddress}/dashboard/announcements`);
     });
 
@@ -74,7 +70,6 @@ export default function announcementRedirectRoute(app, config, lang) {
             res
         )
 
-        setBannerCookie("danger", lang.announcement.announcementDisabled, res);
         res.redirect(`${process.env.siteAddress}/dashboard/announcements`);
     });
 

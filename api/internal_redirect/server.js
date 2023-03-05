@@ -14,7 +14,6 @@ export default function serverRedirectRoute(app, config, lang) {
             res
         )
 
-        setBannerCookie("success", lang.server.serverCreated, res);
         res.redirect(`${process.env.siteAddress}/dashboard/servers`);
     });
 
@@ -29,7 +28,6 @@ export default function serverRedirectRoute(app, config, lang) {
             res
         )
 
-        setBannerCookie("success", lang.server.serverEdited, res);
         res.redirect(`${process.env.siteAddress}/dashboard/servers`);
     });
 
@@ -44,7 +42,6 @@ export default function serverRedirectRoute(app, config, lang) {
             res
         )
 
-        setBannerCookie("success", lang.server.serverDeleted, res);
         res.redirect(`${process.env.siteAddress}/dashboard/servers`);
     });
 

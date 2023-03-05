@@ -27,7 +27,6 @@ export default function userRedirectRoute(app, config, lang) {
 
     //     console.log(data);
 
-    //     setBannerCookie("success", lang.report.reportCreated, res);
     //     res.redirect(`${process.env.siteAddress}/`);
     // });
 }
