@@ -1,4 +1,4 @@
-import { hasPermission, isFeatureWebRouteEnabled } from "../../api/common";
+import { getGlobalImage, hasPermission, isFeatureWebRouteEnabled } from "../../api/common";
 
 export default function dashboardKnowledgebaseSiteRoute(app, fetch, moment, config, db, features, lang) {
     // 
@@ -25,13 +25,14 @@ export default function dashboardKnowledgebaseSiteRoute(app, fetch, moment, conf
         });
         const sectionApiData = await sectionResponse.json();
       
-        res.view('dashboard/knowledgebase/list', {
+        res.view('dashboard/knowledgebase/knowledgebase-list', {
             "pageTitle": `Dashboard - Knowledgebase`,
             config: config,
             articleApiData: articleApiData,
             sectionApiData: sectionApiData,
             features: features,
-            req: req
+            req: req,
+            globalImage: getGlobalImage()
         });
     });
 
@@ -46,11 +47,13 @@ export default function dashboardKnowledgebaseSiteRoute(app, fetch, moment, conf
         if (!hasPermission('zander.web.knowledgebase', req, res, features))
             return;
 
-        res.view('dashboard/knowledgebase/sectionEditor', {
+        res.view('dashboard/knowledgebase/knowledgebase-sectionEditor', {
             "pageTitle": `Dashboard - Section Creator`,
             config: config,
             type: "create",
-            features: features
+            features: features,
+            req: req,
+            globalImage: getGlobalImage()
         });
     });
 
@@ -72,12 +75,14 @@ export default function dashboardKnowledgebaseSiteRoute(app, fetch, moment, conf
         });
         const kbApiData = await response.json();
 
-        res.view('dashboard/knowledgebase/sectionEditor', {
+        res.view('dashboard/knowledgebase/knowledgebase-sectionEditor', {
             "pageTitle": `Dashboard - Section Editor`,
             config: config,
             kbApiData: kbApiData.data[0],
             type: "edit",
-            features: features
+            features: features,
+            req: req,
+            globalImage: getGlobalImage()
         });
     });
 
@@ -128,12 +133,14 @@ export default function dashboardKnowledgebaseSiteRoute(app, fetch, moment, conf
         });
         const kbSectionApiData = await response.json();
 
-        res.view('dashboard/knowledgebase/articleEditor', {
+        res.view('dashboard/knowledgebase/knowledgebase-articleEditor', {
             "pageTitle": `Dashboard - Article Creator`,
             config: config,
             sectionApiData: kbSectionApiData.data,
             type: "create",
-            features: features
+            features: features,
+            req: req,
+            globalImage: getGlobalImage()
         });
     });
 
@@ -161,13 +168,15 @@ export default function dashboardKnowledgebaseSiteRoute(app, fetch, moment, conf
         });
         const kbSectionApiData = await kbSectionResponse.json();
 
-        res.view('dashboard/knowledgebase/articleEditor', {
+        res.view('dashboard/knowledgebase/knowledgebase-articleEditor', {
             "pageTitle": `Dashboard - Article Editor`,
             config: config,
             kbApiData: kbApiData.data[0],
             sectionApiData: kbSectionApiData.data,
             type: "edit",
-            features: features
+            features: features,
+            req: req,
+            globalImage: getGlobalImage()
         });
     });
 

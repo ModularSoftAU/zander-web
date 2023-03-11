@@ -1,0 +1,74 @@
+<%- include("../../modules/header.ejs", {
+    pageTitle: pageTitle,
+    pageDescription: "Dashboard for platform"
+}) %>
+
+<%- include("../../modules/navigationBar.ejs") %>
+
+<%- include("../../partials/miniHeader.ejs", {
+  headerTitle: "Applications",
+  backgroundImage: globalImage
+}) %>
+
+<div class="row">
+    <div class="col-sm-2">
+      <%- include("../../modules/dashboard/dashboard-sidebar.ejs") %>
+    </div>
+    <div class="col" style="padding: 20px;">
+        <a href="/dashboard/applications/create"><button type="button" class="btn btn-sm btn-info">Create Application</button></a>
+        <br><br>
+
+        <% if (req.cookies.alertType) { %>
+            <%- include("../../partials/alert.ejs", {
+              alertType: req.cookies.alertType,
+              content: req.cookies.alertContent
+            }) %>
+        <% } %>
+        <table class="table">
+            <thead>
+                <tr>
+                    <th></th>
+                    <th>Name</th>
+                    <th>Description</th>
+                    <th>Status</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                <% if (apiData.success == false) { %>
+                    <%- include("../../partials/alert.ejs", {
+                      alertType: "danger",
+                      content: apiData.message
+                    }) %>
+                <% } else { %>
+                    <% apiData.data.forEach(function (application) { %>
+                        <tr>
+                            <td><i class="<%= application.displayIcon %>"></i></td>
+                            <td><%= application.displayName %></td>
+                            <td><%= application.description %></td>
+                            <td>
+                                <% if (application.closed === 1) { %>
+                                    <i class="fas fa-check-circle" style="color:green"></i>
+                                <% } else { %>
+                                    <i class="fas fa-times-circle" style="color: red;"></i>
+                                <% } %>
+                            </td>
+                            <td>
+                                <div class="btn-group">
+                                    <a href="/dashboard/applications/edit?id=<%= application.applicationId %>"><button class="btn btn-sm btn-warning" type="button">Edit</button></a>
+
+                                    <form action="<%= process.env.siteAddress %>/redirect/application/delete" method="post">
+                                        <input type="hidden" name="applicationId" value="<%= application.applicationId %>">
+                                        <button class="btn btn-sm btn-danger" type="submit">Delete</button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                    <% }) %>
+                <% } %>
+            </tbody>
+        </table>
+    </div>
+  </div>
+
+<%- include("../../modules/footer.ejs") %>

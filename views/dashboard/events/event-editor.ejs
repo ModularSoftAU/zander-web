@@ -1,0 +1,156 @@
+<%- include("../../modules/header.ejs", {
+    pageTitle: pageTitle,
+    pageDescription: "Dashboard for platform"
+}) %>
+
+<%- include("../../modules/navigationBar.ejs") %>
+
+<%- include("../../partials/miniHeader.ejs", {
+  headerTitle: "Event Editor",
+  backgroundImage: globalImage
+}) %>
+
+<div class="row">
+    <div class="col-sm-2">
+      <%- include("../../modules/dashboard/dashboard-sidebar.ejs") %>
+    </div>
+    <div class="col" style="padding: 20px;">
+        <%- include("../../partials/documentationLink.ejs", {
+            doclink: "https://modularsoft.org/docs/products/zander/"
+        }) %>
+
+        <div class="basic-form">
+            <% if (type === 'create') { %>
+                <form method="post" action="<%= config.siteConfiguration.siteAddress %>/redirect/event/create">
+            <% } %>
+            <% if (type === 'edit') { %>
+                <form method="post" action="<%= config.siteConfiguration.siteAddress %>/redirect/event/edit">
+                    <%- include("../../partials/form/inputHidden.ejs", {
+                        elementName: "eventId",
+                        elementValue: eventApiData.id
+                    }) %>
+            <% } %>
+
+            <div class="row">
+                <div class="col">
+                    <!-- Name of Event -->
+                    <div class="form-group">
+                        <label for="eventName">Event Name</label>
+                        <% if (type === 'create') { %>
+                            <%- include("../../partials/form/inputText.ejs", {
+                                elementName: "eventName",
+                                elementValue: null,
+                                required: true
+                            }) %>
+                        <% } %>
+                        <% if (type === 'edit') { %>
+                            <%- include("../../partials/form/inputText.ejs", {
+                                elementName: "eventName",
+                                elementValue: eventApiData.name,
+                                required: true
+                            }) %>
+                        <% } %>
+                    </div>
+                </div>
+                <div class="col">
+                    <!-- Event Icon -->
+                    <div class="form-group">
+                        <label for="eventIcon">Event Icon</label>
+                        <% if (type === 'create') { %>
+                            <%- include("../../partials/form/inputText.ejs", {
+                                elementName: "eventIcon",
+                                elementValue: null,
+                                required: true
+                            }) %>
+                        <% } %>
+                        <% if (type === 'edit') { %>
+                            <%- include("../../partials/form/inputText.ejs", {
+                                elementName: "eventIcon",
+                                elementValue: eventApiData.icon,
+                                required: true
+                            }) %>
+                        <% } %>
+                    </div>
+                </div>
+                <div class="col">
+                    <!-- Event Location -->
+                    <div class="form-group">
+                    <label for="eventLocation">Event Location</label>
+                    <% if (type === 'create') { %>
+                        <%- include("../../partials/form/inputText.ejs", {
+                            elementName: "eventLocation",
+                            elementValue: null,
+                            required: true
+                        }) %>
+                    <% } %>
+                    <% if (type === 'edit') { %>
+                        <%- include("../../partials/form/inputText.ejs", {
+                            elementName: "eventLocation",
+                            elementValue: eventApiData.eventLocation,
+                            required: true
+                        }) %>
+                    <% } %>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col">
+                    <!-- Event Date and Time Start -->
+                    <div class="form-group">
+                        <label for="eventStartDateTime">Event Date/Time Start</label>
+                        <% if (type === 'create') { %>
+                            <input type="datetime-local" class="form-control input-default " name="eventStartDateTime" required>
+                        <% } %>
+                        <% if (type === 'edit') { %>
+                            <!-- Moment Setting the Date and Time doesn't work in edit mode -->
+                            <input type="datetime-local" class="form-control input-default " name="eventStartDateTime" value="<%= moment(eventApiData.eventDateTime).format('YYYY-MM-DDTh:mm') %>" required>
+                        <% } %>
+                    </div>
+                </div>
+                <div class="col">
+                    <!-- Event Date and Time End -->
+                    <div class="form-group">
+                        <label for="eventEndDateTime">Event Date/Time End</label>
+                        <% if (type === 'create') { %>
+                            <input type="datetime-local" class="form-control input-default " name="eventEndDateTime" required>
+                        <% } %>
+                        <% if (type === 'edit') { %>
+                            <!-- Moment Setting the Date and Time doesn't work in edit mode -->
+                            <input type="datetime-local" class="form-control input-default " name="eventEndDateTime" value="<%= moment(eventApiData.eventDateTime).format('YYYY-MM-DDTh:mm') %>" required>
+                        <% } %>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Event Information -->
+            <div class="form-group">
+                <label for="eventInformation">Event Information</label>
+                <% if (type === 'create') { %>
+                    <%- include("../../partials/form/inputTextArea.ejs", {
+                        elementName: "eventInformation",
+                        elementValue: null,
+                        required: true
+                    }) %>
+                <% } %>
+                <% if (type === 'edit') { %>
+                    <%- include("../../partials/form/inputTextArea.ejs", {
+                        elementName: "eventInformation",
+                        elementValue: eventApiData.information,
+                        required: true
+                    }) %>
+                <% } %>
+            </div>
+
+            <% if (type === 'create') { %>
+                <button type="submit" class="btn btn-primary"><i class="fas fa-calendar"></i> Schedule Event</button>
+            <% } %>
+            <% if (type === 'edit') { %>
+                <button type="submit" class="btn btn-warning"><i class="fas fa-calendar"></i> Edit Event</button>
+            <% } %>
+            </form>
+        </div>
+    </div>
+  </div>
+
+<%- include("../../modules/footer.ejs") %>

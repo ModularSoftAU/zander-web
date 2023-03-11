@@ -5,3 +5,4 @@ sslCert.cert
 sslPrivate.key
 config.json
 package-lock.json
+google.json

@@ -1,0 +1,209 @@
+<%- include("../../modules/header.ejs", {
+    pageTitle: pageTitle,
+    pageDescription: "Dashboard for platform"
+}) %>
+
+<%- include("../../modules/navigationBar.ejs") %>
+
+<%- include("../../partials/miniHeader.ejs", {
+  headerTitle: "Server Editor",
+  backgroundImage: globalImage
+}) %>
+
+<div class="row">
+    <div class="col-sm-2">
+      <%- include("../../modules/dashboard/dashboard-sidebar.ejs") %>
+    </div>
+    <div class="col" style="padding: 20px;">
+        <%- include("../../partials/documentationLink.ejs", {
+            doclink: "https://modularsoft.org/docs/products/zander/"
+        }) %>
+
+        <div class="basic-form">
+            <% if (type === 'create') { %>
+                <form method="post" action="<%= config.siteConfiguration.siteAddress %>/redirect/server/create">
+            <% } %>
+            <% if (type === 'edit') { %>
+                <form method="post" action="<%= config.siteConfiguration.siteAddress %>/redirect/server/edit">
+                    <input type="hidden" name="serverId" value="<%= serverApiData.serverId %>">
+            <% } %>
+                    
+            <div class="row">
+                <!-- Server Name -->
+                <div class="form-group col">
+                    <label for="name">Server Name</label>
+
+                    <% if (type === 'create') { %>
+                        <%- include("../../partials/form/inputText.ejs", {
+                            elementName: "name",
+                            elementValue: null,
+                            required: true
+                        }) %>
+                    <% } %>
+                    <% if (type === 'edit') { %>
+                        <%- include("../../partials/form/inputText.ejs", {
+                            elementName: "name",
+                            elementValue: serverApiData.name,
+                            required: true
+                        }) %>
+                    <% } %>
+                </div>
+
+                <!-- Server FQDN -->
+                <div class="form-group col">
+                    <label for="fqdn">Server FQDN</label>
+
+                    <% if (type === 'create') { %>
+                        <%- include("../../partials/form/inputText.ejs", {
+                            elementName: "fqdn",
+                            elementValue: null,
+                            required: false
+                        }) %>
+                    <% } %>
+                    <% if (type === 'edit') { %>
+                        <%- include("../../partials/form/inputText.ejs", {
+                            elementName: "fqdn",
+                            elementValue: serverApiData.fqdn,
+                            required: false
+                        }) %>
+                    <% } %>
+                </div>
+            </div>
+
+            <div class="row">
+                <!-- Server Name -->
+                <div class="form-group col">
+                    <label for="ipAddress">Server Address</label>
+
+                    <% if (type === 'create') { %>
+                        <%- include("../../partials/form/inputText.ejs", {
+                            elementName: "ipAddress",
+                            elementValue: null,
+                            required: true
+                        }) %>
+                    <% } %>
+                    <% if (type === 'edit') { %>
+                        <%- include("../../partials/form/inputText.ejs", {
+                            elementName: "ipAddress",
+                            elementValue: serverApiData.ipAddress,
+                            required: true
+                        }) %>
+                    <% } %>
+                </div>
+
+                <!-- Server Port -->
+                <div class="form-group col">
+                    <label for="port">Server Port</label>
+
+                    <% if (type === 'create') { %>
+                        <%- include("../../partials/form/inputText.ejs", {
+                            elementName: "port",
+                            elementValue: null,
+                            required: true
+                        }) %>
+                    <% } %>
+                    <% if (type === 'edit') { %>
+                        <%- include("../../partials/form/inputText.ejs", {
+                            elementName: "port",
+                            elementValue: serverApiData.port,
+                            required: true
+                        }) %>
+                    <% } %>
+                </div>
+            </div>
+
+            <div class="row">
+                <!-- Server Position -->
+                <div class="form-group col">
+                    <label for="position">Server Position</label>
+
+                    <% if (type === 'create') { %>
+                        <%- include("../../partials/form/inputText.ejs", {
+                            elementName: "position",
+                            elementValue: null,
+                            required: true
+                        }) %>
+                    <% } %>
+                    <% if (type === 'edit') { %>
+                        <%- include("../../partials/form/inputText.ejs", {
+                            elementName: "position",
+                            elementValue: serverApiData.position,
+                            required: true
+                        }) %>
+                    <% } %>
+                </div>
+
+                <!-- Server Visability -->
+                <div class="form-group col">
+                    <label for="visible">Server Visability</label>
+
+                    <% if (type === 'create') { %>
+                        <%- include("../../partials/form/inputSelect.ejs", {
+                            elementName: "visible",
+                            elementValue: "null",
+                            required: true,
+                            optionElements: [
+                                {
+                                    optionName: "Select a Visability",
+                                    optionValue: "null",
+                                    selected: true,
+                                    disabled: true
+                                },
+                                {
+                                    optionName: "Show",
+                                    optionValue: "1",
+                                    selected: false,
+                                    disabled: false
+                                },
+                                {
+                                    optionName: "Hide",
+                                    optionValue: "0",
+                                    selected: false,
+                                    disabled: false
+                                }
+                            ]
+                        }) %>
+                    <% } %>
+                    <% if (type === 'edit') { %>
+                        <%- include("../../partials/form/inputSelect.ejs", {
+                            elementName: "visible",
+                            elementValue: serverApiData.visible,
+                            required: true,
+                            optionElements: [
+                                {
+                                    optionName: "Select a Visability",
+                                    optionValue: "null",
+                                    selected: true,
+                                    disabled: true
+                                },
+                                {
+                                    optionName: "Show",
+                                    optionValue: "1",
+                                    selected: false,
+                                    disabled: false
+                                },
+                                {
+                                    optionName: "Hide",
+                                    optionValue: "0",
+                                    selected: false,
+                                    disabled: false
+                                }
+                            ]
+                        }) %>
+                    <% } %>
+                </div>
+            </div>
+
+            <% if (type === 'create') { %>
+                <button type="submit" class="btn btn-primary"><i class="fas fa-server"></i> Create Server</button>
+            <% } %>
+
+            <% if (type === 'edit') { %>
+                <button type="submit" class="btn btn-warning"><i class="fas fa-server"></i> Edit Server</button>
+            <% } %>
+        </form>
+    </div>        
+    </div>
+  </div>
+
+<%- include("../../modules/footer.ejs") %>

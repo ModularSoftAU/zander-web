@@ -1,0 +1,78 @@
+<%- include("../../modules/header.ejs", {
+    pageTitle: pageTitle,
+    pageDescription: "Dashboard for platform"
+}) %>
+
+<%- include("../../modules/navigationBar.ejs") %>
+
+<%- include("../../partials/miniHeader.ejs", {
+  headerTitle: "Servers",
+  backgroundImage: globalImage
+}) %>
+
+<div class="row">
+    <div class="col-sm-2">
+      <%- include("../../modules/dashboard/dashboard-sidebar.ejs") %>
+    </div>
+    <div class="col" style="padding: 20px;">
+      <a href="/dashboard/servers/create"><button type="button" class="btn btn-sm btn-info">Create a Server</button></a>
+      <br><br>
+
+      <% if (req.cookies.alertType) { %>
+          <%- include("../../partials/alert.ejs", {
+            alertType: req.cookies.alertType,
+            content: req.cookies.alertContent
+          }) %>
+      <% } %>
+      <div class="table-responsive">
+          <table class="table">
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>FQDN</th>
+                        <th>Address</th>
+                        <th>Port</th>
+                        <th>Visable</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <% if (apiData.success == false) { %>
+                        <%- include("../../partials/alert.ejs", {
+                        alertType: "danger",
+                        content: apiData.message
+                        }) %>
+                    <% } else { %>
+                        <% apiData.data.forEach(function (server) { %>
+                            <tr>
+                                <td><%= server.name %></td>
+                                <td><%= server.fqdn %></td>
+                                <td><%= server.ipAddress %></td>
+                                <td><%= server.port %></td>
+                                <td>
+                                    <% if (server.visible === 1) { %>
+                                        <i class="fas fa-check-circle" style="color:green"></i>
+                                    <% } else { %>
+                                        <i class="fas fa-times-circle" style="color: red;"></i>
+                                    <% } %>
+                                </td>
+                                <td>
+                                    <div class="btn-group">
+                                        <a href="/dashboard/servers/edit?id=<%= server.serverId %>"><button class="btn btn-sm btn-warning" type="button">Edit</button></a>
+
+                                        <form action="<%= config.siteConfiguration.siteAddress %>/redirect/server/delete" method="post">
+                                            <input type="hidden" name="serverId" value="<%= server.serverId %>">
+                                            <button class="btn btn-sm btn-danger" type="submit" onclick="window.location='/dashboard/servers/'">Delete</button>
+                                        </form>
+                                    </div>
+                                </td>
+                            </tr>
+                        <% }) %>
+                    <% } %>
+                </tbody>
+            </table>
+      </div>
+    </div>
+  </div>
+
+<%- include("../../modules/footer.ejs") %>

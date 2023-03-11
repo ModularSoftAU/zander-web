@@ -1,4 +1,4 @@
-import { hasPermission, isFeatureWebRouteEnabled } from "../../api/common";
+import { getGlobalImage, hasPermission, isFeatureWebRouteEnabled } from "../../api/common";
 
 export default function dashboardEventSiteRoute(app, client, fetch, moment, config, db, features, lang) {
     // 
@@ -17,13 +17,14 @@ export default function dashboardEventSiteRoute(app, client, fetch, moment, conf
         });
         const apiData = await response.json();
                 
-        res.view('dashboard/events/list', {
+        res.view('dashboard/events/event-list', {
             "pageTitle": `Dashboard - Events`,
             config: config,
             apiData: apiData,
             moment: moment,
             features: features,
-            req: req
+            req: req,
+            globalImage: getGlobalImage()
         });
     });
 
@@ -44,13 +45,14 @@ export default function dashboardEventSiteRoute(app, client, fetch, moment, conf
         });
         const serverApiData = await response.json();
                 
-        res.view('dashboard/events/editor', {
+        res.view('dashboard/events/event-editor', {
             "pageTitle": `Dashboard - Event Creator`,
             config: config,
             serverApiData: serverApiData.data,
             type: "create",
             features: features,
-            req: req
+            req: req,
+            globalImage: getGlobalImage()
         });
     });
 
@@ -78,7 +80,7 @@ export default function dashboardEventSiteRoute(app, client, fetch, moment, conf
         });
         const serverApiData = await serverResponse.json();
 
-        res.view('dashboard/events/editor', {
+        res.view('dashboard/events/event-editor', {
             "pageTitle": `Dashboard - Event Editor`,
             config: config,
             eventApiData: eventApiData.data[0],
@@ -86,7 +88,8 @@ export default function dashboardEventSiteRoute(app, client, fetch, moment, conf
             moment: moment,
             type: "edit",
             features: features,
-            req: req
+            req: req,
+            globalImage: getGlobalImage()
         });
     });
 }
