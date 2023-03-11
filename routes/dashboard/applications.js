@@ -1,4 +1,4 @@
-import { hasPermission, isFeatureWebRouteEnabled } from "../../api/common";
+import { getGlobalImage, hasPermission, isFeatureWebRouteEnabled } from "../../api/common";
 
 export default function dashboardApplicationsSiteRoute(app, fetch, config, db, features, lang) {
 
@@ -18,12 +18,13 @@ export default function dashboardApplicationsSiteRoute(app, fetch, config, db, f
         });
         const apiData = await response.json();
 
-        res.view('dashboard/applications/list', {
+        res.view('dashboard/applications/application-list', {
             "pageTitle": `Dashboard - Applications`,
             config: config,
             apiData: apiData,
             features: features,
-            req: req
+            req: req,
+            globalImage: getGlobalImage()
         });
     });
 
@@ -34,11 +35,13 @@ export default function dashboardApplicationsSiteRoute(app, fetch, config, db, f
         if (!hasPermission('zander.web.application', req, res, features))
             return;
 
-        res.view('dashboard/applications/editor', {
+        res.view('dashboard/applications/application-editor', {
             "pageTitle": `Dashboard - Application Creator`,
             config: config,
             type: "create",
-            features: features
+            features: features,
+            req: req,
+            globalImage: getGlobalImage()
         });
     });
 
@@ -56,12 +59,14 @@ export default function dashboardApplicationsSiteRoute(app, fetch, config, db, f
         });
         const applicationApiData = await response.json();
 
-        res.view('dashboard/applications/editor', {
+        res.view('dashboard/applications/application-editor', {
             "pageTitle": `Dashboard - Application Editor`,
             config: config,
             applicationApiData: applicationApiData.data[0],
             type: "edit",
-            features: features
+            features: features,
+            req: req,
+            globalImage: getGlobalImage()
         });
     });
 
