@@ -18,27 +18,18 @@ export default function dashbordSiteRoute(app, config, features, lang) {
         });
     });
 
-    app.get('/dashboard/view/network', async function (req, res) {
-        if (!hasPermission('zander.web.dashboard', req, res, features))
+    app.get('/dashboard/logs', async function (req, res) {
+        if (!hasPermission('zander.web.logs', req, res, features))
             return;
 
-        res.view('dashboard/indexViewNetwork', {
-            "pageTitle": `Dashboard`,
+        res.view('dashboard/log', {
+            "pageTitle": `Logs`,
             config: config,
-            features: features
+            features: features,
+            req: req,
+            globalImage: getGlobalImage()
         });
     });
-
-    app.get('/dashboard/view/punishment', async function (req, res) {
-        if (!hasPermission('zander.web.dashboard', req, res, features))
-            return;
-
-        res.view('dashboard/indexViewPunishment', {
-            "pageTitle": `Dashboard`,
-            config: config,
-            features: features
-        });
-    }); 
 
     // 
     // Player Check

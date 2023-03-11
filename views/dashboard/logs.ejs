@@ -1,0 +1,55 @@
+<%- include("../../modules/header.ejs", {
+    pageTitle: pageTitle,
+    pageDescription: "Dashboard for platform"
+}) %>
+
+<%- include("../../modules/navigationBar.ejs") %>
+
+<%- include("../../partials/miniHeader.ejs", {
+  headerTitle: "Logs",
+  backgroundImage: globalImage
+}) %>
+
+<div class="row">
+    <div class="col-sm-2">
+      <%- include("../../modules/dashboard/dashboard-sidebar.ejs") %>
+    </div>
+    <div class="col" style="padding: 20px;">
+        <% if (req.cookies.alertType) { %>
+            <%- include("../../partials/alert.ejs", {
+              alertType: req.cookies.alertType,
+              content: req.cookies.alertContent
+            }) %>
+        <% } %>
+        
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Actioned User</th>
+                    <th>Type</th>
+                    <th>Description</th>
+                    <th>DateTime</th>
+                </tr>
+            </thead>
+            <tbody>
+                <% if (apiData.success == false) { %>
+                    <%- include("../../partials/alert.ejs", {
+                      alertType: "danger",
+                      content: apiData.message
+                    }) %>
+                <% } else { %>
+                    <% apiData.data.forEach(function (log) { %>
+                        <tr>
+                            <td><%= log.actionUser %></td>
+                            <td><span class="badge badge-primary"><%= log.logType %></span></td>
+                            <td><%= log.description %></td>
+                            <td><%= log.dateTime %></td>
+                        </tr>
+                    <% }) %>
+                <% } %>
+            </tbody>
+        </table>
+    </div>
+  </div>
+
+<%- include("../../modules/footer.ejs") %>
