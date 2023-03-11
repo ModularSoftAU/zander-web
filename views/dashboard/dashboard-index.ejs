@@ -1,0 +1,22 @@
+<%- include("../modules/header.ejs", {
+    pageTitle: pageTitle,
+    pageDescription: "Dashboard for platform"
+}) %>
+
+<%- include("../modules/navigationBar.ejs") %>
+
+<%- include("../partials/miniHeader.ejs", {
+  headerTitle: "Dashboard",
+  backgroundImage: globalImage
+}) %>
+
+<div class="row">
+    <div class="col-sm-2">
+      <%- include("../modules/dashboard/dashboard-sidebar.ejs") %>
+    </div>
+    <div class="col" style="padding: 10px;">
+      <h2>Test</h2>
+    </div>
+  </div>
+
+<%- include("../modules/footer.ejs") %>  

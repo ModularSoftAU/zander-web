@@ -707,7 +707,7 @@ a.dt-button.active:not(.disabled) {
   transition: margin-left 300ms ease-in-out 0s;
 }
 .logo {
-  background: #343957;
+  background: #2f508c;
   display: inline-block;
   padding: 15px 0;
   text-align: center;
@@ -719,12 +719,15 @@ a.dt-button.active:not(.disabled) {
   font-size: 20px;
   font-weight: 700;
 }
+
 .sidebar-hide .logo {
   width: 0;
 }
+
 .sidebar-hide .logo span {
   display: none;
 }
+
 .header-icon {
   font-size: 18px;
   padding: 12px 15px;

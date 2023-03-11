@@ -1,4 +1,4 @@
-import { hasPermission } from "../../api/common";
+import { getGlobalImage, hasPermission } from "../../api/common";
 
 export default function dashbordSiteRoute(app, config, features, lang) {
 
@@ -9,10 +9,12 @@ export default function dashbordSiteRoute(app, config, features, lang) {
         if (!hasPermission('zander.web.dashboard', req, res, features))
             return;
 
-        res.view('dashboard/indexViewNetwork', {
+        res.view('dashboard/dashboard-index', {
             "pageTitle": `Dashboard`,
             config: config,
-            features: features
+            features: features,
+            req: req,
+            globalImage: await getGlobalImage()
         });
     });
 
