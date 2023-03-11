@@ -25,13 +25,6 @@
           }) %>
       <% } %>
       <div class="table-responsive">
-            <% if (req.cookies.alertType) { %>
-            <%- include("../partials/alert.ejs", {
-                alertType: req.cookies.alertType,
-                content: req.cookies.alertContent
-            }) %>
-            <% } %>
-
           <table class="table table-hover table-responsive-sm">
               <thead>
                   <tr>

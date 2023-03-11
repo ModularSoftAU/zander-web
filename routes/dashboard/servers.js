@@ -1,4 +1,4 @@
-import { hasPermission, isFeatureWebRouteEnabled } from "../../api/common";
+import { getGlobalImage, hasPermission, isFeatureWebRouteEnabled } from "../../api/common";
 
 export default function dashboardServersSiteRoute(app, fetch, config, db, features, lang) {
     // 
@@ -17,12 +17,13 @@ export default function dashboardServersSiteRoute(app, fetch, config, db, featur
         });
         const apiData = await response.json();
 
-        res.view('dashboard/servers/list', {
+        res.view('dashboard/servers/server-list', {
             "pageTitle": `Dashboard - Servers`,
             config: config,
             apiData: apiData,
             features: features,
-            req: req
+            req: req,
+            globalImage: getGlobalImage()
         });
     });
 
@@ -33,11 +34,13 @@ export default function dashboardServersSiteRoute(app, fetch, config, db, featur
         if (!hasPermission('zander.web.server', req, res, features))
             return;
                 
-        res.view('dashboard/servers/editor', {
+        res.view('dashboard/servers/server-editor', {
             "pageTitle": `Dashboard - Server Creator`,
             config: config,
             type: "create",
-            features: features
+            features: features,
+            globalImage: getGlobalImage(),
+            req: req
         });
     });
 
@@ -55,12 +58,14 @@ export default function dashboardServersSiteRoute(app, fetch, config, db, featur
         });
         const serverApiData = await response.json();
 
-        res.view('dashboard/servers/editor', {
+        res.view('dashboard/servers/server-editor', {
             "pageTitle": `Dashboard - Server Editor`,
             config: config,
             serverApiData: serverApiData.data[0],
             type: "edit",
-            features: features
+            features: features,
+            globalImage: getGlobalImage(),
+            req: req
         });
     });
 

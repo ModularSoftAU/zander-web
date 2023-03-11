@@ -15,6 +15,10 @@
       <%- include("../../modules/dashboard/dashboard-sidebar.ejs") %>
     </div>
     <div class="col" style="padding: 20px;">
+        <%- include("../../partials/documentationLink.ejs", {
+            doclink: "https://modularsoft.org/docs/products/zander/"
+        }) %>
+
         <div class="basic-form">
             <% if (type === 'create') { %>
                 <form method="post" action="<%= config.siteConfiguration.siteAddress %>/redirect/event/create">
@@ -26,10 +30,6 @@
                         elementValue: eventApiData.id
                     }) %>
             <% } %>
-
-            <%- include("../../partials/documentationLink.ejs", {
-                doclink: "https://modularsoft.org/docs/products/zander/"
-           }) %>
 
             <div class="row">
                 <div class="col">
