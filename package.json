@@ -1,5 +1,5 @@
 {
-  "name": "modularenigma-zander-web",
+  "name": "modularsoft-zander-web",
   "version": "1.0",
   "description": "The web component of the Zander project that contains database, API and website.",
   "main": "app.js",
@@ -9,20 +9,20 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/ModularEnigma/zander-web.git"
+    "url": "git+https://github.com/ModularSoftAU/zander-web.git"
   },
   "engines": {
     "npm": ">=8.5.0",
     "node": "16.17.0"
   },
   "keywords": [],
-  "author": "ModularEnigma",
+  "author": "ModularSoft",
   "type": "module",
   "license": "ISC",
   "bugs": {
-    "url": "https://github.com/ModularEnigma/zander-web/issues"
+    "url": "https://github.com/ModularSoftAU/zander-web/issues"
   },
-  "homepage": "https://github.com/ModularEnigma/zander-web#readme",
+  "homepage": "https://github.com/ModularSoftAU/zander-web#readme",
   "dependencies": {
     "@discordjs/builders": "^0.13.0",
     "@fastify/oauth2": "^5.0.0",
