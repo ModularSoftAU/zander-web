@@ -9,7 +9,7 @@ export default function sessionSiteRoute(app, client, fetch, moment, config, db,
 	app.get('/login', async function (req, res) {
 		if (!isFeatureWebRouteEnabled(features.web.login, req, res, features))
 			return;
-
+		
 		res.view('session/login', {
             "pageTitle": `Login`,
             config: config,

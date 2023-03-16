@@ -198,10 +198,10 @@ export async function getGlobalImage() {
     @param alertContent The alert content text.
     @param res Passing through res
 */
-export function setBannerCookie(alertType, alertContent, res) {
+export async function setBannerCookie(alertType, alertContent, res) {
     try {
         var expiryTime = new Date();
-        expiryTime.setSeconds(expiryTime.getSeconds() + 3);
+        expiryTime.setSeconds(expiryTime.getSeconds() + 2);
 
         // Set Alert Type
         res.setCookie('alertType', alertType, {
@@ -214,8 +214,6 @@ export function setBannerCookie(alertType, alertContent, res) {
             path: '/',
             expires: expiryTime
         })
-
-        console.log(`setBannerCookie is being called.`);
 
         return true;
     } catch (error) {
