@@ -220,17 +220,25 @@ export default function userApiRoute(app, config, db, features, lang) {
     // 
     app.post(baseEndpoint + '/profile/update', async function (req, res) {
         isFeatureEnabled(features.web.profiles, res, lang);
-        const username = required(req.body, "username");
+
+        const userId = required(req.body, "userId");
+        const profilePictureType = required(req.body, "profilePictureType");
 
         try {
-            // db.query(`SELECT u.userId, u.uuid, u.username, gs.ipAddress FROM gamesessions gs LEFT JOIN users u ON gs.userId = u.userId WHERE u.username = ?;`, [username], function (error, results, fields) {
-                
+            db.query(`UPDATE users SET profilePictureType=? WHERE userId=?;`, [profilePictureType, userId], function (error, results, fields) {
+                if (error) {
+                    return res.send({
+                        success: false,
+                        message: error
+                    });
+                }
 
-            //     res.send({
-            //         success: true,
-            //         data: results
-            //     });
-            // });
+                return res.send({
+                    success: true,
+                    alertType: "success",
+                    alertContent: `Profile has been updated`
+                });
+            });
         } catch (error) {
             return res.send({
                 success: false,

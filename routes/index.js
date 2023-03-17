@@ -5,6 +5,7 @@ import communityCreationsRoutes from './communityCreationsRoutes'
 import sessionRoutes from './sessionRoutes'
 import userRoutes from './userRoutes'
 import { isFeatureWebRouteEnabled, isLoggedIn, getGlobalImage, setBannerCookie } from "../api/common";
+import { getProfilePicture } from '../controllers/userController'
 
 export default function applicationSiteRoutes(app, client, fetch, moment, config, db, features, lang) {
 
@@ -228,6 +229,7 @@ export default function applicationSiteRoutes(app, client, fetch, moment, config
             reportApiData: reportApiData,
             features: features,
             globalImage: await getGlobalImage(),
+            profilePicture: await getProfilePicture(profileApiData.data[0].username)
         });
     });
 

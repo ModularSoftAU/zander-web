@@ -154,3 +154,24 @@ export async function doesPasswordMatch(password, confirmPassword) {
     });
 }
 
+/*
+    Checks if two given passwords match, and returns a Promise with a boolean value of true if they match and false otherwise.
+
+    @param username The username of the user.
+*/
+export async function getProfilePicture(username) {
+    return new Promise((resolve, reject) => {
+        db.query(`SELECT * FROM users WHERE username=?;`, [username], function (error, results, fields) {
+            if (error) {
+                reject(error);
+            }
+
+            let profilePictureType = results[0].profilePictureType;
+            let craftUUID = results[0].uuid;
+            let emailHash = results[0].emailHash;
+
+            if (profilePictureType == "CRAFTATAR") return resolve(`https://crafatar.com/avatars/${craftUUID}?helm`);
+            if (profilePictureType == "GRAVATAR") return resolve(`https://www.gravatar.com/avatar/${emailHash}`);
+        });        
+    });
+}

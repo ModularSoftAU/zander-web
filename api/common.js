@@ -1,6 +1,7 @@
 import config from '../config.json' assert {type: "json"};
 import fetch from 'node-fetch';
 import { readdirSync } from 'fs';
+import crypto from "crypto";
 
 /*
     Check if a specific feature is enabled.
@@ -219,4 +220,21 @@ export async function setBannerCookie(alertType, alertContent, res) {
     } catch (error) {
         console.log(error);
     }
+}
+
+/*
+    Sets two cookies (alertType and alertContent) with specified values and an expiration time of one second. 
+    These cookies are set on the root path and are returned by the function.
+
+    @param email The email address to hash.
+*/
+export async function hashEmail(email) {
+    // Create a new MD5 hash object
+    const md5Hash = crypto.createHash('md5');
+
+    // Update the hash object with the email address
+    md5Hash.update(email);
+
+    // Get the hexadecimal representation of the hash and return it
+    return md5Hash.digest('hex');
 }

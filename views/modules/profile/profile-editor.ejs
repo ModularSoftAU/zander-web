@@ -10,23 +10,46 @@
   backgroundImage: profileApiData.data[0].coverArt
 }) %>
 
-<section class="section">
-  <div class="container">
-    <div class="row">
-      <div class="col-8" style="background-color: #cfcfcf; min-height:600px; border-radius: 5px;">
-
-      </div>
-      
-      <div class="col-3">
-        <h3>Discord</h3>
-          <% if (!req.session.user.discordID) { %>
-            <a href="/user/oauth/discord"><button class="btn btn-primary btn-sm" type="button"><i class="fa-brands fa-discord"></i> Connect Discord</button></a>
-          <% } else { %>
-            <a href="/user/oauth/discord/disconnect/<%= req.session.user.discordID %>"><button class="btn btn-danger btn-sm" type="button"><i class="fa-brands fa-discord"></i> Disconnect Discord</button></a>
+<form action="<%= config.siteConfiguration.siteAddress %>/redirect/user/profile/update" method="post">
+  <section class="section">
+    <div class="container">
+      <div class="row">
+        <% if (req.cookies.alertType) { %>
+            <%- include("../partials/alert.ejs", {
+              alertType: req.cookies.alertType,
+              content: req.cookies.alertContent
+            }) %>
           <% } %>
+          
+        <div class="col-8" style="background-color: #cfcfcf; min-height:600px; border-radius: 5px;">
+
+        </div>
+
+        <input type="hidden" name="userId" value="<%= profileApiData.data[0].userId %>">
+        
+        <div class="col-3">
+          <h3>Profile Picture Type</h3>
+            <select class="form-control" name="profilePictureType">
+              <option value="CRAFTATAR">Craftatar</option>
+              <option value="GRAVATAR">Gravatar</option>
+            </select>
+            <br>
+
+          <h3>Discord</h3>
+            <% if (!req.session.user.discordID) { %>
+              <a href="/user/oauth/discord"><button class="btn btn-primary btn-sm" type="button"><i class="fa-brands fa-discord"></i> Connect Discord</button></a>
+            <% } else { %>
+              <a href="/user/oauth/discord/disconnect/<%= req.session.user.discordID %>"><button class="btn btn-danger btn-sm" type="button"><i class="fa-brands fa-discord"></i> Disconnect Discord</button></a>
+            <% } %>
+        </div>
       </div>
+
+      <br>
+      <button class="btn btn-primary btn-sm" type="submit">Update Profile</button>
+
     </div>
-  </div>
-</section>
+  </section>
+</form>
+
 
 <%- include("../footer.ejs") %>  
