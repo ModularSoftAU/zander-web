@@ -1,3 +1,4 @@
+import { getProfilePicture } from '../../controllers/userController';
 import {isFeatureEnabled, required, optional} from '../common'
 
 export default function userApiRoute(app, config, db, features, lang) {
@@ -225,13 +226,17 @@ export default function userApiRoute(app, config, db, features, lang) {
         const profilePictureType = required(req.body, "profilePictureType");
 
         try {
-            db.query(`UPDATE users SET profilePictureType=? WHERE userId=?;`, [profilePictureType, userId], function (error, results, fields) {
+            db.query(`UPDATE users SET profilePictureType=? WHERE userId=?;`, [profilePictureType, userId], async function (error, results, fields) {
                 if (error) {
                     return res.send({
                         success: false,
                         message: error
                     });
                 }
+
+                // Update the profile picture on change.
+                let profilePicture = await getProfilePicture(userData.username);
+                req.session.user.profilePicture = profilePicture;
 
                 return res.send({
                     success: true,

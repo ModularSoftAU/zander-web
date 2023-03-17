@@ -1,5 +1,6 @@
 import bcrypt from 'bcrypt';
 import { isFeatureWebRouteEnabled, setBannerCookie, getGlobalImage } from "../api/common";
+import { getProfilePicture } from '../controllers/userController';
 
 export default function sessionSiteRoute(app, client, fetch, moment, config, db, features, lang) {
 
@@ -152,10 +153,12 @@ export default function sessionSiteRoute(app, client, fetch, moment, config, db,
 			if (result) {
 				req.session.authenticated = true;
 				let userData = await getPermissions(results[0]);
+				let profilePicture = await getProfilePicture(userData.username);
 				
 				req.session.user = {
 					userId: userData.userId,
 					username: userData.username,
+					profilePicture: profilePicture,
 					discordID: userData.discordID,
 					uuid: userData.uuid,
 					ranks: userData.userRanks,

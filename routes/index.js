@@ -246,6 +246,8 @@ export default function applicationSiteRoutes(app, client, fetch, moment, config
         });
         const profileApiData = await profileResponse.json();
 
+        console.log(profileApiData.data[0].username);
+
         res.view('modules/profile/profile-editor', {
             "pageTitle": `${req.session.user.username}'s Profile`,
             config: config,
@@ -254,6 +256,7 @@ export default function applicationSiteRoutes(app, client, fetch, moment, config
             profileApiData: profileApiData,
             features: features,
             globalImage: await getGlobalImage(),
+            profilePicture: await getProfilePicture(profileApiData.data[0].username)
         });
     });
 

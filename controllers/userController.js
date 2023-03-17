@@ -171,7 +171,7 @@ export async function getProfilePicture(username) {
             let emailHash = results[0].emailHash;
 
             if (profilePictureType == "CRAFTATAR") return resolve(`https://crafatar.com/avatars/${craftUUID}?helm`);
-            if (profilePictureType == "GRAVATAR") return resolve(`https://www.gravatar.com/avatar/${emailHash}`);
+            if (profilePictureType == "GRAVATAR") return resolve(`https://www.gravatar.com/avatar/${emailHash}?s=300`);
         });        
     });
 }
