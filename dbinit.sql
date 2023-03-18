@@ -578,3 +578,12 @@ CREATE TABLE communityLikes (
     CONSTRAINT communityLikes_creationId FOREIGN KEY (creationId) REFERENCES communityCreations (creationId) ON DELETE CASCADE,
     CONSTRAINT communityLikes_userId FOREIGN KEY (userId) REFERENCES users (userId) ON DELETE CASCADE
 );
+
+CREATE TABLE logs (
+	logId INT NOT NULL AUTO_INCREMENT,
+    creatorId INT NOT NULL,
+    logType VARCHAR(30),
+    description TEXT,
+    actionedDateTime DATETIME NOT NULL DEFAULT NOW(),
+    PRIMARY KEY (logId)
+);

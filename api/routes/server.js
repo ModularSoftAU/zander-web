@@ -1,4 +1,4 @@
-import {isFeatureEnabled, required, optional} from '../common'
+import {isFeatureEnabled, required, optional, generateLog} from '../common'
 
 export default function serverApiRoute(app, config, db, features, lang) {
     const baseEndpoint = '/api/server';
@@ -119,8 +119,6 @@ export default function serverApiRoute(app, config, db, features, lang) {
 
         const serverCreatedLang = lang.server.serverCreated
 
-        console.log(req.body);
-
         try {
             db.query(`
                 INSERT INTO 
@@ -139,6 +137,7 @@ export default function serverApiRoute(app, config, db, features, lang) {
                         message: `${error}`
                     });
                 }
+                
                 return res.send({
                     success: true,
                     message: serverCreatedLang.replace("%NAME%", name)

@@ -152,4 +152,38 @@ export default async function webApiRoute(app, config, db, features, lang) {
         });
     });
 
+    app.post(baseEndpoint + '/logs/get', async function (req, res) {
+        try {
+            db.query(`SELECT * FROM logs;`, function (error, results, fields) {
+                if (error) {
+                    return res.send({
+                        success: false,
+                        message: `${error}`
+                    });
+                }
+
+                if (!results.length) {
+                    return res.send({
+                        success: false,
+                        alertType: "danger",
+                        alertContent: `There are no logs`
+                    });
+                }
+
+                console.log(results);
+
+                res.send({
+                    success: true,
+                    data: results
+                });
+            });
+
+        } catch (error) {
+            res.send({
+                success: false,
+                data: error
+            });
+        }
+    });
+
 }

@@ -1,3 +1,4 @@
+import fetch from "node-fetch";
 import { getGlobalImage, hasPermission } from "../../api/common";
 
 export default function dashbordSiteRoute(app, config, features, lang) {
@@ -18,13 +19,23 @@ export default function dashbordSiteRoute(app, config, features, lang) {
         });
     });
 
+    // 
+    // Logs
+    // 
     app.get('/dashboard/logs', async function (req, res) {
         if (!hasPermission('zander.web.logs', req, res, features))
             return;
 
-        res.view('dashboard/log', {
-            "pageTitle": `Logs`,
+        const fetchURL = `${process.env.siteAddress}/api/web/logs/get`;
+        const response = await fetch(fetchURL, {
+            headers: { 'x-access-token': process.env.apiKey }
+        });
+        const apiData = await response.json();
+
+        res.view('dashboard/logs', {
+            "pageTitle": `Dashboard - Logs`,
             config: config,
+            apiData: apiData,
             features: features,
             req: req,
             globalImage: getGlobalImage()
