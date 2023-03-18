@@ -234,14 +234,10 @@ export default function userApiRoute(app, config, db, features, lang) {
                     });
                 }
 
-                // Update the profile picture on change.
-                let profilePicture = await getProfilePicture(userData.username);
-                req.session.user.profilePicture = profilePicture;
-
                 return res.send({
                     success: true,
                     alertType: "success",
-                    alertContent: `Profile has been updated`
+                    alertContent: `Profile has been updated, profile picture will be updated on next login.`
                 });
             });
         } catch (error) {

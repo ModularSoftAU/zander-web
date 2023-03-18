@@ -19,7 +19,7 @@
               alertType: req.cookies.alertType,
               content: req.cookies.alertContent
             }) %>
-          <% } %>
+        <% } %>
           
         <div class="col-8" style="background-color: #cfcfcf; min-height:600px; border-radius: 5px;">
 
@@ -29,10 +29,30 @@
         
         <div class="col-3">
           <h3>Profile Picture Type</h3>
-            <select class="form-control" name="profilePictureType">
+            <!-- <select class="form-control" name="profilePictureType">
               <option value="CRAFTATAR">Craftatar</option>
               <option value="GRAVATAR">Gravatar</option>
-            </select>
+            </select> -->
+
+            <%- include("../../partials/form/inputSelect.ejs", {
+                 elementName: "profilePictureType",
+                 elementValue: profileApiData.data[0].profilePictureType,
+                 required: true,
+                 optionElements: [
+                     {
+                         optionName: "Craftatar",
+                         optionValue: "CRAFTATAR",
+                         selected: false,
+                         disabled: false
+                     },
+                     {
+                         optionName: "Gravatar",
+                         optionValue: "GRAVATAR",
+                         selected: false,
+                         disabled: false
+                     }
+                 ]
+            }) %>
             <br>
 
           <h3>Discord</h3>
