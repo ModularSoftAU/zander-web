@@ -1,6 +1,6 @@
 import bcrypt from 'bcrypt';
 import { doesPasswordMatch, hasEmailBeenUsed, hasUserJoinedBefore } from '../../controllers/userController';
-import {isFeatureEnabled, required, setBannerCookie} from '../common'
+import {hashEmail, isFeatureEnabled, required, setBannerCookie} from '../common'
 
 export default async function webApiRoute(app, config, db, features, lang) {
     const baseEndpoint = '/api/web';
@@ -56,7 +56,7 @@ export default async function webApiRoute(app, config, db, features, lang) {
                 const salt = await bcrypt.genSalt();
                 let hashpassword = await bcrypt.hash(password, salt);
 
-                db.query(`UPDATE users SET password=?, email=? where username=?;`, [hashpassword, email, username], async function (err, results) {
+                db.query(`UPDATE users SET password=?, email=?, emailHash=? WHERE username=?;`, [hashpassword, email, await hashEmail(email), username], async function (err, results) {
                     if (err) {
                         console.log(err);
 

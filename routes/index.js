@@ -5,6 +5,7 @@ import communityCreationsRoutes from './communityCreationsRoutes'
 import sessionRoutes from './sessionRoutes'
 import userRoutes from './userRoutes'
 import { isFeatureWebRouteEnabled, isLoggedIn, getGlobalImage, setBannerCookie } from "../api/common";
+import { getProfilePicture } from '../controllers/userController'
 
 export default function applicationSiteRoutes(app, client, fetch, moment, config, db, features, lang) {
 
@@ -228,6 +229,7 @@ export default function applicationSiteRoutes(app, client, fetch, moment, config
             reportApiData: reportApiData,
             features: features,
             globalImage: await getGlobalImage(),
+            profilePicture: await getProfilePicture(profileApiData.data[0].username)
         });
     });
 
@@ -244,6 +246,8 @@ export default function applicationSiteRoutes(app, client, fetch, moment, config
         });
         const profileApiData = await profileResponse.json();
 
+        console.log(profileApiData.data[0].username);
+
         res.view('modules/profile/profile-editor', {
             "pageTitle": `${req.session.user.username}'s Profile`,
             config: config,
@@ -252,6 +256,7 @@ export default function applicationSiteRoutes(app, client, fetch, moment, config
             profileApiData: profileApiData,
             features: features,
             globalImage: await getGlobalImage(),
+            profilePicture: await getProfilePicture(profileApiData.data[0].username)
         });
     });
 
