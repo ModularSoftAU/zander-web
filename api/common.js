@@ -2,6 +2,7 @@ import config from '../config.json' assert {type: "json"};
 import fetch from 'node-fetch';
 import { readdirSync } from 'fs';
 import crypto from "crypto";
+import db from "../controllers/databaseController";
 
 /*
     Check if a specific feature is enabled.
@@ -237,4 +238,28 @@ export async function hashEmail(email) {
 
     // Get the hexadecimal representation of the hash and return it
     return md5Hash.digest('hex');
+}
+
+/*
+    Sets two cookies (alertType and alertContent) with specified values and an expiration time of one second. 
+    These cookies are set on the root path and are returned by the function.
+
+    @param userId The ID of the user that actioned the log.
+    @param logType The type of log.
+    @param description A short description of the log.
+*/
+export async function generateLog(userId, logType, logFeature, description, res) {
+    db.query(`INSERT INTO logs (creatorId, logType, logFeature, description) VALUES (?, ?, ?, ?)`, [userId, logType, logFeature, description], function (error, results, fields) {
+        if (error) {
+            return res.send({
+                success: false,
+                message: `${error}`
+            });
+        }
+
+        return res.send({
+            success: true,
+            message: `Log created.`
+        });
+    });
 }

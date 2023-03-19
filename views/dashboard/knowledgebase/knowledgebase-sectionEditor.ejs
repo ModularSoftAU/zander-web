@@ -25,6 +25,12 @@
                     elementValue: kbApiData.sectionSlug
                 }) %>
         <% } %>
+
+        <%- include("../../partials/form/inputHidden.ejs", {
+            elementName: "actioningUser",
+            elementValue: req.session.user.userId
+        }) %>
+        
                 <!-- Name of Section Slug -->
                 <div class="form-group">
                     <label for="sectionSlug">Section Slug</label>

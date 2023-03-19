@@ -2,6 +2,7 @@ import moment from 'moment';
 import db from './databaseController';
 import config from '../config.json' assert {type: "json"};
 import { MessageEmbed } from 'discord.js';
+import { generateLog } from '../api/common';
 
 /*
     Clears old events from the database by running a SQL query that 
@@ -166,6 +167,8 @@ export function createDiscordEvent(eventInfo, client, res) {
             .setFooter(`To stay notified of when the event will begin, mark yourself as Interested in the Events tab on the sidebar.`)
 
         channel.send({ embeds: [embed] });
+
+        generateLog(actioningUser, "SUCCESS", "EVENTS", `Event ${eventInfo.name} information has been published to Discord.`, res);
         
     } catch (error) {
         console.log(error);

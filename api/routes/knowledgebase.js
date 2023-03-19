@@ -127,6 +127,8 @@ export default function knowledgebaseApiRoute(app, config, db, features, lang) {
 
     app.post(baseEndpoint + '/section/create', async function(req, res) {
         isFeatureEnabled(features.knowledgebase, res, lang);
+
+        const actioningUser = required(req.body, "actioningUser", res);
         const sectionSlug = required(req.body, "sectionSlug", res);
         const sectionName = required(req.body, "sectionName", res);
         const sectionDescription = required(req.body, "sectionDescription", res);
@@ -143,6 +145,8 @@ export default function knowledgebaseApiRoute(app, config, db, features, lang) {
                         message: `${error}`
                     });
                 }
+
+                generateLog(actioningUser, "SUCCESS", "KNOWLEDGEBASE", `Section ${sectionName} (${sectionSlug}) has been created.`, res);
 
                 res.send({
                     success: true,
@@ -161,6 +165,8 @@ export default function knowledgebaseApiRoute(app, config, db, features, lang) {
 
     app.post(baseEndpoint + '/section/update', async function(req, res) {
         isFeatureEnabled(features.knowledgebase, res, lang);
+
+        const actioningUser = required(req.body, "actioningUser", res);
         const slug = required(req.body, "slug", res);
         const sectionSlug = required(req.body, "sectionSlug", res);
         const sectionName = required(req.body, "sectionName", res);
@@ -179,6 +185,8 @@ export default function knowledgebaseApiRoute(app, config, db, features, lang) {
                     });
                 }
 
+                generateLog(actioningUser, "SUCCESS", "KNOWLEDGEBASE", `Section ${sectionName} (${sectionSlug}) has been updated.`, res);
+
                 res.send({
                     success: true,
                     message: sectionUpdatedLang.replace("%SECTIONNAME%", sectionName)
@@ -195,6 +203,8 @@ export default function knowledgebaseApiRoute(app, config, db, features, lang) {
 
     app.post(baseEndpoint + '/article/create', async function(req, res) {
         isFeatureEnabled(features.knowledgebase, res, lang);
+
+        const actioningUser = required(req.body, "actioningUser", res);
         const articleSlug = required(req.body, "articleSlug", res);
         const articleName = required(req.body, "articleName", res);
         const articleDescription = required(req.body, "articleDescription", res);
@@ -219,6 +229,8 @@ export default function knowledgebaseApiRoute(app, config, db, features, lang) {
                     });
                 }
 
+                generateLog(actioningUser, "SUCCESS", "KNOWLEDGEBASE", `Article ${articleName} (${articleSlug}) has been created.`, res);
+
                 return res.send({
                     success: true,
                     message: articleCreatedLang.replace("%ARTICLENAME%", articleName)
@@ -235,7 +247,8 @@ export default function knowledgebaseApiRoute(app, config, db, features, lang) {
 
     app.post(baseEndpoint + '/article/update', async function(req, res) {
         isFeatureEnabled(features.knowledgebase, res, lang);
-                
+
+        const actioningUser = required(req.body, "actioningUser", res);
         const slug = required(req.body, "slug", res);
         const articleSlug = required(req.body, "articleSlug", res);
         const articleName = required(req.body, "articleName", res);
@@ -246,8 +259,6 @@ export default function knowledgebaseApiRoute(app, config, db, features, lang) {
         const articleVisibility = required(req.body, "articleVisibility", res);
 
         const articleUpdatedLang = lang.knowledgebase.articleUpdated
-
-        console.log(articleSection);
 
         try {
             db.query(`
@@ -268,6 +279,8 @@ export default function knowledgebaseApiRoute(app, config, db, features, lang) {
                         message: `${error}`
                     });
                 }
+
+                generateLog(actioningUser, "SUCCESS", "KNOWLEDGEBASE", `Article ${articleName} (${articleSlug}) has been updated.`, res);
 
                 return res.send({
                     success: true,

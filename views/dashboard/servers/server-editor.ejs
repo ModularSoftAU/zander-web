@@ -27,6 +27,11 @@
                 <form method="post" action="<%= config.siteConfiguration.siteAddress %>/redirect/server/edit">
                     <input type="hidden" name="serverId" value="<%= serverApiData.serverId %>">
             <% } %>
+
+            <%- include("../../partials/form/inputHidden.ejs", {
+                elementName: "actioningUser",
+                elementValue: req.session.user.userId
+            }) %>
                     
             <div class="row">
                 <!-- Server Name -->
