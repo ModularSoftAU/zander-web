@@ -25,7 +25,6 @@
         <table class="table">
             <thead>
                 <tr>
-                    <th></th>
                     <th>Actioned User</th>
                     <th>Type</th>
                     <th>Feature</th>
@@ -39,16 +38,18 @@
                       alertType: "danger",
                       content: apiData.message
                     }) %>
-
-                    <% console.log(apiData) %>
                 <% } else { %>
                     <% apiData.data.forEach(function (log) { %>
                         <tr>
-                            <td><%= log.actionUsername %></td>
-                            <td><span class="badge badge-primary"><%= log.logType %></span></td>
+                            <td><%= log.actionedUsername %></td>
+                            <td>
+                                <%- include("../partials/logPriorityBadge.ejs", {
+                                    type: log.logType
+                                }) %>
+                            </td>
                             <td><span class="badge badge-primary"><%= log.logFeature %></span></td>
                             <td><%= log.description %></td>
-                            <td><%= log.actionedDateTime %></td>
+                            <td><%= moment(log.actionedDateTime).startOf('hour').fromNow() %></td>
                         </tr>
                     <% }) %>
                 <% } %>

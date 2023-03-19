@@ -1,6 +1,6 @@
+import moment from "moment/moment";
 import fetch from "node-fetch";
 import { getGlobalImage, hasPermission } from "../../api/common";
-import { getProfilePicture } from "../../controllers/userController";
 
 export default function dashbordSiteRoute(app, config, features, lang) {
 
@@ -40,6 +40,7 @@ export default function dashbordSiteRoute(app, config, features, lang) {
             features: features,
             req: req,
             globalImage: getGlobalImage(),
+            moment: moment
         });
     });
 

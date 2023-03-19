@@ -59,6 +59,7 @@
 
                                     <form action="<%= process.env.siteAddress %>/redirect/application/delete" method="post">
                                         <input type="hidden" name="applicationId" value="<%= application.applicationId %>">
+                                        <input type="hidden" name="actioningUser" value="<%= req.session.user.userId %>">
                                         <button class="btn btn-sm btn-danger" type="submit">Delete</button>
                                     </form>
                                 </div>

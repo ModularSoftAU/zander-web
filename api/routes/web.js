@@ -154,7 +154,7 @@ export default async function webApiRoute(app, config, db, features, lang) {
 
     app.get(baseEndpoint + '/logs/get', async function (req, res) {
         try {
-            db.query(`SELECT logId, creatorId, (SELECT username FROM users WHERE userId=creatorId) AS 'actionedUsername', logFeature, logType, description, actionedDateTime FROM logs;`, function (error, results, fields) {
+            db.query(`SELECT logId, creatorId, (SELECT username FROM users WHERE userId=creatorId) AS 'actionedUsername', logFeature, logType, description, actionedDateTime FROM logs ORDER BY actionedDateTime DESC;`, function (error, results, fields) {
                 if (error) {
                     return res.send({
                         success: false,

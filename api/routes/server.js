@@ -139,7 +139,7 @@ export default function serverApiRoute(app, config, db, features, lang) {
                     });
                 }
 
-                generateLog(actioningUser, "SUCCESS", `Created ${name} (${fqdn})`, res);
+                generateLog(actioningUser, "SUCCESS", "SERVER", `Created ${name} (${fqdn})`, res);
                 
                 return res.send({
                     success: true,
@@ -196,7 +196,7 @@ export default function serverApiRoute(app, config, db, features, lang) {
                     });
                 }
 
-                generateLog(actioningUser, "SUCCESS", `Edited ${name} (${fqdn})`, res);
+                generateLog(actioningUser, "SUCCESS", "SERVER", `Edited ${name} (${fqdn})`, res);
 
                 return res.send({
                     success: true,
@@ -227,7 +227,7 @@ export default function serverApiRoute(app, config, db, features, lang) {
                     });
                 }
 
-                generateLog(actioningUser, "SUCCESS", `Deleted ${serverId}`, res);
+                generateLog(actioningUser, "SUCCESS", "SERVER", `Deleted ${serverId}`, res);
 
                 return res.send({
                     success: true,

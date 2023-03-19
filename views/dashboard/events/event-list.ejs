@@ -55,6 +55,7 @@
                                       <% } else { %>
                                           <form action="<%= config.siteConfiguration.siteAddress %>/redirect/event/publish" method="post">
                                               <input type="hidden" name="eventId" value="<%= event.eventId %>">
+                                              <input type="hidden" name="actioningUser" value="<%= req.session.user.userId %>">
                                               <button class="btn btn-sm btn-info" type="submit">Publish</button>
                                           </form>
                                       <% } %>
@@ -63,6 +64,7 @@
 
                                       <form action="<%= config.siteConfiguration.siteAddress %>/redirect/event/delete" method="post">
                                           <input type="hidden" name="eventId" value="<%= event.eventId %>">
+                                          <input type="hidden" name="actioningUser" value="<%= req.session.user.userId %>">
                                           <button class="btn btn-sm btn-danger" type="submit">Delete</button>
                                       </form>
                                   </div>

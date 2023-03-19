@@ -19,6 +19,7 @@
             <% if (type === 'create') { %>
                 <form method="post" action="<%= process.env.siteAddress %>/redirect/announcement/create">
             <% } %>
+
             <% if (type === 'edit') { %>
                 <form method="post" action="<%= process.env.siteAddress %>/redirect/announcement/edit">
                     <%- include("../../partials/form/inputHidden.ejs", {
@@ -26,6 +27,12 @@
                         elementValue: announcementApiData.announcementSlug
                     }) %>
             <% } %>
+
+            <%- include("../../partials/form/inputHidden.ejs", {
+                elementName: "actioningUser",
+                elementValue: req.session.user.userId
+            }) %>
+            
                     <div class="row">
                         <!-- Announcement Slug -->
                         <div class="form-group col">
