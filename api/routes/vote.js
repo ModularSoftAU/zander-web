@@ -21,12 +21,15 @@ export default function voteApiRoute(app, config, db, features, lang) {
                         (SELECT userId FROM users WHERE username=?),
                         ?
                     )`, [username, voteSite], function(error, results, fields) {
+
                 if (error) {
                     return res.send({
                         success: false,
                         message: `${error}`
                     });
                 }
+
+                generateLog(null, "INFO", "VOTE", `New vote has been cast by ${username} on ${voteSite}`, res);
 
                 return res.send({
                     success: true,

@@ -67,6 +67,8 @@ export default async function webApiRoute(app, config, db, features, lang) {
                         });
                     }
 
+                    generateLog(null, "INFO", "WEB", `New website registration ${username}`, res);
+
                     // Success, generating account now.
                     return res.send({
                         success: true,

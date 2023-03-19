@@ -1,4 +1,4 @@
-import {isFeatureEnabled, required, optional} from '../common'
+import {isFeatureEnabled, required, optional, generateLog} from '../common'
 import { MessageEmbed } from 'discord.js';
 
 export default function reportApiRoute(app, client, config, db, features, lang) {
@@ -128,6 +128,8 @@ export default function reportApiRoute(app, client, config, db, features, lang) 
 
     app.post(baseEndpoint + '/create', async function(req, res) {
         isFeatureEnabled(features.report, res, lang);
+
+        const actioningUser = required(req.body, "actioningUser", res);
         const reportedUser = required(req.body, "reportedUser", res);
         const reporterUser = required(req.body, "reporterUser", res);
         const reason = required(req.body, "reason", res);
@@ -178,7 +180,9 @@ export default function reportApiRoute(app, client, config, db, features, lang) 
 
                 channel.send({
                     embeds: [embed]
-                }); 
+                });
+
+                generateLog(actioningUser, "INFO", "REPORT", `Report from ${reporterUser} to ${reportedUser} has been submitted`, res);
 
                 return res.send({
                     success: true,
@@ -196,6 +200,8 @@ export default function reportApiRoute(app, client, config, db, features, lang) 
 
     app.post(baseEndpoint + '/close', async function(req, res) {
         isFeatureEnabled(features.report, res, lang);
+
+        const actioningUser = required(req.body, "actioningUser", res);
         const reportId = required(req.body, "reportId", res);
 
         try {
@@ -206,6 +212,9 @@ export default function reportApiRoute(app, client, config, db, features, lang) 
                         message: `${error}`
                     });
                 }
+
+                generateLog(actioningUser, "INFO", "REPORT", `Report ${reportId} has been closed.`, res);
+
                 return res.send({
                     success: true,
                     message: lang.report.reportClosed

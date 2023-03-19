@@ -1,4 +1,4 @@
-import {isFeatureEnabled, required, optional} from '../common'
+import {isFeatureEnabled, required, optional, generateLog} from '../common'
 
 export default function announcementApiRoute(app, config, db, features, lang) {
     const baseEndpoint = '/api/announcement';
@@ -83,6 +83,8 @@ export default function announcementApiRoute(app, config, db, features, lang) {
 
     app.post(baseEndpoint + '/create', async function(req, res) {
         isFeatureEnabled(features.announcements, res, lang);
+
+        const actioningUser = required(req.body, "actioningUser", res);
         const announcementSlug = required(req.body, "announcementSlug", res);
         const enabled = required(req.body, "enabled", res);
         const announcementType = required(req.body, "announcementType", res);
@@ -98,6 +100,8 @@ export default function announcementApiRoute(app, config, db, features, lang) {
                         message: `${error}`
                     });
                 }
+
+                generateLog(actioningUser, "SUCCESS", "ANNOUNCEMENT", `Created ${announcementSlug}`, res);
 
                 res.send({
                     success: true,
@@ -116,6 +120,8 @@ export default function announcementApiRoute(app, config, db, features, lang) {
 
     app.post(baseEndpoint + '/edit', async function(req, res) {
         isFeatureEnabled(features.announcements, res, lang);
+
+        const actioningUser = required(req.body, "actioningUser", res);
         const slug = required(req.body, "slug", res);
         const announcementSlug = required(req.body, "announcementSlug", res);
         const enabled = required(req.body, "enabled", res);
@@ -153,6 +159,8 @@ export default function announcementApiRoute(app, config, db, features, lang) {
                         });
                     }
 
+                    generateLog(actioningUser, "SUCCESS", "ANNOUNCEMENT", `Edited ${announcementSlug}`, res);
+
                     return res.send({
                         success: true,
                         message: lang.announcement.announcementEdited
@@ -180,6 +188,9 @@ export default function announcementApiRoute(app, config, db, features, lang) {
                         message: `${error}`
                     });
                 }
+
+                generateLog(actioningUser, "WARNING", "ANNOUNCEMENT", `Deleted ${announcementSlug}`, res);
+
                 return res.send({
                     success: true,
                     message: lang.announcement.announcementDeleted
