@@ -31,6 +31,11 @@
                     }) %>
             <% } %>
 
+            <%- include("../../partials/form/inputHidden.ejs", {
+                elementName: "actioningUser",
+                elementValue: req.session.user.userId
+            }) %>
+
             <div class="row">
                 <div class="col">
                     <!-- Name of Event -->

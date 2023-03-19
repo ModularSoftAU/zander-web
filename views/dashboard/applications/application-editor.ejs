@@ -26,6 +26,12 @@
                         elementValue: applicationApiData.applicationId
                     }) %>
             <% } %>
+
+            <%- include("../../partials/form/inputHidden.ejs", {
+                elementName: "actioningUser",
+                elementValue: req.session.user.userId
+            }) %>
+            
                     <div class="row">
                         <!-- Display Name -->
                         <div class="form-group col">

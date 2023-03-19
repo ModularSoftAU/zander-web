@@ -15,5 +15,4 @@ export default function dashbordSiteRoutes(app, client, fetch, moment, config, d
     dashboardServersSiteRoute(app, fetch, config, db, features, lang);
     dashboardAnnouncementSiteRoute(app, fetch, config, db, features, lang);
     dashboardApplicationsSiteRoute(app, fetch, config, db, features, lang);
-
 }

@@ -14,7 +14,14 @@
   <div class="container">
 
     <form method="post" action="<%= config.siteConfiguration.siteAddress %>/api/communitycreation/submit">
-      <input type="hidden" name="creatorId" value="<%= req.session.user.userId %>">
+      <%- include("../../partials/form/inputHidden.ejs", {
+          elementName: "creatorId",
+          elementValue: req.session.user.userId
+      }) %>
+      <%- include("../../partials/form/inputHidden.ejs", {
+          elementName: "actioningUser",
+          elementValue: req.session.user.userId
+      }) %>
 
       <h3>Creation Information</h3>
       <!-- Creation Name -->

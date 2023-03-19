@@ -1,4 +1,4 @@
-import {isFeatureEnabled, required, optional} from '../common'
+import {isFeatureEnabled, required, optional, generateLog} from '../common'
 
 export default function communityCreationApiRoute(app, config, db, features, lang) {
     const baseEndpoint = '/api/communitycreation';
@@ -176,6 +176,7 @@ export default function communityCreationApiRoute(app, config, db, features, lan
     });
 
     app.post(baseEndpoint + '/submit', async function(req, res) {
+		const actioningUser = required(req.body, "actioningUser", res);
         const creatorId = required(req.body, "creatorId", res);
         const creationName = optional(req.body, "creationName");
         const creationDescription = optional(req.body, "creationDescription");
@@ -189,6 +190,8 @@ export default function communityCreationApiRoute(app, config, db, features, lan
                         message: `${error}`
                     });
                 }
+
+				generateLog(actioningUser, "INFO", "COMMUNITY CREATION", `${creationName} has been submitted.`, res);
 
                 // Filter out empty image entries.
                 const creationImageFiltered = creationImage.filter(element => {
@@ -219,16 +222,19 @@ export default function communityCreationApiRoute(app, config, db, features, lan
     });
     
     app.post(baseEndpoint + '/approve', async function(req, res) {
+		const actioningUser = required(req.body, "actioningUser", res);
         const id = required(req.body, "id", res);
 
         try {
-            db.query(`UPDATE communitycreations SET approved = ? WHERE creationId;`, [1], function(error, results, fields) {
+			db.query(`UPDATE communitycreations SET approved = ? WHERE creationId=?;`, [1, id], function(error, results, fields) {
                 if (error) {
                     return res.send({
                         success: false,
                         message: `${error}`
                     });
                 }
+
+				generateLog(actioningUser, "INFO", "COMMUNITY CREATION", `${id} has been approved.`, res);
 
                 res.send({
 					success: true,
@@ -245,6 +251,7 @@ export default function communityCreationApiRoute(app, config, db, features, lan
     });
 
     app.post(baseEndpoint + '/delete', async function(req, res) {
+		const actioningUser = required(req.body, "actioningUser", res);
         const creationId = required(req.body, "creationId", res);
 
         try {
@@ -255,6 +262,8 @@ export default function communityCreationApiRoute(app, config, db, features, lan
                         message: `${error}`
                     });
                 }
+
+				generateLog(actioningUser, "WARNING", "COMMUNITY CREATION", `${creationId} has been denied.`, res);
 
                 res.send({
 					success: true,
@@ -271,8 +280,9 @@ export default function communityCreationApiRoute(app, config, db, features, lan
     });
 
     app.post(baseEndpoint + '/like', async function(req, res) {
-        const userId = req.body.userId;
-        const creationId = req.body.creationId;
+		const actioningUser = required(req.body, "actioningUser", res);
+		const userId = required(req.body, "userId", res);
+		const creationId = required(req.body, "creationId", res);
 
         try {
             db.query(`INSERT INTO communityLikes (creationId, userId) VALUES (?, ?);`, [creationId, userId], function(error, results, fields) {
@@ -282,6 +292,8 @@ export default function communityCreationApiRoute(app, config, db, features, lan
                         message: `${error}`
                     });
                 }
+
+				generateLog(actioningUser, "INFO", "COMMUNITY CREATION", `${creationId} was liked by ${userId}.`, res);
 
                 res.send({
 					success: true,
