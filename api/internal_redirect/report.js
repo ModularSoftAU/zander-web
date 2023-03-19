@@ -10,11 +10,11 @@ export default function reportRedirectRoute(app, config, lang) {
         postAPIRequest(
             `${process.env.siteAddress}/api/report/create`,
             req.body,
-            `${process.env.siteAddress}/dashboard`,
+            `${process.env.siteAddress}/report`,
             res
         )
 
-        res.redirect(`${process.env.siteAddress}/dashboard`);
+        res.redirect(`${process.env.siteAddress}/`);
     });
 
     app.post(baseEndpoint + '/close', async function(req, res) {

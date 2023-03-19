@@ -1,5 +1,5 @@
 import {isFeatureEnabled, required, optional} from '../common'
-import { MessageEmbed } from 'discord.js';
+import { sendReportDiscord } from '../../controllers/reportController';
 
 export default function reportApiRoute(app, client, config, db, features, lang) {
     const baseEndpoint = '/api/report';
@@ -163,22 +163,7 @@ export default function reportApiRoute(app, client, config, db, features, lang) 
                     });
                 }
 
-                const guild = client.guilds.cache.get(config.discord.guildId);
-                const channel = guild.channels.cache.get(config.discord.channels.reports);
-
-                const embed = new MessageEmbed()
-                    .setTitle(`Incoming ${platform} Report from ${reporterUser}`)
-                    .setColor('#FFA500')
-
-                    .addField(`Reported User`, `${reportedUser}`, true)
-                    .addField(`Reporter User`, `${reporterUser}`, true)
-                    .addField(`Reason`, `${reason}`)
-                    .addField(`Server`, `${server}`)
-                    .addField(`Evidence`, `${evidence}`)
-
-                channel.send({
-                    embeds: [embed]
-                }); 
+                sendReportDiscord(reportedUser, reporterUser, reason, evidence, platform, server, client, res);
 
                 return res.send({
                     success: true,
