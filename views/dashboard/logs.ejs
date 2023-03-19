@@ -16,7 +16,7 @@
     </div>
     <div class="col" style="padding: 20px;">
         <% if (req.cookies.alertType) { %>
-            <%- include("../../partials/alert.ejs", {
+            <%- include("../partials/alert.ejs", {
               alertType: req.cookies.alertType,
               content: req.cookies.alertContent
             }) %>
@@ -25,23 +25,28 @@
         <table class="table">
             <thead>
                 <tr>
+                    <th></th>
                     <th>Actioned User</th>
                     <th>Type</th>
+                    <th>Feature</th>
                     <th>Description</th>
                     <th>DateTime</th>
                 </tr>
             </thead>
             <tbody>
                 <% if (apiData.success == false) { %>
-                    <%- include("../../partials/alert.ejs", {
+                    <%- include("../partials/alert.ejs", {
                       alertType: "danger",
                       content: apiData.message
                     }) %>
+
+                    <% console.log(apiData) %>
                 <% } else { %>
                     <% apiData.data.forEach(function (log) { %>
                         <tr>
-                            <td><%= log.creatorId %></td>
+                            <td><%= log.actionUsername %></td>
                             <td><span class="badge badge-primary"><%= log.logType %></span></td>
+                            <td><span class="badge badge-primary"><%= log.logFeature %></span></td>
                             <td><%= log.description %></td>
                             <td><%= log.actionedDateTime %></td>
                         </tr>
@@ -52,4 +57,4 @@
     </div>
   </div>
 
-<%- include("../../modules/footer.ejs") %>
+<%- include("../modules/footer.ejs") %>

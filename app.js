@@ -56,6 +56,7 @@ import apiRedirectRoutes from './api/internal_redirect'
 import verifyToken from './api/routes/verifyToken'
 import { setTimeout } from 'timers';
 import { getGlobalImage } from './api/common';
+import { getProfilePicture } from './controllers/userController';
 
 //
 // Application Boot

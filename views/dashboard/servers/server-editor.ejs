@@ -27,6 +27,8 @@
                 <form method="post" action="<%= config.siteConfiguration.siteAddress %>/redirect/server/edit">
                     <input type="hidden" name="serverId" value="<%= serverApiData.serverId %>">
             <% } %>
+
+            <input type="hidden" name="actioningUser" value="<%= req.session.user.userId %>">
                     
             <div class="row">
                 <!-- Server Name -->
