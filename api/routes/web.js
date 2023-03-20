@@ -1,6 +1,6 @@
 import bcrypt from 'bcrypt';
 import { doesPasswordMatch, hasEmailBeenUsed, hasUserJoinedBefore } from '../../controllers/userController';
-import {hashEmail, isFeatureEnabled, required, setBannerCookie} from '../common'
+import {generateLog, hashEmail, isFeatureEnabled, required, setBannerCookie} from '../common'
 
 export default async function webApiRoute(app, config, db, features, lang) {
     const baseEndpoint = '/api/web';

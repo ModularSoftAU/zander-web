@@ -1,3 +1,4 @@
+import { setAuditLastMinecraftMessage } from '../../controllers/userController';
 import {isFeatureEnabled, required, optional} from '../common'
 
 export default function discordApiRoute(app, client, config, db, features, lang) {
@@ -30,6 +31,8 @@ export default function discordApiRoute(app, client, config, db, features, lang)
         const username = required(req.body, "username", res);
         const server = required(req.body, "server", res);
         const content = required(req.body, "content", res);
+
+        setAuditLastMinecraftMessage('shadowolfyt', res);
 
         try {
             const guild = client.guilds.cache.get(config.discord.guildId);
