@@ -57,6 +57,7 @@ import verifyToken from './api/routes/verifyToken'
 import { setTimeout } from 'timers';
 import { getGlobalImage } from './api/common';
 import { getProfilePicture } from './controllers/userController';
+import { isUserLinkedToDiscord } from './controllers/discordController';
 
 //
 // Application Boot

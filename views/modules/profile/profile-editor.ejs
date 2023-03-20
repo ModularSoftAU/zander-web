@@ -13,14 +13,14 @@
 <form action="<%= config.siteConfiguration.siteAddress %>/redirect/user/profile/update" method="post">
   <section class="section">
     <div class="container">
-      <div class="row">
         <% if (req.cookies.alertType) { %>
-            <%- include("../partials/alert.ejs", {
+            <%- include("../../partials/alert.ejs", {
               alertType: req.cookies.alertType,
               content: req.cookies.alertContent
             }) %>
         <% } %>
-          
+
+      <div class="row">
         <div class="col-8" style="background-color: #cfcfcf; min-height:600px; border-radius: 5px;">
 
         </div>
