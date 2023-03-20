@@ -588,6 +588,7 @@ CREATE TABLE communityLikes (
 CREATE TABLE logs (
 	logId INT NOT NULL AUTO_INCREMENT,
     creatorId INT NOT NULL,
+    logFeature VARCHAR(30),
     logType VARCHAR(30),
     description TEXT,
     actionedDateTime DATETIME NOT NULL DEFAULT NOW(),

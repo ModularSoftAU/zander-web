@@ -67,6 +67,8 @@ export default async function webApiRoute(app, config, db, features, lang) {
                         });
                     }
 
+                    generateLog(null, "INFO", "WEB", `New website registration ${username}`, res);
+
                     // Success, generating account now.
                     return res.send({
                         success: true,
@@ -152,9 +154,9 @@ export default async function webApiRoute(app, config, db, features, lang) {
         });
     });
 
-    app.post(baseEndpoint + '/logs/get', async function (req, res) {
+    app.get(baseEndpoint + '/logs/get', async function (req, res) {
         try {
-            db.query(`SELECT * FROM logs;`, function (error, results, fields) {
+            db.query(`SELECT logId, creatorId, (SELECT username FROM users WHERE userId=creatorId) AS 'actionedUsername', logFeature, logType, description, actionedDateTime FROM logs ORDER BY actionedDateTime DESC;`, function (error, results, fields) {
                 if (error) {
                     return res.send({
                         success: false,
@@ -165,12 +167,9 @@ export default async function webApiRoute(app, config, db, features, lang) {
                 if (!results.length) {
                     return res.send({
                         success: false,
-                        alertType: "danger",
-                        alertContent: `There are no logs`
+                        message: `There are no logs`
                     });
                 }
-
-                console.log(results);
 
                 res.send({
                     success: true,
@@ -181,7 +180,7 @@ export default async function webApiRoute(app, config, db, features, lang) {
         } catch (error) {
             res.send({
                 success: false,
-                data: error
+                message: error
             });
         }
     });

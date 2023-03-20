@@ -110,6 +110,7 @@ export default function serverApiRoute(app, config, db, features, lang) {
     app.post(baseEndpoint + '/create', async function(req, res) {
         isFeatureEnabled(features.servers, res, lang);
 
+        const actioningUser = required(req.body, "actioningUser", res);
         const name = required(req.body, "name", res);
         const fqdn = required(req.body, "fqdn", res);
         const ipAddress = required(req.body, "ipAddress", res);
@@ -137,6 +138,8 @@ export default function serverApiRoute(app, config, db, features, lang) {
                         message: `${error}`
                     });
                 }
+
+                generateLog(actioningUser, "SUCCESS", "SERVER", `Created ${name} (${fqdn})`, res);
                 
                 return res.send({
                     success: true,
@@ -155,6 +158,7 @@ export default function serverApiRoute(app, config, db, features, lang) {
     app.post(baseEndpoint + '/edit', async function(req, res) {
         isFeatureEnabled(features.servers, res, lang);
 
+        const actioningUser = required(req.body, "actioningUser", res);
         const serverId = required(req.body, "serverId", res);
         const name = required(req.body, "name", res);
         const fqdn = required(req.body, "fqdn", res);
@@ -192,6 +196,8 @@ export default function serverApiRoute(app, config, db, features, lang) {
                     });
                 }
 
+                generateLog(actioningUser, "SUCCESS", "SERVER", `Edited ${name} (${fqdn})`, res);
+
                 return res.send({
                     success: true,
                     message: lang.server.serverEdited
@@ -208,6 +214,8 @@ export default function serverApiRoute(app, config, db, features, lang) {
 
     app.post(baseEndpoint + '/delete', async function(req, res) {
         isFeatureEnabled(features.servers, res, lang);
+
+        const actioningUser = required(req.body, "actioningUser", res);
         const serverId = required(req.body, "serverId", res);
 
         try {
@@ -218,6 +226,9 @@ export default function serverApiRoute(app, config, db, features, lang) {
                         message: `${error}`
                     });
                 }
+
+                generateLog(actioningUser, "SUCCESS", "SERVER", `Deleted ${serverId}`, res);
+
                 return res.send({
                     success: true,
                     message: lang.server.serverDeleted

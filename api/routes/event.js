@@ -1,5 +1,5 @@
 import { createDiscordEvent, doesEventExist, getEventInfo, isEventPublished, setEventAsPublished } from '../../controllers/eventController';
-import {isFeatureEnabled, required, optional} from '../common'
+import {isFeatureEnabled, required, optional, generateLog} from '../common'
 
 export default function eventApiRoute(app, client, moment, config, db, features, lang) {
     const baseEndpoint = '/api/event';
@@ -64,6 +64,8 @@ export default function eventApiRoute(app, client, moment, config, db, features,
 
     app.post(baseEndpoint + '/create', async function(req, res) {
         isFeatureEnabled(features.events, res, lang);
+
+        const actioningUser = required(req.body, "actioningUser", res);
         const name = required(req.body, "eventName", res);
         const icon = required(req.body, "eventIcon", res);
         const eventStartDateTime = required(req.body, "eventStartDateTime", res);
@@ -81,6 +83,9 @@ export default function eventApiRoute(app, client, moment, config, db, features,
                         message: `${error}`
                     });
                 }
+
+                generateLog(actioningUser, "SUCCESS", "EVENTS", `Event ${name} was created.`, res);
+
                 return res.send({
                     success: true,
                     message: eventCreatedLang.replace("%NAME%", name)
@@ -97,6 +102,7 @@ export default function eventApiRoute(app, client, moment, config, db, features,
 
     app.post(baseEndpoint + '/edit', async function(req, res) {
         isFeatureEnabled(features.events, res, lang);
+
         const name = required(req.body, "eventName", res);
         const icon = required(req.body, "eventIcon", res);
         const eventDateTime = required(req.body, "eventDateTime", res);
@@ -130,6 +136,8 @@ export default function eventApiRoute(app, client, moment, config, db, features,
         // Check if event has been published
         let eventPublished = await isEventPublished(eventId);
         if (eventPublished) {
+            generateLog(actioningUser, "WARNING", "EVENTS", `Event ${eventId} was attempted to publish, but has already been published.`, res);
+
             return res.send({
                 success: false,
                 message: `Event is already published, you cannot publish this again.`
@@ -194,6 +202,8 @@ export default function eventApiRoute(app, client, moment, config, db, features,
                             message: `${error}`
                         });
                     }
+
+                    generateLog(actioningUser, "WARNING", "EVENTS", `Event ${eventId} has been deleted.`, res);
 
                     return res.send({
                         success: true,

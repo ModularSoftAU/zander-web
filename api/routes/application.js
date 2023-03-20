@@ -1,4 +1,4 @@
-import {isFeatureEnabled, required, optional} from '../common'
+import {isFeatureEnabled, required, optional, generateLog} from '../common'
 
 export default function applicationApiRoute(app, config, db, features, lang) {
     const baseEndpoint = '/api/application';
@@ -51,6 +51,8 @@ export default function applicationApiRoute(app, config, db, features, lang) {
 
     app.post(baseEndpoint + '/create', async function(req, res) {
         isFeatureEnabled(features.applications, res, lang);
+
+        const actioningUser = required(req.body, "actioningUser", res);
         const displayName = required(req.body, "displayName", res);
         const description = required(req.body, "description", res);
         const displayIcon = required(req.body, "displayIcon", res);
@@ -73,6 +75,9 @@ export default function applicationApiRoute(app, config, db, features, lang) {
                         message: `${error}`
                     });
                 }
+
+                    generateLog(actioningUser, "SUCCESS", "APPLICATION", `Created ${displayName}`, res);
+
                 return res.send({
                     success: true,
                     message: applicationCreatedLang.replace("%DISPLAYNAME%", displayName)
@@ -89,6 +94,8 @@ export default function applicationApiRoute(app, config, db, features, lang) {
 
     app.post(baseEndpoint + '/edit', async function(req, res) {
         isFeatureEnabled(features.applications, res, lang);
+
+        const actioningUser = required(req.body, "actioningUser", res);
         const applicationId = required(req.body, "applicationId", res);
         const displayName = required(req.body, "displayName", res);
         const description = required(req.body, "description", res);
@@ -116,12 +123,16 @@ export default function applicationApiRoute(app, config, db, features, lang) {
                     closed=?
                 WHERE applicationId=?;`,
                 [displayName, displayIcon, description, requirementsMarkdown, redirectUrl, position, applicationStatus, applicationId], function(error, results, fields) {
+
 				if (error) {
 					return res.send({
 						success: false,
 						message: `${error}`
 					});
 				}
+
+                generateLog(actioningUser, "SUCCESS", "APPLICATION", `Edited ${displayName}`, res);
+
 				return res.send({
 					success: true,
 					message: applicationEditedLang.replace("%DISPLAYNAME%", displayName)
@@ -137,9 +148,9 @@ export default function applicationApiRoute(app, config, db, features, lang) {
 
     app.post(baseEndpoint + '/delete', async function(req, res) {
         isFeatureEnabled(features.applications, res, lang);
-        const applicationId = required(req.body, "applicationId", res);
 
-        console.log(applicationId);
+        const actioningUser = required(req.body, "actioningUser", res);
+        const applicationId = required(req.body, "applicationId", res);
 
         try {
             db.query(`DELETE FROM applications WHERE applicationId=?;`, [applicationId], function(error, results, fields) {
@@ -149,6 +160,9 @@ export default function applicationApiRoute(app, config, db, features, lang) {
                         message: `${error}`
                     });
                 }
+
+                generateLog(actioningUser, "WARNING", "APPLICATION", `Deleted ${applicationId}`, res);
+
                 return res.send({
                     success: true,
                     message: `Deletion of application with the id ${applicationId} has been successful`

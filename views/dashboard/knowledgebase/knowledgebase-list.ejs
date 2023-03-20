@@ -68,6 +68,7 @@
       
                                                       <form action="/dashboard/knowledgebase/section/delete" method="post">
                                                           <input type="hidden" name="sectionSlug" value="<%= section.sectionSlug %>">
+                                                          <input type="hidden" name="actioningUser" value="<%= req.session.user.userId %>">
                                                           <button class="btn btn-sm btn-danger" type="submit">Delete</button>
                                                       </form>
                                                   </div>
@@ -120,6 +121,7 @@
       
                                                       <form action="/dashboard/knowledgebase/article/delete" method="post">
                                                           <input type="hidden" name="articleSlug" value="<%= article.articleSlug %>">
+                                                          <input type="hidden" name="actioningUser" value="<%= req.session.user.userId %>">
                                                           <button class="btn btn-sm btn-danger" type="submit">Delete</button>
                                                       </form>
                                                   </div>

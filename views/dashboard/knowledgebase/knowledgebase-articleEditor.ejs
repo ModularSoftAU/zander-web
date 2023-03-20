@@ -27,6 +27,11 @@
                     }) %>
             <% } %>
                     <div class="row">
+                        <%- include("../../partials/form/inputHidden.ejs", {
+                            elementName: "actioningUser",
+                            elementValue: req.session.user.userId
+                        }) %>
+                        
                         <!-- Name of Article Slug -->
                         <div class="form-group col">
                             <label for="articleSlug">Article Slug</label>

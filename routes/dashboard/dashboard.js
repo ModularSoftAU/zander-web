@@ -1,3 +1,4 @@
+import moment from "moment/moment";
 import fetch from "node-fetch";
 import { getGlobalImage, hasPermission } from "../../api/common";
 
@@ -38,7 +39,8 @@ export default function dashbordSiteRoute(app, config, features, lang) {
             apiData: apiData,
             features: features,
             req: req,
-            globalImage: getGlobalImage()
+            globalImage: getGlobalImage(),
+            moment: moment
         });
     });
 

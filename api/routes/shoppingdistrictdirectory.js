@@ -1,4 +1,4 @@
-import {isFeatureEnabled, required, optional} from '../common'
+import {isFeatureEnabled, required, optional, generateLog} from '../common'
 
 // Jaedan: Shops likely need a get route to obtain items from a specific shop
 export default function shoppingDistrictDirectoryApiRoute(app, config, db, features) {
@@ -31,6 +31,8 @@ export default function shoppingDistrictDirectoryApiRoute(app, config, db, featu
 
     app.post(baseEndpoint + '/create', async function(req, res) {
         isFeatureEnabled(features.shops, res, lang);
+
+        const actioningUser = required(req.body, "actioningUser", res);
         const shopOwner = required(req.body, "shopOwner", res);
         const shopName = required(req.body, "shopName", res);
         const shopDescription = required(req.body, "shopDescription", res);
@@ -46,6 +48,9 @@ export default function shoppingDistrictDirectoryApiRoute(app, config, db, featu
                         message: `${error}`
                     });
                 }
+
+                generateLog(actioningUser, "SUCCESS", "SHOPS", `Shop ${shopName} has been successfully created.`, res);
+
                 return res.send({
                     success: true,
                     message: shopCreatedLang.replace('%SHOPOWNER%', shopOwner).replace("%SHOPNAME%", shopName)
@@ -84,6 +89,9 @@ export default function shoppingDistrictDirectoryApiRoute(app, config, db, featu
                         message: `${error}`
                     });
                 }
+
+                generateLog(actioningUser, "WARNING", "SHOPS", `Shop ${shopId} has been successfully deleted.`, res);
+
                 return res.send({
                     success: true,
                     message: lang.shop.shopDeleted

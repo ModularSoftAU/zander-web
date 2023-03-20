@@ -2,6 +2,7 @@ import config from '../config.json' assert {type: "json"};
 import fetch from 'node-fetch';
 import { readdirSync } from 'fs';
 import crypto from "crypto";
+import db from "../controllers/databaseController";
 
 /*
     Check if a specific feature is enabled.
@@ -247,8 +248,8 @@ export async function hashEmail(email) {
     @param logType The type of log.
     @param description A short description of the log.
 */
-export async function generateLog(userId, logType, description) {
-    db.query(`INSERT INTO logs (creatorId, logType, description) VALUES (?, ?, ?)`, [userId, logType, description], function (error, results, fields) {
+export async function generateLog(userId, logType, logFeature, description, res) {
+    db.query(`INSERT INTO logs (creatorId, logType, logFeature, description) VALUES (?, ?, ?, ?)`, [userId, logType, logFeature, description], function (error, results, fields) {
         if (error) {
             return res.send({
                 success: false,
