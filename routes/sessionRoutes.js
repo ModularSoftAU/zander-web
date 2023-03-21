@@ -1,6 +1,6 @@
 import bcrypt from 'bcrypt';
 import { isFeatureWebRouteEnabled, setBannerCookie, getGlobalImage } from "../api/common";
-import { getProfilePicture } from '../controllers/userController';
+import { getProfilePicture, setAuditLastWebsiteLogin } from '../controllers/userController';
 
 export default function sessionSiteRoute(app, client, fetch, moment, config, db, features, lang) {
 
@@ -164,6 +164,8 @@ export default function sessionSiteRoute(app, client, fetch, moment, config, db,
 					ranks: userData.userRanks,
 					permissions: userData.permissions
 				};
+
+				setAuditLastWebsiteLogin(userData.username, res)
 
 				setBannerCookie("success", lang.session.userSuccessLogin, res);
 				return res.redirect(`${process.env.siteAddress}/`);

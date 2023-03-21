@@ -210,6 +210,66 @@ export function setAuditLastMinecraftMessage(username, res) {
 /*
     This
 
+    @param username The username of the player to submit audit information to.
+    @param res Passing through res.
+*/
+export function setAuditLastMinecraftLogin(username, res) {
+    try {
+        db.query(`UPDATE users SET audit_lastMinecraftLogin=? WHERE username=?;`, [new Date(), username], function (error, results, fields) {
+            if (error) {
+                return res.send({
+                    success: false,
+                    message: error
+                });
+            }
+
+            res.send({
+                success: true,
+                data: results
+            });
+        });
+    } catch (error) {
+        console.log(error);
+        return res.send({
+            success: false,
+            message: `${error}`
+        });
+    }
+}
+
+/*
+    This
+
+    @param username The username of the player to submit audit information to.
+    @param res Passing through res.
+*/
+export function setAuditLastWebsiteLogin(username, res) {
+    try {
+        db.query(`UPDATE users SET audit_lastWebsiteLogin=? WHERE username=?;`, [new Date(), username], function (error, results, fields) {
+            if (error) {
+                return res.send({
+                    success: false,
+                    message: error
+                });
+            }
+
+            res.send({
+                success: true,
+                data: results
+            });
+        });
+    } catch (error) {
+        console.log(error);
+        return res.send({
+            success: false,
+            message: `${error}`
+        });
+    }
+}
+
+/*
+    This
+
     @param discordID The Discord ID of the message author.
 */
 export async function setAuditLastDiscordMessage(discordID) {
