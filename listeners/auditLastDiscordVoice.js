@@ -1,4 +1,5 @@
 import { Listener } from '@sapphire/framework';
+import { setAuditLastDiscordVoice } from '../controllers/userController';
 
 export class VoiceStateUpdateListener extends Listener {
   constructor(context, options) {
@@ -10,6 +11,6 @@ export class VoiceStateUpdateListener extends Listener {
   }
 
   async run(oldState, newState) {
-    console.log(newState);
+    setAuditLastDiscordVoice(oldState.id);
   }
 }

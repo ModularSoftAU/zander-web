@@ -24,7 +24,12 @@ const __dirname = path.dirname(__filename);
 // Discord
 // 
 const client = new SapphireClient({
-    intents: ['GUILDS', 'GUILD_MESSAGES', 'GUILD_MEMBERS'],
+    intents: [
+        'GUILDS',
+        'GUILD_MESSAGES',
+        'GUILD_MEMBERS',
+        'GUILD_VOICE_STATES',
+    ],
     presence: {
         status: "online",
         activities: [{
@@ -56,8 +61,6 @@ import apiRedirectRoutes from './api/internal_redirect'
 import verifyToken from './api/routes/verifyToken'
 import { setTimeout } from 'timers';
 import { getGlobalImage } from './api/common';
-import { getProfilePicture } from './controllers/userController';
-import { isUserLinkedToDiscord } from './controllers/discordController';
 
 //
 // Application Boot
