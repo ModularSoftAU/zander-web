@@ -1,4 +1,5 @@
 import db from './databaseController';
+import { getDiscordIdByUsername, getUsernameByDiscordId, isUserLinkedToDiscord } from './discordController';
 
 /*
     Updates the discordID field of a user in the database. 
@@ -174,4 +175,174 @@ export async function getProfilePicture(username) {
             if (profilePictureType == "GRAVATAR") return resolve(`https://www.gravatar.com/avatar/${emailHash}?s=300`);
         });        
     });
+}
+
+/*
+    This
+
+    @param username The username of the player to submit audit information to.
+    @param res Passing through res.
+*/
+export function setAuditLastMinecraftMessage(username, res) {
+    try {
+        db.query(`UPDATE users SET audit_lastMinecraftMessage=? WHERE username=?;`, [new Date(), username], function (error, results, fields) {
+            if (error) {
+                return res.send({
+                    success: false,
+                    message: error
+                });
+            }
+
+            res.send({
+                success: true,
+                data: results
+            });
+        });
+    } catch (error) {
+        console.log(error);
+        return res.send({
+            success: false,
+            message: `${error}`
+        });
+    }
+}
+
+/*
+    This
+
+    @param username The username of the player to submit audit information to.
+    @param res Passing through res.
+*/
+export function setAuditLastMinecraftLogin(username, res) {
+    try {
+        db.query(`UPDATE users SET audit_lastMinecraftLogin=? WHERE username=?;`, [new Date(), username], function (error, results, fields) {
+            if (error) {
+                return res.send({
+                    success: false,
+                    message: error
+                });
+            }
+
+            res.send({
+                success: true,
+                data: results
+            });
+        });
+    } catch (error) {
+        console.log(error);
+        return res.send({
+            success: false,
+            message: `${error}`
+        });
+    }
+}
+
+/*
+    This
+
+    @param username The username of the player to submit audit information to.
+    @param res Passing through res.
+*/
+export function setAuditLastWebsiteLogin(username, res) {
+    try {
+        db.query(`UPDATE users SET audit_lastWebsiteLogin=? WHERE username=?;`, [new Date(), username], function (error, results, fields) {
+            if (error) {
+                return res.send({
+                    success: false,
+                    message: error
+                });
+            }
+
+            res.send({
+                success: true,
+                data: results
+            });
+        });
+    } catch (error) {
+        console.log(error);
+        return res.send({
+            success: false,
+            message: `${error}`
+        });
+    }
+}
+
+/*
+    This
+
+    @param discordID The Discord ID of the message author.
+*/
+export async function setAuditLastDiscordMessage(discordID) {
+    try {
+        let username = await getUsernameByDiscordId(discordID);
+        console.log(username);
+
+        let isDiscordLinked = await isUserLinkedToDiscord(username);
+        if (!isDiscordLinked) {
+            return console.log({
+                success: false,
+                message: `User isn't linked, not proceeding.`
+            });
+        }
+
+        db.query(`UPDATE users SET audit_lastDiscordMessage=? WHERE username=?;`, [new Date(), username], function (error, results, fields) {
+            if (error) {
+                return console.log({
+                    success: false,
+                    message: error
+                });
+            }
+
+            console.log({
+                success: true,
+                data: results
+            });
+        });
+    } catch (error) {
+        console.log(error);
+        return console.log({
+            success: false,
+            message: `${error}`
+        });
+    }
+}
+
+/*
+    This
+
+    @param discordID The Discord ID of the voice author.
+*/
+export async function setAuditLastDiscordVoice(discordID) {
+    try {
+        let username = await getUsernameByDiscordId(discordID);
+        console.log(username);
+
+        let isDiscordLinked = await isUserLinkedToDiscord(username);
+        if (!isDiscordLinked) {
+            return console.log({
+                success: false,
+                message: `User isn't linked, not proceeding.`
+            });
+        }
+
+        db.query(`UPDATE users SET audit_lastDiscordVoice=? WHERE username=?;`, [new Date(), username], function (error, results, fields) {
+            if (error) {
+                return console.log({
+                    success: false,
+                    message: error
+                });
+            }
+
+            console.log({
+                success: true,
+                data: results
+            });
+        });
+    } catch (error) {
+        console.log(error);
+        return console.log({
+            success: false,
+            message: `${error}`
+        });
+    }
 }

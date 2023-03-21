@@ -26,6 +26,12 @@ CREATE TABLE users (
     timezone TEXT,
     userLanguage TEXT,
 	coverArt VARCHAR(54),
+	audit_lastDiscordMessage DATETIME,
+	audit_lastDiscordVoice DATETIME,
+	audit_lastMinecraftLogin DATETIME,
+	audit_lastMinecraftMessage DATETIME,
+	audit_lastPunishment DATETIME,
+	audit_lastWebsiteLogin DATETIME,
 	PRIMARY KEY (userId),
 	INDEX users (uuid(8))
 );

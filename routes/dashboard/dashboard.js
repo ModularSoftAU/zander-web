@@ -1,7 +1,6 @@
 import moment from "moment/moment";
 import fetch from "node-fetch";
 import { getGlobalImage, hasPermission } from "../../api/common";
-import { getDiscordIdByUsername, isUserLinkedToDiscord } from "../../controllers/discordController";
 
 export default function dashbordSiteRoute(app, config, features, lang) {
 

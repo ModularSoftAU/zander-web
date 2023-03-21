@@ -1,3 +1,4 @@
+import { setAuditLastMinecraftLogin, setAuditLastMinecraftMessage } from '../../controllers/userController';
 import {isFeatureEnabled, required, optional} from '../common'
 
 export default function discordApiRoute(app, client, config, db, features, lang) {
@@ -37,6 +38,8 @@ export default function discordApiRoute(app, client, config, db, features, lang)
 
             channel.send(`**${server}**  |  \`${username}\` :: ${content}`);
 
+            setAuditLastMinecraftMessage(username, res);
+
             res.send({
                 success: true
             });
@@ -57,6 +60,8 @@ export default function discordApiRoute(app, client, config, db, features, lang)
             const channel = guild.channels.cache.get(config.discord.channels.networkChatLog);
 
             channel.send(`:ballot_box_with_check:  | \`${username}\` has joined the Network.`);
+
+            setAuditLastMinecraftLogin(username, res);
 
             res.send({
                 success: true
