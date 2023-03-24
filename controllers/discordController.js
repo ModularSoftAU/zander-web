@@ -75,17 +75,15 @@ export async function getUsernameByDiscordId(discordID) {
             if (error) {
                 reject(error);
             }
-
-            if (!results || !results.length) {
+            
+            if (!results[0] || !results.length) {
                 resolve(false);
             }
 
-            let username = results[0].username;
-
-            if (username == null) {
-                resolve(false);
+            if (results[0] && results[0].username != null) {
+                resolve(results[0].username);
             } else {
-                resolve(username);
+                resolve(false);
             }
         });
     });
