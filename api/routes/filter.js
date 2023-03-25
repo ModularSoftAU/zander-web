@@ -1,22 +1,8 @@
-import {isFeatureEnabled, required} from '../common';
+import {expandString, isFeatureEnabled, required} from '../common';
 import filter from '../../filter.json' assert {type: "json"};
 
 export default function filterApiRoute(app, config, db, features, lang) {
     const baseEndpoint = '/api/filter';
-
-    function expandString(string, filter) {
-        var regexString = "";
-        for (var i = 0; i < string.length; i++) {
-            // If the character does not have any aliases then just
-            // use the character. Note, this is a regex character.
-            if (string[i] in filter.alias)
-                regexString += "[" + filter.alias[string[i]] + "]";
-            else
-                regexString += string[i]
-        }
-        regexString = regexString.replace(".", "\\.")
-        return regexString
-    }
 
     app.post(baseEndpoint, async function(req, res) {
         // Hack to show the error we expect when both are disabled
