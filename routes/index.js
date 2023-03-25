@@ -297,7 +297,7 @@ export default function applicationSiteRoutes(app, client, fetch, moment, config
     // Punishments
     // 
     app.get('/punishments', async function (req, res) {
-        isFeatureWebRouteEnabled(features.punishments, req, res, features);
+        isFeatureWebRouteEnabled(features.punishment, req, res, features);
 
         res.view('punishments', {
             "pageTitle": `Punishments`,

@@ -345,3 +345,33 @@ export async function setAuditLastDiscordVoice(discordID) {
         });
     }
 }
+
+/*
+    This
+
+    @param username The username of the player to submit audit information to.
+    @param res Passing through res.
+*/
+export function setAuditLastPunishment(username, res) {
+    try {
+        db.query(`UPDATE users SET audit_lastPunishment=? WHERE username=?;`, [new Date(), username], function (error, results, fields) {
+            if (error) {
+                return res.send({
+                    success: false,
+                    message: error
+                });
+            }
+
+            res.send({
+                success: true,
+                data: results
+            });
+        });
+    } catch (error) {
+        console.log(error);
+        return res.send({
+            success: false,
+            message: `${error}`
+        });
+    }
+}

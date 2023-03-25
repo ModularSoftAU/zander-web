@@ -17,6 +17,7 @@
         "nameHistory": true
     },
     "knowledgebase": true,
+    "punishment": true,
     "servers": true,
     "report": true,
     "filter": {
