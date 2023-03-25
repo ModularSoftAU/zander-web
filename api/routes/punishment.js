@@ -1,5 +1,5 @@
 import { setAuditLastPunishment } from '../../controllers/userController';
-import {isFeatureEnabled, required, optional} from '../common'
+import { generateLog, isFeatureEnabled, required } from '../common'
 
 export default function punishmentApiRoute(app, config, db, features, lang) {
     const baseEndpoint = '/api/punishment';
@@ -13,20 +13,21 @@ export default function punishmentApiRoute(app, config, db, features, lang) {
         const type = required(req.body, "type", res);
         const reason = required(req.body, "reason", res);
 
-        generateLog(actioningUser, "PRIMARY", "PUNISHMENT", `${playerUsername} was ${type} by ${staffUsername} on ${platform} for ${reason}`, res);
+        generateLog(staffUsername, "PRIMARY", "PUNISHMENT", `${playerUsername} was ${type} by ${staffUsername} on ${platform} for ${reason}`, res);
 
-        setAuditLastPunishment(username, res)
+        setAuditLastPunishment(staffUsername, res);
 
         res.send({ success: true });
     });
 
     app.post(baseEndpoint + '/delete', async function(req, res) {
         isFeatureEnabled(features.punishment, res, lang);
+        const actioningUser = required(req.body, "actioningUser", res);
         const punishmentId = required(req.body, "punishmentId", res);
 
         generateLog(actioningUser, "WARNING", "PUNISHMENT", `${punishmentId} has been revoked.`, res);
 
-        setAuditLastPunishment(username, res)
+        setAuditLastPunishment(actioningUser, res)
 
         res.send({ success: true });
     });
