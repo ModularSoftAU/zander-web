@@ -275,7 +275,6 @@ export function setAuditLastWebsiteLogin(username, res) {
 export async function setAuditLastDiscordMessage(discordID) {
     try {
         let username = await getUsernameByDiscordId(discordID);
-        console.log(username);
 
         let isDiscordLinked = await isUserLinkedToDiscord(username);
         if (!isDiscordLinked) {

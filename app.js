@@ -1,7 +1,7 @@
 import packageData from './package.json' assert {type: "json"};
 import moment from 'moment';
 import fetch from 'node-fetch';
-import { SapphireClient } from '@sapphire/framework';
+// import { SapphireClient } from '@sapphire/framework';
 import dotenv from 'dotenv';
 dotenv.config()
 
@@ -20,26 +20,28 @@ import { fileURLToPath } from 'url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// 
-// Discord
-// 
-const client = new SapphireClient({
-    intents: [
-        'GUILDS',
-        'GUILD_MESSAGES',
-        'GUILD_MEMBERS',
-        'GUILD_VOICE_STATES',
-    ],
-    presence: {
-        status: "online",
-        activities: [{
-            name: config.siteConfiguration.siteAddress,
-            type: 'PLAYING'
-        }]
-    }
-});
+// // 
+// // Discord
+// // 
+// const client = new SapphireClient({
+//     intents: [
+//         'GUILDS',
+//         'GUILD_MESSAGES',
+//         'GUILD_MEMBERS',
+//         'GUILD_VOICE_STATES',
+//     ],
+//     presence: {
+//         status: "online",
+//         activities: [{
+//             name: config.siteConfiguration.siteAddress,
+//             type: 'PLAYING'
+//         }]
+//     }
+// });
 
-client.login(process.env.discordAPIKey);
+// client.login(process.env.discordAPIKey);
+
+import('./controllers/discordController.js');
 
 //
 // Cron Jobs
@@ -61,6 +63,7 @@ import apiRedirectRoutes from './api/internal_redirect'
 import verifyToken from './api/routes/verifyToken'
 import { setTimeout } from 'timers';
 import { getGlobalImage } from './api/common';
+import { client } from './controllers/discordController';
 
 //
 // Application Boot

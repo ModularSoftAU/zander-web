@@ -263,3 +263,23 @@ export async function generateLog(userId, logType, logFeature, description, res)
         });
     });
 }
+
+/*
+    Sets
+
+    @param string The string of text
+    @param filter the JSON output of the filter.json file
+*/
+export async function expandString(string, filter) {
+    var regexString = "";
+    for (var i = 0; i < string.length; i++) {
+        // If the character does not have any aliases then just
+        // use the character. Note, this is a regex character.
+        if (string[i] in filter.alias)
+            regexString += "[" + filter.alias[string[i]] + "]";
+        else
+            regexString += string[i]
+    }
+    regexString = regexString.replace(".", "\\.")
+    return regexString
+}

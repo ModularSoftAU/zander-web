@@ -1,4 +1,27 @@
 import db from './databaseController';
+import { SapphireClient } from '@sapphire/framework';
+import config from '../config.json' assert {type: "json"};
+
+// 
+// Discord
+// 
+export const client = new SapphireClient({
+    intents: [
+        'GUILDS',
+        'GUILD_MESSAGES',
+        'GUILD_MEMBERS',
+        'GUILD_VOICE_STATES',
+    ],
+    presence: {
+        status: "online",
+        activities: [{
+            name: config.siteConfiguration.siteAddress,
+            type: 'PLAYING'
+        }]
+    }
+});
+
+client.login(process.env.discordAPIKey);
 
 /*
     Takes a username as input and returns a Promise. 
@@ -75,7 +98,7 @@ export async function getUsernameByDiscordId(discordID) {
             if (error) {
                 reject(error);
             }
-            
+
             if (!results[0] || !results.length) {
                 resolve(false);
             }
@@ -87,4 +110,17 @@ export async function getUsernameByDiscordId(discordID) {
             }
         });
     });
+}
+
+/*
+    It
+
+    @param username The username of the user.
+*/
+export async function isBot() {
+    const user = client.users.cache.get(userId);
+    if (user) {
+        return user.bot;
+    }
+    return false;
 }

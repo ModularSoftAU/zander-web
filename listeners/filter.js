@@ -14,6 +14,9 @@ export class GuildMessageListener extends Listener {
   }
 
   async run(message) {
+    // Check if the author is a bot
+    if (message.author.bot) return;
+    
     if (features.filter.link || features.filter.phrase) {
       try {
         const filterURL = `${process.env.siteAddress}/api/filter`;
