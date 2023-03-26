@@ -10,6 +10,14 @@
         window.emojiUrls = data; 
     });
 
+    $.ajax({
+        url: '<%= config.siteConfiguration.siteAddress %>/emojis',
+        async: false
+    }).then(function(data) {
+        window.emojis = Object.keys(data);
+        window.emojiUrls = data; 
+    });
+
     $('#<%= editorElementName %>').summernote({
         height: 250,
         minHeight: null,
