@@ -30,7 +30,13 @@
         <!-- Evidence -->
         <label for="evidence">Evidence</label>
           <!-- <input type="text" class="form-control input-default " name="evidence" required> -->
-          <textarea class="form-control input-default " name="evidence" required cols="30" rows="10"></textarea>
+          <!-- <textarea class="form-control input-default " name="evidence" required cols="30" rows="10"></textarea> -->
+
+          <%- include("./partials/summerNoteEditor.ejs", {
+              editorElementName: "evidenceEditor",
+              editorPOSTElementName: "evidence"
+          }) %>
+
           <small class="text-muted m-b-15 f-s-12">The evidence for the report (anything from an explaination, a link to an unlisted video or photos)</small>
 
         <div class="row">

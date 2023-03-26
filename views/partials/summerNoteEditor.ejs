@@ -1,8 +1,21 @@
+<textarea id="<%= editorElementName %>" name="<%= editorPOSTElementName %>"></textarea>
+
 <script>
   $(document).ready(function() {
-    $('#<%= editorElementName %>').summernote();
+    $('#<%= editorElementName %>').summernote({
+        height: 250,                 // set editor height
+        minHeight: null,             // set minimum height of editor
+        maxHeight: null,             // set maximum height of editor
+        focus: false,                // set focus to editable area after initializing summernote
+        toolbar: [
+          ['style', ['style']],
+          ['font', ['bold', 'underline', 'clear']],
+          ['color', ['color']],
+          ['para', ['ul', 'ol', 'paragraph']],
+          ['table', ['table']],
+          ['insert', ['link', 'picture', 'video']],
+          ['view', ['fullscreen', 'help']]
+        ]
+    });
   });
 </script>
-
-<div class="summernote">summernote 1</div>
-<div class="summernote">summernote 2</div>
