@@ -18,26 +18,19 @@
         <!-- Reported User -->
         <label for="reportedUser">User to Report</label>
           <input type="text" class="form-control input-default " name="reportedUser" required>
-          <small class="text-muted m-b-15 f-s-12">The user you would like to report</small>
           <br>
 
         <!-- Reason -->
         <label for="reason">Reason</label>
           <input type="text" class="form-control input-default " name="reason" required>
-          <small class="text-muted m-b-15 f-s-12">The reasoning for report</small>
           <br>
 
         <!-- Evidence -->
         <label for="evidence">Evidence</label>
-          <!-- <input type="text" class="form-control input-default " name="evidence" required> -->
-          <!-- <textarea class="form-control input-default " name="evidence" required cols="30" rows="10"></textarea> -->
-
           <%- include("./partials/summerNoteEditor.ejs", {
               editorElementName: "evidenceEditor",
               editorPOSTElementName: "evidence"
           }) %>
-
-          <small class="text-muted m-b-15 f-s-12">The evidence for the report (anything from an explaination, a link to an unlisted video or photos)</small>
 
         <div class="row">
           <div class="col-sm">
@@ -49,7 +42,6 @@
                 <option value="DISCORD">Discord</option>
                 <!-- <option value="WEBSITE">Website</option> -->
               </select>
-              <small class="text-muted m-b-15 f-s-12">The platform that this report happenned on</small>
           </div>
 
           <div class="col-sm">

@@ -34,7 +34,10 @@
       <!-- Creation Description -->
       <div class="mb-3">
         <label for="creationDescription" class="form-label">Creation Description</label>
-          <textarea class="form-control" style="height: 150px;" rows="10" name="creationDescription" placeholder="Text input"></textarea>
+          <%- include("./partials/summerNoteEditor.ejs", {
+              editorElementName: "creationDescriptionEditor",
+              editorPOSTElementName: "creationDescription"
+          }) %>
           <small class="disabled">A description for your creation.</small>
       </div>
 

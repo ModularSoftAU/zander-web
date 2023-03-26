@@ -1,4 +1,4 @@
-import {hasPermission, setBannerCookie, postAPIRequest} from '../common'
+import {hasPermission, postAPIRequest} from '../common'
 
 export default function reportRedirectRoute(app, config, lang) {
     const baseEndpoint = '/redirect/report';
