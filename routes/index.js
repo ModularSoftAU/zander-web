@@ -168,6 +168,12 @@ export default function applicationSiteRoutes(app, client, fetch, moment, config
             });
         }
 
+        const userFetchURL = `${process.env.siteAddress}/api/user/get?fetchAll=true`;
+        const userResponse = await fetch(userFetchURL, {
+            headers: { 'x-access-token': process.env.apiKey }
+        });
+        const userListApiData = await userResponse.json();
+
         res.view('report', {
             "pageTitle": `Report a Player`,
             config: config,
@@ -175,6 +181,7 @@ export default function applicationSiteRoutes(app, client, fetch, moment, config
             serverApiData: serverApiData.data,
             features: features,
             globalImage: await getGlobalImage(),
+            userList: userListApiData.data
         });
     });
 

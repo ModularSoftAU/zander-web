@@ -17,8 +17,13 @@
 
         <!-- Reported User -->
         <label for="reportedUser">User to Report</label>
-          <input type="text" class="form-control input-default " name="reportedUser" required>
-          <br>
+          <input type="text" class="form-control input-default " id="search-field" name="search-field" list="search-options">
+          <datalist id="search-options">
+            <% userList.forEach(user => { %>
+              <option value="<%= user.username %>"></option>
+            <% }) %>
+          </datalist>
+        <br>
 
         <!-- Reason -->
         <label for="reason">Reason</label>
