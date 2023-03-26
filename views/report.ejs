@@ -17,7 +17,19 @@
 
         <!-- Reported User -->
         <label for="reportedUser">User to Report</label>
-          <input type="text" class="form-control input-default " name="reportedUser" required>
+          <!-- <input type="text" class="form-control input-default " name="reportedUser" required> -->
+          <input type="text" id="reportedUser" name="reportedUser" list="search-options">
+          <datalist id="search-options">
+            <option value="Apple">
+            <option value="Banana">
+            <option value="Cherry">
+            <option value="Durian">
+            <option value="Elderberry">
+            <option value="Fig">
+          </datalist>
+
+
+
           <br>
 
         <!-- Reason -->

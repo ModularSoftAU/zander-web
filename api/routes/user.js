@@ -55,29 +55,57 @@ export default function userApiRoute(app, config, db, features, lang) {
 
     // TODO: Update docs
     app.get(baseEndpoint + '/get', async function(req, res) {
-        const username = required(req.query, "username");
+        const username = optional(req.query, "username");
+        const fetchAll = optional(req.query, "fetchAll");
         
         try {
-            db.query(`SELECT * FROM users WHERE username=?;`, [username], function(error, results, fields) {
-                if (error) {
-                    return res.send({
-                        success: false,
-                        message: error
+            if (fetchAll) {
+                db.query(`SELECT * FROM users;`, function (error, results, fields) {
+                    if (error) {
+                        return res.send({
+                            success: false,
+                            message: error
+                        });
+                    }
+
+                    console.log(results);
+
+                    if (!results || !results.length) {
+                        return res.send({
+                            success: false,
+                            message: lang.api.userDoesNotExist
+                        });
+                    }
+
+                    res.send({
+                        success: true,
+                        data: results
                     });
-                }
-                
-                if (!results || !results.length) {
-                    return res.send({
-                        success: false,
-                        message: lang.api.userDoesNotExist
+                });                
+            } else {
+                db.query(`SELECT * FROM users WHERE username=?;`, [username], function (error, results, fields) {
+                    if (error) {
+                        return res.send({
+                            success: false,
+                            message: error
+                        });
+                    }
+
+                    console.log(results);
+
+                    if (!results || !results.length) {
+                        return res.send({
+                            success: false,
+                            message: lang.api.userDoesNotExist
+                        });
+                    }
+
+                    res.send({
+                        success: true,
+                        data: results
                     });
-                }
-                
-                res.send({
-                    success: true,
-                    data: results
-                });
-            });
+                });   
+            }
         } catch (error) {
             return res.send({
                 success: false,
