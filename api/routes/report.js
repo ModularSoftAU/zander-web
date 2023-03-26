@@ -1,4 +1,4 @@
-import {isFeatureEnabled, required, optional, generateLog} from '../common'
+import {isFeatureEnabled, required, optional, generateLog, removeHtmlTags} from '../common'
 import { sendReportDiscord } from '../../controllers/reportController';
 
 export default function reportApiRoute(app, client, config, db, features, lang) {
@@ -165,7 +165,7 @@ export default function reportApiRoute(app, client, config, db, features, lang) 
                 }
 
                 generateLog(reporterUser, "SUCCESS", "REPORT", `Report has been created against ${reportedUser} for ${reason}`, res);
-                sendReportDiscord(reportedUser, reporterUser, reason, evidence, platform, server, client, res);
+                sendReportDiscord(reportedUser, reporterUser, reason, removeHtmlTags(evidence), platform, server, client, res);
 
                 return res.send({
                     success: true,
