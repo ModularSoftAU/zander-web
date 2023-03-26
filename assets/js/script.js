@@ -1,6 +1,3 @@
-
-
-
 ;(function ($) {
 
 	'use strict';
@@ -149,8 +146,6 @@
 		  
   		]
 	});
-
-
 
 	var map;
 

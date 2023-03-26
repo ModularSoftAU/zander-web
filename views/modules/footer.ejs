@@ -72,7 +72,9 @@
 						<% if (features.communityCreations) { %>
 							<li><a href="/vote">Vote</a></li>
 						<% } %>
-						<li><a href="/punishments">Punishments</a></li>
+						<% if (features.punishment) { %>
+							<li><a href="/punishments">Punishments</a></li>
+						<% } %>
 						<% if (features.report) { %>
 							<li><a href="/report">Report</a></li>
 						<% } %>
