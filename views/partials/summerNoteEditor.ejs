@@ -2,11 +2,20 @@
 
 <script>
   $(document).ready(function() {
+    $.ajax({
+        url: 'https://api.github.com/emojis',
+        async: false
+    }).then(function(data) {
+        window.emojis = Object.keys(data);
+        window.emojiUrls = data; 
+    });
+
     $('#<%= editorElementName %>').summernote({
-        height: 250,                 // set editor height
-        minHeight: null,             // set minimum height of editor
-        maxHeight: null,             // set maximum height of editor
-        focus: false,                // set focus to editable area after initializing summernote
+        height: 250,
+        minHeight: null,
+        maxHeight: null,
+        focus: false,
+        emoji: true,
         toolbar: [
           ['style', ['style']],
           ['font', ['bold', 'underline', 'clear']],
@@ -15,7 +24,27 @@
           ['table', ['table']],
           ['insert', ['link', 'picture', 'video']],
           ['view', ['fullscreen', 'help']]
-        ]
+        ],
+        hint: {
+            match: /:([\-+\w]+)$/,
+            search: function (keyword, callback) {
+            callback($.grep(emojis, function (item) {
+                return item.indexOf(keyword)  === 0;
+            }));
+            },
+            template: function (item) {
+            var content = emojiUrls[item];
+            return '<img src="' + content + '" width="20" /> :' + item + ':';
+            },
+            content: function (item) {
+            var url = emojiUrls[item];
+            if (url) {
+                return $('<img />').attr('src', url).css('width', 20)[0];
+            }
+            return '';
+            }
+        }
     });
+
   });
 </script>
