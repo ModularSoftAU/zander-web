@@ -17,20 +17,13 @@
 
         <!-- Reported User -->
         <label for="reportedUser">User to Report</label>
-          <!-- <input type="text" class="form-control input-default " name="reportedUser" required> -->
-          <input type="text" id="reportedUser" name="reportedUser" list="search-options">
+          <input type="text" class="form-control input-default " id="search-field" name="search-field" list="search-options">
           <datalist id="search-options">
-            <option value="Apple">
-            <option value="Banana">
-            <option value="Cherry">
-            <option value="Durian">
-            <option value="Elderberry">
-            <option value="Fig">
+            <% userList.forEach(user => { %>
+              <option value="<%= user.username %>"></option>
+            <% }) %>
           </datalist>
-
-
-
-          <br>
+        <br>
 
         <!-- Reason -->
         <label for="reason">Reason</label>
