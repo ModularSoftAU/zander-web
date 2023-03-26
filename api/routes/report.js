@@ -1,4 +1,4 @@
-import {isFeatureEnabled, required, optional} from '../common'
+import {isFeatureEnabled, required, optional, generateLog, removeHtmlTags} from '../common'
 import { sendReportDiscord } from '../../controllers/reportController';
 
 export default function reportApiRoute(app, client, config, db, features, lang) {
@@ -129,7 +129,6 @@ export default function reportApiRoute(app, client, config, db, features, lang) 
     app.post(baseEndpoint + '/create', async function(req, res) {
         isFeatureEnabled(features.report, res, lang);
 
-        const actioningUser = required(req.body, "actioningUser", res);
         const reportedUser = required(req.body, "reportedUser", res);
         const reporterUser = required(req.body, "reporterUser", res);
         const reason = required(req.body, "reason", res);
@@ -165,7 +164,8 @@ export default function reportApiRoute(app, client, config, db, features, lang) 
                     });
                 }
 
-                sendReportDiscord(reportedUser, reporterUser, reason, evidence, platform, server, client, res);
+                generateLog(reporterUser, "SUCCESS", "REPORT", `Report has been created against ${reportedUser} for ${reason}`, res);
+                sendReportDiscord(reportedUser, reporterUser, reason, removeHtmlTags(evidence), platform, server, client, res);
 
                 return res.send({
                     success: true,

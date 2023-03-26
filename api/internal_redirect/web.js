@@ -11,9 +11,6 @@ export default function webRedirectRoute(app, config, lang) {
             res
         )
 
-        console.log(req.headers);
-        console.log(req.cookies);
-
         res.redirect(`${process.env.siteAddress}/register`);
     });
 

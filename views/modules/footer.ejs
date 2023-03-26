@@ -72,7 +72,9 @@
 						<% if (features.communityCreations) { %>
 							<li><a href="/vote">Vote</a></li>
 						<% } %>
-						<li><a href="/punishments">Punishments</a></li>
+						<% if (features.punishment) { %>
+							<li><a href="/punishments">Punishments</a></li>
+						<% } %>
 						<% if (features.report) { %>
 							<li><a href="/report">Report</a></li>
 						<% } %>
@@ -121,10 +123,11 @@
     <!-- Essential Scripts -->
     
     <!-- Main jQuery -->
-    <script src="/vendors/jquery/jquery.js"></script>
+    <!-- <script src="/vendors/jquery/jquery.js"></script> -->
     <!-- Bootstrap 4.3.2 -->
-    <script src="/vendors/bootstrap/js/popper.js"></script>
-    <script src="/vendors/bootstrap/js/bootstrap.min.js"></script>
+    <!-- <script src="/vendors/bootstrap/js/popper.js"></script> -->
+    <!-- <script src="/vendors/bootstrap/js/bootstrap.min.js"></script> -->
+
     <script src="/vendors/counterup/jquery.easing.js"></script>
     <!-- Slick Slider -->
     <script src="/vendors/slick-carousel/slick/slick.min.js"></script>

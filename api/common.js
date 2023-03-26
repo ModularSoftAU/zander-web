@@ -283,3 +283,13 @@ export async function expandString(string, filter) {
     regexString = regexString.replace(".", "\\.")
     return regexString
 }
+
+/*
+    Sets
+
+    @param string The string of text
+    @param filter the JSON output of the filter.json file
+*/
+export function removeHtmlTags(html) {
+    return html.replace(/<(?!\/?(a)\b)[^<]*?>/gi, '');
+}

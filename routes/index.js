@@ -6,6 +6,7 @@ import sessionRoutes from './sessionRoutes'
 import userRoutes from './userRoutes'
 import { isFeatureWebRouteEnabled, isLoggedIn, getGlobalImage, setBannerCookie } from "../api/common";
 import { getProfilePicture } from '../controllers/userController'
+import emojis from "../emojis.json" assert {type: "json"};
 
 export default function applicationSiteRoutes(app, client, fetch, moment, config, db, features, lang) {
 
@@ -376,5 +377,11 @@ export default function applicationSiteRoutes(app, client, fetch, moment, config
         //         minecraftItem: files
         //     });
         // });
+    });
+
+    app.get('/emojis', async function (req, res) {
+        // There is no isFeatureEnabled() due to being a critical endpoint.
+
+        return res.send(emojis);
     });
 }

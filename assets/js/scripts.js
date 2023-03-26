@@ -28,9 +28,6 @@
     });
 
 
-
-
-
     /* TO DO LIST 
     --------------------*/
     $(".tdl-new").on('keypress', function(e) {
@@ -64,10 +61,5 @@
         });
         return false;
     });
-
-
-    
-
-
 
 })(jQuery);
