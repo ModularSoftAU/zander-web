@@ -10,7 +10,7 @@ const clearOldEventsTask = cron.schedule('0 7 * * *', function() {
   
   }, {
      scheduled: true,
-     timezone: "Australia/Sydney"
+     timezone: process.env.TZ
   });
   
   clearOldEventsTask.start();

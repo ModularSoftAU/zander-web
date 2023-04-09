@@ -41,7 +41,7 @@ export default async function monthlyCron(client) {
       
     }, {
         scheduled: true,
-        timezone: "Australia/Sydney"
+        timezone: process.env.TZ
      });
      
     clearAllVotesTask.start();
