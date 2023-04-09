@@ -151,7 +151,7 @@ const buildApp = async () => {
     });
 
     try {
-        app.listen({ port: process.env.PORT }, (err) => {
+        app.listen({ port: port }, (err) => {
             if (err) {
                 app.log.error(err)
                 process.exit(1)
