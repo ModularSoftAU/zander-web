@@ -71,7 +71,6 @@ import { client } from './controllers/discordController';
 const buildApp = async () => {
     
     const app = fastify({ logger: config.debug });
-    const port = process.env.PORT || config.port || 8080;
 
     // When app can't found route, render the not found on a page, do not provide JSON
     // app.setNotFoundHandler((error, req, res) => {
@@ -151,7 +150,7 @@ const buildApp = async () => {
     });
 
     try {
-        app.listen({ port: port }, (err) => {
+        app.listen({ port: process.env.PORT }, (err) => {
             if (err) {
                 app.log.error(err)
                 process.exit(1)
@@ -159,7 +158,7 @@ const buildApp = async () => {
         })
 
         console.log(`\n// ${packageData.name} v.${packageData.version}\nGitHub Repository: ${packageData.homepage}\nCreated By: ${packageData.author}`);
-        console.log(`Site and API is listening to the port ${port}`);
+        console.log(`Site and API is listening to the port ${process.env.PORT}`);
     } catch (error) {
         app.log.error(`Unable to start the server:\n${error}`);
     }
