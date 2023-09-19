@@ -95,29 +95,4 @@ export default function discordApiRoute(app, client, config, db, features, lang)
         }
     });
 
-    app.post(baseEndpoint + '/directMessage', async function(req, res) {
-        isFeatureEnabled(features.discord, res, lang);
-                
-        const senderUsername = required(req.body, "senderUsername", res);
-        const recipientUsername = required(req.body, "recipientUsername", res);
-        const server = required(req.body, "server", res);
-        const content = required(req.body, "content", res);
-
-        try {
-            const guild = client.guilds.cache.get(config.discord.guildId);
-            const channel = guild.channels.cache.get(config.discord.channels.networkChatLog);
-
-            channel.send(`:e_mail: | **${server}** | \`${senderUsername}\` **=>** \`${recipientUsername}\` :: ${content}`);
-
-            res.send({
-                success: true
-            });
-        } catch (error) {
-            res.send({
-                success: false,
-                message: `${error}`
-            });
-        }
-    });
-
 }
