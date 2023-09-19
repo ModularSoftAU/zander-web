@@ -1,7 +1,5 @@
 import dashboardSiteRoutes from './dashboard'
-import knowledgebaseSiteRoutes from './knowledgebaseRoutes'
 import policySiteRoutes from './policyRoutes'
-import communityCreationsRoutes from './communityCreationsRoutes'
 import sessionRoutes from './sessionRoutes'
 import userRoutes from './userRoutes'
 import { isFeatureWebRouteEnabled, isLoggedIn, getGlobalImage, setBannerCookie } from "../api/common";
@@ -11,8 +9,6 @@ import emojis from "../emojis.json" assert {type: "json"};
 export default function applicationSiteRoutes(app, client, fetch, moment, config, db, features, lang) {
 
     dashboardSiteRoutes(app, client, fetch, moment, config, db, features, lang);
-    knowledgebaseSiteRoutes(app, client, fetch, moment, config, db, features, lang);
-    communityCreationsRoutes(app, client, fetch, moment, config, db, features, lang);
     sessionRoutes(app, client, fetch, moment, config, db, features, lang);
     userRoutes(app, client, fetch, moment, config, db, features, lang);
     policySiteRoutes(app, config, features);
