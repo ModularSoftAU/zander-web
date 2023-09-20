@@ -20,9 +20,9 @@ import { fileURLToPath } from 'url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// // 
+// //
 // // Discord
-// // 
+// //
 // const client = new SapphireClient({
 //     intents: [
 //         'GUILDS',
@@ -33,7 +33,7 @@ const __dirname = path.dirname(__filename);
 //     presence: {
 //         status: "online",
 //         activities: [{
-//             name: config.siteConfiguration.siteAddress,
+//             name: process.env.siteAddress,
 //             type: 'PLAYING'
 //         }]
 //     }

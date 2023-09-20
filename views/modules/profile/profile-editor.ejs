@@ -10,7 +10,7 @@
   backgroundImage: profileApiData.data[0].coverArt
 }) %>
 
-<form action="<%= config.siteConfiguration.siteAddress %>/redirect/user/profile/update" method="post">
+<form action="<%= process.env.siteAddress %>/redirect/user/profile/update" method="post">
   <section class="section">
     <div class="container">
         <% if (req.cookies.alertType) { %>

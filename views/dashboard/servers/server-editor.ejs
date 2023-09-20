@@ -21,10 +21,10 @@
 
         <div class="basic-form">
             <% if (type === 'create') { %>
-                <form method="post" action="<%= config.siteConfiguration.siteAddress %>/redirect/server/create">
+                <form method="post" action="<%= process.env.siteAddress %>/redirect/server/create">
             <% } %>
             <% if (type === 'edit') { %>
-                <form method="post" action="<%= config.siteConfiguration.siteAddress %>/redirect/server/edit">
+                <form method="post" action="<%= process.env.siteAddress %>/redirect/server/edit">
                     <input type="hidden" name="serverId" value="<%= serverApiData.serverId %>">
             <% } %>
 

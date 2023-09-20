@@ -26,7 +26,7 @@
         </div>
       </div>
       <div class="col-sm" style="margin-right:100px;">
-        <form method="post" action="<%= config.siteConfiguration.siteAddress %>/redirect/web/register">
+        <form method="post" action="<%= process.env.siteAddress %>/redirect/web/register">
           <div class="form-group">
             <label for="username">Username</label>
             <input type="text" class="form-control" name="username" required>

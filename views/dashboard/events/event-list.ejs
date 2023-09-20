@@ -53,7 +53,7 @@
                                       <% if (event.published === 1) { %>
                                           <button class="btn btn-sm btn-success" disabled type="button">Published</button>
                                       <% } else { %>
-                                          <form action="<%= config.siteConfiguration.siteAddress %>/redirect/event/publish" method="post">
+                                          <form action="<%= process.env.siteAddress %>/redirect/event/publish" method="post">
                                               <input type="hidden" name="eventId" value="<%= event.eventId %>">
                                               <input type="hidden" name="actioningUser" value="<%= req.session.user.userId %>">
                                               <button class="btn btn-sm btn-info" type="submit">Publish</button>
@@ -62,7 +62,7 @@
 
                                       <a href="/dashboard/events/edit?id=<%= event.eventId %>"><button class="btn btn-sm btn-warning" type="button">Edit</button></a>
 
-                                      <form action="<%= config.siteConfiguration.siteAddress %>/redirect/event/delete" method="post">
+                                      <form action="<%= process.env.siteAddress %>/redirect/event/delete" method="post">
                                           <input type="hidden" name="eventId" value="<%= event.eventId %>">
                                           <input type="hidden" name="actioningUser" value="<%= req.session.user.userId %>">
                                           <button class="btn btn-sm btn-danger" type="submit">Delete</button>

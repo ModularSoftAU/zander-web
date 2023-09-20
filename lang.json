@@ -25,30 +25,9 @@
         "applicationEdited": "The application has been updated.",
         "applicationDeleted": "The application has been deleted."
     },
-    "communityCreation": {
-        "creationApproval": "Creation has been approved and in the process of broadcasting.",
-        "creationDenied": "Creation has been denied and in the process being deleted.",
-        "creationLike": "You liked this creation!",
-        "creationUnlike": "You unliked this creation."
-    },
     "event": {
         "noEventsScheduled": "There are currently no events scheduled, come back later.",
         "eventCreated": "The event %NAME% has been successfully created!"
-    },
-    "friend": {
-        "noFriends": "You have no friends."
-    },
-    "knowledgebase": {
-        "noSections": "There are no knowledgebase sections to display.",
-        "noArticles": "There are no knowledgebase articles to display.",
-        "sectionCreated": "The section has been successfully created in the knowledgebase.",
-        "sectionUpdated": "The section has been successfully updated in the knowledgebase.",
-        "articleCreated": "The article has been successfully created in the knowledgebase.",
-        "articleUpdated": "The article has been successfully updated in the knowledgebase."
-    },
-    "report": {
-        "reportCreated": "The report against %REPORTEDUSER% has been successfully created!",
-        "reportClosed": "This report has been closed."
     },
     "server": {
         "noServers": "There are currently no Servers that can be displayed at this time.",
@@ -63,14 +42,6 @@
         "userSuccessLogin": "Sign in successful, welcome.",
         "userFailedLogin": "The username or password you have entered is incorrect, please try again.",
         "userLogout": "You have been successfully logged out."
-    },
-    "shop": {
-        "shopCreated": "%SHOPOWNER%'s shop %SHOPNAME% has been successfully created.",
-        "shopDeleted": "The shop has been deleted successfully."
-    },
-    "vote": {
-        "newVoteCast": "New vote cast entry has been successfully entered for %USERNAME%",
-        "noVotes": "There are currently no votes! You can be the first!"
     },
     "announcement": {
         "announcementCreated": "Announcement has been created.",

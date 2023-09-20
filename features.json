@@ -11,38 +11,16 @@
             "guildMemberVerify": true
         }
     },
-    "moderation": {
-        "altCheck": true,
-        "ipCheck": true,
-        "nameHistory": true
-    },
-    "knowledgebase": true,
-    "punishment": true,
     "servers": true,
-    "report": true,
     "filter": {
         "link": true,
         "phrase": true
     },
     "web": {
         "login": true,
-        "register": true,
-        "profiles": true,
-        "profileEditor": true,
-        "profilePlatform": {
-            "twitter": false,
-            "twitch": false,
-            "steam": false,
-            "github": false,
-            "spotify": false,
-            "discord": true,
-            "youtube": false,
-            "instagram": false
-        }
+        "register": true
     },
-    "vote": true,
 
-    "communityCreations": false,
     "events": true,
     
     "smDiscord": true,

@@ -248,7 +248,7 @@
                   <td>NULL</td>
                   <td>
                     <div class="btn-group btn-sm">
-                      <form action="<%= config.siteConfiguration.siteAddress %>/api/report/close" method="post">
+                      <form action="<%= process.env.siteAddress %>/api/report/close" method="post">
                         <input type="hidden" name="reportId" value="<%= %>">
                         <button class="btn btn-sm btn-danger" type="submit">Close</button>
                       </form>
@@ -332,7 +332,7 @@
                                 <button class="btn btn-sm btn-info" type="button">View</button>
 
                                 <% if (!report.closed) { %>
-                                  <form action="<%= config.siteConfiguration.siteAddress %>/api/report/close" method="post">
+                                  <form action="<%= process.env.siteAddress %>/api/report/close" method="post">
                                     <input type="hidden" name="reportId" value="<%= report.reportId %>">
                                     <button class="btn btn-sm btn-danger" type="submit">Close</button>
                                   </form>

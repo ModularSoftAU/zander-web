@@ -20,10 +20,10 @@
                             <div class="card-body">
                                 <div class="basic-form">
                                     <% if (type === 'create') { %>
-                                        <form method="post" action="<%= config.siteConfiguration.siteAddress %>/redirect/event/create">
+                                        <form method="post" action="<%= process.env.siteAddress %>/redirect/event/create">
                                     <% } %>
                                     <% if (type === 'edit') { %>
-                                        <form method="post" action="<%= config.siteConfiguration.siteAddress %>/redirect/event/edit">
+                                        <form method="post" action="<%= process.env.siteAddress %>/redirect/event/edit">
                                             <%- include("../../partials/form/inputHidden.ejs", {
                                                 elementName: "eventId",
                                                 elementValue: eventApiData.id

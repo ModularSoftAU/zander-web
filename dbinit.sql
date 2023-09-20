@@ -11,21 +11,7 @@ CREATE TABLE users (
 	password TEXT,
 	joined DATETIME NOT NULL DEFAULT NOW(),
 	disabled BOOLEAN DEFAULT 0,
-	twitter VARCHAR(15),
-	twitch TEXT,
-	steam VARCHAR(32),
-	github VARCHAR(40),
-	spotify VARCHAR(30),
-	discordID VARCHAR(18),
-	discord TEXT,
-	youtube TEXT,
-	instagram VARCHAR(30),
-    interests TEXT,
-	aboutPage LONGTEXT,
     profilePictureType ENUM('CRAFTATAR', 'GRAVATAR') DEFAULT 'CRAFTATAR',
-    timezone TEXT,
-    userLanguage TEXT,
-	coverArt VARCHAR(54),
 	audit_lastDiscordMessage DATETIME,
 	audit_lastDiscordVoice DATETIME,
 	audit_lastMinecraftLogin DATETIME,
@@ -41,51 +27,6 @@ VALUES ('f78a4d8d-d51b-4b39-98a3-230f2de0c670','CONSOLE',0);
 
 CREATE VIEW zanderdev.luckPermsPlayers AS
 SELECT * FROM cfcdev_luckperms.luckperms_players;
-
-CREATE TABLE userSettings (
-	userSettingsId INT NOT NULL AUTO_INCREMENT,
-    userId INT,
-    userKey TEXT,
-    value TEXT,
-    PRIMARY KEY (userSettingsId),
-    CONSTRAINT userSettings_userId FOREIGN KEY (userId) REFERENCES users (userId) ON DELETE CASCADE
-);
-
-CREATE TABLE userStats (
-	statId INT NOT NULL,
-    userId INT NOT NULL,
-    statName TEXT,
-    statValue INT,
-    PRIMARY KEY (statId, userId),
-    INDEX userStats_statId (statId),
-    CONSTRAINT userStats_userId FOREIGN KEY (userId) REFERENCES users (userId) ON DELETE CASCADE
-);
-
-CREATE TABLE userVerify (
-    userVerifyId INT NOT NULL AUTO_INCREMENT,
-    verificationToken VARCHAR(16) UNIQUE, 
-    username VARCHAR(16),
-    email VARCHAR(200),
-    createdDate DATETIME NOT NULL DEFAULT NOW(),
-    verifiedOn DATETIME,
-    verified BOOLEAN DEFAULT 0,
-    PRIMARY KEY (userVerifyId)
-);
-
--- Generate verificationToken before data is inserted if it NULL
-CREATE TRIGGER userVerify_generateTokenBeforeInsert
-BEFORE INSERT ON userVerify FOR EACH ROW
-	SET NEW.verificationToken = LEFT(REPLACE(UUID(), '-', ''), 16)
-;
-
--- Update verifiedOn to current date when verified is set to true (1)
-CREATE TRIGGER userVerify_insertVerifiedDateAfterUpdate
-BEFORE UPDATE ON userVerify FOR EACH ROW
-	SET NEW.verifiedOn = CASE
-		WHEN NEW.verified = 1 AND NEW.verifiedOn IS NULL THEN NOW()
-        ELSE NEW.verifiedOn = NEW.verifiedOn
-    END
-;
 
 CREATE VIEW zanderdev.ranks AS 
 SELECT
@@ -219,37 +160,6 @@ CREATE TABLE gameSessions (
     CONSTRAINT gameSessions_serverId FOREIGN KEY (serverId) REFERENCES servers (serverId) ON DELETE CASCADE
 );
 
-CREATE TABLE friends (
-	userId INT NOT NULL,
-    friendId INT NOT NULL,
-    accepted BOOLEAN DEFAULT 0,
-    pending BOOLEAN DEFAULT 0,
-    blocked BOOLEAN DEFAULT 0,
-    createdDate DATETIME NOT NULL DEFAULT NOW(),
-    PRIMARY KEY (userId, friendId),
-    INDEX friends_accepted (accepted),
-    CONSTRAINT friends_userId FOREIGN KEY (userId) REFERENCES users (userId) ON DELETE CASCADE,
-    CONSTRAINT friends_friendId FOREIGN KEY (friendId) REFERENCES users (userId) ON DELETE CASCADE
-);
-
-CREATE TABLE reports (
-	reportId INT NOT NULL AUTO_INCREMENT,
-    reportedUserId INT NOT NULL,
-    reporterUserId INT NOT NULL,
-    reason TEXT,
-    evidence LONGTEXT,
-    platform TEXT,
-    server INT NOT NULL,
-    createdDate DATETIME NOT NULL DEFAULT NOW(),
-    closed BOOLEAN DEFAULT 0,
-    PRIMARY KEY (reportId),
-    INDEX reports_createdDate (createdDate),
-    INDEX reports_closed (closed),
-    CONSTRAINT reports_server FOREIGN KEY (server) REFERENCES servers (serverId),
-    CONSTRAINT reports_reportedUserId FOREIGN KEY (reportedUserId) REFERENCES users (userId) ON DELETE RESTRICT,
-    CONSTRAINT reports_reporterUserId FOREIGN KEY (reporterUserId) REFERENCES users (userId) ON DELETE RESTRICT
-);
-
 CREATE TABLE events (
 	eventId INT NOT NULL AUTO_INCREMENT,
     name TEXT,
@@ -264,184 +174,6 @@ CREATE TABLE events (
     INDEX events_eventStartDateTime (eventStartDateTime),
     INDEX events_eventEndDateTime (eventEndDateTime),
     INDEX events_published (published)
-);
-
-CREATE TABLE webPunishments (
-	webPunishmentId INT NOT NULL AUTO_INCREMENT,
-    playerId INT NOT NULL,
-    staffId INT NOT NULL,
-    platform VARCHAR(10),
-    type VARCHAR(20),
-    reason VARCHAR(50),
-    createdDate DATETIME NOT NULL DEFAULT NOW(),
-    expires DATETIME,
-    PRIMARY KEY (webPunishmentId),
-    INDEX webPunishments_createdDate (createdDate),
-    INDEX webPunishments_expires (expires),
-    CONSTRAINT webPunishments_playerId FOREIGN KEY (playerId) REFERENCES users (userId) ON DELETE RESTRICT,
-    CONSTRAINT webPunishments_staffId FOREIGN KEY (staffId) REFERENCES users (userId) ON DELETE RESTRICT
-);
-
-CREATE TABLE discordPunishments (
-	discordPunishmentId INT NOT NULL AUTO_INCREMENT,
-    playerId INT NOT NULL,
-    staffId INT NOT NULL,
-    platform VARCHAR(10),
-    type VARCHAR(20),
-    reason VARCHAR(50),
-    createdDate DATETIME NOT NULL DEFAULT NOW(),
-    expires DATETIME,
-    PRIMARY KEY (discordPunishmentId),
-    INDEX discordPunishments_createdDate (createdDate),
-    INDEX discordPunishments_expires (expires),
-    CONSTRAINT discordPunishments_playerId FOREIGN KEY (playerId) REFERENCES users (userId) ON DELETE RESTRICT,
-    CONSTRAINT discordPunishments_staffId FOREIGN KEY (staffId) REFERENCES users (userId) ON DELETE RESTRICT
-);
-
-CREATE TABLE ipBans (
-	ipBanId INT NOT NULL AUTO_INCREMENT,
-    staffId INT NOT NULL,
-    punishmentId INT,
-    ipAddress TEXT,
-    reason VARCHAR(50),
-    enabled BOOLEAN DEFAULT 1,
-    createdDate DATETIME NOT NULL DEFAULT NOW(),
-    PRIMARY KEY (ipBanId),
-    INDEX ipBans_ipAddress (ipAddress(7))
-);
-
-CREATE TABLE ipBanUserExclusions (
-	ipBanId INT NOT NULL,
-    userId INT NOT NULL,
-    PRIMARY KEY (ipBanId, userId),
-    CONSTRAINT ipBanUserExclusions_ipBanId FOREIGN KEY (ipBanId) REFERENCES ipBans (ipBanId) ON DELETE CASCADE,
-    CONSTRAINT ipBanUserExclusion_userId FOREIGN KEY (userId) REFERENCES users (userId) ON DELETE CASCADE
-);
-
-CREATE TABLE appeals (
-	appealId INT NOT NULL AUTO_INCREMENT,
-    punishmentId TEXT,
-    playerId INT NOT NULL,
-    closed BOOLEAN DEFAULT 0,
-    escalated BOOLEAN DEFAULT 0,
-    createdDate DATETIME NOT NULL DEFAULT NOW(),
-    updatedDate DATETIME,
-    PRIMARY KEY (appealId),
-    INDEX appeals_createdDate (createdDate),
-    CONSTRAINT appeals_playerId FOREIGN KEY (playerId) REFERENCES users (userId) ON DELETE CASCADE
-);
-
-CREATE VIEW zanderdev.punishments AS
-SELECT
-	CONCAT('S-', p.id) AS punishmentId,
-    u.userId AS playerId,
-    s.userId AS staffId,
-    p.operator AS staffUsername,
-    'server' AS platform,
-    p.punishmentType AS type,
-    p.reason,
-    CAST(FROM_UNIXTIME(CAST(p.start AS UNSIGNED) / 1000) AS DATETIME) AS createdDate,
-    CASE p.end
-		WHEN -1 THEN null
-        ELSE CAST(FROM_UNIXTIME(CAST(p.end AS UNSIGNED) / 1000) AS DATETIME)
-	END AS expires,
-    CASE WHEN EXISTS (SELECT '' FROM zanderdev.appeals WHERE punishmentId = CONCAT('S-', p.id)) THEN 1 ELSE 0 END AS appealed
-FROM cfcdev_advancedban.punishments p
-	JOIN zanderdev.users u ON u.uuid = p.uuid
-    JOIN zanderdev.users s ON UPPER(s.username) = UPPER(p.operator)
-UNION ALL
-SELECT
-	CONCAT('W-', p.webPunishmentId) AS punishmentId,
-    p.playerId,
-    p.staffId,
-    s.username AS staffUsername,
-    'web' AS platform,
-    p.type,
-    p.reason,
-    p.createdDate,
-    p.expires,
-    CASE WHEN EXISTS (SELECT '' FROM zanderdev.appeals WHERE punishmentId = CONCAT('W-', p.webPunishmentId)) THEN 1 ELSE 0 END AS appealed
-FROM zanderdev.webPunishments p
-	JOIN zanderdev.users s ON s.userId = p.staffId
-UNION ALL
-SELECT
-	CONCAT('D-', p.discordPunishmentId) AS punishmentId,
-    p.playerId,
-    p.staffId,
-    s.username AS staffUsername,
-    'discord' AS platform,
-    p.type,
-    p.reason,
-    p.createdDate,
-    p.expires,
-    CASE WHEN EXISTS (SELECT '' FROM zanderdev.appeals WHERE punishmentId = CONCAT('D-', p.discordPunishmentId)) THEN 1 ELSE 0 END AS appealed
-FROM zanderdev.discordPunishments p
-	JOIN zanderdev.users s ON s.userId = p.staffId;
-
--- Update the appeals.updatedDate when record is updated
-CREATE TRIGGER appeals_updatedDateBeforeUpdate
-BEFORE UPDATE ON appeals FOR EACH ROW
-	SET NEW.updatedDate = NOW()
-;
-
-CREATE TABLE appealActions (
-	appealActionId INT NOT NULL AUTO_INCREMENT,
-    appealId INT NOT NULL,
-    staffId INT NOT NULL,
-    action TEXT,
-    createdDate DATETIME NOT NULL DEFAULT NOW(),
-    updatedDate DATETIME,
-    PRIMARY KEY (appealActionId),
-    INDEX appealActions_createdDate (createdDate),
-    CONSTRAINT appealActions_appealId FOREIGN KEY (appealId) REFERENCES appeals (appealId) ON DELETE CASCADE,
-    CONSTRAINT appealActions_staffId FOREIGN KEY (staffId) REFERENCES users (userId) ON DELETE CASCADE
-);
-
--- Update the appealActions.updatedDate when record is updated
-CREATE TRIGGER appealActions_updatedDateBeforeUpdate
-BEFORE UPDATE ON appealActions FOR EACH ROW
-	SET NEW.updatedDate = NOW()
-;
-
-CREATE TABLE appealComments (
-	appealCommentId INT NOT NULL AUTO_INCREMENT,
-    appealId INT NOT NULL,
-    userId INT NOT NULL,
-    staffNote BOOLEAN DEFAULT 0,
-    initialComment BOOLEAN DEFAULT 0,
-    content TEXT,
-    createdDate DATETIME NOT NULL DEFAULT NOW(),
-    updatedDate DATETIME,
-    PRIMARY KEY (appealCommentId),
-    INDEX appealComments_createdDate (createdDate),
-    INDEX appealComments_staffNote (staffNote),
-    CONSTRAINT appealComments_userId FOREIGN KEY (userId) REFERENCES users (userId) ON DELETE CASCADE,
-    CONSTRAINT appealComments_appealId FOREIGN KEY (appealId) REFERENCES appeals (appealId) ON DELETE CASCADE
-);
-
--- Update the appealComments.updatedDate when record is updated
-CREATE TRIGGER appealComments_updatedDateBeforeUpdate
-BEFORE UPDATE ON appealComments FOR EACH ROW
-	SET NEW.updatedDate = NOW()
-;
-
--- CREATE TABLE voteSites (
--- 	voteSiteId INT NOT NULL AUTO_INCREMENT,
---     serverId INT NOT NULL,
---     name VARCHAR(30),
---     siteUrl TEXT,
---     PRIMARY KEY (voteSiteId),
---     CONSTRAINT voteSites_serverId FOREIGN KEY (serverId) REFERENCES servers (serverId) ON DELETE CASCADE
--- );
-
-CREATE TABLE votes (
-	voteId INT NOT NULL AUTO_INCREMENT,
-    userId INT NOT NULL,
-    voteSite VARCHAR(50),
-    createdDate DATETIME NOT NULL DEFAULT NOW(),
-    PRIMARY KEY (voteId),
-    INDEX votes_createdDate (createdDate),
-    CONSTRAINT votes_userId FOREIGN KEY (userId) REFERENCES users (userId) ON DELETE CASCADE
 );
 
 CREATE TABLE announcements (
@@ -463,16 +195,6 @@ BEFORE UPDATE ON announcements FOR EACH ROW
 	SET NEW.updatedDate = NOW()
 ;
 
-CREATE TABLE notifications (
-	notificationId INT NOT NULL AUTO_INCREMENT,
-    userId INT NOT NULL,
-    icon TEXT,
-    body TEXT,
-    link TEXT,
-    PRIMARY KEY (notificationId),
-    CONSTRAINT notifications_userId FOREIGN KEY (userId) REFERENCES users (userId) ON DELETE CASCADE
-);
-
 CREATE TABLE applications (
 	applicationId INT NOT NULL AUTO_INCREMENT,
     displayName VARCHAR(30),
@@ -484,105 +206,6 @@ CREATE TABLE applications (
     closed BOOLEAN DEFAULT 0,
     PRIMARY KEY (applicationId),
     INDEX applications_closed (closed)
-);
-
-CREATE TABLE knowledgebaseSections (
-	sectionId INT NOT NULL AUTO_INCREMENT,
-    sectionSlug VARCHAR(30) UNIQUE NOT NULL,
-    sectionName VARCHAR(30),
-    description TEXT,
-    sectionIcon VARCHAR(30),
-    position INT,
-    privateSection BOOLEAN DEFAULT 0,
-    PRIMARY KEY (sectionId)
-);
-
-CREATE TABLE knowledgebaseArticles (
-	articleId INT NOT NULL AUTO_INCREMENT,
-    sectionId INT NOT NULL,
-    articleSlug VARCHAR(30) UNIQUE NOT NULL,
-    articleName VARCHAR(30),
-    articleDescription TEXT,
-    articleLink TEXT,
-    position INT,
-    unlisted BOOLEAN DEFAULT 0,
-    published BOOLEAN DEFAULT 1,
-    createdDate DATETIME NOT NULL DEFAULT NOW(),
-    PRIMARY KEY (articleId),
-    INDEX knowledgebaseArticles_published (published),
-    CONSTRAINT knowledgebaseArticles_sectionId FOREIGN KEY (sectionId) REFERENCES knowledgebaseSections (sectionId) ON DELETE RESTRICT
-);
-
-CREATE TABLE minecraftItems (
-	`name` VARCHAR(70),
-    idName VARCHAR(50),
-    id INT NOT NULL,
-    dataValue INT NOT NULL,
-    imagePath VARCHAR(81),
-    PRIMARY KEY (id, dataValue),
-    INDEX minecraftItems_idName (idName)
-);
-
-CREATE TABLE shops (
-	shopId INT NOT NULL AUTO_INCREMENT,
-    shopCreatorId INT NOT NULL,
-    shopName VARCHAR(30),
-    shopDescription TEXT,
-    serverId INT NOT NULL,
-    PRIMARY KEY (shopId),
-    CONSTRAINT shops_shopCreatorId FOREIGN KEY (shopCreatorId) REFERENCES users (userId) ON DELETE CASCADE,
-    CONSTRAINT shops_serverId FOREIGN KEY (serverId) REFERENCES servers (serverId) ON DELETE CASCADE
-);
-
-CREATE TABLE shopItems (
-	shopItemId INT NOT NULL AUTO_INCREMENT,
-    shopId INT NOT NULL,
-    shopItem VARCHAR(50),
-    shopPrice DECIMAL(5,2),
-    shopBuyQuantity INT,
-    PRIMARY KEY (shopItemId),
-    INDEX shopItems_shopPrice (shopPrice),
-    CONSTRAINT shopItems_shopId FOREIGN KEY (shopId) REFERENCES shops (shopId) ON DELETE CASCADE,
-    CONSTRAINT shopItems_shopItem FOREIGN KEY (shopItem) REFERENCES minecraftItems (idName) ON UPDATE CASCADE
-);
-
-CREATE TABLE communityCreations (
-	creationId INT NOT NULL AUTO_INCREMENT,
-    creatorId INT NOT NULL,
-    creationName VARCHAR(30),
-    creationDescription TEXT,
-    approved BOOLEAN DEFAULT 0,
-    submittedDate DATETIME NOT NULL DEFAULT NOW(),
-    PRIMARY KEY (creationId),
-    INDEX communityCreations_submittedDate (submittedDate),
-    INDEX communityCreations_approved (approved),
-    CONSTRAINT communityCreations_creatorId FOREIGN KEY (creatorId) REFERENCES users (userId) ON DELETE CASCADE
-);
-
-CREATE TABLE communityCreationImages (
-	creationImageId INT NOT NULL AUTO_INCREMENT,
-    creationId INT NOT NULL,
-    imageLink TEXT,
-    cover BOOLEAN DEFAULT 0,
-	approved BOOLEAN DEFAULT 0,
-    position INT,
-    PRIMARY KEY (creationImageId),
-    INDEX communityCreationImages_cover (cover),
-    CONSTRAINT communityCreationImages_creationId FOREIGN KEY (creationid) REFERENCES communityCreations (creationId) ON DELETE CASCADE
-);
-
--- Trigger to automatically add the position column for newly inserted images of a community creatin.
-CREATE TRIGGER communityCreationImages_positionBeforeInsert
-BEFORE INSERT ON communityCreationImages FOR EACH ROW
-	SET NEW.position = (SELECT COUNT(*) FROM communityCreationImages WHERE creationId = NEW.creationId) + 1
-;
-
-CREATE TABLE communityLikes (
-	creationId INT NOT NULL,
-    userId INT NOT NULL,
-    PRIMARY KEY (creationid, userId),
-    CONSTRAINT communityLikes_creationId FOREIGN KEY (creationId) REFERENCES communityCreations (creationId) ON DELETE CASCADE,
-    CONSTRAINT communityLikes_userId FOREIGN KEY (userId) REFERENCES users (userId) ON DELETE CASCADE
 );
 
 CREATE TABLE logs (
