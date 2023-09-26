@@ -43,13 +43,6 @@ const __dirname = path.dirname(__filename);
 
 import('./controllers/discordController.js');
 
-//
-// Cron Jobs
-//
-import('./cron/daily.js');
-import monthlyCron from './cron/monthly.js';
-setTimeout(function name() { monthlyCron(client); }, 5000)
-
 // 
 // Website Related
 //

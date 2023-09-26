@@ -1,7 +1,6 @@
 import announcementApiRoute from './announcement'
 import applicationApiRoute from './application'
 import discordApiRoute from './discord'
-import eventApiRoute from './event'
 import serverApiRoute from './server'
 import sessionApiRoute from './session'
 import userApiRoute from './user'
@@ -13,7 +12,6 @@ export default (app, client, moment, config, db, features, lang) => {
     announcementApiRoute(app, config, db, features, lang);
     applicationApiRoute(app, config, db, features, lang);
     discordApiRoute(app, client, config, db, features, lang);
-    eventApiRoute(app, client, moment, config, db, features, lang);
     serverApiRoute(app, config, db, features, lang);
     sessionApiRoute(app, config, db, features, lang);
     userApiRoute(app, config, db, features, lang);
