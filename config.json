@@ -27,8 +27,7 @@
         "channels": {
             "welcomeChannel": "926380663953821736",
             "networkChatLog": "925702393423859724",
-            "adminLog": "926380052155867146",
-            "eventAnnouncements": "926380005854957608"
+            "adminLog": "926380052155867146"
         },
         "roles": {
             "verified": "926259482319794246"

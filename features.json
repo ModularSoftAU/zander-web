@@ -20,8 +20,6 @@
         "login": true,
         "register": true
     },
-
-    "events": true,
     
     "smDiscord": true,
     "smFacebook": true,

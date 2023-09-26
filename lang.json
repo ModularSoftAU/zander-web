@@ -25,10 +25,6 @@
         "applicationEdited": "The application has been updated.",
         "applicationDeleted": "The application has been deleted."
     },
-    "event": {
-        "noEventsScheduled": "There are currently no events scheduled, come back later.",
-        "eventCreated": "The event %NAME% has been successfully created!"
-    },
     "server": {
         "noServers": "There are currently no Servers that can be displayed at this time.",
         "serverCreated": "The Server has been successfully created!",
