@@ -16,6 +16,13 @@ export default (app, client, moment, config, db, features, lang) => {
     sessionApiRoute(app, config, db, features, lang);
     userApiRoute(app, config, db, features, lang);
     webApiRoute(app, config, db, features, lang);
-    filterApiRoute(app, config, db, features, lang);   
+    filterApiRoute(app, config, db, features, lang);
+
+    app.get('/api/heartbeat', async function (req, res) {
+        return res.send({
+            success: true,
+            message: `OK`
+        });
+    });
 
 }
