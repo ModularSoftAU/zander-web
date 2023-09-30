@@ -15,7 +15,7 @@ export const client = new SapphireClient({
     presence: {
         status: "online",
         activities: [{
-            name: config.siteConfiguration.siteAddress,
+            name: process.env.siteAddress,
             type: 'PLAYING'
         }]
     }

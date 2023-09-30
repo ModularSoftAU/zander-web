@@ -20,9 +20,9 @@ import { fileURLToPath } from 'url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// // 
+// //
 // // Discord
-// // 
+// //
 // const client = new SapphireClient({
 //     intents: [
 //         'GUILDS',
@@ -33,7 +33,7 @@ const __dirname = path.dirname(__filename);
 //     presence: {
 //         status: "online",
 //         activities: [{
-//             name: config.siteConfiguration.siteAddress,
+//             name: process.env.siteAddress,
 //             type: 'PLAYING'
 //         }]
 //     }
@@ -42,13 +42,6 @@ const __dirname = path.dirname(__filename);
 // client.login(process.env.discordAPIKey);
 
 import('./controllers/discordController.js');
-
-//
-// Cron Jobs
-//
-import('./cron/daily.js');
-import monthlyCron from './cron/monthly.js';
-setTimeout(function name() { monthlyCron(client); }, 5000)
 
 // 
 // Website Related

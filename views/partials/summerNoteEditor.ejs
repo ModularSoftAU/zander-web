@@ -11,7 +11,7 @@
     });
 
     $.ajax({
-        url: '<%= config.siteConfiguration.siteAddress %>/emojis',
+        url: '<%= process.env.siteAddress %>/emojis',
         async: false
     }).then(function(data) {
         window.emojis = Object.keys(data);
