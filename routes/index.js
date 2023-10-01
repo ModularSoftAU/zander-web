@@ -1,7 +1,7 @@
 import dashboardSiteRoutes from './dashboard'
 import policySiteRoutes from './policyRoutes'
 import sessionRoutes from './sessionRoutes'
-import { isFeatureWebRouteEnabled, isLoggedIn, getGlobalImage, setBannerCookie } from "../api/common";
+import { isFeatureWebRouteEnabled, getGlobalImage } from "../api/common";
 
 export default function applicationSiteRoutes(app, client, fetch, moment, config, db, features, lang) {
 
