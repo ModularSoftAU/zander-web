@@ -151,29 +151,12 @@ CREATE TABLE gameSessions (
     userId INT NOT NULL,
     sessionStart DATETIME NOT NULL DEFAULT NOW(),
     sessionEnd DATETIME,
-    vanished BOOLEAN DEFAULT 0,
     ipAddress VARCHAR(45),
-    serverId INT,
+    server INT,
     PRIMARY KEY (sessionId),
     INDEX gameSessions_sessionStart (sessionStart),
     INDEX gameSessions_sessionEnd (sessionEnd),
     CONSTRAINT gameSessions_serverId FOREIGN KEY (serverId) REFERENCES servers (serverId) ON DELETE CASCADE
-);
-
-CREATE TABLE events (
-	eventId INT NOT NULL AUTO_INCREMENT,
-    name TEXT,
-    icon TEXT,
-    eventStartDateTime DATETIME,
-    eventEndDateTime DATETIME,
-    location TEXT,
-    information TEXT,
-    guildEventId VARCHAR(18),
-    published BOOLEAN DEFAULT 0,
-    PRIMARY KEY (eventId),
-    INDEX events_eventStartDateTime (eventStartDateTime),
-    INDEX events_eventEndDateTime (eventEndDateTime),
-    INDEX events_published (published)
 );
 
 CREATE TABLE announcements (

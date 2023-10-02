@@ -1,9 +1,9 @@
 {
     "debug": false,
     "siteConfiguration": {
-        "siteName": "Crafting For Christ",
-        "tagline": "Home of one of the biggest Christian Minecraft Servers in Australia.",
-        "email": "support@craftingforchrist.net",
+        "siteName": "My Server",
+        "tagline": "This is my Server.",
+        "email": "support@myserver.com",
         "policy": {
             "termsOfService": "https://raw.githubusercontent.com/craftingforchrist/Legal/master/terms.md",
             "rules": "https://raw.githubusercontent.com/craftingforchrist/Legal/master/rules.md",
@@ -12,29 +12,25 @@
         },
         "platforms": {
             "discord": "https://discord.com/",
-            "facebook": "https://www.facebook.com/craft4christ/",
-            "twitter": "https://twitter.com/craft4christmc",
-            "instagram": "https://instagram.com/craftingforchrist",
-            "reddit": "https://www.reddit.com/r/craftingforchrist/",
-            "twitch": "https://www.twitch.tv/craftingforchrist",
-            "youtube": "https://www.youtube.com/channel/UCeijz6MNnya85LprMjPmYag",
-            "linkedin": "https://www.linkedin.com/company/68885022/",
-            "tiktok": "https://www.tiktok.com/@craftingforchrist"
+            "facebook": "https://www.facebook.com/",
+            "twitter": "https://twitter.com/",
+            "instagram": "https://instagram.com/",
+            "reddit": "https://www.reddit.com/",
+            "twitch": "https://www.twitch.tv/",
+            "youtube": "https://www.youtube.com/",
+            "linkedin": "https://www.linkedin.com/",
+            "tiktok": "https://www.tiktok.com/"
         }
     },
     "discord": {
-        "guildId": "899441191416901632",
+        "guildId": "999999999999999999",
         "channels": {
-            "welcomeChannel": "926380663953821736",
-            "networkChatLog": "925702393423859724",
-            "adminLog": "926380052155867146",
-            "eventAnnouncements": "926380005854957608",
-            "reports": "936889292263936030",
-            "punishments": "936889228598587392",
-            "topVoterBroadcast": "926380005854957608"
+            "welcomeChannel": "999999999999999999",
+            "networkChatLog": "999999999999999999",
+            "adminLog": "999999999999999999"
         },
         "roles": {
-            "verified": "926259482319794246"
+            "verified": "999999999999999999"
         }
     }
 }
