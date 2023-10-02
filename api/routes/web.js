@@ -117,9 +117,6 @@ export default async function webApiRoute(app, config, db, features, lang) {
             let communityMembers = results[0][0].communityMembers;
             let timePlayed = results[1][0].timePlayed;
             let staffMembers = results[2][0].totalStaff;
-
-            // Punishments
-            
             
             return res.send({
                 success: true,

@@ -6,8 +6,8 @@ import dotenv from 'dotenv';
 dotenv.config()
 
 import fastify from 'fastify';
-import fastifySession from 'fastify-session';
-import fastifyCookie from 'fastify-cookie';
+import fastifySession from '@fastify/session';
+import fastifyCookie from '@fastify/cookie';
 
 import config from './config.json' assert {type: "json"};
 import features from './features.json' assert {type: "json"};
@@ -54,7 +54,6 @@ import apiRedirectRoutes from './api/internal_redirect'
 
 // API token authentication
 import verifyToken from './api/routes/verifyToken'
-import { setTimeout } from 'timers';
 import { getGlobalImage } from './api/common';
 import { client } from './controllers/discordController';
 
@@ -92,28 +91,28 @@ const buildApp = async () => {
     });
 
     // EJS Rendering Engine
-    app.register(await import("point-of-view"), {
+    await app.register(await import("@fastify/view"), {
         engine: {
           ejs: await import("ejs"),
         },
         root: path.join(__dirname, "views"),
     });
 
-    app.register(await import('fastify-static'), {
+    await app.register(await import('@fastify/static'), {
         root: path.join(__dirname, 'assets'),
         prefix: '/',
     })
 
-    app.register(await import ('fastify-formbody'))
+    await app.register(await import ('@fastify/formbody'))
     
-    app.register((instance, options, next) => {
+    await app.register((instance, options, next) => {
         // API routes (Token authenticated)
         instance.addHook('preValidation', verifyToken);
         apiRoutes(instance, client, moment, config, db, features, lang);
         next();
     });
 
-    app.register((instance, options, next) => {
+    await app.register((instance, options, next) => {
         // Don't authenticate the Redirect routes. These are
         // protected by 
         apiRedirectRoutes(instance, config, lang);
@@ -122,16 +121,17 @@ const buildApp = async () => {
 
     // Sessions
     await app.register(fastifyCookie, {
-        secret: 'my-secret', // for cookies signature
+        secret: process.env.sessionCookieSecret, // for cookies signature
     });
-    app.register(fastifySession, {
+
+    await app.register(fastifySession, {
         cookieName: 'sessionId',
         secret: process.env.sessionCookieSecret,
         cookie: { secure: false },
         expires: 1800000
     });
 
-    app.register((instance, options, next) => {
+    await app.register((instance, options, next) => {
         // Routes
         siteRoutes(instance, client, fetch, moment, config, db, features, lang);
         next();
