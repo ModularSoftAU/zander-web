@@ -1,16 +1,16 @@
 import db from './databaseController';
 import { SapphireClient } from '@sapphire/framework';
-import config from '../config.json' assert {type: "json"};
+import { GatewayIntentBits } from 'discord.js';
 
 // 
 // Discord
-// 
+//
 export const client = new SapphireClient({
     intents: [
-        'GUILDS',
-        'GUILD_MESSAGES',
-        'GUILD_MEMBERS',
-        'GUILD_VOICE_STATES',
+        GatewayIntentBits.Guilds,
+        GatewayIntentBits.GuildMessages,
+        GatewayIntentBits.GuildMembers,
+        GatewayIntentBits.GuildVoiceStates,
     ],
     presence: {
         status: "online",

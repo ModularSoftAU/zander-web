@@ -1,6 +1,5 @@
 import { Command, RegisterBehavior } from '@sapphire/framework';
-import { MessageEmbed } from 'discord.js';
-import config from '../config.json' assert {type: "json"};
+import { EmbedBuilder, MessageEmbed } from 'discord.js';
 
 export class WebsiteCommand extends Command {
   constructor(context, options) {

@@ -25,10 +25,10 @@
   },
   "homepage": "https://github.com/ModularSoftAU/zander-web#readme",
   "dependencies": {
-    "@sapphire/framework": "^3.2.0",
+    "@sapphire/framework": "^4.6.0",
     "bcrypt": "^5.0.1",
     "crypto": "^1.0.1",
-    "discord.js": "^13.14.0",
+    "discord.js": "^14.13.0",
     "dotenv": "^16.0.1",
     "ejs": "^3.1.7",
     "fastify": "^3.25.3",
