@@ -13,20 +13,20 @@ export default function serverApiRoute(app, config, db, features, lang) {
             function getServers(dbQuery) {
                 db.query(dbQuery, function(error, results, fields) {
                     if (error) {
-                        return res.send({
+                        res.send({
                             success: false,
                             message: `${error}`
                         });
                     }
 
                     if (!results.length) {
-                        return res.send({
+                        res.send({
                             success: false,
                             message: lang.server.noServers
                         });
                     }
 
-                    return res.send({
+                    res.send({
                         success: true,
                         data: results
                     });
@@ -100,7 +100,7 @@ export default function serverApiRoute(app, config, db, features, lang) {
                 });
             });
         } catch (error) {
-            res.send({
+            return res.send({
                 success: false,
                 message: `${error}`
             });
@@ -148,7 +148,7 @@ export default function serverApiRoute(app, config, db, features, lang) {
             });
 
         } catch (error) {
-            res.send({
+            return res.send({
                 success: false,
                 message: `${error}`
             });
@@ -205,7 +205,7 @@ export default function serverApiRoute(app, config, db, features, lang) {
             });
 
         } catch (error) {
-            res.send({
+            return res.send({
                 success: false,
                 message: `${error}`
             });
@@ -236,7 +236,7 @@ export default function serverApiRoute(app, config, db, features, lang) {
             });
 
         } catch (error) {
-            res.send({
+            return res.send({
                 success: false,
                 message: `${error}`
             });

@@ -110,7 +110,7 @@ export default async function webApiRoute(app, config, db, features, lang) {
             SELECT COUNT(DISTINCT(u.uuid)) totalStaff FROM userRanks ur JOIN ranks r ON ur.rankSlug = r.rankSlug JOIN users u ON u.uuid = ur.uuid WHERE r.isStaff = 1 AND u.disabled = 0;
         `, async function (err, results) {
             if (err) {
-                console.log(err);
+                return console.log(err);
             }
 
             // General
@@ -151,14 +151,14 @@ export default async function webApiRoute(app, config, db, features, lang) {
                     });
                 }
 
-                res.send({
+                return res.send({
                     success: true,
                     data: results
                 });
             });
 
         } catch (error) {
-            res.send({
+            return res.send({
                 success: false,
                 message: error
             });

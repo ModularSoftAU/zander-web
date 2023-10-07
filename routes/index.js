@@ -60,7 +60,7 @@ export default function applicationSiteRoutes(app, client, fetch, moment, config
         });
         const apiData = await response.json();
 
-        res.view('apply', {
+        return res.view('apply', {
             "pageTitle": `Apply`,
             config: config,
             req: req,
@@ -74,7 +74,7 @@ export default function applicationSiteRoutes(app, client, fetch, moment, config
     // Discord Redirect
     // 
     app.get('/discord', async function (req, res) {
-        res.redirect(config.siteConfiguration.platforms.discord)
+        return res.redirect(config.siteConfiguration.platforms.discord)
     });
 
 }
