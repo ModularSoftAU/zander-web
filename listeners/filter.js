@@ -1,7 +1,6 @@
 import { Listener } from '@sapphire/framework';
-import { MessageEmbed } from 'discord.js';
+import { EmbedBuilder } from 'discord.js';
 import fetch from 'node-fetch';
-import config from '../config.json' assert {type: "json"};
 import features from '../features.json' assert {type: "json"};
 
 export class GuildMessageListener extends Listener {
@@ -37,7 +36,7 @@ export class GuildMessageListener extends Listener {
         if (message.author.isbot) return
   
         if (dataResponse.success == false) {
-          let embed = new MessageEmbed()
+          let embed = new EmbedBuilder()
           .setTitle(`Prohibited content has been detected!`)
           .setDescription(`${message.author.username} please don't advertise or say prohibited content/phrases. If you continue, you will be punished.`)
           .setColor(`#ff3333`)

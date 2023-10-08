@@ -13,20 +13,20 @@ export default function serverApiRoute(app, config, db, features, lang) {
             function getServers(dbQuery) {
                 db.query(dbQuery, function(error, results, fields) {
                     if (error) {
-                        return res.send({
+                        res.send({
                             success: false,
                             message: `${error}`
                         });
                     }
 
                     if (!results.length) {
-                        return res.send({
+                        res.send({
                             success: false,
                             message: lang.server.noServers
                         });
                     }
 
-                    return res.send({
+                    res.send({
                         success: true,
                         data: results
                     });
@@ -54,7 +54,7 @@ export default function serverApiRoute(app, config, db, features, lang) {
             // Return all Servers by default
             let dbQuery = `SELECT * FROM servers ORDER BY position ASC;`
             getServers(dbQuery);
-
+            return res;
         } catch (error) {
             res.send({
                 success: false,
@@ -100,7 +100,7 @@ export default function serverApiRoute(app, config, db, features, lang) {
                 });
             });
         } catch (error) {
-            res.send({
+            return res.send({
                 success: false,
                 message: `${error}`
             });
@@ -144,7 +144,7 @@ export default function serverApiRoute(app, config, db, features, lang) {
             });
 
         } catch (error) {
-            res.send({
+            return res.send({
                 success: false,
                 message: `${error}`
             });
@@ -197,7 +197,7 @@ export default function serverApiRoute(app, config, db, features, lang) {
             });
 
         } catch (error) {
-            res.send({
+            return res.send({
                 success: false,
                 message: `${error}`
             });
@@ -228,7 +228,7 @@ export default function serverApiRoute(app, config, db, features, lang) {
             });
 
         } catch (error) {
-            res.send({
+            return res.send({
                 success: false,
                 message: `${error}`
             });

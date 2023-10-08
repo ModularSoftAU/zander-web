@@ -1,7 +1,7 @@
 import { Listener } from '@sapphire/framework';
 import joinMessages from '../joinMessages.json' assert {type: "json"};
 import config from '../config.json' assert {type: "json"};
-import { MessageEmbed } from 'discord.js';
+import { EmbedBuilder } from 'discord.js';
 import features from '../features.json' assert {type: "json"};
 
 export class GuildMemberUpdateListener extends Listener {
@@ -21,7 +21,7 @@ export class GuildMemberUpdateListener extends Listener {
       const oldRole = oldMember.roles.cache.has(config.discord.roles.verified);
       const newRole = newMember.roles.cache.has(config.discord.roles.verified);
 
-      let welcomechannel = newMember.guild.channels.cache.find(c => c.id === config.discord.channels.welcomeChannel);
+      let welcomechannel = newMember.guild.channels.cache.find(channel => channel.id === config.discord.channels.welcomeChannel);
       if (!welcomechannel) return;
 
       // Grab random letters and numbers to get a HEX Colour.
@@ -31,7 +31,7 @@ export class GuildMemberUpdateListener extends Listener {
       const randomJoinMessage = joinMessages[Math.floor(Math.random() * joinMessages.length)];
 
       if (!oldRole && newRole) {
-        let embed = new MessageEmbed()
+        let embed = new EmbedBuilder()
           .setTitle(randomJoinMessage.replace("%USERNAME%", newMember.user.username))
           .setColor(`#${randomColor}`)
         welcomechannel.send({embeds: [embed]});

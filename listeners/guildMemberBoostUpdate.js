@@ -1,6 +1,6 @@
 import { Listener } from '@sapphire/framework';
 import config from '../config.json' assert {type: "json"};
-import { MessageEmbed } from 'discord.js';
+import { EmbedBuilder } from 'discord.js';
 import features from '../features.json' assert {type: "json"};
 
 export class GuildMemberBoostUpdateListener extends Listener {
@@ -24,7 +24,7 @@ export class GuildMemberBoostUpdateListener extends Listener {
       if (!welcomechannel) return;
 
       if (!oldStatus && newStatus) {
-        let embed = new MessageEmbed()
+        let embed = new EmbedBuilder()
           .setTitle(`${newMember.user.username} has boosted the Server!  :tada:`)
           .setColor(`#f47fff`)
         welcomechannel.send({embeds: [embed]});

@@ -1,5 +1,5 @@
 import { Command, RegisterBehavior } from '@sapphire/framework';
-import { MessageEmbed } from 'discord.js';
+import { EmbedBuilder } from 'discord.js';
 import features from '../features.json' assert {type: "json"};
 
 export class LegoFlipCommand extends Command {
@@ -18,7 +18,7 @@ export class LegoFlipCommand extends Command {
   async chatInputRun(interaction) {
     if (features.discord.commands.legoFlip) {
       if (Math.random() < 0.50) {
-        const embed = new MessageEmbed()
+        const embed = new EmbedBuilder()
         .setTitle(`Lego Flip!`)
         .setImage(`https://crafatar.com/avatars/2a881594693543c99c39ec31374d46fe?overlay`)
   

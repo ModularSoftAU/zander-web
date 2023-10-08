@@ -1,6 +1,5 @@
 import { Command, RegisterBehavior } from '@sapphire/framework';
-import { MessageEmbed } from 'discord.js';
-import config from '../config.json' assert {type: "json"};
+import { EmbedBuilder } from 'discord.js';
 
 export class WebsiteCommand extends Command {
   constructor(context, options) {
@@ -16,7 +15,7 @@ export class WebsiteCommand extends Command {
   }
 
   async chatInputRun(interaction) {
-    const embed = new MessageEmbed()
+    const embed = new EmbedBuilder()
       .setTitle(`Network Website`)
       .setDescription(`For more info and to get involved with the community, jump on our website ${process.env.siteAddress}`)
 

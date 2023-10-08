@@ -41,6 +41,7 @@ export default function applicationApiRoute(app, config, db, features, lang) {
             let dbQuery = `SELECT * FROM applications ORDER BY position ASC;`
             getApplications(dbQuery);
 
+            return res;
         } catch (error) {
             res.send({
 				success: false,
