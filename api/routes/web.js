@@ -101,14 +101,14 @@ export default async function webApiRoute(app, config, db, features, lang) {
         });
     });
 
-    app.get(baseEndpoint + '/statistics', async function(req, res) {
+    app.get(baseEndpoint + '/statistics', async function (req, res) {
         // There is no isFeatureEnabled() due to being a critical endpoint.
 
         db.query(`
-            SELECT COUNT(*) AS communityMembers FROM users;
-            SELECT CONVERT(SUM(TIMESTAMPDIFF(minute, sessionStart, sessionEnd)), time) AS timePlayed FROM gamesessions;
-            SELECT COUNT(DISTINCT(u.uuid)) totalStaff FROM userRanks ur JOIN ranks r ON ur.rankSlug = r.rankSlug JOIN users u ON u.uuid = ur.uuid WHERE r.isStaff = 1 AND u.disabled = 0;
-        `, async function (err, results) {
+      SELECT COUNT(*) AS communityMembers FROM users;
+      SELECT CONVERT(SUM(TIMESTAMPDIFF(minute, sessionStart, sessionEnd)), time) AS timePlayed FROM gamesessions;
+      SELECT COUNT(DISTINCT(u.uuid)) totalStaff FROM userRanks ur JOIN ranks r ON ur.rankSlug = r.rankSlug JOIN users u ON u.uuid = ur.uuid WHERE r.isStaff = 1 AND u.disabled = 0;
+  `, async function (err, results) {
             if (err) {
                 return console.log(err);
             }
@@ -117,7 +117,7 @@ export default async function webApiRoute(app, config, db, features, lang) {
             let communityMembers = results[0][0].communityMembers;
             let timePlayed = results[1][0].timePlayed;
             let staffMembers = results[2][0].totalStaff;
-            
+
             return res.send({
                 success: true,
                 data: {
@@ -125,13 +125,12 @@ export default async function webApiRoute(app, config, db, features, lang) {
                         "communityMembers": communityMembers,
                         "timePlayed": timePlayed,
                         "staffMembers": staffMembers,
-                    },
-                    punishments: {
-
                     }
                 }
             });
         });
+
+        return res;
     });
 
     app.get(baseEndpoint + '/logs/get', async function (req, res) {

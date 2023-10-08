@@ -54,7 +54,7 @@ export default function serverApiRoute(app, config, db, features, lang) {
             // Return all Servers by default
             let dbQuery = `SELECT * FROM servers ORDER BY position ASC;`
             getServers(dbQuery);
-
+            return res;
         } catch (error) {
             res.send({
                 success: false,

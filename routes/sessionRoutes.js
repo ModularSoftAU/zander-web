@@ -18,6 +18,8 @@ export default function sessionSiteRoute(app, client, fetch, moment, config, db,
             features: features,
 			globalImage: await getGlobalImage(),
         });
+
+		return res;
     });
 
 	app.get('/register', async function (req, res) {
@@ -31,6 +33,8 @@ export default function sessionSiteRoute(app, client, fetch, moment, config, db,
             features: features,
 			globalImage: await getGlobalImage(),
         });
+
+		return res;
     });
 
     app.post('/login', async function(req, res) {
