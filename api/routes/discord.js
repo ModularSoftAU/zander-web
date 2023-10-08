@@ -39,8 +39,6 @@ export default function discordApiRoute(app, client, config, db, features, lang)
 
             channel.send(`**${server}**  |  \`${username}\` :: ${content}`);
 
-            setAuditLastMinecraftMessage(username, res);
-
             return res.send({
                 success: true
             });

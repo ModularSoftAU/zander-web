@@ -32,7 +32,7 @@ export default function applicationApiRoute(app, config, db, features, lang) {
             }
 
             // Get Application by ID
-            if (id) {
+            if (applicationId) {
                 let dbQuery = `SELECT * FROM applications WHERE applicationId=${applicationId};`
                 getApplications(dbQuery);
             }

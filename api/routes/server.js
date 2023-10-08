@@ -34,7 +34,7 @@ export default function serverApiRoute(app, config, db, features, lang) {
             }
 
             // Get Server by ID
-            if (id) {
+            if (serverId) {
                 let dbQuery = `SELECT * FROM servers WHERE serverId=${serverId};`
                 getServers(dbQuery);
             }
