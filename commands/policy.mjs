@@ -1,12 +1,13 @@
 import { Command, RegisterBehavior } from '@sapphire/framework';
-import { EmbedBuilder } from 'discord.js';
+import pkg from 'discord.js';
+const { EmbedBuilder } = pkg;
 
 export class PolicyCommand extends Command {
   constructor(context, options) {
     super(context, {
       ...options,
       name: 'policy',
-      description: 'Display Network policy (Rules, Terms, Privacy and Refund)',
+      description: 'Display Network policy (Rules, Terms, Privacy, and Refund)',
       chatInputCommand: {
         register: true,
         behaviorWhenNotIdentical: RegisterBehavior.Overwrite
@@ -16,17 +17,20 @@ export class PolicyCommand extends Command {
 
   async chatInputRun(interaction) {
     const embed = new EmbedBuilder()
-      .setTitle(`Network Policy`)
-      .setDescription(`For user reference, here is a link to all Network polices.\nBy joining the Network and using our services you agree to all our polices.`)
+      .setTitle('Network Policy')
+      .setDescription('For user reference, here is a link to all Network policies.\nBy joining the Network and using our services you agree to all our policies.')
+      .addFields(
+        { name: 'Rules', value: `${process.env.siteAddress}/rules`, inline: false },
+        { name: 'Terms Of Service', value: `${process.env.siteAddress}/terms`, inline: false },
+        { name: 'Privacy Policy', value: `${process.env.siteAddress}/privacy`, inline: false },
+        { name: 'Refund Policy', value: `${process.env.siteAddress}/refund`, inline: false }
+      );
 
-      .addField(`Rules`, `${process.env.siteAddress}/rules`)
-      .addField(`Terms Of Service`, `${process.env.siteAddress}/terms`)
-      .addField(`Privacy Policy`, `${process.env.siteAddress}/privacy`)
-      .addField(`Refund Policy`, `${process.env.siteAddress}/refund`)
+    const messageContent = {
+      embeds: [embed],
+      ephemeral: true,
+    };
 
-      interaction.reply({
-        embeds: [embed],
-        empheral: true
-      });
+    interaction.reply(messageContent);
   }
 }

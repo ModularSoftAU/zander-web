@@ -3,7 +3,7 @@
     "applications": true,
     "discord": {
         "commands": {
-            "legoFlip": false
+            "legoFlip": true
         },
         "events": {
             "generalKenobi": true,
