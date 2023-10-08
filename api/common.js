@@ -15,7 +15,7 @@ export function isFeatureEnabled(isFeatureEnabled, res, lang) {
     if (isFeatureEnabled)
         return;
 
-    return res.send({
+    res.send({
         success: false,
         message: `${lang.api.featureDisabled}`
     });

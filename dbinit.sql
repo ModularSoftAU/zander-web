@@ -153,8 +153,7 @@ CREATE TABLE gameSessions (
     server TEXT,
     PRIMARY KEY (sessionId),
     INDEX gameSessions_sessionStart (sessionStart),
-    INDEX gameSessions_sessionEnd (sessionEnd),
-    CONSTRAINT gameSessions_serverId FOREIGN KEY (serverId) REFERENCES servers (serverId) ON DELETE CASCADE
+    INDEX gameSessions_sessionEnd (sessionEnd)
 );
 
 CREATE TABLE announcements (
@@ -185,7 +184,7 @@ CREATE TABLE applications (
     position INT,
     applicationStatus BOOLEAN DEFAULT 0,
     PRIMARY KEY (applicationId),
-    INDEX applications_closed (closed)
+    INDEX applications_closed (applicationStatus)
 );
 
 CREATE TABLE logs (

@@ -37,41 +37,48 @@ export default function announcementApiRoute(app, config, db, features, lang) {
             if (req.query === 'announcementId') {
                 let dbQuery = `SELECT * FROM announcements WHERE announcementId=${announcementId};`
                 getAnnouncements(dbQuery);
+                return res;
             }
 
             // Get 1 web announcement
             if (announcementType === 'web') {
                 let dbQuery = `SELECT * FROM announcements WHERE announcementType='web' ORDER BY RAND() LIMIT 1;`
                 getAnnouncements(dbQuery);
+                return res;
             }
 
             // Get 1 tip announcement
             if (announcementType === 'tip') {
                 let dbQuery = `SELECT * FROM announcements WHERE announcementType='tip' ORDER BY RAND() LIMIT 1;`
                 getAnnouncements(dbQuery);
+                return res;
             }
 
             // Get 1 motd announcement
             if (announcementType === 'motd') {
                 let dbQuery = `SELECT * FROM announcements WHERE announcementType='motd' ORDER BY RAND() LIMIT 1;`
                 getAnnouncements(dbQuery);
+                return res;
             }
 
             // Show all public announcements
             if (enabled === 1) {
                 let dbQuery = `SELECT * FROM announcements WHERE enabled=1;`
                 getAnnouncements(dbQuery);
+                return res;
             }
 
             // Show all hidden announcements
             if (enabled === 0) {
                 let dbQuery = `SELECT * FROM announcements WHERE enabled=0;`
                 getAnnouncements(dbQuery);
+                return res;
             }
 
             // Show all announcements
             let dbQuery = `SELECT * FROM announcements;`
             getAnnouncements(dbQuery);
+            return res;
 
         } catch (error) {
             res.send({
@@ -79,6 +86,8 @@ export default function announcementApiRoute(app, config, db, features, lang) {
                 message: `${error}`
             });
         }
+
+        return res;
     });
 
     app.post(baseEndpoint + '/create', async function(req, res) {
@@ -115,6 +124,8 @@ export default function announcementApiRoute(app, config, db, features, lang) {
                 message: `${error}`
             });
         }
+
+        return res;
     });
 
     app.post(baseEndpoint + '/edit', async function(req, res) {
@@ -127,8 +138,6 @@ export default function announcementApiRoute(app, config, db, features, lang) {
         const body = optional(req.body, "body", res);
         const colourMessageFormat = optional(req.body, "colourMessageFormat", res);
         const link = optional(req.body, "link", res);
-
-        console.log(req.body);
 
         try {
             db.query(`
@@ -169,6 +178,8 @@ export default function announcementApiRoute(app, config, db, features, lang) {
                 message: `${error}`
             });
         }
+
+        return res;
     });
 
     app.post(baseEndpoint + '/delete', async function(req, res) {
@@ -199,5 +210,7 @@ export default function announcementApiRoute(app, config, db, features, lang) {
                 message: `${error}`
             });
         }
+
+        return res;
     });
 }

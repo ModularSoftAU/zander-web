@@ -64,6 +64,8 @@ export default function filterApiRoute(app, config, db, features, lang) {
                 message: lang.web.registrationError
             });
         }
+
+        return res;
     });
 
 }

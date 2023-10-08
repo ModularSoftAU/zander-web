@@ -39,7 +39,8 @@ export default function sessionApiRoute(app, config, db, features, lang) {
                 message: `${error}`
             });
         }
-
+        
+        return res;
     });
 
     app.post(baseEndpoint + '/destroy', async function(req, res) {
@@ -79,6 +80,7 @@ export default function sessionApiRoute(app, config, db, features, lang) {
             });
         }
 
+        return res;
     });
 
     app.post(baseEndpoint + '/switch', async function(req, res) {
@@ -119,6 +121,8 @@ export default function sessionApiRoute(app, config, db, features, lang) {
                 message: `${error}`
             });
         }
+
+        return res;
     });
 
 }

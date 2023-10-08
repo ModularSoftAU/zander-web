@@ -1,6 +1,6 @@
 import bcrypt from 'bcrypt';
 import { isFeatureWebRouteEnabled, setBannerCookie, getGlobalImage } from "../api/common";
-import { getProfilePicture, setAuditLastWebsiteLogin } from '../controllers/userController';
+import { getProfilePicture } from '../controllers/userController';
 
 export default function sessionSiteRoute(app, client, fetch, moment, config, db, features, lang) {
 
@@ -169,8 +169,6 @@ export default function sessionSiteRoute(app, client, fetch, moment, config, db,
 					permissions: userData.permissions
 				};
 
-				setAuditLastWebsiteLogin(userData.username, res)
-
 				setBannerCookie("success", lang.session.userSuccessLogin, res);
 				return res.redirect(`${process.env.siteAddress}/`);
 			} else {
@@ -179,6 +177,8 @@ export default function sessionSiteRoute(app, client, fetch, moment, config, db,
 			}
 		});
       });
+
+	  return res;
   });
 
   app.get('/logout', async function(req, res) {
@@ -191,6 +191,8 @@ export default function sessionSiteRoute(app, client, fetch, moment, config, db,
 		  	return res.redirect(`${process.env.siteAddress}/`)
 		}
 	})
+
+	return res;
   });
 
 }

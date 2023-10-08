@@ -61,6 +61,8 @@ export default function serverApiRoute(app, config, db, features, lang) {
                 message: `${error}`
             });
         }
+
+        return res;
     });
 
     app.get(baseEndpoint + '/users/get', async function(req, res) {
@@ -105,6 +107,8 @@ export default function serverApiRoute(app, config, db, features, lang) {
                 message: `${error}`
             });
         }
+        
+        return res;
     });
 
     app.post(baseEndpoint + '/create', async function(req, res) {
@@ -149,6 +153,8 @@ export default function serverApiRoute(app, config, db, features, lang) {
                 message: `${error}`
             });
         }
+
+        return res;
     });
 
     app.post(baseEndpoint + '/edit', async function(req, res) {
@@ -202,6 +208,8 @@ export default function serverApiRoute(app, config, db, features, lang) {
                 message: `${error}`
             });
         }
+
+        return res;
     });
 
     app.post(baseEndpoint + '/delete', async function(req, res) {
@@ -233,6 +241,7 @@ export default function serverApiRoute(app, config, db, features, lang) {
                 message: `${error}`
             });
         }
-    });
 
+        return res;
+    });
 }

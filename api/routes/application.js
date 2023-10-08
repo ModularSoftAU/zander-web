@@ -40,14 +40,14 @@ export default function applicationApiRoute(app, config, db, features, lang) {
             // Return all Servers by default
             let dbQuery = `SELECT * FROM applications ORDER BY position ASC;`
             getApplications(dbQuery);
-
-            return res;
         } catch (error) {
             res.send({
 				success: false,
 				message: `${error}`
 			});
         }
+
+        return res;
     });
 
     app.post(baseEndpoint + '/create', async function(req, res) {
@@ -91,6 +91,8 @@ export default function applicationApiRoute(app, config, db, features, lang) {
                 message: `${error}`
             });
         }
+
+        return res;
     });
 
     app.post(baseEndpoint + '/edit', async function(req, res) {
@@ -145,6 +147,8 @@ export default function applicationApiRoute(app, config, db, features, lang) {
 				message: `${error}`
 			});
 		}
+
+        return res;
     });
 
     app.post(baseEndpoint + '/delete', async function(req, res) {
@@ -176,6 +180,8 @@ export default function applicationApiRoute(app, config, db, features, lang) {
 				message: `${error}`
 			});
         }
+
+        return res;
     });
 
 }

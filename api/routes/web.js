@@ -87,6 +87,8 @@ export default async function webApiRoute(app, config, db, features, lang) {
                 });
             }
         });
+
+        return res;
     });
 
     app.get(baseEndpoint + '/configuration', async function(req, res) {

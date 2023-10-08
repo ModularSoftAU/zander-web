@@ -1,4 +1,3 @@
-import { setAuditLastMinecraftLogin, setAuditLastMinecraftMessage } from '../../controllers/userController';
 import { isFeatureEnabled, required } from '../common'
 
 export default function discordApiRoute(app, client, config, db, features, lang) {
@@ -15,15 +14,17 @@ export default function discordApiRoute(app, client, config, db, features, lang)
 
             channel.send(`:twisted_rightwards_arrows:  |  \`${username}\` switched to \`${server}\``);
 
-            res.send({
+            return res.send({
                 success: true
             });
         } catch (error) {
-            res.send({
+            return res.send({
                 success: false,
                 message: `${error}`
             });
         }
+
+        return res;
     });
 
     app.post(baseEndpoint + '/chat', async function(req, res) {
@@ -40,18 +41,18 @@ export default function discordApiRoute(app, client, config, db, features, lang)
 
             setAuditLastMinecraftMessage(username, res);
 
-            res.send({
+            return res.send({
                 success: true
             });
         } catch (error) {
-            res.send({
+            return res.send({
                 success: false,
                 message: `${error}`
             });
         }
     });
 
-    app.post(baseEndpoint + '/join', async function(req, res) {
+    app.post(baseEndpoint + '/join', async function (req, res) {
         isFeatureEnabled(features.discord, res, lang);
         const username = required(req.body, "username", res);
 
@@ -60,14 +61,8 @@ export default function discordApiRoute(app, client, config, db, features, lang)
             const channel = guild.channels.cache.get(config.discord.channels.networkChatLog);
 
             channel.send(`:ballot_box_with_check:  | \`${username}\` has joined the Network.`);
-
-            setAuditLastMinecraftLogin(username, res);
-
-            res.send({
-                success: true
-            });
         } catch (error) {
-            res.send({
+            return res.send({
                 success: false,
                 message: `${error}`
             });
@@ -93,6 +88,8 @@ export default function discordApiRoute(app, client, config, db, features, lang)
                 message: `${error}`
             });
         }
+
+        return res;
     });
 
 }

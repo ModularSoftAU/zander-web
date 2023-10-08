@@ -50,6 +50,8 @@ export default function userApiRoute(app, config, db, features, lang) {
                 });
             });
         });
+
+        return res;
     });
 
     // TODO: Update docs
@@ -111,5 +113,7 @@ export default function userApiRoute(app, config, db, features, lang) {
                 message: `${error}`
             });
         }
+
+        return res;
     });
 }
