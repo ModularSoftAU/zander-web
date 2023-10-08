@@ -139,31 +139,33 @@ export default async function webApiRoute(app, config, db, features, lang) {
         try {
             db.query(`SELECT logId, creatorId, (SELECT username FROM users WHERE userId=creatorId) AS 'actionedUsername', logFeature, logType, description, actionedDateTime FROM logs ORDER BY actionedDateTime DESC;`, function (error, results, fields) {
                 if (error) {
-                    return res.send({
+                    res.send({
                         success: false,
                         message: `${error}`
                     });
                 }
 
                 if (!results.length) {
-                    return res.send({
+                    res.send({
                         success: false,
                         message: `There are no logs`
                     });
                 }
 
-                return res.send({
+                res.send({
                     success: true,
                     data: results
                 });
             });
 
         } catch (error) {
-            return res.send({
+            res.send({
                 success: false,
                 message: error
             });
         }
+
+        return res;
     });
 
 }

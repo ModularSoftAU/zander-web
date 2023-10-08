@@ -26,6 +26,8 @@ export default function dashboardApplicationsSiteRoute(app, fetch, config, db, f
             req: req,
             globalImage: getGlobalImage()
         });
+
+        return res;
     });
 
     app.get('/dashboard/applications/create', async function (req, res) {
@@ -43,6 +45,8 @@ export default function dashboardApplicationsSiteRoute(app, fetch, config, db, f
             req: req,
             globalImage: getGlobalImage()
         });
+
+        return res;
     });
 
     app.get('/dashboard/applications/edit', async function (req, res) {
@@ -68,6 +72,8 @@ export default function dashboardApplicationsSiteRoute(app, fetch, config, db, f
             req: req,
             globalImage: getGlobalImage()
         });
+
+        return res;
     });
 
 }

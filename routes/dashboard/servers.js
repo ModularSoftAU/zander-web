@@ -25,6 +25,8 @@ export default function dashboardServersSiteRoute(app, fetch, config, db, featur
             req: req,
             globalImage: getGlobalImage()
         });
+
+        return res;
     });
 
     app.get('/dashboard/servers/create', async function (req, res) {
@@ -42,6 +44,8 @@ export default function dashboardServersSiteRoute(app, fetch, config, db, featur
             globalImage: getGlobalImage(),
             req: req
         });
+
+        return res;
     });
 
     app.get('/dashboard/servers/edit', async function (req, res) {
@@ -67,6 +71,8 @@ export default function dashboardServersSiteRoute(app, fetch, config, db, featur
             globalImage: getGlobalImage(),
             req: req
         });
+
+        return res;
     });
 
 }

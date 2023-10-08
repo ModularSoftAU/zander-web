@@ -25,6 +25,8 @@ export default function dashboardAnnouncementSiteRoute(app, fetch, config, db, f
             req: req,
             globalImage: getGlobalImage()
         });
+
+        return res;
     });
 
     app.get('/dashboard/announcements/create', async function (req, res) {
@@ -42,6 +44,8 @@ export default function dashboardAnnouncementSiteRoute(app, fetch, config, db, f
             req: req,
             globalImage: getGlobalImage()
         });
+
+        return res;
     });
 
     app.get('/dashboard/announcements/edit', async function (req, res) {
@@ -67,6 +71,8 @@ export default function dashboardAnnouncementSiteRoute(app, fetch, config, db, f
             req: req,
             globalImage: getGlobalImage()
         });
+
+        return res;
     });
 
 }

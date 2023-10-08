@@ -30,30 +30,8 @@
 			  <% if (features.applications) { %>
 				<li class="nav-item"><a class="nav-link" href="/apply">Apply</a></li>
 			  <% } %>
-			  <% if (features.events) { %>
-				<li class="nav-item"><a class="nav-link" href="/events">Events</a></li>
-			  <% } %>
-			  <% if (features.knowledgebase) { %>
-				<li class="nav-item"><a class="nav-link" href="/knowledgebase">Knowledgebase</a></li>
-			  <% } %>
-
-			  <% if (features.communityCreations || features.shops) { %>
-				<li class="nav-item dropdown">
-					<a class="nav-link dropdown-toggle" href="#" id="dropdown02" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Community <i class="icofont-thin-down"></i></a>
-					<ul class="dropdown-menu" aria-labelledby="dropdown02">
-						<% if (features.communityCreations) { %>
-							<li><a class="dropdown-item" href="/communityCreations">Community Creations</a></li>
-						<% } %>
-						<% if (features.shops) { %>
-							<li><a class="dropdown-item" href="/shoppingDistrictDirectory">Shopping District Directory</a></li>
-						<% } %>
-					</ul>
-				</li>
-			  <% } %>
 			  
 			  <% if (req.session?.user) { %>
-				<li class="nav-item"><a class="nav-link" href="/notifications"><i class="fas fa-bell"></i></a></li>
-
 				<li class="nav-item dropdown">
 					<a class="nav-link dropdown-toggle" href="#" id="dropdown02" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><img style="padding-right: 5px;" src="<%= req.session.user.profilePicture %>" height="20px" draggable="false">  <%= req.session.user.username %> <i class="icofont-thin-down"></i></a>
 					<ul class="dropdown-menu" aria-labelledby="dropdown02">

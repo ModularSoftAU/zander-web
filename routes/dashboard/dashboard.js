@@ -18,6 +18,8 @@ export default function dashbordSiteRoute(app, config, features, lang) {
             req: req,
             globalImage: await getGlobalImage()
         });
+
+        return res;
     });
 
     // 
@@ -42,20 +44,7 @@ export default function dashbordSiteRoute(app, config, features, lang) {
             globalImage: getGlobalImage(),
             moment: moment
         });
+
+        return res;
     });
-
-    // 
-    // Player Check
-    // 
-    app.get('/dashboard/user/check', async function (req, res) {
-        if (!hasPermission('zander.web.moderation.user', req, res, features))
-            return;
-
-        res.view('dashboard/usercheck', {
-            "pageTitle": `Dashboard - User Check`,
-            config: config,
-            features: features
-        });
-    });
-
 }
