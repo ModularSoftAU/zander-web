@@ -136,10 +136,8 @@ WHERE gp.permission IS NOT NULL
 
 CREATE TABLE servers (
 	serverId INT NOT NULL AUTO_INCREMENT,
-    name TEXT,
-    fqdn VARCHAR(50),
-    ipAddress VARCHAR(15),
-    port SMALLINT,
+    displayName TEXT,
+    serverConnectionAddress TEXT,
     visible BOOLEAN DEFAULT 0,
     position INT,
     PRIMARY KEY (serverId),
@@ -152,7 +150,7 @@ CREATE TABLE gameSessions (
     sessionStart DATETIME NOT NULL DEFAULT NOW(),
     sessionEnd DATETIME,
     ipAddress VARCHAR(45),
-    server INT,
+    server TEXT,
     PRIMARY KEY (sessionId),
     INDEX gameSessions_sessionStart (sessionStart),
     INDEX gameSessions_sessionEnd (sessionEnd),
@@ -161,7 +159,6 @@ CREATE TABLE gameSessions (
 
 CREATE TABLE announcements (
 	announcementId INT NOT NULL AUTO_INCREMENT,
-    announcementSlug VARCHAR(30) UNIQUE NOT NULL,
     enabled BOOLEAN DEFAULT 1,
     announcementType ENUM('motd', 'tip', 'web'),
     body TEXT,
@@ -186,7 +183,7 @@ CREATE TABLE applications (
     requirementsMarkdown TEXT,
     redirectUrl TEXT,
     position INT,
-    closed BOOLEAN DEFAULT 0,
+    applicationStatus BOOLEAN DEFAULT 0,
     PRIMARY KEY (applicationId),
     INDEX applications_closed (closed)
 );

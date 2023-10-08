@@ -1,5 +1,5 @@
 import { setAuditLastMinecraftLogin, setAuditLastMinecraftMessage } from '../../controllers/userController';
-import {isFeatureEnabled, required, optional} from '../common'
+import { isFeatureEnabled, required } from '../common'
 
 export default function discordApiRoute(app, client, config, db, features, lang) {
     const baseEndpoint = '/api/discord';

@@ -7,7 +7,7 @@ export default function serverApiRoute(app, config, db, features, lang) {
     app.get(baseEndpoint + '/get', async function(req, res) {
         isFeatureEnabled(features.servers, res, lang);
         const visible = optional(req.query, "visible");
-        const id = optional(req.query, "id");
+        const serverId = optional(req.query, "serverId");
 
         try {
             function getServers(dbQuery) {
@@ -35,18 +35,18 @@ export default function serverApiRoute(app, config, db, features, lang) {
 
             // Get Server by ID
             if (id) {
-                let dbQuery = `SELECT * FROM servers WHERE serverId=${id};`
+                let dbQuery = `SELECT * FROM servers WHERE serverId=${serverId};`
                 getServers(dbQuery);
             }
 
             // Get Servers that are publically visable
-            if (visible === 'true') {
+            if (visible === 1) {
                 let dbQuery = `SELECT * FROM servers WHERE visible=1 ORDER BY position ASC;`
                 getServers(dbQuery);
             }
 
             // Get Servers that are not private or internal
-            if (visible === 'false') {
+            if (visible === 0) {
                 let dbQuery = `SELECT * FROM servers WHERE visible=0 ORDER BY position ASC;`
                 getServers(dbQuery);
             }
@@ -111,10 +111,8 @@ export default function serverApiRoute(app, config, db, features, lang) {
         isFeatureEnabled(features.servers, res, lang);
 
         const actioningUser = required(req.body, "actioningUser", res);
-        const name = required(req.body, "name", res);
-        const fqdn = required(req.body, "fqdn", res);
-        const ipAddress = required(req.body, "ipAddress", res);
-        const port = required(req.body, "port", res);
+        const displayName = required(req.body, "displayName", res);
+        const serverConnectionAddress = required(req.body, "serverConnectionAddress", res);
         const visible = required(req.body, "visible", res);
         const position = required(req.body, "position", res);
 
@@ -125,13 +123,11 @@ export default function serverApiRoute(app, config, db, features, lang) {
                 INSERT INTO 
                     servers
                 (
-                    name, 
-                    fqdn, 
-                    ipAddress, 
-                    port, 
+                    displayName, 
+                    serverConnectionAddress,
                     visible, 
                     position
-                ) VALUES (?, ?, ?, ?, ?, ?)`, [name, fqdn, ipAddress, port, visible, position], function(error, results, fields) {
+                ) VALUES (?, ?, ?, ?, ?, ?)`, [displayName, serverConnectionAddress, visible, position], function(error, results, fields) {
                 if (error) {
                     return res.send({
                         success: false,
@@ -139,11 +135,11 @@ export default function serverApiRoute(app, config, db, features, lang) {
                     });
                 }
 
-                generateLog(actioningUser, "SUCCESS", "SERVER", `Created ${name} (${fqdn})`, res);
+                generateLog(actioningUser, "SUCCESS", "SERVER", `Created ${displayName} (${serverConnectionAddress})`, res);
                 
                 return res.send({
                     success: true,
-                    message: serverCreatedLang.replace("%NAME%", name)
+                    message: serverCreatedLang.replace("%NAME%", displayName)
                 });
             });
 
@@ -160,10 +156,8 @@ export default function serverApiRoute(app, config, db, features, lang) {
 
         const actioningUser = required(req.body, "actioningUser", res);
         const serverId = required(req.body, "serverId", res);
-        const name = required(req.body, "name", res);
-        const fqdn = required(req.body, "fqdn", res);
-        const ipAddress = required(req.body, "ipAddress", res);
-        const port = required(req.body, "port", res);
+        const displayName = required(req.body, "displayName", res);
+        const serverConnectionAddress = required(req.body, "serverConnectionAddress", res);
         const visible = required(req.body, "visible", res);
         const position = required(req.body, "position", res);
 
@@ -172,8 +166,8 @@ export default function serverApiRoute(app, config, db, features, lang) {
             UPDATE 
                 servers 
             SET 
-                name=?, 
-                fqdn=?, 
+                displayName=?, 
+                serverConnectionAddress=?, 
                 ipAddress=?, 
                 port=?, 
                 visible=?, 
@@ -181,10 +175,8 @@ export default function serverApiRoute(app, config, db, features, lang) {
             WHERE 
                 serverId=?`, 
             [
-                name, 
-                fqdn, 
-                ipAddress, 
-                port, 
+                displayName, 
+                serverConnectionAddress, 
                 visible, 
                 position, 
                 serverId
@@ -196,7 +188,7 @@ export default function serverApiRoute(app, config, db, features, lang) {
                     });
                 }
 
-                generateLog(actioningUser, "SUCCESS", "SERVER", `Edited ${name} (${fqdn})`, res);
+                generateLog(actioningUser, "SUCCESS", "SERVER", `Edited ${displayName} (${serverConnectionAddress})`, res);
 
                 return res.send({
                     success: true,

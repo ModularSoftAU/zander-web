@@ -5,7 +5,7 @@ export default function applicationApiRoute(app, config, db, features, lang) {
 
     app.get(baseEndpoint + '/get', async function(req, res) {
         isFeatureEnabled(features.applications, res, lang);
-        const id = optional(req.query, "id");
+        const applicationId = optional(req.query, "applicationId");
 
         try {
             function getApplications(dbQuery) {
@@ -31,9 +31,9 @@ export default function applicationApiRoute(app, config, db, features, lang) {
                 });
             }
 
-            // Get Server by ID
+            // Get Application by ID
             if (id) {
-                let dbQuery = `SELECT * FROM applications WHERE applicationId=${id};`
+                let dbQuery = `SELECT * FROM applications WHERE applicationId=${applicationId};`
                 getApplications(dbQuery);
             }
 
@@ -59,14 +59,14 @@ export default function applicationApiRoute(app, config, db, features, lang) {
         const requirementsMarkdown = required(req.body, "requirementsMarkdown", res);
         const redirectUrl = required(req.body, "redirectUrl", res);
         const position = required(req.body, "position", res);
-        const applicationStatus = required(req.body, "closed", res);
+        const applicationStatus = required(req.body, "applicationStatus", res);
 
         let applicationCreatedLang = lang.applications.applicationCreated;
 
         try {
             db.query(`
                 INSERT INTO applications 
-                    (displayName, description, displayIcon, requirementsMarkdown, redirectUrl, position, closed) 
+                    (displayName, description, displayIcon, requirementsMarkdown, redirectUrl, position, applicationStatus) 
                 VALUES (?, ?, ?, ?, ?, ?, ?)`, 
                 [displayName, description, displayIcon, requirementsMarkdown, redirectUrl, position, applicationStatus], function(error, results, fields) {
                 if (error) {
@@ -103,7 +103,7 @@ export default function applicationApiRoute(app, config, db, features, lang) {
         const requirementsMarkdown = required(req.body, "requirementsMarkdown", res);
         const redirectUrl = required(req.body, "redirectUrl", res);
         const position = required(req.body, "position", res);
-        const applicationStatus = required(req.body, "closed", res);
+        const applicationStatus = required(req.body, "applicationStatus", res);
 
         let applicationEditedLang = lang.applications.applicationEdited;
 
@@ -120,7 +120,7 @@ export default function applicationApiRoute(app, config, db, features, lang) {
                     requirementsMarkdown=?, 
                     redirectUrl=?, 
                     position=?,
-                    closed=?
+                    applicationStatus=?
                 WHERE applicationId=?;`,
                 [displayName, displayIcon, description, requirementsMarkdown, redirectUrl, position, applicationStatus, applicationId], function(error, results, fields) {
 

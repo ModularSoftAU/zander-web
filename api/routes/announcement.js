@@ -5,7 +5,7 @@ export default function announcementApiRoute(app, config, db, features, lang) {
 
     app.get(baseEndpoint + '/get', async function(req, res) {
         isFeatureEnabled(features.announcements, res, lang);
-        const announcementSlug = optional(req.query, "announcementSlug");
+        const announcementId = optional(req.query, "announcementId");
         const announcementType = optional(req.query, "announcementType");
         const enabled = optional(req.query, "enabled");
 
@@ -34,8 +34,8 @@ export default function announcementApiRoute(app, config, db, features, lang) {
             }
 
             // Get Announcement by specific ID.
-            if (req.query === 'announcementSlug') {
-                let dbQuery = `SELECT * FROM announcements WHERE announcementSlug=${announcementSlug};`
+            if (req.query === 'announcementId') {
+                let dbQuery = `SELECT * FROM announcements WHERE announcementId=${announcementId};`
                 getAnnouncements(dbQuery);
             }
 
@@ -58,13 +58,13 @@ export default function announcementApiRoute(app, config, db, features, lang) {
             }
 
             // Show all public announcements
-            if (enabled === 'show') {
+            if (enabled === 1) {
                 let dbQuery = `SELECT * FROM announcements WHERE enabled=1;`
                 getAnnouncements(dbQuery);
             }
 
             // Show all hidden announcements
-            if (enabled === 'hide') {
+            if (enabled === 0) {
                 let dbQuery = `SELECT * FROM announcements WHERE enabled=0;`
                 getAnnouncements(dbQuery);
             }
@@ -85,7 +85,6 @@ export default function announcementApiRoute(app, config, db, features, lang) {
         isFeatureEnabled(features.announcements, res, lang);
 
         const actioningUser = required(req.body, "actioningUser", res);
-        const announcementSlug = required(req.body, "announcementSlug", res);
         const enabled = required(req.body, "enabled", res);
         const announcementType = required(req.body, "announcementType", res);
         const body = optional(req.body, "body", res);
@@ -93,7 +92,7 @@ export default function announcementApiRoute(app, config, db, features, lang) {
         const link = optional(req.body, "link", res);
 
         try {
-            db.query(`INSERT INTO announcements (announcementSlug, enabled, body, announcementType, link, colourMessageFormat) VALUES (?, ?, ?, ?, ?, ?)`, [announcementSlug, enabled, body, announcementType, link, colourMessageFormat], function(error, results, fields) {
+            db.query(`INSERT INTO announcements (enabled, body, announcementType, link, colourMessageFormat) VALUES (?, ?, ?, ?, ?, ?)`, [announcementSlug, enabled, body, announcementType, link, colourMessageFormat], function(error, results, fields) {
                 if (error) {
                     return res.send({
                         success: false,
@@ -101,7 +100,7 @@ export default function announcementApiRoute(app, config, db, features, lang) {
                     });
                 }
 
-                generateLog(actioningUser, "SUCCESS", "ANNOUNCEMENT", `Created ${announcementSlug}`, res);
+                generateLog(actioningUser, "SUCCESS", "ANNOUNCEMENT", `Created ${announcementId}`, res);
 
                 res.send({
                     success: true,
@@ -122,8 +121,7 @@ export default function announcementApiRoute(app, config, db, features, lang) {
         isFeatureEnabled(features.announcements, res, lang);
 
         const actioningUser = required(req.body, "actioningUser", res);
-        const slug = required(req.body, "slug", res);
-        const announcementSlug = required(req.body, "announcementSlug", res);
+        const announcementId = required(req.body, "announcementId", res);
         const enabled = required(req.body, "enabled", res);
         const announcementType = required(req.body, "announcementType", res);
         const body = optional(req.body, "body", res);
@@ -136,21 +134,19 @@ export default function announcementApiRoute(app, config, db, features, lang) {
             db.query(`
                 UPDATE announcements 
                     SET 
-                        announcementSlug=?,
                         enabled=?,
                         announcementType=?,
                         body=?,
                         colourMessageFormat=?,
                         link=?
-                    WHERE announcementSlug=?;`,
+                    WHERE announcementSId=?;`,
                 [
-                    announcementSlug,
                     enabled,
                     announcementType,
                     body,
                     colourMessageFormat,
                     link,
-                    slug
+                    announcementId
                 ], function(error, results, fields) {
                     if (error) {
                         return res.send({
@@ -159,7 +155,7 @@ export default function announcementApiRoute(app, config, db, features, lang) {
                         });
                     }
 
-                    generateLog(actioningUser, "SUCCESS", "ANNOUNCEMENT", `Edited ${announcementSlug}`, res);
+                    generateLog(actioningUser, "SUCCESS", "ANNOUNCEMENT", `Edited ${announcementId}`, res);
 
                     return res.send({
                         success: true,
@@ -178,10 +174,10 @@ export default function announcementApiRoute(app, config, db, features, lang) {
     app.post(baseEndpoint + '/delete', async function(req, res) {
         isFeatureEnabled(features.announcements, res, lang);
         
-        const announcementSlug = required(req.body, "announcementSlug", res);
+        const announcementId = required(req.body, "announcementId", res);
 
         try {
-            db.query(`DELETE FROM announcements WHERE announcementSlug=?;`, [announcementSlug], function(error, results, fields) {
+            db.query(`DELETE FROM announcements WHERE announcementId=?;`, [announcementId], function(error, results, fields) {
                 if (error) {
                     return res.send({
                         success: false,
@@ -189,7 +185,7 @@ export default function announcementApiRoute(app, config, db, features, lang) {
                     });
                 }
 
-                generateLog(actioningUser, "WARNING", "ANNOUNCEMENT", `Deleted ${announcementSlug}`, res);
+                generateLog(actioningUser, "WARNING", "ANNOUNCEMENT", `Deleted ${announcementId}`, res);
 
                 return res.send({
                     success: true,
@@ -204,57 +200,4 @@ export default function announcementApiRoute(app, config, db, features, lang) {
             });
         }
     });
-
-    app.post(baseEndpoint + '/enable', async function(req, res) {
-        isFeatureEnabled(features.announcements, res, lang);
-        const announcementSlug = required(req.body, "announcementSlug", res);
-
-        try {
-            db.query(`UPDATE announcements SET enabled=? WHERE announcementSlug=?`, [1, announcementSlug], function(error, results, fields) {
-                if (error) {
-                    return res.send({
-                        success: false,
-                        message: `${error}`
-                    });
-                }
-                return res.send({
-                    success: true,
-                    message: lang.announcement.announcementEnabled
-                });
-            });
-
-        } catch (error) {
-            res.send({
-                success: false,
-                message: `${error}`
-            });
-        }
-    });
-
-    app.post(baseEndpoint + '/disable', async function(req, res) {
-        isFeatureEnabled(features.announcements, res, lang);
-        const announcementSlug = required(req.body, "announcementSlug", res);
-
-        try {
-            db.query(`UPDATE announcements SET enabled=? WHERE announcementSlug=?`, [0, announcementSlug], function(error, results, fields) {
-                if (error) {
-                    return res.send({
-                        success: false,
-                        message: `${error}`
-                    });
-                }
-                return res.send({
-                    success: true,
-                    message: lang.announcement.announcementDisabled
-                });
-            });
-
-        } catch (error) {
-            res.send({
-                success: false,
-                message: `${error}`
-            });
-        }
-    });
-
 }
