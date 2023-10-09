@@ -1,4 +1,4 @@
-import {setBannerCookie, postAPIRequest} from '../common'
+import { postAPIRequest } from '../common'
 
 export default function webRedirectRoute(app, config, lang) {
     const baseEndpoint = '/redirect/web';
@@ -12,6 +12,8 @@ export default function webRedirectRoute(app, config, lang) {
         )
 
         res.redirect(`${process.env.siteAddress}/register`);
+
+        return res;
     });
 
 }

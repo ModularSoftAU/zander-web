@@ -15,6 +15,8 @@ export default function announcementRedirectRoute(app, config, lang) {
         )
 
         res.redirect(`${process.env.siteAddress}/dashboard/announcements`);
+
+        return res;
     });
 
     app.post(baseEndpoint + '/edit', async function(req, res) {
@@ -29,6 +31,8 @@ export default function announcementRedirectRoute(app, config, lang) {
         )
 
         res.redirect(`${process.env.siteAddress}/dashboard/announcements`);
+
+        return res;
     });
 
     app.post(baseEndpoint + '/delete', async function(req, res) {
@@ -43,34 +47,7 @@ export default function announcementRedirectRoute(app, config, lang) {
         )
 
         res.redirect(`${process.env.siteAddress}/dashboard/announcements`);
+
+        return res;
     });
-
-    app.post(baseEndpoint + '/enable', async function(req, res) {
-        if (!hasPermission('zander.web.announcements', req, res))
-            return;
-        
-        postAPIRequest(
-            `${process.env.siteAddress}/api/announcement/enable`,
-            req.body,
-            `${process.env.siteAddress}/dashboard/announcements`,
-            res
-        )
-
-        res.redirect(`${process.env.siteAddress}/dashboard/announcements`);
-    });
-
-    app.post(baseEndpoint + '/disable', async function(req, res) {
-        if (!hasPermission('zander.web.announcements', req, res))
-            return;
-        
-        postAPIRequest(
-            `${process.env.siteAddress}/api/announcement/disable`,
-            req.body,
-            `${process.env.siteAddress}/dashboard/announcements`,
-            res
-        )
-
-        res.redirect(`${process.env.siteAddress}/dashboard/announcements`);
-    });
-
 }

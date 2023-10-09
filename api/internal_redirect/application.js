@@ -15,6 +15,8 @@ export default function applicationRedirectRoute(app, config, lang) {
         )
 
         res.redirect(`${process.env.siteAddress}/dashboard/applications`);
+
+        return res;
     });
 
     app.post(baseEndpoint + '/edit', async function(req, res) {
@@ -29,6 +31,8 @@ export default function applicationRedirectRoute(app, config, lang) {
         )
 
         res.redirect(`${process.env.siteAddress}/dashboard/applications`);
+
+        return res;
     });
 
     app.post(baseEndpoint + '/delete', async function(req, res) {
@@ -43,6 +47,8 @@ export default function applicationRedirectRoute(app, config, lang) {
         )
 
         res.redirect(`${process.env.siteAddress}/dashboard/applications`);
+
+        return res;
     });
 
 }

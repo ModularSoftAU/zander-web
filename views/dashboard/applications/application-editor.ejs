@@ -163,7 +163,7 @@
 
                             <% if (type === 'create') { %>
                                 <%- include("../../partials/form/inputSelect.ejs", {
-                                    elementName: "closed",
+                                    elementName: "applicationStatus",
                                     elementValue: "null",
                                     required: true,
                                     optionElements: [
@@ -190,8 +190,8 @@
                             <% } %>
                             <% if (type === 'edit') { %>
                                 <%- include("../../partials/form/inputSelect.ejs", {
-                                    elementName: "closed",
-                                    elementValue: applicationApiData.closed,
+                                    elementName: "applicationStatus",
+                                    elementValue: applicationApiData.applicationStatus,
                                     required: true,
                                     optionElements: [
                                         {

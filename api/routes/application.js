@@ -64,6 +64,8 @@ export default function applicationApiRoute(app, config, db, features, lang) {
 
         let applicationCreatedLang = lang.applications.applicationCreated;
 
+        console.log(req.body);
+
         try {
             db.query(`
                 INSERT INTO applications 
@@ -77,7 +79,7 @@ export default function applicationApiRoute(app, config, db, features, lang) {
                     });
                 }
 
-                    generateLog(actioningUser, "SUCCESS", "APPLICATION", `Created ${displayName}`, res);
+                generateLog(actioningUser, "SUCCESS", "APPLICATION", `Created ${displayName}`, res);
 
                 return res.send({
                     success: true,
