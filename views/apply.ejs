@@ -34,7 +34,7 @@
                     <p><%= application.description %></p>
 
                     <!-- <%= application.displayName %> Modal -->
-                    <% if (application.closed === 0) { %>
+                    <% if (application.applicationStatus === 0) { %>
                       <a href="#" target="_blank"><button type="button" class="btn btn-danger" disabled>Closed</button></a>
                     <% } else { %>
                       <button type="button" class="btn btn-primary" data-toggle="modal" data-target=".bd-staff-modal-lg">Apply</button>
@@ -50,7 +50,7 @@
                                 <zero-md src="<%= application.requirementsMarkdown %>"></zero-md>
                               <br><br>
 
-                              <% if (application.closed === 0) { %>
+                              <% if (application.applicationStatus === '0') { %>
                                 <a href="#" target="_blank"><button type="button" class="btn btn-danger" disabled>Applications Closed</button></a>
                               <% } else { %>
                                 <a href="<%= application.redirectUrl %>" target="_blank"><button type="button" class="btn btn-info">Apply</button></a>

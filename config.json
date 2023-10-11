@@ -1,5 +1,5 @@
 {
-    "debug": true,
+    "debug": false,
     "siteConfiguration": {
         "siteName": "Crafting For Christ",
         "tagline": "Home of one of the biggest Christian Minecraft Servers in Australia.",
@@ -11,6 +11,7 @@
             "refund": "https://raw.githubusercontent.com/craftingforchrist/Legal/master/refund.md"
         },
         "platforms": {
+            "webstore": "https://crafting-for-christ.tebex.io/",
             "discord": "https://discord.com/",
             "facebook": "https://www.facebook.com/craft4christ/",
             "twitter": "https://twitter.com/craft4christmc",

@@ -183,8 +183,7 @@ CREATE TABLE applications (
     redirectUrl TEXT,
     position INT,
     applicationStatus BOOLEAN DEFAULT 0,
-    PRIMARY KEY (applicationId),
-    INDEX applications_closed (applicationStatus)
+    PRIMARY KEY (applicationId)
 );
 
 CREATE TABLE logs (

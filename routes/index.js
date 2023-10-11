@@ -74,7 +74,14 @@ export default function applicationSiteRoutes(app, client, fetch, moment, config
     // Discord Redirect
     // 
     app.get('/discord', async function (req, res) {
-        return res.redirect(config.siteConfiguration.platforms.discord)
+        return res.redirect(config.siteConfiguration.platforms.discord);
+    });
+
+    // 
+    // Discord Redirect
+    // 
+    app.get('/webstore', async function (req, res) {
+        return res.redirect(config.siteConfiguration.platforms.webstore);
     });
 
 }
