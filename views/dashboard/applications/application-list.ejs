@@ -47,7 +47,7 @@
                             <td><%= application.displayName %></td>
                             <td><%= application.description %></td>
                             <td>
-                                <% if (application.closed === 1) { %>
+                                <% if (application.applicationStatus === 1) { %>
                                     <i class="fas fa-check-circle" style="color:green"></i>
                                 <% } else { %>
                                     <i class="fas fa-times-circle" style="color: red;"></i>

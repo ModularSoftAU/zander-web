@@ -158,15 +158,12 @@ export default function serverApiRoute(app, config, db, features, lang) {
             SET 
                 displayName=?, 
                 serverConnectionAddress=?, 
-                ipAddress=?, 
-                port=?, 
                 position=? 
             WHERE 
                 serverId=?`, 
             [
                 displayName, 
                 serverConnectionAddress, 
-                visible, 
                 position, 
                 serverId
             ], function(error, results, fields) {
