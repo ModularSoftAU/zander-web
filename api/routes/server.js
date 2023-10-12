@@ -6,7 +6,6 @@ export default function serverApiRoute(app, config, db, features, lang) {
     // TODO: Update docs
     app.get(baseEndpoint + '/get', async function(req, res) {
         isFeatureEnabled(features.servers, res, lang);
-        const visible = optional(req.query, "visible");
         const serverId = optional(req.query, "serverId");
 
         try {
@@ -36,18 +35,6 @@ export default function serverApiRoute(app, config, db, features, lang) {
             // Get Server by ID
             if (serverId) {
                 let dbQuery = `SELECT * FROM servers WHERE serverId=${serverId};`
-                getServers(dbQuery);
-            }
-
-            // Get Servers that are publically visable
-            if (visible === 1) {
-                let dbQuery = `SELECT * FROM servers WHERE visible=1 ORDER BY position ASC;`
-                getServers(dbQuery);
-            }
-
-            // Get Servers that are not private or internal
-            if (visible === 0) {
-                let dbQuery = `SELECT * FROM servers WHERE visible=0 ORDER BY position ASC;`
                 getServers(dbQuery);
             }
 
@@ -117,7 +104,6 @@ export default function serverApiRoute(app, config, db, features, lang) {
         const actioningUser = required(req.body, "actioningUser", res);
         const displayName = required(req.body, "displayName", res);
         const serverConnectionAddress = required(req.body, "serverConnectionAddress", res);
-        const visible = required(req.body, "visible", res);
         const position = required(req.body, "position", res);
 
         const serverCreatedLang = lang.server.serverCreated
@@ -129,9 +115,8 @@ export default function serverApiRoute(app, config, db, features, lang) {
                 (
                     displayName, 
                     serverConnectionAddress,
-                    visible, 
                     position
-                ) VALUES (?, ?, ?, ?, ?, ?)`, [displayName, serverConnectionAddress, visible, position], function(error, results, fields) {
+                ) VALUES (?, ?, ?)`, [displayName, serverConnectionAddress, position], function(error, results, fields) {
                 if (error) {
                     return res.send({
                         success: false,
@@ -164,7 +149,6 @@ export default function serverApiRoute(app, config, db, features, lang) {
         const serverId = required(req.body, "serverId", res);
         const displayName = required(req.body, "displayName", res);
         const serverConnectionAddress = required(req.body, "serverConnectionAddress", res);
-        const visible = required(req.body, "visible", res);
         const position = required(req.body, "position", res);
 
         try {
@@ -176,7 +160,6 @@ export default function serverApiRoute(app, config, db, features, lang) {
                 serverConnectionAddress=?, 
                 ipAddress=?, 
                 port=?, 
-                visible=?, 
                 position=? 
             WHERE 
                 serverId=?`, 

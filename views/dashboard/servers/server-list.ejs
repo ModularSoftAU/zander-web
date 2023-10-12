@@ -28,11 +28,8 @@
           <table class="table">
                 <thead>
                     <tr>
-                        <th>Name</th>
-                        <th>FQDN</th>
-                        <th>Address</th>
-                        <th>Port</th>
-                        <th>Visable</th>
+                        <th>Display Name</th>
+                        <th>Connection Address</th>
                         <th>Action</th>
                     </tr>
                 </thead>
@@ -45,17 +42,8 @@
                     <% } else { %>
                         <% apiData.data.forEach(function (server) { %>
                             <tr>
-                                <td><%= server.name %></td>
-                                <td><%= server.fqdn %></td>
-                                <td><%= server.ipAddress %></td>
-                                <td><%= server.port %></td>
-                                <td>
-                                    <% if (server.visible === 1) { %>
-                                        <i class="fas fa-check-circle" style="color:green"></i>
-                                    <% } else { %>
-                                        <i class="fas fa-times-circle" style="color: red;"></i>
-                                    <% } %>
-                                </td>
+                                <td><%= server.displayName %></td>
+                                <td><%= server.serverConnectionAddress %></td>
                                 <td>
                                     <div class="btn-group">
                                         <a href="/dashboard/servers/edit?id=<%= server.serverId %>"><button class="btn btn-sm btn-warning" type="button">Edit</button></a>

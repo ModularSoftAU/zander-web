@@ -36,88 +36,44 @@
             <div class="row">
                 <!-- Server Name -->
                 <div class="form-group col">
-                    <label for="name">Server Name</label>
+                    <label for="displayName">Server Display Name</label>
 
                     <% if (type === 'create') { %>
                         <%- include("../../partials/form/inputText.ejs", {
-                            elementName: "name",
+                            elementName: "displayName",
                             elementValue: null,
                             required: true
                         }) %>
                     <% } %>
                     <% if (type === 'edit') { %>
                         <%- include("../../partials/form/inputText.ejs", {
-                            elementName: "name",
-                            elementValue: serverApiData.name,
+                            elementName: "displayName",
+                            elementValue: serverApiData.displayName,
                             required: true
                         }) %>
                     <% } %>
                 </div>
 
-                <!-- Server FQDN -->
+                <!-- Server Connection Address -->
                 <div class="form-group col">
-                    <label for="fqdn">Server FQDN</label>
+                    <label for="serverConnectionAddress">Server Connection Address</label>
 
                     <% if (type === 'create') { %>
                         <%- include("../../partials/form/inputText.ejs", {
-                            elementName: "fqdn",
+                            elementName: "serverConnectionAddress",
                             elementValue: null,
                             required: false
                         }) %>
                     <% } %>
                     <% if (type === 'edit') { %>
                         <%- include("../../partials/form/inputText.ejs", {
-                            elementName: "fqdn",
-                            elementValue: serverApiData.fqdn,
+                            elementName: "serverConnectionAddress",
+                            elementValue: serverApiData.serverConnectionAddress,
                             required: false
                         }) %>
                     <% } %>
                 </div>
-            </div>
 
-            <div class="row">
-                <!-- Server Name -->
-                <div class="form-group col">
-                    <label for="ipAddress">Server Address</label>
-
-                    <% if (type === 'create') { %>
-                        <%- include("../../partials/form/inputText.ejs", {
-                            elementName: "ipAddress",
-                            elementValue: null,
-                            required: true
-                        }) %>
-                    <% } %>
-                    <% if (type === 'edit') { %>
-                        <%- include("../../partials/form/inputText.ejs", {
-                            elementName: "ipAddress",
-                            elementValue: serverApiData.ipAddress,
-                            required: true
-                        }) %>
-                    <% } %>
-                </div>
-
-                <!-- Server Port -->
-                <div class="form-group col">
-                    <label for="port">Server Port</label>
-
-                    <% if (type === 'create') { %>
-                        <%- include("../../partials/form/inputText.ejs", {
-                            elementName: "port",
-                            elementValue: null,
-                            required: true
-                        }) %>
-                    <% } %>
-                    <% if (type === 'edit') { %>
-                        <%- include("../../partials/form/inputText.ejs", {
-                            elementName: "port",
-                            elementValue: serverApiData.port,
-                            required: true
-                        }) %>
-                    <% } %>
-                </div>
-            </div>
-
-            <div class="row">
                 <!-- Server Position -->
                 <div class="form-group col">
                     <label for="position">Server Position</label>
@@ -134,66 +90,6 @@
                             elementName: "position",
                             elementValue: serverApiData.position,
                             required: true
-                        }) %>
-                    <% } %>
-                </div>
-
-                <!-- Server Visability -->
-                <div class="form-group col">
-                    <label for="visible">Server Visability</label>
-
-                    <% if (type === 'create') { %>
-                        <%- include("../../partials/form/inputSelect.ejs", {
-                            elementName: "visible",
-                            elementValue: "null",
-                            required: true,
-                            optionElements: [
-                                {
-                                    optionName: "Select a Visability",
-                                    optionValue: "null",
-                                    selected: true,
-                                    disabled: true
-                                },
-                                {
-                                    optionName: "Show",
-                                    optionValue: "1",
-                                    selected: false,
-                                    disabled: false
-                                },
-                                {
-                                    optionName: "Hide",
-                                    optionValue: "0",
-                                    selected: false,
-                                    disabled: false
-                                }
-                            ]
-                        }) %>
-                    <% } %>
-                    <% if (type === 'edit') { %>
-                        <%- include("../../partials/form/inputSelect.ejs", {
-                            elementName: "visible",
-                            elementValue: serverApiData.visible,
-                            required: true,
-                            optionElements: [
-                                {
-                                    optionName: "Select a Visability",
-                                    optionValue: "null",
-                                    selected: true,
-                                    disabled: true
-                                },
-                                {
-                                    optionName: "Show",
-                                    optionValue: "1",
-                                    selected: false,
-                                    disabled: false
-                                },
-                                {
-                                    optionName: "Hide",
-                                    optionValue: "0",
-                                    selected: false,
-                                    disabled: false
-                                }
-                            ]
                         }) %>
                     <% } %>
                 </div>

@@ -138,10 +138,8 @@ CREATE TABLE servers (
 	serverId INT NOT NULL AUTO_INCREMENT,
     displayName TEXT,
     serverConnectionAddress TEXT,
-    visible BOOLEAN DEFAULT 0,
     position INT,
-    PRIMARY KEY (serverId),
-    INDEX servers_visible (visible)
+    PRIMARY KEY (serverId)
 );
 
 CREATE TABLE gameSessions (

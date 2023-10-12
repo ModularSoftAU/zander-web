@@ -20,10 +20,10 @@
 										}) %>
 									  <% } else { %>
 										<% apiData.data.forEach(function (server) { %>
-										  <!-- <%= server.name %> Server -->
+										  <!-- <%= server.displayName %> Server -->
 										  	<div class="feature-item mb-5 mb-lg-0">
-												<h4 class="mb-3"><%= server.name %></h4>
-												<input type="text" class="form-control input-default text-center" value="<%= server.fqdn %>" disabled>
+												<h4 class="mb-3"><%= server.displayName %></h4>
+												<input type="text" class="form-control input-default text-center" value="<%= server.serverConnectionAddress %>" disabled>
 											</div>
 										<% }) %>
 									  <% } %>
