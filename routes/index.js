@@ -78,10 +78,17 @@ export default function applicationSiteRoutes(app, client, fetch, moment, config
     });
 
     // 
-    // Discord Redirect
+    // Webstore Redirect
     // 
     app.get('/webstore', async function (req, res) {
         return res.redirect(config.siteConfiguration.platforms.webstore);
+    });
+
+    // 
+    // Guides Redirect
+    // 
+    app.get('/knowledgebase', async function (req, res) {
+        return res.redirect(`https://guides.craftingforchrist.net/`);
     });
 
 }
