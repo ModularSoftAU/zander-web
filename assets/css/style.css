@@ -1531,3 +1531,8 @@ a:focus {
 .communityCreationItem {
   padding: 20px;
 }
+
+/* Dashboard View */
+.dashboardview {
+  min-height: 450px;
+}
