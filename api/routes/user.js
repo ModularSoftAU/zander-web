@@ -1,10 +1,9 @@
-import {isFeatureEnabled, required, optional} from '../common'
+import {required, optional} from '../common'
 
 export default function userApiRoute(app, config, db, features, lang) {
     const baseEndpoint = '/api/user';
 
     app.post(baseEndpoint + '/create', async function(req, res) {
-        isFeatureEnabled(features.web.login, res, features, lang);
         const uuid = required(req.body, "uuid", res);
         const username = required(req.body, "username", res);
 
@@ -57,33 +56,9 @@ export default function userApiRoute(app, config, db, features, lang) {
     // TODO: Update docs
     app.get(baseEndpoint + '/get', async function(req, res) {
         const username = optional(req.query, "username");
-        const fetchAll = optional(req.query, "fetchAll");
         
         try {
-            if (fetchAll) {
-                db.query(`SELECT * FROM users;`, function (error, results, fields) {
-                    if (error) {
-                        return res.send({
-                            success: false,
-                            message: error
-                        });
-                    }
-
-                    console.log(results);
-
-                    if (!results || !results.length) {
-                        return res.send({
-                            success: false,
-                            message: lang.api.userDoesNotExist
-                        });
-                    }
-
-                    res.send({
-                        success: true,
-                        data: results
-                    });
-                });                
-            } else {
+            if (username) {
                 db.query(`SELECT * FROM users WHERE username=?;`, [username], function (error, results, fields) {
                     if (error) {
                         return res.send({
@@ -92,8 +67,6 @@ export default function userApiRoute(app, config, db, features, lang) {
                         });
                     }
 
-                    console.log(results);
-
                     if (!results || !results.length) {
                         return res.send({
                             success: false,
@@ -105,7 +78,28 @@ export default function userApiRoute(app, config, db, features, lang) {
                         success: true,
                         data: results
                     });
-                });   
+                });          
+            } else {
+                db.query(`SELECT * FROM users;`, function (error, results, fields) {
+                    if (error) {
+                        return res.send({
+                            success: false,
+                            message: error
+                        });
+                    }
+
+                    if (!results || !results.length) {
+                        return res.send({
+                            success: false,
+                            message: `No Users found`
+                        });
+                    }
+
+                    res.send({
+                        success: true,
+                        data: results
+                    });
+                });                   
             }
         } catch (error) {
             return res.send({
