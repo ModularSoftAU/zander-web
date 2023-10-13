@@ -11,7 +11,7 @@
             "guildMemberVerify": true
         }
     },
-    "servers": true,
+    "server": true,
     "filter": {
         "link": true,
         "phrase": true

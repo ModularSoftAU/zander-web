@@ -5,7 +5,7 @@ export default function serverApiRoute(app, config, db, features, lang) {
 
     // TODO: Update docs
     app.get(baseEndpoint + '/get', async function(req, res) {
-        isFeatureEnabled(features.servers, res, lang);
+        isFeatureEnabled(features.server, res, lang);
         const serverId = optional(req.query, "serverId");
 
         try {
@@ -21,7 +21,7 @@ export default function serverApiRoute(app, config, db, features, lang) {
                     if (!results.length) {
                         res.send({
                             success: false,
-                            message: lang.server.noServers
+                            message: lang.server.noServer
                         });
                     }
 
@@ -99,7 +99,7 @@ export default function serverApiRoute(app, config, db, features, lang) {
     });
 
     app.post(baseEndpoint + '/create', async function(req, res) {
-        isFeatureEnabled(features.servers, res, lang);
+        isFeatureEnabled(features.server, res, lang);
 
         const actioningUser = required(req.body, "actioningUser", res);
         const displayName = required(req.body, "displayName", res);
@@ -143,7 +143,7 @@ export default function serverApiRoute(app, config, db, features, lang) {
     });
 
     app.post(baseEndpoint + '/edit', async function(req, res) {
-        isFeatureEnabled(features.servers, res, lang);
+        isFeatureEnabled(features.server, res, lang);
 
         const actioningUser = required(req.body, "actioningUser", res);
         const serverId = required(req.body, "serverId", res);
@@ -193,7 +193,7 @@ export default function serverApiRoute(app, config, db, features, lang) {
     });
 
     app.post(baseEndpoint + '/delete', async function(req, res) {
-        isFeatureEnabled(features.servers, res, lang);
+        isFeatureEnabled(features.server, res, lang);
 
         const actioningUser = required(req.body, "actioningUser", res);
         const serverId = required(req.body, "serverId", res);

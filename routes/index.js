@@ -30,7 +30,7 @@ export default function applicationSiteRoutes(app, client, fetch, moment, config
     // Play
     // 
     app.get('/play', async function (req, res) {
-        isFeatureWebRouteEnabled(features.servers, req, res, features);
+        isFeatureWebRouteEnabled(features.server, req, res, features);
 
         const fetchURL = `${process.env.siteAddress}/api/server/get?visible=true`;
         const response = await fetch(fetchURL, {
