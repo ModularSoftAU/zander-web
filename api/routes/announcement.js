@@ -42,21 +42,21 @@ export default function announcementApiRoute(app, config, db, features, lang) {
 
             // Get 1 web announcement
             if (announcementType === 'web') {
-                let dbQuery = `SELECT * FROM announcements WHERE announcementType='web' ORDER BY RAND() LIMIT 1;`
+                let dbQuery = `SELECT * FROM announcements WHERE announcementType='web' AND enabled=1 ORDER BY RAND() LIMIT 1;`
                 getAnnouncements(dbQuery);
                 return res;
             }
 
             // Get 1 tip announcement
             if (announcementType === 'tip') {
-                let dbQuery = `SELECT * FROM announcements WHERE announcementType='tip' ORDER BY RAND() LIMIT 1;`
+                let dbQuery = `SELECT * FROM announcements WHERE announcementType='tip' AND enabled=1 ORDER BY RAND() LIMIT 1;`
                 getAnnouncements(dbQuery);
                 return res;
             }
 
             // Get 1 motd announcement
             if (announcementType === 'motd') {
-                let dbQuery = `SELECT * FROM announcements WHERE announcementType='motd' ORDER BY RAND() LIMIT 1;`
+                let dbQuery = `SELECT * FROM announcements WHERE announcementType='motd' AND enabled=1 ORDER BY RAND() LIMIT 1;`
                 getAnnouncements(dbQuery);
                 return res;
             }
@@ -101,7 +101,7 @@ export default function announcementApiRoute(app, config, db, features, lang) {
         const link = optional(req.body, "link", res);
 
         try {
-            db.query(`INSERT INTO announcements (enabled, body, announcementType, link, colourMessageFormat) VALUES (?, ?, ?, ?, ?, ?)`, [announcementSlug, enabled, body, announcementType, link, colourMessageFormat], function(error, results, fields) {
+            db.query(`INSERT INTO announcements (enabled, body, announcementType, link, colourMessageFormat) VALUES (?, ?, ?, ?, ?)`, [enabled, body, announcementType, link, colourMessageFormat, Date.now()], function(error, results, fields) {
                 if (error) {
                     return res.send({
                         success: false,
@@ -109,7 +109,7 @@ export default function announcementApiRoute(app, config, db, features, lang) {
                     });
                 }
 
-                generateLog(actioningUser, "SUCCESS", "ANNOUNCEMENT", `Created ${announcementId}`, res);
+                generateLog(actioningUser, "SUCCESS", "ANNOUNCEMENT", `Created ${announcementType}`, res);
 
                 res.send({
                     success: true,
@@ -148,7 +148,7 @@ export default function announcementApiRoute(app, config, db, features, lang) {
                         body=?,
                         colourMessageFormat=?,
                         link=?
-                    WHERE announcementSId=?;`,
+                    WHERE announcementId=?;`,
                 [
                     enabled,
                     announcementType,

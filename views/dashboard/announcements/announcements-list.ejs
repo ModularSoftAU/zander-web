@@ -28,7 +28,6 @@
         <table class="table">
             <thead>
                 <tr>
-                    <th>Slug Name</th>
                     <th>Type</th>
                     <th>Format</th>
                     <th>Enabled</th>
@@ -44,7 +43,6 @@
                 <% } else { %>
                     <% apiData.data.forEach(function (announcement) { %>
                         <tr>
-                            <td><%= announcement.announcementSlug %></td>
                             <td><span class="badge badge-primary"><%= announcement.announcementType %></span></td>
                             <td><%= announcement.colourMessageFormat %></td>
                             <td>
@@ -56,22 +54,10 @@
                             </td>
                             <td>
                                 <div class="btn-group">
-                                    <% if (announcement.enabled === 0) { %>
-                                        <form action="<%= process.env.siteAddress %>/redirect/announcement/enable" method="post">
-                                            <input type="hidden" name="announcementSlug" value="<%= announcement.announcementSlug %>">
-                                            <button class="btn btn-sm btn-success" type="submit">Enable</button>
-                                        </form>
-                                    <% } else { %>
-                                        <form action="<%= process.env.siteAddress %>/redirect/announcement/disable" method="post">
-                                            <input type="hidden" name="announcementSlug" value="<%= announcement.announcementSlug %>">
-                                            <button class="btn btn-sm btn-danger" type="submit">Disable</button>
-                                        </form>
-                                    <% } %>
-
-                                    <a href="/dashboard/announcements/edit?announcementSlug=<%= announcement.announcementSlug %>"><button class="btn btn-sm btn-warning" type="button">Edit</button></a>
+                                    <a href="/dashboard/announcements/edit?announcementId=<%= announcement.announcementId %>"><button class="btn btn-sm btn-warning" type="button">Edit</button></a>
 
                                     <form action="<%= process.env.siteAddress %>/redirect/announcement/delete" method="post">
-                                        <input type="hidden" name="announcementSlug" value="<%= announcement.announcementSlug %>">
+                                        <input type="hidden" name="announcementId" value="<%= announcement.announcementId %>">
                                         <input type="hidden" name="actioningUser" value="<%= req.session.user.userId %>">
                                         <button class="btn btn-sm btn-danger" type="submit">Delete</button>
                                     </form>
