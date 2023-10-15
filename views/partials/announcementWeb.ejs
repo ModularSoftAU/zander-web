@@ -1,0 +1,10 @@
+<% if (announcementData) { %>
+    <a href="<%= announcementData.link %>">
+        <div class="announcementWebBanner">
+            <small><%= announcementData.body %></small><br>
+            <% if (announcementData.link) { %>
+                <small>Click me for more information.</small>
+            <% } %>
+        </div>
+    </a>
+<% } %>

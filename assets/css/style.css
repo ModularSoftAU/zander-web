@@ -1536,3 +1536,11 @@ a:focus {
 .dashboardview {
   min-height: 450px;
 }
+
+/* Announcement Web Banner */
+.announcementWebBanner {
+  color: black;
+  background-color: #92b4f2;
+  text-align: center;
+  padding: 15px;
+}

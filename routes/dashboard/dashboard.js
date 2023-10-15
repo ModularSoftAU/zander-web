@@ -1,6 +1,7 @@
 import moment from "moment/moment";
 import fetch from "node-fetch";
 import { getGlobalImage, hasPermission } from "../../api/common";
+import { getWebAnnouncement } from "../../controllers/announcementController";
 
 export default function dashbordSiteRoute(app, config, features, lang) {
 
@@ -16,7 +17,8 @@ export default function dashbordSiteRoute(app, config, features, lang) {
             config: config,
             features: features,
             req: req,
-            globalImage: await getGlobalImage()
+            globalImage: await getGlobalImage(),
+            announcementWeb: await getWebAnnouncement()
         });
 
         return res;
@@ -42,7 +44,8 @@ export default function dashbordSiteRoute(app, config, features, lang) {
             features: features,
             req: req,
             globalImage: getGlobalImage(),
-            moment: moment
+            moment: moment,
+            announcementWeb: await getWebAnnouncement()
         });
 
         return res;
