@@ -161,7 +161,6 @@ CREATE TABLE announcements (
     body TEXT,
     colourMessageFormat TEXT,
     link TEXT,
-    createdDate DATETIME NOT NULL DEFAULT NOW(),
     updatedDate DATETIME,
     PRIMARY KEY (announcementId)
 );

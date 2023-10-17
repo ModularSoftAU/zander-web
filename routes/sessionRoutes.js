@@ -1,6 +1,7 @@
 import bcrypt from 'bcrypt';
 import { isFeatureWebRouteEnabled, setBannerCookie, getGlobalImage } from "../api/common";
 import { getProfilePicture } from '../controllers/userController';
+import { getWebAnnouncement } from '../controllers/announcementController';
 
 export default function sessionSiteRoute(app, client, fetch, moment, config, db, features, lang) {
 
@@ -17,6 +18,7 @@ export default function sessionSiteRoute(app, client, fetch, moment, config, db,
 			req: req,
             features: features,
 			globalImage: await getGlobalImage(),
+			announcementWeb: await getWebAnnouncement()
         });
 
 		return res;
@@ -32,6 +34,7 @@ export default function sessionSiteRoute(app, client, fetch, moment, config, db,
 			req: req,
             features: features,
 			globalImage: await getGlobalImage(),
+			announcementWeb: await getWebAnnouncement()
         });
 
 		return res;

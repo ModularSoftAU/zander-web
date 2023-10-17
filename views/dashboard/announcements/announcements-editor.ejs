@@ -10,7 +10,7 @@
   backgroundImage: globalImage
 }) %>
 
-<div class="row">
+<div class="row dashboardview">
     <div class="col-sm-2">
       <%- include("../../modules/dashboard/dashboard-sidebar.ejs") %>
     </div>
@@ -23,8 +23,8 @@
             <% if (type === 'edit') { %>
                 <form method="post" action="<%= process.env.siteAddress %>/redirect/announcement/edit">
                     <%- include("../../partials/form/inputHidden.ejs", {
-                        elementName: "slug",
-                        elementValue: announcementApiData.announcementSlug
+                        elementName: "announcementId",
+                        elementValue: announcementApiData.announcementId
                     }) %>
             <% } %>
 
@@ -34,26 +34,6 @@
             }) %>
             
                     <div class="row">
-                        <!-- Announcement Slug -->
-                        <div class="form-group col">
-                            <label for="name">Announcement Slug</label>
-
-                            <% if (type === 'create') { %>
-                                <%- include("../../partials/form/inputText.ejs", {
-                                    elementName: "announcementSlug",
-                                    elementValue: null,
-                                    required: true
-                                }) %>
-                            <% } %>
-                            <% if (type === 'edit') { %>
-                                <%- include("../../partials/form/inputText.ejs", {
-                                    elementName: "announcementSlug",
-                                    elementValue: announcementApiData.announcementSlug,
-                                    required: true
-                                }) %>
-                            <% } %>
-                        </div>
-
                         <!-- Announcement Type -->
                         <div class="form-group col">
                             <label for="announcementType">Announcement Type</label>
