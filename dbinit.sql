@@ -5,7 +5,7 @@ USE zanderDev;
 CREATE TABLE users (
 	userId INT NOT NULL AUTO_INCREMENT,
 	uuid VARCHAR(36) NOT NULL,
-	username VARCHAR(16),
+	username VARCHAR(16) NOT NULL,
 	emailHash TEXT,
 	email VARCHAR(200),
 	password TEXT,
