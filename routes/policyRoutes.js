@@ -1,4 +1,5 @@
 import { getGlobalImage } from "../api/common";
+import { getWebAnnouncement } from "../controllers/announcementController";
 
 export default function policySiteRoute(app, config, features) {
 
@@ -9,6 +10,7 @@ export default function policySiteRoute(app, config, features) {
             req: req,
             features: features,
             globalImage: await getGlobalImage(),
+            announcementWeb: await getWebAnnouncement()
         });
     });
 
@@ -19,6 +21,7 @@ export default function policySiteRoute(app, config, features) {
             req: req,
             features: features,
             globalImage: await getGlobalImage(),
+            announcementWeb: await getWebAnnouncement()
         });
     });
 
@@ -29,6 +32,7 @@ export default function policySiteRoute(app, config, features) {
             req: req,
             features: features,
             globalImage: await getGlobalImage(),
+            announcementWeb: await getWebAnnouncement()
         });
     });
 
@@ -39,6 +43,7 @@ export default function policySiteRoute(app, config, features) {
             req: req,
             features: features,
             globalImage: await getGlobalImage(),
+            announcementWeb: await getWebAnnouncement()
         });
     });
 

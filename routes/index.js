@@ -2,6 +2,7 @@ import dashboardSiteRoutes from './dashboard'
 import policySiteRoutes from './policyRoutes'
 import sessionRoutes from './sessionRoutes'
 import { isFeatureWebRouteEnabled, getGlobalImage } from "../api/common";
+import { getWebAnnouncement } from '../controllers/announcementController';
 
 export default function applicationSiteRoutes(app, client, fetch, moment, config, db, features, lang) {
 
@@ -22,7 +23,8 @@ export default function applicationSiteRoutes(app, client, fetch, moment, config
             req: req,
             features: features,
             globalImage: await getGlobalImage(),
-            statApiData: statApiData
+            statApiData: statApiData,
+            announcementWeb: await getWebAnnouncement()
         });
     });
 
@@ -45,6 +47,7 @@ export default function applicationSiteRoutes(app, client, fetch, moment, config
             apiData: apiData,
             features: features,
             globalImage: await getGlobalImage(),
+            announcementWeb: await getWebAnnouncement()
         });
     });
 
@@ -67,6 +70,7 @@ export default function applicationSiteRoutes(app, client, fetch, moment, config
             apiData: apiData,
             features: features,
             globalImage: await getGlobalImage(),
+            announcementWeb: await getWebAnnouncement()
         });
     });
 
