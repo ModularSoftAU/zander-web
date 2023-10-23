@@ -143,11 +143,13 @@ const buildApp = async () => {
     });
 
     try {
-        app.listen({ port: process.env.PORT }, (err) => {
+        const port = process.env.PORT;
+
+        app.listen({ port: port, host: '0.0.0.0' }, (err) => {
             if (err) {
-                app.log.error(err)
-                process.exit(1)
-              }
+                app.log.error(err);
+                process.exit(1);
+            }
         })
 
         console.log(`\n// ${packageData.name} v.${packageData.version}\nGitHub Repository: ${packageData.homepage}\nCreated By: ${packageData.author}`);
