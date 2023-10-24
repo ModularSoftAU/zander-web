@@ -13,7 +13,7 @@ import config from './config.json' assert {type: "json"};
 import features from './features.json' assert {type: "json"};
 import lang from './lang.json' assert {type: "json"};
 import db from './controllers/databaseController';
-import { getWebAnnouncement } from '../controllers/announcementController';
+import { getWebAnnouncement } from './controllers/announcementController';
 
 // Paths
 import path from 'path';
