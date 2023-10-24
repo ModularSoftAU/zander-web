@@ -1,7 +1,6 @@
 import packageData from './package.json' assert {type: "json"};
 import moment from 'moment';
 import fetch from 'node-fetch';
-// import { SapphireClient } from '@sapphire/framework';
 import dotenv from 'dotenv';
 dotenv.config()
 
@@ -20,27 +19,6 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-
-// //
-// // Discord
-// //
-// const client = new SapphireClient({
-//     intents: [
-//         'GUILDS',
-//         'GUILD_MESSAGES',
-//         'GUILD_MEMBERS',
-//         'GUILD_VOICE_STATES',
-//     ],
-//     presence: {
-//         status: "online",
-//         activities: [{
-//             name: process.env.siteAddress,
-//             type: 'PLAYING'
-//         }]
-//     }
-// });
-
-// client.login(process.env.discordAPIKey);
 
 import('./controllers/discordController.js');
 
@@ -64,20 +42,6 @@ import { client } from './controllers/discordController';
 const buildApp = async () => {
     
     const app = fastify({ logger: config.debug });
-
-    // When app can't found route, render the not found on a page, do not provide JSON
-    // app.setNotFoundHandler((error, req, res) => {
-    //     if (error) {
-    //         res.code(404);
-    //         res.view('session/notFound', {
-    //             "pageTitle": `404 : Not Found`,
-    //             config: config,s
-    //             moment: moment,
-    //             req: req,
-    //             features: features
-    //         });
-    //     }
-    // });
   
     // When app errors, render the error on a page, do not provide JSON
     app.setErrorHandler(async function (error, req, res) {        
