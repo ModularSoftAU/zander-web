@@ -2,7 +2,8 @@ import mysql from 'mysql';
 import dotenv from 'dotenv';
 dotenv.config()
 
-var connection = mysql.createConnection({
+var pool = mysql.createPool({
+  connectionLimit: 10,
   host: process.env.databaseHost,
   port: process.env.databasePort,
   user: process.env.databaseUser,
@@ -11,13 +12,13 @@ var connection = mysql.createConnection({
   multipleStatements: true
 });
 
-connection.connect(function(err) {
+pool.getConnection(function(err) {
   if (err) {
     console.error(`[ERROR] [DB] There was an error connecting:\n ${err.stack}`);
-    connection.connect();
+    pool.connect();
     return;
   }
-  console.log(`[CONSOLE] [DB] Database connection is successful. Your connection ID is ${connection.threadId}.`);
+  console.log(`[CONSOLE] [DB] Database pool connection is successful.`);
 });
 
-export default connection;
+export default pool;
