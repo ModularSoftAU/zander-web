@@ -33,7 +33,7 @@ export class PlayCommand extends Command {
 
         interaction.reply({
             embeds: [embed],
-            ephemeral: true // Corrected 'empheral' to 'ephemeral'
+            empheral: true
         });
     }
 }
