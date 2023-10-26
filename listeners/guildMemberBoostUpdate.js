@@ -20,7 +20,7 @@ export class GuildMemberBoostUpdateListener extends Listener {
       const oldStatus = oldMember.premiumSince;
       const newStatus = newMember.premiumSince;
 
-      let welcomechannel = newMember.guild.channels.cache.find(c => c.id === config.discord.channels.welcomeChannel);
+      let welcomechannel = newMember.guild.channels.cache.find(c => c.id === config.discord.channels.welcome);
       if (!welcomechannel) return;
 
       if (!oldStatus && newStatus) {

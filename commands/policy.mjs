@@ -28,7 +28,7 @@ export class PolicyCommand extends Command {
 
     const messageContent = {
       embeds: [embed],
-      ephemeral: true,
+      ephemeral: true
     };
 
     interaction.reply(messageContent);
