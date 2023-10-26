@@ -21,7 +21,7 @@ export class GuildMemberUpdateListener extends Listener {
       const oldRole = oldMember.roles.cache.has(config.discord.roles.verified);
       const newRole = newMember.roles.cache.has(config.discord.roles.verified);
 
-      let welcomechannel = newMember.guild.channels.cache.find(channel => channel.id === config.discord.channels.welcomeChannel);
+      let welcomechannel = newMember.guild.channels.cache.find(channel => channel.id === config.discord.channels.welcome);
       if (!welcomechannel) return;
 
       // Grab random letters and numbers to get a HEX Colour.
