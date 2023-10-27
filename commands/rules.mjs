@@ -16,6 +16,7 @@ export class RulesCommand extends Command {
     const embed = new EmbedBuilder()
       .setTitle(`Network Rules`)
       .setDescription(`Please ensure you follow and abide by the rules which you can read here: ${process.env.siteAddress}/rules`)
+      .setColor(Colors.DarkGold)
 
       interaction.reply({
         embeds: [embed],

@@ -16,6 +16,7 @@ export class PolicyCommand extends Command {
   async chatInputRun(interaction) {
     const embed = new EmbedBuilder()
       .setTitle('Network Policy')
+      .setColor(Colors.DarkGold)
       .setDescription('For user reference, here is a link to all Network policies.\nBy joining the Network and using our services you agree to all our policies.')
       .addFields(
         { name: 'Rules', value: `${process.env.siteAddress}/rules`, inline: false },

@@ -1,5 +1,5 @@
 import { Command, RegisterBehavior } from '@sapphire/framework';
-import { EmbedBuilder } from 'discord.js';
+import { Colors, EmbedBuilder } from 'discord.js';
 import fetch from 'node-fetch';
 
 export class PlayCommand extends Command {
@@ -23,10 +23,11 @@ export class PlayCommand extends Command {
         const embed = new EmbedBuilder()
             .setTitle(`Network Servers`)
             .setDescription(`Get started! Jump on and play with our community!`)
+            .setColor(Colors.DarkGold)
 
         // Loop through the server data and add them to the embed
         apiData.data.forEach(server => {
-            embed.addField(server.displayName, `${server.serverConnectionAddress}`);
+            embed.addFields({ name: server.displayName, value: server.serverConnectionAddress, inline: true });
         });
 
         interaction.reply({

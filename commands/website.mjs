@@ -16,6 +16,7 @@ export class WebsiteCommand extends Command {
     const embed = new EmbedBuilder()
       .setTitle(`Network Website`)
       .setDescription(`For more info and to get involved with the community, jump on our website ${process.env.siteAddress}`)
+      .setColor(Colors.DarkGold)
 
       interaction.reply({
         embeds: [embed],
