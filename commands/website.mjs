@@ -3,15 +3,13 @@ import { EmbedBuilder } from 'discord.js';
 
 export class WebsiteCommand extends Command {
   constructor(context, options) {
-    super(context, {
-      ...options,
-      name: 'website',
-      description: 'Display Network Website',
-      chatInputCommand: {
-        register: true,
-        behaviorWhenNotIdentical: RegisterBehavior.Overwrite
-      }
-    });
+    super(context, { ...options });
+  }
+
+  registerApplicationCommands(registry) {
+    registry.registerChatInputCommand((builder) =>
+      builder.setName('website').setDescription('Display link to the Network Website')
+    );
   }
 
   async chatInputRun(interaction) {

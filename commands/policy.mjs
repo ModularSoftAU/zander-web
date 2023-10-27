@@ -4,15 +4,13 @@ const { EmbedBuilder } = pkg;
 
 export class PolicyCommand extends Command {
   constructor(context, options) {
-    super(context, {
-      ...options,
-      name: 'policy',
-      description: 'Display Network policy (Rules, Terms, Privacy, and Refund)',
-      chatInputCommand: {
-        register: true,
-        behaviorWhenNotIdentical: RegisterBehavior.Overwrite
-      },
-    });
+    super(context, { ...options });
+  }
+
+  registerApplicationCommands(registry) {
+    registry.registerChatInputCommand((builder) =>
+      builder.setName('policy').setDescription('Display Network policy (Rules, Terms, Privacy, and Refund)')
+    );
   }
 
   async chatInputRun(interaction) {

@@ -3,15 +3,13 @@ import { EmbedBuilder } from 'discord.js';
 
 export class RulesCommand extends Command {
   constructor(context, options) {
-    super(context, {
-      ...options,
-      name: 'rules',
-      description: 'Display link to the Network Rules',
-      chatInputCommand: {
-        register: true,
-        behaviorWhenNotIdentical: RegisterBehavior.Overwrite
-      }      
-    });
+    super(context, { ...options });
+  }
+
+  registerApplicationCommands(registry) {
+    registry.registerChatInputCommand((builder) =>
+      builder.setName('rules').setDescription('Display link to the Network Rules')
+    );
   }
 
   async chatInputRun(interaction) {

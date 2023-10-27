@@ -4,15 +4,13 @@ import features from '../features.json' assert {type: "json"};
 
 export class LegoFlipCommand extends Command {
   constructor(context, options) {
-    super(context, {
-      ...options,
-      name: 'legoflip',
-      description: 'A simple lego flip!',
-      chatInputCommand: {
-        register: true,
-        behaviorWhenNotIdentical: RegisterBehavior.Overwrite
-      },
-    });
+    super(context, { ...options });
+  }
+
+  registerApplicationCommands(registry) {
+    registry.registerChatInputCommand((builder) =>
+      builder.setName('legoflip').setDescription('A simple lego flip!')
+    );
   }
 
   async chatInputRun(interaction) {

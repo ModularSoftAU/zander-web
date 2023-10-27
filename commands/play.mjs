@@ -4,15 +4,13 @@ import fetch from 'node-fetch';
 
 export class PlayCommand extends Command {
     constructor(context, options) {
-        super(context, {
-            ...options,
-            name: 'play',
-            description: 'Display all Network servers to play on.',
-            chatInputCommand: {
-                register: true,
-                behaviorWhenNotIdentical: RegisterBehavior.Overwrite
-            }
-        });
+        super(context, { ...options });
+    }
+
+    registerApplicationCommands(registry) {
+        registry.registerChatInputCommand((builder) =>
+            builder.setName('play').setDescription('Display all Network servers to play on.')
+        );
     }
 
     async chatInputRun(interaction) {
