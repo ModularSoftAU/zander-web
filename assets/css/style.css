@@ -439,6 +439,14 @@ a:focus {
   color: #fff;
 }
 
+/* Media query for mobile devices (adjust the max-width as needed) */
+@media (max-width: 767px) {
+  .header-top-bar {
+    padding: 5px 0;
+    font-size: 10px;
+  }
+}
+
 .top-bar-info li a {
   color: #fff;
   margin-right: 20px;
