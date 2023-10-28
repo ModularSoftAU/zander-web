@@ -445,6 +445,12 @@ a:focus {
     padding: 5px 0;
     font-size: 10px;
   }
+
+  .youtube-home-player {
+    height: 250px;
+    width: 450px;
+    margin-top: -150px;
+  }
 }
 
 .top-bar-info li a {
