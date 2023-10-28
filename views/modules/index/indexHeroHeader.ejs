@@ -1,5 +1,5 @@
 <!-- Slider Start -->
-<section class="banner" style="background: url(<%= globalImage %>) no-repeat 50% 50%;">
+<section class="banner" style="background: url(<%= globalImage %>) no-repeat 50% 50%; background-size:cover">
 	<div class="container">
 		<% if (req.cookies.alertType) { %>
 			<br>
@@ -22,14 +22,14 @@
 						<p>By the grace God has given me, I laid a foundation as a wise builder, and someone else is building on it. But each one should build with care. For no one can lay any foundation other than the one already laid, which is Jesus Christ.<br>1 Corinthians 3:10-11</p>
 					</div>
 					<div class="btn-container ">
-						<a href="/play" class="btn btn-main-2 btn-icon btn-round-full">Let's Play <i class="icofont-simple-right ml-2 "></i></a>
+						<a href="/play" class="btn btn-main-2 btn-icon btn-round-full">Let's Play <i class="fa-solid fa-right-long"></i></a>
 					</div>
 				</div>
 			</div>
 
 			<div class="col-lg-4">
 				<div class="block">
-					<iframe width="430" height="240" src="https://www.youtube.com/embed/ceKiwsIuiA8" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+					<iframe class="youtube-home-player" width="430" height="240" src="https://www.youtube.com/embed/ceKiwsIuiA8" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
 				</div>
 			</div>
 		</div>
