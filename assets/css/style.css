@@ -547,7 +547,7 @@ a:focus {
 @media (max-width: 768px) {
   .banner .block h1 {
     font-size: 56px;
-    line-height: -2px !important;
+    line-height: 60px;
   }
 }
 
