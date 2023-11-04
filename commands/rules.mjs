@@ -20,7 +20,7 @@ export class RulesCommand extends Command {
 
       interaction.reply({
         embeds: [embed],
-        empheral: true
+        empheral: false
       });
   }
 }

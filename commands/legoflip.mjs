@@ -9,7 +9,7 @@ export class LegoFlipCommand extends Command {
 
   registerApplicationCommands(registry) {
     registry.registerChatInputCommand((builder) =>
-      builder.setName('legoflip').setDescription('A simple lego flip!')
+      builder.setName('legoflip').setDescription('A simple lego flip! (Coin flip)')
     );
   }
 
@@ -21,7 +21,8 @@ export class LegoFlipCommand extends Command {
         .setImage(`https://crafatar.com/avatars/2a881594693543c99c39ec31374d46fe?overlay`)
   
         interaction.reply({
-          embeds: [embed]
+          embeds: [embed],
+          empheral: false
         });
       } else {
         const embed = new MessageEmbed()
@@ -29,7 +30,8 @@ export class LegoFlipCommand extends Command {
         .setImage(`https://crafatar.com/avatars/21a6469871f04578830a2ab0ac2f4d48?overlay`)
   
         interaction.reply({
-          embeds: [embed]
+          embeds: [embed],
+          empheral: false
         });        
       }
     } else {

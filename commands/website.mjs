@@ -20,7 +20,7 @@ export class WebsiteCommand extends Command {
 
       interaction.reply({
         embeds: [embed],
-        empheral: true
+        empheral: false
       });
   }
 }

@@ -32,7 +32,7 @@ export class PlayCommand extends Command {
 
         interaction.reply({
             embeds: [embed],
-            empheral: true
+            empheral: false
         });
     }
 }
