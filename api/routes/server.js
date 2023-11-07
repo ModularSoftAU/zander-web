@@ -12,20 +12,20 @@ export default function serverApiRoute(app, config, db, features, lang) {
             function getServers(dbQuery) {
                 db.query(dbQuery, function(error, results, fields) {
                     if (error) {
-                        res.send({
+                        return res.send({
                             success: false,
                             message: `${error}`
                         });
                     }
 
                     if (!results.length) {
-                        res.send({
+                        return res.send({
                             success: false,
-                            message: lang.server.noServer
+                            message: `There are no servers available.`
                         });
                     }
 
-                    res.send({
+                    return res.send({
                         success: true,
                         data: results
                     });
@@ -63,7 +63,7 @@ export default function serverApiRoute(app, config, db, features, lang) {
                     SELECT
                         COUNT(serverId) AS playersOnline,
                         serverId
-                    FROM gamesessions
+                    FROM gameSessions
                     WHERE sessionEnd IS NULL
                         OR sessionEnd > NOW()
                     GROUP BY serverId
