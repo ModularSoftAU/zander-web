@@ -44,7 +44,7 @@ const buildApp = async () => {
     const app = fastify({ logger: config.debug });
   
     // When app errors, render the error on a page, do not provide JSON
-    app.setErrorHandler(async function (error, req, res) {        
+    app.setErrorHandler(async function (error, req, res) {
         res.view('session/error', {
             "pageTitle": `Server Error`,
             config: config,

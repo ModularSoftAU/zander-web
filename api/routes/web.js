@@ -108,7 +108,7 @@ export default async function webApiRoute(app, config, db, features, lang) {
 
         db.query(`
       SELECT COUNT(*) AS communityMembers FROM users;
-      SELECT CONVERT(SUM(TIMESTAMPDIFF(minute, sessionStart, sessionEnd)), time) AS timePlayed FROM gamesessions;
+      SELECT CONVERT(SUM(TIMESTAMPDIFF(minute, sessionStart, sessionEnd)), time) AS timePlayed FROM gameSessions;
       SELECT COUNT(DISTINCT(u.uuid)) totalStaff FROM userRanks ur JOIN ranks r ON ur.rankSlug = r.rankSlug JOIN users u ON u.uuid = ur.uuid WHERE r.isStaff = 1 AND u.disabled = 0;
   `, async function (err, results) {
             if (err) {
