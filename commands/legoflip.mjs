@@ -25,7 +25,7 @@ export class LegoFlipCommand extends Command {
           empheral: false
         });
       } else {
-        const embed = new MessageEmbed()
+        const embed = new EmbedBuilder()
         .setTitle(`Lego Flip!`)
         .setImage(`https://crafatar.com/avatars/21a6469871f04578830a2ab0ac2f4d48?overlay`)
   
