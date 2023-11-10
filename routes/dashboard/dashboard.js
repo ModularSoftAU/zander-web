@@ -12,7 +12,7 @@ export default function dashbordSiteRoute(app, config, features, lang) {
         if (!hasPermission('zander.web.dashboard', req, res, features))
             return;
 
-        res.view('dashboard/dashboard-index', {
+        return res.view('dashboard/dashboard-index', {
             "pageTitle": `Dashboard`,
             config: config,
             features: features,
@@ -20,8 +20,6 @@ export default function dashbordSiteRoute(app, config, features, lang) {
             globalImage: await getGlobalImage(),
             announcementWeb: await getWebAnnouncement()
         });
-
-        return res;
     });
 
     // 
