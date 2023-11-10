@@ -86,7 +86,7 @@ export default function sessionSiteRoute(app, client, fetch, moment, config, db,
 	  
 	  async function getRankPermissions (allRanks) {
 		return new Promise((resolve) => {
-			db.query(`SELECT DISTINCT permission FROM rankpermissions WHERE FIND_IN_SET(rankSlug, ?)`, [allRanks.join()], async function (err, results) {
+			db.query(`SELECT DISTINCT permission FROM rankPermissions WHERE FIND_IN_SET(rankSlug, ?)`, [allRanks.join()], async function (err, results) {
 				if (err) {
 					throw err;
 				}
