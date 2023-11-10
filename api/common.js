@@ -83,6 +83,7 @@ export async function isFeatureWebRouteEnabled(isFeatureEnabled, req, res, featu
             res: res,
             features: features,
             globalImage: await getGlobalImage(),
+            announcementWeb: await getWebAnnouncement(),
         });
         return false;
     }
