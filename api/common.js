@@ -3,6 +3,7 @@ import fetch from 'node-fetch';
 import { readdirSync } from 'fs';
 import crypto from "crypto";
 import db from "../controllers/databaseController";
+import { getWebAnnouncement } from '../controllers/announcementController';
 
 /*
     Check if a specific feature is enabled.
