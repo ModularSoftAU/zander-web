@@ -20,19 +20,31 @@ export class PlayCommand extends Command {
         });
         const apiData = await response.json();
 
-        const embed = new EmbedBuilder()
-            .setTitle(`Network Servers`)
-            .setDescription(`Get started! Jump on and play with our community!`)
-            .setColor(Colors.DarkGold)
+        if (!apiData.data) {
+            const noServersEmbed = new EmbedBuilder()
+                .setTitle(`No Servers`)
+                .setDescription(apiData.message)
+                .setColor(Colors.Red)
 
-        // Loop through the server data and add them to the embed
-        apiData.data.forEach(server => {
-            embed.addFields({ name: server.displayName, value: server.serverConnectionAddress, inline: true });
-        });
+            interaction.reply({
+                embeds: [noServersEmbed],
+                empheral: false
+            });
+        } else {
+            const embed = new EmbedBuilder()
+                .setTitle(`Network Servers`)
+                .setDescription(`Get started! Jump on and play with our community!`)
+                .setColor(Colors.DarkGold)
 
-        interaction.reply({
-            embeds: [embed],
-            empheral: false
-        });
+            // Loop through the server data and add them to the embed
+            apiData.data.forEach(server => {
+                embed.addFields({ name: server.displayName, value: server.serverConnectionAddress, inline: true });
+            });
+
+            interaction.reply({
+                embeds: [embed],
+                empheral: false
+            });   
+        }
     }
 }
