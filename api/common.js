@@ -86,7 +86,6 @@ export async function isFeatureWebRouteEnabled(isFeatureEnabled, req, res, featu
             globalImage: await getGlobalImage(),
             announcementWeb: await getWebAnnouncement(),
         });
-        return false;
     }
     return true;
 }
@@ -118,8 +117,8 @@ export async function hasPermission(permissionNode, req, res, features) {
             res: res,
             features: features,
             globalImage: await getGlobalImage(),
+            announcementWeb: await getWebAnnouncement()
         });
-        return false;
     }
 
     const userPermissions = req.session.user.permissions;
@@ -136,6 +135,7 @@ export async function hasPermission(permissionNode, req, res, features) {
             res: res,
             features: features,
             globalImage: await getGlobalImage(),
+            announcementWeb: await getWebAnnouncement()
         });
         return false;
     }

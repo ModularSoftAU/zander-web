@@ -191,11 +191,8 @@ export default function sessionSiteRoute(app, client, fetch, moment, config, db,
 		  	throw err;
 		} else {
 			setBannerCookie("success", lang.session.userLogout, res);
-		  	return res.redirect(`${process.env.siteAddress}/`)
+		  	return res.redirect(`${process.env.siteAddress}/`);
 		}
 	})
-
-	return res;
   });
-
 }
