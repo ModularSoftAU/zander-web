@@ -52,52 +52,6 @@ export default function serverApiRoute(app, config, db, features, lang) {
         return res;
     });
 
-    app.get(baseEndpoint + '/users/get', async function(req, res) {
-        try {
-            db.query(`
-                SELECT
-                    s.name,
-                    c.playersOnline
-                FROM servers s
-                RIGHT JOIN (
-                    SELECT
-                        COUNT(serverId) AS playersOnline,
-                        serverId
-                    FROM gameSessions
-                    WHERE sessionEnd IS NULL
-                        OR sessionEnd > NOW()
-                    GROUP BY serverId
-                ) c ON s.serverId = c.serverId
-            `, function(error, results, fields) {
-                if (error) {
-                    return res.send({
-                        success: false,
-                        message: `${error}`
-                    });
-                }
-
-                if (!results.length) {
-                    return res.send({
-                        success: false,
-                        message: `There are no users online.`
-                    });
-                }
-
-                return res.send({
-                    success: true,
-                    data: results
-                });
-            });
-        } catch (error) {
-            return res.send({
-                success: false,
-                message: `${error}`
-            });
-        }
-        
-        return res;
-    });
-
     app.post(baseEndpoint + '/create', async function(req, res) {
         isFeatureEnabled(features.server, res, lang);
 
