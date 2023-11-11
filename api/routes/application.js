@@ -111,8 +111,6 @@ export default function applicationApiRoute(app, config, db, features, lang) {
         const applicationStatus = required(req.body, "applicationStatus", res);
 
         let applicationEditedLang = lang.applications.applicationEdited;
-
-        console.log(req.body);
 		
 		try {
 			db.query(`
