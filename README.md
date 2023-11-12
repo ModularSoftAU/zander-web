@@ -1,10 +1,4 @@
 # zander-web
 The web component of the Zander project that contains database, API and website.
 
-Primary Colour: #2f508c
-Secondary Colour: #1c2f53
-
-Use Node v16.14.2 
-
-Use NVM (Node Version Manager) to switch if you have troubles
-https://github.com/coreybutler/nvm-windows
+Documentation: [https://modularsoft.org/docs/products/zander](https://modularsoft.org/docs/products/zander)
