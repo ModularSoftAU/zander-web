@@ -1,7 +1,7 @@
 import dashboardSiteRoutes from './dashboard'
 import policySiteRoutes from './policyRoutes'
 import sessionRoutes from './sessionRoutes'
-import { isFeatureWebRouteEnabled, getGlobalImage } from "../api/common";
+import { isFeatureWebRouteEnabled, getGlobalImage, isLoggedIn } from "../api/common";
 import { getWebAnnouncement } from '../controllers/announcementController';
 
 export default function applicationSiteRoutes(app, client, fetch, moment, config, db, features, lang) {
@@ -11,6 +11,10 @@ export default function applicationSiteRoutes(app, client, fetch, moment, config
     policySiteRoutes(app, config, features);
 
     app.get('/', async function (req, res) {
+        if (!isLoggedIn(req)) {
+            
+        }
+
         const fetchURL = `${process.env.siteAddress}/api/web/statistics`;
         const response = await fetch(fetchURL, {
             headers: { 'x-access-token': process.env.apiKey }
