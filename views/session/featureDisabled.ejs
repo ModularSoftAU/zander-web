@@ -1,0 +1,35 @@
+<%- include("../modules/header.ejs", {
+  pageTitle: pageTitle,
+  pageDescription: "This feature has been disabled and is not accessible."
+}) %>
+
+<%- include("../modules/navigationBar.ejs", {
+  features: features
+}) %>
+
+<%- include("../partials/miniHeader.ejs", {
+  headerTitle: "Feature Disabled",
+  backgroundImage: globalImage
+}) %>
+
+<section class="section">
+  <div class="container">
+    <div class="row">
+      <div class="col-sm" style="min-height:500px;">
+        <div class="text-center">
+          <img class="floating" style="margin-top:10px;" src="images/session/errorImage.png" height="400px"
+            draggable="false">
+        </div>
+      </div>
+      <div class="col-sm" style="margin-right:100px;">
+        <h3>This feature is disabled</h3>
+        <p>This feature has been disabled by the System Administator.</p>
+
+        <br><br><br>
+        <a href="/"><button type="button" class="btn btn-success">Back to Safety</button></a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<%- include("../modules/footer.ejs") %>

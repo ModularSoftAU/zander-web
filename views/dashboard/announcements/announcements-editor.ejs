@@ -1,0 +1,244 @@
+<%- include("../../modules/header.ejs", {
+    pageTitle: pageTitle,
+    pageDescription: "Dashboard for platform"
+}) %>
+
+<%- include("../../modules/navigationBar.ejs") %>
+
+<%- include("../../partials/miniHeader.ejs", {
+  headerTitle: "Announcements",
+  backgroundImage: globalImage
+}) %>
+
+<div class="row dashboardview">
+    <div class="col-sm-2">
+      <%- include("../../modules/dashboard/dashboard-sidebar.ejs") %>
+    </div>
+    <div class="col" style="padding: 20px;">
+        <div class="basic-form">
+            <% if (type === 'create') { %>
+                <form method="post" action="<%= process.env.siteAddress %>/redirect/announcement/create">
+            <% } %>
+
+            <% if (type === 'edit') { %>
+                <form method="post" action="<%= process.env.siteAddress %>/redirect/announcement/edit">
+                    <%- include("../../partials/form/inputHidden.ejs", {
+                        elementName: "announcementId",
+                        elementValue: announcementApiData.announcementId
+                    }) %>
+            <% } %>
+
+            <%- include("../../partials/form/inputHidden.ejs", {
+                elementName: "actioningUser",
+                elementValue: req.session.user.userId
+            }) %>
+            
+                    <div class="row">
+                        <!-- Announcement Type -->
+                        <div class="form-group col">
+                            <label for="announcementType">Announcement Type</label>
+
+                            <% if (type === 'create') { %>
+                                <%- include("../../partials/form/inputSelect.ejs", {
+                                    elementName: "announcementType",
+                                    elementValue: "null",
+                                    required: true,
+                                    optionElements: [
+                                        {
+                                            optionName: "Select a Type",
+                                            optionValue: "null",
+                                            selected: true,
+                                            disabled: true
+                                        },
+                                        {
+                                            optionName: "Server Ping MOTD",
+                                            optionValue: "motd",
+                                            selected: false,
+                                            disabled: false
+                                        },
+                                        {
+                                            optionName: "In-Game Tip",
+                                            optionValue: "tip",
+                                            selected: false,
+                                            disabled: false
+                                        },
+                                        {
+                                            optionName: "Website Banner",
+                                            optionValue: "web",
+                                            selected: false,
+                                            disabled: false
+                                        }
+                                    ]
+                                }) %>
+                            <% } %>
+                            <% if (type === 'edit') { %>
+                                <%- include("../../partials/form/inputSelect.ejs", {
+                                    elementName: "announcementType",
+                                    elementValue: announcementApiData.announcementType,
+                                    required: true,
+                                    optionElements: [
+                                        {
+                                            optionName: "Select a Type",
+                                            optionValue: null,
+                                            selected: true,
+                                            disabled: true
+                                        },
+                                        {
+                                            optionName: "Server Ping MOTD",
+                                            optionValue: "motd",
+                                            selected: false,
+                                            disabled: false
+                                        },
+                                        {
+                                            optionName: "In-Game Tip",
+                                            optionValue: "tip",
+                                            selected: false,
+                                            disabled: false
+                                        },
+                                        {
+                                            optionName: "Website Banner",
+                                            optionValue: "web",
+                                            selected: false,
+                                            disabled: false
+                                        }
+                                    ]
+                                }) %>
+                            <% } %>
+                        </div>
+                    </div>
+
+                    <!-- Banner Body -->
+                    <div class="form-group">
+                        <label for="body">Banner Body</label>
+
+                        <% if (type === 'create') { %>
+                            <%- include("../../partials/form/inputTextArea.ejs", {
+                                elementName: "body",
+                                elementValue: null,
+                                required: false
+                            }) %>
+                        <% } %>
+                        <% if (type === 'edit') { %>
+                            <%- include("../../partials/form/inputTextArea.ejs", {
+                                elementName: "body",
+                                elementValue: announcementApiData.body,
+                                required: false
+                            }) %>
+                        <% } %>
+                    </div>
+
+                    <!-- Colour Message Body Format -->
+                    <div class="form-group">
+                        <label for="colourMessageFormat">Colour Message Format</label>
+
+                        <% if (type === 'create') { %>
+                            <%- include("../../partials/form/inputTextArea.ejs", {
+                                elementName: "colourMessageFormat",
+                                elementValue: null,
+                                required: false
+                            }) %>
+                        <% } %>
+                        <% if (type === 'edit') { %>
+                            <%- include("../../partials/form/inputTextArea.ejs", {
+                                elementName: "colourMessageFormat",
+                                elementValue: announcementApiData.colourMessageFormat,
+                                required: false
+                            }) %>
+                        <% } %>
+                    </div>
+
+                    <div class="row">
+                        <!-- Announcement Link -->
+                        <div class="form-group col">
+                            <label for="position">Announcement Link</label>
+
+                            <% if (type === 'create') { %>
+                                <%- include("../../partials/form/inputText.ejs", {
+                                    elementName: "link",
+                                    elementValue: null,
+                                    required: false
+                                }) %>
+                            <% } %>
+                            <% if (type === 'edit') { %>
+                                <%- include("../../partials/form/inputText.ejs", {
+                                    elementName: "link",
+                                    elementValue: announcementApiData.link,
+                                    required: false
+                                }) %>
+                            <% } %>
+                        </div>
+
+                        <!-- Announcement Visability -->
+                        <div class="form-group col">
+                            <label for="enabled">Announcement Visability</label>
+
+                            <% if (type === 'create') { %>
+                                <%- include("../../partials/form/inputSelect.ejs", {
+                                    elementName: "enabled",
+                                    elementValue: "null",
+                                    required: true,
+                                    optionElements: [
+                                        {
+                                            optionName: "Select a Visability",
+                                            optionValue: "null",
+                                            selected: true,
+                                            disabled: true
+                                        },
+                                        {
+                                            optionName: "Enabled",
+                                            optionValue: "1",
+                                            selected: false,
+                                            disabled: false
+                                        },
+                                        {
+                                            optionName: "Disabled",
+                                            optionValue: "0",
+                                            selected: false,
+                                            disabled: false
+                                        }
+                                    ]
+                                }) %>
+                            <% } %>
+                            <% if (type === 'edit') { %>
+                                <%- include("../../partials/form/inputSelect.ejs", {
+                                    elementName: "enabled",
+                                    elementValue: announcementApiData.enabled,
+                                    required: true,
+                                    optionElements: [
+                                        {
+                                            optionName: "Select a Visability",
+                                            optionValue: "null",
+                                            selected: true,
+                                            disabled: true
+                                        },
+                                        {
+                                            optionName: "Enabled",
+                                            optionValue: "1",
+                                            selected: false,
+                                            disabled: false
+                                        },
+                                        {
+                                            optionName: "Disabled",
+                                            optionValue: "0",
+                                            selected: false,
+                                            disabled: false
+                                        }
+                                    ]
+                                }) %>
+                            <% } %>
+                        </div>
+                    </div>
+
+                    <% if (type === 'create') { %>
+                        <button type="submit" class="btn btn-primary"><i class="fas fa-server"></i> Create Announcement</button>
+                    <% } %>
+
+                    <% if (type === 'edit') { %>
+                        <button type="submit" class="btn btn-warning"><i class="fas fa-server"></i> Edit Announcement</button>
+                    <% } %>
+            </form>
+        </div>
+    </div>
+  </div>
+
+<%- include("../../modules/footer.ejs") %>

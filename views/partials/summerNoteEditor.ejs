@@ -1,0 +1,60 @@
+<textarea id="<%= editorElementName %>" name="<%= editorPOSTElementName %>"></textarea>
+
+<script>
+  $(document).ready(function() {
+    $.ajax({
+        url: 'https://api.github.com/emojis',
+        async: false
+    }).then(function(data) {
+        window.emojis = Object.keys(data);
+        window.emojiUrls = data; 
+    });
+
+    $.ajax({
+        url: '<%= process.env.siteAddress %>/emojis',
+        async: false
+    }).then(function(data) {
+        window.emojis = Object.keys(data);
+        window.emojiUrls = data; 
+    });
+
+    $('#<%= editorElementName %>').summernote({
+        height: 250,
+        minHeight: null,
+        maxHeight: null,
+        focus: false,
+        emoji: true,
+        toolbar: [
+          ['style', ['style']],
+          ['font', ['bold', 'underline', 'clear']],
+          ['color', ['color']],
+          ['para', ['ul', 'ol', 'paragraph']],
+          ['table', ['table']],
+          ['insert', ['link', 'picture', 'video']],
+          ['view', ['fullscreen', 'help']]
+        ],
+        hint: {
+            match: /:([\-+\w]+)$/,
+            search: function (keyword, callback) {
+            callback($.grep(emojis, function (item) {
+                return item.indexOf(keyword)  === 0;
+            }));
+            },
+            template: function (item) {
+            var content = emojiUrls[item];
+            return '<img src="' + content + '" width="20" /> :' + item + ':';
+            },
+            content: function (item) {
+            var url = emojiUrls[item];
+            if (url) {
+                return $('<img />').attr('src', url).css('width', 20)[0];
+            }
+            return '';
+            }
+        }
+    });
+
+    $('div.note-group-select-from-files').remove();
+
+  });
+</script>

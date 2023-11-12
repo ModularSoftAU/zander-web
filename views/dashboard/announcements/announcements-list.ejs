@@ -1,0 +1,74 @@
+<%- include("../../modules/header.ejs", {
+    pageTitle: pageTitle,
+    pageDescription: "Dashboard for platform"
+}) %>
+
+<%- include("../../modules/navigationBar.ejs") %>
+
+<%- include("../../partials/miniHeader.ejs", {
+  headerTitle: "Announcements",
+  backgroundImage: globalImage
+}) %>
+
+<div class="row dashboardview">
+    <div class="col-sm-2">
+      <%- include("../../modules/dashboard/dashboard-sidebar.ejs") %>
+    </div>
+    <div class="col" style="padding: 20px;">
+        <a href="/dashboard/announcements/create"><button type="button" class="btn btn-sm btn-info">Create Announcement</button></a>
+        <br><br>
+
+        <% if (req.cookies.alertType) { %>
+            <%- include("../../partials/alert.ejs", {
+              alertType: req.cookies.alertType,
+              content: req.cookies.alertContent
+            }) %>
+        <% } %>
+        
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Type</th>
+                    <th>Format</th>
+                    <th>Enabled</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                <% if (apiData.success == false) { %>
+                    <%- include("../../partials/alert.ejs", {
+                      alertType: "danger",
+                      content: apiData.message
+                    }) %>
+                <% } else { %>
+                    <% apiData.data.forEach(function (announcement) { %>
+                        <tr>
+                            <td><span class="badge badge-primary"><%= announcement.announcementType %></span></td>
+                            <td><%= announcement.colourMessageFormat %></td>
+                            <td>
+                                <% if (announcement.enabled === 1) { %>
+                                    <i class="fas fa-check-circle" style="color:green"></i>
+                                <% } else { %>
+                                    <i class="fas fa-times-circle" style="color: red;"></i>
+                                <% } %>
+                            </td>
+                            <td>
+                                <div class="btn-group">
+                                    <a href="/dashboard/announcements/edit?announcementId=<%= announcement.announcementId %>"><button class="btn btn-sm btn-warning" type="button">Edit</button></a>
+
+                                    <form action="<%= process.env.siteAddress %>/redirect/announcement/delete" method="post">
+                                        <input type="hidden" name="announcementId" value="<%= announcement.announcementId %>">
+                                        <input type="hidden" name="actioningUser" value="<%= req.session.user.userId %>">
+                                        <button class="btn btn-sm btn-danger" type="submit">Delete</button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                    <% }) %>
+                <% } %>
+            </tbody>
+        </table>
+    </div>
+  </div>
+
+<%- include("../../modules/footer.ejs") %>

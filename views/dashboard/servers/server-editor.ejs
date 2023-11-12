@@ -1,0 +1,110 @@
+<%- include("../../modules/header.ejs", {
+    pageTitle: pageTitle,
+    pageDescription: "Dashboard for platform"
+}) %>
+
+<%- include("../../modules/navigationBar.ejs") %>
+
+<%- include("../../partials/miniHeader.ejs", {
+  headerTitle: "Server Editor",
+  backgroundImage: globalImage
+}) %>
+
+<div class="row dashboardview">
+    <div class="col-sm-2">
+      <%- include("../../modules/dashboard/dashboard-sidebar.ejs") %>
+    </div>
+    <div class="col" style="padding: 20px;">
+        <%- include("../../partials/documentationLink.ejs", {
+            doclink: "https://modularsoft.org/docs/products/zander/"
+        }) %>
+
+        <div class="basic-form">
+            <% if (type === 'create') { %>
+                <form method="post" action="<%= process.env.siteAddress %>/redirect/server/create">
+            <% } %>
+            <% if (type === 'edit') { %>
+                <form method="post" action="<%= process.env.siteAddress %>/redirect/server/edit">
+                    <input type="hidden" name="serverId" value="<%= serverApiData.serverId %>">
+            <% } %>
+
+            <%- include("../../partials/form/inputHidden.ejs", {
+                elementName: "actioningUser",
+                elementValue: req.session.user.userId
+            }) %>
+                    
+            <div class="row">
+                <!-- Server Name -->
+                <div class="form-group col">
+                    <label for="displayName">Server Display Name</label>
+
+                    <% if (type === 'create') { %>
+                        <%- include("../../partials/form/inputText.ejs", {
+                            elementName: "displayName",
+                            elementValue: null,
+                            required: true
+                        }) %>
+                    <% } %>
+                    <% if (type === 'edit') { %>
+                        <%- include("../../partials/form/inputText.ejs", {
+                            elementName: "displayName",
+                            elementValue: serverApiData.displayName,
+                            required: true
+                        }) %>
+                    <% } %>
+                </div>
+
+                <!-- Server Connection Address -->
+                <div class="form-group col">
+                    <label for="serverConnectionAddress">Server Connection Address</label>
+
+                    <% if (type === 'create') { %>
+                        <%- include("../../partials/form/inputText.ejs", {
+                            elementName: "serverConnectionAddress",
+                            elementValue: null,
+                            required: false
+                        }) %>
+                    <% } %>
+                    <% if (type === 'edit') { %>
+                        <%- include("../../partials/form/inputText.ejs", {
+                            elementName: "serverConnectionAddress",
+                            elementValue: serverApiData.serverConnectionAddress,
+                            required: false
+                        }) %>
+                    <% } %>
+                </div>
+
+                <!-- Server Position -->
+                <div class="form-group col">
+                    <label for="position">Server Position</label>
+
+                    <% if (type === 'create') { %>
+                        <%- include("../../partials/form/inputText.ejs", {
+                            elementName: "position",
+                            elementValue: null,
+                            required: true
+                        }) %>
+                    <% } %>
+                    <% if (type === 'edit') { %>
+                        <%- include("../../partials/form/inputText.ejs", {
+                            elementName: "position",
+                            elementValue: serverApiData.position,
+                            required: true
+                        }) %>
+                    <% } %>
+                </div>
+            </div>
+
+            <% if (type === 'create') { %>
+                <button type="submit" class="btn btn-primary"><i class="fas fa-server"></i> Create Server</button>
+            <% } %>
+
+            <% if (type === 'edit') { %>
+                <button type="submit" class="btn btn-warning"><i class="fas fa-server"></i> Edit Server</button>
+            <% } %>
+        </form>
+    </div>        
+    </div>
+  </div>
+
+<%- include("../../modules/footer.ejs") %>

@@ -1,0 +1,57 @@
+<%- include("../modules/header.ejs", {
+    pageTitle: pageTitle,
+    pageDescription: "Register to get involved with the community!"
+}) %>
+
+<%- include("../modules/navigationBar.ejs") %>
+
+<%- include("../partials/miniHeader.ejs", {
+  headerTitle: "Register",
+  backgroundImage: globalImage
+}) %>
+
+<section class="section">
+  <div class="container">
+    <div class="row">
+      <div class="col-sm" style="min-height:500px;">
+        <% if (req.cookies.alertType) { %>
+          <%- include("../partials/alert.ejs", {
+            alertType: req.cookies.alertType,
+            content: req.cookies.alertContent
+          }) %>
+        <% } %>
+
+        <div class="text-center">
+          <img class="floating" style="margin-top:10px;" src="images/session/registerImage.png" height="270px" draggable="false">
+        </div>
+      </div>
+      <div class="col-sm" style="margin-right:100px;">
+        <form method="post" action="<%= process.env.siteAddress %>/redirect/web/register">
+          <div class="form-group">
+            <label for="username">Username</label>
+            <input type="text" class="form-control" name="username" required>
+          </div>
+          <div class="form-group">
+            <label for="email">Email</label>
+            <input type="text" class="form-control" name="email" required>
+          </div>
+          <div class="form-group">
+            <label for="password">Password</label>
+            <input type="password" class="form-control" name="password" required>
+          </div>
+          <div class="form-group">
+            <label for="confirmPassword">Confirm Password</label>
+            <input type="password" class="form-control" name="confirmPassword" required>
+          </div>
+          <div class="text-center">
+            <button type="submit" class="btn btn-primary" style="margin:0 auto; width: 30%">Register</button>
+          </div>
+        </form>
+        <br>
+        <small class="text-muted">Have an account? You can <a href="/login"> login here</a>.</small>
+      </div>
+    </div>
+  </div>
+</section>
+
+<%- include("../modules/footer.ejs") %>  

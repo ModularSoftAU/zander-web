@@ -1,0 +1,35 @@
+<script>
+    window.addEventListener("load",function(event) {
+        const $<%= elementName %>Select = document.querySelector('#<%= elementName %>Sel');
+        $<%= elementName %>Select.value = '<%= elementValue %>'
+    },false);
+</script>
+
+<select 
+    class="form-control <%= elementName %>Sel" 
+    name="<%= elementName %>"
+    id="<%= elementName %>Sel"
+    <% if (required) { %>
+        required
+    <% } %>
+>
+
+    <% optionElements.forEach(optionElement => { %>
+
+        <option 
+            <% if (optionElement.selected) { %>
+                selected
+            <% } %> 
+            <% if (optionElement.disabled) { %>
+                disabled
+            <% } %>
+            <% if (optionElement.optionValue) { %>
+                value="<%= optionElement.optionValue %>"
+            <% } %>
+        >
+            <%= optionElement.optionName %>
+        </option>
+
+    <% }); %>
+
+</select>

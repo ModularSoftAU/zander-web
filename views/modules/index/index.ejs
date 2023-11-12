@@ -1,0 +1,18 @@
+<%- include("../../modules/header.ejs", {
+    pageTitle: pageTitle,
+    pageDescription: config.siteConfiguration.tagline
+}) %>
+
+<%- include("../../modules/navigationBar.ejs") %>
+
+<%- include("../../modules/index/indexHeroHeader.ejs") %>
+
+<%- include("../../modules/index/features.ejs") %>
+
+<br><br>
+<%- include("../../modules/index/stats.ejs", {
+    globalImage: globalImage
+}) %>
+<br><br><br><br><br><br>
+
+<%- include("../../modules/footer.ejs") %>  

@@ -1,0 +1,48 @@
+{
+  "name": "modularsoft-zander-web",
+  "version": "1.0",
+  "description": "The web component of the Zander project that contains database, API and website.",
+  "main": "app.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "prod": "node --experimental-modules --experimental-json-modules --experimental-specifier-resolution=node --max-old-space-size=512 app.js",
+    "dev": "nodemon  --experimental-modules --experimental-json-modules --experimental-specifier-resolution=node"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ModularSoftAU/zander-web.git"
+  },
+  "engines": {
+    "npm": ">=8.5.0",
+    "node": "16.17.0"
+  },
+  "keywords": [],
+  "author": "ModularSoft",
+  "type": "module",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/ModularSoftAU/zander-web/issues"
+  },
+  "homepage": "https://github.com/ModularSoftAU/zander-web#readme",
+  "dependencies": {
+    "@fastify/cookie": "^9.1.0",
+    "@fastify/formbody": "^7.4.0",
+    "@fastify/session": "^10.5.0",
+    "@fastify/static": "^6.11.2",
+    "@fastify/view": "^8.2.0",
+    "@sapphire/framework": "^4.7.2",
+    "bcrypt": "^5.0.1",
+    "crypto": "^1.0.1",
+    "discord.js": "^14.13.0",
+    "dotenv": "^16.0.1",
+    "ejs": "^3.1.7",
+    "fastify": "^4.23.2",
+    "moment": ">=2.29.2",
+    "mysql": "^2.18.1",
+    "node-cron": "^3.0.0",
+    "node-fetch": "^3.3.2",
+    "nodemon": "^3.0.1",
+    "path": "^0.12.7",
+    "zero-md": "^2.3.1"
+  }
+}
