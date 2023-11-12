@@ -109,25 +109,7 @@ export function isLoggedIn(req) {
     @param features Passing through features
 */
 export async function hasPermission(permissionNode, req, res, features) {
-    if (!isLoggedIn(req)) {
-        res.view('session/noPermission', {
-            "pageTitle": `Access Restricted`,
-            config: config,
-            req: req,
-            res: res,
-            features: features,
-            globalImage: await getGlobalImage(),
-            announcementWeb: await getWebAnnouncement()
-        });
-    }
-
-    const userPermissions = req.session.user.permissions;
-
-    function hasSpecificPerm(node, permissionArray) {
-        return userPermissions.some(node => node === permissionNode);
-    }
-
-    if (!hasSpecificPerm(permissionNode, userPermissions)) {
+    if (!isLoggedIn(req) || !req.session.user || !req.session.user.permissions) {
         res.view('session/noPermission', {
             "pageTitle": `Access Restricted`,
             config: config,
@@ -138,8 +120,27 @@ export async function hasPermission(permissionNode, req, res, features) {
             announcementWeb: await getWebAnnouncement()
         });
         return false;
+    } else {
+        const userPermissions = req.session.user.permissions;
+
+        function hasSpecificPerm(node, permissionArray) {
+            return permissionArray.some(permission => permission === node);
+        }
+
+        if (!hasSpecificPerm(permissionNode, userPermissions)) {
+            res.view('session/noPermission', {
+                "pageTitle": `Access Restricted`,
+                config: config,
+                req: req,
+                res: res,
+                features: features,
+                globalImage: await getGlobalImage(),
+                announcementWeb: await getWebAnnouncement()
+            });
+            return false;
+        }
+        return true;
     }
-    return true;
 }
 
 /*
