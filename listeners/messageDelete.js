@@ -23,7 +23,6 @@ export class GuildMessageDeleteListener extends Listener {
       .setColor(Colors.Red)
       .setDescription(`Message deleted from \`${message.author.username}\` in \`#${message.channel.name}\``)
       .addFields(
-        { name: 'Channel', value: `${message.channel.name}`, inline: false },
         { name: 'Deleted Message', value: `${message.content}`, inline: false }
       );
 
