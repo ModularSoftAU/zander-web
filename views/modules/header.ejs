@@ -16,7 +16,10 @@
   <title><%= pageTitle %></title>
   <meta name="title" content="<%= pageTitle %>">
   <meta name="description" content="<%= pageDescription %> // <%= config.siteConfiguration.tagline %>">
+  <meta name="keywords" content="<%= config.siteConfiguration.keywords %>">
+  <meta name="author" content="<%= config.siteConfiguration.siteName %>">
   <meta name="theme-color" content="#2f508c">
+  <link rel="canonical" href="<%= process.env.siteAddress %>">
 
   <!-- Open Graph / Facebook -->
   <meta property="og:type" content="website">
