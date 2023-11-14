@@ -12,7 +12,7 @@ export default function discordApiRoute(app, client, config, db, features, lang)
             const guild = client.guilds.cache.get(config.discord.guildId);
             const channel = guild.channels.cache.get(config.discord.channels.networkChatLog);
 
-            channel.send(`:twisted_rightwards_arrows:  |  \`${username}\` switched to \`${server}\``);
+            channel.send(`:twisted_rightwards_arrows: | \`${username}\` switched to \`${server}\``);
 
             return res.send({
                 success: true
@@ -37,7 +37,7 @@ export default function discordApiRoute(app, client, config, db, features, lang)
             const guild = client.guilds.cache.get(config.discord.guildId);
             const channel = guild.channels.cache.get(config.discord.channels.networkChatLog);
 
-            channel.send(`**${server}**  |  \`${username}\` :: ${content}`);
+            channel.send(`**${server}** | \`${username}\` :: ${content}`);
 
             return res.send({
                 success: true
@@ -58,7 +58,7 @@ export default function discordApiRoute(app, client, config, db, features, lang)
             const guild = client.guilds.cache.get(config.discord.guildId);
             const channel = guild.channels.cache.get(config.discord.channels.networkChatLog);
 
-            channel.send(`:ballot_box_with_check:  | \`${username}\` has joined the Network.`);
+            channel.send(`:ballot_box_with_check: | \`${username}\` has joined the Network.`);
         } catch (error) {
             return res.send({
                 success: false,
@@ -75,7 +75,7 @@ export default function discordApiRoute(app, client, config, db, features, lang)
             const guild = client.guilds.cache.get(config.discord.guildId);
             const channel = guild.channels.cache.get(config.discord.channels.networkChatLog);
 
-            channel.send(`:negative_squared_cross_mark:  | \`${username}\` has left the Network.`);
+            channel.send(`:negative_squared_cross_mark: | \`${username}\` has left the Network.`);
 
             res.send({
                 success: true
