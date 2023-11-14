@@ -40,7 +40,7 @@ export class GuildMessageListener extends Listener {
 
           let embed = new EmbedBuilder()
             .setTitle(`Prohibited content has been detected!`)
-            .setDescription(`${message.author.username} please don't advertise or say prohibited content/phrases. If you continue, you will be punished.`)
+            .setDescription(`\`${message.author.username}\` please don't advertise or say prohibited content/phrases. If you continue, you will be punished.`)
             .setColor(`#ff3333`)
           message.reply({ embeds: [embed] });
         }

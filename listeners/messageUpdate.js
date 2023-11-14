@@ -21,9 +21,9 @@ export class GuildMessageUpdateListener extends Listener {
     const embed = new EmbedBuilder()
       .setTitle('Message Edit')
       .setColor(Colors.Yellow)
-      .setDescription(`Message edit from ${oldMessage.author.username} in ${oldMessage.channel.name}`)
+      .setDescription(`Message edit from \`${oldMessage.author.username}\` in \`#${oldMessage.channel.name}\``)
       .addFields(
-        { name: 'Channel', value: `${oldMessage.channel.name}`, inline: false },
+        { name: 'Channel', value: `\`$#{oldMessage.channel.name}\``, inline: false },
         { name: 'Old Message', value: `${oldMessage.content}`, inline: false },
         { name: 'Edited Message', value: `${newMessage.content}`, inline: false }
       );

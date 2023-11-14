@@ -18,11 +18,10 @@ export class GuildMessageDeleteListener extends Listener {
     let adminLogChannel = message.guild.channels.cache.find(c => c.id === config.discord.channels.adminLog);
     if (!adminLogChannel) return;
 
-
     const embed = new EmbedBuilder()
       .setTitle('Message Delete')
       .setColor(Colors.Red)
-      .setDescription(`Message deleted from ${message.author.username} in ${message.channel.name}`)
+      .setDescription(`Message deleted from \`${message.author.username}\` in \`#${message.channel.name}\``)
       .addFields(
         { name: 'Channel', value: `${message.channel.name}`, inline: false },
         { name: 'Deleted Message', value: `${message.content}`, inline: false }
