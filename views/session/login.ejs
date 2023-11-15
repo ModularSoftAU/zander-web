@@ -13,12 +13,7 @@
 <section class="section">
     <div class="container">
       <div class="row">
-        <div class="col-sm" style="min-height:500px;">
-          <div class="text-center">
-            <img class="floating" style="margin-top:10px;" src="images/session/loginImage.png" height="400px" draggable="false">
-          </div>
-        </div>
-        <div class="col-sm" style="margin-right:100px;">
+        <div class="col-12 col-sm-6">    
           <% if (req.cookies.alertType) { %>
             <%- include("../partials/alert.ejs", {
               alertType: req.cookies.alertType,
@@ -36,14 +31,19 @@
               <input type="password" class="form-control" name="password" required>
             </div>
             <div class="text-center">
-              <button type="submit" class="btn btn-primary" style="margin:0 auto; width: 30%">Sign In</button>
+              <button type="submit" class="btn btn-primary" style="width: 100%">Sign In</button>
             </div>
           </form>
           <br>
           <small class="text-muted">Don't have an account? You can <a href="/register">register here</a>.</small>
         </div>
+        <div class="col-12 col-sm-6" style="min-height:500px;">
+          <div class="text-center">
+            <img class="floating" style="margin-top:10px;" src="images/session/loginImage.png" height="300px" draggable="false">
+          </div>
+        </div>
       </div>
     </div>
 </section>
 
-<%- include("../modules/footer.ejs") %>  
+<%- include("../modules/footer.ejs") %>

@@ -1,34 +1,35 @@
 <%- include("../modules/header.ejs", {
-    pageTitle: pageTitle,
-    pageDescription: "Permission to this page is restricted, please ensure you are logged in and have the required access."
+  pageTitle: pageTitle,
+  pageDescription: "Permission Denied"
 }) %>
 
-<%- include("../modules/navigationBar.ejs") %>
+<%- include("../modules/navigationBar.ejs", {
+  features: features
+}) %>
 
 <%- include("../partials/miniHeader.ejs", {
   headerTitle: "Permission Denied",
-  backgroundImage: "../images/banner/error.png"
+  backgroundImage: globalImage
 }) %>
 
-
 <section class="section">
-    <div class="container">
-      <div class="row">
-        <div class="col-sm" style="min-height:500px;">
-          <div class="text-center">
-            <img class="floating" style="margin-top:10px;" src="../images/session/errorImage.png" height="400px" draggable="false">
-          </div>
+  <div class="container">
+    <div class="row">
+      <div class="col-12 col-md-6" style="min-height:500px;">
+        <div class="text-center">
+          <img class="floating" style="margin-top:10px;" src="images/session/errorImage.png" height="300px" draggable="false">
         </div>
-        <div class="col-sm" style="margin-right:100px;">    
-          <h3>You do not have permission.</h3>
+      </div>
+      <div class="col-12 col-md-6">
+        <h3>You do not have permission.</h3>
           <p>Permission to this page is restricted, please ensure you are logged in and have the required access.</p>
 
           <br><br><br>
           <a href="/login"><button type="button" class="btn btn-primary">Login</button></a>
           <a href="/"><button type="button" class="btn btn-success">Back to Safety</button></a>
-        </div>
       </div>
     </div>
+  </div>
 </section>
 
-<%- include("../modules/footer.ejs") %>  
+<%- include("../modules/footer.ejs") %>

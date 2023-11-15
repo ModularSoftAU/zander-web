@@ -13,19 +13,7 @@
 <section class="section">
   <div class="container">
     <div class="row">
-      <div class="col-sm" style="min-height:500px;">
-        <% if (req.cookies.alertType) { %>
-          <%- include("../partials/alert.ejs", {
-            alertType: req.cookies.alertType,
-            content: req.cookies.alertContent
-          }) %>
-        <% } %>
-
-        <div class="text-center">
-          <img class="floating" style="margin-top:10px;" src="images/session/registerImage.png" height="270px" draggable="false">
-        </div>
-      </div>
-      <div class="col-sm" style="margin-right:100px;">
+      <div class="col-12 col-md-6" style="margin-top: 10px;">
         <form method="post" action="<%= process.env.siteAddress %>/redirect/web/register">
           <div class="form-group">
             <label for="username">Username</label>
@@ -44,14 +32,19 @@
             <input type="password" class="form-control" name="confirmPassword" required>
           </div>
           <div class="text-center">
-            <button type="submit" class="btn btn-primary" style="margin:0 auto; width: 30%">Register</button>
+            <button type="submit" class="btn btn-primary" style="width: 100%;">Register</button>
           </div>
         </form>
         <br>
-        <small class="text-muted">Have an account? You can <a href="/login"> login here</a>.</small>
+        <small class="text-muted">Have an account? You can <a href="/login">login here</a>.</small>
+      </div>
+      <div class="col-12 col-md-6" style="min-height:500px; display: flex; align-items: center;">
+        <div class="text-center">
+          <img class="floating" style="max-width: 100%; height: auto; margin-top:10px;" src="images/session/registerImage.png" draggable="false">
+        </div>
       </div>
     </div>
   </div>
 </section>
 
-<%- include("../modules/footer.ejs") %>  
+<%- include("../modules/footer.ejs") %>
