@@ -11,10 +11,10 @@
 }) %>
 
 <div class="row dashboardview">
-    <div class="col-sm-2">
+    <div class="col-md-2">
       <%- include("../../modules/dashboard/dashboard-sidebar.ejs") %>
     </div>
-    <div class="col" style="padding: 20px;">
+    <div class="col-md-10" style="padding: 20px;">
         <a href="/dashboard/announcements/create"><button type="button" class="btn btn-sm btn-info">Create Announcement</button></a>
         <%- include("../../partials/documentationLink.ejs", {
             doclink: "https://modularsoft.org/docs/products/zander/features/announcement/"

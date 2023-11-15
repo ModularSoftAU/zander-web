@@ -1546,3 +1546,9 @@ a:focus {
   text-align: center;
   padding: 15px;
 }
+
+@media only screen and (max-width: 767px) {
+  .dashboard-sidebar {
+    display: block !important;
+  }
+}
