@@ -15,6 +15,11 @@
       <%- include("../../modules/dashboard/dashboard-sidebar.ejs") %>
     </div>
     <div class="col" style="padding: 20px;">
+        <%- include("../../partials/documentationLink.ejs", {
+            doclink: "https://modularsoft.org/docs/products/zander/features/announcement/"
+        }) %>
+        <br><br>
+        
         <div class="basic-form">
             <% if (type === 'create') { %>
                 <form method="post" action="<%= process.env.siteAddress %>/redirect/announcement/create">

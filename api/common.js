@@ -192,7 +192,7 @@ export async function getGlobalImage() {
     // Now files is an Array of the name of the files in the folder and you can pick a random name inside of that array.
     let chosenFile = await files[Math.floor(Math.random() * files.length)] 
 
-    return "../images/globalImages/" + chosenFile;
+    return "../../../images/globalImages/" + chosenFile;
 }
 
 /*

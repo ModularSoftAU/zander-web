@@ -16,6 +16,9 @@
     </div>
     <div class="col" style="padding: 20px;">
         <a href="/dashboard/applications/create"><button type="button" class="btn btn-sm btn-info">Create Application</button></a>
+        <%- include("../../partials/documentationLink.ejs", {
+            doclink: "https://modularsoft.org/docs/products/zander/features/application/"
+        }) %>
         <br><br>
 
         <% if (req.cookies.alertType) { %>
