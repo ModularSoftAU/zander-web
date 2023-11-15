@@ -14,6 +14,13 @@
   <div class="container">
     <div class="row">
       <div class="col-12 col-md-6" style="margin-top: 10px;">
+        <% if (req.cookies.alertType) { %>
+          <%- include("../partials/alert.ejs", {
+            alertType: req.cookies.alertType,
+            content: req.cookies.alertContent
+          }) %>
+        <% } %>
+
         <form method="post" action="<%= process.env.siteAddress %>/redirect/web/register">
           <div class="form-group">
             <label for="username">Username</label>
