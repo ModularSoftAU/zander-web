@@ -110,7 +110,7 @@ export function isLoggedIn(req) {
 */
 export async function hasPermission(permissionNode, req, res, features) {
     if (!isLoggedIn(req) || !req.session.user || !req.session.user.permissions) {
-        res.view('session/noPermission', {
+        return res.view('session/noPermission', {
             "pageTitle": `Access Restricted`,
             config: config,
             req: req,
@@ -119,7 +119,6 @@ export async function hasPermission(permissionNode, req, res, features) {
             globalImage: await getGlobalImage(),
             announcementWeb: await getWebAnnouncement()
         });
-        return false;
     } else {
         const userPermissions = req.session.user.permissions;
 

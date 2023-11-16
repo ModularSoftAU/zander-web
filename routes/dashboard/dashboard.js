@@ -9,7 +9,8 @@ export default function dashbordSiteRoute(app, config, features, lang) {
     // Dashboard
     // 
     app.get('/dashboard', async function (req, res) {
-        if (!hasPermission('zander.web.dashboard', req, res, features))
+        const permissionBoolean = await hasPermission('zander.web.dashboard', req, res, features)
+        if (!permissionBoolean)
             return;
 
         return res.view('dashboard/dashboard-index', {
