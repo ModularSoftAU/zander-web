@@ -56,6 +56,19 @@ const buildApp = async () => {
         });
     });
 
+    // When app errors, render the error on a page, do not provide JSON
+    app.setNotFoundHandler(async function (req, res) {
+        return res.view('session/notFound', {
+            "pageTitle": `404 Not Found`,
+            config: config,
+            error: error,
+            req: req,
+            features: features,
+            globalImage: await getGlobalImage(),
+            announcementWeb: await getWebAnnouncement(),
+        });
+    });
+
     // EJS Rendering Engine
     await app.register(await import("@fastify/view"), {
         engine: {
