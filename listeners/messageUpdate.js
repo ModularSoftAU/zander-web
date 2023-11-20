@@ -1,13 +1,13 @@
-import { Listener } from '@sapphire/framework';
-import config from '../config.json' assert {type: "json"};
-import { Colors, EmbedBuilder } from 'discord.js';
+import { Listener } from "@sapphire/framework";
+import config from "../config.json" assert { type: "json" };
+import { Colors, EmbedBuilder } from "discord.js";
 
 export class GuildMessageUpdateListener extends Listener {
   constructor(context, options) {
     super(context, {
       ...options,
       once: false,
-      event: 'messageUpdate'
+      event: "messageUpdate",
     });
   }
 
@@ -15,16 +15,24 @@ export class GuildMessageUpdateListener extends Listener {
     // Check if the author is a bot and stop if true.
     if (newMessage.author.bot) return;
 
-    let adminLogChannel = oldMessage.guild.channels.cache.find(c => c.id === config.discord.channels.adminLog);
+    let adminLogChannel = oldMessage.guild.channels.cache.find(
+      (c) => c.id === config.discord.channels.adminLog
+    );
     if (!adminLogChannel) return;
 
     const embed = new EmbedBuilder()
-      .setTitle('Message Edit')
+      .setTitle("Message Edit")
       .setColor(Colors.Yellow)
-      .setDescription(`Message edit from \`${oldMessage.author.username}\` in \`#${oldMessage.channel.name}\``)
+      .setDescription(
+        `Message edit from \`${oldMessage.author.username}\` in \`#${oldMessage.channel.name}\``
+      )
       .addFields(
-        { name: 'Old Message', value: `${oldMessage.content}`, inline: false },
-        { name: 'Edited Message', value: `${newMessage.content}`, inline: false }
+        { name: "Old Message", value: `${oldMessage.content}`, inline: false },
+        {
+          name: "Edited Message",
+          value: `${newMessage.content}`,
+          inline: false,
+        }
       );
 
     adminLogChannel.send({ embeds: [embed] });

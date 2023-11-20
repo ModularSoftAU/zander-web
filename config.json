@@ -1,39 +1,39 @@
 {
-    "debug": true,
-    "siteConfiguration": {
-        "siteName": "Crafting For Christ",
-        "tagline": "Crafting A Christ Centred Gaming Community",
-        "keywords": "Christian, Minecraft, Faith, Gaming, Ministry, Community, Believers, Experience, Crafting, Creativity, Worship, Scripture, Fellowship, Gameplay, Builds, Christian Minecraft Server, Faith-based Gaming Community, Minecraft for Christians, Christ-Centered Gameplay, Bible-inspired Builds, Virtual Fellowship, Gaming Ministry, Christian Gaming Experience, Building Faith in Minecraft, Community of Faithful Gamers, Gaming and Worship, Scripture-based Creativity, Christian Fellowship in Minecraft",
-        "email": "support@craftingforchrist.net",
-        "policy": {
-            "termsOfService": "https://raw.githubusercontent.com/craftingforchrist/Legal/master/terms.md",
-            "rules": "https://raw.githubusercontent.com/craftingforchrist/Legal/master/rules.md",
-            "privacy": "https://raw.githubusercontent.com/craftingforchrist/Legal/master/privacy.md",
-            "refund": "https://raw.githubusercontent.com/craftingforchrist/Legal/master/refund.md"
-        },
-        "platforms": {
-            "webstore": "https://crafting-for-christ.tebex.io/",
-            "discord": "https://discord.com/",
-            "facebook": "https://www.facebook.com/craft4christ/",
-            "twitter": "https://twitter.com/craft4christmc",
-            "instagram": "https://instagram.com/craftingforchrist",
-            "reddit": "https://www.reddit.com/r/craftingforchrist/",
-            "twitch": "https://www.twitch.tv/craftingforchrist",
-            "youtube": "https://www.youtube.com/channel/UCeijz6MNnya85LprMjPmYag",
-            "linkedin": "https://www.linkedin.com/company/68885022/",
-            "tiktok": "https://www.tiktok.com/@craftingforchrist"
-        }
+  "debug": true,
+  "siteConfiguration": {
+    "siteName": "Crafting For Christ",
+    "tagline": "Crafting A Christ Centred Gaming Community",
+    "keywords": "Christian, Minecraft, Faith, Gaming, Ministry, Community, Believers, Experience, Crafting, Creativity, Worship, Scripture, Fellowship, Gameplay, Builds, Christian Minecraft Server, Faith-based Gaming Community, Minecraft for Christians, Christ-Centered Gameplay, Bible-inspired Builds, Virtual Fellowship, Gaming Ministry, Christian Gaming Experience, Building Faith in Minecraft, Community of Faithful Gamers, Gaming and Worship, Scripture-based Creativity, Christian Fellowship in Minecraft",
+    "email": "support@craftingforchrist.net",
+    "policy": {
+      "termsOfService": "https://raw.githubusercontent.com/craftingforchrist/Legal/master/terms.md",
+      "rules": "https://raw.githubusercontent.com/craftingforchrist/Legal/master/rules.md",
+      "privacy": "https://raw.githubusercontent.com/craftingforchrist/Legal/master/privacy.md",
+      "refund": "https://raw.githubusercontent.com/craftingforchrist/Legal/master/refund.md"
     },
-    "discord": {
-        "guildId": "899441191416901632",
-        "channels": {
-            "welcome": "926380663953821736",
-            "networkChatLog": "925702393423859724",
-            "adminLog": "926380052155867146",
-            "staffChannel": "926380052155867146"
-        },
-        "roles": {
-            "verified": "926259482319794246"
-        }
+    "platforms": {
+      "webstore": "https://crafting-for-christ.tebex.io/",
+      "discord": "https://discord.com/",
+      "facebook": "https://www.facebook.com/craft4christ/",
+      "twitter": "https://twitter.com/craft4christmc",
+      "instagram": "https://instagram.com/craftingforchrist",
+      "reddit": "https://www.reddit.com/r/craftingforchrist/",
+      "twitch": "https://www.twitch.tv/craftingforchrist",
+      "youtube": "https://www.youtube.com/channel/UCeijz6MNnya85LprMjPmYag",
+      "linkedin": "https://www.linkedin.com/company/68885022/",
+      "tiktok": "https://www.tiktok.com/@craftingforchrist"
     }
+  },
+  "discord": {
+    "guildId": "899441191416901632",
+    "channels": {
+      "welcome": "926380663953821736",
+      "networkChatLog": "925702393423859724",
+      "adminLog": "926380052155867146",
+      "staffChannel": "926380052155867146"
+    },
+    "roles": {
+      "verified": "926259482319794246"
+    }
+  }
 }
