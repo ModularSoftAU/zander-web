@@ -1,4 +1,4 @@
-import db from './databaseController';
+import db from "./databaseController";
 
 /*
     Returns a Promise which checks if a user with a given username has joined 
@@ -10,19 +10,23 @@ import db from './databaseController';
     @param username The username of the user
 */
 export async function hasUserJoinedBefore(username) {
-    return new Promise((resolve, reject) => {
-        db.query(`select * from users where username=?;`, [username], function (error, results, fields) {
-            if (error) {
-                reject(error);
-            }
+  return new Promise((resolve, reject) => {
+    db.query(
+      `select * from users where username=?;`,
+      [username],
+      function (error, results, fields) {
+        if (error) {
+          reject(error);
+        }
 
-            if (!results || !results.length) {
-                resolve(false);
-            }
+        if (!results || !results.length) {
+          resolve(false);
+        }
 
-            resolve(true);
-        });
-    });
+        resolve(true);
+      }
+    );
+  });
 }
 
 /*
@@ -35,19 +39,23 @@ export async function hasUserJoinedBefore(username) {
     @param email The email to specify
 */
 export async function hasEmailBeenUsed(email) {
-    return new Promise((resolve, reject) => {
-        db.query(`select * from users where email=?;`, [email], function (error, results, fields) {
-            if (error) {
-                reject(error);
-            }
+  return new Promise((resolve, reject) => {
+    db.query(
+      `select * from users where email=?;`,
+      [email],
+      function (error, results, fields) {
+        if (error) {
+          reject(error);
+        }
 
-            if (!results || !results.length) {
-                resolve(false);
-            }
+        if (!results || !results.length) {
+          resolve(false);
+        }
 
-            resolve(true);
-        });
-    });
+        resolve(true);
+      }
+    );
+  });
 }
 
 /*
@@ -57,13 +65,13 @@ export async function hasEmailBeenUsed(email) {
     @param confirmPassword The password to validate against password
 */
 export async function doesPasswordMatch(password, confirmPassword) {
-    return new Promise((resolve, reject) => {
-        if (password === confirmPassword) {
-            resolve(true);
-        }
+  return new Promise((resolve, reject) => {
+    if (password === confirmPassword) {
+      resolve(true);
+    }
 
-        resolve(false);
-    });
+    resolve(false);
+  });
 }
 
 /*
@@ -72,18 +80,24 @@ export async function doesPasswordMatch(password, confirmPassword) {
     @param username The username of the user.
 */
 export async function getProfilePicture(username) {
-    return new Promise((resolve, reject) => {
-        db.query(`SELECT * FROM users WHERE username=?;`, [username], function (error, results, fields) {
-            if (error) {
-                reject(error);
-            }
+  return new Promise((resolve, reject) => {
+    db.query(
+      `SELECT * FROM users WHERE username=?;`,
+      [username],
+      function (error, results, fields) {
+        if (error) {
+          reject(error);
+        }
 
-            let profilePictureType = results[0].profilePictureType;
-            let craftUUID = results[0].uuid;
-            let emailHash = results[0].emailHash;
+        let profilePictureType = results[0].profilePictureType;
+        let craftUUID = results[0].uuid;
+        let emailHash = results[0].emailHash;
 
-            if (profilePictureType == "CRAFTATAR") return resolve(`https://crafatar.com/avatars/${craftUUID}?helm`);
-            if (profilePictureType == "GRAVATAR") return resolve(`https://www.gravatar.com/avatar/${emailHash}?s=300`);
-        });        
-    });
+        if (profilePictureType == "CRAFTATAR")
+          return resolve(`https://crafatar.com/avatars/${craftUUID}?helm`);
+        if (profilePictureType == "GRAVATAR")
+          return resolve(`https://www.gravatar.com/avatar/${emailHash}?s=300`);
+      }
+    );
+  });
 }

@@ -1,6 +1,6 @@
-import mysql from 'mysql';
-import dotenv from 'dotenv';
-dotenv.config()
+import mysql from "mysql";
+import dotenv from "dotenv";
+dotenv.config();
 
 var pool = mysql.createPool({
   connectionLimit: 10,
@@ -9,10 +9,10 @@ var pool = mysql.createPool({
   user: process.env.databaseUser,
   password: process.env.databasePassword,
   database: process.env.databaseName,
-  multipleStatements: true
+  multipleStatements: true,
 });
 
-pool.getConnection(function(err) {
+pool.getConnection(function (err) {
   if (err) {
     console.error(`[ERROR] [DB] There was an error connecting:\n ${err.stack}`);
     pool.connect();

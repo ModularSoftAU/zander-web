@@ -1,24 +1,26 @@
-import { SapphireClient } from '@sapphire/framework';
-import { GatewayIntentBits } from 'discord.js';
+import { SapphireClient } from "@sapphire/framework";
+import { GatewayIntentBits } from "discord.js";
 
-// 
+//
 // Discord
 //
 export const client = new SapphireClient({
-    intents: [
-        GatewayIntentBits.Guilds,
-        GatewayIntentBits.GuildMessages,
-        GatewayIntentBits.GuildMembers,
-        GatewayIntentBits.GuildVoiceStates,
-        GatewayIntentBits.MessageContent,
+  intents: [
+    GatewayIntentBits.Guilds,
+    GatewayIntentBits.GuildMessages,
+    GatewayIntentBits.GuildMembers,
+    GatewayIntentBits.GuildVoiceStates,
+    GatewayIntentBits.MessageContent,
+  ],
+  presence: {
+    status: "online",
+    activities: [
+      {
+        name: process.env.siteAddress,
+        type: "PLAYING",
+      },
     ],
-    presence: {
-        status: "online",
-        activities: [{
-            name: process.env.siteAddress,
-            type: 'PLAYING'
-        }]
-    }
+  },
 });
 
 client.login(process.env.discordAPIKey);
@@ -29,9 +31,9 @@ client.login(process.env.discordAPIKey);
     @param username The username of the user.
 */
 export async function isBot() {
-    const user = client.users.cache.get(userId);
-    if (user) {
-        return user.bot;
-    }
-    return false;
+  const user = client.users.cache.get(userId);
+  if (user) {
+    return user.bot;
+  }
+  return false;
 }
