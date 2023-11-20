@@ -228,15 +228,14 @@ export default function sessionSiteRoute(
     return res;
   });
 
-  app.get("/logout", async function (req, res) {
-    req.destroySession((err) => {
-      if (err) {
-        console.log(err);
-        throw err;
-      } else {
-        setBannerCookie("success", lang.session.userLogout, res);
-        return res.redirect(`${process.env.siteAddress}/`);
-      }
-    });
+  app.get("/logout", async function (req, reply) {
+    try {
+      await req.session.destroy();
+      setBannerCookie("success", lang.session.userLogout, reply.res);
+      reply.redirect(`${process.env.siteAddress}/`);
+    } catch (err) {
+      console.log(err);
+      throw err;
+    }
   });
 }
