@@ -3,6 +3,7 @@ import policySiteRoutes from "./policyRoutes";
 import sessionRoutes from "./sessionRoutes";
 import { isFeatureWebRouteEnabled, getGlobalImage } from "../api/common";
 import { getWebAnnouncement } from "../controllers/announcementController";
+import rankData from "../ranks.json" assert { type: "json" };
 
 export default function applicationSiteRoutes(
   app,
@@ -76,6 +77,32 @@ export default function applicationSiteRoutes(
       config: config,
       req: req,
       apiData: apiData,
+      features: features,
+      globalImage: await getGlobalImage(),
+      announcementWeb: await getWebAnnouncement(),
+    });
+  });
+
+  //
+  // Ranks
+  //
+  app.get("/ranks", async function (req, res) {
+    isFeatureWebRouteEnabled(features.ranks, req, res, features);
+
+    const fetchURL = `https://plugin.tebex.io/listing`;
+    const response = await fetch(fetchURL, {
+      headers: { "X-Tebex-Secret": process.env.tebexSecretKey },
+    });
+    const tebexPackageData = await response.json();
+
+    console.log(tebexPackageData.categories);
+
+    return res.view("ranks", {
+      pageTitle: `Ranks`,
+      config: config,
+      req: req,
+      rankData: rankData,
+      tebexPackageData: tebexPackageData.categories,
       features: features,
       globalImage: await getGlobalImage(),
       announcementWeb: await getWebAnnouncement(),

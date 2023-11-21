@@ -1552,3 +1552,14 @@ a:focus {
     display: block !important;
   }
 }
+
+@media (max-width: 767px) {
+  .button-group {
+    display: flex;
+    justify-content: center;
+  }
+
+  .button-group a {
+    margin-right: 10px;
+  }
+}

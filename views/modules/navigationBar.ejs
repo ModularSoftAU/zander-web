@@ -28,6 +28,9 @@
                     <% if (features.applications) { %>
                         <li class="nav-item"><a class="nav-link" href="/apply">Apply</a></li>
                     <% } %>
+                    <% if (features.ranks) { %>
+                        <li class="nav-item"><a class="nav-link" href="/ranks">Ranks</a></li>
+                    <% } %>
                     <li class="nav-item"><a class="nav-link" href="/webstore">Webstore</a></li>
                     <% if (req.session?.user) { %>
                         <li class="nav-item dropdown">

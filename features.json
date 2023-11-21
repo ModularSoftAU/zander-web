@@ -12,6 +12,7 @@
     }
   },
   "server": true,
+  "ranks": true,
   "filter": {
     "link": true,
     "phrase": true

@@ -1,0 +1,47 @@
+<%- include("modules/header.ejs", {
+    pageTitle: pageTitle,
+    pageDescription: "If you have skills in our positions we are keen for you to join our ever-expanding team on the Network."
+}) %>
+
+<%- include("modules/navigationBar.ejs") %>
+
+<%- include("partials/miniHeader.ejs", {
+  headerTitle: "Ranks",
+  backgroundImage: globalImage
+}) %>
+
+
+<section class="section">
+    <div class="container">
+      <div>
+        <% tebexPackageData.forEach(function (category) { %>
+          <% console.log(category); %>
+          <h3 class="mb-3"><%= category.name %></h3>
+          <hr>
+
+        <div class="row">
+          <% category.packages.forEach(function (package) { %>
+            <% console.log(package); %>
+              <div class="col-lg-4 col-md-6 col-sm-6">
+                <div class="service-item mb-4">
+                  <div class="feature-item mb-5 mb-lg-0">
+                    <div class="feature-icon mb-4">
+                      <img src="<%= package.image %>" alt="<%= package.name %> rank image" height="100px">
+                    </div>
+                    <h4 class="mb-3"><%= package.name %></h4>
+                    <h5 class="mb-3">$<%= package.price %></h5>
+                    
+                    <a href="<%= config.siteConfiguration.platforms.webstore %>/package/<%= package.id %>" target="_blank"><button type="button" class="btn btn-info">Apply</button></a>
+
+                  </div>
+                </div>
+              </div>
+            <% }) %>
+        </div>
+
+        <% }) %>
+      </div>
+    </div>
+</section>
+
+<%- include("modules/footer.ejs") %>  
