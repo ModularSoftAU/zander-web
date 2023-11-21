@@ -89,20 +89,11 @@ export default function applicationSiteRoutes(
   app.get("/ranks", async function (req, res) {
     isFeatureWebRouteEnabled(features.ranks, req, res, features);
 
-    const fetchURL = `https://plugin.tebex.io/listing`;
-    const response = await fetch(fetchURL, {
-      headers: { "X-Tebex-Secret": process.env.tebexSecretKey },
-    });
-    const tebexPackageData = await response.json();
-
-    console.log(tebexPackageData.categories);
-
     return res.view("ranks", {
       pageTitle: `Ranks`,
       config: config,
       req: req,
-      rankData: rankData,
-      tebexPackageData: tebexPackageData.categories,
+      rankData: rankData.categories,
       features: features,
       globalImage: await getGlobalImage(),
       announcementWeb: await getWebAnnouncement(),

@@ -1,86 +1,108 @@
 {
-  "currency": "AUD",
-  "ranks": [
+  "categories": [
     {
-      "name": "Iron",
-      "image": "images/ranks/iron.png",
-      "priceMonthly": 1,
-      "monthlyRedirectUrl": "https://crafting-for-christ.tebex.io/package/4028832",
-      "globalPerks": ["Iron tag on Server and Discord"],
-      "networkPerks": ["Ability to join full games during Events on Mixed"],
-      "hubPerks": [
-        "Player statue in the Hall of Patrons",
-        "Access to /fly :elytra: in the Hub"
-      ],
-      "survivalPerks": ["Access to /sethome :homes:, maximum of 2"],
-      "discordPerks": [
-        "Access to exclusive Donator channels",
-        "Access to using the Discord Music Bot"
+      "displayName": "Ranks",
+      "packages": [
+        {
+          "displayName": "Iron",
+          "image": "images/ranks/iron.png",
+          "priceMonthly": 1,
+          "monthlyRedirectUrl": "https://crafting-for-christ.tebex.io/package/4028832",
+          "perks": [
+            {
+              "displayName": "Global",
+              "perks": ["Iron tag on Server and Discord"]
+            },
+            {
+              "displayName": "Network",
+              "perks": ["Ability to join full games during Events on Mixed"]
+            },
+            {
+              "displayName": "Hub",
+              "perks": [
+                "Player statue in the Hall of Patrons",
+                "Access to /fly :elytra: in the Hub"
+              ]
+            },
+            {
+              "displayName": "Survival",
+              "perks": ["Access to /sethome :homes:, maximum of 2"]
+            },
+            {
+              "displayName": "Discord",
+              "perks": [
+                "Access to exclusive Donator channels",
+                "Access to using the Discord Music Bot"
+              ]
+            }
+          ]
+        },
+        {
+          "displayName": "Gold",
+          "image": "images/ranks/gold.png",
+          "priceMonthly": 5,
+          "priceOneTime": 25,
+          "monthlyRedirectUrl": "https://crafting-for-christ.tebex.io/package/4028834",
+          "oneTimeRedirectUrl": "https://crafting-for-christ.tebex.io/package/4028835",
+          "globalPerks": ["Gold tag on Server and Discord"],
+          "survivalPerks": [
+            "Access to /hat :womans_hat:",
+            "Ability to customize armor stands using armour statues (https://www.youtube.com/watch?v=A25hSBnM7dM)",
+            "Access to /sethome, maximum of 3"
+          ]
+        },
+        {
+          "displayName": "Diamond",
+          "image": "images/ranks/diamond.png",
+          "priceMonthly": 10,
+          "priceOneTime": 50,
+          "monthlyRedirectUrl": "https://crafting-for-christ.tebex.io/package/4028837",
+          "oneTimeRedirectUrl": "https://crafting-for-christ.tebex.io/package/4028840",
+          "globalPerks": ["Diamond tag on Server and Discord"],
+          "survivalPerks": ["Access to /sethome, maximum of 4"]
+        }
       ]
     },
     {
-      "name": "Gold",
-      "image": "images/ranks/gold.png",
-      "priceMonthly": 5,
-      "priceOneTime": 25,
-      "monthlyRedirectUrl": "https://crafting-for-christ.tebex.io/package/4028834",
-      "oneTimeRedirectUrl": "https://crafting-for-christ.tebex.io/package/4028835",
-      "inherits": "Iron",
-      "globalPerks": ["Gold tag on Server and Discord"],
-      "survivalPerks": [
-        "Access to /hat :womans_hat:",
-        "Ability to customize armor stands using armour statues (https://www.youtube.com/watch?v=A25hSBnM7dM)",
-        "Access to /sethome, maximum of 3"
+      "displayName": "Donate",
+      "packages": [
+        {
+          "displayName": "$10 Donation",
+          "image": "images/ranks/donate.png",
+          "price": 10,
+          "redirectUrl": "https://crafting-for-christ.tebex.io/package/4028841"
+        },
+        {
+          "displayName": "$20 Donation",
+          "image": "images/ranks/donate.png",
+          "price": 20,
+          "redirectUrl": "https://crafting-for-christ.tebex.io/package/4028842"
+        },
+        {
+          "displayName": "$30 Donation",
+          "image": "images/ranks/donate.png",
+          "price": 30,
+          "redirectUrl": "https://crafting-for-christ.tebex.io/package/4028843"
+        },
+        {
+          "displayName": "$40 Donation",
+          "image": "images/ranks/donate.png",
+          "price": 40,
+          "redirectUrl": "https://crafting-for-christ.tebex.io/package/4028844"
+        },
+        {
+          "displayName": "$50 Donation",
+          "image": "images/ranks/donate.png",
+          "price": 50,
+          "redirectUrl": "https://crafting-for-christ.tebex.io/package/4028845"
+        },
+        {
+          "displayName": "$100 Donation",
+          "image": "images/ranks/donate.png",
+          "price": 100,
+          "redirectUrl": "https://crafting-for-christ.tebex.io/package/4028846"
+        }
       ]
-    },
-    {
-      "name": "Diamond",
-      "image": "images/ranks/diamond.png",
-      "priceMonthly": 10,
-      "priceOneTime": 50,
-      "monthlyRedirectUrl": "https://crafting-for-christ.tebex.io/package/4028837",
-      "oneTimeRedirectUrl": "https://crafting-for-christ.tebex.io/package/4028840",
-      "inherits": "Gold",
-      "globalPerks": ["Diamond tag on Server and Discord"],
-      "survivalPerks": ["Access to /sethome, maximum of 4"]
-    }
-  ],
-  "additionalItems": [
-    {
-      "name": "$10 Donation",
-      "image": "images/ranks/donate.png",
-      "price": 10,
-      "redirectUrl": "https://crafting-for-christ.tebex.io/package/4028841"
-    },
-    {
-      "name": "$20 Donation",
-      "image": "images/ranks/donate.png",
-      "price": 20,
-      "redirectUrl": "https://crafting-for-christ.tebex.io/package/4028842"
-    },
-    {
-      "name": "$30 Donation",
-      "image": "images/ranks/donate.png",
-      "price": 30,
-      "redirectUrl": "https://crafting-for-christ.tebex.io/package/4028843"
-    },
-    {
-      "name": "$40 Donation",
-      "image": "images/ranks/donate.png",
-      "price": 40,
-      "redirectUrl": "https://crafting-for-christ.tebex.io/package/4028844"
-    },
-    {
-      "name": "$50 Donation",
-      "image": "images/ranks/donate.png",
-      "price": 50,
-      "redirectUrl": "https://crafting-for-christ.tebex.io/package/4028845"
-    },
-    {
-      "name": "$100 Donation",
-      "image": "images/ranks/donate.png",
-      "price": 100,
-      "redirectUrl": "https://crafting-for-christ.tebex.io/package/4028846"
     }
   ]
 }
