@@ -55,16 +55,9 @@
             {
               "displayName": "Survival",
               "perks": [
-                "Access to /hat :womans_hat:",
+                "Access to /hat",
                 "Ability to customize armor stands using armour statues.",
                 "Access to /sethome, maximum of 3."
-              ]
-            },
-            {
-              "displayName": "Discord",
-              "perks": [
-                "Access to exclusive Donator channels.",
-                "Access to using the Discord Music Bot."
               ]
             }
           ]
@@ -87,16 +80,7 @@
             {
               "displayName": "Survival",
               "perks": [
-                "Access to /hat.",
-                "Ability to customize armor stands using armour statues.",
-                "Access to /sethome, maximum of 3."
-              ]
-            },
-            {
-              "displayName": "Discord",
-              "perks": [
-                "Access to exclusive Donator channels",
-                "Access to using the Discord Music Bot."
+                "Access to /sethome, maximum of 4."
               ]
             }
           ]
