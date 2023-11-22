@@ -7,7 +7,12 @@
           "displayName": "Iron",
           "image": "images/ranks/iron.png",
           "priceMonthly": 1,
-          "monthlyRedirectUrl": "https://crafting-for-christ.tebex.io/package/4028832",
+          "callToAction": [
+            {
+              "displayText": "Subscription",
+              "redirectUrl": "https://crafting-for-christ.tebex.io/package/4028832"
+            }
+          ],
           "perks": [
             {
               "displayName": "Global",
@@ -42,8 +47,16 @@
           "image": "images/ranks/gold.png",
           "priceMonthly": 5,
           "priceOneTime": 25,
-          "monthlyRedirectUrl": "https://crafting-for-christ.tebex.io/package/4028834",
-          "oneTimeRedirectUrl": "https://crafting-for-christ.tebex.io/package/4028835",
+          "callToAction": [
+            {
+              "displayText": "Subscription",
+              "redirectUrl": "https://crafting-for-christ.tebex.io/package/4028834"
+            },
+            {
+              "displayText": "Permanent",
+              "redirectUrl": "https://crafting-for-christ.tebex.io/package/4028835"
+            }
+          ],
           "perks": [
             {
               "displayName": "Global",
@@ -67,8 +80,16 @@
           "image": "images/ranks/diamond.png",
           "priceMonthly": 10,
           "priceOneTime": 50,
-          "monthlyRedirectUrl": "https://crafting-for-christ.tebex.io/package/4028837",
-          "oneTimeRedirectUrl": "https://crafting-for-christ.tebex.io/package/4028840",
+          "callToAction": [
+            {
+              "displayText": "Subscription",
+              "redirectUrl": "https://crafting-for-christ.tebex.io/package/4028837"
+            },
+            {
+              "displayText": "Permanent",
+              "redirectUrl": "https://crafting-for-christ.tebex.io/package/4028840"
+            }
+          ],
           "perks": [
             {
               "displayName": "Global",
@@ -79,9 +100,7 @@
             },
             {
               "displayName": "Survival",
-              "perks": [
-                "Access to /sethome, maximum of 4."
-              ]
+              "perks": ["Access to /sethome, maximum of 4."]
             }
           ]
         }
@@ -94,37 +113,67 @@
           "displayName": "$10 Donation",
           "image": "images/ranks/donate.png",
           "price": 10,
-          "oneTimeRedirectUrl": "https://crafting-for-christ.tebex.io/package/4028841"
+          "callToAction": [
+            {
+              "displayText": "Donate",
+              "redirectUrl": "https://crafting-for-christ.tebex.io/package/4028841"
+            }
+          ]
         },
         {
           "displayName": "$20 Donation",
           "image": "images/ranks/donate.png",
           "price": 20,
-          "oneTimeRedirectUrl": "https://crafting-for-christ.tebex.io/package/4028842"
+          "callToAction": [
+            {
+              "displayText": "Donate",
+              "redirectUrl": "https://crafting-for-christ.tebex.io/package/4028842"
+            }
+          ]
         },
         {
           "displayName": "$30 Donation",
           "image": "images/ranks/donate.png",
           "price": 30,
-          "oneTimeRedirectUrl": "https://crafting-for-christ.tebex.io/package/4028843"
+          "callToAction": [
+            {
+              "displayText": "Donate",
+              "redirectUrl": "https://crafting-for-christ.tebex.io/package/4028843"
+            }
+          ]
         },
         {
           "displayName": "$40 Donation",
           "image": "images/ranks/donate.png",
           "price": 40,
-          "oneTimeRedirectUrl": "https://crafting-for-christ.tebex.io/package/4028844"
+          "callToAction": [
+            {
+              "displayText": "Donate",
+              "redirectUrl": "https://crafting-for-christ.tebex.io/package/4028844"
+            }
+          ]
         },
         {
           "displayName": "$50 Donation",
           "image": "images/ranks/donate.png",
           "price": 50,
-          "oneTimeRedirectUrl": "https://crafting-for-christ.tebex.io/package/4028845"
+          "callToAction": [
+            {
+              "displayText": "Donate",
+              "redirectUrl": "https://crafting-for-christ.tebex.io/package/4028845"
+            }
+          ]
         },
         {
           "displayName": "$100 Donation",
           "image": "images/ranks/donate.png",
           "price": 100,
-          "oneTimeRedirectUrl": "https://crafting-for-christ.tebex.io/package/4028846"
+          "callToAction": [
+            {
+              "displayText": "Donate",
+              "redirectUrl": "https://crafting-for-christ.tebex.io/package/4028846"
+            }
+          ]
         }
       ]
     }
