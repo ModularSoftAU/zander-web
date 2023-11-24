@@ -33,7 +33,7 @@
     "@sapphire/framework": "^4.7.2",
     "bcrypt": "^5.0.1",
     "crypto": "^1.0.1",
-    "discord.js": "^14.13.0",
+    "discord.js": "^14.14.1",
     "dotenv": "^16.0.1",
     "ejs": "^3.1.7",
     "fastify": "^4.23.2",
