@@ -3,6 +3,7 @@ import policySiteRoutes from "./policyRoutes";
 import sessionRoutes from "./sessionRoutes";
 import { isFeatureWebRouteEnabled, getGlobalImage } from "../api/common";
 import { getWebAnnouncement } from "../controllers/announcementController";
+import redirectSiteRoutes from "./redirectRoutes";
 import rankData from "../ranks.json" assert { type: "json" };
 
 export default function applicationSiteRoutes(
@@ -18,6 +19,7 @@ export default function applicationSiteRoutes(
   dashboardSiteRoutes(app, client, fetch, moment, config, db, features, lang);
   sessionRoutes(app, client, fetch, moment, config, db, features, lang);
   policySiteRoutes(app, config, features);
+  redirectSiteRoutes(app, config, features);
 
   app.get("/", async function (req, res) {
     const fetchURL = `${process.env.siteAddress}/api/web/statistics`;
@@ -108,26 +110,5 @@ export default function applicationSiteRoutes(
       globalImage: await getGlobalImage(),
       announcementWeb: await getWebAnnouncement(),
     });
-  });
-
-  //
-  // Discord Redirect
-  //
-  app.get("/discord", async function (req, res) {
-    return res.redirect(config.siteConfiguration.platforms.discord);
-  });
-
-  //
-  // Webstore Redirect
-  //
-  app.get("/webstore", async function (req, res) {
-    return res.redirect(config.siteConfiguration.platforms.webstore);
-  });
-
-  //
-  // Guides Redirect
-  //
-  app.get("/knowledgebase", async function (req, res) {
-    return res.redirect(`https://guides.craftingforchrist.net/`);
   });
 }
