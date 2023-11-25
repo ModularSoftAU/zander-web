@@ -136,9 +136,13 @@ WHERE gp.permission IS NOT NULL
 
 CREATE TABLE servers (
 	serverId INT NOT NULL AUTO_INCREMENT,
+    proxyIdentifier TEXT, -- This needs to be the servers display name to lower case.
     displayName TEXT,
     serverConnectionAddress TEXT,
     position INT,
+    serverCount INT,
+    serverStatus BOOLEAN,
+    visible BOOLEAN,
     PRIMARY KEY (serverId)
 );
 
