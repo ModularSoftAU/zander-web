@@ -91,12 +91,22 @@ export default function applicationSiteRoutes(
   app.get("/ranks", async function (req, res) {
     isFeatureWebRouteEnabled(features.ranks, req, res, features);
 
+    const fetchURL = `https://plugin.tebex.io/community_goals`;
+    const response = await fetch(fetchURL, {
+      headers: { "X-Tebex-Secret": process.env.tebexSecretKey },
+    });
+    const communityGoalData = await response.json();
+
+    console.log(communityGoalData);
+
     return res.view("ranks", {
       pageTitle: `Ranks`,
       config: config,
       req: req,
+      communityGoalData: communityGoalData,
       rankData: rankData.categories,
       features: features,
+      moment: moment,
       globalImage: await getGlobalImage(),
       announcementWeb: await getWebAnnouncement(),
     });

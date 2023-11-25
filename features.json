@@ -13,6 +13,7 @@
   },
   "server": true,
   "ranks": true,
+  "communityGoal": true,
   "filter": {
     "link": true,
     "phrase": true

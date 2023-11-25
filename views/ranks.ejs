@@ -12,6 +12,56 @@
 
 
 <section class="section">
+    <% if (features.communityGoal) { %>
+    <div class="container">
+        <h2 class="mb-3">Community Goal</h2>
+
+        <% communityGoalData.forEach(function (goal) { %>
+          <h3 class="mb-3"><%= goal.name %></h3>
+          <hr>
+
+        <div class="col-">
+          <div class="service-item mb-4">
+            <div class="feature-item mb-5 mb-lg-0">
+              <div class="feature-icon mb-4">
+                <div class="row">
+                   <div class="col-lg-4 col-md-6 col-sm-12">
+                    <h3>Goal Progress</h3>
+                    <div class="progress" role="progressbar" aria-label="Animated striped example" aria-valuenow="75" aria-valuemin="0" aria-valuemax="100">
+                      <div class="progress-bar progress-bar-striped progress-bar-animated" style="width: 20%"></div>
+                    </div>
+
+                    <% if (goal.status == 'active') { %>
+                      <span class="badge badge-success">Ongoing</span>
+                    <% } %>
+                    <% if (goal.status == 'complete') { %>
+                      <span class="badge badge-info">Success</span>
+                    <% } %>
+                    <br><br>
+
+                    <h6>Target</h6>
+                      <p>$<%= goal.target %></p>
+                    <h6>Currently Raised</h6>
+                      <p>$<%= goal.current %></p>
+
+                  </div>
+                  <div class="col-lg-8 col-md-6 col-sm-12">
+                    <h3>Goal Description</h3>
+                    <span class=""><%- goal.description %></span>
+                  </div>
+                </div>
+
+                <small>Created At: <%= moment(goal.created_at).format('MMMM Do YYYY, h:mm:ss a') %></small><br>
+                <small>Updated At: <%= moment(goal.updated_at).format('MMMM Do YYYY, h:mm:ss a') %> </small>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <% }) %>
+    </div> 
+    <% } %>
+
     <div class="container">
       <div>
         <% rankData.forEach(function (category) { %>
