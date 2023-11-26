@@ -1,3 +1,4 @@
+import { Webhook } from "discord-webhook-node";
 import { isFeatureEnabled, required } from "../common";
 
 export default function discordApiRoute(
@@ -16,12 +17,11 @@ export default function discordApiRoute(
     const server = required(req.body, "server", res);
 
     try {
-      const guild = client.guilds.cache.get(config.discord.guildId);
-      const channel = guild.channels.cache.get(
-        config.discord.channels.networkChatLog
+      const networkChatLogHook = new Webhook(
+        config.discord.webhooks.networkChatLog
       );
 
-      channel.send(
+      networkChatLogHook.send(
         `:twisted_rightwards_arrows: | \`${username}\` switched to \`${server}\``
       );
 
@@ -45,12 +45,11 @@ export default function discordApiRoute(
     const content = required(req.body, "content", res);
 
     try {
-      const guild = client.guilds.cache.get(config.discord.guildId);
-      const channel = guild.channels.cache.get(
-        config.discord.channels.networkChatLog
+      const networkChatLogHook = new Webhook(
+        config.discord.webhooks.networkChatLog
       );
 
-      channel.send(`**${server}** | \`${username}\` :: ${content}`);
+      networkChatLogHook.send(`**${server}** | \`${username}\` :: ${content}`);
 
       return res.send({
         success: true,
@@ -68,12 +67,11 @@ export default function discordApiRoute(
     const username = required(req.body, "username", res);
 
     try {
-      const guild = client.guilds.cache.get(config.discord.guildId);
-      const channel = guild.channels.cache.get(
-        config.discord.channels.networkChatLog
+      const networkChatLogHook = new Webhook(
+        config.discord.webhooks.networkChatLog
       );
 
-      channel.send(
+      networkChatLogHook.send(
         `:ballot_box_with_check: | \`${username}\` has joined the Network.`
       );
     } catch (error) {
@@ -89,12 +87,11 @@ export default function discordApiRoute(
     const username = required(req.body, "username", res);
 
     try {
-      const guild = client.guilds.cache.get(config.discord.guildId);
-      const channel = guild.channels.cache.get(
-        config.discord.channels.networkChatLog
+      const networkChatLogHook = new Webhook(
+        config.discord.webhooks.networkChatLog
       );
 
-      channel.send(
+      networkChatLogHook.send(
         `:negative_squared_cross_mark: | \`${username}\` has left the Network.`
       );
 
