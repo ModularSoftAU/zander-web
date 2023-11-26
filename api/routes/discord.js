@@ -11,33 +11,6 @@ export default function discordApiRoute(
 ) {
   const baseEndpoint = "/api/discord";
 
-  app.post(baseEndpoint + "/switch", async function (req, res) {
-    isFeatureEnabled(features.discord, res, lang);
-    const username = required(req.body, "username", res);
-    const server = required(req.body, "server", res);
-
-    try {
-      const networkChatLogHook = new Webhook(
-        config.discord.webhooks.networkChatLog
-      );
-
-      networkChatLogHook.send(
-        `:twisted_rightwards_arrows: | \`${username}\` switched to \`${server}\``
-      );
-
-      return res.send({
-        success: true,
-      });
-    } catch (error) {
-      return res.send({
-        success: false,
-        message: `${error}`,
-      });
-    }
-
-    return res;
-  });
-
   app.post(baseEndpoint + "/chat", async function (req, res) {
     isFeatureEnabled(features.discord, res, lang);
     const username = required(req.body, "username", res);
@@ -100,6 +73,63 @@ export default function discordApiRoute(
       });
     } catch (error) {
       res.send({
+        success: false,
+        message: `${error}`,
+      });
+    }
+
+    return res;
+  });
+
+  app.post(baseEndpoint + "/spy/command", async function (req, res) {
+    isFeatureEnabled(features.discord, res, lang);
+    const username = required(req.body, "username", res);
+    const command = required(req.body, "command", res);
+    const server = required(req.body, "server", res);
+
+    try {
+      const networkChatLogHook = new Webhook(
+        config.discord.webhooks.networkChatLog
+      );
+
+      networkChatLogHook.send(
+        `:floppy_disk: | **${server}** | \`${username}\` executed command \`${command}\``
+      );
+
+      return res.send({
+        success: true,
+      });
+    } catch (error) {
+      return res.send({
+        success: false,
+        message: `${error}`,
+      });
+    }
+
+    return res;
+  });
+
+  app.post(baseEndpoint + "/spy/directMessage", async function (req, res) {
+    isFeatureEnabled(features.discord, res, lang);
+    const usernameFrom = required(req.body, "usernameFrom", res);
+    const usernameTo = required(req.body, "usernameTo", res);
+    const directMessage = required(req.body, "directMessage", res);
+    const server = required(req.body, "server", res);
+
+    try {
+      const networkChatLogHook = new Webhook(
+        config.discord.webhooks.networkChatLog
+      );
+
+      networkChatLogHook.send(
+        `:speaking_head: | **${server}** | \`${usernameFrom}\` => \`${usernameTo}\`: \`${directMessage}\``
+      );
+
+      return res.send({
+        success: true,
+      });
+    } catch (error) {
+      return res.send({
         success: false,
         message: `${error}`,
       });
