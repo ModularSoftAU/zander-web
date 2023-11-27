@@ -52,6 +52,22 @@ export default function sessionSiteRoute(
     return res;
   });
 
+  app.get("/register/verify", async function (req, res) {
+    if (!isFeatureWebRouteEnabled(features.web.register, req, res, features))
+      return;
+
+    res.view("session/verifyEmail", {
+      pageTitle: `Verify Email`,
+      config: config,
+      req: req,
+      features: features,
+      globalImage: await getGlobalImage(),
+      announcementWeb: await getWebAnnouncement(),
+    });
+
+    return res;
+  });
+
   app.post("/login", async function (req, res) {
     if (!isFeatureWebRouteEnabled(features.web.login, req, res, features))
       return;
