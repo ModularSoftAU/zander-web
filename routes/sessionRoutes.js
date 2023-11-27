@@ -6,6 +6,7 @@ import {
 } from "../api/common";
 import { getProfilePicture } from "../controllers/userController";
 import { getWebAnnouncement } from "../controllers/announcementController";
+import { generateVerificationCode } from "../controllers/sessionController";
 
 export default function sessionSiteRoute(
   app,
@@ -55,6 +56,10 @@ export default function sessionSiteRoute(
   app.get("/register/verify", async function (req, res) {
     if (!isFeatureWebRouteEnabled(features.web.register, req, res, features))
       return;
+    
+    console.log(await generateVerificationCode());
+
+    
 
     res.view("session/verifyEmail", {
       pageTitle: `Verify Email`,

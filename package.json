@@ -37,10 +37,12 @@
     "dotenv": "^16.0.1",
     "ejs": "^3.1.7",
     "fastify": "^4.23.2",
+    "mailtrap": "^3.2.0",
     "moment": ">=2.29.2",
     "mysql": "^2.18.1",
     "node-cron": "^3.0.0",
     "node-fetch": "^3.3.2",
+    "nodemailer": "^6.9.7",
     "nodemon": "^3.0.1",
     "path": "^0.12.7",
     "zero-md": "^2.3.1"
