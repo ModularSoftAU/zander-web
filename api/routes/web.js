@@ -117,100 +117,20 @@ export default async function webApiRoute(app, config, db, features, lang) {
     return res;
   });
 
-  app.post(baseEndpoint + "/register/email/verify", async function (req, res) {
+  app.post(baseEndpoint + "/verify/email/", async function (req, res) {
     isFeatureEnabled(features.web.register, res, lang);
 
-    const username = required(req.body, "username", res);
-    const verificationCode = required(req.body, "verificationCode", res);
+    return res;
+  });
 
-    db.query(
-      `select * from users where username=?; select * from users where email=?;`,
-      [username, email],
-      async function (err, results) {
-        if (err) {
-          throw err;
-        }
+  app.post(baseEndpoint + "/verify/minecraft", async function (req, res) {
+    isFeatureEnabled(features.web.register, res, lang);
 
-        // User has not logged in before.
-        let userJoinBefore = await hasUserJoinedBefore(username);
-        if (!userJoinBefore) {
-          setBannerCookie(`warning`, `This is a test`, res);
+    return res;
+  });
 
-          return res.send({
-            success: false,
-            alertType: "warning",
-            alertContent: notLoggedInBeforeLang.replace(
-              "%SITEADDRESS%",
-              process.env.siteAddress
-            ),
-          });
-        }
-
-        let emailBeenUsed = await hasEmailBeenUsed(email);
-        if (emailBeenUsed) {
-          return res.send({
-            success: false,
-            alertType: "warning",
-            alertContent: lang.web.emailAlreadyInUse,
-          });
-        }
-
-        // Check if passwords match
-        let passwordMatch = await doesPasswordMatch(password, confirmPassword);
-        if (!passwordMatch) {
-          return res.send({
-            success: false,
-            alertType: "danger",
-            alertContent: lang.web.passwordDoesNotMatch,
-          });
-        }
-
-        // Hash password and enter into the database.
-        try {
-          const salt = await bcrypt.genSalt();
-          let hashpassword = await bcrypt.hash(password, salt);
-
-          db.query(
-            `UPDATE users SET password=?, email=?, emailHash=? WHERE username=?;`,
-            [hashpassword, email, await hashEmail(email), username],
-            async function (err, results) {
-              if (err) {
-                console.log(err);
-
-                return res.send({
-                  success: false,
-                  alertType: "danger",
-                  alertContent: lang.web.registrationError,
-                });
-              }
-
-              generateLog(
-                null,
-                "INFO",
-                "WEB",
-                `New website registration ${username}`,
-                res
-              );
-
-              // Success, generating account now.
-              return res.send({
-                success: true,
-                alertType: "success",
-                alertContent: lang.web.registrationSuccess,
-              });
-            }
-          );
-        } catch (error) {
-          console.log(error);
-
-          return res.send({
-            success: false,
-            alertType: "danger",
-            alertContent: lang.web.registrationError,
-          });
-        }
-      }
-    );
+  app.post(baseEndpoint + "/verify/2fa", async function (req, res) {
+    isFeatureEnabled(features.web.register, res, lang);
 
     return res;
   });
