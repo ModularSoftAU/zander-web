@@ -10,6 +10,10 @@
   backgroundImage: globalImage
 }) %>
 
+<script>
+
+</script>
+
 <section class="section">
   <div class="container">
     <div class="row">
@@ -21,33 +25,62 @@
           }) %>
         <% } %>
 
-        <p>Check your email EMAIL for a code and enter it here.</p>
+        <script>
+          $(document).ready(function() {
+            var $pincodeInputs = $('.form-control');
+            var $submitButton = $('#submitBtn');
 
-        <form method="post" action="<%= process.env.siteAddress %>/redirect/web/register/verify">
-          <div class="row mb-4">
-                  <div class="col-lg-2 col-md-2 col-2 ps-0 ps-md-2">
-                      <input type="text" class="form-control text-lg text-center" maxlength="1">
-                  </div>
-                  <div class="col-lg-2 col-md-2 col-2 ps-0 ps-md-2">
-                      <input type="text" class="form-control text-lg text-center" maxlength="1">
-                  </div>
-                  <div class="col-lg-2 col-md-2 col-2 ps-0 ps-md-2">
-                      <input type="text" class="form-control text-lg text-center" maxlength="1">
-                  </div>
-                  <div class="col-lg-2 col-md-2 col-2 pe-0 pe-md-2">
-                      <input type="text" class="form-control text-lg text-center" maxlength="1">
-                  </div>
-                  <div class="col-lg-2 col-md-2 col-2 pe-0 pe-md-2">
-                      <input type="text" class="form-control text-lg text-center" maxlength="1">
-                  </div>
-                  <div class="col-lg-2 col-md-2 col-2 pe-0 pe-md-2">
-                      <input type="text" class="form-control text-lg text-center" maxlength="1">
-                  </div>
+            $pincodeInputs.on('input', function() {
+              var allFilled = true;
+
+              $pincodeInputs.each(function() {
+                if ($(this).val().length !== 1) {
+                  allFilled = false;
+                  return false; // Exit the loop early if any box is not filled
+                }
+              });
+
+              $submitButton.prop('disabled', !allFilled);
+              
+              var $this = $(this);
+              var val = $this.val();
+
+              if (val.length === 1) {
+                var currentIndex = $pincodeInputs.index(this);
+                var nextIndex = currentIndex + 1;
+
+                if (nextIndex < $pincodeInputs.length) {
+                  $pincodeInputs.eq(nextIndex).focus();
+                }
+              }
+            });
+          });
+        </script>
+
+        <div class="container">
+        <form id="form">
+          <h1 class="mt-4">TWO-FACTOR AUTHENTICATION</h1>
+          <p>Enter 6-digit code from your authenticator application</p>
+          <div class="form-group row">
+            <div class="col-sm-6 col-md-8">
+              <div class="input-group mb-3">
+                <input type="tel" id="pincode-1" class="form-control" maxlength="1" pattern="[\\d]*" tabindex="1" placeholder="·" autocomplete="off">
+                <input type="tel" id="pincode-2" class="form-control" maxlength="1" pattern="[\\d]*" tabindex="2" placeholder="·" autocomplete="off">
+                <input type="tel" id="pincode-3" class="form-control" maxlength="1" pattern="[\\d]*" tabindex="3" placeholder="·" autocomplete="off">
+                <input type="tel" id="pincode-4" class="form-control" maxlength="1" pattern="[\\d]*" tabindex="4" placeholder="·" autocomplete="off">
+                <input type="tel" id="pincode-5" class="form-control" maxlength="1" pattern="[\\d]*" tabindex="5" placeholder="·" autocomplete="off">
+                <input type="tel" id="pincode-6" class="form-control" maxlength="1" pattern="[\\d]*" tabindex="6" placeholder="·" autocomplete="off">
               </div>
-              <div class="text-center">
-                  <button type="button" class="btn bg-info btn-lg my-4">Continue</button>
-              </div>
-          </form>
+            </div>
+          </div>
+          <div class="form-group row">
+            <div class="col">
+              <button type="button" id="submitBtn" class="btn btn-primary" disabled>Continue</button>
+            </div>
+          </div>
+        </form>
+      </div>
+
       </div>
       <div class="col-12 col-md-6" style="min-height:500px; display: flex; align-items: center;">
         <div class="text-center">
