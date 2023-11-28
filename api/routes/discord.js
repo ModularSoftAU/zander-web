@@ -11,6 +11,33 @@ export default function discordApiRoute(
 ) {
   const baseEndpoint = "/api/discord";
 
+  app.post(baseEndpoint + "/switch", async function (req, res) {
+    isFeatureEnabled(features.discord, res, lang);
+    const username = required(req.body, "username", res);
+    const server = required(req.body, "server", res);
+
+    try {
+      const networkChatLogHook = new Webhook(
+        config.discord.webhooks.networkChatLog
+      );
+
+      networkChatLogHook.send(
+        `:twisted_rightwards_arrows: | \`${username}\` switched to \`${server}\``
+      );
+
+      return res.send({
+        success: true,
+      });
+    } catch (error) {
+      return res.send({
+        success: false,
+        message: `${error}`,
+      });
+    }
+
+    return res;
+  });
+
   app.post(baseEndpoint + "/chat", async function (req, res) {
     isFeatureEnabled(features.discord, res, lang);
     const username = required(req.body, "username", res);
