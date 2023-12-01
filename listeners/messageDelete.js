@@ -1,7 +1,7 @@
 import { Listener } from "@sapphire/framework";
 import config from "../config.json" assert { type: "json" };
 import { Colors, EmbedBuilder } from "discord.js";
-import { MessageBuilder } from "discord-webhook-node";
+import { MessageBuilder, Webhook } from "discord-webhook-node";
 
 export class GuildMessageDeleteListener extends Listener {
   constructor(context, options) {
