@@ -26,11 +26,11 @@ export class GuildMessageDeleteListener extends Listener {
       .setDescription(
         `Message deleted from \`${message.author.username}\` in \`#${message.channel.name}\``
       )
-      .addFields({
-        name: "Deleted Message",
-        value: `${message.content}`,
-        inline: false,
-      });
+      .addField(
+        "Deleted Message",
+        `${message.content}`,
+        false,
+      );
 
     adminLogHook.send(embed);
   }

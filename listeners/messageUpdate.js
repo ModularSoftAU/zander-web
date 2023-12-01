@@ -26,13 +26,15 @@ export class GuildMessageUpdateListener extends Listener {
       .setDescription(
         `Message edit from \`${oldMessage.author.username}\` in \`#${oldMessage.channel.name}\``
       )
-      .addFields(
-        { name: "Old Message", value: `${oldMessage.content}`, inline: false },
-        {
-          name: "Edited Message",
-          value: `${newMessage.content}`,
-          inline: false,
-        }
+      .addField(
+        "Old Message",
+        `${oldMessage.content}`,
+        false
+      )
+      .addField(
+        "Edited Message",
+        `${newMessage.content}`,
+        false,
       );
 
     adminLogHook.send(embed);
