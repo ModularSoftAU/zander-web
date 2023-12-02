@@ -58,9 +58,7 @@ export default function sessionSiteRoute(
       return;
     
     console.log(await generateVerificationCode());
-
     
-
     res.view("session/verifyEmail", {
       pageTitle: `Verify Email`,
       config: config,
