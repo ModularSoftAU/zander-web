@@ -7,6 +7,7 @@ import {
 import { getProfilePicture } from "../controllers/userController";
 import { getWebAnnouncement } from "../controllers/announcementController";
 import { generateVerificationCode } from "../controllers/sessionController";
+import { sendMail } from "../controllers/emailController";
 
 export default function sessionSiteRoute(
   app,
@@ -55,10 +56,12 @@ export default function sessionSiteRoute(
 
   app.get("/register/verify", async function (req, res) {
     if (!isFeatureWebRouteEnabled(features.web.register, req, res, features))
-      return;
+      return; 
     
     console.log(await generateVerificationCode());
-    
+
+    sendMail(`benrobson76@gmail.com`, `Testing`);
+
     res.view("session/verifyEmail", {
       pageTitle: `Verify Email`,
       config: config,
