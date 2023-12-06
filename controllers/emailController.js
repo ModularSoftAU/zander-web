@@ -19,7 +19,7 @@ export async function sendMail(
   subject
 ) {
   const emailTemplate = ejs.compile(
-    fs.readFileSync("../views/partials/email/emailTemplate.ejs", "utf-8")
+    fs.readFileSync("./views/partials/email/emailTemplate.ejs", "utf-8")
   );
   const renderedTemplate = emailTemplate({ username: "John" });
 
