@@ -1,0 +1,63 @@
+<%- include("modules/header.ejs", {
+    pageTitle: pageTitle,
+    pageDescription: "Looking to support our Network and get awesome perks in return, we value our community supporting the Network in what we do."
+}) %>
+
+<%- include("modules/navigationBar.ejs") %>
+
+<%- include("partials/miniHeader.ejs", {
+  headerTitle: "Ranks",
+  backgroundImage: globalImage
+}) %>
+
+
+<section class="section">
+    <div class="container">
+      <div>
+        <% rankData.forEach(function (category) { %>
+          <h3 class="mb-3"><%= category.displayName %></h3>
+          <hr>
+
+        <div class="row">
+          <% category.packages.forEach(function (package) { %>
+              <div class="col-lg-4 col-md-6 col-sm-12">
+                <div class="service-item mb-4">
+                  <div class="feature-item mb-5 mb-lg-0">
+                    <div class="feature-icon mb-4">
+                      <img src="<%= package.image %>" alt="<%= package.displayName %> rank image" height="100px">
+                    </div>
+                    <h4 class="mb-3"><%= package.displayName %></h4>
+                    <% if (package.priceMonthly || package.priceOneTime) { %>
+                     <b>$<%= package.priceMonthly %> per month</b><br>
+                    <% } %>
+                    <% if (package.priceOneTime) { %>
+                      <b>$<%= package.priceOneTime %> permanently</b>
+                    <% } %>
+                    <br><br>
+
+                    <% if (package.perks) { %>
+                      <% package.perks.forEach(function (perksGroup) { %>
+                        <h5 class="mb-3"><%= perksGroup.displayName %></h5>
+                        <ul>
+                          <% perksGroup.perks.forEach(function (perkItem) { %>
+                            <li><%= perkItem %></li>
+                          <% }) %>
+                        </ul>
+                      <% }) %>
+                    <% } %>
+
+                    <% package.callToAction.forEach(function (cta) { %>
+                      <a href="<%= cta.redirectUrl %>" target="_blank"><button type="button" class="btn btn-info btn-sm mr-2"><%= cta.displayText %></button></a>
+                    <% }) %>
+                  </div>
+                </div>
+              </div>
+            <% }) %>
+        </div>
+
+        <% }) %>
+      </div>
+    </div>
+</section>
+
+<%- include("modules/footer.ejs") %>

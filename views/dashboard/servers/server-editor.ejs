@@ -1,6 +1,6 @@
 <%- include("../../modules/header.ejs", {
     pageTitle: pageTitle,
-    pageDescription: "Dashboard for platform"
+    pageDescription: "Editor for Network Servers."
 }) %>
 
 <%- include("../../modules/navigationBar.ejs") %>
@@ -11,13 +11,14 @@
 }) %>
 
 <div class="row dashboardview">
-    <div class="col-sm-2">
+    <div class="col-md-2">
       <%- include("../../modules/dashboard/dashboard-sidebar.ejs") %>
     </div>
-    <div class="col" style="padding: 20px;">
+    <div class="col-md-10" style="padding: 10px;">
         <%- include("../../partials/documentationLink.ejs", {
-            doclink: "https://modularsoft.org/docs/products/zander/"
+            doclink: "https://modularsoft.org/docs/products/zander/features/server/"
         }) %>
+        <br><br>
 
         <div class="basic-form">
             <% if (type === 'create') { %>

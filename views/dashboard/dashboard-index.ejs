@@ -1,6 +1,6 @@
 <%- include("../modules/header.ejs", {
     pageTitle: pageTitle,
-    pageDescription: "Dashboard for platform"
+    pageDescription: "The dashboard for the Network Administration Panel"
 }) %>
 
 <%- include("../modules/navigationBar.ejs") %>
@@ -11,12 +11,12 @@
 }) %>
 
 <div class="row dashboardview">
-    <div class="col-sm-2">
+    <div class="col-md-2">
       <%- include("../modules/dashboard/dashboard-sidebar.ejs") %>
     </div>
-    <div class="col" style="padding: 10px;">
+    <div class="col-md-10" style="padding: 10px;">
       <h2>Test</h2>
     </div>
-  </div>
+</div>
 
-<%- include("../modules/footer.ejs") %>  
+<%- include("../modules/footer.ejs") %>

@@ -1,25 +1,26 @@
 <%- include("../modules/header.ejs", {
-    pageTitle: pageTitle,
-    pageDescription: "An error has occured and cannot load this page."
+  pageTitle: pageTitle,
+  pageDescription: "This feature has been disabled and is not accessible."
 }) %>
 
-<%- include("../modules/navigationBar.ejs") %>
+<%- include("../modules/navigationBar.ejs", {
+  features: features
+}) %>
 
 <%- include("../partials/miniHeader.ejs", {
-  headerTitle: "Server Error",
-  backgroundImage: "../images/banner/error.png"
+  headerTitle: "Feature Disabled",
+  backgroundImage: globalImage
 }) %>
 
-
 <section class="section">
-    <div class="container">
-      <div class="row">
-        <div class="col-sm" style="min-height:500px;">
-          <div class="text-center">
-            <img class="floating" style="margin-top:10px;" src="../images/session/errorImage.png" height="400px" draggable="false">
-          </div>
+  <div class="container">
+    <div class="row">
+      <div class="col-12 col-md-6" style="min-height:500px;">
+        <div class="text-center">
+          <img class="floating" style="margin-top:10px;" src="images/session/errorImage.png" height="300px" draggable="false">
         </div>
-        <div class="col-sm" style="margin-right:100px;">    
+      </div>
+      <div class="col-12 col-md-6">
           <h3>There was an error ;-;</h3>
           <% if (error.message) { %>
             <code><%= error.message %></code>
@@ -31,9 +32,9 @@
 
           <br><br><br>
           <small class="text-muted">If this continues to happen, please report this by either <a style="color: rgb(75, 64, 224);" href="mailto:<%= config.siteConfiguration.email %>">e-mailing our Support Team</a> or <a style="color: rgb(75, 64, 224);" href="/discord">join our Community Discord and open a ticket</a>.</small>
-        </div>
       </div>
     </div>
+  </div>
 </section>
 
-<%- include("../modules/footer.ejs") %>  
+<%- include("../modules/footer.ejs") %>

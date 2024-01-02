@@ -1,33 +1,34 @@
 {
-    "announcements": true,
-    "applications": true,
-    "discord": {
-        "commands": {
-            "legoFlip": true
-        },
-        "events": {
-            "generalKenobi": true,
-            "guildMemberBoost": true,
-            "guildMemberVerify": true
-        }
+  "announcements": true,
+  "applications": true,
+  "discord": {
+    "commands": {
+      "legoFlip": true
     },
-    "server": true,
-    "filter": {
-        "link": true,
-        "phrase": true
-    },
-    "web": {
-        "login": true,
-        "register": true
-    },
-    
-    "smDiscord": true,
-    "smFacebook": true,
-    "smTwitter": true,
-    "smInstagram": true,
-    "smReddit": false,
-    "smTwitch": true,
-    "smYouTube": true,
-    "smLinkedIn": true,
-    "smTikTok": true
+    "events": {
+      "generalKenobi": true,
+      "guildMemberBoost": true,
+      "guildMemberVerify": true
+    }
+  },
+  "server": true,
+  "ranks": true,
+  "filter": {
+    "link": true,
+    "phrase": true
+  },
+  "web": {
+    "login": true,
+    "register": true
+  },
+
+  "smDiscord": true,
+  "smFacebook": true,
+  "smTwitter": true,
+  "smInstagram": true,
+  "smReddit": false,
+  "smTwitch": true,
+  "smYouTube": true,
+  "smLinkedIn": true,
+  "smTikTok": true
 }

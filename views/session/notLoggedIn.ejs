@@ -3,32 +3,33 @@
     pageDescription: "You must be logged in to use this feature."
 }) %>
 
-<%- include("../modules/navigationBar.ejs") %>
+<%- include("../modules/navigationBar.ejs", {
+  features: features
+}) %>
 
 <%- include("../partials/miniHeader.ejs", {
   headerTitle: "Not Logged In",
-  backgroundImage: "../images/banner/error.png"
+  backgroundImage: globalImage
 }) %>
 
-
 <section class="section">
-    <div class="container">
-      <div class="row">
-        <div class="col-sm" style="min-height:500px;">
-          <div class="text-center">
-            <img class="floating" style="margin-top:10px;" src="images/session/errorImage.png" height="400px" draggable="false">
-          </div>
+  <div class="container">
+    <div class="row">
+      <div class="col-12 col-md-6" style="min-height:500px;">
+        <div class="text-center">
+          <img class="floating" style="margin-top:10px;" src="images/session/errorImage.png" height="300px" draggable="false">
         </div>
-        <div class="col-sm" style="margin-right:100px;">    
+      </div>
+      <div class="col-12 col-md-6">
           <h3>You must be logged in to use this feature.</h3>
           <p>Permission to this page is restricted, please ensure you are logged in to use this feature.</p>
 
           <br><br><br>
           <a href="/login"><button type="button" class="btn btn-primary">Login</button></a>
           <a href="/"><button type="button" class="btn btn-success">Back to Safety</button></a>
-        </div>
       </div>
     </div>
+  </div>
 </section>
 
-<%- include("../modules/footer.ejs") %>  
+<%- include("../modules/footer.ejs") %>

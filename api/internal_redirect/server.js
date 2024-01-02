@@ -1,54 +1,50 @@
-import {hasPermission, setBannerCookie, postAPIRequest} from '../common'
+import { hasPermission, postAPIRequest } from "../common";
 
 export default function serverRedirectRoute(app, config, lang) {
-    const baseEndpoint = '/redirect/server';
-    
-    app.post(baseEndpoint + '/create', async function(req, res) {
-        if (!hasPermission('zander.web.server', req, res))
-            return;
+  const baseEndpoint = "/redirect/server";
 
-        postAPIRequest(
-            `${process.env.siteAddress}/api/server/create`,
-            req.body,
-            `${process.env.siteAddress}/dashboard/servers`,
-            res
-        )
+  app.post(baseEndpoint + "/create", async function (req, res) {
+    if (!hasPermission("zander.web.server", req, res)) return;
 
-        res.redirect(`${process.env.siteAddress}/dashboard/servers`);
+    postAPIRequest(
+      `${process.env.siteAddress}/api/server/create`,
+      req.body,
+      `${process.env.siteAddress}/dashboard/servers`,
+      res
+    );
 
-        return res;
-    });
+    res.redirect(`${process.env.siteAddress}/dashboard/servers`);
 
-    app.post(baseEndpoint + '/edit', async function(req, res) {
-        if (!hasPermission('zander.web.server', req, res))
-            return;
+    return res;
+  });
 
-        postAPIRequest(
-            `${process.env.siteAddress}/api/server/edit`,
-            req.body,
-            `${process.env.siteAddress}/dashboard/servers`,
-            res
-        )
+  app.post(baseEndpoint + "/edit", async function (req, res) {
+    if (!hasPermission("zander.web.server", req, res)) return;
 
-        res.redirect(`${process.env.siteAddress}/dashboard/servers`);
+    postAPIRequest(
+      `${process.env.siteAddress}/api/server/edit`,
+      req.body,
+      `${process.env.siteAddress}/dashboard/servers`,
+      res
+    );
 
-        return res;
-    });
+    res.redirect(`${process.env.siteAddress}/dashboard/servers`);
 
-    app.post(baseEndpoint + '/delete', async function(req, res) {
-        if (!hasPermission('zander.web.server', req, res))
-            return;
+    return res;
+  });
 
-        postAPIRequest(
-            `${process.env.siteAddress}/api/server/delete`,
-            req.body,
-            `${process.env.siteAddress}/dashboard/servers`,
-            res
-        )
+  app.post(baseEndpoint + "/delete", async function (req, res) {
+    if (!hasPermission("zander.web.server", req, res)) return;
 
-        res.redirect(`${process.env.siteAddress}/dashboard/servers`);
+    postAPIRequest(
+      `${process.env.siteAddress}/api/server/delete`,
+      req.body,
+      `${process.env.siteAddress}/dashboard/servers`,
+      res
+    );
 
-        return res;
-    });
+    res.redirect(`${process.env.siteAddress}/dashboard/servers`);
 
+    return res;
+  });
 }

@@ -1546,3 +1546,27 @@ a:focus {
   text-align: center;
   padding: 15px;
 }
+
+@media only screen and (max-width: 767px) {
+  .dashboard-sidebar {
+    display: block !important;
+  }
+}
+
+@media (max-width: 767px) {
+  .button-group {
+    display: flex;
+    justify-content: center;
+  }
+
+  .button-group a {
+    margin-right: 10px;
+  }
+}
+
+.btn-sm {
+  padding: 0.25rem 0.5rem;
+  font-size: 0.875rem;
+  line-height: 1.5;
+  border-radius: 0.2rem;
+}
