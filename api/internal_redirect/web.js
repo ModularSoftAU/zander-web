@@ -15,4 +15,30 @@ export default function webRedirectRoute(app, config, lang) {
 
     return res;
   });
+
+  app.post(baseEndpoint + "/verify/email", async function (req, res) {
+    await postAPIRequest(
+      `${process.env.siteAddress}/api/web/verify/email`,
+      req.body,
+      `${process.env.siteAddress}/verify/email`,
+      res
+    );
+
+    res.redirect(`${process.env.siteAddress}/`);
+
+    return res;
+  });
+
+  app.post(baseEndpoint + "/verify/minecraft", async function (req, res) {
+    await postAPIRequest(
+      `${process.env.siteAddress}/api/web/verify/minecraft`,
+      req.body,
+      `${process.env.siteAddress}/verify/minecraft`,
+      res
+    );
+
+    res.redirect(`${process.env.siteAddress}/`);
+
+    return res;
+  });
 }

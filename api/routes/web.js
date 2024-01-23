@@ -73,8 +73,8 @@ export default async function webApiRoute(app, config, db, features, lang) {
           let hashpassword = await bcrypt.hash(password, salt);
 
           db.query(
-            `UPDATE users SET password=?, email=?, emailHash=? WHERE username=?;`,
-            [hashpassword, email, await hashEmail(email), username],
+            `UPDATE users SET password=?, email=?, emailHash=?, registered=? WHERE username=?;`,
+            [hashpassword, email, await hashEmail(email), new Date(), username],
             async function (err, results) {
               if (err) {
                 console.log(err);
@@ -124,12 +124,6 @@ export default async function webApiRoute(app, config, db, features, lang) {
   });
 
   app.post(baseEndpoint + "/verify/minecraft", async function (req, res) {
-    isFeatureEnabled(features.web.register, res, lang);
-
-    return res;
-  });
-
-  app.post(baseEndpoint + "/verify/2fa", async function (req, res) {
     isFeatureEnabled(features.web.register, res, lang);
 
     return res;

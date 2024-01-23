@@ -54,9 +54,9 @@ export default function sessionSiteRoute(
     return res;
   });
 
-  app.get("/register/verify", async function (req, res) {
+  app.get("/verify/email", async function (req, res) {
     if (!isFeatureWebRouteEnabled(features.web.register, req, res, features))
-      return; 
+      return;
     
     console.log(await generateVerificationCode());
 
@@ -74,12 +74,27 @@ export default function sessionSiteRoute(
     return res;
   });
 
+  app.get("/verify/minecraft", async function (req, res) {
+    if (!isFeatureWebRouteEnabled(features.web.register, req, res, features))
+      return;
+
+    res.view("session/verifyMinecraft", {
+      pageTitle: `Verify Minecraft`,
+      config: config,
+      req: req,
+      features: features,
+      globalImage: await getGlobalImage(),
+      announcementWeb: await getWebAnnouncement(),
+    });
+
+    return res;
+  });
+
   app.post("/login", async function (req, res) {
     if (!isFeatureWebRouteEnabled(features.web.login, req, res, features))
       return;
 
     const username = req.body.username;
-    const email = req.body.email;
     const password = req.body.password;
 
     async function getUserRanks(userData, userRanks = null) {
@@ -163,25 +178,6 @@ export default function sessionSiteRoute(
       });
     }
 
-    async function getPermissions(userData) {
-      //Get directly assigned User Ranks
-      userData.userRanks = await getUserRanks(userData);
-      //get all the ranks including children
-      let allRanks = await getUserRanks(
-        userData,
-        userData.userRanks.map((a) => a.rankSlug)
-      );
-      //get permissions assigned to all the ranks
-      let rankPermissions = await getRankPermissions(allRanks);
-      //Get permissions assigned directly to user
-      let userPermissions = await getUserPermissions(userData);
-      //Combine into 1 permissions array
-      let permissions = rankPermissions.concat(userPermissions);
-      //Using a set of the array removes duplicates and prevents infinite loops
-      userData.permissions = [...new Set(permissions)];
-      return userData;
-    }
-
     db.query(
       `select * from users where username=?`,
       [username],
@@ -235,6 +231,8 @@ export default function sessionSiteRoute(
               uuid: userData.uuid,
               ranks: userData.userRanks,
               permissions: userData.permissions,
+              emailVerified: userData.emailVerified,
+              minecraftVerified: userData.minecraftVerified,
             };
 
             setBannerCookie("success", lang.session.userSuccessLogin, res);
@@ -250,11 +248,11 @@ export default function sessionSiteRoute(
     return res;
   });
 
-  app.get("/logout", async function (req, reply) {
+  app.get("/logout", async function (req, res) {
     try {
       await req.session.destroy();
-      setBannerCookie("success", lang.session.userLogout, reply.res);
-      reply.redirect(`${process.env.siteAddress}/`);
+      setBannerCookie("success", lang.session.userLogout, res);
+      res.redirect(`${process.env.siteAddress}/`);
     } catch (err) {
       console.log(err);
       throw err;
