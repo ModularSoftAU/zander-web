@@ -1,4 +1,4 @@
-import { required, optional } from "../common";
+import { required, optional, generateVerifyCode } from "../common";
 
 export default function userApiRoute(app, config, db, features, lang) {
   const baseEndpoint = "/api/user";
@@ -91,7 +91,7 @@ export default function userApiRoute(app, config, db, features, lang) {
               });
             }
 
-            res.send({
+            return res.send({
               success: true,
               data: results,
             });
@@ -113,12 +113,62 @@ export default function userApiRoute(app, config, db, features, lang) {
             });
           }
 
-          res.send({
+          return res.send({
             success: true,
             data: results,
           });
         });
       }
+    } catch (error) {
+      return res.send({
+        success: false,
+        message: `${error}`,
+      });
+    }
+
+    return res;
+  });
+
+  app.get(baseEndpoint + "/verify", async function (req, res) {
+    const username = required(req.query, "username");
+    const uuid = required(req.query, "uuid");
+
+    const linkCode = await generateVerifyCode();
+
+    try {
+      db.query(
+        `INSERT INTO userVerifyLink (uuid, username, linkCode) VALUES (?, ?, ?)`,
+        [uuid, username, linkCode],
+        function (error, results, fields) {
+          if (error) {
+            return res.send({
+              success: false,
+              message: `${error}`,
+            });
+          }
+
+          return res.send({
+            success: true,
+            message: `Thanks for registering on Crafting For Christ.\nPlease enter the code below on the website to complete user registration\n\nDo NOT share this code.\n${linkCode}`
+          });
+        }
+      );
+
+
+    } catch (error) {
+      return res.send({
+        success: false,
+        message: `${error}`,
+      });
+    }
+
+    return res;
+  });
+
+  app.post(baseEndpoint + "/link", async function (req, res) {
+    const username = optional(req.body, "username");
+
+    try {
     } catch (error) {
       return res.send({
         success: false,

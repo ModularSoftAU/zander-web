@@ -311,3 +311,8 @@ export async function expandString(string, filter) {
 export function removeHtmlTags(html) {
   return html.replace(/<(?!\/?(a)\b)[^<]*?>/gi, "");
 }
+
+export async function generateVerifyCode() {
+  const code = Math.floor(Math.random() * 900000) + 100000;
+  return code
+}

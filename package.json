@@ -25,7 +25,7 @@
   },
   "homepage": "https://github.com/ModularSoftAU/zander-web#readme",
   "dependencies": {
-    "@fastify/cookie": "^9.1.0",
+    "@fastify/cookie": "^9.3.1",
     "@fastify/formbody": "^7.4.0",
     "@fastify/session": "^10.5.0",
     "@fastify/static": "^6.11.2",
@@ -36,7 +36,7 @@
     "discord.js": "^14.13.0",
     "dotenv": "^16.0.1",
     "ejs": "^3.1.7",
-    "fastify": "^4.23.2",
+    "fastify": "^4.25.2",
     "mailtrap": "^3.2.0",
     "moment": ">=2.29.2",
     "mysql": "^2.18.1",
@@ -45,6 +45,7 @@
     "nodemailer": "^6.9.7",
     "nodemon": "^3.0.1",
     "path": "^0.12.7",
+    "querystring": "^0.2.1",
     "zero-md": "^2.3.1"
   }
 }

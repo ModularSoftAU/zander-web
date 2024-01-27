@@ -1,0 +1,98 @@
+<%- include("../modules/header.ejs", {
+    pageTitle: pageTitle,
+    pageDescription: "Register to get involved with the community!"
+}) %>
+
+<%- include("../modules/navigationBar.ejs") %>
+
+<%- include("../partials/miniHeader.ejs", {
+  headerTitle: "Account Confirmation",
+  backgroundImage: globalImage
+}) %>
+
+<section class="section">
+  <div class="container">
+    <div class="row justify-content-center">
+      <div class="col-12 col-md-6" style="margin-top: 10px;">
+        <% if (req.cookies.alertType) { %>
+          <%- include("../partials/alert.ejs", {
+            alertType: req.cookies.alertType,
+            content: req.cookies.alertContent
+          }) %>
+        <% } %>
+
+        <style>
+          /* Custom style for small input fields */
+          .form-control-sm {
+            height: auto;
+            padding: 0.5rem 0.75rem;
+            font-size: 1.25rem;
+          }
+        </style>
+
+        <form id="verificationForm" method="post" action="<%= process.env.siteAddress %>/redirect/web/register">
+          <p>Hey! Before you can get started, we need to know your Minecraft account. First, log in with the Minecraft account you want to use. Then, join this server: <code>the.server.verify.server</code></p>
+          <p>That server will give you a secret 6 digit code. Enter it here, and you're done!</p>
+
+          <input type="hidden" name="discordId" value="<%= discordId %>">
+
+          <div id="otp" class="inputs d-flex flex-row justify-content-center mt-2">
+            <input class="m-2 text-center form-control rounded" type="text" name="first" maxlength="1" required />
+            <input class="m-2 text-center form-control rounded" type="text" name="second" maxlength="1" required />
+            <input class="m-2 text-center form-control rounded" type="text" name="third" maxlength="1" required />
+            <input class="m-2 text-center form-control rounded" type="text" name="fourth" maxlength="1" required />
+            <input class="m-2 text-center form-control rounded" type="text" name="fifth" maxlength="1" required />
+            <input class="m-2 text-center form-control rounded" type="text" name="sixth" maxlength="1" required />
+          </div>
+          
+          <div class="text-center">
+            <button id="submitButton" type="submit" class="btn btn-primary" disabled>Submit</button>
+          </div>
+        </form>
+
+        <script>
+          // Function to move focus to the next input field
+          function moveToNextInput(currentInput) {
+            var maxLength = parseInt(currentInput.getAttribute('maxlength'));
+            if (currentInput.value.length >= maxLength) {
+              var nextInput = currentInput.nextElementSibling;
+              if (nextInput !== null) {
+                nextInput.focus();
+              }
+            }
+            validateInputs();
+          }
+
+          // Function to validate inputs and enable/disable submit button
+          function validateInputs() {
+            var inputs = document.querySelectorAll('input[type="text"]');
+            var isFilled = true;
+            inputs.forEach(function(input) {
+              if (input.value === '') {
+                isFilled = false;
+              }
+            });
+            document.getElementById('submitButton').disabled = !isFilled;
+          }
+
+          // Event listener for input fields
+          document.addEventListener('DOMContentLoaded', function() {
+            var inputs = document.querySelectorAll('input[type="text"]');
+            inputs.forEach(function(input) {
+              input.addEventListener('input', function() {
+                moveToNextInput(this);
+              });
+            });
+          });
+        </script>
+      </div>
+      <div class="col-12 col-md-6" style="min-height:500px; display: flex; align-items: center;">
+        <div class="text-center">
+          <img class="floating" style="max-width: 100%; height: auto; margin-top:10px;" src="images/session/registerImage.png" draggable="false">
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<%- include("../modules/footer.ejs") %>

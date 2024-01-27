@@ -6,17 +6,12 @@ CREATE TABLE users (
 	userId INT NOT NULL AUTO_INCREMENT,
 	uuid VARCHAR(36) NOT NULL,
 	username VARCHAR(16) NOT NULL,
-	emailHash TEXT,
 	email VARCHAR(200),
-	password TEXT,
+    discordId VARCHAR(18),
 	joined DATETIME NOT NULL DEFAULT NOW(),
-	disabled BOOLEAN DEFAULT 0,
     profilePictureType ENUM('CRAFTATAR', 'GRAVATAR') DEFAULT 'CRAFTATAR',
-    emailVerificationCode VARCHAR(6),
-    minecraftVerificationCode VARCHAR(6),
-    emailVerified DATETIME,
-    minecraftVerified DATETIME,
-    registered DATETIME,
+    account_registered DATETIME,
+	account_disabled BOOLEAN DEFAULT 0,
 	audit_lastDiscordMessage DATETIME,
 	audit_lastDiscordVoice DATETIME,
 	audit_lastMinecraftLogin DATETIME,
@@ -27,7 +22,15 @@ CREATE TABLE users (
 	INDEX users (uuid(8))
 );
 
-INSERT INTO users (uuid, username, disabled)
+CREATE TABLE userVerifyLink (
+	verifyId INT NOT NULL AUTO_INCREMENT,
+    uuid TEXT NOT NULL,
+    username TEXT NOT NULL,
+    linkCode VARCHAR(6),
+    PRIMARY KEY (verifyId)
+);
+
+INSERT INTO users (uuid, username, account_disabled)
 VALUES ('f78a4d8d-d51b-4b39-98a3-230f2de0c670','CONSOLE',0);
 
 CREATE VIEW zanderdev.luckPermsPlayers AS

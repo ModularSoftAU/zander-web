@@ -1,13 +1,14 @@
 import bcrypt from "bcrypt";
+import fetch from "node-fetch";
+import qs from "querystring";
 import {
   isFeatureWebRouteEnabled,
   setBannerCookie,
   getGlobalImage,
+  generateVerifyCode,
 } from "../api/common";
 import { getProfilePicture } from "../controllers/userController";
 import { getWebAnnouncement } from "../controllers/announcementController";
-import { generateVerificationCode } from "../controllers/sessionController";
-import { sendMail } from "../controllers/emailController";
 
 export default function sessionSiteRoute(
   app,
@@ -26,65 +27,76 @@ export default function sessionSiteRoute(
     if (!isFeatureWebRouteEnabled(features.web.login, req, res, features))
       return;
 
-    res.view("session/login", {
-      pageTitle: `Login`,
-      config: config,
-      req: req,
-      features: features,
-      globalImage: await getGlobalImage(),
-      announcementWeb: await getWebAnnouncement(),
-    });
+    // Redirect to Discord for authentication
+    const params = {
+      client_id: process.env.discordClientId,
+      redirect_uri: `${process.env.siteAddress}/login/callback`,
+      response_type: "code",
+      scope: "identify", // specify required scopes
+    };
 
-    return res;
+    const authorizeUrl = `https://discord.com/api/oauth2/authorize?${qs.stringify(
+      params
+    )}`;
+
+    return res.redirect(authorizeUrl);
   });
 
-  app.get("/register", async function (req, res) {
+  app.get("/login/callback", async function (req, res) {
+    const code = req.query.code;
+
+    // Exchange authorization code for access token
+    const tokenParams = {
+      client_id: process.env.discordClientId, // Use process.env.discordClientId here
+      client_secret: process.env.discordClientSecret, // Use process.env.discordClientSecret here
+      grant_type: "authorization_code",
+      code: code,
+      redirect_uri: `${process.env.siteAddress}/callback`, // Use the same redirect URI as in the login route
+      scope: "identify",
+    };
+
+    const tokenResponse = await fetch("https://discord.com/api/oauth2/token", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded",
+      },
+      body: qs.stringify(tokenParams),
+    });
+    const tokenData = await tokenResponse.json();
+
+    // Use the access token to make requests to the Discord API
+    const userResponse = await fetch("https://discord.com/api/users/@me", {
+      headers: {
+        Authorization: `${tokenData.token_type} ${tokenData.access_token}`,
+      },
+    });
+    const userData = await userResponse.json();
+
+    const tenSecondsFromNow = new Date(Date.now() + 10000); // 10000 milliseconds = 10 seconds
+    res.setCookie("discordId", userData.id, {
+      path: "/", // Specify the path where the cookie is valid
+      httpOnly: true, // Prevent client-side JavaScript from accessing the cookie
+      expires: tenSecondsFromNow, // Set the expiration time
+    });
+
+    res.redirect(`/unregistered`);
+  });
+
+  app.get("/unregistered", async function (req, res) {
     if (!isFeatureWebRouteEnabled(features.web.register, req, res, features))
       return;
 
-    res.view("session/register", {
-      pageTitle: `Register`,
+    const discordId = req.cookies.discordId;
+    if (!discordId) res.redirect(`/`);
+
+    res.view("session/unregistered", {
+      pageTitle: `Unregistered`,
       config: config,
       req: req,
       features: features,
       globalImage: await getGlobalImage(),
       announcementWeb: await getWebAnnouncement(),
-    });
-
-    return res;
-  });
-
-  app.get("/verify/email", async function (req, res) {
-    if (!isFeatureWebRouteEnabled(features.web.register, req, res, features))
-      return;
-    
-    console.log(await generateVerificationCode());
-
-    sendMail(`benrobson76@gmail.com`, `Testing`);
-
-    res.view("session/verifyEmail", {
-      pageTitle: `Verify Email`,
-      config: config,
-      req: req,
-      features: features,
-      globalImage: await getGlobalImage(),
-      announcementWeb: await getWebAnnouncement(),
-    });
-
-    return res;
-  });
-
-  app.get("/verify/minecraft", async function (req, res) {
-    if (!isFeatureWebRouteEnabled(features.web.register, req, res, features))
-      return;
-
-    res.view("session/verifyMinecraft", {
-      pageTitle: `Verify Minecraft`,
-      config: config,
-      req: req,
-      features: features,
-      globalImage: await getGlobalImage(),
-      announcementWeb: await getWebAnnouncement(),
+      discordId: discordId,
     });
 
     return res;
