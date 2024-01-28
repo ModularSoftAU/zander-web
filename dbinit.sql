@@ -4,9 +4,8 @@ USE zanderdev;
 
 CREATE TABLE users (
 	userId INT NOT NULL AUTO_INCREMENT,
-	uuid VARCHAR(36) NOT NULL,
+	uuid VARCHAR(36) NOT NULL UNIQUE,
 	username VARCHAR(16) NOT NULL,
-	email VARCHAR(200),
     discordId VARCHAR(18),
 	joined DATETIME NOT NULL DEFAULT NOW(),
     profilePictureType ENUM('CRAFTATAR', 'GRAVATAR') DEFAULT 'CRAFTATAR',
@@ -24,7 +23,7 @@ CREATE TABLE users (
 
 CREATE TABLE userVerifyLink (
 	verifyId INT NOT NULL AUTO_INCREMENT,
-    uuid TEXT NOT NULL,
+    uuid VARCHAR(36) NOT NULL UNIQUE,
     username TEXT NOT NULL,
     linkCode VARCHAR(6),
     PRIMARY KEY (verifyId)

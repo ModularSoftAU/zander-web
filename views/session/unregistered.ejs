@@ -30,19 +30,19 @@
           }
         </style>
 
-        <form id="verificationForm" method="post" action="<%= process.env.siteAddress %>/redirect/web/register">
+        <form id="verificationForm" method="post" action="<%= process.env.siteAddress %>/redirect/web/user/link">
           <p>Hey! Before you can get started, we need to know your Minecraft account. First, log in with the Minecraft account you want to use. Then, join this server: <code>the.server.verify.server</code></p>
           <p>That server will give you a secret 6 digit code. Enter it here, and you're done!</p>
 
           <input type="hidden" name="discordId" value="<%= discordId %>">
 
           <div id="otp" class="inputs d-flex flex-row justify-content-center mt-2">
-            <input class="m-2 text-center form-control rounded" type="text" name="first" maxlength="1" required />
-            <input class="m-2 text-center form-control rounded" type="text" name="second" maxlength="1" required />
-            <input class="m-2 text-center form-control rounded" type="text" name="third" maxlength="1" required />
-            <input class="m-2 text-center form-control rounded" type="text" name="fourth" maxlength="1" required />
-            <input class="m-2 text-center form-control rounded" type="text" name="fifth" maxlength="1" required />
-            <input class="m-2 text-center form-control rounded" type="text" name="sixth" maxlength="1" required />
+            <input class="m-2 text-center form-control rounded" type="text" name="first" maxlength="1" autocomplete="off" required />
+            <input class="m-2 text-center form-control rounded" type="text" name="second" maxlength="1" autocomplete="off" required />
+            <input class="m-2 text-center form-control rounded" type="text" name="third" maxlength="1" autocomplete="off" required />
+            <input class="m-2 text-center form-control rounded" type="text" name="fourth" maxlength="1" autocomplete="off" required />
+            <input class="m-2 text-center form-control rounded" type="text" name="fifth" maxlength="1" autocomplete="off" required />
+            <input class="m-2 text-center form-control rounded" type="text" name="sixth" maxlength="1" autocomplete="off" required />
           </div>
           
           <div class="text-center">

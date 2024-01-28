@@ -1,3 +1,5 @@
+import dotenv from "dotenv";
+dotenv.config();
 import config from "../config.json" assert { type: "json" };
 import fetch from "node-fetch";
 import { readdirSync } from "fs";
@@ -170,6 +172,7 @@ export async function postAPIRequest(
       "x-access-token": process.env.apiKey,
     },
   });
+
   const data = await response.json();
 
   console.log(data);
@@ -314,5 +317,5 @@ export function removeHtmlTags(html) {
 
 export async function generateVerifyCode() {
   const code = Math.floor(Math.random() * 900000) + 100000;
-  return code
+  return code;
 }

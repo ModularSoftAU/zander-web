@@ -9,40 +9,11 @@ import db from "./databaseController";
 
     @param username The username of the user
 */
-export async function hasUserJoinedBefore(username) {
+export async function hasJoined(username) {
   return new Promise((resolve, reject) => {
     db.query(
       `select * from users where username=?;`,
       [username],
-      function (error, results, fields) {
-        if (error) {
-          reject(error);
-        }
-
-        if (!results || !results.length) {
-          resolve(false);
-        }
-
-        resolve(true);
-      }
-    );
-  });
-}
-
-/*
-    Returns a promise that resolves to a boolean value indicating whether 
-    the email has been used by any user in the database. 
-    It does this by querying the database with the given email, 
-    and resolving to true if there are any results, and false otherwise. 
-    If there is an error with the query, the promise is rejected with the error message.
-
-    @param email The email to specify
-*/
-export async function hasEmailBeenUsed(email) {
-  return new Promise((resolve, reject) => {
-    db.query(
-      `select * from users where email=?;`,
-      [email],
       function (error, results, fields) {
         if (error) {
           reject(error);
@@ -97,6 +68,28 @@ export async function getProfilePicture(username) {
           return resolve(`https://crafatar.com/avatars/${craftUUID}?helm`);
         if (profilePictureType == "GRAVATAR")
           return resolve(`https://www.gravatar.com/avatar/${emailHash}?s=300`);
+      }
+    );
+  });
+}
+
+export async function isRegistered(uuid) {
+  return new Promise((resolve, reject) => {
+    db.query(
+      `SELECT account_registered FROM users WHERE uuid=?;`,
+      [uuid],
+      function (error, results, fields) {
+        if (error) {
+          reject(error);
+        }
+
+        console.log(results);
+
+        if (!results || !results.length) {
+          resolve(false);
+        }
+
+        resolve(true);
       }
     );
   });

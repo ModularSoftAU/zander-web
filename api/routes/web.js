@@ -1,8 +1,7 @@
 import bcrypt from "bcrypt";
 import {
   doesPasswordMatch,
-  hasEmailBeenUsed,
-  hasUserJoinedBefore,
+  hasJoined,
 } from "../../controllers/userController";
 import {
   generateLog,
@@ -34,10 +33,8 @@ export default async function webApiRoute(app, config, db, features, lang) {
         }
 
         // User has not logged in before.
-        let userJoinBefore = await hasUserJoinedBefore(username);
+        let userJoinBefore = await hasJoined(username);
         if (!userJoinBefore) {
-          setBannerCookie(`warning`, `This is a test`, res);
-
           return res.send({
             success: false,
             alertType: "warning",
@@ -45,15 +42,6 @@ export default async function webApiRoute(app, config, db, features, lang) {
               "%SITEADDRESS%",
               process.env.siteAddress
             ),
-          });
-        }
-
-        let emailBeenUsed = await hasEmailBeenUsed(email);
-        if (emailBeenUsed) {
-          return res.send({
-            success: false,
-            alertType: "warning",
-            alertContent: lang.web.emailAlreadyInUse,
           });
         }
 
@@ -117,18 +105,6 @@ export default async function webApiRoute(app, config, db, features, lang) {
     return res;
   });
 
-  app.post(baseEndpoint + "/verify/email/", async function (req, res) {
-    isFeatureEnabled(features.web.register, res, lang);
-
-    return res;
-  });
-
-  app.post(baseEndpoint + "/verify/minecraft", async function (req, res) {
-    isFeatureEnabled(features.web.register, res, lang);
-
-    return res;
-  });
-
   app.get(baseEndpoint + "/configuration", async function (req, res) {
     // There is no isFeatureEnabled() due to being a critical endpoint.
 
@@ -148,7 +124,7 @@ export default async function webApiRoute(app, config, db, features, lang) {
       `
       SELECT COUNT(*) AS communityMembers FROM users;
       SELECT HOUR(SEC_TO_TIME(SUM(TIME_TO_SEC(TIMEDIFF(COALESCE(sessionEnd, NOW()), sessionStart))))) AS timePlayed FROM gameSessions;
-      SELECT COUNT(DISTINCT(u.uuid)) totalStaff FROM userRanks ur JOIN ranks r ON ur.rankSlug = r.rankSlug JOIN users u ON u.uuid = ur.uuid WHERE r.isStaff = 1 AND u.disabled = 0;
+      SELECT COUNT(DISTINCT(u.uuid)) totalStaff FROM userRanks ur JOIN ranks r ON ur.rankSlug = r.rankSlug JOIN users u ON u.uuid = ur.uuid WHERE r.isStaff = 1 AND u.account_disabled = 0;
   `,
       async function (err, results) {
         if (err) {

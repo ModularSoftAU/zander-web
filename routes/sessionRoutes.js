@@ -1,13 +1,11 @@
-import bcrypt from "bcrypt";
-import fetch from "node-fetch";
+import dotenv from "dotenv";
+dotenv.config();
 import qs from "querystring";
 import {
   isFeatureWebRouteEnabled,
   setBannerCookie,
   getGlobalImage,
-  generateVerifyCode,
 } from "../api/common";
-import { getProfilePicture } from "../controllers/userController";
 import { getWebAnnouncement } from "../controllers/announcementController";
 
 export default function sessionSiteRoute(
@@ -30,7 +28,7 @@ export default function sessionSiteRoute(
     // Redirect to Discord for authentication
     const params = {
       client_id: process.env.discordClientId,
-      redirect_uri: `${process.env.siteAddress}/login/callback`,
+      redirect_uri: `${process.env.siteAddress}/login/callback`, // Corrected redirect_uri
       response_type: "code",
       scope: "identify", // specify required scopes
     };
@@ -45,41 +43,63 @@ export default function sessionSiteRoute(
   app.get("/login/callback", async function (req, res) {
     const code = req.query.code;
 
-    // Exchange authorization code for access token
-    const tokenParams = {
-      client_id: process.env.discordClientId, // Use process.env.discordClientId here
-      client_secret: process.env.discordClientSecret, // Use process.env.discordClientSecret here
-      grant_type: "authorization_code",
-      code: code,
-      redirect_uri: `${process.env.siteAddress}/callback`, // Use the same redirect URI as in the login route
-      scope: "identify",
-    };
+    try {
+      // Exchange authorization code for access token
+      const tokenParams = {
+        client_id: process.env.discordClientId,
+        client_secret: process.env.discordClientSecret,
+        grant_type: "authorization_code",
+        code: code,
+        redirect_uri: `${process.env.siteAddress}/login/callback`, // Corrected redirect_uri
+        scope: "identify",
+      };
 
-    const tokenResponse = await fetch("https://discord.com/api/oauth2/token", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/x-www-form-urlencoded",
-      },
-      body: qs.stringify(tokenParams),
-    });
-    const tokenData = await tokenResponse.json();
+      const tokenResponse = await fetch(
+        "https://discord.com/api/oauth2/token",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/x-www-form-urlencoded",
+          },
+          body: qs.stringify(tokenParams),
+        }
+      );
 
-    // Use the access token to make requests to the Discord API
-    const userResponse = await fetch("https://discord.com/api/users/@me", {
-      headers: {
-        Authorization: `${tokenData.token_type} ${tokenData.access_token}`,
-      },
-    });
-    const userData = await userResponse.json();
+      if (!tokenResponse.ok) {
+        throw new Error(
+          `Failed to obtain access token: ${tokenResponse.status} ${tokenResponse.statusText}`
+        );
+      }
 
-    const tenSecondsFromNow = new Date(Date.now() + 10000); // 10000 milliseconds = 10 seconds
-    res.setCookie("discordId", userData.id, {
-      path: "/", // Specify the path where the cookie is valid
-      httpOnly: true, // Prevent client-side JavaScript from accessing the cookie
-      expires: tenSecondsFromNow, // Set the expiration time
-    });
+      const tokenData = await tokenResponse.json();
 
-    res.redirect(`/unregistered`);
+      // Use the access token to make requests to the Discord API
+      const userResponse = await fetch("https://discord.com/api/users/@me", {
+        headers: {
+          Authorization: `${tokenData.token_type} ${tokenData.access_token}`,
+        },
+      });
+
+      if (!userResponse.ok) {
+        throw new Error(
+          `Failed to fetch user data: ${userResponse.status} ${userResponse.statusText}`
+        );
+      }
+
+      const userData = await userResponse.json();
+
+      const tenSecondsFromNow = new Date(Date.now() + 10000);
+      res.setCookie("discordId", userData.id, {
+        path: "/",
+        httpOnly: true,
+        expires: tenSecondsFromNow,
+      });
+
+      res.redirect(`/unregistered`);
+    } catch (error) {
+      console.error("Error:", error);
+      res.status(500).send("Internal Server Error");
+    }
   });
 
   app.get("/unregistered", async function (req, res) {
@@ -102,163 +122,163 @@ export default function sessionSiteRoute(
     return res;
   });
 
-  app.post("/login", async function (req, res) {
-    if (!isFeatureWebRouteEnabled(features.web.login, req, res, features))
-      return;
+  // app.post("/login", async function (req, res) {
+  //   if (!isFeatureWebRouteEnabled(features.web.login, req, res, features))
+  //     return;
 
-    const username = req.body.username;
-    const password = req.body.password;
+  //   const username = req.body.username;
+  //   const password = req.body.password;
 
-    async function getUserRanks(userData, userRanks = null) {
-      return new Promise((resolve) => {
-        // Call with just userData only get directly assigned Ranks
-        if (userRanks === null) {
-          db.query(
-            `SELECT rankSlug, title FROM userRanks WHERE userId = ?`,
-            [userData.userId],
-            async function (err, results) {
-              if (err) {
-                throw err;
-              }
+  //   async function getUserRanks(userData, userRanks = null) {
+  //     return new Promise((resolve) => {
+  //       // Call with just userData only get directly assigned Ranks
+  //       if (userRanks === null) {
+  //         db.query(
+  //           `SELECT rankSlug, title FROM userRanks WHERE userId = ?`,
+  //           [userData.userId],
+  //           async function (err, results) {
+  //             if (err) {
+  //               throw err;
+  //             }
 
-              let userRanks = results.map((a) => ({
-                ["rankSlug"]: a.rankSlug,
-                ["title"]: a.title,
-              }));
-              resolve(userRanks);
-            }
-          );
-          // Ranks were passed in meaning we are looking for nested ranks
-        } else {
-          db.query(
-            `SELECT rankSlug FROM rankRanks WHERE FIND_IN_SET(parentRankSlug, ?)`,
-            [userRanks.join()],
-            async function (err, results) {
-              if (err) {
-                throw err;
-              }
+  //             let userRanks = results.map((a) => ({
+  //               ["rankSlug"]: a.rankSlug,
+  //               ["title"]: a.title,
+  //             }));
+  //             resolve(userRanks);
+  //           }
+  //         );
+  //         // Ranks were passed in meaning we are looking for nested ranks
+  //       } else {
+  //         db.query(
+  //           `SELECT rankSlug FROM rankRanks WHERE FIND_IN_SET(parentRankSlug, ?)`,
+  //           [userRanks.join()],
+  //           async function (err, results) {
+  //             if (err) {
+  //               throw err;
+  //             }
 
-              let childRanks = results.map((a) => a.rankSlug);
-              let allRanks = userRanks.concat(childRanks);
-              //Using a set of the array removes duplicates and prevents infinite loops
-              let removeDuplicates = [...new Set(allRanks)];
+  //             let childRanks = results.map((a) => a.rankSlug);
+  //             let allRanks = userRanks.concat(childRanks);
+  //             //Using a set of the array removes duplicates and prevents infinite loops
+  //             let removeDuplicates = [...new Set(allRanks)];
 
-              //If after removing duplicates the length of the new list is not longer than the old list we are done simply resolve
-              if (userRanks.length <= removeDuplicates.length) {
-                resolve(removeDuplicates);
-              } else {
-                resolve(getUserRanks(userData, removeDuplicates));
-              }
-            }
-          );
-        }
-      });
-    }
+  //             //If after removing duplicates the length of the new list is not longer than the old list we are done simply resolve
+  //             if (userRanks.length <= removeDuplicates.length) {
+  //               resolve(removeDuplicates);
+  //             } else {
+  //               resolve(getUserRanks(userData, removeDuplicates));
+  //             }
+  //           }
+  //         );
+  //       }
+  //     });
+  //   }
 
-    async function getRankPermissions(allRanks) {
-      return new Promise((resolve) => {
-        db.query(
-          `SELECT DISTINCT permission FROM rankPermissions WHERE FIND_IN_SET(rankSlug, ?)`,
-          [allRanks.join()],
-          async function (err, results) {
-            if (err) {
-              throw err;
-            }
+  //   async function getRankPermissions(allRanks) {
+  //     return new Promise((resolve) => {
+  //       db.query(
+  //         `SELECT DISTINCT permission FROM rankPermissions WHERE FIND_IN_SET(rankSlug, ?)`,
+  //         [allRanks.join()],
+  //         async function (err, results) {
+  //           if (err) {
+  //             throw err;
+  //           }
 
-            let rankPermissions = results.map((a) => a.permission);
-            resolve(rankPermissions);
-          }
-        );
-      });
-    }
+  //           let rankPermissions = results.map((a) => a.permission);
+  //           resolve(rankPermissions);
+  //         }
+  //       );
+  //     });
+  //   }
 
-    async function getUserPermissions(userData) {
-      return new Promise((resolve) => {
-        //Get permissions assigned directly to user
-        db.query(
-          `SELECT DISTINCT permission FROM userPermissions WHERE userId = ?`,
-          [userData.userId],
-          async function (err, results) {
-            if (err) {
-              throw err;
-            }
+  //   async function getUserPermissions(userData) {
+  //     return new Promise((resolve) => {
+  //       //Get permissions assigned directly to user
+  //       db.query(
+  //         `SELECT DISTINCT permission FROM userPermissions WHERE userId = ?`,
+  //         [userData.userId],
+  //         async function (err, results) {
+  //           if (err) {
+  //             throw err;
+  //           }
 
-            let userPermissions = results.map((a) => a.permission);
-            resolve(userPermissions);
-          }
-        );
-      });
-    }
+  //           let userPermissions = results.map((a) => a.permission);
+  //           resolve(userPermissions);
+  //         }
+  //       );
+  //     });
+  //   }
 
-    db.query(
-      `select * from users where username=?`,
-      [username],
-      async function (err, results) {
-        if (err) {
-          throw err;
-        }
+  //   db.query(
+  //     `select * from users where username=?`,
+  //     [username],
+  //     async function (err, results) {
+  //       if (err) {
+  //         throw err;
+  //       }
 
-        let hashedPassword = null;
+  //       let hashedPassword = null;
 
-        let loginFailed = false;
-        if (!results.length) {
-          loginFailed = true;
-        } else {
-          hashedPassword = results[0].password;
-        }
+  //       let loginFailed = false;
+  //       if (!results.length) {
+  //         loginFailed = true;
+  //       } else {
+  //         hashedPassword = results[0].password;
+  //       }
 
-        // User has not logged in before.
-        if (loginFailed || hashedPassword == null) {
-          let notLoggedInBeforeLang = lang.web.notLoggedInBefore;
+  //       // User has not logged in before.
+  //       if (loginFailed || hashedPassword == null) {
+  //         let notLoggedInBeforeLang = lang.web.notLoggedInBefore;
 
-          setBannerCookie(
-            "warning",
-            notLoggedInBeforeLang.replace(
-              "%SITEADDRESS%",
-              process.env.siteAddress
-            ),
-            res
-          );
-          return res.redirect(`${process.env.siteAddress}/login`);
-        }
+  //         setBannerCookie(
+  //           "warning",
+  //           notLoggedInBeforeLang.replace(
+  //             "%SITEADDRESS%",
+  //             process.env.siteAddress
+  //           ),
+  //           res
+  //         );
+  //         return res.redirect(`${process.env.siteAddress}/login`);
+  //       }
 
-        // Check if passwords match
-        const salt = await bcrypt.genSalt();
+  //       // Check if passwords match
+  //       const salt = await bcrypt.genSalt();
 
-        bcrypt.compare(password, hashedPassword, async function (err, result) {
-          if (err) {
-            throw err;
-          }
+  //       bcrypt.compare(password, hashedPassword, async function (err, result) {
+  //         if (err) {
+  //           throw err;
+  //         }
 
-          if (result) {
-            req.session.authenticated = true;
-            let userData = await getPermissions(results[0]);
-            let profilePicture = await getProfilePicture(userData.username);
+  //         if (result) {
+  //           req.session.authenticated = true;
+  //           let userData = await getPermissions(results[0]);
+  //           let profilePicture = await getProfilePicture(userData.username);
 
-            req.session.user = {
-              userId: userData.userId,
-              username: userData.username,
-              profilePicture: profilePicture,
-              discordID: userData.discordID,
-              uuid: userData.uuid,
-              ranks: userData.userRanks,
-              permissions: userData.permissions,
-              emailVerified: userData.emailVerified,
-              minecraftVerified: userData.minecraftVerified,
-            };
+  //           req.session.user = {
+  //             userId: userData.userId,
+  //             username: userData.username,
+  //             profilePicture: profilePicture,
+  //             discordID: userData.discordID,
+  //             uuid: userData.uuid,
+  //             ranks: userData.userRanks,
+  //             permissions: userData.permissions,
+  //             emailVerified: userData.emailVerified,
+  //             minecraftVerified: userData.minecraftVerified,
+  //           };
 
-            setBannerCookie("success", lang.session.userSuccessLogin, res);
-            return res.redirect(`${process.env.siteAddress}/`);
-          } else {
-            setBannerCookie("warning", lang.session.userFailedLogin, res);
-            return res.redirect(`${process.env.siteAddress}/login`);
-          }
-        });
-      }
-    );
+  //           setBannerCookie("success", lang.session.userSuccessLogin, res);
+  //           return res.redirect(`${process.env.siteAddress}/`);
+  //         } else {
+  //           setBannerCookie("warning", lang.session.userFailedLogin, res);
+  //           return res.redirect(`${process.env.siteAddress}/login`);
+  //         }
+  //       });
+  //     }
+  //   );
 
-    return res;
-  });
+  //   return res;
+  // });
 
   app.get("/logout", async function (req, res) {
     try {
