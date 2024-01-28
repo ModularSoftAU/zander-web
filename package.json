@@ -40,7 +40,7 @@
     "mailtrap": "^3.2.0",
     "moment": ">=2.29.2",
     "mysql": "^2.18.1",
-    "node-cron": "^3.0.0",
+    "node-cron": "^3.0.3",
     "node-fetch": "^3.3.2",
     "nodemailer": "^6.9.7",
     "nodemon": "^3.0.1",

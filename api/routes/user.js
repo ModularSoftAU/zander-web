@@ -134,10 +134,10 @@ export default function userApiRoute(app, config, db, features, lang) {
     const uuid = required(req.body, "uuid");
 
     const linkCode = await generateVerifyCode();
-
+    
     try {
       db.query(
-        `INSERT INTO userVerifyLink (uuid, username, linkCode) VALUES (?, ?, ?)`,
+        `INSERT INTO userVerifyLink (uuid, username, linkCode, codeExpiry) VALUES (?, ?, ?, ?)`,
         [uuid, username, linkCode],
         function (error, results, fields) {
           if (error) {

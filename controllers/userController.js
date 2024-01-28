@@ -161,3 +161,23 @@ export async function getUserRanks(userData, userRanks = null) {
     }
   });
 }
+
+export async function hasLinked(discordId) {
+  return new Promise((resolve, reject) => {
+    db.query(
+      `SELECT * FROM users WHERE discordId=?;`,
+      [discordId],
+      function (error, results, fields) {
+        if (error) {
+          reject(error);
+        }
+
+        if (!results || !results.length) {
+          resolve(false);
+        }
+
+        resolve(true);
+      }
+    );
+  });
+}

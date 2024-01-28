@@ -26,6 +26,7 @@ CREATE TABLE userVerifyLink (
     uuid VARCHAR(36) NOT NULL UNIQUE,
     username TEXT NOT NULL,
     linkCode VARCHAR(6),
+    codeExpiry DATETIME NOT NULL,
     PRIMARY KEY (verifyId)
 );
 

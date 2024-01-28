@@ -29,9 +29,9 @@ export default function sessionSiteRoute(
     // Redirect to Discord for authentication
     const params = {
       client_id: process.env.discordClientId,
-      redirect_uri: `${process.env.siteAddress}/login/callback`, // Corrected redirect_uri
+      redirect_uri: `${process.env.siteAddress}/login/callback`,
       response_type: "code",
-      scope: "identify", // specify required scopes
+      scope: "identify",
     };
 
     const authorizeUrl = `https://discord.com/api/oauth2/authorize?${qs.stringify(
@@ -51,7 +51,7 @@ export default function sessionSiteRoute(
         client_secret: process.env.discordClientSecret,
         grant_type: "authorization_code",
         code: code,
-        redirect_uri: `${process.env.siteAddress}/login/callback`, // Corrected redirect_uri
+        redirect_uri: `${process.env.siteAddress}/login/callback`,
         scope: "identify",
       };
 

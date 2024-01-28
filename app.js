@@ -21,6 +21,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 import("./controllers/discordController.js");
+import("./cron/userCodeExpiryCron.js");
 
 //
 // Website Related
