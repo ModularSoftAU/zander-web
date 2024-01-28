@@ -7,6 +7,7 @@ import {
   getGlobalImage,
 } from "../api/common";
 import { getWebAnnouncement } from "../controllers/announcementController";
+import { getProfilePicture, hasJoined } from "../controllers/userController";
 
 export default function sessionSiteRoute(
   app,
@@ -122,163 +123,45 @@ export default function sessionSiteRoute(
     return res;
   });
 
-  // app.post("/login", async function (req, res) {
-  //   if (!isFeatureWebRouteEnabled(features.web.login, req, res, features))
-  //     return;
+  app.post("/login", async function (req, res) {
+    db.query(
+      `select * from users where username=?`,
+      [username],
+      async function (err, results) {
+        bcrypt.compare(password, hashedPassword, async function (err, result) {
+          if (err) {
+            throw err;
+          }
 
-  //   const username = req.body.username;
-  //   const password = req.body.password;
+          if (result) {
+            req.session.authenticated = true;
+            let userData = await getPermissions(results[0]);
+            let profilePicture = await getProfilePicture(userData.username);
 
-  //   async function getUserRanks(userData, userRanks = null) {
-  //     return new Promise((resolve) => {
-  //       // Call with just userData only get directly assigned Ranks
-  //       if (userRanks === null) {
-  //         db.query(
-  //           `SELECT rankSlug, title FROM userRanks WHERE userId = ?`,
-  //           [userData.userId],
-  //           async function (err, results) {
-  //             if (err) {
-  //               throw err;
-  //             }
+            req.session.user = {
+              userId: userData.userId,
+              username: userData.username,
+              profilePicture: profilePicture,
+              discordID: userData.discordID,
+              uuid: userData.uuid,
+              ranks: userData.userRanks,
+              permissions: userData.permissions,
+              emailVerified: userData.emailVerified,
+              minecraftVerified: userData.minecraftVerified,
+            };
 
-  //             let userRanks = results.map((a) => ({
-  //               ["rankSlug"]: a.rankSlug,
-  //               ["title"]: a.title,
-  //             }));
-  //             resolve(userRanks);
-  //           }
-  //         );
-  //         // Ranks were passed in meaning we are looking for nested ranks
-  //       } else {
-  //         db.query(
-  //           `SELECT rankSlug FROM rankRanks WHERE FIND_IN_SET(parentRankSlug, ?)`,
-  //           [userRanks.join()],
-  //           async function (err, results) {
-  //             if (err) {
-  //               throw err;
-  //             }
+            setBannerCookie("success", lang.session.userSuccessLogin, res);
+            return res.redirect(`${process.env.siteAddress}/`);
+          } else {
+            setBannerCookie("warning", lang.session.userFailedLogin, res);
+            return res.redirect(`${process.env.siteAddress}/`);
+          }
+        });
+      }
+    );
 
-  //             let childRanks = results.map((a) => a.rankSlug);
-  //             let allRanks = userRanks.concat(childRanks);
-  //             //Using a set of the array removes duplicates and prevents infinite loops
-  //             let removeDuplicates = [...new Set(allRanks)];
-
-  //             //If after removing duplicates the length of the new list is not longer than the old list we are done simply resolve
-  //             if (userRanks.length <= removeDuplicates.length) {
-  //               resolve(removeDuplicates);
-  //             } else {
-  //               resolve(getUserRanks(userData, removeDuplicates));
-  //             }
-  //           }
-  //         );
-  //       }
-  //     });
-  //   }
-
-  //   async function getRankPermissions(allRanks) {
-  //     return new Promise((resolve) => {
-  //       db.query(
-  //         `SELECT DISTINCT permission FROM rankPermissions WHERE FIND_IN_SET(rankSlug, ?)`,
-  //         [allRanks.join()],
-  //         async function (err, results) {
-  //           if (err) {
-  //             throw err;
-  //           }
-
-  //           let rankPermissions = results.map((a) => a.permission);
-  //           resolve(rankPermissions);
-  //         }
-  //       );
-  //     });
-  //   }
-
-  //   async function getUserPermissions(userData) {
-  //     return new Promise((resolve) => {
-  //       //Get permissions assigned directly to user
-  //       db.query(
-  //         `SELECT DISTINCT permission FROM userPermissions WHERE userId = ?`,
-  //         [userData.userId],
-  //         async function (err, results) {
-  //           if (err) {
-  //             throw err;
-  //           }
-
-  //           let userPermissions = results.map((a) => a.permission);
-  //           resolve(userPermissions);
-  //         }
-  //       );
-  //     });
-  //   }
-
-  //   db.query(
-  //     `select * from users where username=?`,
-  //     [username],
-  //     async function (err, results) {
-  //       if (err) {
-  //         throw err;
-  //       }
-
-  //       let hashedPassword = null;
-
-  //       let loginFailed = false;
-  //       if (!results.length) {
-  //         loginFailed = true;
-  //       } else {
-  //         hashedPassword = results[0].password;
-  //       }
-
-  //       // User has not logged in before.
-  //       if (loginFailed || hashedPassword == null) {
-  //         let notLoggedInBeforeLang = lang.web.notLoggedInBefore;
-
-  //         setBannerCookie(
-  //           "warning",
-  //           notLoggedInBeforeLang.replace(
-  //             "%SITEADDRESS%",
-  //             process.env.siteAddress
-  //           ),
-  //           res
-  //         );
-  //         return res.redirect(`${process.env.siteAddress}/login`);
-  //       }
-
-  //       // Check if passwords match
-  //       const salt = await bcrypt.genSalt();
-
-  //       bcrypt.compare(password, hashedPassword, async function (err, result) {
-  //         if (err) {
-  //           throw err;
-  //         }
-
-  //         if (result) {
-  //           req.session.authenticated = true;
-  //           let userData = await getPermissions(results[0]);
-  //           let profilePicture = await getProfilePicture(userData.username);
-
-  //           req.session.user = {
-  //             userId: userData.userId,
-  //             username: userData.username,
-  //             profilePicture: profilePicture,
-  //             discordID: userData.discordID,
-  //             uuid: userData.uuid,
-  //             ranks: userData.userRanks,
-  //             permissions: userData.permissions,
-  //             emailVerified: userData.emailVerified,
-  //             minecraftVerified: userData.minecraftVerified,
-  //           };
-
-  //           setBannerCookie("success", lang.session.userSuccessLogin, res);
-  //           return res.redirect(`${process.env.siteAddress}/`);
-  //         } else {
-  //           setBannerCookie("warning", lang.session.userFailedLogin, res);
-  //           return res.redirect(`${process.env.siteAddress}/login`);
-  //         }
-  //       });
-  //     }
-  //   );
-
-  //   return res;
-  // });
+    return res;
+  });
 
   app.get("/logout", async function (req, res) {
     try {
