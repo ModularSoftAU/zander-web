@@ -7,7 +7,7 @@ import {
   getGlobalImage,
 } from "../api/common";
 import { getWebAnnouncement } from "../controllers/announcementController";
-import { getProfilePicture, hasJoined } from "../controllers/userController";
+import userGetter, { getProfilePicture } from "../controllers/userController";
 
 export default function sessionSiteRoute(
   app,
@@ -108,7 +108,7 @@ export default function sessionSiteRoute(
       return;
 
     const discordId = req.cookies.discordId;
-    if (!discordId) res.redirect(`/`);
+    if (!discordId) return res.redirect(`/`);
 
     res.view("session/unregistered", {
       pageTitle: `Unregistered`,
@@ -145,9 +145,7 @@ export default function sessionSiteRoute(
               discordID: userData.discordID,
               uuid: userData.uuid,
               ranks: userData.userRanks,
-              permissions: userData.permissions,
-              emailVerified: userData.emailVerified,
-              minecraftVerified: userData.minecraftVerified,
+              permissions: userData.permissions
             };
 
             setBannerCookie("success", lang.session.userSuccessLogin, res);

@@ -10,6 +10,94 @@ import db from "./databaseController";
 
     @param username The username of the user
 */
+
+export function UserGetter() {
+  this.byUsername = function(username) {
+    return new Promise((resolve, reject) => {
+      db.query(
+        `SELECT * FROM users WHERE username=?;`,
+        [username],
+        function(error, results, fields) {
+          if (error) {
+            reject(error);
+          }
+
+          if (!results || !results.length) {
+            resolve(null); // User not found
+          } else {
+            resolve(results[0]); // Resolve with user data
+          }
+        }
+      );
+    });
+  };
+
+  this.byUUID = function(uuid) {
+    return new Promise((resolve, reject) => {
+      db.query(
+        `SELECT * FROM users WHERE uuid=?;`,
+        [uuid],
+        function(error, results, fields) {
+          if (error) {
+            reject(error);
+          }
+
+          if (!results || !results.length) {
+            resolve(null); // User not found
+          } else {
+            resolve(results[0]); // Resolve with user data
+          }
+        }
+      );
+    });
+  };
+
+  this.byDiscordId = function(discordId) {
+    return new Promise((resolve, reject) => {
+      db.query(
+        `SELECT * FROM users WHERE discordId=?;`,
+        [discordId],
+        function(error, results, fields) {
+          if (error) {
+            reject(error);
+          }
+
+          if (!results || !results.length) {
+            resolve(null); // User not found
+          } else {
+            resolve(results[0]); // Resolve with user data
+          }
+        }
+      );
+    });
+  };
+
+  this.isRegistered = function(discordId) {
+    return new Promise((resolve, reject) => {
+      db.query(
+        `SELECT * FROM users WHERE discordId=?;`,
+        [discordId],
+        function(error, results, fields) {
+          if (error) {
+            reject(error);
+          }
+
+          if (!results || !results.length) {
+            resolve(false); // User not registered
+          } else {
+            resolve(true); // User registered
+          }
+        }
+      );
+    });
+  };
+}
+
+const userGetter = new UserGetter(); // Instantiate the UserGetter
+
+export default userGetter; // Export the instance
+
+
 export async function hasJoined(username) {
   return new Promise((resolve, reject) => {
     db.query(
@@ -159,25 +247,5 @@ export async function getUserRanks(userData, userRanks = null) {
         }
       );
     }
-  });
-}
-
-export async function hasLinked(discordId) {
-  return new Promise((resolve, reject) => {
-    db.query(
-      `SELECT * FROM users WHERE discordId=?;`,
-      [discordId],
-      function (error, results, fields) {
-        if (error) {
-          reject(error);
-        }
-
-        if (!results || !results.length) {
-          resolve(false);
-        }
-
-        resolve(true);
-      }
-    );
   });
 }
