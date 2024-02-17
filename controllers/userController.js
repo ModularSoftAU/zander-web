@@ -1,23 +1,13 @@
 import { hashEmail } from "../api/common";
 import db from "./databaseController";
 
-/*
-    Returns a Promise which checks if a user with a given username has joined 
-    before by querying a database using the db.query method. 
-    If the query is successful and a user with that username is found, 
-    it resolves the Promise with a value of true, otherwise it resolves with a value of false. I
-    f there is an error, the Promise is rejected with the error message.
-
-    @param username The username of the user
-*/
-
 export function UserGetter() {
-  this.byUsername = function(username) {
+  this.byUsername = function (username) {
     return new Promise((resolve, reject) => {
       db.query(
         `SELECT * FROM users WHERE username=?;`,
         [username],
-        function(error, results, fields) {
+        function (error, results, fields) {
           if (error) {
             reject(error);
           }
@@ -32,12 +22,31 @@ export function UserGetter() {
     });
   };
 
-  this.byUUID = function(uuid) {
+  this.byUUID = function (uuid) {
     return new Promise((resolve, reject) => {
       db.query(
         `SELECT * FROM users WHERE uuid=?;`,
         [uuid],
-        function(error, results, fields) {
+        function (error, results, fields) {
+          if (error) {
+            reject(error);
+          }
+          if (!results || !results.length) {
+            resolve(null); // User not found
+          } else {
+            resolve(results[0]); // Resolve with user data
+          }
+        }
+      );
+    });
+  };
+
+  this.byDiscordId = function (discordId) {
+    return new Promise((resolve, reject) => {
+      db.query(
+        `SELECT * FROM users WHERE discordId=?;`,
+        [discordId],
+        function (error, results, fields) {
           if (error) {
             reject(error);
           }
@@ -52,32 +61,32 @@ export function UserGetter() {
     });
   };
 
-  this.byDiscordId = function(discordId) {
+  this.hasJoined = function (username) {
     return new Promise((resolve, reject) => {
       db.query(
-        `SELECT * FROM users WHERE discordId=?;`,
-        [discordId],
-        function(error, results, fields) {
+        `select * from users where username=?;`,
+        [username],
+        function (error, results, fields) {
           if (error) {
             reject(error);
           }
 
           if (!results || !results.length) {
-            resolve(null); // User not found
-          } else {
-            resolve(results[0]); // Resolve with user data
+            resolve(false);
           }
+
+          resolve(true);
         }
       );
     });
   };
 
-  this.isRegistered = function(discordId) {
+  this.isRegistered = function (discordId) {
     return new Promise((resolve, reject) => {
       db.query(
         `SELECT * FROM users WHERE discordId=?;`,
         [discordId],
-        function(error, results, fields) {
+        function (error, results, fields) {
           if (error) {
             reject(error);
           }
@@ -93,29 +102,42 @@ export function UserGetter() {
   };
 }
 
-const userGetter = new UserGetter(); // Instantiate the UserGetter
+export function UserLinkGetter() {
+  this.getUserByCode = function (code) {
+    return new Promise((resolve, reject) => {
+      db.query(
+        `SELECT u.* FROM users u JOIN userVerifyLink uv ON u.uuid = uv.uuid WHERE uv.linkCode = ?;`,
+        [code],
+        function (error, results, fields) {
+          if (error) {
+            reject(error);
+          }
 
-export default userGetter; // Export the instance
-
-
-export async function hasJoined(username) {
-  return new Promise((resolve, reject) => {
-    db.query(
-      `select * from users where username=?;`,
-      [username],
-      function (error, results, fields) {
-        if (error) {
-          reject(error);
+          if (!results || !results.length) {
+            resolve(null); // User not found
+          } else {
+            resolve(results[0]); // Resolve with user data
+          }
         }
+      );
+    });
+  };
 
-        if (!results || !results.length) {
-          resolve(false);
+  this.link = function (uuid, discordId) {
+    return new Promise((resolve, reject) => {
+      db.query(
+        `UPDATE users SET discordId=? account_registered=? WHERE uuid=?`,
+        [discordId, new Date(), uuid],
+        function (error, results, fields) {
+          if (error) {
+            reject(error);
+          }
+
+          resolve(true)
         }
-
-        resolve(true);
-      }
-    );
-  });
+      );
+    });
+  };
 }
 
 /*
@@ -142,28 +164,6 @@ export async function getProfilePicture(username) {
           return resolve(`https://crafatar.com/avatars/${craftUUID}?helm`);
         if (profilePictureType == "GRAVATAR")
           return resolve(`https://www.gravatar.com/avatar/${emailHash}?s=300`);
-      }
-    );
-  });
-}
-
-export async function isRegistered(uuid) {
-  return new Promise((resolve, reject) => {
-    db.query(
-      `SELECT account_registered FROM users WHERE uuid=?;`,
-      [uuid],
-      function (error, results, fields) {
-        if (error) {
-          reject(error);
-        }
-
-        console.log(results);
-
-        if (!results || !results.length) {
-          resolve(false);
-        }
-
-        resolve(true);
       }
     );
   });
@@ -235,10 +235,10 @@ export async function getUserRanks(userData, userRanks = null) {
 
           let childRanks = results.map((a) => a.rankSlug);
           let allRanks = userRanks.concat(childRanks);
-          //Using a set of the array removes duplicates and prevents infinite loops
+          // Using a set of the array removes duplicates and prevents infinite loops
           let removeDuplicates = [...new Set(allRanks)];
 
-          //If after removing duplicates the length of the new list is not longer than the old list we are done simply resolve
+          // If after removing duplicates the length of the new list is not longer than the old list we are done simply resolve
           if (userRanks.length <= removeDuplicates.length) {
             resolve(removeDuplicates);
           } else {

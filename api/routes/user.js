@@ -1,3 +1,4 @@
+import { UserGetter, UserLinkGetter } from "../../controllers/userController";
 import { required, optional, generateVerifyCode } from "../common";
 
 export default function userApiRoute(app, config, db, features, lang) {
@@ -133,33 +134,43 @@ export default function userApiRoute(app, config, db, features, lang) {
     const username = required(req.body, "username");
     const uuid = required(req.body, "uuid");
 
-    const linkCode = await generateVerifyCode();
-    
-    try {
-      db.query(
-        `INSERT INTO userVerifyLink (uuid, username, linkCode, codeExpiry) VALUES (?, ?, ?, ?)`,
-        [uuid, username, linkCode],
-        function (error, results, fields) {
-          if (error) {
-            return res.send({
-              success: false,
-              message: `${error}`,
-            });
-          }
+    const userData = new UserGetter();
+    const user = await userData.byUUID(uuid);
 
-          return res.send({
-            success: true,
-            code: linkCode,
-          });
-        }
-      );
-
-
-    } catch (error) {
+    if (!user) {
       return res.send({
         success: false,
-        message: `${error}`,
+        message: `User ${username} does not exist in player base, please join the Network and try again.`,
       });
+    } else {
+      try {
+        const linkCode = await generateVerifyCode();
+        const now = new Date();
+        const codeExpiry = new Date(now.getTime() + 5 * 60000);
+
+        db.query(
+          `INSERT INTO userVerifyLink (uuid, username, linkCode, codeExpiry) VALUES (?, ?, ?, ?)`,
+          [uuid, username, linkCode, codeExpiry],
+          function (error, results, fields) {
+            if (error) {
+              return res.send({
+                success: false,
+                message: `There was an error in setting your code, try again in 5 minutes.`,
+              });
+            }
+
+            return res.send({
+              success: true,
+              message: `Here is your code: ${linkCode}\nGo back to the registration form and put this in.\nThis code will expire in 5 minutes.`,
+            });
+          }
+        );
+      } catch (error) {
+        return res.send({
+          success: false,
+          message: `${error}`,
+        });
+      }
     }
 
     return res;
@@ -177,44 +188,17 @@ export default function userApiRoute(app, config, db, features, lang) {
     const verifyCode = first + second + third + fourth + fifth + sixth;
 
     try {
-      // 
+      //
       // Grab link code and find player.
-      // 
-      db.query(
-        `SELECT * FROM userVerifyLink WHERE linkCode=?`,
-        [verifyCode],
-        function (error, results, fields) {
-          if (error) {
-            return res.send({
-              success: false,
-              message: `${error}`,
-            });
-          }
+      //
+      const userLinkData = new UserLinkGetter();
+      const linkUser = await userLinkData.getUserByCode(verifyCode);
+      let linkUserUUID = linkUser.uuid;
 
-          const mcUuid = results[0].uuid;
-
-          // 
-          // Bind Discord Account to User ID
-          // 
-          db.query(
-            `UPDATE users SET discordId=? account_registered=? WHERE uuid=?`,
-            [discordId, new Date(), mcUuid],
-            function (error, results, fields) {
-              if (error) {
-                return res.send({
-                  success: false,
-                  message: `${error}`,
-                });
-              }
-
-              return res.send({
-                success: true,
-                message: `Account creation successful, sign back in to get started.`,
-              });
-            }
-          );
-        }
-      );
+      //
+      // Bind Discord Account to User ID
+      //
+      userLinkData.link(linkUserUUID, discordId);
     } catch (error) {
       return res.send({
         success: false,
