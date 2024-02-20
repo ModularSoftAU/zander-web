@@ -7,7 +7,7 @@ import {
   getGlobalImage,
 } from "../api/common";
 import { getWebAnnouncement } from "../controllers/announcementController";
-import { getProfilePicture } from "../controllers/userController";
+import { UserGetter, getProfilePicture, getUserPermissions } from "../controllers/userController";
 
 export default function sessionSiteRoute(
   app,
@@ -89,14 +89,46 @@ export default function sessionSiteRoute(
 
       const userData = await userResponse.json();
 
-      const tenSecondsFromNow = new Date(Date.now() + 10000);
-      res.setCookie("discordId", userData.id, {
-        path: "/",
-        httpOnly: true,
-        expires: tenSecondsFromNow,
-      });
+      const userGetData = new UserGetter();
+      const userIsRegistered = await userGetData.isRegistered(userData.id);
 
-      res.redirect(`/unregistered`);
+      // 
+      // If user is not registered, start the user account verification process.
+      // 
+      if (!userIsRegistered) {
+        const tenSecondsFromNow = new Date(Date.now() + 10000);
+        res.setCookie("discordId", userData.id, {
+          path: "/",
+          httpOnly: true,
+          expires: tenSecondsFromNow,
+        });
+
+        res.redirect(`/unregistered`);
+      } else {
+        // 
+        // If registered, sign the user into their session. 
+        // 
+        const userLoginData = await userGetData.byDiscordId(userData.id);
+        
+        req.session.authenticated = true;
+        let userPermissionData = await getUserPermissions(userLoginData);
+        let profilePicture = await getProfilePicture(userLoginData.username);
+
+        req.session.user = {
+          userId: userLoginData.userId,
+          username: userLoginData.username,
+          profilePicture: profilePicture,
+          discordID: userLoginData.discordID,
+          uuid: userLoginData.uuid,
+          ranks: userPermissionData.userRanks,
+          permissions: userPermissionData,
+        };
+
+        setBannerCookie("success", lang.session.userSuccessLogin, res);
+        return res.redirect(`${process.env.siteAddress}/`);
+      }
+
+      
     } catch (error) {
       console.error("Error:", error);
       res.status(500).send("Internal Server Error");
@@ -119,44 +151,6 @@ export default function sessionSiteRoute(
       announcementWeb: await getWebAnnouncement(),
       discordId: discordId,
     });
-
-    return res;
-  });
-
-  app.post("/login", async function (req, res) {
-    db.query(
-      `select * from users where username=?`,
-      [username],
-      async function (err, results) {
-        bcrypt.compare(password, hashedPassword, async function (err, result) {
-          if (err) {
-            throw err;
-          }
-
-          if (result) {
-            req.session.authenticated = true;
-            let userData = await getPermissions(results[0]);
-            let profilePicture = await getProfilePicture(userData.username);
-
-            req.session.user = {
-              userId: userData.userId,
-              username: userData.username,
-              profilePicture: profilePicture,
-              discordID: userData.discordID,
-              uuid: userData.uuid,
-              ranks: userData.userRanks,
-              permissions: userData.permissions,
-            };
-
-            setBannerCookie("success", lang.session.userSuccessLogin, res);
-            return res.redirect(`${process.env.siteAddress}/`);
-          } else {
-            setBannerCookie("warning", lang.session.userFailedLogin, res);
-            return res.redirect(`${process.env.siteAddress}/`);
-          }
-        });
-      }
-    );
 
     return res;
   });

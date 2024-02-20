@@ -198,7 +198,20 @@ export default function userApiRoute(app, config, db, features, lang) {
       //
       // Bind Discord Account to User ID
       //
-      userLinkData.link(linkUserUUID, discordId);
+      userLinkData
+        .link(linkUserUUID, discordId)
+        .then((success) => {
+          if (success) {
+            console.error("Linking success");
+          } else {
+            // Handle error or do something else
+            console.error("Linking failed");
+          }
+        })
+        .catch((error) => {
+          // Handle error
+          console.error("Error linking");
+        });
     } catch (error) {
       return res.send({
         success: false,

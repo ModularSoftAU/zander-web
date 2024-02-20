@@ -131,7 +131,7 @@ export async function hasPermission(permissionNode, req, res, features) {
     }
 
     if (!hasSpecificPerm(permissionNode, userPermissions)) {
-      res.view("session/noPermission", {
+      return res.view("session/noPermission", {
         pageTitle: `Access Restricted`,
         config: config,
         req: req,
@@ -140,7 +140,6 @@ export async function hasPermission(permissionNode, req, res, features) {
         globalImage: await getGlobalImage(),
         announcementWeb: await getWebAnnouncement(),
       });
-      return false;
     }
     return true;
   }

@@ -1,0 +1,76 @@
+<%- include("../../modules/header.ejs", {
+    pageTitle: pageTitle,
+    pageDescription: config.siteConfiguration.tagline
+}) %>
+
+<%- include("../../modules/navigationBar.ejs") %>
+
+<%- include("../../modules/profile/profileHeader.ejs") %>
+<br>
+
+<div class="container">
+    <div class="row">
+        <div class="col-md-8">
+        <ul class="nav nav-pills nav-fill" id="myTab" role="tablist">
+            <li class="nav-item" role="presentation">
+                <a class="nav-link active" id="about-tab" data-bs-toggle="tab" href="#about" role="tab" aria-controls="about" aria-selected="true">About Me</a>
+            </li>
+            <li class="nav-item" role="presentation">
+                <a class="nav-link" id="punishments-tab" data-bs-toggle="tab" href="#punishments" role="tab" aria-controls="punishments" aria-selected="false">Punishments</a>
+            </li>
+            <li class="nav-item" role="presentation">
+                <a class="nav-link" id="audit-tab" data-bs-toggle="tab" href="#audit" role="tab" aria-controls="audit" aria-selected="false">Audit</a>
+            </li>
+        </ul>
+        <div class="tab-content mt-2" id="myTabContent">
+            <div class="tab-pane fade show active" id="about" role="tabpanel" aria-labelledby="about-tab">
+                <!-- About Me content goes here -->
+                <p>This is the About Me section content.</p>
+            </div>
+            <div class="tab-pane fade mt-2" id="punishments" role="tabpanel" aria-labelledby="punishments-tab">
+                <!-- Punishments content goes here -->
+                <p>This is the Punishments section content.</p>
+            </div>
+            <div class="tab-pane fade mt-2" id="audit" role="tabpanel" aria-labelledby="audit-tab">
+                <!-- Audit content goes here -->
+                <p>This is the Audit section content.</p>
+            </div>
+        </div>
+    </div>
+        <div class="col-md-4">
+            <h4>Joined</h4>
+            <p>JOIN DATE</p>
+            <hr>
+
+            <h4>Interests</h4>
+            <p>INTERESTS</p>
+            <hr>
+
+            <h4>Social Connections</h4>
+            <hr>
+
+            <h6><i class="fa-brands fa-discord"></i> Discord</h6>
+            <p>LINK</p>
+
+            <h6><i class="fa-brands fa-steam"></i> Steam</h6>
+            <p>LINK</p>
+
+            <h6><i class="fa-brands fa-twitch"></i> Twitch</h6>
+            <p>LINK</p>
+
+            <h6><i class="fa-brands fa-twitch"></i> YouTube</h6>
+            <p>LINK</p>
+
+            <h6><i class="fa-brands fa-twitter"></i> Twitter</h6>
+            <p>LINK</p>
+
+            <h6><i class="fa-brands fa-square-reddit"></i> Reddit</h6>
+            <p>LINK</p>
+
+            <h6><i class="fa-brands fa-square-instagram"></i> Instagram</h6>
+            <p>LINK</p>
+        </div>
+    </div>
+</div>
+
+<%- include("../../modules/footer.ejs") %>  

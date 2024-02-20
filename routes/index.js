@@ -5,6 +5,7 @@ import { isFeatureWebRouteEnabled, getGlobalImage } from "../api/common";
 import { getWebAnnouncement } from "../controllers/announcementController";
 import redirectSiteRoutes from "./redirectRoutes";
 import rankData from "../ranks.json" assert { type: "json" };
+import profileSiteRoutes from "./profileRoutes";
 
 export default function applicationSiteRoutes(
   app,
@@ -18,6 +19,7 @@ export default function applicationSiteRoutes(
 ) {
   dashboardSiteRoutes(app, client, fetch, moment, config, db, features, lang);
   sessionRoutes(app, client, fetch, moment, config, db, features, lang);
+  profileSiteRoutes(app, client, fetch, moment, config, db, features, lang);
   policySiteRoutes(app, config, features);
   redirectSiteRoutes(app, config, features);
 

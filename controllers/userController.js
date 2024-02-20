@@ -1,4 +1,3 @@
-import { hashEmail } from "../api/common";
 import db from "./databaseController";
 
 export function UserGetter() {
@@ -126,25 +125,20 @@ export function UserLinkGetter() {
   this.link = function (uuid, discordId) {
     return new Promise((resolve, reject) => {
       db.query(
-        `UPDATE users SET discordId=? account_registered=? WHERE uuid=?`,
+        `UPDATE users SET discordId=?, account_registered=? WHERE uuid=?`,
         [discordId, new Date(), uuid],
         function (error, results, fields) {
           if (error) {
             reject(error);
           }
 
-          resolve(true)
+          resolve(true);
         }
       );
     });
   };
 }
 
-/*
-    Checks if two given passwords match, and returns a Promise with a boolean value of true if they match and false otherwise.
-
-    @param username The username of the user.
-*/
 export async function getProfilePicture(username) {
   return new Promise((resolve, reject) => {
     db.query(
@@ -157,13 +151,13 @@ export async function getProfilePicture(username) {
 
         let profilePictureType = results[0].profilePictureType;
         let craftUUID = results[0].uuid;
-        let email = results[0].email;
-        let emailHash = hashEmail(email);
+        // let email = results[0].email;
+        // let emailHash = hashEmail(email);
 
         if (profilePictureType == "CRAFTATAR")
           return resolve(`https://crafatar.com/avatars/${craftUUID}?helm`);
-        if (profilePictureType == "GRAVATAR")
-          return resolve(`https://www.gravatar.com/avatar/${emailHash}?s=300`);
+        // if (profilePictureType == "GRAVATAR")
+        //   return resolve(`https://www.gravatar.com/avatar/${emailHash}?s=300`);
       }
     );
   });
