@@ -16,10 +16,10 @@
                 <a class="nav-link active" id="about-tab" data-bs-toggle="tab" href="#about" role="tab" aria-controls="about" aria-selected="true">About Me</a>
             </li>
             <li class="nav-item" role="presentation">
-                <a class="nav-link" id="punishments-tab" data-bs-toggle="tab" href="#punishments" role="tab" aria-controls="punishments" aria-selected="false">Punishments</a>
+                <a class="nav-link" id="punishments-tab" data-bs-toggle="tab" href="#punishments" role="tab" aria-controls="punishments" aria-selected="false">Punishments <i class="fa-solid fa-shield" style="color: red;"></i></a>
             </li>
             <li class="nav-item" role="presentation">
-                <a class="nav-link" id="audit-tab" data-bs-toggle="tab" href="#audit" role="tab" aria-controls="audit" aria-selected="false">Audit</a>
+                <a class="nav-link" id="audit-tab" data-bs-toggle="tab" href="#audit" role="tab" aria-controls="audit" aria-selected="false">Audit <i class="fa-solid fa-shield" style="color: red;"></i></a>
             </li>
         </ul>
         <div class="tab-content mt-2" id="myTabContent">
@@ -34,12 +34,64 @@
             <div class="tab-pane fade mt-2" id="audit" role="tabpanel" aria-labelledby="audit-tab">
                 <!-- Audit content goes here -->
                 <div class="alert alert-warning" role="alert">This audit feature is in development, coming soon!</div>
+
+                <h3>Minecraft</h3>
+                <table class="table">
+                    <tbody>
+                        <tr>
+                            <th scope="row">Last Minecraft Login</th>
+                            <td>COUNT</td>
+                        </tr>
+                        <tr>
+                            <th scope="row">Last Minecraft Message</th>
+                            <td>COUNT</td>
+                        </tr>
+                        <tr>
+                            <th scope="row">Last Minecraft Punishment</th>
+                            <td>PUNISHMENTID<br>COUNT</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <h3>Discord</h3>
+                <table class="table">
+                    <tbody>
+                        <tr>
+                            <th scope="row">Last Discord Message</th>
+                            <td>COUNT</td>
+                        </tr>
+                        <tr>
+                            <th scope="row">Last Discord Voice Interaction</th>
+                            <td>COUNT</td>
+                        </tr>
+                        <tr>
+                            <th scope="row">Last Discord Punishment</th>
+                            <td>PUNISHMENTID<br>COUNT</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <h3>Misc</h3>
+                <table class="table">
+                    <tbody>
+                        <tr>
+                            <th scope="row">Last Website Login</th>
+                            <td>COUNT</td>
+                        </tr>
+                        <tr>
+                            <th scope="row">Last Discord Voice Interaction</th>
+                            <td>COUNT</td>
+                        </tr>
+                    </tbody>
+                </table>
             </div>
         </div>
     </div>
         <div class="col-md-4">
             <h4>Joined</h4>
-            <p>JOIN DATE</p>
+            <p data-toggle="tooltip" data-placement="top" title="<%= moment(profileApiData.joined).fromNow() %>">
+                <%= moment(profileApiData.joined).format('LLLL') %>
+            </p>
             <hr>
 
             <h4>Interests</h4>
@@ -58,16 +110,19 @@
             <h6><i class="fa-brands fa-twitch"></i> Twitch</h6>
             <p>LINK</p>
 
-            <h6><i class="fa-brands fa-twitch"></i> YouTube</h6>
+            <h6><i class="fa-brands fa-youtube"></i> YouTube</h6>
             <p>LINK</p>
 
-            <h6><i class="fa-brands fa-twitter"></i> Twitter</h6>
+            <h6><i class="fa-brands fa-twitter"></i> Twitter/X</h6>
+            <p>LINK</p>
+
+            <h6><i class="fa-brands fa-square-instagram"></i> Instagram</h6>
             <p>LINK</p>
 
             <h6><i class="fa-brands fa-square-reddit"></i> Reddit</h6>
             <p>LINK</p>
 
-            <h6><i class="fa-brands fa-square-instagram"></i> Instagram</h6>
+            <h6><i class="fa-brands fa-spotify"></i> Spotify</h6>
             <p>LINK</p>
         </div>
     </div>

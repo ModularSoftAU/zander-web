@@ -1,6 +1,6 @@
-import { isFeatureWebRouteEnabled, getGlobalImage } from "../api/common";
+import { isFeatureWebRouteEnabled, getGlobalImage, hasPermission } from "../api/common";
 import { getWebAnnouncement } from "../controllers/announcementController";
-import { UserGetter, getProfilePicture } from "../controllers/userController";
+import { UserGetter, getProfilePicture, getUserPermissions } from "../controllers/userController";
 
 export default function profileSiteRoutes(
   app,
@@ -41,6 +41,14 @@ export default function profileSiteRoutes(
       console.log(profileApiData);
 
       const [profilePicture] = await Promise.all([getProfilePicture(username)]);
+      
+      const perms = await getUserPermissions(profileApiData.data[0]);
+
+      const filteredArray = perms.filter((item) =>
+        item.includes("zander.web.logs")
+      );
+
+      console.log(filteredArray);
 
       return res.view("modules/profile/profile", {
         pageTitle: `${profileApiData.data[0].username}`,
@@ -48,9 +56,10 @@ export default function profileSiteRoutes(
         req: req,
         features: features,
         globalImage: await getGlobalImage(),
-        profileApiData: profileApiData.data,
+        profileApiData: profileApiData.data[0],
         announcementWeb: await getWebAnnouncement(),
         profilePicture: profilePicture,
+        moment: moment,
       });
     }
   });
