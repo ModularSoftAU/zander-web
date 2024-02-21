@@ -48,8 +48,6 @@ export default function profileSiteRoutes(
         // 
         let contextPermissions = null;
 
-        console.log(req.session.user);
-
         if (req.session.user) {
           const userProfile = await userData.byUsername(
             req.session.user.username
