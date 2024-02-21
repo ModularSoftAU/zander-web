@@ -243,3 +243,19 @@ export async function getUserRanks(userData, userRanks = null) {
     }
   });
 }
+
+export async function checkPermissions(username, permissionNode) {
+  try {
+    const userPermissions = await getUserPermissions(username);
+    console.log(userPermissions);
+
+    const hasPermission = userPermissions.includes(permissionNode);
+
+    console.log(hasPermission);
+
+    return hasPermission;
+  } catch (error) {
+    console.error("Error:", error);
+    return false;
+  }
+}

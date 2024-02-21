@@ -15,76 +15,83 @@
             <li class="nav-item" role="presentation">
                 <a class="nav-link active" id="about-tab" data-bs-toggle="tab" href="#about" role="tab" aria-controls="about" aria-selected="true">About Me</a>
             </li>
-            <li class="nav-item" role="presentation">
-                <a class="nav-link" id="punishments-tab" data-bs-toggle="tab" href="#punishments" role="tab" aria-controls="punishments" aria-selected="false">Punishments <i class="fa-solid fa-shield" style="color: red;"></i></a>
-            </li>
-            <li class="nav-item" role="presentation">
-                <a class="nav-link" id="audit-tab" data-bs-toggle="tab" href="#audit" role="tab" aria-controls="audit" aria-selected="false">Audit <i class="fa-solid fa-shield" style="color: red;"></i></a>
-            </li>
+            <% if (contextPermissions && contextPermissions.includes('zander.web.profile.punishments')) { %>
+                <li class="nav-item" role="presentation">
+                    <a class="nav-link" id="punishments-tab" data-bs-toggle="tab" href="#punishments" role="tab" aria-controls="punishments" aria-selected="false">Punishments <i class="fa-solid fa-shield" style="color: red;"></i></a>
+                </li>
+            <% } %>
+            <% if (contextPermissions && contextPermissions.includes('zander.web.profile.audit')) { %>
+                <li class="nav-item" role="presentation">
+                    <a class="nav-link" id="audit-tab" data-bs-toggle="tab" href="#audit" role="tab" aria-controls="audit" aria-selected="false">Audit <i class="fa-solid fa-shield" style="color: red;"></i></a>
+                </li>
+            <% } %>
         </ul>
         <div class="tab-content mt-2" id="myTabContent">
             <div class="tab-pane fade show active" id="about" role="tabpanel" aria-labelledby="about-tab">
                 <!-- About Me content goes here -->
                 <div class="alert alert-warning" role="alert">This About Me feature is in development, coming soon!</div>
             </div>
-            <div class="tab-pane fade mt-2" id="punishments" role="tabpanel" aria-labelledby="punishments-tab">
-                <!-- Punishments content goes here -->
-                <div class="alert alert-warning" role="alert">This punishment feature is in development, coming soon!</div>
-            </div>
-            <div class="tab-pane fade mt-2" id="audit" role="tabpanel" aria-labelledby="audit-tab">
+            <% if (contextPermissions && contextPermissions.includes('zander.web.profile.punishments')) { %>
+                <div class="tab-pane fade mt-2" id="punishments" role="tabpanel" aria-labelledby="punishments-tab">
+                    <!-- Punishments content goes here -->
+                    <div class="alert alert-warning" role="alert">This punishment feature is in development, coming soon!</div>
+                </div>
+            <% } %>
+            <% if (contextPermissions && contextPermissions.includes('zander.web.profile.audit')) { %>
+                <div class="tab-pane fade mt-2" id="audit" role="tabpanel" aria-labelledby="audit-tab">
                 <!-- Audit content goes here -->
                 <div class="alert alert-warning" role="alert">This audit feature is in development, coming soon!</div>
+                    <h3>Minecraft</h3>
+                    <table class="table">
+                        <tbody>
+                            <tr>
+                                <th scope="row">Last Minecraft Login</th>
+                                <td>COUNT</td>
+                            </tr>
+                            <tr>
+                                <th scope="row">Last Minecraft Message</th>
+                                <td>COUNT</td>
+                            </tr>
+                            <tr>
+                                <th scope="row">Last Minecraft Punishment</th>
+                                <td>PUNISHMENTID<br>COUNT</td>
+                            </tr>
+                        </tbody>
+                    </table>
 
-                <h3>Minecraft</h3>
-                <table class="table">
-                    <tbody>
-                        <tr>
-                            <th scope="row">Last Minecraft Login</th>
-                            <td>COUNT</td>
-                        </tr>
-                        <tr>
-                            <th scope="row">Last Minecraft Message</th>
-                            <td>COUNT</td>
-                        </tr>
-                        <tr>
-                            <th scope="row">Last Minecraft Punishment</th>
-                            <td>PUNISHMENTID<br>COUNT</td>
-                        </tr>
-                    </tbody>
-                </table>
+                    <h3>Discord</h3>
+                    <table class="table">
+                        <tbody>
+                            <tr>
+                                <th scope="row">Last Discord Message</th>
+                                <td>COUNT</td>
+                            </tr>
+                            <tr>
+                                <th scope="row">Last Discord Voice Interaction</th>
+                                <td>COUNT</td>
+                            </tr>
+                            <tr>
+                                <th scope="row">Last Discord Punishment</th>
+                                <td>PUNISHMENTID<br>COUNT</td>
+                            </tr>
+                        </tbody>
+                    </table>
 
-                <h3>Discord</h3>
-                <table class="table">
-                    <tbody>
-                        <tr>
-                            <th scope="row">Last Discord Message</th>
-                            <td>COUNT</td>
-                        </tr>
-                        <tr>
-                            <th scope="row">Last Discord Voice Interaction</th>
-                            <td>COUNT</td>
-                        </tr>
-                        <tr>
-                            <th scope="row">Last Discord Punishment</th>
-                            <td>PUNISHMENTID<br>COUNT</td>
-                        </tr>
-                    </tbody>
-                </table>
-
-                <h3>Misc</h3>
-                <table class="table">
-                    <tbody>
-                        <tr>
-                            <th scope="row">Last Website Login</th>
-                            <td>COUNT</td>
-                        </tr>
-                        <tr>
-                            <th scope="row">Last Discord Voice Interaction</th>
-                            <td>COUNT</td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
+                    <h3>Misc</h3>
+                    <table class="table">
+                        <tbody>
+                            <tr>
+                                <th scope="row">Last Website Login</th>
+                                <td>COUNT</td>
+                            </tr>
+                            <tr>
+                                <th scope="row">Last Discord Voice Interaction</th>
+                                <td>COUNT</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            <% } %>
         </div>
     </div>
         <div class="col-md-4">

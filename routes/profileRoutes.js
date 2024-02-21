@@ -1,6 +1,6 @@
 import { isFeatureWebRouteEnabled, getGlobalImage, hasPermission } from "../api/common";
 import { getWebAnnouncement } from "../controllers/announcementController";
-import { UserGetter, getProfilePicture, getUserPermissions } from "../controllers/userController";
+import { UserGetter, checkPermissions, getProfilePicture, getUserPermissions } from "../controllers/userController";
 
 export default function profileSiteRoutes(
   app,
@@ -18,51 +18,70 @@ export default function profileSiteRoutes(
   app.get("/profile/:username", async function (req, res) {
     const username = req.params.username;
 
-    const userData = new UserGetter();
-    const userHasJoined = await userData.hasJoined(username);
+    try {
+      const userData = new UserGetter();
+      const userHasJoined = await userData.hasJoined(username);
 
-    if (!userHasJoined) {
-      return res.view("session/notFound", {
-        pageTitle: `404: Player Not Found`,
-        config: config,
-        req: req,
-        res: res,
-        features: features,
-        globalImage: await getGlobalImage(),
-        announcementWeb: await getWebAnnouncement(),
-      });
-    } else {
-      const fetchURL = `${process.env.siteAddress}/api/user/get?username=${username}`;
-      const response = await fetch(fetchURL, {
-        headers: { "x-access-token": process.env.apiKey },
-      });
-      const profileApiData = await response.json();
+      if (!userHasJoined) {
+        return res.view("session/notFound", {
+          pageTitle: `404: Player Not Found`,
+          config: config,
+          req: req,
+          res: res,
+          features: features,
+          globalImage: await getGlobalImage(),
+          announcementWeb: await getWebAnnouncement(),
+        });
+      } else {
+        // 
+        // Grab user profile data
+        // 
+        const fetchURL = `${process.env.siteAddress}/api/user/get?username=${username}`;
+        const response = await fetch(fetchURL, {
+          headers: { "x-access-token": process.env.apiKey },
+        });
 
-      console.log(profileApiData);
+        const profileApiData = await response.json();
 
-      const [profilePicture] = await Promise.all([getProfilePicture(username)]);
-      
-      const perms = await getUserPermissions(profileApiData.data[0]);
+        // 
+        // Get user context for display permissions
+        // 
+        let contextPermissions = null;
 
-      const filteredArray = perms.filter((item) =>
-        item.includes("zander.web.logs")
-      );
+        console.log(req.session.user);
 
-      console.log(filteredArray);
+        if (req.session.user) {
+          const userProfile = await userData.byUsername(
+            req.session.user.username
+          );
+          const perms = await getUserPermissions(userProfile);
+          contextPermissions = perms;
+        } else {
+          contextPermissions = null;
+        }
 
-      return res.view("modules/profile/profile", {
-        pageTitle: `${profileApiData.data[0].username}`,
-        config: config,
-        req: req,
-        features: features,
-        globalImage: await getGlobalImage(),
-        profileApiData: profileApiData.data[0],
-        announcementWeb: await getWebAnnouncement(),
-        profilePicture: profilePicture,
-        moment: moment,
-      });
+        // 
+        // Render the profile page
+        // 
+        return res.view("modules/profile/profile", {
+          pageTitle: `${profileApiData.data[0].username}`,
+          config: config,
+          req: req,
+          features: features,
+          globalImage: await getGlobalImage(),
+          announcementWeb: await getWebAnnouncement(),
+          profilePicture: await getProfilePicture(profileApiData.data[0].username),
+          profileApiData: profileApiData.data[0],
+          moment: moment,
+          contextPermissions: contextPermissions,
+        });
+      }
+    } catch (error) {
+      console.error("Error:", error);
+      res.status(500).send("Internal Server Error");
     }
   });
+
 
   //
   // Edit Signed in User profile
