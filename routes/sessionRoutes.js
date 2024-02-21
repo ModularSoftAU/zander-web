@@ -8,6 +8,7 @@ import {
 } from "../api/common";
 import { getWebAnnouncement } from "../controllers/announcementController";
 import { UserGetter, getProfilePicture, getUserPermissions } from "../controllers/userController";
+import { updateAudit_lastWebsiteLogin } from "../controllers/auditController";
 
 export default function sessionSiteRoute(
   app,
@@ -105,11 +106,11 @@ export default function sessionSiteRoute(
 
         res.redirect(`/unregistered`);
       } else {
-        // 
-        // If registered, sign the user into their session. 
-        // 
+        //
+        // If registered, sign the user into their session.
+        //
         const userLoginData = await userGetData.byDiscordId(userData.id);
-        
+
         req.session.authenticated = true;
         let userPermissionData = await getUserPermissions(userLoginData);
         let profilePicture = await getProfilePicture(userLoginData.username);
@@ -123,6 +124,18 @@ export default function sessionSiteRoute(
           ranks: userPermissionData.userRanks,
           permissions: userPermissionData,
         };
+
+        //
+        // Update user profile for auditing
+        //
+        try {
+          updateAudit_lastWebsiteLogin(new Date(), userLoginData.username);
+        } catch (error) {
+          return res.send({
+            success: false,
+            message: `${error}`,
+          });
+        }
 
         setBannerCookie("success", lang.session.userSuccessLogin, res);
         return res.redirect(`${process.env.siteAddress}/`);

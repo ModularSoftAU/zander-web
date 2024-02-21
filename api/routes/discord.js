@@ -1,3 +1,4 @@
+import { updateAudit_lastMinecraftLogin, updateAudit_lastMinecraftMessage } from "../../controllers/auditController";
 import { isFeatureEnabled, required } from "../common";
 
 export default function discordApiRoute(
@@ -44,6 +45,21 @@ export default function discordApiRoute(
     const server = required(req.body, "server", res);
     const content = required(req.body, "content", res);
 
+    //
+    // Update user profile for auditing
+    //
+    try {
+      updateAudit_lastMinecraftMessage(new Date(), username);
+    } catch (error) {
+      return res.send({
+        success: false,
+        message: `${error}`,
+      });
+    }
+
+    //
+    // Send Discord Message to Log
+    //
     try {
       const guild = client.guilds.cache.get(config.discord.guildId);
       const channel = guild.channels.cache.get(
@@ -67,6 +83,9 @@ export default function discordApiRoute(
     isFeatureEnabled(features.discord, res, lang);
     const username = required(req.body, "username", res);
 
+    //
+    // Send Discord Message to Log
+    //
     try {
       const guild = client.guilds.cache.get(config.discord.guildId);
       const channel = guild.channels.cache.get(
@@ -88,6 +107,21 @@ export default function discordApiRoute(
     isFeatureEnabled(features.discord, res, lang);
     const username = required(req.body, "username", res);
 
+    //
+    // Update user profile for auditing
+    //
+    try {
+      updateAudit_lastMinecraftLogin(new Date(), username);
+    } catch (error) {
+      return res.send({
+        success: false,
+        message: `${error}`,
+      });
+    }
+
+    //
+    // Send Discord Message to Log
+    //
     try {
       const guild = client.guilds.cache.get(config.discord.guildId);
       const channel = guild.channels.cache.get(
