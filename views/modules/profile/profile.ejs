@@ -39,22 +39,26 @@
             <% } %>
             <% if (contextPermissions && contextPermissions.includes('zander.web.profile.audit')) { %>
                 <div class="tab-pane fade mt-2" id="audit" role="tabpanel" aria-labelledby="audit-tab">
-                <!-- Audit content goes here -->
-                <div class="alert alert-warning" role="alert">This audit feature is in development, coming soon!</div>
                     <h3>Minecraft</h3>
                     <table class="table">
                         <tbody>
                             <tr>
-                                <th scope="row">Last Minecraft Login</th>
-                                <td>COUNT</td>
+                                <th scope="row">Last Minecraft Session</th>
+                                <td data-toggle="tooltip" data-placement="top" title="<%= moment(profileApiData.audit_lastMinecraftLogin).fromNow() %>">
+                                    <%= moment(profileApiData.audit_lastMinecraftLogin).format('LLLL') %>
+                                </td>
                             </tr>
                             <tr>
                                 <th scope="row">Last Minecraft Message</th>
-                                <td>COUNT</td>
+                                <td data-toggle="tooltip" data-placement="top" title="<%= moment(profileApiData.audit_lastMinecraftMessage).fromNow() %>">
+                                    <%= moment(profileApiData.audit_lastMinecraftMessage).format('LLLL') %>
+                                </td>
                             </tr>
                             <tr>
                                 <th scope="row">Last Minecraft Punishment</th>
-                                <td>PUNISHMENTID<br>COUNT</td>
+                                <td>
+                                    <div class="alert alert-warning" role="alert">Feature coming soon, currently in development.</div>
+                                </td>
                             </tr>
                         </tbody>
                     </table>
@@ -64,15 +68,21 @@
                         <tbody>
                             <tr>
                                 <th scope="row">Last Discord Message</th>
-                                <td>COUNT</td>
+                                <td data-toggle="tooltip" data-placement="top" title="<%= moment(profileApiData.audit_lastDiscordMessage).fromNow() %>">
+                                    <%= moment(profileApiData.audit_lastDiscordMessage).format('LLLL') %>
+                                </td>
                             </tr>
                             <tr>
-                                <th scope="row">Last Discord Voice Interaction</th>
-                                <td>COUNT</td>
+                                <th scope="row">Last Discord Voice Session</th>
+                                <td data-toggle="tooltip" data-placement="top" title="<%= moment(profileApiData.audit_lastDiscordVoice).fromNow() %>">
+                                    <%= moment(profileApiData.audit_lastDiscordVoice).format('LLLL') %>
+                                </td>
                             </tr>
                             <tr>
                                 <th scope="row">Last Discord Punishment</th>
-                                <td>PUNISHMENTID<br>COUNT</td>
+                                <td>
+                                    <div class="alert alert-warning" role="alert">Feature coming soon, currently in development.</div>
+                                </td>
                             </tr>
                         </tbody>
                     </table>
@@ -82,11 +92,9 @@
                         <tbody>
                             <tr>
                                 <th scope="row">Last Website Login</th>
-                                <td>COUNT</td>
-                            </tr>
-                            <tr>
-                                <th scope="row">Last Discord Voice Interaction</th>
-                                <td>COUNT</td>
+                                <td data-toggle="tooltip" data-placement="top" title="<%= moment(profileApiData.audit_lastWebsiteLogin).fromNow() %>">
+                                    <%= moment(profileApiData.audit_lastWebsiteLogin).format('LLLL') %>
+                                </td>
                             </tr>
                         </tbody>
                     </table>
