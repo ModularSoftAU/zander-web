@@ -13,16 +13,49 @@
         <div class="col-md-12">
         <ul class="nav nav-pills nav-fill" id="myTab" role="tablist">
             <li class="nav-item" role="presentation">
-                <a class="nav-link active" id="about-tab" data-bs-toggle="tab" href="#about" role="tab" aria-controls="about" aria-selected="true">About Me</a>
+                <a class="nav-link active" id="profileDisplay-tab" data-bs-toggle="tab" href="#profileDisplay" role="tab" aria-controls="about" aria-selected="true">Profile Display</a>
+            </li>
+            <li class="nav-item" role="presentation">
+                <a class="nav-link" id="about-tab" data-bs-toggle="tab" href="#about" role="tab" aria-controls="about" aria-selected="true">About Me</a>
             </li>
             <li class="nav-item" role="presentation">
                 <a class="nav-link" id="socialconnections-tab" data-bs-toggle="tab" href="#socialconnections" role="tab" aria-controls="socialconnections" aria-selected="false">Social Connections</a>
             </li>
         </ul>
         <div class="tab-content mt-2" id="myTabContent">
-            <div class="tab-pane fade show active" id="about" role="tabpanel" aria-labelledby="about-tab">
+            <div class="tab-pane fade show active" id="profileDisplay" role="tabpanel" aria-labelledby="profileDisplay-tab">
+                <!-- Profile Info/Display content goes here -->
+                <div class="alert alert-warning" role="alert">This feature is in development, coming soon!</div>
+
+                <div class="row">
+                    <div class="col-md-6">
+                        <label for="profilePicture_type">Profile Picture Type</label>
+                        <select class="form-control" name="profilePicture_type">
+                            <option value="CRAFTATAR" selected>CRAFTATAR</option>
+                            <option value="GRAVATAR">GRAVATAR</option>
+                        </select>
+
+                        <small><b>Profile Picture Type: CRAFTATAR or GRAVATAR?</b><br>CRAFTATAR uses your Minecraft skin by default<br>GRAVATAR utilizes the avatar you upload from <a href="https://gravatar.com/">Gravatar</a> and will appear when you link your email and select the option.<br><i>Please ensure that your profile picture complies with the <a href="/rules">Network Rules</a><div class=""></div></i></small>
+                    </div>
+                    <div class="col-md-6">
+                        <label for="profilePicture_email">Email</label>
+                        <input type="text" class="form-control mb-3" name="profilePicture_email" maxlength="70">
+                    </div>
+                </div>
+                <br>
+            </div>
+            <div class="tab-pane fade" id="about" role="tabpanel" aria-labelledby="about-tab">
                 <!-- About Me content goes here -->
                 <div class="alert alert-warning" role="alert">This About Me feature is in development, coming soon!</div>
+
+                <label for="social_interests">Interests</label>
+                <input type="text" class="form-control mb-3" name="social_interests" maxlength="50">
+
+                <%- include("../../partials/summerNoteEditor.ejs", {
+                    editorElementName: "social_aboutMe",
+                    editorPOSTElementName: "social_aboutMe"
+                }) %>  
+                <br>
             </div>
             <div class="tab-pane fade mt-2" id="socialconnections" role="tabpanel" aria-labelledby="socialconnections-tab">
                 <!-- Social Connections content goes here -->
@@ -35,10 +68,25 @@
 
                                 <label for="social_steam"><i class="fab fa-steam"></i> Steam</label>
                                 <input type="text" class="form-control mb-3" name="social_discord" maxlength="32">
+
+                                <label for="social_twitch"><i class="fab fa-twitch"></i> Twitch</label>
+                                <input type="text" class="form-control mb-3" name="social_twitch" maxlength="25">
                             </div>
                         </div>
                         <div class="col-md-6">
-                            <p>Test</p>
+                            <div class="form-group">
+                                <label for="social_twitter_x"><i class="fab fa-twitter"></i> Twitter/X</label>
+                                <input type="text" class="form-control mb-3" name="social_twitter_x" maxlength="15">
+
+                                <label for="social_instagram"><i class="fab fa-square-instagram"></i> Instagram</label>
+                                <input type="text" class="form-control mb-3" name="social_instagram" maxlength="30">
+
+                                <label for="social_reddit"><i class="fab fa-reddit"></i> Reddit</label>
+                                <input type="text" class="form-control mb-3" name="social_reddit" maxlength="38">
+
+                                <label for="social_spotify"><i class="fab fa-reddit"></i> Spotify</label>
+                                <input type="text" class="form-control mb-3" name="social_spotify" maxlength="30">
+                            </div>
                         </div>
                     </div>
                 </form>
