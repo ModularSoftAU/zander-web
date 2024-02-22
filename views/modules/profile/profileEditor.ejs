@@ -27,39 +27,48 @@
                 <!-- Profile Info/Display content goes here -->
                 <div class="alert alert-warning" role="alert">This feature is in development, coming soon!</div>
 
-                <div class="row">
-                    <div class="col-md-6">
-                        <label for="profilePicture_type">Profile Picture Type</label>
-                        <select class="form-control" name="profilePicture_type">
-                            <option value="CRAFTATAR" selected>CRAFTATAR</option>
-                            <option value="GRAVATAR">GRAVATAR</option>
-                        </select>
+                <form action="<%= process.env.siteAddress %>/redirect/user/profile/display" method="post">
+                    <div class="row">
+                            <div class="col-md-6">
+                            <label for="profilePicture_type">Profile Picture Type</label>
+                            <select class="form-control" name="profilePicture_type">
+                                <option value="CRAFTATAR" selected>CRAFTATAR</option>
+                                <option value="GRAVATAR">GRAVATAR</option>
+                            </select>
+                            <small><b>Profile Picture Type: CRAFTATAR or GRAVATAR?</b><br>CRAFTATAR uses your Minecraft skin by default<br>GRAVATAR utilizes the avatar you upload from <a href="https://gravatar.com/">Gravatar</a> and will appear when you link your email and select the option.<br><i>Please ensure that your profile picture complies with the <a href="/rules">Network Rules</a><div class=""></div></i></small>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="profilePicture_email">Email</label>
+                            <input type="text" class="form-control mb-3" name="profilePicture_email" maxlength="70">
 
-                        <small><b>Profile Picture Type: CRAFTATAR or GRAVATAR?</b><br>CRAFTATAR uses your Minecraft skin by default<br>GRAVATAR utilizes the avatar you upload from <a href="https://gravatar.com/">Gravatar</a> and will appear when you link your email and select the option.<br><i>Please ensure that your profile picture complies with the <a href="/rules">Network Rules</a><div class=""></div></i></small>
+                            <button type="submit" class="btn btn-primary">Update Profile Display Preferences</button>
+                        </div>
                     </div>
-                    <div class="col-md-6">
-                        <label for="profilePicture_email">Email</label>
-                        <input type="text" class="form-control mb-3" name="profilePicture_email" maxlength="70">
-                    </div>
-                </div>
+                </form>
                 <br>
             </div>
             <div class="tab-pane fade" id="about" role="tabpanel" aria-labelledby="about-tab">
                 <!-- About Me content goes here -->
                 <div class="alert alert-warning" role="alert">This About Me feature is in development, coming soon!</div>
 
-                <label for="social_interests">Interests</label>
-                <input type="text" class="form-control mb-3" name="social_interests" maxlength="50">
+                <form action="<%= process.env.siteAddress %>/redirect/user/profile/interests" method="post">
+                    <label for="social_interests">Interests</label>
+                    <input type="text" class="form-control mb-3" name="social_interests" maxlength="50">
+                    <button type="submit" class="btn btn-primary mb-3">Update Interests</button>
+                </form>
 
-                <%- include("../../partials/summerNoteEditor.ejs", {
-                    editorElementName: "social_aboutMe",
-                    editorPOSTElementName: "social_aboutMe"
-                }) %>  
+                <form action="<%= process.env.siteAddress %>/redirect/user/profile/about" method="post">
+                    <%- include("../../partials/summerNoteEditor.ejs", {
+                        editorElementName: "social_aboutMe",
+                        editorPOSTElementName: "social_aboutMe"
+                    }) %>
+                    <button type="submit" class="btn btn-primary mt-3">Update About Me</button>
+                </form> 
                 <br>
             </div>
             <div class="tab-pane fade mt-2" id="socialconnections" role="tabpanel" aria-labelledby="socialconnections-tab">
                 <!-- Social Connections content goes here -->
-                <form action="" method="post">
+                <form action="<%= process.env.siteAddress %>/redirect/user/profile/social" method="post">
                     <div class="row">
                         <div class="col-md-6">
                             <div class="form-group">
@@ -90,6 +99,7 @@
                         </div>
                     </div>
                 </form>
+                <button type="submit" class="btn btn-primary mb-3">Update Social Connections</button>
             </div>
         </div>
     </div>

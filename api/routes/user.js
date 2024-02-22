@@ -221,4 +221,86 @@ export default function userApiRoute(app, config, db, features, lang) {
 
     return res;
   });
+
+  app.post(baseEndpoint + "/profile/display", async function (req, res) {
+    // const discordId = required(req.body, "discordId");
+
+    try {
+      //
+      // Grab link code and find player.
+      //
+      // const userLinkData = new UserLinkGetter();
+      // const linkUser = await userLinkData.getUserByCode(verifyCode);
+      // let linkUserUUID = linkUser.uuid;
+
+      
+    } catch (error) {
+      return res.send({
+        success: false,
+        message: `${error}`,
+      });
+    }
+
+    return res;
+  });
+
+  app.post(baseEndpoint + "/profile/interests", async function (req, res) {
+    // const discordId = required(req.body, "discordId");
+
+    try {
+      //
+      // Grab link code and find player.
+      //
+      // const userLinkData = new UserLinkGetter();
+      // const linkUser = await userLinkData.getUserByCode(verifyCode);
+      // let linkUserUUID = linkUser.uuid;
+    } catch (error) {
+      return res.send({
+        success: false,
+        message: `${error}`,
+      });
+    }
+
+    return res;
+  });
+
+  app.post(baseEndpoint + "/profile/about", async function (req, res) {
+    // const discordId = required(req.body, "discordId");
+
+    try {
+      //
+      // Grab link code and find player.
+      //
+      // const userLinkData = new UserLinkGetter();
+      // const linkUser = await userLinkData.getUserByCode(verifyCode);
+      // let linkUserUUID = linkUser.uuid;
+    } catch (error) {
+      return res.send({
+        success: false,
+        message: `${error}`,
+      });
+    }
+
+    return res;
+  });
+  
+  app.post(baseEndpoint + "/profile/social", async function (req, res) {
+    // const discordId = required(req.body, "discordId");
+
+    try {
+      //
+      // Grab link code and find player.
+      //
+      // const userLinkData = new UserLinkGetter();
+      // const linkUser = await userLinkData.getUserByCode(verifyCode);
+      // let linkUserUUID = linkUser.uuid;
+    } catch (error) {
+      return res.send({
+        success: false,
+        message: `${error}`,
+      });
+    }
+
+    return res;
+  });
 }

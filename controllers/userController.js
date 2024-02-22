@@ -163,6 +163,28 @@ export async function getProfilePicture(username) {
   });
 }
 
+export async function setProfileDisplayPreferences(username, profilePicture_type, profilePicture_email) {
+  db.query(
+    `SELECT * FROM users WHERE username=?;`,
+    [username],
+    function (error, results, fields) {
+      if (error) {
+        reject(error);
+      }
+
+      let profilePictureType = results[0].profilePictureType;
+      let craftUUID = results[0].uuid;
+      // let email = results[0].email;
+      // let emailHash = hashEmail(email);
+
+      if (profilePictureType == "CRAFTATAR")
+        return resolve(`https://crafatar.com/avatars/${craftUUID}?helm`);
+      // if (profilePictureType == "GRAVATAR")
+      //   return resolve(`https://www.gravatar.com/avatar/${emailHash}?s=300`);
+    }
+  );
+}
+
 export async function getUserPermissions(userData) {
   return new Promise((resolve) => {
     //Get permissions assigned directly to user
