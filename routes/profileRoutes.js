@@ -84,23 +84,54 @@ export default function profileSiteRoutes(
   //
   // Edit Signed in User profile
   //
-  app.get("/profile/user/edit", async function (req, res) {
-    isFeatureWebRouteEnabled(features.server, req, res, features);
+  app.get("/profile/:username/edit", async function (req, res) {
+    const username = req.params.username;
 
-    const fetchURL = `${process.env.siteAddress}/api/server/get?visible=true`;
-    const response = await fetch(fetchURL, {
-      headers: { "x-access-token": process.env.apiKey },
-    });
-    const apiData = await response.json();
+    try {
+      const userData = new UserGetter();
+      const userHasJoined = await userData.hasJoined(username);
 
-    return res.view("modules/play/play", {
-      pageTitle: `Play`,
-      config: config,
-      req: req,
-      apiData: apiData,
-      features: features,
-      globalImage: await getGlobalImage(),
-      announcementWeb: await getWebAnnouncement(),
-    });
+      if (!userHasJoined) {
+        return res.view("session/notFound", {
+          pageTitle: `404: Player Not Found`,
+          config: config,
+          req: req,
+          res: res,
+          features: features,
+          globalImage: await getGlobalImage(),
+          announcementWeb: await getWebAnnouncement(),
+        });
+      } else {
+        //
+        // Grab user profile data
+        //
+        const fetchURL = `${process.env.siteAddress}/api/user/get?username=${req.session.user.username}`;
+        const response = await fetch(fetchURL, {
+          headers: { "x-access-token": process.env.apiKey },
+        });
+
+        const profileApiData = await response.json();
+
+        //
+        // Render the profile page
+        //
+        return res.view("modules/profile/profileEditor", {
+          pageTitle: `${profileApiData.data[0].username} - Profile Editor`,
+          config: config,
+          req: req,
+          features: features,
+          globalImage: await getGlobalImage(),
+          announcementWeb: await getWebAnnouncement(),
+          profilePicture: await getProfilePicture(
+            profileApiData.data[0].username
+          ),
+          profileApiData: profileApiData.data[0],
+          moment: moment,
+        });
+      }
+    } catch (error) {
+      console.error("Error:", error);
+      res.status(500).send("Internal Server Error");
+    }
   });
 }

@@ -1,0 +1,36 @@
+<%- include("../../modules/header.ejs", {
+    pageTitle: pageTitle,
+    pageDescription: config.siteConfiguration.tagline
+}) %>
+
+<%- include("../../modules/navigationBar.ejs") %>
+
+<%- include("../../modules/profile/profileHeader.ejs") %>
+<br>
+
+<div class="container">
+    <div class="row">
+        <div class="col-md-12">
+        <ul class="nav nav-pills nav-fill" id="myTab" role="tablist">
+            <li class="nav-item" role="presentation">
+                <a class="nav-link active" id="about-tab" data-bs-toggle="tab" href="#about" role="tab" aria-controls="about" aria-selected="true">About Me</a>
+            </li>
+            <li class="nav-item" role="presentation">
+                <a class="nav-link" id="socialconnections-tab" data-bs-toggle="tab" href="#socialconnections" role="tab" aria-controls="socialconnections" aria-selected="false">Social Connections</a>
+            </li>
+        </ul>
+        <div class="tab-content mt-2" id="myTabContent">
+            <div class="tab-pane fade show active" id="about" role="tabpanel" aria-labelledby="about-tab">
+                <!-- About Me content goes here -->
+                <div class="alert alert-warning" role="alert">This About Me feature is in development, coming soon!</div>
+            </div>
+            <div class="tab-pane fade mt-2" id="socialconnections" role="tabpanel" aria-labelledby="socialconnections-tab">
+                <!-- Social Connections content goes here -->
+                <div class="alert alert-warning" role="alert">This punishment feature is in development, coming soon!</div>
+            </div>
+        </div>
+    </div>
+    </div>
+</div>
+
+<%- include("../../modules/footer.ejs") %>  

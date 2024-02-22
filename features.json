@@ -18,8 +18,7 @@
     "phrase": true
   },
   "web": {
-    "login": true,
-    "register": true
+    "login": true
   },
 
   "smDiscord": true,
