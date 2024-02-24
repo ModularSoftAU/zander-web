@@ -49,13 +49,21 @@
                             <tr>
                                 <th scope="row">Last Minecraft Session</th>
                                 <td data-toggle="tooltip" data-placement="top" title="<%= moment(profileApiData.audit_lastMinecraftLogin).fromNow() %>">
-                                    <%= moment(profileApiData.audit_lastMinecraftLogin).format('LLLL') %>
+                                    <% if (moment(profileApiData.audit_lastMinecraftLogin).isValid()) { %>
+                                        <%= moment(profileApiData.audit_lastMinecraftLogin).format('LLLL') %>
+                                    <% } else { %>
+                                        <i>No data!</i>
+                                    <% } %>
                                 </td>
                             </tr>
                             <tr>
                                 <th scope="row">Last Minecraft Message</th>
                                 <td data-toggle="tooltip" data-placement="top" title="<%= moment(profileApiData.audit_lastMinecraftMessage).fromNow() %>">
-                                    <%= moment(profileApiData.audit_lastMinecraftMessage).format('LLLL') %>
+                                    <% if (moment(profileApiData.audit_lastMinecraftMessage).isValid()) { %>
+                                        <%= moment(profileApiData.audit_lastMinecraftMessage).format('LLLL') %>
+                                    <% } else { %>
+                                        <i>No data!</i>
+                                    <% } %>
                                 </td>
                             </tr>
                             <tr>
@@ -73,13 +81,21 @@
                             <tr>
                                 <th scope="row">Last Discord Message</th>
                                 <td data-toggle="tooltip" data-placement="top" title="<%= moment(profileApiData.audit_lastDiscordMessage).fromNow() %>">
-                                    <%= moment(profileApiData.audit_lastDiscordMessage).format('LLLL') %>
+                                    <% if (moment(profileApiData.audit_lastDiscordMessage).isValid()) { %>
+                                        <%= moment(profileApiData.audit_lastDiscordMessage).format('LLLL') %>
+                                    <% } else { %>
+                                        <i>No data!</i>
+                                    <% } %>
                                 </td>
                             </tr>
                             <tr>
                                 <th scope="row">Last Discord Voice Session</th>
                                 <td data-toggle="tooltip" data-placement="top" title="<%= moment(profileApiData.audit_lastDiscordVoice).fromNow() %>">
-                                    <%= moment(profileApiData.audit_lastDiscordVoice).format('LLLL') %>
+                                    <% if (moment(profileApiData.audit_lastDiscordVoice).isValid()) { %>
+                                        <%= moment(profileApiData.audit_lastDiscordVoice).format('LLLL') %>
+                                    <% } else { %>
+                                        <i>No data!</i>
+                                    <% } %>
                                 </td>
                             </tr>
                             <tr>
@@ -97,7 +113,11 @@
                             <tr>
                                 <th scope="row">Last Website Login</th>
                                 <td data-toggle="tooltip" data-placement="top" title="<%= moment(profileApiData.audit_lastWebsiteLogin).fromNow() %>">
-                                    <%= moment(profileApiData.audit_lastWebsiteLogin).format('LLLL') %>
+                                    <% if (moment(profileApiData.audit_lastWebsiteLogin).isValid()) { %>
+                                        <%= moment(profileApiData.audit_lastWebsiteLogin).format('LLLL') %>
+                                    <% } else { %>
+                                        <i>No data!</i>
+                                    <% } %>
                                 </td>
                             </tr>
                         </tbody>
