@@ -28,8 +28,12 @@
         </ul>
         <div class="tab-content mt-2" id="myTabContent">
             <div class="tab-pane fade show active" id="about" role="tabpanel" aria-labelledby="about-tab">
-                <!-- About Me content goes here -->
-                <div class="alert alert-warning" role="alert">This About Me feature is in development, coming soon!</div>
+                <% if (profileApiData.social_aboutMe) { %>
+                    <%- profileApiData.social_aboutMe %>
+                <% } else { %>
+                    <div class="alert alert-warning" role="alert"><%= profileApiData.username %> doesn't have an About section.</div>
+                <% } %>
+                
             </div>
             <% if (contextPermissions && contextPermissions.includes('zander.web.profile.punishments')) { %>
                 <div class="tab-pane fade mt-2" id="punishments" role="tabpanel" aria-labelledby="punishments-tab">
@@ -110,35 +114,44 @@
             <hr>
 
             <h4>Interests</h4>
-            <p>INTERESTS</p>
+            <p><%= profileApiData.social_interests %></p>
             <hr>
 
             <h4>Social Connections</h4>
             <hr>
 
-            <h6><i class="fa-brands fa-discord"></i> Discord</h6>
-            <p>LINK</p>
+            <% if (profileApiData.social_discord) { %>
+                <h6><i class="fa-brands fa-discord"></i> Discord</h6>
+                <p><%= profileApiData.social_discord %></p> 
+            <% } %>
 
-            <h6><i class="fa-brands fa-steam"></i> Steam</h6>
-            <p>LINK</p>
+            <% if (profileApiData.social_steam) { %>
+                <h6 class="mb-4"><a href="<%= profileApiData.social_steam %>"><i class="fa-brands fa-steam"></i> Steam</a></h6>
+            <% } %>
 
-            <h6><i class="fa-brands fa-twitch"></i> Twitch</h6>
-            <p>LINK</p>
+            <% if (profileApiData.social_twitch) { %>
+                <h6 class="mb-4"><a href="<%= profileApiData.social_twitch %>"><i class="fa-brands fa-twitch"></i> Twitch</a></h6>
+            <% } %>
 
-            <h6><i class="fa-brands fa-youtube"></i> YouTube</h6>
-            <p>LINK</p>
+            <% if (profileApiData.social_youtube) { %>
+                <h6 class="mb-4"><a href="<%= profileApiData.social_youtube %>"><i class="fa-brands fa-youtube"></i> YouTube</a></h6>
+            <% } %>
 
-            <h6><i class="fa-brands fa-twitter"></i> Twitter/X</h6>
-            <p>LINK</p>
+            <% if (profileApiData.social_twitter_x) { %>
+                <h6 class="mb-4"><a href="<%= profileApiData.social_twitter_x %>"><i class="fa-brands fa-twitter"></i> Twitter/X</a></h6>
+            <% } %>
 
-            <h6><i class="fa-brands fa-square-instagram"></i> Instagram</h6>
-            <p>LINK</p>
+            <% if (profileApiData.social_instagram) { %>
+                <h6 class="mb-4"><a href="<%= profileApiData.social_instagram %>"><i class="fa-brands fa-square-instagram"></i> Instagram</a></h6>
+            <% } %>
 
-            <h6><i class="fa-brands fa-square-reddit"></i> Reddit</h6>
-            <p>LINK</p>
+            <% if (profileApiData.social_reddit) { %>
+                <h6 class="mb-4"><a href="<%= profileApiData.social_reddit %>"><i class="fa-brands fa-reddit"></i> Reddit</a></h6>
+            <% } %>
 
-            <h6><i class="fa-brands fa-spotify"></i> Spotify</h6>
-            <p>LINK</p>
+            <% if (profileApiData.social_spotify) { %>
+                <h6 class="mb-4"><a href="<%= profileApiData.social_spotify %>"><i class="fa-brands fa-spotify"></i> Spotify</a></h6>
+            <% } %>
         </div>
     </div>
 </div>

@@ -168,10 +168,76 @@ export async function getProfilePicture(username) {
 }
 
 
-export async function setProfileDisplayPreferences(userId, profilePicture_type, profilePicture_email) {
+export async function setProfileDisplayPreferences(
+  userId,
+  profilePicture_type,
+  profilePicture_email
+) {
   db.query(
     `UPDATE users SET profilePicture_type=?, profilePicture_email=? WHERE userId=?;`,
     [profilePicture_type, profilePicture_email, userId],
+    function (error, results, fields) {
+      if (error) {
+        console.log(error);
+      }
+    }
+  );
+}
+
+export async function setProfileUserInterests(
+  userId,
+  social_interests
+) {
+  db.query(
+    `UPDATE users SET social_interests=? WHERE userId=?;`,
+    [social_interests, userId],
+    function (error, results, fields) {
+      if (error) {
+        console.log(error);
+      }
+    }
+  );
+}
+
+export async function setProfileSocialConnections(
+  userId,
+  social_discord,
+  social_steam,
+  social_twitch,
+  social_youtube,
+  social_twitter_x,
+  social_instagram,
+  social_reddit,
+  social_spotify
+) {
+  db.query(
+    `UPDATE users SET social_discord=?, social_steam=?, social_twitch=?, social_youtube=?, social_twitter_x=?, social_instagram=?, social_reddit=?, social_spotify=? WHERE userId=?;`,
+    [
+      social_discord,
+      social_steam,
+      social_twitch,
+      social_youtube,
+      social_twitter_x,
+      social_instagram,
+      social_reddit,
+      social_spotify,
+      userId,
+    ],
+    function (error, results, fields) {
+      if (error) {
+        console.log(error);
+      }
+    }
+  );
+}
+
+export async function setProfileUserAboutMe(
+  userId,
+  social_aboutMe
+) {
+  db.query(
+    `UPDATE users SET social_aboutMe=? WHERE userId=?;`,
+    [social_aboutMe, userId],
     function (error, results, fields) {
       if (error) {
         console.log(error);

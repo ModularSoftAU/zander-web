@@ -24,9 +24,6 @@
         </ul>
         <div class="tab-content mt-2" id="myTabContent">
             <div class="tab-pane fade show active" id="profileDisplay" role="tabpanel" aria-labelledby="profileDisplay-tab">
-                <!-- Profile Info/Display content goes here -->
-                <div class="alert alert-warning" role="alert">This feature is in development, coming soon!</div>
-
                 <form action="<%= process.env.siteAddress %>/redirect/web/user/profile/display" method="post">
                     <div class="row">
                         <div class="col-md-6">
@@ -59,58 +56,66 @@
                 <br>
             </div>
             <div class="tab-pane fade" id="about" role="tabpanel" aria-labelledby="about-tab">
-                <!-- About Me content goes here -->
-                <div class="alert alert-warning" role="alert">This About Me feature is in development, coming soon!</div>
-
                 <form action="<%= process.env.siteAddress %>/redirect/web/user/profile/interests" method="post">
                     <label for="social_interests">Interests</label>
-                    <input type="text" class="form-control mb-3" name="social_interests" maxlength="50">
+                    <input type="text" class="form-control mb-3" name="social_interests" maxlength="50" value="<%= profileApiData.social_interests %>">
                     <button type="submit" class="btn btn-primary mb-3">Update Interests</button>
                 </form>
 
                 <form action="<%= process.env.siteAddress %>/redirect/web/user/profile/about" method="post">
                     <%- include("../../partials/summerNoteEditor.ejs", {
                         editorElementName: "social_aboutMe",
-                        editorPOSTElementName: "social_aboutMe"
+                        editorPOSTElementName: "social_aboutMe",
+                        editorElementText: profileApiData.social_aboutMe
                     }) %>
                     <button type="submit" class="btn btn-primary mt-3">Update About Me</button>
-                </form> 
+                </form>
                 <br>
             </div>
             <div class="tab-pane fade mt-2" id="socialconnections" role="tabpanel" aria-labelledby="socialconnections-tab">
-                <!-- Social Connections content goes here -->
                 <form action="<%= process.env.siteAddress %>/redirect/web/user/profile/social" method="post">
                     <div class="row">
                         <div class="col-md-6">
                             <div class="form-group">
                                 <label for="social_discord"><i class="fab fa-discord"></i> Discord</label>
-                                <input type="text" class="form-control mb-3" name="social_discord" maxlength="32">
+                                <small>Your username</small>
+                                <input type="text" class="form-control mb-3" name="social_discord" maxlength="32" value="<%= profileApiData.social_discord %>">
 
                                 <label for="social_steam"><i class="fab fa-steam"></i> Steam</label>
-                                <input type="text" class="form-control mb-3" name="social_discord" maxlength="32">
+                                <small>Your link</small>
+                                <input type="text" class="form-control mb-3" name="social_steam" value="<%= profileApiData.social_steam %>">
 
                                 <label for="social_twitch"><i class="fab fa-twitch"></i> Twitch</label>
-                                <input type="text" class="form-control mb-3" name="social_twitch" maxlength="25">
+                                <small>Your username</small>
+                                <input type="text" class="form-control mb-3" name="social_twitch" maxlength="25" value="<%= profileApiData.social_twitch %>">
+
+                                <label for="social_youtube"><i class="fab fa-youtube"></i> YouTube</label>
+                                <small>Your link</small>
+                                <input type="text" class="form-control mb-3" name="social_youtube" value="<%= profileApiData.social_youtube %>">
                             </div>
                         </div>
                         <div class="col-md-6">
                             <div class="form-group">
                                 <label for="social_twitter_x"><i class="fab fa-twitter"></i> Twitter/X</label>
-                                <input type="text" class="form-control mb-3" name="social_twitter_x" maxlength="15">
+                                <small>Your username</small>
+                                <input type="text" class="form-control mb-3" name="social_twitter_x" maxlength="15" value="<%= profileApiData.social_twitter_x %>">
 
                                 <label for="social_instagram"><i class="fab fa-square-instagram"></i> Instagram</label>
-                                <input type="text" class="form-control mb-3" name="social_instagram" maxlength="30">
+                                <small>Your username</small>
+                                <input type="text" class="form-control mb-3" name="social_instagram" maxlength="30" value="<%= profileApiData.social_instagram %>">
 
                                 <label for="social_reddit"><i class="fab fa-reddit"></i> Reddit</label>
-                                <input type="text" class="form-control mb-3" name="social_reddit" maxlength="38">
+                                <small>Your username</small>
+                                <input type="text" class="form-control mb-3" name="social_reddit" maxlength="38" value="<%= profileApiData.social_reddit %>">
 
                                 <label for="social_spotify"><i class="fab fa-reddit"></i> Spotify</label>
-                                <input type="text" class="form-control mb-3" name="social_spotify" maxlength="30">
+                                <small>Your link</small>
+                                <input type="text" class="form-control mb-3" name="social_spotify" value="<%= profileApiData.social_spotify %>">
                             </div>
                         </div>
                     </div>
+                    <button type="submit" class="btn btn-primary mb-3">Update Social Connections</button>
                 </form>
-                <button type="submit" class="btn btn-primary mb-3">Update Social Connections</button>
             </div>
         </div>
     </div>

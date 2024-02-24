@@ -112,8 +112,6 @@ export default function profileSiteRoutes(
 
         const profileApiData = await response.json();
 
-        console.log(profileApiData);
-
         //
         // Render the profile page
         //

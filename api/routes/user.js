@@ -1,4 +1,4 @@
-import { UserGetter, UserLinkGetter, setProfileDisplayPreferences } from "../../controllers/userController";
+import { UserGetter, UserLinkGetter, setProfileDisplayPreferences, setProfileSocialConnections, setProfileUserAboutMe, setProfileUserInterests } from "../../controllers/userController";
 import { required, optional, generateVerifyCode, setBannerCookie } from "../common";
 
 export default function userApiRoute(app, config, db, features, lang) {
@@ -230,7 +230,7 @@ export default function userApiRoute(app, config, db, features, lang) {
     const profilePicture_email = optional(req.body, "profilePicture_email");
 
     try {
-      setProfileDisplayPreferences(userId, profilePicture_type, profilePicture_email);      
+      setProfileDisplayPreferences(userId, profilePicture_type, profilePicture_email);
     } catch (error) {
       return res.send({
         success: false,
@@ -242,15 +242,11 @@ export default function userApiRoute(app, config, db, features, lang) {
   });
 
   app.post(baseEndpoint + "/profile/interests", async function (req, res) {
-    // const discordId = required(req.body, "discordId");
+    const userId = required(req.body, "userId");
+    const social_interests = required(req.body, "social_interests");
 
     try {
-      //
-      // Grab link code and find player.
-      //
-      // const userLinkData = new UserLinkGetter();
-      // const linkUser = await userLinkData.getUserByCode(verifyCode);
-      // let linkUserUUID = linkUser.uuid;
+      setProfileUserInterests(userId, social_interests);
     } catch (error) {
       return res.send({
         success: false,
@@ -262,15 +258,11 @@ export default function userApiRoute(app, config, db, features, lang) {
   });
 
   app.post(baseEndpoint + "/profile/about", async function (req, res) {
-    // const discordId = required(req.body, "discordId");
+    const userId = required(req.body, "userId");
+    const social_aboutMe = required(req.body, "social_aboutMe");
 
     try {
-      //
-      // Grab link code and find player.
-      //
-      // const userLinkData = new UserLinkGetter();
-      // const linkUser = await userLinkData.getUserByCode(verifyCode);
-      // let linkUserUUID = linkUser.uuid;
+      setProfileUserAboutMe(userId, social_aboutMe);
     } catch (error) {
       return res.send({
         success: false,
@@ -282,15 +274,18 @@ export default function userApiRoute(app, config, db, features, lang) {
   });
   
   app.post(baseEndpoint + "/profile/social", async function (req, res) {
-    // const discordId = required(req.body, "discordId");
+    const userId = required(req.body, "userId");
+    const social_discord = optional(req.body, "social_discord");
+    const social_steam = optional(req.body, "social_steam");
+    const social_twitch = optional(req.body, "social_twitch");
+    const social_youtube = optional(req.body, "social_youtube");
+    const social_twitter_x = optional(req.body, "social_twitter_x");
+    const social_instagram = optional(req.body, "social_instagram");
+    const social_reddit = optional(req.body, "social_reddit");
+    const social_spotify = optional(req.body, "social_spotify");
 
     try {
-      //
-      // Grab link code and find player.
-      //
-      // const userLinkData = new UserLinkGetter();
-      // const linkUser = await userLinkData.getUserByCode(verifyCode);
-      // let linkUserUUID = linkUser.uuid;
+      setProfileSocialConnections(userId, social_discord, social_steam, social_twitch, social_youtube, social_twitter_x, social_instagram, social_reddit, social_spotify);
     } catch (error) {
       return res.send({
         success: false,
