@@ -40,7 +40,9 @@
                                 <i class="icofont-thin-down"></i>
                             </a>
                             <div class="dropdown-menu" aria-labelledby="dropdown02">
-                                <a class="dropdown-item" href="/dashboard">Dashboard</a>
+                                <% if (req.session.user.permissions.includes('zander.web.dashboard')) { %>
+                                    <a class="dropdown-item" href="/dashboard">Dashboard</a>
+                                <% } %>
                                 <a class="dropdown-item" href="/profile/<%= req.session.user.username %>">Profile</a>
                                 <a class="dropdown-item" href="/profile/<%= req.session.user.username %>/edit">Edit Profile</a>
                                 <a class="dropdown-item" href="/logout">Logout</a>
