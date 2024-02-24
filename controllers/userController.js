@@ -1,3 +1,4 @@
+import { hashEmail } from "../api/common";
 import db from "./databaseController";
 
 export function UserGetter() {
@@ -144,43 +145,37 @@ export async function getProfilePicture(username) {
     db.query(
       `SELECT * FROM users WHERE username=?;`,
       [username],
-      function (error, results, fields) {
+      async function (error, results, fields) {
         if (error) {
           reject(error);
         }
 
-        let profilePictureType = results[0].profilePictureType;
-        let craftUUID = results[0].uuid;
-        // let email = results[0].email;
-        // let emailHash = hashEmail(email);
+        let profilePictureType = results[0].profilePicture_type;
 
-        if (profilePictureType == "CRAFTATAR")
+        if (profilePictureType == "CRAFTATAR") {
+          let craftUUID = results[0].uuid;
           return resolve(`https://crafatar.com/avatars/${craftUUID}?helm`);
-        // if (profilePictureType == "GRAVATAR")
-        //   return resolve(`https://www.gravatar.com/avatar/${emailHash}?s=300`);
+        }
+
+        if (profilePictureType == "GRAVATAR") {
+          let email = results[0].profilePicture_email;
+          let emailHash = await hashEmail(email); // Await here
+          return resolve(`https://gravatar.com/avatar/${emailHash}?size=300`);
+        }
       }
     );
   });
 }
 
-export async function setProfileDisplayPreferences(username, profilePicture_type, profilePicture_email) {
+
+export async function setProfileDisplayPreferences(userId, profilePicture_type, profilePicture_email) {
   db.query(
-    `SELECT * FROM users WHERE username=?;`,
-    [username],
+    `UPDATE users SET profilePicture_type=?, profilePicture_email=? WHERE userId=?;`,
+    [profilePicture_type, profilePicture_email, userId],
     function (error, results, fields) {
       if (error) {
-        reject(error);
+        console.log(error);
       }
-
-      let profilePictureType = results[0].profilePictureType;
-      let craftUUID = results[0].uuid;
-      // let email = results[0].email;
-      // let emailHash = hashEmail(email);
-
-      if (profilePictureType == "CRAFTATAR")
-        return resolve(`https://crafatar.com/avatars/${craftUUID}?helm`);
-      // if (profilePictureType == "GRAVATAR")
-      //   return resolve(`https://www.gravatar.com/avatar/${emailHash}?s=300`);
     }
   );
 }

@@ -18,7 +18,8 @@
     "phrase": true
   },
   "web": {
-    "login": true
+    "login": true,
+    "register": true
   },
 
   "smDiscord": true,

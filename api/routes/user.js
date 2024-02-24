@@ -1,5 +1,5 @@
-import { UserGetter, UserLinkGetter } from "../../controllers/userController";
-import { required, optional, generateVerifyCode } from "../common";
+import { UserGetter, UserLinkGetter, setProfileDisplayPreferences } from "../../controllers/userController";
+import { required, optional, generateVerifyCode, setBannerCookie } from "../common";
 
 export default function userApiRoute(app, config, db, features, lang) {
   const baseEndpoint = "/api/user";
@@ -203,14 +203,16 @@ export default function userApiRoute(app, config, db, features, lang) {
         .then((success) => {
           if (success) {
             console.error("Linking success");
+            setBannerCookie("success", `Link success`, res);
           } else {
             // Handle error or do something else
-            console.error("Linking failed");
+            setBannerCookie("warning", `Link failed`, res);
           }
         })
         .catch((error) => {
           // Handle error
           console.error("Error linking");
+          setBannerCookie("warning", `Issue with linking, try again soon.`, res);
         });
     } catch (error) {
       return res.send({
@@ -223,17 +225,12 @@ export default function userApiRoute(app, config, db, features, lang) {
   });
 
   app.post(baseEndpoint + "/profile/display", async function (req, res) {
-    // const discordId = required(req.body, "discordId");
+    const userId = required(req.body, "userId");
+    const profilePicture_type = required(req.body, "profilePicture_type");
+    const profilePicture_email = optional(req.body, "profilePicture_email");
 
     try {
-      //
-      // Grab link code and find player.
-      //
-      // const userLinkData = new UserLinkGetter();
-      // const linkUser = await userLinkData.getUserByCode(verifyCode);
-      // let linkUserUUID = linkUser.uuid;
-
-      
+      setProfileDisplayPreferences(userId, profilePicture_type, profilePicture_email);      
     } catch (error) {
       return res.send({
         success: false,

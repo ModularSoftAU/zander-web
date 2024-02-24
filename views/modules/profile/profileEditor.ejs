@@ -27,37 +27,48 @@
                 <!-- Profile Info/Display content goes here -->
                 <div class="alert alert-warning" role="alert">This feature is in development, coming soon!</div>
 
-                <form action="<%= process.env.siteAddress %>/redirect/user/profile/display" method="post">
+                <form action="<%= process.env.siteAddress %>/redirect/web/user/profile/display" method="post">
                     <div class="row">
-                            <div class="col-md-6">
+                        <div class="col-md-6">
                             <label for="profilePicture_type">Profile Picture Type</label>
-                            <select class="form-control" name="profilePicture_type">
-                                <option value="CRAFTATAR" selected>CRAFTATAR</option>
-                                <option value="GRAVATAR">GRAVATAR</option>
+                            <select class="form-control" name="profilePicture_type" id="profilePicture_type">
+                                <option value="CRAFTATAR" <% if (profileApiData.profilePicture_type === 'CRAFTATAR') { %> selected <% } %>>CRAFTATAR</option>
+                                <option value="GRAVATAR" <% if (profileApiData.profilePicture_type === 'GRAVATAR') { %> selected <% } %>>GRAVATAR</option>
                             </select>
                             <small><b>Profile Picture Type: CRAFTATAR or GRAVATAR?</b><br>CRAFTATAR uses your Minecraft skin by default<br>GRAVATAR utilizes the avatar you upload from <a href="https://gravatar.com/">Gravatar</a> and will appear when you link your email and select the option.<br><i>Please ensure that your profile picture complies with the <a href="/rules">Network Rules</a><div class=""></div></i></small>
                         </div>
                         <div class="col-md-6">
                             <label for="profilePicture_email">Email</label>
-                            <input type="text" class="form-control mb-3" name="profilePicture_email" maxlength="70">
+                            <input type="email" class="form-control mb-3" name="profilePicture_email" id="profilePicture_email" maxlength="70" value="<%= profileApiData.profilePicture_email %>">
 
                             <button type="submit" class="btn btn-primary">Update Profile Display Preferences</button>
                         </div>
                     </div>
                 </form>
+
+                <script>
+                    document.getElementById("profilePicture_type").addEventListener("change", function() {
+                        var emailField = document.getElementById("profilePicture_email");
+                        if (this.value === "GRAVATAR") {
+                            emailField.setAttribute("required", "");
+                        } else {
+                            emailField.removeAttribute("required");
+                        }
+                    });
+                </script>
                 <br>
             </div>
             <div class="tab-pane fade" id="about" role="tabpanel" aria-labelledby="about-tab">
                 <!-- About Me content goes here -->
                 <div class="alert alert-warning" role="alert">This About Me feature is in development, coming soon!</div>
 
-                <form action="<%= process.env.siteAddress %>/redirect/user/profile/interests" method="post">
+                <form action="<%= process.env.siteAddress %>/redirect/web/user/profile/interests" method="post">
                     <label for="social_interests">Interests</label>
                     <input type="text" class="form-control mb-3" name="social_interests" maxlength="50">
                     <button type="submit" class="btn btn-primary mb-3">Update Interests</button>
                 </form>
 
-                <form action="<%= process.env.siteAddress %>/redirect/user/profile/about" method="post">
+                <form action="<%= process.env.siteAddress %>/redirect/web/user/profile/about" method="post">
                     <%- include("../../partials/summerNoteEditor.ejs", {
                         editorElementName: "social_aboutMe",
                         editorPOSTElementName: "social_aboutMe"
@@ -68,7 +79,7 @@
             </div>
             <div class="tab-pane fade mt-2" id="socialconnections" role="tabpanel" aria-labelledby="socialconnections-tab">
                 <!-- Social Connections content goes here -->
-                <form action="<%= process.env.siteAddress %>/redirect/user/profile/social" method="post">
+                <form action="<%= process.env.siteAddress %>/redirect/web/user/profile/social" method="post">
                     <div class="row">
                         <div class="col-md-6">
                             <div class="form-group">

@@ -112,6 +112,8 @@ export default function profileSiteRoutes(
 
         const profileApiData = await response.json();
 
+        console.log(profileApiData);
+
         //
         // Render the profile page
         //
@@ -122,9 +124,7 @@ export default function profileSiteRoutes(
           features: features,
           globalImage: await getGlobalImage(),
           announcementWeb: await getWebAnnouncement(),
-          profilePicture: await getProfilePicture(
-            profileApiData.data[0].username
-          ),
+          profilePicture: await getProfilePicture(profileApiData.data[0].username),
           profileApiData: profileApiData.data[0],
           moment: moment,
         });
