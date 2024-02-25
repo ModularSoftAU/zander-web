@@ -264,6 +264,49 @@ export async function getUserPermissions(userData) {
   });
 }
 
+export async function getUserStats(userId) {
+  return new Promise((resolve) => {
+    db.query(
+      `SELECT SUM(TIME_TO_SEC(TIMEDIFF(COALESCE(sessionEnd, NOW()), sessionStart))) AS totalSeconds FROM gameSessions WHERE userId=?; SELECT COUNT(*) AS totalLogins FROM gameSessions WHERE userId = ?;`,
+      [userId, userId],
+      async function (err, results) {
+        if (err) {
+          throw err;
+        }
+
+        const seconds = results[0][0].totalSeconds;
+        const logins = results[1][0].totalLogins;
+
+        function convertSecondsToDuration(seconds) {
+          const MINUTE = 60;
+          const HOUR = 60 * MINUTE;
+          const DAY = 24 * HOUR;
+          const MONTH = 30 * DAY;
+
+          if (seconds < MINUTE) {
+            return `${seconds} seconds`;
+          } else if (seconds < HOUR) {
+            return `${Math.floor(seconds / MINUTE)} minutes`;
+          } else if (seconds < DAY) {
+            return `${Math.floor(seconds / HOUR)} hours`;
+          } else if (seconds < MONTH) {
+            return `${Math.floor(seconds / DAY)} days`;
+          } else {
+            return `${Math.floor(seconds / MONTH)} months`;
+          }
+        }
+
+        const userStats = {
+          totalPlaytime: convertSecondsToDuration(seconds),
+          totalLogins: logins,
+        };
+
+        resolve(userStats);
+      }
+    );
+  });
+}
+
 export async function getRankPermissions(allRanks) {
   return new Promise((resolve) => {
     db.query(

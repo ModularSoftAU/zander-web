@@ -1,6 +1,6 @@
 import { isFeatureWebRouteEnabled, getGlobalImage, hasPermission } from "../api/common";
 import { getWebAnnouncement } from "../controllers/announcementController";
-import { UserGetter, checkPermissions, getProfilePicture, getUserPermissions } from "../controllers/userController";
+import { UserGetter, checkPermissions, getProfilePicture, getUserPermissions, getUserStats } from "../controllers/userController";
 
 export default function profileSiteRoutes(
   app,
@@ -68,8 +68,11 @@ export default function profileSiteRoutes(
           features: features,
           globalImage: await getGlobalImage(),
           announcementWeb: await getWebAnnouncement(),
-          profilePicture: await getProfilePicture(profileApiData.data[0].username),
+          profilePicture: await getProfilePicture(
+            profileApiData.data[0].username
+          ),
           profileApiData: profileApiData.data[0],
+          profileStats: await getUserStats(profileApiData.data[0].userId),
           moment: moment,
           contextPermissions: contextPermissions,
         });
@@ -124,6 +127,7 @@ export default function profileSiteRoutes(
           announcementWeb: await getWebAnnouncement(),
           profilePicture: await getProfilePicture(profileApiData.data[0].username),
           profileApiData: profileApiData.data[0],
+          profileStats: await getUserStats(profileApiData.data[0].userId),
           moment: moment,
         });
       }
