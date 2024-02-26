@@ -158,7 +158,7 @@ CREATE TABLE servers (
 	serverId INT NOT NULL AUTO_INCREMENT,
     displayName TEXT,
     serverConnectionAddress TEXT,
-    verificationServer BOOLEAN DEFAULT 0,
+    serverType ENUM('INTERNAL', 'EXTERNAL', 'VERIFICATION'),
     position INT,
     PRIMARY KEY (serverId)
 );

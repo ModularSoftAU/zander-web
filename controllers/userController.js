@@ -277,25 +277,6 @@ export async function getUserStats(userId) {
         const seconds = results[0][0].totalSeconds;
         const logins = results[1][0].totalLogins;
 
-        function convertSecondsToDuration(seconds) {
-          const MINUTE = 60;
-          const HOUR = 60 * MINUTE;
-          const DAY = 24 * HOUR;
-          const MONTH = 30 * DAY;
-
-          if (seconds < MINUTE) {
-            return `${seconds} seconds`;
-          } else if (seconds < HOUR) {
-            return `${Math.floor(seconds / MINUTE)} minutes`;
-          } else if (seconds < DAY) {
-            return `${Math.floor(seconds / HOUR)} hours`;
-          } else if (seconds < MONTH) {
-            return `${Math.floor(seconds / DAY)} days`;
-          } else {
-            return `${Math.floor(seconds / MONTH)} months`;
-          }
-        }
-
         const userStats = {
           totalPlaytime: convertSecondsToDuration(seconds),
           totalLogins: logins,
@@ -305,6 +286,25 @@ export async function getUserStats(userId) {
       }
     );
   });
+}
+
+export function convertSecondsToDuration(seconds) {
+  const MINUTE = 60;
+  const HOUR = 60 * MINUTE;
+  const DAY = 24 * HOUR;
+  const MONTH = 30 * DAY;
+
+  if (seconds < MINUTE) {
+    return `${seconds} seconds`;
+  } else if (seconds < HOUR) {
+    return `${Math.floor(seconds / MINUTE)} minutes`;
+  } else if (seconds < DAY) {
+    return `${Math.floor(seconds / HOUR)} hours`;
+  } else if (seconds < MONTH) {
+    return `${Math.floor(seconds / DAY)} days`;
+  } else {
+    return `${Math.floor(seconds / MONTH)} months`;
+  }
 }
 
 export async function getRankPermissions(allRanks) {
@@ -377,11 +377,36 @@ export async function checkPermissions(username, permissionNode) {
 
     const hasPermission = userPermissions.includes(permissionNode);
 
-    console.log(hasPermission);
-
     return hasPermission;
   } catch (error) {
     console.error("Error:", error);
     return false;
   }
+}
+
+export async function getUserLastSession(userId) {
+  return new Promise((resolve) => {
+    db.query(
+      `SELECT * FROM gameSessions WHERE userId=? ORDER BY sessionStart DESC LIMIT 1;`,
+      [userId],
+      async function (err, results) {
+        if (err) {
+          throw err;
+        }
+
+        const now = new Date(); // Current time
+        const sessionStart = new Date(results[0].sessionEnd);
+        const sessionDiff = convertSecondsToDuration(Math.floor((now - sessionStart) / 1000));
+
+        const sessionData = {
+          sessionStart: results[0].sessionStart,
+          sessionEnd: results[0].sessionEnd,
+          server: results[0].server,
+          lastOnlineDiff: sessionDiff,
+        };
+
+        resolve(sessionData);
+      }
+    );
+  });
 }

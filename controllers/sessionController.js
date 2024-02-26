@@ -1,3 +1,5 @@
+import db from "./databaseController";
+
 export async function generateVerificationCode() {
   return new Promise((resolve, reject) => {
     try {

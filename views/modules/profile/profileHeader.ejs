@@ -7,9 +7,12 @@
 			</div>
             <div class="col-md-5">
                 <div class="block">
-                    <h1 class="mb-1">shadowolfyt</h1>
-                    <h4 class="mb-1 text-white"><i class="fa-solid fa-circle" style="color: red;"></i> Last Seen TIMEAGO on SERVER</h4>
-                    <h4 class="mb-1 text-white"><i class="fa-solid fa-circle" style="color: green;"></i> Currently Online on SERVER</h4>
+                    <h1 class="mb-1"><%= profileApiData.username %>>
+                    <% if (profileSession.sessionEnd) { %>
+                        <h4 class="mb-1 text-white"><i class="fa-solid fa-circle" style="color: red;"></i> Last Seen <%= profileSession.lastOnlineDiff %> ago on <%= profileSession.server.charAt(0).toUpperCase() + profileSession.server.slice(1) %></h4>
+                    <% } else { %>
+                        <h4 class="mb-1 text-white"><i class="fa-solid fa-circle" style="color: green;"></i> Currently Online on <%= profileSession.server.charAt(0).toUpperCase() + profileSession.server.slice(1) %></h4>
+                    <% } %>
                 </div>
             </div>
         </div>

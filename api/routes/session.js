@@ -57,7 +57,7 @@ export default function sessionApiRoute(app, config, db, features, lang) {
       // If this is not there and there is somehow more than 1 open session, the query will fail.
       db.query(
         `
-                UPDATE gameSessions, users
+          UPDATE gameSessions, users
 					SET gameSessions.sessionEnd = NOW()
 				WHERE gameSessions.userId = users.userId
 					AND users.uuid = ?
@@ -95,19 +95,21 @@ export default function sessionApiRoute(app, config, db, features, lang) {
 
     const sessionSwitchLang = lang.session.sessionSwitch;
 
+    console.log(req.body);
+
     try {
       // Update any open sessions for the specified user to change to the specified server
       // The 'AND gameSessions.sessionId > 0' line is necessary to bypass mySQL's "safe update" feature.
       // If this is not there and there is somehow more than 1 open session, the query will fail.
       db.query(
         `
-                UPDATE gameSessions, users, servers
-					SET gameSessions.server = ?
-				WHERE gameSessions.userId = users.userId
-					AND users.uuid = ?
-					AND gameSessions.sessionEnd IS NULL
-					AND gameSessions.sessionId > 0
-				`,
+      UPDATE gameSessions
+      JOIN users ON gameSessions.userId = users.userId
+      SET gameSessions.server = ?
+      WHERE users.uuid = ?
+          AND gameSessions.sessionEnd IS NULL
+          AND gameSessions.sessionId > 0;
+    `,
         [server, uuid],
         function (error, results, fields) {
           if (error) {
