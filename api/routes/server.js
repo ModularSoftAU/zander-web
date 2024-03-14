@@ -57,11 +57,8 @@ export default function serverApiRoute(app, config, db, features, lang) {
 
     const actioningUser = required(req.body, "actioningUser", res);
     const displayName = required(req.body, "displayName", res);
-    const serverConnectionAddress = required(
-      req.body,
-      "serverConnectionAddress",
-      res
-    );
+    const serverType = required(req.body, "serverType", res);
+    const serverConnectionAddress = required(req.body, "serverConnectionAddress", res);
     const position = required(req.body, "position", res);
 
     const serverCreatedLang = lang.server.serverCreated;
@@ -72,11 +69,12 @@ export default function serverApiRoute(app, config, db, features, lang) {
                 INSERT INTO 
                     servers
                 (
-                    displayName, 
+                    displayName,
+                    serverType,
                     serverConnectionAddress,
                     position
-                ) VALUES (?, ?, ?)`,
-        [displayName, serverConnectionAddress, position],
+                ) VALUES (?, ?, ?, ?)`,
+        [displayName, serverType, serverConnectionAddress, position],
         function (error, results, fields) {
           if (error) {
             return res.send({
@@ -115,6 +113,7 @@ export default function serverApiRoute(app, config, db, features, lang) {
     const actioningUser = required(req.body, "actioningUser", res);
     const serverId = required(req.body, "serverId", res);
     const displayName = required(req.body, "displayName", res);
+    const serverType = required(req.body, "serverType", res);
     const serverConnectionAddress = required(
       req.body,
       "serverConnectionAddress",
@@ -128,12 +127,13 @@ export default function serverApiRoute(app, config, db, features, lang) {
             UPDATE 
                 servers 
             SET 
-                displayName=?, 
+                displayName=?,
+                serverType=?,
                 serverConnectionAddress=?, 
                 position=? 
             WHERE 
                 serverId=?`,
-        [displayName, serverConnectionAddress, position, serverId],
+        [displayName, serverType, serverConnectionAddress, position, serverId],
         function (error, results, fields) {
           if (error) {
             return res.send({

@@ -28,11 +28,6 @@
                 <form method="post" action="<%= process.env.siteAddress %>/redirect/server/edit">
                     <input type="hidden" name="serverId" value="<%= serverApiData.serverId %>">
             <% } %>
-
-            <%- include("../../partials/form/inputHidden.ejs", {
-                elementName: "actioningUser",
-                elementValue: req.session.user.userId
-            }) %>
                     
             <div class="row">
                 <!-- Server Name -->
@@ -74,7 +69,29 @@
                         }) %>
                     <% } %>
                 </div>
+            </div>
 
+            <div class="row">
+                <!-- Server Position -->
+                <div class="form-group col">
+                    <label for="serverType">Server Type</label>
+
+                    <% if (type === 'create') { %>
+                        <select class="form-control" name="serverType">
+                            <option value="INTERNAL">Internal</option>
+                            <option value="EXTERNAL">External</option>
+                            <option value="VERIFICATION">Verification</option>
+                        </select>
+                    <% } %>
+                    <% if (type === 'edit') { %>
+                        <select class="form-control" name="serverType">
+                            <option value="INTERNAL" <% if (serverApiData.serverType === 'INTERNAL') { %> selected <% } %>>Internal</option>
+                            <option value="EXTERNAL" <% if (serverApiData.serverType === 'EXTERNAL') { %> selected <% } %>>External</option>
+                            <option value="VERIFICATION" <% if (serverApiData.serverType === 'VERIFICATION') { %> selected <% } %>>Verification</option>
+                        </select>
+                    <% } %>
+                </div>
+                
                 <!-- Server Position -->
                 <div class="form-group col">
                     <label for="position">Server Position</label>
