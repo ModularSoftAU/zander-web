@@ -47,7 +47,7 @@ export default function applicationSiteRoutes(
   app.get("/play", async function (req, res) {
     isFeatureWebRouteEnabled(features.server, req, res, features);
 
-    const fetchURL = `${process.env.siteAddress}/api/server/get?visible=true`;
+    const fetchURL = `${process.env.siteAddress}/api/server/get?type=EXTERNAL`;
     const response = await fetch(fetchURL, {
       headers: { "x-access-token": process.env.apiKey },
     });

@@ -6,50 +6,57 @@ export default function serverApiRoute(app, config, db, features, lang) {
   // TODO: Update docs
   app.get(baseEndpoint + "/get", async function (req, res) {
     isFeatureEnabled(features.server, res, lang);
-    const serverId = optional(req.query, "serverId");
+    const id = optional(req.query, "id");
+    const type = optional(req.query, "type");
 
     try {
       function getServers(dbQuery) {
-        db.query(dbQuery, function (error, results, fields) {
-          if (error) {
-            return res.send({
-              success: false,
-              message: `${error}`,
-            });
-          }
-
-          if (!results.length) {
-            return res.send({
-              success: false,
-              message: `There are no servers available.`,
-            });
-          }
-
-          return res.send({
-            success: true,
-            data: results,
+        console.log("Executing query:", dbQuery);
+        return new Promise((resolve, reject) => {
+          db.query(dbQuery, function (error, results, fields) {
+            if (error) {
+              console.error(error);
+              reject(error);
+            } else {
+              if (!results.length) {
+                res.send({
+                  success: false,
+                  message: `There are no servers available.`,
+                });
+              } else {
+                res.send({
+                  success: true,
+                  data: results,
+                });
+              }
+              resolve();
+            }
           });
         });
       }
 
       // Get Server by ID
-      if (serverId) {
-        let dbQuery = `SELECT * FROM servers WHERE serverId=${serverId};`;
-        getServers(dbQuery);
+      if (id) {
+        let dbQuery = `SELECT * FROM servers WHERE serverId=${id};`;
+        await getServers(dbQuery);
+      }
+
+      // Get Server by Type
+      if (type) {
+        let dbQuery = `SELECT * FROM servers WHERE serverType='${type}';`;
+        await getServers(dbQuery);
       }
 
       // Return all Servers by default
       let dbQuery = `SELECT * FROM servers ORDER BY position ASC;`;
-      getServers(dbQuery);
-      return res;
+      await getServers(dbQuery);
     } catch (error) {
+      console.error(error);
       res.send({
         success: false,
         message: `${error}`,
       });
     }
-
-    return res;
   });
 
   app.post(baseEndpoint + "/create", async function (req, res) {
