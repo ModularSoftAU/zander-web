@@ -155,10 +155,19 @@ export default function sessionSiteRoute(
     const discordId = req.cookies.discordId;
     if (!discordId) res.redirect(`/`);
 
+    const fetchURL = `${process.env.siteAddress}/api/server/get?type=VERIFICATION`;
+    const response = await fetch(fetchURL, {
+      headers: { "x-access-token": process.env.apiKey },
+    });
+    const apiData = await response.json();
+
+    console.log(apiData);
+
     res.view("session/unregistered", {
       pageTitle: `Unregistered`,
       config: config,
       req: req,
+      apiData: apiData,
       features: features,
       globalImage: await getGlobalImage(),
       announcementWeb: await getWebAnnouncement(),

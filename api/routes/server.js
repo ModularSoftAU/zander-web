@@ -11,7 +11,6 @@ export default function serverApiRoute(app, config, db, features, lang) {
 
     try {
       function getServers(dbQuery) {
-        console.log("Executing query:", dbQuery);
         return new Promise((resolve, reject) => {
           db.query(dbQuery, function (error, results, fields) {
             if (error) {
