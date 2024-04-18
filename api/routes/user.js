@@ -20,7 +20,7 @@ export default function userApiRoute(app, config, db, features, lang) {
           console.log(error);
         }
 
-        if (results[0]) {
+        if (results) {
           // To ensure usernames are always accurate we set the username just in case the username changes.
           db.query(
             `UPDATE users SET username=? WHERE uuid=?;`,
