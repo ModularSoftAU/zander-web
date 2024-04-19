@@ -49,29 +49,37 @@ export async function updateAudit_lastWebsiteLogin(auditDateTime, username) {
 export async function updateAudit_lastDiscordMessage(auditDateTime, discordId) {
   const userData = new UserGetter();
   const userAudit = await userData.byDiscordId(discordId);
-
-  db.query(
-    `UPDATE users SET audit_lastDiscordMessage=? WHERE userId=?;`,
-    [auditDateTime, userAudit.userId],
-    function (error, results, fields) {
-      if (error) {
-        reject(error);
+  
+  if (!userAudit) {
+    db.query(
+      `UPDATE users SET audit_lastDiscordMessage=? WHERE userId=?;`,
+      [auditDateTime, userAudit.userId],
+      function (error, results, fields) {
+        if (error) {
+          reject(error);
+        }
       }
-    }
-  );
+    );
+
+    console.log(`Discord account for this user is not linked, chat audit ignored.`);
+  }
 }
 
 export async function updateAudit_lastDiscordVoice(auditDateTime, discordId) {
   const userData = new UserGetter();
   const userAudit = await userData.byDiscordId(discordId);
 
-  db.query(
-    `UPDATE users SET audit_lastDiscordVoice=? WHERE userId=?;`,
-    [auditDateTime, userAudit.userId],
-    function (error, results, fields) {
-      if (error) {
-        reject(error);
+  if (!userAudit) {
+    db.query(
+      `UPDATE users SET audit_lastDiscordVoice=? WHERE userId=?;`,
+      [auditDateTime, userAudit.userId],
+      function (error, results, fields) {
+        if (error) {
+          reject(error);
+        }
       }
-    }
-  );
+    );
+
+    console.log(`Discord account for this user is not linked, chat audit ignored.`);    
+  }
 }
