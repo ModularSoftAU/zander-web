@@ -7,7 +7,7 @@ export default function webRedirectRoute(app, config, lang) {
     postAPIRequest(
       `${process.env.siteAddress}/api/user/link`,
       req.body,
-      `${process.env.siteAddress}/`,
+      `${process.env.siteAddress}/unregistered`,
       res
     );
 
