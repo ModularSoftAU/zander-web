@@ -9,64 +9,73 @@ export default function userApiRoute(app, config, db, features, lang) {
     const username = required(req.body, "username", res);
 
     const userCreatedLang = lang.api.userCreated;
+    const userAlreadyExistsLang = lang.api.userAlreadyExists;
 
-    // shadowolf
-    // Check if user does not exist, we do this in case of testing we create multiple users on accident
-    db.query(
-      `SELECT * FROM users WHERE uuid=?`,
-      [uuid],
-      function (error, results, fields) {
-        if (error) {
-          console.log(error);
-        }
+    try {
+      // Check if the user exists
+      const existingUser = await new Promise((resolve, reject) => {
+        db.query(
+          `SELECT * FROM users WHERE uuid=?`,
+          [uuid],
+          function (error, results, fields) {
+            if (error) {
+              reject(error);
+            }
+            resolve(results[0]);
+          }
+        );
+      });
 
-        if (results) {
-          // To ensure usernames are always accurate we set the username just in case the username changes.
+      if (existingUser) {
+        // User already exists, update the username
+        await new Promise((resolve, reject) => {
           db.query(
             `UPDATE users SET username=? WHERE uuid=?;`,
             [username, uuid],
             function (error, results, fields) {
               if (error) {
-                return res.send({
-                  success: false,
-                  message: `${error}`,
-                });
+                reject(error);
               }
+              resolve();
             }
           );
+        });
 
-          // If the user already exists, we alert the console that the user wasn't created because it doesn't exist.
-          return res.send({
-            success: null,
-            message: `${lang.api.userAlreadyExists}`,
-          });
-        }
-
-        // If user does not exist, create them
-        db.query(
-          `INSERT INTO users (uuid, username) VALUES (?, ?)`,
-          [uuid, username],
-          function (error, results, fields) {
-            if (error) {
-              return res.send({
-                success: false,
-                message: `${error}`,
-              });
+        return res.send({
+          success: null,
+          message: userAlreadyExistsLang,
+        });
+      } else {
+        // User does not exist, create them
+        await new Promise((resolve, reject) => {
+          db.query(
+            `INSERT INTO users (uuid, username) VALUES (?, ?)`,
+            [uuid, username],
+            function (error, results, fields) {
+              if (error) {
+                reject(error);
+              }
+              resolve();
             }
+          );
+        });
 
-            return res.send({
-              success: true,
-              message: userCreatedLang
-                .replace("%USERNAME%", username)
-                .replace("%UUID%", uuid),
-            });
-          }
-        );
+        return res.send({
+          success: true,
+          message: userCreatedLang
+            .replace("%USERNAME%", username)
+            .replace("%UUID%", uuid),
+        });
       }
-    );
-
-    return res;
+    } catch (error) {
+      console.log(error);
+      return res.send({
+        success: false,
+        message: `${error}`,
+      });
+    }
   });
+
 
   // TODO: Update docs
   app.get(baseEndpoint + "/get", async function (req, res) {

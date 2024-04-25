@@ -4,47 +4,72 @@ export default function sessionApiRoute(app, config, db, features, lang) {
   const baseEndpoint = "/api/session";
 
   app.post(baseEndpoint + "/create", async function (req, res) {
-    const uuid = required(req.body, "uuid", res);
-    const ipAddress = required(req.body, "ipAddress", res);
+  const uuid = required(req.body, "uuid", res);
+  const ipAddress = required(req.body, "ipAddress", res);
 
-    const newSessionCreatedLang = lang.session.newSessionCreated;
+  const newSessionCreatedLang = lang.session.newSessionCreated;
 
-    try {
-      // Insert newly started session into database
+  try {
+    // Fetch userId based on the provided uuid
+    const userIdResult = await new Promise((resolve, reject) => {
       db.query(
-        `
-                INSERT INTO gameSessions 
-                    (
-                        userId, 
-                        ipAddress
-                    ) VALUES (
-                        (SELECT userId FROM users WHERE uuid=?), 
-                        ?
-                    )`,
-        [uuid, ipAddress],
+        `SELECT userId FROM users WHERE uuid = ?`,
+        [uuid],
         function (error, results, fields) {
           if (error) {
-            return res.send({
-              success: false,
-              message: `${error}`,
-            });
+            reject(error);
+          } else {
+            resolve(results);
           }
-
-          return res.send({
-            success: true,
-            message: newSessionCreatedLang.replace("%UUID%", uuid),
-          });
         }
       );
-    } catch (error) {
-      res.send({
+    });
+
+    if (userIdResult.length === 0) {
+      return res.send({
         success: false,
-        message: `${error}`,
+        message: "User not found with the provided UUID.",
       });
     }
 
-    return res;
-  });
+    const userId = userIdResult[0].userId;
+
+    // Insert newly started session into database
+    await new Promise((resolve, reject) => {
+      db.query(
+        `
+          INSERT INTO gameSessions 
+              (
+                  userId, 
+                  ipAddress
+              ) VALUES (
+                  ?, 
+                  ?
+              )`,
+        [userId, ipAddress],
+        function (error, results, fields) {
+          if (error) {
+            reject(error);
+          } else {
+            resolve();
+          }
+        }
+      );
+    });
+
+    return res.send({
+      success: true,
+      message: newSessionCreatedLang.replace("%UUID%", uuid),
+    });
+  } catch (error) {
+    console.error(error);
+    return res.send({
+      success: false,
+      message: `${error}`,
+    });
+  }
+});
+
 
   app.post(baseEndpoint + "/destroy", async function (req, res) {
     const uuid = required(req.body, "uuid", res);
@@ -94,8 +119,6 @@ export default function sessionApiRoute(app, config, db, features, lang) {
     const server = required(req.body, "server", res);
 
     const sessionSwitchLang = lang.session.sessionSwitch;
-
-    console.log(req.body);
 
     try {
       // Update any open sessions for the specified user to change to the specified server
