@@ -1,5 +1,5 @@
 {
-  "debug": false,
+  "debug": true,
   "siteConfiguration": {
     "siteName": "Crafting For Christ",
     "tagline": "Crafting A Christ Centred Gaming Community",
@@ -28,11 +28,11 @@
   },
   "discord": {
     "guildId": "899441191416901632",
-    "channels": {
-      "welcome": "926380663953821736",
-      "networkChatLog": "925702393423859724",
-      "adminLog": "926380052155867146",
-      "staffChannel": "926380052155867146"
+    "webhooks": {
+      "welcome": "https://discord.com/api/webhooks/1178111335070974022/ZoLQ-J-puUAhLGoNQL05QuOl9Y4plVF85U-h8mO0l5o6X1tKzpiCzo8_BWDFEGrm5aMr",
+      "networkChatLog": "https://discord.com/api/webhooks/1178169414135316612/1exf1LDfzd3bGnrDiP3kpF9vFoBip0R-axNzDV-5-G6sXqf5iz28auYdgVDNMQJimrP9",
+      "adminLog": "https://discord.com/api/webhooks/1180274861952737381/aeKat4hvzNIf56fhENBmtAx1BNNECKb7NS3nVOqaof9loRIZk_cS3jOzr7AEAIRrdgL1",
+      "staffChannel": "https://discord.com/api/webhooks/1178170745315151933/u1vv4c-ncQFjKYuwWcAyk9CsEmUgt2sV8Oe3YEOcaQkHXcjgr3xCRGbADwiW1C0cCLkb"
     },
     "roles": {
       "verified": "926259482319794246"

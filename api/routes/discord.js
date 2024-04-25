@@ -1,4 +1,5 @@
 import { updateAudit_lastMinecraftLogin, updateAudit_lastMinecraftMessage } from "../../controllers/auditController";
+import { Webhook } from "discord-webhook-node";
 import { isFeatureEnabled, required } from "../common";
 
 export default function discordApiRoute(
@@ -17,12 +18,11 @@ export default function discordApiRoute(
     const server = required(req.body, "server", res);
 
     try {
-      const guild = client.guilds.cache.get(config.discord.guildId);
-      const channel = guild.channels.cache.get(
-        config.discord.channels.networkChatLog
+      const networkChatLogHook = new Webhook(
+        config.discord.webhooks.networkChatLog
       );
 
-      channel.send(
+      networkChatLogHook.send(
         `:twisted_rightwards_arrows: | \`${username}\` switched to \`${server}\``
       );
 

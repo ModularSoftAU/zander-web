@@ -2,6 +2,7 @@ import { Listener } from "@sapphire/framework";
 import config from "../config.json" assert { type: "json" };
 import { Colors, EmbedBuilder } from "discord.js";
 import features from "../features.json" assert { type: "json" };
+import { MessageBuilder, Webhook } from "discord-webhook-node";
 
 export class GuildMemberBoostUpdateListener extends Listener {
   constructor(context, options) {
@@ -20,18 +21,15 @@ export class GuildMemberBoostUpdateListener extends Listener {
       const oldStatus = oldMember.premiumSince;
       const newStatus = newMember.premiumSince;
 
-      let welcomechannel = newMember.guild.channels.cache.find(
-        (c) => c.id === config.discord.channels.welcome
-      );
-      if (!welcomechannel) return;
+      const welcomeHook = new Webhook(config.discord.webhooks.welcome);
 
       if (!oldStatus && newStatus) {
-        let embed = new EmbedBuilder()
+        let embed = new MessageBuilder()
           .setTitle(
             `\`${newMember.user.username}\` has boosted the Server! :tada:`
           )
           .setColor(Colors.DarkVividPink);
-        welcomechannel.send({ embeds: [embed] });
+        welcomeHook.send(embed);
       }
       return;
     }

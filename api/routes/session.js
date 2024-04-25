@@ -126,13 +126,13 @@ export default function sessionApiRoute(app, config, db, features, lang) {
       // If this is not there and there is somehow more than 1 open session, the query will fail.
       db.query(
         `
-      UPDATE gameSessions
-      JOIN users ON gameSessions.userId = users.userId
-      SET gameSessions.server = ?
-      WHERE users.uuid = ?
-          AND gameSessions.sessionEnd IS NULL
-          AND gameSessions.sessionId > 0;
-    `,
+          UPDATE gameSessions
+          JOIN users ON gameSessions.userId = users.userId
+          SET gameSessions.server = ?
+          WHERE users.uuid = ?
+              AND gameSessions.sessionEnd IS NULL
+              AND gameSessions.sessionId > 0;
+        `,
         [server, uuid],
         function (error, results, fields) {
           if (error) {

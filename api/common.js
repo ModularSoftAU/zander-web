@@ -245,8 +245,8 @@ export async function hashEmail(email) {
     // Create a new MD5 hash object
     const md5Hash = crypto.createHash("md5");
 
-    // Update the hash object with the email address
-    md5Hash.update(email);
+  // Update the hash object with the email address
+  md5Hash.update(email);
 
     // Get the hexadecimal representation of the hash and return it
     return md5Hash.digest("hex");
