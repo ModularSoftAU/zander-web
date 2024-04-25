@@ -61,12 +61,11 @@ export default function discordApiRoute(
     // Send Discord Message to Log
     //
     try {
-      const guild = client.guilds.cache.get(config.discord.guildId);
-      const channel = guild.channels.cache.get(
-        config.discord.channels.networkChatLog
+      const networkChatLogHook = new Webhook(
+        config.discord.webhooks.networkChatLog
       );
 
-      channel.send(`**${server}** | \`${username}\` :: ${content}`);
+      networkChatLogHook.send(`**${server}** | \`${username}\` :: ${content}`);
 
       return res.send({
         success: true,
@@ -86,21 +85,20 @@ export default function discordApiRoute(
     //
     // Send Discord Message to Log
     //
-    try {
-      const guild = client.guilds.cache.get(config.discord.guildId);
-      const channel = guild.channels.cache.get(
-        config.discord.channels.networkChatLog
-      );
+     try {
+       const networkChatLogHook = new Webhook(
+         config.discord.webhooks.networkChatLog
+       );
 
-      channel.send(
-        `:ballot_box_with_check: | \`${username}\` has joined the Network.`
-      );
-    } catch (error) {
-      return res.send({
-        success: false,
-        message: `${error}`,
-      });
-    }
+       networkChatLogHook.send(
+         `:ballot_box_with_check: | \`${username}\` has joined the Network.`
+       );
+     } catch (error) {
+       return res.send({
+         success: false,
+         message: `${error}`,
+       });
+     }
   });
 
   app.post(baseEndpoint + "/leave", async function (req, res) {
@@ -123,12 +121,11 @@ export default function discordApiRoute(
     // Send Discord Message to Log
     //
     try {
-      const guild = client.guilds.cache.get(config.discord.guildId);
-      const channel = guild.channels.cache.get(
-        config.discord.channels.networkChatLog
+      const networkChatLogHook = new Webhook(
+        config.discord.webhooks.networkChatLog
       );
 
-      channel.send(
+      networkChatLogHook.send(
         `:negative_squared_cross_mark: | \`${username}\` has left the Network.`
       );
 
