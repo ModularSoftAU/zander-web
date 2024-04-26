@@ -241,19 +241,14 @@ export async function setBannerCookie(alertType, alertContent, res) {
     @param email The email address to hash.
 */
 export async function hashEmail(email) {
-  try {
-    // Create a new MD5 hash object
-    const md5Hash = crypto.createHash("md5");
+  // Create a new MD5 hash object
+  const md5Hash = crypto.createHash("md5");
 
-    // Update the hash object with the email address
-    md5Hash.update(email);
+  // Update the hash object with the email address
+  md5Hash.update(email);
 
-    // Get the hexadecimal representation of the hash and return it
-    return md5Hash.digest("hex");
-  } catch (error) {
-    console.error("Error hashing email:", error);
-    throw error;
-  }
+  // Get the hexadecimal representation of the hash and return it
+  return md5Hash.digest("hex");
 }
 
 /*

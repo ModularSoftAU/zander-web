@@ -81,7 +81,7 @@ export default function sessionSiteRoute(
           Authorization: `${tokenData.token_type} ${tokenData.access_token}`,
         },
       });
-
+      
       if (!userResponse.ok) {
         throw new Error(
           `Failed to fetch user data: ${userResponse.status} ${userResponse.statusText}`
