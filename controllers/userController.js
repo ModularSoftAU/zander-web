@@ -167,7 +167,6 @@ export async function getProfilePicture(username) {
   });
 }
 
-
 export async function setProfileDisplayPreferences(
   userId,
   profilePicture_type,
