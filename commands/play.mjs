@@ -22,8 +22,6 @@ export class PlayCommand extends Command {
     });
     const apiData = await response.json();
 
-    console.log(apiData);
-
     if (!apiData.data) {
       const noServersEmbed = new EmbedBuilder()
         .setTitle(`No Servers`)
