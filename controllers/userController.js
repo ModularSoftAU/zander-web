@@ -83,18 +83,23 @@ export function UserGetter() {
 
   this.isRegistered = function (discordId) {
     return new Promise((resolve, reject) => {
+      // Execute a SQL query to check if the user exists in the database
       db.query(
         `SELECT * FROM users WHERE discordId=?;`,
         [discordId],
         function (error, results, fields) {
           if (error) {
+            // If there's an error with the database query, reject the Promise
             reject(error);
           }
 
+          // Check if the query returned any results
           if (!results || !results.length) {
-            resolve(false); // User not registered
+            // If no results were found, resolve with false (user not registered)
+            resolve(false);
           } else {
-            resolve(true); // User registered
+            // If results were found, resolve with true (user is registered)
+            resolve(true);
           }
         }
       );
