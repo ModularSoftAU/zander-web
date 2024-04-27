@@ -204,6 +204,11 @@ export default function userApiRoute(app, config, db, features, lang) {
       const linkUser = await userLinkData.getUserByCode(verifyCode);
       let linkUserUUID = linkUser.uuid;
 
+      if (!linkUser) {
+        setBannerCookie("warning", `No verification code matches, please try again.`, res);
+        return res.redirect(`/unregistered`);
+      }
+
       //
       // Bind Discord Account to User ID
       //

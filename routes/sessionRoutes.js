@@ -7,7 +7,11 @@ import {
   getGlobalImage,
 } from "../api/common";
 import { getWebAnnouncement } from "../controllers/announcementController";
-import { UserGetter, getProfilePicture, getUserPermissions } from "../controllers/userController";
+import {
+  UserGetter,
+  getProfilePicture,
+  getUserPermissions,
+} from "../controllers/userController";
 import { updateAudit_lastWebsiteLogin } from "../controllers/auditController";
 
 export default function sessionSiteRoute(
@@ -81,7 +85,7 @@ export default function sessionSiteRoute(
           Authorization: `${tokenData.token_type} ${tokenData.access_token}`,
         },
       });
-      
+
       if (!userResponse.ok) {
         throw new Error(
           `Failed to fetch user data: ${userResponse.status} ${userResponse.statusText}`
@@ -89,13 +93,15 @@ export default function sessionSiteRoute(
       }
 
       const userData = await userResponse.json();
+      console.log(userData);
 
       const userGetData = new UserGetter();
       const userIsRegistered = await userGetData.isRegistered(userData.id);
+      console.log(userIsRegistered);
 
-      // 
+      //
       // If user is not registered, start the user account verification process.
-      // 
+      //
       if (!userIsRegistered) {
         const tenSecondsFromNow = new Date(Date.now() + 10000);
         res.setCookie("discordId", userData.id, {
@@ -104,7 +110,7 @@ export default function sessionSiteRoute(
           expires: tenSecondsFromNow,
         });
 
-        res.redirect(`/unregistered`);
+        return res.redirect(`/unregistered`);
       } else {
         //
         // If registered, sign the user into their session.
@@ -140,8 +146,6 @@ export default function sessionSiteRoute(
         setBannerCookie("success", lang.session.userSuccessLogin, res);
         return res.redirect(`${process.env.siteAddress}/`);
       }
-
-      
     } catch (error) {
       console.error("Error:", error);
       res.status(500).send("Internal Server Error");

@@ -34,8 +34,6 @@
           <p>Hey! Before you can get started, we need to know your Minecraft account. First, log in with the Minecraft account you want to use. Then, one of the below servers on your supported platform.</p>
           <p>That server will give you a secret 6 digit code. Enter it here, and you're done!</p>
 
-          <%= console.log(apiData.success); %>
-
           <% if (apiData.success == false) { %>
             <%- include("../partials/alert.ejs", {
               alertType: "danger",
