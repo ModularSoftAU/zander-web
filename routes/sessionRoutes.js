@@ -46,10 +46,14 @@ export default function sessionSiteRoute(
     res.redirect(authorizeUrl);
   });
 
-  app.get("/login/callback", async function (req, res) {
-    const code = req.query.code;
+  app.get("/login/callback", async (req, res) => {
+    const { code } = req.query;
 
     try {
+      if (!code) {
+        throw new Error("Authorization code missing");
+      }
+
       // Exchange authorization code for access token
       const tokenParams = {
         client_id: process.env.discordClientId,
@@ -59,8 +63,6 @@ export default function sessionSiteRoute(
         redirect_uri: `${process.env.siteAddress}/login/callback`,
         scope: "identify",
       };
-
-      console.log("Token Request Body:", tokenParams);
 
       const tokenResponse = await fetch(
         "https://discord.com/api/oauth2/token",
@@ -72,9 +74,6 @@ export default function sessionSiteRoute(
           body: qs.stringify(tokenParams),
         }
       );
-
-      console.log("Token Response Status:", tokenResponse.status);
-      console.log("Token Response Text:", await tokenResponse.text());
 
       if (!tokenResponse.ok) {
         throw new Error(
@@ -91,9 +90,6 @@ export default function sessionSiteRoute(
         },
       });
 
-      console.log("User Response Status:", userResponse.status);
-      console.log("User Response Text:", await userResponse.text());
-
       if (!userResponse.ok) {
         throw new Error(
           `Failed to fetch user data: ${userResponse.status} ${userResponse.statusText}`
@@ -101,14 +97,11 @@ export default function sessionSiteRoute(
       }
 
       const userData = await userResponse.json();
-      console.log("User Data:", userData);
 
       // Check if user is registered in your system
       const userGetData = new UserGetter();
       const userIsRegistered = await userGetData.isRegistered(userData.id);
-      console.log("Is User Registered:", userIsRegistered);
 
-      // Handle user registration status
       if (!userIsRegistered) {
         // Set a cookie for unregistered user
         const tenSecondsFromNow = new Date(Date.now() + 10000);
@@ -138,18 +131,11 @@ export default function sessionSiteRoute(
         };
 
         // Update user profile for auditing
-        try {
-          updateAudit_lastWebsiteLogin(new Date(), userLoginData.username);
-        } catch (error) {
-          console.error("Audit Update Error:", error);
-          return res.status(500).send({
-            success: false,
-            message: "Failed to update user profile for auditing",
-          });
-        }
+        await updateAudit_lastWebsiteLogin(new Date(), userLoginData.username);
 
         // Set success banner cookie and redirect to home
         setBannerCookie("success", lang.session.userSuccessLogin, res);
+
         return res.redirect(`${process.env.siteAddress}/`);
       }
     } catch (error) {
