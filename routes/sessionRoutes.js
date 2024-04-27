@@ -43,7 +43,7 @@ export default function sessionSiteRoute(
       params
     )}`;
 
-    return res.redirect(authorizeUrl);
+    res.redirect(authorizeUrl);
   });
 
   app.get("/login/callback", async function (req, res) {
@@ -110,7 +110,7 @@ export default function sessionSiteRoute(
           expires: tenSecondsFromNow,
         });
 
-        return res.redirect(`/unregistered`);
+        res.redirect(`/unregistered`);
       } else {
         //
         // If registered, sign the user into their session.
