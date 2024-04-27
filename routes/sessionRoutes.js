@@ -51,7 +51,7 @@ export default function sessionSiteRoute(
 
     try {
       if (!code) {
-        throw new Error("Authorization code missing");
+        throw new Error("Authorization code is missing");
       }
 
       // Exchange authorization code for access token
@@ -81,7 +81,7 @@ export default function sessionSiteRoute(
         );
       }
 
-      const tokenData = await tokenResponse.json();
+      const tokenData = await tokenResponse.json(); // Parse the response body as JSON
 
       // Use the access token to fetch user data from Discord API
       const userResponse = await fetch("https://discord.com/api/users/@me", {
@@ -96,19 +96,18 @@ export default function sessionSiteRoute(
         );
       }
 
-      const userData = await userResponse.json();
+      const userData = await userResponse.json(); // Parse the response body as JSON
 
       // Check if user is registered in your system
-      const userGetData = new UserGetter();
+      const userGetData = new UserGetter(); // Assuming UserGetter is defined
       const userIsRegistered = await userGetData.isRegistered(userData.id);
 
       if (!userIsRegistered) {
-        // Set a cookie for unregistered user
-        const tenSecondsFromNow = new Date(Date.now() + 10000);
+        // Set a cookie for unregistered user (example)
         res.cookie("discordId", userData.id, {
           path: "/",
           httpOnly: true,
-          expires: tenSecondsFromNow,
+          maxAge: 10000, // Expires in 10 seconds
         });
 
         return res.redirect(`/unregistered`);
@@ -117,6 +116,8 @@ export default function sessionSiteRoute(
         const userLoginData = await userGetData.byDiscordId(userData.id);
 
         req.session.authenticated = true;
+
+        // Example: Fetch additional user permissions and profile picture
         const userPermissionData = await getUserPermissions(userLoginData);
         const profilePicture = await getProfilePicture(userLoginData.username);
 
@@ -130,12 +131,10 @@ export default function sessionSiteRoute(
           permissions: userPermissionData,
         };
 
-        // Update user profile for auditing
+        // Update user profile for auditing (example)
         await updateAudit_lastWebsiteLogin(new Date(), userLoginData.username);
 
-        // Set success banner cookie and redirect to home
-        setBannerCookie("success", lang.session.userSuccessLogin, res);
-
+        // Redirect user to the home page
         return res.redirect(`${process.env.siteAddress}/`);
       }
     } catch (error) {
