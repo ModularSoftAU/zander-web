@@ -60,6 +60,8 @@ export default function sessionSiteRoute(
         scope: "identify",
       };
 
+      console.log("Token Request Body:", tokenParams);
+
       const tokenResponse = await fetch(
         "https://discord.com/api/oauth2/token",
         {
@@ -71,6 +73,9 @@ export default function sessionSiteRoute(
         }
       );
 
+      console.log("Token Response Status:", tokenResponse.status);
+      console.log("Token Response Text:", await tokenResponse.text());
+
       if (!tokenResponse.ok) {
         throw new Error(
           `Failed to obtain access token: ${tokenResponse.status} ${tokenResponse.statusText}`
@@ -79,15 +84,15 @@ export default function sessionSiteRoute(
 
       const tokenData = await tokenResponse.json();
 
-      // Log token data for debugging
-      console.log("Token Data:", tokenData);
-
-      // Use the access token to make requests to the Discord API
+      // Use the access token to fetch user data from Discord API
       const userResponse = await fetch("https://discord.com/api/users/@me", {
         headers: {
           Authorization: `${tokenData.token_type} ${tokenData.access_token}`,
         },
       });
+
+      console.log("User Response Status:", userResponse.status);
+      console.log("User Response Text:", await userResponse.text());
 
       if (!userResponse.ok) {
         throw new Error(
@@ -98,7 +103,7 @@ export default function sessionSiteRoute(
       const userData = await userResponse.json();
       console.log("User Data:", userData);
 
-      // Troubleshooting user registration
+      // Check if user is registered in your system
       const userGetData = new UserGetter();
       const userIsRegistered = await userGetData.isRegistered(userData.id);
       console.log("Is User Registered:", userIsRegistered);
