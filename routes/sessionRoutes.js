@@ -79,6 +79,9 @@ export default function sessionSiteRoute(
 
       const tokenData = await tokenResponse.json();
 
+      // Log token data for debugging
+      console.log("Token Data:", tokenData);
+
       // Use the access token to make requests to the Discord API
       const userResponse = await fetch("https://discord.com/api/users/@me", {
         headers: {
@@ -93,33 +96,31 @@ export default function sessionSiteRoute(
       }
 
       const userData = await userResponse.json();
-      console.log(userData);
+      console.log("User Data:", userData);
 
+      // Troubleshooting user registration
       const userGetData = new UserGetter();
       const userIsRegistered = await userGetData.isRegistered(userData.id);
-      console.log(userIsRegistered);
+      console.log("Is User Registered:", userIsRegistered);
 
-      //
-      // If user is not registered, start the user account verification process.
-      //
+      // Handle user registration status
       if (!userIsRegistered) {
+        // Set a cookie for unregistered user
         const tenSecondsFromNow = new Date(Date.now() + 10000);
-        res.setCookie("discordId", userData.id, {
+        res.cookie("discordId", userData.id, {
           path: "/",
           httpOnly: true,
           expires: tenSecondsFromNow,
         });
 
-        res.redirect(`/unregistered`);
+        return res.redirect(`/unregistered`);
       } else {
-        //
-        // If registered, sign the user into their session.
-        //
+        // User is registered, proceed with session setup
         const userLoginData = await userGetData.byDiscordId(userData.id);
 
         req.session.authenticated = true;
-        let userPermissionData = await getUserPermissions(userLoginData);
-        let profilePicture = await getProfilePicture(userLoginData.username);
+        const userPermissionData = await getUserPermissions(userLoginData);
+        const profilePicture = await getProfilePicture(userLoginData.username);
 
         req.session.user = {
           userId: userLoginData.userId,
@@ -131,24 +132,24 @@ export default function sessionSiteRoute(
           permissions: userPermissionData,
         };
 
-        //
         // Update user profile for auditing
-        //
         try {
           updateAudit_lastWebsiteLogin(new Date(), userLoginData.username);
         } catch (error) {
-          return res.send({
+          console.error("Audit Update Error:", error);
+          return res.status(500).send({
             success: false,
-            message: `${error}`,
+            message: "Failed to update user profile for auditing",
           });
         }
 
+        // Set success banner cookie and redirect to home
         setBannerCookie("success", lang.session.userSuccessLogin, res);
         return res.redirect(`${process.env.siteAddress}/`);
       }
     } catch (error) {
       console.error("Error:", error);
-      res.status(500).send("Internal Server Error");
+      return res.status(500).send("Internal Server Error");
     }
   });
 
