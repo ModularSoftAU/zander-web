@@ -1,7 +1,7 @@
 import dashboardSiteRoutes from "./dashboard";
 import policySiteRoutes from "./policyRoutes";
 import sessionRoutes from "./sessionRoutes";
-import { isFeatureWebRouteEnabled, getGlobalImage } from "../api/common";
+import { isFeatureWebRouteEnabled, getGlobalImage, isLoggedIn } from "../api/common";
 import { getWebAnnouncement } from "../controllers/announcementController";
 import redirectSiteRoutes from "./redirectRoutes";
 import rankData from "../ranks.json" assert { type: "json" };
@@ -102,5 +102,51 @@ export default function applicationSiteRoutes(
       globalImage: await getGlobalImage(),
       announcementWeb: await getWebAnnouncement(),
     });
+  });
+
+  app.get("/form/:formSlug", async function (req, res) {
+    const formSlug = req.params.formSlug;
+
+    try {
+      if (!isLoggedIn(req) || !req.session.user) {
+        return res.view("session/notLoggedIn", {
+          pageTitle: `Not Logged in`,
+          config: config,
+          req: req,
+          res: res,
+          features: features,
+          globalImage: await getGlobalImage(),
+          announcementWeb: await getWebAnnouncement(),
+        });
+      } else {
+        //
+        // Grab form data
+        //
+        const fetchURL = `${process.env.siteAddress}/api/form/get?slug=${formSlug}`;
+        const response = await fetch(fetchURL, {
+          headers: { "x-access-token": process.env.apiKey },
+        });
+
+        const formApiData = await response.json();
+
+        console.log(formApiData);
+
+        //
+        // Render the form page
+        //
+        return res.view("form", {
+          pageTitle: `Form`,
+          config: config,
+          req: req,
+          features: features,
+          globalImage: await getGlobalImage(),
+          announcementWeb: await getWebAnnouncement(),
+          moment: moment,
+        });
+      }
+    } catch (error) {
+      console.error("Error:", error);
+      res.status(500).send("Internal Server Error");
+    }
   });
 }

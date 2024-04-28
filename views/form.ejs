@@ -1,0 +1,34 @@
+<%- include("modules/header.ejs", {
+    pageTitle: pageTitle,
+    pageDescription: "Form application page"
+}) %>
+
+<%- include("modules/navigationBar.ejs") %>
+
+<%- include("partials/miniHeader.ejs", {
+  headerTitle: "Form",
+  backgroundImage: globalImage
+}) %>
+
+
+<section class="section">
+    <div class="container">
+      <div>
+        <div class="row">
+
+          <% if (apiData.success == false) { %>
+            <%- include("partials/alert.ejs", {
+              alertType: "danger",
+              content: apiData.message
+            }) %>
+          <% } else { %>
+            <h3>Form Data</h3>
+            <small>needs here</small>
+        <% } %>
+
+        </div>
+      </div>
+    </div>
+</section>
+
+<%- include("modules/footer.ejs") %>  

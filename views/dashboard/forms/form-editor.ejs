@@ -1,12 +1,12 @@
 <%- include("../../modules/header.ejs", {
     pageTitle: pageTitle,
-    pageDescription: "Editor for Network Applications"
+    pageDescription: "Editor for Network Forms"
 }) %>
 
 <%- include("../../modules/navigationBar.ejs") %>
 
 <%- include("../../partials/miniHeader.ejs", {
-  headerTitle: "Applications",
+  headerTitle: "Forms",
   backgroundImage: globalImage
 }) %>
 
@@ -16,19 +16,19 @@
     </div>
     <div class="col-md-10" style="padding: 10px;">
         <%- include("../../partials/documentationLink.ejs", {
-            doclink: "https://modularsoft.org/docs/products/zander/features/application/"
+            doclink: "https://modularsoft.org/docs/products/zander/features/form/"
         }) %>
         <br><br>
         
         <div class="basic-form">
             <% if (type === 'create') { %>
-                <form method="post" action="<%= process.env.siteAddress %>/redirect/application/create">
+                <form method="post" action="<%= process.env.siteAddress %>/redirect/form/create">
             <% } %>
             <% if (type === 'edit') { %>
-                <form method="post" action="<%= process.env.siteAddress %>/redirect/application/edit">
+                <form method="post" action="<%= process.env.siteAddress %>/redirect/form/edit">
                     <%- include("../../partials/form/inputHidden.ejs", {
-                        elementName: "applicationId",
-                        elementValue: applicationApiData.applicationId
+                        elementName: "formId",
+                        elementValue: formApiData.formId
                     }) %>
             <% } %>
 
@@ -37,199 +37,199 @@
                 elementValue: req.session.user.userId
             }) %>
             
-                    <div class="row">
-                        <!-- Display Name -->
-                        <div class="form-group col">
-                            <label for="displayName">Display Name</label>
-
-                            <% if (type === 'create') { %>
-                                <%- include("../../partials/form/inputText.ejs", {
-                                    elementName: "displayName",
-                                    elementValue: null,
-                                    required: true
-                                }) %>
-                            <% } %>
-                            <% if (type === 'edit') { %>
-                                <%- include("../../partials/form/inputText.ejs", {
-                                    elementName: "displayName",
-                                    elementValue: applicationApiData.displayName,
-                                    required: true
-                                }) %>
-                            <% } %>
-                        </div>
-
-                        <!-- Application Icon -->
-                        <div class="form-group col">
-                            <label for="displayIcon">Application Icon</label>
-
-                            <% if (type === 'create') { %>
-                                <%- include("../../partials/form/inputText.ejs", {
-                                    elementName: "displayIcon",
-                                    elementValue: null,
-                                    required: true
-                                }) %>
-                            <% } %>
-                            <% if (type === 'edit') { %>
-                                <%- include("../../partials/form/inputText.ejs", {
-                                    elementName: "displayIcon",
-                                    elementValue: applicationApiData.displayIcon,
-                                    required: true
-                                }) %>
-                            <% } %>
-                        </div>
-                    </div>                                            
-
-                    <!-- Application Description -->
-                    <div class="form-group">
-                        <label for="description">Application Description</label>
-
-                        <% if (type === 'create') { %>
-                            <%- include("../../partials/form/inputTextArea.ejs", {
-                                elementName: "description",
-                                elementValue: null,
-                                required: false
-                            }) %>
-                        <% } %>
-                        <% if (type === 'edit') { %>
-                            <%- include("../../partials/form/inputTextArea.ejs", {
-                                elementName: "description",
-                                elementValue: applicationApiData.description,
-                                required: false
-                            }) %>
-                        <% } %>
-                    </div>
-
-                    <div class="row">
-                        <!-- Application Requirements Markdown Link -->
-                        <div class="form-group col">
-                            <label for="requirementsMarkdown">Application Requirements Markdown Link</label>
-
-                            <% if (type === 'create') { %>
-                                <%- include("../../partials/form/inputText.ejs", {
-                                    elementName: "requirementsMarkdown",
-                                    elementValue: null,
-                                    required: true
-                                }) %>
-                            <% } %>
-                            <% if (type === 'edit') { %>
-                                <%- include("../../partials/form/inputText.ejs", {
-                                    elementName: "requirementsMarkdown",
-                                    elementValue: applicationApiData.requirementsMarkdown,
-                                    required: true
-                                }) %>
-                            <% } %>
-                        </div>
-
-                        <!-- Application URL Redirect -->
-                        <div class="form-group col">
-                            <label for="redirectUrl">Application URL Redirect</label>
-
-                            <% if (type === 'create') { %>
-                                <%- include("../../partials/form/inputText.ejs", {
-                                    elementName: "redirectUrl",
-                                    elementValue: null,
-                                    required: true
-                                }) %>
-                            <% } %>
-                            <% if (type === 'edit') { %>
-                                <%- include("../../partials/form/inputText.ejs", {
-                                    elementName: "redirectUrl",
-                                    elementValue: applicationApiData.redirectUrl,
-                                    required: true
-                                }) %>
-                            <% } %>
-                        </div>
-                    </div>
-
-                    <div class="row">
-                        <!-- Application Position -->
-                        <div class="form-group col">
-                            <label for="position">Application Position</label>
-
-                            <% if (type === 'create') { %>
-                                <%- include("../../partials/form/inputText.ejs", {
-                                    elementName: "position",
-                                    elementValue: null,
-                                    required: true
-                                }) %>
-                            <% } %>
-                            <% if (type === 'edit') { %>
-                                <%- include("../../partials/form/inputText.ejs", {
-                                    elementName: "position",
-                                    elementValue: applicationApiData.position,
-                                    required: true
-                                }) %>
-                            <% } %>
-                        </div>
-
-                        <!-- Application Status -->
-                        <div class="form-group col">
-                            <label for="applicationStatus">Application Status</label>
-
-                            <% if (type === 'create') { %>
-                                <%- include("../../partials/form/inputSelect.ejs", {
-                                    elementName: "applicationStatus",
-                                    elementValue: "null",
-                                    required: true,
-                                    optionElements: [
-                                        {
-                                            optionName: "Select a Status",
-                                            optionValue: "null",
-                                            selected: true,
-                                            disabled: true
-                                        },
-                                        {
-                                            optionName: "Open",
-                                            optionValue: "1",
-                                            selected: false,
-                                            disabled: false
-                                        },
-                                        {
-                                            optionName: "Closed",
-                                            optionValue: "0",
-                                            selected: false,
-                                            disabled: false
-                                        }
-                                    ]
-                                }) %>
-                            <% } %>
-                            <% if (type === 'edit') { %>
-                                <%- include("../../partials/form/inputSelect.ejs", {
-                                    elementName: "applicationStatus",
-                                    elementValue: applicationApiData.applicationStatus,
-                                    required: true,
-                                    optionElements: [
-                                        {
-                                            optionName: "Select a Status",
-                                            optionValue: "null",
-                                            selected: true,
-                                            disabled: true
-                                        },
-                                        {
-                                            optionName: "Open",
-                                            optionValue: "1",
-                                            selected: false,
-                                            disabled: false
-                                        },
-                                        {
-                                            optionName: "Closed",
-                                            optionValue: "0",
-                                            selected: false,
-                                            disabled: false
-                                        }
-                                    ]
-                                }) %>
-                            <% } %>
-                        </div>
-                    </div>
+            <div class="row">
+                <!-- Display Name -->
+                <div class="form-group col">
+                    <label for="displayName">Display Name</label>
 
                     <% if (type === 'create') { %>
-                        <button type="submit" class="btn btn-primary"><i class="fal fa-copy"></i> Create Application</button>
+                        <%- include("../../partials/form/inputText.ejs", {
+                            elementName: "displayName",
+                            elementValue: null,
+                            required: true
+                        }) %>
                     <% } %>
-
                     <% if (type === 'edit') { %>
-                        <button type="submit" class="btn btn-warning"><i class="fal fa-copy"></i> Edit Application</button>
+                        <%- include("../../partials/form/inputText.ejs", {
+                            elementName: "displayName",
+                            elementValue: formApiData.displayName,
+                            required: true
+                        }) %>
                     <% } %>
+                </div>
+
+                <!-- Form Slug -->
+                <div class="form-group col">
+                    <label for="formSlug">Form Slug</label>
+
+                    <% if (type === 'create') { %>
+                        <%- include("../../partials/form/inputText.ejs", {
+                            elementName: "formSlug",
+                            elementValue: null,
+                            required: true
+                        }) %>
+                    <% } %>
+                    <% if (type === 'edit') { %>
+                        <%- include("../../partials/form/inputText.ejs", {
+                            elementName: "formSlug",
+                            elementValue: formApiData.formSlug,
+                            required: true
+                        }) %>
+                    <% } %>
+                </div>
+
+                <!-- Form Type -->
+                <div class="form-group col">
+                    <label for="formType">Form Type</label>
+
+                    <% if (type === 'create') { %>
+                        <select class="form-control" name="formType">
+                            <option value="INTERNAL">Internal</option>
+                            <option value="EXTERNAL">External</option>
+                        </select>
+                    <% } %>
+                    <% if (type === 'edit') { %>
+                        <select class="form-control" name="formType">
+                            <option value="INTERNAL" <% if (serverApiData.serverType === 'INTERNAL') { %> selected <% } %>>Internal</option>
+                            <option value="EXTERNAL" <% if (serverApiData.serverType === 'EXTERNAL') { %> selected <% } %>>External</option>
+                        </select>
+                    <% } %>
+                </div>
+            </div>                                            
+
+            <!-- Form Description -->
+            <div class="form-group">
+                <label for="description">Form Description</label>
+
+                <% if (type === 'create') { %>
+                    <%- include("../../partials/form/inputTextArea.ejs", {
+                        elementName: "description",
+                        elementValue: null,
+                        required: false
+                    }) %>
+                <% } %>
+                <% if (type === 'edit') { %>
+                    <%- include("../../partials/form/inputTextArea.ejs", {
+                        elementName: "description",
+                        elementValue: formApiData.description,
+                        required: false
+                    }) %>
+                <% } %>
+            </div>
+
+            <div class="row">
+                <!-- Form Schema Link -->
+                <div class="form-group col">
+                    <label for="formSchema">Form Schema Link</label>
+                    <small>If using internal forms, redirect your JSON to a external repository.</small>
+
+                    <% if (type === 'create') { %>
+                        <%- include("../../partials/form/inputText.ejs", {
+                            elementName: "formSchema",
+                            elementValue: null,
+                            required: true
+                        }) %>
+                    <% } %>
+                    <% if (type === 'edit') { %>
+                        <%- include("../../partials/form/inputText.ejs", {
+                            elementName: "formSchema",
+                            elementValue: formApiData.formSchema,
+                            required: true
+                        }) %>
+                    <% } %>
+                </div>
+
+                <!-- Form URL Redirect -->
+                <div class="form-group col">
+                    <label for="redirectUrl">Form URL Redirect</label>
+                    <small>If using external forms.</small>
+
+                    <% if (type === 'create') { %>
+                        <%- include("../../partials/form/inputText.ejs", {
+                            elementName: "redirectUrl",
+                            elementValue: null,
+                            required: false
+                        }) %>
+                    <% } %>
+                    <% if (type === 'edit') { %>
+                        <%- include("../../partials/form/inputText.ejs", {
+                            elementName: "redirectUrl",
+                            elementValue: formApiData.redirectUrl,
+                            required: false
+                        }) %>
+                    <% } %>
+                </div>
+            </div>
+
+            <div class="row">
+                <!-- Form Status -->
+                <div class="form-group col">
+                    <label for="formStatus">Form Status</label>
+
+                    <% if (type === 'create') { %>
+                        <%- include("../../partials/form/inputSelect.ejs", {
+                            elementName: "formStatus",
+                            elementValue: "null",
+                            required: true,
+                            optionElements: [
+                                {
+                                    optionName: "Select a Status",
+                                    optionValue: "null",
+                                    selected: true,
+                                    disabled: true
+                                },
+                                {
+                                    optionName: "Open",
+                                    optionValue: "1",
+                                    selected: false,
+                                    disabled: false
+                                },
+                                {
+                                    optionName: "Closed",
+                                    optionValue: "0",
+                                    selected: false,
+                                    disabled: false
+                                }
+                            ]
+                        }) %>
+                    <% } %>
+                    <% if (type === 'edit') { %>
+                        <%- include("../../partials/form/inputSelect.ejs", {
+                            elementName: "formStatus",
+                            elementValue: formApiData.formStatus,
+                            required: true,
+                            optionElements: [
+                                {
+                                    optionName: "Select a Status",
+                                    optionValue: "null",
+                                    selected: true,
+                                    disabled: true
+                                },
+                                {
+                                    optionName: "Open",
+                                    optionValue: "1",
+                                    selected: false,
+                                    disabled: false
+                                },
+                                {
+                                    optionName: "Closed",
+                                    optionValue: "0",
+                                    selected: false,
+                                    disabled: false
+                                }
+                            ]
+                        }) %>
+                    <% } %>
+                </div>
+            </div>
+
+            <% if (type === 'create') { %>
+                <button type="submit" class="btn btn-primary"><i class="fal fa-copy"></i> Create Form</button>
+            <% } %>
+
+            <% if (type === 'edit') { %>
+                <button type="submit" class="btn btn-warning"><i class="fal fa-copy"></i> Edit Form</button>
+            <% } %>
             </form>
         </div>
     </div>

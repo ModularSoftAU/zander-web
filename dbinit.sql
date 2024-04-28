@@ -194,12 +194,12 @@ BEFORE UPDATE ON announcements FOR EACH ROW
 
 CREATE TABLE forms (
 	formId INT NOT NULL AUTO_INCREMENT,
-    formSlug VARCHAR(30),
+    formSlug VARCHAR(30) UNIQUE NOT NULL,
     displayName VARCHAR(30),
     description TEXT,
     formType ENUM('INTERNAL', 'EXTERNAL'),
     formSchema TEXT,
-    formRedirectUrl TEXT,
+    redirectUrl TEXT,
     formStatus BOOLEAN DEFAULT 0,
     PRIMARY KEY (formId)
 );

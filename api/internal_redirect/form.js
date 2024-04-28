@@ -9,6 +9,8 @@ export default function formRedirectRoute(app, config, lang) {
     // Add userId to req.body
     req.body.actioningUser = req.session.user.userId;
 
+    console.log(req.body);
+
     postAPIRequest(
       `${process.env.siteAddress}/api/form/create`,
       req.body,
