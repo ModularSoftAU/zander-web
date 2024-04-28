@@ -1,6 +1,7 @@
 {
   "announcements": true,
   "applications": true,
+  "forms": true,
   "discord": {
     "commands": {
       "legoFlip": true

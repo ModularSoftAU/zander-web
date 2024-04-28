@@ -6,10 +6,12 @@ import sessionApiRoute from "./session";
 import userApiRoute from "./user";
 import webApiRoute from "./web";
 import filterApiRoute from "./filter";
+import formApiRoute from "./form";
 
 export default (app, client, moment, config, db, features, lang) => {
   announcementApiRoute(app, config, db, features, lang);
   applicationApiRoute(app, config, db, features, lang);
+  formApiRoute(app, config, db, features, lang);
   discordApiRoute(app, client, config, db, features, lang);
   serverApiRoute(app, config, db, features, lang);
   sessionApiRoute(app, config, db, features, lang);

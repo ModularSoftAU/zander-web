@@ -192,11 +192,32 @@ BEFORE UPDATE ON announcements FOR EACH ROW
 	SET NEW.updatedDate = NOW()
 ;
 
-CREATE TABLE applications (
-	applicationId INT NOT NULL AUTO_INCREMENT,
+CREATE TABLE forms (
+	formId INT NOT NULL AUTO_INCREMENT,
+    formSlug VARCHAR(30),
     displayName VARCHAR(30),
     description TEXT,
-    displayIcon VARCHAR(40),
+    formType ENUM('INTERNAL', 'EXTERNAL'),
+    formSchema TEXT,
+    formRedirectUrl TEXT,
+    formStatus BOOLEAN DEFAULT 0,
+    PRIMARY KEY (formId)
+);
+
+CREATE TABLE formResponses (
+	formResponseId INT NOT NULL AUTO_INCREMENT,
+    formId INT NOT NULL,
+    formUserID INT NOT NULL,
+    response JSON,
+    formStatus BOOLEAN DEFAULT 0,
+    PRIMARY KEY (formResponseId)
+);
+
+CREATE TABLE applications (
+	applicationId INT NOT NULL AUTO_INCREMENT,
+    displayName VARCHAR(30) NOT NULL,
+    description TEXT,
+    displayIcon VARCHAR(40) NOT NULL,
     requirementsMarkdown TEXT,
     redirectUrl TEXT,
     position INT,

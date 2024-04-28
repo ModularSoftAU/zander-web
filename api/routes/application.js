@@ -37,7 +37,7 @@ export default function applicationApiRoute(app, config, db, features, lang) {
         getApplications(dbQuery);
       }
 
-      // Return all Servers by default
+      // Return all Applications by default
       let dbQuery = `SELECT * FROM applications ORDER BY position ASC;`;
       getApplications(dbQuery);
     } catch (error) {
