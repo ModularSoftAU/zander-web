@@ -128,17 +128,29 @@ export default function applicationSiteRoutes(
         });
 
         const formApiData = await response.json();
+        let formSchemaData = null;
 
-        console.log(formApiData);
+        if (formApiData.data[0].formSchema) {
+          //
+          // Grab form schema data
+          //
+          const schemaFetchURL = `${formApiData.data[0].formSchema}`;
+          const schemaResponse = await fetch(schemaFetchURL);
+          const formSchemaJSONData = await schemaResponse.json();
+
+          formSchemaData = formSchemaJSONData;
+        }
 
         //
         // Render the form page
         //
         return res.view("form", {
-          pageTitle: `Form`,
+          pageTitle: formApiData.data[0].formSchema,
           config: config,
           req: req,
           features: features,
+          formApiData: formApiData,
+          formSchemaData: formSchemaData,
           globalImage: await getGlobalImage(),
           announcementWeb: await getWebAnnouncement(),
           moment: moment,

@@ -12,22 +12,31 @@
 
 
 <section class="section">
-    <div class="container">
-      <div>
-        <div class="row">
-
-          <% if (apiData.success == false) { %>
+    <div class="container" style="width: 60%;">
+      <% if (formApiData.success == false) { %>
             <%- include("partials/alert.ejs", {
               alertType: "danger",
-              content: apiData.message
+              content: formApiData.message
             }) %>
           <% } else { %>
-            <h3>Form Data</h3>
-            <small>needs here</small>
-        <% } %>
+            <% formSchemaData.sections.forEach(section => { %>
+              <h3><%= section.sectionTitle %></h3>
+              <p><%= section.sectionDescription %></p>
+              <hr>
 
-        </div>
-      </div>
+              <% section.prompts.forEach(prompt => { %>
+                <%= console.log(prompt); %>
+
+                <label for=""><%= prompt.promptDisplay %></label>
+                <%- include("./partials/form/inputText.ejs", {
+                    elementName: "body",
+                    elementValue: null,
+                    required: prompt.required
+                }) %>
+               
+              <% }) %>
+            <% }) %>
+        <% } %>
     </div>
 </section>
 

@@ -40,7 +40,7 @@ export default function formApiRoute(app, config, db, features, lang) {
 
       // Get Form by Slug
       if (formSlug) {
-        let dbQuery = `SELECT * FROM forms WHERE formSlug=${formSlug};`;
+        let dbQuery = `SELECT * FROM forms WHERE formSlug='${formSlug}';`;
         getForms(dbQuery);
       }
 
