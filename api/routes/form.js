@@ -1,4 +1,4 @@
-import { isFeatureEnabled, required, optional, generateLog } from "../common";
+import { isFeatureEnabled, required, optional, generateLog, setBannerCookie } from "../common";
 
 export default function formApiRoute(app, config, db, features, lang) {
   const baseEndpoint = "/api/form";
@@ -223,6 +223,59 @@ export default function formApiRoute(app, config, db, features, lang) {
         message: `${error}`,
       });
     }
+
+    return res;
+  });
+
+  app.post(baseEndpoint + "/:formSlug/submit", async function (req, res) {
+    isFeatureEnabled(features.forms, res, lang);
+
+    setBannerCookie("success", `Application Submitted`, res);
+
+
+    // try {
+    //   db.query(
+    //     `INSERT INTO forms 
+    //         (formSlug, displayName, description, formType, formSchema, redirectUrl, formStatus) 
+    //     VALUES (?, ?, ?, ?, ?, ?, ?)`,
+    //     [
+    //       formSlug,
+    //       displayName,
+    //       description,
+    //       formType,
+    //       formSchema,
+    //       redirectUrl,
+    //       formStatus,
+    //     ],
+    //     function (error, results, fields) {
+    //       if (error) {
+    //         return res.send({
+    //           success: false,
+    //           message: `${error}`,
+    //         });
+    //       }
+
+    //       generateLog(
+    //         actioningUser,
+    //         "SUCCESS",
+    //         "FORM",
+    //         `Created ${displayName}`,
+    //         res
+    //       );
+
+    //       return res.send({
+    //         success: true,
+    //         message: `${displayName} form created`,
+    //       });
+    //     }
+    //   );
+    // } catch (error) {
+    //   console.log(error);
+    //   return res.send({
+    //     success: false,
+    //     message: `${error}`,
+    //   });
+    // }
 
     return res;
   });

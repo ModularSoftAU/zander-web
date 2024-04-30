@@ -145,7 +145,7 @@ export default function applicationSiteRoutes(
         // Render the form page
         //
         return res.view("form", {
-          pageTitle: formApiData.data[0].formSchema,
+          pageTitle: formApiData.data[0].displayName,
           config: config,
           req: req,
           features: features,

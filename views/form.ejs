@@ -6,37 +6,56 @@
 <%- include("modules/navigationBar.ejs") %>
 
 <%- include("partials/miniHeader.ejs", {
-  headerTitle: "Form",
+  headerTitle: formApiData.data[0].displayName,
   backgroundImage: globalImage
 }) %>
 
 
 <section class="section">
     <div class="container" style="width: 60%;">
-      <% if (formApiData.success == false) { %>
+      <form action="<%= process.env.siteAddress %>/redirect/form/<%= formApiData.data[0].formSlug %>/submit" method="post">
+          <% if (formApiData.success == false) { %>
             <%- include("partials/alert.ejs", {
               alertType: "danger",
               content: formApiData.message
             }) %>
           <% } else { %>
-            <% formSchemaData.sections.forEach(section => { %>
+            <% formSchemaData.sections.forEach((section, sectionIndex) => { %>
               <h3><%= section.sectionTitle %></h3>
               <p><%= section.sectionDescription %></p>
               <hr>
 
-              <% section.prompts.forEach(prompt => { %>
-                <%= console.log(prompt); %>
+              <% section.prompts.forEach((prompt, promptIndex) => { %>
+                <% 
+                // Generate a unique elementName with an iterated number
+                const elementName = `${formApiData.data[0].formSlug}_${sectionIndex}_${promptIndex}`;
+                %>
 
-                <label for=""><%= prompt.promptDisplay %></label>
-                <%- include("./partials/form/inputText.ejs", {
-                    elementName: "body",
+                <label for="<%= elementName %>"><%= prompt.promptDisplay %></label>
+                <% if (prompt.promptType == "shortText") { %>
+                  <%- include("./partials/form/inputText.ejs", {
+                    elementName: elementName,
                     elementValue: null,
                     required: prompt.required
-                }) %>
-               
+                  }) %>
+                <% } %>
+
+                <% if (prompt.promptType == "longText") { %>
+                  <%- include("./partials/form/inputTextArea.ejs", {
+                    elementName: elementName,
+                    elementValue: null,
+                    required: prompt.required
+                  }) %>
+                <% } %>
+                <br>
+              
               <% }) %>
-            <% }) %>
+              <br>
+          <% }) %>
         <% } %>
+
+        <button type="submit" class="btn btn-primary mb-3">Submit</button>
+      </form>
     </div>
 </section>
 

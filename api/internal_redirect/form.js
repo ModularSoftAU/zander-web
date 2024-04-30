@@ -58,4 +58,19 @@ export default function formRedirectRoute(app, config, lang) {
 
     return res;
   });
+
+  app.post(baseEndpoint + "/:formSlug/submit", async function (req, res) {
+    const formSlug = req.params.formSlug;
+
+    postAPIRequest(
+      `${process.env.siteAddress}/api/form/:formSlug/submit`,
+      req.body,
+      `${process.env.siteAddress}/`,
+      res
+    );
+
+    res.redirect(`${process.env.siteAddress}/`);
+
+    return res;
+  });
 }
