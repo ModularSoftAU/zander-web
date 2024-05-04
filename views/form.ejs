@@ -47,6 +47,40 @@
                     required: prompt.required
                   }) %>
                 <% } %>
+
+                <% if (prompt.promptType == "multipleChoice") { %>
+                  <%- include("./partials/form/inputSelect.ejs", {
+                      elementName: elementName,
+                      elementValue: "null",
+                      required: true,
+                      optionElements: [
+                          {
+                              optionName: "Select a Type",
+                              optionValue: "null",
+                              selected: true,
+                              disabled: true
+                          },
+                          {
+                              optionName: "Server Ping MOTD",
+                              optionValue: "motd",
+                              selected: false,
+                              disabled: false
+                          },
+                          {
+                              optionName: "In-Game Tip",
+                              optionValue: "tip",
+                              selected: false,
+                              disabled: false
+                          },
+                          {
+                              optionName: "Website Banner",
+                              optionValue: "web",
+                              selected: false,
+                              disabled: false
+                          }
+                      ]
+                  }) %>
+                <% } %>
                 <br>
               
               <% }) %>

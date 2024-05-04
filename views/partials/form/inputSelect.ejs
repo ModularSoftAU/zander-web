@@ -1,35 +1,72 @@
-<script>
-    window.addEventListener("load",function(event) {
-        const $<%= elementName %>Select = document.querySelector('#<%= elementName %>Sel');
-        $<%= elementName %>Select.value = '<%= elementValue %>'
-    },false);
-</script>
+<%- include("modules/header.ejs", {
+    pageTitle: pageTitle,
+    pageDescription: "Form application page"
+}) %>
 
-<select 
-    class="form-control <%= elementName %>Sel" 
-    name="<%= elementName %>"
-    id="<%= elementName %>Sel"
-    <% if (required) { %>
-        required
-    <% } %>
->
+<%- include("modules/navigationBar.ejs") %>
 
-    <% optionElements.forEach(optionElement => { %>
+<%- include("partials/miniHeader.ejs", {
+  headerTitle: formApiData.data[0].displayName,
+  backgroundImage: globalImage
+}) %>
 
-        <option 
-            <% if (optionElement.selected) { %>
-                selected
-            <% } %> 
-            <% if (optionElement.disabled) { %>
-                disabled
+
+<section class="section">
+  <div class="container" style="width: 60%;">
+    <form action="<%= process.env.siteAddress %>/redirect/form/<%= formApiData.data[0].formSlug %>/submit" method="post">
+      <% if (formApiData.success == false) { %>
+        <%- include("partials/alert.ejs", {
+          alertType: "danger",
+          content: formApiData.message
+        }) %>
+      <% } else { %>
+        <% formSchemaData.sections.forEach((section, sectionIndex) => { %>
+          <h3><%= section.sectionTitle %></h3>
+          <p><%= section.sectionDescription %></p>
+          <hr>
+
+          <% section.prompts.forEach((prompt, promptIndex) => { %>
+            <% 
+            // Generate a unique elementName with an iterated number
+            const elementName = `${formApiData.data[0].formSlug}_${sectionIndex}_${promptIndex}`;
+            %>
+
+            <label for="<%= elementName %>"><%= prompt.promptDisplay %></label>
+            
+            <% if (prompt.promptType === "shortText") { %>
+              <%- include("./partials/form/inputText.ejs", {
+                elementName: elementName,
+                elementValue: null,
+                required: prompt.required
+              }) %>
             <% } %>
-            <% if (optionElement.optionValue) { %>
-                value="<%= optionElement.optionValue %>"
+
+            <% if (prompt.promptType === "longText") { %>
+              <%- include("./partials/form/inputTextArea.ejs", {
+                elementName: elementName,
+                elementValue: null,
+                required: prompt.required
+              }) %>
             <% } %>
-        >
-            <%= optionElement.optionName %>
-        </option>
+            
+            <% if (prompt.promptType === "multipleChoice") { %>
+              <select name="<%= elementName %>"<% if (prompt.required) { %> required<% } %>>
+                <option value="" disabled selected>Select an option</option>
+                <% prompt.promptChoices.forEach((choice) => { %>
+                  <option value="<%= choice %>"><%= choice %></option>
+                <% }) %>
+              </select>
+            <% } %>
 
-    <% }); %>
+            <br>
+          <% }) %>
+          <br>
+        <% }) %>
+      <% } %>
 
-</select>
+      <button type="submit" class="btn btn-primary mb-3">Submit</button>
+    </form>
+  </div>
+</section>
+
+<%- include("modules/footer.ejs") %>
