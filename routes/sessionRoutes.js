@@ -56,8 +56,8 @@ export default function sessionSiteRoute(
 
       // Exchange authorization code for access token
       const tokenParams = {
-        client_id: process.env.discordClientId,
-        client_secret: process.env.discordClientSecret,
+        client_id: `${process.env.discordClientId}`,
+        client_secret: `${process.env.discordClientSecret}`,
         grant_type: "authorization_code",
         code: code,
         redirect_uri: `${process.env.siteAddress}/login/callback`,
