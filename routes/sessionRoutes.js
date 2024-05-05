@@ -148,6 +148,7 @@ export default function sessionSiteRoute(
     }
   });
 
+
   app.get("/unregistered", async function (req, res) {
     if (!isFeatureWebRouteEnabled(features.web.register, req, res, features))
       return;
