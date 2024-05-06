@@ -103,11 +103,13 @@ export default function sessionSiteRoute(
       console.log("Received user data from Discord:", userData);
 
 
-      console.log(`GOT HERE`);
-
+      
       // Check if user is registered in your system
       const userGetData = new UserGetter();
       const userIsRegistered = await userGetData.isRegistered(userData.id);
+      
+      console.log(userIsRegistered);
+      console.log(`GOT HERE`);
 
       if (!userIsRegistered) {
         // Set a cookie for unregistered user
