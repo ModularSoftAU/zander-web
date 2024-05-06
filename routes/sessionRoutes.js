@@ -119,8 +119,8 @@ export default function sessionSiteRoute(
       } else {
         // User is registered, proceed with session setup
         const userLoginData = await userGetData.byDiscordId(userData.id);
-        console.log(userLoginData);
-        console.log(`GOT HERE`);
+        console.log(`Here is user data: ${userLoginData}`);
+        console.log(`GOT HERE 2`);
 
         req.session.authenticated = true;
         req.session.user = {
