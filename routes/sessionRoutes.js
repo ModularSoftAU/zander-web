@@ -121,6 +121,9 @@ export default function sessionSiteRoute(
         // User is registered, proceed with session setup
         const userLoginData = await userGetData.byDiscordId(userData.id);
         const userPermissionData = await getUserPermissions(userLoginData);
+
+        console.log(`Permissions Data`);
+        console.log(userPermissionData);
         
         req.session.authenticated = true;
         req.session.user = {
