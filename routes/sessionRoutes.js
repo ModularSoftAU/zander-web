@@ -102,6 +102,9 @@ export default function sessionSiteRoute(
       const userData = await userResponse.json();
       console.log("Received user data from Discord:", userData);
 
+
+      console.log(`GOT HERE`);
+
       // Check if user is registered in your system
       const userGetData = new UserGetter();
       const userIsRegistered = await userGetData.isRegistered(userData.id);
