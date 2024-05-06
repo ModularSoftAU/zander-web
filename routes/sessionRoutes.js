@@ -10,6 +10,7 @@ import { getWebAnnouncement } from "../controllers/announcementController";
 import {
   UserGetter,
   getProfilePicture,
+  getRankPermissions,
   getUserPermissions,
 } from "../controllers/userController";
 import { updateAudit_lastWebsiteLogin } from "../controllers/auditController";
@@ -119,19 +120,22 @@ export default function sessionSiteRoute(
       } else {
         // User is registered, proceed with session setup
         const userLoginData = await userGetData.byDiscordId(userData.id);
-        console.log(`Here is user data: ${userLoginData}`);
-        console.log(`GOT HERE 2`);
-
+        const userPermissionData = await getUserPermissions(userLoginData);
+        
         req.session.authenticated = true;
         req.session.user = {
           userId: userLoginData.userId,
           username: userLoginData.username,
           profilePicture: await getProfilePicture(userLoginData.username),
-          discordID: userLoginData.discordID,
+          discordID: userLoginData.discordId,
           uuid: userLoginData.uuid,
-          ranks: (await getUserPermissions(userLoginData)).userRanks,
-          permissions: await getUserPermissions(userLoginData)
+          ranks: userPermissionData.userRanks,
+          permissions: userPermissionData,
         };
+
+        console.log(userLoginData);
+        console.log(req.session);
+        console.log(`GOT HERE 4`);
 
         // Update user profile for auditing
         await updateAudit_lastWebsiteLogin(new Date(), userLoginData.username);
