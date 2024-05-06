@@ -101,15 +101,10 @@ export default function sessionSiteRoute(
 
       const userData = await userResponse.json();
       console.log("Received user data from Discord:", userData);
-
-
       
       // Check if user is registered in your system
       const userGetData = new UserGetter();
       const userIsRegistered = await userGetData.isRegistered(userData.id);
-      
-      console.log(userIsRegistered);
-      console.log(`GOT HERE`);
 
       if (!userIsRegistered) {
         // Set a cookie for unregistered user
@@ -124,6 +119,8 @@ export default function sessionSiteRoute(
       } else {
         // User is registered, proceed with session setup
         const userLoginData = await userGetData.byDiscordId(userData.id);
+        console.log(userLoginData);
+        console.log(`GOT HERE`);
 
         req.session.authenticated = true;
         req.session.user = {
@@ -133,7 +130,7 @@ export default function sessionSiteRoute(
           discordID: userLoginData.discordID,
           uuid: userLoginData.uuid,
           ranks: (await getUserPermissions(userLoginData)).userRanks,
-          permissions: await getUserPermissions(userLoginData),
+          permissions: await getUserPermissions(userLoginData)
         };
 
         // Update user profile for auditing
