@@ -10,6 +10,7 @@ import { getWebAnnouncement } from "../controllers/announcementController";
 import {
   UserGetter,
   getProfilePicture,
+  getRankPermissions,
   getUserPermissions,
 } from "../controllers/userController";
 import { updateAudit_lastWebsiteLogin } from "../controllers/auditController";
@@ -54,6 +55,8 @@ export default function sessionSiteRoute(
         throw new Error("Authorization code is missing");
       }
 
+      console.log("Received authorization code:", code);
+
       // Exchange authorization code for access token
       const tokenParams = {
         client_id: process.env.discordClientId,
@@ -76,12 +79,13 @@ export default function sessionSiteRoute(
       );
 
       if (!tokenResponse.ok) {
-        throw new Error(
-          `Failed to obtain access token: ${tokenResponse.status} ${tokenResponse.statusText}`
-        );
+        const errorText = `Failed to obtain access token: ${tokenResponse.status} ${tokenResponse.statusText}`;
+        console.error(errorText);
+        throw new Error(errorText);
       }
 
-      const tokenData = await tokenResponse.json(); // Parse the response body as JSON
+      const tokenData = await tokenResponse.json();
+      console.log("Received access token data:", tokenData);
 
       // Use the access token to fetch user data from Discord API
       const userResponse = await fetch("https://discord.com/api/users/@me", {
@@ -91,50 +95,55 @@ export default function sessionSiteRoute(
       });
 
       if (!userResponse.ok) {
-        throw new Error(
-          `Failed to fetch user data: ${userResponse.status} ${userResponse.statusText}`
-        );
+        const errorText = `Failed to fetch user data: ${userResponse.status} ${userResponse.statusText}`;
+        console.error(errorText);
+        throw new Error(errorText);
       }
 
-      const userData = await userResponse.json(); // Parse the response body as JSON
-
+      const userData = await userResponse.json();
+      console.log("Received user data from Discord:", userData);
+      
       // Check if user is registered in your system
-      const userGetData = new UserGetter(); // Assuming UserGetter is defined
+      const userGetData = new UserGetter();
       const userIsRegistered = await userGetData.isRegistered(userData.id);
 
       if (!userIsRegistered) {
-        // Set a cookie for unregistered user (example)
+        // Set a cookie for unregistered user
         res.cookie("discordId", userData.id, {
           path: "/",
           httpOnly: true,
-          maxAge: 10000, // Expires in 10 seconds
+          maxAge: 10000, // Expires in 10 seconds (for testing purposes)
         });
 
+        console.log("User is unregistered, redirecting to /unregistered");
         return res.redirect(`/unregistered`);
       } else {
         // User is registered, proceed with session setup
         const userLoginData = await userGetData.byDiscordId(userData.id);
-
-        req.session.authenticated = true;
-
-        // Example: Fetch additional user permissions and profile picture
         const userPermissionData = await getUserPermissions(userLoginData);
-        const profilePicture = await getProfilePicture(userLoginData.username);
 
+        console.log(`Permissions Data`);
+        console.log(userPermissionData);
+        
+        req.session.authenticated = true;
         req.session.user = {
           userId: userLoginData.userId,
           username: userLoginData.username,
-          profilePicture: profilePicture,
-          discordID: userLoginData.discordID,
+          profilePicture: await getProfilePicture(userLoginData.username),
+          discordID: userLoginData.discordId,
           uuid: userLoginData.uuid,
           ranks: userPermissionData.userRanks,
           permissions: userPermissionData,
         };
 
-        // Update user profile for auditing (example)
+        console.log(userLoginData);
+        console.log(req.session);
+        console.log(`GOT HERE 4`);
+
+        // Update user profile for auditing
         await updateAudit_lastWebsiteLogin(new Date(), userLoginData.username);
 
-        // Redirect user to the home page
+        console.log("User is registered, redirecting to home page");
         return res.redirect(`${process.env.siteAddress}/`);
       }
     } catch (error) {
@@ -142,6 +151,8 @@ export default function sessionSiteRoute(
       return res.status(500).send("Internal Server Error");
     }
   });
+
+
 
   app.get("/unregistered", async function (req, res) {
     if (!isFeatureWebRouteEnabled(features.web.register, req, res, features))
