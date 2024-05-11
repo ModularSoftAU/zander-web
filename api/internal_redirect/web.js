@@ -28,7 +28,7 @@ export default function webRedirectRoute(app, config, lang) {
       res
     );
 
-    res.redirect(`${process.env.siteAddress}/`);
+    res.redirect(`${process.env.siteAddress}/profile/${req.session.user.username}`);
 
     return res;
   });
@@ -44,7 +44,7 @@ export default function webRedirectRoute(app, config, lang) {
       res
     );
 
-    res.redirect(`${process.env.siteAddress}/`);
+    res.redirect(`${process.env.siteAddress}/profile/${req.session.user.username}`);
 
     return res;
   });
@@ -60,7 +60,7 @@ export default function webRedirectRoute(app, config, lang) {
       res
     );
 
-    res.redirect(`${process.env.siteAddress}/`);
+    res.redirect(`${process.env.siteAddress}/profile/${req.session.user.username}`);
 
     return res;
   });
@@ -76,7 +76,7 @@ export default function webRedirectRoute(app, config, lang) {
       res
     );
 
-    res.redirect(`${process.env.siteAddress}/`);
+    res.redirect(`${process.env.siteAddress}/profile/${req.session.user.username}`);
 
     return res;
   });

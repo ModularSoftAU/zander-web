@@ -146,45 +146,49 @@
                 <%= moment(profileApiData.joined).format('LLLL') %>
             </p>
             <hr>
-
-            <h4>Interests</h4>
-            <p><%= profileApiData.social_interests %></p>
-            <hr>
-
-            <h4>Social Connections</h4>
-            <hr>
-
-            <% if (profileApiData.social_discord) { %>
-                <h6><i class="fa-brands fa-discord"></i> Discord</h6>
-                <p><%= profileApiData.social_discord %></p> 
+            
+            <% if (profileApiData.social_interests) { %>
+                <h4>Interests</h4>
+                <p><%= profileApiData.social_interests %></p>
+                <hr>
             <% } %>
 
-            <% if (profileApiData.social_steam) { %>
-                <h6 class="mb-4"><a href="<%= profileApiData.social_steam %>" target="_blank"><i class="fa-brands fa-steam"></i> Steam</a></h6>
-            <% } %>
+            <% if (profileApiData.social_discord || profileApiData.social_steam || profileApiData.social_twitch || profileApiData.social_youtube || profileApiData.social_twitter_x || profileApiData.social_instagram || profileApiData.social_reddit || profileApiData.social_spotify) { %>
+                <h4>Social Connections</h4>
+                <hr>
 
-            <% if (profileApiData.social_twitch) { %>
-                <h6 class="mb-4"><a href="<%= profileApiData.social_twitch %>" target="_blank"><i class="fa-brands fa-twitch"></i> Twitch</a></h6>
-            <% } %>
+                <% if (profileApiData.social_discord) { %>
+                    <h6><i class="fa-brands fa-discord"></i> Discord</h6>
+                    <p><%= profileApiData.social_discord %></p> 
+                <% } %>
 
-            <% if (profileApiData.social_youtube) { %>
-                <h6 class="mb-4"><a href="<%= profileApiData.social_youtube %>" target="_blank"><i class="fa-brands fa-youtube"></i> YouTube</a></h6>
-            <% } %>
+                <% if (profileApiData.social_steam) { %>
+                    <h6 class="mb-4"><a href="<%= profileApiData.social_steam %>" target="_blank"><i class="fa-brands fa-steam"></i> Steam</a></h6>
+                <% } %>
 
-            <% if (profileApiData.social_twitter_x) { %>
-                <h6 class="mb-4"><a href="<%= profileApiData.social_twitter_x %>" target="_blank"><i class="fa-brands fa-twitter"></i> Twitter/X</a></h6>
-            <% } %>
+                <% if (profileApiData.social_twitch) { %>
+                    <h6 class="mb-4"><a href="https://twitch.tv/<%= profileApiData.social_twitch %>" target="_blank"><i class="fa-brands fa-twitch"></i> Twitch</a></h6>
+                <% } %>
 
-            <% if (profileApiData.social_instagram) { %>
-                <h6 class="mb-4"><a href="<%= profileApiData.social_instagram %>" target="_blank"><i class="fa-brands fa-square-instagram"></i> Instagram</a></h6>
-            <% } %>
+                <% if (profileApiData.social_youtube) { %>
+                    <h6 class="mb-4"><a href="https://youtube.com/<%= profileApiData.social_youtube %>" target="_blank"><i class="fa-brands fa-youtube"></i> YouTube</a></h6>
+                <% } %>
 
-            <% if (profileApiData.social_reddit) { %>
-                <h6 class="mb-4"><a href="<%= profileApiData.social_reddit %>" target="_blank"><i class="fa-brands fa-reddit"></i> Reddit</a></h6>
-            <% } %>
+                <% if (profileApiData.social_twitter_x) { %>
+                    <h6 class="mb-4"><a href="https://twitter.com/<%= profileApiData.social_twitter_x %>" target="_blank"><i class="fa-brands fa-twitter"></i> Twitter/X</a></h6>
+                <% } %>
 
-            <% if (profileApiData.social_spotify) { %>
-                <h6 class="mb-4"><a href="<%= profileApiData.social_spotify %>" target="_blank"><i class="fa-brands fa-spotify"></i> Spotify</a></h6>
+                <% if (profileApiData.social_instagram) { %>
+                    <h6 class="mb-4"><a href="https://instagram.com/<%= profileApiData.social_instagram %>" target="_blank"><i class="fa-brands fa-square-instagram"></i> Instagram</a></h6>
+                <% } %>
+
+                <% if (profileApiData.social_reddit) { %>
+                    <h6 class="mb-4"><a href="<%= profileApiData.social_reddit %>" target="_blank"><i class="fa-brands fa-reddit"></i> Reddit</a></h6>
+                <% } %>
+
+                <% if (profileApiData.social_spotify) { %>
+                    <h6 class="mb-4"><a href="https://open.spotify.com/user/<%= profileApiData.social_spotify %>" target="_blank"><i class="fa-brands fa-spotify"></i> Spotify</a></h6>
+                <% } %>
             <% } %>
         </div>
     </div>
