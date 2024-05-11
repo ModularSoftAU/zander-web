@@ -55,8 +55,6 @@ export default function sessionSiteRoute(
         throw new Error("Authorization code is missing");
       }
 
-      console.log("Received authorization code:", code);
-
       // Exchange authorization code for access token
       const tokenParams = {
         client_id: process.env.discordClientId,
@@ -85,8 +83,6 @@ export default function sessionSiteRoute(
       }
 
       const tokenData = await tokenResponse.json();
-      console.log("Received access token data:", tokenData);
-
       // Use the access token to fetch user data from Discord API
       const userResponse = await fetch("https://discord.com/api/users/@me", {
         headers: {
@@ -100,9 +96,7 @@ export default function sessionSiteRoute(
         throw new Error(errorText);
       }
 
-      const userData = await userResponse.json();
-      console.log("Received user data from Discord:", userData);
-      
+      const userData = await userResponse.json();      
       // Check if user is registered in your system
       const userGetData = new UserGetter();
       const userIsRegistered = await userGetData.isRegistered(userData.id);
@@ -112,7 +106,7 @@ export default function sessionSiteRoute(
         res.cookie("discordId", userData.id, {
           path: "/",
           httpOnly: true,
-          maxAge: 10000, // Expires in 10 seconds (for testing purposes)
+          maxAge: 10000, // Expires in 10 seconds
         });
 
         console.log("User is unregistered, redirecting to /unregistered");
@@ -121,9 +115,6 @@ export default function sessionSiteRoute(
         // User is registered, proceed with session setup
         const userLoginData = await userGetData.byDiscordId(userData.id);
         const userPermissionData = await getUserPermissions(userLoginData);
-
-        console.log(`Permissions Data`);
-        console.log(userPermissionData);
         
         req.session.authenticated = true;
         req.session.user = {
@@ -136,14 +127,8 @@ export default function sessionSiteRoute(
           permissions: userPermissionData,
         };
 
-        console.log(userLoginData);
-        console.log(req.session);
-        console.log(`GOT HERE 4`);
-
         // Update user profile for auditing
         await updateAudit_lastWebsiteLogin(new Date(), userLoginData.username);
-
-        console.log("User is registered, redirecting to home page");
         return res.redirect(`${process.env.siteAddress}/`);
       }
     } catch (error) {
@@ -151,8 +136,6 @@ export default function sessionSiteRoute(
       return res.status(500).send("Internal Server Error");
     }
   });
-
-
 
   app.get("/unregistered", async function (req, res) {
     if (!isFeatureWebRouteEnabled(features.web.register, req, res, features))

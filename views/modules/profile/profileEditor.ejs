@@ -5,7 +5,9 @@
 
 <%- include("../../modules/navigationBar.ejs") %>
 
-<%- include("../../modules/profile/profileHeader.ejs") %>
+<%- include("../../modules/profile/profileHeader.ejs"), {
+    profileSession: profileSession
+} %>
 <br>
 
 <div class="container">

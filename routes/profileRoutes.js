@@ -1,4 +1,4 @@
-import { getGlobalImage } from "../api/common";
+import { getGlobalImage, isLoggedIn } from "../api/common";
 import { getWebAnnouncement } from "../controllers/announcementController";
 import { UserGetter, getProfilePicture, getUserLastSession, getUserPermissions, getUserStats } from "../controllers/userController";
 
@@ -68,9 +68,7 @@ export default function profileSiteRoutes(
           features: features,
           globalImage: await getGlobalImage(),
           announcementWeb: await getWebAnnouncement(),
-          profilePicture: await getProfilePicture(
-            profileApiData.data[0].username
-          ),
+          profilePicture: await getProfilePicture(profileApiData.data[0].username),
           profileApiData: profileApiData.data[0],
           profileStats: await getUserStats(profileApiData.data[0].userId),
           profileSession: await getUserLastSession(profileApiData.data[0].userId),
@@ -95,6 +93,8 @@ export default function profileSiteRoutes(
       const userData = new UserGetter();
       const userHasJoined = await userData.hasJoined(username);
 
+      if (!isLoggedIn(req)) return res.redirect(`/`);
+
       if (!userHasJoined) {
         return res.view("session/notFound", {
           pageTitle: `404: Player Not Found`,
@@ -102,7 +102,6 @@ export default function profileSiteRoutes(
           req: req,
           res: res,
           features: features,
-          profileSession: await getUserLastSession(profileApiData.data[0].userId),
           globalImage: await getGlobalImage(),
           announcementWeb: await getWebAnnouncement(),
         });
@@ -130,6 +129,7 @@ export default function profileSiteRoutes(
           profilePicture: await getProfilePicture(profileApiData.data[0].username),
           profileApiData: profileApiData.data[0],
           profileStats: await getUserStats(profileApiData.data[0].userId),
+          profileSession: await getUserLastSession(profileApiData.data[0].userId),
           moment: moment,
         });
       }
