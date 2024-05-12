@@ -1,3 +1,4 @@
+import fetch from "node-fetch";
 import { UserGetter, UserLinkGetter, setProfileDisplayPreferences, setProfileSocialConnections, setProfileUserAboutMe, setProfileUserInterests } from "../../controllers/userController";
 import { required, optional, generateVerifyCode, setBannerCookie } from "../common";
 
@@ -260,12 +261,37 @@ export default function userApiRoute(app, config, db, features, lang) {
     const social_interests = required(req.body, "social_interests");
 
     try {
-      setProfileUserInterests(userId, social_interests);
-    } catch (error) {
-      return res.send({
-        success: false,
-        message: `${error}`,
+      const filterURL = `${process.env.siteAddress}/api/filter`;
+      const bodyJSON = { content: social_interests };
+
+      const response = await fetch(filterURL, {
+        method: "POST",
+        body: JSON.stringify(bodyJSON),
+        headers: {
+          "Content-Type": "application/json",
+          "x-access-token": process.env.apiKey,
+        },
       });
+
+      const dataResponse = await response.json();
+      console.log(dataResponse);
+
+      if (dataResponse.success == true) {
+        try {
+          setProfileUserInterests(userId, social_interests);
+        } catch (error) {
+          return res.send({
+            success: false,
+            message: `${error}`,
+          });
+        }
+      } else {
+        console.log(`Illegal words detected.`);
+        setBannerCookie("danger", `Illegal words detected, changes not applied.`, res);
+      }
+    } catch (error) {
+      console.log(error);
+      return;
     }
 
     return res;

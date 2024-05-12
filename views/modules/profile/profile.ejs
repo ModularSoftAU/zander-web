@@ -11,6 +11,13 @@
 <br>
 
 <div class="container">
+    <% if (req.cookies.alertType) { %>
+        <%- include("../../partials/alert.ejs", {
+          alertType: req.cookies.alertType,
+          content: req.cookies.alertContent
+        }) %>
+    <% } %>
+
     <div class="row">
         <div class="col-md-8">
         <ul class="nav nav-pills nav-fill" id="myTab" role="tablist">
@@ -163,7 +170,7 @@
                 <% } %>
 
                 <% if (profileApiData.social_steam) { %>
-                    <h6 class="mb-4"><a href="<%= profileApiData.social_steam %>" target="_blank"><i class="fa-brands fa-steam"></i> Steam</a></h6>
+                    <h6 class="mb-4"><a href="https://steamcommunity.com/id/<%= profileApiData.social_steam %>" target="_blank"><i class="fa-brands fa-steam"></i> Steam</a></h6>
                 <% } %>
 
                 <% if (profileApiData.social_twitch) { %>
