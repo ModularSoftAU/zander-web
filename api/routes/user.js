@@ -153,6 +153,13 @@ export default function userApiRoute(app, config, db, features, lang) {
         message: `User ${username} does not exist in player base, please join the Network and try again.`,
       });
     } else {
+      if (user.discordId) {
+        return res.send({
+          success: false,
+          message: `You are already registered and linked, you cannot do this again.`,
+        });
+      }
+
       try {
         const linkCode = await generateVerifyCode();
         const now = new Date();
@@ -302,12 +309,34 @@ export default function userApiRoute(app, config, db, features, lang) {
     const social_aboutMe = required(req.body, "social_aboutMe");
 
     try {
-      setProfileUserAboutMe(userId, social_aboutMe);
-    } catch (error) {
-      return res.send({
-        success: false,
-        message: `${error}`,
+      const filterURL = `${process.env.siteAddress}/api/filter`;
+      const bodyJSON = { content: social_aboutMe };
+
+      const response = await fetch(filterURL, {
+        method: "POST",
+        body: JSON.stringify(bodyJSON),
+        headers: {
+          "Content-Type": "application/json",
+          "x-access-token": process.env.apiKey,
+        },
       });
+
+      const dataResponse = await response.json();
+      console.log(dataResponse);
+
+      if (dataResponse.success == true) {
+         try {
+           setProfileUserAboutMe(userId, social_aboutMe);
+         } catch (error) {
+           return res.send({
+             success: false,
+             message: `${error}`,
+           });
+         }
+      }
+    } catch (error) {
+      console.log(error);
+      return;
     }
 
     return res;
