@@ -1,5 +1,5 @@
 import fetch from "node-fetch";
-import { UserGetter, UserLinkGetter, setProfileDisplayPreferences, setProfileSocialConnections, setProfileUserAboutMe, setProfileUserInterests } from "../../controllers/userController";
+import { UserGetter, UserLinkGetter, getProfilePicture, getUserLastSession, getUserStats, setProfileDisplayPreferences, setProfileSocialConnections, setProfileUserAboutMe, setProfileUserInterests } from "../../controllers/userController";
 import { required, optional, generateVerifyCode, setBannerCookie } from "../common";
 
 export default function userApiRoute(app, config, db, features, lang) {
@@ -77,7 +77,6 @@ export default function userApiRoute(app, config, db, features, lang) {
     }
   });
 
-
   // TODO: Update docs
   app.get(baseEndpoint + "/get", async function (req, res) {
     const username = optional(req.query, "username");
@@ -128,6 +127,52 @@ export default function userApiRoute(app, config, db, features, lang) {
             success: true,
             data: results,
           });
+        });
+      }
+    } catch (error) {
+      return res.send({
+        success: false,
+        message: `${error}`,
+      });
+    }
+
+    return res;
+  });
+
+  // TODO: Update docs
+  app.get(baseEndpoint + "/profile/get", async function (req, res) {
+    const username = optional(req.query, "username");
+
+    try {
+      if (username) {
+        //
+        // Grab user data
+        //
+        const fetchURL = `${process.env.siteAddress}/api/user/get?username=${username}`;
+        const response = await fetch(fetchURL, {
+          headers: { "x-access-token": process.env.apiKey },
+        });
+
+        const apiData = await response.json();
+        
+        const profileApiData = apiData.data[0];
+        const profilePicture = await getProfilePicture(apiData.data[0].username);
+        const profileStats = await getUserStats(apiData.data[0].userId);
+        const profileSession = await getUserLastSession(apiData.data[0].userId);
+
+        return res.send({
+          success: true,
+          data: {
+            profileData: profileApiData,
+            profilePicture: profilePicture,
+            profileStats: profileStats,
+            profileSession: profileSession
+          }
+        });
+      } else {
+        return res.send({
+          success: false,
+          message: `No Users found`,
         });
       }
     } catch (error) {
@@ -213,7 +258,11 @@ export default function userApiRoute(app, config, db, features, lang) {
       let linkUserUUID = linkUser.uuid;
 
       if (!linkUser) {
-        setBannerCookie("warning", `No verification code matches, please try again.`, res);
+        setBannerCookie(
+          "warning",
+          `No verification code matches, please try again.`,
+          res
+        );
         return res.redirect(`/unregistered`);
       }
 
@@ -234,7 +283,11 @@ export default function userApiRoute(app, config, db, features, lang) {
         .catch((error) => {
           // Handle error
           console.error("Error linking");
-          setBannerCookie("warning", `Issue with linking, try again soon.`, res);
+          setBannerCookie(
+            "warning",
+            `Issue with linking, try again soon.`,
+            res
+          );
         });
     } catch (error) {
       return res.send({
@@ -252,7 +305,11 @@ export default function userApiRoute(app, config, db, features, lang) {
     const profilePicture_email = optional(req.body, "profilePicture_email");
 
     try {
-      setProfileDisplayPreferences(userId, profilePicture_type, profilePicture_email);
+      setProfileDisplayPreferences(
+        userId,
+        profilePicture_type,
+        profilePicture_email
+      );
     } catch (error) {
       return res.send({
         success: false,
@@ -294,7 +351,11 @@ export default function userApiRoute(app, config, db, features, lang) {
         }
       } else {
         console.log(`Illegal words detected.`);
-        setBannerCookie("danger", `Illegal words detected, changes not applied.`, res);
+        setBannerCookie(
+          "danger",
+          `Illegal words detected, changes not applied.`,
+          res
+        );
       }
     } catch (error) {
       console.log(error);
@@ -325,14 +386,14 @@ export default function userApiRoute(app, config, db, features, lang) {
       console.log(dataResponse);
 
       if (dataResponse.success == true) {
-         try {
-           setProfileUserAboutMe(userId, social_aboutMe);
-         } catch (error) {
-           return res.send({
-             success: false,
-             message: `${error}`,
-           });
-         }
+        try {
+          setProfileUserAboutMe(userId, social_aboutMe);
+        } catch (error) {
+          return res.send({
+            success: false,
+            message: `${error}`,
+          });
+        }
       }
     } catch (error) {
       console.log(error);
@@ -341,7 +402,7 @@ export default function userApiRoute(app, config, db, features, lang) {
 
     return res;
   });
-  
+
   app.post(baseEndpoint + "/profile/social", async function (req, res) {
     const userId = required(req.body, "userId");
     const social_discord = optional(req.body, "social_discord");
@@ -354,7 +415,17 @@ export default function userApiRoute(app, config, db, features, lang) {
     const social_spotify = optional(req.body, "social_spotify");
 
     try {
-      setProfileSocialConnections(userId, social_discord, social_steam, social_twitch, social_youtube, social_twitter_x, social_instagram, social_reddit, social_spotify);
+      setProfileSocialConnections(
+        userId,
+        social_discord,
+        social_steam,
+        social_twitch,
+        social_youtube,
+        social_twitter_x,
+        social_instagram,
+        social_reddit,
+        social_spotify
+      );
     } catch (error) {
       return res.send({
         success: false,
