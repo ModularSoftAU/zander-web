@@ -72,14 +72,14 @@ export default function serverApiRoute(app, config, db, features, lang) {
     try {
       db.query(
         `
-                INSERT INTO 
-                    servers
-                (
-                    displayName,
-                    serverType,
-                    serverConnectionAddress,
-                    position
-                ) VALUES (?, ?, ?, ?)`,
+        INSERT INTO 
+            servers
+        (
+            displayName,
+            serverType,
+            serverConnectionAddress,
+            position
+        ) VALUES (?, ?, ?, ?)`,
         [displayName, serverType, serverConnectionAddress, position],
         function (error, results, fields) {
           if (error) {
