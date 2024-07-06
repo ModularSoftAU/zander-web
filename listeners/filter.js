@@ -31,6 +31,7 @@ export class GuildMessageListener extends Listener {
         });
 
         const dataResponse = await response.json();
+        console.log(`dataResponse`);
         console.log(dataResponse);
 
         if (message.author.isbot) return;
@@ -44,7 +45,7 @@ export class GuildMessageListener extends Listener {
               `\`${message.author.username}\` please don't advertise or say prohibited content/phrases. If you continue, you will be punished.`
             )
             .setColor(`#ff3333`);
-          message.reply({ embeds: [embed] });
+          return message.reply({ embeds: [embed] });
         }
       } catch (error) {
         console.log(error);

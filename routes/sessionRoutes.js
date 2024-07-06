@@ -12,6 +12,7 @@ import {
   getProfilePicture,
   getRankPermissions,
   getUserPermissions,
+  getUserRanks,
 } from "../controllers/userController";
 import { updateAudit_lastWebsiteLogin } from "../controllers/auditController";
 
