@@ -16,7 +16,7 @@ export class PlayCommand extends Command {
   }
 
   async chatInputRun(interaction) {
-    const fetchURL = `${process.env.siteAddress}/api/server/get`;
+    const fetchURL = `${process.env.siteAddress}/api/server/get?type=EXTERNAL`;
     const response = await fetch(fetchURL, {
       headers: { "x-access-token": process.env.apiKey },
     });

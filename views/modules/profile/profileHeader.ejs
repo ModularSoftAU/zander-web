@@ -1,0 +1,20 @@
+<section class="page-title" style="background: url(../<%= globalImage %>) no-repeat 50% 50%; background-size: cover;">
+    <div class="overlay"></div>
+    <div class="container">
+        <div class="row">
+            <div class="col-md-3">
+				<img src="<%= profilePicture %>" alt="<%= profileApiData.username %>'s Avatar" height="180px">
+			</div>
+            <div class="col-md-5">
+                <div class="block">
+                    <h1 class="mb-1"><%= profileApiData.username %>
+                    <% if (profileSession.sessionEnd) { %>
+                        <h4 class="mb-1 text-white"><i class="fa-solid fa-circle" style="color: red;"></i> Last Seen <%= profileSession.lastOnlineDiff %> ago on <%= profileSession.server.charAt(0).toUpperCase() + profileSession.server.slice(1) %></h4>
+                    <% } else { %>
+                        <h4 class="mb-1 text-white"><i class="fa-solid fa-circle" style="color: green;"></i> Currently Online on <%= profileSession.server.charAt(0).toUpperCase() + profileSession.server.slice(1) %></h4>
+                    <% } %>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>

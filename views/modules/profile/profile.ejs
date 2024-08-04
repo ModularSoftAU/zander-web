@@ -1,0 +1,204 @@
+<%- include("../../modules/header.ejs", {
+    pageTitle: pageTitle,
+    pageDescription: config.siteConfiguration.tagline
+}) %>
+
+<%- include("../../modules/navigationBar.ejs") %>
+
+<%- include("../../modules/profile/profileHeader.ejs"), {
+    profileSession: profileSession
+} %>
+<br>
+
+<div class="container">
+    <% if (req.cookies.alertType) { %>
+        <%- include("../../partials/alert.ejs", {
+          alertType: req.cookies.alertType,
+          content: req.cookies.alertContent
+        }) %>
+    <% } %>
+
+    <div class="row">
+        <div class="col-md-8">
+        <ul class="nav nav-pills nav-fill" id="myTab" role="tablist">
+            <li class="nav-item" role="presentation">
+                <a class="nav-link active" id="about-tab" data-bs-toggle="tab" href="#about" role="tab" aria-controls="about" aria-selected="true">About Me</a>
+            </li>
+            <% if (contextPermissions && contextPermissions.includes('zander.web.profile.punishments')) { %>
+                <li class="nav-item" role="presentation">
+                    <a class="nav-link" id="punishments-tab" data-bs-toggle="tab" href="#punishments" role="tab" aria-controls="punishments" aria-selected="false">Punishments <i class="fa-solid fa-shield" style="color: red;"></i></a>
+                </li>
+            <% } %>
+            <% if (contextPermissions && contextPermissions.includes('zander.web.profile.audit')) { %>
+                <li class="nav-item" role="presentation">
+                    <a class="nav-link" id="audit-tab" data-bs-toggle="tab" href="#audit" role="tab" aria-controls="audit" aria-selected="false">Audit <i class="fa-solid fa-shield" style="color: red;"></i></a>
+                </li>
+            <% } %>
+        </ul>
+        <div class="tab-content mt-2" id="myTabContent">
+            <div class="tab-pane fade show active" id="about" role="tabpanel" aria-labelledby="about-tab">
+                <div class="row mt-3">
+                    <div class="col-md-6">
+                        <h1><%= profileStats.totalLogins %></h1>
+                        <h3>Logins</h3>
+                    </div>
+                    <div class="col-md-5">
+                        <h1><%= profileStats.totalPlaytime %></h1>
+                        <h3>Total Playtime</h3>
+                    </div>
+                </div>
+                <hr>
+
+                <% if (profileApiData.social_aboutMe) { %>
+                    <%- profileApiData.social_aboutMe %>
+                <% } else { %>
+                    <div class="alert alert-warning" role="alert"><%= profileApiData.username %> doesn't have an About section.</div>
+                <% } %>
+                
+            </div>
+            <% if (contextPermissions && contextPermissions.includes('zander.web.profile.punishments')) { %>
+                <div class="tab-pane fade mt-2" id="punishments" role="tabpanel" aria-labelledby="punishments-tab">
+                    <!-- Punishments content goes here -->
+                    <div class="alert alert-warning" role="alert">This punishment feature is in development, coming soon!</div>
+                </div>
+            <% } %>
+            <% if (contextPermissions && contextPermissions.includes('zander.web.profile.audit')) { %>
+                <div class="tab-pane fade mt-2" id="audit" role="tabpanel" aria-labelledby="audit-tab">
+                    <h3>Minecraft</h3>
+                    <table class="table">
+                        <tbody>
+                            <tr>
+                                <th scope="row">Last Minecraft Session</th>
+                                <td data-toggle="tooltip" data-placement="top" title="<%= moment(profileApiData.audit_lastMinecraftLogin).fromNow() %>">
+                                    <% if (moment(profileApiData.audit_lastMinecraftLogin).isValid()) { %>
+                                        <%= moment(profileApiData.audit_lastMinecraftLogin).format('LLLL') %>
+                                    <% } else { %>
+                                        <i>No data!</i>
+                                    <% } %>
+                                </td>
+                            </tr>
+                            <tr>
+                                <th scope="row">Last Minecraft Message</th>
+                                <td data-toggle="tooltip" data-placement="top" title="<%= moment(profileApiData.audit_lastMinecraftMessage).fromNow() %>">
+                                    <% if (moment(profileApiData.audit_lastMinecraftMessage).isValid()) { %>
+                                        <%= moment(profileApiData.audit_lastMinecraftMessage).format('LLLL') %>
+                                    <% } else { %>
+                                        <i>No data!</i>
+                                    <% } %>
+                                </td>
+                            </tr>
+                            <tr>
+                                <th scope="row">Last Minecraft Punishment</th>
+                                <td>
+                                    <div class="alert alert-warning" role="alert">Feature coming soon, currently in development.</div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <h3>Discord</h3>
+                    <table class="table">
+                        <tbody>
+                            <tr>
+                                <th scope="row">Last Discord Message</th>
+                                <td data-toggle="tooltip" data-placement="top" title="<%= moment(profileApiData.audit_lastDiscordMessage).fromNow() %>">
+                                    <% if (moment(profileApiData.audit_lastDiscordMessage).isValid()) { %>
+                                        <%= moment(profileApiData.audit_lastDiscordMessage).format('LLLL') %>
+                                    <% } else { %>
+                                        <i>No data!</i>
+                                    <% } %>
+                                </td>
+                            </tr>
+                            <tr>
+                                <th scope="row">Last Discord Voice Session</th>
+                                <td data-toggle="tooltip" data-placement="top" title="<%= moment(profileApiData.audit_lastDiscordVoice).fromNow() %>">
+                                    <% if (moment(profileApiData.audit_lastDiscordVoice).isValid()) { %>
+                                        <%= moment(profileApiData.audit_lastDiscordVoice).format('LLLL') %>
+                                    <% } else { %>
+                                        <i>No data!</i>
+                                    <% } %>
+                                </td>
+                            </tr>
+                            <tr>
+                                <th scope="row">Last Discord Punishment</th>
+                                <td>
+                                    <div class="alert alert-warning" role="alert">Feature coming soon, currently in development.</div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <h3>Misc</h3>
+                    <table class="table">
+                        <tbody>
+                            <tr>
+                                <th scope="row">Last Website Login</th>
+                                <td data-toggle="tooltip" data-placement="top" title="<%= moment(profileApiData.audit_lastWebsiteLogin).fromNow() %>">
+                                    <% if (moment(profileApiData.audit_lastWebsiteLogin).isValid()) { %>
+                                        <%= moment(profileApiData.audit_lastWebsiteLogin).format('LLLL') %>
+                                    <% } else { %>
+                                        <i>No data!</i>
+                                    <% } %>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            <% } %>
+        </div>
+    </div>
+        <div class="col-md-4">
+            <h4>Joined</h4>
+            <p data-toggle="tooltip" data-placement="top" title="<%= moment(profileApiData.joined).fromNow() %>">
+                <%= moment(profileApiData.joined).format('LLLL') %>
+            </p>
+            <hr>
+            
+            <% if (profileApiData.social_interests) { %>
+                <h4>Interests</h4>
+                <p><%= profileApiData.social_interests %></p>
+                <hr>
+            <% } %>
+
+            <% if (profileApiData.social_discord || profileApiData.social_steam || profileApiData.social_twitch || profileApiData.social_youtube || profileApiData.social_twitter_x || profileApiData.social_instagram || profileApiData.social_reddit || profileApiData.social_spotify) { %>
+                <h4>Social Connections</h4>
+                <hr>
+
+                <% if (profileApiData.social_discord) { %>
+                    <h6><i class="fa-brands fa-discord"></i> Discord</h6>
+                    <p><%= profileApiData.social_discord %></p> 
+                <% } %>
+
+                <% if (profileApiData.social_steam) { %>
+                    <h6 class="mb-4"><a href="https://steamcommunity.com/id/<%= profileApiData.social_steam %>" target="_blank"><i class="fa-brands fa-steam"></i> Steam</a></h6>
+                <% } %>
+
+                <% if (profileApiData.social_twitch) { %>
+                    <h6 class="mb-4"><a href="https://twitch.tv/<%= profileApiData.social_twitch %>" target="_blank"><i class="fa-brands fa-twitch"></i> Twitch</a></h6>
+                <% } %>
+
+                <% if (profileApiData.social_youtube) { %>
+                    <h6 class="mb-4"><a href="https://youtube.com/<%= profileApiData.social_youtube %>" target="_blank"><i class="fa-brands fa-youtube"></i> YouTube</a></h6>
+                <% } %>
+
+                <% if (profileApiData.social_twitter_x) { %>
+                    <h6 class="mb-4"><a href="https://twitter.com/<%= profileApiData.social_twitter_x %>" target="_blank"><i class="fa-brands fa-twitter"></i> Twitter/X</a></h6>
+                <% } %>
+
+                <% if (profileApiData.social_instagram) { %>
+                    <h6 class="mb-4"><a href="https://instagram.com/<%= profileApiData.social_instagram %>" target="_blank"><i class="fa-brands fa-square-instagram"></i> Instagram</a></h6>
+                <% } %>
+
+                <% if (profileApiData.social_reddit) { %>
+                    <h6 class="mb-4"><a href="<%= profileApiData.social_reddit %>" target="_blank"><i class="fa-brands fa-reddit"></i> Reddit</a></h6>
+                <% } %>
+
+                <% if (profileApiData.social_spotify) { %>
+                    <h6 class="mb-4"><a href="https://open.spotify.com/user/<%= profileApiData.social_spotify %>" target="_blank"><i class="fa-brands fa-spotify"></i> Spotify</a></h6>
+                <% } %>
+            <% } %>
+        </div>
+    </div>
+</div>
+
+<%- include("../../modules/footer.ejs") %>  

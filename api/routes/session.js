@@ -4,47 +4,72 @@ export default function sessionApiRoute(app, config, db, features, lang) {
   const baseEndpoint = "/api/session";
 
   app.post(baseEndpoint + "/create", async function (req, res) {
-    const uuid = required(req.body, "uuid", res);
-    const ipAddress = required(req.body, "ipAddress", res);
+  const uuid = required(req.body, "uuid", res);
+  const ipAddress = required(req.body, "ipAddress", res);
 
-    const newSessionCreatedLang = lang.session.newSessionCreated;
+  const newSessionCreatedLang = lang.session.newSessionCreated;
 
-    try {
-      // Insert newly started session into database
+  try {
+    // Fetch userId based on the provided uuid
+    const userIdResult = await new Promise((resolve, reject) => {
       db.query(
-        `
-                INSERT INTO gameSessions 
-                    (
-                        userId, 
-                        ipAddress
-                    ) VALUES (
-                        (SELECT userId FROM users WHERE uuid=?), 
-                        ?
-                    )`,
-        [uuid, ipAddress],
+        `SELECT userId FROM users WHERE uuid = ?`,
+        [uuid],
         function (error, results, fields) {
           if (error) {
-            return res.send({
-              success: false,
-              message: `${error}`,
-            });
+            reject(error);
+          } else {
+            resolve(results);
           }
-
-          return res.send({
-            success: true,
-            message: newSessionCreatedLang.replace("%UUID%", uuid),
-          });
         }
       );
-    } catch (error) {
-      res.send({
+    });
+
+    if (userIdResult.length === 0) {
+      return res.send({
         success: false,
-        message: `${error}`,
+        message: "User not found with the provided UUID.",
       });
     }
 
-    return res;
-  });
+    const userId = userIdResult[0].userId;
+
+    // Insert newly started session into database
+    await new Promise((resolve, reject) => {
+      db.query(
+        `
+          INSERT INTO gameSessions 
+              (
+                  userId, 
+                  ipAddress
+              ) VALUES (
+                  ?, 
+                  ?
+              )`,
+        [userId, ipAddress],
+        function (error, results, fields) {
+          if (error) {
+            reject(error);
+          } else {
+            resolve();
+          }
+        }
+      );
+    });
+
+    return res.send({
+      success: true,
+      message: newSessionCreatedLang.replace("%UUID%", uuid),
+    });
+  } catch (error) {
+    console.error(error);
+    return res.send({
+      success: false,
+      message: `${error}`,
+    });
+  }
+});
+
 
   app.post(baseEndpoint + "/destroy", async function (req, res) {
     const uuid = required(req.body, "uuid", res);
@@ -57,7 +82,7 @@ export default function sessionApiRoute(app, config, db, features, lang) {
       // If this is not there and there is somehow more than 1 open session, the query will fail.
       db.query(
         `
-                UPDATE gameSessions, users
+          UPDATE gameSessions, users
 					SET gameSessions.sessionEnd = NOW()
 				WHERE gameSessions.userId = users.userId
 					AND users.uuid = ?
@@ -101,13 +126,13 @@ export default function sessionApiRoute(app, config, db, features, lang) {
       // If this is not there and there is somehow more than 1 open session, the query will fail.
       db.query(
         `
-                UPDATE gameSessions, users, servers
-					SET gameSessions.server = ?
-				WHERE gameSessions.userId = users.userId
-					AND users.uuid = ?
-					AND gameSessions.sessionEnd IS NULL
-					AND gameSessions.sessionId > 0
-				`,
+          UPDATE gameSessions
+          JOIN users ON gameSessions.userId = users.userId
+          SET gameSessions.server = ?
+          WHERE users.uuid = ?
+              AND gameSessions.sessionEnd IS NULL
+              AND gameSessions.sessionId > 0;
+        `,
         [server, uuid],
         function (error, results, fields) {
           if (error) {

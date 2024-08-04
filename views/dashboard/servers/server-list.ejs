@@ -33,6 +33,7 @@
                     <tr>
                         <th>Display Name</th>
                         <th>Connection Address</th>
+                        <th>Type</th>
                         <th>Action</th>
                     </tr>
                 </thead>
@@ -47,6 +48,7 @@
                             <tr>
                                 <td><%= server.displayName %></td>
                                 <td><%= server.serverConnectionAddress %></td>
+                                <td><%= server.serverType %></td>
                                 <td>
                                     <div class="btn-group">
                                         <a href="/dashboard/servers/edit?id=<%= server.serverId %>"><button class="btn btn-sm btn-warning" type="button">Edit</button></a>

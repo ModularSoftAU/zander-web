@@ -6,50 +6,56 @@ export default function serverApiRoute(app, config, db, features, lang) {
   // TODO: Update docs
   app.get(baseEndpoint + "/get", async function (req, res) {
     isFeatureEnabled(features.server, res, lang);
-    const serverId = optional(req.query, "serverId");
+    const id = optional(req.query, "id");
+    const type = optional(req.query, "type");
 
     try {
       function getServers(dbQuery) {
-        db.query(dbQuery, function (error, results, fields) {
-          if (error) {
-            return res.send({
-              success: false,
-              message: `${error}`,
-            });
-          }
-
-          if (!results.length) {
-            return res.send({
-              success: false,
-              message: `There are no servers available.`,
-            });
-          }
-
-          return res.send({
-            success: true,
-            data: results,
+        return new Promise((resolve, reject) => {
+          db.query(dbQuery, function (error, results, fields) {
+            if (error) {
+              console.error(error);
+              reject(error);
+            } else {
+              if (!results.length) {
+                res.send({
+                  success: false,
+                  message: `There are no servers available.`,
+                });
+              } else {
+                res.send({
+                  success: true,
+                  data: results,
+                });
+              }
+              resolve();
+            }
           });
         });
       }
 
       // Get Server by ID
-      if (serverId) {
-        let dbQuery = `SELECT * FROM servers WHERE serverId=${serverId};`;
-        getServers(dbQuery);
+      if (id) {
+        let dbQuery = `SELECT * FROM servers WHERE serverId=${id};`;
+        await getServers(dbQuery);
+      }
+
+      // Get Server by Type
+      if (type) {
+        let dbQuery = `SELECT * FROM servers WHERE serverType='${type}';`;
+        await getServers(dbQuery);
       }
 
       // Return all Servers by default
       let dbQuery = `SELECT * FROM servers ORDER BY position ASC;`;
-      getServers(dbQuery);
-      return res;
+      await getServers(dbQuery);
     } catch (error) {
+      console.error(error);
       res.send({
         success: false,
         message: `${error}`,
       });
     }
-
-    return res;
   });
 
   app.post(baseEndpoint + "/create", async function (req, res) {
@@ -57,11 +63,8 @@ export default function serverApiRoute(app, config, db, features, lang) {
 
     const actioningUser = required(req.body, "actioningUser", res);
     const displayName = required(req.body, "displayName", res);
-    const serverConnectionAddress = required(
-      req.body,
-      "serverConnectionAddress",
-      res
-    );
+    const serverType = required(req.body, "serverType", res);
+    const serverConnectionAddress = required(req.body, "serverConnectionAddress", res);
     const position = required(req.body, "position", res);
 
     const serverCreatedLang = lang.server.serverCreated;
@@ -69,14 +72,15 @@ export default function serverApiRoute(app, config, db, features, lang) {
     try {
       db.query(
         `
-                INSERT INTO 
-                    servers
-                (
-                    displayName, 
-                    serverConnectionAddress,
-                    position
-                ) VALUES (?, ?, ?)`,
-        [displayName, serverConnectionAddress, position],
+        INSERT INTO 
+            servers
+        (
+            displayName,
+            serverType,
+            serverConnectionAddress,
+            position
+        ) VALUES (?, ?, ?, ?)`,
+        [displayName, serverType, serverConnectionAddress, position],
         function (error, results, fields) {
           if (error) {
             return res.send({
@@ -115,6 +119,7 @@ export default function serverApiRoute(app, config, db, features, lang) {
     const actioningUser = required(req.body, "actioningUser", res);
     const serverId = required(req.body, "serverId", res);
     const displayName = required(req.body, "displayName", res);
+    const serverType = required(req.body, "serverType", res);
     const serverConnectionAddress = required(
       req.body,
       "serverConnectionAddress",
@@ -128,12 +133,13 @@ export default function serverApiRoute(app, config, db, features, lang) {
             UPDATE 
                 servers 
             SET 
-                displayName=?, 
+                displayName=?,
+                serverType=?,
                 serverConnectionAddress=?, 
                 position=? 
             WHERE 
                 serverId=?`,
-        [displayName, serverConnectionAddress, position, serverId],
+        [displayName, serverType, serverConnectionAddress, position, serverId],
         function (error, results, fields) {
           if (error) {
             return res.send({

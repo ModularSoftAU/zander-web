@@ -1,3 +1,4 @@
+import { updateAudit_lastMinecraftLogin, updateAudit_lastMinecraftMessage } from "../../controllers/auditController";
 import { Webhook } from "discord-webhook-node";
 import { isFeatureEnabled, required } from "../common";
 
@@ -44,6 +45,21 @@ export default function discordApiRoute(
     const server = required(req.body, "server", res);
     const content = required(req.body, "content", res);
 
+    //
+    // Update user profile for auditing
+    //
+    try {
+      updateAudit_lastMinecraftMessage(new Date(), username);
+    } catch (error) {
+      return res.send({
+        success: false,
+        message: `${error}`,
+      });
+    }
+
+    //
+    // Send Discord Message to Log
+    //
     try {
       const networkChatLogHook = new Webhook(
         config.discord.webhooks.networkChatLog
@@ -66,26 +82,44 @@ export default function discordApiRoute(
     isFeatureEnabled(features.discord, res, lang);
     const username = required(req.body, "username", res);
 
-    try {
-      const networkChatLogHook = new Webhook(
-        config.discord.webhooks.networkChatLog
-      );
+    //
+    // Send Discord Message to Log
+    //
+     try {
+       const networkChatLogHook = new Webhook(
+         config.discord.webhooks.networkChatLog
+       );
 
-      networkChatLogHook.send(
-        `:ballot_box_with_check: | \`${username}\` has joined the Network.`
-      );
-    } catch (error) {
-      return res.send({
-        success: false,
-        message: `${error}`,
-      });
-    }
+       networkChatLogHook.send(
+         `:ballot_box_with_check: | \`${username}\` has joined the Network.`
+       );
+     } catch (error) {
+       return res.send({
+         success: false,
+         message: `${error}`,
+       });
+     }
   });
 
   app.post(baseEndpoint + "/leave", async function (req, res) {
     isFeatureEnabled(features.discord, res, lang);
     const username = required(req.body, "username", res);
 
+    //
+    // Update user profile for auditing
+    //
+    try {
+      updateAudit_lastMinecraftLogin(new Date(), username);
+    } catch (error) {
+      return res.send({
+        success: false,
+        message: `${error}`,
+      });
+    }
+
+    //
+    // Send Discord Message to Log
+    //
     try {
       const networkChatLogHook = new Webhook(
         config.discord.webhooks.networkChatLog
