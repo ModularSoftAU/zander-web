@@ -252,16 +252,27 @@ export async function setProfileUserAboutMe(
 
 export async function getUserPermissions(userData) {
   return new Promise((resolve) => {
-    //Get permissions assigned directly to user
     db.query(
-      `SELECT DISTINCT permission FROM userPermissions WHERE userId = ?`,
-      [userData.userId],
+      `SELECT DISTINCT permission FROM userPermissions WHERE userId = ?; SELECT rankSlug FROM userRanks WHERE userId = ?`,
+      [userData.userId, userData.userId],
       async function (err, results) {
         if (err) {
           throw err;
         }
+        // Define this array to specify the permission context for the player
+        const userPermissions = [];
 
-        let userPermissions = results.map((a) => a.permission);
+        // Map results to get an array of permissions
+        let userPermissionResults = results[0].map((a) => a.permission);
+
+        // Push userPermissionResults into userPermissions using the spread operator
+        userPermissions.push(...userPermissionResults);
+        
+
+        console.log(results[1]);
+
+        console.log(userPermissions);
+
         resolve(userPermissions);
       }
     );
