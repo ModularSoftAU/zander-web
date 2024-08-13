@@ -250,6 +250,50 @@ export async function setProfileUserAboutMe(
   );
 }
 
+export async function getStaffListing() {
+  return new Promise((resolve, reject) => {
+    db.query(
+      `SELECT * FROM ranks;
+        SELECT 
+          ur.userId,
+          ur.uuid,
+          ur.rankSlug,
+          ur.title,
+          u.username
+        FROM 
+          userRanks ur
+        LEFT JOIN 
+          users u ON ur.userId = u.userId;
+      `,
+      [],
+      async function (err, results) {
+        if (err) {
+          return reject(err);
+        }
+
+        // Convert RowDataPacket to plain objects
+        let ranks = results[0].map((row) => ({ ...row }));
+        let rankUsers = results[1].map((row) => ({ ...row }));
+
+        // Fetch profile pictures for each user
+        for (let user of rankUsers) {
+          if (user.username) {
+            user.profilePicture = await getProfilePicture(user.username);
+          }
+        }
+
+        const output = {
+          ranks,
+          rankUsers,
+        };
+
+        resolve(output);
+      }
+    );
+  });
+}
+
+
 export async function getUserPermissions(userData) {
   return new Promise((resolve) => {
     //Get permissions assigned directly to user

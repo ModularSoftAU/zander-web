@@ -6,6 +6,7 @@ import { getWebAnnouncement } from "../controllers/announcementController";
 import redirectSiteRoutes from "./redirectRoutes";
 import rankData from "../ranks.json" assert { type: "json" };
 import profileSiteRoutes from "./profileRoutes";
+import { getProfilePicture, getStaffListing } from "../controllers/userController";
 
 export default function applicationSiteRoutes(
   app,
@@ -82,6 +83,25 @@ export default function applicationSiteRoutes(
       req: req,
       apiData: apiData,
       features: features,
+      globalImage: await getGlobalImage(),
+      announcementWeb: await getWebAnnouncement(),
+    });
+  });
+
+  //
+  // Staff
+  //
+  app.get("/staff", async function (req, res) {
+    // Get all staff
+    let staffListing = await getStaffListing();
+    console.log(staffListing);
+
+    return res.view("staff", {
+      pageTitle: `Staff`,
+      config: config,
+      req: req,
+      features: features,
+      staffData: staffListing,
       globalImage: await getGlobalImage(),
       announcementWeb: await getWebAnnouncement(),
     });

@@ -127,9 +127,6 @@ export default function sessionSiteRoute(
           permissions: userPermissionData,
         };
 
-        console.log(`User Permissions`);
-        console.log(userPermissionData);
-
         // Update user profile for auditing
         await updateAudit_lastWebsiteLogin(new Date(), userLoginData.username);
         return res.redirect(`${process.env.siteAddress}/`);

@@ -1,0 +1,40 @@
+<%- include("modules/header.ejs", {
+    pageTitle: pageTitle,
+    pageDescription: "Featuring all staff of present and past."
+}) %>
+
+<%- include("modules/navigationBar.ejs") %>
+
+<%- include("partials/miniHeader.ejs", {
+  headerTitle: "Staff",
+  backgroundImage: globalImage
+}) %>
+
+
+<section class="section">
+    <div class="container">
+      <% staffData.ranks.forEach(rank => { %>
+        <% if (rank.rankSlug == "default" || rank.rankSlug == "retired" || rank.isDonator == 1) { %>
+          <% return %>
+        <% } %>
+        
+        <h2><%= rank.displayName %></h2>
+
+        <div class="container text-center">
+          <div class="row">
+            <!-- Iterate Rank Users -->
+            <% staffData.rankUsers.forEach(rankUser => { %>
+              <div class="col">
+                <img src="<%= rankUser.profilePicture %>" alt="<%= rankUser.username %>'s Avatar" height="100px">
+                <h4><%= rankUser.username %></h4>
+              </div>
+            <% }) %>
+          </div>
+        </div>
+        
+        <hr>
+      <% }) %>
+    </div>
+</section>
+
+<%- include("modules/footer.ejs") %>  
