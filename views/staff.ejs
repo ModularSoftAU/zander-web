@@ -14,7 +14,7 @@
 <section class="section">
     <div class="container">
       <% staffData.ranks.forEach(rank => { %>
-        <% if (rank.rankSlug == "default" || rank.rankSlug == "retired" || rank.isDonator == 1) { %>
+        <% if (rank.rankSlug == "default" || rank.rankSlug == "retired" || rank.isDonator == 1 || rank.isStaff == 0) { %>
           <% return %>
         <% } %>
         
