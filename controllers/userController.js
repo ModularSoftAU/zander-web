@@ -251,14 +251,15 @@ export async function setProfileUserAboutMe(
 }
 
 export async function getUserPermissions(userData) {
-  return new Promise((resolve) => {
+  return new Promise((resolve, reject) => {
     db.query(
       `SELECT DISTINCT permission FROM userPermissions WHERE userId = ?; SELECT rankSlug FROM userRanks WHERE userId = ?`,
       [userData.userId, userData.userId],
       async function (err, results) {
         if (err) {
-          throw err;
+          return reject(err);
         }
+
         // Define this array to specify the permission context for the player
         const userPermissions = [];
 
@@ -267,13 +268,42 @@ export async function getUserPermissions(userData) {
 
         // Push userPermissionResults into userPermissions using the spread operator
         userPermissions.push(...userPermissionResults);
-        
 
-        console.log(results[1]);
+        const userRanks = results[1];
 
-        console.log(userPermissions);
+        // Use Promise.all to handle the asynchronous queries inside the forEach loop
+        try {
+          await Promise.all(
+            userRanks.map(async (rank) => {
+              console.log(rank.rankSlug);
 
-        resolve(userPermissions);
+              return new Promise((resolve, reject) => {
+                db.query(
+                  `SELECT * FROM zanderdev.rankPermissions WHERE rankSlug=?;`,
+                  [rank.rankSlug],
+                  function (err, rankPermissionsResults) {
+                    if (err) {
+                      return reject(err);
+                    }
+
+                    rankPermissionsResults.forEach((rankPermission) => {
+                      console.log(rankPermission.permission);
+                      userPermissions.push(rankPermission.permission);
+                    });
+
+                    resolve();
+                  }
+                );
+              });
+            })
+          );
+
+          console.log(userPermissions);
+
+          resolve(userPermissions);
+        } catch (err) {
+          reject(err);
+        }
       }
     );
   });
