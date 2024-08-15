@@ -279,7 +279,7 @@ export async function getUserPermissions(userData) {
 
               return new Promise((resolve, reject) => {
                 db.query(
-                  `SELECT * FROM zanderdev.rankPermissions WHERE rankSlug=?;`,
+                  `SELECT * FROM rankPermissions WHERE rankSlug=?;`,
                   [rank.rankSlug],
                   function (err, rankPermissionsResults) {
                     if (err) {
