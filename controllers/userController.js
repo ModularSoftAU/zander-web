@@ -430,18 +430,24 @@ export async function checkPermissions(username, permissionNode) {
 }
 
 export async function getUserLastSession(userId) {
-  return new Promise((resolve) => {
+  return new Promise((resolve, reject) => {
     db.query(
       `SELECT * FROM gameSessions WHERE userId=? ORDER BY sessionStart DESC LIMIT 1;`,
       [userId],
       async function (err, results) {
         if (err) {
-          throw err;
+          return reject(err);
+        }
+
+        if (results.length === 0) {
+          return resolve(null); // No sessions found
         }
 
         const now = new Date(); // Current time
         const sessionStart = new Date(results[0].sessionEnd);
-        const sessionDiff = convertSecondsToDuration(Math.floor((now - sessionStart) / 1000));
+        const sessionDiff = convertSecondsToDuration(
+          Math.floor((now - sessionStart) / 1000)
+        );
 
         const sessionData = {
           sessionStart: results[0].sessionStart,
