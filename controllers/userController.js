@@ -440,7 +440,14 @@ export async function getUserLastSession(userId) {
         }
 
         if (results.length === 0) {
-          return resolve(null); // No sessions found
+          // Return a default value if no session is found
+          const defaultSessionData = {
+            sessionStart: null,
+            sessionEnd: null,
+            server: null,
+            lastOnlineDiff: "No previous session",
+          };
+          return resolve(defaultSessionData);
         }
 
         const now = new Date(); // Current time
