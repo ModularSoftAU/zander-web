@@ -53,7 +53,7 @@ export class ProfileCommand extends Command {
 
       const embed = new EmbedBuilder()
         if (isLinked) {
-          embed.setTitle(`${apiData.data.profileData.username}'s Profile ✅`);
+          embed.setTitle(`\`${apiData.data.profileData.username}\`'s Profile ✅`);
         } else {
           embed.setTitle(`${apiData.data.profileData.username}'s Profile`);
         }
