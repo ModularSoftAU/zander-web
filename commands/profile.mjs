@@ -25,12 +25,6 @@ export class ProfileCommand extends Command {
   async chatInputRun(interaction) {
     const username = interaction.options.getString("username");
 
-    try {
-      
-    } catch (error) {
-      
-    }
-
     //
     // Grab user profile data
     //
@@ -40,7 +34,6 @@ export class ProfileCommand extends Command {
     });
 
     const apiData = await response.json();
-
     if (!apiData.success) {
       const noProfileEmbed = new EmbedBuilder()
         .setTitle(`Could not fetch profile.`)
@@ -53,6 +46,8 @@ export class ProfileCommand extends Command {
       });
     } else {
       console.log(apiData.data);
+      console.log(`apiData.data.profilePicture`);
+      console.log(apiData.data.profilePicture);
 
       let isLinked = apiData.data.profileData.discordId;
 
@@ -63,28 +58,30 @@ export class ProfileCommand extends Command {
           embed.setTitle(`${apiData.data.profileData.username}'s Profile`);
         }
 
-        embed.setDescription(
-          `Last Online ${apiData.data.profileSession.lastOnlineDiff} on ${apiData.data.profileSession.server}`
-        )
-        .setThumbnail(apiData.data.profilePicture)
-        .setColor(Colors.Blurple)
-        .addFields(
-          {
-            name: "Date Joined",
-            value: `${moment(apiData.data.profileData.joined).format('LLLL')} (${moment(apiData.data.profileData.joined).fromNow()})`,
-            inline: false,
-          },
-          {
-            name: "Total Logins",
-            value: `${apiData.data.profileStats.totalLogins}`,
-            inline: true,
-          },
-          {
-            name: "Total Playtime",
-            value: `${apiData.data.profileStats.totalPlaytime}`,
-            inline: true,
-          }
-        );
+        embed
+          .setDescription(
+            `Last Online ${apiData.data.profileSession.lastOnlineDiff} on ${apiData.data.profileSession.server}`
+          )
+          .setColor(Colors.Blurple)
+          .addFields(
+            {
+              name: "Date Joined",
+              value: `${moment(apiData.data.profileData.joined).format(
+                "LLLL"
+              )} (${moment(apiData.data.profileData.joined).fromNow()})`,
+              inline: false,
+            },
+            {
+              name: "Total Logins",
+              value: `${apiData.data.profileStats.totalLogins}`,
+              inline: true,
+            },
+            {
+              name: "Total Playtime",
+              value: `${apiData.data.profileStats.totalPlaytime}`,
+              inline: true,
+            }
+          );
 
       interaction.reply({
         embeds: [embed],
