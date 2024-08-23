@@ -275,8 +275,6 @@ export async function getUserPermissions(userData) {
         try {
           await Promise.all(
             userRanks.map(async (rank) => {
-              console.log(rank.rankSlug);
-
               return new Promise((resolve, reject) => {
                 db.query(
                   `SELECT * FROM rankPermissions WHERE rankSlug=?;`,
@@ -287,7 +285,6 @@ export async function getUserPermissions(userData) {
                     }
 
                     rankPermissionsResults.forEach((rankPermission) => {
-                      console.log(rankPermission.permission);
                       userPermissions.push(rankPermission.permission);
                     });
 
@@ -297,8 +294,6 @@ export async function getUserPermissions(userData) {
               });
             })
           );
-
-          console.log(userPermissions);
 
           resolve(userPermissions);
         } catch (err) {
@@ -418,8 +413,6 @@ export async function getUserRanks(userData, userRanks = null) {
 export async function checkPermissions(username, permissionNode) {
   try {
     const userPermissions = await getUserPermissions(username);
-    console.log(userPermissions);
-
     const hasPermission = userPermissions.includes(permissionNode);
 
     return hasPermission;
