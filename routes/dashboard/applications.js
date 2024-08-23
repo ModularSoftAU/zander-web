@@ -67,10 +67,7 @@ export default function dashboardApplicationsSiteRoute(
     const response = await fetch(fetchURL, {
       headers: { "x-access-token": process.env.apiKey },
     });
-    const applicationApiData = await response.json();
-
-    console.log(applicationApiData);
-    
+    const applicationApiData = await response.json();    
 
     return res.view("dashboard/applications/application-editor", {
       pageTitle: `Dashboard - Application Editor`,
