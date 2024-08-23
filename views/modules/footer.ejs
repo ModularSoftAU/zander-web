@@ -116,5 +116,40 @@
     <script src="/js/script.js"></script>
     <script src="/js/contact.js"></script>
 
+	<!-- Tabbing in profiles -->
+	<script>
+		$(document).ready(function(){
+			$('#myTab a').on('click', function (e) {
+				e.preventDefault()
+				$(this).tab('show')
+			})
+		});
+	</script>
+
+	<script>
+		var tabTriggerList = document.querySelectorAll('#myTab a')
+		var tabContentList = document.querySelectorAll('.tab-content .tab-pane')
+		tabTriggerList.forEach(function (tabTrigger) {
+			tabTrigger.addEventListener('click', function (event) {
+				event.preventDefault()
+				var tabTriggerTarget = document.querySelector(tabTrigger.getAttribute('href'))
+				tabContentList.forEach(function (tabContent) {
+					tabContent.classList.remove('active', 'show')
+				})
+				tabTriggerList.forEach(function (tabTrigger) {
+					tabTrigger.classList.remove('active')
+				})
+				tabTrigger.classList.add('active')
+				tabTriggerTarget.classList.add('active', 'show')
+			})
+		})
+	</script>
+
+	<!-- Tooltips -->
+	<script>
+		$(document).ready(function(){
+			$('[data-toggle="tooltip"]').tooltip();
+		});
+	</script>
   </body>
 </html>

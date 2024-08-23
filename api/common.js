@@ -1,3 +1,5 @@
+import dotenv from "dotenv";
+dotenv.config();
 import config from "../config.json" assert { type: "json" };
 import fetch from "node-fetch";
 import { readdirSync } from "fs";
@@ -129,7 +131,7 @@ export async function hasPermission(permissionNode, req, res, features) {
     }
 
     if (!hasSpecificPerm(permissionNode, userPermissions)) {
-      res.view("session/noPermission", {
+      return res.view("session/noPermission", {
         pageTitle: `Access Restricted`,
         config: config,
         req: req,
@@ -138,7 +140,6 @@ export async function hasPermission(permissionNode, req, res, features) {
         globalImage: await getGlobalImage(),
         announcementWeb: await getWebAnnouncement(),
       });
-      return false;
     }
     return true;
   }
@@ -170,6 +171,7 @@ export async function postAPIRequest(
       "x-access-token": process.env.apiKey,
     },
   });
+
   const data = await response.json();
 
   console.log(data);
@@ -310,4 +312,9 @@ export async function expandString(string, filter) {
 */
 export function removeHtmlTags(html) {
   return html.replace(/<(?!\/?(a)\b)[^<]*?>/gi, "");
+}
+
+export async function generateVerifyCode() {
+  const code = Math.floor(Math.random() * 900000) + 100000;
+  return code;
 }

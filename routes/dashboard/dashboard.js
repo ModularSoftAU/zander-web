@@ -3,7 +3,7 @@ import fetch from "node-fetch";
 import { getGlobalImage, hasPermission } from "../../api/common";
 import { getWebAnnouncement } from "../../controllers/announcementController";
 
-export default function dashbordSiteRoute(app, config, features, lang) {
+export default function dashboardSiteRoute(app, config, features, lang) {
   //
   // Dashboard
   //
@@ -14,8 +14,9 @@ export default function dashbordSiteRoute(app, config, features, lang) {
       res,
       features
     );
+    
     if (!permissionBoolean) return;
-
+    
     return res.view("dashboard/dashboard-index", {
       pageTitle: `Dashboard`,
       config: config,

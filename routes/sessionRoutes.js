@@ -1,11 +1,19 @@
-import bcrypt from "bcrypt";
+import dotenv from "dotenv";
+dotenv.config();
+import qs from "querystring";
 import {
   isFeatureWebRouteEnabled,
   setBannerCookie,
   getGlobalImage,
 } from "../api/common";
-import { getProfilePicture } from "../controllers/userController";
 import { getWebAnnouncement } from "../controllers/announcementController";
+import {
+  UserGetter,
+  getProfilePicture,
+  getRankPermissions,
+  getUserPermissions,
+} from "../controllers/userController";
+import { updateAudit_lastWebsiteLogin } from "../controllers/auditController";
 
 export default function sessionSiteRoute(
   app,
@@ -24,215 +32,148 @@ export default function sessionSiteRoute(
     if (!isFeatureWebRouteEnabled(features.web.login, req, res, features))
       return;
 
-    res.view("session/login", {
-      pageTitle: `Login`,
-      config: config,
-      req: req,
-      features: features,
-      globalImage: await getGlobalImage(),
-      announcementWeb: await getWebAnnouncement(),
-    });
+    // Redirect to Discord for authentication
+    const params = {
+      client_id: process.env.discordClientId,
+      redirect_uri: `${process.env.siteAddress}/login/callback`,
+      response_type: "code",
+      scope: "identify",
+    };
 
-    return res;
+    const authorizeUrl = `https://discord.com/api/oauth2/authorize?${qs.stringify(
+      params
+    )}`;
+
+    res.redirect(authorizeUrl);
   });
 
-  app.get("/register", async function (req, res) {
+  app.get("/login/callback", async (req, res) => {
+    const { code } = req.query;
+
+    try {
+      if (!code) {
+        throw new Error("Authorization code is missing");
+      }
+
+      // Exchange authorization code for access token
+      const tokenParams = {
+        client_id: process.env.discordClientId,
+        client_secret: process.env.discordClientSecret,
+        grant_type: "authorization_code",
+        code: code,
+        redirect_uri: `${process.env.siteAddress}/login/callback`,
+        scope: "identify",
+      };
+
+      const tokenResponse = await fetch(
+        "https://discord.com/api/oauth2/token",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/x-www-form-urlencoded",
+          },
+          body: qs.stringify(tokenParams),
+        }
+      );
+
+      if (!tokenResponse.ok) {
+        const errorText = `Failed to obtain access token: ${tokenResponse.status} ${tokenResponse.statusText}`;
+        console.error(errorText);
+        throw new Error(errorText);
+      }
+
+      const tokenData = await tokenResponse.json();
+      // Use the access token to fetch user data from Discord API
+      const userResponse = await fetch("https://discord.com/api/users/@me", {
+        headers: {
+          Authorization: `${tokenData.token_type} ${tokenData.access_token}`,
+        },
+      });
+
+      if (!userResponse.ok) {
+        const errorText = `Failed to fetch user data: ${userResponse.status} ${userResponse.statusText}`;
+        console.error(errorText);
+        throw new Error(errorText);
+      }
+
+      const userData = await userResponse.json();      
+      // Check if user is registered in your system
+      const userGetData = new UserGetter();
+      const userIsRegistered = await userGetData.isRegistered(userData.id);
+
+      if (!userIsRegistered) {
+        // Set a cookie for unregistered user
+        res.cookie("discordId", userData.id, {
+          path: "/",
+          httpOnly: true,
+          maxAge: 10000, // Expires in 10 seconds
+        });
+
+        console.log("User is unregistered, redirecting to /unregistered");
+        return res.redirect(`/unregistered`);
+      } else {
+        // User is registered, proceed with session setup
+        const userLoginData = await userGetData.byDiscordId(userData.id);
+        const userPermissionData = await getUserPermissions(userLoginData);
+        
+        req.session.authenticated = true;
+        req.session.user = {
+          userId: userLoginData.userId,
+          username: userLoginData.username,
+          profilePicture: await getProfilePicture(userLoginData.username),
+          discordID: userLoginData.discordId,
+          uuid: userLoginData.uuid,
+          ranks: userPermissionData.userRanks,
+          permissions: userPermissionData,
+        };
+
+        console.log(`User Permissions`);
+        console.log(userPermissionData);
+
+        // Update user profile for auditing
+        await updateAudit_lastWebsiteLogin(new Date(), userLoginData.username);
+        return res.redirect(`${process.env.siteAddress}/`);
+      }
+    } catch (error) {
+      console.error("Error:", error);
+      return res.status(500).send("Internal Server Error");
+    }
+  });
+
+  app.get("/unregistered", async function (req, res) {
     if (!isFeatureWebRouteEnabled(features.web.register, req, res, features))
       return;
 
-    res.view("session/register", {
-      pageTitle: `Register`,
+    const discordId = req.cookies.discordId;
+    if (!discordId) res.redirect(`/`);
+
+    const fetchURL = `${process.env.siteAddress}/api/server/get?type=VERIFICATION`;
+    const response = await fetch(fetchURL, {
+      headers: { "x-access-token": process.env.apiKey },
+    });
+    const apiData = await response.json();
+
+    console.log(apiData);
+
+    res.view("session/unregistered", {
+      pageTitle: `Unregistered`,
       config: config,
       req: req,
+      apiData: apiData,
       features: features,
       globalImage: await getGlobalImage(),
       announcementWeb: await getWebAnnouncement(),
+      discordId: discordId,
     });
 
     return res;
   });
 
-  app.post("/login", async function (req, res) {
-    if (!isFeatureWebRouteEnabled(features.web.login, req, res, features))
-      return;
-
-    const username = req.body.username;
-    const email = req.body.email;
-    const password = req.body.password;
-
-    async function getUserRanks(userData, userRanks = null) {
-      return new Promise((resolve) => {
-        // Call with just userData only get directly assigned Ranks
-        if (userRanks === null) {
-          db.query(
-            `SELECT rankSlug, title FROM userRanks WHERE userId = ?`,
-            [userData.userId],
-            async function (err, results) {
-              if (err) {
-                throw err;
-              }
-
-              let userRanks = results.map((a) => ({
-                ["rankSlug"]: a.rankSlug,
-                ["title"]: a.title,
-              }));
-              resolve(userRanks);
-            }
-          );
-          // Ranks were passed in meaning we are looking for nested ranks
-        } else {
-          db.query(
-            `SELECT rankSlug FROM rankRanks WHERE FIND_IN_SET(parentRankSlug, ?)`,
-            [userRanks.join()],
-            async function (err, results) {
-              if (err) {
-                throw err;
-              }
-
-              let childRanks = results.map((a) => a.rankSlug);
-              let allRanks = userRanks.concat(childRanks);
-              //Using a set of the array removes duplicates and prevents infinite loops
-              let removeDuplicates = [...new Set(allRanks)];
-
-              //If after removing duplicates the length of the new list is not longer than the old list we are done simply resolve
-              if (userRanks.length <= removeDuplicates.length) {
-                resolve(removeDuplicates);
-              } else {
-                resolve(getUserRanks(userData, removeDuplicates));
-              }
-            }
-          );
-        }
-      });
-    }
-
-    async function getRankPermissions(allRanks) {
-      return new Promise((resolve) => {
-        db.query(
-          `SELECT DISTINCT permission FROM rankPermissions WHERE FIND_IN_SET(rankSlug, ?)`,
-          [allRanks.join()],
-          async function (err, results) {
-            if (err) {
-              throw err;
-            }
-
-            let rankPermissions = results.map((a) => a.permission);
-            resolve(rankPermissions);
-          }
-        );
-      });
-    }
-
-    async function getUserPermissions(userData) {
-      return new Promise((resolve) => {
-        //Get permissions assigned directly to user
-        db.query(
-          `SELECT DISTINCT permission FROM userPermissions WHERE userId = ?`,
-          [userData.userId],
-          async function (err, results) {
-            if (err) {
-              throw err;
-            }
-
-            let userPermissions = results.map((a) => a.permission);
-            resolve(userPermissions);
-          }
-        );
-      });
-    }
-
-    async function getPermissions(userData) {
-      //Get directly assigned User Ranks
-      userData.userRanks = await getUserRanks(userData);
-      //get all the ranks including children
-      let allRanks = await getUserRanks(
-        userData,
-        userData.userRanks.map((a) => a.rankSlug)
-      );
-      //get permissions assigned to all the ranks
-      let rankPermissions = await getRankPermissions(allRanks);
-      //Get permissions assigned directly to user
-      let userPermissions = await getUserPermissions(userData);
-      //Combine into 1 permissions array
-      let permissions = rankPermissions.concat(userPermissions);
-      //Using a set of the array removes duplicates and prevents infinite loops
-      userData.permissions = [...new Set(permissions)];
-      return userData;
-    }
-
-    db.query(
-      `select * from users where username=?`,
-      [username],
-      async function (err, results) {
-        if (err) {
-          throw err;
-        }
-
-        let hashedPassword = null;
-
-        let loginFailed = false;
-        if (!results.length) {
-          loginFailed = true;
-        } else {
-          hashedPassword = results[0].password;
-        }
-
-        // User has not logged in before.
-        if (loginFailed || hashedPassword == null) {
-          let notLoggedInBeforeLang = lang.web.notLoggedInBefore;
-
-          setBannerCookie(
-            "warning",
-            notLoggedInBeforeLang.replace(
-              "%SITEADDRESS%",
-              process.env.siteAddress
-            ),
-            res
-          );
-          return res.redirect(`${process.env.siteAddress}/login`);
-        }
-
-        // Check if passwords match
-        const salt = await bcrypt.genSalt();
-
-        bcrypt.compare(password, hashedPassword, async function (err, result) {
-          if (err) {
-            throw err;
-          }
-
-          if (result) {
-            req.session.authenticated = true;
-            let userData = await getPermissions(results[0]);
-            let profilePicture = await getProfilePicture(userData.username);
-
-            req.session.user = {
-              userId: userData.userId,
-              username: userData.username,
-              profilePicture: profilePicture,
-              discordID: userData.discordID,
-              uuid: userData.uuid,
-              ranks: userData.userRanks,
-              permissions: userData.permissions,
-            };
-
-            setBannerCookie("success", lang.session.userSuccessLogin, res);
-            return res.redirect(`${process.env.siteAddress}/`);
-          } else {
-            setBannerCookie("warning", lang.session.userFailedLogin, res);
-            return res.redirect(`${process.env.siteAddress}/login`);
-          }
-        });
-      }
-    );
-
-    return res;
-  });
-
-  app.get("/logout", async function (req, reply) {
+  app.get("/logout", async function (req, res) {
     try {
       await req.session.destroy();
-      setBannerCookie("success", lang.session.userLogout, reply.res);
-      reply.redirect(`${process.env.siteAddress}/`);
+      setBannerCookie("success", lang.session.userLogout, res);
+      res.redirect(`${process.env.siteAddress}/`);
     } catch (err) {
       console.log(err);
       throw err;

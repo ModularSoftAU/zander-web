@@ -4,25 +4,45 @@ USE zanderdev;
 
 CREATE TABLE users (
 	userId INT NOT NULL AUTO_INCREMENT,
-	uuid VARCHAR(36) NOT NULL,
+	uuid VARCHAR(36) NOT NULL UNIQUE,
 	username VARCHAR(16) NOT NULL,
-	emailHash TEXT,
-	email VARCHAR(200),
-	password TEXT,
+    discordId VARCHAR(18),
 	joined DATETIME NOT NULL DEFAULT NOW(),
-	disabled BOOLEAN DEFAULT 0,
-    profilePictureType ENUM('CRAFTATAR', 'GRAVATAR') DEFAULT 'CRAFTATAR',
+    profilePicture_type ENUM('CRAFTATAR', 'GRAVATAR') DEFAULT 'CRAFTATAR',
+    profilePicture_email VARCHAR(70),
+    account_registered DATETIME,
+	account_disabled BOOLEAN DEFAULT 0,
+    social_aboutMe MEDIUMTEXT,
+    social_interests VARCHAR(50),
+    social_discord VARCHAR(32),
+    social_steam VARCHAR(100),
+    social_twitch VARCHAR(25),
+    social_youtube VARCHAR(100),
+    social_twitter_x VARCHAR(15),
+    social_instagram VARCHAR(30),
+    social_reddit VARCHAR(38),
+    social_spotify VARCHAR(100),
 	audit_lastDiscordMessage DATETIME,
 	audit_lastDiscordVoice DATETIME,
 	audit_lastMinecraftLogin DATETIME,
 	audit_lastMinecraftMessage DATETIME,
-	audit_lastPunishment DATETIME,
+	audit_lastMinecraftPunishment DATETIME,
+	audit_lastDiscordPunishment DATETIME,
 	audit_lastWebsiteLogin DATETIME,
 	PRIMARY KEY (userId),
 	INDEX users (uuid(8))
 );
 
-INSERT INTO users (uuid, username, disabled)
+CREATE TABLE userVerifyLink (
+	verifyId INT NOT NULL AUTO_INCREMENT,
+    uuid VARCHAR(36) NOT NULL UNIQUE,
+    username TEXT NOT NULL,
+    linkCode VARCHAR(6),
+    codeExpiry DATETIME NOT NULL,
+    PRIMARY KEY (verifyId)
+);
+
+INSERT INTO users (uuid, username, account_disabled)
 VALUES ('f78a4d8d-d51b-4b39-98a3-230f2de0c670','CONSOLE',0);
 
 CREATE VIEW zanderdev.luckPermsPlayers AS
@@ -138,6 +158,7 @@ CREATE TABLE servers (
 	serverId INT NOT NULL AUTO_INCREMENT,
     displayName TEXT,
     serverConnectionAddress TEXT,
+    serverType ENUM('INTERNAL', 'EXTERNAL', 'VERIFICATION'),
     position INT,
     PRIMARY KEY (serverId)
 );
