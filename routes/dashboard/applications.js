@@ -69,6 +69,9 @@ export default function dashboardApplicationsSiteRoute(
     });
     const applicationApiData = await response.json();
 
+    console.log(applicationApiData);
+    
+
     return res.view("dashboard/applications/application-editor", {
       pageTitle: `Dashboard - Application Editor`,
       config: config,
