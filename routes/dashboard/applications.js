@@ -39,7 +39,7 @@ export default function dashboardApplicationsSiteRoute(
     });
   });
 
-  app.get("/dashboard/applications/create", async function (req, res) {
+  app.get("/dashboard/application/create", async function (req, res) {
     if (!isFeatureWebRouteEnabled(features.applications, req, res, features))
       return;
 
@@ -56,7 +56,7 @@ export default function dashboardApplicationsSiteRoute(
     });
   });
 
-  app.get("/dashboard/applications/edit", async function (req, res) {
+  app.get("/dashboard/application/edit", async function (req, res) {
     if (!isFeatureWebRouteEnabled(features.applications, req, res, features))
       return;
 
