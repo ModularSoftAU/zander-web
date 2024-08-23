@@ -22,7 +22,7 @@
               content: apiData.message
             }) %>
           <% } else { %>
-            <% apiData.data.forEach(function (application) { %>
+            <% apiData.data.forEach(function (application) { %>              
               <!-- <%= application.displayName %> Application Item -->
               <div class="col-lg-4 col-md-6 col-sm-6">
                 <div class="service-item mb-4">
@@ -37,10 +37,12 @@
                     <% if (application.applicationStatus === 0) { %>
                       <a href="#" target="_blank"><button type="button" class="btn btn-danger" disabled>Closed</button></a>
                     <% } else { %>
-                      <button type="button" class="btn btn-primary" data-toggle="modal" data-target=".bd-staff-modal-lg">Apply</button>
+                      <!-- Updated data-target with unique ID -->
+                      <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#modal-<%= application.applicationId %>">Apply</button>
                     <% } %>
 
-                    <div class="modal fade bd-staff-modal-lg" tabindex="-1" role="dialog" aria-labelledby="<%= application.applicationId %>Label" aria-hidden="true">
+                    <!-- Updated modal ID -->
+                    <div class="modal fade" id="modal-<%= application.applicationId %>" tabindex="-1" role="dialog" aria-labelledby="<%= application.applicationId %>Label" aria-hidden="true">
                       <div class="modal-dialog modal-lg">
                         <div class="modal-content">
                           <div class="container" style="padding:20px;">
@@ -70,5 +72,6 @@
       </div>
     </div>
 </section>
+
 
 <%- include("modules/footer.ejs") %>  

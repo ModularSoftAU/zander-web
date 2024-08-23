@@ -287,7 +287,6 @@ export async function getUserPermissions(userData) {
                     }
 
                     rankPermissionsResults.forEach((rankPermission) => {
-                      console.log(rankPermission.permission);
                       userPermissions.push(rankPermission.permission);
                     });
 
@@ -418,8 +417,6 @@ export async function getUserRanks(userData, userRanks = null) {
 export async function checkPermissions(username, permissionNode) {
   try {
     const userPermissions = await getUserPermissions(username);
-    console.log(userPermissions);
-
     const hasPermission = userPermissions.includes(permissionNode);
 
     return hasPermission;
