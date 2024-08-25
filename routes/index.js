@@ -103,4 +103,37 @@ export default function applicationSiteRoutes(
       announcementWeb: await getWebAnnouncement(),
     });
   });
+
+  //
+  // Report
+  //
+  app.get("/report", async function (req, res) {
+    isFeatureWebRouteEnabled(features.report, req, res, features);
+
+    if (!isLoggedIn(req) || !req.session.user || !req.session.user.permissions) {
+      return res.view("session/notLoggedIn", {
+        pageTitle: `Access Restricted`,
+        config: config,
+        req: req,
+        features: features,
+        globalImage: await getGlobalImage(),
+        announcementWeb: await getWebAnnouncement(),
+      });
+    }
+
+    // const fetchURL = `${process.env.siteAddress}/api/application/get`;
+    // const response = await fetch(fetchURL, {
+    //   headers: { "x-access-token": process.env.apiKey },
+    // });
+    // const apiData = await response.json();
+
+    return res.view("report", {
+      pageTitle: `Report`,
+      config: config,
+      req: req,
+      features: features,
+      globalImage: await getGlobalImage(),
+      announcementWeb: await getWebAnnouncement(),
+    });
+  });
 }

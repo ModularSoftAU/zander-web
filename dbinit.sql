@@ -204,6 +204,16 @@ CREATE TABLE applications (
     PRIMARY KEY (applicationId)
 );
 
+CREATE TABLE reports (
+	reportId INT NOT NULL AUTO_INCREMENT,
+    reporterId INT NOT NULL,
+    reportedId INT NOT NULL,
+    reportReason VARCHAR(100),
+    reportReasonEvidence MEDIUMTEXT,
+    reportDateTime DATETIME NOT NULL DEFAULT NOW(),
+    PRIMARY KEY (reportId)
+);
+
 CREATE TABLE logs (
 	logId INT NOT NULL AUTO_INCREMENT,
     creatorId INT NOT NULL,
