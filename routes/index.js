@@ -108,9 +108,11 @@ export default function applicationSiteRoutes(
   // Report
   //
   app.get("/report", async function (req, res) {
-    isFeatureWebRouteEnabled(features.report, req, res, features);
+    if (!isFeatureWebRouteEnabled(features.report, req, res, features)) {
+      return;
+    }
 
-    if (!isLoggedIn(req) || !req.session.user || !req.session.user.permissions) {
+    if (!req.session.user) {
       return res.view("session/notLoggedIn", {
         pageTitle: `Access Restricted`,
         config: config,
@@ -120,12 +122,6 @@ export default function applicationSiteRoutes(
         announcementWeb: await getWebAnnouncement(),
       });
     }
-
-    // const fetchURL = `${process.env.siteAddress}/api/application/get`;
-    // const response = await fetch(fetchURL, {
-    //   headers: { "x-access-token": process.env.apiKey },
-    // });
-    // const apiData = await response.json();
 
     return res.view("report", {
       pageTitle: `Report`,

@@ -45,10 +45,6 @@ export class ProfileCommand extends Command {
         empheral: false,
       });
     } else {
-      console.log(apiData.data);
-      console.log(`apiData.data.profilePicture`);
-      console.log(apiData.data.profilePicture);
-
       let isLinked = apiData.data.profileData.discordId;
 
       const embed = new EmbedBuilder()

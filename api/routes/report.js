@@ -1,4 +1,6 @@
-import { isFeatureEnabled, required, optional, generateLog } from "../common";
+import { MessageBuilder, Webhook } from "discord-webhook-node";
+import { isFeatureEnabled, required, optional, generateLog, setBannerCookie } from "../common";
+import { Colors } from "discord.js";
 
 export default function reportApiRoute(app, config, db, features, lang) {
   const baseEndpoint = "/api/report";
@@ -53,6 +55,7 @@ export default function reportApiRoute(app, config, db, features, lang) {
   app.post(baseEndpoint + "/create", async function (req, res) {
     isFeatureEnabled(features.report, res, lang);
 
+    const reportPlatform = required(req.body, "reportPlatform", res);
     const reportedUser = required(req.body, "reportedUser", res);
     const reporterUser = required(req.body, "reporterUser", res);
     const reportReason = required(req.body, "reportReason", res);
@@ -61,6 +64,8 @@ export default function reportApiRoute(app, config, db, features, lang) {
       "reportReasonEvidence",
       res
     );
+
+    console.log(req.body);
 
     try {
       db.query(
@@ -71,24 +76,52 @@ export default function reportApiRoute(app, config, db, features, lang) {
             reporterId,
             reportedId,
             reportReason,
-            reportReasonEvidence
-        ) VALUES (?, ?, ?, ?)`,
-        [reportedUser, reporterUser, reportReason, reportReasonEvidence],
+            reportReasonEvidence,
+            reportPlatform
+        ) VALUES ((SELECT userid FROM users WHERE username=?), (SELECT userid FROM users WHERE username=?), ?, ?, ?)`,
+        [reporterUser, reportedUser, reportReason, reportReasonEvidence, reportPlatform],
         function (error, results, fields) {
           if (error) {
             return res.send({
               success: false,
-              message: `${error}`,
+              message: `Report has failed, this user does not exist.`,
+            });
+          } else {
+            setBannerCookie("success", "Report has been sent.", res);
+
+            try {
+              const staffChannelHook = new Webhook(
+                config.discord.webhooks.staffChannel
+              );
+
+              const embed = new MessageBuilder()
+                .setTitle(`New Report: ${reportedUser}`)
+                .addField("Report Platform", reportPlatform, true)
+                .addField("Report By", reporterUser, true)
+                .addField("Report Reason", reportReason)
+                .setColor(Colors.Red)
+                .setTimestamp();
+
+              if (reportReasonEvidence) {
+                embed.addField("Report Evidence", reportReasonEvidence);
+              }
+
+              staffChannelHook.send(embed);
+            } catch (error) {
+              return res.send({
+                success: false,
+                message: `${error}`,
+              });
+            }
+
+            return res.send({
+              success: true,
+              message: `Thanks for your submission: ${reportedUser} for ${reportReason}.`,
             });
           }
-
-          return res.send({
-            success: true,
-            message: `Report for ${reportReason} has been submitted.`,
-          });
         }
       );
-    } catch (error) {
+    } catch (error) {      
       return res.send({
         success: false,
         message: `${error}`,

@@ -4,7 +4,7 @@ export default function reportRedirectRoute(app, config, lang) {
   const baseEndpoint = "/redirect/report";
 
   app.post(baseEndpoint + "/create", async function (req, res) {
-    if (!hasPermission("zander.web.report", req, res)) return;
+    req.body.reporterUser = req.session.user.username;
 
     postAPIRequest(
       `${process.env.siteAddress}/api/report/create`,

@@ -16,10 +16,23 @@
     </div>
 
     <div class="container">
+      <% if (req.cookies.alertType) { %>
+          <%- include("../partials/alert.ejs", {
+            alertType: req.cookies.alertType,
+            content: req.cookies.alertContent
+          }) %>
+      <% } %>
+      
       <form method="post" action="<%= process.env.siteAddress %>/redirect/report/create">
-        <label for="reportedUsername">User to Report</label>
+        <%- include("partials/form/inputHidden.ejs", {
+            elementName: "reportPlatform",
+            required: true,
+            elementValue: "WEB"
+        }) %>
+
+        <label for="reportedUser">User to Report</label>
         <%- include("partials/form/inputText.ejs", {
-            elementName: "reportedUsername",
+            elementName: "reportedUser",
             required: true,
             elementValue: null
         }) %>
