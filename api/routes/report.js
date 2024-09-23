@@ -55,17 +55,15 @@ export default function reportApiRoute(app, config, db, features, lang) {
   app.post(baseEndpoint + "/create", async function (req, res) {
     isFeatureEnabled(features.report, res, lang);
 
-    const reportPlatform = required(req.body, "reportPlatform", res);
-    const reportedUser = required(req.body, "reportedUser", res);
     const reporterUser = required(req.body, "reporterUser", res);
+    const reportedUser = required(req.body, "reportedUser", res);
     const reportReason = required(req.body, "reportReason", res);
     const reportReasonEvidence = optional(
       req.body,
       "reportReasonEvidence",
       res
     );
-
-    console.log(req.body);
+    const reportPlatform = required(req.body, "reportPlatform", res);
 
     try {
       db.query(
@@ -74,17 +72,28 @@ export default function reportApiRoute(app, config, db, features, lang) {
             reports
         (
             reporterId,
-            reportedId,
+            reportedUser,
             reportReason,
             reportReasonEvidence,
             reportPlatform
-        ) VALUES ((SELECT userid FROM users WHERE username=?), (SELECT userid FROM users WHERE username=?), ?, ?, ?)`,
-        [reporterUser, reportedUser, reportReason, reportReasonEvidence, reportPlatform],
+        ) VALUES ((SELECT userId FROM users WHERE username=?), ?, ?, ?, ?)`,
+        [
+          reporterUser,
+          reportedUser,
+          reportReason,
+          reportReasonEvidence,
+          reportPlatform,
+        ],
         function (error, results, fields) {
+          console.log(req.body);
+          
           if (error) {
+            console.log(error);
+            console.log(results);
+            
             return res.send({
               success: false,
-              message: `Report has failed, this user does not exist.`,
+              message: `Report has failed, please try again later.`,
             });
           } else {
             setBannerCookie("success", "Report has been sent.", res);
@@ -121,7 +130,7 @@ export default function reportApiRoute(app, config, db, features, lang) {
           }
         }
       );
-    } catch (error) {      
+    } catch (error) {
       return res.send({
         success: false,
         message: `${error}`,

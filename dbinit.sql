@@ -207,10 +207,10 @@ CREATE TABLE applications (
 CREATE TABLE reports (
 	reportId INT NOT NULL AUTO_INCREMENT,
     reporterId INT NOT NULL,
-    reportedId INT,
-    reportReason VARCHAR(100),
+    reportedUser VARCHAR(30) NOT NULL,
+    reportReason VARCHAR(100) NOT NULL,
     reportReasonEvidence MEDIUMTEXT,
-    reportPlatform VARCHAR(10),
+    reportPlatform VARCHAR(10) NOT NULL,
     reportDateTime DATETIME NOT NULL DEFAULT NOW(),
     PRIMARY KEY (reportId)
 );
