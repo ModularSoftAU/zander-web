@@ -2,6 +2,7 @@ import { Command, RegisterBehavior } from "@sapphire/framework";
 import { Colors, EmbedBuilder } from "discord.js";
 import fetch from "node-fetch";
 import { UserGetter } from "../controllers/userController";
+import features from "../features.json" assert { type: "json" };
 
 export class ReportCommand extends Command {
   constructor(context, options) {
@@ -29,6 +30,20 @@ export class ReportCommand extends Command {
   }
 
   async chatInputRun(interaction) {
+    if (!features.report) {
+      const errorEmbed = new EmbedBuilder()
+        .setTitle("Feature Disabled")
+        .setDescription(
+          `This feature has been disabled by your System Administrator.`
+        )
+        .setColor(Colors.Red);
+
+      return interaction.reply({
+        embeds: [errorEmbed],
+        ephemeral: true,
+      });
+    }
+
     const reporterUser = interaction.user.id;
     const reportedUser = interaction.options.getUser("user").username;
     const reportReason = interaction.options.getString("reason");
