@@ -10,7 +10,7 @@
   },
   "server": true,
   "ranks": true,
-  "report": false,
+  "report": true,
   "filter": {
     "link": true,
     "phrase": true
