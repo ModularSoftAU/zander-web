@@ -3,6 +3,7 @@ import serverRedirectRoute from "./server";
 import webRedirectRoute from "./web";
 import announcementsRedirectRoute from "./announcement";
 import reportRedirectRoute from "./report";
+import vaultRedirectRoute from "./vault";
 
 export default (app, config, lang) => {
   applicationRedirectRoute(app, config, lang);
@@ -10,4 +11,5 @@ export default (app, config, lang) => {
   reportRedirectRoute(app, config, lang);
   webRedirectRoute(app, config, lang);
   announcementsRedirectRoute(app, config, lang);
+  vaultRedirectRoute(app, config, lang);
 };
