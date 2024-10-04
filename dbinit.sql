@@ -216,22 +216,22 @@ CREATE TABLE logs (
 
 CREATE VIEW zanderdev.punishments AS
 SELECT
-	litebans.uuid AS bannedUuid,
+    litebans.uuid AS bannedUuid,
     banned.userId AS bannedUserId,
-	litebans.banned_by_uuid AS bannedByUuid,
+    litebans.banned_by_uuid AS bannedByUuid,
     banner.userId AS bannedByUserId,
-	litebans.removed_by_uuid AS removedByUuid,
+    litebans.removed_by_uuid AS removedByUuid,
     remover.userId AS removedByUserId,
-	litebans.type,
-	litebans.active,
-	litebans.silent,
+    litebans.type,
+    litebans.active,
+    litebans.silent,
     FROM_UNIXTIME(litebans.time/1000) AS dateStart,
     FROM_UNIXTIME(nullif((litebans.until / 1000), 0)) AS dateEnd,
     litebans.removed_by_date AS dateRemoved,
     litebans.reason,
     litebans.removed_by_reason AS reasonRemoved,
     litebans.ip,
-	litebans.ipban,
+    litebans.ipban,
     litebans.ipban_wildcard AS ipBanWildcard
 FROM (
 	SELECT
