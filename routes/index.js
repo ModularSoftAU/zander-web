@@ -132,4 +132,20 @@ export default function applicationSiteRoutes(
       announcementWeb: await getWebAnnouncement(),
     });
   });
+
+  //
+  // Shopping District Directory
+  //
+  app.get("/shoppingdirectory", async function (req, res) {
+    isFeatureWebRouteEnabled(features.shoppingdirectory, req, res, features);
+
+    return res.view("shoppingdirectory", {
+      pageTitle: `Shopping District Directory`,
+      config: config,
+      req: req,
+      features: features,
+      globalImage: await getGlobalImage(),
+      announcementWeb: await getWebAnnouncement(),
+    });
+  });
 }

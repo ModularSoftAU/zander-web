@@ -1,0 +1,54 @@
+<%- include("modules/header.ejs", {
+    pageTitle: pageTitle,
+    pageDescription: "Report inappropriate behavior, harassment, cheating, or any other misconduct by a player to help us maintain a safe and respectful gaming environment."
+}) %>
+
+<%- include("modules/navigationBar.ejs") %>
+
+<%- include("partials/miniHeader.ejs", {
+  headerTitle: "Shopping District Directory",
+  backgroundImage: globalImage
+}) %>
+
+<section class="section">
+  <div class="container">
+    <table id="shoppingDistrictTable" class="display">
+      <thead>
+        <tr>
+          <th>Shop Name</th>
+          <th>Owner</th>
+          <th>Location</th>
+          <th>Items Sold</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Iron Works</td>
+          <td>JohnDoe</td>
+          <td>X: 123, Y: 65, Z: -456</td>
+          <td>Iron Ingots, Iron Blocks</td>
+        </tr>
+        <tr>
+          <td>Redstone Central</td>
+          <td>JaneDoe</td>
+          <td>X: 300, Y: 70, Z: -100</td>
+          <td>Redstone Dust, Redstone Lamps</td>
+        </tr>
+        <!-- Add more rows as needed -->
+      </tbody>
+    </table>
+  </div>
+
+  <script>
+    $(document).ready(function() {
+      $('#shoppingDistrictTable').DataTable({
+        "paging": true,
+        "searching": true,
+        "ordering": true,
+        "info": true
+      });
+    });
+  </script>
+</section>
+
+<%- include("modules/footer.ejs") %>

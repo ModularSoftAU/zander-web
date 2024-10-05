@@ -215,6 +215,43 @@ CREATE TABLE reports (
     PRIMARY KEY (reportId)
 );
 
+CREATE VIEW zanderdev.shoppingDirectory AS
+SELECT
+    shops.id,
+    users.uuid,
+    users.userId,
+    data.item,
+    substring_index(
+        SUBSTRING(item,
+            LOCATE('type:', item) + LENGTH('type:')
+        ),
+        '\n',
+        1
+    ) AS item,
+    CASE LOCATE('amount:', item)
+        WHEN 0 THEN null
+        ELSE substring_index(
+            SUBSTRING(item,
+                LOCATE('amount:', item) + LENGTH('amount:')
+            ),
+            '\n',
+            1
+        )
+    END AS amount,
+    data.price,
+    stock.stock,
+    map.world,
+    map.x,
+    map.y,
+    map.z
+FROM cfc_dev_quickshop.qs_shops shops
+    JOIN cfc_dev_quickshop.qs_shop_map map ON shops.id = map.shop
+    JOIN cfc_dev_quickshop.qs_data data ON shops.data = data.id
+    JOIN zanderdev.users users ON users.uuid = data.owner
+    JOIN cfc_dev_quickshop.qs_external_cache stock ON shops.id = stock.shop
+WHERE data.unlimited = 0
+ORDER BY shops.id
+
 CREATE TABLE logs (
 	logId INT NOT NULL AUTO_INCREMENT,
     creatorId INT NOT NULL,

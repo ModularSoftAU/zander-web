@@ -11,6 +11,7 @@
   "server": true,
   "ranks": true,
   "report": true,
+  "shoppingdirectory": true,
   "filter": {
     "link": true,
     "phrase": true
