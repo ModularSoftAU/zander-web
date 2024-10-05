@@ -61,7 +61,7 @@ export default function dashboardVaultSiteRoute(
     if (!hasPermission("zander.web.vault", req, res, features)) return;
 
     const vaultId = req.query.vaultId;
-    const fetchURL = `${process.env.siteAddress}/api/vault/get?vaultId=${vaultId}`;
+    const fetchURL = `${process.env.siteAddress}/api/vault/get?id=${vaultId}`;
     const response = await fetch(fetchURL, {
       headers: { "x-access-token": process.env.apiKey },
     });
