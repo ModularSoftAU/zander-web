@@ -49,9 +49,7 @@ export default function profileSiteRoutes(
         const reportsResponse = await fetch(fetchReportsURL, {
           headers: { "x-access-token": process.env.apiKey },
         });
-
         const profileReportsApiData = await reportsResponse.json();
-        console.log(profileReportsApiData);
 
         //
         // Get user context for display permissions
