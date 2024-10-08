@@ -8,7 +8,7 @@ export default function reportApiRoute(app, config, db, features, lang) {
   // TODO: Update docs
   app.get(baseEndpoint + "/get", async function (req, res) {
     isFeatureEnabled(features.report, res, lang);
-    const reportedId = optional(req.query, "reportedId");
+    const reporterId = optional(req.query, "reporterId");
 
     try {
       function getReports(dbQuery) {
@@ -35,9 +35,9 @@ export default function reportApiRoute(app, config, db, features, lang) {
         });
       }
 
-      // Get Reports by user
-      if (reportedId) {
-        let dbQuery = `SELECT * FROM reports WHERE reportedId=${reportedId};`;
+      // Get Reports that user has made
+      if (reporterId) {
+        let dbQuery = `SELECT * FROM reports WHERE reporterId=${reporterId};`;
         await getReports(dbQuery);
       }
 
