@@ -169,8 +169,8 @@
                                     <td><%= report.reportId %></td>
                                     <td><%= report.reportedUser %></td>
                                     <td><%= report.reportReason %></td>
-                                    <td><%= report.reportPlatform %></td>
-                                    <td><%= report.reportDateTime %></td>
+                                    <td><span class="badge badge-primary"><%= report.reportPlatform %></span></td>
+                                    <td><%= moment(report.reportDateTime).format('Do MMMM YYYY, h:mm a'); %></td>
                                 </tr>
                             <% }) %>
                         </tbody>
