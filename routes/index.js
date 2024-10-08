@@ -103,4 +103,33 @@ export default function applicationSiteRoutes(
       announcementWeb: await getWebAnnouncement(),
     });
   });
+
+  //
+  // Report
+  //
+  app.get("/report", async function (req, res) {
+    if (!isFeatureWebRouteEnabled(features.report, req, res, features)) {
+      return;
+    }
+
+    if (!req.session.user) {
+      return res.view("session/notLoggedIn", {
+        pageTitle: `Access Restricted`,
+        config: config,
+        req: req,
+        features: features,
+        globalImage: await getGlobalImage(),
+        announcementWeb: await getWebAnnouncement(),
+      });
+    }
+
+    return res.view("report", {
+      pageTitle: `Report`,
+      config: config,
+      req: req,
+      features: features,
+      globalImage: await getGlobalImage(),
+      announcementWeb: await getWebAnnouncement(),
+    });
+  });
 }

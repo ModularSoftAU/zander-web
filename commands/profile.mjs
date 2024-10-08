@@ -2,6 +2,7 @@ import { Command, RegisterBehavior } from "@sapphire/framework";
 import { Colors, EmbedBuilder } from "discord.js";
 import moment from "moment";
 import fetch from "node-fetch";
+import { getProfilePicture } from "../controllers/userController";
 
 export class ProfileCommand extends Command {
   constructor(context, options) {
@@ -45,11 +46,8 @@ export class ProfileCommand extends Command {
         empheral: false,
       });
     } else {
-      console.log(apiData.data);
-      console.log(`apiData.data.profilePicture`);
-      console.log(apiData.data.profilePicture);
-
       let isLinked = apiData.data.profileData.discordId;
+      let profilePicture = await getProfilePicture(apiData.data.profileData.username);
 
       const embed = new EmbedBuilder()
         if (isLinked) {
@@ -63,6 +61,7 @@ export class ProfileCommand extends Command {
             `Last Online ${apiData.data.profileSession.lastOnlineDiff} on ${apiData.data.profileSession.server}`
           )
           .setColor(Colors.Blurple)
+          .setThumbnail(profilePicture)
           .addFields(
             {
               name: "Date Joined",

@@ -2,9 +2,6 @@
   "announcements": true,
   "applications": true,
   "discord": {
-    "commands": {
-      "legoFlip": true
-    },
     "events": {
       "generalKenobi": true,
       "guildMemberBoost": true,
@@ -13,6 +10,7 @@
   },
   "server": true,
   "ranks": true,
+  "report": true,
   "filter": {
     "link": true,
     "phrase": true

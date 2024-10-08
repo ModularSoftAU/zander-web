@@ -7,12 +7,14 @@ import userApiRoute from "./user";
 import webApiRoute from "./web";
 import filterApiRoute from "./filter";
 import rankApiRoute from "./ranks";
+import reportApiRoute from "./report";
 
 export default (app, client, moment, config, db, features, lang) => {
   announcementApiRoute(app, config, db, features, lang);
   applicationApiRoute(app, config, db, features, lang);
   discordApiRoute(app, client, config, db, features, lang);
   serverApiRoute(app, config, db, features, lang);
+  reportApiRoute(app, config, db, features, lang);
   sessionApiRoute(app, config, db, features, lang);
   userApiRoute(app, config, db, features, lang);
   webApiRoute(app, config, db, features, lang);
