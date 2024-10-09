@@ -1,5 +1,6 @@
 import { Command, RegisterBehavior } from "@sapphire/framework";
 import { Colors, EmbedBuilder } from "discord.js";
+import features from "../features.json" assert { type: "json" };
 
 export class RanksCommand extends Command {
   constructor(context, options) {
@@ -30,7 +31,7 @@ export class RanksCommand extends Command {
     }
 
     const embed = new EmbedBuilder()
-      .setTitle(`Ranks`)
+      .setTitle(`Vault`)
       .setDescription(
         `Explore the Vault to discover and download our previous maps and explore the worlds and builds of our community: ${process.env.siteAddress}/vault`
       )
