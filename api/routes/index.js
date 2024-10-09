@@ -8,6 +8,7 @@ import webApiRoute from "./web";
 import filterApiRoute from "./filter";
 import rankApiRoute from "./ranks";
 import reportApiRoute from "./report";
+import vaultApiRoute from "./vault";
 
 export default (app, client, moment, config, db, features, lang) => {
   announcementApiRoute(app, config, db, features, lang);
@@ -20,6 +21,7 @@ export default (app, client, moment, config, db, features, lang) => {
   webApiRoute(app, config, db, features, lang);
   rankApiRoute(app, config, db, features, lang);
   filterApiRoute(app, config, db, features, lang);
+  vaultApiRoute(app, config, db, features, lang);
 
   app.get("/api/heartbeat", async function (req, res) {
     return res.send({

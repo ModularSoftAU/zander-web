@@ -34,10 +34,10 @@ export default function reportApiRoute(app, config, db, features, lang) {
           });
         });
       }
-
-      // Get Reports that user has made
-      if (reporterId) {
-        let dbQuery = `SELECT * FROM reports WHERE reporterId=${reporterId};`;
+      
+      // Get Reports by user
+      if (reportedId) {
+        let dbQuery = `SELECT * FROM reports WHERE reportedId=${reportedId};`;
         await getReports(dbQuery);
       }
 

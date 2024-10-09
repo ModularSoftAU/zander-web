@@ -215,6 +215,15 @@ CREATE TABLE reports (
     PRIMARY KEY (reportId)
 );
 
+CREATE TABLE vault (
+	vaultId INT NOT NULL AUTO_INCREMENT,
+    displayName VARCHAR(30),
+    description MEDIUMTEXT,
+    redirectUrl TEXT,
+    position INT,
+    PRIMARY KEY (vaultId)
+);
+
 CREATE TABLE logs (
 	logId INT NOT NULL AUTO_INCREMENT,
     creatorId INT NOT NULL,
