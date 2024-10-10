@@ -67,13 +67,8 @@ export default function bridgeApiRoute(app, config, db, features, lang) {
 
     try {
       db.query(
-        `INSERT INTO bridge 
-            (command, targetedServer) 
-        VALUES (?, ?)`,
-        [
-          command,
-          targetedServer
-        ],
+        `INSERT INTO bridge (command, targetedServer) VALUES (?, ?)`,
+        [command, targetedServer],
         function (error, results, fields) {
           if (error) {
             return res.send({
@@ -104,46 +99,18 @@ export default function bridgeApiRoute(app, config, db, features, lang) {
   app.post(baseEndpoint + "/command/process", async function (req, res) {
     isFeatureEnabled(features.bridge, res, lang);
 
-    const actioningUser = required(req.body, "actioningUser", res);
-    const applicationId = required(req.body, "applicationId", res);
-    const displayName = required(req.body, "displayName", res);
-    const description = required(req.body, "description", res);
-    const displayIcon = required(req.body, "displayIcon", res);
-    const requirementsMarkdown = required(
-      req.body,
-      "requirementsMarkdown",
-      res
-    );
-    const redirectUrl = required(req.body, "redirectUrl", res);
-    const position = required(req.body, "position", res);
-    const applicationStatus = required(req.body, "applicationStatus", res);
-
-    let applicationEditedLang = lang.applications.applicationEdited;
+    const bridgeId = required(req.body, "bridgeId", res);
 
     try {
+      const fetchURL = `${process.env.siteAddress}/api/bridge/get?id=${bridgeId}`;
+      const response = await fetch(fetchURL, {
+        headers: { "x-access-token": process.env.apiKey },
+      });
+      const bridgeApiData = await response.json();
+
       db.query(
-        `
-                UPDATE 
-                    applications 
-                SET 
-                    displayName=?, 
-                    displayIcon=?, 
-                    description=?, 
-                    requirementsMarkdown=?, 
-                    redirectUrl=?, 
-                    position=?,
-                    applicationStatus=?
-                WHERE applicationId=?;`,
-        [
-          displayName,
-          displayIcon,
-          description,
-          requirementsMarkdown,
-          redirectUrl,
-          position,
-          applicationStatus,
-          applicationId,
-        ],
+        `UPDATE bridge SET processed=? WHERE bridgeId=?;`,
+        [1, bridgeId],
         function (error, results, fields) {
           if (error) {
             return res.send({
@@ -152,20 +119,9 @@ export default function bridgeApiRoute(app, config, db, features, lang) {
             });
           }
 
-          generateLog(
-            actioningUser,
-            "SUCCESS",
-            "APPLICATION",
-            `Edited ${displayName}`,
-            res
-          );
-
           return res.send({
             success: true,
-            message: applicationEditedLang.replace(
-              "%DISPLAYNAME%",
-              displayName
-            ),
+            message: `Bridge ID ${bridgeId} has been executed with command: ${bridgeApiData.data[0]}`,
           });
         }
       );

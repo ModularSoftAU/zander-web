@@ -12,6 +12,7 @@
   "ranks": true,
   "report": true,
   "vault": true,
+  "bridge": true,
   "filter": {
     "link": true,
     "phrase": true
