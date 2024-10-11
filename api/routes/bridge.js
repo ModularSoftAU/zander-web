@@ -6,7 +6,7 @@ export default function bridgeApiRoute(app, config, db, features, lang) {
   app.get(baseEndpoint + "/get", async function (req, res) {
     isFeatureEnabled(features.bridge, res, lang);
     const bridgeId = optional(req.query, "id");
-    const targetedServer = optional(req.query, "targetedServer");
+    const targetServer = optional(req.query, "targetServer");
 
     try {
       function getBridge(dbQuery) {
@@ -42,7 +42,7 @@ export default function bridgeApiRoute(app, config, db, features, lang) {
 
       // Get Bridge by Targeted Server
       if (bridgeId) {
-        let dbQuery = `SELECT * FROM bridge WHERE targetedServer=${targetedServer};`;
+        let dbQuery = `SELECT * FROM bridge WHERE targetServer=${targetServer};`;
         getBridge(dbQuery);
       }
 
@@ -63,12 +63,12 @@ export default function bridgeApiRoute(app, config, db, features, lang) {
     isFeatureEnabled(features.bridge, res, lang);
 
     const command = required(req.body, "command", res);
-    const targetedServer = required(req.body, "targetedServer", res);
+    const targetServer = required(req.body, "targetServer", res);
 
     try {
       db.query(
-        `INSERT INTO bridge (command, targetedServer) VALUES (?, ?)`,
-        [command, targetedServer],
+        `INSERT INTO bridge (command, targetServer) VALUES (?, ?)`,
+        [command, targetServer],
         function (error, results, fields) {
           if (error) {
             return res.send({
@@ -79,10 +79,7 @@ export default function bridgeApiRoute(app, config, db, features, lang) {
 
           return res.send({
             success: true,
-            message: applicationCreatedLang.replace(
-              "%DISPLAYNAME%",
-              displayName
-            ),
+            message: `New Bridge command added for ${targetServer}: ${command}`,
           });
         }
       );

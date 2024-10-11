@@ -227,7 +227,7 @@ CREATE TABLE vault (
 CREATE TABLE bridge (
 	bridgeId INT NOT NULL AUTO_INCREMENT,
     command TEXT,
-    targetedServer VARCHAR(30),
+    targetServer VARCHAR(30),
     processed BOOLEAN DEFAULT 0,
     bridgeDateTime DATETIME NOT NULL DEFAULT NOW(),
     PRIMARY KEY (bridgeId)

@@ -15,6 +15,42 @@
       <%- include("../modules/dashboard/dashboard-sidebar.ejs") %>
     </div>
     <div class="col" style="padding: 20px;">
+        <%- include("../partials/documentationLink.ejs", {
+            doclink: "https://modularsoft.org/docs/products/zander/features/bridge/"
+        }) %>
+        <br><br>
+
+        <div class="basic-form">
+            <form method="post" action="<%= process.env.siteAddress %>/redirect/bridge/command/add">
+                <div class="row">
+                    <!-- Target Server -->
+                    <div class="form-group col">
+                        <label for="command">Command</label>
+
+                         <%- include("../partials/form/inputText.ejs", {
+                             elementName: "command",
+                             elementValue: null,
+                             required: true
+                         }) %>
+                    </div>
+
+                    <!-- Target Server -->
+                    <div class="form-group col">
+                        <label for="targetServer">Target Server</label>
+
+                         <%- include("../partials/form/inputText.ejs", {
+                             elementName: "targetServer",
+                             elementValue: null,
+                             required: true
+                         }) %>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn btn-primary">Send to Bridge</button>
+            </form>
+        </div>
+        <br><br>
+
         <% if (req.cookies.alertType) { %>
             <%- include("../partials/alert.ejs", {
               alertType: req.cookies.alertType,
@@ -27,6 +63,8 @@
                 <tr>
                     <th>Bridge ID</th>
                     <th>Command</th>
+                    <th>Target Server</th>
+                    <th>Processed</th>
                     <th>Created</th>
                 </tr>
             </thead>
@@ -37,17 +75,13 @@
                       content: apiData.message
                     }) %>
                 <% } else { %>
-                    <% apiData.data.forEach(function (log) { %>
+                    <% apiData.data.forEach(function (bridge) { %>
                         <tr>
-                            <td><%= log.actionedUsername %></td>
-                            <td>
-                                <%- include("../partials/logPriorityBadge.ejs", {
-                                    type: log.logType
-                                }) %>
-                            </td>
-                            <td><span class="badge badge-primary"><%= log.logFeature %></span></td>
-                            <td><%= log.description %></td>
-                            <td><%= moment(log.actionedDateTime).startOf('hour').fromNow() %></td>
+                            <td><%= bridge.bridgeId %></td>
+                            <td><code><%= bridge.command %></code></td>
+                            <td><%= bridge.targetServer %></td>
+                            <td><%= bridge.processed %></td>
+                            <td><%= moment(bridge.bridgeDateTime).startOf('hour').fromNow() %></td>
                         </tr>
                     <% }) %>
                 <% } %>
