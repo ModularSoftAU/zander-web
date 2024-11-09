@@ -42,7 +42,7 @@ export default function bridgeApiRoute(app, config, db, features, lang) {
 
       // Get Bridge by Targeted Server
       if (bridgeId) {
-        let dbQuery = `SELECT * FROM bridge WHERE targetServer=${targetServer};`;
+        let dbQuery = `SELECT * FROM bridge WHERE targetServer=${targetServer} AND processed=0;`;
         getBridge(dbQuery);
       }
 
@@ -104,7 +104,7 @@ export default function bridgeApiRoute(app, config, db, features, lang) {
         headers: { "x-access-token": process.env.apiKey },
       });
       const bridgeApiData = await response.json();
-
+      
       db.query(
         `UPDATE bridge SET processed=? WHERE bridgeId=?;`,
         [1, bridgeId],
@@ -118,7 +118,7 @@ export default function bridgeApiRoute(app, config, db, features, lang) {
 
           return res.send({
             success: true,
-            message: `Bridge ID ${bridgeId} has been executed with command: ${bridgeApiData.data[0]}`,
+            message: `Bridge ID ${bridgeId} has been executed.`,
           });
         }
       );
