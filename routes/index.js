@@ -134,18 +134,27 @@ export default function applicationSiteRoutes(
   });
 
   //
-  // Shopping District Directory
+  // Shop Directory
   //
-  app.get("/shoppingdirectory", async function (req, res) {
-    isFeatureWebRouteEnabled(features.shoppingdirectory, req, res, features);
+  app.get("/shopdirectory", async function (req, res) {
+    isFeatureEnabled(features.shopdirectory, res, lang);
 
-    return res.view("shoppingdirectory", {
-      pageTitle: `Shopping District Directory`,
+    const fetchURL = `${process.env.siteAddress}/api/shop/get`;
+    const response = await fetch(fetchURL, {
+      headers: { "x-access-token": process.env.apiKey },
+    });
+    const apiData = await response.json();
+
+    console.log(apiData);
+
+    return res.view("shopdirectory", {
+      pageTitle: `Shop Directory`,
       config: config,
       req: req,
       features: features,
       globalImage: await getGlobalImage(),
       announcementWeb: await getWebAnnouncement(),
+      apiData: apiData
     });
   });
 }

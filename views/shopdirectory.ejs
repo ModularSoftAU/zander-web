@@ -6,13 +6,13 @@
 <%- include("modules/navigationBar.ejs") %>
 
 <%- include("partials/miniHeader.ejs", {
-  headerTitle: "Shopping District Directory",
+  headerTitle: "Shop Directory",
   backgroundImage: globalImage
 }) %>
 
 <section class="section">
   <div class="container">
-    <table id="shoppingDistrictTable" class="display">
+    <table id="shopTable" class="display">
       <thead>
         <tr>
           <th>Shop Name</th>
@@ -41,7 +41,7 @@
 
   <script>
     $(document).ready(function() {
-      $('#shoppingDistrictTable').DataTable({
+      $('#shopTable').DataTable({
         "paging": true,
         "searching": true,
         "ordering": true,
