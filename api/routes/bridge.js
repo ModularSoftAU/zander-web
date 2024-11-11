@@ -11,16 +11,14 @@ export default function bridgeApiRoute(app, config, db, features, lang) {
     try {
       function getBridge(dbQuery) {
         db.query(dbQuery, function (error, results, fields) {
-          console.log(results);
-
           if (error) {
             res.send({
               success: false,
               message: `${error}`,
             });
-          }
+          }          
 
-          if (!results.length) {
+          if (!results) {
             return res.send({
               success: false,
               message: `No Bridge requests can be found`,
@@ -41,8 +39,8 @@ export default function bridgeApiRoute(app, config, db, features, lang) {
       }
 
       // Get Bridge by Targeted Server
-      if (bridgeId) {
-        let dbQuery = `SELECT * FROM bridge WHERE targetServer=${targetServer} AND processed=0;`;
+      if (targetServer) {
+        let dbQuery = `SELECT * FROM bridge WHERE targetServer='${targetServer}' AND processed=0;`;
         getBridge(dbQuery);
       }
 
@@ -104,7 +102,7 @@ export default function bridgeApiRoute(app, config, db, features, lang) {
         headers: { "x-access-token": process.env.apiKey },
       });
       const bridgeApiData = await response.json();
-      
+
       db.query(
         `UPDATE bridge SET processed=? WHERE bridgeId=?;`,
         [1, bridgeId],
