@@ -12,6 +12,8 @@
   "ranks": true,
   "report": true,
   "shopdirectory": true,
+  "vault": true,
+  "bridge": true,
   "filter": {
     "link": true,
     "phrase": true

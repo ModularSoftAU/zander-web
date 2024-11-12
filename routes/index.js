@@ -160,5 +160,28 @@ export default function applicationSiteRoutes(
       globalImage: await getGlobalImage(),
       announcementWeb: await getWebAnnouncement(),
     });
+  })
+  
+  //
+  // Vault
+  //
+  app.get("/vault", async function (req, res) {
+    isFeatureWebRouteEnabled(features.vault, req, res, features);
+
+    const fetchURL = `${process.env.siteAddress}/api/vault/get`;
+    const response = await fetch(fetchURL, {
+      headers: { "x-access-token": process.env.apiKey },
+    });
+    const apiData = await response.json();
+
+    return res.view("vault", {
+      pageTitle: `Vault`,
+      config: config,
+      req: req,
+      apiData: apiData,
+      features: features,
+      globalImage: await getGlobalImage(),
+      announcementWeb: await getWebAnnouncement(),
+    });
   });
 }

@@ -1,5 +1,5 @@
 import { MessageBuilder, Webhook } from "discord-webhook-node";
-import { isFeatureEnabled, required, optional, generateLog, setBannerCookie } from "../common";
+import { isFeatureEnabled, required, optional, setBannerCookie } from "../common";
 import { Colors } from "discord.js";
 
 export default function reportApiRoute(app, config, db, features, lang) {
@@ -34,7 +34,7 @@ export default function reportApiRoute(app, config, db, features, lang) {
           });
         });
       }
-
+      
       // Get Reports by user
       if (reportedId) {
         let dbQuery = `SELECT * FROM reports WHERE reportedId=${reportedId};`;
