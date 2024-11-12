@@ -80,12 +80,38 @@ export default function userApiRoute(app, config, db, features, lang) {
   // TODO: Update docs
   app.get(baseEndpoint + "/get", async function (req, res) {
     const username = optional(req.query, "username");
+    const userId = optional(req.query, "userId");
 
     try {
       if (username) {
         db.query(
           `SELECT * FROM users WHERE username=?;`,
           [username],
+          function (error, results, fields) {
+            if (error) {
+              return res.send({
+                success: false,
+                message: error,
+              });
+            }
+
+            if (!results || !results.length) {
+              return res.send({
+                success: false,
+                message: lang.api.userDoesNotExist,
+              });
+            }
+
+            return res.send({
+              success: true,
+              data: results,
+            });
+          }
+        );
+      } else if (userId) {
+        db.query(
+          `SELECT * FROM users WHERE userId=?;`,
+          [userId],
           function (error, results, fields) {
             if (error) {
               return res.send({

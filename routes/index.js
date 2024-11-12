@@ -135,26 +135,30 @@ export default function applicationSiteRoutes(
 
   //
   // Shop Directory
-  //
+  // 
   app.get("/shopdirectory", async function (req, res) {
-    isFeatureEnabled(features.shopdirectory, res, lang);
+    isFeatureWebRouteEnabled(features.shopdirectory, req, res, features);
 
-    const fetchURL = `${process.env.siteAddress}/api/shop/get`;
-    const response = await fetch(fetchURL, {
+    //
+    // Get all Shops
+    //
+    const shopFetchURL = `${process.env.siteAddress}/api/shop/get`;
+    const shopResponse = await fetch(shopFetchURL, {
       headers: { "x-access-token": process.env.apiKey },
     });
-    const apiData = await response.json();
+    const shopApiData = await shopResponse.json();
 
-    console.log(apiData);
+    console.log(shopApiData.data[0].userData);
+    
 
     return res.view("shopdirectory", {
       pageTitle: `Shop Directory`,
       config: config,
       req: req,
       features: features,
+      shopApiData: shopApiData,
       globalImage: await getGlobalImage(),
       announcementWeb: await getWebAnnouncement(),
-      apiData: apiData
     });
   });
 }
