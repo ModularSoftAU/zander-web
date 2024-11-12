@@ -215,12 +215,11 @@ CREATE TABLE reports (
     PRIMARY KEY (reportId)
 );
 
-CREATE VIEW zanderdev.shoppingDirectory AS
+CREATE VIEW shoppingDirectory AS
 SELECT
     shops.id,
     users.uuid,
     users.userId,
-    data.item,
     substring_index(
         SUBSTRING(item,
             LOCATE('type:', item) + LENGTH('type:')
@@ -244,11 +243,11 @@ SELECT
     map.x,
     map.y,
     map.z
-FROM cfc_dev_quickshop.qs_shops shops
-    JOIN cfc_dev_quickshop.qs_shop_map map ON shops.id = map.shop
-    JOIN cfc_dev_quickshop.qs_data data ON shops.data = data.id
-    JOIN zanderdev.users users ON users.uuid = data.owner
-    JOIN cfc_dev_quickshop.qs_external_cache stock ON shops.id = stock.shop
+FROM cfc_prod_quickshop.qs_shops shops
+    JOIN cfc_prod_quickshop.qs_shop_map map ON shops.id = map.shop
+    JOIN cfc_prod_quickshop.qs_data data ON shops.data = data.id
+    JOIN zanderProd.users users ON users.uuid = data.owner
+    JOIN cfc_prod_quickshop.qs_external_cache stock ON shops.id = stock.shop
 WHERE data.unlimited = 0
 ORDER BY shops.id
 
