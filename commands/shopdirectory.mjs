@@ -57,7 +57,7 @@ export class ShopDirectoryCommand extends Command {
           .setTitle("No Shop Items Found")
           .setDescription(
             `No shop items were found${
-              material ? ` for material: ${material}` : ""
+              material ? ` for material: \`${material}\`` : ""
             }.`
           )
           .setColor(Colors.Orange);
@@ -69,9 +69,9 @@ export class ShopDirectoryCommand extends Command {
 
       // Construct an embed with shop items
       const itemsEmbed = new EmbedBuilder()
-        .setTitle("Shop Directory")
+        .setTitle("🛍️ Shop Directory")
         .setDescription(
-          `Here are the shop items${
+          `🔍 Here are the shop items${
             material ? ` for material: \`${material}\`` : ""
           }.`
         )
@@ -82,7 +82,7 @@ export class ShopDirectoryCommand extends Command {
         itemsEmbed.addFields([
           {
             name: `Item: ${shop.itemData.displayName}`,
-            value: `**Seller:** ${shop.userData.username}\n**Amount:** $${shop.amount}\n**Price:** $${shop.price}\n**Stock:** $${shop.stock}\n**Location:** ${shop.x}, ${shop.y}, ${shop.z}`,
+            value: `**Seller:** \`${shop.userData.username}\`\n**Amount:** $${shop.amount}\n**Price:** $${shop.price}\n**Stock:** $${shop.stock}\n**Location:** ${shop.x}, ${shop.y}, ${shop.z}`,
           },
         ]);
       });
