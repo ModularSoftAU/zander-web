@@ -72,7 +72,7 @@ export class ShopDirectoryCommand extends Command {
         .setTitle("Shop Directory")
         .setDescription(
           `Here are the shop items${
-            material ? ` for material: ${material}` : ""
+            material ? ` for material: \`${material}\`` : ""
           }.`
         )
         .setColor(Colors.Blue);
@@ -81,7 +81,7 @@ export class ShopDirectoryCommand extends Command {
       apiData.data.forEach((shop) => {
         itemsEmbed.addFields([
           {
-            name: `Item: ${shop.itemData.name}`,
+            name: `Item: ${shop.itemData.displayName}`,
             value: `Seller: ${shop.userData.username}\Amount: $${shop.amount}\nPrice: $${shop.price}\nStock: $${shop.stock}\nLocation: ${shop.x}, ${shop.y}, ${shop.z}`,
           },
         ]);
