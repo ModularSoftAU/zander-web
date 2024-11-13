@@ -9,7 +9,7 @@ export default function shopApiRoute(app, config, db, features, lang) {
     isFeatureEnabled(features.shopdirectory, res, lang);
 
     const material = optional(req.query, "material");
-    const limit = pLimit(10); // Limit concurrent async operations
+    const limit = pLimit(10);
 
     try {
       async function getShops(dbQuery) {
@@ -39,20 +39,50 @@ export default function shopApiRoute(app, config, db, features, lang) {
 
                     // Fetch item data from Craftdex
                     const itemFetchURL = `https://craftdex.onrender.com/search/${itemName}`;
-                    const itemResponse = await fetch(itemFetchURL);
-                    const itemApiData = await itemResponse.json();
+                    let itemApiData = {};
+                    try {
+                      const itemResponse = await fetch(itemFetchURL);
+                      if (itemResponse.ok) {
+                        itemApiData = await itemResponse.json();
+                      } else {
+                        console.error(
+                          `Failed to fetch item data: ${itemResponse.status}`
+                        );
+                      }
+                    } catch (itemError) {
+                      console.error("Error fetching item data:", itemError);
+                    }
 
                     // Fetch user data from internal API
                     const userFetchURL = `${process.env.siteAddress}/api/user/get?userId=${shop.userId}`;
-                    const userResponse = await fetch(userFetchURL, {
-                      headers: { "x-access-token": process.env.apiKey },
-                    });
-                    const userApiData = await userResponse.json();
+                    let userApiData = {};
+                    try {
+                      const userResponse = await fetch(userFetchURL, {
+                        headers: { "x-access-token": process.env.apiKey },
+                      });
+                      if (userResponse.ok) {
+                        userApiData = await userResponse.json();
+                      } else {
+                        console.error(
+                          `Failed to fetch user data: ${userResponse.status}`
+                        );
+                      }
+                    } catch (userError) {
+                      console.error("Error fetching user data:", userError);
+                    }
 
                     // Get user profile picture
-                    const profilePicture = await getProfilePicture(
-                      userApiData.data[0]?.username
-                    );
+                    let profilePicture = "";
+                    try {
+                      profilePicture = await getProfilePicture(
+                        userApiData.data[0]?.username
+                      );
+                    } catch (profileError) {
+                      console.error(
+                        "Error fetching profile picture:",
+                        profileError
+                      );
+                    }
 
                     // Return the enriched shop data
                     return {
@@ -73,7 +103,7 @@ export default function shopApiRoute(app, config, db, features, lang) {
                 data: modifiedShops,
               });
             } catch (fetchError) {
-              console.error("Error fetching shop data:", fetchError);
+              console.error("Error processing shop data:", fetchError);
               res.send({
                 success: false,
                 message: "Error processing shop data.",
