@@ -233,6 +233,20 @@ CREATE TABLE bridge (
     PRIMARY KEY (bridgeId)
 );
 
+CREATE TABLE votes (
+	voteId INT NOT NULL AUTO_INCREMENT,
+    userId INT,
+    voteSite INT
+    PRIMARY KEY (voteId)
+);
+
+CREATE TABLE voteSite (
+	voteSiteId INT NOT NULL AUTO_INCREMENT,
+    voteSiteDisplayName VARCHAR(20),
+    voteSiteRedirect VARCHAR(120),
+    PRIMARY KEY (voteSiteId)
+);
+
 CREATE TABLE logs (
 	logId INT NOT NULL AUTO_INCREMENT,
     creatorId INT NOT NULL,
