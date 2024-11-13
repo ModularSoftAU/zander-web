@@ -37,8 +37,13 @@ export class ShopDirectoryCommand extends Command {
       });
     }
 
+    // Defer the reply to prevent interaction expiration
+    await interaction.deferReply();
+
     const material = interaction.options.getString("material") || "";
-    const shopApiURL = `${process.env.siteAddress}/api/shop/get?material=${encodeURIComponent(material)}`;
+    const shopApiURL = `${
+      process.env.siteAddress
+    }/api/shop/get?material=${encodeURIComponent(material)}`;
 
     try {
       // Fetch shop data from the API
@@ -57,9 +62,8 @@ export class ShopDirectoryCommand extends Command {
           )
           .setColor(Colors.Orange);
 
-        return interaction.reply({
+        return interaction.editReply({
           embeds: [noItemsEmbed],
-          ephemeral: true,
         });
       }
 
@@ -83,9 +87,8 @@ export class ShopDirectoryCommand extends Command {
         ]);
       });
 
-      interaction.reply({
+      interaction.editReply({
         embeds: [itemsEmbed],
-        ephemeral: false,
       });
     } catch (error) {
       console.error("Error fetching shop items:", error);
@@ -97,9 +100,8 @@ export class ShopDirectoryCommand extends Command {
         )
         .setColor(Colors.Red);
 
-      interaction.reply({
+      interaction.editReply({
         embeds: [errorEmbed],
-        ephemeral: true,
       });
     }
   }
