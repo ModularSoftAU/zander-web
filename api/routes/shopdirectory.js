@@ -1,96 +1,103 @@
 import { getProfilePicture } from "../../controllers/userController";
 import { isFeatureEnabled, optional } from "../common";
+import pLimit from "p-limit";
 
 export default function shopApiRoute(app, config, db, features, lang) {
   const baseEndpoint = "/api/shop";
 
-  app.get(baseEndpoint + "/get", async function (req, res) {
+  app.get(baseEndpoint + "/get", async (req, res) => {
     isFeatureEnabled(features.shopdirectory, res, lang);
 
     const material = optional(req.query, "material");
+    const limit = pLimit(10); // Limit concurrent async operations
 
     try {
-      function getShops(dbQuery) {
-        return new Promise(async (resolve, reject) => {
-          db.query(dbQuery, async function (error, results, fields) {
+      async function getShops(dbQuery) {
+        return new Promise((resolve, reject) => {
+          db.query(dbQuery, async (error, results) => {
             if (error) {
-              console.error(error);
+              console.error("Database error:", error);
               reject(error);
-            } else {
-              if (!results.length) {
-                res.send({
-                  success: false,
-                  message: `There are no shops available.`,
-                });
-              } else {
-                // Use map to process each shop and wait for all asynchronous operations
-                const modifiedShops = await Promise.all(
-                  results.map(async (shop) => {
+              return;
+            }
+
+            if (!results.length) {
+              res.send({
+                success: false,
+                message: "There are no shops available.",
+              });
+              resolve();
+              return;
+            }
+
+            try {
+              // Limit concurrency of async operations
+              const modifiedShops = await Promise.all(
+                results.map((shop) =>
+                  limit(async () => {
                     const itemName = shop.item.trim();
 
-                    //
-                    // Get all Shop item data from Craftdex
-                    //
+                    // Fetch item data from Craftdex
                     const itemFetchURL = `https://craftdex.onrender.com/search/${itemName}`;
                     const itemResponse = await fetch(itemFetchURL);
                     const itemApiData = await itemResponse.json();
 
-                    //
-                    // Get shop seller data
-                    //
+                    // Fetch user data from internal API
                     const userFetchURL = `${process.env.siteAddress}/api/user/get?userId=${shop.userId}`;
                     const userResponse = await fetch(userFetchURL, {
                       headers: { "x-access-token": process.env.apiKey },
                     });
                     const userApiData = await userResponse.json();
 
-                    // Get profile picture for the user
+                    // Get user profile picture
                     const profilePicture = await getProfilePicture(
                       userApiData.data[0]?.username
                     );
 
-                    // Return the modified shop data with itemData and filtered userData
+                    // Return the enriched shop data
                     return {
                       ...shop,
-                      itemData: itemApiData.data || {}, // Replace 'item' with 'itemData'
+                      itemData: itemApiData.data || {},
                       userData: {
-                        username: userApiData.data[0]?.username || "", // Only keep username
-                        discordId: userApiData.data[0]?.discordId || "", // Only keep discordId
-                        profilePicture: profilePicture || "", // Add the profile picture
+                        username: userApiData.data[0]?.username || "",
+                        discordId: userApiData.data[0]?.discordId || "",
+                        profilePicture: profilePicture || "",
                       },
                     };
                   })
-                );
+                )
+              );
 
-                // Send the modified data back in the response
-                res.send({
-                  success: true,
-                  data: modifiedShops,
-                });
-              }
-              resolve();
+              res.send({
+                success: true,
+                data: modifiedShops,
+              });
+            } catch (fetchError) {
+              console.error("Error fetching shop data:", fetchError);
+              res.send({
+                success: false,
+                message: "Error processing shop data.",
+              });
             }
+
+            resolve();
           });
         });
       }
 
-      // Get Shops by Material
-      if (material) {
-        let dbQuery = `SELECT * FROM shoppingDirectory WHERE item LIKE '%${material}%';`; // Ensure material is safe from injection
-        await getShops(dbQuery);
-      } else {
-        // Return all shops by default
-        let dbQuery = `SELECT * FROM shoppingDirectory;`;
-        await getShops(dbQuery);
-      }
+      // Construct the database query
+      const dbQuery = material
+        ? `SELECT * FROM shoppingDirectory WHERE item LIKE '%${material}%';`
+        : `SELECT * FROM shoppingDirectory;`;
+
+      // Execute the query and process the shops
+      await getShops(dbQuery);
     } catch (error) {
-      console.error(error);
+      console.error("Unhandled error:", error);
       res.send({
         success: false,
         message: `${error}`,
       });
     }
-
-    return res;
   });
 }
