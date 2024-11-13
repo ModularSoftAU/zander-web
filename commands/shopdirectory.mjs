@@ -81,8 +81,8 @@ export class ShopDirectoryCommand extends Command {
       apiData.data.forEach((shop) => {
         itemsEmbed.addFields([
           {
-            name: `Item: ${shop.itemData.name || shop.item}`,
-            value: `Seller: ${shop.userData.username}\nPrice: ${shop.price} coins\nLocation: ${shop.location}`,
+            name: `Item: ${shop.itemData.name}`,
+            value: `Seller: ${shop.userData.username}\Amount: $${shop.amount}\nPrice: $${shop.price}\nStock: $${shop.stock}\nLocation: ${shop.x}, ${shop.y}, ${shop.z}`,
           },
         ]);
       });
