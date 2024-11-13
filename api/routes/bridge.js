@@ -91,6 +91,36 @@ export default function bridgeApiRoute(app, config, db, features, lang) {
     return res;
   });
 
+  app.post(baseEndpoint + "/clear", async function (req, res) {
+    isFeatureEnabled(features.bridge, res, lang);
+
+    try {
+      db.query(
+        `TRUNCATE bridge;`,
+        function (error, results, fields) {
+          if (error) {
+            return res.send({
+              success: false,
+              message: `${error}`,
+            });
+          }
+
+          return res.send({
+            success: true,
+            message: `Bridge has now been cleared.`,
+          });
+        }
+      );
+    } catch (error) {
+      res.send({
+        success: false,
+        message: `${error}`,
+      });
+    }
+
+    return res;
+  });
+
   app.post(baseEndpoint + "/command/process", async function (req, res) {
     isFeatureEnabled(features.bridge, res, lang);
 
