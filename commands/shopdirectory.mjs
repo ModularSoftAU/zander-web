@@ -82,7 +82,7 @@ export class ShopDirectoryCommand extends Command {
         itemsEmbed.addFields([
           {
             name: `Item: ${shop.itemData.displayName}`,
-            value: `**Seller:** \`${shop.userData.username}\`\n**Amount:** $${shop.amount}\n**Price:** $${shop.price}\n**Stock:** $${shop.stock}\n**Location:** ${shop.x}, ${shop.y}, ${shop.z}`,
+            value: `**Seller:** \`${shop.userData.username}\`\n**Amount:** ${shop.amount}\n**Price:** $${shop.price}\n**Stock:** $${shop.stock}\n**Location:** ${shop.x}, ${shop.y}, ${shop.z}`,
           },
         ]);
       });
