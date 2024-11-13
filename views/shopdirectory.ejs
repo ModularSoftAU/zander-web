@@ -27,7 +27,7 @@
         <% shopApiData.data.forEach(shop => { %>
           <tr>
             <td><img src="<%= shop.itemData.image %>" alt="<%= shop.itemData.displayName %>"> <%= shop.itemData.displayName %></td>
-            <td><img src="<%= shop.userData.profilePicture %>" alt="<%= shop.userData.username %>" height="20px"> <%= shop.userData.username %></td>
+            <td><img src="<%= shop.userData.profilePicture %>" alt="<%= shop.userData.username %>" height="20px"> <a href="/profile/<%= shop.userData.username %>"><%= shop.userData.username %></a></td>
             <td><code><%= shop.amount %></code></td>
             <td><code><%= shop.price %></code></td>
             <td><code><%= shop.stock %></code></td>
