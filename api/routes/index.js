@@ -8,6 +8,7 @@ import webApiRoute from "./web";
 import filterApiRoute from "./filter";
 import rankApiRoute from "./ranks";
 import reportApiRoute from "./report";
+import shopApiRoute from "./shopdirectory";
 import vaultApiRoute from "./vault";
 import bridgeApiRoute from "./bridge";
 
@@ -22,6 +23,7 @@ export default (app, client, moment, config, db, features, lang) => {
   webApiRoute(app, config, db, features, lang);
   rankApiRoute(app, config, db, features, lang);
   filterApiRoute(app, config, db, features, lang);
+  shopApiRoute(app, config, db, features, lang);
   vaultApiRoute(app, config, db, features, lang);
   bridgeApiRoute(app, config, db, features, lang);
 
