@@ -134,6 +134,35 @@ export default function applicationSiteRoutes(
   });
 
   //
+  // Shop Directory
+  // 
+  app.get("/shopdirectory", async function (req, res) {
+    isFeatureWebRouteEnabled(features.shopdirectory, req, res, features);
+
+    //
+    // Get all Shops
+    //
+    const shopFetchURL = `${process.env.siteAddress}/api/shop/get`;
+    const shopResponse = await fetch(shopFetchURL, {
+      headers: { "x-access-token": process.env.apiKey },
+    });
+    const shopApiData = await shopResponse.json();
+
+    console.log(shopApiData.data[0].userData);
+    
+
+    return res.view("shopdirectory", {
+      pageTitle: `Shop Directory`,
+      config: config,
+      req: req,
+      features: features,
+      shopApiData: shopApiData,
+      globalImage: await getGlobalImage(),
+      announcementWeb: await getWebAnnouncement(),
+    });
+  })
+  
+  //
   // Vault
   //
   app.get("/vault", async function (req, res) {

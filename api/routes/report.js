@@ -1,5 +1,5 @@
 import { MessageBuilder, Webhook } from "discord-webhook-node";
-import { isFeatureEnabled, required, optional, generateLog, setBannerCookie } from "../common";
+import { isFeatureEnabled, required, optional, setBannerCookie } from "../common";
 import { Colors } from "discord.js";
 
 export default function reportApiRoute(app, config, db, features, lang) {
@@ -8,7 +8,7 @@ export default function reportApiRoute(app, config, db, features, lang) {
   // TODO: Update docs
   app.get(baseEndpoint + "/get", async function (req, res) {
     isFeatureEnabled(features.report, res, lang);
-    const reporterId = optional(req.query, "reporterId");
+    const reportedId = optional(req.query, "reportedId");
 
     try {
       function getReports(dbQuery) {
