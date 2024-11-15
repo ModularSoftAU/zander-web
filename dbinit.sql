@@ -278,3 +278,95 @@ CREATE TABLE logs (
     actionedDateTime DATETIME NOT NULL DEFAULT NOW(),
     PRIMARY KEY (logId)
 );
+
+CREATE VIEW zanderdev.punishments AS
+SELECT
+    litebans.uuid AS bannedUuid,
+    banned.userId AS bannedUserId,
+    litebans.banned_by_uuid AS bannedByUuid,
+    banner.userId AS bannedByUserId,
+    litebans.removed_by_uuid AS removedByUuid,
+    remover.userId AS removedByUserId,
+    litebans.type,
+    litebans.active,
+    litebans.silent,
+    FROM_UNIXTIME(litebans.time/1000) AS dateStart,
+    FROM_UNIXTIME(nullif((litebans.until / 1000), 0)) AS dateEnd,
+    litebans.removed_by_date AS dateRemoved,
+    litebans.reason,
+    litebans.removed_by_reason AS reasonRemoved,
+    litebans.ip,
+    litebans.ipban,
+    litebans.ipban_wildcard AS ipBanWildcard
+FROM (
+	SELECT
+		uuid,
+		ip,
+		reason,
+		banned_by_uuid,
+		time,
+		null AS until,
+		null AS removed_by_uuid,
+		null AS removed_by_reason,
+		null AS removed_by_date,
+		silent,
+		ipban,
+		ipban_wildcard,
+		null AS active,
+		'kick' AS type
+	FROM cfcdev_litebans.litebans_kicks
+	UNION
+	SELECT
+		uuid,
+		ip,
+		reason,
+		banned_by_uuid,
+		time,
+		until,
+		removed_by_uuid,
+		removed_by_reason,
+		removed_by_date,
+		silent,
+		ipban,
+		ipban_wildcard,
+		active,
+		'ban' AS type
+	FROM cfcdev_litebans.litebans_bans
+	UNION
+	SELECT
+		uuid,
+		ip,
+		reason,
+		banned_by_uuid,
+		time,
+		until,
+		removed_by_uuid,
+		removed_by_reason,
+		removed_by_date,
+		silent,
+		ipban,
+		ipban_wildcard,
+		active,
+		'mute' AS type
+	FROM cfcdev_litebans.litebans_mutes
+	UNION
+	SELECT
+		uuid,
+		ip,
+		reason,
+		banned_by_uuid,
+		time,
+		until,
+		removed_by_uuid,
+		removed_by_reason,
+		removed_by_date,
+		silent,
+		ipban,
+		ipban_wildcard,
+		active,
+		'warning' AS type
+	FROM cfcdev_litebans.litebans_warnings
+) AS litebans
+	LEFT JOIN zanderdev.users banned ON litebans.uuid = banned.uuid
+    LEFT JOIN zanderdev.users banner ON litebans.banned_by_uuid = banner.uuid
+    LEFT JOIN zanderdev.users remover ON litebans.removed_by_uuid = remover.uuid;
