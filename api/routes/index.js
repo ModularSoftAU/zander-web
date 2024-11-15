@@ -7,25 +7,17 @@ import userApiRoute from "./user";
 import webApiRoute from "./web";
 import filterApiRoute from "./filter";
 import rankApiRoute from "./ranks";
-import reportApiRoute from "./report";
-import shopApiRoute from "./shopdirectory";
-import vaultApiRoute from "./vault";
-import bridgeApiRoute from "./bridge";
 
 export default (app, client, moment, config, db, features, lang) => {
   announcementApiRoute(app, config, db, features, lang);
   applicationApiRoute(app, config, db, features, lang);
   discordApiRoute(app, client, config, db, features, lang);
   serverApiRoute(app, config, db, features, lang);
-  reportApiRoute(app, config, db, features, lang);
   sessionApiRoute(app, config, db, features, lang);
   userApiRoute(app, config, db, features, lang);
   webApiRoute(app, config, db, features, lang);
   rankApiRoute(app, config, db, features, lang);
   filterApiRoute(app, config, db, features, lang);
-  shopApiRoute(app, config, db, features, lang);
-  vaultApiRoute(app, config, db, features, lang);
-  bridgeApiRoute(app, config, db, features, lang);
 
   app.get("/api/heartbeat", async function (req, res) {
     return res.send({

@@ -159,7 +159,7 @@ export async function getProfilePicture(username) {
 
         if (profilePictureType == "CRAFTATAR") {
           let craftUUID = results[0].uuid;
-          return resolve(`https://crafthead.net/helm/${craftUUID}`);
+          return resolve(`https://crafatar.com/avatars/${craftUUID}?helm`);
         }
 
         if (profilePictureType == "GRAVATAR") {
@@ -275,8 +275,6 @@ export async function getUserPermissions(userData) {
         try {
           await Promise.all(
             userRanks.map(async (rank) => {
-              console.log(rank.rankSlug);
-
               return new Promise((resolve, reject) => {
                 db.query(
                   `SELECT * FROM rankPermissions WHERE rankSlug=?;`,
@@ -296,8 +294,6 @@ export async function getUserPermissions(userData) {
               });
             })
           );
-
-          console.log(userPermissions);
 
           resolve(userPermissions);
         } catch (err) {

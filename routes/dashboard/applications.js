@@ -63,7 +63,7 @@ export default function dashboardApplicationsSiteRoute(
     if (!hasPermission("zander.web.application", req, res, features)) return;
 
     const applicationId = req.query.applicationId;
-    const fetchURL = `${process.env.siteAddress}/api/application/get?id=${applicationId}`;
+    const fetchURL = `${process.env.siteAddress}/api/application/get?applicationId=${applicationId}`;
     const response = await fetch(fetchURL, {
       headers: { "x-access-token": process.env.apiKey },
     });

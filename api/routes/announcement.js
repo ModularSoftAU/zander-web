@@ -5,7 +5,7 @@ export default function announcementApiRoute(app, config, db, features, lang) {
 
   app.get(baseEndpoint + "/get", async function (req, res) {
     isFeatureEnabled(features.announcements, res, lang);
-    const announcementId = optional(req.query, "announcementId");
+    const announcementId = optional(req.query, "id");
     const announcementType = optional(req.query, "announcementType");
     const enabled = optional(req.query, "enabled");
 
@@ -157,14 +157,14 @@ export default function announcementApiRoute(app, config, db, features, lang) {
     try {
       db.query(
         `
-          UPDATE announcements 
-              SET 
-                  enabled=?,
-                  announcementType=?,
-                  body=?,
-                  colourMessageFormat=?,
-                  link=?
-              WHERE announcementId=?;`,
+                UPDATE announcements 
+                    SET 
+                        enabled=?,
+                        announcementType=?,
+                        body=?,
+                        colourMessageFormat=?,
+                        link=?
+                    WHERE announcementId=?;`,
         [
           enabled,
           announcementType,

@@ -220,23 +220,19 @@ export async function setBannerCookie(alertType, alertContent, res) {
     res.setCookie("alertType", alertType, {
       path: "/",
       expires: expiryTime,
-      httpOnly: true,
     });
 
     // Set Content Type
     res.setCookie("alertContent", alertContent, {
       path: "/",
       expires: expiryTime,
-      httpOnly: true,
     });
 
-    // Make sure to send the res
-    return res;
+    return true;
   } catch (error) {
     console.log(error);
   }
 }
-
 
 /*
     Sets two cookies (alertType and alertContent) with specified values and an expiration time of one second. 
