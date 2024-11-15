@@ -5,7 +5,7 @@ export default function applicationApiRoute(app, config, db, features, lang) {
 
   app.get(baseEndpoint + "/get", async function (req, res) {
     isFeatureEnabled(features.applications, res, lang);
-    const applicationId = optional(req.query, "applicationId");
+    const applicationId = optional(req.query, "id");
 
     try {
       function getApplications(dbQuery) {

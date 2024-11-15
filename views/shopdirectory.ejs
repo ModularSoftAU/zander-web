@@ -1,0 +1,53 @@
+<%- include("modules/header.ejs", {
+    pageTitle: pageTitle,
+    pageDescription: "The Shop Directory provides a comprehensive listing of available shops, showcasing items for sale, their prices, stock levels, and the shop owners' details to help you find what you're looking for quickly and easily."
+}) %>
+
+<%- include("modules/navigationBar.ejs") %>
+
+<%- include("partials/miniHeader.ejs", {
+  headerTitle: "Shop Directory",
+  backgroundImage: globalImage
+}) %>
+
+<section class="section">
+  <div class="container">
+    <table id="shopTable" class="display">
+      <thead>
+        <tr>
+          <th>Item</th>
+          <th>Shop Owner</th>
+          <th>Amount</th>
+          <th>Price</th>
+          <th>Stock</th>
+          <th>Location</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% shopApiData.data.forEach(shop => { %>
+          <tr>
+            <td><img src="<%= shop.itemData.image %>" alt="<%= shop.itemData.displayName %>"> <%= shop.itemData.displayName %></td>
+            <td><img src="<%= shop.userData.profilePicture %>" alt="<%= shop.userData.username %>" height="20px"> <a href="/profile/<%= shop.userData.username %>"><%= shop.userData.username %></a></td>
+            <td><code><%= shop.amount %></code></td>
+            <td><code><%= shop.price %></code></td>
+            <td><code><%= shop.stock %></code></td>
+            <td><code><%= shop.x %>, <%= shop.y %>, <%= shop.z %></code></td>
+          </tr>
+        <% }) %>
+      </tbody>
+    </table>
+  </div>
+
+  <script>
+    $(document).ready(function() {
+      $('#shopTable').DataTable({
+        "paging": true,
+        "searching": true,
+        "ordering": true,
+        "info": true
+      });
+    });
+  </script>
+</section>
+
+<%- include("modules/footer.ejs") %>

@@ -204,6 +204,71 @@ CREATE TABLE applications (
     PRIMARY KEY (applicationId)
 );
 
+CREATE TABLE reports (
+	reportId INT NOT NULL AUTO_INCREMENT,
+    reporterId INT NOT NULL,
+    reportedUser VARCHAR(30) NOT NULL,
+    reportReason VARCHAR(100) NOT NULL,
+    reportReasonEvidence MEDIUMTEXT,
+    reportPlatform VARCHAR(10) NOT NULL,
+    reportDateTime DATETIME NOT NULL DEFAULT NOW(),
+    PRIMARY KEY (reportId)
+);
+
+CREATE VIEW shoppingDirectory AS
+SELECT
+    shops.id,
+    users.uuid,
+    users.userId,
+    substring_index(
+        SUBSTRING(item,
+            LOCATE('type:', item) + LENGTH('type:')
+        ),
+        '\n',
+        1
+    ) AS item,
+    CASE LOCATE('amount:', item)
+        WHEN 0 THEN null
+        ELSE substring_index(
+            SUBSTRING(item,
+                LOCATE('amount:', item) + LENGTH('amount:')
+            ),
+            '\n',
+            1
+        )
+    END AS amount,
+    data.price,
+    stock.stock,
+    map.world,
+    map.x,
+    map.y,
+    map.z
+FROM cfc_prod_quickshop.qs_shops shops
+    JOIN cfc_prod_quickshop.qs_shop_map map ON shops.id = map.shop
+    JOIN cfc_prod_quickshop.qs_data data ON shops.data = data.id
+    JOIN zanderProd.users users ON users.uuid = data.owner
+    JOIN cfc_prod_quickshop.qs_external_cache stock ON shops.id = stock.shop
+WHERE data.unlimited = 0
+ORDER BY shops.id
+
+CREATE TABLE vault (
+	vaultId INT NOT NULL AUTO_INCREMENT,
+    displayName VARCHAR(30),
+    description MEDIUMTEXT,
+    redirectUrl TEXT,
+    position INT,
+    PRIMARY KEY (vaultId)
+);
+
+CREATE TABLE bridge (
+	bridgeId INT NOT NULL AUTO_INCREMENT,
+    command TEXT,
+    targetServer VARCHAR(30),
+    processed BOOLEAN DEFAULT 0,
+    bridgeDateTime DATETIME NOT NULL DEFAULT NOW(),
+    PRIMARY KEY (bridgeId)
+);
+
 CREATE TABLE logs (
 	logId INT NOT NULL AUTO_INCREMENT,
     creatorId INT NOT NULL,
