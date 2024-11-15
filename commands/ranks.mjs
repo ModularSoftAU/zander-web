@@ -16,20 +16,6 @@ export class RanksCommand extends Command {
   }
 
   async chatInputRun(interaction) {
-    if (!features.ranks) {
-      const errorEmbed = new EmbedBuilder()
-        .setTitle("Feature Disabled")
-        .setDescription(
-          `This feature has been disabled by your System Administrator.`
-        )
-        .setColor(Colors.Red);
-
-      return interaction.reply({
-        embeds: [errorEmbed],
-        ephemeral: true,
-      });      
-    }
-
     const embed = new EmbedBuilder()
       .setTitle(`Ranks`)
       .setDescription(

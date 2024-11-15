@@ -18,20 +18,6 @@ export class PolicyCommand extends Command {
   }
 
   async chatInputRun(interaction) {
-    if (!features.applications) {
-      const errorEmbed = new EmbedBuilder()
-        .setTitle("Feature Disabled")
-        .setDescription(
-          `This feature has been disabled by your System Administrator.`
-        )
-        .setColor(Colors.Red);
-
-      return interaction.reply({
-        embeds: [errorEmbed],
-        ephemeral: true,
-      });
-    }
-
     const embed = new EmbedBuilder()
       .setTitle("Network Applications")
       .setColor(Colors.Gold)

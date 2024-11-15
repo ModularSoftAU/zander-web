@@ -10,18 +10,15 @@ var pool = mysql.createPool({
   password: process.env.databasePassword,
   database: process.env.databaseName,
   multipleStatements: true,
-  connectTimeout: 30000, // 30 seconds
-  acquireTimeout: 30000, // Time to wait for acquiring a connection
 });
 
-pool.getConnection(function (err, connection) {
+pool.getConnection(function (err) {
   if (err) {
-    console.log(err);    
     console.error(`[ERROR] [DB] There was an error connecting:\n ${err.stack}`);
+    pool.connect();
     return;
   }
   console.log(`[CONSOLE] [DB] Database pool connection is successful.`);
-  connection.release(); // Release the connection back to the pool
 });
 
 export default pool;

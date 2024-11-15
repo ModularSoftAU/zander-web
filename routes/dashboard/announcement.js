@@ -66,8 +66,8 @@ export default function dashboardAnnouncementSiteRoute(
 
     if (!hasPermission("zander.web.announcements", req, res, features)) return;
 
-    const announcementId = req.query.announcementId;
-    const fetchURL = `${process.env.siteAddress}/api/announcement/get?announcementId=${announcementId}`;
+    const announcementSlug = req.query.announcementSlug;
+    const fetchURL = `${process.env.siteAddress}/api/announcement/get?announcementSlug=${announcementSlug}`;
     const response = await fetch(fetchURL, {
       headers: { "x-access-token": process.env.apiKey },
     });
