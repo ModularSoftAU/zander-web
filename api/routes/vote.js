@@ -6,8 +6,6 @@ export default function voteApiRoute(app, config, db, features, lang) {
   // TODO: Update docs
   app.get(baseEndpoint + "/get", async function (req, res) {
     isFeatureEnabled(features.vote, res, lang);
-    const id = optional(req.query, "id");
-    const type = optional(req.query, "type");
 
     try {
       db.query(
@@ -22,7 +20,7 @@ export default function voteApiRoute(app, config, db, features, lang) {
 
           return res.send({
             success: true,
-            data: `New Bridge command added for ${targetServer}: ${command}`,
+            data: results,
           });
         }
       );
@@ -34,29 +32,51 @@ export default function voteApiRoute(app, config, db, features, lang) {
     }
   });
 
-  app.post(baseEndpoint + "/create", async function (req, res) {
-    isFeatureEnabled(features.server, res, lang);
+  app.get(baseEndpoint + "/site/get", async function (req, res) {
+    isFeatureEnabled(features.vote, res, lang);
+
+    try {
+      db.query(`SELECT * FROM voteSite;`, function (error, results, fields) {
+        if (error) {
+          return res.send({
+            success: false,
+            message: `${error}`,
+          });
+        }
+
+        return res.send({
+          success: true,
+          data: results,
+        });
+      });
+    } catch (error) {
+      return res.send({
+        success: false,
+        message: `${error}`,
+      });
+    }
+  });
+
+  app.post(baseEndpoint + "/site/create", async function (req, res) {
+    isFeatureEnabled(features.vote, res, lang);
 
     const actioningUser = required(req.body, "actioningUser", res);
-    const displayName = required(req.body, "displayName", res);
-    const serverType = required(req.body, "serverType", res);
-    const serverConnectionAddress = required(req.body, "serverConnectionAddress", res);
-    const position = required(req.body, "position", res);
-
-    const serverCreatedLang = lang.server.serverCreated;
+    const voteSiteDisplayName = required(req.body, "voteSiteDisplayName", res);
+    const voteSiteRedirect = required(req.body, "voteSiteRedirect", res);
 
     try {
       db.query(
         `
         INSERT INTO 
-            servers
+            voteSite
         (
-            displayName,
-            serverType,
-            serverConnectionAddress,
-            position
-        ) VALUES (?, ?, ?, ?)`,
-        [displayName, serverType, serverConnectionAddress, position],
+            voteSiteDisplayName,
+            voteSiteRedirect
+        ) VALUES (?, ?)`,
+        [
+          voteSiteDisplayName,
+          voteSiteRedirect,
+        ],
         function (error, results, fields) {
           if (error) {
             return res.send({
@@ -68,14 +88,14 @@ export default function voteApiRoute(app, config, db, features, lang) {
           generateLog(
             actioningUser,
             "SUCCESS",
-            "SERVER",
-            `Created ${displayName} (${serverConnectionAddress})`,
+            "VOTESITE",
+            `Created ${voteSiteDisplayName} (${voteSiteRedirect})`,
             res
           );
 
           return res.send({
             success: true,
-            message: serverCreatedLang.replace("%NAME%", displayName),
+            message: `New vote site added: ${voteSiteDisplayName}`,
           });
         }
       );
@@ -89,33 +109,29 @@ export default function voteApiRoute(app, config, db, features, lang) {
     return res;
   });
 
-  app.post(baseEndpoint + "/edit", async function (req, res) {
-    isFeatureEnabled(features.server, res, lang);
+  app.post(baseEndpoint + "/site/edit", async function (req, res) {
+    isFeatureEnabled(features.vote, res, lang);
 
     const actioningUser = required(req.body, "actioningUser", res);
-    const serverId = required(req.body, "serverId", res);
-    const displayName = required(req.body, "displayName", res);
-    const serverType = required(req.body, "serverType", res);
-    const serverConnectionAddress = required(
-      req.body,
-      "serverConnectionAddress",
-      res
-    );
-    const position = required(req.body, "position", res);
+    const voteSiteId = required(req.body, "voteSiteId", res);
+    const voteSiteDisplayName = required(req.body, "voteSiteDisplayName", res);
+    const voteSiteRedirect = required(req.body, "voteSiteRedirect", res);
 
     try {
       db.query(
         `
             UPDATE 
-                servers 
+                voteSite 
             SET 
-                displayName=?,
-                serverType=?,
-                serverConnectionAddress=?, 
-                position=? 
+                voteSiteDisplayName=?,
+                voteSiteRedirect=?
             WHERE 
-                serverId=?`,
-        [displayName, serverType, serverConnectionAddress, position, serverId],
+                voteSiteId=?`,
+        [
+          voteSiteDisplayName,
+          voteSiteRedirect,
+          voteSiteId,
+        ],
         function (error, results, fields) {
           if (error) {
             return res.send({
@@ -127,14 +143,14 @@ export default function voteApiRoute(app, config, db, features, lang) {
           generateLog(
             actioningUser,
             "SUCCESS",
-            "SERVER",
-            `Edited ${displayName} (${serverConnectionAddress})`,
+            "VOTESITE",
+            `Edited ${voteSiteDisplayName} (${voteSiteRedirect})`,
             res
           );
 
           return res.send({
             success: true,
-            message: lang.server.serverEdited,
+            message: `Vote server edited ${voteSiteDisplayName} (${voteSiteRedirect})`,
           });
         }
       );
@@ -148,16 +164,16 @@ export default function voteApiRoute(app, config, db, features, lang) {
     return res;
   });
 
-  app.post(baseEndpoint + "/delete", async function (req, res) {
+  app.post(baseEndpoint + "/site/delete", async function (req, res) {
     isFeatureEnabled(features.server, res, lang);
 
     const actioningUser = required(req.body, "actioningUser", res);
-    const serverId = required(req.body, "serverId", res);
+    const voteSiteId = required(req.body, "voteSiteId", res);
 
     try {
       db.query(
-        `DELETE FROM servers WHERE serverId=?;`,
-        [serverId],
+        `DELETE FROM voteSite WHERE voteSiteId=?;`,
+        [voteSiteId],
         function (error, results, fields) {
           if (error) {
             return res.send({
@@ -169,14 +185,14 @@ export default function voteApiRoute(app, config, db, features, lang) {
           generateLog(
             actioningUser,
             "SUCCESS",
-            "SERVER",
-            `Deleted ${serverId}`,
+            "VOTESITE",
+            `Deleted ${voteSiteId}`,
             res
           );
 
           return res.send({
             success: true,
-            message: lang.server.serverDeleted,
+            message: `Vote site deleted ${voteSiteId}`,
           });
         }
       );

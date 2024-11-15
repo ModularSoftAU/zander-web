@@ -5,6 +5,7 @@ import announcementsRedirectRoute from "./announcement";
 import reportRedirectRoute from "./report";
 import vaultRedirectRoute from "./vault";
 import bridgeRedirectRoute from "./bridge";
+import voteRedirectRoute from "./vote";
 
 export default (app, config, lang) => {
   applicationRedirectRoute(app, config, lang);
@@ -14,4 +15,5 @@ export default (app, config, lang) => {
   announcementsRedirectRoute(app, config, lang);
   vaultRedirectRoute(app, config, lang);
   bridgeRedirectRoute(app, config, lang);
+  voteRedirectRoute(app, config, lang);
 };

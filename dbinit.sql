@@ -236,14 +236,14 @@ CREATE TABLE bridge (
 CREATE TABLE votes (
 	voteId INT NOT NULL AUTO_INCREMENT,
     userId INT,
-    voteSite INT
+    voteSite INT,
     PRIMARY KEY (voteId)
 );
 
 CREATE TABLE voteSite (
 	voteSiteId INT NOT NULL AUTO_INCREMENT,
-    voteSiteDisplayName VARCHAR(20),
-    voteSiteRedirect VARCHAR(120),
+    voteSiteDisplayName VARCHAR(50),
+    voteSiteRedirect VARCHAR(200),
     PRIMARY KEY (voteSiteId)
 );
 

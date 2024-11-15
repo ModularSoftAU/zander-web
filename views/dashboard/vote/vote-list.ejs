@@ -1,0 +1,70 @@
+<%- include("../../modules/header.ejs", {
+    pageTitle: pageTitle,
+    pageDescription: "List of all Voting Servers."
+}) %>
+
+<%- include("../../modules/navigationBar.ejs") %>
+
+<%- include("../../partials/miniHeader.ejs", {
+  headerTitle: "Voting",
+  backgroundImage: globalImage
+}) %>
+
+<div class="row dashboardview">
+    <div class="col-md-2">
+      <%- include("../../modules/dashboard/dashboard-sidebar.ejs") %>
+    </div>
+    <div class="col-md-10" style="padding: 10px;">
+      <a href="/dashboard/vote/site/create"><button type="button" class="btn btn-sm btn-info">Create a Vote Site</button></a>
+      <%- include("../../partials/documentationLink.ejs", {
+            doclink: "https://modularsoft.org/docs/products/zander/features/vote/"
+      }) %>
+      <br><br>
+
+      <% if (req.cookies.alertType) { %>
+          <%- include("../../partials/alert.ejs", {
+            alertType: req.cookies.alertType,
+            content: req.cookies.alertContent
+          }) %>
+      <% } %>
+      <div class="table-responsive">
+          <table class="table">
+                <thead>
+                    <tr>
+                        <th>Vote Site Display Name</th>
+                        <th>Vote Site Address</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <% if (apiData.success == false) { %>
+                        <%- include("../../partials/alert.ejs", {
+                        alertType: "danger",
+                        content: apiData.message
+                        }) %>
+                    <% } else { %>
+                        <% apiData.data.forEach(function (voteSite) { %>
+                            <tr>
+                                <td><%= voteSite.voteSiteDisplayName %></td>
+                                <td><%= voteSite.voteSiteRedirect %></td>
+                                <td>
+                                    <div class="btn-group">
+                                        <a href="/dashboard/vote/site/edit?id=<%= voteSite.voteSiteId %>"><button class="btn btn-sm btn-warning" type="button">Edit</button></a>
+
+                                        <form action="<%= process.env.siteAddress %>/redirect/vote/site/delete" method="post">
+                                            <input type="hidden" name="actioningUser" value="<%= req.session.user.userId %>">
+                                            <input type="hidden" name="voteSiteId" value="<%= voteSite.voteSiteId %>">
+                                            <button class="btn btn-sm btn-danger" type="submit" onclick="window.location='/dashboard/vote/'">Delete</button>
+                                        </form>
+                                    </div>
+                                </td>
+                            </tr>
+                        <% }) %>
+                    <% } %>
+                </tbody>
+            </table>
+      </div>
+    </div>
+  </div>
+
+<%- include("../../modules/footer.ejs") %>

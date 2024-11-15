@@ -1,0 +1,86 @@
+<%- include("../../modules/header.ejs", {
+    pageTitle: pageTitle,
+    pageDescription: "Editor for Voting servers."
+}) %>
+
+<%- include("../../modules/navigationBar.ejs") %>
+
+<%- include("../../partials/miniHeader.ejs", {
+  headerTitle: "Vote Editor",
+  backgroundImage: globalImage
+}) %>
+
+<div class="row dashboardview">
+    <div class="col-md-2">
+      <%- include("../../modules/dashboard/dashboard-sidebar.ejs") %>
+    </div>
+    <div class="col-md-10" style="padding: 10px;">
+        <%- include("../../partials/documentationLink.ejs", {
+            doclink: "https://modularsoft.org/docs/products/zander/features/vote/"
+        }) %>
+        <br><br>
+
+        <div class="basic-form">
+            <% if (type === 'create') { %>
+                <form method="post" action="<%= process.env.siteAddress %>/redirect/vote/site/create">
+            <% } %>
+            <% if (type === 'edit') { %>
+                <form method="post" action="<%= process.env.siteAddress %>/redirect/vote/site/edit">
+                    <input type="hidden" name="serverId" value="<%= voteSiteApiData.voteSiteId %>">
+            <% } %>
+                    
+            <div class="row">
+                <!-- Vote Site Name -->
+                <div class="form-group col">
+                    <label for="displayName">Vote Site Display Name</label>
+
+                    <% if (type === 'create') { %>
+                        <%- include("../../partials/form/inputText.ejs", {
+                            elementName: "voteSiteDisplayName",
+                            elementValue: null,
+                            required: true
+                        }) %>
+                    <% } %>
+                    <% if (type === 'edit') { %>
+                        <%- include("../../partials/form/inputText.ejs", {
+                            elementName: "voteSiteDisplayName",
+                            elementValue: voteSiteApiData.voteSiteDisplayName,
+                            required: true
+                        }) %>
+                    <% } %>
+                </div>
+
+                <!-- Vote Site Redirect Address -->
+                <div class="form-group col">
+                    <label for="serverConnectionAddress">Vote Site Redirect Address</label>
+
+                    <% if (type === 'create') { %>
+                        <%- include("../../partials/form/inputText.ejs", {
+                            elementName: "voteSiteRedirect",
+                            elementValue: null,
+                            required: false
+                        }) %>
+                    <% } %>
+                    <% if (type === 'edit') { %>
+                        <%- include("../../partials/form/inputText.ejs", {
+                            elementName: "voteSiteRedirect",
+                            elementValue: voteSiteApiData.voteSiteRedirect,
+                            required: false
+                        }) %>
+                    <% } %>
+                </div>
+            </div>
+
+            <% if (type === 'create') { %>
+                <button type="submit" class="btn btn-primary"><i class="fas fa-server"></i> Create Vote Site</button>
+            <% } %>
+
+            <% if (type === 'edit') { %>
+                <button type="submit" class="btn btn-warning"><i class="fas fa-server"></i> Edit Vote Site</button>
+            <% } %>
+        </form>
+    </div>        
+    </div>
+  </div>
+
+<%- include("../../modules/footer.ejs") %>

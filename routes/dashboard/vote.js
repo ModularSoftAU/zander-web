@@ -17,27 +17,34 @@ export default function dashboardVoteSiteRoute(
   // Vote
   //
   app.get("/dashboard/vote", async function (req, res) {
-    if (!isFeatureWebRouteEnabled(features.vote, req, res, features)) return;
+    try {
+      if (!isFeatureWebRouteEnabled(features.vote, req, res, features)) return;
 
-    if (!hasPermission("zander.web.vote", req, res, features)) return;
+      if (!hasPermission("zander.web.vote", req, res, features)) return;
 
-    const fetchURL = `${process.env.siteAddress}/api/vote/site/get`;
-    const response = await fetch(fetchURL, {
-      headers: { "x-access-token": process.env.apiKey },
-    });
-    const apiData = await response.json();
+      const fetchURL = `${process.env.siteAddress}/api/vote/site/get`;
+      const response = await fetch(fetchURL, {
+        headers: { "x-access-token": process.env.apiKey },
+      });
+      const apiData = await response.json();
 
-    res.view("dashboard/vote/vote-list", {
-      pageTitle: `Dashboard - Vote`,
-      config: config,
-      apiData: apiData,
-      features: features,
-      req: req,
-      globalImage: getGlobalImage(),
-      announcementWeb: await getWebAnnouncement(),
-    });
+      console.log(apiData);
 
-    return res;
+      return res.view("dashboard/vote/vote-list", {
+        pageTitle: `Dashboard - Vote`,
+        config: config,
+        apiData: apiData,
+        features: features,
+        req: req,
+        globalImage: getGlobalImage(),
+        announcementWeb: await getWebAnnouncement(),
+      });
+      
+    } catch (error) {
+      console.log(error);
+      
+      
+    }
   });
 
   app.get("/dashboard/vote/site/create", async function (req, res) {
@@ -64,7 +71,7 @@ export default function dashboardVoteSiteRoute(
     if (!hasPermission("zander.web.vote", req, res, features)) return;
 
     const id = req.query.id;
-    const fetchURL = `${process.env.siteAddress}/api/vote/get?id=${id}`;
+    const fetchURL = `${process.env.siteAddress}/api/vote/site/get?id=${id}`;
     const response = await fetch(fetchURL, {
       headers: { "x-access-token": process.env.apiKey },
     });
