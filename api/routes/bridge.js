@@ -121,12 +121,42 @@ export default function bridgeApiRoute(app, config, db, features, lang) {
     return res;
   });
 
+  app.get(baseEndpoint + "/server/get", async function (req, res) {
+    isFeatureEnabled(features.bridge, res, lang);
+
+    try {
+      db.query(
+        `SELECT * FROM serverStatus;`,
+        function (error, results) {
+          if (error) {
+            return res.send({
+              success: false,
+              message: `Failed: ${error}`,
+            });
+          }
+
+          return res.send({
+            success: true,
+            data: results,
+          });
+        }
+      );
+    } catch (error) {
+      return res.send({
+        success: false,
+        message: `Unexpected error: ${error}`,
+      });
+    }
+
+    return res;
+  });
+
   app.post(baseEndpoint + "/server/update", async function (req, res) {
     isFeatureEnabled(features.bridge, res, lang);
 
     const serverInfo = required(req.body, "serverInfo", res);
     let lastUpdated = required(req.body, "lastUpdated", res);
-    
+
     try {
       const serverInfoString = JSON.stringify(serverInfo);
 
