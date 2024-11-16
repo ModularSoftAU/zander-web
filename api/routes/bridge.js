@@ -121,6 +121,40 @@ export default function bridgeApiRoute(app, config, db, features, lang) {
     return res;
   });
 
+  app.post(baseEndpoint + "/server/update", async function (req, res) {
+    isFeatureEnabled(features.bridge, res, lang);
+
+    const serverInfo = required(req.body, "serverInfo", res);
+    let lastUpdated = required(req.body, "lastUpdated", res);
+    
+    try {
+      const serverInfoString = JSON.stringify(serverInfo);
+
+      db.query(
+        `UPDATE serverStatus SET statusInfo = ?, lastUpdated = ? WHERE serverStatusId = 1;`,
+        [serverInfoString, lastUpdated],
+        function (error, updateResults) {
+          if (error) {
+            return res.send({
+              success: false,
+              message: `Update failed: ${error}`,
+            });
+          }
+
+          return res.send({
+            success: true,
+            message: `Server status updated successfully.`,
+          });
+        }
+      );
+    } catch (error) {
+      return res.send({
+        success: false,
+        message: `Unexpected error: ${error}`,
+      });
+    }
+  });
+
   app.post(baseEndpoint + "/command/process", async function (req, res) {
     isFeatureEnabled(features.bridge, res, lang);
 

@@ -163,6 +163,16 @@ CREATE TABLE servers (
     PRIMARY KEY (serverId)
 );
 
+CREATE TABLE serverStatus (
+	serverStatusId INT NOT NULL AUTO_INCREMENT,
+    statusInfo JSON,
+    lastUpdated DATETIME,
+    PRIMARY KEY (serverStatusId)
+);
+
+INSERT INTO serverStatus (serverStatusId, statusInfo)
+VALUES (1, null);
+
 CREATE TABLE gameSessions (
 	sessionId INT NOT NULL AUTO_INCREMENT,
     userId INT NOT NULL,
