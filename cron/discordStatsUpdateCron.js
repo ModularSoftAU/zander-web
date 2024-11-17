@@ -3,6 +3,8 @@ import { client } from "../controllers/discordController";
 import config from "../config.json" assert { type: "json" };
 
 var discordStatsUpdateTask = cron.schedule("* * * * *", async () => {
+  console.log("Cron task is running...");
+
   try {
     // Fetch server sync data
     const fetchURL = `${process.env.siteAddress}/api/bridge/server/get`;
@@ -31,6 +33,7 @@ var discordStatsUpdateTask = cron.schedule("* * * * *", async () => {
       if (channel) {
         // Update the channel name with the total number of players
         await channel.setName(`Players Online: ${totalPlayers}`);
+        console.log(`Updated channel name to: Players Online: ${totalPlayers}`);
       } else {
         console.log("Channel not found");
       }
