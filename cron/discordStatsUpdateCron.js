@@ -2,7 +2,7 @@ import cron from "node-cron";
 import { client } from "../controllers/discordController";
 import config from "../config.json" assert { type: "json" };
 
-var discordStatsUpdateTask = cron.schedule("*/5 * * * *", async () => {
+var discordStatsUpdateTask = cron.schedule("* * * * *", async () => {
   try {
     // Fetch server sync data
     const fetchURL = `${process.env.siteAddress}/api/bridge/server/get`;
