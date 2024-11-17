@@ -198,7 +198,7 @@ export default function bridgeApiRoute(app, config, db, features, lang) {
       const bridgeApiData = await response.json();
 
       db.query(
-        `UPDATE bridge SET processed=? WHERE bridgeId=?;`,
+        `DELETE FROM bridge WHERE bridgeId=?;`,
         [1, bridgeId],
         function (error, results, fields) {
           if (error) {
