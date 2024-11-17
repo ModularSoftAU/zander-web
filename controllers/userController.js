@@ -159,7 +159,7 @@ export async function getProfilePicture(username) {
 
         if (profilePictureType == "CRAFTATAR") {
           let craftUUID = results[0].uuid;
-          return resolve(`https://crafatar.com/avatars/${craftUUID}?helm`);
+          return resolve(`https://crafthead.net/helm/${craftUUID}`);
         }
 
         if (profilePictureType == "GRAVATAR") {

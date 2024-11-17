@@ -1,5 +1,5 @@
 {
-  "debug": true,
+  "debug": false,
   "siteConfiguration": {
     "siteName": "Crafting For Christ",
     "tagline": "Crafting A Christ Centred Gaming Community",
@@ -29,6 +29,7 @@
   },
   "discord": {
     "guildId": "899441191416901632",
+    "onlinePlayerChannel": "1307658804720308224",
     "webhooks": {
       "welcome": "https://discord.com/api/webhooks/1178111335070974022/ZoLQ-J-puUAhLGoNQL05QuOl9Y4plVF85U-h8mO0l5o6X1tKzpiCzo8_BWDFEGrm5aMr",
       "networkChatLog": "https://discord.com/api/webhooks/1178169414135316612/1exf1LDfzd3bGnrDiP3kpF9vFoBip0R-axNzDV-5-G6sXqf5iz28auYdgVDNMQJimrP9",
