@@ -63,24 +63,18 @@ export default function formApiRoute(app, config, db, features, lang) {
     const actioningUser = required(req.body, "actioningUser", res);
     const formSlug = required(req.body, "formSlug", res);
     const displayName = required(req.body, "displayName", res);
-    const description = required(req.body, "description", res);
-    const formType = required(req.body, "formType", res);
-    const formSchema = optional(req.body, "formSchema", res);
-    const redirectUrl = optional(req.body, "redirectUrl", res);
+    const formSchema = required(req.body, "formSchema", res);
     const formStatus = required(req.body, "formStatus", res);
 
     try {
       db.query(
         `INSERT INTO forms 
-            (formSlug, displayName, description, formType, formSchema, redirectUrl, formStatus) 
-        VALUES (?, ?, ?, ?, ?, ?, ?)`,
+            (formSlug, displayName, formSchema, formStatus) 
+        VALUES (?, ?, ?, ?)`,
         [
           formSlug,
           displayName,
-          description,
-          formType,
           formSchema,
-          redirectUrl,
           formStatus,
         ],
         function (error, results, fields) {
@@ -107,6 +101,7 @@ export default function formApiRoute(app, config, db, features, lang) {
       );
     } catch (error) {
       console.log(error);
+
       return res.send({
         success: false,
         message: `${error}`,
@@ -123,10 +118,7 @@ export default function formApiRoute(app, config, db, features, lang) {
     const formId = required(req.body, "formId", res);
     const formSlug = required(req.body, "formSlug", res);
     const displayName = required(req.body, "displayName", res);
-    const description = required(req.body, "description", res);
-    const formType = required(req.body, "formType", res);
     const formSchema = optional(req.body, "formSchema", res);
-    const redirectUrl = optional(req.body, "redirectUrl", res);
     const formStatus = required(req.body, "formStatus", res);
 
     try {
@@ -135,21 +127,15 @@ export default function formApiRoute(app, config, db, features, lang) {
                 UPDATE 
                     forms 
                 SET 
-                    formSlug=?, 
+                    formSlug=?,
                     displayName=?, 
-                    description=?, 
-                    formType=?, 
                     formSchema=?, 
-                    redirectUrl=?, 
                     formStatus=?
                 WHERE formId=?;`,
         [
           formSlug,
           displayName,
-          description,
-          formType,
           formSchema,
-          formRedirectUrl,
           formStatus,
           formId,
         ],
@@ -176,6 +162,8 @@ export default function formApiRoute(app, config, db, features, lang) {
         }
       );
     } catch (error) {
+      console.log(error);
+      
       res.send({
         success: false,
         message: `${error}`,
@@ -228,55 +216,85 @@ export default function formApiRoute(app, config, db, features, lang) {
   });
 
   app.post(baseEndpoint + "/:formSlug/submit", async function (req, res) {
+    // Check if the feature is enabled
     isFeatureEnabled(features.forms, res, lang);
 
+    const formSlug = optional(req.query, "formSlug");
+
+    //
+    // Grab form data
+    //
+    const fetchURL = `${process.env.siteAddress}/api/form/get?slug=${formSlug}`;
+    const response = await fetch(fetchURL, {
+      headers: { "x-access-token": process.env.apiKey },
+    });
+
+    const formApiData = await response.json();
+    let formSchemaData = null;
+
+    if (formApiData.data[0].formSchema) {
+      //
+      // Grab form schema data
+      //
+      const schemaFetchURL = `${formApiData.data[0].formSchema}`;
+      const schemaResponse = await fetch(schemaFetchURL);
+      const formSchemaJSONData = await schemaResponse.json();
+
+      formSchemaData = formSchemaJSONData;
+    }
+
+    // Set a success banner cookie
     setBannerCookie("success", `Application Submitted`, res);
 
+    // Log the incoming request body for debugging
+    console.log("Request Body:", req.body);
 
-    // try {
-    //   db.query(
-    //     `INSERT INTO forms 
-    //         (formSlug, displayName, description, formType, formSchema, redirectUrl, formStatus) 
-    //     VALUES (?, ?, ?, ?, ?, ?, ?)`,
-    //     [
-    //       formSlug,
-    //       displayName,
-    //       description,
-    //       formType,
-    //       formSchema,
-    //       redirectUrl,
-    //       formStatus,
-    //     ],
-    //     function (error, results, fields) {
-    //       if (error) {
-    //         return res.send({
-    //           success: false,
-    //           message: `${error}`,
-    //         });
-    //       }
+    // Ensure formSchemaData is valid before proceeding
+    if (!formSchemaData || !formSchemaData.sections) {
+      console.error("Invalid form schema data");
+      return res.status(400).json({
+        success: false,
+        message: "Invalid form schema",
+      });
+    }
 
-    //       generateLog(
-    //         actioningUser,
-    //         "SUCCESS",
-    //         "FORM",
-    //         `Created ${displayName}`,
-    //         res
-    //       );
+    const formData = req.body; // This contains the submitted answers
+    let result = [];
 
-    //       return res.send({
-    //         success: true,
-    //         message: `${displayName} form created`,
-    //       });
-    //     }
-    //   );
-    // } catch (error) {
-    //   console.log(error);
-    //   return res.send({
-    //     success: false,
-    //     message: `${error}`,
-    //   });
-    // }
+    // Process each section and prompt to map answers to questions
+    formSchemaData.sections.forEach((section, sectionIndex) => {
+      section.prompts.forEach((prompt, promptIndex) => {
+        // Generate the key based on the formSlug, section index, and prompt index
+        const elementName = `${formSlug}_${sectionIndex}_${promptIndex}`;
+        const promptText = prompt.display;
+        const answer = formData[elementName];
 
-    return res;
+        if (answer) {
+          // Add the question-answer pair to the result array
+          result.push({
+            question: promptText,
+            answer: answer,
+          });
+        }
+      });
+    });
+
+    // Log the results to check the question-answer pairs
+    console.log("Processed Form Data:", result);
+
+    // Send the response with the mapped question-answer pairs
+    try {
+      return res.json({
+        success: true,
+        message: "Form submitted successfully",
+        data: result,
+      });
+    } catch (error) {
+      console.error("Error sending JSON response:", error);
+      return res.status(500).json({
+        success: false,
+        message: "Internal server error",
+      });
+    }
   });
 }

@@ -77,44 +77,6 @@
                         }) %>
                     <% } %>
                 </div>
-
-                <!-- Form Type -->
-                <div class="form-group col">
-                    <label for="formType">Form Type</label>
-
-                    <% if (type === 'create') { %>
-                        <select class="form-control" name="formType">
-                            <option value="INTERNAL">Internal</option>
-                            <option value="EXTERNAL">External</option>
-                        </select>
-                    <% } %>
-                    <% if (type === 'edit') { %>
-                        <select class="form-control" name="formType">
-                            <option value="INTERNAL" <% if (serverApiData.serverType === 'INTERNAL') { %> selected <% } %>>Internal</option>
-                            <option value="EXTERNAL" <% if (serverApiData.serverType === 'EXTERNAL') { %> selected <% } %>>External</option>
-                        </select>
-                    <% } %>
-                </div>
-            </div>                                            
-
-            <!-- Form Description -->
-            <div class="form-group">
-                <label for="description">Form Description</label>
-
-                <% if (type === 'create') { %>
-                    <%- include("../../partials/form/inputTextArea.ejs", {
-                        elementName: "description",
-                        elementValue: null,
-                        required: false
-                    }) %>
-                <% } %>
-                <% if (type === 'edit') { %>
-                    <%- include("../../partials/form/inputTextArea.ejs", {
-                        elementName: "description",
-                        elementValue: formApiData.description,
-                        required: false
-                    }) %>
-                <% } %>
             </div>
 
             <div class="row">
@@ -139,32 +101,9 @@
                     <% } %>
                 </div>
 
-                <!-- Form URL Redirect -->
+                <!-- Visability -->
                 <div class="form-group col">
-                    <label for="redirectUrl">Form URL Redirect</label>
-                    <small>If using external forms.</small>
-
-                    <% if (type === 'create') { %>
-                        <%- include("../../partials/form/inputText.ejs", {
-                            elementName: "redirectUrl",
-                            elementValue: null,
-                            required: false
-                        }) %>
-                    <% } %>
-                    <% if (type === 'edit') { %>
-                        <%- include("../../partials/form/inputText.ejs", {
-                            elementName: "redirectUrl",
-                            elementValue: formApiData.redirectUrl,
-                            required: false
-                        }) %>
-                    <% } %>
-                </div>
-            </div>
-
-            <div class="row">
-                <!-- Form Status -->
-                <div class="form-group col">
-                    <label for="formStatus">Form Status</label>
+                    <label for="formStatus">Visability</label>
 
                     <% if (type === 'create') { %>
                         <%- include("../../partials/form/inputSelect.ejs", {
@@ -173,19 +112,19 @@
                             required: true,
                             optionElements: [
                                 {
-                                    optionName: "Select a Status",
+                                    optionName: "Select a Visability",
                                     optionValue: "null",
                                     selected: true,
                                     disabled: true
                                 },
                                 {
-                                    optionName: "Open",
+                                    optionName: "Enabled",
                                     optionValue: "1",
                                     selected: false,
                                     disabled: false
                                 },
                                 {
-                                    optionName: "Closed",
+                                    optionName: "Disabled",
                                     optionValue: "0",
                                     selected: false,
                                     disabled: false
@@ -200,19 +139,19 @@
                             required: true,
                             optionElements: [
                                 {
-                                    optionName: "Select a Status",
+                                    optionName: "Select a Visability",
                                     optionValue: "null",
                                     selected: true,
                                     disabled: true
                                 },
                                 {
-                                    optionName: "Open",
+                                    optionName: "Enabled",
                                     optionValue: "1",
                                     selected: false,
                                     disabled: false
                                 },
                                 {
-                                    optionName: "Closed",
+                                    optionName: "Disabled",
                                     optionValue: "0",
                                     selected: false,
                                     disabled: false

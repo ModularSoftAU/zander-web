@@ -9,12 +9,6 @@
 <br>
 
 <div class="container">
-<%- include("../../modules/profile/profileHeader.ejs"), {
-    profileSession: profileSession
-} %>
-<br>
-
-<div class="container">
     <%= console.log(req.cookies); %>
     <% if (req.cookies.alertType) { %>
         <%- include("../../partials/alert.ejs", {

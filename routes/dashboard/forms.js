@@ -28,7 +28,9 @@ export default function dashboardFormsSiteRoute(
     });
     const apiData = await response.json();
 
-    return res.view("dashboard/forms/form-list", {
+    console.log(apiData);
+
+    res.view("dashboard/forms/form-list", {
       pageTitle: `Dashboard - Forms`,
       config: config,
       apiData: apiData,
@@ -37,6 +39,8 @@ export default function dashboardFormsSiteRoute(
       globalImage: getGlobalImage(),
       announcementWeb: await getWebAnnouncement(),
     });
+
+    return res;
   });
 
   app.get("/dashboard/forms/create", async function (req, res) {
@@ -45,7 +49,7 @@ export default function dashboardFormsSiteRoute(
 
     if (!hasPermission("zander.web.form", req, res, features)) return;
 
-    return res.view("dashboard/forms/form-editor", {
+    res.view("dashboard/forms/form-editor", {
       pageTitle: `Dashboard - Form Creator`,
       config: config,
       type: "create",
@@ -54,6 +58,8 @@ export default function dashboardFormsSiteRoute(
       globalImage: getGlobalImage(),
       announcementWeb: await getWebAnnouncement(),
     });
+
+    return res;
   });
 
   app.get("/dashboard/forms/edit", async function (req, res) {
@@ -69,7 +75,7 @@ export default function dashboardFormsSiteRoute(
     });
     const formApiData = await response.json();
 
-    return res.view("dashboard/forms/form-editor", {
+    res.view("dashboard/forms/form-editor", {
       pageTitle: `Dashboard - Form Editor`,
       config: config,
       formApiData: formApiData.data[0],
@@ -79,5 +85,7 @@ export default function dashboardFormsSiteRoute(
       globalImage: getGlobalImage(),
       announcementWeb: await getWebAnnouncement(),
     });
+
+    return res;
   });
 }

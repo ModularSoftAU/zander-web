@@ -139,7 +139,7 @@ export default function applicationSiteRoutes(
           const formSchemaJSONData = await schemaResponse.json();
 
           formSchemaData = formSchemaJSONData;
-        }
+        }        
 
         //
         // Render the form page

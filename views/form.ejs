@@ -10,7 +10,6 @@
   backgroundImage: globalImage
 }) %>
 
-
 <section class="section">
     <div class="container" style="width: 60%;">
       <form action="<%= process.env.siteAddress %>/redirect/form/<%= formApiData.data[0].formSlug %>/submit" method="post">
@@ -21,18 +20,19 @@
             }) %>
           <% } else { %>
             <% formSchemaData.sections.forEach((section, sectionIndex) => { %>
-              <h3><%= section.sectionTitle %></h3>
-              <p><%= section.sectionDescription %></p>
+              <h3><%= section.title %></h3>
+              <p><%= section.description %></p>
               <hr>
 
               <% section.prompts.forEach((prompt, promptIndex) => { %>
                 <% 
                 // Generate a unique elementName with an iterated number
                 const elementName = `${formApiData.data[0].formSlug}_${sectionIndex}_${promptIndex}`;
+                const questionLabel = prompt.display;
                 %>
 
-                <label for="<%= elementName %>"><%= prompt.promptDisplay %></label>
-                <% if (prompt.promptType == "shortText") { %>
+                <label for="<%= elementName %>"><%= questionLabel %></label>
+                <% if (prompt.type == "shortText") { %>
                   <%- include("./partials/form/inputText.ejs", {
                     elementName: elementName,
                     elementValue: null,
@@ -40,7 +40,15 @@
                   }) %>
                 <% } %>
 
-                <% if (prompt.promptType == "longText") { %>
+                <% if (prompt.type == "number") { %>
+                  <%- include("./partials/form/inputNumber.ejs", {
+                    elementName: elementName,
+                    elementValue: null,
+                    required: prompt.required
+                  }) %>
+                <% } %>
+
+                <% if (prompt.type == "longText") { %>
                   <%- include("./partials/form/inputTextArea.ejs", {
                     elementName: elementName,
                     elementValue: null,
@@ -48,44 +56,22 @@
                   }) %>
                 <% } %>
 
-                <% if (prompt.promptType == "multipleChoice") { %>
+                <% if (prompt.type == "multipleChoice") { %>
                   <%- include("./partials/form/inputSelect.ejs", {
                       elementName: elementName,
-                      elementValue: "null",
-                      required: true,
+                      elementValue: null,  // default value
+                      required: prompt.required,
                       optionElements: [
-                          {
-                              optionName: "Select a Type",
-                              optionValue: "null",
-                              selected: true,
-                              disabled: true
-                          },
-                          {
-                              optionName: "Server Ping MOTD",
-                              optionValue: "motd",
-                              selected: false,
-                              disabled: false
-                          },
-                          {
-                              optionName: "In-Game Tip",
-                              optionValue: "tip",
-                              selected: false,
-                              disabled: false
-                          },
-                          {
-                              optionName: "Website Banner",
-                              optionValue: "web",
-                              selected: false,
-                              disabled: false
-                          }
+                          { optionName: "Select a Type", optionValue: "null", selected: true, disabled: true },
+                          { optionName: "Server Ping MOTD", optionValue: "motd", selected: false, disabled: false },
+                          { optionName: "In-Game Tip", optionValue: "tip", selected: false, disabled: false },
+                          { optionName: "Website Banner", optionValue: "web", selected: false, disabled: false }
                       ]
                   }) %>
                 <% } %>
                 <br>
-              
               <% }) %>
-              <br>
-          <% }) %>
+            <% }) %>
         <% } %>
 
         <button type="submit" class="btn btn-primary mb-3">Submit</button>
@@ -93,4 +79,4 @@
     </div>
 </section>
 
-<%- include("modules/footer.ejs") %>  
+<%- include("modules/footer.ejs") %>

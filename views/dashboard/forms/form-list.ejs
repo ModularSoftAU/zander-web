@@ -44,13 +44,13 @@
                       content: apiData.message
                     }) %>
                 <% } else { %>
-                    <% apiData.data.forEach(function (application) { %>
+                    <% apiData.data.forEach(function (form) { %>
                         <tr>
-                            <td><i class="<%= application.displayIcon %>"></i></td>
-                            <td><%= application.displayName %></td>
-                            <td><%= application.description %></td>
+                            <td><i class="<%= form.displayIcon %>"></i></td>
+                            <td><%= form.displayName %></td>
+                            <td><%= form.description %></td>
                             <td>
-                                <% if (application.applicationStatus === 1) { %>
+                                <% if (form.applicationStatus === 1) { %>
                                     <i class="fas fa-check-circle" style="color:green"></i>
                                 <% } else { %>
                                     <i class="fas fa-times-circle" style="color: red;"></i>
@@ -58,10 +58,10 @@
                             </td>
                             <td>
                                 <div class="btn-group">
-                                    <a href="/dashboard/forms/edit?id=<%= application.formId %>"><button class="btn btn-sm btn-warning" type="button">Edit</button></a>
+                                    <a href="/dashboard/forms/edit?id=<%= form.formId %>"><button class="btn btn-sm btn-warning" type="button">Edit</button></a>
 
                                     <form action="<%= process.env.siteAddress %>/redirect/form/delete" method="post">
-                                        <input type="hidden" name="formId" value="<%= application.formId %>">
+                                        <input type="hidden" name="formId" value="<%= form.formId %>">
                                         <input type="hidden" name="actioningUser" value="<%= req.session.user.userId %>">
                                         <button class="btn btn-sm btn-danger" type="submit">Delete</button>
                                     </form>

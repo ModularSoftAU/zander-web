@@ -1,0 +1,11 @@
+<input 
+    type="number" 
+    class="form-control input-default"
+    name="<%= elementName %>"
+    <% if (elementValue) { %>
+        value="<%= elementValue %>"
+    <% } %>
+    <% if (required) { %>
+        required
+    <% } %>
+>
