@@ -47,6 +47,10 @@
   <link href="https://cdn.jsdelivr.net/npm/summernote@0.8.18/dist/summernote-bs4.min.css" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/summernote@0.8.18/dist/summernote-bs4.min.js"></script>
 
+  <!-- DataTable -->
+  <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.13.1/css/jquery.dataTables.css">
+  <script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/1.13.1/js/jquery.dataTables.js"></script>
+
   <!-- Favicon -->
   <link rel="shortcut icon" type="image/x-icon" href="/images/favicon.ico" />
   <link rel="stylesheet" href="/vendors/slick-carousel/slick/slick.css">
@@ -56,6 +60,16 @@
 
   <!-- Main Stylesheet -->
   <link rel="stylesheet" href="/css/style.css">
+
+  <!-- Google tag (gtag.js) -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=<%= config.siteConfiguration.googleTag %>"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+
+    gtag('config', "<%= config.siteConfiguration.googleTag %>");
+  </script>
 
   <script defer src="https://cdn.jsdelivr.net/gh/zerodevx/zero-md@2/dist/zero-md.legacy.min.js"></script>
 </head>

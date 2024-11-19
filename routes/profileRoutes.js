@@ -1,4 +1,4 @@
-import { getGlobalImage } from "../api/common";
+import { getGlobalImage, isLoggedIn } from "../api/common";
 import { getWebAnnouncement } from "../controllers/announcementController";
 import { UserGetter, getProfilePicture, getUserLastSession, getUserPermissions, getUserStats } from "../controllers/userController";
 
@@ -33,19 +33,27 @@ export default function profileSiteRoutes(
           announcementWeb: await getWebAnnouncement(),
         });
       } else {
-        // 
+        //
         // Grab user profile data
-        // 
+        //
         const fetchURL = `${process.env.siteAddress}/api/user/get?username=${username}`;
         const response = await fetch(fetchURL, {
           headers: { "x-access-token": process.env.apiKey },
         });
-
         const profileApiData = await response.json();
 
-        // 
+        //
+        // Grab user reports
+        //
+        const fetchReportsURL = `${process.env.siteAddress}/api/report/get?reporterId=${profileApiData.data[0].userId}`;
+        const reportsResponse = await fetch(fetchReportsURL, {
+          headers: { "x-access-token": process.env.apiKey },
+        });
+        const profileReportsApiData = await reportsResponse.json();
+
+        //
         // Get user context for display permissions
-        // 
+        //
         let contextPermissions = null;
 
         if (req.session.user) {
@@ -58,9 +66,9 @@ export default function profileSiteRoutes(
           contextPermissions = null;
         }
 
-        // 
+        //
         // Render the profile page
-        // 
+        //
         return res.view("modules/profile/profile", {
           pageTitle: `${profileApiData.data[0].username}`,
           config: config,
@@ -72,8 +80,11 @@ export default function profileSiteRoutes(
             profileApiData.data[0].username
           ),
           profileApiData: profileApiData.data[0],
+          profileReportsApiData: profileReportsApiData,
           profileStats: await getUserStats(profileApiData.data[0].userId),
-          profileSession: await getUserLastSession(profileApiData.data[0].userId),
+          profileSession: await getUserLastSession(
+            profileApiData.data[0].userId
+          ),
           moment: moment,
           contextPermissions: contextPermissions,
         });
@@ -95,6 +106,8 @@ export default function profileSiteRoutes(
       const userData = new UserGetter();
       const userHasJoined = await userData.hasJoined(username);
 
+      if (!isLoggedIn(req)) return res.redirect(`/`);
+
       if (!userHasJoined) {
         return res.view("session/notFound", {
           pageTitle: `404: Player Not Found`,
@@ -102,7 +115,6 @@ export default function profileSiteRoutes(
           req: req,
           res: res,
           features: features,
-          profileSession: await getUserLastSession(profileApiData.data[0].userId),
           globalImage: await getGlobalImage(),
           announcementWeb: await getWebAnnouncement(),
         });
@@ -130,6 +142,7 @@ export default function profileSiteRoutes(
           profilePicture: await getProfilePicture(profileApiData.data[0].username),
           profileApiData: profileApiData.data[0],
           profileStats: await getUserStats(profileApiData.data[0].userId),
+          profileSession: await getUserLastSession(profileApiData.data[0].userId),
           moment: moment,
         });
       }

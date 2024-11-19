@@ -5,6 +5,7 @@
   "main": "app.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "npm install --include=dev && npm run build && npm ci",
     "prod": "node --experimental-modules --experimental-json-modules --experimental-specifier-resolution=node --max-old-space-size=512 app.js",
     "dev": "nodemon  --experimental-modules --experimental-json-modules --experimental-specifier-resolution=node"
   },
@@ -45,6 +46,7 @@
     "node-fetch": "^3.3.2",
     "nodemailer": "^6.9.7",
     "nodemon": "^3.0.1",
+    "p-limit": "^6.1.0",
     "path": "^0.12.7",
     "querystring": "^0.2.1",
     "zero-md": "^2.3.1"

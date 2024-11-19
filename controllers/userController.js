@@ -159,7 +159,7 @@ export async function getProfilePicture(username) {
 
         if (profilePictureType == "CRAFTATAR") {
           let craftUUID = results[0].uuid;
-          return resolve(`https://crafatar.com/avatars/${craftUUID}?helm`);
+          return resolve(`https://crafthead.net/helm/${craftUUID}`);
         }
 
         if (profilePictureType == "GRAVATAR") {
@@ -251,18 +251,58 @@ export async function setProfileUserAboutMe(
 }
 
 export async function getUserPermissions(userData) {
-  return new Promise((resolve) => {
-    //Get permissions assigned directly to user
+  return new Promise((resolve, reject) => {
     db.query(
-      `SELECT DISTINCT permission FROM userPermissions WHERE userId = ?`,
-      [userData.userId],
+      `SELECT DISTINCT permission FROM userPermissions WHERE userId = ?; SELECT rankSlug FROM userRanks WHERE userId = ?`,
+      [userData.userId, userData.userId],
       async function (err, results) {
         if (err) {
-          throw err;
+          return reject(err);
         }
 
-        let userPermissions = results.map((a) => a.permission);
-        resolve(userPermissions);
+        // Define this array to specify the permission context for the player
+        const userPermissions = [];
+
+        // Map results to get an array of permissions
+        let userPermissionResults = results[0].map((a) => a.permission);
+
+        // Push userPermissionResults into userPermissions using the spread operator
+        userPermissions.push(...userPermissionResults);
+
+        const userRanks = results[1];
+
+        // Use Promise.all to handle the asynchronous queries inside the forEach loop
+        try {
+          await Promise.all(
+            userRanks.map(async (rank) => {
+              console.log(rank.rankSlug);
+
+              return new Promise((resolve, reject) => {
+                db.query(
+                  `SELECT * FROM rankPermissions WHERE rankSlug=?;`,
+                  [rank.rankSlug],
+                  function (err, rankPermissionsResults) {
+                    if (err) {
+                      return reject(err);
+                    }
+
+                    rankPermissionsResults.forEach((rankPermission) => {
+                      userPermissions.push(rankPermission.permission);
+                    });
+
+                    resolve();
+                  }
+                );
+              });
+            })
+          );
+
+          console.log(userPermissions);
+
+          resolve(userPermissions);
+        } catch (err) {
+          reject(err);
+        }
       }
     );
   });
@@ -377,8 +417,6 @@ export async function getUserRanks(userData, userRanks = null) {
 export async function checkPermissions(username, permissionNode) {
   try {
     const userPermissions = await getUserPermissions(username);
-    console.log(userPermissions);
-
     const hasPermission = userPermissions.includes(permissionNode);
 
     return hasPermission;
@@ -389,18 +427,31 @@ export async function checkPermissions(username, permissionNode) {
 }
 
 export async function getUserLastSession(userId) {
-  return new Promise((resolve) => {
+  return new Promise((resolve, reject) => {
     db.query(
       `SELECT * FROM gameSessions WHERE userId=? ORDER BY sessionStart DESC LIMIT 1;`,
       [userId],
       async function (err, results) {
         if (err) {
-          throw err;
+          return reject(err);
+        }
+
+        if (results.length === 0) {
+          // Return a default value if no session is found
+          const defaultSessionData = {
+            sessionStart: null,
+            sessionEnd: null,
+            server: null,
+            lastOnlineDiff: "No previous session",
+          };
+          return resolve(defaultSessionData);
         }
 
         const now = new Date(); // Current time
         const sessionStart = new Date(results[0].sessionEnd);
-        const sessionDiff = convertSecondsToDuration(Math.floor((now - sessionStart) / 1000));
+        const sessionDiff = convertSecondsToDuration(
+          Math.floor((now - sessionStart) / 1000)
+        );
 
         const sessionData = {
           sessionStart: results[0].sessionStart,

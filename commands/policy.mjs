@@ -1,5 +1,5 @@
 import { Command, RegisterBehavior } from "@sapphire/framework";
-import pkg from "discord.js";
+import pkg, { Colors } from "discord.js";
 const { EmbedBuilder } = pkg;
 
 export class PolicyCommand extends Command {
@@ -20,7 +20,7 @@ export class PolicyCommand extends Command {
   async chatInputRun(interaction) {
     const embed = new EmbedBuilder()
       .setTitle("Network Policy")
-      .setColor(Colors.DarkGold)
+      .setColor(Colors.Gold)
       .setDescription(
         "For user reference, here is a link to all Network policies.\nBy joining the Network and using our services you agree to all our policies."
       )

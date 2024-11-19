@@ -15,8 +15,8 @@ export class StaffHelpCommand extends Command {
         .setDescription("Sends a message to our Staff for help or assistance.")
         .addStringOption((option) =>
           option //
-            .setName("help")
-            .setDescription("What you need help with.")
+            .setName("query")
+            .setDescription("What you need help with?")
             .setRequired(true)
         )
     );

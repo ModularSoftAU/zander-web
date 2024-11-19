@@ -52,4 +52,32 @@ export default function dashboardSiteRoute(app, config, features, lang) {
 
     return res;
   });
+
+  //
+  // Bridge
+  //
+  app.get("/dashboard/bridge", async function (req, res) {
+    if (!hasPermission("zander.web.bridge", req, res, features)) return;
+
+    const fetchURL = `${process.env.siteAddress}/api/bridge/get`;
+    const response = await fetch(fetchURL, {
+      headers: { "x-access-token": process.env.apiKey },
+    });
+    const apiData = await response.json();
+
+    console.log(apiData);
+
+    res.view("dashboard/bridge", {
+      pageTitle: `Dashboard - Bridge`,
+      config: config,
+      apiData: apiData,
+      features: features,
+      req: req,
+      globalImage: getGlobalImage(),
+      moment: moment,
+      announcementWeb: await getWebAnnouncement(),
+    });
+
+    return res;
+  });
 }

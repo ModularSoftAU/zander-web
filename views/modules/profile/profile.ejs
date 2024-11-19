@@ -5,28 +5,38 @@
 
 <%- include("../../modules/navigationBar.ejs") %>
 
-
-
 <%- include("../../modules/profile/profileHeader.ejs"), {
     profileSession: profileSession
 } %>
 <br>
 
 <div class="container">
+    <% if (req.cookies.alertType) { %>
+        <%- include("../../partials/alert.ejs", {
+          alertType: req.cookies.alertType,
+          content: req.cookies.alertContent
+        }) %>
+    <% } %>
+
     <div class="row">
         <div class="col-md-8">
         <ul class="nav nav-pills nav-fill" id="myTab" role="tablist">
             <li class="nav-item" role="presentation">
                 <a class="nav-link active" id="about-tab" data-bs-toggle="tab" href="#about" role="tab" aria-controls="about" aria-selected="true">About Me</a>
             </li>
-            <% if (contextPermissions && contextPermissions.includes('zander.web.profile.punishments')) { %>
+            <% if (contextPermissions && contextPermissions.includes('zander.web.punishments')) { %>
                 <li class="nav-item" role="presentation">
                     <a class="nav-link" id="punishments-tab" data-bs-toggle="tab" href="#punishments" role="tab" aria-controls="punishments" aria-selected="false">Punishments <i class="fa-solid fa-shield" style="color: red;"></i></a>
                 </li>
             <% } %>
-            <% if (contextPermissions && contextPermissions.includes('zander.web.profile.audit')) { %>
+            <% if (contextPermissions && contextPermissions.includes('zander.web.audit')) { %>
                 <li class="nav-item" role="presentation">
                     <a class="nav-link" id="audit-tab" data-bs-toggle="tab" href="#audit" role="tab" aria-controls="audit" aria-selected="false">Audit <i class="fa-solid fa-shield" style="color: red;"></i></a>
+                </li>
+            <% } %>
+            <% if (contextPermissions && contextPermissions.includes('zander.web.reports')) { %>
+                <li class="nav-item" role="presentation">
+                    <a class="nav-link" id="reports-tab" data-bs-toggle="tab" href="#reports" role="tab" aria-controls="reports" aria-selected="false">Reports <i class="fa-solid fa-shield" style="color: red;"></i></a>
                 </li>
             <% } %>
         </ul>
@@ -51,13 +61,13 @@
                 <% } %>
                 
             </div>
-            <% if (contextPermissions && contextPermissions.includes('zander.web.profile.punishments')) { %>
+            <% if (contextPermissions && contextPermissions.includes('zander.web.punishments')) { %>
                 <div class="tab-pane fade mt-2" id="punishments" role="tabpanel" aria-labelledby="punishments-tab">
                     <!-- Punishments content goes here -->
                     <div class="alert alert-warning" role="alert">This punishment feature is in development, coming soon!</div>
                 </div>
             <% } %>
-            <% if (contextPermissions && contextPermissions.includes('zander.web.profile.audit')) { %>
+            <% if (contextPermissions && contextPermissions.includes('zander.web.audit')) { %>
                 <div class="tab-pane fade mt-2" id="audit" role="tabpanel" aria-labelledby="audit-tab">
                     <h3>Minecraft</h3>
                     <table class="table">
@@ -140,6 +150,33 @@
                     </table>
                 </div>
             <% } %>
+
+            <% if (contextPermissions && contextPermissions.includes('zander.web.reports')) { %>
+                <div class="tab-pane fade mt-2" id="reports" role="tabpanel" aria-labelledby="reports-tab">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                            <th scope="col">Report ID</th>
+                            <th scope="col">Reported User</th>
+                            <th scope="col">Reason</th>
+                            <th scope="col">Platform</th>
+                            <th scope="col">Date/Time</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <% profileReportsApiData.data.forEach(report => { %>
+                                <tr>
+                                    <td><%= report.reportId %></td>
+                                    <td><%= report.reportedUser %></td>
+                                    <td><%= report.reportReason %></td>
+                                    <td><span class="badge badge-primary"><%= report.reportPlatform %></span></td>
+                                    <td><%= moment(report.reportDateTime).format('Do MMMM YYYY, h:mm a'); %></td>
+                                </tr>
+                            <% }) %>
+                        </tbody>
+                    </table>
+                </div>
+            <% } %>
         </div>
     </div>
         <div class="col-md-4">
@@ -148,45 +185,49 @@
                 <%= moment(profileApiData.joined).format('LLLL') %>
             </p>
             <hr>
-
-            <h4>Interests</h4>
-            <p><%= profileApiData.social_interests %></p>
-            <hr>
-
-            <h4>Social Connections</h4>
-            <hr>
-
-            <% if (profileApiData.social_discord) { %>
-                <h6><i class="fa-brands fa-discord"></i> Discord</h6>
-                <p><%= profileApiData.social_discord %></p> 
+            
+            <% if (profileApiData.social_interests) { %>
+                <h4>Interests</h4>
+                <p><%= profileApiData.social_interests %></p>
+                <hr>
             <% } %>
 
-            <% if (profileApiData.social_steam) { %>
-                <h6 class="mb-4"><a href="<%= profileApiData.social_steam %>" target="_blank"><i class="fa-brands fa-steam"></i> Steam</a></h6>
-            <% } %>
+            <% if (profileApiData.social_discord || profileApiData.social_steam || profileApiData.social_twitch || profileApiData.social_youtube || profileApiData.social_twitter_x || profileApiData.social_instagram || profileApiData.social_reddit || profileApiData.social_spotify) { %>
+                <h4>Social Connections</h4>
+                <hr>
 
-            <% if (profileApiData.social_twitch) { %>
-                <h6 class="mb-4"><a href="<%= profileApiData.social_twitch %>" target="_blank"><i class="fa-brands fa-twitch"></i> Twitch</a></h6>
-            <% } %>
+                <% if (profileApiData.social_discord) { %>
+                    <h6><i class="fa-brands fa-discord"></i> Discord</h6>
+                    <p><%= profileApiData.social_discord %></p> 
+                <% } %>
 
-            <% if (profileApiData.social_youtube) { %>
-                <h6 class="mb-4"><a href="<%= profileApiData.social_youtube %>" target="_blank"><i class="fa-brands fa-youtube"></i> YouTube</a></h6>
-            <% } %>
+                <% if (profileApiData.social_steam) { %>
+                    <h6 class="mb-4"><a href="https://steamcommunity.com/id/<%= profileApiData.social_steam %>" target="_blank"><i class="fa-brands fa-steam"></i> Steam</a></h6>
+                <% } %>
 
-            <% if (profileApiData.social_twitter_x) { %>
-                <h6 class="mb-4"><a href="<%= profileApiData.social_twitter_x %>" target="_blank"><i class="fa-brands fa-twitter"></i> Twitter/X</a></h6>
-            <% } %>
+                <% if (profileApiData.social_twitch) { %>
+                    <h6 class="mb-4"><a href="https://twitch.tv/<%= profileApiData.social_twitch %>" target="_blank"><i class="fa-brands fa-twitch"></i> Twitch</a></h6>
+                <% } %>
 
-            <% if (profileApiData.social_instagram) { %>
-                <h6 class="mb-4"><a href="<%= profileApiData.social_instagram %>" target="_blank"><i class="fa-brands fa-square-instagram"></i> Instagram</a></h6>
-            <% } %>
+                <% if (profileApiData.social_youtube) { %>
+                    <h6 class="mb-4"><a href="https://youtube.com/<%= profileApiData.social_youtube %>" target="_blank"><i class="fa-brands fa-youtube"></i> YouTube</a></h6>
+                <% } %>
 
-            <% if (profileApiData.social_reddit) { %>
-                <h6 class="mb-4"><a href="<%= profileApiData.social_reddit %>" target="_blank"><i class="fa-brands fa-reddit"></i> Reddit</a></h6>
-            <% } %>
+                <% if (profileApiData.social_twitter_x) { %>
+                    <h6 class="mb-4"><a href="https://twitter.com/<%= profileApiData.social_twitter_x %>" target="_blank"><i class="fa-brands fa-twitter"></i> Twitter/X</a></h6>
+                <% } %>
 
-            <% if (profileApiData.social_spotify) { %>
-                <h6 class="mb-4"><a href="<%= profileApiData.social_spotify %>" target="_blank"><i class="fa-brands fa-spotify"></i> Spotify</a></h6>
+                <% if (profileApiData.social_instagram) { %>
+                    <h6 class="mb-4"><a href="https://instagram.com/<%= profileApiData.social_instagram %>" target="_blank"><i class="fa-brands fa-square-instagram"></i> Instagram</a></h6>
+                <% } %>
+
+                <% if (profileApiData.social_reddit) { %>
+                    <h6 class="mb-4"><a href="<%= profileApiData.social_reddit %>" target="_blank"><i class="fa-brands fa-reddit"></i> Reddit</a></h6>
+                <% } %>
+
+                <% if (profileApiData.social_spotify) { %>
+                    <h6 class="mb-4"><a href="https://open.spotify.com/user/<%= profileApiData.social_spotify %>" target="_blank"><i class="fa-brands fa-spotify"></i> Spotify</a></h6>
+                <% } %>
             <% } %>
         </div>
     </div>

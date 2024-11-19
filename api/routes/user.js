@@ -1,4 +1,5 @@
-import { UserGetter, UserLinkGetter, setProfileDisplayPreferences, setProfileSocialConnections, setProfileUserAboutMe, setProfileUserInterests } from "../../controllers/userController";
+import fetch from "node-fetch";
+import { UserGetter, UserLinkGetter, getProfilePicture, getUserLastSession, getUserStats, setProfileDisplayPreferences, setProfileSocialConnections, setProfileUserAboutMe, setProfileUserInterests } from "../../controllers/userController";
 import { required, optional, generateVerifyCode, setBannerCookie } from "../common";
 
 export default function userApiRoute(app, config, db, features, lang) {
@@ -80,12 +81,38 @@ export default function userApiRoute(app, config, db, features, lang) {
   // TODO: Update docs
   app.get(baseEndpoint + "/get", async function (req, res) {
     const username = optional(req.query, "username");
+    const userId = optional(req.query, "userId");
 
     try {
       if (username) {
         db.query(
           `SELECT * FROM users WHERE username=?;`,
           [username],
+          function (error, results, fields) {
+            if (error) {
+              return res.send({
+                success: false,
+                message: error,
+              });
+            }
+
+            if (!results || !results.length) {
+              return res.send({
+                success: false,
+                message: lang.api.userDoesNotExist,
+              });
+            }
+
+            return res.send({
+              success: true,
+              data: results,
+            });
+          }
+        );
+      } else if (userId) {
+        db.query(
+          `SELECT * FROM users WHERE userId=?;`,
+          [userId],
           function (error, results, fields) {
             if (error) {
               return res.send({
@@ -139,6 +166,52 @@ export default function userApiRoute(app, config, db, features, lang) {
     return res;
   });
 
+  // TODO: Update docs
+  app.get(baseEndpoint + "/profile/get", async function (req, res) {
+    const username = optional(req.query, "username");
+
+    try {
+      if (username) {
+        //
+        // Grab user data
+        //
+        const fetchURL = `${process.env.siteAddress}/api/user/get?username=${username}`;
+        const response = await fetch(fetchURL, {
+          headers: { "x-access-token": process.env.apiKey },
+        });
+
+        const apiData = await response.json();
+        
+        const profileApiData = apiData.data[0];
+        const profilePicture = await getProfilePicture(apiData.data[0].username);
+        const profileStats = await getUserStats(apiData.data[0].userId);
+        const profileSession = await getUserLastSession(apiData.data[0].userId);
+
+        return res.send({
+          success: true,
+          data: {
+            profileData: profileApiData,
+            profilePicture: profilePicture,
+            profileStats: profileStats,
+            profileSession: profileSession
+          }
+        });
+      } else {
+        return res.send({
+          success: false,
+          message: `No Users found`,
+        });
+      }
+    } catch (error) {
+      return res.send({
+        success: false,
+        message: `${error}`,
+      });
+    }
+
+    return res;
+  });
+
   app.post(baseEndpoint + "/verify", async function (req, res) {
     const username = required(req.body, "username");
     const uuid = required(req.body, "uuid");
@@ -152,6 +225,13 @@ export default function userApiRoute(app, config, db, features, lang) {
         message: `User ${username} does not exist in player base, please join the Network and try again.`,
       });
     } else {
+      if (user.discordId) {
+        return res.send({
+          success: false,
+          message: `You are already registered and linked, you cannot do this again.`,
+        });
+      }
+
       try {
         const linkCode = await generateVerifyCode();
         const now = new Date();
@@ -205,7 +285,11 @@ export default function userApiRoute(app, config, db, features, lang) {
       let linkUserUUID = linkUser.uuid;
 
       if (!linkUser) {
-        setBannerCookie("warning", `No verification code matches, please try again.`, res);
+        setBannerCookie(
+          "warning",
+          `No verification code matches, please try again.`,
+          res
+        );
         return res.redirect(`/unregistered`);
       }
 
@@ -226,7 +310,11 @@ export default function userApiRoute(app, config, db, features, lang) {
         .catch((error) => {
           // Handle error
           console.error("Error linking");
-          setBannerCookie("warning", `Issue with linking, try again soon.`, res);
+          setBannerCookie(
+            "warning",
+            `Issue with linking, try again soon.`,
+            res
+          );
         });
     } catch (error) {
       return res.send({
@@ -244,7 +332,11 @@ export default function userApiRoute(app, config, db, features, lang) {
     const profilePicture_email = optional(req.body, "profilePicture_email");
 
     try {
-      setProfileDisplayPreferences(userId, profilePicture_type, profilePicture_email);
+      setProfileDisplayPreferences(
+        userId,
+        profilePicture_type,
+        profilePicture_email
+      );
     } catch (error) {
       return res.send({
         success: false,
@@ -260,12 +352,41 @@ export default function userApiRoute(app, config, db, features, lang) {
     const social_interests = required(req.body, "social_interests");
 
     try {
-      setProfileUserInterests(userId, social_interests);
-    } catch (error) {
-      return res.send({
-        success: false,
-        message: `${error}`,
+      const filterURL = `${process.env.siteAddress}/api/filter`;
+      const bodyJSON = { content: social_interests };
+
+      const response = await fetch(filterURL, {
+        method: "POST",
+        body: JSON.stringify(bodyJSON),
+        headers: {
+          "Content-Type": "application/json",
+          "x-access-token": process.env.apiKey,
+        },
       });
+
+      const dataResponse = await response.json();
+      console.log(dataResponse);
+
+      if (dataResponse.success == true) {
+        try {
+          setProfileUserInterests(userId, social_interests);
+        } catch (error) {
+          return res.send({
+            success: false,
+            message: `${error}`,
+          });
+        }
+      } else {
+        console.log(`Illegal words detected.`);
+        setBannerCookie(
+          "danger",
+          `Illegal words detected, changes not applied.`,
+          res
+        );
+      }
+    } catch (error) {
+      console.log(error);
+      return;
     }
 
     return res;
@@ -276,12 +397,34 @@ export default function userApiRoute(app, config, db, features, lang) {
     const social_aboutMe = required(req.body, "social_aboutMe");
 
     try {
-      setProfileUserAboutMe(userId, social_aboutMe);
-    } catch (error) {
-      return res.send({
-        success: false,
-        message: `${error}`,
+      const filterURL = `${process.env.siteAddress}/api/filter`;
+      const bodyJSON = { content: social_aboutMe };
+
+      const response = await fetch(filterURL, {
+        method: "POST",
+        body: JSON.stringify(bodyJSON),
+        headers: {
+          "Content-Type": "application/json",
+          "x-access-token": process.env.apiKey,
+        },
       });
+
+      const dataResponse = await response.json();
+      console.log(dataResponse);
+
+      if (dataResponse.success == true) {
+        try {
+          setProfileUserAboutMe(userId, social_aboutMe);
+        } catch (error) {
+          return res.send({
+            success: false,
+            message: `${error}`,
+          });
+        }
+      }
+    } catch (error) {
+      console.log(error);
+      return;
     }
 
     return res;
@@ -299,7 +442,17 @@ export default function userApiRoute(app, config, db, features, lang) {
     const social_spotify = optional(req.body, "social_spotify");
 
     try {
-      setProfileSocialConnections(userId, social_discord, social_steam, social_twitch, social_youtube, social_twitter_x, social_instagram, social_reddit, social_spotify);
+      setProfileSocialConnections(
+        userId,
+        social_discord,
+        social_steam,
+        social_twitch,
+        social_youtube,
+        social_twitter_x,
+        social_instagram,
+        social_reddit,
+        social_spotify
+      );
     } catch (error) {
       return res.send({
         success: false,

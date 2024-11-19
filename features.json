@@ -3,9 +3,6 @@
   "applications": true,
   "forms": true,
   "discord": {
-    "commands": {
-      "legoFlip": true
-    },
     "events": {
       "generalKenobi": true,
       "guildMemberBoost": true,
@@ -14,6 +11,10 @@
   },
   "server": true,
   "ranks": true,
+  "report": true,
+  "shopdirectory": true,
+  "vault": true,
+  "bridge": true,
   "filter": {
     "link": true,
     "phrase": true

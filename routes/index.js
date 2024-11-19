@@ -161,4 +161,85 @@ export default function applicationSiteRoutes(
       res.status(500).send("Internal Server Error");
     }
   });
+  
+  //
+  // Report
+  //
+  app.get("/report", async function (req, res) {
+    if (!isFeatureWebRouteEnabled(features.report, req, res, features)) {
+      return;
+    }
+
+    if (!req.session.user) {
+      return res.view("session/notLoggedIn", {
+        pageTitle: `Access Restricted`,
+        config: config,
+        req: req,
+        features: features,
+        globalImage: await getGlobalImage(),
+        announcementWeb: await getWebAnnouncement(),
+      });
+    }
+
+    return res.view("report", {
+      pageTitle: `Report`,
+      config: config,
+      req: req,
+      features: features,
+      globalImage: await getGlobalImage(),
+      announcementWeb: await getWebAnnouncement(),
+    });
+  });
+
+  //
+  // Shop Directory
+  // 
+  app.get("/shopdirectory", async function (req, res) {
+    isFeatureWebRouteEnabled(features.shopdirectory, req, res, features);
+
+    //
+    // Get all Shops
+    //
+    const shopFetchURL = `${process.env.siteAddress}/api/shop/get`;
+    const shopResponse = await fetch(shopFetchURL, {
+      headers: { "x-access-token": process.env.apiKey },
+    });
+    const shopApiData = await shopResponse.json();
+
+    console.log(shopApiData.data[0].userData);
+    
+
+    return res.view("shopdirectory", {
+      pageTitle: `Shop Directory`,
+      config: config,
+      req: req,
+      features: features,
+      shopApiData: shopApiData,
+      globalImage: await getGlobalImage(),
+      announcementWeb: await getWebAnnouncement(),
+    });
+  })
+  
+  //
+  // Vault
+  //
+  app.get("/vault", async function (req, res) {
+    isFeatureWebRouteEnabled(features.vault, req, res, features);
+
+    const fetchURL = `${process.env.siteAddress}/api/vault/get`;
+    const response = await fetch(fetchURL, {
+      headers: { "x-access-token": process.env.apiKey },
+    });
+    const apiData = await response.json();
+
+    return res.view("vault", {
+      pageTitle: `Vault`,
+      config: config,
+      req: req,
+      apiData: apiData,
+      features: features,
+      globalImage: await getGlobalImage(),
+      announcementWeb: await getWebAnnouncement(),
+    });
+  });
 }

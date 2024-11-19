@@ -225,6 +225,71 @@ CREATE TABLE applications (
     PRIMARY KEY (applicationId)
 );
 
+CREATE TABLE reports (
+	reportId INT NOT NULL AUTO_INCREMENT,
+    reporterId INT NOT NULL,
+    reportedUser VARCHAR(30) NOT NULL,
+    reportReason VARCHAR(100) NOT NULL,
+    reportReasonEvidence MEDIUMTEXT,
+    reportPlatform VARCHAR(10) NOT NULL,
+    reportDateTime DATETIME NOT NULL DEFAULT NOW(),
+    PRIMARY KEY (reportId)
+);
+
+CREATE VIEW shoppingDirectory AS
+SELECT
+    shops.id,
+    users.uuid,
+    users.userId,
+    substring_index(
+        SUBSTRING(item,
+            LOCATE('type:', item) + LENGTH('type:')
+        ),
+        '\n',
+        1
+    ) AS item,
+    CASE LOCATE('amount:', item)
+        WHEN 0 THEN null
+        ELSE substring_index(
+            SUBSTRING(item,
+                LOCATE('amount:', item) + LENGTH('amount:')
+            ),
+            '\n',
+            1
+        )
+    END AS amount,
+    data.price,
+    stock.stock,
+    map.world,
+    map.x,
+    map.y,
+    map.z
+FROM cfc_prod_quickshop.qs_shops shops
+    JOIN cfc_prod_quickshop.qs_shop_map map ON shops.id = map.shop
+    JOIN cfc_prod_quickshop.qs_data data ON shops.data = data.id
+    JOIN zanderProd.users users ON users.uuid = data.owner
+    JOIN cfc_prod_quickshop.qs_external_cache stock ON shops.id = stock.shop
+WHERE data.unlimited = 0
+ORDER BY shops.id
+
+CREATE TABLE vault (
+	vaultId INT NOT NULL AUTO_INCREMENT,
+    displayName VARCHAR(30),
+    description MEDIUMTEXT,
+    redirectUrl TEXT,
+    position INT,
+    PRIMARY KEY (vaultId)
+);
+
+CREATE TABLE bridge (
+	bridgeId INT NOT NULL AUTO_INCREMENT,
+    command TEXT,
+    targetServer VARCHAR(30),
+    processed BOOLEAN DEFAULT 0,
+    bridgeDateTime DATETIME NOT NULL DEFAULT NOW(),
+    PRIMARY KEY (bridgeId)
+);
+
 CREATE TABLE logs (
 	logId INT NOT NULL AUTO_INCREMENT,
     creatorId INT NOT NULL,
@@ -234,3 +299,95 @@ CREATE TABLE logs (
     actionedDateTime DATETIME NOT NULL DEFAULT NOW(),
     PRIMARY KEY (logId)
 );
+
+CREATE VIEW zanderdev.punishments AS
+SELECT
+    litebans.uuid AS bannedUuid,
+    banned.userId AS bannedUserId,
+    litebans.banned_by_uuid AS bannedByUuid,
+    banner.userId AS bannedByUserId,
+    litebans.removed_by_uuid AS removedByUuid,
+    remover.userId AS removedByUserId,
+    litebans.type,
+    litebans.active,
+    litebans.silent,
+    FROM_UNIXTIME(litebans.time/1000) AS dateStart,
+    FROM_UNIXTIME(nullif((litebans.until / 1000), 0)) AS dateEnd,
+    litebans.removed_by_date AS dateRemoved,
+    litebans.reason,
+    litebans.removed_by_reason AS reasonRemoved,
+    litebans.ip,
+    litebans.ipban,
+    litebans.ipban_wildcard AS ipBanWildcard
+FROM (
+	SELECT
+		uuid,
+		ip,
+		reason,
+		banned_by_uuid,
+		time,
+		null AS until,
+		null AS removed_by_uuid,
+		null AS removed_by_reason,
+		null AS removed_by_date,
+		silent,
+		ipban,
+		ipban_wildcard,
+		null AS active,
+		'kick' AS type
+	FROM cfcdev_litebans.litebans_kicks
+	UNION
+	SELECT
+		uuid,
+		ip,
+		reason,
+		banned_by_uuid,
+		time,
+		until,
+		removed_by_uuid,
+		removed_by_reason,
+		removed_by_date,
+		silent,
+		ipban,
+		ipban_wildcard,
+		active,
+		'ban' AS type
+	FROM cfcdev_litebans.litebans_bans
+	UNION
+	SELECT
+		uuid,
+		ip,
+		reason,
+		banned_by_uuid,
+		time,
+		until,
+		removed_by_uuid,
+		removed_by_reason,
+		removed_by_date,
+		silent,
+		ipban,
+		ipban_wildcard,
+		active,
+		'mute' AS type
+	FROM cfcdev_litebans.litebans_mutes
+	UNION
+	SELECT
+		uuid,
+		ip,
+		reason,
+		banned_by_uuid,
+		time,
+		until,
+		removed_by_uuid,
+		removed_by_reason,
+		removed_by_date,
+		silent,
+		ipban,
+		ipban_wildcard,
+		active,
+		'warning' AS type
+	FROM cfcdev_litebans.litebans_warnings
+) AS litebans
+	LEFT JOIN zanderdev.users banned ON litebans.uuid = banned.uuid
+    LEFT JOIN zanderdev.users banner ON litebans.banned_by_uuid = banner.uuid
+    LEFT JOIN zanderdev.users remover ON litebans.removed_by_uuid = remover.uuid;
