@@ -39,7 +39,7 @@ export class GuildMessageListener extends Listener {
         if (message.author.isbot) return;
 
         if (dataResponse.success == false) {
-          message.delete(); // Delete the message
+          await message.delete();
 
           let embed = new EmbedBuilder()
             .setTitle(`Prohibited content has been detected!`)
