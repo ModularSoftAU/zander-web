@@ -31,7 +31,7 @@ var discordStatsUpdateTask = cron.schedule("*/5 * * * *", async () => {
       );
 
       if (channel) {
-        await channel.setName(`👨‍👩‍👧‍👧 Players Online: ${totalPlayers}`);
+        await channel.setName(`💁‍♂️ Players Online: ${totalPlayers}`);
       } else {
         console.log("Channel not found");
       }
