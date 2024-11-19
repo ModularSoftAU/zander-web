@@ -19,9 +19,9 @@ var discordStatsUpdateTask = cron.schedule("*/5 * * * *", async () => {
 
       // Loop through each server status and calculate the total player count
       apiData.data.forEach((server) => {
-        const serverInfo = JSON.parse(server.statusInfo); // Parse the statusInfo string
+        const serverInfo = JSON.parse(server.statusInfo);
         serverInfo.forEach((status) => {
-          totalPlayers += status.playerCount; // Add the player count from each server
+          totalPlayers += status.playerCount;
         });
       });
 
@@ -31,7 +31,6 @@ var discordStatsUpdateTask = cron.schedule("*/5 * * * *", async () => {
       );
 
       if (channel) {
-        // Update the channel name with the total number of players
         await channel.setName(`👨‍👩‍👧‍👧 Players Online: ${totalPlayers}`);
       } else {
         console.log("Channel not found");
