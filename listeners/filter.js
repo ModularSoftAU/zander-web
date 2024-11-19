@@ -19,7 +19,10 @@ export class GuildMessageListener extends Listener {
     if (features.filter.link || features.filter.phrase) {
       try {
         const filterURL = `${process.env.siteAddress}/api/filter`;
-        const bodyJSON = { content: message.content };
+        const bodyJSON = {
+          content: message.content,
+          discordId: message.author.id,
+        };
 
         const response = await fetch(filterURL, {
           method: "POST",
