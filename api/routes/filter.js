@@ -52,11 +52,12 @@ export default function filterApiRoute(app, config, db, features, lang) {
 
       const profanityData = await response.json();
 
-      if (profanityData.isProfanity) {
+      // Only flag for profanity if the score is 1
+      if (profanityData.isProfanity && profanityData.score > 1) {
         flaggedFor.push(`Profanity (Score: ${profanityData.score})`);
       }
 
-      if (urlDetected || profanityData.isProfanity) {
+      if (urlDetected || flaggedFor.length > 0) {
         try {
           const staffChannelHook = new Webhook(
             config.discord.webhooks.staffChannel
@@ -64,7 +65,11 @@ export default function filterApiRoute(app, config, db, features, lang) {
 
           const embed = new MessageBuilder()
             .setTitle(`🟥 Filter Flagged`)
-            .addField("Detected User", `${userData.username || "Unknown"}`, true)
+            .addField(
+              "Detected User",
+              `${userData?.username || "Unknown"}`,
+              true
+            )
             .addField("Flagged Issues", flaggedFor.join(", "), true)
             .addField("Content", `${content}`, false)
             .setColor(Colors.Red)
