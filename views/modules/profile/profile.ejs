@@ -24,14 +24,19 @@
             <li class="nav-item" role="presentation">
                 <a class="nav-link active" id="about-tab" data-bs-toggle="tab" href="#about" role="tab" aria-controls="about" aria-selected="true">About Me</a>
             </li>
-            <% if (contextPermissions && contextPermissions.includes('zander.web.profile.punishments')) { %>
+            <% if (contextPermissions && contextPermissions.includes('zander.web.punishments')) { %>
                 <li class="nav-item" role="presentation">
                     <a class="nav-link" id="punishments-tab" data-bs-toggle="tab" href="#punishments" role="tab" aria-controls="punishments" aria-selected="false">Punishments <i class="fa-solid fa-shield" style="color: red;"></i></a>
                 </li>
             <% } %>
-            <% if (contextPermissions && contextPermissions.includes('zander.web.profile.audit')) { %>
+            <% if (contextPermissions && contextPermissions.includes('zander.web.audit')) { %>
                 <li class="nav-item" role="presentation">
                     <a class="nav-link" id="audit-tab" data-bs-toggle="tab" href="#audit" role="tab" aria-controls="audit" aria-selected="false">Audit <i class="fa-solid fa-shield" style="color: red;"></i></a>
+                </li>
+            <% } %>
+            <% if (contextPermissions && contextPermissions.includes('zander.web.reports')) { %>
+                <li class="nav-item" role="presentation">
+                    <a class="nav-link" id="reports-tab" data-bs-toggle="tab" href="#reports" role="tab" aria-controls="reports" aria-selected="false">Reports <i class="fa-solid fa-shield" style="color: red;"></i></a>
                 </li>
             <% } %>
         </ul>
@@ -56,13 +61,13 @@
                 <% } %>
                 
             </div>
-            <% if (contextPermissions && contextPermissions.includes('zander.web.profile.punishments')) { %>
+            <% if (contextPermissions && contextPermissions.includes('zander.web.punishments')) { %>
                 <div class="tab-pane fade mt-2" id="punishments" role="tabpanel" aria-labelledby="punishments-tab">
                     <!-- Punishments content goes here -->
                     <div class="alert alert-warning" role="alert">This punishment feature is in development, coming soon!</div>
                 </div>
             <% } %>
-            <% if (contextPermissions && contextPermissions.includes('zander.web.profile.audit')) { %>
+            <% if (contextPermissions && contextPermissions.includes('zander.web.audit')) { %>
                 <div class="tab-pane fade mt-2" id="audit" role="tabpanel" aria-labelledby="audit-tab">
                     <h3>Minecraft</h3>
                     <table class="table">
@@ -141,6 +146,33 @@
                                     <% } %>
                                 </td>
                             </tr>
+                        </tbody>
+                    </table>
+                </div>
+            <% } %>
+
+            <% if (contextPermissions && contextPermissions.includes('zander.web.reports')) { %>
+                <div class="tab-pane fade mt-2" id="reports" role="tabpanel" aria-labelledby="reports-tab">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                            <th scope="col">Report ID</th>
+                            <th scope="col">Reported User</th>
+                            <th scope="col">Reason</th>
+                            <th scope="col">Platform</th>
+                            <th scope="col">Date/Time</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <% profileReportsApiData.data.forEach(report => { %>
+                                <tr>
+                                    <td><%= report.reportId %></td>
+                                    <td><%= report.reportedUser %></td>
+                                    <td><%= report.reportReason %></td>
+                                    <td><span class="badge badge-primary"><%= report.reportPlatform %></span></td>
+                                    <td><%= moment(report.reportDateTime).format('Do MMMM YYYY, h:mm a'); %></td>
+                                </tr>
+                            <% }) %>
                         </tbody>
                     </table>
                 </div>

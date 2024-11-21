@@ -150,8 +150,6 @@ export default function sessionSiteRoute(
     });
     const apiData = await response.json();
 
-    console.log(apiData);
-
     res.view("session/unregistered", {
       pageTitle: `Unregistered`,
       config: config,

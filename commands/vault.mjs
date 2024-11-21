@@ -1,6 +1,6 @@
 import { Command, RegisterBehavior } from "@sapphire/framework";
 import { Colors, EmbedBuilder } from "discord.js";
-import config from "../config.json" assert { type: "json" };
+import features from "../features.json" assert { type: "json" };
 
 export class RanksCommand extends Command {
   constructor(context, options) {
@@ -10,13 +10,13 @@ export class RanksCommand extends Command {
   registerApplicationCommands(registry) {
     registry.registerChatInputCommand((builder) =>
       builder
-        .setName("ranks")
-        .setDescription("Display link to view rank perks and donate.")
+        .setName("vault")
+        .setDescription("Display link to view link to the map vault.")
     );
   }
 
   async chatInputRun(interaction) {
-    if (!features.ranks) {
+    if (!features.vault) {
       const errorEmbed = new EmbedBuilder()
         .setTitle("Feature Disabled")
         .setDescription(
@@ -31,9 +31,9 @@ export class RanksCommand extends Command {
     }
 
     const embed = new EmbedBuilder()
-      .setTitle(`Ranks`)
+      .setTitle(`Vault`)
       .setDescription(
-        `We are looking always donations to keep this Server running since running this Network isn't free. If you would like to donate to ${config.siteConfiguration.siteName} check out our ranks and perks at ${process.env.siteAddress}/ranks`
+        `Explore the Vault to discover and download our previous maps and explore the worlds and builds of our community: ${process.env.siteAddress}/vault`
       )
       .setColor(Colors.DarkGold);
 

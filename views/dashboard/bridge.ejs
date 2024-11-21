@@ -1,0 +1,93 @@
+<%- include("../modules/header.ejs", {
+    pageTitle: pageTitle,
+    pageDescription: "Bridge for sending commands and functions."
+}) %>
+
+<%- include("../modules/navigationBar.ejs") %>
+
+<%- include("../partials/miniHeader.ejs", {
+  headerTitle: "Bridge",
+  backgroundImage: globalImage
+}) %>
+
+<div class="row dashboardview">
+    <div class="col-sm-2">
+      <%- include("../modules/dashboard/dashboard-sidebar.ejs") %>
+    </div>
+    <div class="col" style="padding: 20px;">
+        <%- include("../partials/documentationLink.ejs", {
+            doclink: "https://modularsoft.org/docs/products/zander/features/bridge/"
+        }) %>
+        <br><br>
+
+        <div class="basic-form">
+            <form method="post" action="<%= process.env.siteAddress %>/redirect/bridge/command/add">
+                <div class="row">
+                    <!-- Target Server -->
+                    <div class="form-group col">
+                        <label for="command">Command</label>
+
+                         <%- include("../partials/form/inputText.ejs", {
+                             elementName: "command",
+                             elementValue: null,
+                             required: true
+                         }) %>
+                    </div>
+
+                    <!-- Target Server -->
+                    <div class="form-group col">
+                        <label for="targetServer">Target Server</label>
+
+                         <%- include("../partials/form/inputText.ejs", {
+                             elementName: "targetServer",
+                             elementValue: null,
+                             required: true
+                         }) %>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn btn-primary">Send to Bridge</button>
+            </form>
+        </div>
+        <br><br>
+
+        <% if (req.cookies.alertType) { %>
+            <%- include("../partials/alert.ejs", {
+              alertType: req.cookies.alertType,
+              content: req.cookies.alertContent
+            }) %>
+        <% } %>
+        
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Bridge ID</th>
+                    <th>Command</th>
+                    <th>Target Server</th>
+                    <th>Processed</th>
+                    <th>Created</th>
+                </tr>
+            </thead>
+            <tbody>
+                <% if (apiData.success == false) { %>
+                    <%- include("../partials/alert.ejs", {
+                      alertType: "danger",
+                      content: apiData.message
+                    }) %>
+                <% } else { %>
+                    <% apiData.data.forEach(function (bridge) { %>
+                        <tr>
+                            <td><%= bridge.bridgeId %></td>
+                            <td><code><%= bridge.command %></code></td>
+                            <td><%= bridge.targetServer %></td>
+                            <td><%= bridge.processed %></td>
+                            <td><%= moment(bridge.bridgeDateTime).startOf('hour').fromNow() %></td>
+                        </tr>
+                    <% }) %>
+                <% } %>
+            </tbody>
+        </table>
+    </div>
+  </div>
+
+<%- include("../modules/footer.ejs") %>

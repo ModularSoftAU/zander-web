@@ -1,12 +1,12 @@
 <%- include("../../modules/header.ejs", {
     pageTitle: pageTitle,
-    pageDescription: "List of all Network Applications"
+    pageDescription: "List of all of the Vault entries"
 }) %>
 
 <%- include("../../modules/navigationBar.ejs") %>
 
 <%- include("../../partials/miniHeader.ejs", {
-  headerTitle: "Applications",
+  headerTitle: "Vault",
   backgroundImage: globalImage
 }) %>
 
@@ -15,9 +15,9 @@
       <%- include("../../modules/dashboard/dashboard-sidebar.ejs") %>
     </div>
     <div class="col-md-10" style="padding: 10px;">
-        <a href="/dashboard/application/create"><button type="button" class="btn btn-sm btn-info">Create Application</button></a>
+        <a href="/dashboard/vault/create"><button type="button" class="btn btn-sm btn-info">Create Vault Entry</button></a>
         <%- include("../../partials/documentationLink.ejs", {
-            doclink: "https://modularsoft.org/docs/products/zander/features/application/"
+            doclink: "https://modularsoft.org/docs/products/zander/features/vault/"
         }) %>
         <br><br>
 
@@ -30,10 +30,7 @@
         <table class="table">
             <thead>
                 <tr>
-                    <th></th>
                     <th>Name</th>
-                    <th>Description</th>
-                    <th>Status</th>
                     <th>Action</th>
                 </tr>
             </thead>
@@ -44,24 +41,15 @@
                       content: apiData.message
                     }) %>
                 <% } else { %>
-                    <% apiData.data.forEach(function (application) { %>
+                    <% apiData.data.forEach(function (vault) { %>
                         <tr>
-                            <td><i class="<%= application.displayIcon %>"></i></td>
-                            <td><%= application.displayName %></td>
-                            <td><%= application.description %></td>
-                            <td>
-                                <% if (application.applicationStatus === 1) { %>
-                                    <i class="fas fa-check-circle" style="color:green"></i>
-                                <% } else { %>
-                                    <i class="fas fa-times-circle" style="color: red;"></i>
-                                <% } %>
-                            </td>
+                            <td><%= vault.displayName %></td>
                             <td>
                                 <div class="btn-group">
-                                    <a href="/dashboard/application/edit?applicationId=<%= application.applicationId %>"><button class="btn btn-sm btn-warning" type="button">Edit</button></a>
+                                    <a href="/dashboard/vault/edit?vaultId=<%= vault.vaultId %>"><button class="btn btn-sm btn-warning" type="button">Edit</button></a>
 
-                                    <form action="<%= process.env.siteAddress %>/redirect/application/delete" method="post">
-                                        <input type="hidden" name="applicationId" value="<%= application.applicationId %>">
+                                    <form action="<%= process.env.siteAddress %>/redirect/vault/delete" method="post">
+                                        <input type="hidden" name="vaultId" value="<%= vault.vaultId %>">
                                         <input type="hidden" name="actioningUser" value="<%= req.session.user.userId %>">
                                         <button class="btn btn-sm btn-danger" type="submit">Delete</button>
                                     </form>

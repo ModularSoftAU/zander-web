@@ -157,14 +157,14 @@ export default function announcementApiRoute(app, config, db, features, lang) {
     try {
       db.query(
         `
-                UPDATE announcements 
-                    SET 
-                        enabled=?,
-                        announcementType=?,
-                        body=?,
-                        colourMessageFormat=?,
-                        link=?
-                    WHERE announcementId=?;`,
+          UPDATE announcements 
+              SET 
+                  enabled=?,
+                  announcementType=?,
+                  body=?,
+                  colourMessageFormat=?,
+                  link=?
+              WHERE announcementId=?;`,
         [
           enabled,
           announcementType,

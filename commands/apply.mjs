@@ -1,8 +1,8 @@
 import { Command, RegisterBehavior } from "@sapphire/framework";
-import { Colors, EmbedBuilder } from "discord.js";
-import config from "../config.json" assert { type: "json" };
+import pkg, { Colors } from "discord.js";
+const { EmbedBuilder } = pkg;
 
-export class RanksCommand extends Command {
+export class PolicyCommand extends Command {
   constructor(context, options) {
     super(context, { ...options });
   }
@@ -10,13 +10,15 @@ export class RanksCommand extends Command {
   registerApplicationCommands(registry) {
     registry.registerChatInputCommand((builder) =>
       builder
-        .setName("ranks")
-        .setDescription("Display link to view rank perks and donate.")
+        .setName("apply")
+        .setDescription(
+          "Display information and description for Applications."
+        )
     );
   }
 
   async chatInputRun(interaction) {
-    if (!features.ranks) {
+    if (!features.applications) {
       const errorEmbed = new EmbedBuilder()
         .setTitle("Feature Disabled")
         .setDescription(
@@ -27,19 +29,21 @@ export class RanksCommand extends Command {
       return interaction.reply({
         embeds: [errorEmbed],
         ephemeral: true,
-      });      
+      });
     }
 
     const embed = new EmbedBuilder()
-      .setTitle(`Ranks`)
+      .setTitle("Network Applications")
+      .setColor(Colors.Gold)
       .setDescription(
-        `We are looking always donations to keep this Server running since running this Network isn't free. If you would like to donate to ${config.siteConfiguration.siteName} check out our ranks and perks at ${process.env.siteAddress}/ranks`
-      )
-      .setColor(Colors.DarkGold);
+        `Want to join our staff team and help make our server even better? Apply for open positions here: ${process.env.siteAddress}/apply`
+      );
 
-    interaction.reply({
+    const messageContent = {
       embeds: [embed],
-      empheral: false,
-    });
+      ephemeral: false,
+    };
+
+    interaction.reply(messageContent);
   }
 }

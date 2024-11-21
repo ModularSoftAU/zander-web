@@ -10,6 +10,8 @@ export default function applicationApiRoute(app, config, db, features, lang) {
     try {
       function getApplications(dbQuery) {
         db.query(dbQuery, function (error, results, fields) {
+          console.log(results);
+          
           if (error) {
             res.send({
               success: false,
@@ -67,8 +69,6 @@ export default function applicationApiRoute(app, config, db, features, lang) {
     const applicationStatus = required(req.body, "applicationStatus", res);
 
     let applicationCreatedLang = lang.applications.applicationCreated;
-
-    console.log(req.body);
 
     try {
       db.query(
