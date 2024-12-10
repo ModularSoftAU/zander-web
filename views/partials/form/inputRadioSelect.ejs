@@ -1,0 +1,20 @@
+<% if (prompt.choices && prompt.choices.length > 0) { %>
+  <% prompt.choices.forEach((choice, index) => { %>
+    <div class="form-check">
+      <input 
+        type="radio" 
+        id="<%= elementName %>Radio<%= index %>" 
+        name="<%= elementName %>" 
+        class="form-check-input"
+        value="<%= choice %>"
+        <% if (required && index === 0) { %> required <% } %>
+      >
+      <label 
+        for="<%= elementName %>Radio<%= index %>" 
+        class="form-check-label"
+      >
+        <%= choice %>
+      </label>
+    </div>
+  <% }); %>
+<% } %>

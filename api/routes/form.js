@@ -219,7 +219,11 @@ export default function formApiRoute(app, config, db, features, lang) {
     // Check if the feature is enabled
     isFeatureEnabled(features.forms, res, lang);
 
-    const formSlug = optional(req.query, "formSlug");
+    const formSlug = req.params.formSlug;
+    console.log(req.query);
+    console.log(req.params);
+    console.log(formSlug);
+    
 
     //
     // Grab form data
@@ -260,6 +264,7 @@ export default function formApiRoute(app, config, db, features, lang) {
 
     const formData = req.body; // This contains the submitted answers
     let result = [];
+    
 
     // Process each section and prompt to map answers to questions
     formSchemaData.sections.forEach((section, sectionIndex) => {

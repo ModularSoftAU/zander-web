@@ -56,19 +56,13 @@
                   }) %>
                 <% } %>
 
-                <% if (prompt.type == "multipleChoice") { %>
-                  <%- include("./partials/form/inputSelect.ejs", {
-                      elementName: elementName,
-                      elementValue: null,  // default value
-                      required: prompt.required,
-                      optionElements: [
-                          { optionName: "Select a Type", optionValue: "null", selected: true, disabled: true },
-                          { optionName: "Server Ping MOTD", optionValue: "motd", selected: false, disabled: false },
-                          { optionName: "In-Game Tip", optionValue: "tip", selected: false, disabled: false },
-                          { optionName: "Website Banner", optionValue: "web", selected: false, disabled: false }
-                      ]
-                  }) %>
-                <% } %>
+                <%- include("./partials/form/inputRadioSelect.ejs", {
+                  elementName: elementName,
+                  elementValue: null,
+                  required: prompt.required,
+                  prompt: prompt
+                }) %>
+
                 <br>
               <% }) %>
             <% }) %>

@@ -35,6 +35,9 @@
       "adminLog": "https://discord.com/api/webhooks/1180274861952737381/aeKat4hvzNIf56fhENBmtAx1BNNECKb7NS3nVOqaof9loRIZk_cS3jOzr7AEAIRrdgL1",
       "staffChannel": "https://discord.com/api/webhooks/1178170745315151933/u1vv4c-ncQFjKYuwWcAyk9CsEmUgt2sV8Oe3YEOcaQkHXcjgr3xCRGbADwiW1C0cCLkb"
     },
+    "channels": {
+      "applications": "1315634802799673344"
+    },
     "roles": {
       "verified": "926259482319794246"
     }
