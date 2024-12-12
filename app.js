@@ -76,6 +76,9 @@ const buildApp = async () => {
       ejs: await import("ejs"),
     },
     root: path.join(__dirname, "views"),
+    options: {
+      debug: config.debug,
+    },
   });
 
   await app.register(await import("@fastify/static"), {
