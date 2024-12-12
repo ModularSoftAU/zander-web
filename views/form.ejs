@@ -18,7 +18,7 @@
               alertType: "danger",
               content: formApiData.message
             }) %>
-          <% } else { %>
+          <% } else { %>            
             <% formSchemaData.sections.forEach((section, sectionIndex) => { %>
               <h3><%= section.title %></h3>
               <p><%= section.description %></p>
@@ -31,7 +31,11 @@
                 const questionLabel = prompt.display;
                 %>
 
-                <label for="<%= elementName %>"><%= questionLabel %></label>
+                <% if (prompt.required) { %>
+                  <label for="<%= elementName %>"><%= questionLabel %> <b style="color: red;">*</b></label>
+                <% } else { %>
+                  <label for="<%= elementName %>"><%= questionLabel %></label>
+                <% } %>
                 <% if (prompt.type == "shortText") { %>
                   <%- include("./partials/form/inputText.ejs", {
                     elementName: elementName,

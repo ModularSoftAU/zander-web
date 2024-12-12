@@ -62,10 +62,9 @@ export default function formRedirectRoute(app, config, lang) {
   app.post(baseEndpoint + "/:formSlug/submit", async function (req, res) {
     const formSlug = req.params.formSlug;
 
-    console.log(req.params);
-    console.log(req.body);
+    req.body.userId = req.session.user.userId;
+    req.body.username = req.session.user.username;
     
-
     postAPIRequest(
       `${process.env.siteAddress}/api/form/${formSlug}/submit`,
       req.body,

@@ -5,7 +5,7 @@ export default function applicationApiRoute(app, config, db, features, lang) {
 
   app.get(baseEndpoint + "/get", async function (req, res) {
     isFeatureEnabled(features.applications, res, lang);
-    const applicationId = optional(req.query, "id");
+    const applicationId = optional(req.query, "applicationId");
 
     try {
       function getApplications(dbQuery) {
@@ -67,14 +67,15 @@ export default function applicationApiRoute(app, config, db, features, lang) {
     const redirectUrl = required(req.body, "redirectUrl", res);
     const position = required(req.body, "position", res);
     const applicationStatus = required(req.body, "applicationStatus", res);
+    const type = required(req.body, "type", res);
 
     let applicationCreatedLang = lang.applications.applicationCreated;
 
     try {
       db.query(
         `INSERT INTO applications 
-            (displayName, description, displayIcon, requirementsMarkdown, redirectUrl, position, applicationStatus) 
-        VALUES (?, ?, ?, ?, ?, ?, ?)`,
+            (displayName, description, displayIcon, requirementsMarkdown, redirectUrl, position, applicationStatus, type) 
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
         [
           displayName,
           description,
@@ -83,6 +84,7 @@ export default function applicationApiRoute(app, config, db, features, lang) {
           redirectUrl,
           position,
           applicationStatus,
+          type,
         ],
         function (error, results, fields) {
           if (error) {
@@ -135,6 +137,7 @@ export default function applicationApiRoute(app, config, db, features, lang) {
     const redirectUrl = required(req.body, "redirectUrl", res);
     const position = required(req.body, "position", res);
     const applicationStatus = required(req.body, "applicationStatus", res);
+    const type = required(req.body, "type", res);
 
     let applicationEditedLang = lang.applications.applicationEdited;
 
@@ -150,7 +153,8 @@ export default function applicationApiRoute(app, config, db, features, lang) {
                     requirementsMarkdown=?, 
                     redirectUrl=?, 
                     position=?,
-                    applicationStatus=?
+                    applicationStatus=?,
+                    type=?
                 WHERE applicationId=?;`,
         [
           displayName,
@@ -160,6 +164,7 @@ export default function applicationApiRoute(app, config, db, features, lang) {
           redirectUrl,
           position,
           applicationStatus,
+          type,
           applicationId,
         ],
         function (error, results, fields) {

@@ -16,7 +16,7 @@ import bridgeApiRoute from "./bridge";
 export default (app, client, moment, config, db, features, lang) => {
   announcementApiRoute(app, config, db, features, lang);
   applicationApiRoute(app, config, db, features, lang);
-  formApiRoute(app, config, db, features, lang);
+  formApiRoute(app, client, config, db, features, lang);
   discordApiRoute(app, client, config, db, features, lang);
   serverApiRoute(app, config, db, features, lang);
   reportApiRoute(app, config, db, features, lang);

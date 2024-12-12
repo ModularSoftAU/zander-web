@@ -1,6 +1,7 @@
+import { EmbedBuilder, Poll } from "discord.js";
 import { isFeatureEnabled, required, optional, generateLog, setBannerCookie } from "../common";
 
-export default function formApiRoute(app, config, db, features, lang) {
+export default function formApiRoute(app, client, config, db, features, lang) {
   const baseEndpoint = "/api/form";
 
   app.get(baseEndpoint + "/get", async function (req, res) {
@@ -71,12 +72,7 @@ export default function formApiRoute(app, config, db, features, lang) {
         `INSERT INTO forms 
             (formSlug, displayName, formSchema, formStatus) 
         VALUES (?, ?, ?, ?)`,
-        [
-          formSlug,
-          displayName,
-          formSchema,
-          formStatus,
-        ],
+        [formSlug, displayName, formSchema, formStatus],
         function (error, results, fields) {
           if (error) {
             return res.send({
@@ -132,13 +128,7 @@ export default function formApiRoute(app, config, db, features, lang) {
                     formSchema=?, 
                     formStatus=?
                 WHERE formId=?;`,
-        [
-          formSlug,
-          displayName,
-          formSchema,
-          formStatus,
-          formId,
-        ],
+        [formSlug, displayName, formSchema, formStatus, formId],
         function (error, results, fields) {
           if (error) {
             return res.send({
@@ -163,7 +153,7 @@ export default function formApiRoute(app, config, db, features, lang) {
       );
     } catch (error) {
       console.log(error);
-      
+
       res.send({
         success: false,
         message: `${error}`,
@@ -220,14 +210,8 @@ export default function formApiRoute(app, config, db, features, lang) {
     isFeatureEnabled(features.forms, res, lang);
 
     const formSlug = req.params.formSlug;
-    console.log(req.query);
-    console.log(req.params);
-    console.log(formSlug);
-    
 
-    //
-    // Grab form data
-    //
+    // Fetch form data
     const fetchURL = `${process.env.siteAddress}/api/form/get?slug=${formSlug}`;
     const response = await fetch(fetchURL, {
       headers: { "x-access-token": process.env.apiKey },
@@ -237,23 +221,12 @@ export default function formApiRoute(app, config, db, features, lang) {
     let formSchemaData = null;
 
     if (formApiData.data[0].formSchema) {
-      //
-      // Grab form schema data
-      //
       const schemaFetchURL = `${formApiData.data[0].formSchema}`;
       const schemaResponse = await fetch(schemaFetchURL);
       const formSchemaJSONData = await schemaResponse.json();
-
       formSchemaData = formSchemaJSONData;
     }
 
-    // Set a success banner cookie
-    setBannerCookie("success", `Application Submitted`, res);
-
-    // Log the incoming request body for debugging
-    console.log("Request Body:", req.body);
-
-    // Ensure formSchemaData is valid before proceeding
     if (!formSchemaData || !formSchemaData.sections) {
       console.error("Invalid form schema data");
       return res.status(400).json({
@@ -262,20 +235,20 @@ export default function formApiRoute(app, config, db, features, lang) {
       });
     }
 
-    const formData = req.body; // This contains the submitted answers
+    const formData = req.body;
+    const { userId, username } = formData; // Extract user info from form data
     let result = [];
-    
 
-    // Process each section and prompt to map answers to questions
+    console.log(formSchemaData);
+
+    // Process form data
     formSchemaData.sections.forEach((section, sectionIndex) => {
       section.prompts.forEach((prompt, promptIndex) => {
-        // Generate the key based on the formSlug, section index, and prompt index
         const elementName = `${formSlug}_${sectionIndex}_${promptIndex}`;
         const promptText = prompt.display;
         const answer = formData[elementName];
 
         if (answer) {
-          // Add the question-answer pair to the result array
           result.push({
             question: promptText,
             answer: answer,
@@ -284,19 +257,66 @@ export default function formApiRoute(app, config, db, features, lang) {
       });
     });
 
-    // Log the results to check the question-answer pairs
-    console.log("Processed Form Data:", result);
-
-    // Send the response with the mapped question-answer pairs
     try {
-      return res.json({
+      const forumChannel = client.channels.cache.get(
+        formSchemaData.form.submission.channelId
+      );
+
+      if (!forumChannel || forumChannel.type !== 15) {
+        console.error("Forum channel not found or invalid type");
+        return res.status(500).send({
+          success: false,
+          message: "Internal server error",
+        });
+      }
+
+      // Create embed
+      const embed = new EmbedBuilder()
+        .setTitle(`${formSchemaData.form.title}: ${username}`)
+        .setColor("#00AAFF")
+        .setTimestamp()
+        .setFooter({ text: `Submitted by ${username} (${userId})` });
+
+      result.forEach(({ question, answer }) => {
+        embed.addFields({
+          name: question,
+          value: answer || "No answer provided",
+        });
+      });
+
+      // Create forum post
+      const postTitle = `Submission for ${formSchemaData.form.title} by ${username}`;
+      const thread = await forumChannel.threads.create({
+        name: postTitle,
+        message: { embeds: [embed] },
+      });
+
+      console.log("Forum post created successfully");
+
+      if (formSchemaData.form.submission.vote) {
+        // Create poll embed
+        const pollEmbed = new EmbedBuilder()
+          .setTitle("Poll: Do you accept this application?")
+          .setDescription("React with 👍 for Accept or 👎 for Deny.")
+          .setColor("#00AAFF");
+
+        const pollMessage = await thread.send({ embeds: [pollEmbed] });
+
+        // Add reactions for voting
+        await pollMessage.react("👍"); // Accept
+        await pollMessage.react("👎"); // Deny
+
+        console.log("Poll reactions added successfully");
+      }
+
+      return res.send({
         success: true,
         message: "Form submitted successfully",
         data: result,
       });
     } catch (error) {
-      console.error("Error sending JSON response:", error);
-      return res.status(500).json({
+      console.error("Error posting to Discord forum:", error);
+      return res.status(500).send({
         success: false,
         message: "Internal server error",
       });

@@ -212,6 +212,7 @@ CREATE TABLE formResponses (
 CREATE TABLE applications (
 	applicationId INT NOT NULL AUTO_INCREMENT,
     displayName VARCHAR(30) NOT NULL,
+    type ENUM('FORM', 'EXTERNAL'),
     description TEXT,
     displayIcon VARCHAR(40) NOT NULL,
     requirementsMarkdown TEXT,

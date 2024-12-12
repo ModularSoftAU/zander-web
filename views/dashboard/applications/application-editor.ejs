@@ -31,11 +31,6 @@
                         elementValue: applicationApiData.applicationId
                     }) %>
             <% } %>
-
-            <%- include("../../partials/form/inputHidden.ejs", {
-                elementName: "actioningUser",
-                elementValue: req.session.user.userId
-            }) %>
             
               <div class="row">
                   <!-- Display Name -->
@@ -74,6 +69,66 @@
                               elementName: "displayIcon",
                               elementValue: applicationApiData.displayIcon,
                               required: true
+                          }) %>
+                      <% } %>
+                  </div>
+
+                  <!-- Application Status -->
+                  <div class="form-group col">
+                      <label for="type">Application Type</label>
+
+                      <% if (type === 'create') { %>
+                          <%- include("../../partials/form/inputSelect.ejs", {
+                              elementName: "type",
+                              elementValue: "null",
+                              required: true,
+                              optionElements: [
+                                  {
+                                      optionName: "Select a Type",
+                                      optionValue: "null",
+                                      selected: true,
+                                      disabled: true
+                                  },
+                                  {
+                                      optionName: "Form",
+                                      optionValue: "FORM",
+                                      selected: false,
+                                      disabled: false
+                                  },
+                                  {
+                                      optionName: "External",
+                                      optionValue: "EXTERNAL",
+                                      selected: false,
+                                      disabled: false
+                                  }
+                              ]
+                          }) %>
+                      <% } %>
+                      <% if (type === 'edit') { %>
+                          <%- include("../../partials/form/inputSelect.ejs", {
+                              elementName: "type",
+                              elementValue: applicationApiData.type,
+                              required: true,
+                              optionElements: [
+                                  {
+                                      optionName: "Select a Type",
+                                      optionValue: "null",
+                                      selected: true,
+                                      disabled: true
+                                  },
+                                  {
+                                      optionName: "Form",
+                                      optionValue: "FORM",
+                                      selected: false,
+                                      disabled: false
+                                  },
+                                  {
+                                      optionName: "External",
+                                      optionValue: "EXTERNAL",
+                                      selected: false,
+                                      disabled: false
+                                  }
+                              ]
                           }) %>
                       <% } %>
                   </div>
