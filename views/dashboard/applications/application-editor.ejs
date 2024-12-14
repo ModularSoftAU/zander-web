@@ -177,22 +177,72 @@
 
                   <!-- Application URL Redirect -->
                   <div class="form-group col">
-                      <label for="redirectUrl">Application URL Redirect</label>
+                      <label for="redirect">Application URL Redirect</label>
 
                       <% if (type === 'create') { %>
                           <%- include("../../partials/form/inputText.ejs", {
-                              elementName: "redirectUrl",
+                              elementName: "redirect",
                               elementValue: null,
                               required: true
                           }) %>
                       <% } %>
                       <% if (type === 'edit') { %>
                           <%- include("../../partials/form/inputText.ejs", {
-                              elementName: "redirectUrl",
-                              elementValue: applicationApiData.redirectUrl,
+                              elementName: "redirect",
+                              elementValue: applicationApiData.redirect,
                               required: true
                           }) %>
                       <% } %>
+                  </div>
+
+                  <!-- Application Form Select -->
+                  <div class="form-group col">
+                      <label for="redirect">Application Form Select</label>
+
+                      <% if (type === 'create') { %>
+                        <%- include("../../partials/form/inputSelect.ejs", {
+                            elementName: "redirect",
+                            elementValue: "null",
+                            required: true,
+                            optionElements: [
+                                {
+                                    optionName: "Select a Type",
+                                    optionValue: "null",
+                                    selected: true,
+                                    disabled: true
+                                },
+                                ...formApiData.data.map(form => ({
+                                    optionName: form.displayName,
+                                    optionValue: form.formSlug,
+                                    selected: false,
+                                    disabled: false
+                                }))
+                            ]
+                        }) %>
+                    <% } %>
+
+                    <% if (type === 'edit') { %>
+                        <%- include("../../partials/form/inputSelect.ejs", {
+                            elementName: "redirect",
+                            elementValue: applicationApiData.redirect,
+                            required: true,
+                            optionElements: [
+                                {
+                                    optionName: "Select a Type",
+                                    optionValue: "null",
+                                    selected: true,
+                                    disabled: true
+                                },
+                                ...formApiData.data.map(form => ({
+                                    optionName: form.displayName,
+                                    optionValue: form.formSlug,
+                                    selected: form.formSlug === applicationApiData.redirect,
+                                    disabled: false
+                                }))
+                            ]
+                        }) %>
+                    <% } %>
+
                   </div>
               </div>
 

@@ -28,8 +28,6 @@ export default function dashboardFormsSiteRoute(
     });
     const apiData = await response.json();
 
-    console.log(apiData);
-
     res.view("dashboard/forms/form-list", {
       pageTitle: `Dashboard - Forms`,
       config: config,
@@ -68,7 +66,7 @@ export default function dashboardFormsSiteRoute(
 
     if (!hasPermission("zander.web.form", req, res, features)) return;
 
-    const formId = req.query.formId;
+    const formId = req.query.id;
     const fetchURL = `${process.env.siteAddress}/api/form/get?id=${formId}`;
     const response = await fetch(fetchURL, {
       headers: { "x-access-token": process.env.apiKey },

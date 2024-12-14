@@ -32,7 +32,6 @@
                 <tr>
                     <th></th>
                     <th>Name</th>
-                    <th>Description</th>
                     <th>Status</th>
                     <th>Action</th>
                 </tr>
@@ -48,9 +47,8 @@
                         <tr>
                             <td><i class="<%= form.displayIcon %>"></i></td>
                             <td><%= form.displayName %></td>
-                            <td><%= form.description %></td>
                             <td>
-                                <% if (form.applicationStatus === 1) { %>
+                                <% if (form.formStatus === 1) { %>
                                     <i class="fas fa-check-circle" style="color:green"></i>
                                 <% } else { %>
                                     <i class="fas fa-times-circle" style="color: red;"></i>

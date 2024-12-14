@@ -216,7 +216,7 @@ CREATE TABLE applications (
     description TEXT,
     displayIcon VARCHAR(40) NOT NULL,
     requirementsMarkdown TEXT,
-    redirectUrl TEXT,
+    redirect TEXT,
     position INT,
     applicationStatus BOOLEAN DEFAULT 0,
     PRIMARY KEY (applicationId)

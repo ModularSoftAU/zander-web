@@ -55,7 +55,7 @@
                               <% if (application.applicationStatus === '0') { %>
                                 <a href="#" target="_blank"><button type="button" class="btn btn-danger" disabled>Applications Closed</button></a>
                               <% } else { %>
-                                <a href="<%= application.redirectUrl %>" target="_blank"><button type="button" class="btn btn-info">Apply</button></a>
+                                <a href="<%= application.redirect %>" target="_blank"><button type="button" class="btn btn-info">Apply</button></a>
                                 <small>Upon clicking Apply, you will be redirected to an external site.</small>
                               <% } %>
                           </div>

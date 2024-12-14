@@ -1,5 +1,5 @@
-import { EmbedBuilder, Poll } from "discord.js";
-import { isFeatureEnabled, required, optional, generateLog, setBannerCookie } from "../common";
+import { EmbedBuilder } from "discord.js";
+import { isFeatureEnabled, required, optional, generateLog } from "../common";
 
 export default function formApiRoute(app, client, config, db, features, lang) {
   const baseEndpoint = "/api/form";

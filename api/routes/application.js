@@ -64,7 +64,7 @@ export default function applicationApiRoute(app, config, db, features, lang) {
       "requirementsMarkdown",
       res
     );
-    const redirectUrl = required(req.body, "redirectUrl", res);
+    const redirect = required(req.body, "redirect", res);
     const position = required(req.body, "position", res);
     const applicationStatus = required(req.body, "applicationStatus", res);
     const type = required(req.body, "type", res);
@@ -74,14 +74,14 @@ export default function applicationApiRoute(app, config, db, features, lang) {
     try {
       db.query(
         `INSERT INTO applications 
-            (displayName, description, displayIcon, requirementsMarkdown, redirectUrl, position, applicationStatus, type) 
+            (displayName, description, displayIcon, requirementsMarkdown, redirect, position, applicationStatus, type) 
         VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
         [
           displayName,
           description,
           displayIcon,
           requirementsMarkdown,
-          redirectUrl,
+          redirect,
           position,
           applicationStatus,
           type,
@@ -134,7 +134,7 @@ export default function applicationApiRoute(app, config, db, features, lang) {
       "requirementsMarkdown",
       res
     );
-    const redirectUrl = required(req.body, "redirectUrl", res);
+    const redirect = required(req.body, "redirect", res);
     const position = required(req.body, "position", res);
     const applicationStatus = required(req.body, "applicationStatus", res);
     const type = required(req.body, "type", res);
@@ -151,7 +151,7 @@ export default function applicationApiRoute(app, config, db, features, lang) {
                     displayIcon=?, 
                     description=?, 
                     requirementsMarkdown=?, 
-                    redirectUrl=?, 
+                    redirect=?, 
                     position=?,
                     applicationStatus=?,
                     type=?
@@ -161,7 +161,7 @@ export default function applicationApiRoute(app, config, db, features, lang) {
           displayIcon,
           description,
           requirementsMarkdown,
-          redirectUrl,
+          redirect,
           position,
           applicationStatus,
           type,

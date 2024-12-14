@@ -42,7 +42,7 @@ import { client } from "./controllers/discordController";
 // Application Boot
 //
 const buildApp = async () => {
-  const app = fastify({ logger: config.debug });
+  const app = fastify({ logger: config.debug.webserver });
 
   // When app errors, render the error on a page, do not provide JSON
   app.setNotFoundHandler(async function (req, res) {
@@ -77,7 +77,7 @@ const buildApp = async () => {
     },
     root: path.join(__dirname, "views"),
     options: {
-      debug: config.debug,
+      debug: config.debug.views,
     },
   });
 
