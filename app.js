@@ -23,6 +23,7 @@ const __dirname = path.dirname(__filename);
 import("./controllers/discordController.js");
 import("./cron/userCodeExpiryCron.js");
 import("./cron/bridgeCleanupCron.js");
+import("./cron/cakeDayUserCheck.js");
 
 //
 // Website Related
