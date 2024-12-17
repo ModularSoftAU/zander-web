@@ -253,17 +253,18 @@ export async function setProfileUserAboutMe(
 export async function getStaffListing() {
   return new Promise((resolve, reject) => {
     db.query(
-      `SELECT * FROM ranks;
-        SELECT 
-          ur.userId,
-          ur.uuid,
-          ur.rankSlug,
-          ur.title,
-          u.username
+      `SELECT 
+            ur.userId,
+            ur.uuid,
+            ur.rankSlug,
+            ur.title,
+            u.username
         FROM 
-          userRanks ur
+            userRanks ur
         LEFT JOIN 
-          users u ON ur.userId = u.userId;
+            users u ON ur.userId = u.userId
+        WHERE 
+            ur.rankSlug != 'default';
       `,
       [],
       async function (err, results) {
@@ -285,7 +286,7 @@ export async function getStaffListing() {
         });
 
         await Promise.all(profilePicturePromises);
-        
+
         const output = {
           ranks,
           rankUsers,
