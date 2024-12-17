@@ -94,7 +94,6 @@ export default function applicationSiteRoutes(
   app.get("/staff", async function (req, res) {
     // Get all staff
     let staffListing = await getStaffListing();
-    console.log(staffListing);
 
     return res.view("staff", {
       pageTitle: `Staff`,
