@@ -275,13 +275,17 @@ export async function getStaffListing() {
         let ranks = results[0].map((row) => ({ ...row }));
         let rankUsers = results[1].map((row) => ({ ...row }));
 
-        // Fetch profile pictures for each user
-        for (let user of rankUsers) {
+        // Fetch profile pictures in parallel using Promise.all
+        const profilePicturePromises = rankUsers.map(async (user) => {
           if (user.username) {
             user.profilePicture = await getProfilePicture(user.username);
+          } else {
+            user.profilePicture = null; // Fallback for users without a username
           }
-        }
+        });
 
+        await Promise.all(profilePicturePromises);
+        
         const output = {
           ranks,
           rankUsers,
