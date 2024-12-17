@@ -93,7 +93,8 @@ FROM cfcdev_luckperms.luckperms_user_permissions lpUserPermissions
         AND lpUserTitle.value = 1
 	LEFT JOIN zanderdev.users zdUsers ON lpUserPermissions.uuid = zdUsers.uuid
 WHERE lpUserPermissions.permission like 'group.%'
-	AND lpUserPermissions.value = 1;
+	AND lpUserPermissions.value = 1
+    AND SUBSTRING_INDEX(lpUserPermissions.permission, '.', -1) != 'default';
 
 CREATE VIEW zanderdev.userPermissions AS
 SELECT
