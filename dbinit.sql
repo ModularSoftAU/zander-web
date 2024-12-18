@@ -51,35 +51,37 @@ SELECT * FROM cfcdev_luckperms.luckperms_players;
 CREATE VIEW zanderdev.ranks AS 
 SELECT
     lpGroups.name AS rankSlug,
-    COALESCE(SUBSTRING_INDEX(lpGroupDisplayName.permission ,'.', -1), lpGroups.name) AS displayName,
+    COALESCE(SUBSTRING_INDEX(lpGroupDisplayName.permission, '.', -1), lpGroups.name) AS displayName,
     SUBSTRING_INDEX(lpGroupWeight.permission, '.', -1) AS priority,
     CONCAT('#', COALESCE(RIGHT(lpGroupBadgeColour.permission, 6), 'FFFFFF')) AS rankBadgeColour,
     CONCAT('#', COALESCE(RIGHT(lpGroupTextColour.permission, 6), '000000')) AS rankTextColour,
-    COALESCE(SUBSTRING_INDEX(lpDiscordId.permission, '.', -1),null) AS discordRoleId,
-    COALESCE(RIGHT(lpGroupStaff.permission, 1),'0') AS isStaff,
-    COALESCE(RIGHT(lpGroupDonator.permission, 1),'0') AS isDonator
+    COALESCE(SUBSTRING_INDEX(lpDiscordId.permission, '.', -1), null) AS discordRoleId,
+    COALESCE(RIGHT(lpGroupStaff.permission, 1), '0') AS isStaff,
+    COALESCE(RIGHT(lpGroupDonator.permission, 1), '0') AS isDonator
 FROM cfcdev_luckperms.luckperms_groups lpGroups
     LEFT JOIN cfcdev_luckperms.luckperms_group_permissions lpGroupDisplayName ON lpGroups.name = lpGroupDisplayName.name
-	AND lpGroupDisplayName.permission LIKE 'displayname.%'
-        AND lpGroupDisplayName.value = 1
+    AND lpGroupDisplayName.permission LIKE 'displayname.%'
+    AND lpGroupDisplayName.value = 1
     LEFT JOIN cfcdev_luckperms.luckperms_group_permissions lpGroupWeight ON lpGroups.name = lpGroupWeight.name
-	AND lpGroupWeight.permission LIKE 'weight.%'
-        AND lpGroupWeight.value = 1
+    AND lpGroupWeight.permission LIKE 'weight.%'
+    AND lpGroupWeight.value = 1
     LEFT JOIN cfcdev_luckperms.luckperms_group_permissions lpGroupBadgeColour ON lpGroups.name = lpGroupBadgeColour.name
-	AND LOWER(lpGroupBadgeColour.permission) LIKE 'meta.rankbadgecolour.%'
-        AND lpGroupBadgeColour.value = 1
+    AND LOWER(lpGroupBadgeColour.permission) LIKE 'meta.rankbadgecolour.%'
+    AND lpGroupBadgeColour.value = 1
     LEFT JOIN cfcdev_luckperms.luckperms_group_permissions lpGroupTextColour ON lpGroups.name = lpGroupTextColour.name
-	AND LOWER(lpGroupTextColour.permission) LIKE 'meta.ranktextcolour.%'
-        AND lpGroupTextColour.value = 1
-    LEFT JOIN cfcdev_luckperms.luckperms_group_permissions lpGroupStaff On lpGroups.name = lpGroupStaff.name
-	AND lpGroupStaff.permission LIKE 'meta.staff.%'
-        AND lpGroupStaff.value = 1
-    LEFT JOIN cfcdev_luckperms.luckperms_group_permissions lpGroupDonator On lpGroups.name = lpGroupDonator.name
-	AND lpGroupDonator.permission LIKE 'meta.donator.%'
-        AND lpGroupDonator.value = 1
+    AND LOWER(lpGroupTextColour.permission) LIKE 'meta.ranktextcolour.%'
+    AND lpGroupTextColour.value = 1
+    LEFT JOIN cfcdev_luckperms.luckperms_group_permissions lpGroupStaff ON lpGroups.name = lpGroupStaff.name
+    AND lpGroupStaff.permission LIKE 'meta.staff.%'
+    AND lpGroupStaff.value = 1
+    LEFT JOIN cfcdev_luckperms.luckperms_group_permissions lpGroupDonator ON lpGroups.name = lpGroupDonator.name
+    AND lpGroupDonator.permission LIKE 'meta.donator.%'
+    AND lpGroupDonator.value = 1
     LEFT JOIN cfcdev_luckperms.luckperms_group_permissions lpDiscordId ON lpGroups.name = lpDiscordId.name
-	AND lpDiscordId.permission LIKE 'meta.discordid.%'
-        AND lpDiscordId.value = 1;
+    AND lpDiscordId.permission LIKE 'meta.discordid.%'
+    AND lpDiscordId.value = 1
+WHERE lpGroups.name NOT LIKE '%griefdefender%'
+  AND lpGroups.name NOT LIKE '%default%';
 
 CREATE VIEW zanderdev.userRanks AS
 SELECT
