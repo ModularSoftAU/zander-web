@@ -41,16 +41,17 @@ export class ShopDirectoryCommand extends Command {
     await interaction.deferReply();
 
     const material = interaction.options.getString("material") || "";
-    const shopApiURL = `${
-      process.env.siteAddress
-    }/api/shop/get?material=${encodeURIComponent(material)}`;
+    const shopApiURL = `${process.env.siteAddress}/api/shop/get?material=${encodeURIComponent(material)}`;
+
+    console.log(material);
+    
 
     try {
       // Fetch shop data from the API
       const response = await fetch(shopApiURL, {
         headers: { "x-access-token": process.env.apiKey },
       });
-      const apiData = await response.json();      
+      const apiData = await response.json();
 
       if (!apiData.success || !apiData.data.length) {
         const noItemsEmbed = new EmbedBuilder()
