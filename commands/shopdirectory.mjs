@@ -41,10 +41,7 @@ export class ShopDirectoryCommand extends Command {
     await interaction.deferReply();
 
     const material = interaction.options.getString("material") || "";
-    const shopApiURL = `${process.env.siteAddress}/api/shop/get?material=${encodeURIComponent(material)}`;
-
-    console.log(material);
-    
+    const shopApiURL = `${process.env.siteAddress}/api/shop/get?material=${encodeURIComponent(material)}`;    
 
     try {
       // Fetch shop data from the API
@@ -80,10 +77,13 @@ export class ShopDirectoryCommand extends Command {
 
       // Add fields for each shop item
       apiData.data.forEach((shop) => {
+        const transactionType = shop.stock === -1 ? "💰 Buying" : "📦 Selling";
+        const stockInfo = shop.stock !== -1 ? `**Stock:** ${shop.stock}\n` : "";
+
         itemsEmbed.addFields([
           {
             name: `Item: ${shop.itemData.displayName}`,
-            value: `**Seller:** \`${shop.userData.username}\`\n**Amount:** ${shop.amount}\n**Price:** $${shop.price}\n**Stock:** ${shop.stock}\n**Location:** ${shop.x}, ${shop.y}, ${shop.z}`,
+            value: `**Seller:** \`${shop.userData.username}\`\n**Amount:** ${shop.amount}\n**Price:** $${shop.price}\n${stockInfo}**Type:** ${transactionType}\n**Location:** ${shop.x}, ${shop.y}, ${shop.z}`,
           },
         ]);
       });
