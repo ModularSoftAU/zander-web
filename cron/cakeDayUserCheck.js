@@ -14,8 +14,6 @@ var cakeDayUserCheckTask = cron.schedule("0 7 * * *", () => {
           return console.log(`Error: ${error}`);
         }
 
-        console.log(results);
-
         const welcomeHook = new Webhook(config.discord.webhooks.welcome);
 
         results.forEach((user) => {
