@@ -28,15 +28,15 @@
     }
   },
   "discord": {
-    "guildId": "IDTAG",
+    "guildId": "GUILDID",
     "channels": {
-      "welcome": "IDTAG",
-      "networkChatLog": "IDTAG",
-      "adminLog": "IDTAG",
-      "staffChannel": "IDTAG"
+      "welcome": "WEBHOOKURL",
+      "networkChatLog": "WEBHOOKURL",
+      "adminLog": "WEBHOOKURL",
+      "staffChannel": "WEBHOOKURL"
     },
     "roles": {
-      "verified": "IDTAG"
+      "verified": "ROLEID"
     }
   }
 }
