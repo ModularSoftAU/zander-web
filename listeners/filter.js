@@ -36,22 +36,27 @@ export class GuildMessageListener extends Listener {
         const dataResponse = await response.json();
         console.log(dataResponse);
 
-        if (message.author.isbot) return;
-
-        if (dataResponse.success == false) {
-          await message.delete();
-
-          let embed = new EmbedBuilder()
-            .setTitle(`Prohibited content has been detected!`)
+        if (dataResponse.success === false) {
+          // Create an embed to warn the user
+          const embed = new EmbedBuilder()
+            .setTitle(`Prohibited content detected!`)
             .setDescription(
-              `\`${message.author.username}\` please don't advertise or say prohibited content/phrases. If you continue, you will be punished.`
+              `\`${message.author.username}\`, please refrain from using prohibited content/phrases. Continued violations may result in penalties.`
             )
             .setColor(`#ff3333`);
-          message.reply({ embeds: [embed] });
+
+          // Send the embed to the channel
+          await message.reply({ embeds: [embed] });
+
+          // Delete the message after a short delay to ensure the embed is sent first
+          setTimeout(async () => {
+            if (message.deletable) {
+              await message.delete();
+            }
+          }, 500); // Delay of 500ms before deleting the message
         }
       } catch (error) {
         console.log(error);
-        return;
       }
     }
   }

@@ -18,6 +18,7 @@ export default function filterApiRoute(app, config, db, features, lang) {
     try {
       let userData = null;
 
+      // Fetch user data based on username or discordId
       if (username) {
         const usernameData = new UserGetter();
         const usernameGetData = await usernameData.byUsername(username);
@@ -30,6 +31,9 @@ export default function filterApiRoute(app, config, db, features, lang) {
         userData = discordUserGetData;
       }
 
+      // Log the received content to ensure it's correct
+      console.log("Received content:", content);
+
       let urlDetected = false;
       let flaggedFor = [];
 
@@ -37,32 +41,39 @@ export default function filterApiRoute(app, config, db, features, lang) {
       filter.links.forEach((link) => {
         const regex = new RegExp(link, "i");
         if (regex.test(content)) {
+          console.log(`URL detected: ${link}`);
           urlDetected = true;
           flaggedFor.push("URL/Advertising");
         }
       });
 
-      // Check profanity with https://www.profanity.dev/#api
+      // Profanity check via external API
       const fetchURL = `https://vector.profanity.dev`;
-      const response = await fetch(fetchURL, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: content }),
-      });
+      let profanityData = {};
+      try {
+        const response = await fetch(fetchURL, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ message: content }),
+        });
 
-      const profanityData = await response.json();
-
-      // Only flag for profanity if the score is 1
-      if (profanityData.isProfanity && profanityData.score > 1) {
+        profanityData = await response.json();
+        console.log("Profanity Data:", profanityData);
+      } catch (error) {
+        console.log("Error calling profanity API:", error);
+      }
+      
+      if (profanityData.isProfanity) {
+        console.log("Profanity detected with score:", profanityData.score);
         flaggedFor.push(`Profanity (Score: ${profanityData.score})`);
       }
 
+      // If any flags are detected, send the alert
       if (urlDetected || flaggedFor.length > 0) {
         try {
           const staffChannelHook = new Webhook(
             config.discord.webhooks.staffChannel
           );
-
           const embed = new MessageBuilder()
             .setTitle(`🟥 Filter Flagged`)
             .addField(
@@ -75,13 +86,15 @@ export default function filterApiRoute(app, config, db, features, lang) {
             .setColor(Colors.Red)
             .setTimestamp();
 
-          staffChannelHook.send(embed);
+          console.log("Sending flagged content to staff channel...");
+          await staffChannelHook.send(embed);
 
           return res.send({
             success: false,
             message: lang.filter.phraseCaught || "Content flagged.",
           });
         } catch (error) {
+          console.log("Error sending to webhook:", error);
           return res.send({
             success: false,
             message: `${error}`,
@@ -89,12 +102,13 @@ export default function filterApiRoute(app, config, db, features, lang) {
         }
       }
 
+      // If no flags, content is clean
       return res.send({
         success: true,
-        message: `Content Clean`,
+        message: "Content is clean. No flags detected.",
       });
     } catch (error) {
-      console.log(error);
+      console.log("Error processing request:", error);
       return res.send({
         success: false,
         message: error,
