@@ -1,8 +1,5 @@
 import fetch from "node-fetch";
 
-/*
-    
-*/
 export async function getWebAnnouncement() {
   const fetchURL = `${process.env.siteAddress}/api/announcement/get?announcementType=web`;
   try {

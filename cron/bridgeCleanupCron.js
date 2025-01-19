@@ -1,5 +1,5 @@
 import cron from "node-cron";
-import db from "../controllers/databaseController";
+import db from "../controllers/databaseController.js";
 
 // Schedule the task to run once a day at 00:05 (5 minutes past midnight)
 var bridgeCleanupTask = cron.schedule("5 0 * * *", () => {

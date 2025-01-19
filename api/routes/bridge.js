@@ -1,4 +1,9 @@
-import { isFeatureEnabled, required, optional, generateLog } from "../common";
+import {
+  isFeatureEnabled,
+  required,
+  optional,
+  generateLog,
+} from "../common.js";
 
 export default function bridgeApiRoute(app, config, db, features, lang) {
   const baseEndpoint = "/api/bridge";

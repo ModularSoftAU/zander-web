@@ -11,8 +11,8 @@ import fastifyCookie from "@fastify/cookie";
 import config from "./config.json" assert { type: "json" };
 import features from "./features.json" assert { type: "json" };
 import lang from "./lang.json" assert { type: "json" };
-import db from "./controllers/databaseController";
-import { getWebAnnouncement } from "./controllers/announcementController";
+import db from "./controllers/databaseController.js";
+import { getWebAnnouncement } from "./controllers/announcementController.js";
 
 // Paths
 import path from "path";
@@ -30,14 +30,14 @@ import("./cron/cakeDayUserCheck.js");
 //
 
 // Site Routes
-import siteRoutes from "./routes";
-import apiRoutes from "./api/routes";
-import apiRedirectRoutes from "./api/internal_redirect";
+import siteRoutes from "./routes/index.js";
+import apiRoutes from "./api/routes/index.js";
+import apiRedirectRoutes from "./api/internal_redirect/index.js";
 
 // API token authentication
-import verifyToken from "./api/routes/verifyToken";
-import { getGlobalImage } from "./api/common";
-import { client } from "./controllers/discordController";
+import verifyToken from "./api/routes/verifyToken.js";
+import { getGlobalImage } from "./api/common.js";
+import { client } from "./controllers/discordController.js";
 
 import("./controllers/discordController.js");
 import("./cron/userCodeExpiryCron.js");

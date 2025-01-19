@@ -1,5 +1,5 @@
 import cron from "node-cron";
-import db from "../controllers/databaseController";
+import db from "../controllers/databaseController.js";
 import { Colors } from "discord.js";
 import { MessageBuilder, Webhook } from "discord-webhook-node";
 import config from "../config.json" assert { type: "json" };

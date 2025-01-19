@@ -1,5 +1,5 @@
 import cron from "node-cron";
-import { client } from "../controllers/discordController";
+import { client } from "../controllers/discordController.js";
 import config from "../config.json" assert { type: "json" };
 
 var discordStatsUpdateTask = cron.schedule("*/5 * * * *", async () => {

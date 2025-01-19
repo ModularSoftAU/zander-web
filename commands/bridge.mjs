@@ -1,7 +1,10 @@
 import { Command } from "@sapphire/framework";
 import { ActionRowBuilder, ButtonBuilder, ButtonStyle, Colors, EmbedBuilder } from "discord.js";
 import fetch from "node-fetch";
-import { getUserPermissions, UserGetter } from "../controllers/userController";
+import {
+  getUserPermissions,
+  UserGetter,
+} from "../controllers/userController.js";
 import features from "../features.json" assert { type: "json" };
 
 export class BridgeCommand extends Command {

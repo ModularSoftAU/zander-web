@@ -1,5 +1,5 @@
-import db from "./databaseController";
-import { UserGetter } from "./userController";
+import db from "./databaseController.js";
+import { UserGetter } from "./userController.js";
 
 export async function updateAudit_lastMinecraftLogin(auditDateTime, username) {
   const userData = new UserGetter();
