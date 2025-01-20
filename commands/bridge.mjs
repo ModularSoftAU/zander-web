@@ -25,7 +25,7 @@ export class BridgeCommand extends Command {
         .addSubcommand((subcommand) =>
           subcommand
             .setName("add")
-            .setDescription("Add a command to the bridge and targeted server.")
+            .setDescription("Add a action to the bridge and targeted server.")
             .addStringOption((option) =>
               option
                 .setName("command")
@@ -42,7 +42,7 @@ export class BridgeCommand extends Command {
         .addSubcommand((subcommand) =>
           subcommand
             .setName("clear")
-            .setDescription("Clear all commands on the Bridge.")
+            .setDescription("Clear all actions on the Bridge.")
         )
     );
   }
@@ -105,7 +105,7 @@ export class BridgeCommand extends Command {
           // No bridge commands found
           const noBridgesEmbed = new EmbedBuilder()
             .setTitle("Bridge Status")
-            .setDescription("There are currently no bridge commands available.")
+            .setDescription("There are currently no bridge actions available.")
             .setColor(Colors.Blurple);
 
           return interaction.reply({
@@ -173,9 +173,9 @@ export class BridgeCommand extends Command {
         }
 
         const successEmbed = new EmbedBuilder()
-          .setTitle("Bridge Command Added")
+          .setTitle("Bridge Action Added")
           .setDescription(
-            `New bridge command added for server: \`${targetedServer}\` with command: \`${command}\`.`
+            `New bridge action added for server: \`${targetedServer}\`: \`${command}\`.`
           )
           .setColor(Colors.Green);
 

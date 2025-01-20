@@ -66,12 +66,13 @@ export default function bridgeApiRoute(app, config, db, features, lang) {
     isFeatureEnabled(features.bridge, res, lang);
 
     const actionType = required(req.body, "actionType", res);
-    const targetServer = required(req.body, "targetServer", res);
+    const actionData = required(req.body, "actionData", res);
+    const actionServer = optional(req.body, "actionServer", res);
 
     try {
       db.query(
-        `INSERT INTO bridge (actionType, targetServer) VALUES (?, ?)`,
-        [actionType, targetServer],
+        `INSERT INTO bridge (actionType, actionData, actionServer) VALUES (?, ?, ?)`,
+        [actionType, actionData, actionServer],
         function (error, results, fields) {
           if (error) {
             return res.send({
@@ -133,5 +134,66 @@ export default function bridgeApiRoute(app, config, db, features, lang) {
     }
 
     return res;
+  });
+
+  app.get(baseEndpoint + "/server/get", async function (req, res) {
+    isFeatureEnabled(features.bridge, res, lang);
+
+    try {
+      db.query(`SELECT * FROM serverStatus;`, function (error, results) {
+        if (error) {
+          return res.send({
+            success: false,
+            message: `Failed: ${error}`,
+          });
+        }
+
+        return res.send({
+          success: true,
+          data: results,
+        });
+      });
+    } catch (error) {
+      return res.send({
+        success: false,
+        message: `Unexpected error: ${error}`,
+      });
+    }
+
+    return res;
+  });
+
+  app.post(baseEndpoint + "/server/update", async function (req, res) {
+    isFeatureEnabled(features.bridge, res, lang);
+
+    const serverInfo = required(req.body, "serverInfo", res);
+    let lastUpdated = required(req.body, "lastUpdated", res);
+
+    try {
+      const serverInfoString = JSON.stringify(serverInfo);
+
+      db.query(
+        `UPDATE serverStatus SET statusInfo = ?, lastUpdated = ? WHERE serverStatusId = 1;`,
+        [serverInfoString, lastUpdated],
+        function (error, updateResults) {
+          if (error) {
+            return res.send({
+              success: false,
+              message: `Update failed: ${error}`,
+            });
+          }
+
+          return res.send({
+            success: true,
+            message: `Server status updated successfully.`,
+          });
+        }
+      );
+    } catch (error) {
+      return res.send({
+        success: false,
+        message: `Unexpected error: ${error}`,
+      });
+    }
   });
 }
