@@ -5,15 +5,15 @@ import {
   isFeatureWebRouteEnabled,
   setBannerCookie,
   getGlobalImage,
-} from "../api/common";
-import { getWebAnnouncement } from "../controllers/announcementController";
+} from "../api/common.js";
+import { getWebAnnouncement } from "../controllers/announcementController.js";
 import {
   UserGetter,
   getProfilePicture,
   getRankPermissions,
   getUserPermissions,
-} from "../controllers/userController";
-import { updateAudit_lastWebsiteLogin } from "../controllers/auditController";
+} from "../controllers/userController.js";
+import { updateAudit_lastWebsiteLogin } from "../controllers/auditController.js";
 
 export default function sessionSiteRoute(
   app,

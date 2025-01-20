@@ -1,5 +1,5 @@
-import { hashEmail } from "../api/common";
-import db from "./databaseController";
+import { hashEmail } from "../api/common.js";
+import db from "./databaseController.js";
 
 export function UserGetter() {
   this.byUsername = function (username) {
@@ -275,8 +275,6 @@ export async function getUserPermissions(userData) {
         try {
           await Promise.all(
             userRanks.map(async (rank) => {
-              console.log(rank.rankSlug);
-
               return new Promise((resolve, reject) => {
                 db.query(
                   `SELECT * FROM rankPermissions WHERE rankSlug=?;`,
@@ -296,8 +294,6 @@ export async function getUserPermissions(userData) {
               });
             })
           );
-
-          console.log(userPermissions);
 
           resolve(userPermissions);
         } catch (err) {

@@ -1,8 +1,8 @@
-import dashboardSiteRoute from "./dashboard";
-import dashboardServersSiteRoute from "./servers";
-import dashboardApplicationsSiteRoute from "./applications";
-import dashboardAnnouncementSiteRoute from "./announcement";
-import dashboardVaultSiteRoute from "./vault";
+import dashboardSiteRoute from "./dashboard.js";
+import dashboardServersSiteRoute from "./servers.js";
+import dashboardApplicationsSiteRoute from "./applications.js";
+import dashboardAnnouncementSiteRoute from "./announcement.js";
+import dashboardVaultSiteRoute from "./vault.js";
 
 export default function dashboardSiteRoutes(
   app,

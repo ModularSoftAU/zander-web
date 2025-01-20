@@ -1,16 +1,16 @@
-import announcementApiRoute from "./announcement";
-import applicationApiRoute from "./application";
-import discordApiRoute from "./discord";
-import serverApiRoute from "./server";
-import sessionApiRoute from "./session";
-import userApiRoute from "./user";
-import webApiRoute from "./web";
-import filterApiRoute from "./filter";
-import rankApiRoute from "./ranks";
-import reportApiRoute from "./report";
-import shopApiRoute from "./shopdirectory";
-import vaultApiRoute from "./vault";
-import bridgeApiRoute from "./bridge";
+import announcementApiRoute from "./announcement.js";
+import applicationApiRoute from "./application.js";
+import discordApiRoute from "./discord.js";
+import serverApiRoute from "./server.js";
+import sessionApiRoute from "./session.js";
+import userApiRoute from "./user.js";
+import webApiRoute from "./web.js";
+import filterApiRoute from "./filter.js";
+import rankApiRoute from "./ranks.js";
+import reportApiRoute from "./report.js";
+import shopApiRoute from "./shopdirectory.js";
+import vaultApiRoute from "./vault.js";
+import bridgeApiRoute from "./bridge.js";
 
 export default (app, client, moment, config, db, features, lang) => {
   announcementApiRoute(app, config, db, features, lang);

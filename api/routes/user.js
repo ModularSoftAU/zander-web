@@ -1,6 +1,21 @@
 import fetch from "node-fetch";
-import { UserGetter, UserLinkGetter, getProfilePicture, getUserLastSession, getUserStats, setProfileDisplayPreferences, setProfileSocialConnections, setProfileUserAboutMe, setProfileUserInterests } from "../../controllers/userController";
-import { required, optional, generateVerifyCode, setBannerCookie } from "../common";
+import {
+  UserGetter,
+  UserLinkGetter,
+  getProfilePicture,
+  getUserLastSession,
+  getUserStats,
+  setProfileDisplayPreferences,
+  setProfileSocialConnections,
+  setProfileUserAboutMe,
+  setProfileUserInterests,
+} from "../../controllers/userController.js";
+import {
+  required,
+  optional,
+  generateVerifyCode,
+  setBannerCookie,
+} from "../common.js";
 
 export default function userApiRoute(app, config, db, features, lang) {
   const baseEndpoint = "/api/user";
@@ -80,6 +95,7 @@ export default function userApiRoute(app, config, db, features, lang) {
   // TODO: Update docs
   app.get(baseEndpoint + "/get", async function (req, res) {
     const username = optional(req.query, "username");
+    const discordId = optional(req.query, "discordId");
     const userId = optional(req.query, "userId");
 
     try {
@@ -87,6 +103,31 @@ export default function userApiRoute(app, config, db, features, lang) {
         db.query(
           `SELECT * FROM users WHERE username=?;`,
           [username],
+          function (error, results, fields) {
+            if (error) {
+              return res.send({
+                success: false,
+                message: error,
+              });
+            }
+
+            if (!results || !results.length) {
+              return res.send({
+                success: false,
+                message: lang.api.userDoesNotExist,
+              });
+            }
+
+            return res.send({
+              success: true,
+              data: results,
+            });
+          }
+        );
+      } else if (discordId) {
+        db.query(
+          `SELECT * FROM users WHERE discordId=?;`,
+          [discordId],
           function (error, results, fields) {
             if (error) {
               return res.send({

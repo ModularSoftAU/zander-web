@@ -1,7 +1,7 @@
-import moment from "moment/moment";
+import moment from "moment";
 import fetch from "node-fetch";
-import { getGlobalImage, hasPermission } from "../../api/common";
-import { getWebAnnouncement } from "../../controllers/announcementController";
+import { getGlobalImage, hasPermission } from "../../api/common.js";
+import { getWebAnnouncement } from "../../controllers/announcementController.js";
 
 export default function dashboardSiteRoute(app, config, features, lang) {
   //

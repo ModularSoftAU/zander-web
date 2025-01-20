@@ -1,5 +1,8 @@
 import { Listener } from "@sapphire/framework";
-import { updateAudit_lastDiscordMessage, updateAudit_lastDiscordVoice } from "../controllers/auditController";
+import {
+  updateAudit_lastDiscordMessage,
+  updateAudit_lastDiscordVoice,
+} from "../controllers/auditController.js";
 
 export class GuildMessageListener extends Listener {
   constructor(context, options) {

@@ -2,7 +2,7 @@ import { Command, RegisterBehavior } from "@sapphire/framework";
 import { Colors, EmbedBuilder } from "discord.js";
 import moment from "moment";
 import fetch from "node-fetch";
-import { getProfilePicture } from "../controllers/userController";
+import { getProfilePicture } from "../controllers/userController.js";
 
 export class ProfileCommand extends Command {
   constructor(context, options) {

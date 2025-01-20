@@ -1,5 +1,5 @@
-import { getProfilePicture } from "../../controllers/userController";
-import { isFeatureEnabled, optional } from "../common";
+import { getProfilePicture } from "../../controllers/userController.js";
+import { isFeatureEnabled, optional } from "../common.js";
 import pLimit from "p-limit";
 
 export default function shopApiRoute(app, config, db, features, lang) {
