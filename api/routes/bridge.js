@@ -16,12 +16,12 @@ export default function bridgeApiRoute(app, config, db, features, lang) {
               success: false,
               message: `${error}`,
             });
-          }          
+          }
 
           if (!results) {
             return res.send({
               success: false,
-              message: `No Bridge requests can be found`,
+              message: `No Bridge actions can be found`,
             });
           }
 
@@ -40,11 +40,11 @@ export default function bridgeApiRoute(app, config, db, features, lang) {
 
       // Get Bridge by Targeted Server
       if (targetServer) {
-        let dbQuery = `SELECT * FROM bridge WHERE targetServer='${targetServer}' AND processed=0;`;
+        let dbQuery = `SELECT * FROM bridge WHERE targetServer='${targetServer}';`;
         getBridge(dbQuery);
       }
 
-      // Return all Bridge requests by default
+      // Return all Bridge actions by default
       let dbQuery = `SELECT * FROM bridge;`;
       getBridge(dbQuery);
     } catch (error) {
@@ -57,16 +57,16 @@ export default function bridgeApiRoute(app, config, db, features, lang) {
     return res;
   });
 
-  app.post(baseEndpoint + "/command/add", async function (req, res) {
+  app.post(baseEndpoint + "/action/add", async function (req, res) {
     isFeatureEnabled(features.bridge, res, lang);
 
-    const command = required(req.body, "command", res);
+    const actionType = required(req.body, "actionType", res);
     const targetServer = required(req.body, "targetServer", res);
 
     try {
       db.query(
-        `INSERT INTO bridge (command, targetServer) VALUES (?, ?)`,
-        [command, targetServer],
+        `INSERT INTO bridge (actionType, targetServer) VALUES (?, ?)`,
+        [actionType, targetServer],
         function (error, results, fields) {
           if (error) {
             return res.send({
@@ -77,7 +77,7 @@ export default function bridgeApiRoute(app, config, db, features, lang) {
 
           return res.send({
             success: true,
-            message: `New Bridge command added for ${targetServer}: ${command}`,
+            message: `New Bridge action added for ${targetServer}: ${actionType}`,
           });
         }
       );
@@ -91,7 +91,7 @@ export default function bridgeApiRoute(app, config, db, features, lang) {
     return res;
   });
 
-  app.post(baseEndpoint + "/command/process", async function (req, res) {
+  app.post(baseEndpoint + "/action/process", async function (req, res) {
     isFeatureEnabled(features.bridge, res, lang);
 
     const bridgeId = required(req.body, "bridgeId", res);
