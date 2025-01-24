@@ -1,0 +1,76 @@
+<%- include("modules/header.ejs", {
+    pageTitle: pageTitle,
+    pageDescription: "A community-driven space to share helpful links, apps, and tools for your Christian walk. Explore, contribute, and discover resources that support your faith journey!"
+}) %>
+
+<%- include("modules/navigationBar.ejs") %>
+
+<%- include("partials/miniHeader.ejs", {
+  headerTitle: "Resources",
+  backgroundImage: globalImage
+}) %>
+
+<section class="section py-5">
+  <div class="container">
+      <div class="card-body">
+        <p>The page is a collection of helpful links, apps, and tools curated by the community to support your Christian walk. It's a space for everyone to share their favorite resources for anything from Bible study, to prayer, and spiritual growth, while offering others the chance to explore different ways to strengthen their faith. This page is continuously updated with fresh suggestions, reflecting the diverse ways we all grow in our relationship with God.</p>
+
+        <!-- Dynamic Multi-Tab -->
+        <ul class="nav nav-tabs mb-4" id="resourceTabs" role="tablist">
+          <% resourceData.catagories.forEach((category, index) => { %>
+            <li class="nav-item" role="presentation">
+              <button 
+                class="nav-link <%= index === 0 ? 'active' : '' %>" 
+                id="tab-<%= index %>" 
+                data-bs-toggle="tab" 
+                data-bs-target="#content-<%= index %>" 
+                type="button" 
+                role="tab" 
+                aria-controls="content-<%= index %>" 
+                aria-selected="<%= index === 0 ? 'true' : 'false' %>">
+                <%= category.displayName %>
+              </button>
+            </li>
+          <% }); %>
+        </ul>
+
+        <div class="tab-content" id="resourceTabsContent">
+          <% resourceData.catagories.forEach((category, index) => { %>
+            <div 
+              class="tab-pane fade <%= index === 0 ? 'show active' : '' %>" 
+              id="content-<%= index %>" 
+              role="tabpanel" 
+              aria-labelledby="tab-<%= index %>">
+              <!-- Tab Content -->
+              <div class="mb-4">
+                <h3 class="h5 text-primary"><%= category.displayName %></h3>
+                <p class="text-muted"><%= category.description %></p>
+              </div>
+
+              <!-- Entries List -->
+              <ul class="list-group">
+                <% category.entries.forEach((entry) => { %>
+                  <li class="list-group-item d-flex justify-content-between align-items-start">
+                    <div>
+                      <h6 class="mb-1 text-dark"><%= entry.displayName %></h6>
+                      <p class="mb-1 text-muted small"><%= entry.description %></p>
+                    </div>
+                    <a href="<%= entry.externalUrl %>" class="btn btn-outline-primary btn-sm" target="_blank">
+                      Learn More
+                    </a>
+                  </li>
+                <% }); %>
+              </ul>
+            </div>
+          <% }); %>
+        </div>
+
+        <br>
+        <hr>
+        <h4>I want to add to this list!</h4>
+        <p>If you have a resource you'd like to suggest, you can easily submit it using the joining our <a href="http://<%= process.env.siteAddress %>/discord">Discord</a> and use the <code>/resources submit</code> command. Just provide the title, a brief description, and the URL of the resource, and it will be reviewed for inclusion in the list. We’re always looking for helpful tools to support everyone’s Christian walk!</p>
+      </div>
+  </div>
+</section>
+
+<%- include("modules/footer.ejs") %>

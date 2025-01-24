@@ -137,7 +137,7 @@ export default function applicationSiteRoutes(
 
   //
   // Shop Directory
-  // 
+  //
   app.get("/shopdirectory", async function (req, res) {
     isFeatureWebRouteEnabled(features.shopdirectory, req, res, features);
 
@@ -151,7 +151,6 @@ export default function applicationSiteRoutes(
     const shopApiData = await shopResponse.json();
 
     console.log(shopApiData.data[0].userData);
-    
 
     return res.view("shopdirectory", {
       pageTitle: `Shop Directory`,
@@ -162,8 +161,8 @@ export default function applicationSiteRoutes(
       globalImage: await getGlobalImage(),
       announcementWeb: await getWebAnnouncement(),
     });
-  })
-  
+  });
+
   //
   // Vault
   //
@@ -182,6 +181,27 @@ export default function applicationSiteRoutes(
       req: req,
       apiData: apiData,
       features: features,
+      globalImage: await getGlobalImage(),
+      announcementWeb: await getWebAnnouncement(),
+    });
+  });
+
+  //
+  // Resources
+  //
+  app.get("/resources", async function (req, res) {
+    isFeatureWebRouteEnabled(features.resources, req, res, features);
+
+    const fetchURL = "https://raw.githubusercontent.com/craftingforchrist/Web-Various/refs/heads/feat-resources/resources.json";
+    const response = await fetch(fetchURL);
+    const resourceData = await response.json();   
+
+    return res.view("resources", {
+      pageTitle: `Resources`,
+      config: config,
+      req: req,
+      features: features,
+      resourceData: resourceData,
       globalImage: await getGlobalImage(),
       announcementWeb: await getWebAnnouncement(),
     });
