@@ -53,7 +53,7 @@ export class ResourcesCommand extends Command {
       const resourcesEmbed = new EmbedBuilder()
         .setTitle("Resources Page")
         .setDescription(
-          `Check out the available resources: [Resources Page](${resourcesPageLink})`
+          `Check out the available resources: ${process.env.siteAddress}`
         )
         .setColor(Colors.Blue);
 
