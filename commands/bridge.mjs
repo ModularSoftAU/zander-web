@@ -28,14 +28,20 @@ export class BridgeCommand extends Command {
             .setDescription("Add a action to the bridge and targeted server.")
             .addStringOption((option) =>
               option
-                .setName("command")
-                .setDescription("The command for the bridge.")
+                .setName("type")
+                .setDescription("The type of action for the bridge.")
                 .setRequired(true)
             )
             .addStringOption((option) =>
               option
-                .setName("targetedserver")
-                .setDescription("The targeted server to send to.")
+                .setName("data")
+                .setDescription("The data/commands for the action for the bridge.")
+                .setRequired(true)
+            )
+            .addStringOption((option) =>
+              option
+                .setName("server")
+                .setDescription("The targeted server to send the action to.")
                 .setRequired(true)
             )
         )
@@ -145,21 +151,26 @@ export class BridgeCommand extends Command {
     }
 
     if (subcommand === "add") {
-      const command = interaction.options.getString("command");
-      const targetedServer = interaction.options.getString("targetedserver");
+      const type = interaction.options.getString("type");
+      const data = interaction.options.getString("data");
+      const server = interaction.options.getString("server");
 
       try {
-        const response = await fetch(`${process.env.siteAddress}/api/bridge/command/add`, {
-          method: "POST",
-          headers: {
-            "x-access-token": process.env.apiKey,
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            command: command,
-            targetServer: targetedServer,
-          }),
-        });
+        const response = await fetch(
+          `${process.env.siteAddress}/api/bridge/action/add`,
+          {
+            method: "POST",
+            headers: {
+              "x-access-token": process.env.apiKey,
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              actionType: type,
+              actionData: data,
+              actionServer: server,
+            }),
+          }
+        );
 
         const apiData = await response.json();
 
