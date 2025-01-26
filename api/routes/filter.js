@@ -63,7 +63,7 @@ export default function filterApiRoute(app, config, db, features, lang) {
         console.log("Error calling profanity API:", error);
       }
       
-      if (profanityData.isProfanity || profanityData.score >= 1) {
+      if (profanityData.score >= 1) {
         console.log("Profanity detected with score:", profanityData.score);
         flaggedFor.push(`Profanity (Score: ${profanityData.score})`);
       }
