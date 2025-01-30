@@ -186,7 +186,7 @@ export class BridgeCommand extends Command {
         const successEmbed = new EmbedBuilder()
           .setTitle("Bridge Action Added")
           .setDescription(
-            `New bridge action added for server: \`${targetedServer}\`: \`${command}\`.`
+            `New bridge \`${type}\` action added for server: \`${server}\`: \`${data}\`.`
           )
           .setColor(Colors.Green);
 

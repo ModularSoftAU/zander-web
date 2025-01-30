@@ -11,7 +11,7 @@ export default function bridgeApiRoute(app, config, db, features, lang) {
   app.get(baseEndpoint + "/get", async function (req, res) {
     isFeatureEnabled(features.bridge, res, lang);
     const bridgeId = optional(req.query, "id");
-    const targetServer = optional(req.query, "targetServer");
+    const actionServer = optional(req.query, "actionServer");
 
     try {
       function getBridge(dbQuery) {
@@ -44,8 +44,8 @@ export default function bridgeApiRoute(app, config, db, features, lang) {
       }
 
       // Get Bridge by Targeted Server
-      if (targetServer) {
-        let dbQuery = `SELECT * FROM bridge WHERE targetServer='${targetServer}';`;
+      if (actionServer) {
+        let dbQuery = `SELECT * FROM bridge WHERE actionServer='${actionServer}';`;
         getBridge(dbQuery);
       }
 
@@ -83,7 +83,7 @@ export default function bridgeApiRoute(app, config, db, features, lang) {
 
           return res.send({
             success: true,
-            message: `New Bridge action added for ${targetServer}: ${actionType}`,
+            message: `New Bridge action added for ${actionServer}: ${actionType}`,
           });
         }
       );
