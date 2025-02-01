@@ -8,10 +8,25 @@ import {
 export default function bridgeApiRoute(app, config, db, features, lang) {
   const baseEndpoint = "/api/bridge";
 
+  // actionData
+    // command
+      // command:give USER stick 1 user:shadowolfyt
+
+    // user
+      // user:shadowolfyt
+    
+    // routine
+      // routine:topVoter user:shadowolfyt
+    
+    // rank
+      // rank:moderator action:add user:shadowolfyt
+    
+    // server
+      // server:survival
+
   app.get(baseEndpoint + "/get", async function (req, res) {
     isFeatureEnabled(features.bridge, res, lang);
     const bridgeId = optional(req.query, "id");
-    const actionServer = optional(req.query, "actionServer");
 
     try {
       function getBridge(dbQuery) {
@@ -43,12 +58,6 @@ export default function bridgeApiRoute(app, config, db, features, lang) {
         getBridge(dbQuery);
       }
 
-      // Get Bridge by Targeted Server
-      if (actionServer) {
-        let dbQuery = `SELECT * FROM bridge WHERE actionServer='${actionServer}';`;
-        getBridge(dbQuery);
-      }
-
       // Return all Bridge actions by default
       let dbQuery = `SELECT * FROM bridge;`;
       getBridge(dbQuery);
@@ -65,14 +74,12 @@ export default function bridgeApiRoute(app, config, db, features, lang) {
   app.post(baseEndpoint + "/action/add", async function (req, res) {
     isFeatureEnabled(features.bridge, res, lang);
 
-    const actionType = required(req.body, "actionType", res);
     const actionData = required(req.body, "actionData", res);
-    const actionServer = optional(req.body, "actionServer", res);
 
     try {
       db.query(
-        `INSERT INTO bridge (actionType, actionData, actionServer) VALUES (?, ?, ?)`,
-        [actionType, actionData, actionServer],
+        `INSERT INTO bridge (actionData) VALUES (?)`,
+        [actionData],
         function (error, results, fields) {
           if (error) {
             return res.send({
@@ -83,7 +90,7 @@ export default function bridgeApiRoute(app, config, db, features, lang) {
 
           return res.send({
             success: true,
-            message: `New Bridge action added for ${actionServer}: ${actionType}`,
+            message: `New Bridge action added: ${actionData}`,
           });
         }
       );
@@ -98,20 +105,16 @@ export default function bridgeApiRoute(app, config, db, features, lang) {
   });
 
   app.post(baseEndpoint + "/action/process", async function (req, res) {
-    isFeatureEnabled(features.bridge, res, lang);
+    // isFeatureEnabled(features.bridge, res, lang);
 
     const bridgeId = required(req.body, "bridgeId", res);
 
-    try {
-      const fetchURL = `${process.env.siteAddress}/api/bridge/get?id=${bridgeId}`;
-      const response = await fetch(fetchURL, {
-        headers: { "x-access-token": process.env.apiKey },
-      });
-      const bridgeApiData = await response.json();
+    console.log(`Getting the process request`);
 
+    try {
       db.query(
         `DELETE FROM bridge WHERE bridgeId=?;`,
-        [1, bridgeId],
+        [bridgeId],
         function (error, results, fields) {
           if (error) {
             return res.send({
@@ -120,6 +123,9 @@ export default function bridgeApiRoute(app, config, db, features, lang) {
             });
           }
 
+          console.log(results);
+          
+
           return res.send({
             success: true,
             message: `Bridge ID ${bridgeId} has been executed.`,
@@ -127,13 +133,13 @@ export default function bridgeApiRoute(app, config, db, features, lang) {
         }
       );
     } catch (error) {
-      res.send({
+      console.log(error);
+      
+      return res.send({
         success: false,
         message: `${error}`,
       });
     }
-
-    return res;
   });
 
   app.get(baseEndpoint + "/server/get", async function (req, res) {

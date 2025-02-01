@@ -22,8 +22,8 @@ const __dirname = path.dirname(__filename);
 
 import("./controllers/discordController.js");
 import("./cron/userCodeExpiryCron.js");
-import("./cron/bridgeCleanupCron.js");
 import("./cron/cakeDayUserCheck.js");
+import("./cron/discordStatsUpdateCron.js");
 
 //
 // Website Related
@@ -38,11 +38,6 @@ import apiRedirectRoutes from "./api/internal_redirect/index.js";
 import verifyToken from "./api/routes/verifyToken.js";
 import { getGlobalImage } from "./api/common.js";
 import { client } from "./controllers/discordController.js";
-
-import("./controllers/discordController.js");
-import("./cron/userCodeExpiryCron.js");
-import("./cron/bridgeCleanupCron.js");
-import("./cron/discordStatsUpdateCron.js");
 
 //
 // Application Boot

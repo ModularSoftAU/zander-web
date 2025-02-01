@@ -272,9 +272,7 @@ CREATE TABLE vault (
 
 CREATE TABLE bridge (
 	bridgeId INT NOT NULL AUTO_INCREMENT,
-    actionType VARCHAR(15),
     actionData TEXT,
-    actionServer VARCHAR(15),
     bridgeDateTime DATETIME NOT NULL DEFAULT NOW(),
     PRIMARY KEY (bridgeId)
 );

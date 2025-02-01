@@ -28,20 +28,8 @@ export class BridgeCommand extends Command {
             .setDescription("Add a action to the bridge and targeted server.")
             .addStringOption((option) =>
               option
-                .setName("type")
-                .setDescription("The type of action for the bridge.")
-                .setRequired(true)
-            )
-            .addStringOption((option) =>
-              option
                 .setName("data")
-                .setDescription("The data/commands for the action for the bridge.")
-                .setRequired(true)
-            )
-            .addStringOption((option) =>
-              option
-                .setName("server")
-                .setDescription("The targeted server to send the action to.")
+                .setDescription("The data for the action for the bridge.")
                 .setRequired(true)
             )
         )
@@ -151,9 +139,7 @@ export class BridgeCommand extends Command {
     }
 
     if (subcommand === "add") {
-      const type = interaction.options.getString("type");
       const data = interaction.options.getString("data");
-      const server = interaction.options.getString("server");
 
       try {
         const response = await fetch(
@@ -165,9 +151,7 @@ export class BridgeCommand extends Command {
               "Content-Type": "application/json",
             },
             body: JSON.stringify({
-              actionType: type,
-              actionData: data,
-              actionServer: server,
+              actionData: data
             }),
           }
         );
@@ -186,7 +170,7 @@ export class BridgeCommand extends Command {
         const successEmbed = new EmbedBuilder()
           .setTitle("Bridge Action Added")
           .setDescription(
-            `New bridge \`${type}\` action added for server: \`${server}\`: \`${data}\`.`
+            `New bridge action added: \`${data}\`.`
           )
           .setColor(Colors.Green);
 
