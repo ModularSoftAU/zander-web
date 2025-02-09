@@ -106,8 +106,10 @@ export default function bridgeApiRoute(app, config, db, features, lang) {
 
   app.post(baseEndpoint + "/action/process", async function (req, res) {
     // isFeatureEnabled(features.bridge, res, lang);
+    console.log(req.body);
+    
 
-    const bridgeId = required(req.body, "bridgeId", res);
+    const bridgeId = required(req.body, "id", res);
 
     console.log(`Getting the process request`);
 
