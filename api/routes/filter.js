@@ -38,15 +38,6 @@ export default function filterApiRoute(
         userData = discordUserGetData;
       }
 
-      // Handle case where no valid user data is found
-      if (!userData) {
-        return res.status(400).send({
-          success: false,
-          message:
-            "User data not found. Provide a valid username or Discord ID.",
-        });
-      }
-
       // Log the received content to ensure it's correct
       console.log("Received content:", content);
 
