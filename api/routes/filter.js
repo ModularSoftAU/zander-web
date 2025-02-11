@@ -4,7 +4,14 @@ import { UserGetter } from "../../controllers/userController.js";
 import { MessageBuilder, Webhook } from "discord-webhook-node";
 import { Colors } from "discord.js";
 
-export default function filterApiRoute(app, config, db, features, lang) {
+export default function filterApiRoute(
+  app,
+  client,
+  config,
+  db,
+  features,
+  lang
+) {
   const baseEndpoint = "/api/filter";
 
   app.post(baseEndpoint, async function (req, res) {
@@ -37,15 +44,20 @@ export default function filterApiRoute(app, config, db, features, lang) {
       let urlDetected = false;
       let flaggedFor = [];
 
-      // Scan for URLs using filter.links
-      filter.links.forEach((link) => {
-        const regex = new RegExp(link, "i");
-        if (regex.test(content)) {
-          console.log(`URL detected: ${link}`);
-          urlDetected = true;
-          flaggedFor.push("URL/Advertising");
-        }
-      });
+      // Allow messages containing the guild ID unless they fail the profanity filter
+      const containsGuildId = content.includes(config.discord.guildId);
+
+      // Scan for URLs using filter.links if guild ID is not present
+      if (!containsGuildId) {
+        filter.links.forEach((link) => {
+          const regex = new RegExp(link, "i");
+          if (regex.test(content)) {
+            console.log(`URL detected: ${link}`);
+            urlDetected = true;
+            flaggedFor.push("URL/Advertising");
+          }
+        });
+      }
 
       // Profanity check via external API
       const fetchURL = `https://vector.profanity.dev`;
@@ -62,20 +74,23 @@ export default function filterApiRoute(app, config, db, features, lang) {
       } catch (error) {
         console.log("Error calling profanity API:", error);
       }
-      
+
       if (profanityData.score >= 1) {
         console.log("Profanity detected with score:", profanityData.score);
         flaggedFor.push(`Profanity (Score: ${profanityData.score})`);
       }
 
       // If any flags are detected, send the alert
-      if (urlDetected || flaggedFor.length > 0) {
+      if (
+        (urlDetected || flaggedFor.length > 0) &&
+        !(containsGuildId && flaggedFor.length === 0)
+      ) {
         try {
           const staffChannelHook = new Webhook(
             config.discord.webhooks.staffChannel
           );
           const embed = new MessageBuilder()
-            .setTitle(`🟥 Filter Flagged`)
+            .setTitle(`🔵 Filter Flagged`)
             .addField(
               "Detected User",
               `${userData?.username || "Unknown"}`,

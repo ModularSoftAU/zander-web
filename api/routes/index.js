@@ -22,7 +22,7 @@ export default (app, client, moment, config, db, features, lang) => {
   userApiRoute(app, config, db, features, lang);
   webApiRoute(app, config, db, features, lang);
   rankApiRoute(app, config, db, features, lang);
-  filterApiRoute(app, config, db, features, lang);
+  filterApiRoute(app, client, config, db, features, lang);
   shopApiRoute(app, config, db, features, lang);
   vaultApiRoute(app, config, db, features, lang);
   bridgeApiRoute(app, config, db, features, lang);
