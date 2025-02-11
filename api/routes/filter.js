@@ -38,8 +38,31 @@ export default function filterApiRoute(
         userData = discordUserGetData;
       }
 
+      // Handle case where no valid user data is found
+      if (!userData) {
+        return res.status(400).send({
+          success: false,
+          message:
+            "User data not found. Provide a valid username or Discord ID.",
+        });
+      }
+
       // Log the received content to ensure it's correct
       console.log("Received content:", content);
+
+      // Check for words in the whitelist from filter.json
+      const contentWords = content.split(/\s+/); // Split content into words
+      const isWhitelisted = contentWords.some((word) =>
+        filter.phrasesWhitelist.includes(word.toLowerCase())
+      );
+
+      if (isWhitelisted) {
+        console.log("Content contains whitelisted word, passing through.");
+        return res.send({
+          success: true,
+          message: "Content is clean. No flags detected.",
+        });
+      }
 
       let urlDetected = false;
       let flaggedFor = [];
@@ -124,9 +147,9 @@ export default function filterApiRoute(
       });
     } catch (error) {
       console.log("Error processing request:", error);
-      return res.send({
+      return res.status(500).send({
         success: false,
-        message: error,
+        message: error.message || "Internal Server Error",
       });
     }
   });
