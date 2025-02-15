@@ -8,22 +8,6 @@ import {
 export default function bridgeApiRoute(app, config, db, features, lang) {
   const baseEndpoint = "/api/bridge";
 
-  // actionData
-    // command
-      // command:give USER stick 1 user:shadowolfyt
-
-    // user
-      // user:shadowolfyt
-    
-    // routine
-      // routine:topVoter user:shadowolfyt
-    
-    // rank
-      // rank:moderator action:add user:shadowolfyt
-    
-    // server
-      // server:survival
-
   app.get(baseEndpoint + "/get", async function (req, res) {
     isFeatureEnabled(features.bridge, res, lang);
     const bridgeId = optional(req.query, "id");
@@ -105,13 +89,9 @@ export default function bridgeApiRoute(app, config, db, features, lang) {
   });
 
   app.post(baseEndpoint + "/action/process", async function (req, res) {
-    // isFeatureEnabled(features.bridge, res, lang);
-    console.log(req.body);
-    
+    isFeatureEnabled(features.bridge, res, lang); 
 
     const bridgeId = required(req.body, "id", res);
-
-    console.log(`Getting the process request`);
 
     try {
       db.query(
@@ -123,10 +103,7 @@ export default function bridgeApiRoute(app, config, db, features, lang) {
               success: false,
               message: `${error}`,
             });
-          }
-
-          console.log(results);
-          
+          }          
 
           return res.send({
             success: true,
