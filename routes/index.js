@@ -186,4 +186,27 @@ export default function applicationSiteRoutes(
       announcementWeb: await getWebAnnouncement(),
     });
   });
+
+  //
+  // Vote
+  //
+  app.get("/vote", async function (req, res) {
+    isFeatureWebRouteEnabled(features.vote, req, res, features);
+
+    // const fetchURL = `${process.env.siteAddress}/api/vault/get`;
+    // const response = await fetch(fetchURL, {
+    //   headers: { "x-access-token": process.env.apiKey },
+    // });
+    // const apiData = await response.json();
+
+    return res.view("vote", {
+      pageTitle: `Vote`,
+      config: config,
+      req: req,
+      // apiData: apiData,
+      features: features,
+      globalImage: await getGlobalImage(),
+      announcementWeb: await getWebAnnouncement(),
+    });
+  });
 }

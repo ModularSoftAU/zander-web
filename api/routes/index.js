@@ -11,6 +11,7 @@ import reportApiRoute from "./report.js";
 import shopApiRoute from "./shopdirectory.js";
 import vaultApiRoute from "./vault.js";
 import bridgeApiRoute from "./bridge.js";
+import voteApiRoute from "./vote.js";
 
 export default (app, client, moment, config, db, features, lang) => {
   announcementApiRoute(app, config, db, features, lang);
@@ -26,6 +27,7 @@ export default (app, client, moment, config, db, features, lang) => {
   shopApiRoute(app, config, db, features, lang);
   vaultApiRoute(app, config, db, features, lang);
   bridgeApiRoute(app, config, db, features, lang);
+  voteApiRoute(app, config, db, features, lang);
 
   app.get("/api/heartbeat", async function (req, res) {
     return res.send({

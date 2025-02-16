@@ -14,6 +14,7 @@
   "shopdirectory": true,
   "vault": true,
   "bridge": true,
+  "vote": true,
   "filter": {
     "link": true,
     "phrase": true
