@@ -16,28 +16,10 @@ export default function voteApiRoute(app, config, db, features, lang) {
           });
         }
 
-        return res.send({
-          success: true,
-          data: results,
-        });
-      });
-    } catch (error) {
-      res.send({
-        success: false,
-        message: `${error}`,
-      });
-    }
-  });
-
-  app.get(baseEndpoint + "/site/get", async function (req, res) {
-    isFeatureEnabled(features.vote, res, lang);
-
-    try {
-      db.query(`SELECT * FROM voteSite;`, function (error, results, fields) {
-        if (error) {
+        if (!results || results.length === 0) {
           return res.send({
             success: false,
-            message: `${error}`,
+            message: "There are no votes available.",
           });
         }
 
@@ -53,6 +35,48 @@ export default function voteApiRoute(app, config, db, features, lang) {
       });
     }
   });
+
+  app.get(baseEndpoint + "/site/get", async function (req, res) {
+    // Check if the feature is enabled
+    if (!isFeatureEnabled(features.vote, res, lang)) {
+      return; // Exit if the feature is not enabled
+    }
+
+    try {
+      db.query(`SELECT * FROM voteSite;`, function (error, results, fields) {
+        if (error) {
+          console.error("Database query error:", error);
+          res.send({
+            success: false,
+            message: `Database query error: ${error.message}`,
+          });
+          return; // Ensure no further code execution after sending response
+        }
+
+        if (!results || results.length === 0) {
+          console.log("No vote sites available.");
+          res.send({
+            success: false,
+            message: "There are no vote sites available.",
+          });
+          return; // Ensure no further code execution after sending response
+        }
+
+        console.log("Vote sites retrieved:", results);
+        res.send({
+          success: true,
+          data: results,
+        });
+      });
+    } catch (error) {
+      console.error("Unexpected error:", error);
+      res.send({
+        success: false,
+        message: `Unexpected error: ${error.message}`,
+      });
+    }
+  });
+
 
   app.post(baseEndpoint + "/site/create", async function (req, res) {
     isFeatureEnabled(features.vote, res, lang);
