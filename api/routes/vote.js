@@ -1,14 +1,77 @@
-import { isFeatureEnabled, required, optional, generateLog } from "../common.js";
+import {
+  isFeatureEnabled,
+  required,
+  optional,
+  generateLog,
+} from "../common.js";
 
 export default function voteApiRoute(app, config, db, features, lang) {
   const baseEndpoint = "/api/vote";
 
-  // TODO: Update docs
   app.get(baseEndpoint + "/get", async function (req, res) {
+    isFeatureEnabled(features.vote, res, lang);
+    const username = req.query.username;
+    const stats = req.query.stats === "true"; // Ensure proper boolean conversion
+
+    try {
+      function getVotes(dbQuery, queryParams) {
+        db.query(dbQuery, queryParams, function (error, results, fields) {
+          if (error) {
+            return res.send({
+              success: false,
+              message: `${error}`,
+            });
+          }
+
+          if (!results.length) {
+            return res.send({
+              success: false,
+              message: `No votes can be found`,
+            });
+          }
+
+          res.send({
+            success: true,
+            data: results,
+          });
+        });
+      }
+
+      // Get Votes by username
+      if (username) {
+        let dbQuery = `SELECT * FROM votes WHERE username = ?;`;
+        getVotes(dbQuery, [username]);
+      }
+      // Get stats (total votes per player)
+      else if (stats) {
+        let dbQuery = `SELECT u.username, COUNT(v.voteId) AS total_votes
+          FROM votes v
+          JOIN users u ON v.userId = u.userId
+          GROUP BY u.username
+          ORDER BY total_votes DESC;
+        `;
+        getVotes(dbQuery, []);
+      }
+      // Show all votes
+      else {
+        let dbQuery = `SELECT * FROM votes;`;
+        getVotes(dbQuery, []);
+      }
+    } catch (error) {
+      res.send({
+        success: false,
+        message: `${error}`,
+      });
+    }
+
+    return res;
+  });
+
+  app.get(baseEndpoint + "/site/get", async function (req, res) {
     isFeatureEnabled(features.vote, res, lang);
 
     try {
-      db.query(`SELECT * FROM votes;`, function (error, results, fields) {
+      db.query(`SELECT * FROM voteSite;`, function (error, results, fields) {
         if (error) {
           return res.send({
             success: false,
@@ -16,10 +79,10 @@ export default function voteApiRoute(app, config, db, features, lang) {
           });
         }
 
-        if (!results || results.length === 0) {
+        if (!results.length) {
           return res.send({
             success: false,
-            message: "There are no votes available.",
+            message: `There are no vote sites.`,
           });
         }
 
@@ -34,49 +97,76 @@ export default function voteApiRoute(app, config, db, features, lang) {
         message: `${error}`,
       });
     }
+
+    return res;
   });
 
-  app.get(baseEndpoint + "/site/get", async function (req, res) {
-    // Check if the feature is enabled
-    if (!isFeatureEnabled(features.vote, res, lang)) {
-      return; // Exit if the feature is not enabled
-    }
+  app.post(baseEndpoint + "/cast", async function (req, res) {
+    isFeatureEnabled(features.vote, res, lang);
+
+    const username = required(req.body, "username", res);
+    const voteSiteRedirect = required(req.body, "voteSite", res);
 
     try {
-      db.query(`SELECT * FROM voteSite;`, function (error, results, fields) {
-        if (error) {
-          console.error("Database query error:", error);
-          res.send({
-            success: false,
-            message: `Database query error: ${error.message}`,
-          });
-          return; // Ensure no further code execution after sending response
-        }
+      db.query(
+        `SELECT userId FROM users WHERE username = ?`,
+        [username],
+        function (error, userResults, fields) {
+          if (error || userResults.length === 0) {
+            return res.send({
+              success: false,
+              message: error ? `${error}` : `User not found`,
+            });
+          }
 
-        if (!results || results.length === 0) {
-          console.log("No vote sites available.");
-          res.send({
-            success: false,
-            message: "There are no vote sites available.",
-          });
-          return; // Ensure no further code execution after sending response
-        }
+          const userId = userResults[0].userId;
 
-        console.log("Vote sites retrieved:", results);
-        res.send({
-          success: true,
-          data: results,
-        });
-      });
+          // Get voteSiteId from voteSite table
+          db.query(
+            `SELECT voteSiteId FROM voteSite WHERE voteSiteRedirect LIKE ?`,
+            [`%${voteSiteRedirect}%`],
+            function (error, siteResults, fields) {
+              if (error || siteResults.length === 0) {
+                return res.send({
+                  success: false,
+                  message: error ? `${error}` : `Vote site not found/supported.`,
+                });
+              }
+
+              const voteSiteId = siteResults[0].voteSiteId;
+
+              // Insert vote into votes table
+              db.query(
+                `INSERT INTO votes (userId, voteSite) VALUES (?, ?)`,
+                [userId, voteSiteId],
+                function (error, results, fields) {
+                  if (error) {
+                    return res.send({
+                      success: false,
+                      message: `${error}`,
+                    });
+                  }
+
+                  res.send({
+                    success: true,
+                    alertType: "success",
+                    content: `New vote entry: ${username} on ${voteSiteRedirect}`,
+                  });
+                }
+              );
+            }
+          );
+        }
+      );
     } catch (error) {
-      console.error("Unexpected error:", error);
       res.send({
         success: false,
-        message: `Unexpected error: ${error.message}`,
+        message: `${error}`,
       });
     }
-  });
 
+    return res;
+  });
 
   app.post(baseEndpoint + "/site/create", async function (req, res) {
     isFeatureEnabled(features.vote, res, lang);
@@ -106,19 +196,20 @@ export default function voteApiRoute(app, config, db, features, lang) {
           generateLog(
             actioningUser,
             "SUCCESS",
-            "VOTESITE",
-            `Created ${voteSiteDisplayName} (${voteSiteRedirect})`,
+            "VOTE",
+            `Created vote site ${voteSiteDisplayName}`,
             res
           );
 
-          return res.send({
+          res.send({
             success: true,
-            message: `New vote site added: ${voteSiteDisplayName}`,
+            alertType: "success",
+            content: `Vote site created`,
           });
         }
       );
     } catch (error) {
-      return res.send({
+      res.send({
         success: false,
         message: `${error}`,
       });
@@ -157,19 +248,19 @@ export default function voteApiRoute(app, config, db, features, lang) {
           generateLog(
             actioningUser,
             "SUCCESS",
-            "VOTESITE",
-            `Edited ${voteSiteDisplayName} (${voteSiteRedirect})`,
+            "VOTE",
+            `Edited vote site ${voteSiteDisplayName}`,
             res
           );
 
           return res.send({
             success: true,
-            message: `Vote server edited ${voteSiteDisplayName} (${voteSiteRedirect})`,
+            message: `Edited vote site ${voteSiteDisplayName}`,
           });
         }
       );
     } catch (error) {
-      return res.send({
+      res.send({
         success: false,
         message: `${error}`,
       });
@@ -179,7 +270,7 @@ export default function voteApiRoute(app, config, db, features, lang) {
   });
 
   app.post(baseEndpoint + "/site/delete", async function (req, res) {
-    isFeatureEnabled(features.server, res, lang);
+    isFeatureEnabled(features.vote, res, lang);
 
     const actioningUser = required(req.body, "actioningUser", res);
     const voteSiteId = required(req.body, "voteSiteId", res);
@@ -198,20 +289,20 @@ export default function voteApiRoute(app, config, db, features, lang) {
 
           generateLog(
             actioningUser,
-            "SUCCESS",
-            "VOTESITE",
+            "WARNING",
+            "VOTE",
             `Deleted ${voteSiteId}`,
             res
           );
 
           return res.send({
             success: true,
-            message: `Vote site deleted ${voteSiteId}`,
+            message: `Deleted ${voteSiteId}`,
           });
         }
       );
     } catch (error) {
-      return res.send({
+      res.send({
         success: false,
         message: `${error}`,
       });

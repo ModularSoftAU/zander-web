@@ -193,17 +193,24 @@ export default function applicationSiteRoutes(
   app.get("/vote", async function (req, res) {
     isFeatureWebRouteEnabled(features.vote, req, res, features);
 
-    // const fetchURL = `${process.env.siteAddress}/api/vault/get`;
-    // const response = await fetch(fetchURL, {
-    //   headers: { "x-access-token": process.env.apiKey },
-    // });
-    // const apiData = await response.json();
+    const voteFetchURL = `${process.env.siteAddress}/api/vote/get?stats=true`;
+    const voteResponse = await fetch(voteFetchURL, {
+      headers: { "x-access-token": process.env.apiKey },
+    });
+    const voteApiData = await voteResponse.json();
+
+    const voteSiteFetchURL = `${process.env.siteAddress}/api/vote/site/get`;
+    const voteSiteResponse = await fetch(voteSiteFetchURL, {
+      headers: { "x-access-token": process.env.apiKey },
+    });
+    const voteSiteApiData = await voteSiteResponse.json();
 
     return res.view("vote", {
       pageTitle: `Vote`,
       config: config,
       req: req,
-      // apiData: apiData,
+      voteApiData: voteApiData,
+      voteSiteApiData: voteSiteApiData,
       features: features,
       globalImage: await getGlobalImage(),
       announcementWeb: await getWebAnnouncement(),

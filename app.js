@@ -24,6 +24,7 @@ import("./controllers/discordController.js");
 import("./cron/userCodeExpiryCron.js");
 import("./cron/cakeDayUserCheck.js");
 import("./cron/discordStatsUpdateCron.js");
+import("./cron/clearVotesCron.js");
 
 //
 // Website Related

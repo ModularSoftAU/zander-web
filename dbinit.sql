@@ -279,15 +279,15 @@ CREATE TABLE bridge (
 
 CREATE TABLE votes (
 	voteId INT NOT NULL AUTO_INCREMENT,
-    userId INT,
-    voteSite INT,
+    userId INT NOT NULL,
+    voteSite INT NOT NULL,
     PRIMARY KEY (voteId)
 );
 
 CREATE TABLE voteSite (
 	voteSiteId INT NOT NULL AUTO_INCREMENT,
-    voteSiteDisplayName VARCHAR(50),
-    voteSiteRedirect VARCHAR(200),
+    voteSiteDisplayName VARCHAR(50) NOT NULL,
+    voteSiteRedirect VARCHAR(200) NOT NULL,
     PRIMARY KEY (voteSiteId)
 );
 

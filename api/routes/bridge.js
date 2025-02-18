@@ -224,6 +224,7 @@ export default function bridgeApiRoute(app, config, db, features, lang) {
         message: `Unexpected error: ${error}`,
       });
     }
+    return res;
   });
 
   app.post(baseEndpoint + "/server/update", async function (req, res) {
@@ -259,5 +260,6 @@ export default function bridgeApiRoute(app, config, db, features, lang) {
         message: `Unexpected error: ${error}`,
       });
     }
+    return res;
   });
 }
