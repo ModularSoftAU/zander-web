@@ -1,5 +1,8 @@
 import { getWebAnnouncement } from "../controllers/announcementController.js";
 import { isFeatureWebRouteEnabled, getGlobalImage } from "../api/common.js";
+import { required } from "../api/common.js";
+import { Webhook, MessageBuilder } from "discord-webhook-node";
+import { Colors } from "discord.js";
 
 import dashboardSiteRoutes from "./dashboard/index.js";
 import sessionRoutes from "./sessionRoutes.js";
@@ -137,7 +140,7 @@ export default function applicationSiteRoutes(
 
   //
   // Shop Directory
-  // 
+  //
   app.get("/shopdirectory", async function (req, res) {
     isFeatureWebRouteEnabled(features.shopdirectory, req, res, features);
 
@@ -150,9 +153,6 @@ export default function applicationSiteRoutes(
     });
     const shopApiData = await shopResponse.json();
 
-    console.log(shopApiData.data[0].userData);
-    
-
     return res.view("shopdirectory", {
       pageTitle: `Shop Directory`,
       config: config,
@@ -162,8 +162,8 @@ export default function applicationSiteRoutes(
       globalImage: await getGlobalImage(),
       announcementWeb: await getWebAnnouncement(),
     });
-  })
-  
+  });
+
   //
   // Vault
   //
@@ -185,5 +185,92 @@ export default function applicationSiteRoutes(
       globalImage: await getGlobalImage(),
       announcementWeb: await getWebAnnouncement(),
     });
+  });
+
+  //
+  // About
+  //
+  app.get("/about", async function (req, res) {
+    const fetchURL = `${process.env.siteAddress}/api/server/get?type=EXTERNAL`;
+    const response = await fetch(fetchURL, {
+      headers: { "x-access-token": process.env.apiKey },
+    });
+    const apiData = await response.json();
+
+    res.view("about", {
+      pageTitle: `About Us`,
+      config: config,
+      req: req,
+      apiData: apiData,
+      features: features,
+      globalImage: await getGlobalImage(),
+      announcementWeb: await getWebAnnouncement(),
+    });
+
+    return res;
+  });
+
+  //
+  // Ministry: FaithForge
+  //
+  app.get("/ministry/faithforge", async function (req, res) {
+    res.view("faithforge", {
+      pageTitle: `FaithForge`,
+      config: config,
+      req: req,
+      features: features,
+      globalImage: await getGlobalImage(),
+      announcementWeb: await getWebAnnouncement(),
+    });
+
+    return res;
+  });
+
+  //
+  // Contact
+  //
+  app.get("/contact", async function (req, res) {
+    res.view("contact", {
+      pageTitle: `Contact Us`,
+      config: config,
+      req: req,
+      features: features,
+      globalImage: await getGlobalImage(),
+      announcementWeb: await getWebAnnouncement(),
+    });
+
+    return res;
+  });
+
+  app.post("/contact", async function (req, res) {
+    const name = required(req.body, "name", res);
+    const email = required(req.body, "email", res);
+    const message = required(req.body, "message", res);
+
+    const contactHook = new Webhook(config.discord.webhooks.adminNotifications);
+
+    const embed = new MessageBuilder()
+      .setTitle(`New Contact Entry`)
+      .addField("Name/Username", `${name}`, false)
+      .addField("Email", `${email}`, false)
+      .addField("Message", `${message}`, false)
+      .setColor(Colors.Blue)
+      .setTimestamp();
+
+    console.log("Sending contact entry to admin notifications...");
+    await contactHook.send(embed);
+
+    res.send({
+      success: true,
+      message: `Contact entry has been sent successfully.`,
+    });
+
+    setBannerCookie(
+      "success",
+      "Contact entry has been sent successfully.",
+      res
+    );
+
+    return res.redirect("/");
   });
 }
