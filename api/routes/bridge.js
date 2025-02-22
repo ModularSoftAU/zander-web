@@ -13,6 +13,7 @@ export default function bridgeApiRoute(app, config, db, features, lang) {
   app.get(baseEndpoint + "/get", async function (req, res) {
     isFeatureEnabled(features.bridge, res, lang);
     const bridgeId = optional(req.query, "id");
+    const targetServer = optional(req.query, "targetServer");
 
     try {
       function getBridge(dbQuery) {
@@ -43,10 +44,16 @@ export default function bridgeApiRoute(app, config, db, features, lang) {
         let dbQuery = `SELECT * FROM bridge WHERE bridgeId=${bridgeId};`;
         getBridge(dbQuery);
       }
-
+      // Get Bridge by targetServer
+      else if (targetServer) {
+        let dbQuery = `SELECT * FROM bridge WHERE targetServer='${targetServer}';`;
+        getBridge(dbQuery);
+      }
       // Return all Bridge actions by default
-      let dbQuery = `SELECT * FROM bridge;`;
-      getBridge(dbQuery);
+      else {
+        let dbQuery = `SELECT * FROM bridge;`;
+        getBridge(dbQuery);
+      }
     } catch (error) {
       res.send({
         success: false,
@@ -61,10 +68,11 @@ export default function bridgeApiRoute(app, config, db, features, lang) {
     try {
       isFeatureEnabled(features.bridge, res, lang);
       const actionData = required(req.body, "actionData", res);
+      const targetServer = optional(req.body, "targetServer");
 
       db.query(
-        `INSERT INTO bridge (actionData) VALUES (?)`,
-        [actionData],
+        `INSERT INTO bridge (actionData, targetServer) VALUES (?, ?)`,
+        [actionData, targetServer],
         function (error, results, fields) {
           if (error) {
             console.error("Database insert error:", error);
@@ -93,6 +101,7 @@ export default function bridgeApiRoute(app, config, db, features, lang) {
     try {
       const routineName = required(req.body, "routine", res);
       const username = required(req.body, "username", res);
+      const targetServer = optional(req.body, "targetServer");
 
       // Check if routinesData is defined and is an object
       if (!routinesData || typeof routinesData !== "object") {
@@ -128,7 +137,7 @@ export default function bridgeApiRoute(app, config, db, features, lang) {
       // Execute the /action/add POST request for each command
       for (const command of commands) {
         try {
-          const apiPostBody = { actionData: command }; // Define the body for the POST request
+          const apiPostBody = { actionData: command, targetServer }; // Include targetServer in the body
 
           const response = await fetch(
             `${process.env.siteAddress}/api/bridge/action/add`,
@@ -165,6 +174,8 @@ export default function bridgeApiRoute(app, config, db, features, lang) {
         message: `An unexpected error occurred: ${error.message}`,
       });
     }
+
+    return res;
   });
 
   app.post(baseEndpoint + "/action/process", async function (req, res) {
@@ -224,6 +235,8 @@ export default function bridgeApiRoute(app, config, db, features, lang) {
         message: `Unexpected error: ${error}`,
       });
     }
+
+    return res;
   });
 
   app.post(baseEndpoint + "/server/update", async function (req, res) {
@@ -259,5 +272,6 @@ export default function bridgeApiRoute(app, config, db, features, lang) {
         message: `Unexpected error: ${error}`,
       });
     }
+    return res;
   });
 }
