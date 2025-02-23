@@ -1,5 +1,5 @@
 import cron from "node-cron";
-import db from "../controllers/databaseController";
+import db from "../controllers/databaseController.js";
 
 var userCodeExpiryTask = cron.schedule("5 * * * *", () => {
   try {

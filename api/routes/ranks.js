@@ -1,4 +1,4 @@
-import { isFeatureEnabled, optional } from "../common";
+import { isFeatureEnabled, optional } from "../common.js";
 
 export default function rankApiRoute(app, config, db, features, lang) {
   const baseEndpoint = "/api/rank";

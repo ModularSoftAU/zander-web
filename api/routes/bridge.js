@@ -1,4 +1,9 @@
-import { isFeatureEnabled, required, optional, generateLog } from "../common";
+import {
+  isFeatureEnabled,
+  required,
+  optional,
+  generateLog,
+} from "../common.js";
 
 export default function bridgeApiRoute(app, config, db, features, lang) {
   const baseEndpoint = "/api/bridge";
@@ -91,6 +96,100 @@ export default function bridgeApiRoute(app, config, db, features, lang) {
     return res;
   });
 
+  app.post(baseEndpoint + "/clear", async function (req, res) {
+    isFeatureEnabled(features.bridge, res, lang);
+
+    try {
+      db.query(
+        `TRUNCATE bridge;`,
+        function (error, results, fields) {
+          if (error) {
+            return res.send({
+              success: false,
+              message: `${error}`,
+            });
+          }
+
+          return res.send({
+            success: true,
+            message: `Bridge has now been cleared.`,
+          });
+        }
+      );
+    } catch (error) {
+      res.send({
+        success: false,
+        message: `${error}`,
+      });
+    }
+
+    return res;
+  });
+
+  app.get(baseEndpoint + "/server/get", async function (req, res) {
+    isFeatureEnabled(features.bridge, res, lang);
+
+    try {
+      db.query(
+        `SELECT * FROM serverStatus;`,
+        function (error, results) {
+          if (error) {
+            return res.send({
+              success: false,
+              message: `Failed: ${error}`,
+            });
+          }
+
+          return res.send({
+            success: true,
+            data: results,
+          });
+        }
+      );
+    } catch (error) {
+      return res.send({
+        success: false,
+        message: `Unexpected error: ${error}`,
+      });
+    }
+
+    return res;
+  });
+
+  app.post(baseEndpoint + "/server/update", async function (req, res) {
+    isFeatureEnabled(features.bridge, res, lang);
+
+    const serverInfo = required(req.body, "serverInfo", res);
+    let lastUpdated = required(req.body, "lastUpdated", res);
+
+    try {
+      const serverInfoString = JSON.stringify(serverInfo);
+
+      db.query(
+        `UPDATE serverStatus SET statusInfo = ?, lastUpdated = ? WHERE serverStatusId = 1;`,
+        [serverInfoString, lastUpdated],
+        function (error, updateResults) {
+          if (error) {
+            return res.send({
+              success: false,
+              message: `Update failed: ${error}`,
+            });
+          }
+
+          return res.send({
+            success: true,
+            message: `Server status updated successfully.`,
+          });
+        }
+      );
+    } catch (error) {
+      return res.send({
+        success: false,
+        message: `Unexpected error: ${error}`,
+      });
+    }
+  });
+
   app.post(baseEndpoint + "/command/process", async function (req, res) {
     isFeatureEnabled(features.bridge, res, lang);
 
@@ -104,7 +203,7 @@ export default function bridgeApiRoute(app, config, db, features, lang) {
       const bridgeApiData = await response.json();
 
       db.query(
-        `UPDATE bridge SET processed=? WHERE bridgeId=?;`,
+        `DELETE FROM bridge WHERE bridgeId=?;`,
         [1, bridgeId],
         function (error, results, fields) {
           if (error) {

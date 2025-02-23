@@ -1,4 +1,4 @@
-import { required } from "../common";
+import { required } from "../common.js";
 
 export default function sessionApiRoute(app, config, db, features, lang) {
   const baseEndpoint = "/api/session";

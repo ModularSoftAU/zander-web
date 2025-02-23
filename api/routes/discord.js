@@ -1,6 +1,9 @@
-import { updateAudit_lastMinecraftLogin, updateAudit_lastMinecraftMessage } from "../../controllers/auditController";
+import {
+  updateAudit_lastMinecraftLogin,
+  updateAudit_lastMinecraftMessage,
+} from "../../controllers/auditController.js";
 import { Webhook } from "discord-webhook-node";
-import { isFeatureEnabled, required } from "../common";
+import { isFeatureEnabled, required } from "../common.js";
 
 export default function discordApiRoute(
   app,

@@ -1,10 +1,10 @@
-import applicationRedirectRoute from "./application";
-import serverRedirectRoute from "./server";
-import webRedirectRoute from "./web";
-import announcementsRedirectRoute from "./announcement";
-import reportRedirectRoute from "./report";
-import vaultRedirectRoute from "./vault";
-import bridgeRedirectRoute from "./bridge";
+import applicationRedirectRoute from "./application.js";
+import serverRedirectRoute from "./server.js";
+import webRedirectRoute from "./web.js";
+import announcementsRedirectRoute from "./announcement.js";
+import reportRedirectRoute from "./report.js";
+import vaultRedirectRoute from "./vault.js";
+import bridgeRedirectRoute from "./bridge.js";
 
 export default (app, config, lang) => {
   applicationRedirectRoute(app, config, lang);
