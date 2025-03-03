@@ -101,7 +101,6 @@ export default function bridgeApiRoute(app, config, db, features, lang) {
     try {
       const routineName = required(req.body, "routine", res);
       const username = required(req.body, "username", res);
-      const targetServer = optional(req.body, "targetServer");
 
       // Check if routinesData is defined and is an object
       if (!routinesData || typeof routinesData !== "object") {
@@ -128,16 +127,17 @@ export default function bridgeApiRoute(app, config, db, features, lang) {
       console.log("Routine found:", routine);
 
       // Replace %PLAYER% with the actual player's username in the commands
-      const commands = routine.commands.map((command) =>
-        command.replace(/%PLAYER%/g, username)
-      );
+      const commands = routine.commands.map((cmd) => ({
+        command: cmd.command.replace(/%PLAYER%/g, username),
+        targetServer: cmd.targetServer,
+      }));
 
       console.log("Commands to execute:", commands);
 
       // Execute the /action/add POST request for each command
-      for (const command of commands) {
+      for (const { command, targetServer } of commands) {
         try {
-          const apiPostBody = { actionData: command, targetServer }; // Include targetServer in the body
+          const apiPostBody = { actionData: command, targetServer };
 
           const response = await fetch(
             `${process.env.siteAddress}/api/bridge/action/add`,

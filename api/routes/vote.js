@@ -11,7 +11,7 @@ export default function voteApiRoute(app, config, db, features, lang) {
   app.get(baseEndpoint + "/get", async function (req, res) {
     isFeatureEnabled(features.vote, res, lang);
     const username = req.query.username;
-    const stats = req.query.stats === "true"; // Ensure proper boolean conversion
+    const stats = req.query.stats === "true";
 
     try {
       function getVotes(dbQuery, queryParams) {

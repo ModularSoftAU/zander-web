@@ -3,7 +3,14 @@
     {
       "routine": "vote",
       "commands": [
-        "give %PLAYER% stick"
+        {
+          "command": "give %PLAYER% stick",
+          "targetServer": "survival"
+        },
+        {
+          "command": "alert Thankyou %PLAYER% for Voting! Consider supporting the server by voting [/vote]!",
+          "targetServer": "proxy"
+        }
       ]
     }
   ]
