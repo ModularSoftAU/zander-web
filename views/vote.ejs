@@ -32,10 +32,10 @@
                 </div>
                 <hr>
 
-                <% if (apiData.success == false) { %>
+                <% if (voteSiteApiData.success == false) { %>
                     <%- include("partials/alert.ejs", {
                         alertType: "danger",
-                        content: apiData.message
+                        content: voteSiteApiData.message
                     }) %>
                 <% } else { %>
                     <div class="row">
