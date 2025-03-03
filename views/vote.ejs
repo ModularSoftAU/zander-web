@@ -32,18 +32,25 @@
                 </div>
                 <hr>
 
-                <div class="row">
-                    <% voteSiteApiData.data.forEach(function(site) { %>
-                        <div class="col-md-4 mb-3">
-                            <div class="p-3 text-center">
-                                <h3 style="margin-bottom: 15px;"><%= site.voteSiteDisplayName %></h3>
-                                <a href="<%= site.link %>" target="_blank" class="btn btn-primary w-100">
-                                    Vote
-                                </a>
+                <% if (apiData.success == false) { %>
+                    <%- include("partials/alert.ejs", {
+                        alertType: "danger",
+                        content: apiData.message
+                    }) %>
+                <% } else { %>
+                    <div class="row">
+                        <% voteSiteApiData.data.forEach(function(site) { %>
+                            <div class="col-md-4 mb-3">
+                                <div class="p-3 text-center">
+                                    <h3 style="margin-bottom: 15px;"><%= site.voteSiteDisplayName %></h3>
+                                    <a href="<%= site.link %>" target="_blank" class="btn btn-primary w-100">
+                                        Vote
+                                    </a>
+                                </div>
                             </div>
-                        </div>
-                    <% }); %>
-                </div>
+                        <% }); %>
+                    </div>
+                <% } %>
             </div>
             <div class="col-md-4">
                 <h3>Voting Leaderboard</h3>

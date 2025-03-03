@@ -8,6 +8,10 @@
           "targetServer": "survival"
         },
         {
+          "command": "msg %PLAYER% Here is a stick.",
+          "targetServer": "survival"
+        },
+        {
           "command": "alert Thankyou %PLAYER% for Voting! Consider supporting the server by voting [/vote]!",
           "targetServer": "proxy"
         }
