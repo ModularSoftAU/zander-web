@@ -28,10 +28,6 @@ export default function dashboardVoteSiteRoute(
       });
       const apiData = await response.json();
 
-      console.log(`apiData`);
-      console.log(apiData);
-      console.log(`apiData`);
-
       return res.view("dashboard/vote/vote-list", {
         pageTitle: `Dashboard - Vote`,
         config: config,
