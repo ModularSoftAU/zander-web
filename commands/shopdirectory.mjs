@@ -76,6 +76,8 @@ export class ShopDirectoryCommand extends Command {
         .setColor(Colors.Blue);
 
       let outOfStockCount = 0;
+      let fieldCount = 0;
+      const embeds = [itemsEmbed];
 
       // Add fields for each shop item
       apiData.data.forEach((shop) => {
@@ -85,27 +87,36 @@ export class ShopDirectoryCommand extends Command {
         }
 
         const transactionType = shop.stock === -1 ? "💰 Buying" : "📦 Selling";
-        const stockInfo = shop.stock !== -1 ? `**Stock:** ${shop.stock}` : "";
+        const stockInfo = shop.stock !== -1 ? `**Stock:** ${shop.stock}\n` : "";
 
         // Set shop.amount to 1 if it is null
         const amount = shop.amount ?? 1;
 
-        itemsEmbed.addFields([
+        if (fieldCount >= 25) {
+          const newEmbed = new EmbedBuilder()
+            .setTitle("🛍️ Shop Directory (continued)")
+            .setColor(Colors.Blue);
+          embeds.push(newEmbed);
+          fieldCount = 0;
+        }
+
+        embeds[embeds.length - 1].addFields([
           {
             name: `${transactionType} ${shop.itemData.displayName}`,
             value: `**Seller:** \`${shop.userData.username}\`\n**Amount:** ${amount}\n**Price:** $${shop.price}\n${stockInfo}**Location:** ${shop.x}, ${shop.y}, ${shop.z}`,
           },
         ]);
+        fieldCount++;
       });
 
       if (outOfStockCount > 0) {
-        itemsEmbed.setFooter({
+        embeds[embeds.length - 1].setFooter({
           text: `There were ${outOfStockCount} items that were out of stock and have been hidden from this search.`,
         });
       }
 
       interaction.editReply({
-        embeds: [itemsEmbed],
+        embeds: embeds,
       });
     } catch (error) {
       console.error("Error fetching shop items:", error);
