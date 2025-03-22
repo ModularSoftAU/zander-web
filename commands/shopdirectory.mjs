@@ -80,10 +80,13 @@ export class ShopDirectoryCommand extends Command {
         const transactionType = shop.stock === -1 ? "💰 Buying" : "📦 Selling";
         const stockInfo = shop.stock !== -1 ? `**Stock:** ${shop.stock}\n` : "";
 
+        // Set shop.amount to 1 if it is null
+        const amount = shop.amount ?? 1;
+
         itemsEmbed.addFields([
           {
             name: `${transactionType} ${shop.itemData.displayName}`,
-            value: `**Seller:** \`${shop.userData.username}\`\n**Amount:** ${shop.amount}\n**Price:** $${shop.price}\n${stockInfo}\n**Location:** ${shop.x}, ${shop.y}, ${shop.z}`,
+            value: `**Seller:** \`${shop.userData.username}\`\n**Amount:** ${amount}\n**Price:** $${shop.price}\n${stockInfo}**Location:** ${shop.x}, ${shop.y}, ${shop.z}`,
           },
         ]);
       });
