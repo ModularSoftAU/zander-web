@@ -75,8 +75,15 @@ export class ShopDirectoryCommand extends Command {
         )
         .setColor(Colors.Blue);
 
+      let outOfStockCount = 0;
+
       // Add fields for each shop item
       apiData.data.forEach((shop) => {
+        if (shop.stock === 0) {
+          outOfStockCount++;
+          return;
+        }
+
         const transactionType = shop.stock === -1 ? "💰 Buying" : "📦 Selling";
         const stockInfo = shop.stock !== -1 ? `**Stock:** ${shop.stock}\n` : "";
 
@@ -86,10 +93,16 @@ export class ShopDirectoryCommand extends Command {
         itemsEmbed.addFields([
           {
             name: `${transactionType} ${shop.itemData.displayName}`,
-            value: `**Seller:** \`${shop.userData.username}\`\n**Amount:** ${amount}\n**Price:** $${shop.price}\n${stockInfo}**Location:** ${shop.x}, ${shop.y}, ${shop.z}`,
+            value: `**Seller:** \`${shop.userData.username}\`\n**Amount:** ${amount}\n**Price:** $${shop.price}\n${stockInfo}\n**Location:** ${shop.x}, ${shop.y}, ${shop.z}`,
           },
         ]);
       });
+
+      if (outOfStockCount > 0) {
+        itemsEmbed.setFooter({
+          text: `There were ${outOfStockCount} items that were out of stock.`,
+        });
+      }
 
       interaction.editReply({
         embeds: [itemsEmbed],
