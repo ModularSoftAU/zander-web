@@ -18,7 +18,7 @@ export default function applicationApiRoute(app, config, db, features, lang) {
           console.log(results);
           
           if (error) {
-            res.send({
+            return res.send({
               success: false,
               message: `${error}`,
             });
@@ -42,6 +42,7 @@ export default function applicationApiRoute(app, config, db, features, lang) {
       if (applicationId) {
         let dbQuery = `SELECT * FROM applications WHERE applicationId=${applicationId};`;
         getApplications(dbQuery);
+        return; // Add return statement here
       }
 
       // Return all Servers by default
