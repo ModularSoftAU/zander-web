@@ -40,6 +40,11 @@ import verifyToken from "./api/routes/verifyToken.js";
 import { getGlobalImage } from "./api/common.js";
 import { client } from "./controllers/discordController.js";
 
+import("./controllers/discordController.js");
+import("./cron/userCodeExpiryCron.js");
+import("./cron/bridgeCleanupCron.js");
+import("./cron/discordStatsUpdateCron.js");
+
 //
 // Application Boot
 //

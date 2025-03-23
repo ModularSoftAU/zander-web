@@ -25,18 +25,24 @@ export class BridgeCommand extends Command {
         .addSubcommand((subcommand) =>
           subcommand
             .setName("add")
-            .setDescription("Add a action to the bridge and targeted server.")
+            .setDescription("Add a command to the bridge and targeted server.")
             .addStringOption((option) =>
               option
-                .setName("data")
-                .setDescription("The data for the action for the bridge.")
+                .setName("command")
+                .setDescription("The command for the bridge.")
+                .setRequired(true)
+            )
+            .addStringOption((option) =>
+              option
+                .setName("targetedserver")
+                .setDescription("The targeted server to send to.")
                 .setRequired(true)
             )
         )
         .addSubcommand((subcommand) =>
           subcommand
             .setName("clear")
-            .setDescription("Clear all actions on the Bridge.")
+            .setDescription("Clear all commands on the Bridge.")
         )
     );
   }
@@ -99,7 +105,7 @@ export class BridgeCommand extends Command {
           // No bridge commands found
           const noBridgesEmbed = new EmbedBuilder()
             .setTitle("Bridge Status")
-            .setDescription("There are currently no bridge actions available.")
+            .setDescription("There are currently no bridge commands available.")
             .setColor(Colors.Blurple);
 
           return interaction.reply({
@@ -139,22 +145,21 @@ export class BridgeCommand extends Command {
     }
 
     if (subcommand === "add") {
-      const data = interaction.options.getString("data");
+      const command = interaction.options.getString("command");
+      const targetedServer = interaction.options.getString("targetedserver");
 
       try {
-        const response = await fetch(
-          `${process.env.siteAddress}/api/bridge/action/add`,
-          {
-            method: "POST",
-            headers: {
-              "x-access-token": process.env.apiKey,
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-              actionData: data
-            }),
-          }
-        );
+        const response = await fetch(`${process.env.siteAddress}/api/bridge/command/add`, {
+          method: "POST",
+          headers: {
+            "x-access-token": process.env.apiKey,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            command: command,
+            targetServer: targetedServer,
+          }),
+        });
 
         const apiData = await response.json();
 
@@ -168,9 +173,9 @@ export class BridgeCommand extends Command {
         }
 
         const successEmbed = new EmbedBuilder()
-          .setTitle("Bridge Action Added")
+          .setTitle("Bridge Command Added")
           .setDescription(
-            `New bridge action added: \`${data}\`.`
+            `New bridge command added for server: \`${targetedServer}\` with command: \`${command}\`.`
           )
           .setColor(Colors.Green);
 

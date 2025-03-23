@@ -14,7 +14,7 @@ export default function dashboardAnnouncementSiteRoute(
   lang
 ) {
   //
-  // Servers
+  // Announcements
   //
   app.get("/dashboard/announcements", async function (req, res) {
     if (!isFeatureWebRouteEnabled(features.announcements, req, res, features))
