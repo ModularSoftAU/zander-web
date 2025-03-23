@@ -42,7 +42,6 @@ import { client } from "./controllers/discordController.js";
 
 import("./controllers/discordController.js");
 import("./cron/userCodeExpiryCron.js");
-import("./cron/bridgeCleanupCron.js");
 import("./cron/discordStatsUpdateCron.js");
 
 //
