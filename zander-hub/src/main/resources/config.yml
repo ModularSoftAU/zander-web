@@ -1,8 +1,14 @@
 velocitymultiplier: 3
 hub:
-  world: world
+  world: 'world'
   x: 0.5
-  y: 33
+  y: 33.0
   z: 0.5
   yaw: -180.0
   pitch: 0.0
+messages:
+  join: '&7%p% joined.'
+  leave: '&7%p% left.'
+misc:
+  always_first_join: false
+  slot_hub_compass: 4

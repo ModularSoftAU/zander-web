@@ -3,3 +3,9 @@
 /target
 /.idea
 *.iml
+
+# jdtls generation
+.classpath
+.factorypath
+.project
+.settings/
