@@ -172,6 +172,22 @@ export async function getProfilePicture(username) {
   });
 }
 
+export async function setProfileSettings(
+  userId,
+  setting_shoppingdirectory_notification,
+  setting_friends_dm
+) {
+  db.query(
+    `UPDATE users SET setting_shoppingdirectory_notification=?, setting_friends_dm=? WHERE userId=?;`,
+    [setting_shoppingdirectory_notification, setting_friends_dm, userId],
+    function (error, results, fields) {
+      if (error) {
+        console.log(error);
+      }
+    }
+  );
+}
+
 export async function setProfileDisplayPreferences(
   userId,
   profilePicture_type,

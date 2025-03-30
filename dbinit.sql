@@ -29,6 +29,10 @@ CREATE TABLE users (
 	audit_lastMinecraftPunishment DATETIME,
 	audit_lastDiscordPunishment DATETIME,
 	audit_lastWebsiteLogin DATETIME,
+
+    setting_shoppingdirectory_notification BOOLEAN DEFAULT 0,
+    setting_friends_dm BOOLEAN DEFAULT 0,
+
 	PRIMARY KEY (userId),
 	INDEX users (uuid(8))
 );

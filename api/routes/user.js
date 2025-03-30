@@ -6,6 +6,7 @@ import {
   getUserLastSession,
   getUserStats,
   setProfileDisplayPreferences,
+  setProfileSettings,
   setProfileSocialConnections,
   setProfileUserAboutMe,
   setProfileUserInterests,
@@ -356,6 +357,27 @@ export default function userApiRoute(app, config, db, features, lang) {
             res
           );
         });
+    } catch (error) {
+      return res.send({
+        success: false,
+        message: `${error}`,
+      });
+    }
+
+    return res;
+  });
+
+  app.post(baseEndpoint + "/profile/settings", async function (req, res) {
+    const userId = required(req.body, "userId");
+    const setting_shoppingdirectory_notification = required(req.body, "setting_shoppingdirectory_notification");
+    const setting_friends_dm = optional(req.body, "setting_friends_dm");
+
+    try {
+      setProfileSettings(
+        userId,
+        setting_shoppingdirectory_notification,
+        setting_friends_dm
+      );
     } catch (error) {
       return res.send({
         success: false,
