@@ -16,7 +16,7 @@
       "webstore": "https://crafting-for-christ.tebex.io",
       "discord": "https://discord.com/",
       "issueTracker": "https://github.com/craftingforchrist/Issues/issues",
-      "knowledgebase": "https://guides.craftingforchrist.net/",
+      "knowledgebase": "https://kb.craftingforchrist.net/",
       "facebook": "https://www.facebook.com/craft4christ/",
       "twitter": "https://twitter.com/craft4christmc",
       "instagram": "https://instagram.com/craftingforchrist",
@@ -28,15 +28,15 @@
     }
   },
   "discord": {
-    "guildId": "IDTAG",
+    "guildId": "GUILDID",
     "channels": {
-      "welcome": "IDTAG",
-      "networkChatLog": "IDTAG",
-      "adminLog": "IDTAG",
-      "staffChannel": "IDTAG"
+      "welcome": "WEBHOOKURL",
+      "networkChatLog": "WEBHOOKURL",
+      "adminLog": "WEBHOOKURL",
+      "staffChannel": "WEBHOOKURL"
     },
     "roles": {
-      "verified": "IDTAG"
+      "verified": "ROLEID"
     }
   }
 }

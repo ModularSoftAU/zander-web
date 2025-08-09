@@ -1,4 +1,9 @@
-import { isFeatureEnabled, required, optional, generateLog } from "../common";
+import {
+  isFeatureEnabled,
+  required,
+  optional,
+  generateLog,
+} from "../common.js";
 
 export default function announcementApiRoute(app, config, db, features, lang) {
   const baseEndpoint = "/api/announcement";
@@ -26,6 +31,8 @@ export default function announcementApiRoute(app, config, db, features, lang) {
             });
           }
 
+          console.log(results);
+
           res.send({
             success: true,
             data: results,
@@ -34,7 +41,7 @@ export default function announcementApiRoute(app, config, db, features, lang) {
       }
 
       // Get Announcement by specific ID.
-      if (req.query === "announcementId") {
+      if (announcementId) {
         let dbQuery = `SELECT * FROM announcements WHERE announcementId=${announcementId};`;
         getAnnouncements(dbQuery);
         return res;

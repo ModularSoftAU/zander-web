@@ -1,6 +1,21 @@
 import fetch from "node-fetch";
-import { UserGetter, UserLinkGetter, getProfilePicture, getUserLastSession, getUserStats, setProfileDisplayPreferences, setProfileSocialConnections, setProfileUserAboutMe, setProfileUserInterests } from "../../controllers/userController";
-import { required, optional, generateVerifyCode, setBannerCookie } from "../common";
+import {
+  UserGetter,
+  UserLinkGetter,
+  getProfilePicture,
+  getUserLastSession,
+  getUserStats,
+  setProfileDisplayPreferences,
+  setProfileSocialConnections,
+  setProfileUserAboutMe,
+  setProfileUserInterests,
+} from "../../controllers/userController.js";
+import {
+  required,
+  optional,
+  generateVerifyCode,
+  setBannerCookie,
+} from "../common.js";
 
 export default function userApiRoute(app, config, db, features, lang) {
   const baseEndpoint = "/api/user";

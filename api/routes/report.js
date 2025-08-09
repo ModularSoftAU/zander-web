@@ -1,5 +1,10 @@
 import { MessageBuilder, Webhook } from "discord-webhook-node";
-import { isFeatureEnabled, required, optional, setBannerCookie } from "../common";
+import {
+  isFeatureEnabled,
+  required,
+  optional,
+  setBannerCookie,
+} from "../common.js";
 import { Colors } from "discord.js";
 
 export default function reportApiRoute(app, config, db, features, lang) {

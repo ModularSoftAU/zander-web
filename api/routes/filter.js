@@ -1,70 +1,146 @@
-import { expandString, isFeatureEnabled, required } from "../common";
+import { isFeatureEnabled, optional, required } from "../common.js";
 import filter from "../../filter.json" assert { type: "json" };
+import { UserGetter } from "../../controllers/userController.js";
+import { MessageBuilder, Webhook } from "discord-webhook-node";
+import { Colors } from "discord.js";
 
-export default function filterApiRoute(app, config, db, features, lang) {
+export default function filterApiRoute(
+  app,
+  client,
+  config,
+  db,
+  features,
+  lang
+) {
   const baseEndpoint = "/api/filter";
 
   app.post(baseEndpoint, async function (req, res) {
-    function expandString(string, filter) {
-      var regexString = "";
-      for (var i = 0; i < string.length; i++) {
-        if (string[i] in filter.alias)
-          regexString += "[" + filter.alias[string[i]] + "]";
-        else regexString += string[i];
-      }
-      regexString = regexString.replace(".", "\\.");
-      return regexString;
-    }
-
     if (!features.filter.phrase && !features.filter.link)
       return isFeatureEnabled(false, res, lang);
 
     const content = required(req.body, "content", res);
-
-    var bannedWords = [];
-    if (features.filter.phrase)
-      bannedWords = bannedWords.concat(filter.phrases);
-    if (features.filter.link) bannedWords = bannedWords.concat(filter.links);
-
-    var bannedRegex = [];
-    bannedWords.forEach((bannedWord) => {
-      bannedRegex.push(new RegExp(expandString(bannedWord, filter)));
-    });
-
-    let responseSent = false;
+    const username = optional(req.body, "username", res);
+    const discordId = optional(req.body, "discordId", res);
 
     try {
-      const wordList = content.split(" ");
-      for (let i = 0; i < bannedRegex.length; i++) {
-        const re = bannedRegex[i];
-        for (let j = 0; j < wordList.length; j++) {
-          const word = wordList[j];
-          if (re.test(word)) {
-            res.send({
-              success: false,
-              message: lang.filter.phraseCaught,
-            });
-            responseSent = true;
-            break;
-          }
-        }
-        if (responseSent) {
-          break;
-        }
+      let userData = null;
+
+      // Fetch user data based on username or discordId
+      if (username) {
+        const usernameData = new UserGetter();
+        const usernameGetData = await usernameData.byUsername(username);
+        userData = usernameGetData;
       }
 
-      if (!responseSent) {
-        res.send({
+      if (discordId) {
+        const discordUserData = new UserGetter();
+        const discordUserGetData = await discordUserData.byDiscordId(discordId);
+        userData = discordUserGetData;
+      }
+
+      // Log the received content to ensure it's correct
+      console.log("Received content:", content);
+
+      // Check for words in the whitelist from filter.json
+      const contentWords = content.split(/\s+/); // Split content into words
+      const isWhitelisted = contentWords.some((word) =>
+        filter.phrasesWhitelist.includes(word.toLowerCase())
+      );
+
+      if (isWhitelisted) {
+        console.log("Content contains whitelisted word, passing through.");
+        return res.send({
           success: true,
-          message: `Content Clean`,
+          message: "Content is clean. No flags detected.",
         });
       }
-    } catch (error) {
-      console.log(error);
 
-      res.send({
+      let urlDetected = false;
+      let flaggedFor = [];
+
+      // Allow messages containing the guild ID unless they fail the profanity filter
+      const containsGuildId = content.includes(config.discord.guildId);
+
+      // Scan for URLs using filter.links if guild ID is not present
+      if (!containsGuildId) {
+        filter.links.forEach((link) => {
+          const regex = new RegExp(link, "i");
+          if (regex.test(content)) {
+            console.log(`URL detected: ${link}`);
+            urlDetected = true;
+            flaggedFor.push("URL/Advertising");
+          }
+        });
+      }
+
+      // Profanity check via external API
+      const fetchURL = `https://vector.profanity.dev`;
+      let profanityData = {};
+      try {
+        const response = await fetch(fetchURL, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ message: content }),
+        });
+
+        profanityData = await response.json();
+        console.log("Profanity Data:", profanityData);
+      } catch (error) {
+        console.log("Error calling profanity API:", error);
+      }
+
+      if (profanityData.score >= 1) {
+        console.log("Profanity detected with score:", profanityData.score);
+        flaggedFor.push(`Profanity (Score: ${profanityData.score})`);
+      }
+
+      // If any flags are detected, send the alert
+      if (
+        (urlDetected || flaggedFor.length > 0) &&
+        !(containsGuildId && flaggedFor.length === 0)
+      ) {
+        try {
+          const staffChannelHook = new Webhook(
+            config.discord.webhooks.staffChannel
+          );
+          const embed = new MessageBuilder()
+            .setTitle(`🔵 Filter Flagged`)
+            .addField(
+              "Detected User",
+              `${userData?.username || "Unknown"}`,
+              true
+            )
+            .addField("Flagged Issues", flaggedFor.join(", "), true)
+            .addField("Content", `${content}`, false)
+            .setColor(Colors.Red)
+            .setTimestamp();
+
+          console.log("Sending flagged content to staff channel...");
+          await staffChannelHook.send(embed);
+
+          return res.send({
+            success: false,
+            message: lang.filter.phraseCaught || "Content flagged.",
+          });
+        } catch (error) {
+          console.log("Error sending to webhook:", error);
+          return res.send({
+            success: false,
+            message: `${error}`,
+          });
+        }
+      }
+
+      // If no flags, content is clean
+      return res.send({
+        success: true,
+        message: "Content is clean. No flags detected.",
+      });
+    } catch (error) {
+      console.log("Error processing request:", error);
+      return res.status(500).send({
         success: false,
-        message: lang.web.registrationError,
+        message: error.message || "Internal Server Error",
       });
     }
   });
