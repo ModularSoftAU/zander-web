@@ -7,7 +7,7 @@ import policySiteRoutes from "./policyRoutes.js";
 import redirectSiteRoutes from "./redirectRoutes.js";
 import profileSiteRoutes from "./profileRoutes.js";
 
-import rankData from "../ranks.json" assert { type: "json" };
+import rankData from "../ranks.json" with { type: "json" };
 
 export default function applicationSiteRoutes(
   app,

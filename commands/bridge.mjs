@@ -5,7 +5,7 @@ import {
   getUserPermissions,
   UserGetter,
 } from "../controllers/userController.js";
-import features from "../features.json" assert { type: "json" };
+import features from "../features.json" with { type: "json" };
 
 export class BridgeCommand extends Command {
   constructor(context, options) {

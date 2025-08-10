@@ -1,6 +1,6 @@
 import { Command, RegisterBehavior } from "@sapphire/framework";
 import { Colors, EmbedBuilder } from "discord.js";
-import features from "../features.json" assert { type: "json" };
+import features from "../features.json" with { type: "json" };
 
 export class RanksCommand extends Command {
   constructor(context, options) {

@@ -1,4 +1,4 @@
-import lang from "../../lang.json" assert { type: "json" };
+import lang from "../../lang.json" with { type: "json" };
 
 export default function verifyToken(req, res, done) {
   var token = req.headers["x-access-token"];
