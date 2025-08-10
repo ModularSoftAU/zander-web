@@ -75,8 +75,17 @@ export class ShopDirectoryCommand extends Command {
         )
         .setColor(Colors.Blue);
 
+      // Filter out shops with no stock (stock is 0)
+      const originalShopCount = apiData.data.length;
+      const inStockShops = apiData.data.filter(shop => shop.stock !== 0);
+      const outOfStockCount = originalShopCount - inStockShops.length;
+
+      // Limit the number of shops to 25
+      const shopsToShow = inStockShops.slice(0, 25);
+
+
       // Add fields for each shop item
-      apiData.data.forEach((shop) => {
+      shopsToShow.forEach((shop) => {
         const transactionType = shop.stock === -1 ? "💰 Buying" : "📦 Selling";
         const stockInfo = shop.stock !== -1 ? `**Stock:** ${shop.stock}\n` : "";
 
@@ -87,6 +96,19 @@ export class ShopDirectoryCommand extends Command {
           },
         ]);
       });
+
+      // Add footer
+      let footerText = "";
+      if (outOfStockCount > 0) {
+        footerText += `${outOfStockCount} shop(s) not shown (out of stock). `;
+      }
+      if (inStockShops.length > 25) {
+        footerText += `Showing 25 of ${inStockShops.length} in-stock shops.`;
+      }
+
+      if (footerText) {
+        itemsEmbed.setFooter({ text: footerText.trim() });
+      }
 
       interaction.editReply({
         embeds: [itemsEmbed],
