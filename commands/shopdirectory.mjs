@@ -69,7 +69,7 @@ export class ShopDirectoryCommand extends Command {
       const originalShopCount = apiData.data.length;
       const inStockShops = apiData.data.filter(shop => shop.stock !== 0);
       const outOfStockCount = originalShopCount - inStockShops.length;
-
+      
       if (!inStockShops.length) {
         const noItemsEmbed = new EmbedBuilder()
           .setTitle("No Shop Items Found")
