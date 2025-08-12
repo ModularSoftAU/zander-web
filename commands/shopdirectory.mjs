@@ -69,7 +69,7 @@ export class ShopDirectoryCommand extends Command {
       const originalShopCount = apiData.data.length;
       const inStockShops = apiData.data.filter(shop => shop.stock !== 0);
       const outOfStockCount = originalShopCount - inStockShops.length;
-
+      
       if (!inStockShops.length) {
         const noItemsEmbed = new EmbedBuilder()
           .setTitle("No Shop Items Found")
@@ -129,50 +129,69 @@ export class ShopDirectoryCommand extends Command {
         return embed;
       };
 
-      const row = new ActionRowBuilder()
-        .addComponents(
-          new ButtonBuilder()
-            .setCustomId('prev_page')
-            .setLabel('Previous')
-            .setStyle(ButtonStyle.Primary)
-            .setDisabled(true),
-          new ButtonBuilder()
-            .setCustomId('next_page')
-            .setLabel('Next')
-            .setStyle(ButtonStyle.Primary)
-            .setDisabled(shopPages.length === 1)
-        );
+      // Only show buttons and create a collector if there's more than one page
+      if (shopPages.length > 1) {
+        const getRow = (pageIndex) => {
+          return new ActionRowBuilder()
+            .addComponents(
+              new ButtonBuilder()
+                .setCustomId('prev_page')
+                .setLabel('Previous')
+                .setStyle(ButtonStyle.Primary)
+                .setDisabled(pageIndex === 0),
+              new ButtonBuilder()
+                .setCustomId('next_page')
+                .setLabel('Next')
+                .setStyle(ButtonStyle.Primary)
+                .setDisabled(pageIndex === shopPages.length - 1)
+            );
+        };
 
-      const reply = await interaction.editReply({
-        embeds: [createEmbed(currentPageIndex)],
-        components: [row]
-      });
-
-      const collector = reply.createMessageComponentCollector({
-        filter: (i) => i.user.id === interaction.user.id,
-        time: 60000
-      });
-
-      collector.on('collect', async (i) => {
-        if (i.customId === 'prev_page') {
-          currentPageIndex--;
-        } else if (i.customId === 'next_page') {
-          currentPageIndex++;
-        }
-
-        row.components[0].setDisabled(currentPageIndex === 0);
-        row.components[1].setDisabled(currentPageIndex === shopPages.length - 1);
-
-        await i.update({
+        const reply = await interaction.editReply({
           embeds: [createEmbed(currentPageIndex)],
-          components: [row]
+          components: [getRow(currentPageIndex)]
         });
-      });
 
-      collector.on('end', async () => {
-        row.components.forEach(component => component.setDisabled(true));
-        await reply.edit({ components: [row] }).catch(() => {});
-      });
+        const collector = reply.createMessageComponentCollector({
+          filter: (i) => i.user.id === interaction.user.id,
+          time: 60000 // 1 minute
+        });
+
+        collector.on('collect', async (i) => {
+          if (i.customId === 'prev_page') {
+            currentPageIndex--;
+          } else if (i.customId === 'next_page') {
+            currentPageIndex++;
+          }
+
+          await i.update({
+            embeds: [createEmbed(currentPageIndex)],
+            components: [getRow(currentPageIndex)]
+          });
+        });
+
+        collector.on('end', async () => {
+          const disabledRow = new ActionRowBuilder()
+            .addComponents(
+              new ButtonBuilder()
+                .setCustomId('prev_page')
+                .setLabel('Previous')
+                .setStyle(ButtonStyle.Primary)
+                .setDisabled(true),
+              new ButtonBuilder()
+                .setCustomId('next_page')
+                .setLabel('Next')
+                .setStyle(ButtonStyle.Primary)
+                .setDisabled(true)
+            );
+          await reply.edit({ components: [disabledRow] }).catch(() => {});
+        });
+      } else {
+        // If there's only one page, just send the embed without any components
+        await interaction.editReply({
+          embeds: [createEmbed(currentPageIndex)]
+        });
+      }
     } catch (error) {
       console.error("Error fetching shop items:", error);
 
