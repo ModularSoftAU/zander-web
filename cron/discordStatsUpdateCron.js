@@ -1,6 +1,6 @@
 import cron from "node-cron";
 import { client } from "../controllers/discordController.js";
-import config from "../config.json" assert { type: "json" };
+import config from "../config.json" with { type: "json" };
 
 var discordStatsUpdateTask = cron.schedule("*/5 * * * *", async () => {
   console.log("Cron task is running...");
@@ -11,6 +11,13 @@ var discordStatsUpdateTask = cron.schedule("*/5 * * * *", async () => {
     const response = await fetch(fetchURL, {
       headers: { "x-access-token": process.env.apiKey },
     });
+
+    const contentType = response.headers.get("content-type");
+    if (!contentType || !contentType.includes("application/json")) {
+        const responseText = await response.text();
+        console.error("Error in discordStatsUpdateCron: Expected JSON response, but received:", responseText);
+        throw new Error("Did not receive JSON response from API. Check siteAddress configuration.");
+    }
 
     const apiData = await response.json();
 

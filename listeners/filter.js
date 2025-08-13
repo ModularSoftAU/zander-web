@@ -1,7 +1,7 @@
 import { Listener } from "@sapphire/framework";
 import { EmbedBuilder } from "discord.js";
 import fetch from "node-fetch";
-import features from "../features.json" assert { type: "json" };
+import features from "../features.json" with { type: "json" };
 
 export class GuildMessageListener extends Listener {
   constructor(context, options) {

@@ -1570,3 +1570,134 @@ a:focus {
   line-height: 1.5;
   border-radius: 0.2rem;
 }
+
+.stat-widget-one {
+    padding: 15px;
+}
+
+.stat-widget-one .stat-icon {
+    display: inline-block;
+    vertical-align: middle;
+    width: 60px;
+    height: 60px;
+    line-height: 60px;
+    text-align: center;
+    border-radius: 50%;
+    font-size: 30px;
+    margin-right: 15px;
+    border: 1px solid;
+}
+
+.stat-widget-one .stat-content {
+    display: inline-block;
+    vertical-align: middle;
+}
+
+.stat-widget-one .stat-text {
+    font-size: 16px;
+    color: #555;
+}
+
+.stat-widget-one .stat-digit {
+    font-size: 24px;
+    font-weight: 600;
+}
+
+/* Sidebar */
+.sidebar {
+    width: 250px;
+    background: #f8f9fa;
+    border-right: 1px solid #dee2e6;
+    padding: 20px;
+}
+
+.sidebar-nav .nav {
+    flex-direction: column;
+}
+
+.sidebar-nav .nav-item {
+    margin-bottom: 10px;
+}
+
+.sidebar-nav .nav-link {
+    color: #333;
+    padding: 10px 15px;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+}
+
+.sidebar-nav .nav-link i {
+    margin-right: 10px;
+}
+
+.sidebar-nav .nav-link:hover {
+    background: #e9ecef;
+}
+
+.sidebar-nav .nav-dropdown.open > .nav-dropdown-toggle {
+    background: #e9ecef;
+}
+
+.sidebar-nav .nav-dropdown-items {
+    list-style: none;
+    padding-left: 20px;
+    display: none;
+}
+
+.sidebar-nav .nav-dropdown.open > .nav-dropdown-items {
+    display: block;
+}
+
+.sidebar-nav .nav-dropdown-items .nav-link {
+    padding-left: 30px;
+}
+
+/* Tables */
+.table {
+    width: 100%;
+    margin-bottom: 1rem;
+    color: #212529;
+    border-collapse: collapse;
+}
+
+.table th,
+.table td {
+    padding: 0.75rem;
+    vertical-align: top;
+    border-top: 1px solid #dee2e6;
+}
+
+.table thead th {
+    vertical-align: bottom;
+    border-bottom: 2px solid #dee2e6;
+    background-color: #f8f9fa;
+}
+
+.table tbody tr:hover {
+    background-color: #f2f2f2;
+}
+
+/* Buttons */
+.btn {
+    border-radius: 20px;
+    padding: 10px 20px;
+}
+
+.btn-primary {
+    background-color: #007bff;
+    border-color: #007bff;
+}
+
+.btn-primary:hover {
+    background-color: #0069d9;
+    border-color: #0062cc;
+}
+
+.btn-warning {
+    color: #fff;
+}
+
+.btn-danger {
+    color: #fff;
+}

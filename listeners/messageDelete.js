@@ -1,5 +1,5 @@
 import { Listener } from "@sapphire/framework";
-import config from "../config.json" assert { type: "json" };
+import config from "../config.json" with { type: "json" };
 import { Colors, EmbedBuilder } from "discord.js";
 import { MessageBuilder, Webhook } from "discord-webhook-node";
 

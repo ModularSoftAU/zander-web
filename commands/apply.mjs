@@ -1,6 +1,6 @@
 import { Command, RegisterBehavior } from "@sapphire/framework";
 import pkg, { Colors } from "discord.js";
-import features from "../features.json" assert { type: "json" };
+import features from "../features.json" with { type: "json" };
 const { EmbedBuilder } = pkg;
 
 export class PolicyCommand extends Command {

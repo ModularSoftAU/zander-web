@@ -1,6 +1,6 @@
 import dotenv from "dotenv";
 dotenv.config();
-import config from "../config.json" assert { type: "json" };
+import config from "../config.json" with { type: "json" };
 import fetch from "node-fetch";
 import { readdirSync } from "fs";
 import crypto from "crypto";
@@ -24,7 +24,7 @@ export function isFeatureEnabled(isFeatureEnabled, res, lang) {
 }
 
 /*
-    Ensure that a required field is present and has a non-null value, 
+    Ensure that a required field is present and has a non-null value,
     and to return an error message if this is not the case.
 
     @param body Passing through the req.body
@@ -149,7 +149,7 @@ export async function hasPermission(permissionNode, req, res, features) {
     Makes a POST API request to the specified postURL with the provided apiPostBody.
     It includes a header with the x-access-token value taken from an environment variable named apiKey.
     If the request is successful, it logs the response data.
-    If the request fails, it sets a cookie with a "danger" alert type and an error message, 
+    If the request fails, it sets a cookie with a "danger" alert type and an error message,
     then redirects the user to the specified failureRedirectURL.
 
     @param postURL The POST url that the apiPostBody will go to in the API.
@@ -188,9 +188,9 @@ export async function postAPIRequest(
 }
 
 /*
-    Returns the path of a randomly chosen image file from a specified directory. 
-    The function first reads the names of the files in the directory using the readdirSync function and 
-    then selects a random file from the list using the Math.random() function. 
+    Returns the path of a randomly chosen image file from a specified directory.
+    The function first reads the names of the files in the directory using the readdirSync function and
+    then selects a random file from the list using the Math.random() function.
     Finally, the function returns the path of the chosen file by concatenating the file name with the relative path to the directory.
 */
 export async function getGlobalImage() {
@@ -204,7 +204,7 @@ export async function getGlobalImage() {
 }
 
 /*
-    Sets two cookies (alertType and alertContent) with specified values and an expiration time of one second. 
+    Sets two cookies (alertType and alertContent) with specified values and an expiration time of one second.
     These cookies are set on the root path and are returned by the function.
 
     @param alertType The alert content type and colour according to https://getbootstrap.com/docs/4.0/components/alerts/#examples
@@ -239,7 +239,7 @@ export async function setBannerCookie(alertType, alertContent, res) {
 
 
 /*
-    Sets two cookies (alertType and alertContent) with specified values and an expiration time of one second. 
+    Sets two cookies (alertType and alertContent) with specified values and an expiration time of one second.
     These cookies are set on the root path and are returned by the function.
 
     @param email The email address to hash.
@@ -256,7 +256,7 @@ export async function hashEmail(email) {
 }
 
 /*
-    Sets two cookies (alertType and alertContent) with specified values and an expiration time of one second. 
+    Sets two cookies (alertType and alertContent) with specified values and an expiration time of one second.
     These cookies are set on the root path and are returned by the function.
 
     @param userId The ID of the user that actioned the log.

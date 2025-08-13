@@ -14,6 +14,13 @@ export async function getWebAnnouncement() {
       );
     }
 
+    const contentType = response.headers.get("content-type");
+    if (!contentType || !contentType.includes("application/json")) {
+        const responseText = await response.text();
+        console.error("Error fetching announcement: Expected JSON response, but received:", responseText);
+        throw new Error("Did not receive JSON response from API. Check siteAddress configuration.");
+    }
+
     const apiData = await response.json();
 
     if (apiData.data && apiData.data.length > 0) {
