@@ -29,6 +29,7 @@
   },
   "discord": {
     "guildId": "GUILDID",
+    "onlinePlayerChannel": "CHANNELID",
     "channels": {
       "welcome": "WEBHOOKURL",
       "networkChatLog": "WEBHOOKURL",
