@@ -19,6 +19,16 @@ export class ShopDirectoryCommand extends Command {
             .setDescription("The material to filter shop items by.")
             .setRequired(true)
         )
+        .addStringOption((option) =>
+          option
+            .setName("type")
+            .setDescription("The type of transaction to filter by.")
+            .setRequired(false)
+            .addChoices(
+              { name: "Buying", value: "buying" },
+              { name: "Selling", value: "selling" }
+            )
+        )
     );
   }
 
@@ -41,6 +51,7 @@ export class ShopDirectoryCommand extends Command {
     await interaction.deferReply();
 
     const material = interaction.options.getString("material") || "";
+    const type = interaction.options.getString("type");
     const shopApiURL = `${process.env.siteAddress}/api/shop/get?material=${encodeURIComponent(material)}`;    
 
     try {
@@ -67,9 +78,17 @@ export class ShopDirectoryCommand extends Command {
 
       // Filter out shops with no stock (stock is 0)
       const originalShopCount = apiData.data.length;
-      const inStockShops = apiData.data.filter(shop => shop.stock !== 0);
+      let inStockShops = apiData.data.filter(shop => shop.stock !== 0);
       const outOfStockCount = originalShopCount - inStockShops.length;
       
+      if (type) {
+        if (type === "buying") {
+          inStockShops = inStockShops.filter(shop => shop.stock === -1);
+        } else if (type === "selling") {
+          inStockShops = inStockShops.filter(shop => shop.stock > 0);
+        }
+      }
+
       if (!inStockShops.length) {
         const noItemsEmbed = new EmbedBuilder()
           .setTitle("No Shop Items Found")
@@ -91,8 +110,9 @@ export class ShopDirectoryCommand extends Command {
 
       // Create pages of shops
       const shopPages = [];
-      for (let i = 0; i < inStockShops.length; i += 25) {
-        shopPages.push(inStockShops.slice(i, i + 25));
+      const shopsPerPage = 8;
+      for (let i = 0; i < inStockShops.length; i += shopsPerPage) {
+        shopPages.push(inStockShops.slice(i, i + shopsPerPage));
       }
 
       let currentPageIndex = 0;
