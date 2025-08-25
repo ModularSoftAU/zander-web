@@ -1,5 +1,7 @@
 import { isFeatureEnabled, optional, required } from "../common.js";
-import filter from "../../filter.json" with { type: "json" };
+import { createRequire } from "module";
+const require = createRequire(import.meta.url);
+const filter = require("../../filter.json");
 import { UserGetter } from "../../controllers/userController.js";
 import { MessageBuilder, Webhook } from "discord-webhook-node";
 import { Colors } from "discord.js";

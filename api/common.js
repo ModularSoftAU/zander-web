@@ -1,6 +1,8 @@
 import dotenv from "dotenv";
 dotenv.config();
-import config from "../config.json" with { type: "json" };
+import { createRequire } from "module";
+const require = createRequire(import.meta.url);
+const config = require("../config.json");
 import fetch from "node-fetch";
 import { readdirSync } from "fs";
 import crypto from "crypto";
