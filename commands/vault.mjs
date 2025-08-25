@@ -1,6 +1,8 @@
 import { Command, RegisterBehavior } from "@sapphire/framework";
 import { Colors, EmbedBuilder } from "discord.js";
-import features from "../features.json" with { type: "json" };
+import { createRequire } from "module";
+const require = createRequire(import.meta.url);
+const features = require("../features.json");
 
 export class RanksCommand extends Command {
   constructor(context, options) {

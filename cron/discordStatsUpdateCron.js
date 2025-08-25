@@ -1,6 +1,8 @@
 import cron from "node-cron";
 import { client } from "../controllers/discordController.js";
-import config from "../config.json" with { type: "json" };
+import { createRequire } from "module";
+const require = createRequire(import.meta.url);
+const config = require("../config.json");
 
 var discordStatsUpdateTask = cron.schedule("*/5 * * * *", async () => {
   console.log("Cron task is running...");

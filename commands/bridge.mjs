@@ -5,7 +5,9 @@ import {
   getUserPermissions,
   UserGetter,
 } from "../controllers/userController.js";
-import features from "../features.json" with { type: "json" };
+import { createRequire } from "module";
+const require = createRequire(import.meta.url);
+const features = require("../features.json");
 
 export class BridgeCommand extends Command {
   constructor(context, options) {
