@@ -91,8 +91,9 @@ export class ShopDirectoryCommand extends Command {
 
       // Create pages of shops
       const shopPages = [];
-      for (let i = 0; i < inStockShops.length; i += 25) {
-        shopPages.push(inStockShops.slice(i, i + 25));
+      const shopsPerPage = 8;
+      for (let i = 0; i < inStockShops.length; i += shopsPerPage) {
+        shopPages.push(inStockShops.slice(i, i + shopsPerPage));
       }
 
       let currentPageIndex = 0;
