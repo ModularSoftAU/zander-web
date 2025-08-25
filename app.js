@@ -1,4 +1,4 @@
-import packageData from "./package.json" with { type: "json" };
+import packageData from "./package.json" assert { type: "json" };
 import moment from "moment";
 import fetch from "node-fetch";
 import dotenv from "dotenv";
@@ -8,9 +8,9 @@ import fastify from "fastify";
 import fastifySession from "@fastify/session";
 import fastifyCookie from "@fastify/cookie";
 
-import config from "./config.json" with { type: "json" };
-import features from "./features.json" with { type: "json" };
-import lang from "./lang.json" with { type: "json" };
+import config from "./config.json" assert { type: "json" };
+import features from "./features.json" assert { type: "json" };
+import lang from "./lang.json" assert { type: "json" };
 import db from "./controllers/databaseController.js";
 import { getWebAnnouncement } from "./controllers/announcementController.js";
 
