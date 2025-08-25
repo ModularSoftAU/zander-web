@@ -1,3 +1,6 @@
+import { createRequire } from "module";
+const require = createRequire(import.meta.url);
+
 import { getWebAnnouncement } from "../controllers/announcementController.js";
 import { isFeatureWebRouteEnabled, getGlobalImage } from "../api/common.js";
 
@@ -7,7 +10,7 @@ import policySiteRoutes from "./policyRoutes.js";
 import redirectSiteRoutes from "./redirectRoutes.js";
 import profileSiteRoutes from "./profileRoutes.js";
 
-import rankData from "../ranks.json" with { type: "json" };
+const rankData = require("../ranks.json");
 
 export default function applicationSiteRoutes(
   app,
