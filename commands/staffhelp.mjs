@@ -1,6 +1,8 @@
 import { Command, RegisterBehavior } from "@sapphire/framework";
 import { Colors, EmbedBuilder } from "discord.js";
-import config from "../config.json" with { type: "json" };
+import { createRequire } from "module";
+const require = createRequire(import.meta.url);
+const config = require("../config.json");
 import { MessageBuilder, Webhook } from "discord-webhook-node";
 
 export class StaffHelpCommand extends Command {

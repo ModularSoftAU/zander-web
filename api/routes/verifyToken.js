@@ -1,4 +1,6 @@
-import lang from "../../lang.json" with { type: "json" };
+import { createRequire } from "module";
+const require = createRequire(import.meta.url);
+const lang = require("../../lang.json");
 
 export default function verifyToken(req, res, done) {
   var token = req.headers["x-access-token"];

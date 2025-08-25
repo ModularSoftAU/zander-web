@@ -1,8 +1,10 @@
 import { Listener } from "@sapphire/framework";
-import joinMessages from "../joinMessages.json" with { type: "json" };
-import config from "../config.json" with { type: "json" };
+import { createRequire } from "module";
+const require = createRequire(import.meta.url);
+const joinMessages = require("../joinMessages.json");
+const config = require("../config.json");
 import { EmbedBuilder } from "discord.js";
-import features from "../features.json" with { type: "json" };
+const features = require("../features.json");
 import { MessageBuilder, Webhook } from "discord-webhook-node";
 
 export class GuildMemberUpdateListener extends Listener {
