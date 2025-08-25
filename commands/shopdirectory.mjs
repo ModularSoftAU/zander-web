@@ -85,7 +85,7 @@ export class ShopDirectoryCommand extends Command {
         if (type === "buying") {
           inStockShops = inStockShops.filter(shop => shop.stock === -1);
         } else if (type === "selling") {
-          inStockShops = inStockShops.filter(shop => shop.stock !== -1);
+          inStockShops = inStockShops.filter(shop => shop.stock > 0);
         }
       }
 
