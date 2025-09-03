@@ -215,6 +215,7 @@ export default function announcementApiRoute(app, config, db, features, lang) {
   app.post(baseEndpoint + "/delete", async function (req, res) {
     isFeatureEnabled(features.announcements, res, lang);
 
+    const actioningUser = required(req.body, "actioningUser", res);
     const announcementId = required(req.body, "announcementId", res);
 
     try {

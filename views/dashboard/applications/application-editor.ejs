@@ -22,20 +22,15 @@
         
         <div class="basic-form">
             <% if (type === 'create') { %>
-                <form method="post" action="<%= process.env.siteAddress %>/redirect/application/create">
+                <form method="post" action="<%= process.env.siteAddress %>/redirect/applications/create">
             <% } %>
             <% if (type === 'edit') { %>
-                <form method="post" action="<%= process.env.siteAddress %>/redirect/application/edit">
+                <form method="post" action="<%= process.env.siteAddress %>/redirect/applications/edit">
                     <%- include("../../partials/form/inputHidden.ejs", {
                         elementName: "applicationId",
                         elementValue: applicationApiData.applicationId
                     }) %>
             <% } %>
-
-            <%- include("../../partials/form/inputHidden.ejs", {
-                elementName: "actioningUser",
-                elementValue: req.session.user.userId
-            }) %>
             
               <div class="row">
                   <!-- Display Name -->
