@@ -10,48 +10,34 @@
   backgroundImage: globalImage
 }) %>
 
-<div class="row dashboardview">
-    <div class="col-lg-2 col-md-12">
-      <%- include("../modules/dashboard/dashboard-sidebar.ejs") %>
-    </div>
-    <div class="col-lg-10 col-md-12" style="padding: 20px;">
+<div class="dashboardview">
+    <%- include("../modules/dashboard/dashboard-sidebar.ejs") %>
+    <div class="main-content">
       <div class="row">
-        <div class="col-lg-4 col-md-6 col-sm-12">
-          <div class="card">
-            <div class="card-body">
-              <div class="stat-widget-one">
-                <div class="stat-icon dib"><i class="fas fa-exclamation-circle text-success border-success"></i></div>
-                <div class="stat-content dib">
-                  <div class="stat-text">Announcements</div>
-                  <div class="stat-digit"><%= announcementsCount %></div>
-                </div>
-              </div>
+        <div class="col-md-4">
+          <div class="stat-widget-one">
+            <div class="stat-icon dib"><i class="fas fa-exclamation-circle text-success border-success"></i></div>
+            <div class="stat-content dib">
+              <div class="stat-text">Announcements</div>
+              <div class="stat-digit"><%= announcementsCount %></div>
             </div>
           </div>
         </div>
-        <div class="col-lg-4 col-md-6 col-sm-12">
-          <div class="card">
-            <div class="card-body">
-              <div class="stat-widget-one">
-                <div class="stat-icon dib"><i class="fas fa-copy text-primary border-primary"></i></div>
-                <div class="stat-content dib">
-                  <div class="stat-text">Applications</div>
-                  <div class="stat-digit"><%= applicationsCount %></div>
-                </div>
-              </div>
+        <div class="col-md-4">
+          <div class="stat-widget-one">
+            <div class="stat-icon dib"><i class="fas fa-copy text-primary border-primary"></i></div>
+            <div class="stat-content dib">
+              <div class="stat-text">Applications</div>
+              <div class="stat-digit"><%= applicationsCount %></div>
             </div>
           </div>
         </div>
-        <div class="col-lg-4 col-md-6 col-sm-12">
-          <div class="card">
-            <div class="card-body">
-              <div class="stat-widget-one">
-                <div class="stat-icon dib"><i class="fas fa-server text-warning border-warning"></i></div>
-                <div class="stat-content dib">
-                  <div class="stat-text">Servers</div>
-                  <div class="stat-digit"><%= serversCount %></div>
-                </div>
-              </div>
+        <div class="col-md-4">
+          <div class="stat-widget-one">
+            <div class="stat-icon dib"><i class="fas fa-server text-warning border-warning"></i></div>
+            <div class="stat-content dib">
+              <div class="stat-text">Servers</div>
+              <div class="stat-digit"><%= serversCount %></div>
             </div>
           </div>
         </div>

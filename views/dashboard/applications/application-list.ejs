@@ -10,11 +10,9 @@
   backgroundImage: globalImage
 }) %>
 
-<div class="row dashboardview">
-    <div class="col-md-2">
-      <%- include("../../modules/dashboard/dashboard-sidebar.ejs") %>
-    </div>
-    <div class="col-md-10" style="padding: 10px;">
+<div class="dashboardview">
+    <%- include("../../modules/dashboard/dashboard-sidebar.ejs") %>
+    <div class="main-content">
         <a href="/dashboard/applications/create"><button type="button" class="btn btn-sm btn-info">Create Application</button></a>
         <%- include("../../partials/documentationLink.ejs", {
             doclink: "https://modularsoft.org/docs/products/zander/features/application/"
@@ -27,46 +25,46 @@
               content: req.cookies.alertContent
             }) %>
         <% } %>
-        <div class="row">
+        <ul class="item-list">
             <% if (apiData.success == false) { %>
-                <div class="col-12">
+                <li class="item-list-item">
                     <%- include("../../partials/alert.ejs", {
                       alertType: "danger",
                       content: apiData.message
                     }) %>
-                </div>
+                </li>
             <% } else { %>
                 <% apiData.data.forEach(function (application) { %>
-                    <div class="col-md-4 mb-4">
-                        <div class="card">
-                            <div class="card-body">
-                                <h5 class="card-title">
-                                    <i class="<%= application.displayIcon %>"></i> <%= application.displayName %>
-                                    <% if (application.applicationStatus === 1) { %>
-                                        <i class="fas fa-check-circle" style="color:green" title="Open"></i>
-                                    <% } else { %>
-                                        <i class="fas fa-times-circle" style="color: red;" title="Closed"></i>
-                                    <% } %>
-                                </h5>
-                                <p class="card-text"><%= application.description %></p>
-                                <p class="card-text"><strong>Requirements:</strong> <%= application.requirementsMarkdown %></p>
-                                <p class="card-text"><strong>Position:</strong> <%= application.position %></p>
-                                <a href="<%= application.redirectUrl %>" class="btn btn-info btn-sm" target="_blank">View Application</a>
-                                <hr>
-                                <div class="btn-group">
-                                    <a href="/dashboard/applications/edit?applicationId=<%= application.applicationId %>" class="btn btn-sm btn-warning">Edit</a>
-                                    <form action="<%= process.env.siteAddress %>/redirect/application/delete" method="post" class="d-inline">
-                                        <input type="hidden" name="applicationId" value="<%= application.applicationId %>">
-                                        <button class="btn btn-sm btn-danger" type="submit">Delete</button>
-                                    </form>
-                                </div>
+                    <li class="item-list-item">
+                        <div class="item-details">
+                            <h5><i class="<%= application.displayIcon %>"></i> <%= application.displayName %></h5>
+                            <p><%= application.description %></p>
+                            <p><strong>Requirements:</strong> <%= application.requirementsMarkdown %></p>
+                            <p><strong>Position:</strong> <%= application.position %></p>
+                            <p>
+                                <strong>Status:</strong>
+                                <% if (application.applicationStatus === 1) { %>
+                                    <span class="badge badge-success">Open</span>
+                                <% } else { %>
+                                    <span class="badge badge-danger">Closed</span>
+                                <% } %>
+                            </p>
+                            <a href="<%= application.redirectUrl %>" class="btn btn-info btn-sm" target="_blank">View Application</a>
+                        </div>
+                        <div class="item-actions">
+                            <div class="btn-group">
+                                <a href="/dashboard/applications/edit?applicationId=<%= application.applicationId %>" class="btn btn-sm btn-warning">Edit</a>
+                                <form action="<%= process.env.siteAddress %>/redirect/application/delete" method="post" class="d-inline">
+                                    <input type="hidden" name="applicationId" value="<%= application.applicationId %>">
+                                    <button class="btn btn-sm btn-danger" type="submit">Delete</button>
+                                </form>
                             </div>
                         </div>
-                    </div>
+                    </li>
                 <% }) %>
             <% } %>
-        </div>
+        </ul>
     </div>
-  </div>
+</div>
 
 <%- include("../../modules/footer.ejs") %>

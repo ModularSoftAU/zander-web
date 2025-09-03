@@ -4515,3 +4515,53 @@ h6.h1 {
     display: inline-block !important;
   }
 }
+
+/* Custom Styles */
+.dashboardview {
+  display: flex;
+  flex-wrap: wrap;
+}
+
+.sidebar {
+    height: 100%;
+    width: 250px;
+    position: fixed;
+    z-index: 1;
+    top: 0;
+    left: 0;
+    background-color: #f8f9fa;
+    overflow-x: hidden;
+    padding-top: 20px;
+    border-right: 1px solid #dee2e6;
+}
+
+.main-content {
+  margin-left: 250px;
+  padding: 20px;
+  width: calc(100% - 250px);
+}
+
+.item-list {
+  list-style: none;
+  padding: 0;
+}
+
+.item-list-item {
+  background-color: #fff;
+  border: 1px solid #dee2e6;
+  padding: 15px;
+  margin-bottom: 10px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-radius: 5px;
+}
+
+.item-list-item .item-details {
+  flex-grow: 1;
+}
+
+.item-list-item .item-actions {
+  flex-shrink: 0;
+  margin-left: 20px;
+}

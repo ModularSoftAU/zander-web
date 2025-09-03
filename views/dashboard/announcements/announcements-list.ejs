@@ -10,11 +10,9 @@
   backgroundImage: globalImage
 }) %>
 
-<div class="row dashboardview">
-    <div class="col-md-2">
-      <%- include("../../modules/dashboard/dashboard-sidebar.ejs") %>
-    </div>
-    <div class="col-md-10" style="padding: 20px;">
+<div class="dashboardview">
+    <%- include("../../modules/dashboard/dashboard-sidebar.ejs") %>
+    <div class="main-content">
         <a href="/dashboard/announcements/create"><button type="button" class="btn btn-sm btn-info">Create Announcement</button></a>
         <%- include("../../partials/documentationLink.ejs", {
             doclink: "https://modularsoft.org/docs/products/zander/features/announcement/"
@@ -28,46 +26,47 @@
             }) %>
         <% } %>
         
-        <div class="row">
+        <ul class="item-list">
             <% if (apiData.success == false) { %>
-                <div class="col-12">
+                <li class="item-list-item">
                     <%- include("../../partials/alert.ejs", {
                       alertType: "danger",
                       content: apiData.message
                     }) %>
-                </div>
+                </li>
             <% } else { %>
                 <% apiData.data.forEach(function (announcement) { %>
-                    <div class="col-md-4 mb-4">
-                        <div class="card">
-                            <div class="card-body">
-                                <h5 class="card-title">
-                                    <span class="badge badge-primary"><%= announcement.announcementType %></span>
-                                    <% if (announcement.enabled === 1) { %>
-                                        <i class="fas fa-check-circle" style="color:green" title="Enabled"></i>
-                                    <% } else { %>
-                                        <i class="fas fa-times-circle" style="color: red;" title="Disabled"></i>
-                                    <% } %>
-                                </h5>
-                                <p class="card-text"><strong>Body:</strong> <%- announcement.body %></p>
-                                <p class="card-text"><strong>Format:</strong> <%= announcement.colourMessageFormat %></p>
-                                <% if (announcement.link) { %>
-                                    <p class="card-text"><strong>Link:</strong> <a href="<%= announcement.link %>" target="_blank"><%= announcement.link %></a></p>
+                    <li class="item-list-item">
+                        <div class="item-details">
+                            <h5><span class="badge badge-primary"><%= announcement.announcementType %></span></h5>
+                            <p><strong>Body:</strong> <%- announcement.body %></p>
+                            <p><strong>Format:</strong> <%= announcement.colourMessageFormat %></p>
+                            <% if (announcement.link) { %>
+                                <p><strong>Link:</strong> <a href="<%= announcement.link %>" target="_blank"><%= announcement.link %></a></p>
+                            <% } %>
+                            <p>
+                                <strong>Status:</strong>
+                                <% if (announcement.enabled === 1) { %>
+                                    <span class="badge badge-success">Enabled</span>
+                                <% } else { %>
+                                    <span class="badge badge-danger">Disabled</span>
                                 <% } %>
-                                <div class="btn-group">
-                                    <a href="/dashboard/announcements/edit?announcementId=<%= announcement.announcementId %>" class="btn btn-sm btn-warning">Edit</a>
-                                    <form action="<%= process.env.siteAddress %>/redirect/announcement/delete" method="post" class="d-inline">
-                                        <input type="hidden" name="announcementId" value="<%= announcement.announcementId %>">
-                                        <button class="btn btn-sm btn-danger" type="submit">Delete</button>
-                                    </form>
-                                </div>
+                            </p>
+                        </div>
+                        <div class="item-actions">
+                            <div class="btn-group">
+                                <a href="/dashboard/announcements/edit?announcementId=<%= announcement.announcementId %>" class="btn btn-sm btn-warning">Edit</a>
+                                <form action="<%= process.env.siteAddress %>/redirect/announcement/delete" method="post" class="d-inline">
+                                    <input type="hidden" name="announcementId" value="<%= announcement.announcementId %>">
+                                    <button class="btn btn-sm btn-danger" type="submit">Delete</button>
+                                </form>
                             </div>
                         </div>
-                    </div>
+                    </li>
                 <% }) %>
             <% } %>
-        </div>
+        </ul>
     </div>
-  </div>
+</div>
 
 <%- include("../../modules/footer.ejs") %>

@@ -10,11 +10,9 @@
   backgroundImage: globalImage
 }) %>
 
-<div class="row dashboardview">
-    <div class="col-sm-2">
-      <%- include("../modules/dashboard/dashboard-sidebar.ejs") %>
-    </div>
-    <div class="col" style="padding: 20px;">
+<div class="dashboardview">
+    <%- include("../modules/dashboard/dashboard-sidebar.ejs") %>
+    <div class="main-content">
         <%- include("../partials/documentationLink.ejs", {
             doclink: "https://modularsoft.org/docs/products/zander/features/bridge/"
         }) %>
@@ -58,31 +56,29 @@
             }) %>
         <% } %>
         
-        <div class="row">
+        <ul class="item-list">
             <% if (apiData.success == false) { %>
-                <div class="col-12">
+                <li class="item-list-item">
                     <%- include("../partials/alert.ejs", {
                       alertType: "danger",
                       content: apiData.message
                     }) %>
-                </div>
+                </li>
             <% } else { %>
                 <% apiData.data.forEach(function (bridge) { %>
-                    <div class="col-md-4 mb-4">
-                        <div class="card">
-                            <div class="card-body">
-                                <h5 class="card-title">Command: <code><%= bridge.command %></code></h5>
-                                <p class="card-text"><strong>Target Server:</strong> <%= bridge.targetServer %></p>
-                                <p class="card-text"><strong>Processed:</strong> <%= bridge.processed %></p>
-                                <p class="card-text"><strong>Created:</strong> <%= moment(bridge.bridgeDateTime).startOf('hour').fromNow() %></p>
-                                <p class="card-text"><strong>Bridge ID:</strong> <%= bridge.bridgeId %></p>
-                            </div>
+                    <li class="item-list-item">
+                        <div class="item-details">
+                            <h5>Command: <code><%= bridge.command %></code></h5>
+                            <p><strong>Target Server:</strong> <%= bridge.targetServer %></p>
+                            <p><strong>Processed:</strong> <%= bridge.processed %></p>
+                            <p><strong>Created:</strong> <%= moment(bridge.bridgeDateTime).startOf('hour').fromNow() %></p>
+                            <p><strong>Bridge ID:</strong> <%= bridge.bridgeId %></p>
                         </div>
-                    </div>
+                    </li>
                 <% }) %>
             <% } %>
-        </div>
+        </ul>
     </div>
-  </div>
+</div>
 
 <%- include("../modules/footer.ejs") %>

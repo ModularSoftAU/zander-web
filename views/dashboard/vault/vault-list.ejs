@@ -10,11 +10,9 @@
   backgroundImage: globalImage
 }) %>
 
-<div class="row dashboardview">
-    <div class="col-md-2">
-      <%- include("../../modules/dashboard/dashboard-sidebar.ejs") %>
-    </div>
-    <div class="col-md-10" style="padding: 10px;">
+<div class="dashboardview">
+    <%- include("../../modules/dashboard/dashboard-sidebar.ejs") %>
+    <div class="main-content">
         <a href="/dashboard/vault/create"><button type="button" class="btn btn-sm btn-info">Create Vault Entry</button></a>
         <%- include("../../partials/documentationLink.ejs", {
             doclink: "https://modularsoft.org/docs/products/zander/features/vault/"
@@ -27,38 +25,37 @@
               content: req.cookies.alertContent
             }) %>
         <% } %>
-        <div class="row">
+        <ul class="item-list">
             <% if (apiData.success == false) { %>
-                <div class="col-12">
+                <li class="item-list-item">
                     <%- include("../../partials/alert.ejs", {
                       alertType: "danger",
                       content: apiData.message
                     }) %>
-                </div>
+                </li>
             <% } else { %>
                 <% apiData.data.forEach(function (vault) { %>
-                    <div class="col-md-4 mb-4">
-                        <div class="card">
-                            <div class="card-body">
-                                <h5 class="card-title"><%= vault.displayName %></h5>
-                                <p class="card-text"><%= vault.description %></p>
-                                <p class="card-text"><strong>Position:</strong> <%= vault.position %></p>
-                                <a href="<%= vault.redirectUrl %>" class="btn btn-info btn-sm" target="_blank">View Vault Item</a>
-                                <hr>
-                                <div class="btn-group">
-                                    <a href="/dashboard/vault/edit?vaultId=<%= vault.vaultId %>" class="btn btn-sm btn-warning">Edit</a>
-                                    <form action="<%= process.env.siteAddress %>/redirect/vault/delete" method="post" class="d-inline">
-                                        <input type="hidden" name="vaultId" value="<%= vault.vaultId %>">
-                                        <button class="btn btn-sm btn-danger" type="submit">Delete</button>
-                                    </form>
-                                </div>
+                    <li class="item-list-item">
+                        <div class="item-details">
+                            <h5><%= vault.displayName %></h5>
+                            <p><%= vault.description %></p>
+                            <p><strong>Position:</strong> <%= vault.position %></p>
+                            <a href="<%= vault.redirectUrl %>" class="btn btn-info btn-sm" target="_blank">View Vault Item</a>
+                        </div>
+                        <div class="item-actions">
+                            <div class="btn-group">
+                                <a href="/dashboard/vault/edit?vaultId=<%= vault.vaultId %>" class="btn btn-sm btn-warning">Edit</a>
+                                <form action="<%= process.env.siteAddress %>/redirect/vault/delete" method="post" class="d-inline">
+                                    <input type="hidden" name="vaultId" value="<%= vault.vaultId %>">
+                                    <button class="btn btn-sm btn-danger" type="submit">Delete</button>
+                                </form>
                             </div>
                         </div>
-                    </div>
+                    </li>
                 <% }) %>
             <% } %>
-        </div>
+        </ul>
     </div>
-  </div>
+</div>
 
 <%- include("../../modules/footer.ejs") %>
