@@ -47,7 +47,7 @@
                                     type: log.logType
                                 }) %>
                             </td>
-                            <td><span class="badge badge-primary"><%= log.logFeature %></span></td>
+                            <td><span class="badge text-bg-primary"><%= log.logFeature %></span></td>
                             <td><%= log.description %></td>
                             <td><%= moment(log.actionedDateTime).startOf('hour').fromNow() %></td>
                         </tr>

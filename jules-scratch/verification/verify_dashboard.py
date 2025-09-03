@@ -1,12 +1,12 @@
-from playwright.sync_api import sync_playwright
+from playwright.sync_api import Page, expect
 
-def run(playwright):
-    browser = playwright.chromium.launch(headless=True)
-    context = browser.new_context()
-    page = context.new_page()
+def test_dashboard_loads(page: Page):
+    # Navigate to the dashboard page
     page.goto("http://localhost:3000/dashboard")
-    page.screenshot(path="jules-scratch/verification/verification.png")
-    browser.close()
 
-with sync_playwright() as playwright:
-    run(playwright)
+    # Check if the "Announcements" card is visible
+    announcements_card = page.get_by_text("Announcements")
+    expect(announcements_card).to_be_visible()
+
+    # Take a screenshot
+    page.screenshot(path="jules-scratch/verification/dashboard.png")
