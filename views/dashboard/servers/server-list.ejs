@@ -27,44 +27,36 @@
             content: req.cookies.alertContent
           }) %>
       <% } %>
-      <div class="table-responsive">
-          <table class="table">
-                <thead>
-                    <tr>
-                        <th>Display Name</th>
-                        <th>Connection Address</th>
-                        <th>Type</th>
-                        <th>Action</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <% if (apiData.success == false) { %>
-                        <%- include("../../partials/alert.ejs", {
-                        alertType: "danger",
-                        content: apiData.message
-                        }) %>
-                    <% } else { %>
-                        <% apiData.data.forEach(function (server) { %>
-                            <tr>
-                                <td><%= server.displayName %></td>
-                                <td><%= server.serverConnectionAddress %></td>
-                                <td><%= server.serverType %></td>
-                                <td>
-                                    <div class="btn-group">
-                                        <a href="/dashboard/servers/edit?id=<%= server.serverId %>"><button class="btn btn-sm btn-warning" type="button">Edit</button></a>
-
-                                        <form action="<%= process.env.siteAddress %>/redirect/server/delete" method="post">
-                                            <input type="hidden" name="serverId" value="<%= server.serverId %>">
-                                            <button class="btn btn-sm btn-danger" type="submit">Delete</button>
-                                        </form>
-                                    </div>
-                                </td>
-                            </tr>
-                        <% }) %>
-                    <% } %>
-                </tbody>
-            </table>
-      </div>
+      <div class="row">
+        <% if (apiData.success == false) { %>
+            <div class="col-12">
+                <%- include("../../partials/alert.ejs", {
+                  alertType: "danger",
+                  content: apiData.message
+                }) %>
+            </div>
+        <% } else { %>
+            <% apiData.data.forEach(function (server) { %>
+                <div class="col-md-4 mb-4">
+                    <div class="card">
+                        <div class="card-body">
+                            <h5 class="card-title"><%= server.displayName %></h5>
+                            <p class="card-text"><strong>Type:</strong> <%= server.serverType %></p>
+                            <p class="card-text"><strong>Address:</strong> <%= server.serverConnectionAddress %></p>
+                            <p class="card-text"><strong>Position:</strong> <%= server.position %></p>
+                            <div class="btn-group">
+                                <a href="/dashboard/servers/edit?id=<%= server.serverId %>" class="btn btn-sm btn-warning">Edit</a>
+                                <form action="<%= process.env.siteAddress %>/redirect/server/delete" method="post" class="d-inline">
+                                    <input type="hidden" name="serverId" value="<%= server.serverId %>">
+                                    <button class="btn btn-sm btn-danger" type="submit">Delete</button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            <% }) %>
+        <% } %>
+    </div>
     </div>
   </div>
 

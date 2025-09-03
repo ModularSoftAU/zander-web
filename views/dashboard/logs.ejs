@@ -11,10 +11,10 @@
 }) %>
 
 <div class="row dashboardview">
-    <div class="col-sm-2">
+    <div class="col-lg-2 col-md-12">
       <%- include("../modules/dashboard/dashboard-sidebar.ejs") %>
     </div>
-    <div class="col" style="padding: 20px;">
+    <div class="col-lg-10 col-md-12" style="padding: 20px;">
         <% if (req.cookies.alertType) { %>
             <%- include("../partials/alert.ejs", {
               alertType: req.cookies.alertType,
@@ -22,40 +22,31 @@
             }) %>
         <% } %>
         
-        <table class="table">
-            <thead>
-                <tr>
-                    <th>Actioned User</th>
-                    <th>Type</th>
-                    <th>Feature</th>
-                    <th>Description</th>
-                    <th>DateTime</th>
-                </tr>
-            </thead>
-            <tbody>
-                <% if (apiData.success == false) { %>
+        <div class="row">
+            <% if (apiData.success == false) { %>
+                <div class="col-12">
                     <%- include("../partials/alert.ejs", {
                       alertType: "danger",
                       content: apiData.message
                     }) %>
-                <% } else { %>
-                    <% apiData.data.forEach(function (log) { %>
-                        <tr>
-                            <td><%= log.actionedUsername %></td>
-                            <td>
-                                <%- include("../partials/logPriorityBadge.ejs", {
-                                    type: log.logType
-                                }) %>
-                            </td>
-                            <td><span class="badge badge-primary"><%= log.logFeature %></span></td>
-                            <td><%= log.description %></td>
-                            <td><%= moment(log.actionedDateTime).startOf('hour').fromNow() %></td>
-                        </tr>
-                    <% }) %>
-                <% } %>
-            </tbody>
-        </table>
+                </div>
+            <% } else { %>
+                <% apiData.data.forEach(function (log) { %>
+                    <div class="col-md-6 mb-4">
+                        <div class="card">
+                            <div class="card-body">
+                                <h5 class="card-title"><%= log.description %></h5>
+                                <p class="card-text"><strong>User:</strong> <%= log.actionedUsername %></p>
+                                <p class="card-text"><strong>Type:</strong> <%- include("../partials/logPriorityBadge.ejs", { type: log.logType }) %></p>
+                                <p class="card-text"><strong>Feature:</strong> <span class="badge badge-primary"><%= log.logFeature %></span></p>
+                                <p class="card-text"><strong>Date:</strong> <%= moment(log.actionedDateTime).startOf('hour').fromNow() %></p>
+                            </div>
+                        </div>
+                    </div>
+                <% }) %>
+            <% } %>
+        </div>
     </div>
-  </div>
+</div>
 
 <%- include("../modules/footer.ejs") %>

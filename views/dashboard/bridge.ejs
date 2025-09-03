@@ -58,35 +58,30 @@
             }) %>
         <% } %>
         
-        <table class="table">
-            <thead>
-                <tr>
-                    <th>Bridge ID</th>
-                    <th>Command</th>
-                    <th>Target Server</th>
-                    <th>Processed</th>
-                    <th>Created</th>
-                </tr>
-            </thead>
-            <tbody>
-                <% if (apiData.success == false) { %>
+        <div class="row">
+            <% if (apiData.success == false) { %>
+                <div class="col-12">
                     <%- include("../partials/alert.ejs", {
                       alertType: "danger",
                       content: apiData.message
                     }) %>
-                <% } else { %>
-                    <% apiData.data.forEach(function (bridge) { %>
-                        <tr>
-                            <td><%= bridge.bridgeId %></td>
-                            <td><code><%= bridge.command %></code></td>
-                            <td><%= bridge.targetServer %></td>
-                            <td><%= bridge.processed %></td>
-                            <td><%= moment(bridge.bridgeDateTime).startOf('hour').fromNow() %></td>
-                        </tr>
-                    <% }) %>
-                <% } %>
-            </tbody>
-        </table>
+                </div>
+            <% } else { %>
+                <% apiData.data.forEach(function (bridge) { %>
+                    <div class="col-md-4 mb-4">
+                        <div class="card">
+                            <div class="card-body">
+                                <h5 class="card-title">Command: <code><%= bridge.command %></code></h5>
+                                <p class="card-text"><strong>Target Server:</strong> <%= bridge.targetServer %></p>
+                                <p class="card-text"><strong>Processed:</strong> <%= bridge.processed %></p>
+                                <p class="card-text"><strong>Created:</strong> <%= moment(bridge.bridgeDateTime).startOf('hour').fromNow() %></p>
+                                <p class="card-text"><strong>Bridge ID:</strong> <%= bridge.bridgeId %></p>
+                            </div>
+                        </div>
+                    </div>
+                <% }) %>
+            <% } %>
+        </div>
     </div>
   </div>
 

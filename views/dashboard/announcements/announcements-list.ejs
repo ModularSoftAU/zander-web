@@ -28,48 +28,45 @@
             }) %>
         <% } %>
         
-        <table class="table">
-            <thead>
-                <tr>
-                    <th>Type</th>
-                    <th>Format</th>
-                    <th>Enabled</th>
-                    <th>Action</th>
-                </tr>
-            </thead>
-            <tbody>
-                <% if (apiData.success == false) { %>
+        <div class="row">
+            <% if (apiData.success == false) { %>
+                <div class="col-12">
                     <%- include("../../partials/alert.ejs", {
                       alertType: "danger",
                       content: apiData.message
                     }) %>
-                <% } else { %>
-                    <% apiData.data.forEach(function (announcement) { %>
-                        <tr>
-                            <td><span class="badge badge-primary"><%= announcement.announcementType %></span></td>
-                            <td><%= announcement.colourMessageFormat %></td>
-                            <td>
-                                <% if (announcement.enabled === 1) { %>
-                                    <i class="fas fa-check-circle" style="color:green"></i>
-                                <% } else { %>
-                                    <i class="fas fa-times-circle" style="color: red;"></i>
+                </div>
+            <% } else { %>
+                <% apiData.data.forEach(function (announcement) { %>
+                    <div class="col-md-4 mb-4">
+                        <div class="card">
+                            <div class="card-body">
+                                <h5 class="card-title">
+                                    <span class="badge badge-primary"><%= announcement.announcementType %></span>
+                                    <% if (announcement.enabled === 1) { %>
+                                        <i class="fas fa-check-circle" style="color:green" title="Enabled"></i>
+                                    <% } else { %>
+                                        <i class="fas fa-times-circle" style="color: red;" title="Disabled"></i>
+                                    <% } %>
+                                </h5>
+                                <p class="card-text"><strong>Body:</strong> <%- announcement.body %></p>
+                                <p class="card-text"><strong>Format:</strong> <%= announcement.colourMessageFormat %></p>
+                                <% if (announcement.link) { %>
+                                    <p class="card-text"><strong>Link:</strong> <a href="<%= announcement.link %>" target="_blank"><%= announcement.link %></a></p>
                                 <% } %>
-                            </td>
-                            <td>
                                 <div class="btn-group">
-                                    <a href="/dashboard/announcements/edit?announcementId=<%= announcement.announcementId %>"><button class="btn btn-sm btn-warning" type="button">Edit</button></a>
-
-                                    <form action="<%= process.env.siteAddress %>/redirect/announcement/delete" method="post">
+                                    <a href="/dashboard/announcements/edit?announcementId=<%= announcement.announcementId %>" class="btn btn-sm btn-warning">Edit</a>
+                                    <form action="<%= process.env.siteAddress %>/redirect/announcement/delete" method="post" class="d-inline">
                                         <input type="hidden" name="announcementId" value="<%= announcement.announcementId %>">
                                         <button class="btn btn-sm btn-danger" type="submit">Delete</button>
                                     </form>
                                 </div>
-                            </td>
-                        </tr>
-                    <% }) %>
-                <% } %>
-            </tbody>
-        </table>
+                            </div>
+                        </div>
+                    </div>
+                <% }) %>
+            <% } %>
+        </div>
     </div>
   </div>
 
