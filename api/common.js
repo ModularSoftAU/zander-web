@@ -92,7 +92,6 @@ export async function isFeatureWebRouteEnabled(
       globalImage: await getGlobalImage(),
       announcementWeb: await getWebAnnouncement(),
     });
-    return false;
   }
   return true;
 }
@@ -203,7 +202,7 @@ export async function getGlobalImage() {
   // Now files is an Array of the name of the files in the folder and you can pick a random name inside of that array.
   let chosenFile = await files[Math.floor(Math.random() * files.length)];
 
-  return "/images/globalImages/" + chosenFile;
+  return "../../../images/globalImages/" + chosenFile;
 }
 
 /*
@@ -260,7 +259,7 @@ export async function hashEmail(email) {
 
 /*
     Sets two cookies (alertType and alertContent) with specified values and an expiration time of one second.
-    These cookies are set on the root path and are returned by the a function.
+    These cookies are set on the root path and are returned by the function.
 
     @param userId The ID of the user that actioned the log.
     @param logType The type of log.

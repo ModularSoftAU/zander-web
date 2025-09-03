@@ -4,7 +4,7 @@
     // Smart table for announcements
     $('#announcements-table').DataTable({
         initComplete: function () {
-            this.api().columns([0, 2]).every(function () { // Filter on Type and Enabled columns
+            this.api().columns([0, 1, 2]).every(function () { // Filter on Type, Format, and Enabled columns
                 var column = this;
                 var select = $('<select class="form-control"><option value=""></option></select>')
                     .appendTo($(column.footer()).empty())

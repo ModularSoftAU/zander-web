@@ -40,7 +40,7 @@
                     <% apiData.data.forEach(function (announcement) { %>
                         <tr>
                             <td><span class="badge badge-primary"><%= announcement.announcementType %></span></td>
-                            <td><%- announcement.body %></td>
+                            <td><%- announcement.colourMessageFormat %></td>
                             <td>
                                 <% if (announcement.enabled === 1) { %>
                                     <span class="badge badge-success">Enabled</span>

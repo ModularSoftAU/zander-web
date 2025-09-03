@@ -4553,3 +4553,35 @@ h6.h1 {
     border-bottom: 1px solid #dee2e6;
     text-align: right;
 }
+
+.overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: 1000;
+}
+
+@media (max-width: 768px) {
+    .sidebar {
+        position: fixed;
+        left: -250px;
+        z-index: 1002;
+    }
+
+    .sidebar.toggled {
+        left: 0;
+    }
+
+    .main-content {
+        margin-left: 0;
+        width: 100%;
+    }
+
+    .overlay.active {
+        display: block;
+    }
+}
