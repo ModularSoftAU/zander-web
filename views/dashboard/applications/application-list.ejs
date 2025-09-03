@@ -15,7 +15,7 @@
       <%- include("../../modules/dashboard/dashboard-sidebar.ejs") %>
     </div>
     <div class="col-md-10" style="padding: 10px;">
-        <a href="/dashboard/application/create"><button type="button" class="btn btn-sm btn-info">Create Application</button></a>
+        <a href="/dashboard/applications/create"><button type="button" class="btn btn-sm btn-info">Create Application</button></a>
         <%- include("../../partials/documentationLink.ejs", {
             doclink: "https://modularsoft.org/docs/products/zander/features/application/"
         }) %>
@@ -58,11 +58,10 @@
                             </td>
                             <td>
                                 <div class="btn-group">
-                                    <a href="/dashboard/application/edit?applicationId=<%= application.applicationId %>"><button class="btn btn-sm btn-warning" type="button">Edit</button></a>
+                                    <a href="/dashboard/applications/edit?applicationId=<%= application.applicationId %>"><button class="btn btn-sm btn-warning" type="button">Edit</button></a>
 
                                     <form action="<%= process.env.siteAddress %>/redirect/application/delete" method="post">
                                         <input type="hidden" name="applicationId" value="<%= application.applicationId %>">
-                                        <input type="hidden" name="actioningUser" value="<%= req.session.user.userId %>">
                                         <button class="btn btn-sm btn-danger" type="submit">Delete</button>
                                     </form>
                                 </div>
