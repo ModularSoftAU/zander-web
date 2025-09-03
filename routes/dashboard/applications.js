@@ -17,10 +17,11 @@ export default function dashboardApplicationsSiteRoute(
   // Applications
   //
   app.get("/dashboard/applications", async function (req, res) {
-    if (!isFeatureWebRouteEnabled(features.applications, req, res, features))
+    if (!(await isFeatureWebRouteEnabled(features.applications, req, res, features)))
       return;
 
-    if (!hasPermission("zander.web.application", req, res, features)) return;
+    if (!(await hasPermission("zander.web.application", req, res, features)))
+      return;
 
     const fetchURL = `${process.env.siteAddress}/api/application/get`;
     const response = await fetch(fetchURL, {
@@ -40,10 +41,11 @@ export default function dashboardApplicationsSiteRoute(
   });
 
   app.get("/dashboard/applications/create", async function (req, res) {
-    if (!isFeatureWebRouteEnabled(features.applications, req, res, features))
+    if (!(await isFeatureWebRouteEnabled(features.applications, req, res, features)))
       return;
 
-    if (!hasPermission("zander.web.application", req, res, features)) return;
+    if (!(await hasPermission("zander.web.application", req, res, features)))
+      return;
 
     return res.view("dashboard/applications/application-editor", {
       pageTitle: `Dashboard - Application Creator`,
@@ -57,10 +59,11 @@ export default function dashboardApplicationsSiteRoute(
   });
 
   app.get("/dashboard/applications/edit", async function (req, res) {
-    if (!isFeatureWebRouteEnabled(features.applications, req, res, features))
+    if (!(await isFeatureWebRouteEnabled(features.applications, req, res, features)))
       return;
 
-    if (!hasPermission("zander.web.application", req, res, features)) return;
+    if (!(await hasPermission("zander.web.application", req, res, features)))
+      return;
 
     const applicationId = req.query.applicationId;
     const fetchURL = `${process.env.siteAddress}/api/application/get?id=${applicationId}`;
