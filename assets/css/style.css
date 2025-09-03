@@ -242,17 +242,18 @@ input[type="email"]:focus, input[type="password"]:focus, input[type="text"]:focu
   letter-spacing: 1px;
 }
 
-.overlay:before {
-  content: "";
+.overlay {
+  position: relative;
+}
+
+.overlay::before {
+  content: '';
   position: absolute;
-  left: 0;
   top: 0;
-  bottom: 0;
+  left: 0;
   right: 0;
-  width: 100%;
-  height: 100%;
-  opacity: 0.9;
-  background: #2f508c;
+  bottom: 0;
+  background-color: rgba(47, 80, 140, 0.9);
 }
 
 .overly-2 {
@@ -485,15 +486,6 @@ a:focus {
   min-height: 550px;
 }
 
-.banner:before{
-  content: '';
-  position: absolute;
-  top: 0;
-  right: 0;
-  left: 0;
-  bottom: 0;
-  background: rgba(255, 255, 255, 0.8);
-}
 
 .banner .block {
   padding: 80px 0px 160px;
