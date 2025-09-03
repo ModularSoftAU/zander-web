@@ -10,7 +10,7 @@
   backgroundImage: globalImage
 }) %>
 
-<div class="dashboardview">
+<div id="dashboard-wrapper">
     <%- include("../../modules/dashboard/dashboard-sidebar.ejs") %>
     <div class="main-content">
       <a href="/dashboard/servers/create"><button type="button" class="btn btn-sm btn-info">Create a Server</button></a>
@@ -25,37 +25,48 @@
             content: req.cookies.alertContent
           }) %>
       <% } %>
-      <ul class="item-list">
-        <% if (apiData.success == false) { %>
-            <li class="item-list-item">
-                <%- include("../../partials/alert.ejs", {
-                  alertType: "danger",
-                  content: apiData.message
-                }) %>
-            </li>
-        <% } else { %>
-            <% apiData.data.forEach(function (server) { %>
-                <li class="item-list-item">
-                    <div class="item-details">
-                        <h5><%= server.displayName %></h5>
-                        <p><strong>Type:</strong> <%= server.serverType %></p>
-                        <p><strong>Address:</strong> <%= server.serverConnectionAddress %></p>
-                        <p><strong>Position:</strong> <%= server.position %></p>
-                    </div>
-                    <div class="item-actions">
-                        <div class="btn-group">
-                            <a href="/dashboard/servers/edit?id=<%= server.serverId %>" class="btn btn-sm btn-warning">Edit</a>
-                            <form action="<%= process.env.siteAddress %>/redirect/server/delete" method="post" class="d-inline">
-                                <input type="hidden" name="serverId" value="<%= server.serverId %>">
-                                <button class="btn btn-sm btn-danger" type="submit">Delete</button>
-                            </form>
-                        </div>
-                    </div>
-                </li>
-            <% }) %>
-        <% } %>
-    </ul>
+      <div class="table-responsive">
+          <table id="servers-table" class="table table-striped table-bordered">
+                <thead>
+                    <tr>
+                        <th>Display Name</th>
+                        <th>Connection Address</th>
+                        <th>Type</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <% if (apiData.success == true) { %>
+                        <% apiData.data.forEach(function (server) { %>
+                            <tr>
+                                <td><%= server.displayName %></td>
+                                <td><%= server.serverConnectionAddress %></td>
+                                <td><%= server.serverType %></td>
+                                <td>
+                                    <div class="btn-group">
+                                        <a href="/dashboard/servers/edit?id=<%= server.serverId %>" class="btn btn-sm btn-warning">Edit</a>
+                                        <form action="<%= process.env.siteAddress %>/redirect/server/delete" method="post" class="d-inline">
+                                            <input type="hidden" name="serverId" value="<%= server.serverId %>">
+                                            <button class="btn btn-sm btn-danger" type="submit">Delete</button>
+                                        </form>
+                                    </div>
+                                </td>
+                            </tr>
+                        <% }) %>
+                    <% } %>
+                </tbody>
+                <tfoot>
+                    <tr>
+                        <th>Display Name</th>
+                        <th>Connection Address</th>
+                        <th>Type</th>
+                        <th>Action</th>
+                    </tr>
+                </tfoot>
+            </table>
+      </div>
     </div>
 </div>
 
 <%- include("../../modules/footer.ejs") %>
+<script src="/js/dashboard-tables-init.js"></script>

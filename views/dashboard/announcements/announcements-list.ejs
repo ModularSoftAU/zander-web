@@ -10,7 +10,7 @@
   backgroundImage: globalImage
 }) %>
 
-<div class="dashboardview">
+<div id="dashboard-wrapper">
     <%- include("../../modules/dashboard/dashboard-sidebar.ejs") %>
     <div class="main-content">
         <a href="/dashboard/announcements/create"><button type="button" class="btn btn-sm btn-info">Create Announcement</button></a>
@@ -26,47 +26,52 @@
             }) %>
         <% } %>
         
-        <ul class="item-list">
-            <% if (apiData.success == false) { %>
-                <li class="item-list-item">
-                    <%- include("../../partials/alert.ejs", {
-                      alertType: "danger",
-                      content: apiData.message
-                    }) %>
-                </li>
-            <% } else { %>
-                <% apiData.data.forEach(function (announcement) { %>
-                    <li class="item-list-item">
-                        <div class="item-details">
-                            <h5><span class="badge badge-primary"><%= announcement.announcementType %></span></h5>
-                            <p><strong>Body:</strong> <%- announcement.body %></p>
-                            <p><strong>Format:</strong> <%= announcement.colourMessageFormat %></p>
-                            <% if (announcement.link) { %>
-                                <p><strong>Link:</strong> <a href="<%= announcement.link %>" target="_blank"><%= announcement.link %></a></p>
-                            <% } %>
-                            <p>
-                                <strong>Status:</strong>
+        <table id="announcements-table" class="table table-striped table-bordered">
+            <thead>
+                <tr>
+                    <th>Type</th>
+                    <th>Format</th>
+                    <th>Enabled</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                <% if (apiData.success == true) { %>
+                    <% apiData.data.forEach(function (announcement) { %>
+                        <tr>
+                            <td><span class="badge badge-primary"><%= announcement.announcementType %></span></td>
+                            <td><%- announcement.body %></td>
+                            <td>
                                 <% if (announcement.enabled === 1) { %>
                                     <span class="badge badge-success">Enabled</span>
                                 <% } else { %>
                                     <span class="badge badge-danger">Disabled</span>
                                 <% } %>
-                            </p>
-                        </div>
-                        <div class="item-actions">
-                            <div class="btn-group">
-                                <a href="/dashboard/announcements/edit?announcementId=<%= announcement.announcementId %>" class="btn btn-sm btn-warning">Edit</a>
-                                <form action="<%= process.env.siteAddress %>/redirect/announcement/delete" method="post" class="d-inline">
-                                    <input type="hidden" name="announcementId" value="<%= announcement.announcementId %>">
-                                    <button class="btn btn-sm btn-danger" type="submit">Delete</button>
-                                </form>
-                            </div>
-                        </div>
-                    </li>
-                <% }) %>
-            <% } %>
-        </ul>
+                            </td>
+                            <td>
+                                <div class="btn-group">
+                                    <a href="/dashboard/announcements/edit?announcementId=<%= announcement.announcementId %>" class="btn btn-sm btn-warning">Edit</a>
+                                    <form action="<%= process.env.siteAddress %>/redirect/announcement/delete" method="post" class="d-inline">
+                                        <input type="hidden" name="announcementId" value="<%= announcement.announcementId %>">
+                                        <button class="btn btn-sm btn-danger" type="submit">Delete</button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                    <% }) %>
+                <% } %>
+            </tbody>
+            <tfoot>
+                <tr>
+                    <th>Type</th>
+                    <th>Format</th>
+                    <th>Enabled</th>
+                    <th>Action</th>
+                </tr>
+            </tfoot>
+        </table>
     </div>
 </div>
 
 <%- include("../../modules/footer.ejs") %>
+<script src="/js/dashboard-tables-init.js"></script>

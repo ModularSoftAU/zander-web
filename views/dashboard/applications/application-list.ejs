@@ -10,7 +10,7 @@
   backgroundImage: globalImage
 }) %>
 
-<div class="dashboardview">
+<div id="dashboard-wrapper">
     <%- include("../../modules/dashboard/dashboard-sidebar.ejs") %>
     <div class="main-content">
         <a href="/dashboard/applications/create"><button type="button" class="btn btn-sm btn-info">Create Application</button></a>
@@ -25,46 +25,55 @@
               content: req.cookies.alertContent
             }) %>
         <% } %>
-        <ul class="item-list">
-            <% if (apiData.success == false) { %>
-                <li class="item-list-item">
-                    <%- include("../../partials/alert.ejs", {
-                      alertType: "danger",
-                      content: apiData.message
-                    }) %>
-                </li>
-            <% } else { %>
-                <% apiData.data.forEach(function (application) { %>
-                    <li class="item-list-item">
-                        <div class="item-details">
-                            <h5><i class="<%= application.displayIcon %>"></i> <%= application.displayName %></h5>
-                            <p><%= application.description %></p>
-                            <p><strong>Requirements:</strong> <%= application.requirementsMarkdown %></p>
-                            <p><strong>Position:</strong> <%= application.position %></p>
-                            <p>
-                                <strong>Status:</strong>
+        <table id="applications-table" class="table table-striped table-bordered">
+            <thead>
+                <tr>
+                    <th></th>
+                    <th>Name</th>
+                    <th>Description</th>
+                    <th>Status</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                <% if (apiData.success == true) { %>
+                    <% apiData.data.forEach(function (application) { %>
+                        <tr>
+                            <td><i class="<%= application.displayIcon %>"></i></td>
+                            <td><%= application.displayName %></td>
+                            <td><%= application.description %></td>
+                            <td>
                                 <% if (application.applicationStatus === 1) { %>
                                     <span class="badge badge-success">Open</span>
                                 <% } else { %>
                                     <span class="badge badge-danger">Closed</span>
                                 <% } %>
-                            </p>
-                            <a href="<%= application.redirectUrl %>" class="btn btn-info btn-sm" target="_blank">View Application</a>
-                        </div>
-                        <div class="item-actions">
-                            <div class="btn-group">
-                                <a href="/dashboard/applications/edit?applicationId=<%= application.applicationId %>" class="btn btn-sm btn-warning">Edit</a>
-                                <form action="<%= process.env.siteAddress %>/redirect/application/delete" method="post" class="d-inline">
-                                    <input type="hidden" name="applicationId" value="<%= application.applicationId %>">
-                                    <button class="btn btn-sm btn-danger" type="submit">Delete</button>
-                                </form>
-                            </div>
-                        </div>
-                    </li>
-                <% }) %>
-            <% } %>
-        </ul>
+                            </td>
+                            <td>
+                                <div class="btn-group">
+                                    <a href="/dashboard/applications/edit?applicationId=<%= application.applicationId %>" class="btn btn-sm btn-warning">Edit</a>
+                                    <form action="<%= process.env.siteAddress %>/redirect/application/delete" method="post" class="d-inline">
+                                        <input type="hidden" name="applicationId" value="<%= application.applicationId %>">
+                                        <button class="btn btn-sm btn-danger" type="submit">Delete</button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                    <% }) %>
+                <% } %>
+            </tbody>
+            <tfoot>
+                <tr>
+                    <th></th>
+                    <th>Name</th>
+                    <th>Description</th>
+                    <th>Status</th>
+                    <th>Action</th>
+                </tr>
+            </tfoot>
+        </table>
     </div>
 </div>
 
 <%- include("../../modules/footer.ejs") %>
+<script src="/js/dashboard-tables-init.js"></script>

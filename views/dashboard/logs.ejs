@@ -10,7 +10,7 @@
   backgroundImage: globalImage
 }) %>
 
-<div class="dashboardview">
+<div id="dashboard-wrapper">
     <%- include("../modules/dashboard/dashboard-sidebar.ejs") %>
     <div class="main-content">
         <% if (req.cookies.alertType) { %>
@@ -20,29 +20,45 @@
             }) %>
         <% } %>
         
-        <ul class="item-list">
-            <% if (apiData.success == false) { %>
-                <li class="item-list-item">
-                    <%- include("../partials/alert.ejs", {
-                      alertType: "danger",
-                      content: apiData.message
-                    }) %>
-                </li>
-            <% } else { %>
-                <% apiData.data.forEach(function (log) { %>
-                    <li class="item-list-item">
-                        <div class="item-details">
-                            <h5><%= log.description %></h5>
-                            <p><strong>User:</strong> <%= log.actionedUsername %></p>
-                            <p><strong>Type:</strong> <%- include("../partials/logPriorityBadge.ejs", { type: log.logType }) %></p>
-                            <p><strong>Feature:</strong> <span class="badge badge-primary"><%= log.logFeature %></span></p>
-                            <p><strong>Date:</strong> <%= moment(log.actionedDateTime).startOf('hour').fromNow() %></p>
-                        </div>
-                    </li>
-                <% }) %>
-            <% } %>
-        </ul>
+        <table id="logs-table" class="table table-striped table-bordered">
+            <thead>
+                <tr>
+                    <th>Actioned User</th>
+                    <th>Type</th>
+                    <th>Feature</th>
+                    <th>Description</th>
+                    <th>DateTime</th>
+                </tr>
+            </thead>
+            <tbody>
+                <% if (apiData.success == true) { %>
+                    <% apiData.data.forEach(function (log) { %>
+                        <tr>
+                            <td><%= log.actionedUsername %></td>
+                            <td>
+                                <%- include("../partials/logPriorityBadge.ejs", {
+                                    type: log.logType
+                                }) %>
+                            </td>
+                            <td><span class="badge badge-primary"><%= log.logFeature %></span></td>
+                            <td><%= log.description %></td>
+                            <td><%= moment(log.actionedDateTime).startOf('hour').fromNow() %></td>
+                        </tr>
+                    <% }) %>
+                <% } %>
+            </tbody>
+            <tfoot>
+                <tr>
+                    <th>Actioned User</th>
+                    <th>Type</th>
+                    <th>Feature</th>
+                    <th>Description</th>
+                    <th>DateTime</th>
+                </tr>
+            </tfoot>
+        </table>
     </div>
 </div>
 
 <%- include("../modules/footer.ejs") %>
+<script src="/js/dashboard-tables-init.js"></script>

@@ -10,7 +10,7 @@
   backgroundImage: globalImage
 }) %>
 
-<div class="dashboardview">
+<div id="dashboard-wrapper">
     <%- include("../../modules/dashboard/dashboard-sidebar.ejs") %>
     <div class="main-content">
         <a href="/dashboard/vault/create"><button type="button" class="btn btn-sm btn-info">Create Vault Entry</button></a>
@@ -25,37 +25,34 @@
               content: req.cookies.alertContent
             }) %>
         <% } %>
-        <ul class="item-list">
-            <% if (apiData.success == false) { %>
-                <li class="item-list-item">
-                    <%- include("../../partials/alert.ejs", {
-                      alertType: "danger",
-                      content: apiData.message
-                    }) %>
-                </li>
-            <% } else { %>
-                <% apiData.data.forEach(function (vault) { %>
-                    <li class="item-list-item">
-                        <div class="item-details">
-                            <h5><%= vault.displayName %></h5>
-                            <p><%= vault.description %></p>
-                            <p><strong>Position:</strong> <%= vault.position %></p>
-                            <a href="<%= vault.redirectUrl %>" class="btn btn-info btn-sm" target="_blank">View Vault Item</a>
-                        </div>
-                        <div class="item-actions">
-                            <div class="btn-group">
-                                <a href="/dashboard/vault/edit?vaultId=<%= vault.vaultId %>" class="btn btn-sm btn-warning">Edit</a>
-                                <form action="<%= process.env.siteAddress %>/redirect/vault/delete" method="post" class="d-inline">
-                                    <input type="hidden" name="vaultId" value="<%= vault.vaultId %>">
-                                    <button class="btn btn-sm btn-danger" type="submit">Delete</button>
-                                </form>
-                            </div>
-                        </div>
-                    </li>
-                <% }) %>
-            <% } %>
-        </ul>
+        <table id="vault-table" class="table table-striped table-bordered">
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                <% if (apiData.success == true) { %>
+                    <% apiData.data.forEach(function (vault) { %>
+                        <tr>
+                            <td><%= vault.displayName %></td>
+                            <td>
+                                <div class="btn-group">
+                                    <a href="/dashboard/vault/edit?vaultId=<%= vault.vaultId %>" class="btn btn-sm btn-warning">Edit</a>
+                                    <form action="<%= process.env.siteAddress %>/redirect/vault/delete" method="post" class="d-inline">
+                                        <input type="hidden" name="vaultId" value="<%= vault.vaultId %>">
+                                        <button class="btn btn-sm btn-danger" type="submit">Delete</button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                    <% }) %>
+                <% } %>
+            </tbody>
+        </table>
     </div>
 </div>
 
 <%- include("../../modules/footer.ejs") %>
+<script src="/js/dashboard-tables-init.js"></script>

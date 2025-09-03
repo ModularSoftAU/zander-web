@@ -10,7 +10,7 @@
   backgroundImage: globalImage
 }) %>
 
-<div class="dashboardview">
+<div id="dashboard-wrapper">
     <%- include("../modules/dashboard/dashboard-sidebar.ejs") %>
     <div class="main-content">
         <%- include("../partials/documentationLink.ejs", {
@@ -56,29 +56,32 @@
             }) %>
         <% } %>
         
-        <ul class="item-list">
-            <% if (apiData.success == false) { %>
-                <li class="item-list-item">
-                    <%- include("../partials/alert.ejs", {
-                      alertType: "danger",
-                      content: apiData.message
-                    }) %>
-                </li>
-            <% } else { %>
-                <% apiData.data.forEach(function (bridge) { %>
-                    <li class="item-list-item">
-                        <div class="item-details">
-                            <h5>Command: <code><%= bridge.command %></code></h5>
-                            <p><strong>Target Server:</strong> <%= bridge.targetServer %></p>
-                            <p><strong>Processed:</strong> <%= bridge.processed %></p>
-                            <p><strong>Created:</strong> <%= moment(bridge.bridgeDateTime).startOf('hour').fromNow() %></p>
-                            <p><strong>Bridge ID:</strong> <%= bridge.bridgeId %></p>
-                        </div>
-                    </li>
-                <% }) %>
-            <% } %>
-        </ul>
+        <table id="bridge-table" class="table table-striped table-bordered">
+            <thead>
+                <tr>
+                    <th>Bridge ID</th>
+                    <th>Command</th>
+                    <th>Target Server</th>
+                    <th>Processed</th>
+                    <th>Created</th>
+                </tr>
+            </thead>
+            <tbody>
+                <% if (apiData.success == true) { %>
+                    <% apiData.data.forEach(function (bridge) { %>
+                        <tr>
+                            <td><%= bridge.bridgeId %></td>
+                            <td><code><%= bridge.command %></code></td>
+                            <td><%= bridge.targetServer %></td>
+                            <td><%= bridge.processed %></td>
+                            <td><%= moment(bridge.bridgeDateTime).startOf('hour').fromNow() %></td>
+                        </tr>
+                    <% }) %>
+                <% } %>
+            </tbody>
+        </table>
     </div>
 </div>
 
 <%- include("../modules/footer.ejs") %>
+<script src="/js/dashboard-tables-init.js"></script>
