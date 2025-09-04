@@ -1716,3 +1716,23 @@ a:focus {
 .stats-overlay .counter-stat i {
     color: rgba(255, 255, 255, 0.5) !important;
 }
+
+.banner:before{
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 0;
+  left: 0;
+  bottom: 0;
+  background: rgba(47, 80, 140, 0.9);
+}
+
+.page-title .block {
+    background: rgba(255, 255, 255, 0.8);
+    padding: 20px;
+    border-radius: 5px;
+}
+
+.page-title .block h1 {
+    color: #222;
+}
