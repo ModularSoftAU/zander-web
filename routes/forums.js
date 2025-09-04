@@ -21,7 +21,11 @@ export default function forumSiteRoutes(
     if (!(await isFeatureWebRouteEnabled(features.forums, req, res, features))) return;
 
     try {
-        const categories = await forumsController.getCategories(req.session.user);
+        const [categories, globalImage, announcementWeb] = await Promise.all([
+            forumsController.getCategories(req.session.user),
+            getGlobalImage(),
+            getWebAnnouncement()
+        ]);
 
         return res.view("forums/index", {
             pageTitle: `Forums`,
@@ -29,12 +33,14 @@ export default function forumSiteRoutes(
             req: req,
             features: features,
             categories: categories,
-            globalImage: await getGlobalImage(),
-            announcementWeb: await getWebAnnouncement(),
+            globalImage: globalImage,
+            announcementWeb: announcementWeb,
         });
     } catch (error) {
         console.error('Error in /forums route:', error);
-        return res.view("session/error", { pageTitle: "Server Error", config, req, features, error: error, globalImage: await getGlobalImage(), announcementWeb: await getWebAnnouncement() });
+        // We can't guarantee getGlobalImage or getWebAnnouncement will work if the error is widespread
+        // So we render the error page with nulls for that data.
+        return res.view("session/error", { pageTitle: "Server Error", config, req, features, error: error, globalImage: null, announcementWeb: null });
     }
   });
 
@@ -46,17 +52,15 @@ export default function forumSiteRoutes(
         if (isNaN(categoryId)) {
             return res.view("session/notFound", { pageTitle: "Not Found", config, req, features, globalImage: await getGlobalImage(), announcementWeb: await getWebAnnouncement() });
         }
-        const result = await forumsController.getDiscussionsByCategory(categoryId, req.session.user);
+
+        const [result, globalImage, announcementWeb] = await Promise.all([
+            forumsController.getDiscussionsByCategory(categoryId, req.session.user),
+            getGlobalImage(),
+            getWebAnnouncement()
+        ]);
 
         if (result.error) {
-            return res.view("session/noPermission", {
-                pageTitle: "No Permission",
-                config: config,
-                req: req,
-                features: features,
-                globalImage: await getGlobalImage(),
-                announcementWeb: await getWebAnnouncement(),
-            });
+            return res.view("session/noPermission", { pageTitle: "No Permission", config, req, features, globalImage, announcementWeb });
         }
 
         const canCreate = await forumsController.hasPermission(req.session.user, `forums.discussion.create.${categoryId}`);
@@ -69,12 +73,12 @@ export default function forumSiteRoutes(
             category: result.category,
             discussions: result.discussions,
             canCreate: canCreate,
-            globalImage: await getGlobalImage(),
-            announcementWeb: await getWebAnnouncement(),
+            globalImage: globalImage,
+            announcementWeb: announcementWeb,
         });
     } catch (error) {
         console.error(`Error in /forums/categories/:categoryId route:`, error);
-        return res.view("session/error", { pageTitle: "Server Error", config, req, features, error: error, globalImage: await getGlobalImage(), announcementWeb: await getWebAnnouncement() });
+        return res.view("session/error", { pageTitle: "Server Error", config, req, features, error: error, globalImage: null, announcementWeb: null });
     }
   });
 
@@ -91,9 +95,14 @@ export default function forumSiteRoutes(
             return res.view("session/noPermission", { pageTitle: "No Permission", config, req, features, globalImage: await getGlobalImage(), announcementWeb: await getWebAnnouncement() });
         }
 
-        const category = await forumsController.getCategory(categoryId, req.session.user);
+        const [category, globalImage, announcementWeb] = await Promise.all([
+            forumsController.getCategory(categoryId, req.session.user),
+            getGlobalImage(),
+            getWebAnnouncement()
+        ]);
+
         if (!category) {
-            return res.view("session/notFound", { pageTitle: "Not Found", config, req, features, globalImage: await getGlobalImage(), announcementWeb: await getWebAnnouncement() });
+            return res.view("session/notFound", { pageTitle: "Not Found", config, req, features, globalImage, announcementWeb });
         }
 
         return res.view("forums/new-discussion", {
@@ -102,12 +111,12 @@ export default function forumSiteRoutes(
             req: req,
             features: features,
             category: category,
-            globalImage: await getGlobalImage(),
-            announcementWeb: await getWebAnnouncement(),
+            globalImage: globalImage,
+            announcementWeb: announcementWeb,
         });
     } catch (error) {
         console.error(`Error in /forums/categories/:categoryId/discussions/new route:`, error);
-        return res.view("session/error", { pageTitle: "Server Error", config, req, features, error: error, globalImage: await getGlobalImage(), announcementWeb: await getWebAnnouncement() });
+        return res.view("session/error", { pageTitle: "Server Error", config, req, features, error: error, globalImage: null, announcementWeb: null });
     }
   });
 
@@ -131,7 +140,11 @@ export default function forumSiteRoutes(
         }
 
         if (validationErrors.length > 0) {
-            const category = await forumsController.getCategory(categoryId, req.session.user);
+            const [category, globalImage, announcementWeb] = await Promise.all([
+                forumsController.getCategory(categoryId, req.session.user),
+                getGlobalImage(),
+                getWebAnnouncement()
+            ]);
             return res.view("forums/new-discussion", {
                 pageTitle: "New Discussion",
                 config: config,
@@ -141,22 +154,25 @@ export default function forumSiteRoutes(
                 errors: validationErrors,
                 title: title,
                 body: body,
-                globalImage: await getGlobalImage(),
-                announcementWeb: await getWebAnnouncement(),
+                globalImage: globalImage,
+                announcementWeb: announcementWeb,
             });
         }
 
         const result = await forumsController.createDiscussion(categoryId, title, body, req.session.user);
 
         if (result.error) {
-            // Re-render form with a more generic error
-            const category = await forumsController.getCategory(categoryId, req.session.user);
-            return res.view("forums/new-discussion", { pageTitle: "New Discussion", config, req, features, category: category, errors: [result.error], title, body, globalImage: await getGlobalImage(), announcementWeb: await getWebAnnouncement() });
+            const [category, globalImage, announcementWeb] = await Promise.all([
+                forumsController.getCategory(categoryId, req.session.user),
+                getGlobalImage(),
+                getWebAnnouncement()
+            ]);
+            return res.view("forums/new-discussion", { pageTitle: "New Discussion", config, req, features, category: category, errors: [result.error], title, body, globalImage, announcementWeb });
         }
         return res.redirect(`/forums/discussions/${result.uuid}`);
     } catch (error) {
         console.error(`Error in POST /forums/discussions route:`, error);
-        return res.view("session/error", { pageTitle: "Server Error", config, req, features, error: error, globalImage: await getGlobalImage(), announcementWeb: await getWebAnnouncement() });
+        return res.view("session/error", { pageTitle: "Server Error", config, req, features, error: error, globalImage: null, announcementWeb: null });
     }
   });
 
@@ -244,17 +260,15 @@ export default function forumSiteRoutes(
 
     try {
         const { discussionUuid } = req.params;
-        const result = await forumsController.getDiscussion(discussionUuid, req.session.user);
+
+        const [result, globalImage, announcementWeb] = await Promise.all([
+            forumsController.getDiscussion(discussionUuid, req.session.user),
+            getGlobalImage(),
+            getWebAnnouncement()
+        ]);
 
         if (result.error) {
-            return res.view("session/noPermission", {
-                pageTitle: "No Permission",
-                config: config,
-                req: req,
-                features: features,
-                globalImage: await getGlobalImage(),
-                announcementWeb: await getWebAnnouncement(),
-            });
+            return res.view("session/noPermission", { pageTitle: "No Permission", config, req, features, globalImage, announcementWeb });
         }
 
         const canLock = await forumsController.hasPermission(req.session.user, 'forums.discussion.lock');
@@ -271,12 +285,12 @@ export default function forumSiteRoutes(
             canLock,
             canSticky,
             canArchive,
-            globalImage: await getGlobalImage(),
-            announcementWeb: await getWebAnnouncement(),
+            globalImage: globalImage,
+            announcementWeb: announcementWeb,
         });
     } catch (error) {
         console.error(`Error in /forums/discussions/:discussionUuid route:`, error);
-        return res.view("session/error", { pageTitle: "Server Error", config, req, features, error: error, globalImage: await getGlobalImage(), announcementWeb: await getWebAnnouncement() });
+        return res.view("session/error", { pageTitle: "Server Error", config, req, features, error: error, globalImage: null, announcementWeb: null });
     }
   });
 }
