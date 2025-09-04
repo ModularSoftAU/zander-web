@@ -17,7 +17,7 @@ export default function forumSiteRoutes(
   lang
 ) {
   app.get("/forums", async function (req, res) {
-    isFeatureWebRouteEnabled(features.forums, req, res, features);
+    if (!(await isFeatureWebRouteEnabled(features.forums, req, res, features))) return;
 
     const categories = await forumsController.getCategories(req.session.user);
 
@@ -33,7 +33,7 @@ export default function forumSiteRoutes(
   });
 
   app.get("/forums/categories/:categoryId", async function (req, res) {
-    isFeatureWebRouteEnabled(features.forums, req, res, features);
+    if (!(await isFeatureWebRouteEnabled(features.forums, req, res, features))) return;
 
     const { categoryId } = req.params;
     const result = await forumsController.getDiscussionsByCategory(categoryId, req.session.user);
@@ -67,7 +67,7 @@ export default function forumSiteRoutes(
 
   // Route to show the new discussion form
   app.get("/forums/categories/:categoryId/discussions/new", async function (req, res) {
-    isFeatureWebRouteEnabled(features.forums, req, res, features);
+    if (!(await isFeatureWebRouteEnabled(features.forums, req, res, features))) return;
     const { categoryId } = req.params;
     const canCreate = await forumsController.hasPermission(req.session.user, `forums.discussion.create.${categoryId}`);
     if (!canCreate) {
@@ -92,7 +92,7 @@ export default function forumSiteRoutes(
 
   // Route to handle the creation of a new discussion
   app.post("/forums/discussions", async function (req, res) {
-    isFeatureWebRouteEnabled(features.forums, req, res, features);
+    if (!(await isFeatureWebRouteEnabled(features.forums, req, res, features))) return;
     const { categoryId, title, body } = req.body;
     const canCreate = await forumsController.hasPermission(req.session.user, `forums.discussion.create.${categoryId}`);
     if (!canCreate) {
@@ -110,7 +110,7 @@ export default function forumSiteRoutes(
 
   // Route to handle the creation of a new reply
   app.post("/forums/replies", async function (req, res) {
-    isFeatureWebRouteEnabled(features.forums, req, res, features);
+    if (!(await isFeatureWebRouteEnabled(features.forums, req, res, features))) return;
     const { discussionId, body } = req.body;
     // Permission to reply is implicitly checked in createReply by seeing if the discussion is locked
     const result = await forumsController.createReply(discussionId, body, req.session.user);
@@ -123,7 +123,7 @@ export default function forumSiteRoutes(
   });
 
   app.post("/forums/discussions/:discussionId/lock", async function (req, res) {
-    isFeatureWebRouteEnabled(features.forums, req, res, features);
+    if (!(await isFeatureWebRouteEnabled(features.forums, req, res, features))) return;
     const canLock = await forumsController.hasPermission(req.session.user, 'forums.discussion.lock');
     if (!canLock) {
         return res.view("session/noPermission", { pageTitle: "No Permission", config, req, features, globalImage: await getGlobalImage(), announcementWeb: await getWebAnnouncement() });
@@ -134,7 +134,7 @@ export default function forumSiteRoutes(
   });
 
   app.post("/forums/discussions/:discussionId/sticky", async function (req, res) {
-    isFeatureWebRouteEnabled(features.forums, req, res, features);
+    if (!(await isFeatureWebRouteEnabled(features.forums, req, res, features))) return;
     const canSticky = await forumsController.hasPermission(req.session.user, 'forums.discussion.sticky');
     if (!canSticky) {
         return res.view("session/noPermission", { pageTitle: "No Permission", config, req, features, globalImage: await getGlobalImage(), announcementWeb: await getWebAnnouncement() });
@@ -145,7 +145,7 @@ export default function forumSiteRoutes(
   });
 
   app.post("/forums/revisions/:revisionId/archive", async function (req, res) {
-    isFeatureWebRouteEnabled(features.forums, req, res, features);
+    if (!(await isFeatureWebRouteEnabled(features.forums, req, res, features))) return;
     const canArchive = await forumsController.hasPermission(req.session.user, 'forums.post.archive');
     if (!canArchive) {
         return res.view("session/noPermission", { pageTitle: "No Permission", config, req, features, globalImage: await getGlobalImage(), announcementWeb: await getWebAnnouncement() });
@@ -156,7 +156,7 @@ export default function forumSiteRoutes(
   });
 
   app.get("/forums/discussions/:discussionUuid", async function (req, res) {
-    isFeatureWebRouteEnabled(features.forums, req, res, features);
+    if (!(await isFeatureWebRouteEnabled(features.forums, req, res, features))) return;
 
     const { discussionUuid } = req.params;
     const result = await forumsController.getDiscussion(discussionUuid, req.session.user);
