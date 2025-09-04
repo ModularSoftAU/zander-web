@@ -251,12 +251,10 @@ input[type="email"]:focus, input[type="password"]:focus, input[type="text"]:focu
   bottom: 0;
   background-color: #2f508c;
   opacity: 0.9;
-  z-index: -1;
 }
 
 .page-title .container, .banner .container {
   position: relative;
-  z-index: 1;
 }
 
 .overly-2 {
@@ -615,6 +613,7 @@ a:focus {
 
 .features {
   margin-top: -70px;
+  position: relative;
 }
 
 .feature-item {
