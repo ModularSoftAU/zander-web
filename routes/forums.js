@@ -2,7 +2,7 @@ import { createRequire } from "module";
 const require = createRequire(import.meta.url);
 
 import { getWebAnnouncement } from "../controllers/announcementController.js";
-import { isFeatureWebRouteEnabled, getGlobalImage, hasPermission, setBannerCookie } from "../../api/common.js";
+import { isFeatureWebRouteEnabled, getGlobalImage, hasPermission, setBannerCookie } from "../api/common.js";
 import validator from 'validator';
 
 import * as forumsController from '../controllers/forumsController.js';
