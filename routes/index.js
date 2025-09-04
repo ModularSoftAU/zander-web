@@ -30,6 +30,10 @@ export default function applicationSiteRoutes(
   policySiteRoutes(app, config, features);
   redirectSiteRoutes(app, config, features);
 
+  app.get("/favicon.ico", async (req, reply) => {
+    return reply.code(204).send();
+  });
+
   app.get("/", async function (req, res) {
     const fetchURL = `${process.env.siteAddress}/api/web/statistics`;
     const response = await fetch(fetchURL, {

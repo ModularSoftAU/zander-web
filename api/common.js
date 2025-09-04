@@ -83,7 +83,7 @@ export async function isFeatureWebRouteEnabled(
   features
 ) {
   if (!isFeatureEnabled) {
-    return res.view("session/featureDisabled", {
+    res.view("session/featureDisabled", {
       pageTitle: `Feature Disabled`,
       config: config,
       req: req,
@@ -92,6 +92,7 @@ export async function isFeatureWebRouteEnabled(
       globalImage: await getGlobalImage(),
       announcementWeb: await getWebAnnouncement(),
     });
+    return false;
   }
   return true;
 }
@@ -116,7 +117,7 @@ export function isLoggedIn(req) {
 */
 export async function hasPermission(permissionNode, req, res, features) {
   if (!isLoggedIn(req) || !req.session.user || !req.session.user.permissions) {
-    return res.view("session/noPermission", {
+    res.view("session/noPermission", {
       pageTitle: `Access Restricted`,
       config: config,
       req: req,
@@ -125,6 +126,7 @@ export async function hasPermission(permissionNode, req, res, features) {
       globalImage: await getGlobalImage(),
       announcementWeb: await getWebAnnouncement(),
     });
+    return false;
   } else {
     const userPermissions = req.session.user.permissions;
 
@@ -133,7 +135,7 @@ export async function hasPermission(permissionNode, req, res, features) {
     }
 
     if (!hasSpecificPerm(permissionNode, userPermissions)) {
-      return res.view("session/noPermission", {
+      res.view("session/noPermission", {
         pageTitle: `Access Restricted`,
         config: config,
         req: req,
@@ -142,6 +144,7 @@ export async function hasPermission(permissionNode, req, res, features) {
         globalImage: await getGlobalImage(),
         announcementWeb: await getWebAnnouncement(),
       });
+      return false;
     }
     return true;
   }
