@@ -27,8 +27,8 @@ export default function forumSiteRoutes(
         req: req,
         features: features,
         categories: categories,
-        globalImage: await getGlobalImage(),
-        announcementWeb: await getWebAnnouncement(),
+        globalImage: null,
+        announcementWeb: null,
     });
   });
 
