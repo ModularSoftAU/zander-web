@@ -83,7 +83,7 @@ export async function isFeatureWebRouteEnabled(
   features
 ) {
   if (!isFeatureEnabled) {
-    res.view("session/featureDisabled", {
+    return res.view("session/featureDisabled", {
       pageTitle: `Feature Disabled`,
       config: config,
       req: req,
