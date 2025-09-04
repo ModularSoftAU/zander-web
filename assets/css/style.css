@@ -657,7 +657,7 @@ a:focus {
 
 .counter-stat i {
   display: block;
-  color: rgba(255, 255, 255, 0.06);
+  color: rgba(255, 255, 255, 0.5);
   font-size: 70px;
   position: absolute;
   left: 0px;
