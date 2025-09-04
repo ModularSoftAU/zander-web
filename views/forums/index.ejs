@@ -1,0 +1,38 @@
+<%- include('../modules/header'); %>
+<%- include('../modules/navigationBar'); %>
+<%- include('../partials/miniHeader', {
+    pageTitle: pageTitle,
+    pageSubTitle: null
+}); %>
+
+<div class="container">
+    <div class="row">
+        <div class="col-lg-12">
+            <div class="card">
+                <div class="card-body">
+                    <h4 class="card-title">Forum Categories</h4>
+                    <div class="list-group">
+                        <% if (categories && categories.length > 0) { %>
+                            <% categories.forEach(function(category) { %>
+                                <a href="/forums/categories/<%= category.categoryId %>" class="list-group-item list-group-item-action flex-column align-items-start">
+                                    <div class="d-flex w-100 justify-content-between">
+                                        <h5 class="mb-1"><%= category.title %></h5>
+                                        <!-- <small>3 days ago</small> -->
+                                    </div>
+                                    <p class="mb-1"><%= category.description %></p>
+                                    <!-- <small>Donec id elit non mi porta.</small> -->
+                                </a>
+                            <% }); %>
+                        <% } else { %>
+                            <div class="alert alert-info">
+                                There are no forum categories to display.
+                            </div>
+                        <% } %>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<%- include('../modules/footer'); %>

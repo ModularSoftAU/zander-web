@@ -1,0 +1,50 @@
+<%- include('../modules/header'); %>
+<%- include('../modules/navigationBar'); %>
+<%- include('../partials/miniHeader', {
+    pageTitle: pageTitle,
+    pageSubTitle: "Discussions"
+}); %>
+
+<div class="container">
+    <div class="row">
+        <div class="col-lg-12">
+            <div class="card">
+                <div class="card-body">
+                    <% if (canCreate) { %>
+                        <a href="/forums/categories/<%= category.categoryId %>/discussions/new" class="btn btn-primary mb-3">New Discussion</a>
+                    <% } %>
+                    <div class="list-group">
+                        <% if (discussions && discussions.length > 0) { %>
+                            <% discussions.forEach(function(discussion) { %>
+                                <a href="/forums/discussions/<%= discussion.uuid %>" class="list-group-item list-group-item-action">
+                                    <div class="d-flex w-100 justify-content-between">
+                                        <h5 class="mb-1">
+                                            <% if (discussion.stickied) { %>
+                                                <i class="fa fa-thumb-tack text-success" title="Stickied"></i>
+                                            <% } %>
+                                            <% if (discussion.locked) { %>
+                                                <i class="fa fa-lock text-danger" title="Locked"></i>
+                                            <% } %>
+                                            <%= discussion.title %>
+                                        </h5>
+                                        <small>Last reply: <%= new Date(discussion.lastReplyAt || discussion.createdAt).toLocaleString() %></small>
+                                    </div>
+                                    <p class="mb-1">
+                                        Started by <%= discussion.authorName %> on <%= new Date(discussion.createdAt).toLocaleDateString() %>.
+                                        Replies: <%= discussion.replyCount || 0 %>.
+                                    </p>
+                                </a>
+                            <% }); %>
+                        <% } else { %>
+                            <div class="alert alert-info">
+                                There are no discussions in this category yet.
+                            </div>
+                        <% } %>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<%- include('../modules/footer'); %>

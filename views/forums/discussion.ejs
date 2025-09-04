@@ -1,0 +1,78 @@
+<%- include('../modules/header'); %>
+<%- include('../modules/navigationBar'); %>
+<%- include('../partials/miniHeader', {
+    pageTitle: discussion.title,
+    pageSubTitle: "Viewing discussion"
+}); %>
+
+<div class="container">
+    <div class="row">
+        <div class="col-lg-12">
+            <div class="card mb-3">
+                <div class="card-body d-flex justify-content-end">
+                    <% if (canLock) { %>
+                        <form action="/forums/discussions/<%= discussion.discussionId %>/lock" method="POST" class="me-2">
+                            <button type="submit" class="btn btn-sm <%= discussion.locked ? 'btn-success' : 'btn-warning' %>">
+                                <%= discussion.locked ? 'Unlock' : 'Lock' %>
+                            </button>
+                        </form>
+                    <% } %>
+                    <% if (canSticky) { %>
+                        <form action="/forums/discussions/<%= discussion.discussionId %>/sticky" method="POST">
+                            <button type="submit" class="btn btn-sm <%= discussion.stickied ? 'btn-success' : 'btn-warning' %>">
+                                <%= discussion.stickied ? 'Unsticky' : 'Sticky' %>
+                            </button>
+                        </form>
+                    <% } %>
+                </div>
+            </div>
+
+            <!-- Render the main discussion post -->
+            <%- include('_post', { post: discussion.originalPost, canArchive: canArchive }) %>
+
+            <hr>
+            <h4 class="mb-3">Replies</h4>
+
+            <!-- Render the replies -->
+            <% if (replies && replies.length > 0) { %>
+                <% replies.forEach(function(reply) { %>
+                    <%- include('_post', { post: reply, canArchive: canArchive }) %>
+                <% }); %>
+            <% } else { %>
+                <div class="alert alert-info">
+                    There are no replies to this discussion yet.
+                </div>
+            <% } %>
+
+            <hr>
+            <h4 class="mb-3">Post a Reply</h4>
+
+            <!-- Reply Form -->
+            <% if (req.session.user && !discussion.locked) { %>
+                <div class="card">
+                    <div class="card-body">
+                        <form action="/forums/replies" method="POST">
+                            <input type="hidden" name="discussionId" value="<%= discussion.discussionId %>">
+                            <div class="form-group">
+                                <textarea name="body" id="reply-editor"></textarea>
+                            </div>
+                            <button type="submit" class="btn btn-primary mt-3">Submit Reply</button>
+                        </form>
+                    </div>
+                </div>
+                <%- include('../partials/summerNoteEditor', { editorElementName: 'reply-editor', editorPOSTElementName: 'body', editorElementText: '' }) %>
+            <% } else if (discussion.locked) { %>
+                <div class="alert alert-danger">
+                    This discussion is locked. You cannot post a reply.
+                </div>
+            <% } else { %>
+                <div class="alert alert-warning">
+                    You must be <a href="/login">logged in</a> to post a reply.
+                </div>
+            <% } %>
+
+        </div>
+    </div>
+</div>
+
+<%- include('../modules/footer'); %>

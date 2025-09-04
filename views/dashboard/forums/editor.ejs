@@ -1,0 +1,63 @@
+<%- include('../../modules/header'); %>
+<%- include('../../modules/dashboard/dashboard-sidebar'); %>
+
+<div class="content-wrap">
+    <div class="main">
+        <div class="container-fluid">
+            <div class="row">
+                <div class="col-lg-8 p-r-0 title-margin-right">
+                    <div class="page-header">
+                        <div class="page-title">
+                            <h1><%= category ? 'Edit' : 'New' %> Forum Category</h1>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-4 p-l-0 title-margin-left">
+                    <div class="page-header">
+                        <div class="page-title">
+                            <ol class="breadcrumb">
+                                <li class="breadcrumb-item"><a href="/dashboard">Dashboard</a></li>
+                                <li class="breadcrumb-item"><a href="/dashboard/forums">Forums</a></li>
+                                <li class="breadcrumb-item active"><%= category ? 'Edit' : 'New' %></li>
+                            </ol>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <section id="main-content">
+                <div class="row">
+                    <div class="col-lg-12">
+                        <div class="card">
+                            <div class="card-body">
+                                <form action="<%= category ? '/dashboard/forums/' + category.categoryId : '/dashboard/forums' %>" method="POST">
+                                    <div class="form-group">
+                                        <label for="title">Title</label>
+                                        <input type="text" class="form-control" id="title" name="title" value="<%= category ? category.title : '' %>" required>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="description">Description</label>
+                                        <textarea class="form-control" id="description" name="description" rows="3"><%= category ? category.description : '' %></textarea>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="position">Position</label>
+                                        <input type="number" class="form-control" id="position" name="position" value="<%= category ? category.position : 0 %>" required>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="requiredPermission">Required Permission Node</label>
+                                        <input type="text" class="form-control" id="requiredPermission" name="requiredPermission" value="<%= category ? category.requiredPermission : '' %>">
+                                        <small class="form-text text-muted">Optional. If set, only users with this permission node can see the category.</small>
+                                    </div>
+                                    <button type="submit" class="btn btn-primary"><%= category ? 'Update' : 'Create' %> Category</button>
+                                    <a href="/dashboard/forums" class="btn btn-secondary">Cancel</a>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </div>
+</div>
+
+<%- include('../../modules/footer'); %>

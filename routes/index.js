@@ -9,6 +9,7 @@ import sessionRoutes from "./sessionRoutes.js";
 import policySiteRoutes from "./policyRoutes.js";
 import redirectSiteRoutes from "./redirectRoutes.js";
 import profileSiteRoutes from "./profileRoutes.js";
+import forumSiteRoutes from "./forums.js";
 
 const rankData = require("../ranks.json");
 
@@ -25,6 +26,7 @@ export default function applicationSiteRoutes(
   dashboardSiteRoutes(app, client, fetch, moment, config, db, features, lang);
   sessionRoutes(app, client, fetch, moment, config, db, features, lang);
   profileSiteRoutes(app, client, fetch, moment, config, db, features, lang);
+  forumSiteRoutes(app, client, fetch, moment, config, db, features, lang);
   policySiteRoutes(app, config, features);
   redirectSiteRoutes(app, config, features);
 

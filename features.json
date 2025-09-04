@@ -1,4 +1,5 @@
 {
+  "forums": true,
   "announcements": true,
   "applications": true,
   "discord": {

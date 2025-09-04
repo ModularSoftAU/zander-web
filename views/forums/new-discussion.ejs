@@ -1,0 +1,32 @@
+<%- include('../modules/header'); %>
+<%- include('../modules/navigationBar'); %>
+<%- include('../partials/miniHeader', {
+    pageTitle: "Create New Discussion",
+    pageSubTitle: "in " + category.title
+}); %>
+
+<div class="container">
+    <div class="row">
+        <div class="col-lg-12">
+            <div class="card">
+                <div class="card-body">
+                    <form action="/forums/discussions" method="POST">
+                        <input type="hidden" name="categoryId" value="<%= category.categoryId %>">
+                        <div class="form-group">
+                            <label for="title">Discussion Title</label>
+                            <input type="text" class="form-control" id="title" name="title" required>
+                        </div>
+                        <div class="form-group mt-3">
+                            <label for="body-editor">Content</label>
+                            <textarea name="body" id="body-editor"></textarea>
+                        </div>
+                        <button type="submit" class="btn btn-primary mt-3">Create Discussion</button>
+                    </form>
+                </div>
+            </div>
+            <%- include('../partials/summerNoteEditor', { editorElementName: 'body-editor', editorPOSTElementName: 'body', editorElementText: '' }) %>
+        </div>
+    </div>
+</div>
+
+<%- include('../modules/footer'); %>

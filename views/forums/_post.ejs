@@ -1,0 +1,50 @@
+<%
+// Determine the base URL for profile pictures
+const profilePicBaseUrl = "https://craftatar.com/avatars/";
+// TODO: Add support for Gravatar based on user preference
+const avatarUrl = profilePicBaseUrl + post.authorUuid + "?size=100&overlay=true";
+%>
+<div class="card mb-3" id="post-<%= post.postId %>">
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-2 text-center">
+                <img src="<%= avatarUrl %>" class="rounded-circle mb-2" alt="<%= post.authorName %>'s avatar" width="80" height="80">
+                <h5 class="card-title mb-1"><a href="/profile/<%= post.authorUuid %>"><%= post.authorName %></a></h5>
+                <div class="user-ranks">
+                    <% if (post.authorRanks && post.authorRanks.length > 0) { %>
+                        <% post.authorRanks.forEach(function(rank) { %>
+                            <span class="badge" style="background-color: <%= rank.rankBadgeColour %>; color: <%= rank.rankTextColour %>;">
+                                <%= rank.displayName %>
+                            </span>
+                        <% }); %>
+                    <% } %>
+                </div>
+                <!-- <p class="text-muted small">Posts: 123</p> -->
+            </div>
+            <div class="col-md-10">
+                <div class="d-flex justify-content-between">
+                    <p class="text-muted small">
+                        Posted on <%= new Date(post.createdAt).toLocaleString() %>
+                    </p>
+                    <div>
+                        <% if (canArchive) { %>
+                            <form action="/forums/revisions/<%= post.revisionId %>/archive" method="POST" class="d-inline">
+                                <button type="submit" class="btn btn-danger btn-sm">Archive</button>
+                            </form>
+                        <% } %>
+                        <!-- TODO: Add Edit/Quote/Report buttons here based on permissions -->
+                        <a href="#post-<%= post.postId %>" class="card-link small">#<%= post.postId %></a>
+                    </div>
+                </div>
+                <hr>
+                <div class="post-body">
+                    <%- post.body %>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="card-footer text-muted small">
+        <!-- TODO: Add signature here if implemented -->
+        Last edited: <%= new Date(post.updatedAt).toLocaleString() %>
+    </div>
+</div>
