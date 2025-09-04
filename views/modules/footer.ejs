@@ -2,7 +2,7 @@
 <footer class="footer section gray-bg">
 	<div class="container">
 		<div class="row">
-			<div class="col-lg-3 mr-auto col-sm-6">
+			<div class="col-lg-3 me-auto col-sm-6">
 				<div class="widget mb-5 mb-lg-0">
 					<div class="logo mb-4">
 						<img src="images/siteLogo.png" alt="" class="img-fluid">
@@ -124,29 +124,13 @@
 
 	<!-- Tabbing in profiles -->
 	<script>
-		$(document).ready(function(){
-			$('#myTab a').on('click', function (e) {
-				e.preventDefault()
-				$(this).tab('show')
-			})
-		});
-	</script>
+		const triggerTabList = document.querySelectorAll('#myTab a')
+		triggerTabList.forEach(triggerEl => {
+			const tabTrigger = new bootstrap.Tab(triggerEl)
 
-	<script>
-		var tabTriggerList = document.querySelectorAll('#myTab a')
-		var tabContentList = document.querySelectorAll('.tab-content .tab-pane')
-		tabTriggerList.forEach(function (tabTrigger) {
-			tabTrigger.addEventListener('click', function (event) {
+			triggerEl.addEventListener('click', event => {
 				event.preventDefault()
-				var tabTriggerTarget = document.querySelector(tabTrigger.getAttribute('href'))
-				tabContentList.forEach(function (tabContent) {
-					tabContent.classList.remove('active', 'show')
-				})
-				tabTriggerList.forEach(function (tabTrigger) {
-					tabTrigger.classList.remove('active')
-				})
-				tabTrigger.classList.add('active')
-				tabTriggerTarget.classList.add('active', 'show')
+				tabTrigger.show()
 			})
 		})
 	</script>
@@ -154,7 +138,7 @@
 	<!-- Tooltips -->
 	<script>
 		$(document).ready(function(){
-			$('[data-toggle="tooltip"]').tooltip();
+			$('[data-bs-toggle="tooltip"]').tooltip();
 		});
 	</script>
   </body>

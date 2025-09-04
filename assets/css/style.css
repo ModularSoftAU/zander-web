@@ -242,17 +242,26 @@ input[type="email"]:focus, input[type="password"]:focus, input[type="text"]:focu
   letter-spacing: 1px;
 }
 
-.overlay:before {
-  content: "";
+.hero-overlay {
+  position: relative;
+}
+.hero-overlay::before {
+  content: '';
   position: absolute;
-  left: 0;
   top: 0;
-  bottom: 0;
+  left: 0;
   right: 0;
-  width: 100%;
-  height: 100%;
+  bottom: 0;
+  background-color: #2f508c;
   opacity: 0.9;
-  background: #2f508c;
+  z-index: 1;
+}
+.hero-overlay > .container, .hero-overlay > .row {
+    position: relative;
+    z-index: 3;
+}
+.counter-stat i {
+    color: rgba(255, 255, 255, 0.5) !important;
 }
 
 .overly-2 {
@@ -611,6 +620,8 @@ a:focus {
 
 .features {
   margin-top: -70px;
+  position: relative;
+  z-index: 2;
 }
 
 .feature-item {

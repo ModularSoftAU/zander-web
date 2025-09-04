@@ -31,7 +31,7 @@
                     
             <div class="row">
                 <!-- Server Name -->
-                <div class="form-group col">
+                <div class="mb-3 col">
                     <label for="displayName">Server Display Name</label>
 
                     <% if (type === 'create') { %>
@@ -51,7 +51,7 @@
                 </div>
 
                 <!-- Server Connection Address -->
-                <div class="form-group col">
+                <div class="mb-3 col">
                     <label for="serverConnectionAddress">Server Connection Address</label>
 
                     <% if (type === 'create') { %>
@@ -73,18 +73,18 @@
 
             <div class="row">
                 <!-- Server Position -->
-                <div class="form-group col">
+                <div class="mb-3 col">
                     <label for="serverType">Server Type</label>
 
                     <% if (type === 'create') { %>
-                        <select class="form-control" name="serverType">
+                        <select class="form-select" name="serverType">
                             <option value="INTERNAL">Internal</option>
                             <option value="EXTERNAL">External</option>
                             <option value="VERIFICATION">Verification</option>
                         </select>
                     <% } %>
                     <% if (type === 'edit') { %>
-                        <select class="form-control" name="serverType">
+                        <select class="form-select" name="serverType">
                             <option value="INTERNAL" <% if (serverApiData.serverType === 'INTERNAL') { %> selected <% } %>>Internal</option>
                             <option value="EXTERNAL" <% if (serverApiData.serverType === 'EXTERNAL') { %> selected <% } %>>External</option>
                             <option value="VERIFICATION" <% if (serverApiData.serverType === 'VERIFICATION') { %> selected <% } %>>Verification</option>
@@ -93,7 +93,7 @@
                 </div>
                 
                 <!-- Server Position -->
-                <div class="form-group col">
+                <div class="mb-3 col">
                     <label for="position">Server Position</label>
 
                     <% if (type === 'create') { %>
