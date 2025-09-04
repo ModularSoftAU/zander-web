@@ -153,7 +153,7 @@ export async function getDiscussion(discussionUuid, user) {
         WHERE d.uuid = ?
     `;
     const discussionRows = await query(discussionSql, [discussionUuid]);
-    if (discussionRows.length === 0) return { error: 'Not Found' };
+    if (discussionRows.length === 0) return { error: 'Discussion not found.' };
     const discussionInfo = discussionRows[0];
 
     if (discussionInfo.requiredPermission) {
@@ -196,7 +196,7 @@ export async function getDiscussion(discussionUuid, user) {
 
     // 3. Get the original post
     const originalPost = await getPostDetails({ ...discussionInfo });
-    if (!originalPost) return { error: 'Could not load original post' };
+    if (!originalPost) return { error: 'Could not load the original post. It may be corrupted or archived.' };
 
     // 4. Get all replies
     const repliesSql = `SELECT * FROM forums_replies WHERE discussionId = ? ORDER BY createdAt ASC`;
@@ -269,7 +269,7 @@ export async function createDiscussion(categoryId, title, body, user) {
     } catch (error) {
         if (connection) await new Promise((resolve, reject) => connection.rollback(() => resolve()));
         console.error("Error creating discussion:", error);
-        return { error: 'Database error while creating discussion.' };
+        return { error: 'A database error occurred while creating the discussion.' };
     } finally {
         if (connection) connection.release();
     }
@@ -313,7 +313,7 @@ export async function createReply(discussionId, body, user) {
     } catch (error) {
         if (connection) await new Promise((resolve, reject) => connection.rollback(() => resolve()));
         console.error("Error creating reply:", error);
-        return { error: 'Database error while creating reply.' };
+        return { error: 'A database error occurred while creating the reply.' };
     } finally {
         if (connection) connection.release();
     }
@@ -405,7 +405,7 @@ export async function deleteCategory(categoryId) {
     } catch (error) {
         if (connection) await new Promise((resolve, reject) => connection.rollback(() => resolve()));
         console.error(`Error deleting category ${categoryId}:`, error);
-        return { error: 'Database error' };
+        return { error: 'A database error occurred while deleting the category.' };
     } finally {
         if (connection) connection.release();
     }
