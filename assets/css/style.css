@@ -242,7 +242,7 @@ input[type="email"]:focus, input[type="password"]:focus, input[type="text"]:focu
   letter-spacing: 1px;
 }
 
-.page-title::before, .banner::before {
+.overlay::before {
   content: '';
   position: absolute;
   top: 0;
@@ -251,10 +251,12 @@ input[type="email"]:focus, input[type="password"]:focus, input[type="text"]:focu
   bottom: 0;
   background-color: #2f508c;
   opacity: 0.9;
+  z-index: 1;
 }
 
-.page-title .container, .banner .container {
-  position: relative;
+.overlay > * {
+    position: relative;
+    z-index: 2;
 }
 
 .overly-2 {
