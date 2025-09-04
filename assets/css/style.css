@@ -258,7 +258,7 @@ input[type="email"]:focus, input[type="password"]:focus, input[type="text"]:focu
 }
 .hero-overlay > .container, .hero-overlay > .row {
     position: relative;
-    z-index: 2;
+    z-index: 3;
 }
 .counter-stat i {
     color: rgba(255, 255, 255, 0.5) !important;
@@ -621,6 +621,7 @@ a:focus {
 .features {
   margin-top: -70px;
   position: relative;
+  z-index: 2;
 }
 
 .feature-item {
