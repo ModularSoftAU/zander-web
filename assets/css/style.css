@@ -620,6 +620,7 @@ a:focus {
 
 .features {
   margin-top: -70px;
+  position: relative;
 }
 
 .feature-item {
