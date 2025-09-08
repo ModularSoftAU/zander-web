@@ -110,6 +110,27 @@ export class ShopDirectoryCommand extends Command {
         });
       }
 
+      // Find the most frequent item for the thumbnail
+      const itemCounts = new Map();
+      inStockShops.forEach(shop => {
+        const itemName = shop.itemData.name;
+        if (itemName) {
+          itemCounts.set(itemName, (itemCounts.get(itemName) || 0) + 1);
+        }
+      });
+
+      let mostFrequentItemName = "";
+      let maxCount = 0;
+      for (const [itemName, count] of itemCounts.entries()) {
+        if (count > maxCount) {
+          maxCount = count;
+          mostFrequentItemName = itemName;
+        }
+      }
+
+      const mostFrequentItem = inStockShops.find(shop => shop.itemData.name === mostFrequentItemName);
+      const thumbnailUrl = mostFrequentItem?.itemData?.image;
+
       // Create pages of shops
       const shopPages = [];
       const shopsPerPage = 8;
@@ -129,6 +150,10 @@ export class ShopDirectoryCommand extends Command {
             }.`
           )
           .setColor(Colors.Blue);
+
+        if (thumbnailUrl) {
+          embed.setThumbnail(thumbnailUrl);
+        }
 
         page.forEach((shop) => {
           const transactionType = shop.stock === -1 ? "💰 Buying" : "📦 Selling";
