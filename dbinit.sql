@@ -230,23 +230,28 @@ SELECT
     shops.id,
     users.uuid,
     users.userId,
-    substring_index(
-        SUBSTRING(item,
-            LOCATE('type:', item) + LENGTH('type:')
-        ),
-        '\n',
-        1
-    ) AS item,
-    CASE LOCATE('amount:', item)
-        WHEN 0 THEN null
-        ELSE substring_index(
-            SUBSTRING(item,
-                LOCATE('amount:', item) + LENGTH('amount:')
-            ),
+    
+    -- Extract 'id' and remove 'minecraft:' prefix
+    REPLACE(
+        TRIM(SUBSTRING_INDEX(
+            SUBSTRING(item, LOCATE('id:', item) + LENGTH('id:')),
             '\n',
             1
-        )
+        )),
+        'minecraft:',
+        ''
+    ) AS item,
+
+    -- Extract 'count'
+    CASE 
+        WHEN LOCATE('count:', item) = 0 THEN NULL
+        ELSE TRIM(SUBSTRING_INDEX(
+            SUBSTRING(item, LOCATE('count:', item) + LENGTH('count:')),
+            '\n',
+            1
+        ))
     END AS amount,
+
     data.price,
     stock.stock,
     map.world,
@@ -259,7 +264,7 @@ FROM cfc_prod_quickshop.qs_shops shops
     JOIN zanderProd.users users ON users.uuid = data.owner
     JOIN cfc_prod_quickshop.qs_external_cache stock ON shops.id = stock.shop
 WHERE data.unlimited = 0
-ORDER BY shops.id
+ORDER BY shops.id;
 
 CREATE TABLE vault (
 	vaultId INT NOT NULL AUTO_INCREMENT,
