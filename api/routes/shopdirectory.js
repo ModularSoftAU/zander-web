@@ -118,7 +118,7 @@ export default function shopApiRoute(app, config, db, features, lang) {
       const dbQuery = material
         ? `SELECT * FROM shoppingDirectory WHERE item LIKE '%${material}%' OR item LIKE '%${material
             .toUpperCase()
-            .replace(/ /g, "_")}%';`
+            .replace(/ /g, "_")}%' OR display_name LIKE '%${material}%';`
         : `SELECT * FROM shoppingDirectory;`;
 
       // Execute the query and process the shops
