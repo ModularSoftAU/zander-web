@@ -1,8 +1,5 @@
 import fetch from "node-fetch";
 
-/*
-    
-*/
 export async function getWebAnnouncement() {
   const fetchURL = `${process.env.siteAddress}/api/announcement/get?announcementType=web`;
   try {
@@ -15,6 +12,13 @@ export async function getWebAnnouncement() {
       throw new Error(
         `Failed to fetch announcement data. Status: ${response.status}`
       );
+    }
+
+    const contentType = response.headers.get("content-type");
+    if (!contentType || !contentType.includes("application/json")) {
+        const responseText = await response.text();
+        console.error("Error fetching announcement: Expected JSON response, but received:", responseText);
+        throw new Error("Did not receive JSON response from API. Check siteAddress configuration.");
     }
 
     const apiData = await response.json();

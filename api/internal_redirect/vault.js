@@ -1,4 +1,4 @@
-import { hasPermission, postAPIRequest } from "../common";
+import { hasPermission, postAPIRequest } from "../common.js";
 
 export default function vaultRedirectRoute(app, config, lang) {
   const baseEndpoint = "/redirect/vault";

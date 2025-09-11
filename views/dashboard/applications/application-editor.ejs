@@ -22,24 +22,19 @@
         
         <div class="basic-form">
             <% if (type === 'create') { %>
-                <form method="post" action="<%= process.env.siteAddress %>/redirect/application/create">
+                <form method="post" action="<%= process.env.siteAddress %>/redirect/applications/create">
             <% } %>
             <% if (type === 'edit') { %>
-                <form method="post" action="<%= process.env.siteAddress %>/redirect/application/edit">
+                <form method="post" action="<%= process.env.siteAddress %>/redirect/applications/edit">
                     <%- include("../../partials/form/inputHidden.ejs", {
                         elementName: "applicationId",
                         elementValue: applicationApiData.applicationId
                     }) %>
             <% } %>
-
-            <%- include("../../partials/form/inputHidden.ejs", {
-                elementName: "actioningUser",
-                elementValue: req.session.user.userId
-            }) %>
             
               <div class="row">
                   <!-- Display Name -->
-                  <div class="form-group col">
+                  <div class="mb-3 col">
                       <label for="displayName">Display Name</label>
 
                       <% if (type === 'create') { %>
@@ -59,7 +54,7 @@
                   </div>
 
                   <!-- Application Icon -->
-                  <div class="form-group col">
+                  <div class="mb-3 col">
                       <label for="displayIcon">Application Icon</label>
 
                       <% if (type === 'create') { %>
@@ -80,7 +75,7 @@
               </div>                                            
 
               <!-- Application Description -->
-              <div class="form-group">
+              <div class="mb-3">
                   <label for="description">Application Description</label>
 
                   <% if (type === 'create') { %>
@@ -101,7 +96,7 @@
 
               <div class="row">
                   <!-- Application Requirements Markdown Link -->
-                  <div class="form-group col">
+                  <div class="mb-3 col">
                       <label for="requirementsMarkdown">Application Requirements Markdown Link</label>
 
                       <% if (type === 'create') { %>
@@ -121,7 +116,7 @@
                   </div>
 
                   <!-- Application URL Redirect -->
-                  <div class="form-group col">
+                  <div class="mb-3 col">
                       <label for="redirectUrl">Application URL Redirect</label>
 
                       <% if (type === 'create') { %>
@@ -143,7 +138,7 @@
 
               <div class="row">
                   <!-- Application Position -->
-                  <div class="form-group col">
+                  <div class="mb-3 col">
                       <label for="position">Application Position</label>
 
                       <% if (type === 'create') { %>
@@ -163,7 +158,7 @@
                   </div>
 
                   <!-- Application Status -->
-                  <div class="form-group col">
+                  <div class="mb-3 col">
                       <label for="applicationStatus">Application Status</label>
 
                       <% if (type === 'create') { %>

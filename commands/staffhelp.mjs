@@ -1,6 +1,8 @@
 import { Command, RegisterBehavior } from "@sapphire/framework";
 import { Colors, EmbedBuilder } from "discord.js";
-import config from "../config.json" assert { type: "json" };
+import { createRequire } from "module";
+const require = createRequire(import.meta.url);
+const config = require("../config.json");
 import { MessageBuilder, Webhook } from "discord-webhook-node";
 
 export class StaffHelpCommand extends Command {
@@ -14,7 +16,7 @@ export class StaffHelpCommand extends Command {
         .setName("staffhelp")
         .setDescription("Sends a message to our Staff for help or assistance.")
         .addStringOption((option) =>
-          option //
+          option
             .setName("query")
             .setDescription("What you need help with?")
             .setRequired(true)

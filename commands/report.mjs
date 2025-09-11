@@ -1,8 +1,10 @@
 import { Command, RegisterBehavior } from "@sapphire/framework";
 import { Colors, EmbedBuilder } from "discord.js";
 import fetch from "node-fetch";
-import { UserGetter } from "../controllers/userController";
-import features from "../features.json" assert { type: "json" };
+import { UserGetter } from "../controllers/userController.js";
+import { createRequire } from "module";
+const require = createRequire(import.meta.url);
+const features = require("../features.json");
 
 export class ReportCommand extends Command {
   constructor(context, options) {

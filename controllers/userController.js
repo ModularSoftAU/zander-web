@@ -1,5 +1,5 @@
-import { hashEmail } from "../api/common";
-import db from "./databaseController";
+import { hashEmail } from "../api/common.js";
+import db from "./databaseController.js";
 
 export function UserGetter() {
   this.byUsername = function (username) {

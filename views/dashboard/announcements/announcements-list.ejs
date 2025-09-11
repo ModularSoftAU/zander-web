@@ -46,7 +46,7 @@
                 <% } else { %>
                     <% apiData.data.forEach(function (announcement) { %>
                         <tr>
-                            <td><span class="badge badge-primary"><%= announcement.announcementType %></span></td>
+                            <td><span class="badge text-bg-primary"><%= announcement.announcementType %></span></td>
                             <td><%= announcement.colourMessageFormat %></td>
                             <td>
                                 <% if (announcement.enabled === 1) { %>
@@ -61,7 +61,6 @@
 
                                     <form action="<%= process.env.siteAddress %>/redirect/announcement/delete" method="post">
                                         <input type="hidden" name="announcementId" value="<%= announcement.announcementId %>">
-                                        <input type="hidden" name="actioningUser" value="<%= req.session.user.userId %>">
                                         <button class="btn btn-sm btn-danger" type="submit">Delete</button>
                                     </form>
                                 </div>

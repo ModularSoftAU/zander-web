@@ -38,7 +38,7 @@
                     <div class="row">
                         <div class="col-md-6">
                             <label for="profilePicture_type">Profile Picture Type</label>
-                            <select class="form-control" name="profilePicture_type" id="profilePicture_type">
+                            <select class="form-select" name="profilePicture_type" id="profilePicture_type">
                                 <option value="CRAFTATAR" <% if (profileApiData.profilePicture_type === 'CRAFTATAR') { %> selected <% } %>>CRAFTATAR</option>
                                 <option value="GRAVATAR" <% if (profileApiData.profilePicture_type === 'GRAVATAR') { %> selected <% } %>>GRAVATAR</option>
                             </select>
@@ -86,7 +86,7 @@
                 <form action="<%= process.env.siteAddress %>/redirect/web/user/profile/social" method="post">
                     <div class="row">
                         <div class="col-md-6">
-                            <div class="form-group">
+                            <div class="mb-3">
                                 <label for="social_discord"><i class="fab fa-discord"></i> Discord</label>
                                 <small>Your username</small>
                                 <input type="text" class="form-control mb-3" name="social_discord" maxlength="32" value="<%= profileApiData.social_discord %>">
@@ -105,7 +105,7 @@
                             </div>
                         </div>
                         <div class="col-md-6">
-                            <div class="form-group">
+                            <div class="mb-3">
                                 <label for="social_twitter_x"><i class="fab fa-twitter"></i> Twitter/X</label>
                                 <small>Your username</small>
                                 <input type="text" class="form-control mb-3" name="social_twitter_x" maxlength="15" value="<%= profileApiData.social_twitter_x %>">

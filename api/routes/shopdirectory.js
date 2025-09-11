@@ -1,5 +1,5 @@
-import { getProfilePicture } from "../../controllers/userController";
-import { isFeatureEnabled, optional } from "../common";
+import { getProfilePicture } from "../../controllers/userController.js";
+import { isFeatureEnabled, optional } from "../common.js";
 import pLimit from "p-limit";
 
 export default function shopApiRoute(app, config, db, features, lang) {
@@ -31,7 +31,6 @@ export default function shopApiRoute(app, config, db, features, lang) {
             }
 
             try {
-              // Limit concurrency of async operations
               const modifiedShops = await Promise.all(
                 results.map((shop) =>
                   limit(async () => {
@@ -117,7 +116,9 @@ export default function shopApiRoute(app, config, db, features, lang) {
 
       // Construct the database query
       const dbQuery = material
-        ? `SELECT * FROM shoppingDirectory WHERE item LIKE '%${material}%';`
+        ? `SELECT * FROM shoppingDirectory WHERE item LIKE '%${material}%' OR item LIKE '%${material
+            .toUpperCase()
+            .replace(/ /g, "_")}%';`
         : `SELECT * FROM shoppingDirectory;`;
 
       // Execute the query and process the shops

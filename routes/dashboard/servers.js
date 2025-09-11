@@ -2,8 +2,8 @@ import {
   getGlobalImage,
   hasPermission,
   isFeatureWebRouteEnabled,
-} from "../../api/common";
-import { getWebAnnouncement } from "../../controllers/announcementController";
+} from "../../api/common.js";
+import { getWebAnnouncement } from "../../controllers/announcementController.js";
 
 export default function dashboardServersSiteRoute(
   app,

@@ -2,8 +2,8 @@ import {
   getGlobalImage,
   hasPermission,
   isFeatureWebRouteEnabled,
-} from "../../api/common";
-import { getWebAnnouncement } from "../../controllers/announcementController";
+} from "../../api/common.js";
+import { getWebAnnouncement } from "../../controllers/announcementController.js";
 
 export default function dashboardAnnouncementSiteRoute(
   app,
@@ -14,7 +14,7 @@ export default function dashboardAnnouncementSiteRoute(
   lang
 ) {
   //
-  // Servers
+  // Announcements
   //
   app.get("/dashboard/announcements", async function (req, res) {
     if (!isFeatureWebRouteEnabled(features.announcements, req, res, features))

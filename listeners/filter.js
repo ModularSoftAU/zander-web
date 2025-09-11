@@ -1,7 +1,9 @@
 import { Listener } from "@sapphire/framework";
 import { EmbedBuilder } from "discord.js";
 import fetch from "node-fetch";
-import features from "../features.json" assert { type: "json" };
+import { createRequire } from "module";
+const require = createRequire(import.meta.url);
+const features = require("../features.json");
 
 export class GuildMessageListener extends Listener {
   constructor(context, options) {
@@ -19,7 +21,10 @@ export class GuildMessageListener extends Listener {
     if (features.filter.link || features.filter.phrase) {
       try {
         const filterURL = `${process.env.siteAddress}/api/filter`;
-        const bodyJSON = { content: message.content };
+        const bodyJSON = {
+          content: message.content,
+          discordId: message.author.id,
+        };
 
         const response = await fetch(filterURL, {
           method: "POST",
@@ -33,22 +38,27 @@ export class GuildMessageListener extends Listener {
         const dataResponse = await response.json();
         console.log(dataResponse);
 
-        if (message.author.isbot) return;
-
-        if (dataResponse.success == false) {
-          message.delete(); // Delete the message
-
-          let embed = new EmbedBuilder()
-            .setTitle(`Prohibited content has been detected!`)
+        if (dataResponse.success === false) {
+          // Create an embed to warn the user
+          const embed = new EmbedBuilder()
+            .setTitle(`Prohibited content detected!`)
             .setDescription(
-              `\`${message.author.username}\` please don't advertise or say prohibited content/phrases. If you continue, you will be punished.`
+              `\`${message.author.username}\`, please refrain from using prohibited content/phrases. Continued violations may result in penalties.`
             )
             .setColor(`#ff3333`);
-          message.reply({ embeds: [embed] });
+
+          // Send the embed to the channel
+          await message.reply({ embeds: [embed] });
+
+          // Delete the message after a short delay to ensure the embed is sent first
+          setTimeout(async () => {
+            if (message.deletable) {
+              await message.delete();
+            }
+          }, 500); // Delay of 500ms before deleting the message
         }
       } catch (error) {
         console.log(error);
-        return;
       }
     }
   }

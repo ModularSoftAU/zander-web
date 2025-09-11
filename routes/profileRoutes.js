@@ -1,6 +1,12 @@
-import { getGlobalImage, isLoggedIn } from "../api/common";
-import { getWebAnnouncement } from "../controllers/announcementController";
-import { UserGetter, getProfilePicture, getUserLastSession, getUserPermissions, getUserStats } from "../controllers/userController";
+import { getGlobalImage, isLoggedIn } from "../api/common.js";
+import { getWebAnnouncement } from "../controllers/announcementController.js";
+import {
+  UserGetter,
+  getProfilePicture,
+  getUserLastSession,
+  getUserPermissions,
+  getUserStats,
+} from "../controllers/userController.js";
 
 export default function profileSiteRoutes(
   app,

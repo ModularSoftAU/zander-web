@@ -1,5 +1,8 @@
 import { Command, RegisterBehavior } from "@sapphire/framework";
 import pkg, { Colors } from "discord.js";
+import { createRequire } from "module";
+const require = createRequire(import.meta.url);
+const features = require("../features.json");
 const { EmbedBuilder } = pkg;
 
 export class PolicyCommand extends Command {

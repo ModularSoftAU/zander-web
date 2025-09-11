@@ -1,7 +1,7 @@
-import { hasPermission, postAPIRequest } from "../common";
+import { hasPermission, postAPIRequest } from "../common.js";
 
 export default function applicationRedirectRoute(app, config, lang) {
-  const baseEndpoint = "/redirect/application";
+  const baseEndpoint = "/redirect/applications";
 
   app.post(baseEndpoint + "/create", async function (req, res) {
     if (!hasPermission("zander.web.application", req, res)) return;

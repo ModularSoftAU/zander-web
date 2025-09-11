@@ -1,11 +1,16 @@
-import dashboardSiteRoutes from "./dashboard";
-import policySiteRoutes from "./policyRoutes";
-import sessionRoutes from "./sessionRoutes";
-import { isFeatureWebRouteEnabled, getGlobalImage } from "../api/common";
-import { getWebAnnouncement } from "../controllers/announcementController";
-import redirectSiteRoutes from "./redirectRoutes";
-import rankData from "../ranks.json" assert { type: "json" };
-import profileSiteRoutes from "./profileRoutes";
+import { createRequire } from "module";
+const require = createRequire(import.meta.url);
+
+import { getWebAnnouncement } from "../controllers/announcementController.js";
+import { isFeatureWebRouteEnabled, getGlobalImage } from "../api/common.js";
+
+import dashboardSiteRoutes from "./dashboard/index.js";
+import sessionRoutes from "./sessionRoutes.js";
+import policySiteRoutes from "./policyRoutes.js";
+import redirectSiteRoutes from "./redirectRoutes.js";
+import profileSiteRoutes from "./profileRoutes.js";
+
+const rankData = require("../ranks.json");
 
 export default function applicationSiteRoutes(
   app,

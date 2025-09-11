@@ -1,4 +1,7 @@
-import packageData from "./package.json" assert { type: "json" };
+import { createRequire } from "module";
+const require = createRequire(import.meta.url);
+
+const packageData = require("./package.json");
 import moment from "moment";
 import fetch from "node-fetch";
 import dotenv from "dotenv";
@@ -8,11 +11,11 @@ import fastify from "fastify";
 import fastifySession from "@fastify/session";
 import fastifyCookie from "@fastify/cookie";
 
-import config from "./config.json" assert { type: "json" };
-import features from "./features.json" assert { type: "json" };
-import lang from "./lang.json" assert { type: "json" };
-import db from "./controllers/databaseController";
-import { getWebAnnouncement } from "./controllers/announcementController";
+const config = require("./config.json");
+const features = require("./features.json");
+const lang = require("./lang.json");
+import db from "./controllers/databaseController.js";
+import { getWebAnnouncement } from "./controllers/announcementController.js";
 
 // Paths
 import path from "path";
@@ -20,19 +23,34 @@ import { fileURLToPath } from "url";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
+import("./controllers/discordController.js");
+import("./cron/userCodeExpiryCron.js");
+import("./cron/bridgeCleanupCron.js");
+import("./cron/cakeDayUserCheck.js");
+
 //
 // Website Related
 //
 
 // Site Routes
-import siteRoutes from "./routes";
-import apiRoutes from "./api/routes";
-import apiRedirectRoutes from "./api/internal_redirect";
+import siteRoutes from "./routes/index.js";
+import apiRoutes from "./api/routes/index.js";
+import apiRedirectRoutes from "./api/internal_redirect/index.js";
 
 // API token authentication
-import verifyToken from "./api/routes/verifyToken";
-import { getGlobalImage } from "./api/common";
-import { client } from "./controllers/discordController";
+import verifyToken from "./api/routes/verifyToken.js";
+import { getGlobalImage } from "./api/common.js";
+import { client } from "./controllers/discordController.js";
+
+import("./controllers/discordController.js");
+import("./cron/userCodeExpiryCron.js");
+import("./cron/bridgeCleanupCron.js");
+import("./cron/discordStatsUpdateCron.js");
+
+import("./controllers/discordController.js");
+import("./cron/userCodeExpiryCron.js");
+import("./cron/bridgeCleanupCron.js");
+import("./cron/discordStatsUpdateCron.js");
 
 import("./controllers/discordController.js");
 import("./cron/userCodeExpiryCron.js");

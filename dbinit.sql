@@ -226,40 +226,133 @@ CREATE TABLE reports (
 );
 
 CREATE VIEW shoppingDirectory AS
-SELECT
-    shops.id,
-    users.uuid,
-    users.userId,
-    substring_index(
-        SUBSTRING(item,
-            LOCATE('type:', item) + LENGTH('type:')
-        ),
-        '\n',
-        1
-    ) AS item,
-    CASE LOCATE('amount:', item)
-        WHEN 0 THEN null
-        ELSE substring_index(
-            SUBSTRING(item,
-                LOCATE('amount:', item) + LENGTH('amount:')
-            ),
-            '\n',
-            1
-        )
-    END AS amount,
-    data.price,
-    stock.stock,
-    map.world,
-    map.x,
-    map.y,
-    map.z
-FROM cfc_prod_quickshop.qs_shops shops
-    JOIN cfc_prod_quickshop.qs_shop_map map ON shops.id = map.shop
-    JOIN cfc_prod_quickshop.qs_data data ON shops.data = data.id
-    JOIN zanderProd.users users ON users.uuid = data.owner
-    JOIN cfc_prod_quickshop.qs_external_cache stock ON shops.id = stock.shop
-WHERE data.unlimited = 0
-ORDER BY shops.id
+SELECT 
+        `shops`.`id` AS `id`,
+        `zanderProd`.`users`.`uuid` AS `uuid`,
+        `zanderProd`.`users`.`userId` AS `userId`,
+        REPLACE(
+            TRIM(SUBSTRING_INDEX(
+                SUBSTR(`data`.`item`,
+                       LOCATE('id:', `data`.`item`) + OCTET_LENGTH('id:')),
+                '\n',
+                1
+            )),
+            'minecraft:',
+            ''
+        ) AS `item`,
+        CASE
+            WHEN LOCATE('count:', `data`.`item`) = 0 THEN NULL
+            ELSE TRIM(SUBSTRING_INDEX(
+                SUBSTR(`data`.`item`,
+                       LOCATE('count:', `data`.`item`) + OCTET_LENGTH('count:')),
+                '\n',
+                1
+            ))
+        END AS `amount`,
+        `data`.`price` AS `price`,
+        `stock`.`stock` AS `stock`,
+        `map`.`world` AS `world`,
+        `map`.`x` AS `x`,
+        `map`.`y` AS `y`,
+        `map`.`z` AS `z`,
+        CASE
+            WHEN LOCATE('minecraft:stored_enchantments:', `data`.`item`) > 0
+            THEN CONCAT(
+                -- enchant name (underscores → spaces, strip quotes, title-case)
+                CONCAT(
+                    UPPER(LEFT(
+                        REPLACE(
+                            REPLACE(
+                                TRIM(SUBSTRING_INDEX(
+                                    REPLACE(
+                                        REPLACE(
+                                            TRIM(SUBSTRING_INDEX(
+                                                SUBSTR(`data`.`item`,
+                                                       LOCATE('minecraft:stored_enchantments:', `data`.`item`) 
+                                                         + OCTET_LENGTH('minecraft:stored_enchantments:')),
+                                                '\n',
+                                                1
+                                            )),
+                                            '{"minecraft:', ''
+                                        ),
+                                        '}', ''
+                                    ),
+                                    '":',
+                                    1
+                                )),
+                                '"',
+                                ''
+                            ),
+                            '_',
+                            ' '
+                        ),
+                        1
+                    )),
+                    LOWER(SUBSTRING(
+                        REPLACE(
+                            REPLACE(
+                                TRIM(SUBSTRING_INDEX(
+                                    REPLACE(
+                                        REPLACE(
+                                            TRIM(SUBSTRING_INDEX(
+                                                SUBSTR(`data`.`item`,
+                                                       LOCATE('minecraft:stored_enchantments:', `data`.`item`) 
+                                                         + OCTET_LENGTH('minecraft:stored_enchantments:')),
+                                                '\n',
+                                                1
+                                            )),
+                                            '{"minecraft:', ''
+                                        ),
+                                        '}', ''
+                                    ),
+                                    '":',
+                                    1
+                                )),
+                                '"',
+                                ''
+                            ),
+                            '_',
+                            ' '
+                        ),
+                        2
+                    ))
+                ),
+                ' ',
+                -- enchant level
+                REPLACE(
+                    TRIM(SUBSTRING_INDEX(
+                        REPLACE(
+                            REPLACE(
+                                TRIM(SUBSTRING_INDEX(
+                                    SUBSTR(`data`.`item`,
+                                           LOCATE('minecraft:stored_enchantments:', `data`.`item`) 
+                                             + OCTET_LENGTH('minecraft:stored_enchantments:')),
+                                    '\n',
+                                    1
+                                )),
+                                '{"minecraft:', ''
+                            ),
+                            '}',
+                            ''
+                        ),
+                        '":',
+                        -1
+                    )),
+                    '"',
+                    ''
+                )
+            )
+            ELSE NULL
+        END AS `display_name`
+    FROM
+        ((((`cfc_prod_quickshop`.`qs_shops` `shops`
+        JOIN `cfc_prod_quickshop`.`qs_shop_map` `map` ON (`shops`.`id` = `map`.`shop`))
+        JOIN `cfc_prod_quickshop`.`qs_data` `data` ON (`shops`.`data` = `data`.`id`))
+        JOIN `zanderProd`.`users` ON (`zanderProd`.`users`.`uuid` = `data`.`owner`))
+        JOIN `cfc_prod_quickshop`.`qs_external_cache` `stock` ON (`shops`.`id` = `stock`.`shop`))
+    WHERE
+        `data`.`unlimited` = 0
+    ORDER BY `shops`.`id`;
 
 CREATE TABLE vault (
 	vaultId INT NOT NULL AUTO_INCREMENT,

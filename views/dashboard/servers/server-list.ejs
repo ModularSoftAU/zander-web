@@ -55,8 +55,7 @@
 
                                         <form action="<%= process.env.siteAddress %>/redirect/server/delete" method="post">
                                             <input type="hidden" name="serverId" value="<%= server.serverId %>">
-                                            <input type="hidden" name="actioningUser" value="<%= req.session.user.userId %>">
-                                            <button class="btn btn-sm btn-danger" type="submit" onclick="window.location='/dashboard/servers/'">Delete</button>
+                                            <button class="btn btn-sm btn-danger" type="submit">Delete</button>
                                         </form>
                                     </div>
                                 </td>

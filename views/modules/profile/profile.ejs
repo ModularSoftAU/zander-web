@@ -74,7 +74,7 @@
                         <tbody>
                             <tr>
                                 <th scope="row">Last Minecraft Session</th>
-                                <td data-toggle="tooltip" data-placement="top" title="<%= moment(profileApiData.audit_lastMinecraftLogin).fromNow() %>">
+                                <td data-bs-toggle="tooltip" data-placement="top" title="<%= moment(profileApiData.audit_lastMinecraftLogin).fromNow() %>">
                                     <% if (moment(profileApiData.audit_lastMinecraftLogin).isValid()) { %>
                                         <%= moment(profileApiData.audit_lastMinecraftLogin).format('LLLL') %>
                                     <% } else { %>
@@ -84,7 +84,7 @@
                             </tr>
                             <tr>
                                 <th scope="row">Last Minecraft Message</th>
-                                <td data-toggle="tooltip" data-placement="top" title="<%= moment(profileApiData.audit_lastMinecraftMessage).fromNow() %>">
+                                <td data-bs-toggle="tooltip" data-placement="top" title="<%= moment(profileApiData.audit_lastMinecraftMessage).fromNow() %>">
                                     <% if (moment(profileApiData.audit_lastMinecraftMessage).isValid()) { %>
                                         <%= moment(profileApiData.audit_lastMinecraftMessage).format('LLLL') %>
                                     <% } else { %>
@@ -106,7 +106,7 @@
                         <tbody>
                             <tr>
                                 <th scope="row">Last Discord Message</th>
-                                <td data-toggle="tooltip" data-placement="top" title="<%= moment(profileApiData.audit_lastDiscordMessage).fromNow() %>">
+                                <td data-bs-toggle="tooltip" data-placement="top" title="<%= moment(profileApiData.audit_lastDiscordMessage).fromNow() %>">
                                     <% if (moment(profileApiData.audit_lastDiscordMessage).isValid()) { %>
                                         <%= moment(profileApiData.audit_lastDiscordMessage).format('LLLL') %>
                                     <% } else { %>
@@ -116,7 +116,7 @@
                             </tr>
                             <tr>
                                 <th scope="row">Last Discord Voice Session</th>
-                                <td data-toggle="tooltip" data-placement="top" title="<%= moment(profileApiData.audit_lastDiscordVoice).fromNow() %>">
+                                <td data-bs-toggle="tooltip" data-placement="top" title="<%= moment(profileApiData.audit_lastDiscordVoice).fromNow() %>">
                                     <% if (moment(profileApiData.audit_lastDiscordVoice).isValid()) { %>
                                         <%= moment(profileApiData.audit_lastDiscordVoice).format('LLLL') %>
                                     <% } else { %>
@@ -138,7 +138,7 @@
                         <tbody>
                             <tr>
                                 <th scope="row">Last Website Login</th>
-                                <td data-toggle="tooltip" data-placement="top" title="<%= moment(profileApiData.audit_lastWebsiteLogin).fromNow() %>">
+                                <td data-bs-toggle="tooltip" data-placement="top" title="<%= moment(profileApiData.audit_lastWebsiteLogin).fromNow() %>">
                                     <% if (moment(profileApiData.audit_lastWebsiteLogin).isValid()) { %>
                                         <%= moment(profileApiData.audit_lastWebsiteLogin).format('LLLL') %>
                                     <% } else { %>
@@ -169,7 +169,7 @@
                                     <td><%= report.reportId %></td>
                                     <td><%= report.reportedUser %></td>
                                     <td><%= report.reportReason %></td>
-                                    <td><span class="badge badge-primary"><%= report.reportPlatform %></span></td>
+                                    <td><span class="badge text-bg-primary"><%= report.reportPlatform %></span></td>
                                     <td><%= moment(report.reportDateTime).format('Do MMMM YYYY, h:mm a'); %></td>
                                 </tr>
                             <% }) %>
@@ -181,7 +181,7 @@
     </div>
         <div class="col-md-4">
             <h4>Joined</h4>
-            <p data-toggle="tooltip" data-placement="top" title="<%= moment(profileApiData.joined).fromNow() %>">
+            <p data-bs-toggle="tooltip" data-placement="top" title="<%= moment(profileApiData.joined).fromNow() %>">
                 <%= moment(profileApiData.joined).format('LLLL') %>
             </p>
             <hr>

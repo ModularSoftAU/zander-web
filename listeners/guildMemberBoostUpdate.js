@@ -1,7 +1,9 @@
 import { Listener } from "@sapphire/framework";
-import config from "../config.json" assert { type: "json" };
+import { createRequire } from "module";
+const require = createRequire(import.meta.url);
+const config = require("../config.json");
 import { Colors, EmbedBuilder } from "discord.js";
-import features from "../features.json" assert { type: "json" };
+const features = require("../features.json");
 import { MessageBuilder, Webhook } from "discord-webhook-node";
 
 export class GuildMemberBoostUpdateListener extends Listener {

@@ -1,7 +1,7 @@
-import moment from "moment/moment";
+import moment from "moment";
 import fetch from "node-fetch";
-import { getGlobalImage, hasPermission } from "../../api/common";
-import { getWebAnnouncement } from "../../controllers/announcementController";
+import { getGlobalImage, hasPermission } from "../../api/common.js";
+import { getWebAnnouncement } from "../../controllers/announcementController.js";
 
 export default function dashboardSiteRoute(app, config, features, lang) {
   //
@@ -17,6 +17,27 @@ export default function dashboardSiteRoute(app, config, features, lang) {
 
     if (!permissionBoolean) return;
 
+    const announcements = await fetch(
+      `${process.env.siteAddress}/api/announcement/get`,
+      {
+        headers: { "x-access-token": process.env.apiKey },
+      }
+    ).then((res) => res.json());
+
+    const applications = await fetch(
+      `${process.env.siteAddress}/api/application/get`,
+      {
+        headers: { "x-access-token": process.env.apiKey },
+      }
+    ).then((res) => res.json());
+
+    const servers = await fetch(
+      `${process.env.siteAddress}/api/server/get`,
+      {
+        headers: { "x-access-token": process.env.apiKey },
+      }
+    ).then((res) => res.json());
+
     return res.view("dashboard/dashboard-index", {
       pageTitle: `Dashboard`,
       config: config,
@@ -24,6 +45,9 @@ export default function dashboardSiteRoute(app, config, features, lang) {
       req: req,
       globalImage: await getGlobalImage(),
       announcementWeb: await getWebAnnouncement(),
+      announcementsCount: announcements.data ? announcements.data.length : 0,
+      applicationsCount: applications.data ? applications.data.length : 0,
+      serversCount: servers.data ? servers.data.length : 0,
     });
   });
 
