@@ -30,7 +30,7 @@
               Your current email address is
               <strong><%= req.session.user.email || "not set" %></strong>.
             </p>
-            <form method="post" action="<%= process.env.siteAddress %>/account/change-email" class="row g-3">
+            <form method="post" action="/account/change-email" class="row g-3">
               <div class="col-12">
                 <label for="email" class="form-label">New email address</label>
                 <input type="email" class="form-control" name="email" required>
@@ -49,7 +49,7 @@
         <div class="card mb-4 shadow-sm border-0">
           <div class="card-body">
             <h5 class="card-title">Password</h5>
-            <form method="post" action="<%= process.env.siteAddress %>/account/change-password" class="row g-3">
+            <form method="post" action="/account/change-password" class="row g-3">
               <div class="col-12">
                 <label for="currentPassword" class="form-label">Current password</label>
                 <input type="password" class="form-control" name="currentPassword" required>
