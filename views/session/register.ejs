@@ -1,0 +1,58 @@
+<%- include("../modules/header.ejs", {
+    pageTitle: pageTitle,
+    pageDescription: "Register for a web account."
+}) %>
+
+<%- include("../modules/navigationBar.ejs") %>
+
+<%- include("../partials/miniHeader.ejs", {
+  headerTitle: "Register",
+  backgroundImage: globalImage
+}) %>
+
+<section class="section">
+    <div class="container">
+      <div class="row">
+        <div class="col-12 col-sm-6">
+          <% if (req.cookies.alertType) { %>
+            <%- include("../partials/alert.ejs", {
+              alertType: req.cookies.alertType,
+              content: req.cookies.alertContent
+            }) %>
+          <% } %>
+
+          <form method="post" action="<%= process.env.siteAddress %>/register">
+            <div class="mb-3">
+              <label for="username">Minecraft username</label>
+              <input type="text" class="form-control" name="username" maxlength="16" required>
+              <small class="form-text text-muted">We use your existing Minecraft account to link your web profile.</small>
+            </div>
+            <div class="mb-3">
+              <label for="email">Email address</label>
+              <input type="email" class="form-control" name="email" required>
+            </div>
+            <div class="mb-3">
+              <label for="password">Password</label>
+              <input type="password" class="form-control" name="password" minlength="8" required>
+            </div>
+            <div class="mb-3">
+              <label for="confirmPassword">Confirm password</label>
+              <input type="password" class="form-control" name="confirmPassword" minlength="8" required>
+            </div>
+            <div class="text-center">
+              <button type="submit" class="btn btn-primary" style="width: 100%">Create account</button>
+            </div>
+          </form>
+          <br>
+          <small class="text-muted">Already have an account? <a href="/login">Sign in here</a>.</small>
+        </div>
+        <div class="col-12 col-sm-6" style="min-height:500px;">
+          <div class="text-center">
+            <img class="floating" style="margin-top:10px;" src="images/session/registerImage.png" height="300px" draggable="false">
+          </div>
+        </div>
+      </div>
+    </div>
+</section>
+
+<%- include("../modules/footer.ejs") %>

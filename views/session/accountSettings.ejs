@@ -1,0 +1,88 @@
+<%- include("../modules/header.ejs", {
+    pageTitle: pageTitle,
+    pageDescription: "Manage your account preferences."
+}) %>
+
+<%- include("../modules/navigationBar.ejs") %>
+
+<%- include("../partials/miniHeader.ejs", {
+  headerTitle: "Account settings",
+  backgroundImage: globalImage
+}) %>
+
+<section class="section">
+  <div class="container">
+    <div class="row">
+      <div class="col-12 col-lg-8 mx-auto">
+        <% if (req.cookies.alertType) { %>
+          <%- include("../partials/alert.ejs", {
+            alertType: req.cookies.alertType,
+            content: req.cookies.alertContent
+          }) %>
+        <% } %>
+
+        <div class="card mb-4">
+          <div class="card-body">
+            <h5 class="card-title">Email address</h5>
+            <p class="card-text">
+              Your current email address is
+              <strong><%= req.session.user.email || "not set" %></strong>.
+            </p>
+            <form method="post" action="<%= process.env.siteAddress %>/account/change-email" class="row g-3">
+              <div class="col-12">
+                <label for="email" class="form-label">New email address</label>
+                <input type="email" class="form-control" name="email" required>
+              </div>
+              <div class="col-12">
+                <label for="password" class="form-label">Confirm with password</label>
+                <input type="password" class="form-control" name="password" required>
+              </div>
+              <div class="col-12">
+                <button type="submit" class="btn btn-primary">Update email</button>
+              </div>
+            </form>
+          </div>
+        </div>
+
+        <div class="card mb-4">
+          <div class="card-body">
+            <h5 class="card-title">Password</h5>
+            <form method="post" action="<%= process.env.siteAddress %>/account/change-password" class="row g-3">
+              <div class="col-12">
+                <label for="currentPassword" class="form-label">Current password</label>
+                <input type="password" class="form-control" name="currentPassword" required>
+              </div>
+              <div class="col-12 col-md-6">
+                <label for="newPassword" class="form-label">New password</label>
+                <input type="password" class="form-control" name="newPassword" minlength="8" required>
+              </div>
+              <div class="col-12 col-md-6">
+                <label for="confirmPassword" class="form-label">Confirm new password</label>
+                <input type="password" class="form-control" name="confirmPassword" minlength="8" required>
+              </div>
+              <div class="col-12">
+                <button type="submit" class="btn btn-primary">Update password</button>
+              </div>
+            </form>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-body">
+            <h5 class="card-title">Discord connection</h5>
+            <% if (req.session.user.discordID) { %>
+              <p class="card-text">Your account is linked to Discord ID <strong><%= req.session.user.discordID %></strong>.</p>
+              <a href="https://discord.com/channels/@me" target="_blank" rel="noopener" class="btn btn-outline-secondary">Open Discord</a>
+            <% } else { %>
+              <p class="card-text">Link your Discord account to receive in-game and community benefits.</p>
+              <a class="btn btn-outline-primary" href="/login/discord">Connect Discord</a>
+            <% } %>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</section>
+
+<%- include("../modules/footer.ejs") %>

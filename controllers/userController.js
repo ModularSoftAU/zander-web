@@ -61,6 +61,66 @@ export function UserGetter() {
     });
   };
 
+  this.byEmail = function (email) {
+    return new Promise((resolve, reject) => {
+      db.query(
+        `SELECT * FROM users WHERE email=?;`,
+        [email],
+        function (error, results) {
+          if (error) {
+            reject(error);
+          }
+
+          if (!results || !results.length) {
+            resolve(null);
+          } else {
+            resolve(results[0]);
+          }
+        }
+      );
+    });
+  };
+
+  this.byEmailVerificationToken = function (tokenHash) {
+    return new Promise((resolve, reject) => {
+      db.query(
+        `SELECT * FROM users WHERE email_verification_token=?;`,
+        [tokenHash],
+        function (error, results) {
+          if (error) {
+            reject(error);
+          }
+
+          if (!results || !results.length) {
+            resolve(null);
+          } else {
+            resolve(results[0]);
+          }
+        }
+      );
+    });
+  };
+
+  this.byPasswordResetToken = function (tokenHash) {
+    return new Promise((resolve, reject) => {
+      db.query(
+        `SELECT * FROM users WHERE password_reset_token=?;`,
+        [tokenHash],
+        function (error, results) {
+          if (error) {
+            reject(error);
+          }
+
+          if (!results || !results.length) {
+            resolve(null);
+          } else {
+            resolve(results[0]);
+          }
+        }
+      );
+    });
+  };
+
   this.hasJoined = function (username) {
     return new Promise((resolve, reject) => {
       db.query(
@@ -105,6 +165,140 @@ export function UserGetter() {
       );
     });
   };
+}
+
+export function updateUserCredentials(
+  userId,
+  email,
+  passwordHash,
+  verificationToken,
+  verificationExpiry
+) {
+  return new Promise((resolve, reject) => {
+    db.query(
+      `UPDATE users SET email=?, password_hash=?, email_verification_token=?, email_verification_expires=?, email_verified=0, email_verified_at=NULL WHERE userId=?;`,
+      [email, passwordHash, verificationToken, verificationExpiry, userId],
+      function (error, results) {
+        if (error) {
+          reject(error);
+        }
+
+        resolve(results);
+      }
+    );
+  });
+}
+
+export function markEmailVerified(userId) {
+  return new Promise((resolve, reject) => {
+    db.query(
+      `UPDATE users SET email_verified=1, email_verified_at=NOW(), email_verification_token=NULL, email_verification_expires=NULL, account_registered=COALESCE(account_registered, NOW()) WHERE userId=?;`,
+      [userId],
+      function (error, results) {
+        if (error) {
+          reject(error);
+        }
+
+        resolve(results);
+      }
+    );
+  });
+}
+
+export function clearEmailVerificationToken(userId) {
+  return new Promise((resolve, reject) => {
+    db.query(
+      `UPDATE users SET email_verification_token=NULL, email_verification_expires=NULL WHERE userId=?;`,
+      [userId],
+      function (error, results) {
+        if (error) {
+          reject(error);
+        }
+
+        resolve(results);
+      }
+    );
+  });
+}
+
+export function savePasswordResetToken(userId, tokenHash, expiry) {
+  return new Promise((resolve, reject) => {
+    db.query(
+      `UPDATE users SET password_reset_token=?, password_reset_expires=? WHERE userId=?;`,
+      [tokenHash, expiry, userId],
+      function (error, results) {
+        if (error) {
+          reject(error);
+        }
+
+        resolve(results);
+      }
+    );
+  });
+}
+
+export function clearPasswordResetToken(userId) {
+  return new Promise((resolve, reject) => {
+    db.query(
+      `UPDATE users SET password_reset_token=NULL, password_reset_expires=NULL WHERE userId=?;`,
+      [userId],
+      function (error, results) {
+        if (error) {
+          reject(error);
+        }
+
+        resolve(results);
+      }
+    );
+  });
+}
+
+export function updatePassword(userId, passwordHash) {
+  return new Promise((resolve, reject) => {
+    db.query(
+      `UPDATE users SET password_hash=?, account_registered=COALESCE(account_registered, NOW()) WHERE userId=?;`,
+      [passwordHash, userId],
+      function (error, results) {
+        if (error) {
+          reject(error);
+        }
+
+        resolve(results);
+      }
+    );
+  });
+}
+
+export function updateEmail(userId, email, verificationToken, verificationExpiry) {
+  return new Promise((resolve, reject) => {
+    db.query(
+      `UPDATE users SET email=?, email_verified=0, email_verified_at=NULL, email_verification_token=?, email_verification_expires=? WHERE userId=?;`,
+      [email, verificationToken, verificationExpiry, userId],
+      function (error, results) {
+        if (error) {
+          reject(error);
+        }
+
+        resolve(results);
+      }
+    );
+  });
+}
+
+export function linkDiscordAccount(userId, discordId) {
+  return new Promise((resolve, reject) => {
+    db.query(
+      `UPDATE users SET discordId=?, account_registered=COALESCE(account_registered, NOW()) WHERE userId=?;`,
+      [discordId, userId],
+      function (error, results) {
+        if (error) {
+          reject(error);
+        }
+
+        resolve(results);
+      }
+    );
+  });
 }
 
 export function UserLinkGetter() {
