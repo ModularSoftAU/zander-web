@@ -1,3 +1,5 @@
+USE zanderdev;
+
 ALTER TABLE users
     ADD COLUMN email VARCHAR(255) UNIQUE AFTER account_disabled,
     ADD COLUMN email_verified BOOLEAN DEFAULT 0 AFTER email,
