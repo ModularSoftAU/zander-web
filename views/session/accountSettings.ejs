@@ -10,18 +10,20 @@
   backgroundImage: globalImage
 }) %>
 
-<section class="section">
+<section class="section section-account">
   <div class="container">
-    <div class="row">
-      <div class="col-12 col-lg-8 mx-auto">
+    <div class="row justify-content-center">
+      <div class="col-12 col-lg-10 col-xl-8">
         <% if (req.cookies.alertType) { %>
-          <%- include("../partials/alert.ejs", {
-            alertType: req.cookies.alertType,
-            content: req.cookies.alertContent
-          }) %>
+          <div class="mb-3">
+            <%- include("../partials/alert.ejs", {
+              alertType: req.cookies.alertType,
+              content: req.cookies.alertContent
+            }) %>
+          </div>
         <% } %>
 
-        <div class="card mb-4">
+        <div class="card mb-4 shadow-sm border-0">
           <div class="card-body">
             <h5 class="card-title">Email address</h5>
             <p class="card-text">
@@ -44,7 +46,7 @@
           </div>
         </div>
 
-        <div class="card mb-4">
+        <div class="card mb-4 shadow-sm border-0">
           <div class="card-body">
             <h5 class="card-title">Password</h5>
             <form method="post" action="<%= process.env.siteAddress %>/account/change-password" class="row g-3">
@@ -67,7 +69,7 @@
           </div>
         </div>
 
-        <div class="card">
+        <div class="card shadow-sm border-0">
           <div class="card-body">
             <h5 class="card-title">Discord connection</h5>
             <% if (req.session.user.discordID) { %>

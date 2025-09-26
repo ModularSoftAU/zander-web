@@ -10,56 +10,78 @@
   backgroundImage: globalImage
 }) %>
 
-<div class="row dashboardview">
-    <div class="col-md-2">
-      <%- include("../../modules/dashboard/dashboard-sidebar.ejs") %>
-    </div>
-    <div class="col-md-10" style="padding: 10px;">
-        <a href="/dashboard/vault/create"><button type="button" class="btn btn-sm btn-info">Create Vault Entry</button></a>
-        <%- include("../../partials/documentationLink.ejs", {
-            doclink: "https://modularsoft.org/docs/products/zander/features/vault/"
-        }) %>
-        <br><br>
+<section class="section section-dashboard">
+  <div class="container-fluid">
+    <div class="row dashboardview g-4">
+      <div class="col-12 d-lg-none">
+        <button class="btn btn-outline-primary w-100 dashboard-menu-toggle" type="button" data-bs-toggle="collapse" data-bs-target="#dashboardSidebar" aria-controls="dashboardSidebar" aria-expanded="false">
+          <i class="fas fa-bars me-2"></i>Dashboard menu
+        </button>
+      </div>
+      <div class="col-12 col-lg-3 col-xl-2">
+        <%- include("../../modules/dashboard/dashboard-sidebar.ejs") %>
+      </div>
+      <div class="col-12 col-lg-9 col-xl-10">
+        <div class="d-flex flex-column flex-lg-row align-items-lg-center gap-3 mb-4">
+          <a href="/dashboard/vault/create" class="btn btn-info btn-sm text-nowrap"><i class="fa-solid fa-plus me-1"></i> Create vault entry</a>
+          <%- include("../../partials/documentationLink.ejs", {
+              doclink: "https://modularsoft.org/docs/products/zander/features/vault/"
+          }) %>
+        </div>
 
         <% if (req.cookies.alertType) { %>
+          <div class="mb-3">
             <%- include("../../partials/alert.ejs", {
               alertType: req.cookies.alertType,
               content: req.cookies.alertContent
             }) %>
+          </div>
         <% } %>
-        <table class="table">
-            <thead>
-                <tr>
-                    <th>Name</th>
-                    <th>Action</th>
-                </tr>
-            </thead>
-            <tbody>
-                <% if (apiData.success == false) { %>
-                    <%- include("../../partials/alert.ejs", {
-                      alertType: "danger",
-                      content: apiData.message
-                    }) %>
-                <% } else { %>
-                    <% apiData.data.forEach(function (vault) { %>
-                        <tr>
-                            <td><%= vault.displayName %></td>
-                            <td>
-                                <div class="btn-group">
-                                    <a href="/dashboard/vault/edit?vaultId=<%= vault.vaultId %>"><button class="btn btn-sm btn-warning" type="button">Edit</button></a>
 
-                                    <form action="<%= process.env.siteAddress %>/redirect/vault/delete" method="post">
-                                        <input type="hidden" name="vaultId" value="<%= vault.vaultId %>">
-                                        <button class="btn btn-sm btn-danger" type="submit">Delete</button>
-                                    </form>
-                                </div>
-                            </td>
-                        </tr>
+        <div class="card shadow-sm border-0">
+          <div class="card-body">
+            <div class="table-responsive">
+              <table class="table align-middle mb-0">
+                <thead>
+                  <tr>
+                    <th scope="col">Name</th>
+                    <th scope="col" class="text-end">Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <% if (apiData.success == false) { %>
+                    <tr>
+                      <td colspan="2">
+                        <%- include("../../partials/alert.ejs", {
+                          alertType: "danger",
+                          content: apiData.message
+                        }) %>
+                      </td>
+                    </tr>
+                  <% } else { %>
+                    <% apiData.data.forEach(function (vault) { %>
+                      <tr>
+                        <td class="fw-semibold"><%= vault.displayName %></td>
+                        <td class="text-end">
+                          <div class="btn-group flex-wrap">
+                            <a href="/dashboard/vault/edit?vaultId=<%= vault.vaultId %>" class="btn btn-sm btn-warning">Edit</a>
+                            <form action="<%= process.env.siteAddress %>/redirect/vault/delete" method="post">
+                              <input type="hidden" name="vaultId" value="<%= vault.vaultId %>">
+                              <button class="btn btn-sm btn-danger" type="submit">Delete</button>
+                            </form>
+                          </div>
+                        </td>
+                      </tr>
                     <% }) %>
-                <% } %>
-            </tbody>
-        </table>
+                  <% } %>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
+</section>
 
 <%- include("../../modules/footer.ejs") %>

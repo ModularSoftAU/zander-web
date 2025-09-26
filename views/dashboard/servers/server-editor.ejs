@@ -10,119 +10,122 @@
   backgroundImage: globalImage
 }) %>
 
-<div class="row dashboardview">
-    <div class="col-md-2">
-      <%- include("../../modules/dashboard/dashboard-sidebar.ejs") %>
-    </div>
-    <div class="col-md-10" style="padding: 10px;">
-        <%- include("../../partials/documentationLink.ejs", {
-            doclink: "https://modularsoft.org/docs/products/zander/features/server/"
-        }) %>
-        <br><br>
+<section class="section section-dashboard">
+  <div class="container-fluid">
+    <div class="row dashboardview g-4">
+      <div class="col-12 d-lg-none">
+        <button class="btn btn-outline-primary w-100 dashboard-menu-toggle" type="button" data-bs-toggle="collapse" data-bs-target="#dashboardSidebar" aria-controls="dashboardSidebar" aria-expanded="false">
+          <i class="fas fa-bars me-2"></i>Dashboard menu
+        </button>
+      </div>
+      <div class="col-12 col-lg-3 col-xl-2">
+        <%- include("../../modules/dashboard/dashboard-sidebar.ejs") %>
+      </div>
+      <div class="col-12 col-lg-9 col-xl-10">
+        <div class="d-flex flex-column flex-lg-row align-items-lg-center gap-3 mb-4">
+          <%- include("../../partials/documentationLink.ejs", {
+              doclink: "https://modularsoft.org/docs/products/zander/features/server/"
+          }) %>
+        </div>
 
-        <div class="basic-form">
-            <% if (type === 'create') { %>
-                <form method="post" action="<%= process.env.siteAddress %>/redirect/server/create">
-            <% } %>
-            <% if (type === 'edit') { %>
-                <form method="post" action="<%= process.env.siteAddress %>/redirect/server/edit">
-                    <input type="hidden" name="serverId" value="<%= serverApiData.serverId %>">
-            <% } %>
-                    
-            <div class="row">
-                <!-- Server Name -->
-                <div class="mb-3 col">
-                    <label for="displayName">Server Display Name</label>
+        <div class="card shadow-sm border-0">
+          <div class="card-body">
+            <div class="basic-form">
+              <% if (type === 'create') { %>
+                <form method="post" action="<%= process.env.siteAddress %>/redirect/server/create" class="row g-4">
+              <% } %>
+              <% if (type === 'edit') { %>
+                <form method="post" action="<%= process.env.siteAddress %>/redirect/server/edit" class="row g-4">
+                  <input type="hidden" name="serverId" value="<%= serverApiData.serverId %>">
+              <% } %>
 
-                    <% if (type === 'create') { %>
+                  <div class="col-12 col-lg-6">
+                    <div class="mb-3">
+                      <label for="displayName" class="form-label">Server display name</label>
+                      <% if (type === 'create') { %>
                         <%- include("../../partials/form/inputText.ejs", {
                             elementName: "displayName",
                             elementValue: null,
                             required: true
                         }) %>
-                    <% } %>
-                    <% if (type === 'edit') { %>
+                      <% } %>
+                      <% if (type === 'edit') { %>
                         <%- include("../../partials/form/inputText.ejs", {
                             elementName: "displayName",
                             elementValue: serverApiData.displayName,
                             required: true
                         }) %>
-                    <% } %>
-                </div>
+                      <% } %>
+                    </div>
+                  </div>
 
-                <!-- Server Connection Address -->
-                <div class="mb-3 col">
-                    <label for="serverConnectionAddress">Server Connection Address</label>
-
-                    <% if (type === 'create') { %>
+                  <div class="col-12 col-lg-6">
+                    <div class="mb-3">
+                      <label for="serverConnectionAddress" class="form-label">Connection address</label>
+                      <% if (type === 'create') { %>
                         <%- include("../../partials/form/inputText.ejs", {
                             elementName: "serverConnectionAddress",
                             elementValue: null,
                             required: false
                         }) %>
-                    <% } %>
-                    <% if (type === 'edit') { %>
+                      <% } %>
+                      <% if (type === 'edit') { %>
                         <%- include("../../partials/form/inputText.ejs", {
                             elementName: "serverConnectionAddress",
                             elementValue: serverApiData.serverConnectionAddress,
                             required: false
                         }) %>
-                    <% } %>
-                </div>
-            </div>
+                      <% } %>
+                    </div>
+                  </div>
 
-            <div class="row">
-                <!-- Server Position -->
-                <div class="mb-3 col">
-                    <label for="serverType">Server Type</label>
+                  <div class="col-12 col-lg-6">
+                    <div class="mb-3">
+                      <label for="serverType" class="form-label">Server type</label>
+                      <select class="form-select" name="serverType">
+                        <option value="INTERNAL" <% if (type === 'edit' && serverApiData.serverType === 'INTERNAL') { %>selected<% } %>>Internal</option>
+                        <option value="EXTERNAL" <% if (type === 'edit' && serverApiData.serverType === 'EXTERNAL') { %>selected<% } %>>External</option>
+                        <option value="VERIFICATION" <% if (type === 'edit' && serverApiData.serverType === 'VERIFICATION') { %>selected<% } %>>Verification</option>
+                      </select>
+                    </div>
+                  </div>
 
-                    <% if (type === 'create') { %>
-                        <select class="form-select" name="serverType">
-                            <option value="INTERNAL">Internal</option>
-                            <option value="EXTERNAL">External</option>
-                            <option value="VERIFICATION">Verification</option>
-                        </select>
-                    <% } %>
-                    <% if (type === 'edit') { %>
-                        <select class="form-select" name="serverType">
-                            <option value="INTERNAL" <% if (serverApiData.serverType === 'INTERNAL') { %> selected <% } %>>Internal</option>
-                            <option value="EXTERNAL" <% if (serverApiData.serverType === 'EXTERNAL') { %> selected <% } %>>External</option>
-                            <option value="VERIFICATION" <% if (serverApiData.serverType === 'VERIFICATION') { %> selected <% } %>>Verification</option>
-                        </select>
-                    <% } %>
-                </div>
-                
-                <!-- Server Position -->
-                <div class="mb-3 col">
-                    <label for="position">Server Position</label>
-
-                    <% if (type === 'create') { %>
+                  <div class="col-12 col-lg-6">
+                    <div class="mb-3">
+                      <label for="position" class="form-label">Display order</label>
+                      <% if (type === 'create') { %>
                         <%- include("../../partials/form/inputText.ejs", {
                             elementName: "position",
                             elementValue: null,
                             required: true
                         }) %>
-                    <% } %>
-                    <% if (type === 'edit') { %>
+                      <% } %>
+                      <% if (type === 'edit') { %>
                         <%- include("../../partials/form/inputText.ejs", {
                             elementName: "position",
                             elementValue: serverApiData.position,
                             required: true
                         }) %>
+                      <% } %>
+                    </div>
+                  </div>
+
+                  <div class="col-12 d-flex flex-wrap gap-2">
+                    <% if (type === 'create') { %>
+                      <button type="submit" class="btn btn-primary"><i class="fas fa-server me-2"></i>Create server</button>
                     <% } %>
-                </div>
+
+                    <% if (type === 'edit') { %>
+                      <button type="submit" class="btn btn-warning"><i class="fas fa-server me-2"></i>Update server</button>
+                    <% } %>
+                  </div>
+                </form>
             </div>
-
-            <% if (type === 'create') { %>
-                <button type="submit" class="btn btn-primary"><i class="fas fa-server"></i> Create Server</button>
-            <% } %>
-
-            <% if (type === 'edit') { %>
-                <button type="submit" class="btn btn-warning"><i class="fas fa-server"></i> Edit Server</button>
-            <% } %>
-        </form>
-    </div>        
+          </div>
+        </div>
+      </div>
     </div>
   </div>
+</section>
 
 <%- include("../../modules/footer.ejs") %>

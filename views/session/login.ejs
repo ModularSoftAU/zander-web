@@ -10,44 +10,50 @@
   backgroundImage: globalImage
 }) %>
 
-<section class="section">
-    <div class="container">
-      <div class="row">
-        <div class="col-12 col-sm-6">    
-          <% if (req.cookies.alertType) { %>
+<section class="section section-auth">
+  <div class="container">
+    <div class="row justify-content-center align-items-center g-5">
+      <div class="col-12 col-lg-5 col-xl-4 order-2 order-lg-1">
+        <% if (req.cookies.alertType) { %>
+          <div class="mb-3">
             <%- include("../partials/alert.ejs", {
               alertType: req.cookies.alertType,
               content: req.cookies.alertContent
             }) %>
-          <% } %>
-
-          <form method="post" action="<%= process.env.siteAddress %>/login">
-            <div class="mb-3">
-              <label for="email">Email address</label>
-              <input type="email" class="form-control" name="email" required>
-            </div>
-            <div class="mb-3">
-              <label for="password">Password</label>
-              <input type="password" class="form-control" name="password" required>
-            </div>
-            <div class="d-grid gap-2">
-              <button type="submit" class="btn btn-primary">Sign in with email</button>
-              <a class="btn btn-outline-secondary" href="/login/discord">Sign in with Discord</a>
-            </div>
-          </form>
-          <br>
-          <div class="d-flex flex-column gap-1">
-            <small class="text-muted">Don't have an account? You can <a href="/register">register here</a>.</small>
-            <small><a href="/forgot-password">Forgot your password?</a></small>
           </div>
-        </div>
-        <div class="col-12 col-sm-6" style="min-height:500px;">
-          <div class="text-center">
-            <img class="floating" style="margin-top:10px;" src="images/session/loginImage.png" height="300px" draggable="false">
+        <% } %>
+
+        <div class="card shadow-sm border-0 auth-card">
+          <div class="card-body p-4 p-md-5">
+            <h2 class="h4 mb-4 text-center text-lg-start">Sign in to your account</h2>
+            <form method="post" action="<%= process.env.siteAddress %>/login" class="row g-3">
+              <div class="col-12">
+                <label for="email" class="form-label">Email address</label>
+                <input type="email" class="form-control" name="email" required>
+              </div>
+              <div class="col-12">
+                <label for="password" class="form-label">Password</label>
+                <input type="password" class="form-control" name="password" required>
+              </div>
+              <div class="col-12 d-grid gap-2">
+                <button type="submit" class="btn btn-primary">Sign in with email</button>
+                <a class="btn btn-outline-secondary" href="/login/discord">Sign in with Discord</a>
+              </div>
+            </form>
+            <div class="pt-3 text-center text-lg-start">
+              <small class="d-block text-muted">Don't have an account? <a href="/register">Register here</a>.</small>
+              <small class="d-block"><a href="/forgot-password">Forgot your password?</a></small>
+            </div>
           </div>
         </div>
       </div>
+      <div class="col-10 col-sm-8 col-lg-5 col-xl-4 order-1 order-lg-2 text-center">
+        <div class="auth-illustration mx-auto">
+          <img class="img-fluid floating" src="images/session/loginImage.png" alt="Login illustration" draggable="false">
+        </div>
+      </div>
     </div>
+  </div>
 </section>
 
 <%- include("../modules/footer.ejs") %>

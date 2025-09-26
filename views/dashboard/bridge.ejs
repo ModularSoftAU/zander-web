@@ -10,84 +10,111 @@
   backgroundImage: globalImage
 }) %>
 
-<div class="row dashboardview">
-    <div class="col-sm-2">
-      <%- include("../modules/dashboard/dashboard-sidebar.ejs") %>
-    </div>
-    <div class="col" style="padding: 20px;">
-        <%- include("../partials/documentationLink.ejs", {
-            doclink: "https://modularsoft.org/docs/products/zander/features/bridge/"
-        }) %>
-        <br><br>
-
-        <div class="basic-form">
-            <form method="post" action="<%= process.env.siteAddress %>/redirect/bridge/command/add">
-                <div class="row">
-                    <!-- Target Server -->
-                    <div class="mb-3 col">
-                        <label for="command">Command</label>
-
-                         <%- include("../partials/form/inputText.ejs", {
-                             elementName: "command",
-                             elementValue: null,
-                             required: true
-                         }) %>
-                    </div>
-
-                    <!-- Target Server -->
-                    <div class="mb-3 col">
-                        <label for="targetServer">Target Server</label>
-
-                         <%- include("../partials/form/inputText.ejs", {
-                             elementName: "targetServer",
-                             elementValue: null,
-                             required: true
-                         }) %>
-                    </div>
-                </div>
-
-                <button type="submit" class="btn btn-primary">Send to Bridge</button>
-            </form>
+<section class="section section-dashboard">
+  <div class="container-fluid">
+    <div class="row dashboardview g-4">
+      <div class="col-12 d-lg-none">
+        <button class="btn btn-outline-primary w-100 dashboard-menu-toggle" type="button" data-bs-toggle="collapse" data-bs-target="#dashboardSidebar" aria-controls="dashboardSidebar" aria-expanded="false">
+          <i class="fas fa-bars me-2"></i>Dashboard menu
+        </button>
+      </div>
+      <div class="col-12 col-lg-3 col-xl-2">
+        <%- include("../modules/dashboard/dashboard-sidebar.ejs") %>
+      </div>
+      <div class="col-12 col-lg-9 col-xl-10">
+        <div class="d-flex flex-column flex-lg-row align-items-lg-center gap-3 mb-4">
+          <%- include("../partials/documentationLink.ejs", {
+              doclink: "https://modularsoft.org/docs/products/zander/features/bridge/"
+          }) %>
         </div>
-        <br><br>
+
+        <div class="card shadow-sm border-0 mb-4">
+          <div class="card-body">
+            <h5 class="card-title">Queue a bridge command</h5>
+            <div class="basic-form">
+              <form method="post" action="<%= process.env.siteAddress %>/redirect/bridge/command/add" class="row g-3">
+                <div class="col-12 col-lg-6">
+                  <label for="command" class="form-label">Command</label>
+                  <%- include("../partials/form/inputText.ejs", {
+                      elementName: "command",
+                      elementValue: null,
+                      required: true
+                  }) %>
+                </div>
+                <div class="col-12 col-lg-6">
+                  <label for="targetServer" class="form-label">Target server</label>
+                  <%- include("../partials/form/inputText.ejs", {
+                      elementName: "targetServer",
+                      elementValue: null,
+                      required: true
+                  }) %>
+                </div>
+                <div class="col-12">
+                  <button type="submit" class="btn btn-primary"><i class="fas fa-paper-plane me-2"></i>Send to bridge</button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
 
         <% if (req.cookies.alertType) { %>
+          <div class="mb-3">
             <%- include("../partials/alert.ejs", {
               alertType: req.cookies.alertType,
               content: req.cookies.alertContent
             }) %>
+          </div>
         <% } %>
-        
-        <table class="table">
-            <thead>
-                <tr>
-                    <th>Bridge ID</th>
-                    <th>Command</th>
-                    <th>Target Server</th>
-                    <th>Processed</th>
-                    <th>Created</th>
-                </tr>
-            </thead>
-            <tbody>
-                <% if (apiData.success == false) { %>
-                    <%- include("../partials/alert.ejs", {
-                      alertType: "danger",
-                      content: apiData.message
-                    }) %>
-                <% } else { %>
+
+        <div class="card shadow-sm border-0">
+          <div class="card-body">
+            <h5 class="card-title">Recent bridge messages</h5>
+            <div class="table-responsive">
+              <table class="table align-middle mb-0">
+                <thead>
+                  <tr>
+                    <th scope="col">Bridge ID</th>
+                    <th scope="col">Command</th>
+                    <th scope="col">Target server</th>
+                    <th scope="col">Processed</th>
+                    <th scope="col">Created</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <% if (apiData.success == false) { %>
+                    <tr>
+                      <td colspan="5">
+                        <%- include("../partials/alert.ejs", {
+                          alertType: "danger",
+                          content: apiData.message
+                        }) %>
+                      </td>
+                    </tr>
+                  <% } else { %>
                     <% apiData.data.forEach(function (bridge) { %>
-                        <tr>
-                            <td><%= bridge.bridgeId %></td>
-                            <td><code><%= bridge.command %></code></td>
-                            <td><%= bridge.targetServer %></td>
-                            <td><%= bridge.processed %></td>
-                            <td><%= moment(bridge.bridgeDateTime).startOf('hour').fromNow() %></td>
-                        </tr>
+                      <tr>
+                        <td class="fw-semibold">#<%= bridge.bridgeId %></td>
+                        <td class="text-break"><code><%= bridge.command %></code></td>
+                        <td><%= bridge.targetServer %></td>
+                        <td>
+                          <% if (bridge.processed) { %>
+                            <span class="badge text-bg-success">Processed</span>
+                          <% } else { %>
+                            <span class="badge text-bg-secondary">Pending</span>
+                          <% } %>
+                        </td>
+                        <td><%= moment(bridge.bridgeDateTime).startOf('minute').fromNow() %></td>
+                      </tr>
                     <% }) %>
-                <% } %>
-            </tbody>
-        </table>
+                  <% } %>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
+</section>
 
 <%- include("../modules/footer.ejs") %>
