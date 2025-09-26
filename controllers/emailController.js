@@ -14,11 +14,21 @@ const transporter = nodemailer.createTransport({
   port: smtpPort,
   secure: smtpPort === 465,
   requireTLS: smtpPort !== 465,
+  connectionTimeout: 1000 * 15,
+  greetingTimeout: 1000 * 15,
+  socketTimeout: 1000 * 20,
   auth: {
     user: process.env.smtpUser,
     pass: process.env.smtpPass,
   },
 });
+
+const smtpIdentityEmail = process.env.smtpIdentityEmailAddress;
+const smtpIdentityName =
+  process.env.smtpIdentityDisplayName || process.env.siteName || "Zander";
+const smtpCredentialsConfigured = Boolean(
+  process.env.smtpUser && process.env.smtpPass && smtpIdentityEmail
+);
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -31,10 +41,14 @@ async function renderTemplate(templateName, data) {
 }
 
 export async function sendMail(recipient, subject, templateName, templateData) {
+  if (!smtpCredentialsConfigured) {
+    throw new Error("SMTP credentials are not fully configured");
+  }
+
   const renderedTemplate = await renderTemplate(templateName, templateData);
 
   const mailOptions = {
-    from: `"${process.env.smtpIdentityDisplayName}" <${process.env.smtpIdentityEmailAddress}>`,
+    from: `"${smtpIdentityName}" <${smtpIdentityEmail}>`,
     to: recipient,
     subject: subject,
     html: renderedTemplate,

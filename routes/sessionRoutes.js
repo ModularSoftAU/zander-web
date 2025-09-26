@@ -31,6 +31,7 @@ import {
 
 const EMAIL_TOKEN_EXPIRY_MINUTES = 60;
 const PASSWORD_TOKEN_EXPIRY_MINUTES = 30;
+const EMAIL_DISPATCH_TIMEOUT_MS = 1000 * 15;
 
 function normalizeEmail(email) {
   return email ? email.trim().toLowerCase() : "";
@@ -44,6 +45,24 @@ function generateToken() {
 
 function tokenExpiry(minutes) {
   return new Date(Date.now() + minutes * 60 * 1000);
+}
+
+async function dispatchEmail(sendFn, contextLabel) {
+  try {
+    await Promise.race([
+      sendFn(),
+      new Promise((_, reject) =>
+        setTimeout(
+          () => reject(new Error(`${contextLabel} timed out after ${EMAIL_DISPATCH_TIMEOUT_MS}ms`)),
+          EMAIL_DISPATCH_TIMEOUT_MS
+        )
+      ),
+    ]);
+    return true;
+  } catch (error) {
+    console.error(contextLabel, error);
+    return false;
+  }
 }
 
 async function buildSession(req, user) {
@@ -242,10 +261,22 @@ export default function sessionSiteRoute(
       const { token, tokenHash } = generateToken();
       const expiry = tokenExpiry(EMAIL_TOKEN_EXPIRY_MINUTES);
 
-      await updateUserCredentials(user.userId, email, passwordHash, tokenHash, expiry);
-
       const verifyUrl = `${process.env.siteAddress}/verify-email?token=${token}`;
-      await sendEmailVerificationMail(email, user.username, verifyUrl);
+      const emailDispatched = await dispatchEmail(
+        () => sendEmailVerificationMail(email, user.username, verifyUrl),
+        "Email verification dispatch failed"
+      );
+
+      if (!emailDispatched) {
+        await setBannerCookie(
+          "danger",
+          "We couldn't send the verification email. Please try again shortly.",
+          res
+        );
+        return res.redirect(`/register`);
+      }
+
+      await updateUserCredentials(user.userId, email, passwordHash, tokenHash, expiry);
 
       await setBannerCookie(
         "success",
@@ -339,10 +370,20 @@ export default function sessionSiteRoute(
       if (user) {
         const { token, tokenHash } = generateToken();
         const expiry = tokenExpiry(PASSWORD_TOKEN_EXPIRY_MINUTES);
-        await savePasswordResetToken(user.userId, tokenHash, expiry);
-
         const resetUrl = `${process.env.siteAddress}/reset-password?token=${token}`;
-        await sendPasswordResetMail(email, user.username, resetUrl);
+
+        const emailDispatched = await dispatchEmail(
+          () => sendPasswordResetMail(email, user.username, resetUrl),
+          "Password reset email dispatch failed"
+        );
+
+        if (emailDispatched) {
+          await savePasswordResetToken(user.userId, tokenHash, expiry);
+        } else {
+          console.warn(
+            `Password reset token not persisted for userId ${user.userId} because email dispatch failed.`
+          );
+        }
       }
 
       await setBannerCookie(
@@ -528,10 +569,22 @@ export default function sessionSiteRoute(
       const { token, tokenHash } = generateToken();
       const expiry = tokenExpiry(EMAIL_TOKEN_EXPIRY_MINUTES);
 
-      await updateEmail(currentUser.userId, email, tokenHash, expiry);
-
       const verifyUrl = `${process.env.siteAddress}/verify-email?token=${token}`;
-      await sendEmailVerificationMail(email, currentUser.username, verifyUrl);
+      const emailDispatched = await dispatchEmail(
+        () => sendEmailVerificationMail(email, currentUser.username, verifyUrl),
+        "Change email verification dispatch failed"
+      );
+
+      if (!emailDispatched) {
+        await setBannerCookie(
+          "danger",
+          "We couldn't send a verification email to that address. Please try again later.",
+          res
+        );
+        return res.redirect(`/account/settings`);
+      }
+
+      await updateEmail(currentUser.userId, email, tokenHash, expiry);
 
       req.session.user.email = email;
 

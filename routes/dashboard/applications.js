@@ -2,6 +2,7 @@ import {
   getGlobalImage,
   hasPermission,
   isFeatureWebRouteEnabled,
+  setBannerCookie,
 } from "../../api/common.js";
 import { getWebAnnouncement } from "../../controllers/announcementController.js";
 
@@ -64,20 +65,48 @@ export default function dashboardApplicationsSiteRoute(
 
     const applicationId = req.query.applicationId;
     const fetchURL = `${process.env.siteAddress}/api/application/get?id=${applicationId}`;
-    const response = await fetch(fetchURL, {
-      headers: { "x-access-token": process.env.apiKey },
-    });
-    const applicationApiData = await response.json();    
 
-    return res.view("dashboard/applications/application-editor", {
-      pageTitle: `Dashboard - Application Editor`,
-      config: config,
-      applicationApiData: applicationApiData.data[0],
-      type: "edit",
-      features: features,
-      req: req,
-      globalImage: getGlobalImage(),
-      announcementWeb: await getWebAnnouncement(),
-    });
+    try {
+      const response = await fetch(fetchURL, {
+        headers: { "x-access-token": process.env.apiKey },
+      });
+
+      if (!response.ok) {
+        throw new Error(
+          `Failed to load application ${applicationId}: ${response.status} ${response.statusText}`
+        );
+      }
+
+      const responseBody = await response.text();
+      if (!responseBody) {
+        throw new Error(`Empty payload received for application ${applicationId}`);
+      }
+
+      const applicationApiData = JSON.parse(responseBody);
+      const applicationRecord = applicationApiData?.data?.[0];
+
+      if (!applicationRecord) {
+        throw new Error(`Application ${applicationId} was not returned by the API`);
+      }
+
+      return res.view("dashboard/applications/application-editor", {
+        pageTitle: `Dashboard - Application Editor`,
+        config: config,
+        applicationApiData: applicationRecord,
+        type: "edit",
+        features: features,
+        req: req,
+        globalImage: getGlobalImage(),
+        announcementWeb: await getWebAnnouncement(),
+      });
+    } catch (error) {
+      console.error("Application editor load failed", error);
+      await setBannerCookie(
+        "danger",
+        "We couldn't load that application. Please try again.",
+        res
+      );
+      return res.redirect(`/dashboard/applications`);
+    }
   });
 }
