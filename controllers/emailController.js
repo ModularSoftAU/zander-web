@@ -30,6 +30,11 @@ const smtpCredentialsConfigured = Boolean(
   process.env.smtpUser && process.env.smtpPass && smtpIdentityEmail
 );
 
+const missingSmtpFields = [];
+if (!process.env.smtpUser) missingSmtpFields.push("smtpUser");
+if (!process.env.smtpPass) missingSmtpFields.push("smtpPass");
+if (!smtpIdentityEmail) missingSmtpFields.push("smtpIdentityEmailAddress");
+
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const templateRoot = path.join(__dirname, "..", "views", "emails");
@@ -73,6 +78,17 @@ export async function sendPasswordResetMail(email, username, resetUrl) {
     resetUrl,
     siteName: process.env.siteName || process.env.smtpIdentityDisplayName,
   });
+}
+
+export function isEmailServiceConfigured() {
+  return smtpCredentialsConfigured;
+}
+
+export function getEmailConfigurationIssues() {
+  if (smtpCredentialsConfigured) {
+    return [];
+  }
+  return missingSmtpFields;
 }
 
 export default transporter;

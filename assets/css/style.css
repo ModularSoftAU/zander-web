@@ -1570,6 +1570,56 @@ a:focus {
   height: auto;
 }
 
+.password-requirements {
+  background-color: #f8f9fa;
+  border-radius: 0.75rem;
+  padding: 0.75rem 1rem;
+}
+
+.password-requirements__title {
+  font-weight: 600;
+}
+
+.password-requirements__item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: #6c757d;
+  transition: color 0.2s ease;
+}
+
+.password-requirements__item:not(:last-child) {
+  margin-bottom: 0.25rem;
+}
+
+.password-requirements__icon {
+  width: 0.9rem;
+  height: 0.9rem;
+  border-radius: 50%;
+  border: 2px solid currentColor;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.55rem;
+  line-height: 1;
+}
+
+.password-requirements__icon::before {
+  content: "\2715";
+}
+
+.password-requirements__item.is-met {
+  color: #198754;
+}
+
+.password-requirements__item.is-met .password-requirements__icon {
+  border-color: #198754;
+}
+
+.password-requirements__item.is-met .password-requirements__icon::before {
+  content: "\2713";
+}
+
 .section-account {
   padding: 3rem 0 4rem;
 }

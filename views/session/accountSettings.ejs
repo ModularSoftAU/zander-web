@@ -30,17 +30,22 @@
               Your current email address is
               <strong><%= req.session.user.email || "not set" %></strong>.
             </p>
+            <% if (!emailServiceConfigured) { %>
+              <div class="alert alert-warning" role="alert">
+                Email updates are temporarily unavailable because email delivery is not configured.
+              </div>
+            <% } %>
             <form method="post" action="/account/change-email" class="row g-3">
               <div class="col-12">
                 <label for="email" class="form-label">New email address</label>
-                <input type="email" class="form-control" name="email" required>
+                <input type="email" class="form-control" id="accountEmail" name="email" required autocomplete="email">
               </div>
               <div class="col-12">
                 <label for="password" class="form-label">Confirm with password</label>
-                <input type="password" class="form-control" name="password" required>
+                <input type="password" class="form-control" id="accountPasswordConfirm" name="password" required autocomplete="current-password">
               </div>
               <div class="col-12">
-                <button type="submit" class="btn btn-primary">Update email</button>
+                <button type="submit" class="btn btn-primary" <%= emailServiceConfigured ? "" : "disabled" %>>Update email</button>
               </div>
             </form>
           </div>
@@ -52,16 +57,26 @@
             <form method="post" action="/account/change-password" class="row g-3">
               <div class="col-12">
                 <label for="currentPassword" class="form-label">Current password</label>
-                <input type="password" class="form-control" name="currentPassword" required>
+                <input type="password" class="form-control" id="accountCurrentPassword" name="currentPassword" required autocomplete="current-password">
               </div>
               <div class="col-12 col-md-6">
                 <label for="newPassword" class="form-label">New password</label>
-                <input type="password" class="form-control" name="newPassword" minlength="8" required>
+                <input type="password" class="form-control" id="accountNewPassword" name="newPassword" minlength="<%= passwordPolicy.minLength %>" required autocomplete="new-password">
               </div>
               <div class="col-12 col-md-6">
                 <label for="confirmPassword" class="form-label">Confirm new password</label>
-                <input type="password" class="form-control" name="confirmPassword" minlength="8" required>
+                <input type="password" class="form-control" id="accountConfirmPassword" name="confirmPassword" minlength="<%= passwordPolicy.minLength %>" required autocomplete="new-password">
               </div>
+              <% if (passwordRequirements && passwordRequirements.length) { %>
+                <div class="col-12">
+                  <%- include("../partials/passwordRequirements.ejs", {
+                    requirements: passwordRequirements,
+                    policy: passwordPolicy,
+                    inputId: "accountNewPassword",
+                    containerId: "accountPasswordRequirements"
+                  }) %>
+                </div>
+              <% } %>
               <div class="col-12">
                 <button type="submit" class="btn btn-primary">Update password</button>
               </div>

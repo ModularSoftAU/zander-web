@@ -26,26 +26,41 @@
         <div class="card shadow-sm border-0 auth-card">
           <div class="card-body p-4 p-md-5">
             <h2 class="h4 mb-4 text-center text-lg-start">Create your account</h2>
+            <% if (!emailServiceConfigured) { %>
+              <div class="alert alert-warning" role="alert">
+                Email verification is currently unavailable. Please contact an administrator before registering.
+              </div>
+            <% } %>
             <form method="post" action="/register" class="row g-3">
               <div class="col-12">
                 <label for="username" class="form-label">Minecraft username</label>
-                <input type="text" class="form-control" name="username" maxlength="16" required>
+                <input type="text" class="form-control" id="registerUsername" name="username" maxlength="16" required autocomplete="username">
                 <small class="form-text text-muted">We use your existing Minecraft account to link your web profile.</small>
               </div>
               <div class="col-12">
                 <label for="email" class="form-label">Email address</label>
-                <input type="email" class="form-control" name="email" required>
-              </div>
-              <div class="col-12 col-md-6">
-                <label for="password" class="form-label">Password</label>
-                <input type="password" class="form-control" name="password" minlength="8" required>
-              </div>
-              <div class="col-12 col-md-6">
-                <label for="confirmPassword" class="form-label">Confirm password</label>
-                <input type="password" class="form-control" name="confirmPassword" minlength="8" required>
+                <input type="email" class="form-control" id="registerEmail" name="email" required autocomplete="email">
               </div>
               <div class="col-12">
-                <button type="submit" class="btn btn-primary w-100">Create account</button>
+                <label for="password" class="form-label">Password</label>
+                <input type="password" class="form-control" id="registerPassword" name="password" minlength="<%= passwordPolicy.minLength %>" required autocomplete="new-password">
+              </div>
+              <div class="col-12">
+                <label for="confirmPassword" class="form-label">Confirm password</label>
+                <input type="password" class="form-control" id="registerConfirmPassword" name="confirmPassword" minlength="<%= passwordPolicy.minLength %>" required autocomplete="new-password">
+              </div>
+              <% if (passwordRequirements && passwordRequirements.length) { %>
+                <div class="col-12">
+                  <%- include("../partials/passwordRequirements.ejs", {
+                    requirements: passwordRequirements,
+                    policy: passwordPolicy,
+                    inputId: "registerPassword",
+                    containerId: "registerPasswordRequirements"
+                  }) %>
+                </div>
+              <% } %>
+              <div class="col-12">
+                <button type="submit" class="btn btn-primary w-100" <%= emailServiceConfigured ? "" : "disabled" %>>Create account</button>
               </div>
             </form>
             <div class="pt-3 text-center text-lg-start">

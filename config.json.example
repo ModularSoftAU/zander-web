@@ -27,6 +27,15 @@
       "tiktok": "https://www.tiktok.com/@craftingforchrist"
     }
   },
+  "auth": {
+    "passwordRequirements": {
+      "minLength": 8,
+      "requireUppercase": true,
+      "requireLowercase": true,
+      "requireNumber": true,
+      "requireSpecial": false
+    }
+  },
   "discord": {
     "guildId": "GUILDID",
     "onlinePlayerChannel": "CHANNELID",

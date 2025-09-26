@@ -27,7 +27,14 @@ import { updateAudit_lastWebsiteLogin } from "../controllers/auditController.js"
 import {
   sendEmailVerificationMail,
   sendPasswordResetMail,
+  isEmailServiceConfigured,
+  getEmailConfigurationIssues,
 } from "../controllers/emailController.js";
+import {
+  getPasswordPolicy,
+  getPasswordRequirementList,
+  validatePasswordAgainstPolicy,
+} from "../utils/passwordPolicy.js";
 
 const EMAIL_TOKEN_EXPIRY_MINUTES = 60;
 const PASSWORD_TOKEN_EXPIRY_MINUTES = 30;
@@ -48,6 +55,14 @@ function tokenExpiry(minutes) {
 }
 
 async function dispatchEmail(sendFn, contextLabel) {
+  if (!isEmailServiceConfigured()) {
+    const missingFields = getEmailConfigurationIssues();
+    const missingLabel = missingFields.length
+      ? ` (missing ${missingFields.join(", ")})`
+      : "";
+    console.warn(`${contextLabel}: email service is not configured${missingLabel}`);
+    return false;
+  }
   try {
     await Promise.race([
       sendFn(),
@@ -115,6 +130,9 @@ export default function sessionSiteRoute(
   features,
   lang
 ) {
+  const passwordPolicy = getPasswordPolicy(config);
+  const passwordRequirements = getPasswordRequirementList(passwordPolicy);
+
   //
   // Email/password authentication
   //
@@ -194,6 +212,9 @@ export default function sessionSiteRoute(
       features: features,
       globalImage: await getGlobalImage(),
       announcementWeb: await getWebAnnouncement(),
+      passwordPolicy,
+      passwordRequirements,
+      emailServiceConfigured: isEmailServiceConfigured(),
     });
   });
 
@@ -211,10 +232,14 @@ export default function sessionSiteRoute(
       return res.redirect(`/register`);
     }
 
-    if (password.length < 8) {
+    const passwordValidation = validatePasswordAgainstPolicy(
+      password,
+      passwordPolicy
+    );
+    if (!passwordValidation.valid) {
       await setBannerCookie(
         "warning",
-        "Password must be at least 8 characters long.",
+        passwordValidation.failedRules[0].message,
         res
       );
       return res.redirect(`/register`);
@@ -222,6 +247,15 @@ export default function sessionSiteRoute(
 
     if (password !== confirmPassword) {
       await setBannerCookie("warning", "Passwords do not match.", res);
+      return res.redirect(`/register`);
+    }
+
+    if (!isEmailServiceConfigured()) {
+      await setBannerCookie(
+        "danger",
+        "We can't send verification emails right now. Please contact an administrator.",
+        res
+      );
       return res.redirect(`/register`);
     }
 
@@ -350,6 +384,7 @@ export default function sessionSiteRoute(
       features: features,
       globalImage: await getGlobalImage(),
       announcementWeb: await getWebAnnouncement(),
+      emailServiceConfigured: isEmailServiceConfigured(),
     });
   });
 
@@ -360,6 +395,15 @@ export default function sessionSiteRoute(
 
     if (!email) {
       await setBannerCookie("warning", "Please provide your email address.", res);
+      return res.redirect(`/forgot-password`);
+    }
+
+    if (!isEmailServiceConfigured()) {
+      await setBannerCookie(
+        "danger",
+        "We can't send password reset emails right now. Please contact an administrator.",
+        res
+      );
       return res.redirect(`/forgot-password`);
     }
 
@@ -420,6 +464,8 @@ export default function sessionSiteRoute(
       features: features,
       globalImage: await getGlobalImage(),
       announcementWeb: await getWebAnnouncement(),
+      passwordPolicy,
+      passwordRequirements,
     });
   });
 
@@ -435,10 +481,14 @@ export default function sessionSiteRoute(
       return res.redirect(`/reset-password?token=${encodeURIComponent(token || "")}`);
     }
 
-    if (password.length < 8) {
+    const passwordValidation = validatePasswordAgainstPolicy(
+      password,
+      passwordPolicy
+    );
+    if (!passwordValidation.valid) {
       await setBannerCookie(
         "warning",
-        "Password must be at least 8 characters long.",
+        passwordValidation.failedRules[0].message,
         res
       );
       return res.redirect(`/reset-password?token=${encodeURIComponent(token)}`);
@@ -507,6 +557,9 @@ export default function sessionSiteRoute(
       features: features,
       globalImage: await getGlobalImage(),
       announcementWeb: await getWebAnnouncement(),
+      passwordPolicy,
+      passwordRequirements,
+      emailServiceConfigured: isEmailServiceConfigured(),
     });
   });
 
@@ -566,6 +619,15 @@ export default function sessionSiteRoute(
         return res.redirect(`/account/settings`);
       }
 
+      if (!isEmailServiceConfigured()) {
+        await setBannerCookie(
+          "danger",
+          "We can't send a verification email right now. Please try again later or contact an administrator.",
+          res
+        );
+        return res.redirect(`/account/settings`);
+      }
+
       const { token, tokenHash } = generateToken();
       const expiry = tokenExpiry(EMAIL_TOKEN_EXPIRY_MINUTES);
 
@@ -620,10 +682,14 @@ export default function sessionSiteRoute(
       return res.redirect(`/account/settings`);
     }
 
-    if (newPassword.length < 8) {
+    const newPasswordValidation = validatePasswordAgainstPolicy(
+      newPassword,
+      passwordPolicy
+    );
+    if (!newPasswordValidation.valid) {
       await setBannerCookie(
         "warning",
-        "New password must be at least 8 characters long.",
+        newPasswordValidation.failedRules[0].message,
         res
       );
       return res.redirect(`/account/settings`);
