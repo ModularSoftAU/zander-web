@@ -133,6 +133,20 @@ const buildApp = async () => {
 
   app.addHook("preHandler", (req, res, next) => {
     req.session.authenticated = false;
+
+    if (req.cookies?.alertType || req.cookies?.alertContent) {
+      res.clearCookie("alertType", {
+        path: "/",
+        httpOnly: true,
+        sameSite: "lax",
+      });
+      res.clearCookie("alertContent", {
+        path: "/",
+        httpOnly: true,
+        sameSite: "lax",
+      });
+    }
+
     next();
   });
 
