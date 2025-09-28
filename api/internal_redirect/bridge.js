@@ -9,15 +9,12 @@ export default function bridgeRedirectRoute(app, config, lang) {
     // Add userId to req.body
     req.body.actioningUser = req.session.user.userId;
 
-    postAPIRequest(
+    await postAPIRequest(
       `${process.env.siteAddress}/api/bridge/command/add`,
       req.body,
-      `${process.env.siteAddress}/dashboard/bridge`,
       res
     );
 
-    res.redirect(`${process.env.siteAddress}/dashboard/bridge`);
-
-    return res;
+    return res.redirect(`${process.env.siteAddress}/dashboard/bridge`);
   });
 }

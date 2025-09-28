@@ -150,43 +150,39 @@ export async function hasPermission(permissionNode, req, res, features) {
 /*
     Makes a POST API request to the specified postURL with the provided apiPostBody.
     It includes a header with the x-access-token value taken from an environment variable named apiKey.
-    If the request is successful, it logs the response data.
-    If the request fails, it sets a cookie with a "danger" alert type and an error message,
-    then redirects the user to the specified failureRedirectURL.
+    Any alert metadata returned by the API is forwarded to the banner cookie helper so it can surface after redirects.
 
     @param postURL The POST url that the apiPostBody will go to in the API.
     @param apiPostBody The request body for the postURL.
-    @param failureRedirectURL If the request returns false, where the API will redirect the user to.
     @param res Passing through res.
 */
-export async function postAPIRequest(
-  postURL,
-  apiPostBody,
-  failureRedirectURL,
-  res
-) {
-  const response = await fetch(postURL, {
-    method: "POST",
-    body: JSON.stringify(apiPostBody),
-    headers: {
-      "Content-Type": "application/json",
-      "x-access-token": process.env.apiKey,
-    },
-  });
+export async function postAPIRequest(postURL, apiPostBody, res) {
+  try {
+    const response = await fetch(postURL, {
+      method: "POST",
+      body: JSON.stringify(apiPostBody),
+      headers: {
+        "Content-Type": "application/json",
+        "x-access-token": process.env.apiKey,
+      },
+    });
 
-  const data = await response.json();
+    const data = await response.json();
 
-  console.log(data);
+    if (data.alertType) {
+      await setBannerCookie(data.alertType, data.alertContent, res);
+    }
 
-  if (data.alertType) {
-    setBannerCookie(`${data.alertType}`, `${data.alertContent}`, res);
+    return data;
+  } catch (error) {
+    console.error(`Failed to POST to ${postURL}`, error);
+    await setBannerCookie(
+      "danger",
+      "We couldn't process that request right now. Please try again shortly.",
+      res
+    );
+    return { success: false };
   }
-
-  if (!data.success) {
-    return res.redirect(failureRedirectURL);
-  }
-
-  return console.log(data);
 }
 
 /*
@@ -206,30 +202,38 @@ export async function getGlobalImage() {
 }
 
 /*
-    Sets two cookies (alertType and alertContent) with specified values and an expiration time of one second.
+    Sets two cookies (alertType and alertContent) with specified values and a short expiration time.
     These cookies are set on the root path and are returned by the function.
 
     @param alertType The alert content type and colour according to https://getbootstrap.com/docs/4.0/components/alerts/#examples
     @param alertContent The alert content text.
     @param res Passing through res
 */
+const BANNER_COOKIE_TTL_SECONDS = 30;
+
 export async function setBannerCookie(alertType, alertContent, res) {
   try {
-    var expiryTime = new Date();
-    expiryTime.setSeconds(expiryTime.getSeconds() + 2);
+    if (!res || typeof res.setCookie !== "function") {
+      return res;
+    }
+    const typeValue = alertType ?? "";
+    const contentValue = alertContent ?? "";
+    const expiryTime = new Date(Date.now() + BANNER_COOKIE_TTL_SECONDS * 1000);
 
     // Set Alert Type
-    res.setCookie("alertType", alertType, {
+    res.setCookie("alertType", typeValue, {
       path: "/",
       expires: expiryTime,
       httpOnly: true,
+      sameSite: "lax",
     });
 
     // Set Content Type
-    res.setCookie("alertContent", alertContent, {
+    res.setCookie("alertContent", contentValue, {
       path: "/",
       expires: expiryTime,
       httpOnly: true,
+      sameSite: "lax",
     });
 
     // Make sure to send the res

@@ -9,16 +9,13 @@ export default function serverRedirectRoute(app, config, lang) {
     // Add userId to req.body
     req.body.actioningUser = req.session.user.userId;
 
-    postAPIRequest(
+    await postAPIRequest(
       `${process.env.siteAddress}/api/server/create`,
       req.body,
-      `${process.env.siteAddress}/dashboard/servers`,
       res
     );
 
-    res.redirect(`${process.env.siteAddress}/dashboard/servers`);
-
-    return res;
+    return res.redirect(`${process.env.siteAddress}/dashboard/servers`);
   });
 
   app.post(baseEndpoint + "/edit", async function (req, res) {
@@ -27,16 +24,13 @@ export default function serverRedirectRoute(app, config, lang) {
     // Add userId to req.body
     req.body.actioningUser = req.session.user.userId;
 
-    postAPIRequest(
+    await postAPIRequest(
       `${process.env.siteAddress}/api/server/edit`,
       req.body,
-      `${process.env.siteAddress}/dashboard/servers`,
       res
     );
 
-    res.redirect(`${process.env.siteAddress}/dashboard/servers`);
-
-    return res;
+    return res.redirect(`${process.env.siteAddress}/dashboard/servers`);
   });
 
   app.post(baseEndpoint + "/delete", async function (req, res) {
@@ -45,15 +39,12 @@ export default function serverRedirectRoute(app, config, lang) {
     // Add userId to req.body
     req.body.actioningUser = req.session.user.userId;
 
-    postAPIRequest(
+    await postAPIRequest(
       `${process.env.siteAddress}/api/server/delete`,
       req.body,
-      `${process.env.siteAddress}/dashboard/servers`,
       res
     );
 
-    res.redirect(`${process.env.siteAddress}/dashboard/servers`);
-
-    return res;
+    return res.redirect(`${process.env.siteAddress}/dashboard/servers`);
   });
 }

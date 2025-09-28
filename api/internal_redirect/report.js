@@ -6,15 +6,16 @@ export default function reportRedirectRoute(app, config, lang) {
   app.post(baseEndpoint + "/create", async function (req, res) {
     req.body.reporterUser = req.session.user.username;
 
-    postAPIRequest(
+    const result = await postAPIRequest(
       `${process.env.siteAddress}/api/report/create`,
       req.body,
-      `${process.env.siteAddress}/report`,
       res
     );
 
-    res.redirect(`${process.env.siteAddress}/`);
+    if (!result || result.success === false) {
+      return res.redirect(`${process.env.siteAddress}/report`);
+    }
 
-    return res;
+    return res.redirect(`${process.env.siteAddress}/`);
   });
 }
