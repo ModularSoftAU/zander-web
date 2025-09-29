@@ -25,7 +25,7 @@ export default function discordApiRoute(
         config.discord.webhooks.networkChatLog
       );
 
-      networkChatLogHook.send(
+      await networkChatLogHook.send(
         `:twisted_rightwards_arrows: | \`${username}\` switched to \`${server}\``
       );
 
@@ -38,8 +38,6 @@ export default function discordApiRoute(
         message: `${error}`,
       });
     }
-
-    return res;
   });
 
   app.post(baseEndpoint + "/chat", async function (req, res) {
@@ -68,7 +66,9 @@ export default function discordApiRoute(
         config.discord.webhooks.networkChatLog
       );
 
-      networkChatLogHook.send(`**${server}** | \`${username}\` :: ${content}`);
+      await networkChatLogHook.send(
+        `**${server}** | \`${username}\` :: ${content}`
+      );
 
       return res.send({
         success: true,
@@ -88,20 +88,24 @@ export default function discordApiRoute(
     //
     // Send Discord Message to Log
     //
-     try {
-       const networkChatLogHook = new Webhook(
-         config.discord.webhooks.networkChatLog
-       );
+    try {
+      const networkChatLogHook = new Webhook(
+        config.discord.webhooks.networkChatLog
+      );
 
-       networkChatLogHook.send(
-         `:ballot_box_with_check: | \`${username}\` has joined the Network.`
-       );
-     } catch (error) {
-       return res.send({
-         success: false,
-         message: `${error}`,
-       });
-     }
+      await networkChatLogHook.send(
+        `:ballot_box_with_check: | \`${username}\` has joined the Network.`
+      );
+
+      return res.send({
+        success: true,
+      });
+    } catch (error) {
+      return res.send({
+        success: false,
+        message: `${error}`,
+      });
+    }
   });
 
   app.post(baseEndpoint + "/leave", async function (req, res) {
@@ -128,21 +132,19 @@ export default function discordApiRoute(
         config.discord.webhooks.networkChatLog
       );
 
-      networkChatLogHook.send(
+      await networkChatLogHook.send(
         `:negative_squared_cross_mark: | \`${username}\` has left the Network.`
       );
 
-      res.send({
+      return res.send({
         success: true,
       });
     } catch (error) {
-      res.send({
+      return res.send({
         success: false,
         message: `${error}`,
       });
     }
-
-    return res;
   });
 
   app.post(baseEndpoint + "/spy/command", async function (req, res) {
@@ -156,7 +158,7 @@ export default function discordApiRoute(
         config.discord.webhooks.networkChatLog
       );
 
-      networkChatLogHook.send(
+      await networkChatLogHook.send(
         `:floppy_disk: | **${server}** | \`${username}\` executed command \`${command}\``
       );
 
@@ -169,8 +171,6 @@ export default function discordApiRoute(
         message: `${error}`,
       });
     }
-
-    return res;
   });
 
   app.post(baseEndpoint + "/spy/directMessage", async function (req, res) {
@@ -185,7 +185,7 @@ export default function discordApiRoute(
         config.discord.webhooks.networkChatLog
       );
 
-      networkChatLogHook.send(
+      await networkChatLogHook.send(
         `:speaking_head: | **${server}** | \`${usernameFrom}\` => \`${usernameTo}\`: \`${directMessage}\``
       );
 
@@ -198,7 +198,5 @@ export default function discordApiRoute(
         message: `${error}`,
       });
     }
-
-    return res;
   });
 }

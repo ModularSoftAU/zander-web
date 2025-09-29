@@ -34,6 +34,12 @@ export class GuildMessageDeleteListener extends Listener {
         false,
       );
 
-    adminLogHook.send(embed);
+    try {
+      await adminLogHook.send(embed);
+    } catch (error) {
+      this.container.logger.error(
+        `[CONSOLE] [DISCORD] Failed to publish delete log: ${error?.message || error}`
+      );
+    }
   }
 }

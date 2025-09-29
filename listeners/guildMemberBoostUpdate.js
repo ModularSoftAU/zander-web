@@ -15,7 +15,7 @@ export class GuildMemberBoostUpdateListener extends Listener {
     });
   }
 
-  run(oldMember, newMember) {
+  async run(oldMember, newMember) {
     if (features.discord.events.guildMemberBoost) {
       if (!newMember.guild) return;
       if (newMember.user.bot) return;
@@ -31,7 +31,13 @@ export class GuildMemberBoostUpdateListener extends Listener {
             `\`${newMember.user.username}\` has boosted the Server! :tada:`
           )
           .setColor(Colors.DarkVividPink);
-        welcomeHook.send(embed);
+        try {
+          await welcomeHook.send(embed);
+        } catch (error) {
+          this.container.logger.error(
+            `[CONSOLE] [DISCORD] Failed to publish boost log: ${error?.message || error}`
+          );
+        }
       }
       return;
     }

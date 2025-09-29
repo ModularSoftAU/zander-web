@@ -89,9 +89,9 @@ export default function reportApiRoute(app, config, db, features, lang) {
           reportReasonEvidence,
           reportPlatform,
         ],
-        function (error, results, fields) {
+        async function (error, results, fields) {
           console.log(req.body);
-          
+
           if (error) {
             console.log(error);
             console.log(results);
@@ -120,7 +120,7 @@ export default function reportApiRoute(app, config, db, features, lang) {
                 embed.addField("Report Evidence", reportReasonEvidence);
               }
 
-              staffChannelHook.send(embed);
+              await staffChannelHook.send(embed);
             } catch (error) {
               return res.send({
                 success: false,

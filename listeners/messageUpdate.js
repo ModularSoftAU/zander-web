@@ -14,7 +14,7 @@ export class GuildMessageUpdateListener extends Listener {
     });
   }
 
-  run(oldMessage, newMessage) {
+  async run(oldMessage, newMessage) {
     // Check if the author is a bot and stop if true.
     if (newMessage.author.bot) return;
 
@@ -39,6 +39,12 @@ export class GuildMessageUpdateListener extends Listener {
         false,
       );
 
-    adminLogHook.send(embed);
+    try {
+      await adminLogHook.send(embed);
+    } catch (error) {
+      this.container.logger.error(
+        `[CONSOLE] [DISCORD] Failed to publish edit log: ${error?.message || error}`
+      );
+    }
   }
 }

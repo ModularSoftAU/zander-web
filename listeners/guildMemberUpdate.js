@@ -16,7 +16,7 @@ export class GuildMemberUpdateListener extends Listener {
     });
   }
 
-  run(oldMember, newMember) {
+  async run(oldMember, newMember) {
     if (features.discord.events.guildMemberVerify) {
       if (!newMember.guild) return;
       if (newMember.user.bot) return;
@@ -39,7 +39,13 @@ export class GuildMemberUpdateListener extends Listener {
             randomJoinMessage.replace("%USERNAME%", newMember.user.username)
           )
           .setColor(`#${randomColor}`);
-        welcomeHook.send(embed);
+        try {
+          await welcomeHook.send(embed);
+        } catch (error) {
+          this.container.logger.error(
+            `[CONSOLE] [DISCORD] Failed to publish verification log: ${error?.message || error}`
+          );
+        }
       }
       return;
     }

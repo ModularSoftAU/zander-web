@@ -18,22 +18,33 @@ var cakeDayUserCheckTask = cron.schedule("0 7 * * *", () => {
 
         const welcomeHook = new Webhook(config.discord.webhooks.welcome);
 
-        results.forEach((user) => {
-          const joinDate = moment(user.joined); // Parse the join date
-          const years = moment().diff(joinDate, "years"); // Calculate the difference in years
+        const sendCelebrations = async () => {
+          for (const user of results) {
+            const joinDate = moment(user.joined); // Parse the join date
+            const years = moment().diff(joinDate, "years"); // Calculate the difference in years
 
-          let embed = new MessageBuilder()
-            .setTitle(`🎂 Happy cake day to ${user.username}! :tada:`)
-            .setDescription(
-              `Celebrating ${years} year(s) with ${config.siteConfiguration.siteName}`
-            )
-            .setColor(Colors.Blurple)
-            .setFooter(
-              `To get your cake day mention, make sure you are a member on our website.`
-            );
+            let embed = new MessageBuilder()
+              .setTitle(`🎂 Happy cake day to ${user.username}! :tada:`)
+              .setDescription(
+                `Celebrating ${years} year(s) with ${config.siteConfiguration.siteName}`
+              )
+              .setColor(Colors.Blurple)
+              .setFooter(
+                `To get your cake day mention, make sure you are a member on our website.`
+              );
 
-          welcomeHook.send(embed);
-        });
+            try {
+              await welcomeHook.send(embed);
+            } catch (error) {
+              console.error(
+                `[CRON] Failed to send cake day announcement for ${user.username}:`,
+                error
+              );
+            }
+          }
+        };
+
+        sendCelebrations();
       }
     );
   } catch (error) {

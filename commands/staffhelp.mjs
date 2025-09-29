@@ -27,7 +27,7 @@ export class StaffHelpCommand extends Command {
   async chatInputRun(interaction) {
     const userQuery = interaction.options.getString("query");
 
-    const staffAssistanceEmbed = new MessageBuilder ()
+    const staffAssistanceEmbed = new MessageBuilder()
       .setTitle(
         `Staff Assistance Requested by \`${interaction.user.username}\``
       )
@@ -42,9 +42,22 @@ export class StaffHelpCommand extends Command {
     const staffChannelHook = new Webhook(
       config.discord.webhooks.staffChannel
     );
-    staffChannelHook.send(staffAssistanceEmbed);
 
-    interaction.reply({
+    try {
+      await staffChannelHook.send(staffAssistanceEmbed);
+    } catch (error) {
+      this.container.logger.error(
+        `[CONSOLE] [DISCORD] Failed to deliver staffhelp request: ${error?.message || error}`
+      );
+
+      return interaction.reply({
+        content:
+          "We couldn't notify the staff team right now. Please try again or reach out directly.",
+        ephemeral: true,
+      });
+    }
+
+    return interaction.reply({
       embeds: [staffAssistanceConfirmed],
       ephemeral: true,
     });
