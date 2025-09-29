@@ -58,6 +58,67 @@ import("./cron/discordStatsUpdateCron.js");
 const buildApp = async () => {
   const app = fastify({ logger: config.debug });
 
+  const AUTH_TRACE_PATHS = new Set([
+    "/login",
+    "/register",
+    "/verify-email",
+    "/forgot-password",
+    "/reset-password",
+    "/account/settings",
+    "/account/change-email",
+    "/account/change-password",
+    "/login/discord",
+    "/login/callback",
+    "/logout",
+  ]);
+
+  function shouldTraceAuthRoute(url) {
+    try {
+      const { pathname } = new URL(url, "http://localhost");
+      return AUTH_TRACE_PATHS.has(pathname);
+    } catch (error) {
+      app.log?.debug?.(
+        { err: error, url },
+        "Failed to parse URL for auth tracing"
+      );
+      return false;
+    }
+  }
+
+  app.addHook("onRequest", (req, res, done) => {
+    if (shouldTraceAuthRoute(req.url)) {
+      req.authTraceStart = process.hrtime.bigint();
+      req.log.info(
+        {
+          event: "auth-request-start",
+          method: req.method,
+          url: req.url,
+          requestId: req.id,
+        },
+        "Authentication route request started"
+      );
+    }
+    done();
+  });
+
+  app.addHook("onResponse", (req, res, done) => {
+    if (req.authTraceStart) {
+      const durationMs = Number(process.hrtime.bigint() - req.authTraceStart) / 1e6;
+      req.log.info(
+        {
+          event: "auth-request-complete",
+          statusCode: res.statusCode,
+          durationMs,
+          url: req.url,
+          requestId: req.id,
+        },
+        "Authentication route request completed"
+      );
+      delete req.authTraceStart;
+    }
+    done();
+  });
+
   // When app errors, render the error on a page, do not provide JSON
   app.setNotFoundHandler(async function (req, res) {
     return res.view("session/notFound", {
