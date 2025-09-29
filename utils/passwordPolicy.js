@@ -1,9 +1,9 @@
 const DEFAULT_POLICY = {
-  minLength: 8,
-  requireUppercase: false,
-  requireLowercase: false,
-  requireNumber: false,
-  requireSpecial: false,
+  minLength: 12,
+  requireUppercase: true,
+  requireLowercase: true,
+  requireNumber: true,
+  requireSpecial: true,
 };
 
 const SPECIAL_CHAR_REGEX = /[^\w\s]/;
@@ -30,6 +30,12 @@ export function getPasswordPolicy(config = {}) {
   policy.requireLowercase = Boolean(policy.requireLowercase);
   policy.requireNumber = Boolean(policy.requireNumber);
   policy.requireSpecial = Boolean(policy.requireSpecial);
+  policy.requireComplexity = Boolean(
+    policy.requireUppercase ||
+      policy.requireLowercase ||
+      policy.requireNumber ||
+      policy.requireSpecial
+  );
 
   return policy;
 }
@@ -40,31 +46,15 @@ export function getPasswordRequirementList(policy) {
   if (policy.minLength && policy.minLength > 0) {
     requirements.push({
       id: "minLength",
-      message: `At least ${policy.minLength} characters`,
+      message: `Length: Aim for at least ${policy.minLength} characters, but longer is better.`,
     });
   }
-  if (policy.requireUppercase) {
+
+  if (policy.requireComplexity) {
     requirements.push({
-      id: "uppercase",
-      message: "At least one uppercase letter",
-    });
-  }
-  if (policy.requireLowercase) {
-    requirements.push({
-      id: "lowercase",
-      message: "At least one lowercase letter",
-    });
-  }
-  if (policy.requireNumber) {
-    requirements.push({
-      id: "number",
-      message: "At least one number",
-    });
-  }
-  if (policy.requireSpecial) {
-    requirements.push({
-      id: "special",
-      message: "At least one symbol",
+      id: "complexity",
+      message:
+        "Complexity: Include a mix of uppercase and lowercase letters, numbers, and special symbols.",
     });
   }
 
@@ -81,32 +71,31 @@ export function validatePasswordAgainstPolicy(password, policy) {
     });
   }
 
-  if (policy.requireUppercase && !/[A-Z]/.test(password)) {
-    failedRules.push({
-      id: "uppercase",
-      message: "Password must contain at least one uppercase letter.",
-    });
-  }
+  if (policy.requireComplexity) {
+    const missing = [];
+    const hasUppercase = /[A-Z]/.test(password);
+    const hasLowercase = /[a-z]/.test(password);
+    const hasNumber = /[0-9]/.test(password);
+    const hasSpecial = SPECIAL_CHAR_REGEX.test(password);
 
-  if (policy.requireLowercase && !/[a-z]/.test(password)) {
-    failedRules.push({
-      id: "lowercase",
-      message: "Password must contain at least one lowercase letter.",
-    });
-  }
+    if (policy.requireUppercase && !hasUppercase) missing.push("uppercase letters");
+    if (policy.requireLowercase && !hasLowercase) missing.push("lowercase letters");
+    if (policy.requireNumber && !hasNumber) missing.push("numbers");
+    if (policy.requireSpecial && !hasSpecial) missing.push("special symbols");
 
-  if (policy.requireNumber && !/[0-9]/.test(password)) {
-    failedRules.push({
-      id: "number",
-      message: "Password must contain at least one number.",
-    });
-  }
-
-  if (policy.requireSpecial && !SPECIAL_CHAR_REGEX.test(password)) {
-    failedRules.push({
-      id: "special",
-      message: "Password must contain at least one symbol.",
-    });
+    if (missing.length) {
+      let missingMessage = missing[0];
+      if (missing.length === 2) {
+        missingMessage = `${missing[0]} and ${missing[1]}`;
+      } else if (missing.length > 2) {
+        const tail = missing.pop();
+        missingMessage = `${missing.join(", ")}, and ${tail}`;
+      }
+      failedRules.push({
+        id: "complexity",
+        message: `Password must include ${missingMessage}.`,
+      });
+    }
   }
 
   return {

@@ -161,7 +161,7 @@ export default function sessionSiteRoute(
 
     if (!email || !password) {
       await setBannerCookie("warning", "Please provide both email and password.", res);
-      return res.redirect(`/login`);
+      return res.redirect(303, `/login`);
     }
 
     try {
@@ -170,7 +170,7 @@ export default function sessionSiteRoute(
 
       if (!user || !user.password_hash) {
         await setBannerCookie("danger", "The provided credentials were invalid.", res);
-        return res.redirect(`/login`);
+        return res.redirect(303, `/login`);
       }
 
       if (!user.email_verified) {
@@ -179,7 +179,7 @@ export default function sessionSiteRoute(
           "You need to verify your email address before signing in.",
           res
         );
-        return res.redirect(`/login`);
+        return res.redirect(303, `/login`);
       }
 
       const passwordMatches = await bcrypt.compare(
@@ -189,15 +189,15 @@ export default function sessionSiteRoute(
 
       if (!passwordMatches) {
         await setBannerCookie("danger", "The provided credentials were invalid.", res);
-        return res.redirect(`/login`);
+        return res.redirect(303, `/login`);
       }
 
       await buildSession(req, user);
-      return res.redirect(`${process.env.siteAddress}/`);
+      return res.redirect(303, `/`);
     } catch (error) {
       console.error("Login error", error);
       await setBannerCookie("danger", "We were unable to log you in right now.", res);
-      return res.redirect(`/login`);
+      return res.redirect(303, `/login`);
     }
   });
 
@@ -229,7 +229,7 @@ export default function sessionSiteRoute(
 
     if (!username || !email || !password || !confirmPassword) {
       await setBannerCookie("warning", "All fields are required.", res);
-      return res.redirect(`/register`);
+      return res.redirect(303, `/register`);
     }
 
     const passwordValidation = validatePasswordAgainstPolicy(
@@ -242,12 +242,12 @@ export default function sessionSiteRoute(
         passwordValidation.failedRules[0].message,
         res
       );
-      return res.redirect(`/register`);
+      return res.redirect(303, `/register`);
     }
 
     if (password !== confirmPassword) {
       await setBannerCookie("warning", "Passwords do not match.", res);
-      return res.redirect(`/register`);
+      return res.redirect(303, `/register`);
     }
 
     if (!isEmailServiceConfigured()) {
@@ -256,7 +256,7 @@ export default function sessionSiteRoute(
         "We can't send verification emails right now. Please contact an administrator.",
         res
       );
-      return res.redirect(`/register`);
+      return res.redirect(303, `/register`);
     }
 
     try {
@@ -269,7 +269,7 @@ export default function sessionSiteRoute(
           "We could not find a Minecraft account with that username. Please join the server first.",
           res
         );
-        return res.redirect(`/register`);
+        return res.redirect(303, `/register`);
       }
 
       if (user.email_verified && user.password_hash) {
@@ -278,7 +278,7 @@ export default function sessionSiteRoute(
           "This user already has an active web account. Please sign in instead.",
           res
         );
-        return res.redirect(`/login`);
+        return res.redirect(303, `/login`);
       }
 
       const existingEmailOwner = await userGetter.byEmail(email);
@@ -288,7 +288,7 @@ export default function sessionSiteRoute(
           "That email address is already in use by another account.",
           res
         );
-        return res.redirect(`/register`);
+        return res.redirect(303, `/register`);
       }
 
       const passwordHash = await bcrypt.hash(password, 12);
@@ -307,7 +307,7 @@ export default function sessionSiteRoute(
           "We couldn't send the verification email. Please try again shortly.",
           res
         );
-        return res.redirect(`/register`);
+        return res.redirect(303, `/register`);
       }
 
       await updateUserCredentials(user.userId, email, passwordHash, tokenHash, expiry);
@@ -317,7 +317,7 @@ export default function sessionSiteRoute(
         "Registration successful! Check your inbox to verify your email.",
         res
       );
-      return res.redirect(`/login`);
+      return res.redirect(303, `/login`);
     } catch (error) {
       console.error("Registration error", error);
       await setBannerCookie(
@@ -325,7 +325,7 @@ export default function sessionSiteRoute(
         "We were unable to create your account. Please try again soon.",
         res
       );
-      return res.redirect(`/register`);
+      return res.redirect(303, `/register`);
     }
   });
 
@@ -333,7 +333,7 @@ export default function sessionSiteRoute(
     const token = req.query?.token;
     if (!token) {
       await setBannerCookie("danger", "Verification token is missing.", res);
-      return res.redirect(`/login`);
+      return res.redirect(303, `/login`);
     }
 
     try {
@@ -343,7 +343,7 @@ export default function sessionSiteRoute(
 
       if (!user) {
         await setBannerCookie("danger", "That verification link is invalid or has already been used.", res);
-        return res.redirect(`/login`);
+        return res.redirect(303, `/login`);
       }
 
       if (user.email_verification_expires && new Date(user.email_verification_expires) < new Date()) {
@@ -353,7 +353,7 @@ export default function sessionSiteRoute(
           res
         );
         await clearEmailVerificationToken(user.userId);
-        return res.redirect(`/login`);
+        return res.redirect(303, `/login`);
       }
 
       await markEmailVerified(user.userId);
@@ -362,7 +362,7 @@ export default function sessionSiteRoute(
         "Your email address has been verified. You can now sign in!",
         res
       );
-      return res.redirect(`/login`);
+      return res.redirect(303, `/login`);
     } catch (error) {
       console.error("Email verification error", error);
       await setBannerCookie(
@@ -370,7 +370,7 @@ export default function sessionSiteRoute(
         "We could not verify your email address. Please try again later.",
         res
       );
-      return res.redirect(`/login`);
+      return res.redirect(303, `/login`);
     }
   });
 
@@ -395,7 +395,7 @@ export default function sessionSiteRoute(
 
     if (!email) {
       await setBannerCookie("warning", "Please provide your email address.", res);
-      return res.redirect(`/forgot-password`);
+      return res.redirect(303, `/forgot-password`);
     }
 
     if (!isEmailServiceConfigured()) {
@@ -404,7 +404,7 @@ export default function sessionSiteRoute(
         "We can't send password reset emails right now. Please contact an administrator.",
         res
       );
-      return res.redirect(`/forgot-password`);
+      return res.redirect(303, `/forgot-password`);
     }
 
     try {
@@ -435,7 +435,7 @@ export default function sessionSiteRoute(
         "If that email exists in our system you will receive a reset link shortly.",
         res
       );
-      return res.redirect(`/forgot-password`);
+      return res.redirect(303, `/forgot-password`);
     } catch (error) {
       console.error("Forgot password error", error);
       await setBannerCookie(
@@ -443,7 +443,7 @@ export default function sessionSiteRoute(
         "We were unable to start the password reset. Please try again soon.",
         res
       );
-      return res.redirect(`/forgot-password`);
+      return res.redirect(303, `/forgot-password`);
     }
   });
 
@@ -453,7 +453,7 @@ export default function sessionSiteRoute(
     const token = req.query?.token;
     if (!token) {
       await setBannerCookie("danger", "Password reset token is missing.", res);
-      return res.redirect(`/login`);
+      return res.redirect(303, `/login`);
     }
 
     return res.view("session/resetPassword", {
@@ -478,7 +478,7 @@ export default function sessionSiteRoute(
 
     if (!token || !password || !confirmPassword) {
       await setBannerCookie("warning", "All fields are required.", res);
-      return res.redirect(`/reset-password?token=${encodeURIComponent(token || "")}`);
+      return res.redirect(303, `/reset-password?token=${encodeURIComponent(token || "")}`);
     }
 
     const passwordValidation = validatePasswordAgainstPolicy(
@@ -491,12 +491,12 @@ export default function sessionSiteRoute(
         passwordValidation.failedRules[0].message,
         res
       );
-      return res.redirect(`/reset-password?token=${encodeURIComponent(token)}`);
+      return res.redirect(303, `/reset-password?token=${encodeURIComponent(token)}`);
     }
 
     if (password !== confirmPassword) {
       await setBannerCookie("warning", "Passwords do not match.", res);
-      return res.redirect(`/reset-password?token=${encodeURIComponent(token)}`);
+      return res.redirect(303, `/reset-password?token=${encodeURIComponent(token)}`);
     }
 
     try {
@@ -510,7 +510,7 @@ export default function sessionSiteRoute(
           "That password reset link is invalid or has already been used.",
           res
         );
-        return res.redirect(`/login`);
+        return res.redirect(303, `/login`);
       }
 
       if (new Date(user.password_reset_expires) < new Date()) {
@@ -520,7 +520,7 @@ export default function sessionSiteRoute(
           res
         );
         await clearPasswordResetToken(user.userId);
-        return res.redirect(`/forgot-password`);
+        return res.redirect(303, `/forgot-password`);
       }
 
       const passwordHash = await bcrypt.hash(password, 12);
@@ -532,7 +532,7 @@ export default function sessionSiteRoute(
         "Your password has been updated. You can now sign in.",
         res
       );
-      return res.redirect(`/login`);
+      return res.redirect(303, `/login`);
     } catch (error) {
       console.error("Reset password error", error);
       await setBannerCookie(
@@ -540,14 +540,14 @@ export default function sessionSiteRoute(
         "We could not reset your password. Please try again soon.",
         res
       );
-      return res.redirect(`/forgot-password`);
+      return res.redirect(303, `/forgot-password`);
     }
   });
 
   app.get("/account/settings", async function (req, res) {
     if (!req.session.user) {
       await setBannerCookie("warning", "Please sign in to manage your account.", res);
-      return res.redirect(`/login`);
+      return res.redirect(303, `/login`);
     }
 
     return res.view("session/accountSettings", {
@@ -566,7 +566,7 @@ export default function sessionSiteRoute(
   app.post("/account/change-email", async function (req, res) {
     if (!req.session.user) {
       await setBannerCookie("warning", "Please sign in to continue.", res);
-      return res.redirect(`/login`);
+      return res.redirect(303, `/login`);
     }
 
     const email = normalizeEmail(req.body?.email || "");
@@ -574,7 +574,7 @@ export default function sessionSiteRoute(
 
     if (!email || !password) {
       await setBannerCookie("warning", "Email and password are required.", res);
-      return res.redirect(`/account/settings`);
+      return res.redirect(303, `/account/settings`);
     }
 
     try {
@@ -587,7 +587,7 @@ export default function sessionSiteRoute(
           "We could not validate your account. Please sign in again.",
           res
         );
-        return res.redirect(`/login`);
+        return res.redirect(303, `/login`);
       }
 
       const passwordMatches = await bcrypt.compare(
@@ -597,7 +597,7 @@ export default function sessionSiteRoute(
 
       if (!passwordMatches) {
         await setBannerCookie("danger", "Your password was incorrect.", res);
-        return res.redirect(`/account/settings`);
+        return res.redirect(303, `/account/settings`);
       }
 
       if (currentUser.email && currentUser.email.toLowerCase() === email) {
@@ -606,7 +606,7 @@ export default function sessionSiteRoute(
           "That email address is already set on your account.",
           res
         );
-        return res.redirect(`/account/settings`);
+        return res.redirect(303, `/account/settings`);
       }
 
       const existingEmailOwner = await userGetter.byEmail(email);
@@ -616,7 +616,7 @@ export default function sessionSiteRoute(
           "That email is already in use by another account.",
           res
         );
-        return res.redirect(`/account/settings`);
+        return res.redirect(303, `/account/settings`);
       }
 
       if (!isEmailServiceConfigured()) {
@@ -625,7 +625,7 @@ export default function sessionSiteRoute(
           "We can't send a verification email right now. Please try again later or contact an administrator.",
           res
         );
-        return res.redirect(`/account/settings`);
+        return res.redirect(303, `/account/settings`);
       }
 
       const { token, tokenHash } = generateToken();
@@ -643,7 +643,7 @@ export default function sessionSiteRoute(
           "We couldn't send a verification email to that address. Please try again later.",
           res
         );
-        return res.redirect(`/account/settings`);
+        return res.redirect(303, `/account/settings`);
       }
 
       await updateEmail(currentUser.userId, email, tokenHash, expiry);
@@ -655,7 +655,7 @@ export default function sessionSiteRoute(
         "We've sent a verification link to your new email. Please confirm it to finish updating your account.",
         res
       );
-      return res.redirect(`/account/settings`);
+      return res.redirect(303, `/account/settings`);
     } catch (error) {
       console.error("Change email error", error);
       await setBannerCookie(
@@ -663,14 +663,14 @@ export default function sessionSiteRoute(
         "We could not update your email address right now.",
         res
       );
-      return res.redirect(`/account/settings`);
+      return res.redirect(303, `/account/settings`);
     }
   });
 
   app.post("/account/change-password", async function (req, res) {
     if (!req.session.user) {
       await setBannerCookie("warning", "Please sign in to continue.", res);
-      return res.redirect(`/login`);
+      return res.redirect(303, `/login`);
     }
 
     const currentPassword = req.body?.currentPassword?.trim();
@@ -679,7 +679,7 @@ export default function sessionSiteRoute(
 
     if (!currentPassword || !newPassword || !confirmPassword) {
       await setBannerCookie("warning", "All password fields are required.", res);
-      return res.redirect(`/account/settings`);
+      return res.redirect(303, `/account/settings`);
     }
 
     const newPasswordValidation = validatePasswordAgainstPolicy(
@@ -692,12 +692,12 @@ export default function sessionSiteRoute(
         newPasswordValidation.failedRules[0].message,
         res
       );
-      return res.redirect(`/account/settings`);
+      return res.redirect(303, `/account/settings`);
     }
 
     if (newPassword !== confirmPassword) {
       await setBannerCookie("warning", "New passwords do not match.", res);
-      return res.redirect(`/account/settings`);
+      return res.redirect(303, `/account/settings`);
     }
 
     try {
@@ -710,7 +710,7 @@ export default function sessionSiteRoute(
           "We could not validate your account. Please sign in again.",
           res
         );
-        return res.redirect(`/login`);
+        return res.redirect(303, `/login`);
       }
 
       const passwordMatches = await bcrypt.compare(
@@ -720,7 +720,7 @@ export default function sessionSiteRoute(
 
       if (!passwordMatches) {
         await setBannerCookie("danger", "Your current password was incorrect.", res);
-        return res.redirect(`/account/settings`);
+        return res.redirect(303, `/account/settings`);
       }
 
       const passwordHash = await bcrypt.hash(newPassword, 12);
@@ -731,7 +731,7 @@ export default function sessionSiteRoute(
         "Your password has been updated.",
         res
       );
-      return res.redirect(`/account/settings`);
+      return res.redirect(303, `/account/settings`);
     } catch (error) {
       console.error("Change password error", error);
       await setBannerCookie(
@@ -739,7 +739,7 @@ export default function sessionSiteRoute(
         "We could not update your password right now.",
         res
       );
-      return res.redirect(`/account/settings`);
+      return res.redirect(303, `/account/settings`);
     }
   });
 
@@ -777,7 +777,7 @@ export default function sessionSiteRoute(
         "Discord authentication state did not match. Please try again.",
         res
       );
-      return res.redirect(`/login`);
+      return res.redirect(303, `/login`);
     }
 
     try {
@@ -834,7 +834,7 @@ export default function sessionSiteRoute(
             "You must be signed in to connect your Discord account.",
             res
           );
-          return res.redirect(`/login`);
+          return res.redirect(303, `/login`);
         }
 
         const existingOwner = await userGetter.byDiscordId(userData.id);
@@ -844,7 +844,7 @@ export default function sessionSiteRoute(
             "That Discord account is already linked to another user.",
             res
           );
-          return res.redirect(`/account/settings`);
+          return res.redirect(303, `/account/settings`);
         }
 
         await linkDiscordAccount(req.session.user.userId, userData.id);
@@ -855,7 +855,7 @@ export default function sessionSiteRoute(
           "Your Discord account has been linked successfully.",
           res
         );
-        return res.redirect(`/account/settings`);
+        return res.redirect(303, `/account/settings`);
       }
 
       const existingUser = await userGetter.byDiscordId(userData.id);
@@ -868,11 +868,11 @@ export default function sessionSiteRoute(
         });
 
         console.log("User is unregistered, redirecting to /unregistered");
-        return res.redirect(`/unregistered`);
+        return res.redirect(303, `/unregistered`);
       }
 
       await buildSession(req, existingUser);
-      return res.redirect(`${process.env.siteAddress}/`);
+      return res.redirect(303, `/`);
     } catch (error) {
       console.error("Discord login error:", error);
       await setBannerCookie(
@@ -880,7 +880,7 @@ export default function sessionSiteRoute(
         "We could not complete the Discord sign in.",
         res
       );
-      return res.redirect(`/login`);
+      return res.redirect(303, `/login`);
     }
   });
 
@@ -889,7 +889,7 @@ export default function sessionSiteRoute(
       return;
 
     const discordId = req.cookies.discordId;
-    if (!discordId) return res.redirect(`/`);
+    if (!discordId) return res.redirect(303, `/`);
 
     const fetchURL = `${process.env.siteAddress}/api/server/get?type=VERIFICATION`;
     const response = await fetch(fetchURL, {
@@ -915,7 +915,7 @@ export default function sessionSiteRoute(
     try {
       await req.session.destroy();
       setBannerCookie("success", lang.session.userLogout, res);
-      res.redirect(`${process.env.siteAddress}/`);
+      res.redirect(303, `/`);
     } catch (err) {
       console.log(err);
       throw err;
