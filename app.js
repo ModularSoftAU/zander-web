@@ -193,7 +193,20 @@ const buildApp = async () => {
   });
 
   app.addHook("preHandler", (req, res, next) => {
-    req.session.authenticated = false;
+    if (typeof req.session.authenticated !== "boolean") {
+      req.session.authenticated = false;
+    }
+
+    if (req.session.authenticated && !req.session.user) {
+      req.log?.warn?.(
+        {
+          event: "session-user-missing",
+          sessionId: req.session.sessionId,
+        },
+        "Authenticated session missing user payload"
+      );
+      req.session.authenticated = false;
+    }
 
     if (req.cookies?.alertType || req.cookies?.alertContent) {
       res.clearCookie("alertType", {
