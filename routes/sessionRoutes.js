@@ -73,6 +73,29 @@ export default function sessionSiteRoute(
     )}-${cleaned.substring(16, 20)}-${cleaned.substring(20)}`;
   };
 
+  const logRouteError = (context, error) => {
+    const message =
+      error && typeof error === "object" && "message" in error
+        ? error.message
+        : String(error ?? "Unknown error");
+
+    const details = [];
+    if (error && typeof error === "object") {
+      if ("code" in error && error.code) {
+        details.push(`code=${error.code}`);
+      }
+      if ("status" in error && error.status) {
+        details.push(`status=${error.status}`);
+      }
+      if ("responseCode" in error && error.responseCode) {
+        details.push(`responseCode=${error.responseCode}`);
+      }
+    }
+
+    const suffix = details.length ? ` (${details.join(", ")})` : "";
+    console.error(`[SESSION] ${context}: ${message}${suffix}`);
+  };
+
   async function hydrateUserSession(req, userLoginData) {
     const userPermissionData = await getUserPermissions(userLoginData);
     const userRanks = userPermissionData.userRanks || [];
@@ -180,7 +203,7 @@ export default function sessionSiteRoute(
       setBannerCookie("success", "Logged in successfully.", res);
       return res.redirect(`${process.env.siteAddress}/`);
     } catch (error) {
-      console.error(error);
+      logRouteError("local login attempt", error);
       setBannerCookie("danger", "Unable to log in, please try again soon.", res);
       return res.redirect(`/login`);
     }
@@ -220,7 +243,7 @@ export default function sessionSiteRoute(
 
       if (!tokenResponse.ok) {
         const errorText = `Failed to obtain access token: ${tokenResponse.status} ${tokenResponse.statusText}`;
-        console.error(errorText);
+        logRouteError("discord token exchange", errorText);
         throw new Error(errorText);
       }
 
@@ -233,7 +256,7 @@ export default function sessionSiteRoute(
 
       if (!userResponse.ok) {
         const errorText = `Failed to fetch user data: ${userResponse.status} ${userResponse.statusText}`;
-        console.error(errorText);
+        logRouteError("discord user fetch", errorText);
         throw new Error(errorText);
       }
 
@@ -257,7 +280,7 @@ export default function sessionSiteRoute(
 
       return res.redirect(`${process.env.siteAddress}/`);
     } catch (error) {
-      console.error("Error:", error);
+      logRouteError("discord OAuth callback", error);
       setBannerCookie("danger", "Discord authentication failed.", res);
       return res.redirect(`/login`);
     }
@@ -345,7 +368,7 @@ export default function sessionSiteRoute(
 
       return res.redirect(`/forgot-password/verify`);
     } catch (error) {
-      console.error(error);
+      logRouteError("start password reset", error);
       setBannerCookie(
         "danger",
         "We couldn't start a password reset right now. Please try again soon.",
@@ -432,7 +455,7 @@ export default function sessionSiteRoute(
       );
       return res.redirect(`/forgot-password/reset`);
     } catch (error) {
-      console.error(error);
+      logRouteError("verify password reset code", error);
       setBannerCookie(
         "danger",
         "We couldn't verify that code right now. Please try again soon.",
@@ -520,7 +543,7 @@ export default function sessionSiteRoute(
       );
       return res.redirect(`/login`);
     } catch (error) {
-      console.error(error);
+      logRouteError("complete password reset", error);
       setBannerCookie(
         "danger",
         "We couldn't reset your password right now. Please try again soon.",
@@ -621,6 +644,7 @@ export default function sessionSiteRoute(
       if (
         existingEmail &&
         existingEmail.password_hash &&
+        existingEmail.account_registered &&
         (!existingUuidUser || existingEmail.userId !== existingUuidUser.userId)
       ) {
         setBannerCookie("danger", "That email address is already in use.", res);
@@ -675,7 +699,7 @@ export default function sessionSiteRoute(
       setBannerCookie("success", "We sent a verification code to your email.", res);
       return res.redirect(`/register/verify-email`);
     } catch (error) {
-      console.error(error);
+      logRouteError("start registration", error);
       setBannerCookie("danger", "We were unable to create your account.", res);
       return res.redirect(`/register`);
     }
@@ -748,7 +772,7 @@ export default function sessionSiteRoute(
       );
       return res.redirect(`/register/minecraft`);
     } catch (error) {
-      console.error(error);
+      logRouteError("verify registration email", error);
       setBannerCookie("danger", "We were unable to verify that code.", res);
       return res.redirect(`/register/verify-email`);
     }
@@ -837,7 +861,7 @@ export default function sessionSiteRoute(
       setBannerCookie("success", "Your account has been verified!", res);
       return res.redirect(`${process.env.siteAddress}/`);
     } catch (error) {
-      console.error(error);
+      logRouteError("verify Minecraft registration", error);
       setBannerCookie("danger", "Unable to verify that code right now.", res);
       return res.redirect(`/register/minecraft`);
     }
@@ -876,7 +900,7 @@ export default function sessionSiteRoute(
       setBannerCookie("success", lang.session.userLogout, res);
       res.redirect(`${process.env.siteAddress}/`);
     } catch (err) {
-      console.error("Failed to destroy session during logout", err);
+      logRouteError("destroy session during logout", err);
       throw err;
     }
   });

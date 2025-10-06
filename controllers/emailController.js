@@ -39,9 +39,34 @@ export async function sendMail(
   };
 
   try {
-    await transporter.sendMail(mailOptions);
+    console.info(
+      `[EMAIL] Sending template "${template}" to ${recipient} via ${process.env.smtpHost}:${process.env.smtpPort}`
+    );
+
+    const info = await transporter.sendMail(mailOptions);
+
+    const messageId = info?.messageId ? ` (messageId: ${info.messageId})` : "";
+    console.info(
+      `[EMAIL] Successfully sent template "${template}" to ${recipient}${messageId}`
+    );
+
+    if (info?.rejected?.length) {
+      console.warn(
+        `[EMAIL] SMTP rejected the following recipients: ${info.rejected.join(", ")}`
+      );
+    }
+
+    return info;
   } catch (error) {
-    console.error("Failed to send email", error);
+    const message = error?.message || error;
+    console.error(
+      `[EMAIL] Failed to send template "${template}" to ${recipient}: ${message}`
+    );
+
+    if (error?.response) {
+      console.error(`[EMAIL] SMTP response: ${error.response}`);
+    }
+
     throw error;
   }
 }
