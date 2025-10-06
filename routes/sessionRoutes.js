@@ -14,6 +14,7 @@ import {
   getUserPermissions,
   createLocalUser,
   updateLocalUserCredentials,
+  updateUserPassword,
   markEmailVerified,
   markAccountRegistered,
   UserLinkGetter,
@@ -23,6 +24,8 @@ import {
   createEmailVerification,
   generateVerificationCode,
   verifyEmailCode,
+  createPasswordResetRequest,
+  verifyPasswordResetCode,
 } from "../controllers/sessionController.js";
 import { sendMail } from "../controllers/emailController.js";
 
@@ -40,6 +43,7 @@ export default function sessionSiteRoute(
   // Session
   //
   const emailVerificationExpiryMinutes = 10;
+  const passwordResetExpiryMinutes = 10;
   const passwordRequirements = /^(?=.*[A-Z])(?=.*[a-z])(?=.*\d).{8,}$/;
 
   const buildDiscordAuthorizeUrl = () => {
@@ -172,6 +176,7 @@ export default function sessionSiteRoute(
       }
 
       await hydrateUserSession(req, user);
+      delete req.session.passwordReset;
       setBannerCookie("success", "Logged in successfully.", res);
       return res.redirect(`${process.env.siteAddress}/`);
     } catch (error) {
@@ -243,18 +248,285 @@ export default function sessionSiteRoute(
           maxAge: 10 * 60 * 1000,
         });
 
-        console.log("User is unregistered, redirecting to /unregistered");
         return res.redirect(`/unregistered`);
       }
 
       const userLoginData = await userGetData.byDiscordId(userData.id);
       await hydrateUserSession(req, userLoginData);
+      delete req.session.passwordReset;
 
       return res.redirect(`${process.env.siteAddress}/`);
     } catch (error) {
       console.error("Error:", error);
       setBannerCookie("danger", "Discord authentication failed.", res);
       return res.redirect(`/login`);
+    }
+  });
+
+  app.get("/forgot-password", async function (req, res) {
+    if (!isFeatureWebRouteEnabled(features.web.login, req, res, features))
+      return;
+
+    if (req.session.user) {
+      return res.redirect(`/`);
+    }
+
+    return res.view("session/forgotPassword", {
+      pageTitle: `Forgot Password`,
+      config: config,
+      req: req,
+      features: features,
+      globalImage: await getGlobalImage(),
+      announcementWeb: await getWebAnnouncement(),
+    });
+  });
+
+  app.post("/forgot-password", async function (req, res) {
+    if (!isFeatureWebRouteEnabled(features.web.login, req, res, features))
+      return;
+
+    if (req.session.user) {
+      return res.redirect(`/`);
+    }
+
+    const identifier = req.body.identifier ? req.body.identifier.trim() : "";
+
+    if (!identifier) {
+      setBannerCookie(
+        "warning",
+        "Please provide a username or email address.",
+        res
+      );
+      return res.redirect(`/forgot-password`);
+    }
+
+    try {
+      const userGetter = new UserGetter();
+      const user = await userGetter.byUsernameOrEmail(identifier);
+
+      if (user && user.email && user.password_hash) {
+        const code = await generateVerificationCode();
+        const expiresAt = new Date(
+          Date.now() + passwordResetExpiryMinutes * 60 * 1000
+        );
+
+        await createPasswordResetRequest(user.userId, code, expiresAt);
+
+        await sendMail(
+          user.email,
+          `Reset your ${config.siteConfiguration.siteName} password`,
+          "passwordResetCode.ejs",
+          {
+            username: user.username,
+            code,
+            expiryMinutes: passwordResetExpiryMinutes,
+            siteAddress: process.env.siteAddress,
+            siteName: config.siteConfiguration.siteName,
+          }
+        );
+
+        req.session.passwordReset = {
+          userId: user.userId,
+          username: user.username,
+          email: user.email,
+          stage: "CODE",
+        };
+      } else {
+        req.session.passwordReset = {
+          stage: "CODE",
+        };
+      }
+
+      setBannerCookie(
+        "success",
+        "If an account exists with those details, we've emailed a verification code.",
+        res
+      );
+
+      return res.redirect(`/forgot-password/verify`);
+    } catch (error) {
+      console.error(error);
+      setBannerCookie(
+        "danger",
+        "We couldn't start a password reset right now. Please try again soon.",
+        res
+      );
+      return res.redirect(`/forgot-password`);
+    }
+  });
+
+  app.get("/forgot-password/verify", async function (req, res) {
+    if (!isFeatureWebRouteEnabled(features.web.login, req, res, features))
+      return;
+
+    const passwordReset = req.session.passwordReset;
+
+    if (!passwordReset || passwordReset.stage !== "CODE") {
+      return res.redirect(`/forgot-password`);
+    }
+
+    return res.view("session/forgotPasswordVerify", {
+      pageTitle: `Verify Reset Code`,
+      config: config,
+      req: req,
+      features: features,
+      globalImage: await getGlobalImage(),
+      announcementWeb: await getWebAnnouncement(),
+      username: passwordReset.username,
+      expiryMinutes: passwordResetExpiryMinutes,
+    });
+  });
+
+  app.post("/forgot-password/verify", async function (req, res) {
+    if (!isFeatureWebRouteEnabled(features.web.login, req, res, features))
+      return;
+
+    const passwordReset = req.session.passwordReset;
+
+    if (!passwordReset || passwordReset.stage !== "CODE") {
+      setBannerCookie(
+        "danger",
+        "Your reset request could not be found. Please start again.",
+        res
+      );
+      return res.redirect(`/forgot-password`);
+    }
+
+    const code = req.body.code ? req.body.code.trim() : "";
+
+    if (!code) {
+      setBannerCookie("warning", "Please enter the verification code.", res);
+      return res.redirect(`/forgot-password/verify`);
+    }
+
+    if (!passwordReset.userId) {
+      setBannerCookie("danger", "We couldn't verify that code.", res);
+      return res.redirect(`/forgot-password/verify`);
+    }
+
+    try {
+      const verification = await verifyPasswordResetCode(
+        passwordReset.userId,
+        code
+      );
+
+      if (!verification.valid) {
+        let message = "We couldn't verify that code.";
+
+        if (verification.reason === "expired") {
+          message = "That code has expired. Please request a new password reset.";
+        } else if (verification.reason === "consumed") {
+          message = "That code has already been used. Please request a new password reset.";
+        }
+
+        setBannerCookie("danger", message, res);
+        return res.redirect(`/forgot-password/verify`);
+      }
+
+      req.session.passwordReset.stage = "RESET";
+
+      setBannerCookie(
+        "success",
+        "Code verified! You can now choose a new password.",
+        res
+      );
+      return res.redirect(`/forgot-password/reset`);
+    } catch (error) {
+      console.error(error);
+      setBannerCookie(
+        "danger",
+        "We couldn't verify that code right now. Please try again soon.",
+        res
+      );
+      return res.redirect(`/forgot-password/verify`);
+    }
+  });
+
+  app.get("/forgot-password/reset", async function (req, res) {
+    if (!isFeatureWebRouteEnabled(features.web.login, req, res, features))
+      return;
+
+    const passwordReset = req.session.passwordReset;
+
+    if (
+      !passwordReset ||
+      passwordReset.stage !== "RESET" ||
+      !passwordReset.userId
+    ) {
+      return res.redirect(`/forgot-password`);
+    }
+
+    return res.view("session/resetPassword", {
+      pageTitle: `Choose a New Password`,
+      config: config,
+      req: req,
+      features: features,
+      globalImage: await getGlobalImage(),
+      announcementWeb: await getWebAnnouncement(),
+    });
+  });
+
+  app.post("/forgot-password/reset", async function (req, res) {
+    if (!isFeatureWebRouteEnabled(features.web.login, req, res, features))
+      return;
+
+    const passwordReset = req.session.passwordReset;
+
+    if (
+      !passwordReset ||
+      passwordReset.stage !== "RESET" ||
+      !passwordReset.userId
+    ) {
+      setBannerCookie(
+        "danger",
+        "Your reset request could not be found. Please start again.",
+        res
+      );
+      return res.redirect(`/forgot-password`);
+    }
+
+    const password = req.body.password || "";
+    const confirmPassword = req.body.confirmPassword || "";
+
+    if (!password || !confirmPassword) {
+      setBannerCookie("warning", "Please complete all password fields.", res);
+      return res.redirect(`/forgot-password/reset`);
+    }
+
+    if (password !== confirmPassword) {
+      setBannerCookie("danger", "Passwords do not match.", res);
+      return res.redirect(`/forgot-password/reset`);
+    }
+
+    if (!passwordRequirements.test(password)) {
+      setBannerCookie(
+        "warning",
+        "Password must be at least 8 characters and include uppercase, lowercase and a number.",
+        res
+      );
+      return res.redirect(`/forgot-password/reset`);
+    }
+
+    try {
+      const passwordHash = await bcrypt.hash(password, 12);
+      await updateUserPassword(passwordReset.userId, passwordHash);
+
+      delete req.session.passwordReset;
+
+      setBannerCookie(
+        "success",
+        "Your password has been reset. You can now sign in.",
+        res
+      );
+      return res.redirect(`/login`);
+    } catch (error) {
+      console.error(error);
+      setBannerCookie(
+        "danger",
+        "We couldn't reset your password right now. Please try again soon.",
+        res
+      );
+      return res.redirect(`/forgot-password/reset`);
     }
   });
 
@@ -604,7 +876,7 @@ export default function sessionSiteRoute(
       setBannerCookie("success", lang.session.userLogout, res);
       res.redirect(`${process.env.siteAddress}/`);
     } catch (err) {
-      console.log(err);
+      console.error("Failed to destroy session during logout", err);
       throw err;
     }
   });

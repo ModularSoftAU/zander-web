@@ -30,14 +30,16 @@
               <label for="password">Password</label>
               <input type="password" class="form-control" name="password" required>
             </div>
-            <div class="text-center">
-              <button type="submit" class="btn btn-primary" style="width: 100%">Sign In</button>
-            </div>
-          </form>
-          <br>
-          <div class="mb-3 text-center">
-            <span class="text-muted">or</span>
+          <div class="text-center">
+            <button type="submit" class="btn btn-primary" style="width: 100%">Sign In</button>
           </div>
+        </form>
+        <br>
+        <small class="text-muted">Forgot your password? <a href="/forgot-password">Reset it here</a>.</small>
+        <br>
+        <div class="mb-3 text-center">
+          <span class="text-muted">or</span>
+        </div>
           <div class="d-grid">
             <a href="<%= discordAuthorizeUrl %>" class="btn" style="background-color:#5865F2; color:#fff;">
               <i class="fab fa-discord"></i> Sign in with Discord

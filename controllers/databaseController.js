@@ -16,11 +16,10 @@ var pool = mysql.createPool({
 
 pool.getConnection(function (err, connection) {
   if (err) {
-    console.log(err);    
     console.error(`[ERROR] [DB] There was an error connecting:\n ${err.stack}`);
     return;
   }
-  console.log(`[CONSOLE] [DB] Database pool connection is successful.`);
+  console.info(`[DB] Database pool connection is successful.`);
   connection.release(); // Release the connection back to the pool
 });
 

@@ -367,7 +367,7 @@ export async function setProfileDisplayPreferences(
     [profilePicture_type, profilePicture_email, userId],
     function (error, results, fields) {
       if (error) {
-        console.log(error);
+        console.error("Failed to update profile display preferences", error);
       }
     }
   );
@@ -382,7 +382,7 @@ export async function setProfileUserInterests(
     [social_interests, userId],
     function (error, results, fields) {
       if (error) {
-        console.log(error);
+        console.error("Failed to update profile interests", error);
       }
     }
   );
@@ -414,7 +414,7 @@ export async function setProfileSocialConnections(
     ],
     function (error, results, fields) {
       if (error) {
-        console.log(error);
+        console.error("Failed to update social connections", error);
       }
     }
   );
@@ -429,10 +429,26 @@ export async function setProfileUserAboutMe(
     [social_aboutMe, userId],
     function (error, results, fields) {
       if (error) {
-        console.log(error);
+        console.error("Failed to update profile bio", error);
       }
     }
   );
+}
+
+export function updateUserPassword(userId, passwordHash) {
+  return new Promise((resolve, reject) => {
+    db.query(
+      `UPDATE users SET password_hash = ? WHERE userId = ?`,
+      [passwordHash, userId],
+      function (error) {
+        if (error) {
+          return reject(error);
+        }
+
+        resolve(true);
+      }
+    );
+  });
 }
 
 export async function getUserPermissions(userData) {

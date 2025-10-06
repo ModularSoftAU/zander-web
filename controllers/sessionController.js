@@ -86,3 +86,78 @@ export async function verifyEmailCode(userId, code) {
     );
   });
 }
+
+export async function createPasswordResetRequest(userId, code, expiresAt) {
+  const hashedCode = await bcrypt.hash(code, 10);
+
+  return new Promise((resolve, reject) => {
+    db.query(
+      `DELETE FROM userPasswordResets WHERE userId = ?`,
+      [userId],
+      function (deleteError) {
+        if (deleteError) {
+          return reject(deleteError);
+        }
+
+        db.query(
+          `INSERT INTO userPasswordResets (userId, codeHash, expiresAt) VALUES (?, ?, ?)`,
+          [userId, hashedCode, expiresAt],
+          function (error) {
+            if (error) {
+              return reject(error);
+            }
+
+            resolve(true);
+          }
+        );
+      }
+    );
+  });
+}
+
+export async function verifyPasswordResetCode(userId, code) {
+  return new Promise((resolve, reject) => {
+    db.query(
+      `SELECT * FROM userPasswordResets WHERE userId = ? ORDER BY createdAt DESC LIMIT 1`,
+      [userId],
+      async function (error, results) {
+        if (error) {
+          return reject(error);
+        }
+
+        if (!results || !results.length) {
+          return resolve({ valid: false });
+        }
+
+        const resetRequest = results[0];
+
+        if (resetRequest.consumed) {
+          return resolve({ valid: false, reason: "consumed" });
+        }
+
+        const expiryDate = new Date(resetRequest.expiresAt);
+        if (expiryDate < new Date()) {
+          return resolve({ valid: false, reason: "expired" });
+        }
+
+        const match = await bcrypt.compare(code, resetRequest.codeHash);
+
+        if (!match) {
+          return resolve({ valid: false, reason: "mismatch" });
+        }
+
+        db.query(
+          `UPDATE userPasswordResets SET consumed = 1, consumedAt = NOW() WHERE resetId = ?`,
+          [resetRequest.resetId],
+          function (updateError) {
+            if (updateError) {
+              return reject(updateError);
+            }
+
+            resolve({ valid: true });
+          }
+        );
+      }
+    );
+  });
+}
