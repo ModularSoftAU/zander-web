@@ -282,11 +282,37 @@ export function createLocalUser({ uuid, username, email, passwordHash }) {
   });
 }
 
-export function updateLocalUserCredentials(userId, email, passwordHash) {
+export function updateLocalUserCredentials(
+  userId,
+  { email, passwordHash, username }
+) {
   return new Promise((resolve, reject) => {
+    const updates = [];
+    const params = [];
+
+    if (typeof email !== "undefined") {
+      updates.push(`email = ?`);
+      params.push(email);
+    }
+
+    if (typeof passwordHash !== "undefined") {
+      updates.push(`password_hash = ?`);
+      params.push(passwordHash);
+    }
+
+    if (typeof username !== "undefined") {
+      updates.push(`username = ?`);
+      params.push(username);
+    }
+
+    updates.push(`email_verified = 0`);
+    updates.push(`email_verified_at = NULL`);
+
+    params.push(userId);
+
     db.query(
-      `UPDATE users SET email = ?, password_hash = ? WHERE userId = ?`,
-      [email, passwordHash, userId],
+      `UPDATE users SET ${updates.join(", ")} WHERE userId = ?`,
+      params,
       function (error) {
         if (error) {
           return reject(error);

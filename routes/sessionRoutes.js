@@ -596,10 +596,6 @@ export default function sessionSiteRoute(
     try {
       const userGetter = new UserGetter();
       const existingUsername = await userGetter.byUsername(username);
-      if (existingUsername && existingUsername.password_hash) {
-        setBannerCookie("danger", "That username is already registered.", res);
-        return res.redirect(`/register`);
-      }
 
       const profileResponse = await fetch(
         `https://api.mojang.com/users/profiles/minecraft/${encodeURIComponent(username)}`
@@ -623,6 +619,19 @@ export default function sessionSiteRoute(
       }
 
       const existingUuidUser = await userGetter.byUUID(formattedUuid);
+
+      if (
+        existingUsername &&
+        (!existingUuidUser || existingUsername.userId !== existingUuidUser.userId)
+      ) {
+        setBannerCookie("danger", "That username is already registered.", res);
+        return res.redirect(`/register`);
+      }
+
+      if (existingUuidUser && existingUuidUser.account_registered) {
+        setBannerCookie("danger", "An account already exists for this Minecraft player.", res);
+        return res.redirect(`/register`);
+      }
 
       if (!existingUuidUser) {
         const hasJoinedServer = await userGetter.hasJoined(
@@ -656,12 +665,11 @@ export default function sessionSiteRoute(
       let userId;
 
       if (existingUuidUser) {
-        if (existingUuidUser.password_hash) {
-          setBannerCookie("danger", "An account already exists for this Minecraft player.", res);
-          return res.redirect(`/register`);
-        }
-
-        await updateLocalUserCredentials(existingUuidUser.userId, email, passwordHash);
+        await updateLocalUserCredentials(existingUuidUser.userId, {
+          email,
+          passwordHash,
+          username,
+        });
         userId = existingUuidUser.userId;
       } else {
         const newUser = await createLocalUser({
