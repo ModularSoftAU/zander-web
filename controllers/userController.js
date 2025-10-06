@@ -22,6 +22,55 @@ export function UserGetter() {
     });
   };
 
+  this.byEmail = function (email) {
+    return new Promise((resolve, reject) => {
+      db.query(
+        `SELECT * FROM users WHERE LOWER(email)=LOWER(?);`,
+        [email],
+        function (error, results) {
+          if (error) {
+            reject(error);
+          }
+
+          if (!results || !results.length) {
+            resolve(null);
+          } else {
+            resolve(results[0]);
+          }
+        }
+      );
+    });
+  };
+
+  this.byUserId = function (userId) {
+    return new Promise((resolve, reject) => {
+      db.query(
+        `SELECT * FROM users WHERE userId=?;`,
+        [userId],
+        function (error, results) {
+          if (error) {
+            reject(error);
+          }
+
+          if (!results || !results.length) {
+            resolve(null);
+          } else {
+            resolve(results[0]);
+          }
+        }
+      );
+    });
+  };
+
+  this.byUsernameOrEmail = async function (identifier) {
+    const byUsername = await this.byUsername(identifier);
+    if (byUsername) {
+      return byUsername;
+    }
+
+    return await this.byEmail(identifier);
+  };
+
   this.byUUID = function (uuid) {
     return new Promise((resolve, reject) => {
       db.query(
@@ -111,7 +160,7 @@ export function UserLinkGetter() {
   this.getUserByCode = function (code) {
     return new Promise((resolve, reject) => {
       db.query(
-        `SELECT u.* FROM users u JOIN userVerifyLink uv ON u.uuid = uv.uuid WHERE uv.linkCode = ?;`,
+        `SELECT u.*, uv.verifyId FROM users u JOIN userVerifyLink uv ON u.uuid = uv.uuid WHERE uv.linkCode = ? AND uv.codeExpiry > NOW();`,
         [code],
         function (error, results, fields) {
           if (error) {
@@ -138,11 +187,111 @@ export function UserLinkGetter() {
             reject(error);
           }
 
-          resolve(true);
+          db.query(
+            `DELETE FROM userVerifyLink WHERE uuid=?`,
+            [uuid],
+            function (deleteError) {
+              if (deleteError) {
+                return reject(deleteError);
+              }
+
+              resolve(true);
+            }
+          );
         }
       );
     });
   };
+
+  this.markWebsiteRegistrationComplete = function (uuid) {
+    return new Promise((resolve, reject) => {
+      db.query(
+        `UPDATE users SET account_registered=? WHERE uuid=?`,
+        [new Date(), uuid],
+        function (error) {
+          if (error) {
+            return reject(error);
+          }
+
+          db.query(
+            `DELETE FROM userVerifyLink WHERE uuid=?`,
+            [uuid],
+            function (deleteError) {
+              if (deleteError) {
+                return reject(deleteError);
+              }
+
+              resolve(true);
+            }
+          );
+        }
+      );
+    });
+  };
+}
+
+export function createLocalUser({ uuid, username, email, passwordHash }) {
+  return new Promise((resolve, reject) => {
+    db.query(
+      `INSERT INTO users (uuid, username, email, password_hash) VALUES (?, ?, ?, ?)`,
+      [uuid, username, email, passwordHash],
+      function (error, results) {
+        if (error) {
+          return reject(error);
+        }
+
+        resolve({ userId: results.insertId });
+      }
+    );
+  });
+}
+
+export function updateLocalUserCredentials(userId, email, passwordHash) {
+  return new Promise((resolve, reject) => {
+    db.query(
+      `UPDATE users SET email = ?, password_hash = ? WHERE userId = ?`,
+      [email, passwordHash, userId],
+      function (error) {
+        if (error) {
+          return reject(error);
+        }
+
+        resolve(true);
+      }
+    );
+  });
+}
+
+export function markEmailVerified(userId) {
+  return new Promise((resolve, reject) => {
+    db.query(
+      `UPDATE users SET email_verified = 1, email_verified_at = NOW() WHERE userId = ?`,
+      [userId],
+      function (error) {
+        if (error) {
+          return reject(error);
+        }
+
+        resolve(true);
+      }
+    );
+  });
+}
+
+export function markAccountRegistered(userId) {
+  return new Promise((resolve, reject) => {
+    db.query(
+      `UPDATE users SET account_registered = NOW() WHERE userId = ?`,
+      [userId],
+      function (error) {
+        if (error) {
+          return reject(error);
+        }
+
+        resolve(true);
+      }
+    );
+  });
 }
 
 export async function getProfilePicture(username) {
@@ -295,6 +444,7 @@ export async function getUserPermissions(userData) {
             })
           );
 
+          userPermissions.userRanks = userRanks.map((rank) => rank.rankSlug);
           resolve(userPermissions);
         } catch (err) {
           reject(err);

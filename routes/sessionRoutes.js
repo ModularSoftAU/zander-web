@@ -1,6 +1,7 @@
 import dotenv from "dotenv";
 dotenv.config();
 import qs from "querystring";
+import bcrypt from "bcrypt";
 import {
   isFeatureWebRouteEnabled,
   setBannerCookie,
@@ -10,10 +11,20 @@ import { getWebAnnouncement } from "../controllers/announcementController.js";
 import {
   UserGetter,
   getProfilePicture,
-  getRankPermissions,
   getUserPermissions,
+  createLocalUser,
+  updateLocalUserCredentials,
+  markEmailVerified,
+  markAccountRegistered,
+  UserLinkGetter,
 } from "../controllers/userController.js";
 import { updateAudit_lastWebsiteLogin } from "../controllers/auditController.js";
+import {
+  createEmailVerification,
+  generateVerificationCode,
+  verifyEmailCode,
+} from "../controllers/sessionController.js";
+import { sendMail } from "../controllers/emailController.js";
 
 export default function sessionSiteRoute(
   app,
@@ -28,11 +39,10 @@ export default function sessionSiteRoute(
   //
   // Session
   //
-  app.get("/login", async function (req, res) {
-    if (!isFeatureWebRouteEnabled(features.web.login, req, res, features))
-      return;
+  const emailVerificationExpiryMinutes = 10;
+  const passwordRequirements = /^(?=.*[A-Z])(?=.*[a-z])(?=.*\d).{8,}$/;
 
-    // Redirect to Discord for authentication
+  const buildDiscordAuthorizeUrl = () => {
     const params = {
       client_id: process.env.discordClientId,
       redirect_uri: `${process.env.siteAddress}/login/callback`,
@@ -40,11 +50,142 @@ export default function sessionSiteRoute(
       scope: "identify",
     };
 
-    const authorizeUrl = `https://discord.com/api/oauth2/authorize?${qs.stringify(
-      params
-    )}`;
+    return `https://discord.com/api/oauth2/authorize?${qs.stringify(params)}`;
+  };
 
-    res.redirect(authorizeUrl);
+  const normaliseEmail = (email) => (email || "").trim().toLowerCase();
+
+  const formatMojangUuid = (rawUuid) => {
+    if (!rawUuid) return null;
+
+    const cleaned = rawUuid.replace(/-/g, "");
+    if (cleaned.length !== 32) {
+      return null;
+    }
+
+    return `${cleaned.substring(0, 8)}-${cleaned.substring(8, 12)}-${cleaned.substring(
+      12,
+      16
+    )}-${cleaned.substring(16, 20)}-${cleaned.substring(20)}`;
+  };
+
+  async function hydrateUserSession(req, userLoginData) {
+    const userPermissionData = await getUserPermissions(userLoginData);
+    const userRanks = userPermissionData.userRanks || [];
+
+    req.session.authenticated = true;
+    req.session.user = {
+      userId: userLoginData.userId,
+      username: userLoginData.username,
+      profilePicture: await getProfilePicture(userLoginData.username),
+      discordID: userLoginData.discordId,
+      uuid: userLoginData.uuid,
+      ranks: userRanks,
+      permissions: userPermissionData,
+    };
+
+    await updateAudit_lastWebsiteLogin(new Date(), userLoginData.username);
+  }
+
+  app.get("/login", async function (req, res) {
+    if (!isFeatureWebRouteEnabled(features.web.login, req, res, features))
+      return;
+
+    const discordAuthorizeUrl = buildDiscordAuthorizeUrl();
+
+    if (req.query.provider === "discord") {
+      return res.redirect(discordAuthorizeUrl);
+    }
+
+    return res.view("session/login", {
+      pageTitle: `Login`,
+      config: config,
+      req: req,
+      features: features,
+      globalImage: await getGlobalImage(),
+      announcementWeb: await getWebAnnouncement(),
+      discordAuthorizeUrl,
+    });
+  });
+
+  app.post("/login", async function (req, res) {
+    if (!isFeatureWebRouteEnabled(features.web.login, req, res, features))
+      return;
+
+    const identifier = req.body.identifier ? req.body.identifier.trim() : "";
+    const password = req.body.password || "";
+
+    if (!identifier || !password) {
+      setBannerCookie("warning", "Username/email and password are required.", res);
+      return res.redirect(`/login`);
+    }
+
+    try {
+      const userGetter = new UserGetter();
+      const user = await userGetter.byUsernameOrEmail(identifier);
+
+      if (!user || !user.password_hash) {
+        setBannerCookie("danger", "Invalid credentials.", res);
+        return res.redirect(`/login`);
+      }
+
+      if (user.account_disabled) {
+        setBannerCookie(
+          "danger",
+          "Your account is disabled. Please contact the team for assistance.",
+          res
+        );
+        return res.redirect(`/login`);
+      }
+
+      const passwordMatch = await bcrypt.compare(password, user.password_hash);
+
+      if (!passwordMatch) {
+        setBannerCookie("danger", "Invalid credentials.", res);
+        return res.redirect(`/login`);
+      }
+
+      if (!user.email_verified) {
+        req.session.pendingRegistration = {
+          userId: user.userId,
+          username: user.username,
+          email: user.email,
+          stage: "EMAIL",
+        };
+        setBannerCookie("warning", "Please verify your email to continue.", res);
+        return res.redirect(`/register/verify-email`);
+      }
+
+      if (!user.account_registered) {
+        req.session.pendingRegistration = {
+          userId: user.userId,
+          username: user.username,
+          email: user.email,
+          stage: "MINECRAFT",
+        };
+        setBannerCookie(
+          "warning",
+          "Please finish verifying your Minecraft account to continue.",
+          res
+        );
+        return res.redirect(`/register/minecraft`);
+      }
+
+      await hydrateUserSession(req, user);
+      setBannerCookie("success", "Logged in successfully.", res);
+      return res.redirect(`${process.env.siteAddress}/`);
+    } catch (error) {
+      console.error(error);
+      setBannerCookie("danger", "Unable to log in, please try again soon.", res);
+      return res.redirect(`/login`);
+    }
+  });
+
+  app.get("/login/discord", async function (req, res) {
+    if (!isFeatureWebRouteEnabled(features.web.login, req, res, features))
+      return;
+
+    return res.redirect(buildDiscordAuthorizeUrl());
   });
 
   app.get("/login/callback", async (req, res) => {
@@ -55,7 +196,6 @@ export default function sessionSiteRoute(
         throw new Error("Authorization code is missing");
       }
 
-      // Exchange authorization code for access token
       const tokenParams = {
         client_id: process.env.discordClientId,
         client_secret: process.env.discordClientSecret,
@@ -65,16 +205,13 @@ export default function sessionSiteRoute(
         scope: "identify",
       };
 
-      const tokenResponse = await fetch(
-        "https://discord.com/api/oauth2/token",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/x-www-form-urlencoded",
-          },
-          body: qs.stringify(tokenParams),
-        }
-      );
+      const tokenResponse = await fetch("https://discord.com/api/oauth2/token", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded",
+        },
+        body: qs.stringify(tokenParams),
+      });
 
       if (!tokenResponse.ok) {
         const errorText = `Failed to obtain access token: ${tokenResponse.status} ${tokenResponse.statusText}`;
@@ -83,7 +220,6 @@ export default function sessionSiteRoute(
       }
 
       const tokenData = await tokenResponse.json();
-      // Use the access token to fetch user data from Discord API
       const userResponse = await fetch("https://discord.com/api/users/@me", {
         headers: {
           Authorization: `${tokenData.token_type} ${tokenData.access_token}`,
@@ -96,44 +232,326 @@ export default function sessionSiteRoute(
         throw new Error(errorText);
       }
 
-      const userData = await userResponse.json();      
-      // Check if user is registered in your system
+      const userData = await userResponse.json();
       const userGetData = new UserGetter();
       const userIsRegistered = await userGetData.isRegistered(userData.id);
 
       if (!userIsRegistered) {
-        // Set a cookie for unregistered user
         res.cookie("discordId", userData.id, {
           path: "/",
           httpOnly: true,
-          maxAge: 10000, // Expires in 10 seconds
+          maxAge: 10 * 60 * 1000,
         });
 
         console.log("User is unregistered, redirecting to /unregistered");
         return res.redirect(`/unregistered`);
-      } else {
-        // User is registered, proceed with session setup
-        const userLoginData = await userGetData.byDiscordId(userData.id);
-        const userPermissionData = await getUserPermissions(userLoginData);
-        
-        req.session.authenticated = true;
-        req.session.user = {
-          userId: userLoginData.userId,
-          username: userLoginData.username,
-          profilePicture: await getProfilePicture(userLoginData.username),
-          discordID: userLoginData.discordId,
-          uuid: userLoginData.uuid,
-          ranks: userPermissionData.userRanks,
-          permissions: userPermissionData,
-        };
-
-        // Update user profile for auditing
-        await updateAudit_lastWebsiteLogin(new Date(), userLoginData.username);
-        return res.redirect(`${process.env.siteAddress}/`);
       }
+
+      const userLoginData = await userGetData.byDiscordId(userData.id);
+      await hydrateUserSession(req, userLoginData);
+
+      return res.redirect(`${process.env.siteAddress}/`);
     } catch (error) {
       console.error("Error:", error);
-      return res.status(500).send("Internal Server Error");
+      setBannerCookie("danger", "Discord authentication failed.", res);
+      return res.redirect(`/login`);
+    }
+  });
+
+  app.get("/register", async function (req, res) {
+    if (!isFeatureWebRouteEnabled(features.web.register, req, res, features))
+      return;
+
+    if (req.session.user) {
+      return res.redirect(`/`);
+    }
+
+    return res.view("session/register", {
+      pageTitle: `Register`,
+      config: config,
+      req: req,
+      features: features,
+      globalImage: await getGlobalImage(),
+      announcementWeb: await getWebAnnouncement(),
+    });
+  });
+
+  app.post("/register", async function (req, res) {
+    if (!isFeatureWebRouteEnabled(features.web.register, req, res, features))
+      return;
+
+    const username = req.body.username ? req.body.username.trim() : "";
+    const email = normaliseEmail(req.body.email);
+    const password = req.body.password || "";
+
+    if (!username || !email || !password) {
+      setBannerCookie("warning", "All fields are required.", res);
+      return res.redirect(`/register`);
+    }
+
+    if (!passwordRequirements.test(password)) {
+      setBannerCookie(
+        "warning",
+        "Password must be at least 8 characters and include uppercase, lowercase and a number.",
+        res
+      );
+      return res.redirect(`/register`);
+    }
+
+    try {
+      const userGetter = new UserGetter();
+      const existingUsername = await userGetter.byUsername(username);
+      if (existingUsername && existingUsername.password_hash) {
+        setBannerCookie("danger", "That username is already registered.", res);
+        return res.redirect(`/register`);
+      }
+
+      const profileResponse = await fetch(
+        `https://api.mojang.com/users/profiles/minecraft/${encodeURIComponent(username)}`
+      );
+
+      if (profileResponse.status === 204 || profileResponse.status === 404) {
+        setBannerCookie("danger", "We could not find that Minecraft username.", res);
+        return res.redirect(`/register`);
+      }
+
+      if (!profileResponse.ok) {
+        throw new Error("Failed to validate Minecraft username");
+      }
+
+      const profileData = await profileResponse.json();
+      const formattedUuid = formatMojangUuid(profileData.id);
+
+      if (!formattedUuid) {
+        setBannerCookie("danger", "Invalid Minecraft UUID returned.", res);
+        return res.redirect(`/register`);
+      }
+
+      const existingUuidUser = await userGetter.byUUID(formattedUuid);
+
+      const existingEmail = await userGetter.byEmail(email);
+      if (
+        existingEmail &&
+        existingEmail.password_hash &&
+        (!existingUuidUser || existingEmail.userId !== existingUuidUser.userId)
+      ) {
+        setBannerCookie("danger", "That email address is already in use.", res);
+        return res.redirect(`/register`);
+      }
+
+      const passwordHash = await bcrypt.hash(password, 12);
+
+      let userId;
+
+      if (existingUuidUser) {
+        if (existingUuidUser.password_hash) {
+          setBannerCookie("danger", "An account already exists for this Minecraft player.", res);
+          return res.redirect(`/register`);
+        }
+
+        await updateLocalUserCredentials(existingUuidUser.userId, email, passwordHash);
+        userId = existingUuidUser.userId;
+      } else {
+        const newUser = await createLocalUser({
+          uuid: formattedUuid,
+          username,
+          email,
+          passwordHash,
+        });
+        userId = newUser.userId;
+      }
+
+      const verificationCode = await generateVerificationCode();
+      const expiresAt = new Date(Date.now() + emailVerificationExpiryMinutes * 60000);
+      await createEmailVerification(userId, verificationCode, expiresAt);
+
+      await sendMail(
+        email,
+        `${config.siteConfiguration.siteName} Email Verification`,
+        "verificationCode.ejs",
+        {
+          username,
+          code: verificationCode,
+          expiryMinutes: emailVerificationExpiryMinutes,
+          siteName: config.siteConfiguration.siteName,
+        }
+      );
+
+      req.session.pendingRegistration = {
+        userId,
+        username,
+        email,
+        stage: "EMAIL",
+      };
+
+      setBannerCookie("success", "We sent a verification code to your email.", res);
+      return res.redirect(`/register/verify-email`);
+    } catch (error) {
+      console.error(error);
+      setBannerCookie("danger", "We were unable to create your account.", res);
+      return res.redirect(`/register`);
+    }
+  });
+
+  app.get("/register/verify-email", async function (req, res) {
+    if (!isFeatureWebRouteEnabled(features.web.register, req, res, features))
+      return;
+
+    const pendingRegistration = req.session.pendingRegistration;
+
+    if (!pendingRegistration || !pendingRegistration.userId) {
+      setBannerCookie("warning", "Start by creating an account first.", res);
+      return res.redirect(`/register`);
+    }
+
+    return res.view("session/registerVerifyEmail", {
+      pageTitle: `Verify Email`,
+      config: config,
+      req: req,
+      features: features,
+      globalImage: await getGlobalImage(),
+      announcementWeb: await getWebAnnouncement(),
+      email: pendingRegistration.email,
+      expiryMinutes: emailVerificationExpiryMinutes,
+    });
+  });
+
+  app.post("/register/verify-email", async function (req, res) {
+    if (!isFeatureWebRouteEnabled(features.web.register, req, res, features))
+      return;
+
+    const pendingRegistration = req.session.pendingRegistration;
+    if (!pendingRegistration || !pendingRegistration.userId) {
+      setBannerCookie("warning", "Start by creating an account first.", res);
+      return res.redirect(`/register`);
+    }
+
+    const code = [
+      req.body.first,
+      req.body.second,
+      req.body.third,
+      req.body.fourth,
+      req.body.fifth,
+      req.body.sixth,
+    ]
+      .join("")
+      .trim();
+
+    if (code.length !== 6) {
+      setBannerCookie("danger", "Please enter the 6 digit code from your email.", res);
+      return res.redirect(`/register/verify-email`);
+    }
+
+    try {
+      const verificationResult = await verifyEmailCode(pendingRegistration.userId, code);
+
+      if (!verificationResult.valid) {
+        setBannerCookie("danger", "That verification code is invalid or expired.", res);
+        return res.redirect(`/register/verify-email`);
+      }
+
+      await markEmailVerified(pendingRegistration.userId);
+      req.session.pendingRegistration.stage = "MINECRAFT";
+
+      setBannerCookie(
+        "success",
+        "Email verified! Now verify your Minecraft account.",
+        res
+      );
+      return res.redirect(`/register/minecraft`);
+    } catch (error) {
+      console.error(error);
+      setBannerCookie("danger", "We were unable to verify that code.", res);
+      return res.redirect(`/register/verify-email`);
+    }
+  });
+
+  app.get("/register/minecraft", async function (req, res) {
+    if (!isFeatureWebRouteEnabled(features.web.register, req, res, features))
+      return;
+
+    const pendingRegistration = req.session.pendingRegistration;
+
+    if (!pendingRegistration || !pendingRegistration.userId) {
+      setBannerCookie("warning", "Start by creating an account first.", res);
+      return res.redirect(`/register`);
+    }
+
+    if (pendingRegistration.stage !== "MINECRAFT") {
+      setBannerCookie("warning", "Please verify your email before continuing.", res);
+      return res.redirect(`/register/verify-email`);
+    }
+
+    const fetchURL = `${process.env.siteAddress}/api/server/get?type=VERIFICATION`;
+    const response = await fetch(fetchURL, {
+      headers: { "x-access-token": process.env.apiKey },
+    });
+    const apiData = await response.json();
+
+    return res.view("session/registerMinecraft", {
+      pageTitle: `Verify Minecraft`,
+      config: config,
+      req: req,
+      apiData: apiData,
+      features: features,
+      globalImage: await getGlobalImage(),
+      announcementWeb: await getWebAnnouncement(),
+      pendingUserId: pendingRegistration.userId,
+    });
+  });
+
+  app.post("/register/minecraft", async function (req, res) {
+    if (!isFeatureWebRouteEnabled(features.web.register, req, res, features))
+      return;
+
+    const pendingRegistration = req.session.pendingRegistration;
+
+    if (!pendingRegistration || !pendingRegistration.userId) {
+      setBannerCookie("warning", "Start by creating an account first.", res);
+      return res.redirect(`/register`);
+    }
+
+    const code = [
+      req.body.first,
+      req.body.second,
+      req.body.third,
+      req.body.fourth,
+      req.body.fifth,
+      req.body.sixth,
+    ]
+      .join("")
+      .trim();
+
+    if (code.length !== 6) {
+      setBannerCookie("danger", "Please enter the 6 digit code from the Minecraft server.", res);
+      return res.redirect(`/register/minecraft`);
+    }
+
+    try {
+      const userLinkData = new UserLinkGetter();
+      const linkUser = await userLinkData.getUserByCode(code);
+
+      if (!linkUser || linkUser.userId !== pendingRegistration.userId) {
+        setBannerCookie(
+          "danger",
+          "That verification code does not match your account.",
+          res
+        );
+        return res.redirect(`/register/minecraft`);
+      }
+
+      await userLinkData.markWebsiteRegistrationComplete(linkUser.uuid);
+      await markAccountRegistered(pendingRegistration.userId);
+
+      await hydrateUserSession(req, linkUser);
+      delete req.session.pendingRegistration;
+
+      setBannerCookie("success", "Your account has been verified!", res);
+      return res.redirect(`${process.env.siteAddress}/`);
+    } catch (error) {
+      console.error(error);
+      setBannerCookie("danger", "Unable to verify that code right now.", res);
+      return res.redirect(`/register/minecraft`);
     }
   });
 
@@ -142,7 +560,7 @@ export default function sessionSiteRoute(
       return;
 
     const discordId = req.cookies.discordId;
-    if (!discordId) res.redirect(`/`);
+    if (!discordId) return res.redirect(`/`);
 
     const fetchURL = `${process.env.siteAddress}/api/server/get?type=VERIFICATION`;
     const response = await fetch(fetchURL, {

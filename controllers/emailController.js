@@ -2,6 +2,7 @@ import dotenv from "dotenv";
 import nodemailer from "nodemailer";
 import ejs from "ejs";
 import fs from "fs";
+import path from "path";
 dotenv.config();
 
 const transporter = nodemailer.createTransport({
@@ -16,27 +17,33 @@ const transporter = nodemailer.createTransport({
 
 export async function sendMail(
   recipient,
-  subject
+  subject,
+  template,
+  templateData = {}
 ) {
-  const emailTemplate = ejs.compile(
-    fs.readFileSync("./views/partials/email/emailTemplate.ejs", "utf-8")
+  const templatePath = path.resolve(
+    "views",
+    "partials",
+    "email",
+    template
   );
-  const renderedTemplate = emailTemplate({ username: "John" });
+
+  const templateContent = fs.readFileSync(templatePath, "utf-8");
+  const renderedTemplate = ejs.render(templateContent, templateData);
 
   const mailOptions = {
-    from: `"${process.env.smtpIdentityDisplayName}" <${process.env.smtpIdentityEmailAddress}>`, // sender address
-    to: recipient, // list of receivers
-    subject: subject, // Subject line
+    from: `"${process.env.smtpIdentityDisplayName}" <${process.env.smtpIdentityEmailAddress}>`,
+    to: recipient,
+    subject: subject,
     html: renderedTemplate,
   };
 
-  transporter.sendMail(mailOptions, (error, info) => {
-    if (error) {
-      return console.log("Error occurred", error);
-    } else {
-      return console.log("Email sent", info.response);
-    }
-  });
+  try {
+    await transporter.sendMail(mailOptions);
+  } catch (error) {
+    console.log("Error occurred", error);
+    throw error;
+  }
 }
 
 
