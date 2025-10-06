@@ -5,15 +5,27 @@ import fs from "fs";
 import path from "path";
 dotenv.config();
 
+const smtpPort = Number(process.env.smtpPort) || 587;
+const smtpSecure = String(process.env.smtpSecure || "").toLowerCase() === "true";
+const smtpRequireTLS = String(process.env.smtpRequireTLS || "true").toLowerCase() === "true";
+
 const transporter = nodemailer.createTransport({
   host: process.env.smtpHost,
-  port: process.env.smtpPort,
-  secure: true,
+  port: smtpPort,
+  secure: smtpSecure,
+  requireTLS: !smtpSecure && smtpRequireTLS,
   auth: {
     user: process.env.smtpUser,
     pass: process.env.smtpPass,
   },
+  tls: {
+    minVersion: process.env.smtpTLSMinVersion || "TLSv1.2",
+  },
 });
+
+console.info(
+  `[EMAIL] Transport configured for ${process.env.smtpHost}:${smtpPort} secure=${smtpSecure} requireTLS=${!smtpSecure && smtpRequireTLS}`
+);
 
 export async function sendMail(
   recipient,
