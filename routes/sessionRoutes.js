@@ -329,6 +329,22 @@ export default function sessionSiteRoute(
 
       const existingUuidUser = await userGetter.byUUID(formattedUuid);
 
+      if (!existingUuidUser) {
+        const hasJoinedServer = await userGetter.hasJoined(
+          username,
+          formattedUuid
+        );
+
+        if (!hasJoinedServer) {
+          setBannerCookie(
+            "danger",
+            "You need to join the Minecraft server before creating a website account.",
+            res
+          );
+          return res.redirect(`/register`);
+        }
+      }
+
       const existingEmail = await userGetter.byEmail(email);
       if (
         existingEmail &&

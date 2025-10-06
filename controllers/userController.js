@@ -110,24 +110,60 @@ export function UserGetter() {
     });
   };
 
-  this.hasJoined = function (username) {
-    return new Promise((resolve, reject) => {
-      db.query(
-        `select * from users where username=?;`,
-        [username],
-        function (error, results, fields) {
+  this.hasJoined = async function (username, uuid = null) {
+    const trimmedUsername = username ? username.trim() : null;
+    const trimmedUuid = uuid ? uuid.trim() : null;
+
+    const runQuery = (sql, params) =>
+      new Promise((resolve, reject) => {
+        db.query(sql, params, (error, results) => {
           if (error) {
-            reject(error);
+            return reject(error);
           }
 
-          if (!results || !results.length) {
-            resolve(false);
-          }
+          resolve(results || []);
+        });
+      });
 
-          resolve(true);
-        }
+    if (trimmedUsername) {
+      const usernameMatch = await runQuery(
+        `SELECT 1 FROM users WHERE LOWER(username) = LOWER(?) LIMIT 1`,
+        [trimmedUsername]
       );
-    });
+
+      if (usernameMatch.length) {
+        return true;
+      }
+    }
+
+    if (trimmedUuid) {
+      const uuidMatch = await runQuery(
+        `SELECT 1 FROM users WHERE uuid = ? LIMIT 1`,
+        [trimmedUuid]
+      );
+
+      if (uuidMatch.length) {
+        return true;
+      }
+    }
+
+    if (!trimmedUsername) {
+      return false;
+    }
+
+    const luckPermsParams = [trimmedUsername];
+    let luckPermsQuery =
+      `SELECT 1 FROM luckPermsPlayers WHERE LOWER(username) = LOWER(?) LIMIT 1`;
+
+    if (trimmedUuid) {
+      luckPermsQuery =
+        `SELECT 1 FROM luckPermsPlayers WHERE LOWER(username) = LOWER(?) OR uuid = UNHEX(REPLACE(?, '-', '')) LIMIT 1`;
+      luckPermsParams.push(trimmedUuid);
+    }
+
+    const luckPermsMatch = await runQuery(luckPermsQuery, luckPermsParams);
+
+    return luckPermsMatch.length > 0;
   };
 
   this.isRegistered = function (discordId) {
