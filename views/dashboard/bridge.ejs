@@ -1,6 +1,6 @@
 <%- include("../modules/header.ejs", {
     pageTitle: pageTitle,
-    pageDescription: "Bridge for sending commands and functions."
+    pageDescription: "Bridge processor configuration and tooling."
 }) %>
 
 <%- include("../modules/navigationBar.ejs") %>
@@ -10,84 +10,276 @@
   backgroundImage: globalImage
 }) %>
 
+<%
+  const pendingList = pendingTasks && pendingTasks.success ? pendingTasks.data : [];
+  const processingList = processingTasks && processingTasks.success ? processingTasks.data : [];
+  const routinesList = routines && routines.success ? routines.data : [];
+%>
+
 <div class="row dashboardview">
-    <div class="col-sm-2">
-      <%- include("../modules/dashboard/dashboard-sidebar.ejs") %>
-    </div>
-    <div class="col" style="padding: 20px;">
-        <%- include("../partials/documentationLink.ejs", {
-            doclink: "https://modularsoft.org/docs/products/zander/features/bridge/"
-        }) %>
-        <br><br>
+  <div class="col-sm-2">
+    <%- include("../modules/dashboard/dashboard-sidebar.ejs") %>
+  </div>
+  <div class="col" style="padding: 20px;">
+    <%- include("../partials/documentationLink.ejs", {
+        doclink: "https://modularsoft.org/docs/products/zander/features/bridge/"
+    }) %>
 
-        <div class="basic-form">
-            <form method="post" action="<%= process.env.siteAddress %>/redirect/bridge/command/add">
-                <div class="row">
-                    <!-- Target Server -->
-                    <div class="mb-3 col">
-                        <label for="command">Command</label>
-
-                         <%- include("../partials/form/inputText.ejs", {
-                             elementName: "command",
-                             elementValue: null,
-                             required: true
-                         }) %>
-                    </div>
-
-                    <!-- Target Server -->
-                    <div class="mb-3 col">
-                        <label for="targetServer">Target Server</label>
-
-                         <%- include("../partials/form/inputText.ejs", {
-                             elementName: "targetServer",
-                             elementValue: null,
-                             required: true
-                         }) %>
-                    </div>
-                </div>
-
-                <button type="submit" class="btn btn-primary">Send to Bridge</button>
+    <div class="row g-4 mt-1">
+      <div class="col-lg-6">
+        <div class="card shadow-sm border-0 h-100">
+          <div class="card-body">
+            <h5 class="card-title">Queue a single command</h5>
+            <p class="text-muted small mb-4">
+              Send a command to a specific server slug. Optionally include metadata or a custom priority to change queue order.
+            </p>
+            <form method="post" action="<%= process.env.siteAddress %>/redirect/bridge/command/add" class="row g-3">
+              <div class="col-12">
+                <label for="command" class="form-label">Command</label>
+                <input type="text" class="form-control" id="command" name="command" placeholder="/ban Player Reason" required>
+              </div>
+              <div class="col-6">
+                <label for="slug" class="form-label">Target slug</label>
+                <input type="text" class="form-control" id="slug" name="slug" placeholder="proxy" required>
+              </div>
+              <div class="col-6">
+                <label for="priority" class="form-label">Priority</label>
+                <input type="number" class="form-control" id="priority" name="priority" value="0" step="1">
+              </div>
+              <div class="col-12">
+                <label for="metadataJSON" class="form-label">Metadata (JSON optional)</label>
+                <textarea class="form-control" id="metadataJSON" name="metadataJSON" rows="2" placeholder='{"requestedBy":"Dashboard"}'></textarea>
+              </div>
+              <div class="col-12 text-end">
+                <button type="submit" class="btn btn-primary">Queue command</button>
+              </div>
             </form>
+          </div>
         </div>
-        <br><br>
+      </div>
 
-        <% if (req.cookies.alertType) { %>
-            <%- include("../partials/alert.ejs", {
-              alertType: req.cookies.alertType,
-              content: req.cookies.alertContent
-            }) %>
-        <% } %>
-        
-        <table class="table">
-            <thead>
+      <div class="col-lg-6">
+        <div class="card shadow-sm border-0 h-100">
+          <div class="card-body">
+            <h5 class="card-title">Trigger a routine</h5>
+            <p class="text-muted small mb-4">
+              Run all steps associated with an existing routine. Each step will be queued as an executor task.
+            </p>
+            <form method="post" action="<%= process.env.siteAddress %>/redirect/bridge/routine/run" class="row g-3">
+              <div class="col-8">
+                <label for="routineSlug" class="form-label">Routine slug</label>
+                <input type="text" class="form-control" id="routineSlug" name="routineSlug" placeholder="vote-reward" required>
+              </div>
+              <div class="col-4">
+                <label for="routinePriority" class="form-label">Priority</label>
+                <input type="number" class="form-control" id="routinePriority" name="priority" value="0" step="1">
+              </div>
+              <div class="col-12">
+                <label for="routineMetadata" class="form-label">Metadata (JSON optional)</label>
+                <textarea class="form-control" id="routineMetadata" name="metadataJSON" rows="2" placeholder='{"player":"PlayerName"}'></textarea>
+              </div>
+              <div class="col-12 text-end">
+                <button type="submit" class="btn btn-secondary">Run routine</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card shadow-sm border-0 mt-4">
+      <div class="card-body">
+        <h5 class="card-title">Define or update a routine</h5>
+        <p class="text-muted small">
+          Provide a JSON array of steps. Each step requires a <code>slug</code>, <code>command</code>, and optional <code>order</code> or <code>metadata</code> field. Existing steps for the routine will be replaced.
+        </p>
+        <form method="post" action="<%= process.env.siteAddress %>/redirect/bridge/routine/save" class="row g-3">
+          <div class="col-md-4">
+            <label for="routineSlugSave" class="form-label">Routine slug</label>
+            <input type="text" class="form-control" id="routineSlugSave" name="routineSlug" placeholder="vote-reward" required>
+          </div>
+          <div class="col-md-4">
+            <label for="displayName" class="form-label">Display name</label>
+            <input type="text" class="form-control" id="displayName" name="displayName" placeholder="Vote reward flow">
+          </div>
+          <div class="col-md-4">
+            <label for="routineDescription" class="form-label">Description</label>
+            <input type="text" class="form-control" id="routineDescription" name="description" placeholder="Executed when a player votes">
+          </div>
+          <div class="col-12">
+            <label for="stepsJSON" class="form-label">Steps JSON</label>
+            <textarea class="form-control" id="stepsJSON" name="stepsJSON" rows="5" placeholder='[
+  {"slug":"proxy","command":"/broadcast Thanks {player}!"},
+  {"slug":"survival","command":"/eco give {player} 50"}
+]'></textarea>
+          </div>
+          <div class="col-12 text-end">
+            <button type="submit" class="btn btn-outline-primary">Save routine</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <div class="mt-4">
+      <% if (req.cookies.alertType) { %>
+        <%- include("../partials/alert.ejs", {
+          alertType: req.cookies.alertType,
+          content: req.cookies.alertContent
+        }) %>
+      <% } %>
+
+      <% if (pendingTasks && pendingTasks.success === false) { %>
+        <%- include("../partials/alert.ejs", {
+          alertType: "danger",
+          content: pendingTasks.message
+        }) %>
+      <% } %>
+
+      <% if (processingTasks && processingTasks.success === false) { %>
+        <%- include("../partials/alert.ejs", {
+          alertType: "danger",
+          content: processingTasks.message
+        }) %>
+      <% } %>
+
+      <div class="card shadow-sm border-0 mb-4">
+        <div class="card-body">
+          <div class="d-flex justify-content-between align-items-center mb-3">
+            <h5 class="card-title mb-0">Pending tasks</h5>
+            <span class="badge bg-primary rounded-pill"><%= pendingList.length %></span>
+          </div>
+          <div class="table-responsive">
+            <table class="table align-middle">
+              <thead>
                 <tr>
-                    <th>Bridge ID</th>
-                    <th>Command</th>
-                    <th>Target Server</th>
-                    <th>Processed</th>
-                    <th>Created</th>
+                  <th scope="col">ID</th>
+                  <th scope="col">Slug</th>
+                  <th scope="col">Command</th>
+                  <th scope="col">Priority</th>
+                  <th scope="col">Routine</th>
+                  <th scope="col">Created</th>
+                  <th scope="col"></th>
                 </tr>
-            </thead>
-            <tbody>
-                <% if (apiData.success == false) { %>
-                    <%- include("../partials/alert.ejs", {
-                      alertType: "danger",
-                      content: apiData.message
-                    }) %>
+              </thead>
+              <tbody>
+                <% if (!pendingList.length) { %>
+                  <tr>
+                    <td colspan="7" class="text-center text-muted">No pending tasks</td>
+                  </tr>
                 <% } else { %>
-                    <% apiData.data.forEach(function (bridge) { %>
-                        <tr>
-                            <td><%= bridge.bridgeId %></td>
-                            <td><code><%= bridge.command %></code></td>
-                            <td><%= bridge.targetServer %></td>
-                            <td><%= bridge.processed %></td>
-                            <td><%= moment(bridge.bridgeDateTime).startOf('hour').fromNow() %></td>
-                        </tr>
-                    <% }) %>
+                  <% pendingList.forEach(function(task) { %>
+                    <tr>
+                      <td><code>#<%= task.executorTaskId %></code></td>
+                      <td><%= task.slug %></td>
+                      <td><code><%= task.command %></code></td>
+                      <td><%= task.priority %></td>
+                      <td><%= task.routineSlug ? task.routineSlug : "-" %></td>
+                      <td><%= moment(task.createdAt).fromNow() %></td>
+                      <td class="text-end">
+                        <form method="post" action="<%= process.env.siteAddress %>/redirect/bridge/task/reset" class="d-inline">
+                          <input type="hidden" name="taskId" value="<%= task.executorTaskId %>">
+                          <button type="submit" class="btn btn-sm btn-outline-secondary">Reset</button>
+                        </form>
+                      </td>
+                    </tr>
+                  <% }) %>
                 <% } %>
-            </tbody>
-        </table>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <div class="card shadow-sm border-0 mb-4">
+        <div class="card-body">
+          <div class="d-flex justify-content-between align-items-center mb-3">
+            <h5 class="card-title mb-0">Processing tasks</h5>
+            <span class="badge bg-warning rounded-pill"><%= processingList.length %></span>
+          </div>
+          <div class="table-responsive">
+            <table class="table align-middle">
+              <thead>
+                <tr>
+                  <th scope="col">ID</th>
+                  <th scope="col">Slug</th>
+                  <th scope="col">Command</th>
+                  <th scope="col">Status</th>
+                  <th scope="col">Updated</th>
+                  <th scope="col">Executed by</th>
+                </tr>
+              </thead>
+              <tbody>
+                <% if (!processingList.length) { %>
+                  <tr>
+                    <td colspan="6" class="text-center text-muted">No processing tasks</td>
+                  </tr>
+                <% } else { %>
+                  <% processingList.forEach(function(task) { %>
+                    <tr>
+                      <td><code>#<%= task.executorTaskId %></code></td>
+                      <td><%= task.slug %></td>
+                      <td><code><%= task.command %></code></td>
+                      <td><span class="badge bg-warning text-dark"><%= task.status %></span></td>
+                      <td><%= moment(task.updatedAt).fromNow() %></td>
+                      <td><%= task.executedBy ? task.executedBy : "-" %></td>
+                    </tr>
+                  <% }) %>
+                <% } %>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <div class="card shadow-sm border-0">
+        <div class="card-body">
+          <div class="d-flex justify-content-between align-items-center mb-3">
+            <h5 class="card-title mb-0">Configured routines</h5>
+            <span class="badge bg-info text-dark rounded-pill"><%= routinesList.length %></span>
+          </div>
+          <div class="table-responsive">
+            <table class="table align-middle">
+              <thead>
+                <tr>
+                  <th scope="col">Routine</th>
+                  <th scope="col">Display name</th>
+                  <th scope="col">Description</th>
+                  <th scope="col">Steps</th>
+                  <th scope="col">Updated</th>
+                </tr>
+              </thead>
+              <tbody>
+                <% if (!routinesList.length) { %>
+                  <tr>
+                    <td colspan="5" class="text-center text-muted">No routines configured yet</td>
+                  </tr>
+                <% } else { %>
+                  <% routinesList.forEach(function(routine) { %>
+                    <tr>
+                      <td><code><%= routine.routineSlug %></code></td>
+                      <td><%= routine.displayName || '-' %></td>
+                      <td><%= routine.description || '-' %></td>
+                      <td>
+                        <ul class="list-unstyled mb-0 small">
+                          <% routine.steps.forEach(function(step) { %>
+                            <li>
+                              <span class="badge bg-light text-dark">#<%= step.order %></span>
+                              <strong><%= step.slug %></strong> &mdash; <code><%= step.command %></code>
+                            </li>
+                          <% }) %>
+                        </ul>
+                      </td>
+                      <td><%= moment(routine.updatedAt || routine.createdAt).fromNow() %></td>
+                    </tr>
+                  <% }) %>
+                <% } %>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
+</div>
 
 <%- include("../modules/footer.ejs") %>

@@ -1,23 +1,98 @@
-import { hasPermission, postAPIRequest } from "../common.js";
+import { hasPermission, postAPIRequest, setBannerCookie } from "../common.js";
 
 export default function bridgeRedirectRoute(app, config, lang) {
   const baseEndpoint = "/redirect/bridge";
 
-  app.post(baseEndpoint + "/command/add", async function (req, res) {
-    if (!hasPermission("zander.web.bridge", req, res)) return;
+  function parseJsonPayload(source, fieldName, res) {
+    if (!source[fieldName]) return null;
 
-    // Add userId to req.body
-    req.body.actioningUser = req.session.user.userId;
+    try {
+      const parsed = JSON.parse(source[fieldName]);
+      delete source[fieldName];
+      return parsed;
+    } catch (error) {
+      setBannerCookie(
+        "warning",
+        `We could not parse the ${fieldName.replace("JSON", "").trim()} JSON payload.`,
+        res
+      );
+      return null;
+    }
+  }
 
-    postAPIRequest(
-      `${process.env.siteAddress}/api/bridge/command/add`,
+  async function forwardRequest(apiPath, req, res) {
+    await postAPIRequest(
+      `${process.env.siteAddress}${apiPath}`,
       req.body,
       `${process.env.siteAddress}/dashboard/bridge`,
       res
     );
 
     res.redirect(`${process.env.siteAddress}/dashboard/bridge`);
+  }
 
-    return res;
+  app.post(`${baseEndpoint}/command/add`, async function (req, res) {
+    if (!hasPermission("zander.web.bridge", req, res)) return;
+
+    req.body.actioningUser = req.session.user.userId;
+
+    const tasksPayload = parseJsonPayload(req.body, "tasksJSON", res);
+    const metadataPayload = parseJsonPayload(req.body, "metadataJSON", res);
+
+    if (tasksPayload) {
+      req.body.tasks = tasksPayload;
+    }
+
+    if (metadataPayload) {
+      req.body.metadata = metadataPayload;
+    }
+
+    return forwardRequest(
+      "/api/bridge/processor/command/add",
+      req,
+      res
+    );
+  });
+
+  app.post(`${baseEndpoint}/routine/run`, async function (req, res) {
+    if (!hasPermission("zander.web.bridge", req, res)) return;
+
+    req.body.actioningUser = req.session.user.userId;
+
+    const metadataPayload = parseJsonPayload(req.body, "metadataJSON", res);
+    if (metadataPayload) {
+      req.body.metadata = metadataPayload;
+    }
+
+    return forwardRequest(
+      "/api/bridge/processor/command/add",
+      req,
+      res
+    );
+  });
+
+  app.post(`${baseEndpoint}/routine/save`, async function (req, res) {
+    if (!hasPermission("zander.web.bridge", req, res)) return;
+
+    req.body.actioningUser = req.session.user.userId;
+
+    const stepsPayload = parseJsonPayload(req.body, "stepsJSON", res);
+    if (stepsPayload) {
+      req.body.steps = stepsPayload;
+    }
+
+    return forwardRequest("/api/bridge/routine/save", req, res);
+  });
+
+  app.post(`${baseEndpoint}/task/reset`, async function (req, res) {
+    if (!hasPermission("zander.web.bridge", req, res)) return;
+
+    req.body.actioningUser = req.session.user.userId;
+
+    return forwardRequest(
+      `/api/bridge/processor/task/${req.body.taskId}/reset`,
+      req,
+      res
+    );
   });
 }

@@ -394,12 +394,53 @@ CREATE TABLE vault (
 );
 
 CREATE TABLE bridge (
-	bridgeId INT NOT NULL AUTO_INCREMENT,
+        bridgeId INT NOT NULL AUTO_INCREMENT,
     command TEXT,
     targetServer VARCHAR(30),
     processed BOOLEAN DEFAULT 0,
     bridgeDateTime DATETIME NOT NULL DEFAULT NOW(),
     PRIMARY KEY (bridgeId)
+);
+
+CREATE TABLE executorTasks (
+        executorTaskId INT NOT NULL AUTO_INCREMENT,
+    slug VARCHAR(64) NOT NULL,
+    command TEXT NOT NULL,
+    status VARCHAR(16) NOT NULL DEFAULT 'pending',
+    routineSlug VARCHAR(64) DEFAULT NULL,
+    metadata TEXT DEFAULT NULL,
+    result TEXT DEFAULT NULL,
+    priority INT DEFAULT 0,
+    executedBy VARCHAR(64) DEFAULT NULL,
+    createdAt DATETIME NOT NULL DEFAULT NOW(),
+    updatedAt DATETIME NOT NULL DEFAULT NOW() ON UPDATE NOW(),
+    processedAt DATETIME DEFAULT NULL,
+    PRIMARY KEY (executorTaskId),
+    KEY idx_executorTasks_status_slug (status, slug),
+    KEY idx_executorTasks_routineSlug (routineSlug)
+);
+
+CREATE TABLE executorRoutines (
+        executorRoutineId INT NOT NULL AUTO_INCREMENT,
+    routineSlug VARCHAR(64) NOT NULL,
+    displayName VARCHAR(120) DEFAULT NULL,
+    description TEXT DEFAULT NULL,
+    createdAt DATETIME NOT NULL DEFAULT NOW(),
+    updatedAt DATETIME NOT NULL DEFAULT NOW() ON UPDATE NOW(),
+    PRIMARY KEY (executorRoutineId),
+    UNIQUE KEY uq_executorRoutines_routineSlug (routineSlug)
+);
+
+CREATE TABLE executorRoutineSteps (
+        executorRoutineStepId INT NOT NULL AUTO_INCREMENT,
+    executorRoutineId INT NOT NULL,
+    stepOrder INT NOT NULL DEFAULT 0,
+    slug VARCHAR(64) NOT NULL,
+    command TEXT NOT NULL,
+    metadata TEXT DEFAULT NULL,
+    createdAt DATETIME NOT NULL DEFAULT NOW(),
+    PRIMARY KEY (executorRoutineStepId),
+    KEY idx_executorRoutineSteps_routine (executorRoutineId, stepOrder)
 );
 
 CREATE TABLE logs (

@@ -5,15 +5,30 @@ import db from "../controllers/databaseController.js";
 var bridgeCleanupTask = cron.schedule("5 0 * * *", () => {
   try {
     db.query(
-      `DELETE FROM bridge WHERE bridgeDatetime <= NOW() - INTERVAL 3 DAY;`,
-      function (error, results, fields) {
+      `DELETE FROM executorTasks WHERE status IN ('completed', 'failed') AND updatedAt <= NOW() - INTERVAL 7 DAY;`,
+      function (error, results) {
         if (error) {
-          return console.log(`Error: ${error}`);
+          return console.log(`Bridge cleanup error: ${error}`);
         }
 
         console.log(
-          `Bridge cleanup complete. Rows affected: ${results.affectedRows}`
+          `Bridge cleanup removed ${results.affectedRows} completed tasks.`
         );
+      }
+    );
+
+    db.query(
+      `UPDATE executorTasks SET status = 'pending', executedBy = NULL, result = NULL, processedAt = NULL, updatedAt = NOW() WHERE status = 'processing' AND updatedAt <= NOW() - INTERVAL 1 HOUR;`,
+      function (error, results) {
+        if (error) {
+          return console.log(`Bridge reset error: ${error}`);
+        }
+
+        if (results.affectedRows > 0) {
+          console.log(
+            `Bridge reset ${results.affectedRows} stale processing task(s).`
+          );
+        }
       }
     );
   } catch (error) {

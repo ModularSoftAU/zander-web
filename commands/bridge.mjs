@@ -22,12 +22,12 @@ export class BridgeCommand extends Command {
         .addSubcommand((subcommand) =>
           subcommand
             .setName("status")
-            .setDescription("View the current bridge status.")
+            .setDescription("View the current bridge executor queue.")
         )
         .addSubcommand((subcommand) =>
           subcommand
             .setName("add")
-            .setDescription("Add a command to the bridge and targeted server.")
+            .setDescription("Queue a command for a specific server slug.")
             .addStringOption((option) =>
               option
                 .setName("command")
@@ -37,7 +37,7 @@ export class BridgeCommand extends Command {
             .addStringOption((option) =>
               option
                 .setName("targetedserver")
-                .setDescription("The targeted server to send to.")
+                .setDescription("The slug of the server to target (e.g. proxy, survival).")
                 .setRequired(true)
             )
         )
@@ -88,26 +88,37 @@ export class BridgeCommand extends Command {
 
     if (subcommand === "status") {
       try {
-        const fetchURL = `${process.env.siteAddress}/api/bridge/get`;
-        const response = await fetch(fetchURL, {
-          headers: { "x-access-token": process.env.apiKey },
-        });
-        const apiData = await response.json();
+        const [pendingResponse, processingResponse] = await Promise.all([
+          fetch(`${process.env.siteAddress}/api/bridge/processor/get?status=pending&limit=50`, {
+            headers: { "x-access-token": process.env.apiKey },
+          }),
+          fetch(`${process.env.siteAddress}/api/bridge/processor/get?status=processing&limit=50`, {
+            headers: { "x-access-token": process.env.apiKey },
+          }),
+        ]);
 
-        if (!apiData.success) {
+        const [pendingData, processingData] = await Promise.all([
+          pendingResponse.json(),
+          processingResponse.json(),
+        ]);
+
+        if (!pendingData.success || !processingData.success) {
           const errorEmbed = new EmbedBuilder()
             .setTitle("Bridge Status Error")
-            .setDescription("There was an error fetching the bridge status.")
+            .setDescription("There was an error fetching the bridge status queue.")
             .setColor(Colors.Red);
 
           return interaction.reply({ embeds: [errorEmbed], ephemeral: true });
         }
 
-        if (!apiData.data || apiData.data.length === 0) {
-          // No bridge commands found
+        const pendingTasks = pendingData.data || [];
+        const processingTasks = processingData.data || [];
+        const combined = [...pendingTasks, ...processingTasks];
+
+        if (!combined.length) {
           const noBridgesEmbed = new EmbedBuilder()
             .setTitle("Bridge Status")
-            .setDescription("There are currently no bridge commands available.")
+            .setDescription("There are currently no executor tasks queued.")
             .setColor(Colors.Blurple);
 
           return interaction.reply({
@@ -118,28 +129,34 @@ export class BridgeCommand extends Command {
 
         const statusEmbed = new EmbedBuilder()
           .setTitle("Bridge Status")
+          .setDescription(
+            `Pending: **${pendingTasks.length}** | Processing: **${processingTasks.length}**`
+          )
           .setColor(Colors.Blurple);
 
-        // Loop through the bridges and add each one to the embed
-        apiData.data.forEach((bridge) => {
-          const bridgeInfo = `**Command**: ${`\`${bridge.command}\``}\n**Target Server**: ${
-            bridge.targetServer
-          }\n**Processed**: ${
-            bridge.processed === 0 ? "No" : "Yes"
-          }\n**Date**: ${new Date(bridge.bridgeDateTime).toLocaleString()}`;
-
+        combined.slice(0, 10).forEach((task) => {
           statusEmbed.addFields({
-            name: `Bridge ID: ${bridge.bridgeId}`,
-            value: bridgeInfo,
+            name: `Task #${task.executorTaskId} (${task.slug})`,
+            value: `Command: \`${task.command}\`\nStatus: **${task.status}**\nQueued: ${new Date(
+              task.createdAt
+            ).toLocaleString()}${
+              task.routineSlug ? `\nRoutine: ${task.routineSlug}` : ""
+            }`,
             inline: false,
           });
         });
 
-        return interaction.reply({ embeds: [statusEmbed] });
+        if (combined.length > 10) {
+          statusEmbed.setFooter({
+            text: `Showing 10 of ${combined.length} queued tasks`,
+          });
+        }
+
+        return interaction.reply({ embeds: [statusEmbed], ephemeral: true });
       } catch (error) {
         const errorEmbed = new EmbedBuilder()
           .setTitle("Bridge Status Error")
-          .setDescription("There was an error fetching the bridge status.")
+          .setDescription("There was an error fetching the bridge status queue.")
           .setColor(Colors.Red);
 
         return interaction.reply({ embeds: [errorEmbed], ephemeral: true });
@@ -151,17 +168,20 @@ export class BridgeCommand extends Command {
       const targetedServer = interaction.options.getString("targetedserver");
 
       try {
-        const response = await fetch(`${process.env.siteAddress}/api/bridge/command/add`, {
-          method: "POST",
-          headers: {
-            "x-access-token": process.env.apiKey,
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            command: command,
-            targetServer: targetedServer,
-          }),
-        });
+        const response = await fetch(
+          `${process.env.siteAddress}/api/bridge/processor/command/add`,
+          {
+            method: "POST",
+            headers: {
+              "x-access-token": process.env.apiKey,
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              command: command,
+              slug: targetedServer,
+            }),
+          }
+        );
 
         const apiData = await response.json();
 
@@ -177,14 +197,14 @@ export class BridgeCommand extends Command {
         const successEmbed = new EmbedBuilder()
           .setTitle("Bridge Command Added")
           .setDescription(
-            `New bridge command added for server: \`${targetedServer}\` with command: \`${command}\`.`
+            `Queued command for \`${targetedServer}\`: \`${command}\``
           )
           .setColor(Colors.Green);
 
-        return interaction.reply({ embeds: [successEmbed] });
+        return interaction.reply({ embeds: [successEmbed], ephemeral: true });
       } catch (error) {
         console.log(error);
-        
+
         const errorEmbed = new EmbedBuilder()
           .setTitle("Bridge Add Error")
           .setDescription("There was an error adding the bridge.")
@@ -244,10 +264,14 @@ export class BridgeCommand extends Command {
             // User confirmed, clear the bridge
             try {
               const response = await fetch(
-                `${process.env.siteAddress}/api/bridge/clear`,
+                `${process.env.siteAddress}/api/bridge/processor/clear`,
                 {
                   method: "POST",
-                  headers: { "x-access-token": process.env.apiKey },
+                  headers: {
+                    "x-access-token": process.env.apiKey,
+                    "Content-Type": "application/json",
+                  },
+                  body: JSON.stringify({}),
                 }
               );
 
@@ -268,7 +292,7 @@ export class BridgeCommand extends Command {
 
               const successEmbed = new EmbedBuilder()
                 .setTitle("Bridge Cleared")
-                .setDescription("The bridge has been cleared.")
+                .setDescription(apiData.message || "The executor queue has been cleared.")
                 .setColor(Colors.Green);
 
               return i.update({
