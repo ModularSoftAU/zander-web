@@ -64,7 +64,7 @@ export async function updateAudit_lastDiscordMessage(auditDateTime, discordId) {
       }
     );
 
-    console.log(`Discord account for this user is not linked, chat audit ignored.`);
+    console.warn(`Discord account for this user is not linked, chat audit ignored.`);
   }
 }
 
@@ -83,6 +83,6 @@ export async function updateAudit_lastDiscordVoice(auditDateTime, discordId) {
       }
     );
 
-    console.log(`Discord account for this user is not linked, chat audit ignored.`);    
+    console.warn(`Discord account for this user is not linked, chat audit ignored.`);
   }
 }

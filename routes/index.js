@@ -153,9 +153,6 @@ export default function applicationSiteRoutes(
     });
     const shopApiData = await shopResponse.json();
 
-    console.log(shopApiData.data[0].userData);
-    
-
     return res.view("shopdirectory", {
       pageTitle: `Shop Directory`,
       config: config,

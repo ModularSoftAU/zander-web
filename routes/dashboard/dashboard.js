@@ -89,8 +89,6 @@ export default function dashboardSiteRoute(app, config, features, lang) {
     });
     const apiData = await response.json();
 
-    console.log(apiData);
-
     res.view("dashboard/bridge", {
       pageTitle: `Dashboard - Bridge`,
       config: config,

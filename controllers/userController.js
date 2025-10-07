@@ -22,6 +22,55 @@ export function UserGetter() {
     });
   };
 
+  this.byEmail = function (email) {
+    return new Promise((resolve, reject) => {
+      db.query(
+        `SELECT * FROM users WHERE LOWER(email)=LOWER(?);`,
+        [email],
+        function (error, results) {
+          if (error) {
+            reject(error);
+          }
+
+          if (!results || !results.length) {
+            resolve(null);
+          } else {
+            resolve(results[0]);
+          }
+        }
+      );
+    });
+  };
+
+  this.byUserId = function (userId) {
+    return new Promise((resolve, reject) => {
+      db.query(
+        `SELECT * FROM users WHERE userId=?;`,
+        [userId],
+        function (error, results) {
+          if (error) {
+            reject(error);
+          }
+
+          if (!results || !results.length) {
+            resolve(null);
+          } else {
+            resolve(results[0]);
+          }
+        }
+      );
+    });
+  };
+
+  this.byUsernameOrEmail = async function (identifier) {
+    const byUsername = await this.byUsername(identifier);
+    if (byUsername) {
+      return byUsername;
+    }
+
+    return await this.byEmail(identifier);
+  };
+
   this.byUUID = function (uuid) {
     return new Promise((resolve, reject) => {
       db.query(
@@ -61,24 +110,60 @@ export function UserGetter() {
     });
   };
 
-  this.hasJoined = function (username) {
-    return new Promise((resolve, reject) => {
-      db.query(
-        `select * from users where username=?;`,
-        [username],
-        function (error, results, fields) {
+  this.hasJoined = async function (username, uuid = null) {
+    const trimmedUsername = username ? username.trim() : null;
+    const trimmedUuid = uuid ? uuid.trim() : null;
+
+    const runQuery = (sql, params) =>
+      new Promise((resolve, reject) => {
+        db.query(sql, params, (error, results) => {
           if (error) {
-            reject(error);
+            return reject(error);
           }
 
-          if (!results || !results.length) {
-            resolve(false);
-          }
+          resolve(results || []);
+        });
+      });
 
-          resolve(true);
-        }
+    if (trimmedUsername) {
+      const usernameMatch = await runQuery(
+        `SELECT 1 FROM users WHERE LOWER(username) = LOWER(?) LIMIT 1`,
+        [trimmedUsername]
       );
-    });
+
+      if (usernameMatch.length) {
+        return true;
+      }
+    }
+
+    if (trimmedUuid) {
+      const uuidMatch = await runQuery(
+        `SELECT 1 FROM users WHERE uuid = ? LIMIT 1`,
+        [trimmedUuid]
+      );
+
+      if (uuidMatch.length) {
+        return true;
+      }
+    }
+
+    if (!trimmedUsername) {
+      return false;
+    }
+
+    const luckPermsParams = [trimmedUsername];
+    let luckPermsQuery =
+      `SELECT 1 FROM luckPermsPlayers WHERE LOWER(username) = LOWER(?) LIMIT 1`;
+
+    if (trimmedUuid) {
+      luckPermsQuery =
+        `SELECT 1 FROM luckPermsPlayers WHERE LOWER(username) = LOWER(?) OR uuid = UNHEX(REPLACE(?, '-', '')) LIMIT 1`;
+      luckPermsParams.push(trimmedUuid);
+    }
+
+    const luckPermsMatch = await runQuery(luckPermsQuery, luckPermsParams);
+
+    return luckPermsMatch.length > 0;
   };
 
   this.isRegistered = function (discordId) {
@@ -111,7 +196,7 @@ export function UserLinkGetter() {
   this.getUserByCode = function (code) {
     return new Promise((resolve, reject) => {
       db.query(
-        `SELECT u.* FROM users u JOIN userVerifyLink uv ON u.uuid = uv.uuid WHERE uv.linkCode = ?;`,
+        `SELECT u.*, uv.verifyId FROM users u JOIN userVerifyLink uv ON u.uuid = uv.uuid WHERE uv.linkCode = ? AND uv.codeExpiry > NOW();`,
         [code],
         function (error, results, fields) {
           if (error) {
@@ -138,11 +223,137 @@ export function UserLinkGetter() {
             reject(error);
           }
 
-          resolve(true);
+          db.query(
+            `DELETE FROM userVerifyLink WHERE uuid=?`,
+            [uuid],
+            function (deleteError) {
+              if (deleteError) {
+                return reject(deleteError);
+              }
+
+              resolve(true);
+            }
+          );
         }
       );
     });
   };
+
+  this.markWebsiteRegistrationComplete = function (uuid) {
+    return new Promise((resolve, reject) => {
+      db.query(
+        `UPDATE users SET account_registered=? WHERE uuid=?`,
+        [new Date(), uuid],
+        function (error) {
+          if (error) {
+            return reject(error);
+          }
+
+          db.query(
+            `DELETE FROM userVerifyLink WHERE uuid=?`,
+            [uuid],
+            function (deleteError) {
+              if (deleteError) {
+                return reject(deleteError);
+              }
+
+              resolve(true);
+            }
+          );
+        }
+      );
+    });
+  };
+}
+
+export function createLocalUser({ uuid, username, email, passwordHash }) {
+  return new Promise((resolve, reject) => {
+    db.query(
+      `INSERT INTO users (uuid, username, email, password_hash) VALUES (?, ?, ?, ?)`,
+      [uuid, username, email, passwordHash],
+      function (error, results) {
+        if (error) {
+          return reject(error);
+        }
+
+        resolve({ userId: results.insertId });
+      }
+    );
+  });
+}
+
+export function updateLocalUserCredentials(
+  userId,
+  { email, passwordHash, username }
+) {
+  return new Promise((resolve, reject) => {
+    const updates = [];
+    const params = [];
+
+    if (typeof email !== "undefined") {
+      updates.push(`email = ?`);
+      params.push(email);
+    }
+
+    if (typeof passwordHash !== "undefined") {
+      updates.push(`password_hash = ?`);
+      params.push(passwordHash);
+    }
+
+    if (typeof username !== "undefined") {
+      updates.push(`username = ?`);
+      params.push(username);
+    }
+
+    updates.push(`email_verified = 0`);
+    updates.push(`email_verified_at = NULL`);
+
+    params.push(userId);
+
+    db.query(
+      `UPDATE users SET ${updates.join(", ")} WHERE userId = ?`,
+      params,
+      function (error) {
+        if (error) {
+          return reject(error);
+        }
+
+        resolve(true);
+      }
+    );
+  });
+}
+
+export function markEmailVerified(userId) {
+  return new Promise((resolve, reject) => {
+    db.query(
+      `UPDATE users SET email_verified = 1, email_verified_at = NOW() WHERE userId = ?`,
+      [userId],
+      function (error) {
+        if (error) {
+          return reject(error);
+        }
+
+        resolve(true);
+      }
+    );
+  });
+}
+
+export function markAccountRegistered(userId) {
+  return new Promise((resolve, reject) => {
+    db.query(
+      `UPDATE users SET account_registered = NOW() WHERE userId = ?`,
+      [userId],
+      function (error) {
+        if (error) {
+          return reject(error);
+        }
+
+        resolve(true);
+      }
+    );
+  });
 }
 
 export async function getProfilePicture(username) {
@@ -182,7 +393,7 @@ export async function setProfileDisplayPreferences(
     [profilePicture_type, profilePicture_email, userId],
     function (error, results, fields) {
       if (error) {
-        console.log(error);
+        console.error("Failed to update profile display preferences", error);
       }
     }
   );
@@ -197,7 +408,7 @@ export async function setProfileUserInterests(
     [social_interests, userId],
     function (error, results, fields) {
       if (error) {
-        console.log(error);
+        console.error("Failed to update profile interests", error);
       }
     }
   );
@@ -229,7 +440,7 @@ export async function setProfileSocialConnections(
     ],
     function (error, results, fields) {
       if (error) {
-        console.log(error);
+        console.error("Failed to update social connections", error);
       }
     }
   );
@@ -244,10 +455,26 @@ export async function setProfileUserAboutMe(
     [social_aboutMe, userId],
     function (error, results, fields) {
       if (error) {
-        console.log(error);
+        console.error("Failed to update profile bio", error);
       }
     }
   );
+}
+
+export function updateUserPassword(userId, passwordHash) {
+  return new Promise((resolve, reject) => {
+    db.query(
+      `UPDATE users SET password_hash = ? WHERE userId = ?`,
+      [passwordHash, userId],
+      function (error) {
+        if (error) {
+          return reject(error);
+        }
+
+        resolve(true);
+      }
+    );
+  });
 }
 
 export async function getUserPermissions(userData) {
@@ -295,6 +522,7 @@ export async function getUserPermissions(userData) {
             })
           );
 
+          userPermissions.userRanks = userRanks.map((rank) => rank.rankSlug);
           resolve(userPermissions);
         } catch (err) {
           reject(err);

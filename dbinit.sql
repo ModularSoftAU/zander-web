@@ -3,15 +3,19 @@ CREATE DATABASE IF NOT EXISTS zanderdev;
 USE zanderdev;
 
 CREATE TABLE users (
-	userId INT NOT NULL AUTO_INCREMENT,
-	uuid VARCHAR(36) NOT NULL UNIQUE,
-	username VARCHAR(16) NOT NULL,
+        userId INT NOT NULL AUTO_INCREMENT,
+        uuid VARCHAR(36) NOT NULL UNIQUE,
+        username VARCHAR(16) NOT NULL,
     discordId VARCHAR(18),
-	joined DATETIME NOT NULL DEFAULT NOW(),
+    email VARCHAR(254) UNIQUE,
+    password_hash VARCHAR(255),
+    email_verified BOOLEAN DEFAULT 0,
+    email_verified_at DATETIME,
+        joined DATETIME NOT NULL DEFAULT NOW(),
     profilePicture_type ENUM('CRAFTATAR', 'GRAVATAR') DEFAULT 'CRAFTATAR',
     profilePicture_email VARCHAR(70),
     account_registered DATETIME,
-	account_disabled BOOLEAN DEFAULT 0,
+        account_disabled BOOLEAN DEFAULT 0,
     social_aboutMe MEDIUMTEXT,
     social_interests VARCHAR(50),
     social_discord VARCHAR(32),
@@ -29,12 +33,38 @@ CREATE TABLE users (
 	audit_lastMinecraftPunishment DATETIME,
 	audit_lastDiscordPunishment DATETIME,
 	audit_lastWebsiteLogin DATETIME,
-	PRIMARY KEY (userId),
-	INDEX users (uuid(8))
+        PRIMARY KEY (userId),
+        INDEX users (uuid(8))
+);
+
+CREATE TABLE userEmailVerifications (
+        verificationId INT NOT NULL AUTO_INCREMENT,
+    userId INT NOT NULL,
+    codeHash VARCHAR(255) NOT NULL,
+    expiresAt DATETIME NOT NULL,
+    consumed BOOLEAN DEFAULT 0,
+    createdAt DATETIME DEFAULT NOW(),
+    consumedAt DATETIME,
+    PRIMARY KEY (verificationId),
+    INDEX userEmailVerifications_userId (userId),
+    CONSTRAINT fk_userEmailVerifications_users FOREIGN KEY (userId) REFERENCES users(userId) ON DELETE CASCADE
+);
+
+CREATE TABLE userPasswordResets (
+        resetId INT NOT NULL AUTO_INCREMENT,
+    userId INT NOT NULL,
+    codeHash VARCHAR(255) NOT NULL,
+    expiresAt DATETIME NOT NULL,
+    consumed BOOLEAN DEFAULT 0,
+    createdAt DATETIME DEFAULT NOW(),
+    consumedAt DATETIME,
+    PRIMARY KEY (resetId),
+    INDEX userPasswordResets_userId (userId),
+    CONSTRAINT fk_userPasswordResets_users FOREIGN KEY (userId) REFERENCES users(userId) ON DELETE CASCADE
 );
 
 CREATE TABLE userVerifyLink (
-	verifyId INT NOT NULL AUTO_INCREMENT,
+        verifyId INT NOT NULL AUTO_INCREMENT,
     uuid VARCHAR(36) NOT NULL UNIQUE,
     username TEXT NOT NULL,
     linkCode VARCHAR(6),
