@@ -34,7 +34,7 @@ export default function dashboardApplicationsSiteRoute(
       apiData: apiData,
       features: features,
       req: req,
-      globalImage: getGlobalImage(),
+      globalImage: await getGlobalImage(),
       announcementWeb: await getWebAnnouncement(),
     });
   });
@@ -51,7 +51,7 @@ export default function dashboardApplicationsSiteRoute(
       type: "create",
       features: features,
       req: req,
-      globalImage: getGlobalImage(),
+      globalImage: await getGlobalImage(),
       announcementWeb: await getWebAnnouncement(),
     });
   });
@@ -76,7 +76,7 @@ export default function dashboardApplicationsSiteRoute(
       type: "edit",
       features: features,
       req: req,
-      globalImage: getGlobalImage(),
+      globalImage: await getGlobalImage(),
       announcementWeb: await getWebAnnouncement(),
     });
   });

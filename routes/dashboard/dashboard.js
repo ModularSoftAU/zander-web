@@ -69,7 +69,7 @@ export default function dashboardSiteRoute(app, config, features, lang) {
       apiData: apiData,
       features: features,
       req: req,
-      globalImage: getGlobalImage(),
+      globalImage: await getGlobalImage(),
       moment: moment,
       announcementWeb: await getWebAnnouncement(),
     });
@@ -109,7 +109,7 @@ export default function dashboardSiteRoute(app, config, features, lang) {
       routines: routines,
       features: features,
       req: req,
-      globalImage: getGlobalImage(),
+      globalImage: await getGlobalImage(),
       moment: moment,
       announcementWeb: await getWebAnnouncement(),
     });

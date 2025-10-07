@@ -25,391 +25,802 @@
         doclink: "https://modularsoft.org/docs/products/zander/features/bridge/"
     }) %>
 
-    <div class="row g-4 mt-1">
-      <div class="col-xl-4 col-lg-6">
-        <div class="card shadow-sm border-0 h-100">
-          <div class="card-body">
-            <h5 class="card-title">Queue a single command</h5>
-            <p class="text-muted small mb-4">
-              Send a command to a specific server slug. Optionally include metadata or a custom priority to change queue order.
-            </p>
-            <form method="post" action="<%= process.env.siteAddress %>/redirect/bridge/command/add" class="row g-3">
-              <div class="col-12">
-                <label for="command" class="form-label">Command</label>
-                <input type="text" class="form-control" id="command" name="command" placeholder="/ban Player Reason" required>
-              </div>
-              <div class="col-6">
-                <label for="slug" class="form-label">Target slug</label>
-                <input type="text" class="form-control" id="slug" name="slug" placeholder="proxy" required>
-              </div>
-              <div class="col-6">
-                <label for="priority" class="form-label">Priority</label>
-                <input type="number" class="form-control" id="priority" name="priority" value="0" step="1">
-              </div>
-              <div class="col-12">
-                <label for="metadataJSON" class="form-label">Metadata (JSON optional)</label>
-                <textarea class="form-control" id="metadataJSON" name="metadataJSON" rows="2" placeholder='{"requestedBy":"Dashboard"}'></textarea>
-              </div>
-              <div class="col-12 text-end">
-                <button type="submit" class="btn btn-primary">Queue command</button>
-              </div>
-            </form>
-          </div>
-        </div>
-      </div>
-
-      <div class="col-xl-4 col-lg-6">
-        <div class="card shadow-sm border-0 h-100">
-          <div class="card-body">
-            <h5 class="card-title">Trigger a routine</h5>
-            <p class="text-muted small mb-4">
-              Run all steps associated with an existing routine. Each step will be queued as an executor task.
-            </p>
-            <form method="post" action="<%= process.env.siteAddress %>/redirect/bridge/routine/run" class="row g-3">
-              <div class="col-8">
-                <label for="routineSlug" class="form-label">Routine slug</label>
-                <input type="text" class="form-control" id="routineSlug" name="routineSlug" placeholder="vote-reward" required>
-              </div>
-              <div class="col-4">
-                <label for="routinePriority" class="form-label">Priority</label>
-                <input type="number" class="form-control" id="routinePriority" name="priority" value="0" step="1">
-              </div>
-              <div class="col-12">
-                <label for="routineMetadata" class="form-label">Metadata (JSON optional)</label>
-                <textarea class="form-control" id="routineMetadata" name="metadataJSON" rows="2" placeholder='{"player":"PlayerName"}'></textarea>
-              </div>
-              <div class="col-12 text-end">
-                <button type="submit" class="btn btn-secondary">Run routine</button>
-              </div>
-            </form>
-          </div>
-        </div>
-      </div>
-
-      <div class="col-xl-4">
-        <div class="card shadow-sm border-0 h-100">
-          <div class="card-body">
-            <h5 class="card-title">Queue multiple commands</h5>
-            <p class="text-muted small mb-4">
-              Paste an array of tasks to queue several commands at once. Each task can target a different server and define its own priority.
-            </p>
-            <form method="post" action="<%= process.env.siteAddress %>/redirect/bridge/command/add" class="row g-3">
-              <div class="col-12">
-                <label for="bulkSlug" class="form-label">Default target slug (optional)</label>
-                <input type="text" class="form-control" id="bulkSlug" name="slug" placeholder="proxy">
-                <div class="form-text">Used when a task omits its own slug.</div>
-              </div>
-              <div class="col-12">
-                <label for="tasksJSON" class="form-label">Tasks JSON</label>
-                <textarea class="form-control" id="tasksJSON" name="tasksJSON" rows="6" placeholder='[
-  {"slug":"proxy","command":"/broadcast Restarting soon","priority":5},
-  {"slug":"survival","command":"/say Preparing for restart"}
-]'></textarea>
-                <div class="form-text">Each task supports <code>slug</code>, <code>command</code>, optional <code>priority</code>, and <code>metadata</code>.</div>
-              </div>
-              <div class="col-6">
-                <label for="bulkPriority" class="form-label">Default priority</label>
-                <input type="number" class="form-control" id="bulkPriority" name="priority" value="0" step="1">
-              </div>
-              <div class="col-6">
-                <label for="bulkMetadata" class="form-label">Metadata (JSON optional)</label>
-                <textarea class="form-control" id="bulkMetadata" name="metadataJSON" rows="2" placeholder='{"requestedBy":"Dashboard"}'></textarea>
-              </div>
-              <div class="col-12 text-end">
-                <button type="submit" class="btn btn-outline-primary">Queue tasks</button>
-              </div>
-            </form>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <div class="row g-4 mt-1">
-      <div class="col-xl-6">
-        <div class="card shadow-sm border-0 h-100">
-          <div class="card-body">
-            <h5 class="card-title">Manage queue</h5>
-            <p class="text-muted small mb-4">
-              Quickly clear out tasks that are no longer needed by filtering on status, slug, or routine association.
-            </p>
-            <form method="post" action="<%= process.env.siteAddress %>/redirect/bridge/queue/clear" class="row g-3">
-              <div class="col-md-4">
-                <label for="clearStatus" class="form-label">Status filter</label>
-                <select class="form-select" id="clearStatus" name="status">
-                  <option value="">Any status</option>
-                  <option value="pending">Pending</option>
-                  <option value="processing">Processing</option>
-                  <option value="completed">Completed</option>
-                  <option value="failed">Failed</option>
-                </select>
-              </div>
-              <div class="col-md-4">
-                <label for="clearSlug" class="form-label">Target slug</label>
-                <input type="text" class="form-control" id="clearSlug" name="slug" placeholder="proxy">
-              </div>
-              <div class="col-md-4">
-                <label for="clearRoutine" class="form-label">Routine slug</label>
-                <input type="text" class="form-control" id="clearRoutine" name="routineSlug" placeholder="vote-reward">
-              </div>
-              <div class="col-12 text-end">
-                <button type="submit" class="btn btn-outline-danger">Clear matching tasks</button>
-              </div>
-            </form>
-          </div>
-        </div>
-      </div>
-
-      <div class="col-xl-6">
-        <div class="card shadow-sm border-0 h-100">
-          <div class="card-body">
-            <h5 class="card-title">Report task outcome</h5>
-            <p class="text-muted small mb-4">
-              Manually update a task status if you execute a command outside of the bridge or need to resolve a stuck job.
-            </p>
-            <form method="post" action="<%= process.env.siteAddress %>/redirect/bridge/task/report" class="row g-3">
-              <div class="col-md-4">
-                <label for="reportTaskId" class="form-label">Task ID</label>
-                <input type="number" class="form-control" id="reportTaskId" name="taskId" placeholder="42" required>
-              </div>
-              <div class="col-md-4">
-                <label for="reportStatus" class="form-label">Status</label>
-                <select class="form-select" id="reportStatus" name="status" required>
-                  <option value="processing">Processing</option>
-                  <option value="completed">Completed</option>
-                  <option value="failed">Failed</option>
-                </select>
-              </div>
-              <div class="col-md-4">
-                <label for="reportExecutedBy" class="form-label">Executed by</label>
-                <input type="text" class="form-control" id="reportExecutedBy" name="executedBy" placeholder="AdminUser">
-              </div>
-              <div class="col-12">
-                <label for="reportResult" class="form-label">Result / Notes</label>
-                <textarea class="form-control" id="reportResult" name="result" rows="3" placeholder="Command executed manually."></textarea>
-              </div>
-              <div class="col-12">
-                <label for="reportMetadata" class="form-label">Metadata (JSON optional)</label>
-                <textarea class="form-control" id="reportMetadata" name="metadataJSON" rows="2" placeholder='{"reason":"manual override"}'></textarea>
-              </div>
-              <div class="col-12 text-end">
-                <button type="submit" class="btn btn-success">Submit report</button>
-              </div>
-            </form>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <div class="card shadow-sm border-0 mt-4">
+    <div class="card shadow-sm border-0 mb-4">
       <div class="card-body">
-        <h5 class="card-title">Define or update a routine</h5>
-        <p class="text-muted small">
-          Provide a JSON array of steps. Each step requires a <code>slug</code>, <code>command</code>, and optional <code>order</code> or <code>metadata</code> field. Existing steps for the routine will be replaced.
+        <h5 class="card-title">Bridge overview</h5>
+        <p class="text-muted small mb-3">
+          The bridge links the API with your proxy and Paper servers so commands can be queued, executed, and tracked from one place.
         </p>
-        <form method="post" action="<%= process.env.siteAddress %>/redirect/bridge/routine/save" class="row g-3">
-          <div class="col-md-4">
-            <label for="routineSlugSave" class="form-label">Routine slug</label>
-            <input type="text" class="form-control" id="routineSlugSave" name="routineSlug" placeholder="vote-reward" required>
-          </div>
-          <div class="col-md-4">
-            <label for="displayName" class="form-label">Display name</label>
-            <input type="text" class="form-control" id="displayName" name="displayName" placeholder="Vote reward flow">
-          </div>
-          <div class="col-md-4">
-            <label for="routineDescription" class="form-label">Description</label>
-            <input type="text" class="form-control" id="routineDescription" name="description" placeholder="Executed when a player votes">
-          </div>
-          <div class="col-12">
-            <label for="stepsJSON" class="form-label">Steps JSON</label>
-            <textarea class="form-control" id="stepsJSON" name="stepsJSON" rows="5" placeholder='[
-  {"slug":"proxy","command":"/broadcast Thanks {player}!"},
-  {"slug":"survival","command":"/eco give {player} 50"}
-]'></textarea>
-          </div>
-          <div class="col-12 text-end">
-            <button type="submit" class="btn btn-outline-primary">Save routine</button>
-          </div>
-        </form>
+        <ul class="text-muted small ps-3 mb-0">
+          <li>Queue ad-hoc commands or batches without building JSON by hand.</li>
+          <li>Trigger reusable routines that target multiple servers with one submission.</li>
+          <li>Use the management tools to clear stuck work and keep processors healthy.</li>
+        </ul>
       </div>
     </div>
 
-    <div class="mt-4">
-      <% if (req.cookies.alertType) { %>
-        <%- include("../partials/alert.ejs", {
-          alertType: req.cookies.alertType,
-          content: req.cookies.alertContent
-        }) %>
-      <% } %>
+    <% if (req.cookies.alertType) { %>
+      <%- include("../partials/alert.ejs", {
+        alertType: req.cookies.alertType,
+        content: req.cookies.alertContent
+      }) %>
+    <% } %>
 
-      <% if (pendingTasks && pendingTasks.success === false) { %>
-        <%- include("../partials/alert.ejs", {
-          alertType: "danger",
-          content: pendingTasks.message
-        }) %>
-      <% } %>
+    <% if (pendingTasks && pendingTasks.success === false) { %>
+      <%- include("../partials/alert.ejs", {
+        alertType: "danger",
+        content: pendingTasks.message
+      }) %>
+    <% } %>
 
-      <% if (processingTasks && processingTasks.success === false) { %>
-        <%- include("../partials/alert.ejs", {
-          alertType: "danger",
-          content: processingTasks.message
-        }) %>
-      <% } %>
+    <% if (processingTasks && processingTasks.success === false) { %>
+      <%- include("../partials/alert.ejs", {
+        alertType: "danger",
+        content: processingTasks.message
+      }) %>
+    <% } %>
 
-      <div class="card shadow-sm border-0 mb-4">
-        <div class="card-body">
-          <div class="d-flex justify-content-between align-items-center mb-3">
-            <h5 class="card-title mb-0">Pending tasks</h5>
-            <span class="badge bg-primary rounded-pill"><%= pendingList.length %></span>
-          </div>
-          <div class="table-responsive">
-            <table class="table align-middle">
-              <thead>
-                <tr>
-                  <th scope="col">ID</th>
-                  <th scope="col">Slug</th>
-                  <th scope="col">Command</th>
-                  <th scope="col">Priority</th>
-                  <th scope="col">Routine</th>
-                  <th scope="col">Created</th>
-                  <th scope="col"></th>
-                </tr>
-              </thead>
-              <tbody>
-                <% if (!pendingList.length) { %>
-                  <tr>
-                    <td colspan="7" class="text-center text-muted">No pending tasks</td>
-                  </tr>
-                <% } else { %>
-                  <% pendingList.forEach(function(task) { %>
-                    <tr>
-                      <td><code>#<%= task.executorTaskId %></code></td>
-                      <td><%= task.slug %></td>
-                      <td><code><%= task.command %></code></td>
-                      <td><%= task.priority %></td>
-                      <td><%= task.routineSlug ? task.routineSlug : "-" %></td>
-                      <td><%= moment(task.createdAt).fromNow() %></td>
-                      <td class="text-end">
-                        <form method="post" action="<%= process.env.siteAddress %>/redirect/bridge/task/reset" class="d-inline">
-                          <input type="hidden" name="taskId" value="<%= task.executorTaskId %>">
-                          <button type="submit" class="btn btn-sm btn-outline-secondary">Reset</button>
-                        </form>
-                      </td>
-                    </tr>
-                  <% }) %>
-                <% } %>
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </div>
+    <div class="card shadow-sm border-0">
+      <div class="card-body">
+        <ul class="nav nav-pills gap-2 flex-wrap mb-3" id="bridgeTabs" role="tablist">
+          <li class="nav-item" role="presentation">
+            <button type="button" class="nav-link active" data-bridge-tab="queue" role="tab" aria-selected="true">
+              Queue commands
+            </button>
+          </li>
+          <li class="nav-item" role="presentation">
+            <button type="button" class="nav-link" data-bridge-tab="routines" role="tab" aria-selected="false">
+              Routines
+            </button>
+          </li>
+          <li class="nav-item" role="presentation">
+            <button type="button" class="nav-link" data-bridge-tab="manage" role="tab" aria-selected="false">
+              Queue management
+            </button>
+          </li>
+          <li class="nav-item" role="presentation">
+            <button type="button" class="nav-link" data-bridge-tab="status" role="tab" aria-selected="false">
+              Status
+              <span class="badge bg-light text-dark ms-2"><%= pendingList.length + processingList.length %></span>
+            </button>
+          </li>
+        </ul>
 
-      <div class="card shadow-sm border-0 mb-4">
-        <div class="card-body">
-          <div class="d-flex justify-content-between align-items-center mb-3">
-            <h5 class="card-title mb-0">Processing tasks</h5>
-            <span class="badge bg-warning rounded-pill"><%= processingList.length %></span>
-          </div>
-          <div class="table-responsive">
-            <table class="table align-middle">
-              <thead>
-                <tr>
-                  <th scope="col">ID</th>
-                  <th scope="col">Slug</th>
-                  <th scope="col">Command</th>
-                  <th scope="col">Status</th>
-                  <th scope="col">Updated</th>
-                  <th scope="col">Executed by</th>
-                  <th scope="col"></th>
-                </tr>
-              </thead>
-              <tbody>
-                <% if (!processingList.length) { %>
-                  <tr>
-                    <td colspan="7" class="text-center text-muted">No processing tasks</td>
-                  </tr>
-                <% } else { %>
-                  <% processingList.forEach(function(task) { %>
-                    <tr>
-                      <td><code>#<%= task.executorTaskId %></code></td>
-                      <td><%= task.slug %></td>
-                      <td><code><%= task.command %></code></td>
-                      <td><span class="badge bg-warning text-dark"><%= task.status %></span></td>
-                      <td><%= moment(task.updatedAt).fromNow() %></td>
-                      <td><%= task.executedBy ? task.executedBy : "-" %></td>
-                      <td class="text-end">
-                        <form method="post" action="<%= process.env.siteAddress %>/redirect/bridge/task/report" class="d-inline">
-                          <input type="hidden" name="taskId" value="<%= task.executorTaskId %>">
-                          <input type="hidden" name="status" value="completed">
-                          <button type="submit" class="btn btn-sm btn-outline-success">Mark complete</button>
-                        </form>
-                        <form method="post" action="<%= process.env.siteAddress %>/redirect/bridge/task/report" class="d-inline ms-1">
-                          <input type="hidden" name="taskId" value="<%= task.executorTaskId %>">
-                          <input type="hidden" name="status" value="failed">
-                          <button type="submit" class="btn btn-sm btn-outline-danger">Mark failed</button>
-                        </form>
-                        <form method="post" action="<%= process.env.siteAddress %>/redirect/bridge/task/reset" class="d-inline ms-1">
-                          <input type="hidden" name="taskId" value="<%= task.executorTaskId %>">
-                          <button type="submit" class="btn btn-sm btn-outline-secondary">Reset</button>
-                        </form>
-                      </td>
-                    </tr>
-                  <% }) %>
-                <% } %>
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </div>
+        <div class="tab-content" id="bridgeTabContent">
+          <div class="tab-pane active" data-bridge-panel="queue" role="tabpanel">
+            <div class="row g-4">
+              <div class="col-xl-6">
+                <div class="card shadow-sm border-0 h-100">
+                  <div class="card-body">
+                    <h5 class="card-title">Queue a single command</h5>
+                    <p class="text-muted small mb-4">
+                      Send one command to a specific server slug. Metadata pairs are optional and help processors know who queued the work or why.
+                    </p>
+                    <form method="post" action="<%= process.env.siteAddress %>/redirect/bridge/command/add" class="row g-3" id="singleCommandForm">
+                      <div class="col-12">
+                        <label for="command" class="form-label">Command</label>
+                        <input type="text" class="form-control" id="command" name="command" placeholder="/ban Player Reason" required>
+                      </div>
+                      <div class="col-md-6">
+                        <label for="slug" class="form-label">Target slug</label>
+                        <input type="text" class="form-control" id="slug" name="slug" placeholder="proxy" required>
+                      </div>
+                      <div class="col-md-6">
+                        <label for="priority" class="form-label">Priority</label>
+                        <input type="number" class="form-control" id="priority" name="priority" value="0" step="1">
+                        <div class="form-text">Higher numbers are handled first.</div>
+                      </div>
+                      <div class="col-12">
+                        <div class="metadata-builder" data-metadata-builder>
+                          <div class="d-flex justify-content-between align-items-center mb-2">
+                            <span class="form-label mb-0">Metadata (optional)</span>
+                            <button type="button" class="btn btn-sm btn-outline-secondary" data-add-metadata>
+                              Add pair
+                            </button>
+                          </div>
+                          <div class="metadata-rows" data-metadata-rows></div>
+                          <p class="form-text">Examples: key <code>requestedBy</code> with value <code>Dashboard</code>, or key <code>reason</code> with value <code>Vote reward</code>.</p>
+                          <input type="hidden" name="metadataJSON" data-metadata-output>
+                        </div>
+                      </div>
+                      <div class="col-12 text-end">
+                        <button type="submit" class="btn btn-primary">Queue command</button>
+                      </div>
+                    </form>
+                  </div>
+                </div>
+              </div>
 
-      <div class="card shadow-sm border-0">
-        <div class="card-body">
-          <div class="d-flex justify-content-between align-items-center mb-3">
-            <h5 class="card-title mb-0">Configured routines</h5>
-            <span class="badge bg-info text-dark rounded-pill"><%= routinesList.length %></span>
+              <div class="col-xl-6">
+                <div class="card shadow-sm border-0 h-100">
+                  <div class="card-body">
+                    <h5 class="card-title">Queue multiple commands</h5>
+                    <p class="text-muted small">
+                      Build a batch of commands inline. Each row becomes an executor task and can target a different server or priority.
+                    </p>
+                    <form method="post" action="<%= process.env.siteAddress %>/redirect/bridge/command/add" class="row g-3" id="bulkCommandForm">
+                      <div class="col-md-6">
+                        <label for="bulkSlug" class="form-label">Default target slug</label>
+                        <input type="text" class="form-control" id="bulkSlug" name="slug" placeholder="proxy">
+                        <div class="form-text">Used when a row leaves its slug empty.</div>
+                      </div>
+                      <div class="col-md-6">
+                        <label for="bulkPriority" class="form-label">Default priority</label>
+                        <input type="number" class="form-control" id="bulkPriority" name="priority" value="0" step="1">
+                      </div>
+                      <div class="col-12">
+                        <div class="bulk-builder" data-bulk-builder>
+                          <div class="d-flex justify-content-between align-items-center mb-2">
+                            <span class="form-label mb-0">Commands in this batch</span>
+                            <button type="button" class="btn btn-sm btn-outline-secondary" data-add-bulk-row>Add command</button>
+                          </div>
+                          <div class="table-responsive">
+                            <table class="table table-sm align-middle">
+                              <thead>
+                                <tr>
+                                  <th scope="col" style="min-width: 120px;">Slug</th>
+                                  <th scope="col" style="min-width: 200px;">Command</th>
+                                  <th scope="col" style="min-width: 100px;">Priority</th>
+                                  <th scope="col" style="min-width: 140px;">Metadata key</th>
+                                  <th scope="col" style="min-width: 160px;">Metadata value</th>
+                                  <th scope="col" class="text-end"></th>
+                                </tr>
+                              </thead>
+                              <tbody data-bulk-rows></tbody>
+                            </table>
+                          </div>
+                          <p class="form-text">Leave slug or priority blank to inherit the defaults above.</p>
+                          <input type="hidden" name="tasksJSON" id="bulkTasksJSON" data-bulk-output>
+                        </div>
+                      </div>
+                      <div class="col-12">
+                        <div class="metadata-builder" data-metadata-builder>
+                          <div class="d-flex justify-content-between align-items-center mb-2">
+                            <span class="form-label mb-0">Batch metadata (optional)</span>
+                            <button type="button" class="btn btn-sm btn-outline-secondary" data-add-metadata>Add pair</button>
+                          </div>
+                          <div class="metadata-rows" data-metadata-rows></div>
+                          <p class="form-text">This metadata is attached to every task in the batch.</p>
+                          <input type="hidden" name="metadataJSON" data-metadata-output>
+                        </div>
+                      </div>
+                      <div class="col-12 text-end">
+                        <button type="submit" class="btn btn-outline-primary">Queue tasks</button>
+                      </div>
+                    </form>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
-          <div class="table-responsive">
-            <table class="table align-middle">
-              <thead>
-                <tr>
-                  <th scope="col">Routine</th>
-                  <th scope="col">Display name</th>
-                  <th scope="col">Description</th>
-                  <th scope="col">Steps</th>
-                  <th scope="col">Updated</th>
-                </tr>
-              </thead>
-              <tbody>
-                <% if (!routinesList.length) { %>
-                  <tr>
-                    <td colspan="5" class="text-center text-muted">No routines configured yet</td>
-                  </tr>
-                <% } else { %>
-                  <% routinesList.forEach(function(routine) { %>
-                    <tr>
-                      <td><code><%= routine.routineSlug %></code></td>
-                      <td><%= routine.displayName || '-' %></td>
-                      <td><%= routine.description || '-' %></td>
-                      <td>
-                        <ul class="list-unstyled mb-0 small">
-                          <% routine.steps.forEach(function(step) { %>
-                            <li>
-                              <span class="badge bg-light text-dark">#<%= step.order %></span>
-                              <strong><%= step.slug %></strong> &mdash; <code><%= step.command %></code>
-                            </li>
-                          <% }) %>
-                        </ul>
-                      </td>
-                      <td><%= moment(routine.updatedAt || routine.createdAt).fromNow() %></td>
-                    </tr>
-                  <% }) %>
-                <% } %>
-              </tbody>
-            </table>
+
+          <div class="tab-pane" data-bridge-panel="routines" role="tabpanel">
+            <div class="row g-4">
+              <div class="col-xl-5">
+                <div class="card shadow-sm border-0 h-100">
+                  <div class="card-body">
+                    <h5 class="card-title">Trigger a routine</h5>
+                    <p class="text-muted small mb-4">
+                      Execute every step saved for a routine. Metadata pairs can be used for placeholders such as the player name.
+                    </p>
+                    <form method="post" action="<%= process.env.siteAddress %>/redirect/bridge/routine/run" class="row g-3" id="runRoutineForm">
+                      <div class="col-md-7">
+                        <label for="routineSlug" class="form-label">Routine slug</label>
+                        <input type="text" class="form-control" id="routineSlug" name="routineSlug" placeholder="vote-reward" required>
+                      </div>
+                      <div class="col-md-5">
+                        <label for="routinePriority" class="form-label">Priority</label>
+                        <input type="number" class="form-control" id="routinePriority" name="priority" value="0" step="1">
+                      </div>
+                      <div class="col-12">
+                        <div class="metadata-builder" data-metadata-builder>
+                          <div class="d-flex justify-content-between align-items-center mb-2">
+                            <span class="form-label mb-0">Routine metadata (optional)</span>
+                            <button type="button" class="btn btn-sm btn-outline-secondary" data-add-metadata>Add pair</button>
+                          </div>
+                          <div class="metadata-rows" data-metadata-rows></div>
+                          <p class="form-text">Pairs are injected into each step. Example: key <code>player</code> with value <code>{username}</code>.</p>
+                          <input type="hidden" name="metadataJSON" data-metadata-output>
+                        </div>
+                      </div>
+                      <div class="col-12 text-end">
+                        <button type="submit" class="btn btn-secondary">Run routine</button>
+                      </div>
+                    </form>
+                  </div>
+                </div>
+              </div>
+              <div class="col-xl-7">
+                <div class="card shadow-sm border-0 h-100">
+                  <div class="card-body">
+                    <h5 class="card-title">Define or update a routine</h5>
+                    <p class="text-muted small">
+                      Build the steps visually and we will create the JSON payload when you save. Steps execute in ascending order values.
+                    </p>
+                    <form method="post" action="<%= process.env.siteAddress %>/redirect/bridge/routine/save" class="row g-3" id="routineBuilderForm">
+                      <div class="col-md-4">
+                        <label for="routineSlugSave" class="form-label">Routine slug</label>
+                        <input type="text" class="form-control" id="routineSlugSave" name="routineSlug" placeholder="vote-reward" required>
+                      </div>
+                      <div class="col-md-4">
+                        <label for="displayName" class="form-label">Display name</label>
+                        <input type="text" class="form-control" id="displayName" name="displayName" placeholder="Vote reward flow">
+                      </div>
+                      <div class="col-md-4">
+                        <label for="routineDescription" class="form-label">Description</label>
+                        <input type="text" class="form-control" id="routineDescription" name="description" placeholder="Executed when a player votes">
+                      </div>
+                      <div class="col-12">
+                        <div class="routine-builder" data-routine-builder>
+                          <div class="d-flex justify-content-between align-items-center mb-2">
+                            <span class="form-label mb-0">Routine steps</span>
+                            <button type="button" class="btn btn-sm btn-outline-secondary" data-add-step>Add step</button>
+                          </div>
+                          <div class="routine-steps" data-routine-steps></div>
+                          <p class="form-text">Provide a slug and command for each step. Metadata pairs are optional and map to placeholders in your commands.</p>
+                          <div class="text-danger small d-none" data-routine-error>Please add at least one step with a slug and command.</div>
+                          <input type="hidden" name="stepsJSON" data-routine-output>
+                        </div>
+                      </div>
+                      <div class="col-12 text-end">
+                        <button type="submit" class="btn btn-outline-primary">Save routine</button>
+                      </div>
+                    </form>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="tab-pane" data-bridge-panel="manage" role="tabpanel">
+            <div class="row g-4">
+              <div class="col-xl-6">
+                <div class="card shadow-sm border-0 h-100">
+                  <div class="card-body">
+                    <h5 class="card-title">Clear tasks from the queue</h5>
+                    <p class="text-muted small mb-4">
+                      Remove work that is no longer needed. Filters are optional and can be combined to target specific jobs.
+                    </p>
+                    <form method="post" action="<%= process.env.siteAddress %>/redirect/bridge/queue/clear" class="row g-3">
+                      <div class="col-md-4">
+                        <label for="clearStatus" class="form-label">Status filter</label>
+                        <select class="form-select" id="clearStatus" name="status">
+                          <option value="">Any status</option>
+                          <option value="pending">Pending</option>
+                          <option value="processing">Processing</option>
+                          <option value="completed">Completed</option>
+                          <option value="failed">Failed</option>
+                        </select>
+                      </div>
+                      <div class="col-md-4">
+                        <label for="clearSlug" class="form-label">Target slug</label>
+                        <input type="text" class="form-control" id="clearSlug" name="slug" placeholder="proxy">
+                      </div>
+                      <div class="col-md-4">
+                        <label for="clearRoutine" class="form-label">Routine slug</label>
+                        <input type="text" class="form-control" id="clearRoutine" name="routineSlug" placeholder="vote-reward">
+                      </div>
+                      <div class="col-12 text-end">
+                        <button type="submit" class="btn btn-outline-danger">Clear matching tasks</button>
+                      </div>
+                    </form>
+                  </div>
+                </div>
+              </div>
+              <div class="col-xl-6">
+                <div class="card shadow-sm border-0 h-100">
+                  <div class="card-body">
+                    <h5 class="card-title">Report a task outcome</h5>
+                    <p class="text-muted small mb-4">
+                      Update a stuck or manually executed task. Completed and failed reports both finalise processing.
+                    </p>
+                    <form method="post" action="<%= process.env.siteAddress %>/redirect/bridge/task/report" class="row g-3" id="reportTaskForm">
+                      <div class="col-md-4">
+                        <label for="reportTaskId" class="form-label">Task ID</label>
+                        <input type="number" class="form-control" id="reportTaskId" name="taskId" placeholder="42" required>
+                      </div>
+                      <div class="col-md-4">
+                        <label for="reportStatus" class="form-label">Status</label>
+                        <select class="form-select" id="reportStatus" name="status" required>
+                          <option value="processing">Processing</option>
+                          <option value="completed">Completed</option>
+                          <option value="failed">Failed</option>
+                        </select>
+                      </div>
+                      <div class="col-md-4">
+                        <label for="reportExecutedBy" class="form-label">Executed by</label>
+                        <input type="text" class="form-control" id="reportExecutedBy" name="executedBy" placeholder="AdminUser">
+                      </div>
+                      <div class="col-12">
+                        <label for="reportResult" class="form-label">Result / Notes</label>
+                        <textarea class="form-control" id="reportResult" name="result" rows="3" placeholder="Command executed manually."></textarea>
+                      </div>
+                      <div class="col-12">
+                        <div class="metadata-builder" data-metadata-builder>
+                          <div class="d-flex justify-content-between align-items-center mb-2">
+                            <span class="form-label mb-0">Metadata (optional)</span>
+                            <button type="button" class="btn btn-sm btn-outline-secondary" data-add-metadata>Add pair</button>
+                          </div>
+                          <div class="metadata-rows" data-metadata-rows></div>
+                          <p class="form-text">Record extra context such as <code>reason</code> or <code>ticketId</code>.</p>
+                          <input type="hidden" name="metadataJSON" data-metadata-output>
+                        </div>
+                      </div>
+                      <div class="col-12 text-end">
+                        <button type="submit" class="btn btn-success">Submit report</button>
+                      </div>
+                    </form>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="tab-pane" data-bridge-panel="status" role="tabpanel">
+            <div class="row g-4">
+              <div class="col-12">
+                <div class="card shadow-sm border-0">
+                  <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                      <h5 class="card-title mb-0">Pending tasks</h5>
+                      <span class="badge bg-primary rounded-pill"><%= pendingList.length %></span>
+                    </div>
+                    <div class="table-responsive">
+                      <table class="table align-middle">
+                        <thead>
+                          <tr>
+                            <th scope="col">ID</th>
+                            <th scope="col">Slug</th>
+                            <th scope="col">Command</th>
+                            <th scope="col">Priority</th>
+                            <th scope="col">Routine</th>
+                            <th scope="col">Created</th>
+                            <th scope="col"></th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          <% if (!pendingList.length) { %>
+                            <tr>
+                              <td colspan="7" class="text-center text-muted">No pending tasks</td>
+                            </tr>
+                          <% } else { %>
+                            <% pendingList.forEach(function(task) { %>
+                              <tr>
+                                <td><code>#<%= task.executorTaskId %></code></td>
+                                <td><%= task.slug %></td>
+                                <td><code><%= task.command %></code></td>
+                                <td><%= task.priority %></td>
+                                <td><%= task.routineSlug ? task.routineSlug : "-" %></td>
+                                <td><%= moment(task.createdAt).fromNow() %></td>
+                                <td class="text-end">
+                                  <form method="post" action="<%= process.env.siteAddress %>/redirect/bridge/task/reset" class="d-inline">
+                                    <input type="hidden" name="taskId" value="<%= task.executorTaskId %>">
+                                    <button type="submit" class="btn btn-sm btn-outline-secondary">Reset</button>
+                                  </form>
+                                </td>
+                              </tr>
+                            <% }) %>
+                          <% } %>
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="col-12">
+                <div class="card shadow-sm border-0">
+                  <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                      <h5 class="card-title mb-0">Processing tasks</h5>
+                      <span class="badge bg-warning text-dark rounded-pill"><%= processingList.length %></span>
+                    </div>
+                    <div class="table-responsive">
+                      <table class="table align-middle">
+                        <thead>
+                          <tr>
+                            <th scope="col">ID</th>
+                            <th scope="col">Slug</th>
+                            <th scope="col">Command</th>
+                            <th scope="col">Status</th>
+                            <th scope="col">Updated</th>
+                            <th scope="col">Executed by</th>
+                            <th scope="col"></th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          <% if (!processingList.length) { %>
+                            <tr>
+                              <td colspan="7" class="text-center text-muted">No processing tasks</td>
+                            </tr>
+                          <% } else { %>
+                            <% processingList.forEach(function(task) { %>
+                              <tr>
+                                <td><code>#<%= task.executorTaskId %></code></td>
+                                <td><%= task.slug %></td>
+                                <td><code><%= task.command %></code></td>
+                                <td><span class="badge bg-warning text-dark"><%= task.status %></span></td>
+                                <td><%= moment(task.updatedAt).fromNow() %></td>
+                                <td><%= task.executedBy ? task.executedBy : "-" %></td>
+                                <td class="text-end">
+                                  <form method="post" action="<%= process.env.siteAddress %>/redirect/bridge/task/report" class="d-inline">
+                                    <input type="hidden" name="taskId" value="<%= task.executorTaskId %>">
+                                    <input type="hidden" name="status" value="completed">
+                                    <button type="submit" class="btn btn-sm btn-outline-success">Mark complete</button>
+                                  </form>
+                                  <form method="post" action="<%= process.env.siteAddress %>/redirect/bridge/task/report" class="d-inline ms-1">
+                                    <input type="hidden" name="taskId" value="<%= task.executorTaskId %>">
+                                    <input type="hidden" name="status" value="failed">
+                                    <button type="submit" class="btn btn-sm btn-outline-danger">Mark failed</button>
+                                  </form>
+                                  <form method="post" action="<%= process.env.siteAddress %>/redirect/bridge/task/reset" class="d-inline ms-1">
+                                    <input type="hidden" name="taskId" value="<%= task.executorTaskId %>">
+                                    <button type="submit" class="btn btn-sm btn-outline-secondary">Reset</button>
+                                  </form>
+                                </td>
+                              </tr>
+                            <% }) %>
+                          <% } %>
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="col-12">
+                <div class="card shadow-sm border-0">
+                  <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                      <h5 class="card-title mb-0">Configured routines</h5>
+                      <span class="badge bg-info text-dark rounded-pill"><%= routinesList.length %></span>
+                    </div>
+                    <div class="table-responsive">
+                      <table class="table align-middle">
+                        <thead>
+                          <tr>
+                            <th scope="col">Routine</th>
+                            <th scope="col">Display name</th>
+                            <th scope="col">Description</th>
+                            <th scope="col">Steps</th>
+                            <th scope="col">Updated</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          <% if (!routinesList.length) { %>
+                            <tr>
+                              <td colspan="5" class="text-center text-muted">No routines configured yet</td>
+                            </tr>
+                          <% } else { %>
+                            <% routinesList.forEach(function(routine) { %>
+                              <tr>
+                                <td><code><%= routine.routineSlug %></code></td>
+                                <td><%= routine.displayName || '-' %></td>
+                                <td><%= routine.description || '-' %></td>
+                                <td>
+                                  <ul class="list-unstyled mb-0 small">
+                                    <% routine.steps.forEach(function(step) { %>
+                                      <li>
+                                        <span class="badge bg-light text-dark">#<%= step.order %></span>
+                                        <strong><%= step.slug %></strong> &mdash; <code><%= step.command %></code>
+                                      </li>
+                                    <% }) %>
+                                  </ul>
+                                </td>
+                                <td><%= moment(routine.updatedAt || routine.createdAt).fromNow() %></td>
+                              </tr>
+                            <% }) %>
+                          <% } %>
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
     </div>
   </div>
 </div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    const tabButtons = document.querySelectorAll('[data-bridge-tab]');
+    const tabPanels = document.querySelectorAll('[data-bridge-panel]');
+
+    function activateTab(name) {
+      tabButtons.forEach((button) => {
+        const isActive = button.dataset.bridgeTab === name;
+        button.classList.toggle('active', isActive);
+        button.setAttribute('aria-selected', isActive ? 'true' : 'false');
+      });
+
+      tabPanels.forEach((panel) => {
+        const isActive = panel.dataset.bridgePanel === name;
+        panel.classList.toggle('active', isActive);
+        panel.classList.toggle('show', isActive);
+      });
+    }
+
+    tabButtons.forEach((button) => {
+      button.addEventListener('click', function () {
+        activateTab(button.dataset.bridgeTab);
+      });
+    });
+
+    function setupMetadataBuilder(builder) {
+      if (!builder) return;
+      const rowsContainer = builder.querySelector('[data-metadata-rows]');
+      const addButton = builder.querySelector('[data-add-metadata]');
+      const output = builder.querySelector('[data-metadata-output]');
+      const form = builder.closest('form');
+
+      if (!rowsContainer || !addButton || !output || !form) return;
+
+      function addRow(key = '', value = '') {
+        const safeKey = (key || '').replace(/"/g, '&quot;');
+        const safeValue = (value || '').replace(/"/g, '&quot;');
+        const row = document.createElement('div');
+        row.className = 'row g-2 metadata-row align-items-end mb-2';
+        row.innerHTML = `
+          <div class="col-md-5">
+            <input type="text" class="form-control" placeholder="Key" data-metadata-key value="${safeKey}">
+          </div>
+          <div class="col-md-5">
+            <input type="text" class="form-control" placeholder="Value" data-metadata-value value="${safeValue}">
+          </div>
+          <div class="col-md-2 text-md-end">
+            <button type="button" class="btn btn-outline-danger btn-sm w-100" data-remove-row>Remove</button>
+          </div>
+        `;
+
+        row.querySelector('[data-remove-row]').addEventListener('click', function () {
+          row.remove();
+        });
+
+        rowsContainer.appendChild(row);
+      }
+
+      addButton.addEventListener('click', function () {
+        addRow();
+      });
+
+      form.addEventListener('submit', function () {
+        const metadata = {};
+        let hasEntries = false;
+
+        rowsContainer.querySelectorAll('.metadata-row').forEach((row) => {
+          const keyInput = row.querySelector('[data-metadata-key]');
+          const valueInput = row.querySelector('[data-metadata-value]');
+          const key = keyInput ? keyInput.value.trim() : '';
+          const value = valueInput ? valueInput.value.trim() : '';
+
+          if (key && value) {
+            metadata[key] = value;
+            hasEntries = true;
+          }
+        });
+
+        output.value = hasEntries ? JSON.stringify(metadata) : '';
+      });
+    }
+
+    document.querySelectorAll('[data-metadata-builder]').forEach((builder) => {
+      setupMetadataBuilder(builder);
+    });
+
+    const bulkBuilder = document.querySelector('[data-bulk-builder]');
+    if (bulkBuilder) {
+      const rowsContainer = bulkBuilder.querySelector('[data-bulk-rows]');
+      const addButton = bulkBuilder.querySelector('[data-add-bulk-row]');
+      const output = bulkBuilder.querySelector('[data-bulk-output]');
+      const form = bulkBuilder.closest('form');
+
+      function addBulkRow() {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+          <td>
+            <input type="text" class="form-control form-control-sm" placeholder="proxy" data-bulk-slug>
+          </td>
+          <td>
+            <input type="text" class="form-control form-control-sm" placeholder="/say Hello" data-bulk-command required>
+          </td>
+          <td>
+            <input type="number" class="form-control form-control-sm" placeholder="0" data-bulk-priority>
+          </td>
+          <td>
+            <input type="text" class="form-control form-control-sm" placeholder="Key" data-bulk-metadata-key>
+          </td>
+          <td>
+            <input type="text" class="form-control form-control-sm" placeholder="Value" data-bulk-metadata-value>
+          </td>
+          <td class="text-end">
+            <button type="button" class="btn btn-outline-danger btn-sm" data-remove-row>Remove</button>
+          </td>
+        `;
+
+        row.querySelector('[data-remove-row]').addEventListener('click', function () {
+          row.remove();
+        });
+
+        rowsContainer.appendChild(row);
+      }
+
+      if (addButton && rowsContainer && output && form) {
+        addButton.addEventListener('click', function () {
+          addBulkRow();
+        });
+
+        if (!rowsContainer.children.length) {
+          addBulkRow();
+        }
+
+        form.addEventListener('submit', function () {
+          const tasks = [];
+
+          rowsContainer.querySelectorAll('tr').forEach((row) => {
+            const commandInput = row.querySelector('[data-bulk-command]');
+            const slugInput = row.querySelector('[data-bulk-slug]');
+            const priorityInput = row.querySelector('[data-bulk-priority]');
+            const metadataKeyInput = row.querySelector('[data-bulk-metadata-key]');
+            const metadataValueInput = row.querySelector('[data-bulk-metadata-value]');
+
+            const command = commandInput ? commandInput.value.trim() : '';
+            if (!command) {
+              return;
+            }
+
+            const task = { command };
+            const slug = slugInput ? slugInput.value.trim() : '';
+            const priorityRaw = priorityInput ? priorityInput.value.trim() : '';
+            const metadataKey = metadataKeyInput ? metadataKeyInput.value.trim() : '';
+            const metadataValue = metadataValueInput ? metadataValueInput.value.trim() : '';
+
+            if (slug) {
+              task.slug = slug;
+            }
+
+            if (priorityRaw !== '') {
+              const parsedPriority = Number(priorityRaw);
+              if (!Number.isNaN(parsedPriority)) {
+                task.priority = parsedPriority;
+              }
+            }
+
+            if (metadataKey && metadataValue) {
+              task.metadata = { [metadataKey]: metadataValue };
+            }
+
+            tasks.push(task);
+          });
+
+          output.value = tasks.length ? JSON.stringify(tasks) : '';
+        });
+      }
+    }
+
+    const routineBuilder = document.querySelector('[data-routine-builder]');
+    if (routineBuilder) {
+      const stepsContainer = routineBuilder.querySelector('[data-routine-steps]');
+      const addStepButton = routineBuilder.querySelector('[data-add-step]');
+      const output = routineBuilder.querySelector('[data-routine-output]');
+      const errorMessage = routineBuilder.querySelector('[data-routine-error]');
+      const form = routineBuilder.closest('form');
+
+      function addStep() {
+        const defaultOrder = stepsContainer.children.length + 1;
+        const step = document.createElement('div');
+        step.className = 'routine-step border rounded p-3 mb-3';
+        step.innerHTML = `
+          <div class="row g-3 align-items-end">
+            <div class="col-md-2">
+              <label class="form-label">Order</label>
+              <input type="number" class="form-control" data-step-order min="0" value="${defaultOrder}">
+            </div>
+            <div class="col-md-4">
+              <label class="form-label">Server slug</label>
+              <input type="text" class="form-control" placeholder="proxy" data-step-slug required>
+            </div>
+            <div class="col-md-4">
+              <label class="form-label">Command</label>
+              <input type="text" class="form-control" placeholder="/say Welcome" data-step-command required>
+            </div>
+            <div class="col-md-2 text-md-end">
+              <button type="button" class="btn btn-outline-danger btn-sm w-100" data-remove-step>Remove</button>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Metadata key <span class="text-muted">(optional)</span></label>
+              <input type="text" class="form-control" placeholder="player" data-step-metadata-key>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Metadata value <span class="text-muted">(optional)</span></label>
+              <input type="text" class="form-control" placeholder="{username}" data-step-metadata-value>
+            </div>
+          </div>
+        `;
+
+        step.querySelector('[data-remove-step]').addEventListener('click', function () {
+          step.remove();
+        });
+
+        stepsContainer.appendChild(step);
+      }
+
+      if (addStepButton && stepsContainer && output && form) {
+        addStepButton.addEventListener('click', function () {
+          addStep();
+        });
+
+        if (!stepsContainer.children.length) {
+          addStep();
+        }
+
+        form.addEventListener('submit', function (event) {
+          const steps = [];
+          let hasError = false;
+
+          stepsContainer.querySelectorAll('.routine-step').forEach((stepElement) => {
+            const slugInput = stepElement.querySelector('[data-step-slug]');
+            const commandInput = stepElement.querySelector('[data-step-command]');
+            const orderInput = stepElement.querySelector('[data-step-order]');
+            const metadataKeyInput = stepElement.querySelector('[data-step-metadata-key]');
+            const metadataValueInput = stepElement.querySelector('[data-step-metadata-value]');
+
+            const slug = slugInput ? slugInput.value.trim() : '';
+            const command = commandInput ? commandInput.value.trim() : '';
+            const orderRaw = orderInput ? orderInput.value.trim() : '';
+            const metadataKey = metadataKeyInput ? metadataKeyInput.value.trim() : '';
+            const metadataValue = metadataValueInput ? metadataValueInput.value.trim() : '';
+
+            if (!slug || !command) {
+              hasError = true;
+              stepElement.classList.add('border-danger');
+              return;
+            }
+
+            stepElement.classList.remove('border-danger');
+
+            const stepData = {
+              slug,
+              command,
+            };
+
+            const orderNumber = Number(orderRaw);
+            if (!Number.isNaN(orderNumber)) {
+              stepData.order = orderNumber;
+            }
+
+            if (metadataKey && metadataValue) {
+              stepData.metadata = { [metadataKey]: metadataValue };
+            }
+
+            steps.push(stepData);
+          });
+
+          if (!steps.length) {
+            hasError = true;
+          }
+
+          if (hasError) {
+            event.preventDefault();
+            event.stopImmediatePropagation();
+            if (errorMessage) {
+              errorMessage.classList.remove('d-none');
+            }
+            return;
+          }
+
+          if (errorMessage) {
+            errorMessage.classList.add('d-none');
+          }
+
+          output.value = JSON.stringify(steps);
+        });
+      }
+    }
+  });
+</script>
 
 <%- include("../modules/footer.ejs") %>
