@@ -5,131 +5,181 @@
 
 <%- include("../../modules/navigationBar.ejs") %>
 
-<%- include("../../modules/profile/profileHeader.ejs"), {
-    profileSession: profileSession
-} %>
-<br>
+<%- include("../../modules/profile/profileHeader.ejs", {
+    profileSession: profileSession,
+    profileApiData: profileApiData,
+    profilePicture: profilePicture
+}) %>
 
-<div class="container">
-    <%= console.log(req.cookies); %>
+<div class="container py-5 profile-container">
     <% if (req.cookies.alertType) { %>
-        <%- include("../../partials/alert.ejs", {
-          alertType: req.cookies.alertType,
-          content: req.cookies.alertContent
-        }) %>
+        <div class="mb-4">
+            <%- include("../../partials/alert.ejs", {
+                alertType: req.cookies.alertType,
+                content: req.cookies.alertContent
+            }) %>
+        </div>
     <% } %>
 
-    <div class="row">
-        <div class="col-md-12">
-        <ul class="nav nav-pills nav-fill" id="myTab" role="tablist">
-            <li class="nav-item" role="presentation">
-                <a class="nav-link active" id="profileDisplay-tab" data-bs-toggle="tab" href="#profileDisplay" role="tab" aria-controls="about" aria-selected="true">Profile Display</a>
-            </li>
-            <li class="nav-item" role="presentation">
-                <a class="nav-link" id="about-tab" data-bs-toggle="tab" href="#about" role="tab" aria-controls="about" aria-selected="true">About Me</a>
-            </li>
-            <li class="nav-item" role="presentation">
-                <a class="nav-link" id="socialconnections-tab" data-bs-toggle="tab" href="#socialconnections" role="tab" aria-controls="socialconnections" aria-selected="false">Social Connections</a>
-            </li>
-        </ul>
-        <div class="tab-content mt-2" id="myTabContent">
-            <div class="tab-pane fade show active" id="profileDisplay" role="tabpanel" aria-labelledby="profileDisplay-tab">
-                <form action="<%= process.env.siteAddress %>/redirect/web/user/profile/display" method="post">
-                    <div class="row">
-                        <div class="col-md-6">
-                            <label for="profilePicture_type">Profile Picture Type</label>
-                            <select class="form-select" name="profilePicture_type" id="profilePicture_type">
-                                <option value="CRAFTATAR" <% if (profileApiData.profilePicture_type === 'CRAFTATAR') { %> selected <% } %>>CRAFTATAR</option>
-                                <option value="GRAVATAR" <% if (profileApiData.profilePicture_type === 'GRAVATAR') { %> selected <% } %>>GRAVATAR</option>
-                            </select>
-                            <small><b>Profile Picture Type: CRAFTATAR or GRAVATAR?</b><br>CRAFTATAR uses your Minecraft skin by default<br>GRAVATAR utilizes the avatar you upload from <a href="https://gravatar.com/">Gravatar</a> and will appear when you link your email and select the option.<br><i>Please ensure that your profile picture complies with the <a href="/rules">Network Rules</a><div class=""></div></i></small>
-                        </div>
-                        <div class="col-md-6">
-                            <label for="profilePicture_email">Email</label>
-                            <input type="email" class="form-control mb-3" name="profilePicture_email" id="profilePicture_email" maxlength="70" value="<%= profileApiData.profilePicture_email %>">
+    <div class="card shadow-sm border-0">
+        <div class="card-body p-4">
+            <ul class="nav nav-pills profile-tabs" id="profileEditorTabs" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <a class="nav-link active profile-tab-link" id="profileDisplay-tab" data-bs-toggle="tab" href="#profileDisplay" role="tab" aria-controls="profileDisplay" aria-selected="true">
+                        <i class="fa-solid fa-image me-2"></i>Profile Display
+                    </a>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <a class="nav-link profile-tab-link" id="about-tab" data-bs-toggle="tab" href="#about" role="tab" aria-controls="about" aria-selected="false">
+                        <i class="fa-solid fa-pen-to-square me-2"></i>About Me
+                    </a>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <a class="nav-link profile-tab-link" id="socialconnections-tab" data-bs-toggle="tab" href="#socialconnections" role="tab" aria-controls="socialconnections" aria-selected="false">
+                        <i class="fa-solid fa-hashtag me-2"></i>Social Connections
+                    </a>
+                </li>
+            </ul>
 
-                            <button type="submit" class="btn btn-primary">Update Profile Display Preferences</button>
-                        </div>
-                    </div>
-                </form>
-
-                <script>
-                    document.getElementById("profilePicture_type").addEventListener("change", function() {
-                        var emailField = document.getElementById("profilePicture_email");
-                        if (this.value === "GRAVATAR") {
-                            emailField.setAttribute("required", "");
-                        } else {
-                            emailField.removeAttribute("required");
-                        }
-                    });
-                </script>
-                <br>
-            </div>
-            <div class="tab-pane fade" id="about" role="tabpanel" aria-labelledby="about-tab">
-                <form action="<%= process.env.siteAddress %>/redirect/web/user/profile/interests" method="post">
-                    <label for="social_interests">Interests</label>
-                    <input type="text" class="form-control mb-3" name="social_interests" maxlength="50" value="<%= profileApiData.social_interests %>">
-                    <button type="submit" class="btn btn-primary mb-3">Update Interests</button>
-                </form>
-
-                <form action="<%= process.env.siteAddress %>/redirect/web/user/profile/about" method="post">
-                    <%- include("../../partials/summerNoteEditor.ejs", {
-                        editorElementName: "social_aboutMe",
-                        editorPOSTElementName: "social_aboutMe",
-                        editorElementText: profileApiData.social_aboutMe
-                    }) %>
-                    <button type="submit" class="btn btn-primary mt-3">Update About Me</button>
-                </form>
-                <br>
-            </div>
-            <div class="tab-pane fade mt-2" id="socialconnections" role="tabpanel" aria-labelledby="socialconnections-tab">
-                <form action="<%= process.env.siteAddress %>/redirect/web/user/profile/social" method="post">
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                <label for="social_discord"><i class="fab fa-discord"></i> Discord</label>
-                                <small>Your username</small>
-                                <input type="text" class="form-control mb-3" name="social_discord" maxlength="32" value="<%= profileApiData.social_discord %>">
-
-                                <label for="social_steam"><i class="fab fa-steam"></i> Steam</label>
-                                <small>Your username</small>
-                                <input type="text" class="form-control mb-3" name="social_steam" value="<%= profileApiData.social_steam %>">
-
-                                <label for="social_twitch"><i class="fab fa-twitch"></i> Twitch</label>
-                                <small>Your username</small>
-                                <input type="text" class="form-control mb-3" name="social_twitch" maxlength="25" value="<%= profileApiData.social_twitch %>">
-
-                                <label for="social_youtube"><i class="fab fa-youtube"></i> YouTube</label>
-                                <small>Your username</small>
-                                <input type="text" class="form-control mb-3" name="social_youtube" value="<%= profileApiData.social_youtube %>">
+            <div class="tab-content pt-4" id="profileEditorTabsContent">
+                <div class="tab-pane fade show active" id="profileDisplay" role="tabpanel" aria-labelledby="profileDisplay-tab">
+                    <form action="<%= process.env.siteAddress %>/redirect/web/user/profile/display" method="post" class="gy-4">
+                        <div class="row g-4 align-items-end">
+                            <div class="col-lg-6">
+                                <label for="profilePicture_type" class="form-label fw-semibold">Profile Picture Type</label>
+                                <select class="form-select" name="profilePicture_type" id="profilePicture_type">
+                                    <option value="CRAFTATAR" <% if (profileApiData.profilePicture_type === 'CRAFTATAR') { %> selected <% } %>>CRAFTATAR</option>
+                                    <option value="GRAVATAR" <% if (profileApiData.profilePicture_type === 'GRAVATAR') { %> selected <% } %>>GRAVATAR</option>
+                                </select>
+                                <div class="form-text">
+                                    <strong>CRAFTATAR</strong> uses your Minecraft skin by default.<br>
+                                    <strong>GRAVATAR</strong> uses the avatar from your <a href="https://gravatar.com/" target="_blank" rel="noopener">Gravatar</a> account.<br>
+                                    Make sure your avatar follows the <a href="/rules">Network Rules</a>.
+                                </div>
+                            </div>
+                            <div class="col-lg-6">
+                                <label for="profilePicture_email" class="form-label fw-semibold">Email</label>
+                                <input type="email" class="form-control" name="profilePicture_email" id="profilePicture_email" maxlength="70" value="<%= profileApiData.profilePicture_email %>">
+                                <div class="form-text">Required when using Gravatar.</div>
+                                <button type="submit" class="btn btn-main mt-3">Update Profile Display</button>
                             </div>
                         </div>
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                <label for="social_twitter_x"><i class="fab fa-twitter"></i> Twitter/X</label>
-                                <small>Your username</small>
-                                <input type="text" class="form-control mb-3" name="social_twitter_x" maxlength="15" value="<%= profileApiData.social_twitter_x %>">
+                    </form>
+                </div>
 
-                                <label for="social_instagram"><i class="fab fa-square-instagram"></i> Instagram</label>
-                                <small>Your username</small>
-                                <input type="text" class="form-control mb-3" name="social_instagram" maxlength="30" value="<%= profileApiData.social_instagram %>">
-
-                                <label for="social_reddit"><i class="fab fa-reddit"></i> Reddit</label>
-                                <small>Your username</small>
-                                <input type="text" class="form-control mb-3" name="social_reddit" maxlength="38" value="<%= profileApiData.social_reddit %>">
-
-                                <label for="social_spotify"><i class="fab fa-reddit"></i> Spotify</label>
-                                <small>Your User ID</small>
-                                <input type="text" class="form-control mb-3" name="social_spotify" value="<%= profileApiData.social_spotify %>">
-                            </div>
+                <div class="tab-pane fade" id="about" role="tabpanel" aria-labelledby="about-tab">
+                    <div class="row g-4">
+                        <div class="col-lg-6">
+                            <form action="<%= process.env.siteAddress %>/redirect/web/user/profile/interests" method="post" class="h-100">
+                                <label for="social_interests" class="form-label fw-semibold">Interests</label>
+                                <input type="text" class="form-control" name="social_interests" maxlength="50" value="<%= profileApiData.social_interests %>">
+                                <button type="submit" class="btn btn-main mt-3">Update Interests</button>
+                            </form>
+                        </div>
+                        <div class="col-lg-6">
+                            <form action="<%= process.env.siteAddress %>/redirect/web/user/profile/about" method="post" class="h-100">
+                                <label class="form-label fw-semibold">About Me</label>
+                                <%- include("../../partials/summerNoteEditor.ejs", {
+                                    editorElementName: "social_aboutMe",
+                                    editorPOSTElementName: "social_aboutMe",
+                                    editorElementText: profileApiData.social_aboutMe
+                                }) %>
+                                <button type="submit" class="btn btn-main mt-3">Update About Me</button>
+                            </form>
                         </div>
                     </div>
-                    <button type="submit" class="btn btn-primary mb-3">Update Social Connections</button>
-                </form>
+                </div>
+
+                <div class="tab-pane fade" id="socialconnections" role="tabpanel" aria-labelledby="socialconnections-tab">
+                    <div class="mb-4">
+                        <div class="d-flex flex-wrap align-items-center justify-content-between gap-3">
+                            <div>
+                                <h5 class="mb-1">Discord</h5>
+                                <% if (profileApiData.discordId) { %>
+                                    <p class="text-muted mb-0">Connected as <strong><%= profileApiData.social_discord || 'Discord user' %></strong>.</p>
+                                <% } else { %>
+                                    <p class="text-muted mb-0">Connect your Discord account to unlock in-game and website integrations.</p>
+                                <% } %>
+                            </div>
+                            <div class="d-flex gap-2">
+                                <% if (profileApiData.discordId) { %>
+                                    <form action="/profile/social/discord/disconnect" method="post">
+                                        <button type="submit" class="btn btn-outline-danger btn-sm"><i class="fa-solid fa-link-slash me-2"></i>Disconnect</button>
+                                    </form>
+                                <% } else { %>
+                                    <a href="/profile/social/discord/connect" class="btn btn-discord btn-sm"><i class="fa-brands fa-discord me-2"></i>Connect Discord</a>
+                                <% } %>
+                            </div>
+                        </div>
+                        <% if (!profileApiData.discordId) { %>
+                            <small class="text-muted d-block mt-2">We'll take you to Discord to authorise the connection. We never post on your behalf.</small>
+                        <% } %>
+                    </div>
+
+                    <form action="<%= process.env.siteAddress %>/redirect/web/user/profile/social" method="post">
+                        <div class="row g-4">
+                            <div class="col-lg-6">
+                                <div class="mb-3">
+                                    <label for="social_discord" class="form-label fw-semibold"><i class="fab fa-discord me-2"></i>Discord</label>
+                                    <input type="text" class="form-control" name="social_discord" maxlength="32" value="<%= profileApiData.social_discord %>" placeholder="Username or @handle">
+                                </div>
+                                <div class="mb-3">
+                                    <label for="social_steam" class="form-label fw-semibold"><i class="fab fa-steam me-2"></i>Steam</label>
+                                    <input type="text" class="form-control" name="social_steam" value="<%= profileApiData.social_steam %>" placeholder="Steam username">
+                                </div>
+                                <div class="mb-3">
+                                    <label for="social_twitch" class="form-label fw-semibold"><i class="fab fa-twitch me-2"></i>Twitch</label>
+                                    <input type="text" class="form-control" name="social_twitch" maxlength="25" value="<%= profileApiData.social_twitch %>" placeholder="Channel name">
+                                </div>
+                                <div class="mb-3">
+                                    <label for="social_youtube" class="form-label fw-semibold"><i class="fab fa-youtube me-2"></i>YouTube</label>
+                                    <input type="text" class="form-control" name="social_youtube" value="<%= profileApiData.social_youtube %>" placeholder="Channel or handle">
+                                </div>
+                            </div>
+                            <div class="col-lg-6">
+                                <div class="mb-3">
+                                    <label for="social_twitter_x" class="form-label fw-semibold"><i class="fab fa-twitter me-2"></i>Twitter / X</label>
+                                    <input type="text" class="form-control" name="social_twitter_x" maxlength="15" value="<%= profileApiData.social_twitter_x %>" placeholder="@handle">
+                                </div>
+                                <div class="mb-3">
+                                    <label for="social_instagram" class="form-label fw-semibold"><i class="fab fa-square-instagram me-2"></i>Instagram</label>
+                                    <input type="text" class="form-control" name="social_instagram" maxlength="30" value="<%= profileApiData.social_instagram %>" placeholder="@username">
+                                </div>
+                                <div class="mb-3">
+                                    <label for="social_reddit" class="form-label fw-semibold"><i class="fab fa-reddit me-2"></i>Reddit</label>
+                                    <input type="text" class="form-control" name="social_reddit" maxlength="38" value="<%= profileApiData.social_reddit %>" placeholder="Profile URL">
+                                </div>
+                                <div class="mb-3">
+                                    <label for="social_spotify" class="form-label fw-semibold"><i class="fab fa-spotify me-2"></i>Spotify</label>
+                                    <input type="text" class="form-control" name="social_spotify" value="<%= profileApiData.social_spotify %>" placeholder="User ID">
+                                </div>
+                            </div>
+                        </div>
+                        <button type="submit" class="btn btn-main">Update Social Connections</button>
+                    </form>
+                </div>
             </div>
         </div>
     </div>
-    </div>
 </div>
 
-<%- include("../../modules/footer.ejs") %>  
+<script>
+    const pictureTypeSelect = document.getElementById("profilePicture_type");
+    const pictureEmailInput = document.getElementById("profilePicture_email");
+
+    function toggleEmailRequirement() {
+        if (!pictureTypeSelect || !pictureEmailInput) return;
+        if (pictureTypeSelect.value === "GRAVATAR") {
+            pictureEmailInput.setAttribute("required", "required");
+        } else {
+            pictureEmailInput.removeAttribute("required");
+        }
+    }
+
+    if (pictureTypeSelect && pictureEmailInput) {
+        toggleEmailRequirement();
+        pictureTypeSelect.addEventListener("change", toggleEmailRequirement);
+    }
+</script>
+
+<%- include("../../modules/footer.ejs") %>

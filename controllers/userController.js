@@ -689,3 +689,35 @@ export async function getUserLastSession(userId) {
     );
   });
 }
+
+export async function linkDiscordAccount(userId, discordId, discordHandle = null) {
+  return new Promise((resolve, reject) => {
+    db.query(
+      `UPDATE users SET discordId=?, social_discord=? WHERE userId=?`,
+      [discordId, discordHandle, userId],
+      function (error) {
+        if (error) {
+          return reject(error);
+        }
+
+        resolve(true);
+      }
+    );
+  });
+}
+
+export async function unlinkDiscordAccount(userId) {
+  return new Promise((resolve, reject) => {
+    db.query(
+      `UPDATE users SET discordId=NULL, social_discord=NULL WHERE userId=?`,
+      [userId],
+      function (error) {
+        if (error) {
+          return reject(error);
+        }
+
+        resolve(true);
+      }
+    );
+  });
+}

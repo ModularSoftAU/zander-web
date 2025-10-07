@@ -1,17 +1,37 @@
-<section class="page-title hero-overlay" style="background: url(../<%= globalImage %>) no-repeat 50% 50%; background-size: cover;">
-    <div class="container">
-        <div class="row">
-            <div class="col-md-3">
-				<img src="<%= profilePicture %>" alt="<%= profileApiData.username %>'s Avatar" height="180px">
-			</div>
-            <div class="col-md-5">
-                <div class="block">
-                    <h1 class="mb-1"><%= profileApiData.username %>
-                    <% if (profileSession.sessionEnd) { %>
-                        <h4 class="mb-1 text-white"><i class="fa-solid fa-circle" style="color: red;"></i> Last Seen <%= profileSession.lastOnlineDiff %> ago on <%= profileSession.server.charAt(0).toUpperCase() + profileSession.server.slice(1) %></h4>
-                    <% } else { %>
-                        <h4 class="mb-1 text-white"><i class="fa-solid fa-circle" style="color: green;"></i> Currently Online on <%= profileSession.server.charAt(0).toUpperCase() + profileSession.server.slice(1) %></h4>
-                    <% } %>
+<% const isOnline = profileSession && !profileSession.sessionEnd; %>
+<% const serverName = profileSession && profileSession.server ? profileSession.server.charAt(0).toUpperCase() + profileSession.server.slice(1) : "the network"; %>
+
+<section class="profile-hero hero-overlay" style="background: url(../<%= globalImage %>) no-repeat 50% 50%; background-size: cover;">
+    <div class="profile-hero-overlay py-5">
+        <div class="container">
+            <div class="row align-items-center g-4">
+                <div class="col-auto">
+                    <div class="profile-avatar shadow-lg">
+                        <img src="<%= profilePicture %>" alt="<%= profileApiData.username %>'s Avatar" class="img-fluid rounded-circle" width="160" height="160">
+                    </div>
+                </div>
+                <div class="col">
+                    <h1 class="text-white display-6 fw-bold mb-2"><%= profileApiData.username %></h1>
+                    <div class="d-flex flex-wrap align-items-center gap-3 text-white-50">
+                        <% if (isOnline) { %>
+                            <span class="badge badge-soft-success d-inline-flex align-items-center gap-2">
+                                <i class="fa-solid fa-circle"></i>
+                                <span>Online</span>
+                            </span>
+                            <span>Playing on <span class="text-white fw-semibold"><%= serverName %></span></span>
+                        <% } else if (profileSession && profileSession.sessionEnd && profileSession.lastOnlineDiff) { %>
+                            <span class="badge badge-soft-danger d-inline-flex align-items-center gap-2">
+                                <i class="fa-solid fa-circle"></i>
+                                <span>Offline</span>
+                            </span>
+                            <span>Last seen <span class="text-white fw-semibold"><%= profileSession.lastOnlineDiff %> ago</span> on <span class="text-white fw-semibold"><%= serverName %></span></span>
+                        <% } else { %>
+                            <span class="badge badge-soft-secondary d-inline-flex align-items-center gap-2">
+                                <i class="fa-solid fa-circle"></i>
+                                <span>Status Unknown</span>
+                            </span>
+                        <% } %>
+                    </div>
                 </div>
             </div>
         </div>
