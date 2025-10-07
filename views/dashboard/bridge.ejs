@@ -26,7 +26,7 @@
     }) %>
 
     <div class="row g-4 mt-1">
-      <div class="col-lg-6">
+      <div class="col-xl-4 col-lg-6">
         <div class="card shadow-sm border-0 h-100">
           <div class="card-body">
             <h5 class="card-title">Queue a single command</h5>
@@ -58,7 +58,7 @@
         </div>
       </div>
 
-      <div class="col-lg-6">
+      <div class="col-xl-4 col-lg-6">
         <div class="card shadow-sm border-0 h-100">
           <div class="card-body">
             <h5 class="card-title">Trigger a routine</h5>
@@ -80,6 +80,119 @@
               </div>
               <div class="col-12 text-end">
                 <button type="submit" class="btn btn-secondary">Run routine</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-xl-4">
+        <div class="card shadow-sm border-0 h-100">
+          <div class="card-body">
+            <h5 class="card-title">Queue multiple commands</h5>
+            <p class="text-muted small mb-4">
+              Paste an array of tasks to queue several commands at once. Each task can target a different server and define its own priority.
+            </p>
+            <form method="post" action="<%= process.env.siteAddress %>/redirect/bridge/command/add" class="row g-3">
+              <div class="col-12">
+                <label for="bulkSlug" class="form-label">Default target slug (optional)</label>
+                <input type="text" class="form-control" id="bulkSlug" name="slug" placeholder="proxy">
+                <div class="form-text">Used when a task omits its own slug.</div>
+              </div>
+              <div class="col-12">
+                <label for="tasksJSON" class="form-label">Tasks JSON</label>
+                <textarea class="form-control" id="tasksJSON" name="tasksJSON" rows="6" placeholder='[
+  {"slug":"proxy","command":"/broadcast Restarting soon","priority":5},
+  {"slug":"survival","command":"/say Preparing for restart"}
+]'></textarea>
+                <div class="form-text">Each task supports <code>slug</code>, <code>command</code>, optional <code>priority</code>, and <code>metadata</code>.</div>
+              </div>
+              <div class="col-6">
+                <label for="bulkPriority" class="form-label">Default priority</label>
+                <input type="number" class="form-control" id="bulkPriority" name="priority" value="0" step="1">
+              </div>
+              <div class="col-6">
+                <label for="bulkMetadata" class="form-label">Metadata (JSON optional)</label>
+                <textarea class="form-control" id="bulkMetadata" name="metadataJSON" rows="2" placeholder='{"requestedBy":"Dashboard"}'></textarea>
+              </div>
+              <div class="col-12 text-end">
+                <button type="submit" class="btn btn-outline-primary">Queue tasks</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="row g-4 mt-1">
+      <div class="col-xl-6">
+        <div class="card shadow-sm border-0 h-100">
+          <div class="card-body">
+            <h5 class="card-title">Manage queue</h5>
+            <p class="text-muted small mb-4">
+              Quickly clear out tasks that are no longer needed by filtering on status, slug, or routine association.
+            </p>
+            <form method="post" action="<%= process.env.siteAddress %>/redirect/bridge/queue/clear" class="row g-3">
+              <div class="col-md-4">
+                <label for="clearStatus" class="form-label">Status filter</label>
+                <select class="form-select" id="clearStatus" name="status">
+                  <option value="">Any status</option>
+                  <option value="pending">Pending</option>
+                  <option value="processing">Processing</option>
+                  <option value="completed">Completed</option>
+                  <option value="failed">Failed</option>
+                </select>
+              </div>
+              <div class="col-md-4">
+                <label for="clearSlug" class="form-label">Target slug</label>
+                <input type="text" class="form-control" id="clearSlug" name="slug" placeholder="proxy">
+              </div>
+              <div class="col-md-4">
+                <label for="clearRoutine" class="form-label">Routine slug</label>
+                <input type="text" class="form-control" id="clearRoutine" name="routineSlug" placeholder="vote-reward">
+              </div>
+              <div class="col-12 text-end">
+                <button type="submit" class="btn btn-outline-danger">Clear matching tasks</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-xl-6">
+        <div class="card shadow-sm border-0 h-100">
+          <div class="card-body">
+            <h5 class="card-title">Report task outcome</h5>
+            <p class="text-muted small mb-4">
+              Manually update a task status if you execute a command outside of the bridge or need to resolve a stuck job.
+            </p>
+            <form method="post" action="<%= process.env.siteAddress %>/redirect/bridge/task/report" class="row g-3">
+              <div class="col-md-4">
+                <label for="reportTaskId" class="form-label">Task ID</label>
+                <input type="number" class="form-control" id="reportTaskId" name="taskId" placeholder="42" required>
+              </div>
+              <div class="col-md-4">
+                <label for="reportStatus" class="form-label">Status</label>
+                <select class="form-select" id="reportStatus" name="status" required>
+                  <option value="processing">Processing</option>
+                  <option value="completed">Completed</option>
+                  <option value="failed">Failed</option>
+                </select>
+              </div>
+              <div class="col-md-4">
+                <label for="reportExecutedBy" class="form-label">Executed by</label>
+                <input type="text" class="form-control" id="reportExecutedBy" name="executedBy" placeholder="AdminUser">
+              </div>
+              <div class="col-12">
+                <label for="reportResult" class="form-label">Result / Notes</label>
+                <textarea class="form-control" id="reportResult" name="result" rows="3" placeholder="Command executed manually."></textarea>
+              </div>
+              <div class="col-12">
+                <label for="reportMetadata" class="form-label">Metadata (JSON optional)</label>
+                <textarea class="form-control" id="reportMetadata" name="metadataJSON" rows="2" placeholder='{"reason":"manual override"}'></textarea>
+              </div>
+              <div class="col-12 text-end">
+                <button type="submit" class="btn btn-success">Submit report</button>
               </div>
             </form>
           </div>
@@ -206,12 +319,13 @@
                   <th scope="col">Status</th>
                   <th scope="col">Updated</th>
                   <th scope="col">Executed by</th>
+                  <th scope="col"></th>
                 </tr>
               </thead>
               <tbody>
                 <% if (!processingList.length) { %>
                   <tr>
-                    <td colspan="6" class="text-center text-muted">No processing tasks</td>
+                    <td colspan="7" class="text-center text-muted">No processing tasks</td>
                   </tr>
                 <% } else { %>
                   <% processingList.forEach(function(task) { %>
@@ -222,6 +336,22 @@
                       <td><span class="badge bg-warning text-dark"><%= task.status %></span></td>
                       <td><%= moment(task.updatedAt).fromNow() %></td>
                       <td><%= task.executedBy ? task.executedBy : "-" %></td>
+                      <td class="text-end">
+                        <form method="post" action="<%= process.env.siteAddress %>/redirect/bridge/task/report" class="d-inline">
+                          <input type="hidden" name="taskId" value="<%= task.executorTaskId %>">
+                          <input type="hidden" name="status" value="completed">
+                          <button type="submit" class="btn btn-sm btn-outline-success">Mark complete</button>
+                        </form>
+                        <form method="post" action="<%= process.env.siteAddress %>/redirect/bridge/task/report" class="d-inline ms-1">
+                          <input type="hidden" name="taskId" value="<%= task.executorTaskId %>">
+                          <input type="hidden" name="status" value="failed">
+                          <button type="submit" class="btn btn-sm btn-outline-danger">Mark failed</button>
+                        </form>
+                        <form method="post" action="<%= process.env.siteAddress %>/redirect/bridge/task/reset" class="d-inline ms-1">
+                          <input type="hidden" name="taskId" value="<%= task.executorTaskId %>">
+                          <button type="submit" class="btn btn-sm btn-outline-secondary">Reset</button>
+                        </form>
+                      </td>
                     </tr>
                   <% }) %>
                 <% } %>

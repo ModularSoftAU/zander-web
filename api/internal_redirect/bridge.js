@@ -95,4 +95,37 @@ export default function bridgeRedirectRoute(app, config, lang) {
       res
     );
   });
+
+  app.post(`${baseEndpoint}/task/report`, async function (req, res) {
+    if (!hasPermission("zander.web.bridge", req, res)) return;
+
+    req.body.actioningUser = req.session.user.userId;
+
+    const metadataPayload = parseJsonPayload(req.body, "metadataJSON", res);
+    const taskId = req.body.taskId;
+
+    delete req.body.taskId;
+
+    if (metadataPayload) {
+      req.body.metadata = metadataPayload;
+    }
+
+    return forwardRequest(
+      `/api/bridge/processor/task/${taskId}/report`,
+      req,
+      res
+    );
+  });
+
+  app.post(`${baseEndpoint}/queue/clear`, async function (req, res) {
+    if (!hasPermission("zander.web.bridge", req, res)) return;
+
+    req.body.actioningUser = req.session.user.userId;
+
+    return forwardRequest(
+      "/api/bridge/processor/clear",
+      req,
+      res
+    );
+  });
 }
