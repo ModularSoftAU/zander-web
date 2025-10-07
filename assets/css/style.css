@@ -385,6 +385,7 @@ input[type="email"]:focus, input[type="password"]:focus, input[type="text"]:focu
 
 .hero-overlay {
   position: relative;
+  z-index: 0;
 }
 .hero-overlay::before {
   content: '';
@@ -395,7 +396,8 @@ input[type="email"]:focus, input[type="password"]:focus, input[type="text"]:focu
   bottom: 0;
   background-color: #2f508c;
   opacity: 0.9;
-  z-index: 1;
+  z-index: -1;
+  pointer-events: none;
 }
 .hero-overlay > .container, .hero-overlay > .row {
     position: relative;
