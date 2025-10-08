@@ -19,11 +19,8 @@
                             <% ranks.forEach(function(rank) { %>
                                 <span class="rank-pill"
                                       style="--rank-pill-bg: <%= rank.rankBadgeColour || '#ffffff' %>; --rank-pill-text: <%= rank.rankTextColour || '#0f172a' %>"
-                                      title="<%= rank.title ? rank.title : rank.displayName %>">
+                                      title="<%= rank.displayName %>">
                                     <span class="rank-pill-name"><%= rank.displayName %></span>
-                                    <% if (rank.title) { %>
-                                        <span class="rank-pill-title ms-2"><%= rank.title %></span>
-                                    <% } %>
                                 </span>
                             <% }) %>
                         </div>

@@ -239,13 +239,6 @@ input[type="email"]:focus, input[type="password"]:focus, input[type="text"]:focu
   box-shadow: 0 6px 12px rgba(15, 23, 42, 0.12);
 }
 
-.rank-pill-title {
-  font-size: 0.75rem;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  opacity: 0.9;
-}
-
 .profile-tabs {
   gap: 0.75rem;
   flex-wrap: wrap;
