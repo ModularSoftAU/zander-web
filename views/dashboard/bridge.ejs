@@ -148,7 +148,7 @@
                   <div class="card-body d-flex flex-column">
                     <h5 class="card-title">Define or update a routine</h5>
                     <p class="text-muted small mb-4">
-                      Build the steps visually and we will create the JSON payload when you save. Steps execute in ascending order values.
+                      Build the steps visually (or load an existing routine to update it) and we will create the JSON payload when you save. Steps execute in ascending order values.
                     </p>
                     <div class="mt-auto d-flex justify-content-end">
                       <button type="button" class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#routineBuilderModal">
@@ -322,12 +322,13 @@
                             <th scope="col">Description</th>
                             <th scope="col">Steps</th>
                             <th scope="col">Updated</th>
+                            <th scope="col" class="text-end">Actions</th>
                           </tr>
                         </thead>
                         <tbody>
                           <% if (!routinesList.length) { %>
                             <tr>
-                              <td colspan="5" class="text-center text-muted">No routines configured yet</td>
+                              <td colspan="6" class="text-center text-muted">No routines configured yet</td>
                             </tr>
                           <% } else { %>
                             <% routinesList.forEach(function(routine) { %>
@@ -346,6 +347,11 @@
                                   </ul>
                                 </td>
                                 <td><%= moment(routine.updatedAt || routine.createdAt).fromNow() %></td>
+                                <td class="text-end">
+                                  <button type="button" class="btn btn-sm btn-outline-primary" data-routine-edit="<%= routine.routineSlug %>" data-bs-toggle="modal" data-bs-target="#routineBuilderModal">
+                                    Edit
+                                  </button>
+                                </td>
                               </tr>
                             <% }) %>
                           <% } %>
@@ -511,6 +517,19 @@
         </div>
         <div class="modal-body">
           <div class="row g-3">
+            <div class="col-12">
+              <label for="routineSelect" class="form-label">Load an existing routine</label>
+              <div class="d-flex flex-column flex-lg-row align-items-lg-center gap-2">
+                <select class="form-select" id="routineSelect" data-routine-select>
+                  <option value="">Create a new routine</option>
+                  <% routinesList.forEach(function(routine) { %>
+                    <option value="<%= routine.routineSlug %>"><%= routine.displayName || routine.routineSlug %></option>
+                  <% }) %>
+                </select>
+                <button type="button" class="btn btn-outline-secondary" data-routine-clear>Start fresh</button>
+              </div>
+              <div class="text-muted small mt-1" data-routine-active-label>Creating a new routine.</div>
+            </div>
             <div class="col-md-4">
               <label for="routineSlugSave" class="form-label">Routine slug</label>
               <input type="text" class="form-control" id="routineSlugSave" name="routineSlug" placeholder="vote-reward" required>
@@ -533,6 +552,7 @@
                 <p class="form-text">Provide a slug and command for each step. Metadata pairs are optional and map to placeholders in your commands.</p>
                 <div class="text-danger small d-none" data-routine-error>Please add at least one step with a slug and command.</div>
                 <input type="hidden" name="stepsJSON" data-routine-output>
+                <script type="application/json" data-routines-json><%- JSON.stringify(routinesList || []).replace(/</g, '\u003c') %></script>
               </div>
             </div>
           </div>
@@ -829,8 +849,41 @@
       const output = routineBuilder.querySelector('[data-routine-output]');
       const errorMessage = routineBuilder.querySelector('[data-routine-error]');
       const form = routineBuilder.closest('form');
+      const slugInput = form ? form.querySelector('#routineSlugSave') : null;
+      const displayNameInput = form ? form.querySelector('#displayName') : null;
+      const descriptionInput = form ? form.querySelector('#routineDescription') : null;
+      const selectInput = form ? form.querySelector('[data-routine-select]') : null;
+      const clearButton = form ? form.querySelector('[data-routine-clear]') : null;
+      const activeLabel = form ? form.querySelector('[data-routine-active-label]') : null;
+      const routinesDataElement = routineBuilder.querySelector('[data-routines-json]');
 
-      function addStep() {
+      let routinesData = [];
+      if (routinesDataElement) {
+        try {
+          routinesData = JSON.parse(routinesDataElement.textContent || '[]');
+        } catch (error) {
+          console.error('Failed to parse routines JSON', error);
+        }
+
+        routinesDataElement.remove();
+      }
+
+      const defaultActiveMessage = 'Creating a new routine.';
+
+      function updateActiveLabel(routine) {
+        if (!activeLabel) {
+          return;
+        }
+
+        if (routine) {
+          const name = routine.displayName || routine.routineSlug;
+          activeLabel.textContent = `Editing routine “${name}”.`;
+        } else {
+          activeLabel.textContent = defaultActiveMessage;
+        }
+      }
+
+      function addStep(initialData = {}) {
         const defaultOrder = stepsContainer.children.length + 1;
         const step = document.createElement('div');
         step.className = 'routine-step p-3 mb-3';
@@ -866,7 +919,108 @@
           step.remove();
         });
 
+        const orderInput = step.querySelector('[data-step-order]');
+        const slugField = step.querySelector('[data-step-slug]');
+        const commandField = step.querySelector('[data-step-command]');
+        const metadataKeyField = step.querySelector('[data-step-metadata-key]');
+        const metadataValueField = step.querySelector('[data-step-metadata-value]');
+
+        if (orderInput) {
+          const orderNumber = Number(initialData.order);
+          orderInput.value = !Number.isNaN(orderNumber) ? orderNumber : defaultOrder;
+        }
+
+        if (slugField && initialData.slug) {
+          slugField.value = initialData.slug;
+        }
+
+        if (commandField && initialData.command) {
+          commandField.value = initialData.command;
+        }
+
+        if (initialData.metadata && typeof initialData.metadata === 'object') {
+          const metadataEntries = Object.entries(initialData.metadata);
+          if (metadataEntries.length) {
+            const [metadataKey, metadataValue] = metadataEntries[0];
+            if (metadataKeyField) {
+              metadataKeyField.value = metadataKey;
+            }
+            if (metadataValueField) {
+              metadataValueField.value = metadataValue;
+            }
+          }
+        }
+
         stepsContainer.appendChild(step);
+      }
+
+      function resetBuilder(options = {}) {
+        const { clearSelection = false } = options;
+
+        if (slugInput) {
+          slugInput.value = '';
+        }
+
+        if (displayNameInput) {
+          displayNameInput.value = '';
+        }
+
+        if (descriptionInput) {
+          descriptionInput.value = '';
+        }
+
+        if (errorMessage) {
+          errorMessage.classList.add('d-none');
+        }
+
+        stepsContainer.innerHTML = '';
+        addStep();
+        updateActiveLabel(null);
+
+        if (clearSelection && selectInput) {
+          selectInput.value = '';
+        }
+      }
+
+      function populateFromRoutine(routine) {
+        if (!routine) {
+          resetBuilder();
+          return;
+        }
+
+        if (slugInput) {
+          slugInput.value = routine.routineSlug || '';
+        }
+
+        if (displayNameInput) {
+          displayNameInput.value = routine.displayName || '';
+        }
+
+        if (descriptionInput) {
+          descriptionInput.value = routine.description || '';
+        }
+
+        if (errorMessage) {
+          errorMessage.classList.add('d-none');
+        }
+
+        stepsContainer.innerHTML = '';
+
+        const sortedSteps = Array.isArray(routine.steps)
+          ? [...routine.steps].sort((a, b) => {
+              const orderA = typeof a.order === 'number' ? a.order : 0;
+              const orderB = typeof b.order === 'number' ? b.order : 0;
+              return orderA - orderB;
+            })
+          : [];
+
+        if (!sortedSteps.length) {
+          addStep();
+        } else {
+          sortedSteps.forEach((stepData) => addStep(stepData));
+        }
+
+        updateActiveLabel(routine);
       }
 
       if (addStepButton && stepsContainer && output && form) {
@@ -874,26 +1028,22 @@
           addStep();
         });
 
-        if (!stepsContainer.children.length) {
-          addStep();
-        }
-
         form.addEventListener('submit', function (event) {
           const steps = [];
           let hasError = false;
 
           stepsContainer.querySelectorAll('.routine-step').forEach((stepElement) => {
-            const slugInput = stepElement.querySelector('[data-step-slug]');
-            const commandInput = stepElement.querySelector('[data-step-command]');
-            const orderInput = stepElement.querySelector('[data-step-order]');
-            const metadataKeyInput = stepElement.querySelector('[data-step-metadata-key]');
-            const metadataValueInput = stepElement.querySelector('[data-step-metadata-value]');
+            const slugField = stepElement.querySelector('[data-step-slug]');
+            const commandField = stepElement.querySelector('[data-step-command]');
+            const orderField = stepElement.querySelector('[data-step-order]');
+            const metadataKeyField = stepElement.querySelector('[data-step-metadata-key]');
+            const metadataValueField = stepElement.querySelector('[data-step-metadata-value]');
 
-            const slug = slugInput ? slugInput.value.trim() : '';
-            const command = commandInput ? commandInput.value.trim() : '';
-            const orderRaw = orderInput ? orderInput.value.trim() : '';
-            const metadataKey = metadataKeyInput ? metadataKeyInput.value.trim() : '';
-            const metadataValue = metadataValueInput ? metadataValueInput.value.trim() : '';
+            const slug = slugField ? slugField.value.trim() : '';
+            const command = commandField ? commandField.value.trim() : '';
+            const orderRaw = orderField ? orderField.value.trim() : '';
+            const metadataKey = metadataKeyField ? metadataKeyField.value.trim() : '';
+            const metadataValue = metadataValueField ? metadataValueField.value.trim() : '';
 
             if (!slug || !command) {
               hasError = true;
@@ -939,6 +1089,49 @@
 
           output.value = JSON.stringify(steps);
         });
+
+        resetBuilder();
+
+        if (selectInput) {
+          selectInput.addEventListener('change', function () {
+            const selectedSlug = selectInput.value;
+            if (!selectedSlug) {
+              resetBuilder();
+              return;
+            }
+
+            const routine = routinesData.find((item) => item && item.routineSlug === selectedSlug);
+            if (routine) {
+              populateFromRoutine(routine);
+            } else {
+              resetBuilder();
+            }
+          });
+        }
+
+        if (clearButton) {
+          clearButton.addEventListener('click', function () {
+            resetBuilder({ clearSelection: true });
+          });
+        }
+
+        if (selectInput) {
+          const routineEditButtons = document.querySelectorAll('[data-routine-edit]');
+          routineEditButtons.forEach((button) => {
+            button.addEventListener('click', function () {
+              const slug = button.getAttribute('data-routine-edit') || '';
+              selectInput.value = slug;
+              selectInput.dispatchEvent(new Event('change'));
+            });
+          });
+        }
+
+        const routineModal = document.getElementById('routineBuilderModal');
+        if (routineModal) {
+          routineModal.addEventListener('hidden.bs.modal', function () {
+            resetBuilder({ clearSelection: true });
+          });
+        }
       }
     }
   });
