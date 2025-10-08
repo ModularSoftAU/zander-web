@@ -16,16 +16,18 @@
   const routinesList = routines && routines.success ? routines.data : [];
 %>
 
-<div class="row dashboardview">
-  <div class="col-sm-2">
+<div class="row g-0 dashboardview">
+  <div class="col-12 col-lg-2 border-bottom border-lg-0 mb-4 mb-lg-0">
     <%- include("../modules/dashboard/dashboard-sidebar.ejs") %>
   </div>
-  <div class="col" style="padding: 20px;">
-    <%- include("../partials/documentationLink.ejs", {
-        doclink: "https://modularsoft.org/docs/products/zander/features/bridge/"
-    }) %>
+  <div class="col-12 col-lg-10 bridge-layout">
+    <div class="mb-4">
+      <%- include("../partials/documentationLink.ejs", {
+          doclink: "https://modularsoft.org/docs/products/zander/features/bridge/"
+      }) %>
+    </div>
 
-    <div class="card shadow-sm border-0 mb-4">
+    <div class="card bridge-card shadow-sm border-0 mb-4">
       <div class="card-body">
         <h5 class="card-title">Bridge overview</h5>
         <p class="text-muted small mb-3">
@@ -60,37 +62,39 @@
       }) %>
     <% } %>
 
-    <div class="card shadow-sm border-0">
+    <div class="card bridge-card shadow-sm border-0">
       <div class="card-body">
-        <ul class="nav nav-pills gap-2 flex-wrap mb-3" id="bridgeTabs" role="tablist">
-          <li class="nav-item" role="presentation">
-            <button type="button" class="nav-link active" data-bridge-tab="queue" role="tab" aria-selected="true">
+        <ul class="nav nav-pills bridge-tablist mb-4" id="bridgeTabs" role="tablist">
+          <li class="nav-item flex-grow-1" role="presentation">
+            <button type="button" class="nav-link bridge-tab-button active" data-bridge-tab="queue" role="tab" aria-selected="true">
               Queue commands
             </button>
           </li>
-          <li class="nav-item" role="presentation">
-            <button type="button" class="nav-link" data-bridge-tab="routines" role="tab" aria-selected="false">
+          <li class="nav-item flex-grow-1" role="presentation">
+            <button type="button" class="nav-link bridge-tab-button" data-bridge-tab="routines" role="tab" aria-selected="false">
               Routines
             </button>
           </li>
-          <li class="nav-item" role="presentation">
-            <button type="button" class="nav-link" data-bridge-tab="manage" role="tab" aria-selected="false">
+          <li class="nav-item flex-grow-1" role="presentation">
+            <button type="button" class="nav-link bridge-tab-button" data-bridge-tab="manage" role="tab" aria-selected="false">
               Queue management
             </button>
           </li>
-          <li class="nav-item" role="presentation">
-            <button type="button" class="nav-link" data-bridge-tab="status" role="tab" aria-selected="false">
-              Status
-              <span class="badge bg-light text-dark ms-2"><%= pendingList.length + processingList.length %></span>
+          <li class="nav-item flex-grow-1" role="presentation">
+            <button type="button" class="nav-link bridge-tab-button" data-bridge-tab="status" role="tab" aria-selected="false">
+              <span class="d-flex align-items-center justify-content-between">
+                <span>Status</span>
+                <span class="badge bg-light text-dark ms-3"><%= pendingList.length + processingList.length %></span>
+              </span>
             </button>
           </li>
         </ul>
 
         <div class="tab-content" id="bridgeTabContent">
           <div class="tab-pane active" data-bridge-panel="queue" role="tabpanel">
-            <div class="row g-4">
-              <div class="col-xl-6">
-                <div class="card shadow-sm border-0 h-100">
+            <div class="row g-4 row-cols-1 row-cols-xl-2">
+              <div class="col">
+                <div class="card bridge-card shadow-sm border-0 h-100">
                   <div class="card-body">
                     <h5 class="card-title">Queue a single command</h5>
                     <p class="text-muted small mb-4">
@@ -112,7 +116,7 @@
                       </div>
                       <div class="col-12">
                         <div class="metadata-builder" data-metadata-builder>
-                          <div class="d-flex justify-content-between align-items-center mb-2">
+                          <div class="d-flex flex-column flex-sm-row align-items-sm-center justify-content-between gap-2 mb-3">
                             <span class="form-label mb-0">Metadata (optional)</span>
                             <button type="button" class="btn btn-sm btn-outline-secondary" data-add-metadata>
                               Add pair
@@ -131,8 +135,8 @@
                 </div>
               </div>
 
-              <div class="col-xl-6">
-                <div class="card shadow-sm border-0 h-100">
+              <div class="col">
+                <div class="card bridge-card shadow-sm border-0 h-100">
                   <div class="card-body">
                     <h5 class="card-title">Queue multiple commands</h5>
                     <p class="text-muted small">
@@ -150,32 +154,18 @@
                       </div>
                       <div class="col-12">
                         <div class="bulk-builder" data-bulk-builder>
-                          <div class="d-flex justify-content-between align-items-center mb-2">
+                          <div class="d-flex flex-column flex-sm-row align-items-sm-center justify-content-between gap-2 mb-3">
                             <span class="form-label mb-0">Commands in this batch</span>
                             <button type="button" class="btn btn-sm btn-outline-secondary" data-add-bulk-row>Add command</button>
                           </div>
-                          <div class="table-responsive">
-                            <table class="table table-sm align-middle">
-                              <thead>
-                                <tr>
-                                  <th scope="col" style="min-width: 120px;">Slug</th>
-                                  <th scope="col" style="min-width: 200px;">Command</th>
-                                  <th scope="col" style="min-width: 100px;">Priority</th>
-                                  <th scope="col" style="min-width: 140px;">Metadata key</th>
-                                  <th scope="col" style="min-width: 160px;">Metadata value</th>
-                                  <th scope="col" class="text-end"></th>
-                                </tr>
-                              </thead>
-                              <tbody data-bulk-rows></tbody>
-                            </table>
-                          </div>
+                          <div class="bulk-rows" data-bulk-rows></div>
                           <p class="form-text">Leave slug or priority blank to inherit the defaults above.</p>
                           <input type="hidden" name="tasksJSON" id="bulkTasksJSON" data-bulk-output>
                         </div>
                       </div>
                       <div class="col-12">
                         <div class="metadata-builder" data-metadata-builder>
-                          <div class="d-flex justify-content-between align-items-center mb-2">
+                          <div class="d-flex flex-column flex-sm-row align-items-sm-center justify-content-between gap-2 mb-3">
                             <span class="form-label mb-0">Batch metadata (optional)</span>
                             <button type="button" class="btn btn-sm btn-outline-secondary" data-add-metadata>Add pair</button>
                           </div>
@@ -196,8 +186,8 @@
 
           <div class="tab-pane" data-bridge-panel="routines" role="tabpanel">
             <div class="row g-4">
-              <div class="col-xl-5">
-                <div class="card shadow-sm border-0 h-100">
+              <div class="col-12 col-xl-5">
+                <div class="card bridge-card shadow-sm border-0 h-100">
                   <div class="card-body">
                     <h5 class="card-title">Trigger a routine</h5>
                     <p class="text-muted small mb-4">
@@ -214,7 +204,7 @@
                       </div>
                       <div class="col-12">
                         <div class="metadata-builder" data-metadata-builder>
-                          <div class="d-flex justify-content-between align-items-center mb-2">
+                          <div class="d-flex flex-column flex-sm-row align-items-sm-center justify-content-between gap-2 mb-3">
                             <span class="form-label mb-0">Routine metadata (optional)</span>
                             <button type="button" class="btn btn-sm btn-outline-secondary" data-add-metadata>Add pair</button>
                           </div>
@@ -230,8 +220,8 @@
                   </div>
                 </div>
               </div>
-              <div class="col-xl-7">
-                <div class="card shadow-sm border-0 h-100">
+              <div class="col-12 col-xl-7">
+                <div class="card bridge-card shadow-sm border-0 h-100">
                   <div class="card-body">
                     <h5 class="card-title">Define or update a routine</h5>
                     <p class="text-muted small">
@@ -252,7 +242,7 @@
                       </div>
                       <div class="col-12">
                         <div class="routine-builder" data-routine-builder>
-                          <div class="d-flex justify-content-between align-items-center mb-2">
+                          <div class="d-flex flex-column flex-sm-row align-items-sm-center justify-content-between gap-2 mb-3">
                             <span class="form-label mb-0">Routine steps</span>
                             <button type="button" class="btn btn-sm btn-outline-secondary" data-add-step>Add step</button>
                           </div>
@@ -273,9 +263,9 @@
           </div>
 
           <div class="tab-pane" data-bridge-panel="manage" role="tabpanel">
-            <div class="row g-4">
-              <div class="col-xl-6">
-                <div class="card shadow-sm border-0 h-100">
+            <div class="row g-4 row-cols-1 row-cols-xl-2">
+              <div class="col">
+                <div class="card bridge-card shadow-sm border-0 h-100">
                   <div class="card-body">
                     <h5 class="card-title">Clear tasks from the queue</h5>
                     <p class="text-muted small mb-4">
@@ -307,8 +297,8 @@
                   </div>
                 </div>
               </div>
-              <div class="col-xl-6">
-                <div class="card shadow-sm border-0 h-100">
+              <div class="col">
+                <div class="card bridge-card shadow-sm border-0 h-100">
                   <div class="card-body">
                     <h5 class="card-title">Report a task outcome</h5>
                     <p class="text-muted small mb-4">
@@ -337,7 +327,7 @@
                       </div>
                       <div class="col-12">
                         <div class="metadata-builder" data-metadata-builder>
-                          <div class="d-flex justify-content-between align-items-center mb-2">
+                          <div class="d-flex flex-column flex-sm-row align-items-sm-center justify-content-between gap-2 mb-3">
                             <span class="form-label mb-0">Metadata (optional)</span>
                             <button type="button" class="btn btn-sm btn-outline-secondary" data-add-metadata>Add pair</button>
                           </div>
@@ -359,9 +349,9 @@
           <div class="tab-pane" data-bridge-panel="status" role="tabpanel">
             <div class="row g-4">
               <div class="col-12">
-                <div class="card shadow-sm border-0">
+                <div class="card bridge-card shadow-sm border-0">
                   <div class="card-body">
-                    <div class="d-flex justify-content-between align-items-center mb-3">
+                    <div class="d-flex flex-column flex-sm-row align-items-sm-center justify-content-between gap-2 mb-3">
                       <h5 class="card-title mb-0">Pending tasks</h5>
                       <span class="badge bg-primary rounded-pill"><%= pendingList.length %></span>
                     </div>
@@ -409,9 +399,9 @@
               </div>
 
               <div class="col-12">
-                <div class="card shadow-sm border-0">
+                <div class="card bridge-card shadow-sm border-0">
                   <div class="card-body">
-                    <div class="d-flex justify-content-between align-items-center mb-3">
+                    <div class="d-flex flex-column flex-sm-row align-items-sm-center justify-content-between gap-2 mb-3">
                       <h5 class="card-title mb-0">Processing tasks</h5>
                       <span class="badge bg-warning text-dark rounded-pill"><%= processingList.length %></span>
                     </div>
@@ -563,16 +553,16 @@
         const safeKey = (key || '').replace(/"/g, '&quot;');
         const safeValue = (value || '').replace(/"/g, '&quot;');
         const row = document.createElement('div');
-        row.className = 'row g-2 metadata-row align-items-end mb-2';
+        row.className = 'row g-3 metadata-row align-items-end mb-2';
         row.innerHTML = `
-          <div class="col-md-5">
+          <div class="col-12 col-md-5">
             <input type="text" class="form-control" placeholder="Key" data-metadata-key value="${safeKey}">
           </div>
-          <div class="col-md-5">
+          <div class="col-12 col-md-5">
             <input type="text" class="form-control" placeholder="Value" data-metadata-value value="${safeValue}">
           </div>
-          <div class="col-md-2 text-md-end">
-            <button type="button" class="btn btn-outline-danger btn-sm w-100" data-remove-row>Remove</button>
+          <div class="col-12 col-md-2 text-md-end">
+            <button type="button" class="btn btn-outline-danger btn-sm" data-remove-row>Remove</button>
           </div>
         `;
 
@@ -619,26 +609,35 @@
       const form = bulkBuilder.closest('form');
 
       function addBulkRow() {
-        const row = document.createElement('tr');
+        const row = document.createElement('div');
+        row.className = 'bulk-row';
+        row.setAttribute('data-bulk-row', '');
         row.innerHTML = `
-          <td>
-            <input type="text" class="form-control form-control-sm" placeholder="proxy" data-bulk-slug>
-          </td>
-          <td>
-            <input type="text" class="form-control form-control-sm" placeholder="/say Hello" data-bulk-command required>
-          </td>
-          <td>
-            <input type="number" class="form-control form-control-sm" placeholder="0" data-bulk-priority>
-          </td>
-          <td>
-            <input type="text" class="form-control form-control-sm" placeholder="Key" data-bulk-metadata-key>
-          </td>
-          <td>
-            <input type="text" class="form-control form-control-sm" placeholder="Value" data-bulk-metadata-value>
-          </td>
-          <td class="text-end">
-            <button type="button" class="btn btn-outline-danger btn-sm" data-remove-row>Remove</button>
-          </td>
+          <div class="row g-3 align-items-end">
+            <div class="col-12 col-md-6">
+              <label class="form-label">Target slug <span class="text-muted">(optional)</span></label>
+              <input type="text" class="form-control" placeholder="proxy" data-bulk-slug>
+            </div>
+            <div class="col-12 col-md-6">
+              <label class="form-label">Command</label>
+              <input type="text" class="form-control" placeholder="/say Hello" data-bulk-command required>
+            </div>
+            <div class="col-12 col-md-4">
+              <label class="form-label">Priority <span class="text-muted">(optional)</span></label>
+              <input type="number" class="form-control" placeholder="0" data-bulk-priority>
+            </div>
+            <div class="col-12 col-md-4">
+              <label class="form-label">Metadata key <span class="text-muted">(optional)</span></label>
+              <input type="text" class="form-control" placeholder="Key" data-bulk-metadata-key>
+            </div>
+            <div class="col-12 col-md-4">
+              <label class="form-label">Metadata value <span class="text-muted">(optional)</span></label>
+              <input type="text" class="form-control" placeholder="Value" data-bulk-metadata-value>
+            </div>
+            <div class="col-12 col-sm-4 col-lg-2 d-flex justify-content-sm-end">
+              <button type="button" class="btn btn-outline-danger btn-sm" data-remove-row>Remove command</button>
+            </div>
+          </div>
         `;
 
         row.querySelector('[data-remove-row]').addEventListener('click', function () {
@@ -660,7 +659,7 @@
         form.addEventListener('submit', function () {
           const tasks = [];
 
-          rowsContainer.querySelectorAll('tr').forEach((row) => {
+          rowsContainer.querySelectorAll('[data-bulk-row]').forEach((row) => {
             const commandInput = row.querySelector('[data-bulk-command]');
             const slugInput = row.querySelector('[data-bulk-slug]');
             const priorityInput = row.querySelector('[data-bulk-priority]');
@@ -712,29 +711,29 @@
       function addStep() {
         const defaultOrder = stepsContainer.children.length + 1;
         const step = document.createElement('div');
-        step.className = 'routine-step border rounded p-3 mb-3';
+        step.className = 'routine-step p-3 mb-3';
         step.innerHTML = `
           <div class="row g-3 align-items-end">
-            <div class="col-md-2">
+            <div class="col-12 col-sm-6 col-lg-3">
               <label class="form-label">Order</label>
               <input type="number" class="form-control" data-step-order min="0" value="${defaultOrder}">
             </div>
-            <div class="col-md-4">
+            <div class="col-12 col-lg-4">
               <label class="form-label">Server slug</label>
               <input type="text" class="form-control" placeholder="proxy" data-step-slug required>
             </div>
-            <div class="col-md-4">
+            <div class="col-12 col-lg-4">
               <label class="form-label">Command</label>
               <input type="text" class="form-control" placeholder="/say Welcome" data-step-command required>
             </div>
-            <div class="col-md-2 text-md-end">
-              <button type="button" class="btn btn-outline-danger btn-sm w-100" data-remove-step>Remove</button>
+            <div class="col-12 col-lg-1 text-lg-end">
+              <button type="button" class="btn btn-outline-danger btn-sm w-100 mt-2 mt-lg-0" data-remove-step>Remove</button>
             </div>
-            <div class="col-md-6">
+            <div class="col-12 col-md-6">
               <label class="form-label">Metadata key <span class="text-muted">(optional)</span></label>
               <input type="text" class="form-control" placeholder="player" data-step-metadata-key>
             </div>
-            <div class="col-md-6">
+            <div class="col-12 col-md-6">
               <label class="form-label">Metadata value <span class="text-muted">(optional)</span></label>
               <input type="text" class="form-control" placeholder="{username}" data-step-metadata-value>
             </div>

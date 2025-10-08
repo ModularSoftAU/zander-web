@@ -56,23 +56,25 @@
 
                     <div class="tab-content pt-4" id="profileTabsContent">
                         <div class="tab-pane fade show active" id="about" role="tabpanel" aria-labelledby="about-tab">
-                            <div class="row g-3 mb-4">
-                                <div class="col-sm-6">
-                                    <div class="profile-stat text-center">
-                                        <div class="profile-stat-number"><%= profileStats.totalLogins %></div>
-                                        <div class="profile-stat-label">Logins</div>
+                            <div class="row gy-4 align-items-start mt-1 mb-4">
+                                <div class="col-12 col-sm-6">
+                                    <div class="profile-legacy-stat text-center text-sm-start">
+                                        <h2 class="mb-1"><%= profileStats.totalLogins %></h2>
+                                        <p class="text-muted text-uppercase small mb-0">Logins</p>
                                     </div>
                                 </div>
-                                <div class="col-sm-6">
-                                    <div class="profile-stat text-center">
-                                        <div class="profile-stat-number"><%= profileStats.totalPlaytime %></div>
-                                        <div class="profile-stat-label">Total Playtime</div>
+                                <div class="col-12 col-sm-6">
+                                    <div class="profile-legacy-stat text-center text-sm-start">
+                                        <h2 class="mb-1"><%= profileStats.totalPlaytime %></h2>
+                                        <p class="text-muted text-uppercase small mb-0">Total Playtime</p>
                                     </div>
                                 </div>
                             </div>
 
+                            <hr class="my-4">
+
                             <% if (profileApiData.social_aboutMe) { %>
-                                <div class="profile-about-content">
+                                <div class="profile-about-legacy">
                                     <%- profileApiData.social_aboutMe %>
                                 </div>
                             <% } else { %>

@@ -244,6 +244,27 @@ input[type="email"]:focus, input[type="password"]:focus, input[type="text"]:focu
   color: #fff;
 }
 
+.profile-legacy-stat h2 {
+  font-weight: 700;
+  font-size: clamp(2rem, 4vw, 2.75rem);
+}
+
+.profile-legacy-stat p {
+  letter-spacing: 0.08em;
+}
+
+.profile-about-legacy {
+  font-size: 1rem;
+  line-height: 1.7;
+  color: #1f2d3d;
+}
+
+.profile-about-legacy p:last-child,
+.profile-about-legacy ul:last-child,
+.profile-about-legacy ol:last-child {
+  margin-bottom: 0;
+}
+
 .profile-stat {
   background: rgba(47, 80, 140, 0.08);
   border-radius: 1rem;
@@ -319,6 +340,115 @@ input[type="email"]:focus, input[type="password"]:focus, input[type="text"]:focu
 .badge-soft-discord {
   background-color: rgba(88, 101, 242, 0.2);
   color: #5865f2;
+}
+
+.bridge-layout {
+  padding: 1.5rem 1rem 3rem;
+}
+
+@media (min-width: 768px) {
+  .bridge-layout {
+    padding: 2rem 1.5rem 3.5rem;
+  }
+}
+
+@media (min-width: 1200px) {
+  .bridge-layout {
+    padding-left: 2rem;
+    padding-right: 2rem;
+  }
+}
+
+.bridge-tablist {
+  gap: 0.75rem;
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  padding-bottom: 0.5rem;
+}
+
+.bridge-tablist::-webkit-scrollbar {
+  display: none;
+}
+
+.bridge-tab-button {
+  border-radius: 0.85rem;
+  background-color: rgba(47, 80, 140, 0.08);
+  color: #2f508c;
+  font-weight: 600;
+  padding: 0.75rem 1rem;
+  min-width: 180px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  transition: background-color 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.bridge-tab-button:hover,
+.bridge-tab-button.active {
+  background-color: #2f508c;
+  color: #fff;
+  box-shadow: 0 0.5rem 1rem rgba(47, 80, 140, 0.2);
+}
+
+@media (max-width: 575.98px) {
+  .bridge-tablist {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .bridge-tab-button {
+    width: 100%;
+    text-align: left;
+    justify-content: space-between;
+  }
+}
+
+.bridge-card {
+  border-radius: 1.25rem;
+}
+
+.bridge-card .card-body {
+  padding: 1.5rem;
+}
+
+@media (min-width: 992px) {
+  .bridge-card .card-body {
+    padding: 2rem;
+  }
+}
+
+.bulk-row {
+  background-color: rgba(15, 23, 42, 0.02);
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  border-radius: 1rem;
+  padding: 1.25rem;
+}
+
+.bulk-row + .bulk-row {
+  margin-top: 1rem;
+}
+
+.routine-step {
+  border-radius: 1rem;
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  background-color: rgba(15, 23, 42, 0.02);
+}
+
+.routine-step.border-danger {
+  border-color: #dc3545 !important;
+}
+
+.metadata-row .btn,
+.bulk-row .btn[data-remove-row] {
+  width: 100%;
+}
+
+@media (min-width: 576px) {
+  .metadata-row .btn,
+  .bulk-row .btn[data-remove-row] {
+    width: auto;
+  }
 }
 
 .badge-soft-success i,
