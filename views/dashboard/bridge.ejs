@@ -95,257 +95,105 @@
             <div class="row g-4 row-cols-1 row-cols-xl-2">
               <div class="col">
                 <div class="card bridge-card shadow-sm border-0 h-100">
-                  <div class="card-body">
+                  <div class="card-body d-flex flex-column">
                     <h5 class="card-title">Queue a single command</h5>
                     <p class="text-muted small mb-4">
                       Send one command to a specific server slug. Metadata pairs are optional and help processors know who queued the work or why.
                     </p>
-                    <form method="post" action="<%= process.env.siteAddress %>/redirect/bridge/command/add" class="row g-3" id="singleCommandForm">
-                      <div class="col-12">
-                        <label for="command" class="form-label">Command</label>
-                        <input type="text" class="form-control" id="command" name="command" placeholder="/ban Player Reason" required>
-                      </div>
-                      <div class="col-md-6">
-                        <label for="slug" class="form-label">Target slug</label>
-                        <input type="text" class="form-control" id="slug" name="slug" placeholder="proxy" required>
-                      </div>
-                      <div class="col-md-6">
-                        <label for="priority" class="form-label">Priority</label>
-                        <input type="number" class="form-control" id="priority" name="priority" value="0" step="1">
-                        <div class="form-text">Higher numbers are handled first.</div>
-                      </div>
-                      <div class="col-12">
-                        <div class="metadata-builder" data-metadata-builder>
-                          <div class="d-flex flex-column flex-sm-row align-items-sm-center justify-content-between gap-2 mb-3">
-                            <span class="form-label mb-0">Metadata (optional)</span>
-                            <button type="button" class="btn btn-sm btn-outline-secondary" data-add-metadata>
-                              Add pair
-                            </button>
-                          </div>
-                          <div class="metadata-rows" data-metadata-rows></div>
-                          <p class="form-text">Examples: key <code>requestedBy</code> with value <code>Dashboard</code>, or key <code>reason</code> with value <code>Vote reward</code>.</p>
-                          <input type="hidden" name="metadataJSON" data-metadata-output>
-                        </div>
-                      </div>
-                      <div class="col-12 text-end">
-                        <button type="submit" class="btn btn-primary">Queue command</button>
-                      </div>
-                    </form>
+                    <div class="mt-auto d-flex justify-content-end">
+                      <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#singleCommandModal">
+                        Open form
+                      </button>
+                    </div>
                   </div>
                 </div>
               </div>
 
               <div class="col">
                 <div class="card bridge-card shadow-sm border-0 h-100">
-                  <div class="card-body">
+                  <div class="card-body d-flex flex-column">
                     <h5 class="card-title">Queue multiple commands</h5>
-                    <p class="text-muted small">
+                    <p class="text-muted small mb-4">
                       Build a batch of commands inline. Each row becomes an executor task and can target a different server or priority.
                     </p>
-                    <form method="post" action="<%= process.env.siteAddress %>/redirect/bridge/command/add" class="row g-3" id="bulkCommandForm">
-                      <div class="col-md-6">
-                        <label for="bulkSlug" class="form-label">Default target slug</label>
-                        <input type="text" class="form-control" id="bulkSlug" name="slug" placeholder="proxy">
-                        <div class="form-text">Used when a row leaves its slug empty.</div>
-                      </div>
-                      <div class="col-md-6">
-                        <label for="bulkPriority" class="form-label">Default priority</label>
-                        <input type="number" class="form-control" id="bulkPriority" name="priority" value="0" step="1">
-                      </div>
-                      <div class="col-12">
-                        <div class="bulk-builder" data-bulk-builder>
-                          <div class="d-flex flex-column flex-sm-row align-items-sm-center justify-content-between gap-2 mb-3">
-                            <span class="form-label mb-0">Commands in this batch</span>
-                            <button type="button" class="btn btn-sm btn-outline-secondary" data-add-bulk-row>Add command</button>
-                          </div>
-                          <div class="bulk-rows" data-bulk-rows></div>
-                          <p class="form-text">Leave slug or priority blank to inherit the defaults above.</p>
-                          <input type="hidden" name="tasksJSON" id="bulkTasksJSON" data-bulk-output>
-                        </div>
-                      </div>
-                      <div class="col-12">
-                        <div class="metadata-builder" data-metadata-builder>
-                          <div class="d-flex flex-column flex-sm-row align-items-sm-center justify-content-between gap-2 mb-3">
-                            <span class="form-label mb-0">Batch metadata (optional)</span>
-                            <button type="button" class="btn btn-sm btn-outline-secondary" data-add-metadata>Add pair</button>
-                          </div>
-                          <div class="metadata-rows" data-metadata-rows></div>
-                          <p class="form-text">This metadata is attached to every task in the batch.</p>
-                          <input type="hidden" name="metadataJSON" data-metadata-output>
-                        </div>
-                      </div>
-                      <div class="col-12 text-end">
-                        <button type="submit" class="btn btn-outline-primary">Queue tasks</button>
-                      </div>
-                    </form>
+                    <div class="mt-auto d-flex justify-content-end">
+                      <button type="button" class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#bulkCommandModal">
+                        Build batch
+                      </button>
+                    </div>
                   </div>
                 </div>
               </div>
             </div>
           </div>
-
           <div class="tab-pane" data-bridge-panel="routines" role="tabpanel">
             <div class="row g-4">
               <div class="col-12 col-xl-5">
                 <div class="card bridge-card shadow-sm border-0 h-100">
-                  <div class="card-body">
+                  <div class="card-body d-flex flex-column">
                     <h5 class="card-title">Trigger a routine</h5>
                     <p class="text-muted small mb-4">
                       Execute every step saved for a routine. Metadata pairs can be used for placeholders such as the player name.
                     </p>
-                    <form method="post" action="<%= process.env.siteAddress %>/redirect/bridge/routine/run" class="row g-3" id="runRoutineForm">
-                      <div class="col-md-7">
-                        <label for="routineSlug" class="form-label">Routine slug</label>
-                        <input type="text" class="form-control" id="routineSlug" name="routineSlug" placeholder="vote-reward" required>
-                      </div>
-                      <div class="col-md-5">
-                        <label for="routinePriority" class="form-label">Priority</label>
-                        <input type="number" class="form-control" id="routinePriority" name="priority" value="0" step="1">
-                      </div>
-                      <div class="col-12">
-                        <div class="metadata-builder" data-metadata-builder>
-                          <div class="d-flex flex-column flex-sm-row align-items-sm-center justify-content-between gap-2 mb-3">
-                            <span class="form-label mb-0">Routine metadata (optional)</span>
-                            <button type="button" class="btn btn-sm btn-outline-secondary" data-add-metadata>Add pair</button>
-                          </div>
-                          <div class="metadata-rows" data-metadata-rows></div>
-                          <p class="form-text">Pairs are injected into each step. Example: key <code>player</code> with value <code>{username}</code>.</p>
-                          <input type="hidden" name="metadataJSON" data-metadata-output>
-                        </div>
-                      </div>
-                      <div class="col-12 text-end">
-                        <button type="submit" class="btn btn-secondary">Run routine</button>
-                      </div>
-                    </form>
+                    <div class="mt-auto d-flex justify-content-end">
+                      <button type="button" class="btn btn-secondary" data-bs-toggle="modal" data-bs-target="#runRoutineModal">
+                        Run routine
+                      </button>
+                    </div>
                   </div>
                 </div>
               </div>
               <div class="col-12 col-xl-7">
                 <div class="card bridge-card shadow-sm border-0 h-100">
-                  <div class="card-body">
+                  <div class="card-body d-flex flex-column">
                     <h5 class="card-title">Define or update a routine</h5>
-                    <p class="text-muted small">
+                    <p class="text-muted small mb-4">
                       Build the steps visually and we will create the JSON payload when you save. Steps execute in ascending order values.
                     </p>
-                    <form method="post" action="<%= process.env.siteAddress %>/redirect/bridge/routine/save" class="row g-3" id="routineBuilderForm">
-                      <div class="col-md-4">
-                        <label for="routineSlugSave" class="form-label">Routine slug</label>
-                        <input type="text" class="form-control" id="routineSlugSave" name="routineSlug" placeholder="vote-reward" required>
-                      </div>
-                      <div class="col-md-4">
-                        <label for="displayName" class="form-label">Display name</label>
-                        <input type="text" class="form-control" id="displayName" name="displayName" placeholder="Vote reward flow">
-                      </div>
-                      <div class="col-md-4">
-                        <label for="routineDescription" class="form-label">Description</label>
-                        <input type="text" class="form-control" id="routineDescription" name="description" placeholder="Executed when a player votes">
-                      </div>
-                      <div class="col-12">
-                        <div class="routine-builder" data-routine-builder>
-                          <div class="d-flex flex-column flex-sm-row align-items-sm-center justify-content-between gap-2 mb-3">
-                            <span class="form-label mb-0">Routine steps</span>
-                            <button type="button" class="btn btn-sm btn-outline-secondary" data-add-step>Add step</button>
-                          </div>
-                          <div class="routine-steps" data-routine-steps></div>
-                          <p class="form-text">Provide a slug and command for each step. Metadata pairs are optional and map to placeholders in your commands.</p>
-                          <div class="text-danger small d-none" data-routine-error>Please add at least one step with a slug and command.</div>
-                          <input type="hidden" name="stepsJSON" data-routine-output>
-                        </div>
-                      </div>
-                      <div class="col-12 text-end">
-                        <button type="submit" class="btn btn-outline-primary">Save routine</button>
-                      </div>
-                    </form>
+                    <div class="mt-auto d-flex justify-content-end">
+                      <button type="button" class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#routineBuilderModal">
+                        Open builder
+                      </button>
+                    </div>
                   </div>
                 </div>
               </div>
             </div>
           </div>
-
           <div class="tab-pane" data-bridge-panel="manage" role="tabpanel">
             <div class="row g-4 row-cols-1 row-cols-xl-2">
               <div class="col">
                 <div class="card bridge-card shadow-sm border-0 h-100">
-                  <div class="card-body">
+                  <div class="card-body d-flex flex-column">
                     <h5 class="card-title">Clear tasks from the queue</h5>
                     <p class="text-muted small mb-4">
                       Remove work that is no longer needed. Filters are optional and can be combined to target specific jobs.
                     </p>
-                    <form method="post" action="<%= process.env.siteAddress %>/redirect/bridge/queue/clear" class="row g-3">
-                      <div class="col-md-4">
-                        <label for="clearStatus" class="form-label">Status filter</label>
-                        <select class="form-select" id="clearStatus" name="status">
-                          <option value="">Any status</option>
-                          <option value="pending">Pending</option>
-                          <option value="processing">Processing</option>
-                          <option value="completed">Completed</option>
-                          <option value="failed">Failed</option>
-                        </select>
-                      </div>
-                      <div class="col-md-4">
-                        <label for="clearSlug" class="form-label">Target slug</label>
-                        <input type="text" class="form-control" id="clearSlug" name="slug" placeholder="proxy">
-                      </div>
-                      <div class="col-md-4">
-                        <label for="clearRoutine" class="form-label">Routine slug</label>
-                        <input type="text" class="form-control" id="clearRoutine" name="routineSlug" placeholder="vote-reward">
-                      </div>
-                      <div class="col-12 text-end">
-                        <button type="submit" class="btn btn-outline-danger">Clear matching tasks</button>
-                      </div>
-                    </form>
+                    <div class="mt-auto d-flex justify-content-end">
+                      <button type="button" class="btn btn-outline-danger" data-bs-toggle="modal" data-bs-target="#queueClearModal">
+                        Clear tasks
+                      </button>
+                    </div>
                   </div>
                 </div>
               </div>
               <div class="col">
                 <div class="card bridge-card shadow-sm border-0 h-100">
-                  <div class="card-body">
+                  <div class="card-body d-flex flex-column">
                     <h5 class="card-title">Report a task outcome</h5>
                     <p class="text-muted small mb-4">
                       Update a stuck or manually executed task. Completed and failed reports both finalise processing.
                     </p>
-                    <form method="post" action="<%= process.env.siteAddress %>/redirect/bridge/task/report" class="row g-3" id="reportTaskForm">
-                      <div class="col-md-4">
-                        <label for="reportTaskId" class="form-label">Task ID</label>
-                        <input type="number" class="form-control" id="reportTaskId" name="taskId" placeholder="42" required>
-                      </div>
-                      <div class="col-md-4">
-                        <label for="reportStatus" class="form-label">Status</label>
-                        <select class="form-select" id="reportStatus" name="status" required>
-                          <option value="processing">Processing</option>
-                          <option value="completed">Completed</option>
-                          <option value="failed">Failed</option>
-                        </select>
-                      </div>
-                      <div class="col-md-4">
-                        <label for="reportExecutedBy" class="form-label">Executed by</label>
-                        <input type="text" class="form-control" id="reportExecutedBy" name="executedBy" placeholder="AdminUser">
-                      </div>
-                      <div class="col-12">
-                        <label for="reportResult" class="form-label">Result / Notes</label>
-                        <textarea class="form-control" id="reportResult" name="result" rows="3" placeholder="Command executed manually."></textarea>
-                      </div>
-                      <div class="col-12">
-                        <div class="metadata-builder" data-metadata-builder>
-                          <div class="d-flex flex-column flex-sm-row align-items-sm-center justify-content-between gap-2 mb-3">
-                            <span class="form-label mb-0">Metadata (optional)</span>
-                            <button type="button" class="btn btn-sm btn-outline-secondary" data-add-metadata>Add pair</button>
-                          </div>
-                          <div class="metadata-rows" data-metadata-rows></div>
-                          <p class="form-text">Record extra context such as <code>reason</code> or <code>ticketId</code>.</p>
-                          <input type="hidden" name="metadataJSON" data-metadata-output>
-                        </div>
-                      </div>
-                      <div class="col-12 text-end">
-                        <button type="submit" class="btn btn-success">Submit report</button>
-                      </div>
-                    </form>
+                    <div class="mt-auto d-flex justify-content-end">
+                      <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#reportTaskModal">
+                        Report task
+                      </button>
+                    </div>
                   </div>
                 </div>
               </div>
             </div>
           </div>
-
           <div class="tab-pane" data-bridge-panel="status" role="tabpanel">
             <div class="row g-4">
               <div class="col-12">
@@ -511,6 +359,280 @@
           </div>
         </div>
       </div>
+    </div>
+  </div>
+</div>
+
+
+<div class="modal fade" id="singleCommandModal" tabindex="-1" aria-labelledby="singleCommandModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+    <div class="modal-content">
+      <form method="post" action="<%= process.env.siteAddress %>/redirect/bridge/command/add" id="singleCommandForm">
+        <div class="modal-header">
+          <h5 class="modal-title" id="singleCommandModalLabel">Queue a single command</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <div class="row g-3">
+            <div class="col-12">
+              <label for="command" class="form-label">Command</label>
+              <input type="text" class="form-control" id="command" name="command" placeholder="/ban Player Reason" required>
+            </div>
+            <div class="col-md-6">
+              <label for="slug" class="form-label">Target slug</label>
+              <input type="text" class="form-control" id="slug" name="slug" placeholder="proxy" required>
+            </div>
+            <div class="col-md-6">
+              <label for="priority" class="form-label">Priority</label>
+              <input type="number" class="form-control" id="priority" name="priority" value="0" step="1">
+              <div class="form-text">Higher numbers are handled first.</div>
+            </div>
+            <div class="col-12">
+              <div class="metadata-builder" data-metadata-builder>
+                <div class="d-flex flex-column flex-sm-row align-items-sm-center justify-content-between gap-2 mb-3">
+                  <span class="form-label mb-0">Metadata (optional)</span>
+                  <button type="button" class="btn btn-sm btn-outline-secondary" data-add-metadata>Add pair</button>
+                </div>
+                <div class="metadata-rows" data-metadata-rows></div>
+                <p class="form-text">Examples: key <code>requestedBy</code> with value <code>Dashboard</code>, or key<code>reason</code> with value <code>Vote reward</code>.</p>
+                <input type="hidden" name="metadataJSON" data-metadata-output>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button type="submit" class="btn btn-primary">Queue command</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade" id="bulkCommandModal" tabindex="-1" aria-labelledby="bulkCommandModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
+    <div class="modal-content">
+      <form method="post" action="<%= process.env.siteAddress %>/redirect/bridge/command/add" id="bulkCommandForm">
+        <div class="modal-header">
+          <h5 class="modal-title" id="bulkCommandModalLabel">Queue multiple commands</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <div class="row g-3">
+            <div class="col-md-6">
+              <label for="bulkSlug" class="form-label">Default target slug</label>
+              <input type="text" class="form-control" id="bulkSlug" name="slug" placeholder="proxy">
+              <div class="form-text">Used when a row leaves its slug empty.</div>
+            </div>
+            <div class="col-md-6">
+              <label for="bulkPriority" class="form-label">Default priority</label>
+              <input type="number" class="form-control" id="bulkPriority" name="priority" value="0" step="1">
+            </div>
+            <div class="col-12">
+              <div class="bulk-builder" data-bulk-builder>
+                <div class="d-flex flex-column flex-sm-row align-items-sm-center justify-content-between gap-2 mb-3">
+                  <span class="form-label mb-0">Commands in this batch</span>
+                  <button type="button" class="btn btn-sm btn-outline-secondary" data-add-bulk-row>Add command</button>
+                </div>
+                <div class="bulk-rows" data-bulk-rows></div>
+                <p class="form-text">Leave slug or priority blank to inherit the defaults above.</p>
+                <input type="hidden" name="tasksJSON" id="bulkTasksJSON" data-bulk-output>
+              </div>
+            </div>
+            <div class="col-12">
+              <div class="metadata-builder" data-metadata-builder>
+                <div class="d-flex flex-column flex-sm-row align-items-sm-center justify-content-between gap-2 mb-3">
+                  <span class="form-label mb-0">Batch metadata (optional)</span>
+                  <button type="button" class="btn btn-sm btn-outline-secondary" data-add-metadata>Add pair</button>
+                </div>
+                <div class="metadata-rows" data-metadata-rows></div>
+                <p class="form-text">This metadata is attached to every task in the batch.</p>
+                <input type="hidden" name="metadataJSON" data-metadata-output>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button type="submit" class="btn btn-outline-primary">Queue tasks</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade" id="runRoutineModal" tabindex="-1" aria-labelledby="runRoutineModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+    <div class="modal-content">
+      <form method="post" action="<%= process.env.siteAddress %>/redirect/bridge/routine/run" id="runRoutineForm">
+        <div class="modal-header">
+          <h5 class="modal-title" id="runRoutineModalLabel">Trigger a routine</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <div class="row g-3">
+            <div class="col-md-7">
+              <label for="routineSlug" class="form-label">Routine slug</label>
+              <input type="text" class="form-control" id="routineSlug" name="routineSlug" placeholder="vote-reward" required>
+            </div>
+            <div class="col-md-5">
+              <label for="routinePriority" class="form-label">Priority</label>
+              <input type="number" class="form-control" id="routinePriority" name="priority" value="0" step="1">
+            </div>
+            <div class="col-12">
+              <div class="metadata-builder" data-metadata-builder>
+                <div class="d-flex flex-column flex-sm-row align-items-sm-center justify-content-between gap-2 mb-3">
+                  <span class="form-label mb-0">Routine metadata (optional)</span>
+                  <button type="button" class="btn btn-sm btn-outline-secondary" data-add-metadata>Add pair</button>
+                </div>
+                <div class="metadata-rows" data-metadata-rows></div>
+                <p class="form-text">Pairs are injected into each step. Example: key <code>player</code> with value <code>{username}</code>.</p>
+                <input type="hidden" name="metadataJSON" data-metadata-output>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button type="submit" class="btn btn-secondary">Run routine</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade" id="routineBuilderModal" tabindex="-1" aria-labelledby="routineBuilderModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
+    <div class="modal-content">
+      <form method="post" action="<%= process.env.siteAddress %>/redirect/bridge/routine/save" id="routineBuilderForm">
+        <div class="modal-header">
+          <h5 class="modal-title" id="routineBuilderModalLabel">Define or update a routine</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <div class="row g-3">
+            <div class="col-md-4">
+              <label for="routineSlugSave" class="form-label">Routine slug</label>
+              <input type="text" class="form-control" id="routineSlugSave" name="routineSlug" placeholder="vote-reward" required>
+            </div>
+            <div class="col-md-4">
+              <label for="displayName" class="form-label">Display name</label>
+              <input type="text" class="form-control" id="displayName" name="displayName" placeholder="Vote reward flow">
+            </div>
+            <div class="col-md-4">
+              <label for="routineDescription" class="form-label">Description</label>
+              <input type="text" class="form-control" id="routineDescription" name="description" placeholder="Executed when a player votes">
+            </div>
+            <div class="col-12">
+              <div class="routine-builder" data-routine-builder>
+                <div class="d-flex flex-column flex-sm-row align-items-sm-center justify-content-between gap-2 mb-3">
+                  <span class="form-label mb-0">Routine steps</span>
+                  <button type="button" class="btn btn-sm btn-outline-secondary" data-add-step>Add step</button>
+                </div>
+                <div class="routine-steps" data-routine-steps></div>
+                <p class="form-text">Provide a slug and command for each step. Metadata pairs are optional and map to placeholders in your commands.</p>
+                <div class="text-danger small d-none" data-routine-error>Please add at least one step with a slug and command.</div>
+                <input type="hidden" name="stepsJSON" data-routine-output>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button type="submit" class="btn btn-outline-primary">Save routine</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade" id="queueClearModal" tabindex="-1" aria-labelledby="queueClearModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-content">
+      <form method="post" action="<%= process.env.siteAddress %>/redirect/bridge/queue/clear">
+        <div class="modal-header">
+          <h5 class="modal-title" id="queueClearModalLabel">Clear tasks from the queue</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <div class="row g-3">
+            <div class="col-md-4">
+              <label for="clearStatus" class="form-label">Status filter</label>
+              <select class="form-select" id="clearStatus" name="status">
+                <option value="">Any status</option>
+                <option value="pending">Pending</option>
+                <option value="processing">Processing</option>
+                <option value="completed">Completed</option>
+                <option value="failed">Failed</option>
+              </select>
+            </div>
+            <div class="col-md-4">
+              <label for="clearSlug" class="form-label">Target slug</label>
+              <input type="text" class="form-control" id="clearSlug" name="slug" placeholder="proxy">
+            </div>
+            <div class="col-md-4">
+              <label for="clearRoutine" class="form-label">Routine slug</label>
+              <input type="text" class="form-control" id="clearRoutine" name="routineSlug" placeholder="vote-reward">
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button type="submit" class="btn btn-outline-danger">Clear matching tasks</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade" id="reportTaskModal" tabindex="-1" aria-labelledby="reportTaskModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+    <div class="modal-content">
+      <form method="post" action="<%= process.env.siteAddress %>/redirect/bridge/task/report" id="reportTaskForm">
+        <div class="modal-header">
+          <h5 class="modal-title" id="reportTaskModalLabel">Report a task outcome</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <div class="row g-3">
+            <div class="col-md-4">
+              <label for="reportTaskId" class="form-label">Task ID</label>
+              <input type="number" class="form-control" id="reportTaskId" name="taskId" placeholder="42" required>
+            </div>
+            <div class="col-md-4">
+              <label for="reportStatus" class="form-label">Status</label>
+              <select class="form-select" id="reportStatus" name="status" required>
+                <option value="processing">Processing</option>
+                <option value="completed">Completed</option>
+                <option value="failed">Failed</option>
+              </select>
+            </div>
+            <div class="col-md-4">
+              <label for="reportExecutedBy" class="form-label">Executed by</label>
+              <input type="text" class="form-control" id="reportExecutedBy" name="executedBy" placeholder="AdminUser">
+            </div>
+            <div class="col-12">
+              <label for="reportResult" class="form-label">Result / Notes</label>
+              <textarea class="form-control" id="reportResult" name="result" rows="3" placeholder="Command executed manually."></textarea>
+            </div>
+            <div class="col-12">
+              <div class="metadata-builder" data-metadata-builder>
+                <div class="d-flex flex-column flex-sm-row align-items-sm-center justify-content-between gap-2 mb-3">
+                  <span class="form-label mb-0">Metadata (optional)</span>
+                  <button type="button" class="btn btn-sm btn-outline-secondary" data-add-metadata>Add pair</button>
+                </div>
+                <div class="metadata-rows" data-metadata-rows></div>
+                <p class="form-text">Record extra context such as <code>reason</code> or <code>ticketId</code>.</p>
+                <input type="hidden" name="metadataJSON" data-metadata-output>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button type="submit" class="btn btn-success">Submit report</button>
+        </div>
+      </form>
     </div>
   </div>
 </div>
