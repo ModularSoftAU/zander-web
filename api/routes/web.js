@@ -18,24 +18,24 @@ export default async function webApiRoute(app, config, db, features, lang) {
 
     db.query(
       `
-      SELECT COUNT(DISTINCT userId) AS communityMembers
-      FROM gameSessions
-      WHERE sessionStart >= DATE_SUB(NOW(), INTERVAL 3 MONTH);
+      SELECT COUNT(DISTINCT gs.userId) AS communityMembers
+      FROM gameSessions gs
+      JOIN users u ON gs.userId = u.userId
+      WHERE gs.sessionStart >= DATE_SUB(NOW(), INTERVAL 3 MONTH)
+        AND u.account_disabled = 0;
 
-      SELECT ROUND(SUM(TIMESTAMPDIFF(SECOND, sessionStart, COALESCE(sessionEnd, NOW()))) / 3600) AS timePlayed
-      FROM gameSessions
-      WHERE sessionStart >= DATE_SUB(NOW(), INTERVAL 3 MONTH);
+      SELECT ROUND(SUM(TIMESTAMPDIFF(SECOND, gs.sessionStart, COALESCE(gs.sessionEnd, NOW()))) / 3600) AS timePlayed
+      FROM gameSessions gs
+      JOIN users u ON gs.userId = u.userId
+      WHERE gs.sessionStart >= DATE_SUB(NOW(), INTERVAL 3 MONTH)
+        AND u.account_disabled = 0;
 
       SELECT COUNT(DISTINCT u.userId) AS totalStaff
       FROM userRanks ur
       JOIN ranks r ON ur.rankSlug = r.rankSlug
       JOIN users u ON u.uuid = ur.uuid
       WHERE r.isStaff = 1
-        AND u.userId IN (
-          SELECT DISTINCT userId
-          FROM gameSessions
-          WHERE sessionStart >= DATE_SUB(NOW(), INTERVAL 3 MONTH)
-        );
+        AND u.account_disabled = 0;
   `,
       async function (err, results) {
         if (err) {
