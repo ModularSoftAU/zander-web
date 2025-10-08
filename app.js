@@ -60,10 +60,11 @@ const buildApp = async () => {
 
   // When app errors, render the error on a page, do not provide JSON
   app.setNotFoundHandler(async function (req, res) {
+    res.status(404);
+
     return res.view("session/notFound", {
       pageTitle: `404 Not Found`,
       config: config,
-      error: error,
       req: req,
       features: features,
       globalImage: await getGlobalImage(),
@@ -73,7 +74,16 @@ const buildApp = async () => {
 
   // When app errors, render the error on a page, do not provide JSON
   app.setErrorHandler(async function (error, req, res) {
-    res.view("session/error", {
+    app.log.error(error);
+
+    const statusCode =
+      typeof error?.statusCode === "number" && error.statusCode >= 400
+        ? error.statusCode
+        : 500;
+
+    res.status(statusCode);
+
+    return res.view("session/error", {
       pageTitle: `Server Error`,
       config: config,
       error: error,

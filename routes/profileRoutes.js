@@ -136,8 +136,17 @@ export default function profileSiteRoutes(
         });
       }
     } catch (error) {
-      console.error("Error:", error);
-      res.status(500).send("Internal Server Error");
+      console.error("[PROFILE] Failed to load profile", error);
+
+      return res.status(500).view("session/error", {
+        pageTitle: `Server Error`,
+        config: config,
+        error: error,
+        req: req,
+        features: features,
+        globalImage: await getGlobalImage(),
+        announcementWeb: await getWebAnnouncement(),
+      });
     }
   });
 
@@ -193,8 +202,17 @@ export default function profileSiteRoutes(
         });
       }
     } catch (error) {
-      console.error("Error:", error);
-      res.status(500).send("Internal Server Error");
+      console.error("[PROFILE] Failed to load profile editor", error);
+
+      return res.status(500).view("session/error", {
+        pageTitle: `Server Error`,
+        config: config,
+        error: error,
+        req: req,
+        features: features,
+        globalImage: await getGlobalImage(),
+        announcementWeb: await getWebAnnouncement(),
+      });
     }
   });
 
