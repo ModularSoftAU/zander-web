@@ -133,7 +133,7 @@
                   <div class="card-body d-flex flex-column">
                     <h5 class="card-title">Trigger a routine</h5>
                     <p class="text-muted small mb-4">
-                      Execute every step saved for a routine. Metadata pairs can be used for placeholders such as the player name.
+                      Execute every step saved for a routine. Metadata pairs can supply values for placeholders such as the player name.
                     </p>
                     <div class="mt-auto d-flex justify-content-end">
                       <button type="button" class="btn btn-secondary" data-bs-toggle="modal" data-bs-target="#runRoutineModal">
@@ -148,7 +148,7 @@
                   <div class="card-body d-flex flex-column">
                     <h5 class="card-title">Define or update a routine</h5>
                     <p class="text-muted small mb-4">
-                      Build the steps visually (or load an existing routine to update it) and we will create the JSON payload when you save. Steps execute in ascending order values.
+                      Build the steps visually (or load an existing routine to update it) and we will create the JSON payload when you save. Steps execute in ascending order values. Use placeholders like <code>{{player}}</code> to inject metadata into commands automatically.
                     </p>
                     <div class="mt-auto d-flex justify-content-end">
                       <button type="button" class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#routineBuilderModal">
@@ -382,7 +382,8 @@
           <div class="row g-3">
             <div class="col-12">
               <label for="command" class="form-label">Command</label>
-              <input type="text" class="form-control" id="command" name="command" placeholder="/ban Player Reason" required>
+              <input type="text" class="form-control" id="command" name="command" placeholder="ban Player Reason" required>
+              <div class="form-text">Commands execute from console, so skip the leading slash. Use metadata placeholders like <code>{{player}}</code> whenever you need to target the triggering user.</div>
             </div>
             <div class="col-md-6">
               <label for="slug" class="form-label">Target slug</label>
@@ -400,7 +401,7 @@
                   <button type="button" class="btn btn-sm btn-outline-secondary" data-add-metadata>Add pair</button>
                 </div>
                 <div class="metadata-rows" data-metadata-rows></div>
-                <p class="form-text">Examples: key <code>requestedBy</code> with value <code>Dashboard</code>, or key<code>reason</code> with value <code>Vote reward</code>.</p>
+                <p class="form-text">Examples: key <code>requestedBy</code> with value <code>Dashboard</code>, or key<code>reason</code> with value <code>Vote reward</code>. Metadata keys can also be referenced in commands using placeholders like <code>{{player}}</code>.</p>
                 <input type="hidden" name="metadataJSON" data-metadata-output>
               </div>
             </div>
@@ -452,7 +453,7 @@
                   <button type="button" class="btn btn-sm btn-outline-secondary" data-add-metadata>Add pair</button>
                 </div>
                 <div class="metadata-rows" data-metadata-rows></div>
-                <p class="form-text">This metadata is attached to every task in the batch.</p>
+                <p class="form-text">This metadata is attached to every task in the batch. Reference it in commands with placeholders like <code>{{player}}</code>.</p>
                 <input type="hidden" name="metadataJSON" data-metadata-output>
               </div>
             </div>
@@ -642,7 +643,7 @@
                   <button type="button" class="btn btn-sm btn-outline-secondary" data-add-metadata>Add pair</button>
                 </div>
                 <div class="metadata-rows" data-metadata-rows></div>
-                <p class="form-text">Record extra context such as <code>reason</code> or <code>ticketId</code>.</p>
+                <p class="form-text">Record extra context such as <code>reason</code> or <code>ticketId</code>. Metadata keys become placeholders like <code>{{player}}</code> inside routine commands.</p>
                 <input type="hidden" name="metadataJSON" data-metadata-output>
               </div>
             </div>
@@ -743,6 +744,16 @@
       setupMetadataBuilder(builder);
     });
 
+    const singleCommandForm = document.getElementById('singleCommandForm');
+    if (singleCommandForm) {
+      singleCommandForm.addEventListener('submit', function () {
+        const commandField = singleCommandForm.querySelector('#command');
+        if (commandField) {
+          commandField.value = commandField.value.trim().replace(/^\/+/, '');
+        }
+      });
+    }
+
     const bulkBuilder = document.querySelector('[data-bulk-builder]');
     if (bulkBuilder) {
       const rowsContainer = bulkBuilder.querySelector('[data-bulk-rows]');
@@ -762,7 +773,8 @@
             </div>
             <div class="col-12 col-md-6">
               <label class="form-label">Command</label>
-              <input type="text" class="form-control" placeholder="/say Hello" data-bulk-command required>
+              <input type="text" class="form-control" placeholder="say Hello" data-bulk-command required>
+              <div class="form-text">Do not include the leading slash. Placeholders such as <code>{{player}}</code> will be replaced using metadata from this row or the batch defaults.</div>
             </div>
             <div class="col-12 col-md-4">
               <label class="form-label">Priority <span class="text-muted">(optional)</span></label>
@@ -808,9 +820,15 @@
             const metadataKeyInput = row.querySelector('[data-bulk-metadata-key]');
             const metadataValueInput = row.querySelector('[data-bulk-metadata-value]');
 
-            const command = commandInput ? commandInput.value.trim() : '';
+            const command = commandInput
+              ? commandInput.value.trim().replace(/^\/+/, '')
+              : '';
             if (!command) {
               return;
+            }
+
+            if (commandInput) {
+              commandInput.value = command;
             }
 
             const task = { command };
@@ -899,7 +917,8 @@
             </div>
             <div class="col-12 col-lg-4">
               <label class="form-label">Command</label>
-              <input type="text" class="form-control" placeholder="/say Welcome" data-step-command required>
+              <input type="text" class="form-control" placeholder="say Welcome" data-step-command required>
+              <div class="form-text">Commands run without a slash. Use placeholders like <code>{{player}}</code> to pull metadata into the command.</div>
             </div>
             <div class="col-12 col-lg-1 text-lg-end">
               <button type="button" class="btn btn-outline-danger btn-sm w-100 mt-2 mt-lg-0" data-remove-step>Remove</button>
@@ -910,7 +929,7 @@
             </div>
             <div class="col-12 col-md-6">
               <label class="form-label">Metadata value <span class="text-muted">(optional)</span></label>
-              <input type="text" class="form-control" placeholder="{username}" data-step-metadata-value>
+              <input type="text" class="form-control" placeholder="ShadowolfYT" data-step-metadata-value>
             </div>
           </div>
         `;
@@ -935,7 +954,7 @@
         }
 
         if (commandField && initialData.command) {
-          commandField.value = initialData.command;
+          commandField.value = (initialData.command || '').replace(/^\/+/, '');
         }
 
         if (initialData.metadata && typeof initialData.metadata === 'object') {
@@ -1040,7 +1059,12 @@
             const metadataValueField = stepElement.querySelector('[data-step-metadata-value]');
 
             const slug = slugField ? slugField.value.trim() : '';
-            const command = commandField ? commandField.value.trim() : '';
+            const command = commandField
+              ? commandField.value.trim().replace(/^\/+/, '')
+              : '';
+            if (commandField) {
+              commandField.value = command;
+            }
             const orderRaw = orderField ? orderField.value.trim() : '';
             const metadataKey = metadataKeyField ? metadataKeyField.value.trim() : '';
             const metadataValue = metadataValueField ? metadataValueField.value.trim() : '';

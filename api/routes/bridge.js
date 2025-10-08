@@ -7,6 +7,66 @@ const ROUTINE_STEPS_TABLE = "executorRoutineSteps";
 
 const VALID_STATUSES = ["pending", "processing", "completed", "failed"];
 
+function normalizeCommand(command) {
+  if (typeof command !== "string") {
+    return "";
+  }
+
+  return command.trim().replace(/^\/+/, "").trim();
+}
+
+function toMetadataObject(value) {
+  if (!value || typeof value !== "object" || Array.isArray(value)) {
+    return null;
+  }
+
+  return value;
+}
+
+function mergeMetadata(...sources) {
+  const merged = {};
+  let hasEntries = false;
+
+  sources.forEach((source) => {
+    const metadata = toMetadataObject(source);
+    if (!metadata) {
+      return;
+    }
+
+    Object.entries(metadata).forEach(([key, value]) => {
+      merged[key] = value;
+      hasEntries = true;
+    });
+  });
+
+  return hasEntries ? merged : null;
+}
+
+function escapeRegExp(string) {
+  return string.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+function applyMetadataPlaceholders(command, ...metadataSources) {
+  let resolved = typeof command === "string" ? command : "";
+
+  const mergedMetadata = mergeMetadata(...metadataSources);
+  if (!mergedMetadata) {
+    return resolved;
+  }
+
+  Object.entries(mergedMetadata).forEach(([key, value]) => {
+    if (value === undefined || value === null) {
+      return;
+    }
+
+    const replacement = typeof value === "string" ? value : String(value);
+    const pattern = new RegExp(`{{\\s*${escapeRegExp(key)}\\s*}}`, "gi");
+    resolved = resolved.replace(pattern, replacement);
+  });
+
+  return resolved;
+}
+
 function toBoolean(value) {
   if (typeof value === "boolean") return value;
   if (typeof value === "string") {
@@ -142,6 +202,8 @@ export default function bridgeApiRoute(app, config, db, features, lang) {
     try {
       const tasksToInsert = [];
 
+      const rootMetadata = toMetadataObject(metadata);
+
       if (inlineCommand) {
         if (!inlineSlug) {
           return res.send({
@@ -150,10 +212,21 @@ export default function bridgeApiRoute(app, config, db, features, lang) {
           });
         }
 
+        const resolvedCommand = normalizeCommand(
+          applyMetadataPlaceholders(inlineCommand, rootMetadata)
+        );
+
+        if (!resolvedCommand) {
+          return res.send({
+            success: false,
+            message: `Command must contain text after removing leading slashes`,
+          });
+        }
+
         tasksToInsert.push({
           slug: inlineSlug,
-          command: inlineCommand,
-          metadata: metadata || null,
+          command: resolvedCommand,
+          metadata: rootMetadata || null,
           priority,
           routineSlug: null,
         });
@@ -174,10 +247,22 @@ export default function bridgeApiRoute(app, config, db, features, lang) {
             throw new Error(`Task payload at index ${index} is missing 'slug'`);
           }
 
+          const stepMetadata = toMetadataObject(task.metadata);
+          const combinedMetadata = mergeMetadata(rootMetadata, stepMetadata);
+          const resolvedCommand = normalizeCommand(
+            applyMetadataPlaceholders(task.command, rootMetadata, stepMetadata)
+          );
+
+          if (!resolvedCommand) {
+            throw new Error(
+              `Task payload at index ${index} must include a command after removing leading slashes`
+            );
+          }
+
           tasksToInsert.push({
             slug: taskSlug,
-            command: task.command,
-            metadata: task.metadata || null,
+            command: resolvedCommand,
+            metadata: combinedMetadata,
             priority: Number(task.priority ?? priority) || 0,
             routineSlug: task.routineSlug || null,
           });
@@ -211,10 +296,20 @@ export default function bridgeApiRoute(app, config, db, features, lang) {
         }
 
         routineSteps.forEach((step) => {
+          const stepMetadata = toMetadataObject(safeJsonParse(step.metadata));
+          const combinedMetadata = mergeMetadata(rootMetadata, stepMetadata);
+          const resolvedCommand = normalizeCommand(
+            applyMetadataPlaceholders(step.command, rootMetadata, stepMetadata)
+          );
+
+          if (!resolvedCommand) {
+            return;
+          }
+
           tasksToInsert.push({
             slug: step.slug,
-            command: step.command,
-            metadata: safeJsonParse(step.metadata),
+            command: resolvedCommand,
+            metadata: combinedMetadata,
             priority,
             routineSlug,
           });
@@ -467,12 +562,20 @@ export default function bridgeApiRoute(app, config, db, features, lang) {
         }
 
         const orderValue = Number(step.order ?? index);
+        const metadataObject = toMetadataObject(step.metadata);
+        const sanitizedCommand = normalizeCommand(step.command);
+
+        if (!sanitizedCommand) {
+          throw new Error(
+            `Routine step at index ${index} must include a command after removing leading slashes`
+          );
+        }
 
         return {
           slug: stepSlug,
-          command: step.command,
+          command: sanitizedCommand,
           order: Number.isFinite(orderValue) ? orderValue : index,
-          metadata: step.metadata || null,
+          metadata: metadataObject,
         };
       });
 

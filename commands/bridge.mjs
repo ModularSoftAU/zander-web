@@ -261,6 +261,9 @@ export class BridgeCommand extends Command {
       }
     };
 
+    const sanitizeCommand = (value) =>
+      typeof value === "string" ? value.trim().replace(/^\/+/, "") : "";
+
     const postBridge = async (path, payload) =>
       fetch(`${process.env.siteAddress}${path}`, {
         method: "POST",
@@ -444,12 +447,19 @@ export class BridgeCommand extends Command {
     }
 
     if (subcommand === "add") {
-      const command = interaction.options.getString("command");
+      const rawCommand = interaction.options.getString("command");
+      const command = sanitizeCommand(rawCommand);
       const slug = interaction.options.getString("slug");
       const priority = interaction.options.getInteger("priority") || 0;
 
       try {
         const metadata = metadataFromOption("metadata");
+
+        if (!command) {
+          throw new Error(
+            "Command must include text after removing the leading slash."
+          );
+        }
 
         const payload = {
           command,
