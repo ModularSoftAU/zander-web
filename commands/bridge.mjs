@@ -1,5 +1,11 @@
 import { Command } from "@sapphire/framework";
-import { ActionRowBuilder, ButtonBuilder, ButtonStyle, Colors, EmbedBuilder } from "discord.js";
+import {
+  ActionRowBuilder,
+  ButtonBuilder,
+  ButtonStyle,
+  Colors,
+  EmbedBuilder,
+} from "discord.js";
 import fetch from "node-fetch";
 import {
   getUserPermissions,
@@ -23,6 +29,37 @@ export class BridgeCommand extends Command {
           subcommand
             .setName("status")
             .setDescription("View the current bridge executor queue.")
+            .addStringOption((option) =>
+              option
+                .setName("status")
+                .setDescription("Filter by task status.")
+                .addChoices(
+                  { name: "Pending", value: "pending" },
+                  { name: "Processing", value: "processing" },
+                  { name: "Completed", value: "completed" },
+                  { name: "Failed", value: "failed" },
+                  { name: "All statuses", value: "all" }
+                )
+            )
+            .addStringOption((option) =>
+              option
+                .setName("slug")
+                .setDescription("Filter to a specific target slug.")
+            )
+            .addIntegerOption((option) =>
+              option
+                .setName("limit")
+                .setDescription("How many tasks to include per status (default 10).")
+                .setMinValue(1)
+                .setMaxValue(25)
+            )
+            .addBooleanOption((option) =>
+              option
+                .setName("claim")
+                .setDescription(
+                  "Claim pending tasks while retrieving the queue (pending status only)."
+                )
+            )
         )
         .addSubcommand((subcommand) =>
           subcommand
@@ -36,15 +73,121 @@ export class BridgeCommand extends Command {
             )
             .addStringOption((option) =>
               option
-                .setName("targetedserver")
-                .setDescription("The slug of the server to target (e.g. proxy, survival).")
+                .setName("slug")
+                .setDescription(
+                  "The slug of the server to target (e.g. proxy, survival)."
+                )
+                .setRequired(true)
+            )
+            .addIntegerOption((option) =>
+              option
+                .setName("priority")
+                .setDescription("Optional priority value (defaults to 0).")
+            )
+            .addStringOption((option) =>
+              option
+                .setName("metadata")
+                .setDescription(
+                  "Optional JSON metadata payload to attach to the task."
+                )
+            )
+        )
+        .addSubcommand((subcommand) =>
+          subcommand
+            .setName("routine")
+            .setDescription("Trigger a saved routine of bridge commands.")
+            .addStringOption((option) =>
+              option
+                .setName("slug")
+                .setDescription("The slug of the routine to run.")
+                .setRequired(true)
+            )
+            .addStringOption((option) =>
+              option
+                .setName("metadata")
+                .setDescription(
+                  "Optional JSON metadata payload shared with every routine step."
+                )
+            )
+        )
+        .addSubcommand((subcommand) =>
+          subcommand
+            .setName("report")
+            .setDescription("Report the status of an executor task.")
+            .addIntegerOption((option) =>
+              option
+                .setName("taskid")
+                .setDescription("The executor task ID to report on.")
+                .setRequired(true)
+            )
+            .addStringOption((option) =>
+              option
+                .setName("status")
+                .setDescription("New status for the task.")
+                .setRequired(true)
+                .addChoices(
+                  { name: "Pending", value: "pending" },
+                  { name: "Processing", value: "processing" },
+                  { name: "Completed", value: "completed" },
+                  { name: "Failed", value: "failed" }
+                )
+            )
+            .addStringOption((option) =>
+              option
+                .setName("result")
+                .setDescription("Optional result or error message to store.")
+            )
+            .addStringOption((option) =>
+              option
+                .setName("executedby")
+                .setDescription("Optional executor identifier reported by the server.")
+            )
+            .addStringOption((option) =>
+              option
+                .setName("metadata")
+                .setDescription(
+                  "Optional JSON metadata payload to merge with the task."
+                )
+            )
+        )
+        .addSubcommand((subcommand) =>
+          subcommand
+            .setName("reset")
+            .setDescription("Reset an executor task back to pending.")
+            .addIntegerOption((option) =>
+              option
+                .setName("taskid")
+                .setDescription("The executor task ID to reset.")
                 .setRequired(true)
             )
         )
         .addSubcommand((subcommand) =>
           subcommand
             .setName("clear")
-            .setDescription("Clear all commands on the Bridge.")
+            .setDescription("Clear commands from the bridge queue.")
+            .addStringOption((option) =>
+              option
+                .setName("status")
+                .setDescription("Optional status filter when clearing tasks.")
+                .addChoices(
+                  { name: "Pending", value: "pending" },
+                  { name: "Processing", value: "processing" },
+                  { name: "Completed", value: "completed" },
+                  { name: "Failed", value: "failed" }
+                )
+            )
+            .addStringOption((option) =>
+              option
+                .setName("slug")
+                .setDescription("Optional target slug filter when clearing.")
+            )
+            .addStringOption((option) =>
+              option
+                .setName("routine")
+                .setDescription(
+                  "Optional routine slug filter to remove queued routine tasks."
+                )
+            )
         )
     );
   }
@@ -68,6 +211,20 @@ export class BridgeCommand extends Command {
     const userData = new UserGetter();
     const userGetData = await userData.byDiscordId(interaction.user.id);
 
+    if (!userGetData) {
+      const errorEmbed = new EmbedBuilder()
+        .setTitle("No Linked Account")
+        .setDescription(
+          "We couldn't find a linked site account for you. Please link your account before using bridge commands."
+        )
+        .setColor(Colors.Red);
+
+      return interaction.reply({
+        embeds: [errorEmbed],
+        ephemeral: true,
+      });
+    }
+
     const userPermissions = await getUserPermissions(userGetData);
     const hasPermission = userPermissions.includes("zander.web.bridge");
 
@@ -83,255 +240,552 @@ export class BridgeCommand extends Command {
       });
     }
 
-    // Handle the different subcommands
     const subcommand = interaction.options.getSubcommand();
 
-    if (subcommand === "status") {
+    const metadataFromOption = (optionName) => {
+      const raw = interaction.options.getString(optionName);
+      if (!raw) return null;
+      const trimmed = raw.trim();
+      if (!trimmed) return null;
+
       try {
-        const [pendingResponse, processingResponse] = await Promise.all([
-          fetch(`${process.env.siteAddress}/api/bridge/processor/get?status=pending&limit=50`, {
-            headers: { "x-access-token": process.env.apiKey },
-          }),
-          fetch(`${process.env.siteAddress}/api/bridge/processor/get?status=processing&limit=50`, {
-            headers: { "x-access-token": process.env.apiKey },
-          }),
-        ]);
-
-        const [pendingData, processingData] = await Promise.all([
-          pendingResponse.json(),
-          processingResponse.json(),
-        ]);
-
-        if (!pendingData.success || !processingData.success) {
-          const errorEmbed = new EmbedBuilder()
-            .setTitle("Bridge Status Error")
-            .setDescription("There was an error fetching the bridge status queue.")
-            .setColor(Colors.Red);
-
-          return interaction.reply({ embeds: [errorEmbed], ephemeral: true });
+        const parsed = JSON.parse(trimmed);
+        if (parsed === null || typeof parsed !== "object") {
+          throw new Error();
         }
+        return parsed;
+      } catch (error) {
+        throw new Error(
+          `We couldn't parse the ${optionName} value. Please provide valid JSON (e.g. {"requestedBy":"Discord"}).`
+        );
+      }
+    };
 
-        const pendingTasks = pendingData.data || [];
-        const processingTasks = processingData.data || [];
-        const combined = [...pendingTasks, ...processingTasks];
+    const postBridge = async (path, payload) =>
+      fetch(`${process.env.siteAddress}${path}`, {
+        method: "POST",
+        headers: {
+          "x-access-token": process.env.apiKey,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(payload),
+      });
 
-        if (!combined.length) {
-          const noBridgesEmbed = new EmbedBuilder()
+    if (subcommand === "status") {
+      const statusFilter = interaction.options.getString("status") || "pending";
+      const slugFilter = interaction.options.getString("slug");
+      const limit = interaction.options.getInteger("limit") || 10;
+      const claim = interaction.options.getBoolean("claim") || false;
+
+      await interaction.deferReply({ ephemeral: true });
+
+      const statusMap = {
+        pending: { label: "Pending", color: Colors.Blurple },
+        processing: { label: "Processing", color: Colors.Orange },
+        completed: { label: "Completed", color: Colors.Green },
+        failed: { label: "Failed", color: Colors.Red },
+      };
+
+      const statusesToFetch =
+        statusFilter === "all"
+          ? ["pending", "processing", "completed", "failed"]
+          : [statusFilter];
+
+      try {
+        const fetchResults = await Promise.all(
+          statusesToFetch.map(async (status) => {
+            const url = new URL(
+              `${process.env.siteAddress}/api/bridge/processor/get`
+            );
+            url.searchParams.set("status", status);
+            url.searchParams.set("limit", String(limit));
+            if (slugFilter) {
+              url.searchParams.set("slug", slugFilter);
+            }
+            if (claim && status === "pending") {
+              url.searchParams.set("claim", "true");
+            }
+
+            const response = await fetch(url, {
+              headers: { "x-access-token": process.env.apiKey },
+            });
+            const data = await response.json();
+            if (!data.success) {
+              throw new Error(data.message || "Unknown API error");
+            }
+
+            return { status, tasks: data.data || [], meta: data.meta };
+          })
+        );
+
+        const totalTasks = fetchResults.reduce(
+          (acc, item) => acc + (item.tasks?.length || 0),
+          0
+        );
+
+        if (totalTasks === 0) {
+          const emptyEmbed = new EmbedBuilder()
             .setTitle("Bridge Status")
-            .setDescription("There are currently no executor tasks queued.")
+            .setDescription("No executor tasks matched your filters.")
             .setColor(Colors.Blurple);
 
-          return interaction.reply({
-            embeds: [noBridgesEmbed],
-            ephemeral: true,
-          });
+          if (slugFilter) {
+            emptyEmbed.addFields({
+              name: "Filters",
+              value: `Slug: **${slugFilter}**\nStatus: **${statusFilter}**`,
+            });
+          }
+
+          return interaction.editReply({ embeds: [emptyEmbed] });
         }
 
         const statusEmbed = new EmbedBuilder()
           .setTitle("Bridge Status")
-          .setDescription(
-            `Pending: **${pendingTasks.length}** | Processing: **${processingTasks.length}**`
-          )
-          .setColor(Colors.Blurple);
+          .setColor(
+            fetchResults.length === 1
+              ? statusMap[fetchResults[0].status]?.color ?? Colors.Blurple
+              : Colors.Blurple
+          );
 
-        combined.slice(0, 10).forEach((task) => {
+        const footerText =
+          claim && statusesToFetch.includes("pending")
+            ? "Pending tasks were claimed."
+            : null;
+
+        if (footerText) {
+          statusEmbed.setFooter({ text: footerText });
+        }
+
+        if (slugFilter) {
           statusEmbed.addFields({
-            name: `Task #${task.executorTaskId} (${task.slug})`,
-            value: `Command: \`${task.command}\`\nStatus: **${task.status}**\nQueued: ${new Date(
-              task.createdAt
-            ).toLocaleString()}${
-              task.routineSlug ? `\nRoutine: ${task.routineSlug}` : ""
-            }`,
+            name: "Filters",
+            value: `Slug: **${slugFilter}**\nStatus: **${statusFilter}**`,
+          });
+        }
+
+        const summaryText = fetchResults
+          .map((item) => {
+            const label = statusMap[item.status]?.label || item.status;
+            const count = item.meta?.count ?? item.tasks.length;
+            return `${label}: **${count}**`;
+          })
+          .join(" | ");
+
+        if (summaryText.length) {
+          statusEmbed.setDescription(summaryText);
+        }
+
+        fetchResults.forEach((item) => {
+          const { status, tasks } = item;
+          const header = `${statusMap[status]?.label || status} — ${tasks.length} task${
+            tasks.length === 1 ? "" : "s"
+          }`;
+
+          if (!tasks.length) {
+            statusEmbed.addFields({
+              name: header,
+              value: "No tasks found.",
+              inline: false,
+            });
+            return;
+          }
+
+          const lines = tasks.map((task) => {
+            const parts = [
+              `#${task.executorTaskId} • ${task.slug}`,
+              `\`${task.command}\``,
+            ];
+
+            if (typeof task.priority === "number" && task.priority !== 0) {
+              parts.push(`Priority: ${task.priority}`);
+            }
+
+            if (task.routineSlug) {
+              parts.push(`Routine: ${task.routineSlug}`);
+            }
+
+            if (task.metadata && Object.keys(task.metadata).length) {
+              const preview = JSON.stringify(task.metadata);
+              parts.push(`Metadata: ${preview.substring(0, 150)}`);
+            }
+
+            if (task.executedBy) {
+              parts.push(`Executor: ${task.executedBy}`);
+            }
+
+            if (task.createdAt) {
+              const created = new Date(task.createdAt);
+              if (!Number.isNaN(created.getTime())) {
+                parts.push(`Queued: ${created.toLocaleString()}`);
+              }
+            }
+
+            return parts.join("\n");
+          });
+
+          statusEmbed.addFields({
+            name: header,
+            value: lines.join("\n\n").slice(0, 1000),
             inline: false,
           });
         });
 
-        if (combined.length > 10) {
-          statusEmbed.setFooter({
-            text: `Showing 10 of ${combined.length} queued tasks`,
-          });
-        }
-
-        return interaction.reply({ embeds: [statusEmbed], ephemeral: true });
+        return interaction.editReply({ embeds: [statusEmbed] });
       } catch (error) {
         const errorEmbed = new EmbedBuilder()
           .setTitle("Bridge Status Error")
-          .setDescription("There was an error fetching the bridge status queue.")
+          .setDescription(
+            `There was an error fetching the bridge status queue. ${error.message || error}`
+          )
           .setColor(Colors.Red);
 
-        return interaction.reply({ embeds: [errorEmbed], ephemeral: true });
+        return interaction.editReply({ embeds: [errorEmbed] });
       }
     }
 
     if (subcommand === "add") {
       const command = interaction.options.getString("command");
-      const targetedServer = interaction.options.getString("targetedserver");
+      const slug = interaction.options.getString("slug");
+      const priority = interaction.options.getInteger("priority") || 0;
 
       try {
-        const response = await fetch(
-          `${process.env.siteAddress}/api/bridge/processor/command/add`,
-          {
-            method: "POST",
-            headers: {
-              "x-access-token": process.env.apiKey,
-              "Content-Type": "application/json",
+        const metadata = metadataFromOption("metadata");
+
+        const payload = {
+          command,
+          slug,
+          priority,
+          metadata:
+            metadata ?? {
+              requestedBy: "Discord",
+              requestedById: interaction.user.id,
             },
-            body: JSON.stringify({
-              command: command,
-              slug: targetedServer,
-            }),
-          }
+          actioningUser: userGetData.userId,
+        };
+
+        await interaction.deferReply({ ephemeral: true });
+
+        const response = await postBridge(
+          "/api/bridge/processor/command/add",
+          payload
         );
 
         const apiData = await response.json();
 
         if (!apiData.success) {
-          const errorEmbed = new EmbedBuilder()
-            .setTitle("Bridge Add Error")
-            .setDescription(`Failed to add the bridge: ${apiData.message}`)
-            .setColor(Colors.Red);
-
-          return interaction.reply({ embeds: [errorEmbed], ephemeral: true });
+          throw new Error(apiData.message || "The API responded with an error.");
         }
+
+        const queuedTasks = Array.isArray(apiData.data) ? apiData.data.length : 1;
 
         const successEmbed = new EmbedBuilder()
           .setTitle("Bridge Command Added")
           .setDescription(
-            `Queued command for \`${targetedServer}\`: \`${command}\``
+            `Queued ${queuedTasks} task${queuedTasks === 1 ? "" : "s"} for **${slug}**.`
+          )
+          .addFields({ name: "Command", value: `\`${command}\`` })
+          .setColor(Colors.Green);
+
+        if (metadata) {
+          successEmbed.addFields({
+            name: "Metadata",
+            value: `\`${JSON.stringify(metadata).slice(0, 250)}\``,
+          });
+        }
+
+        return interaction.editReply({ embeds: [successEmbed] });
+      } catch (error) {
+        const errorEmbed = new EmbedBuilder()
+          .setTitle("Bridge Add Error")
+          .setDescription(error.message || "There was an error adding the bridge.")
+          .setColor(Colors.Red);
+
+        if (interaction.deferred || interaction.replied) {
+          return interaction.editReply({ embeds: [errorEmbed] });
+        }
+
+        return interaction.reply({ embeds: [errorEmbed], ephemeral: true });
+      }
+    }
+
+    if (subcommand === "routine") {
+      const routineSlug = interaction.options.getString("slug");
+
+      try {
+        const metadata = metadataFromOption("metadata");
+
+        await interaction.deferReply({ ephemeral: true });
+
+        const payload = {
+          routineSlug,
+          metadata:
+            metadata ?? {
+              requestedBy: "Discord",
+              requestedById: interaction.user.id,
+            },
+          actioningUser: userGetData.userId,
+        };
+
+        const response = await postBridge(
+          "/api/bridge/processor/command/add",
+          payload
+        );
+        const apiData = await response.json();
+
+        if (!apiData.success) {
+          throw new Error(apiData.message || "The API responded with an error.");
+        }
+
+        const queuedTasks = Array.isArray(apiData.data) ? apiData.data.length : 0;
+
+        const successEmbed = new EmbedBuilder()
+          .setTitle("Routine Queued")
+          .setDescription(
+            `Routine **${routineSlug}** queued ${queuedTasks} task${
+              queuedTasks === 1 ? "" : "s"
+            }.`
           )
           .setColor(Colors.Green);
 
-        return interaction.reply({ embeds: [successEmbed], ephemeral: true });
-      } catch (error) {
-        console.log(error);
+        if (metadata) {
+          successEmbed.addFields({
+            name: "Metadata",
+            value: `\`${JSON.stringify(metadata).slice(0, 250)}\``,
+          });
+        }
 
+        return interaction.editReply({ embeds: [successEmbed] });
+      } catch (error) {
         const errorEmbed = new EmbedBuilder()
-          .setTitle("Bridge Add Error")
-          .setDescription("There was an error adding the bridge.")
+          .setTitle("Routine Error")
+          .setDescription(
+            error.message || "There was an error queuing the requested routine."
+          )
           .setColor(Colors.Red);
+
+        if (interaction.deferred || interaction.replied) {
+          return interaction.editReply({ embeds: [errorEmbed] });
+        }
+
+        return interaction.reply({ embeds: [errorEmbed], ephemeral: true });
+      }
+    }
+
+    if (subcommand === "report") {
+      const taskId = interaction.options.getInteger("taskid");
+      const status = interaction.options.getString("status");
+      const resultText = interaction.options.getString("result");
+      const executedBy = interaction.options.getString("executedby");
+
+      try {
+        const metadata = metadataFromOption("metadata");
+
+        await interaction.deferReply({ ephemeral: true });
+
+        const payload = {
+          status,
+          result: resultText || null,
+          executedBy: executedBy || `discord:${interaction.user.id}`,
+          metadata: metadata ?? null,
+          actioningUser: userGetData.userId,
+        };
+
+        const response = await postBridge(
+          `/api/bridge/processor/task/${taskId}/report`,
+          payload
+        );
+        const apiData = await response.json();
+
+        if (!apiData.success) {
+          throw new Error(apiData.message || "Failed to submit the report.");
+        }
+
+        const successEmbed = new EmbedBuilder()
+          .setTitle("Task Reported")
+          .setDescription(`Task #${taskId} marked as **${status}**.`)
+          .setColor(Colors.Green);
+
+        if (resultText) {
+          successEmbed.addFields({ name: "Result", value: resultText });
+        }
+
+        if (metadata) {
+          successEmbed.addFields({
+            name: "Metadata",
+            value: `\`${JSON.stringify(metadata).slice(0, 250)}\``,
+          });
+        }
+
+        return interaction.editReply({ embeds: [successEmbed] });
+      } catch (error) {
+        const errorEmbed = new EmbedBuilder()
+          .setTitle("Report Error")
+          .setDescription(error.message || "There was an error reporting the task.")
+          .setColor(Colors.Red);
+
+        if (interaction.deferred || interaction.replied) {
+          return interaction.editReply({ embeds: [errorEmbed] });
+        }
+
+        return interaction.reply({ embeds: [errorEmbed], ephemeral: true });
+      }
+    }
+
+    if (subcommand === "reset") {
+      const taskId = interaction.options.getInteger("taskid");
+
+      try {
+        await interaction.deferReply({ ephemeral: true });
+
+        const payload = {
+          actioningUser: userGetData.userId,
+        };
+
+        const response = await postBridge(
+          `/api/bridge/processor/task/${taskId}/reset`,
+          payload
+        );
+        const apiData = await response.json();
+
+        if (!apiData.success) {
+          throw new Error(apiData.message || "Failed to reset the task.");
+        }
+
+        const successEmbed = new EmbedBuilder()
+          .setTitle("Task Reset")
+          .setDescription(`Task #${taskId} has been returned to pending.`)
+          .setColor(Colors.Green);
+
+        return interaction.editReply({ embeds: [successEmbed] });
+      } catch (error) {
+        const errorEmbed = new EmbedBuilder()
+          .setTitle("Reset Error")
+          .setDescription(error.message || "There was an error resetting the task.")
+          .setColor(Colors.Red);
+
+        if (interaction.deferred || interaction.replied) {
+          return interaction.editReply({ embeds: [errorEmbed] });
+        }
 
         return interaction.reply({ embeds: [errorEmbed], ephemeral: true });
       }
     }
 
     if (subcommand === "clear") {
+      const statusFilter = interaction.options.getString("status");
+      const slugFilter = interaction.options.getString("slug");
+      const routineFilter = interaction.options.getString("routine");
+
+      const summary = [
+        statusFilter ? `Status: **${statusFilter}**` : null,
+        slugFilter ? `Slug: **${slugFilter}**` : null,
+        routineFilter ? `Routine: **${routineFilter}**` : null,
+      ]
+        .filter(Boolean)
+        .join("\n");
+
       try {
-        // Create the confirmation embed
         const confirmationEmbed = new EmbedBuilder()
-          .setTitle("Are You Sure?")
+          .setTitle("Clear bridge queue?")
           .setDescription(
-            "Are you sure you want to clear the bridge? This action cannot be undone."
+            summary.length
+              ? `This will remove all matching tasks.\n\n${summary}\n\nThis action cannot be undone.`
+              : "This will remove every task from the executor queue. This action cannot be undone."
           )
           .setColor(Colors.Orange);
 
-        // Create the "Yes" and "No" buttons
         const yesButton = new ButtonBuilder()
           .setCustomId("clear_bridge_yes")
-          .setLabel("Yes")
+          .setLabel("Confirm clear")
           .setStyle(ButtonStyle.Danger);
 
         const noButton = new ButtonBuilder()
           .setCustomId("clear_bridge_no")
-          .setLabel("No")
+          .setLabel("Cancel")
           .setStyle(ButtonStyle.Secondary);
 
-        // Create an action row to hold the buttons
         const actionRow = new ActionRowBuilder().addComponents(
           yesButton,
           noButton
         );
 
-        // Send the confirmation message with buttons
         await interaction.reply({
           embeds: [confirmationEmbed],
           components: [actionRow],
           ephemeral: true,
         });
 
-        // Create a collector to handle button interactions
         const filter = (i) =>
           i.user.id === interaction.user.id &&
-          (i.customId === "clear_bridge_yes" ||
-            i.customId === "clear_bridge_no");
+          ["clear_bridge_yes", "clear_bridge_no"].includes(i.customId);
 
-        const collector = interaction.channel.createMessageComponentCollector({
+        const collector = interaction.channel?.createMessageComponentCollector({
           filter,
-          time: 15000, // 15 seconds
+          time: 15000,
         });
 
-        collector.on("collect", async (i) => {
-          if (i.customId === "clear_bridge_yes") {
-            // User confirmed, clear the bridge
-            try {
-              const response = await fetch(
-                `${process.env.siteAddress}/api/bridge/processor/clear`,
-                {
-                  method: "POST",
-                  headers: {
-                    "x-access-token": process.env.apiKey,
-                    "Content-Type": "application/json",
-                  },
-                  body: JSON.stringify({}),
-                }
-              );
-
-              const apiData = await response.json();
-
-              if (!apiData.success) {
-                const errorEmbed = new EmbedBuilder()
-                  .setTitle("Bridge Clear Error")
-                  .setDescription("Failed to clear the bridge.")
-                  .setColor(Colors.Red);
-
-                return i.update({
-                  embeds: [errorEmbed],
-                  components: [],
-                  ephemeral: true,
-                });
-              }
-
-              const successEmbed = new EmbedBuilder()
-                .setTitle("Bridge Cleared")
-                .setDescription(apiData.message || "The executor queue has been cleared.")
-                .setColor(Colors.Green);
-
-              return i.update({
-                embeds: [successEmbed],
-                components: [],
-                ephemeral: true,
-              });
-            } catch (error) {
-              console.log(error);
-              
-              const errorEmbed = new EmbedBuilder()
+        if (!collector) {
+          return interaction.editReply({
+            embeds: [
+              new EmbedBuilder()
                 .setTitle("Bridge Clear Error")
-                .setDescription("There was an error clearing the bridge.")
-                .setColor(Colors.Red);
+                .setDescription("Unable to start confirmation collector in this channel.")
+                .setColor(Colors.Red),
+            ],
+            components: [],
+          });
+        }
 
-              return i.update({
-                embeds: [errorEmbed],
-                components: [],
-                ephemeral: true,
-              });
-            }
-          } else if (i.customId === "clear_bridge_no") {
-            // User canceled, respond accordingly
+        collector.on("collect", async (i) => {
+          if (i.customId === "clear_bridge_no") {
             const canceledEmbed = new EmbedBuilder()
               .setTitle("Action Canceled")
               .setDescription("The bridge clear action has been canceled.")
               .setColor(Colors.Grey);
 
-            return i.update({
-              embeds: [canceledEmbed],
-              components: [],
-              ephemeral: true,
-            });
+            collector.stop("canceled");
+            return i.update({ embeds: [canceledEmbed], components: [] });
+          }
+
+          try {
+            const payload = {
+              actioningUser: userGetData.userId,
+            };
+
+            if (statusFilter) payload.status = statusFilter;
+            if (slugFilter) payload.slug = slugFilter;
+            if (routineFilter) payload.routineSlug = routineFilter;
+
+            const response = await postBridge(
+              "/api/bridge/processor/clear",
+              payload
+            );
+            const apiData = await response.json();
+
+            if (!apiData.success) {
+              throw new Error(apiData.message || "Failed to clear the queue.");
+            }
+
+            const successEmbed = new EmbedBuilder()
+              .setTitle("Bridge Cleared")
+              .setDescription(apiData.message || "The executor queue has been cleared.")
+              .setColor(Colors.Green);
+
+            collector.stop("completed");
+            return i.update({ embeds: [successEmbed], components: [] });
+          } catch (error) {
+            const errorEmbed = new EmbedBuilder()
+              .setTitle("Bridge Clear Error")
+              .setDescription(error.message || "There was an error clearing the bridge.")
+              .setColor(Colors.Red);
+
+            collector.stop("failed");
+            return i.update({ embeds: [errorEmbed], components: [] });
           }
         });
 
-        collector.on("end", (collected) => {
-          if (collected.size === 0) {
-            // No interaction collected within time limit
+        collector.on("end", (collected, reason) => {
+          if (reason === "time") {
             interaction.editReply({
               content: "No response received. Action has been canceled.",
               components: [],
@@ -339,12 +793,10 @@ export class BridgeCommand extends Command {
           }
         });
       } catch (error) {
-        console.log(error);
-        
         const errorEmbed = new EmbedBuilder()
           .setTitle("Bridge Clear Error")
           .setDescription(
-            "There was an error initiating the bridge clear process."
+            error.message || "There was an error initiating the bridge clear process."
           )
           .setColor(Colors.Red);
 
