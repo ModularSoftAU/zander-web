@@ -1,6 +1,8 @@
 <% const isOnline = profileSession && profileSession.isOnline; %>
 <% const serverName = profileSession && profileSession.server ? profileSession.server.charAt(0).toUpperCase() + profileSession.server.slice(1) : "the network"; %>
 
+<% const ranks = Array.isArray(profileRanks) ? profileRanks : []; %>
+
 <section class="profile-hero hero-overlay" style="background: url(../<%= globalImage %>) no-repeat 50% 50%; background-size: cover;">
     <div class="profile-hero-overlay py-5">
         <div class="container">
@@ -12,6 +14,20 @@
                 </div>
                 <div class="col">
                     <h1 class="text-white display-6 fw-bold mb-2"><%= profileApiData.username %></h1>
+                    <% if (ranks.length) { %>
+                        <div class="d-flex flex-wrap align-items-center profile-rank-pills mb-3">
+                            <% ranks.forEach(function(rank) { %>
+                                <span class="rank-pill"
+                                      style="--rank-pill-bg: <%= rank.rankBadgeColour || '#ffffff' %>; --rank-pill-text: <%= rank.rankTextColour || '#0f172a' %>"
+                                      title="<%= rank.title ? rank.title : rank.displayName %>">
+                                    <span class="rank-pill-name"><%= rank.displayName %></span>
+                                    <% if (rank.title) { %>
+                                        <span class="rank-pill-title ms-2"><%= rank.title %></span>
+                                    <% } %>
+                                </span>
+                            <% }) %>
+                        </div>
+                    <% } %>
                     <div class="d-flex flex-wrap align-items-center gap-3 text-white-50">
                         <% if (isOnline) { %>
                             <span class="badge badge-soft-success d-inline-flex align-items-center gap-2">

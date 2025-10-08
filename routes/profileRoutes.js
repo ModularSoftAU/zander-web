@@ -58,6 +58,33 @@ export default function profileSiteRoutes(
     return baseName.substring(0, 32);
   };
 
+  const fetchUserRanks = async (username) => {
+    if (!username) {
+      return [];
+    }
+
+    try {
+      const response = await fetch(
+        `${process.env.siteAddress}/api/rank/get?username=${encodeURIComponent(
+          username
+        )}`,
+        {
+          headers: { "x-access-token": process.env.apiKey },
+        }
+      );
+
+      if (!response.ok) {
+        return [];
+      }
+
+      const data = await response.json();
+      return Array.isArray(data.data) ? data.data : [];
+    } catch (error) {
+      console.error("[PROFILE] Failed to fetch ranks for", username, error);
+      return [];
+    }
+  };
+
   //
   // View User Profile
   //
@@ -126,6 +153,7 @@ export default function profileSiteRoutes(
             profileApiData.data[0].username
           ),
           profileApiData: profileApiData.data[0],
+          profileRanks: await fetchUserRanks(profileApiData.data[0].username),
           profileReportsApiData: profileReportsApiData,
           profileStats: await getUserStats(profileApiData.data[0].userId),
           profileSession: await getUserLastSession(
@@ -196,6 +224,7 @@ export default function profileSiteRoutes(
           announcementWeb: await getWebAnnouncement(),
           profilePicture: await getProfilePicture(profileApiData.data[0].username),
           profileApiData: profileApiData.data[0],
+          profileRanks: await fetchUserRanks(profileApiData.data[0].username),
           profileStats: await getUserStats(profileApiData.data[0].userId),
           profileSession: await getUserLastSession(profileApiData.data[0].userId),
           moment: moment,

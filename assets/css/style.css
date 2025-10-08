@@ -219,6 +219,33 @@ input[type="email"]:focus, input[type="password"]:focus, input[type="text"]:focu
   object-fit: cover;
 }
 
+.profile-rank-pills {
+  gap: 0.5rem;
+}
+
+.rank-pill {
+  --rank-pill-bg: rgba(255, 255, 255, 0.16);
+  --rank-pill-text: #0f172a;
+  display: inline-flex;
+  align-items: center;
+  padding: 0.35rem 0.85rem;
+  border-radius: 999px;
+  font-weight: 600;
+  font-size: 0.85rem;
+  letter-spacing: 0.01em;
+  background-color: var(--rank-pill-bg);
+  color: var(--rank-pill-text);
+  border: 1px solid rgba(15, 23, 42, 0.15);
+  box-shadow: 0 6px 12px rgba(15, 23, 42, 0.12);
+}
+
+.rank-pill-title {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  opacity: 0.9;
+}
+
 .profile-tabs {
   gap: 0.75rem;
   flex-wrap: wrap;

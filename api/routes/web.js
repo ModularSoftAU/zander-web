@@ -30,12 +30,16 @@ export default async function webApiRoute(app, config, db, features, lang) {
       WHERE gs.sessionStart >= DATE_SUB(NOW(), INTERVAL 3 MONTH)
         AND u.account_disabled = 0;
 
-      SELECT COUNT(DISTINCT u.userId) AS totalStaff
-      FROM userRanks ur
-      JOIN ranks r ON ur.rankSlug = r.rankSlug
-      JOIN users u ON u.uuid = ur.uuid
-      WHERE r.isStaff = 1
-        AND u.account_disabled = 0;
+      SELECT COUNT(*) AS totalStaff
+      FROM (
+        SELECT u.uuid
+        FROM userRanks ur
+        JOIN ranks r ON ur.rankSlug = r.rankSlug
+        JOIN users u ON u.uuid = ur.uuid
+        WHERE r.isStaff = 1
+          AND u.account_disabled = 0
+        GROUP BY u.uuid
+      ) staffRoster;
   `,
       async function (err, results) {
         if (err) {

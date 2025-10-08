@@ -32,6 +32,7 @@ export default function rankApiRoute(app, config, db, features, lang) {
                 JOIN userRanks ur ON ur.rankSlug = r.rankSlug
                 JOIN luckPermsPlayers lpPlayers ON ur.uuid = lpPlayers.uuid
             WHERE lpPlayers.username = ?
+              ORDER BY CAST(r.priority AS UNSIGNED) DESC
           `,
           [username]
         );
