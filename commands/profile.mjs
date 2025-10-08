@@ -64,7 +64,7 @@ export class ProfileCommand extends Command {
 
       let statusLine = "";
 
-      if (!session.sessionEnd) {
+      if (session.isOnline) {
         statusLine = `Currently Online on ${serverName}`;
       } else if (session.lastOnlineDiff) {
         statusLine = `Last Online ${session.lastOnlineDiff} ago on ${serverName}`;

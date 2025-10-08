@@ -537,6 +537,24 @@ input[type="email"]:focus, input[type="password"]:focus, input[type="text"]:focu
     color: rgba(255, 255, 255, 0.5) !important;
 }
 
+.stats-footnote {
+  position: absolute;
+  left: 1.5rem;
+  bottom: 1rem;
+  margin: 0;
+  color: rgba(255, 255, 255, 0.85);
+  font-size: 0.85rem;
+  font-weight: 500;
+}
+
+@media (max-width: 767.98px) {
+  .stats-footnote {
+    left: 1rem;
+    bottom: 0.75rem;
+    font-size: 0.75rem;
+  }
+}
+
 .overly-2 {
   position: relative;
 }

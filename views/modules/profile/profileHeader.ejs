@@ -1,4 +1,4 @@
-<% const isOnline = profileSession && !profileSession.sessionEnd; %>
+<% const isOnline = profileSession && profileSession.isOnline; %>
 <% const serverName = profileSession && profileSession.server ? profileSession.server.charAt(0).toUpperCase() + profileSession.server.slice(1) : "the network"; %>
 
 <section class="profile-hero hero-overlay" style="background: url(../<%= globalImage %>) no-repeat 50% 50%; background-size: cover;">
@@ -19,7 +19,7 @@
                                 <span>Online</span>
                             </span>
                             <span>Playing on <span class="text-white fw-semibold"><%= serverName %></span></span>
-                        <% } else if (profileSession && profileSession.sessionEnd && profileSession.lastOnlineDiff) { %>
+                        <% } else if (profileSession && profileSession.lastOnlineDiff) { %>
                             <span class="badge badge-soft-danger d-inline-flex align-items-center gap-2">
                                 <i class="fa-solid fa-circle"></i>
                                 <span>Offline</span>
@@ -28,7 +28,7 @@
                         <% } else { %>
                             <span class="badge badge-soft-secondary d-inline-flex align-items-center gap-2">
                                 <i class="fa-solid fa-circle"></i>
-                                <span>Status Unknown</span>
+                                <span>No recent session information available</span>
                             </span>
                         <% } %>
                     </div>

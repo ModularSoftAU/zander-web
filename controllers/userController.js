@@ -666,22 +666,44 @@ export async function getUserLastSession(userId) {
             sessionStart: null,
             sessionEnd: null,
             server: null,
-            lastOnlineDiff: "No previous session",
+            lastOnlineDiff: null,
+            isOnline: false,
           };
           return resolve(defaultSessionData);
         }
 
-        const now = new Date(); // Current time
-        const sessionStart = new Date(results[0].sessionEnd);
-        const sessionDiff = convertSecondsToDuration(
-          Math.floor((now - sessionStart) / 1000)
-        );
+        const sessionRecord = results[0];
+        const now = new Date();
+        let isOnline = !sessionRecord.sessionEnd;
+
+        // Treat stale sessions without an end time as offline after a grace period
+        if (isOnline && sessionRecord.sessionStart) {
+          const sessionStartDate = new Date(sessionRecord.sessionStart);
+          const activeSeconds = Math.floor((now - sessionStartDate) / 1000);
+          const staleThresholdSeconds = 24 * 60 * 60; // 24 hours
+          if (activeSeconds > staleThresholdSeconds) {
+            isOnline = false;
+          }
+        }
+
+        const lastActivityDate = sessionRecord.sessionEnd
+          ? new Date(sessionRecord.sessionEnd)
+          : sessionRecord.sessionStart
+          ? new Date(sessionRecord.sessionStart)
+          : null;
+
+        const sessionDiff = lastActivityDate
+          ? convertSecondsToDuration(
+              Math.max(0, Math.floor((now - lastActivityDate) / 1000))
+            )
+          : null;
 
         const sessionData = {
-          sessionStart: results[0].sessionStart,
-          sessionEnd: results[0].sessionEnd,
-          server: results[0].server,
+          sessionStart: sessionRecord.sessionStart,
+          sessionEnd: sessionRecord.sessionEnd,
+          server: sessionRecord.server,
           lastOnlineDiff: sessionDiff,
+          isOnline,
         };
 
         resolve(sessionData);
