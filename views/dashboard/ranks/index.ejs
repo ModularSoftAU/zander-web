@@ -1,0 +1,679 @@
+<%- include("../modules/header.ejs", {
+  pageTitle: pageTitle,
+  pageDescription: "Review rank metadata and manage player permissions."
+}) %>
+
+<%- include("../modules/navigationBar.ejs") %>
+
+<%- include("../partials/miniHeader.ejs", {
+  headerTitle: "Rank Management",
+  backgroundImage: globalImage
+}) %>
+
+<div class="row dashboardview">
+  <div class="col-lg-2">
+    <%- include("../modules/dashboard/dashboard-sidebar.ejs") %>
+  </div>
+  <div class="col-lg-10" style="padding: 20px;">
+    <div class="row g-4">
+      <div class="col-12">
+        <div class="card shadow-sm rank-admin-card">
+          <div class="card-header d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-2">
+            <div>
+              <h5 class="card-title mb-1">Rank directory</h5>
+              <p class="card-subtitle text-muted mb-0">
+                Review every network rank, compare overrides, and adjust their configuration.
+              </p>
+            </div>
+            <span class="badge bg-primary fw-semibold">
+              Total ranks: <%= ranks.length %>
+            </span>
+          </div>
+          <div class="card-body p-0">
+            <div class="table-responsive">
+              <table class="table align-middle mb-0 rank-table">
+                <thead class="table-light">
+                  <tr>
+                    <th scope="col">Rank</th>
+                    <th scope="col" class="text-nowrap">Priority</th>
+                    <th scope="col">Flags</th>
+                    <th scope="col">Overrides</th>
+                    <th scope="col" class="text-end">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <% if (!ranks.length) { %>
+                    <tr>
+                      <td colspan="5" class="text-center text-muted py-4">
+                        No ranks found.
+                      </td>
+                    </tr>
+                  <% } %>
+                  <% ranks.forEach(function(rank) { %>
+                    <% const hasOverride = rank.overrides.displayName || rank.overrides.rankBadgeColour || rank.overrides.rankTextColour || rank.overrides.priority !== null || rank.overrides.discordRoleId || rank.overrides.isStaff !== null || rank.overrides.isDonator !== null; %>
+                    <tr>
+                      <td>
+                        <div class="d-flex flex-column flex-sm-row align-items-sm-center gap-2">
+                          <span class="rank-pill" style="--rank-pill-bg: <%= rank.rankBadgeColour %>; --rank-pill-text: <%= rank.rankTextColour %>"><%= rank.displayName %></span>
+                          <span class="text-muted small">/<%= rank.rankSlug %></span>
+                        </div>
+                      </td>
+                      <td class="text-nowrap">
+                        <span class="badge bg-secondary fw-semibold">
+                          <%= rank.priority === null ? "Default" : rank.priority %>
+                        </span>
+                      </td>
+                      <td>
+                        <div class="d-flex flex-wrap gap-2">
+                          <% if (Number(rank.isStaff) === 1) { %>
+                            <span class="badge bg-danger">Staff</span>
+                          <% } %>
+                          <% if (Number(rank.isDonator) === 1) { %>
+                            <span class="badge bg-warning text-dark">Donator</span>
+                          <% } %>
+                          <% if (!Number(rank.isStaff) && !Number(rank.isDonator)) { %>
+                            <span class="text-muted small">None</span>
+                          <% } %>
+                        </div>
+                      </td>
+                      <td>
+                        <% if (hasOverride) { %>
+                          <div class="d-flex flex-column gap-1 text-muted small">
+                            <% if (rank.overrides.displayName) { %>
+                              <span><i class="fa-solid fa-font me-1"></i><%= rank.overrides.displayName %></span>
+                            <% } %>
+                            <% if (rank.overrides.rankBadgeColour || rank.overrides.rankTextColour) { %>
+                              <span>
+                                <i class="fa-solid fa-palette me-1"></i>
+                                <%= rank.overrides.rankBadgeColour || "Default" %> /
+                                <%= rank.overrides.rankTextColour || "Default" %>
+                              </span>
+                            <% } %>
+                            <% if (rank.overrides.priority !== null && rank.overrides.priority !== undefined) { %>
+                              <span><i class="fa-solid fa-arrow-up-9-1 me-1"></i>Priority <%= rank.overrides.priority %></span>
+                            <% } %>
+                            <% if (rank.overrides.discordRoleId) { %>
+                              <span><i class="fa-brands fa-discord me-1"></i><%= rank.overrides.discordRoleId %></span>
+                            <% } %>
+                            <% if (rank.overrides.isStaff !== null || rank.overrides.isDonator !== null) { %>
+                              <span><i class="fa-solid fa-user-gear me-1"></i>Flags overridden</span>
+                            <% } %>
+                          </div>
+                        <% } else { %>
+                          <span class="text-muted small">Using defaults</span>
+                        <% } %>
+                      </td>
+                      <td class="text-end">
+                        <button type="button" class="btn btn-sm btn-outline-primary" data-rank-config data-rank="<%- encodeURIComponent(JSON.stringify(rank)) %>" data-bs-toggle="modal" data-bs-target="#rankConfigModal">
+                          Manage
+                        </button>
+                      </td>
+                    </tr>
+                  <% }); %>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-12">
+        <div class="card shadow-sm">
+          <div class="card-header">
+            <h5 class="card-title mb-1">User rank tools</h5>
+            <p class="card-subtitle text-muted mb-0">
+              Inspect a player, adjust their ranks, and verify permission nodes without leaving the dashboard.
+            </p>
+          </div>
+          <div class="card-body">
+            <form id="rankUserLookupForm" class="row g-3 align-items-end">
+              <div class="col-md-6">
+                <label for="rankLookupUsername" class="form-label">Minecraft username</label>
+                <input type="text" class="form-control" id="rankLookupUsername" name="username" placeholder="Enter a username" autocomplete="off" required>
+              </div>
+              <div class="col-md-auto">
+                <button type="submit" class="btn btn-primary">Load profile</button>
+              </div>
+            </form>
+
+            <div id="rankUserLookupFeedback" class="alert d-none mt-3" role="alert"></div>
+
+            <div id="rankUserContext" class="d-none">
+              <div class="row g-4 mt-1">
+                <div class="col-lg-6">
+                  <div class="border rounded-3 p-3 h-100 bg-light">
+                    <h6 class="fw-semibold mb-2">Profile summary</h6>
+                    <dl class="row mb-0 small" id="rankUserSummary">
+                      <dt class="col-sm-4">Username</dt>
+                      <dd class="col-sm-8 text-truncate" data-summary="username"></dd>
+                      <dt class="col-sm-4">UUID</dt>
+                      <dd class="col-sm-8 text-truncate" data-summary="uuid"></dd>
+                      <dt class="col-sm-4">Web account</dt>
+                      <dd class="col-sm-8" data-summary="web-account"></dd>
+                    </dl>
+                  </div>
+                </div>
+                <div class="col-lg-6">
+                  <div class="border rounded-3 p-3 h-100">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                      <h6 class="fw-semibold mb-0">Direct ranks</h6>
+                      <span class="badge bg-secondary" id="rankUserRankCount"></span>
+                    </div>
+                    <div id="rankUserRankList" class="d-flex flex-wrap gap-2"></div>
+                    <p class="text-muted small mb-0" id="rankUserRankEmpty">No direct ranks assigned.</p>
+                  </div>
+                </div>
+              </div>
+
+              <hr class="my-4">
+
+              <div class="row g-4">
+                <div class="col-lg-6">
+                  <div class="border rounded-3 p-3 h-100">
+                    <h6 class="fw-semibold mb-3">Promote or demote</h6>
+                    <form id="rankAssignForm" class="row g-3">
+                      <div class="col-12">
+                        <label for="rankAssignSelect" class="form-label">Assign a rank</label>
+                        <select class="form-select" id="rankAssignSelect" name="rankSlug" disabled required>
+                          <option value="" selected>Select a rank</option>
+                        </select>
+                      </div>
+                      <div class="col-12">
+                        <label for="rankAssignTitle" class="form-label">Optional title</label>
+                        <input type="text" class="form-control" id="rankAssignTitle" name="title" maxlength="64" placeholder="Custom staff title or leave blank">
+                      </div>
+                      <div class="col-12 d-flex justify-content-between">
+                        <button type="submit" class="btn btn-primary" id="rankAssignSubmit" disabled>Assign rank</button>
+                        <button type="button" class="btn btn-outline-secondary" id="rankAssignReset" disabled>Reset</button>
+                      </div>
+                    </form>
+                  </div>
+                </div>
+                <div class="col-lg-6">
+                  <div class="border rounded-3 p-3 h-100">
+                    <h6 class="fw-semibold mb-3">Permission check</h6>
+                    <form id="rankPermissionForm" class="row g-3">
+                      <div class="col-12">
+                        <label for="rankPermissionNode" class="form-label">Permission node</label>
+                        <input type="text" class="form-control" id="rankPermissionNode" name="permission" placeholder="example.permission.node" autocomplete="off" required disabled>
+                      </div>
+                      <div class="col-12 d-flex justify-content-between align-items-center">
+                        <button type="submit" class="btn btn-outline-primary" id="rankPermissionSubmit" disabled>Check permission</button>
+                        <div class="text-end" id="rankPermissionResult"></div>
+                      </div>
+                    </form>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade" id="rankConfigModal" tabindex="-1" aria-labelledby="rankConfigModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="rankConfigModalLabel">Rank configuration</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <form id="rankConfigForm">
+        <div class="modal-body">
+          <div class="alert alert-info d-flex align-items-start gap-2" role="alert">
+            <i class="fa-solid fa-circle-info mt-1"></i>
+            <div>
+              Adjust the website presentation for this rank. Leaving a field blank will fall back to the default values sourced from LuckPerms.
+            </div>
+          </div>
+          <div class="row g-3">
+            <div class="col-md-6">
+              <label for="rankConfigDisplayName" class="form-label">Display name</label>
+              <input type="text" class="form-control" id="rankConfigDisplayName" name="displayName" maxlength="64">
+            </div>
+            <div class="col-md-3">
+              <label for="rankConfigBadgeColour" class="form-label">Badge colour</label>
+              <input type="text" class="form-control" id="rankConfigBadgeColour" name="rankBadgeColour" placeholder="#RRGGBB">
+            </div>
+            <div class="col-md-3">
+              <label for="rankConfigTextColour" class="form-label">Text colour</label>
+              <input type="text" class="form-control" id="rankConfigTextColour" name="rankTextColour" placeholder="#RRGGBB">
+            </div>
+            <div class="col-md-3">
+              <label for="rankConfigPriority" class="form-label">Priority</label>
+              <input type="number" class="form-control" id="rankConfigPriority" name="priority" min="0" step="1">
+            </div>
+            <div class="col-md-5">
+              <label for="rankConfigDiscordRole" class="form-label">Discord role ID</label>
+              <input type="text" class="form-control" id="rankConfigDiscordRole" name="discordRoleId" maxlength="32">
+            </div>
+            <div class="col-md-4">
+              <label class="form-label">Flags</label>
+              <div class="d-flex gap-3">
+                <div class="form-check">
+                  <input class="form-check-input" type="checkbox" value="1" id="rankConfigIsStaff" name="isStaff">
+                  <label class="form-check-label" for="rankConfigIsStaff">Staff</label>
+                </div>
+                <div class="form-check">
+                  <input class="form-check-input" type="checkbox" value="1" id="rankConfigIsDonator" name="isDonator">
+                  <label class="form-check-label" for="rankConfigIsDonator">Donator</label>
+                </div>
+              </div>
+            </div>
+          </div>
+          <input type="hidden" name="rankSlug" id="rankConfigSlug">
+        </div>
+        <div class="modal-footer d-flex justify-content-between">
+          <div>
+            <span class="text-muted small" id="rankConfigMeta"></span>
+          </div>
+          <div class="d-flex gap-2">
+            <button type="button" class="btn btn-outline-danger" id="rankConfigReset">Reset to defaults</button>
+            <button type="submit" class="btn btn-primary">Save changes</button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script>
+  window.rankDirectory = <%- JSON.stringify(ranks) %>;
+</script>
+
+<script>
+  (function () {
+    const ranks = window.rankDirectory || [];
+    const modalEl = document.getElementById("rankConfigModal");
+    const modalForm = document.getElementById("rankConfigForm");
+    const resetButton = document.getElementById("rankConfigReset");
+    const metaLabel = document.getElementById("rankConfigMeta");
+    let activeRank = null;
+
+    function decodeRank(button) {
+      const payload = button.getAttribute("data-rank");
+      if (!payload) return null;
+      try {
+        return JSON.parse(decodeURIComponent(payload));
+      } catch (error) {
+        console.error("Failed to parse rank payload", error);
+        return null;
+      }
+    }
+
+    function populateModal(rank) {
+      if (!rank) return;
+      activeRank = rank;
+      modalForm.reset();
+      document.getElementById("rankConfigSlug").value = rank.rankSlug;
+      document.getElementById("rankConfigDisplayName").value = rank.overrides.displayName || "";
+      document.getElementById("rankConfigBadgeColour").value = rank.overrides.rankBadgeColour || "";
+      document.getElementById("rankConfigTextColour").value = rank.overrides.rankTextColour || "";
+      document.getElementById("rankConfigPriority").value =
+        rank.overrides.priority !== null && rank.overrides.priority !== undefined
+          ? rank.overrides.priority
+          : "";
+      document.getElementById("rankConfigDiscordRole").value = rank.overrides.discordRoleId || "";
+      document.getElementById("rankConfigIsStaff").checked = rank.overrides.isStaff === null
+        ? Boolean(rank.base.isStaff)
+        : Boolean(rank.overrides.isStaff);
+      document.getElementById("rankConfigIsDonator").checked = rank.overrides.isDonator === null
+        ? Boolean(rank.base.isDonator)
+        : Boolean(rank.overrides.isDonator);
+
+      if (metaLabel) {
+        if (rank.updatedAt) {
+          metaLabel.textContent = `Last updated ${rank.updatedAt} by ${rank.updatedBy || "System"}`;
+        } else {
+          metaLabel.textContent = "Currently using defaults.";
+        }
+      }
+    }
+
+    document.querySelectorAll('[data-rank-config]').forEach((button) => {
+      button.addEventListener('click', () => {
+        const rank = decodeRank(button);
+        if (!rank) return;
+        populateModal(rank);
+      });
+    });
+
+    async function submitRankConfig(event) {
+      event.preventDefault();
+      if (!activeRank) return;
+
+      const formData = new FormData(modalForm);
+      const payload = Object.fromEntries(formData.entries());
+      payload.isStaff = modalForm.querySelector('#rankConfigIsStaff').checked;
+      payload.isDonator = modalForm.querySelector('#rankConfigIsDonator').checked;
+
+      const submitButton = modalForm.querySelector('button[type="submit"]');
+      submitButton.disabled = true;
+
+      try {
+        const response = await fetch('/redirect/rank/config/save', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        });
+        const data = await response.json();
+
+        if (data.success) {
+          window.location.reload();
+        } else {
+          alert(data.message || 'Failed to update rank configuration.');
+        }
+      } catch (error) {
+        console.error('Failed to update rank configuration', error);
+        alert('An unexpected error occurred while updating the rank.');
+      } finally {
+        submitButton.disabled = false;
+      }
+    }
+
+    async function resetRankOverrides() {
+      if (!activeRank) return;
+
+      if (!confirm('Reset overrides for this rank and use defaults?')) return;
+
+      try {
+        const response = await fetch('/redirect/rank/config/reset', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ rankSlug: activeRank.rankSlug }),
+        });
+        const data = await response.json();
+        if (data.success) {
+          window.location.reload();
+        } else {
+          alert(data.message || 'Unable to reset rank overrides.');
+        }
+      } catch (error) {
+        console.error('Failed to reset rank overrides', error);
+        alert('An unexpected error occurred while resetting the rank.');
+      }
+    }
+
+    if (modalForm) {
+      modalForm.addEventListener('submit', submitRankConfig);
+    }
+
+    if (resetButton) {
+      resetButton.addEventListener('click', resetRankOverrides);
+    }
+
+    // User tooling
+    const lookupForm = document.getElementById('rankUserLookupForm');
+    const lookupFeedback = document.getElementById('rankUserLookupFeedback');
+    const contextContainer = document.getElementById('rankUserContext');
+    const summaryContainer = document.getElementById('rankUserSummary');
+    const rankList = document.getElementById('rankUserRankList');
+    const rankEmptyState = document.getElementById('rankUserRankEmpty');
+    const rankCount = document.getElementById('rankUserRankCount');
+    const assignForm = document.getElementById('rankAssignForm');
+    const assignSelect = document.getElementById('rankAssignSelect');
+    const assignTitle = document.getElementById('rankAssignTitle');
+    const assignSubmit = document.getElementById('rankAssignSubmit');
+    const assignReset = document.getElementById('rankAssignReset');
+    const permissionForm = document.getElementById('rankPermissionForm');
+    const permissionInput = document.getElementById('rankPermissionNode');
+    const permissionSubmit = document.getElementById('rankPermissionSubmit');
+    const permissionResult = document.getElementById('rankPermissionResult');
+    let activeUser = null;
+
+    function updateSummary(user) {
+      if (!summaryContainer) return;
+      summaryContainer.querySelector('[data-summary="username"]').textContent = user.username;
+      summaryContainer.querySelector('[data-summary="uuid"]').textContent = user.uuid || 'Unavailable';
+      summaryContainer.querySelector('[data-summary="web-account"]').textContent = user.userId ? 'Linked' : 'Not linked';
+    }
+
+    function renderUserRanks(rankPayload) {
+      rankList.innerHTML = '';
+      if (!rankPayload || !rankPayload.length) {
+        rankEmptyState.classList.remove('d-none');
+        rankCount.textContent = '0 ranks';
+        return;
+      }
+
+      rankEmptyState.classList.add('d-none');
+      rankCount.textContent = `${rankPayload.length} ${rankPayload.length === 1 ? 'rank' : 'ranks'}`;
+
+      rankPayload.forEach((rank) => {
+        const pill = document.createElement('div');
+        pill.className = 'rank-pill d-flex align-items-center gap-2';
+        pill.style.setProperty('--rank-pill-bg', rank.rankBadgeColour || '#1f2937');
+        pill.style.setProperty('--rank-pill-text', rank.rankTextColour || '#ffffff');
+        pill.textContent = rank.displayName;
+
+        const removeButton = document.createElement('button');
+        removeButton.type = 'button';
+        removeButton.className = 'btn btn-sm btn-outline-danger ms-2';
+        removeButton.textContent = 'Remove';
+        removeButton.addEventListener('click', () => handleRankRemoval(rank.rankSlug));
+
+        const wrapper = document.createElement('div');
+        wrapper.className = 'd-flex align-items-center gap-2';
+        wrapper.appendChild(pill);
+        wrapper.appendChild(removeButton);
+
+        rankList.appendChild(wrapper);
+      });
+    }
+
+    function populateAssignOptions(rankPayload) {
+      assignSelect.innerHTML = '';
+      const placeholderOption = document.createElement('option');
+      placeholderOption.value = '';
+      placeholderOption.textContent = 'Select a rank';
+      assignSelect.appendChild(placeholderOption);
+
+      const assignedSlugs = new Set((rankPayload || []).map((rank) => rank.rankSlug));
+      ranks.forEach((rank) => {
+        if (assignedSlugs.has(rank.rankSlug)) return;
+        const option = document.createElement('option');
+        option.value = rank.rankSlug;
+        option.textContent = `${rank.displayName} (${rank.rankSlug})`;
+        assignSelect.appendChild(option);
+      });
+
+      const hasAvailable = assignSelect.options.length > 1;
+      assignSelect.disabled = !hasAvailable;
+      assignTitle.disabled = !hasAvailable;
+      assignSubmit.disabled = !hasAvailable;
+      assignReset.disabled = !hasAvailable;
+    }
+
+    function enablePermissionTools(enabled) {
+      permissionInput.disabled = !enabled;
+      permissionSubmit.disabled = !enabled;
+      if (!enabled) {
+        permissionResult.innerHTML = '';
+        permissionInput.value = '';
+      }
+    }
+
+    function showPermissionResult(success, message) {
+      permissionResult.innerHTML = '';
+      const badge = document.createElement('span');
+      badge.className = success ? 'badge bg-success' : 'badge bg-danger';
+      badge.textContent = message;
+      permissionResult.appendChild(badge);
+    }
+
+    function resetPermissionResult() {
+      permissionResult.innerHTML = '';
+    }
+
+    function showLookupFeedback(type, message) {
+      if (!lookupFeedback) return;
+      lookupFeedback.classList.remove('d-none', 'alert-success', 'alert-danger', 'alert-warning', 'alert-info');
+      lookupFeedback.classList.add(`alert-${type}`);
+      lookupFeedback.textContent = message;
+    }
+
+    function clearLookupFeedback() {
+      if (!lookupFeedback) return;
+      lookupFeedback.classList.add('d-none');
+      lookupFeedback.textContent = '';
+    }
+
+    async function handleRankRemoval(rankSlug) {
+      if (!activeUser) return;
+
+      if (!confirm(`Remove ${rankSlug} from ${activeUser.user.username}?`)) return;
+
+      try {
+        const response = await fetch('/redirect/rank/user/remove', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username: activeUser.user.username, rankSlug }),
+        });
+        const data = await response.json();
+        if (data.success) {
+          await loadUser(activeUser.user.username, true);
+        } else {
+          alert(data.message || 'Unable to remove rank.');
+        }
+      } catch (error) {
+        console.error('Failed to remove rank', error);
+        alert('An unexpected error occurred while removing the rank.');
+      }
+    }
+
+    async function handleAssignSubmit(event) {
+      event.preventDefault();
+      if (!activeUser) return;
+
+      const formData = new FormData(assignForm);
+      const payload = Object.fromEntries(formData.entries());
+      payload.username = activeUser.user.username;
+
+      if (!payload.rankSlug) {
+        alert('Select a rank to assign.');
+        return;
+      }
+
+      assignSubmit.disabled = true;
+
+      try {
+        const response = await fetch('/redirect/rank/user/assign', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        });
+        const data = await response.json();
+        if (data.success) {
+          assignForm.reset();
+          await loadUser(activeUser.user.username, true);
+        } else {
+          alert(data.message || 'Unable to assign rank.');
+        }
+      } catch (error) {
+        console.error('Failed to assign rank', error);
+        alert('An unexpected error occurred while assigning the rank.');
+      } finally {
+        assignSubmit.disabled = false;
+      }
+    }
+
+    function resetAssignForm() {
+      assignForm.reset();
+    }
+
+    async function handlePermissionSubmit(event) {
+      event.preventDefault();
+      resetPermissionResult();
+
+      if (!activeUser) return;
+
+      const formData = new FormData(permissionForm);
+      const payload = Object.fromEntries(formData.entries());
+      payload.username = activeUser.user.username;
+
+      try {
+        const response = await fetch('/redirect/rank/user/check-permission', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        });
+        const data = await response.json();
+        if (data.success && data.data) {
+          const message = data.data.hasPermission
+            ? `${activeUser.user.username} has ${data.data.permission}`
+            : `${activeUser.user.username} does not have ${data.data.permission}`;
+          showPermissionResult(data.data.hasPermission, message);
+        } else {
+          showPermissionResult(false, data.message || 'Unable to verify permission.');
+        }
+      } catch (error) {
+        console.error('Failed to check permission', error);
+        showPermissionResult(false, 'An unexpected error occurred while checking the permission.');
+      }
+    }
+
+    async function loadUser(username, silent = false) {
+      if (!silent) {
+        showLookupFeedback('info', `Loading ${username}...`);
+      }
+
+      try {
+        const response = await fetch('/redirect/rank/user/lookup', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username }),
+        });
+        const data = await response.json();
+
+        if (!data.success) {
+          activeUser = null;
+          if (!silent) showLookupFeedback('danger', data.message || 'Unable to load player information.');
+          contextContainer.classList.add('d-none');
+          return;
+        }
+
+        clearLookupFeedback();
+        activeUser = data.data;
+        if (!activeUser) return;
+
+        updateSummary(activeUser.user);
+        renderUserRanks(activeUser.ranks);
+        populateAssignOptions(activeUser.ranks);
+        enablePermissionTools(Boolean(activeUser.user.userId));
+        resetPermissionResult();
+        contextContainer.classList.remove('d-none');
+      } catch (error) {
+        console.error('Failed to load user', error);
+        if (!silent) showLookupFeedback('danger', 'An unexpected error occurred while loading the player.');
+      }
+    }
+
+    if (lookupForm) {
+      lookupForm.addEventListener('submit', (event) => {
+        event.preventDefault();
+        const username = lookupForm.username.value.trim();
+        if (!username) {
+          showLookupFeedback('warning', 'Enter a username to continue.');
+          return;
+        }
+        loadUser(username);
+      });
+    }
+
+    if (assignForm) {
+      assignForm.addEventListener('submit', handleAssignSubmit);
+    }
+
+    if (assignReset) {
+      assignReset.addEventListener('click', resetAssignForm);
+    }
+
+    if (permissionForm) {
+      permissionForm.addEventListener('submit', handlePermissionSubmit);
+    }
+  })();
+</script>
+
+<%- include("../modules/footer.ejs") %>

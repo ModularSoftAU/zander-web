@@ -239,6 +239,22 @@ input[type="email"]:focus, input[type="password"]:focus, input[type="text"]:focu
   box-shadow: 0 6px 12px rgba(15, 23, 42, 0.12);
 }
 
+.rank-admin-card .rank-table th,
+.rank-admin-card .rank-table td {
+  padding: 1rem;
+  vertical-align: middle;
+}
+
+#rankUserRankList .rank-pill {
+  border: 0;
+  box-shadow: none;
+}
+
+#rankPermissionResult .badge {
+  font-size: 0.85rem;
+  padding: 0.5rem 0.75rem;
+}
+
 .profile-tabs {
   gap: 0.75rem;
   flex-wrap: wrap;

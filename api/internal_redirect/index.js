@@ -5,6 +5,7 @@ import announcementsRedirectRoute from "./announcement.js";
 import reportRedirectRoute from "./report.js";
 import vaultRedirectRoute from "./vault.js";
 import bridgeRedirectRoute from "./bridge.js";
+import rankRedirectRoute from "./rank.js";
 
 export default (app, config, lang) => {
   applicationRedirectRoute(app, config, lang);
@@ -14,4 +15,5 @@ export default (app, config, lang) => {
   announcementsRedirectRoute(app, config, lang);
   vaultRedirectRoute(app, config, lang);
   bridgeRedirectRoute(app, config, lang);
+  rankRedirectRoute(app, config, lang);
 };
