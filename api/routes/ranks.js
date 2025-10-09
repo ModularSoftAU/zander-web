@@ -4,7 +4,11 @@ import {
   getUserPermissions,
 } from "../../controllers/userController.js";
 
-const RANK_SETTINGS_TABLE = "rankSettings";
+const RANK_VIEW = "ranks";
+const USER_RANKS_VIEW = "userRanks";
+const LUCKPERMS_PLAYERS_VIEW = "luckPermsPlayers";
+const LUCKPERMS_GROUP_PERMISSIONS_TABLE =
+  "cfcdev_luckperms.luckperms_group_permissions";
 const LUCKPERMS_USER_PERMISSIONS_TABLE =
   "cfcdev_luckperms.luckperms_user_permissions";
 
@@ -14,15 +18,21 @@ function parseBoolean(value) {
   if (typeof value === "number") return value === 1;
   if (typeof value === "string") {
     const normalized = value.trim().toLowerCase();
-    return ["1", "true", "yes", "on"].includes(normalized);
+    if (normalized === "true" || normalized === "1" || normalized === "yes") {
+      return true;
+    }
+    if (normalized === "false" || normalized === "0" || normalized === "no") {
+      return false;
+    }
   }
   return false;
 }
 
 function normalizeColour(value) {
   if (!value) return null;
-  let trimmed = value.trim().replace(/[^0-9a-fA-F#]/g, "");
+  let trimmed = String(value).trim().replace(/[^0-9a-fA-F#]/g, "");
   if (!trimmed) return null;
+
   if (trimmed.startsWith("#")) {
     trimmed = trimmed.substring(1);
   }
@@ -38,71 +48,33 @@ function normalizeColour(value) {
     return null;
   }
 
-  return `#${trimmed.substring(0, 6)}`.toLowerCase();
+  return `#${trimmed.substring(0, 6).toLowerCase()}`;
 }
 
-function buildRankRow(row) {
-  const priorityValue = row.overridePriority ?? row.basePriority ?? 0;
-  const isStaffOverride =
-    row.overrideIsStaff === null || row.overrideIsStaff === undefined
-      ? null
-      : row.overrideIsStaff;
-  const isDonatorOverride =
-    row.overrideIsDonator === null || row.overrideIsDonator === undefined
-      ? null
-      : row.overrideIsDonator;
+function mapRankRow(row) {
+  const priority =
+    row.priority !== null && row.priority !== undefined && row.priority !== ""
+      ? Number(row.priority)
+      : null;
+
+  const isStaff =
+    row.isStaff !== null && row.isStaff !== undefined && row.isStaff !== ""
+      ? Number(row.isStaff)
+      : 0;
+  const isDonator =
+    row.isDonator !== null && row.isDonator !== undefined && row.isDonator !== ""
+      ? Number(row.isDonator)
+      : 0;
 
   return {
     rankSlug: row.rankSlug,
-    displayName: row.overrideDisplayName || row.baseDisplayName,
-    priority: priorityValue !== null ? Number(priorityValue) : null,
-    rankBadgeColour: row.overrideRankBadgeColour || row.baseRankBadgeColour,
-    rankTextColour: row.overrideRankTextColour || row.baseRankTextColour,
-    discordRoleId: row.overrideDiscordRoleId || row.baseDiscordRoleId,
-    isStaff: Number(
-      parseBoolean(
-        isStaffOverride !== null ? isStaffOverride : row.baseIsStaff
-      )
-    ),
-    isDonator: Number(
-      parseBoolean(
-        isDonatorOverride !== null ? isDonatorOverride : row.baseIsDonator
-      )
-    ),
-    base: {
-      displayName: row.baseDisplayName,
-      priority:
-        row.basePriority !== null && row.basePriority !== undefined
-          ? Number(row.basePriority)
-          : null,
-      rankBadgeColour: row.baseRankBadgeColour,
-      rankTextColour: row.baseRankTextColour,
-      discordRoleId: row.baseDiscordRoleId,
-      isStaff: Number(parseBoolean(row.baseIsStaff)),
-      isDonator: Number(parseBoolean(row.baseIsDonator)),
-    },
-    overrides: {
-      displayName: row.overrideDisplayName,
-      priority:
-        row.overridePriority !== null && row.overridePriority !== undefined
-          ? Number(row.overridePriority)
-          : null,
-      rankBadgeColour: row.overrideRankBadgeColour,
-      rankTextColour: row.overrideRankTextColour,
-      discordRoleId: row.overrideDiscordRoleId,
-      isStaff:
-        isStaffOverride !== null && isStaffOverride !== undefined
-          ? Number(parseBoolean(isStaffOverride))
-          : null,
-      isDonator:
-        isDonatorOverride !== null && isDonatorOverride !== undefined
-          ? Number(parseBoolean(isDonatorOverride))
-          : null,
-      updatedAt: row.updatedAt || null,
-      updatedBy: row.updatedBy || null,
-    },
-    updatedAt: row.updatedAt || null,
-    updatedBy: row.updatedBy || null,
+    displayName: row.displayName || row.rankSlug,
+    priority,
+    rankBadgeColour: row.rankBadgeColour || null,
+    rankTextColour: row.rankTextColour || null,
+    discordRoleId: row.discordRoleId || null,
+    isStaff,
+    isDonator,
   };
 }
 
@@ -121,26 +93,6 @@ export default function rankApiRoute(app, config, db, features, lang) {
     });
   };
 
-  const rankSelectColumns = `
-    r.rankSlug,
-    r.displayName AS baseDisplayName,
-    r.priority AS basePriority,
-    r.rankBadgeColour AS baseRankBadgeColour,
-    r.rankTextColour AS baseRankTextColour,
-    r.discordRoleId AS baseDiscordRoleId,
-    r.isStaff AS baseIsStaff,
-    r.isDonator AS baseIsDonator,
-    rs.displayName AS overrideDisplayName,
-    rs.priority AS overridePriority,
-    rs.rankBadgeColour AS overrideRankBadgeColour,
-    rs.rankTextColour AS overrideRankTextColour,
-    rs.discordRoleId AS overrideDiscordRoleId,
-    rs.isStaff AS overrideIsStaff,
-    rs.isDonator AS overrideIsDonator,
-    rs.updatedAt,
-    rs.updatedBy
-  `;
-
   async function resolvePlayer(username) {
     if (!username) {
       return null;
@@ -152,12 +104,12 @@ export default function rankApiRoute(app, config, db, features, lang) {
     }
 
     const [webUser] = await queryDb(
-      `SELECT userId, username, uuid FROM users WHERE LOWER(username)=LOWER(?) LIMIT 1`,
+      `SELECT userId, username, uuid FROM users WHERE LOWER(username) = LOWER(?) LIMIT 1`,
       [trimmedUsername]
     );
 
     const [luckPermsUser] = await queryDb(
-      `SELECT username, uuid FROM luckPermsPlayers WHERE LOWER(username)=LOWER(?) LIMIT 1`,
+      `SELECT username, uuid FROM ${LUCKPERMS_PLAYERS_VIEW} WHERE LOWER(username) = LOWER(?) LIMIT 1`,
       [trimmedUsername]
     );
 
@@ -194,10 +146,57 @@ export default function rankApiRoute(app, config, db, features, lang) {
     });
   }
 
+  async function updateGroupNode(rankSlug, key, rawValue) {
+    const trimmedValue =
+      rawValue === null || rawValue === undefined
+        ? null
+        : String(rawValue).trim();
+
+    const effectiveValue = trimmedValue === "" ? null : trimmedValue;
+
+    await queryDb(
+      `DELETE FROM ${LUCKPERMS_GROUP_PERMISSIONS_TABLE}
+        WHERE name = ?
+          AND permission LIKE ?
+          AND server = 'global'
+          AND world = 'global'`,
+      [rankSlug, `${key}.%`]
+    );
+
+    if (effectiveValue === null) {
+      return;
+    }
+
+    await queryDb(
+      `INSERT INTO ${LUCKPERMS_GROUP_PERMISSIONS_TABLE}
+        (name, permission, value, server, world, expiry, contexts)
+      VALUES (?, ?, 1, 'global', 'global', 0, '{}')`,
+      [rankSlug, `${key}.${effectiveValue}`]
+    );
+  }
+
+  async function getRankDirectory() {
+    const results = await queryDb(
+      `SELECT
+        rankSlug,
+        displayName,
+        priority,
+        rankBadgeColour,
+        rankTextColour,
+        discordRoleId,
+        isStaff,
+        isDonator
+      FROM ${RANK_VIEW}
+      ORDER BY CAST(COALESCE(priority, 0) AS UNSIGNED) DESC, rankSlug`
+    );
+
+    return results.map((row) => mapRankRow(row));
+  }
+
   app.get(`${baseEndpoint}/get`, async function (req, res) {
     isFeatureEnabled(features.ranks, res, lang);
     const username = optional(req.query, "username");
-    const rank = optional(req.query, "rank");
+    const rankSlug = optional(req.query, "rank");
 
     try {
       if (username) {
@@ -210,23 +209,26 @@ export default function rankApiRoute(app, config, db, features, lang) {
           });
         }
 
-        const results = await queryDb(
-          `
-            SELECT
-              ${rankSelectColumns},
+        const rows = await queryDb(
+          `SELECT
+              r.rankSlug,
+              r.displayName,
+              r.priority,
+              r.rankBadgeColour,
+              r.rankTextColour,
+              r.discordRoleId,
+              r.isStaff,
+              r.isDonator,
               ur.title
-            FROM userRanks ur
-              JOIN ranks r ON ur.rankSlug = r.rankSlug
-              LEFT JOIN ${RANK_SETTINGS_TABLE} rs ON rs.rankSlug = r.rankSlug
+            FROM ${USER_RANKS_VIEW} ur
+              JOIN ${RANK_VIEW} r ON ur.rankSlug = r.rankSlug
             WHERE ur.uuid = ?
-            ORDER BY CAST(COALESCE(rs.priority, r.priority) AS UNSIGNED) DESC,
-              r.rankSlug
-          `,
+            ORDER BY CAST(COALESCE(r.priority, 0) AS UNSIGNED) DESC, r.rankSlug`,
           [player.uuid]
         );
 
-        const mapped = results.map((row) => ({
-          ...buildRankRow(row),
+        const mapped = rows.map((row) => ({
+          ...mapRankRow(row),
           title: row.title || null,
         }));
 
@@ -237,58 +239,32 @@ export default function rankApiRoute(app, config, db, features, lang) {
         });
       }
 
-      if (rank) {
-        const results = await queryDb(
-          `
-            SELECT
+      if (rankSlug) {
+        const rows = await queryDb(
+          `SELECT
               u.userId,
-              lpPlayers.uuid,
-              COALESCE(u.username, lpPlayers.username) AS username,
-              COALESCE(rs.displayName, r.displayName) AS displayName,
-              COALESCE(rs.rankBadgeColour, r.rankBadgeColour) AS rankBadgeColour,
-              COALESCE(rs.rankTextColour, r.rankTextColour) AS rankTextColour,
+              lp.uuid,
+              COALESCE(u.username, lp.username) AS username,
+              r.displayName,
+              r.rankBadgeColour,
+              r.rankTextColour,
               ur.title
-            FROM ranks r
-              JOIN userRanks ur ON ur.rankSlug = r.rankSlug
-              JOIN luckPermsPlayers lpPlayers ON ur.uuid = lpPlayers.uuid
-              LEFT JOIN users u ON lpPlayers.uuid = u.uuid
-              LEFT JOIN ${RANK_SETTINGS_TABLE} rs ON rs.rankSlug = r.rankSlug
+            FROM ${RANK_VIEW} r
+              JOIN ${USER_RANKS_VIEW} ur ON ur.rankSlug = r.rankSlug
+              JOIN ${LUCKPERMS_PLAYERS_VIEW} lp ON ur.uuid = lp.uuid
+              LEFT JOIN users u ON lp.uuid = u.uuid
             WHERE r.rankSlug = ?
-            ORDER BY COALESCE(rs.displayName, r.displayName)
-          `,
-          [rank]
+            ORDER BY COALESCE(u.username, lp.username)`,
+          [rankSlug]
         );
 
-        return res.send({
-          success: true,
-          data: results,
-        });
+        return res.send({ success: true, data: rows });
       }
 
-      const results = await queryDb(
-        `
-          SELECT
-            ${rankSelectColumns}
-          FROM ranks r
-            LEFT JOIN ${RANK_SETTINGS_TABLE} rs ON rs.rankSlug = r.rankSlug
-          ORDER BY CAST(COALESCE(rs.priority, r.priority) AS UNSIGNED) DESC,
-            r.rankSlug
-        `
-      );
-
-      const mapped = results.map((row) => ({
-        ...buildRankRow(row),
-      }));
-
-      return res.send({
-        success: true,
-        data: mapped,
-      });
+      const directory = await getRankDirectory();
+      return res.send({ success: true, data: directory });
     } catch (error) {
-      return res.send({
-        success: false,
-        message: `${error}`,
-      });
+      return res.send({ success: false, message: `${error}` });
     }
   });
 
@@ -314,22 +290,25 @@ export default function rankApiRoute(app, config, db, features, lang) {
       }
 
       const ranks = await queryDb(
-        `
-          SELECT
-            ${rankSelectColumns},
+        `SELECT
+            r.rankSlug,
+            r.displayName,
+            r.priority,
+            r.rankBadgeColour,
+            r.rankTextColour,
+            r.discordRoleId,
+            r.isStaff,
+            r.isDonator,
             ur.title
-          FROM userRanks ur
-            JOIN ranks r ON ur.rankSlug = r.rankSlug
-            LEFT JOIN ${RANK_SETTINGS_TABLE} rs ON rs.rankSlug = r.rankSlug
+          FROM ${USER_RANKS_VIEW} ur
+            JOIN ${RANK_VIEW} r ON ur.rankSlug = r.rankSlug
           WHERE ur.uuid = ?
-          ORDER BY CAST(COALESCE(rs.priority, r.priority) AS UNSIGNED) DESC,
-            r.rankSlug
-        `,
+          ORDER BY CAST(COALESCE(r.priority, 0) AS UNSIGNED) DESC, r.rankSlug`,
         [player.uuid]
       );
 
       const mappedRanks = ranks.map((row) => ({
-        ...buildRankRow(row),
+        ...mapRankRow(row),
         title: row.title || null,
       }));
 
@@ -341,10 +320,7 @@ export default function rankApiRoute(app, config, db, features, lang) {
         },
       });
     } catch (error) {
-      return res.send({
-        success: false,
-        message: `${error}`,
-      });
+      return res.send({ success: false, message: `${error}` });
     }
   });
 
@@ -360,7 +336,6 @@ export default function rankApiRoute(app, config, db, features, lang) {
       discordRoleId,
       isStaff,
       isDonator,
-      actor,
     } = req.body || {};
 
     if (!rankSlug) {
@@ -370,85 +345,72 @@ export default function rankApiRoute(app, config, db, features, lang) {
     try {
       const sanitizedBadge = normalizeColour(rankBadgeColour);
       const sanitizedText = normalizeColour(rankTextColour);
-      const parsedPriority =
-        priority !== undefined && priority !== null && priority !== ""
-          ? Number(priority)
+      let sanitizedPriority = null;
+
+      if (priority !== undefined && priority !== null && priority !== "") {
+        const parsed = Number(priority);
+        if (Number.isNaN(parsed)) {
+          return res.send({
+            success: false,
+            message: "Priority must be a number.",
+          });
+        }
+        sanitizedPriority = Math.floor(parsed);
+      }
+
+      const sanitizedDiscord =
+        discordRoleId !== undefined && discordRoleId !== null
+          ? String(discordRoleId).trim()
           : null;
 
-      await queryDb(
-        `
-          INSERT INTO ${RANK_SETTINGS_TABLE}
-            (rankSlug, displayName, rankBadgeColour, rankTextColour, priority, discordRoleId, isStaff, isDonator, updatedBy)
-          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-          ON DUPLICATE KEY UPDATE
-            displayName = VALUES(displayName),
-            rankBadgeColour = VALUES(rankBadgeColour),
-            rankTextColour = VALUES(rankTextColour),
-            priority = VALUES(priority),
-            discordRoleId = VALUES(discordRoleId),
-            isStaff = VALUES(isStaff),
-            isDonator = VALUES(isDonator),
-            updatedBy = VALUES(updatedBy)
-        `,
-        [
-          rankSlug,
-          displayName ?? null,
-          sanitizedBadge,
-          sanitizedText,
-          parsedPriority,
-          discordRoleId ?? null,
-          isStaff === undefined || isStaff === null
-            ? null
-            : parseBoolean(isStaff)
-            ? 1
-            : 0,
-          isDonator === undefined || isDonator === null
-            ? null
-            : parseBoolean(isDonator)
-            ? 1
-            : 0,
-          actor || null,
-        ]
-      );
+      const staffFlag =
+        isStaff === undefined || isStaff === null
+          ? null
+          : parseBoolean(isStaff)
+          ? "1"
+          : "0";
+      const donatorFlag =
+        isDonator === undefined || isDonator === null
+          ? null
+          : parseBoolean(isDonator)
+          ? "1"
+          : "0";
+
+      await updateGroupNode(rankSlug, "displayname", displayName || null);
+      await updateGroupNode(rankSlug, "weight", sanitizedPriority);
+      await updateGroupNode(rankSlug, "meta.discordid", sanitizedDiscord);
+      await updateGroupNode(rankSlug, "meta.staff", staffFlag);
+      await updateGroupNode(rankSlug, "meta.donator", donatorFlag);
+      await updateGroupNode(rankSlug, "meta.rankbadgecolour", sanitizedBadge);
+      await updateGroupNode(rankSlug, "meta.ranktextcolour", sanitizedText);
 
       const [updatedRank] = await queryDb(
-        `
-          SELECT
-            ${rankSelectColumns}
-          FROM ranks r
-            LEFT JOIN ${RANK_SETTINGS_TABLE} rs ON rs.rankSlug = r.rankSlug
-          WHERE r.rankSlug = ?
-        `,
+        `SELECT
+            rankSlug,
+            displayName,
+            priority,
+            rankBadgeColour,
+            rankTextColour,
+            discordRoleId,
+            isStaff,
+            isDonator
+          FROM ${RANK_VIEW}
+          WHERE rankSlug = ?
+          LIMIT 1`,
         [rankSlug]
       );
+
+      if (!updatedRank) {
+        return res.send({
+          success: false,
+          message: "Unable to load the updated rank from LuckPerms.",
+        });
+      }
 
       return res.send({
         success: true,
         message: "Rank configuration updated.",
-        data: buildRankRow(updatedRank),
-      });
-    } catch (error) {
-      return res.send({ success: false, message: `${error}` });
-    }
-  });
-
-  app.post(`${baseEndpoint}/config/:rankSlug/reset`, async function (req, res) {
-    isFeatureEnabled(features.ranks, res, lang);
-    const rankSlug = req.params.rankSlug;
-
-    if (!rankSlug) {
-      return res.send({ success: false, message: "Rank slug is required." });
-    }
-
-    try {
-      await queryDb(
-        `DELETE FROM ${RANK_SETTINGS_TABLE} WHERE rankSlug = ? LIMIT 1`,
-        [rankSlug]
-      );
-
-      return res.send({
-        success: true,
-        message: "Rank configuration reset to defaults.",
+        data: mapRankRow(updatedRank),
       });
     } catch (error) {
       return res.send({ success: false, message: `${error}` });
@@ -458,7 +420,7 @@ export default function rankApiRoute(app, config, db, features, lang) {
   app.post(`${baseEndpoint}/user/assign`, async function (req, res) {
     isFeatureEnabled(features.ranks, res, lang);
 
-    const { username, rankSlug, title, actor } = req.body || {};
+    const { username, rankSlug, title } = req.body || {};
 
     if (!username || !rankSlug) {
       return res.send({
@@ -475,10 +437,8 @@ export default function rankApiRoute(app, config, db, features, lang) {
       }
 
       const [existing] = await queryDb(
-        `
-          SELECT uuid FROM ${LUCKPERMS_USER_PERMISSIONS_TABLE}
-          WHERE uuid = ? AND permission = ? AND value = 1 LIMIT 1
-        `,
+        `SELECT uuid FROM ${LUCKPERMS_USER_PERMISSIONS_TABLE}
+          WHERE uuid = ? AND permission = ? AND value = 1 LIMIT 1`,
         [player.uuid, `group.${rankSlug}`]
       );
 
@@ -490,41 +450,31 @@ export default function rankApiRoute(app, config, db, features, lang) {
       }
 
       await queryDb(
-        `
-          INSERT INTO ${LUCKPERMS_USER_PERMISSIONS_TABLE}
-            (uuid, permission, value, server, world, expiry, contexts)
-          VALUES (?, ?, 1, 'global', 'global', 0, '[]')
-        `,
+        `INSERT INTO ${LUCKPERMS_USER_PERMISSIONS_TABLE}
+          (uuid, permission, value, server, world, expiry, contexts)
+        VALUES (?, ?, 1, 'global', 'global', 0, '[]')`,
         [player.uuid, `group.${rankSlug}`]
       );
 
       await queryDb(
-        `
-          DELETE FROM ${LUCKPERMS_USER_PERMISSIONS_TABLE}
+        `DELETE FROM ${LUCKPERMS_USER_PERMISSIONS_TABLE}
           WHERE uuid = ?
-            AND permission LIKE CONCAT('meta.group.', ?, '.title.%')
-        `,
+            AND permission LIKE CONCAT('meta.group.', ?, '.title.%')`,
         [player.uuid, rankSlug]
       );
 
       if (title) {
         await queryDb(
-          `
-            INSERT INTO ${LUCKPERMS_USER_PERMISSIONS_TABLE}
-              (uuid, permission, value, server, world, expiry, contexts)
-            VALUES (?, ?, 1, 'global', 'global', 0, '[]')
-          `,
-          [
-            player.uuid,
-            `meta.group.${rankSlug}.title.${title.substring(0, 64)}`,
-          ]
+          `INSERT INTO ${LUCKPERMS_USER_PERMISSIONS_TABLE}
+            (uuid, permission, value, server, world, expiry, contexts)
+          VALUES (?, ?, 1, 'global', 'global', 0, '[]')`,
+          [player.uuid, `meta.group.${rankSlug}.title.${title.substring(0, 64)}`]
         );
       }
 
       return res.send({
         success: true,
         message: "Rank assigned successfully.",
-        actor: actor || null,
       });
     } catch (error) {
       return res.send({ success: false, message: `${error}` });
@@ -551,19 +501,15 @@ export default function rankApiRoute(app, config, db, features, lang) {
       }
 
       const result = await queryDb(
-        `
-          DELETE FROM ${LUCKPERMS_USER_PERMISSIONS_TABLE}
-          WHERE uuid = ? AND permission = ?
-        `,
+        `DELETE FROM ${LUCKPERMS_USER_PERMISSIONS_TABLE}
+          WHERE uuid = ? AND permission = ?`,
         [player.uuid, `group.${rankSlug}`]
       );
 
       await queryDb(
-        `
-          DELETE FROM ${LUCKPERMS_USER_PERMISSIONS_TABLE}
+        `DELETE FROM ${LUCKPERMS_USER_PERMISSIONS_TABLE}
           WHERE uuid = ?
-            AND permission LIKE CONCAT('meta.group.', ?, '.title.%')
-        `,
+            AND permission LIKE CONCAT('meta.group.', ?, '.title.%')`,
         [player.uuid, rankSlug]
       );
 

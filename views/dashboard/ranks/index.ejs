@@ -22,7 +22,7 @@
             <div>
               <h5 class="card-title mb-1">Rank directory</h5>
               <p class="card-subtitle text-muted mb-0">
-                Review every network rank, compare overrides, and adjust their configuration.
+                Data is sourced directly from the LuckPerms views so the website stays in sync with in-game ranks.
               </p>
             </div>
             <span class="badge bg-primary fw-semibold">
@@ -37,7 +37,7 @@
                     <th scope="col">Rank</th>
                     <th scope="col" class="text-nowrap">Priority</th>
                     <th scope="col">Flags</th>
-                    <th scope="col">Overrides</th>
+                    <th scope="col" class="text-nowrap">Discord role</th>
                     <th scope="col" class="text-end">Actions</th>
                   </tr>
                 </thead>
@@ -50,21 +50,26 @@
                     </tr>
                   <% } %>
                   <% ranks.forEach(function(rank) { %>
-                    <% const hasOverride = rank.overrides.displayName || rank.overrides.rankBadgeColour || rank.overrides.rankTextColour || rank.overrides.priority !== null || rank.overrides.discordRoleId || rank.overrides.isStaff !== null || rank.overrides.isDonator !== null; %>
-                    <tr>
+                    <tr data-rank-row="<%= rank.rankSlug %>">
                       <td>
                         <div class="d-flex flex-column flex-sm-row align-items-sm-center gap-2">
-                          <span class="rank-pill" style="--rank-pill-bg: <%= rank.rankBadgeColour %>; --rank-pill-text: <%= rank.rankTextColour %>"><%= rank.displayName %></span>
-                          <span class="text-muted small">/<%= rank.rankSlug %></span>
+                          <span
+                            class="rank-pill"
+                            data-rank-pill
+                            style="--rank-pill-bg: <%= rank.rankBadgeColour || '#1f2937' %>; --rank-pill-text: <%= rank.rankTextColour || '#ffffff' %>"
+                          >
+                            <span class="rank-pill-name" data-rank-name><%= rank.displayName %></span>
+                          </span>
+                          <span class="text-muted small" data-rank-slug>/<%= rank.rankSlug %></span>
                         </div>
                       </td>
                       <td class="text-nowrap">
-                        <span class="badge bg-secondary fw-semibold">
-                          <%= rank.priority === null ? "Default" : rank.priority %>
+                        <span class="badge bg-secondary fw-semibold" data-rank-priority>
+                          <%= rank.priority === null ? "Not set" : rank.priority %>
                         </span>
                       </td>
                       <td>
-                        <div class="d-flex flex-wrap gap-2">
+                        <div class="d-flex flex-wrap gap-2 align-items-center" data-rank-flags>
                           <% if (Number(rank.isStaff) === 1) { %>
                             <span class="badge bg-danger">Staff</span>
                           <% } %>
@@ -77,34 +82,19 @@
                         </div>
                       </td>
                       <td>
-                        <% if (hasOverride) { %>
-                          <div class="d-flex flex-column gap-1 text-muted small">
-                            <% if (rank.overrides.displayName) { %>
-                              <span><i class="fa-solid fa-font me-1"></i><%= rank.overrides.displayName %></span>
-                            <% } %>
-                            <% if (rank.overrides.rankBadgeColour || rank.overrides.rankTextColour) { %>
-                              <span>
-                                <i class="fa-solid fa-palette me-1"></i>
-                                <%= rank.overrides.rankBadgeColour || "Default" %> /
-                                <%= rank.overrides.rankTextColour || "Default" %>
-                              </span>
-                            <% } %>
-                            <% if (rank.overrides.priority !== null && rank.overrides.priority !== undefined) { %>
-                              <span><i class="fa-solid fa-arrow-up-9-1 me-1"></i>Priority <%= rank.overrides.priority %></span>
-                            <% } %>
-                            <% if (rank.overrides.discordRoleId) { %>
-                              <span><i class="fa-brands fa-discord me-1"></i><%= rank.overrides.discordRoleId %></span>
-                            <% } %>
-                            <% if (rank.overrides.isStaff !== null || rank.overrides.isDonator !== null) { %>
-                              <span><i class="fa-solid fa-user-gear me-1"></i>Flags overridden</span>
-                            <% } %>
-                          </div>
-                        <% } else { %>
-                          <span class="text-muted small">Using defaults</span>
-                        <% } %>
+                        <span class="text-muted small" data-rank-discord>
+                          <%= rank.discordRoleId || "Not set" %>
+                        </span>
                       </td>
                       <td class="text-end">
-                        <button type="button" class="btn btn-sm btn-outline-primary" data-rank-config data-rank="<%- encodeURIComponent(JSON.stringify(rank)) %>" data-bs-toggle="modal" data-bs-target="#rankConfigModal">
+                        <button
+                          type="button"
+                          class="btn btn-sm btn-outline-primary"
+                          data-rank-config
+                          data-rank-slug="<%= rank.rankSlug %>"
+                          data-bs-toggle="modal"
+                          data-bs-target="#rankConfigModal"
+                        >
                           Manage
                         </button>
                       </td>
@@ -129,7 +119,15 @@
             <form id="rankUserLookupForm" class="row g-3 align-items-end">
               <div class="col-md-6">
                 <label for="rankLookupUsername" class="form-label">Minecraft username</label>
-                <input type="text" class="form-control" id="rankLookupUsername" name="username" placeholder="Enter a username" autocomplete="off" required>
+                <input
+                  type="text"
+                  class="form-control"
+                  id="rankLookupUsername"
+                  name="username"
+                  placeholder="Enter a username"
+                  autocomplete="off"
+                  required
+                >
               </div>
               <div class="col-md-auto">
                 <button type="submit" class="btn btn-primary">Load profile</button>
@@ -180,7 +178,14 @@
                       </div>
                       <div class="col-12">
                         <label for="rankAssignTitle" class="form-label">Optional title</label>
-                        <input type="text" class="form-control" id="rankAssignTitle" name="title" maxlength="64" placeholder="Custom staff title or leave blank">
+                        <input
+                          type="text"
+                          class="form-control"
+                          id="rankAssignTitle"
+                          name="title"
+                          maxlength="64"
+                          placeholder="Custom staff title or leave blank"
+                        >
                       </div>
                       <div class="col-12 d-flex justify-content-between">
                         <button type="submit" class="btn btn-primary" id="rankAssignSubmit" disabled>Assign rank</button>
@@ -195,7 +200,16 @@
                     <form id="rankPermissionForm" class="row g-3">
                       <div class="col-12">
                         <label for="rankPermissionNode" class="form-label">Permission node</label>
-                        <input type="text" class="form-control" id="rankPermissionNode" name="permission" placeholder="example.permission.node" autocomplete="off" required disabled>
+                        <input
+                          type="text"
+                          class="form-control"
+                          id="rankPermissionNode"
+                          name="permission"
+                          placeholder="example.permission.node"
+                          autocomplete="off"
+                          required
+                          disabled
+                        >
                       </div>
                       <div class="col-12 d-flex justify-content-between align-items-center">
                         <button type="submit" class="btn btn-outline-primary" id="rankPermissionSubmit" disabled>Check permission</button>
@@ -213,7 +227,13 @@
   </div>
 </div>
 
-<div class="modal fade" id="rankConfigModal" tabindex="-1" aria-labelledby="rankConfigModalLabel" aria-hidden="true">
+<div
+  class="modal fade"
+  id="rankConfigModal"
+  tabindex="-1"
+  aria-labelledby="rankConfigModalLabel"
+  aria-hidden="true"
+>
   <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
     <div class="modal-content">
       <div class="modal-header">
@@ -225,7 +245,7 @@
           <div class="alert alert-info d-flex align-items-start gap-2" role="alert">
             <i class="fa-solid fa-circle-info mt-1"></i>
             <div>
-              Adjust the website presentation for this rank. Leaving a field blank will fall back to the default values sourced from LuckPerms.
+              Updates here modify the LuckPerms metadata for this group. Leave a field blank to remove the corresponding node.
             </div>
           </div>
           <div class="row g-3">
@@ -270,7 +290,7 @@
             <span class="text-muted small" id="rankConfigMeta"></span>
           </div>
           <div class="d-flex gap-2">
-            <button type="button" class="btn btn-outline-danger" id="rankConfigReset">Reset to defaults</button>
+            <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
             <button type="submit" class="btn btn-primary">Save changes</button>
           </div>
         </div>
@@ -286,55 +306,128 @@
 <script>
   (function () {
     const ranks = window.rankDirectory || [];
-    const modalEl = document.getElementById("rankConfigModal");
-    const modalForm = document.getElementById("rankConfigForm");
-    const resetButton = document.getElementById("rankConfigReset");
-    const metaLabel = document.getElementById("rankConfigMeta");
+    const modalEl = document.getElementById('rankConfigModal');
+    const modalForm = document.getElementById('rankConfigForm');
+    const metaLabel = document.getElementById('rankConfigMeta');
     let activeRank = null;
+    let activeUser = null;
 
-    function decodeRank(button) {
-      const payload = button.getAttribute("data-rank");
-      if (!payload) return null;
-      try {
-        return JSON.parse(decodeURIComponent(payload));
-      } catch (error) {
-        console.error("Failed to parse rank payload", error);
-        return null;
+    function findRank(slug) {
+      if (!slug) return null;
+      return ranks.find((rank) => rank.rankSlug === slug) || null;
+    }
+
+    function renderFlagBadges(container, rank) {
+      if (!container) return;
+      container.innerHTML = '';
+
+      const badges = [];
+      if (Number(rank.isStaff) === 1) {
+        const badge = document.createElement('span');
+        badge.className = 'badge bg-danger';
+        badge.textContent = 'Staff';
+        badges.push(badge);
+      }
+
+      if (Number(rank.isDonator) === 1) {
+        const badge = document.createElement('span');
+        badge.className = 'badge bg-warning text-dark';
+        badge.textContent = 'Donator';
+        badges.push(badge);
+      }
+
+      if (!badges.length) {
+        const none = document.createElement('span');
+        none.className = 'text-muted small';
+        none.textContent = 'None';
+        badges.push(none);
+      }
+
+      badges.forEach((badge) => container.appendChild(badge));
+    }
+
+    function applyRankUpdate(updated) {
+      if (!updated) return;
+
+      const index = ranks.findIndex((rank) => rank.rankSlug === updated.rankSlug);
+      if (index !== -1) {
+        ranks[index] = { ...ranks[index], ...updated };
+      } else {
+        ranks.push(updated);
+      }
+
+      if (activeRank && activeRank.rankSlug === updated.rankSlug) {
+        activeRank = { ...activeRank, ...updated };
+      }
+
+      const row = document.querySelector(`[data-rank-row="${updated.rankSlug}"]`);
+      if (row) {
+        const pill = row.querySelector('[data-rank-pill]');
+        if (pill) {
+          pill.style.setProperty('--rank-pill-bg', updated.rankBadgeColour || '#1f2937');
+          pill.style.setProperty('--rank-pill-text', updated.rankTextColour || '#ffffff');
+          const nameEl = pill.querySelector('[data-rank-name]');
+          if (nameEl) {
+            nameEl.textContent = updated.displayName;
+          } else {
+            pill.textContent = updated.displayName;
+          }
+        }
+
+        const slugEl = row.querySelector('[data-rank-slug]');
+        if (slugEl) {
+          slugEl.textContent = `/${updated.rankSlug}`;
+        }
+
+        const priorityBadge = row.querySelector('[data-rank-priority]');
+        if (priorityBadge) {
+          priorityBadge.textContent =
+            updated.priority === null || updated.priority === undefined
+              ? 'Not set'
+              : updated.priority;
+        }
+
+        const flagContainer = row.querySelector('[data-rank-flags]');
+        renderFlagBadges(flagContainer, updated);
+
+        const discordEl = row.querySelector('[data-rank-discord]');
+        if (discordEl) {
+          discordEl.textContent = updated.discordRoleId || 'Not set';
+        }
+      }
+
+      if (activeUser && Array.isArray(activeUser.ranks)) {
+        activeUser.ranks = activeUser.ranks.map((rank) =>
+          rank.rankSlug === updated.rankSlug ? { ...rank, ...updated } : rank
+        );
+        renderUserRanks(activeUser.ranks);
+        populateAssignOptions(activeUser.ranks);
       }
     }
 
     function populateModal(rank) {
-      if (!rank) return;
+      if (!rank || !modalForm) return;
       activeRank = rank;
       modalForm.reset();
-      document.getElementById("rankConfigSlug").value = rank.rankSlug;
-      document.getElementById("rankConfigDisplayName").value = rank.overrides.displayName || "";
-      document.getElementById("rankConfigBadgeColour").value = rank.overrides.rankBadgeColour || "";
-      document.getElementById("rankConfigTextColour").value = rank.overrides.rankTextColour || "";
-      document.getElementById("rankConfigPriority").value =
-        rank.overrides.priority !== null && rank.overrides.priority !== undefined
-          ? rank.overrides.priority
-          : "";
-      document.getElementById("rankConfigDiscordRole").value = rank.overrides.discordRoleId || "";
-      document.getElementById("rankConfigIsStaff").checked = rank.overrides.isStaff === null
-        ? Boolean(rank.base.isStaff)
-        : Boolean(rank.overrides.isStaff);
-      document.getElementById("rankConfigIsDonator").checked = rank.overrides.isDonator === null
-        ? Boolean(rank.base.isDonator)
-        : Boolean(rank.overrides.isDonator);
+      document.getElementById('rankConfigSlug').value = rank.rankSlug;
+      document.getElementById('rankConfigDisplayName').value = rank.displayName || '';
+      document.getElementById('rankConfigBadgeColour').value = rank.rankBadgeColour || '';
+      document.getElementById('rankConfigTextColour').value = rank.rankTextColour || '';
+      document.getElementById('rankConfigPriority').value =
+        rank.priority === null || rank.priority === undefined ? '' : rank.priority;
+      document.getElementById('rankConfigDiscordRole').value = rank.discordRoleId || '';
+      document.getElementById('rankConfigIsStaff').checked = Number(rank.isStaff) === 1;
+      document.getElementById('rankConfigIsDonator').checked = Number(rank.isDonator) === 1;
 
       if (metaLabel) {
-        if (rank.updatedAt) {
-          metaLabel.textContent = `Last updated ${rank.updatedAt} by ${rank.updatedBy || "System"}`;
-        } else {
-          metaLabel.textContent = "Currently using defaults.";
-        }
+        metaLabel.textContent = `Editing LuckPerms group ${rank.rankSlug}`;
       }
     }
 
     document.querySelectorAll('[data-rank-config]').forEach((button) => {
       button.addEventListener('click', () => {
-        const rank = decodeRank(button);
+        const slug = button.getAttribute('data-rank-slug');
+        const rank = findRank(slug);
         if (!rank) return;
         populateModal(rank);
       });
@@ -350,7 +443,9 @@
       payload.isDonator = modalForm.querySelector('#rankConfigIsDonator').checked;
 
       const submitButton = modalForm.querySelector('button[type="submit"]');
-      submitButton.disabled = true;
+      if (submitButton) {
+        submitButton.disabled = true;
+      }
 
       try {
         const response = await fetch('/redirect/rank/config/save', {
@@ -360,8 +455,12 @@
         });
         const data = await response.json();
 
-        if (data.success) {
-          window.location.reload();
+        if (data.success && data.data) {
+          applyRankUpdate(data.data);
+          const modalInstance = bootstrap.Modal.getInstance(modalEl);
+          if (modalInstance) {
+            modalInstance.hide();
+          }
         } else {
           alert(data.message || 'Failed to update rank configuration.');
         }
@@ -369,39 +468,14 @@
         console.error('Failed to update rank configuration', error);
         alert('An unexpected error occurred while updating the rank.');
       } finally {
-        submitButton.disabled = false;
-      }
-    }
-
-    async function resetRankOverrides() {
-      if (!activeRank) return;
-
-      if (!confirm('Reset overrides for this rank and use defaults?')) return;
-
-      try {
-        const response = await fetch('/redirect/rank/config/reset', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ rankSlug: activeRank.rankSlug }),
-        });
-        const data = await response.json();
-        if (data.success) {
-          window.location.reload();
-        } else {
-          alert(data.message || 'Unable to reset rank overrides.');
+        if (submitButton) {
+          submitButton.disabled = false;
         }
-      } catch (error) {
-        console.error('Failed to reset rank overrides', error);
-        alert('An unexpected error occurred while resetting the rank.');
       }
     }
 
     if (modalForm) {
       modalForm.addEventListener('submit', submitRankConfig);
-    }
-
-    if (resetButton) {
-      resetButton.addEventListener('click', resetRankOverrides);
     }
 
     // User tooling
@@ -421,7 +495,6 @@
     const permissionInput = document.getElementById('rankPermissionNode');
     const permissionSubmit = document.getElementById('rankPermissionSubmit');
     const permissionResult = document.getElementById('rankPermissionResult');
-    let activeUser = null;
 
     function updateSummary(user) {
       if (!summaryContainer) return;
@@ -431,6 +504,7 @@
     }
 
     function renderUserRanks(rankPayload) {
+      if (!rankList || !rankEmptyState || !rankCount) return;
       rankList.innerHTML = '';
       if (!rankPayload || !rankPayload.length) {
         rankEmptyState.classList.remove('d-none');
@@ -464,6 +538,7 @@
     }
 
     function populateAssignOptions(rankPayload) {
+      if (!assignSelect || !assignTitle || !assignSubmit || !assignReset) return;
       assignSelect.innerHTML = '';
       const placeholderOption = document.createElement('option');
       placeholderOption.value = '';
@@ -487,6 +562,7 @@
     }
 
     function enablePermissionTools(enabled) {
+      if (!permissionInput || !permissionSubmit || !permissionResult) return;
       permissionInput.disabled = !enabled;
       permissionSubmit.disabled = !enabled;
       if (!enabled) {
@@ -496,6 +572,7 @@
     }
 
     function showPermissionResult(success, message) {
+      if (!permissionResult) return;
       permissionResult.innerHTML = '';
       const badge = document.createElement('span');
       badge.className = success ? 'badge bg-success' : 'badge bg-danger';
@@ -504,6 +581,7 @@
     }
 
     function resetPermissionResult() {
+      if (!permissionResult) return;
       permissionResult.innerHTML = '';
     }
 
@@ -522,7 +600,6 @@
 
     async function handleRankRemoval(rankSlug) {
       if (!activeUser) return;
-
       if (!confirm(`Remove ${rankSlug} from ${activeUser.user.username}?`)) return;
 
       try {
@@ -580,13 +657,13 @@
     }
 
     function resetAssignForm() {
+      if (!assignForm) return;
       assignForm.reset();
     }
 
     async function handlePermissionSubmit(event) {
       event.preventDefault();
       resetPermissionResult();
-
       if (!activeUser) return;
 
       const formData = new FormData(permissionForm);
@@ -630,7 +707,7 @@
         if (!data.success) {
           activeUser = null;
           if (!silent) showLookupFeedback('danger', data.message || 'Unable to load player information.');
-          contextContainer.classList.add('d-none');
+          if (contextContainer) contextContainer.classList.add('d-none');
           return;
         }
 
@@ -643,7 +720,7 @@
         populateAssignOptions(activeUser.ranks);
         enablePermissionTools(Boolean(activeUser.user.userId));
         resetPermissionResult();
-        contextContainer.classList.remove('d-none');
+        if (contextContainer) contextContainer.classList.remove('d-none');
       } catch (error) {
         console.error('Failed to load user', error);
         if (!silent) showLookupFeedback('danger', 'An unexpected error occurred while loading the player.');

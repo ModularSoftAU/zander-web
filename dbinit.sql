@@ -184,20 +184,6 @@ WHERE gp.permission IS NOT NULL
         AND gp.permission NOT LIKE 'group.%'
     AND gp.value = 1;
 
-CREATE TABLE rankSettings (
-        rankSlug VARCHAR(191) NOT NULL,
-    displayName VARCHAR(191),
-    rankBadgeColour VARCHAR(7),
-    rankTextColour VARCHAR(7),
-    priority INT,
-    discordRoleId VARCHAR(32),
-    isStaff TINYINT(1),
-    isDonator TINYINT(1),
-    updatedBy VARCHAR(191),
-    updatedAt DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    PRIMARY KEY (rankSlug)
-);
-
 CREATE TABLE servers (
         serverId INT NOT NULL AUTO_INCREMENT,
     displayName TEXT,

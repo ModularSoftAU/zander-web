@@ -67,30 +67,6 @@ export default function rankRedirectRoute(app) {
     }
   });
 
-  app.post(`${baseEndpoint}/config/reset`, async function (req, res) {
-    if (!ensureRankPermission(req, res)) return;
-
-    const { rankSlug } = req.body || {};
-
-    if (!rankSlug) {
-      return res.code(400).send({
-        success: false,
-        message: "Rank slug is required.",
-      });
-    }
-
-    try {
-      const { data } = await forwardJson(
-        `/api/rank/config/${encodeURIComponent(rankSlug)}/reset`,
-        { method: "POST", body: {} }
-      );
-
-      res.code(data.success ? 200 : 400).send(data);
-    } catch (error) {
-      res.code(500).send({ success: false, message: `${error}` });
-    }
-  });
-
   app.post(`${baseEndpoint}/user/lookup`, async function (req, res) {
     if (!ensureRankPermission(req, res)) return;
 
