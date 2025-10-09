@@ -477,59 +477,164 @@ export function updateUserPassword(userId, passwordHash) {
   });
 }
 
-export async function getUserPermissions(userData) {
+const LUCKPERMS_USER_PERMISSIONS_TABLE =
+  "cfcdev_luckperms.luckperms_user_permissions";
+const LUCKPERMS_GROUP_PERMISSIONS_TABLE =
+  "cfcdev_luckperms.luckperms_group_permissions";
+
+function normaliseUuid(uuid) {
+  if (!uuid) return null;
+
+  const trimmed = String(uuid).trim();
+  if (!trimmed) return null;
+
+  return trimmed.replace(/-/g, "").toLowerCase();
+}
+
+function runQuery(query, params = []) {
   return new Promise((resolve, reject) => {
-    db.query(
-      `SELECT DISTINCT permission FROM userPermissions WHERE userId = ?; SELECT rankSlug FROM userRanks WHERE userId = ?`,
-      [userData.userId, userData.userId],
-      async function (err, results) {
-        if (err) {
-          return reject(err);
-        }
+    db.query(query, params, (error, results) => {
+      if (error) {
+        return reject(error);
+      }
 
-        // Define this array to specify the permission context for the player
-        const userPermissions = [];
+      resolve(results || []);
+    });
+  });
+}
 
-        // Map results to get an array of permissions
-        let userPermissionResults = results[0].map((a) => a.permission);
+export async function getUserPermissions(userData = {}) {
+  const permissionSet = new Set();
+  const rankOrder = [];
+  const seenRanks = new Set();
 
-        // Push userPermissionResults into userPermissions using the spread operator
-        userPermissions.push(...userPermissionResults);
+  const userId = userData?.userId || null;
+  const rawUuid = userData?.uuid || null;
+  const username = userData?.username || null;
 
-        const userRanks = results[1];
+  let uuidHex = normaliseUuid(rawUuid);
 
-        // Use Promise.all to handle the asynchronous queries inside the forEach loop
-        try {
-          await Promise.all(
-            userRanks.map(async (rank) => {
-              return new Promise((resolve, reject) => {
-                db.query(
-                  `SELECT * FROM rankPermissions WHERE rankSlug=?;`,
-                  [rank.rankSlug],
-                  function (err, rankPermissionsResults) {
-                    if (err) {
-                      return reject(err);
-                    }
+  const ensureUuid = async () => {
+    if (uuidHex) {
+      return;
+    }
 
-                    rankPermissionsResults.forEach((rankPermission) => {
-                      userPermissions.push(rankPermission.permission);
-                    });
+    if (userId) {
+      const rows = await runQuery(
+        `SELECT uuid FROM users WHERE userId = ? LIMIT 1`,
+        [userId]
+      );
 
-                    resolve();
-                  }
-                );
-              });
-            })
-          );
+      if (rows.length && rows[0].uuid) {
+        uuidHex = normaliseUuid(rows[0].uuid);
+        return;
+      }
+    }
 
-          userPermissions.userRanks = userRanks.map((rank) => rank.rankSlug);
-          resolve(userPermissions);
-        } catch (err) {
-          reject(err);
+    if (username) {
+      const rows = await runQuery(
+        `SELECT uuid FROM luckPermsPlayers WHERE LOWER(username) = LOWER(?) LIMIT 1`,
+        [username]
+      );
+
+      if (rows.length) {
+        const candidate = rows[0].uuid;
+        if (Buffer.isBuffer(candidate)) {
+          uuidHex = candidate.toString("hex");
+        } else {
+          uuidHex = normaliseUuid(candidate);
         }
       }
+    }
+  };
+
+  await ensureUuid();
+
+  if (!uuidHex && !userId) {
+    const emptyPermissions = [];
+    emptyPermissions.userRanks = [];
+    return emptyPermissions;
+  }
+
+  const pushPermission = (value) => {
+    if (!value) return;
+    permissionSet.add(value);
+  };
+
+  const pushRank = (slug) => {
+    if (!slug || seenRanks.has(slug)) {
+      return;
+    }
+
+    seenRanks.add(slug);
+    rankOrder.push(slug);
+  };
+
+  if (uuidHex) {
+    const directPermissions = await runQuery(
+      `SELECT permission
+         FROM ${LUCKPERMS_USER_PERMISSIONS_TABLE}
+        WHERE uuid = UNHEX(?)
+          AND permission NOT LIKE 'group.%'
+          AND value = 1`,
+      [uuidHex]
     );
-  });
+
+    directPermissions.forEach(({ permission }) => pushPermission(permission));
+
+    const rankRows = await runQuery(
+      `SELECT SUBSTRING_INDEX(permission, '.', -1) AS rankSlug
+         FROM ${LUCKPERMS_USER_PERMISSIONS_TABLE}
+        WHERE uuid = UNHEX(?)
+          AND permission LIKE 'group.%'
+          AND value = 1
+        ORDER BY permission`,
+      [uuidHex]
+    );
+
+    rankRows.forEach(({ rankSlug }) => pushRank(rankSlug));
+  }
+
+  if (!rankOrder.length && userId) {
+    const fallbackRanks = await runQuery(
+      `SELECT rankSlug
+         FROM userRanks
+        WHERE userId = ?`,
+      [userId]
+    );
+
+    fallbackRanks.forEach(({ rankSlug }) => pushRank(rankSlug));
+  }
+
+  if (rankOrder.length) {
+    const placeholders = rankOrder.map(() => "?").join(", ");
+    const rankPermissions = await runQuery(
+      `SELECT permission
+         FROM ${LUCKPERMS_GROUP_PERMISSIONS_TABLE}
+        WHERE name IN (${placeholders})
+          AND permission NOT LIKE 'group.%'
+          AND value = 1`,
+      rankOrder
+    );
+
+    rankPermissions.forEach(({ permission }) => pushPermission(permission));
+  }
+
+  if (userId) {
+    const fallbackPermissions = await runQuery(
+      `SELECT DISTINCT permission
+         FROM userPermissions
+        WHERE userId = ?`,
+      [userId]
+    );
+
+    fallbackPermissions.forEach(({ permission }) => pushPermission(permission));
+  }
+
+  const permissions = Array.from(permissionSet);
+  permissions.userRanks = rankOrder;
+
+  return permissions;
 }
 
 export async function getUserStats(userId) {

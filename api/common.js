@@ -128,9 +128,19 @@ export async function hasPermission(permissionNode, req, res, features) {
   } else {
     const userPermissions = req.session.user.permissions;
 
-    function hasSpecificPerm(node, permissionArray) {
-      return permissionArray.some((permission) => permission === node);
-    }
+    const hasSpecificPerm = (node, permissionArray) => {
+      return permissionArray.some((permission) => {
+        if (!permission) return false;
+        if (permission === "*") return true;
+        if (permission === node) return true;
+        if (permission.endsWith(".*")) {
+          const base = permission.slice(0, -1);
+          return node.startsWith(base);
+        }
+
+        return false;
+      });
+    };
 
     if (!hasSpecificPerm(permissionNode, userPermissions)) {
       return res.view("session/noPermission", {
