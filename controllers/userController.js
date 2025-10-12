@@ -505,8 +505,10 @@ function runQuery(query, params = []) {
 
 export async function getUserPermissions(userData = {}) {
   const permissionSet = new Set();
-  const rankOrder = [];
-  const seenRanks = new Set();
+  const directRankOrder = [];
+  const seenDirectRanks = new Set();
+  const queuedRanks = [];
+  const queuedRankSet = new Set();
 
   const userId = userData?.userId || null;
   const rawUuid = userData?.uuid || null;
@@ -561,13 +563,20 @@ export async function getUserPermissions(userData = {}) {
     permissionSet.add(value);
   };
 
-  const pushRank = (slug) => {
-    if (!slug || seenRanks.has(slug)) {
+  const queueRank = (slug, { direct = false } = {}) => {
+    if (!slug) {
       return;
     }
 
-    seenRanks.add(slug);
-    rankOrder.push(slug);
+    if (direct && !seenDirectRanks.has(slug)) {
+      seenDirectRanks.add(slug);
+      directRankOrder.push(slug);
+    }
+
+    if (!queuedRankSet.has(slug)) {
+      queuedRankSet.add(slug);
+      queuedRanks.push(slug);
+    }
   };
 
   if (uuidHex) {
@@ -576,7 +585,8 @@ export async function getUserPermissions(userData = {}) {
          FROM ${LUCKPERMS_USER_PERMISSIONS_TABLE}
         WHERE uuid = UNHEX(?)
           AND permission NOT LIKE 'group.%'
-          AND value = 1`,
+          AND value = 1
+          AND (expiry = 0 OR expiry > UNIX_TIMESTAMP())`,
       [uuidHex]
     );
 
@@ -588,14 +598,15 @@ export async function getUserPermissions(userData = {}) {
         WHERE uuid = UNHEX(?)
           AND permission LIKE 'group.%'
           AND value = 1
+          AND (expiry = 0 OR expiry > UNIX_TIMESTAMP())
         ORDER BY permission`,
       [uuidHex]
     );
 
-    rankRows.forEach(({ rankSlug }) => pushRank(rankSlug));
+    rankRows.forEach(({ rankSlug }) => queueRank(rankSlug, { direct: true }));
   }
 
-  if (!rankOrder.length && userId) {
+  if (!directRankOrder.length && userId) {
     const fallbackRanks = await runQuery(
       `SELECT rankSlug
          FROM userRanks
@@ -603,21 +614,48 @@ export async function getUserPermissions(userData = {}) {
       [userId]
     );
 
-    fallbackRanks.forEach(({ rankSlug }) => pushRank(rankSlug));
+    fallbackRanks.forEach(({ rankSlug }) => queueRank(rankSlug, { direct: true }));
   }
 
-  if (rankOrder.length) {
-    const placeholders = rankOrder.map(() => "?").join(", ");
-    const rankPermissions = await runQuery(
-      `SELECT permission
-         FROM ${LUCKPERMS_GROUP_PERMISSIONS_TABLE}
-        WHERE name IN (${placeholders})
-          AND permission NOT LIKE 'group.%'
-          AND value = 1`,
-      rankOrder
+  if (!queuedRanks.length && uuidHex) {
+    const primaryGroupRows = await runQuery(
+      `SELECT primary_group AS rankSlug
+         FROM luckPermsPlayers
+        WHERE uuid = UNHEX(?)
+        LIMIT 1`,
+      [uuidHex]
     );
 
-    rankPermissions.forEach(({ permission }) => pushPermission(permission));
+    primaryGroupRows.forEach(({ rankSlug }) => queueRank(rankSlug, { direct: true }));
+  }
+
+  while (queuedRanks.length) {
+    const currentRank = queuedRanks.shift();
+
+    const groupPermissions = await runQuery(
+      `SELECT permission
+         FROM ${LUCKPERMS_GROUP_PERMISSIONS_TABLE}
+        WHERE name = ?
+          AND value = 1
+          AND (expiry = 0 OR expiry > UNIX_TIMESTAMP())`,
+      [currentRank]
+    );
+
+    groupPermissions.forEach(({ permission }) => {
+      if (!permission) {
+        return;
+      }
+
+      if (permission.startsWith("group.")) {
+        const inherited = permission.substring("group.".length).trim();
+        if (inherited && inherited !== currentRank) {
+          queueRank(inherited);
+        }
+        return;
+      }
+
+      pushPermission(permission);
+    });
   }
 
   if (userId) {
@@ -632,7 +670,7 @@ export async function getUserPermissions(userData = {}) {
   }
 
   const permissions = Array.from(permissionSet);
-  permissions.userRanks = rankOrder;
+  permissions.userRanks = directRankOrder;
 
   return permissions;
 }
