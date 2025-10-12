@@ -563,19 +563,33 @@ export async function getUserPermissions(userData = {}) {
     permissionSet.add(value);
   };
 
-  const queueRank = (slug, { direct = false } = {}) => {
+  const normaliseRankSlug = (slug) => {
     if (!slug) {
+      return null;
+    }
+
+    const trimmed = String(slug).trim();
+    if (!trimmed) {
+      return null;
+    }
+
+    return trimmed.toLowerCase();
+  };
+
+  const queueRank = (slug, { direct = false } = {}) => {
+    const normalisedSlug = normaliseRankSlug(slug);
+    if (!normalisedSlug) {
       return;
     }
 
-    if (direct && !seenDirectRanks.has(slug)) {
-      seenDirectRanks.add(slug);
-      directRankOrder.push(slug);
+    if (direct && !seenDirectRanks.has(normalisedSlug)) {
+      seenDirectRanks.add(normalisedSlug);
+      directRankOrder.push(normalisedSlug);
     }
 
-    if (!queuedRankSet.has(slug)) {
-      queuedRankSet.add(slug);
-      queuedRanks.push(slug);
+    if (!queuedRankSet.has(normalisedSlug)) {
+      queuedRankSet.add(normalisedSlug);
+      queuedRanks.push(normalisedSlug);
     }
   };
 
