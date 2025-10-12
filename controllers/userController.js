@@ -617,7 +617,7 @@ export async function getUserPermissions(userData = {}) {
     directPermissions.forEach(({ permission }) => pushPermission(permission));
 
     const rankRows = await runQuery(
-      `SELECT SUBSTRING_INDEX(permission, '.', -1) AS rankSlug
+      `SELECT SUBSTRING(permission, LOCATE('.', permission) + 1) AS rankSlug
          FROM ${LUCKPERMS_USER_PERMISSIONS_TABLE}
         WHERE uuid = UNHEX(?)
           AND permission LIKE 'group.%'
