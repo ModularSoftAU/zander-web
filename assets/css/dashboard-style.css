@@ -274,6 +274,18 @@ span.badge {
   transform: translateY(-50%) !important;
   width: 70%;
 }
+.modal-dialog.modal-dialog-scrollable {
+  top: auto;
+  transform: none !important;
+  margin: 1.5rem auto;
+  max-height: calc(100vh - 3rem);
+}
+.modal-dialog.modal-dialog-scrollable .modal-content {
+  max-height: 100%;
+}
+.modal-dialog.modal-dialog-scrollable .modal-body {
+  overflow-y: auto;
+}
 .modal-header .close {
   font-size: 14px;
   margin-right: 15px;
