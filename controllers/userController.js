@@ -576,15 +576,25 @@ export async function getUserPermissions(userData = {}) {
     return trimmed.toLowerCase();
   };
 
+  const canonicalRankMap = new Map();
+
   const queueRank = (slug, { direct = false } = {}) => {
     const normalisedSlug = normaliseRankSlug(slug);
     if (!normalisedSlug) {
       return;
     }
 
+    const trimmedSlug = String(slug).trim();
+
+    if (!canonicalRankMap.has(normalisedSlug) || direct) {
+      canonicalRankMap.set(normalisedSlug, trimmedSlug);
+    }
+
+    const canonicalSlug = canonicalRankMap.get(normalisedSlug) || trimmedSlug;
+
     if (direct && !seenDirectRanks.has(normalisedSlug)) {
       seenDirectRanks.add(normalisedSlug);
-      directRankOrder.push(normalisedSlug);
+      directRankOrder.push(canonicalSlug);
     }
 
     if (!queuedRankSet.has(normalisedSlug)) {
@@ -644,7 +654,9 @@ export async function getUserPermissions(userData = {}) {
   }
 
   while (queuedRanks.length) {
-    const currentRank = queuedRanks.shift();
+    const currentNormalisedRank = queuedRanks.shift();
+    const currentRank =
+      canonicalRankMap.get(currentNormalisedRank) || currentNormalisedRank;
 
     const groupPermissions = await runQuery(
       `SELECT permission
@@ -662,7 +674,7 @@ export async function getUserPermissions(userData = {}) {
 
       if (permission.startsWith("group.")) {
         const inherited = permission.substring("group.".length).trim();
-        if (inherited && inherited !== currentRank) {
+        if (inherited) {
           queueRank(inherited);
         }
         return;
