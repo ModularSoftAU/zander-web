@@ -69,7 +69,7 @@ export default function dashboardSiteRoute(app, config, features, lang) {
       apiData: apiData,
       features: features,
       req: req,
-      globalImage: getGlobalImage(),
+      globalImage: await getGlobalImage(),
       moment: moment,
       announcementWeb: await getWebAnnouncement(),
     });
@@ -83,19 +83,33 @@ export default function dashboardSiteRoute(app, config, features, lang) {
   app.get("/dashboard/bridge", async function (req, res) {
     if (!hasPermission("zander.web.bridge", req, res, features)) return;
 
-    const fetchURL = `${process.env.siteAddress}/api/bridge/get`;
-    const response = await fetch(fetchURL, {
-      headers: { "x-access-token": process.env.apiKey },
-    });
-    const apiData = await response.json();
+    const [pendingResponse, processingResponse, routineResponse] = await Promise.all([
+      fetch(`${process.env.siteAddress}/api/bridge/processor/get?status=pending&limit=100`, {
+        headers: { "x-access-token": process.env.apiKey },
+      }),
+      fetch(`${process.env.siteAddress}/api/bridge/processor/get?status=processing&limit=100`, {
+        headers: { "x-access-token": process.env.apiKey },
+      }),
+      fetch(`${process.env.siteAddress}/api/bridge/routine/get`, {
+        headers: { "x-access-token": process.env.apiKey },
+      }),
+    ]);
+
+    const [pendingTasks, processingTasks, routines] = await Promise.all([
+      pendingResponse.json(),
+      processingResponse.json(),
+      routineResponse.json(),
+    ]);
 
     res.view("dashboard/bridge", {
       pageTitle: `Dashboard - Bridge`,
       config: config,
-      apiData: apiData,
+      pendingTasks: pendingTasks,
+      processingTasks: processingTasks,
+      routines: routines,
       features: features,
       req: req,
-      globalImage: getGlobalImage(),
+      globalImage: await getGlobalImage(),
       moment: moment,
       announcementWeb: await getWebAnnouncement(),
     });

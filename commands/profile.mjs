@@ -49,38 +49,52 @@ export class ProfileCommand extends Command {
       let isLinked = apiData.data.profileData.discordId;
       let profilePicture = await getProfilePicture(apiData.data.profileData.username);
 
-      const embed = new EmbedBuilder()
-        if (isLinked) {
-          embed.setTitle(`\`${apiData.data.profileData.username}\`'s Profile ✅`);
-        } else {
-          embed.setTitle(`${apiData.data.profileData.username}'s Profile`);
-        }
+      const embed = new EmbedBuilder();
 
-        embed
-          .setDescription(
-            `Last Online ${apiData.data.profileSession.lastOnlineDiff} on ${apiData.data.profileSession.server}`
-          )
-          .setColor(Colors.Blurple)
-          .setThumbnail(profilePicture)
-          .addFields(
-            {
-              name: "Date Joined",
-              value: `${moment(apiData.data.profileData.joined).format(
-                "LLLL"
-              )} (${moment(apiData.data.profileData.joined).fromNow()})`,
-              inline: false,
-            },
-            {
-              name: "Total Logins",
-              value: `${apiData.data.profileStats.totalLogins}`,
-              inline: true,
-            },
-            {
-              name: "Total Playtime",
-              value: `${apiData.data.profileStats.totalPlaytime}`,
-              inline: true,
-            }
-          );
+      if (isLinked) {
+        embed.setTitle(`\`${apiData.data.profileData.username}\`'s Profile ✅`);
+      } else {
+        embed.setTitle(`${apiData.data.profileData.username}'s Profile`);
+      }
+
+      const session = apiData.data.profileSession || {};
+      const serverName = session.server
+        ? `${session.server.charAt(0).toUpperCase()}${session.server.slice(1)}`
+        : "the network";
+
+      let statusLine = "";
+
+      if (session.isOnline) {
+        statusLine = `Currently Online on ${serverName}`;
+      } else if (session.lastOnlineDiff) {
+        statusLine = `Last Online ${session.lastOnlineDiff} ago on ${serverName}`;
+      } else {
+        statusLine = "Last online information unavailable";
+      }
+
+      embed
+        .setDescription(statusLine)
+        .setColor(Colors.Blurple)
+        .setThumbnail(profilePicture)
+        .addFields(
+          {
+            name: "Date Joined",
+            value: `${moment(apiData.data.profileData.joined).format(
+              "LLLL"
+            )} (${moment(apiData.data.profileData.joined).fromNow()})`,
+            inline: false,
+          },
+          {
+            name: "Total Logins",
+            value: `${apiData.data.profileStats.totalLogins}`,
+            inline: true,
+          },
+          {
+            name: "Total Playtime",
+            value: `${apiData.data.profileStats.totalPlaytime}`,
+            inline: true,
+          }
+        );
 
       interaction.reply({
         embeds: [embed],

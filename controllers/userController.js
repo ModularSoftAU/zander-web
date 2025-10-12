@@ -477,59 +477,202 @@ export function updateUserPassword(userId, passwordHash) {
   });
 }
 
-export async function getUserPermissions(userData) {
+const LUCKPERMS_USER_PERMISSIONS_TABLE =
+  "cfcdev_luckperms.luckperms_user_permissions";
+const LUCKPERMS_GROUP_PERMISSIONS_TABLE =
+  "cfcdev_luckperms.luckperms_group_permissions";
+
+function normaliseUuid(uuid) {
+  if (!uuid) return null;
+
+  const trimmed = String(uuid).trim();
+  if (!trimmed) return null;
+
+  return trimmed.replace(/-/g, "").toLowerCase();
+}
+
+function runQuery(query, params = []) {
   return new Promise((resolve, reject) => {
-    db.query(
-      `SELECT DISTINCT permission FROM userPermissions WHERE userId = ?; SELECT rankSlug FROM userRanks WHERE userId = ?`,
-      [userData.userId, userData.userId],
-      async function (err, results) {
-        if (err) {
-          return reject(err);
-        }
+    db.query(query, params, (error, results) => {
+      if (error) {
+        return reject(error);
+      }
 
-        // Define this array to specify the permission context for the player
-        const userPermissions = [];
+      resolve(results || []);
+    });
+  });
+}
 
-        // Map results to get an array of permissions
-        let userPermissionResults = results[0].map((a) => a.permission);
+export async function getUserPermissions(userData = {}) {
+  const permissionSet = new Set();
+  const directRankOrder = [];
+  const seenDirectRanks = new Set();
+  const queuedRanks = [];
+  const queuedRankSet = new Set();
 
-        // Push userPermissionResults into userPermissions using the spread operator
-        userPermissions.push(...userPermissionResults);
+  const userId = userData?.userId || null;
+  const rawUuid = userData?.uuid || null;
+  const username = userData?.username || null;
 
-        const userRanks = results[1];
+  let uuidHex = normaliseUuid(rawUuid);
 
-        // Use Promise.all to handle the asynchronous queries inside the forEach loop
-        try {
-          await Promise.all(
-            userRanks.map(async (rank) => {
-              return new Promise((resolve, reject) => {
-                db.query(
-                  `SELECT * FROM rankPermissions WHERE rankSlug=?;`,
-                  [rank.rankSlug],
-                  function (err, rankPermissionsResults) {
-                    if (err) {
-                      return reject(err);
-                    }
+  const ensureUuid = async () => {
+    if (uuidHex) {
+      return;
+    }
 
-                    rankPermissionsResults.forEach((rankPermission) => {
-                      userPermissions.push(rankPermission.permission);
-                    });
+    if (userId) {
+      const rows = await runQuery(
+        `SELECT uuid FROM users WHERE userId = ? LIMIT 1`,
+        [userId]
+      );
 
-                    resolve();
-                  }
-                );
-              });
-            })
-          );
+      if (rows.length && rows[0].uuid) {
+        uuidHex = normaliseUuid(rows[0].uuid);
+        return;
+      }
+    }
 
-          userPermissions.userRanks = userRanks.map((rank) => rank.rankSlug);
-          resolve(userPermissions);
-        } catch (err) {
-          reject(err);
+    if (username) {
+      const rows = await runQuery(
+        `SELECT uuid FROM luckPermsPlayers WHERE LOWER(username) = LOWER(?) LIMIT 1`,
+        [username]
+      );
+
+      if (rows.length) {
+        const candidate = rows[0].uuid;
+        if (Buffer.isBuffer(candidate)) {
+          uuidHex = candidate.toString("hex");
+        } else {
+          uuidHex = normaliseUuid(candidate);
         }
       }
+    }
+  };
+
+  await ensureUuid();
+
+  if (!uuidHex && !userId) {
+    const emptyPermissions = [];
+    emptyPermissions.userRanks = [];
+    return emptyPermissions;
+  }
+
+  const pushPermission = (value) => {
+    if (!value) return;
+    permissionSet.add(value);
+  };
+
+  const queueRank = (slug, { direct = false } = {}) => {
+    if (!slug) {
+      return;
+    }
+
+    if (direct && !seenDirectRanks.has(slug)) {
+      seenDirectRanks.add(slug);
+      directRankOrder.push(slug);
+    }
+
+    if (!queuedRankSet.has(slug)) {
+      queuedRankSet.add(slug);
+      queuedRanks.push(slug);
+    }
+  };
+
+  if (uuidHex) {
+    const directPermissions = await runQuery(
+      `SELECT permission
+         FROM ${LUCKPERMS_USER_PERMISSIONS_TABLE}
+        WHERE uuid = UNHEX(?)
+          AND permission NOT LIKE 'group.%'
+          AND value = 1
+          AND (expiry = 0 OR expiry > UNIX_TIMESTAMP())`,
+      [uuidHex]
     );
-  });
+
+    directPermissions.forEach(({ permission }) => pushPermission(permission));
+
+    const rankRows = await runQuery(
+      `SELECT SUBSTRING_INDEX(permission, '.', -1) AS rankSlug
+         FROM ${LUCKPERMS_USER_PERMISSIONS_TABLE}
+        WHERE uuid = UNHEX(?)
+          AND permission LIKE 'group.%'
+          AND value = 1
+          AND (expiry = 0 OR expiry > UNIX_TIMESTAMP())
+        ORDER BY permission`,
+      [uuidHex]
+    );
+
+    rankRows.forEach(({ rankSlug }) => queueRank(rankSlug, { direct: true }));
+  }
+
+  if (!directRankOrder.length && userId) {
+    const fallbackRanks = await runQuery(
+      `SELECT rankSlug
+         FROM userRanks
+        WHERE userId = ?`,
+      [userId]
+    );
+
+    fallbackRanks.forEach(({ rankSlug }) => queueRank(rankSlug, { direct: true }));
+  }
+
+  if (!queuedRanks.length && uuidHex) {
+    const primaryGroupRows = await runQuery(
+      `SELECT primary_group AS rankSlug
+         FROM luckPermsPlayers
+        WHERE uuid = UNHEX(?)
+        LIMIT 1`,
+      [uuidHex]
+    );
+
+    primaryGroupRows.forEach(({ rankSlug }) => queueRank(rankSlug, { direct: true }));
+  }
+
+  while (queuedRanks.length) {
+    const currentRank = queuedRanks.shift();
+
+    const groupPermissions = await runQuery(
+      `SELECT permission
+         FROM ${LUCKPERMS_GROUP_PERMISSIONS_TABLE}
+        WHERE name = ?
+          AND value = 1
+          AND (expiry = 0 OR expiry > UNIX_TIMESTAMP())`,
+      [currentRank]
+    );
+
+    groupPermissions.forEach(({ permission }) => {
+      if (!permission) {
+        return;
+      }
+
+      if (permission.startsWith("group.")) {
+        const inherited = permission.substring("group.".length).trim();
+        if (inherited && inherited !== currentRank) {
+          queueRank(inherited);
+        }
+        return;
+      }
+
+      pushPermission(permission);
+    });
+  }
+
+  if (userId) {
+    const fallbackPermissions = await runQuery(
+      `SELECT DISTINCT permission
+         FROM userPermissions
+        WHERE userId = ?`,
+      [userId]
+    );
+
+    fallbackPermissions.forEach(({ permission }) => pushPermission(permission));
+  }
+
+  const permissions = Array.from(permissionSet);
+  permissions.userRanks = directRankOrder;
+
+  return permissions;
 }
 
 export async function getUserStats(userId) {
@@ -666,25 +809,79 @@ export async function getUserLastSession(userId) {
             sessionStart: null,
             sessionEnd: null,
             server: null,
-            lastOnlineDiff: "No previous session",
+            lastOnlineDiff: null,
+            isOnline: false,
           };
           return resolve(defaultSessionData);
         }
 
-        const now = new Date(); // Current time
-        const sessionStart = new Date(results[0].sessionEnd);
-        const sessionDiff = convertSecondsToDuration(
-          Math.floor((now - sessionStart) / 1000)
-        );
+        const sessionRecord = results[0];
+        const now = new Date();
+        let isOnline = !sessionRecord.sessionEnd;
+
+        // Treat stale sessions without an end time as offline after a grace period
+        if (isOnline && sessionRecord.sessionStart) {
+          const sessionStartDate = new Date(sessionRecord.sessionStart);
+          const activeSeconds = Math.floor((now - sessionStartDate) / 1000);
+          const staleThresholdSeconds = 24 * 60 * 60; // 24 hours
+          if (activeSeconds > staleThresholdSeconds) {
+            isOnline = false;
+          }
+        }
+
+        const lastActivityDate = sessionRecord.sessionEnd
+          ? new Date(sessionRecord.sessionEnd)
+          : sessionRecord.sessionStart
+          ? new Date(sessionRecord.sessionStart)
+          : null;
+
+        const sessionDiff = lastActivityDate
+          ? convertSecondsToDuration(
+              Math.max(0, Math.floor((now - lastActivityDate) / 1000))
+            )
+          : null;
 
         const sessionData = {
-          sessionStart: results[0].sessionStart,
-          sessionEnd: results[0].sessionEnd,
-          server: results[0].server,
+          sessionStart: sessionRecord.sessionStart,
+          sessionEnd: sessionRecord.sessionEnd,
+          server: sessionRecord.server,
           lastOnlineDiff: sessionDiff,
+          isOnline,
         };
 
         resolve(sessionData);
+      }
+    );
+  });
+}
+
+export async function linkDiscordAccount(userId, discordId, discordHandle = null) {
+  return new Promise((resolve, reject) => {
+    db.query(
+      `UPDATE users SET discordId=?, social_discord=? WHERE userId=?`,
+      [discordId, discordHandle, userId],
+      function (error) {
+        if (error) {
+          return reject(error);
+        }
+
+        resolve(true);
+      }
+    );
+  });
+}
+
+export async function unlinkDiscordAccount(userId) {
+  return new Promise((resolve, reject) => {
+    db.query(
+      `UPDATE users SET discordId=NULL, social_discord=NULL WHERE userId=?`,
+      [userId],
+      function (error) {
+        if (error) {
+          return reject(error);
+        }
+
+        resolve(true);
       }
     );
   });

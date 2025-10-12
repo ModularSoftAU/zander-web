@@ -18,9 +18,28 @@ export default async function webApiRoute(app, config, db, features, lang) {
 
     db.query(
       `
-      SELECT COUNT(*) AS communityMembers FROM users;
-      SELECT HOUR(SEC_TO_TIME(SUM(TIME_TO_SEC(TIMEDIFF(COALESCE(sessionEnd, NOW()), sessionStart))))) AS timePlayed FROM gameSessions;
-      SELECT COUNT(DISTINCT(u.uuid)) totalStaff FROM userRanks ur JOIN ranks r ON ur.rankSlug = r.rankSlug JOIN users u ON u.uuid = ur.uuid WHERE r.isStaff = 1;
+      SELECT COUNT(DISTINCT gs.userId) AS communityMembers
+      FROM gameSessions gs
+      JOIN users u ON gs.userId = u.userId
+      WHERE gs.sessionStart >= DATE_SUB(NOW(), INTERVAL 3 MONTH)
+        AND u.account_disabled = 0;
+
+      SELECT ROUND(SUM(TIMESTAMPDIFF(SECOND, gs.sessionStart, COALESCE(gs.sessionEnd, NOW()))) / 3600) AS timePlayed
+      FROM gameSessions gs
+      JOIN users u ON gs.userId = u.userId
+      WHERE gs.sessionStart >= DATE_SUB(NOW(), INTERVAL 3 MONTH)
+        AND u.account_disabled = 0;
+
+      SELECT COUNT(*) AS totalStaff
+      FROM (
+        SELECT u.uuid
+        FROM userRanks ur
+        JOIN ranks r ON ur.rankSlug = r.rankSlug
+        JOIN users u ON u.uuid = ur.uuid
+        WHERE r.isStaff = 1
+          AND u.account_disabled = 0
+        GROUP BY u.uuid
+      ) staffRoster;
   `,
       async function (err, results) {
         if (err) {
@@ -28,9 +47,9 @@ export default async function webApiRoute(app, config, db, features, lang) {
         }
 
         // General
-        let communityMembers = results[0][0].communityMembers;
-        let timePlayed = results[1][0].timePlayed;
-        let staffMembers = results[2][0].totalStaff;
+        const communityMembers = results[0][0].communityMembers || 0;
+        const timePlayed = results[1][0].timePlayed || 0;
+        const staffMembers = results[2][0].totalStaff || 0;
 
         return res.send({
           success: true,

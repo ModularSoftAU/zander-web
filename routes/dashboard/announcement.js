@@ -34,7 +34,7 @@ export default function dashboardAnnouncementSiteRoute(
       apiData: apiData,
       features: features,
       req: req,
-      globalImage: getGlobalImage(),
+      globalImage: await getGlobalImage(),
       announcementWeb: await getWebAnnouncement(),
     });
 
@@ -53,7 +53,7 @@ export default function dashboardAnnouncementSiteRoute(
       type: "create",
       features: features,
       req: req,
-      globalImage: getGlobalImage(),
+      globalImage: await getGlobalImage(),
       announcementWeb: await getWebAnnouncement(),
     });
 
@@ -80,7 +80,7 @@ export default function dashboardAnnouncementSiteRoute(
       type: "edit",
       features: features,
       req: req,
-      globalImage: getGlobalImage(),
+      globalImage: await getGlobalImage(),
       announcementWeb: await getWebAnnouncement(),
     });
 
