@@ -14,6 +14,7 @@
   const pendingList = pendingTasks && pendingTasks.success ? pendingTasks.data : [];
   const processingList = processingTasks && processingTasks.success ? processingTasks.data : [];
   const routinesList = routines && routines.success ? routines.data : [];
+  const ranksDirectory = ranks && ranks.success ? ranks.data : [];
 %>
 
 <div class="row g-0 dashboardview">
@@ -550,10 +551,11 @@
                   <button type="button" class="btn btn-sm btn-outline-secondary" data-add-step>Add step</button>
                 </div>
                 <div class="routine-steps" data-routine-steps></div>
-                <p class="form-text">Provide a slug and command for each step. Metadata pairs are optional and map to placeholders in your commands.</p>
-                <div class="text-danger small d-none" data-routine-error>Please add at least one step with a slug and command.</div>
+                <p class="form-text">Provide a slug for each step. Choose between running commands or assigning LuckPerms ranks. Metadata pairs are optional and map to placeholders in your commands.</p>
+                <div class="text-danger small d-none" data-routine-error>Please add at least one step with a slug and a configured command or rank assignment.</div>
                 <input type="hidden" name="stepsJSON" data-routine-output>
                 <script type="application/json" data-routines-json><%- JSON.stringify(routinesList || []).replace(/</g, '\u003c') %></script>
+                <script type="application/json" data-ranks-json><%- JSON.stringify(ranksDirectory || []).replace(/</g, '\u003c') %></script>
               </div>
             </div>
           </div>
@@ -874,6 +876,7 @@
       const clearButton = form ? form.querySelector('[data-routine-clear]') : null;
       const activeLabel = form ? form.querySelector('[data-routine-active-label]') : null;
       const routinesDataElement = routineBuilder.querySelector('[data-routines-json]');
+      const ranksDataElement = routineBuilder.querySelector('[data-ranks-json]');
 
       let routinesData = [];
       if (routinesDataElement) {
@@ -886,6 +889,22 @@
         routinesDataElement.remove();
       }
 
+      let rankDirectory = [];
+      if (ranksDataElement) {
+        try {
+          const parsed = JSON.parse(ranksDataElement.textContent || '[]');
+          if (Array.isArray(parsed)) {
+            rankDirectory = parsed.filter((rank) => rank && rank.rankSlug);
+          }
+        } catch (error) {
+          console.error('Failed to parse ranks JSON', error);
+        }
+
+        ranksDataElement.remove();
+      }
+
+      const CONFIG_KEY = '_routineConfig';
+      const DEFAULT_PLAYER_METADATA_KEY = 'player';
       const defaultActiveMessage = 'Creating a new routine.';
 
       function updateActiveLabel(routine) {
@@ -901,6 +920,62 @@
         }
       }
 
+      function ensureRankOption(select, slug, label) {
+        if (!select || !slug) {
+          return;
+        }
+
+        const options = Array.from(select.options || []);
+        const exists = options.some((option) => option.value === slug);
+
+        if (!exists) {
+          const option = document.createElement('option');
+          option.value = slug;
+          option.textContent = label || slug;
+          select.appendChild(option);
+        }
+      }
+
+      function renderRankOptions(select, selectedSlug = '') {
+        if (!select) {
+          return;
+        }
+
+        const currentValue = selectedSlug || select.value || '';
+        select.innerHTML = '<option value="">Select a rank</option>';
+
+        rankDirectory.forEach((rank) => {
+          if (!rank || !rank.rankSlug) {
+            return;
+          }
+
+          const option = document.createElement('option');
+          option.value = rank.rankSlug;
+          option.textContent = rank.displayName
+            ? `${rank.displayName} (${rank.rankSlug})`
+            : rank.rankSlug;
+          select.appendChild(option);
+        });
+
+        if (currentValue) {
+          ensureRankOption(select, currentValue, currentValue);
+          select.value = currentValue;
+        }
+      }
+
+      function readRoutineConfig(metadata) {
+        if (!metadata || typeof metadata !== 'object') {
+          return {};
+        }
+
+        const config = metadata[CONFIG_KEY];
+        if (!config || typeof config !== 'object') {
+          return {};
+        }
+
+        return { ...config };
+      }
+
       function addStep(initialData = {}) {
         const defaultOrder = stepsContainer.children.length + 1;
         const step = document.createElement('div');
@@ -911,18 +986,49 @@
               <label class="form-label">Order</label>
               <input type="number" class="form-control" data-step-order min="0" value="${defaultOrder}">
             </div>
-            <div class="col-12 col-lg-4">
+            <div class="col-12 col-lg-3">
               <label class="form-label">Server slug</label>
               <input type="text" class="form-control" placeholder="proxy" data-step-slug required>
             </div>
-            <div class="col-12 col-lg-4">
+            <div class="col-12 col-lg-3">
+              <label class="form-label">Step type</label>
+              <select class="form-select" data-step-type>
+                <option value="command">Run command</option>
+                <option value="rank">Assign rank</option>
+              </select>
+            </div>
+            <div class="col-12 col-lg-3 text-lg-end">
+              <button type="button" class="btn btn-outline-danger btn-sm w-100 mt-2 mt-lg-0" data-remove-step>Remove</button>
+            </div>
+          </div>
+          <div class="row g-3 mt-1" data-step-command-row>
+            <div class="col-12 col-lg-8">
               <label class="form-label">Command</label>
               <input type="text" class="form-control" placeholder="say Welcome" data-step-command required>
               <div class="form-text">Commands run without a slash. Use placeholders like <code>{{player}}</code> to pull metadata into the command.</div>
             </div>
-            <div class="col-12 col-lg-1 text-lg-end">
-              <button type="button" class="btn btn-outline-danger btn-sm w-100 mt-2 mt-lg-0" data-remove-step>Remove</button>
+          </div>
+          <div class="row g-3 mt-1 d-none" data-step-rank-row>
+            <div class="col-12 col-lg-4">
+              <label class="form-label">Rank</label>
+              <select class="form-select" data-step-rank>
+                <option value="">Select a rank</option>
+              </select>
             </div>
+            <div class="col-12 col-sm-6 col-lg-4">
+              <label class="form-label">Action</label>
+              <select class="form-select" data-step-rank-action>
+                <option value="assign">Assign rank</option>
+                <option value="remove">Remove rank</option>
+              </select>
+            </div>
+            <div class="col-12 col-sm-6 col-lg-4">
+              <label class="form-label">Player metadata key</label>
+              <input type="text" class="form-control" placeholder="player" data-step-player-key>
+              <div class="form-text">We'll substitute <code>{{key}}</code> with the metadata value when queueing the LuckPerms command.</div>
+            </div>
+          </div>
+          <div class="row g-3 mt-1">
             <div class="col-12 col-md-6">
               <label class="form-label">Metadata key <span class="text-muted">(optional)</span></label>
               <input type="text" class="form-control" placeholder="player" data-step-metadata-key>
@@ -934,15 +1040,33 @@
           </div>
         `;
 
-        step.querySelector('[data-remove-step]').addEventListener('click', function () {
-          step.remove();
-        });
+        const removeButton = step.querySelector('[data-remove-step]');
+        if (removeButton) {
+          removeButton.addEventListener('click', function () {
+            step.remove();
+          });
+        }
 
         const orderInput = step.querySelector('[data-step-order]');
         const slugField = step.querySelector('[data-step-slug]');
+        const typeSelect = step.querySelector('[data-step-type]');
         const commandField = step.querySelector('[data-step-command]');
+        const commandRow = step.querySelector('[data-step-command-row]');
+        const rankRow = step.querySelector('[data-step-rank-row]');
+        const rankSelect = step.querySelector('[data-step-rank]');
+        const rankActionSelect = step.querySelector('[data-step-rank-action]');
+        const playerKeyField = step.querySelector('[data-step-player-key]');
         const metadataKeyField = step.querySelector('[data-step-metadata-key]');
         const metadataValueField = step.querySelector('[data-step-metadata-value]');
+
+        renderRankOptions(rankSelect);
+
+        const metadataObject =
+          initialData.metadata && typeof initialData.metadata === 'object'
+            ? { ...initialData.metadata }
+            : {};
+        const routineConfig = readRoutineConfig(metadataObject);
+        const initialType = (initialData.type || routineConfig.type || 'command').toLowerCase();
 
         if (orderInput) {
           const orderNumber = Number(initialData.order);
@@ -953,22 +1077,117 @@
           slugField.value = initialData.slug;
         }
 
-        if (commandField && initialData.command) {
-          commandField.value = (initialData.command || '').replace(/^\/+/, '');
+        if (typeSelect) {
+          typeSelect.value = ['rank', 'command'].includes(initialType)
+            ? initialType
+            : 'command';
         }
 
-        if (initialData.metadata && typeof initialData.metadata === 'object') {
-          const metadataEntries = Object.entries(initialData.metadata);
-          if (metadataEntries.length) {
-            const [metadataKey, metadataValue] = metadataEntries[0];
-            if (metadataKeyField) {
-              metadataKeyField.value = metadataKey;
-            }
-            if (metadataValueField) {
-              metadataValueField.value = metadataValue;
-            }
+        if (commandField) {
+          const commandValue = typeof initialData.command === 'string'
+            ? initialData.command.replace(/^\/+/, '')
+            : '';
+          if (commandValue) {
+            commandField.value = commandValue;
           }
         }
+
+        if (rankSelect && routineConfig.rankSlug) {
+          ensureRankOption(rankSelect, routineConfig.rankSlug, routineConfig.rankSlug);
+          rankSelect.value = routineConfig.rankSlug;
+        }
+
+        if (rankActionSelect && routineConfig.rankAction) {
+          rankActionSelect.value = routineConfig.rankAction;
+        }
+
+        if (playerKeyField) {
+          playerKeyField.value =
+            routineConfig.playerMetadataKey || DEFAULT_PLAYER_METADATA_KEY;
+        }
+
+        const metadataEntries = Object.entries(metadataObject).filter(
+          ([key]) => key !== CONFIG_KEY
+        );
+
+        if (metadataEntries.length) {
+          const [metadataKey, metadataValue] = metadataEntries[0];
+          if (metadataKeyField) {
+            metadataKeyField.value = metadataKey;
+          }
+          if (metadataValueField) {
+            metadataValueField.value =
+              metadataValue !== undefined && metadataValue !== null
+                ? String(metadataValue)
+                : '';
+          }
+        }
+
+        function updateTypeFields() {
+          const typeValue = typeSelect ? typeSelect.value : 'command';
+          const isRank = typeValue === 'rank';
+
+          if (commandRow) {
+            commandRow.classList.toggle('d-none', isRank);
+          }
+
+          if (commandField) {
+            if (isRank) {
+              commandField.setAttribute('disabled', 'disabled');
+              commandField.removeAttribute('required');
+              commandField.classList.remove('is-invalid');
+            } else {
+              commandField.removeAttribute('disabled');
+              commandField.setAttribute('required', 'required');
+            }
+          }
+
+          if (rankRow) {
+            rankRow.classList.toggle('d-none', !isRank);
+          }
+
+          if (rankSelect) {
+            if (isRank) {
+              rankSelect.removeAttribute('disabled');
+              rankSelect.setAttribute('required', 'required');
+            } else {
+              rankSelect.setAttribute('disabled', 'disabled');
+              rankSelect.removeAttribute('required');
+              rankSelect.classList.remove('is-invalid');
+            }
+          }
+
+          if (playerKeyField) {
+            if (isRank && !playerKeyField.value.trim()) {
+              playerKeyField.value = DEFAULT_PLAYER_METADATA_KEY;
+            }
+            if (isRank) {
+              playerKeyField.removeAttribute('disabled');
+            } else {
+              playerKeyField.setAttribute('disabled', 'disabled');
+              playerKeyField.classList.remove('is-invalid');
+            }
+          }
+
+          step.dataset.stepType = typeValue;
+        }
+
+        if (typeSelect) {
+          typeSelect.addEventListener('change', updateTypeFields);
+        }
+
+        updateTypeFields();
+
+        [slugField, commandField, rankSelect, playerKeyField, metadataKeyField, metadataValueField]
+          .filter(Boolean)
+          .forEach((field) => {
+            field.addEventListener('input', () => {
+              field.classList.remove('is-invalid');
+            });
+            field.addEventListener('change', () => {
+              field.classList.remove('is-invalid');
+            });
+          });
 
         stepsContainer.appendChild(step);
       }
@@ -1057,19 +1276,93 @@
             const orderField = stepElement.querySelector('[data-step-order]');
             const metadataKeyField = stepElement.querySelector('[data-step-metadata-key]');
             const metadataValueField = stepElement.querySelector('[data-step-metadata-value]');
+            const typeSelect = stepElement.querySelector('[data-step-type]');
+            const rankSelect = stepElement.querySelector('[data-step-rank]');
+            const rankActionSelect = stepElement.querySelector('[data-step-rank-action]');
+            const playerKeyField = stepElement.querySelector('[data-step-player-key]');
 
+            const stepType = typeSelect ? typeSelect.value : 'command';
             const slug = slugField ? slugField.value.trim() : '';
-            const command = commandField
-              ? commandField.value.trim().replace(/^\/+/, '')
-              : '';
-            if (commandField) {
-              commandField.value = command;
-            }
             const orderRaw = orderField ? orderField.value.trim() : '';
             const metadataKey = metadataKeyField ? metadataKeyField.value.trim() : '';
             const metadataValue = metadataValueField ? metadataValueField.value.trim() : '';
 
-            if (!slug || !command) {
+            let stepHasError = false;
+
+            [slugField, commandField, rankSelect, playerKeyField]
+              .filter(Boolean)
+              .forEach((field) => field.classList.remove('is-invalid'));
+
+            if (!slug) {
+              stepHasError = true;
+              if (slugField) {
+                slugField.classList.add('is-invalid');
+              }
+            }
+
+            const stepData = { slug };
+            const orderNumber = Number(orderRaw);
+            if (!Number.isNaN(orderNumber)) {
+              stepData.order = orderNumber;
+            }
+
+            const metadata = {};
+            if (metadataKey && metadataValue) {
+              metadata[metadataKey] = metadataValue;
+            }
+
+            if (stepType === 'rank') {
+              const rankSlugValue = rankSelect ? rankSelect.value.trim() : '';
+              const rankAction = rankActionSelect ? rankActionSelect.value : 'assign';
+              const playerKeyRaw = playerKeyField ? playerKeyField.value.trim() : '';
+              const playerKey = playerKeyRaw || DEFAULT_PLAYER_METADATA_KEY;
+
+              if (!rankSlugValue) {
+                stepHasError = true;
+                if (rankSelect) {
+                  rankSelect.classList.add('is-invalid');
+                }
+              }
+
+              if (playerKeyField && !playerKeyRaw) {
+                playerKeyField.value = playerKey;
+              }
+
+              const commandTemplate = rankSlugValue
+                ? rankAction === 'remove'
+                  ? `lp user {{${playerKey}}} parent remove ${rankSlugValue}`
+                  : `lp user {{${playerKey}}} parent add ${rankSlugValue}`
+                : '';
+
+              stepData.command = commandTemplate;
+
+              metadata[CONFIG_KEY] = {
+                type: 'rank',
+                rankSlug: rankSlugValue,
+                rankAction,
+                playerMetadataKey: playerKey,
+              };
+            } else {
+              const commandValue = commandField
+                ? commandField.value.trim().replace(/^\/+/, '')
+                : '';
+
+              if (commandField) {
+                commandField.value = commandValue;
+              }
+
+              if (!commandValue) {
+                stepHasError = true;
+                if (commandField) {
+                  commandField.classList.add('is-invalid');
+                }
+              }
+
+              stepData.command = commandValue;
+              metadata[CONFIG_KEY] = { type: 'command' };
+            }
+
+            if (stepHasError || !stepData.command) {
               hasError = true;
               stepElement.classList.add('border-danger');
               return;
@@ -1077,18 +1370,8 @@
 
             stepElement.classList.remove('border-danger');
 
-            const stepData = {
-              slug,
-              command,
-            };
-
-            const orderNumber = Number(orderRaw);
-            if (!Number.isNaN(orderNumber)) {
-              stepData.order = orderNumber;
-            }
-
-            if (metadataKey && metadataValue) {
-              stepData.metadata = { [metadataKey]: metadataValue };
+            if (Object.keys(metadata).length) {
+              stepData.metadata = metadata;
             }
 
             steps.push(stepData);

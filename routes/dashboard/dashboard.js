@@ -83,7 +83,12 @@ export default function dashboardSiteRoute(app, config, features, lang) {
   app.get("/dashboard/bridge", async function (req, res) {
     if (!hasPermission("zander.web.bridge", req, res, features)) return;
 
-    const [pendingResponse, processingResponse, routineResponse] = await Promise.all([
+    const [
+      pendingResponse,
+      processingResponse,
+      routineResponse,
+      ranksResponse,
+    ] = await Promise.all([
       fetch(`${process.env.siteAddress}/api/bridge/processor/get?status=pending&limit=100`, {
         headers: { "x-access-token": process.env.apiKey },
       }),
@@ -93,12 +98,18 @@ export default function dashboardSiteRoute(app, config, features, lang) {
       fetch(`${process.env.siteAddress}/api/bridge/routine/get`, {
         headers: { "x-access-token": process.env.apiKey },
       }),
+      features?.ranks
+        ? fetch(`${process.env.siteAddress}/api/rank/get`, {
+            headers: { "x-access-token": process.env.apiKey },
+          })
+        : Promise.resolve(null),
     ]);
 
-    const [pendingTasks, processingTasks, routines] = await Promise.all([
+    const [pendingTasks, processingTasks, routines, ranks] = await Promise.all([
       pendingResponse.json(),
       processingResponse.json(),
       routineResponse.json(),
+      ranksResponse ? ranksResponse.json() : Promise.resolve({ success: false }),
     ]);
 
     res.view("dashboard/bridge", {
@@ -107,6 +118,7 @@ export default function dashboardSiteRoute(app, config, features, lang) {
       pendingTasks: pendingTasks,
       processingTasks: processingTasks,
       routines: routines,
+      ranks: ranks,
       features: features,
       req: req,
       globalImage: await getGlobalImage(),

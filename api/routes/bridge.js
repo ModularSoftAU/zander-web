@@ -6,6 +6,8 @@ const ROUTINE_TABLE = "executorRoutines";
 const ROUTINE_STEPS_TABLE = "executorRoutineSteps";
 
 const VALID_STATUSES = ["pending", "processing", "completed", "failed"];
+const ROUTINE_CONFIG_KEY = "_routineConfig";
+const DEFAULT_PLAYER_METADATA_KEY = "player";
 
 function normalizeCommand(command) {
   if (typeof command !== "string") {
@@ -85,6 +87,61 @@ function safeJsonParse(value) {
   } catch (error) {
     return null;
   }
+}
+
+function readRoutineConfig(metadata) {
+  if (!metadata || typeof metadata !== "object") {
+    return {};
+  }
+
+  const config = metadata[ROUTINE_CONFIG_KEY];
+  if (!config || typeof config !== "object") {
+    return {};
+  }
+
+  return { ...config };
+}
+
+function setRoutineConfig(metadata, updates = {}, options = {}) {
+  if (!metadata || typeof metadata !== "object") {
+    return;
+  }
+
+  const { overwrite = false } = options;
+  const baseConfig = overwrite ? {} : readRoutineConfig(metadata);
+  metadata[ROUTINE_CONFIG_KEY] = { ...baseConfig, ...updates };
+}
+
+function normalizeRankAction(action) {
+  if (typeof action !== "string") {
+    return "assign";
+  }
+
+  return action.toLowerCase() === "remove" ? "remove" : "assign";
+}
+
+function normalizePlayerMetadataKey(value) {
+  if (typeof value !== "string") {
+    return DEFAULT_PLAYER_METADATA_KEY;
+  }
+
+  const trimmed = value.trim();
+  return trimmed || DEFAULT_PLAYER_METADATA_KEY;
+}
+
+function buildRankCommand(rankSlug, rankAction, playerMetadataKey) {
+  if (!rankSlug) {
+    return "";
+  }
+
+  const action = normalizeRankAction(rankAction);
+  const playerKey = normalizePlayerMetadataKey(playerMetadataKey);
+
+  if (action === "remove") {
+    return `lp user {{${playerKey}}} parent remove ${rankSlug}`;
+  }
+
+  return `lp user {{${playerKey}}} parent add ${rankSlug}`;
 }
 
 export default function bridgeApiRoute(app, config, db, features, lang) {
@@ -238,19 +295,56 @@ export default function bridgeApiRoute(app, config, db, features, lang) {
             throw new Error(`Task payload at index ${index} must be an object`);
           }
 
-          if (!task.command) {
-            throw new Error(`Task payload at index ${index} is missing 'command'`);
-          }
-
           const taskSlug = task.slug || task.target || inlineSlug;
           if (!taskSlug) {
             throw new Error(`Task payload at index ${index} is missing 'slug'`);
           }
 
-          const stepMetadata = toMetadataObject(task.metadata);
+          const baseMetadata = toMetadataObject(task.metadata);
+          const stepMetadata = baseMetadata ? { ...baseMetadata } : {};
+          const config = readRoutineConfig(stepMetadata);
+          const explicitType =
+            typeof task.type === "string" ? task.type.toLowerCase() : "";
+          const taskType = explicitType || (config.type ? String(config.type).toLowerCase() : "command");
+
+          let commandTemplate = typeof task.command === "string" ? task.command : "";
+
+          if (taskType === "rank") {
+            const rankSlug = (task.rankSlug || config.rankSlug || "").trim();
+            if (!rankSlug) {
+              throw new Error(
+                `Task payload at index ${index} is missing 'rankSlug' for rank assignment`
+              );
+            }
+
+            const rankAction = normalizeRankAction(task.rankAction || config.rankAction);
+            const playerKey = normalizePlayerMetadataKey(
+              task.playerMetadataKey || config.playerMetadataKey
+            );
+
+            commandTemplate = buildRankCommand(rankSlug, rankAction, playerKey);
+
+            setRoutineConfig(
+              stepMetadata,
+              {
+                type: "rank",
+                rankSlug,
+                rankAction,
+                playerMetadataKey: playerKey,
+              },
+              { overwrite: true }
+            );
+          } else {
+            if (!commandTemplate) {
+              throw new Error(`Task payload at index ${index} is missing 'command'`);
+            }
+
+            setRoutineConfig(stepMetadata, { type: "command" });
+          }
+
           const combinedMetadata = mergeMetadata(rootMetadata, stepMetadata);
           const resolvedCommand = normalizeCommand(
-            applyMetadataPlaceholders(task.command, rootMetadata, stepMetadata)
+            applyMetadataPlaceholders(commandTemplate, rootMetadata, stepMetadata)
           );
 
           if (!resolvedCommand) {
@@ -552,30 +646,69 @@ export default function bridgeApiRoute(app, config, db, features, lang) {
           throw new Error(`Routine step at index ${index} must be an object`);
         }
 
-        if (!step.command) {
-          throw new Error(`Routine step at index ${index} is missing 'command'`);
-        }
-
         const stepSlug = step.slug || step.target;
         if (!stepSlug) {
           throw new Error(`Routine step at index ${index} is missing 'slug'`);
         }
 
         const orderValue = Number(step.order ?? index);
-        const metadataObject = toMetadataObject(step.metadata);
-        const sanitizedCommand = normalizeCommand(step.command);
+        const baseMetadata = toMetadataObject(step.metadata);
+        const metadataObject = baseMetadata ? { ...baseMetadata } : {};
+        const config = readRoutineConfig(metadataObject);
+        const explicitType =
+          typeof step.type === "string" ? step.type.toLowerCase() : "";
+        const stepType = explicitType || (config.type ? String(config.type).toLowerCase() : "command");
 
-        if (!sanitizedCommand) {
-          throw new Error(
-            `Routine step at index ${index} must include a command after removing leading slashes`
+        let sanitizedCommand = "";
+
+        if (stepType === "rank") {
+          const rankSlug = (step.rankSlug || config.rankSlug || "").trim();
+          if (!rankSlug) {
+            throw new Error(
+              `Routine step at index ${index} is missing 'rankSlug' for rank assignment`
+            );
+          }
+
+          const rankAction = normalizeRankAction(step.rankAction || config.rankAction);
+          const playerKey = normalizePlayerMetadataKey(
+            step.playerMetadataKey || config.playerMetadataKey
           );
+
+          sanitizedCommand = normalizeCommand(
+            buildRankCommand(rankSlug, rankAction, playerKey)
+          );
+
+          setRoutineConfig(
+            metadataObject,
+            {
+              type: "rank",
+              rankSlug,
+              rankAction,
+              playerMetadataKey: playerKey,
+            },
+            { overwrite: true }
+          );
+        } else {
+          const commandSource = typeof step.command === "string" ? step.command : "";
+          sanitizedCommand = normalizeCommand(commandSource);
+
+          if (!sanitizedCommand) {
+            throw new Error(
+              `Routine step at index ${index} must include a command after removing leading slashes`
+            );
+          }
+
+          setRoutineConfig(metadataObject, { type: "command" });
         }
+
+        const metadataPayload =
+          metadataObject && Object.keys(metadataObject).length ? metadataObject : null;
 
         return {
           slug: stepSlug,
           command: sanitizedCommand,
           order: Number.isFinite(orderValue) ? orderValue : index,
-          metadata: metadataObject,
+          metadata: metadataPayload,
         };
       });
 
