@@ -9,7 +9,7 @@ const VALID_STATUSES = ["pending", "processing", "completed", "failed"];
 const ROUTINE_CONFIG_KEY = "_routineConfig";
 const DEFAULT_PLAYER_METADATA_KEY = "player";
 
-function normalizeCommand(command) {
+export function normalizeCommand(command) {
   if (typeof command !== "string") {
     return "";
   }
@@ -17,7 +17,7 @@ function normalizeCommand(command) {
   return command.trim().replace(/^\/+/, "").trim();
 }
 
-function toMetadataObject(value) {
+export function toMetadataObject(value) {
   if (!value || typeof value !== "object" || Array.isArray(value)) {
     return null;
   }
@@ -25,7 +25,7 @@ function toMetadataObject(value) {
   return value;
 }
 
-function mergeMetadata(...sources) {
+export function mergeMetadata(...sources) {
   const merged = {};
   let hasEntries = false;
 
@@ -48,7 +48,7 @@ function escapeRegExp(string) {
   return string.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
-function applyMetadataPlaceholders(command, ...metadataSources) {
+export function applyMetadataPlaceholders(command, ...metadataSources) {
   let resolved = typeof command === "string" ? command : "";
 
   const mergedMetadata = mergeMetadata(...metadataSources);
@@ -112,7 +112,7 @@ function setRoutineConfig(metadata, updates = {}, options = {}) {
   metadata[ROUTINE_CONFIG_KEY] = { ...baseConfig, ...updates };
 }
 
-function normalizeRankAction(action) {
+export function normalizeRankAction(action) {
   if (typeof action !== "string") {
     return "assign";
   }
@@ -120,7 +120,7 @@ function normalizeRankAction(action) {
   return action.toLowerCase() === "remove" ? "remove" : "assign";
 }
 
-function normalizePlayerMetadataKey(value) {
+export function normalizePlayerMetadataKey(value) {
   if (typeof value !== "string") {
     return DEFAULT_PLAYER_METADATA_KEY;
   }
@@ -129,7 +129,7 @@ function normalizePlayerMetadataKey(value) {
   return trimmed || DEFAULT_PLAYER_METADATA_KEY;
 }
 
-function buildRankCommand(rankSlug, rankAction, playerMetadataKey) {
+export function buildRankCommand(rankSlug, rankAction, playerMetadataKey) {
   if (!rankSlug) {
     return "";
   }

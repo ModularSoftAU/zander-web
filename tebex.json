@@ -1,0 +1,41 @@
+{
+  "defaultTargetSlug": "proxy",
+  "packages": [
+    {
+      "packageId": 4028837,
+      "displayName": "Diamond Subscription",
+      "priority": 5,
+      "metadata": {
+        "tebexGrant": "subscription"
+      },
+      "actions": [
+        {
+          "type": "rank",
+          "rankSlug": "diamond",
+          "rankAction": "assign",
+          "metadata": {
+            "tebexPackageType": "subscription"
+          }
+        }
+      ]
+    },
+    {
+      "packageId": 4028840,
+      "displayName": "Diamond Permanent",
+      "priority": 5,
+      "metadata": {
+        "tebexGrant": "permanent"
+      },
+      "actions": [
+        {
+          "type": "rank",
+          "rankSlug": "diamond",
+          "rankAction": "assign",
+          "metadata": {
+            "tebexPackageType": "permanent"
+          }
+        }
+      ]
+    }
+  ]
+}
