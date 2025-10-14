@@ -510,7 +510,7 @@
 </div>
 
 <div class="modal fade" id="routineBuilderModal" tabindex="-1" aria-labelledby="routineBuilderModalLabel" aria-hidden="true">
-  <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
+  <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable bridge-routine-modal">
     <div class="modal-content">
       <form method="post" action="<%= process.env.siteAddress %>/redirect/bridge/routine/save" id="routineBuilderForm">
         <div class="modal-header">
@@ -546,13 +546,19 @@
             </div>
             <div class="col-12">
               <div class="routine-builder" data-routine-builder>
-                <div class="d-flex flex-column flex-sm-row align-items-sm-center justify-content-between gap-2 mb-3">
-                  <span class="form-label mb-0">Routine steps</span>
-                  <button type="button" class="btn btn-sm btn-outline-secondary" data-add-step>Add step</button>
+                <div class="routine-builder-toolbar d-flex flex-column flex-lg-row align-items-lg-center justify-content-between gap-3 mb-4">
+                  <div>
+                    <h6 class="mb-1">Routine steps</h6>
+                    <p class="text-muted small mb-0">Build each action in order. Switch between running commands or queueing LuckPerms rank assignments.</p>
+                  </div>
+                  <button type="button" class="btn btn-primary" data-add-step>
+                    <span class="me-2" aria-hidden="true">&plus;</span>
+                    Add step
+                  </button>
                 </div>
                 <div class="routine-steps" data-routine-steps></div>
-                <p class="form-text">Provide a slug for each step. Choose between running commands or assigning LuckPerms ranks. Metadata pairs are optional and map to placeholders in your commands.</p>
-                <div class="text-danger small d-none" data-routine-error>Please add at least one step with a slug and a configured command or rank assignment.</div>
+                <div class="text-danger small d-none mt-3" data-routine-error>Please add at least one step with a slug and a configured command or rank assignment.</div>
+                <p class="text-muted small mt-3 mb-0">Provide a slug for each step. Metadata pairs are optional and map to placeholders like <code>{{player}}</code> in your commands.</p>
                 <input type="hidden" name="stepsJSON" data-routine-output>
                 <script type="application/json" data-routines-json><%- JSON.stringify(routinesList || []).replace(/</g, '\u003c') %></script>
                 <script type="application/json" data-ranks-json><%- JSON.stringify(ranksDirectory || []).replace(/</g, '\u003c') %></script>
@@ -976,66 +982,88 @@
         return { ...config };
       }
 
+      function refreshStepNumbers() {
+        if (!stepsContainer) {
+          return;
+        }
+
+        const stepBadges = stepsContainer.querySelectorAll('[data-step-label]');
+        stepBadges.forEach((badge, index) => {
+          badge.textContent = `Step ${index + 1}`;
+        });
+      }
+
       function addStep(initialData = {}) {
         const defaultOrder = stepsContainer.children.length + 1;
         const step = document.createElement('div');
-        step.className = 'routine-step p-3 mb-3';
+        step.className = 'routine-step card shadow-sm';
         step.innerHTML = `
-          <div class="row g-3 align-items-end">
-            <div class="col-12 col-sm-6 col-lg-3">
-              <label class="form-label">Order</label>
-              <input type="number" class="form-control" data-step-order min="0" value="${defaultOrder}">
+          <div class="card-body">
+            <div class="routine-step-summary d-flex flex-column flex-xl-row align-items-xl-start gap-3">
+              <div class="row g-3 flex-grow-1">
+                <div class="col-12 col-md-4 col-xl-3">
+                  <label class="form-label w-100 mb-0">
+                    <span class="text-uppercase small text-muted fw-semibold">Order</span>
+                    <div class="d-flex align-items-center gap-2 mt-2">
+                      <span class="badge bg-primary-subtle text-primary-emphasis routine-step-badge" data-step-label>Step ${defaultOrder}</span>
+                      <input type="number" class="form-control" data-step-order min="0" value="${defaultOrder}">
+                    </div>
+                  </label>
+                </div>
+                <div class="col-12 col-md-4 col-xl-4">
+                  <label class="form-label">Server slug</label>
+                  <input type="text" class="form-control" placeholder="proxy" data-step-slug required>
+                </div>
+                <div class="col-12 col-md-4 col-xl-3">
+                  <label class="form-label">Step type</label>
+                  <select class="form-select" data-step-type>
+                    <option value="command">Run command</option>
+                    <option value="rank">Assign rank</option>
+                  </select>
+                </div>
+              </div>
+              <div class="routine-step-actions d-flex align-items-center justify-content-end">
+                <button type="button" class="btn btn-outline-danger btn-sm" data-remove-step>Remove step</button>
+              </div>
             </div>
-            <div class="col-12 col-lg-3">
-              <label class="form-label">Server slug</label>
-              <input type="text" class="form-control" placeholder="proxy" data-step-slug required>
-            </div>
-            <div class="col-12 col-lg-3">
-              <label class="form-label">Step type</label>
-              <select class="form-select" data-step-type>
-                <option value="command">Run command</option>
-                <option value="rank">Assign rank</option>
-              </select>
-            </div>
-            <div class="col-12 col-lg-3 text-lg-end">
-              <button type="button" class="btn btn-outline-danger btn-sm w-100 mt-2 mt-lg-0" data-remove-step>Remove</button>
-            </div>
-          </div>
-          <div class="row g-3 mt-1" data-step-command-row>
-            <div class="col-12 col-lg-8">
+            <div class="routine-step-section mt-3" data-step-command-row>
               <label class="form-label">Command</label>
               <input type="text" class="form-control" placeholder="say Welcome" data-step-command required>
-              <div class="form-text">Commands run without a slash. Use placeholders like <code>{{player}}</code> to pull metadata into the command.</div>
+              <div class="form-text mt-2">Commands run without a slash. Use placeholders like <code>{{player}}</code> to pull metadata into the command.</div>
             </div>
-          </div>
-          <div class="row g-3 mt-1 d-none" data-step-rank-row>
-            <div class="col-12 col-lg-4">
-              <label class="form-label">Rank</label>
-              <select class="form-select" data-step-rank>
-                <option value="">Select a rank</option>
-              </select>
+            <div class="routine-step-section mt-3 d-none" data-step-rank-row>
+              <div class="row g-3">
+                <div class="col-12 col-lg-4">
+                  <label class="form-label">Rank</label>
+                  <select class="form-select" data-step-rank>
+                    <option value="">Select a rank</option>
+                  </select>
+                </div>
+                <div class="col-12 col-sm-6 col-lg-4">
+                  <label class="form-label">Action</label>
+                  <select class="form-select" data-step-rank-action>
+                    <option value="assign">Assign rank</option>
+                    <option value="remove">Remove rank</option>
+                  </select>
+                </div>
+                <div class="col-12 col-sm-6 col-lg-4">
+                  <label class="form-label">Player metadata key</label>
+                  <input type="text" class="form-control" placeholder="player" data-step-player-key>
+                  <div class="form-text mt-2">We'll substitute <code>{{key}}</code> with the metadata value when queueing the LuckPerms command.</div>
+                </div>
+              </div>
             </div>
-            <div class="col-12 col-sm-6 col-lg-4">
-              <label class="form-label">Action</label>
-              <select class="form-select" data-step-rank-action>
-                <option value="assign">Assign rank</option>
-                <option value="remove">Remove rank</option>
-              </select>
-            </div>
-            <div class="col-12 col-sm-6 col-lg-4">
-              <label class="form-label">Player metadata key</label>
-              <input type="text" class="form-control" placeholder="player" data-step-player-key>
-              <div class="form-text">We'll substitute <code>{{key}}</code> with the metadata value when queueing the LuckPerms command.</div>
-            </div>
-          </div>
-          <div class="row g-3 mt-1">
-            <div class="col-12 col-md-6">
-              <label class="form-label">Metadata key <span class="text-muted">(optional)</span></label>
-              <input type="text" class="form-control" placeholder="player" data-step-metadata-key>
-            </div>
-            <div class="col-12 col-md-6">
-              <label class="form-label">Metadata value <span class="text-muted">(optional)</span></label>
-              <input type="text" class="form-control" placeholder="ShadowolfYT" data-step-metadata-value>
+            <div class="routine-step-section mt-3">
+              <div class="row g-3">
+                <div class="col-12 col-md-6">
+                  <label class="form-label">Metadata key <span class="text-muted">(optional)</span></label>
+                  <input type="text" class="form-control" placeholder="player" data-step-metadata-key>
+                </div>
+                <div class="col-12 col-md-6">
+                  <label class="form-label">Metadata value <span class="text-muted">(optional)</span></label>
+                  <input type="text" class="form-control" placeholder="ShadowolfYT" data-step-metadata-value>
+                </div>
+              </div>
             </div>
           </div>
         `;
@@ -1044,6 +1072,7 @@
         if (removeButton) {
           removeButton.addEventListener('click', function () {
             step.remove();
+            refreshStepNumbers();
           });
         }
 
@@ -1190,6 +1219,7 @@
           });
 
         stepsContainer.appendChild(step);
+        refreshStepNumbers();
       }
 
       function resetBuilder(options = {}) {
@@ -1364,11 +1394,11 @@
 
             if (stepHasError || !stepData.command) {
               hasError = true;
-              stepElement.classList.add('border-danger');
+              stepElement.classList.add('routine-step-error');
               return;
             }
 
-            stepElement.classList.remove('border-danger');
+            stepElement.classList.remove('routine-step-error');
 
             if (Object.keys(metadata).length) {
               stepData.metadata = metadata;
