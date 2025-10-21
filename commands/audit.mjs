@@ -2,6 +2,8 @@ import { Command } from "@sapphire/framework";
 import { Colors, EmbedBuilder } from "discord.js";
 import fetch from "node-fetch";
 import { resolveDiscordUserId } from "./lib/resolveDiscordMember.mjs";
+import { hasPermission } from "./lib/permissions.mjs";
+import { formatDiscordTimestamp } from "./lib/discordFormatting.mjs";
 import {
   getUserPermissions,
   UserGetter,
@@ -9,39 +11,8 @@ import {
 
 const AUDIT_PERMISSION_NODE = "zander.web.audit";
 
-function hasPermission(permissions, node) {
-  if (!Array.isArray(permissions) || !node) {
-    return false;
-  }
-
-  const requested = node.trim();
-  if (!requested) {
-    return false;
-  }
-
-  return permissions.some((permission) => {
-    if (!permission) return false;
-    if (permission === "*") return true;
-    if (permission === requested) return true;
-    if (permission.endsWith(".*")) {
-      const base = permission.slice(0, -1);
-      return requested.startsWith(base);
-    }
-    return false;
-  });
-}
-
-function formatTimestamp(value) {
-  if (!value) {
-    return "No record";
-  }
-
-  const timestamp = Math.floor(new Date(value).getTime() / 1000);
-  if (!Number.isFinite(timestamp)) {
-    return "No record";
-  }
-
-  return `<t:${timestamp}:F>\n(<t:${timestamp}:R>)`;
+function formatAuditTimestamp(value) {
+  return formatDiscordTimestamp(value);
 }
 
 export class AuditCommand extends Command {
@@ -118,6 +89,8 @@ export class AuditCommand extends Command {
       });
     }
 
+    await interaction.deferReply({ ephemeral: true });
+
     const fetchURL = new URL(
       `${process.env.siteAddress}/api/user/profile/get`
     );
@@ -131,26 +104,33 @@ export class AuditCommand extends Command {
       });
 
       if (!resolvedDiscordId) {
-        return interaction.reply({
+        return interaction.editReply({
           content:
             "Unable to resolve the provided Discord information to a linked account.",
-          ephemeral: true,
         });
       }
 
       fetchURL.searchParams.set("discordId", resolvedDiscordId);
     }
 
-    const response = await fetch(fetchURL, {
-      headers: { "x-access-token": process.env.apiKey },
-    });
+    let apiData;
+    try {
+      const response = await fetch(fetchURL, {
+        headers: { "x-access-token": process.env.apiKey },
+      });
 
-    const apiData = await response.json();
+      apiData = await response.json();
+    } catch (error) {
+      console.error("Failed to fetch audit profile data", error);
+      return interaction.editReply({
+        content:
+          "We were unable to fetch profile information at this time. Please try again shortly.",
+      });
+    }
 
-    if (!apiData.success || !apiData.data?.profileData) {
-      return interaction.reply({
+    if (!apiData?.success || !apiData.data?.profileData) {
+      return interaction.editReply({
         content: "No linked user was found for the provided information.",
-        ephemeral: true,
       });
     }
 
@@ -163,37 +143,37 @@ export class AuditCommand extends Command {
       .addFields(
         {
           name: "Discord Message",
-          value: formatTimestamp(profileData.audit_lastDiscordMessage),
+          value: formatAuditTimestamp(profileData.audit_lastDiscordMessage),
           inline: false,
         },
         {
           name: "Discord Voice",
-          value: formatTimestamp(profileData.audit_lastDiscordVoice),
+          value: formatAuditTimestamp(profileData.audit_lastDiscordVoice),
           inline: false,
         },
         {
           name: "Minecraft Login",
-          value: formatTimestamp(profileData.audit_lastMinecraftLogin),
+          value: formatAuditTimestamp(profileData.audit_lastMinecraftLogin),
           inline: false,
         },
         {
           name: "Minecraft Message",
-          value: formatTimestamp(profileData.audit_lastMinecraftMessage),
+          value: formatAuditTimestamp(profileData.audit_lastMinecraftMessage),
           inline: false,
         },
         {
           name: "Minecraft Punishment",
-          value: formatTimestamp(profileData.audit_lastMinecraftPunishment),
+          value: formatAuditTimestamp(profileData.audit_lastMinecraftPunishment),
           inline: false,
         },
         {
           name: "Discord Punishment",
-          value: formatTimestamp(profileData.audit_lastDiscordPunishment),
+          value: formatAuditTimestamp(profileData.audit_lastDiscordPunishment),
           inline: false,
         },
         {
           name: "Website Login",
-          value: formatTimestamp(profileData.audit_lastWebsiteLogin),
+          value: formatAuditTimestamp(profileData.audit_lastWebsiteLogin),
           inline: false,
         }
       );
@@ -204,7 +184,7 @@ export class AuditCommand extends Command {
       embed.setDescription("No Discord account is linked to this user.");
     }
 
-    return interaction.reply({
+    return interaction.editReply({
       embeds: [embed],
     });
   }
