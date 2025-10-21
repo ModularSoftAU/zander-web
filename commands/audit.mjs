@@ -47,6 +47,17 @@ export class AuditCommand extends Command {
   }
 
   async chatInputRun(interaction) {
+    const username = interaction.options.getString("username");
+    const discordUser = interaction.options.getUser("discord_user");
+    const discordTag = interaction.options.getString("discord_tag");
+
+    try {
+      await interaction.deferReply({ ephemeral: true });
+    } catch (error) {
+      console.error("Failed to defer audit command reply", error);
+      return;
+    }
+
     const userGetter = new UserGetter();
     const linkedAccount = await userGetter.byDiscordId(interaction.user.id);
 
@@ -58,9 +69,8 @@ export class AuditCommand extends Command {
         )
         .setColor(Colors.Red);
 
-      return interaction.reply({
+      return interaction.editReply({
         embeds: [notLinkedEmbed],
-        ephemeral: true,
       });
     }
 
@@ -71,25 +81,17 @@ export class AuditCommand extends Command {
         .setDescription("You do not have access to use this command.")
         .setColor(Colors.Red);
 
-      return interaction.reply({
+      return interaction.editReply({
         embeds: [noPermissionEmbed],
-        ephemeral: true,
       });
     }
-
-    const username = interaction.options.getString("username");
-    const discordUser = interaction.options.getUser("discord_user");
-    const discordTag = interaction.options.getString("discord_tag");
 
     if (!username && !discordUser && !discordTag) {
-      return interaction.reply({
+      return interaction.editReply({
         content:
           "Please provide a Minecraft username or Discord user/tag to audit.",
-        ephemeral: true,
       });
     }
-
-    await interaction.deferReply({ ephemeral: true });
 
     const fetchURL = new URL(
       `${process.env.siteAddress}/api/user/profile/get`
