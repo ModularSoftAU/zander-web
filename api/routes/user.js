@@ -209,8 +209,32 @@ export default function userApiRoute(app, config, db, features, lang) {
   // TODO: Update docs
   app.get(baseEndpoint + "/profile/get", async function (req, res) {
     const username = optional(req.query, "username");
+    const discordId = optional(req.query, "discordId");
 
     try {
+      const buildProfileResponse = async (userRecord) => {
+        if (!userRecord) {
+          return res.send({
+            success: false,
+            message: lang.api.userDoesNotExist,
+          });
+        }
+
+        const profilePicture = await getProfilePicture(userRecord.username);
+        const profileStats = await getUserStats(userRecord.userId);
+        const profileSession = await getUserLastSession(userRecord.userId);
+
+        return res.send({
+          success: true,
+          data: {
+            profileData: userRecord,
+            profilePicture: profilePicture,
+            profileStats: profileStats,
+            profileSession: profileSession,
+          },
+        });
+      };
+
       if (username) {
         //
         // Grab user data
@@ -221,21 +245,31 @@ export default function userApiRoute(app, config, db, features, lang) {
         });
 
         const apiData = await response.json();
-        
-        const profileApiData = apiData.data[0];
-        const profilePicture = await getProfilePicture(apiData.data[0].username);
-        const profileStats = await getUserStats(apiData.data[0].userId);
-        const profileSession = await getUserLastSession(apiData.data[0].userId);
 
-        return res.send({
-          success: true,
-          data: {
-            profileData: profileApiData,
-            profilePicture: profilePicture,
-            profileStats: profileStats,
-            profileSession: profileSession
-          }
+        if (!apiData.success || !apiData.data || !apiData.data.length) {
+          return res.send({
+            success: false,
+            message: lang.api.userDoesNotExist,
+          });
+        }
+
+        return await buildProfileResponse(apiData.data[0]);
+      } else if (discordId) {
+        const fetchURL = `${process.env.siteAddress}/api/user/get?discordId=${discordId}`;
+        const response = await fetch(fetchURL, {
+          headers: { "x-access-token": process.env.apiKey },
         });
+
+        const apiData = await response.json();
+
+        if (!apiData.success || !apiData.data || !apiData.data.length) {
+          return res.send({
+            success: false,
+            message: lang.api.userDoesNotExist,
+          });
+        }
+
+        return await buildProfileResponse(apiData.data[0]);
       } else {
         return res.send({
           success: false,
