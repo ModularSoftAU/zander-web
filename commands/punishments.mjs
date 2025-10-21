@@ -198,6 +198,26 @@ function formatPunishmentDetails(punishment) {
   return value || "No additional details available.";
 }
 
+function getProfileDisplayName(profileData = {}) {
+  if (!profileData || typeof profileData !== "object") {
+    return "the specified user";
+  }
+
+  if (profileData.username) {
+    return profileData.username;
+  }
+
+  if (profileData.uuid) {
+    return profileData.uuid;
+  }
+
+  if (profileData.discordId) {
+    return `Discord user ${profileData.discordId}`;
+  }
+
+  return "the specified user";
+}
+
 export class PunishmentsCommand extends Command {
   constructor(context, options) {
     super(context, { ...options });
@@ -230,6 +250,17 @@ export class PunishmentsCommand extends Command {
   }
 
   async chatInputRun(interaction) {
+    const username = interaction.options.getString("username");
+    const discordUser = interaction.options.getUser("discord_user");
+    const discordTag = interaction.options.getString("discord_tag");
+
+    try {
+      await interaction.deferReply({ ephemeral: true });
+    } catch (error) {
+      console.error("Failed to defer punishments command reply", error);
+      return;
+    }
+
     const userGetter = new UserGetter();
     const linkedAccount = await userGetter.byDiscordId(interaction.user.id);
 
@@ -241,9 +272,8 @@ export class PunishmentsCommand extends Command {
         )
         .setColor(Colors.Red);
 
-      return interaction.reply({
+      return interaction.editReply({
         embeds: [notLinkedEmbed],
-        ephemeral: true,
       });
     }
 
@@ -254,25 +284,17 @@ export class PunishmentsCommand extends Command {
         .setDescription("You do not have access to use this command.")
         .setColor(Colors.Red);
 
-      return interaction.reply({
+      return interaction.editReply({
         embeds: [noPermissionEmbed],
-        ephemeral: true,
       });
     }
-
-    const username = interaction.options.getString("username");
-    const discordUser = interaction.options.getUser("discord_user");
-    const discordTag = interaction.options.getString("discord_tag");
 
     if (!username && !discordUser && !discordTag) {
-      return interaction.reply({
+      return interaction.editReply({
         content:
           "Please provide a Minecraft username or Discord user/tag to review.",
-        ephemeral: true,
       });
     }
-
-    await interaction.deferReply({ ephemeral: true });
 
     const profileUrl = new URL(
       `${process.env.siteAddress}/api/user/profile/get`
@@ -318,6 +340,7 @@ export class PunishmentsCommand extends Command {
     }
 
     const profileData = profileResponseJson.data.profileData;
+    const profileDisplayName = getProfileDisplayName(profileData);
 
     const punishmentsUrl = new URL(
       `${process.env.siteAddress}/api/user/punishments`
@@ -362,7 +385,7 @@ export class PunishmentsCommand extends Command {
 
     if (!punishments.length) {
       return interaction.editReply({
-        content: `${profileData.username} has no recorded punishments.`,
+        content: `${profileDisplayName} has no recorded punishments.`,
       });
     }
 
@@ -380,7 +403,7 @@ export class PunishmentsCommand extends Command {
     }
 
     const embed = new EmbedBuilder()
-      .setTitle(`Punishment history for ${profileData.username}`)
+      .setTitle(`Punishment history for ${profileDisplayName}`)
       .setColor(Colors.DarkRed)
       .setTimestamp(new Date());
 
@@ -398,7 +421,7 @@ export class PunishmentsCommand extends Command {
 
     if (!fields.length) {
       return interaction.editReply({
-        content: `No readable punishments were found for ${profileData.username}.`,
+        content: `No readable punishments were found for ${profileDisplayName}.`,
       });
     }
 
