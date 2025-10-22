@@ -456,100 +456,103 @@ export default function forumRoutes(
     );
   });
 
-  app.post(
-    "/forums/discussion/:discussionId/:slug?/reply",
-    async function (req, res) {
-      if (!(await ensureFeature(req, res))) {
-        return;
-      }
+  const discussionReplyHandler = async function (req, res) {
+    if (!(await ensureFeature(req, res))) {
+      return;
+    }
 
-      const discussionId = Number.parseInt(req.params.discussionId, 10);
-      const result = await getDiscussionWithCategory(discussionId);
+    const discussionId = Number.parseInt(req.params.discussionId, 10);
+    const result = await getDiscussionWithCategory(discussionId);
 
-      if (!result) {
-        await setBannerCookie("danger", "Discussion not found.", res);
-        return res.redirect("/forums");
-      }
+    if (!result) {
+      await setBannerCookie("danger", "Discussion not found.", res);
+      return res.redirect("/forums");
+    }
 
-      const { discussion, category } = result;
+    const { discussion, category } = result;
 
-      if (!userCanViewCategory(category, req)) {
-        await setBannerCookie("danger", "You cannot reply to this discussion.", res);
-        return res.redirect("/forums");
-      }
+    if (!userCanViewCategory(category, req)) {
+      await setBannerCookie("danger", "You cannot reply to this discussion.", res);
+      return res.redirect("/forums");
+    }
 
-      if (discussion.isLocked && !userCanModerate(req)) {
-        await setBannerCookie("warning", "This discussion is locked.", res);
-        return res.redirect(
-          `/forums/discussion/${discussion.discussionId}/${discussion.slug}`
-        );
-      }
-
-      if (discussion.isArchived && !userCanModerate(req)) {
-        await setBannerCookie(
-          "warning",
-          "This discussion has been archived.",
-          res
-        );
-        return res.redirect(
-          `/forums/discussion/${discussion.discussionId}/${discussion.slug}`
-        );
-      }
-
-      const userId = getCurrentUserId(req);
-
-      if (!userId) {
-        await setBannerCookie(
-          "warning",
-          "You need to be signed in to reply.",
-          res
-        );
-        return res.redirect(`/login`);
-      }
-
-      if (!userCanPostInCategory(category, req) && !userCanModerate(req)) {
-        await setBannerCookie(
-          "danger",
-          "You do not have permission to reply in this category.",
-          res
-        );
-        return res.redirect(
-          `/forums/discussion/${discussion.discussionId}/${discussion.slug}`
-        );
-      }
-
-      const content = req.body.content || "";
-      if (isContentEmpty(content)) {
-        await setBannerCookie(
-          "danger",
-          "Reply content cannot be empty.",
-          res
-        );
-        return res.redirect(
-          `/forums/discussion/${discussion.discussionId}/${discussion.slug}`
-        );
-      }
-
-      try {
-        await createReply({
-          discussionId,
-          userId,
-          content,
-        });
-        await setBannerCookie("success", "Reply posted.", res);
-      } catch (error) {
-        console.error("[FORUMS] Failed to create reply", error);
-        await setBannerCookie(
-          "danger",
-          "We were unable to post your reply. Please try again.",
-          res
-        );
-      }
-
+    if (discussion.isLocked && !userCanModerate(req)) {
+      await setBannerCookie("warning", "This discussion is locked.", res);
       return res.redirect(
         `/forums/discussion/${discussion.discussionId}/${discussion.slug}`
       );
     }
+
+    if (discussion.isArchived && !userCanModerate(req)) {
+      await setBannerCookie(
+        "warning",
+        "This discussion has been archived.",
+        res
+      );
+      return res.redirect(
+        `/forums/discussion/${discussion.discussionId}/${discussion.slug}`
+      );
+    }
+
+    const userId = getCurrentUserId(req);
+
+    if (!userId) {
+      await setBannerCookie(
+        "warning",
+        "You need to be signed in to reply.",
+        res
+      );
+      return res.redirect(`/login`);
+    }
+
+    if (!userCanPostInCategory(category, req) && !userCanModerate(req)) {
+      await setBannerCookie(
+        "danger",
+        "You do not have permission to reply in this category.",
+        res
+      );
+      return res.redirect(
+        `/forums/discussion/${discussion.discussionId}/${discussion.slug}`
+      );
+    }
+
+    const content = req.body.content || "";
+    if (isContentEmpty(content)) {
+      await setBannerCookie(
+        "danger",
+        "Reply content cannot be empty.",
+        res
+      );
+      return res.redirect(
+        `/forums/discussion/${discussion.discussionId}/${discussion.slug}`
+      );
+    }
+
+    try {
+      await createReply({
+        discussionId,
+        userId,
+        content,
+      });
+      await setBannerCookie("success", "Reply posted.", res);
+    } catch (error) {
+      console.error("[FORUMS] Failed to create reply", error);
+      await setBannerCookie(
+        "danger",
+        "We were unable to post your reply. Please try again.",
+        res
+      );
+    }
+
+    return res.redirect(
+      `/forums/discussion/${discussion.discussionId}/${discussion.slug}`
+    );
+  };
+
+  app.post("/forums/discussion/:discussionId/reply", discussionReplyHandler);
+  app.post(
+    "/forums/discussion/:discussionId/:slug/reply",
+    discussionReplyHandler
   );
 
   app.get("/forums/discussion/:discussionId/edit", async function (req, res) {
