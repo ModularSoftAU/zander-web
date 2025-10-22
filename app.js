@@ -27,6 +27,7 @@ import("./controllers/discordController.js");
 import("./cron/userCodeExpiryCron.js");
 import("./cron/bridgeCleanupCron.js");
 import("./cron/cakeDayUserCheck.js");
+import("./cron/staffAuditReportCron.js");
 
 //
 // Website Related
@@ -46,11 +47,13 @@ import("./controllers/discordController.js");
 import("./cron/userCodeExpiryCron.js");
 import("./cron/bridgeCleanupCron.js");
 import("./cron/discordStatsUpdateCron.js");
+import("./cron/staffAuditReportCron.js");
 
 import("./controllers/discordController.js");
 import("./cron/userCodeExpiryCron.js");
 import("./cron/bridgeCleanupCron.js");
 import("./cron/discordStatsUpdateCron.js");
+import("./cron/staffAuditReportCron.js");
 
 //
 // Application Boot

@@ -30,11 +30,12 @@
   "discord": {
     "guildId": "GUILDID",
     "onlinePlayerChannel": "CHANNELID",
-    "channels": {
+    "webhooks": {
       "welcome": "WEBHOOKURL",
       "networkChatLog": "WEBHOOKURL",
       "adminLog": "WEBHOOKURL",
-      "staffChannel": "WEBHOOKURL"
+      "staffChannel": "WEBHOOKURL",
+      "staffAuditLog": "WEBHOOKURL"
     },
     "roles": {
       "verified": "ROLEID"

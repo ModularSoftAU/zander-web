@@ -3,6 +3,7 @@ import { Colors, EmbedBuilder } from "discord.js";
 import moment from "moment";
 import fetch from "node-fetch";
 import { getProfilePicture } from "../controllers/userController.js";
+import { resolveDiscordUserId } from "./lib/resolveDiscordMember.mjs";
 
 export class ProfileCommand extends Command {
   constructor(context, options) {
@@ -15,21 +16,64 @@ export class ProfileCommand extends Command {
         .setName("profile")
         .setDescription("Display profile for yourself or another player.")
         .addStringOption((option) =>
-          option //
+          option
             .setName("username")
-            .setDescription("Username of the profile to fetch.")
-            .setRequired(true)
+            .setDescription("Minecraft username of the profile to fetch.")
+            .setRequired(false)
+        )
+        .addUserOption((option) =>
+          option
+            .setName("discord_user")
+            .setDescription("Discord user to fetch the linked profile for.")
+            .setRequired(false)
+        )
+        .addStringOption((option) =>
+          option
+            .setName("discord_tag")
+            .setDescription(
+              "Discord tag, ID, or @username of the profile to fetch."
+            )
+            .setRequired(false)
         )
     );
   }
 
   async chatInputRun(interaction) {
     const username = interaction.options.getString("username");
+    const discordUser = interaction.options.getUser("discord_user");
+    const discordTag = interaction.options.getString("discord_tag");
 
-    //
-    // Grab user profile data
-    //
-    const fetchURL = `${process.env.siteAddress}/api/user/profile/get?username=${username}`;
+    if (!username && !discordUser && !discordTag) {
+      return interaction.reply({
+        content:
+          "Please provide either a Minecraft username or a Discord user/tag to look up a profile.",
+        ephemeral: true,
+      });
+    }
+
+    const fetchURL = new URL(
+      `${process.env.siteAddress}/api/user/profile/get`
+    );
+
+    if (username) {
+      fetchURL.searchParams.set("username", username);
+    } else {
+      const resolvedDiscordId = await resolveDiscordUserId(interaction, {
+        discordUser,
+        discordTag,
+      });
+
+      if (!resolvedDiscordId) {
+        return interaction.reply({
+          content:
+            "Unable to resolve the provided Discord information to a linked account.",
+          ephemeral: true,
+        });
+      }
+
+      fetchURL.searchParams.set("discordId", resolvedDiscordId);
+    }
+
     const response = await fetch(fetchURL, {
       headers: { "x-access-token": process.env.apiKey },
     });
