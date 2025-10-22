@@ -2,21 +2,44 @@
 
 <script>
   $(document).ready(function() {
-    $.ajax({
-        url: 'https://api.github.com/emojis',
-        async: false
-    }).then(function(data) {
-        window.emojis = Object.keys(data);
-        window.emojiUrls = data; 
-    });
+    window.emojis = window.emojis || [];
+    window.emojiUrls = window.emojiUrls || {};
 
-    $.ajax({
-        url: '<%= process.env.siteAddress %>/emojis',
-        async: false
-    }).then(function(data) {
-        window.emojis = Object.keys(data);
-        window.emojiUrls = data; 
-    });
+    function updateEmojiData(data) {
+      if (!data) return;
+
+      window.emojis = Object.keys(data);
+      window.emojiUrls = data;
+    }
+
+    function fetchEmojiData(url) {
+      return $.ajax({
+        url: url,
+        dataType: 'json',
+        timeout: 5000,
+      });
+    }
+
+    var hasCustomEmojiData = false;
+
+    fetchEmojiData('https://api.github.com/emojis')
+      .done(function(data) {
+        if (!hasCustomEmojiData) {
+          updateEmojiData(data);
+        }
+      })
+      .fail(function() {
+        console.warn('Unable to load GitHub emoji list.');
+      });
+
+    fetchEmojiData('<%= process.env.siteAddress %>/emojis')
+      .done(function(data) {
+        hasCustomEmojiData = true;
+        updateEmojiData(data);
+      })
+      .fail(function() {
+        console.warn('Unable to load custom emoji list.');
+      });
 
     $('#<%= editorElementName %>').summernote({
         height: 250,
