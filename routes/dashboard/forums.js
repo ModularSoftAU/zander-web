@@ -22,19 +22,13 @@ export default function dashboardForumsRoutes(
   features,
   lang
 ) {
-  const ensurePermission = async (req, res) => {
-    const hasManagePermission = await hasPermission(
+  app.get("/dashboard/forums/categories", async function (req, res) {
+    const hasAccess = await hasPermission(
       MANAGE_PERMISSION,
       req,
       res,
       features
     );
-
-    return hasManagePermission;
-  };
-
-  app.get("/dashboard/forums/categories", async function (req, res) {
-    const hasAccess = await ensurePermission(req, res);
     if (!hasAccess) return;
 
     const categoryTree = await getAllCategoriesForAdmin();
@@ -55,7 +49,12 @@ export default function dashboardForumsRoutes(
   });
 
   app.post("/dashboard/forums/categories/new", async function (req, res) {
-    const hasAccess = await ensurePermission(req, res);
+    const hasAccess = await hasPermission(
+      MANAGE_PERMISSION,
+      req,
+      res,
+      features
+    );
     if (!hasAccess) return;
 
     const name = (req.body.name || "").trim();
@@ -98,9 +97,14 @@ export default function dashboardForumsRoutes(
   });
 
   app.post(
-    "/dashboard/forums/categories/:categoryId/edit",
+      "/dashboard/forums/categories/:categoryId/edit",
     async function (req, res) {
-      const hasAccess = await ensurePermission(req, res);
+      const hasAccess = await hasPermission(
+        MANAGE_PERMISSION,
+        req,
+        res,
+        features
+      );
       if (!hasAccess) return;
 
       const categoryId = Number.parseInt(req.params.categoryId, 10);
@@ -148,9 +152,14 @@ export default function dashboardForumsRoutes(
   );
 
   app.post(
-    "/dashboard/forums/categories/:categoryId/delete",
+      "/dashboard/forums/categories/:categoryId/delete",
     async function (req, res) {
-      const hasAccess = await ensurePermission(req, res);
+      const hasAccess = await hasPermission(
+        MANAGE_PERMISSION,
+        req,
+        res,
+        features
+      );
       if (!hasAccess) return;
 
       const categoryId = Number.parseInt(req.params.categoryId, 10);

@@ -34,13 +34,13 @@ export function permissionMatch(permissions, node) {
     return true;
   }
 
-  if (!Array.isArray(permissions) || !permissions.length) {
+  if (!Array.isArray(permissions) || permissions.length === 0) {
     return false;
   }
 
-  const target = node.trim();
+  const target = String(node).trim().toLowerCase();
   if (!target) {
-    return false;
+    return true;
   }
 
   return permissions.some((permission) => {
@@ -48,16 +48,21 @@ export function permissionMatch(permissions, node) {
       return false;
     }
 
-    if (permission === "*") {
+    const candidate = String(permission).trim().toLowerCase();
+    if (!candidate) {
+      return false;
+    }
+
+    if (candidate === "*") {
       return true;
     }
 
-    if (permission === target) {
+    if (candidate === target) {
       return true;
     }
 
-    if (permission.endsWith(".*")) {
-      const base = permission.slice(0, -1);
+    if (candidate.endsWith(".*")) {
+      const base = candidate.slice(0, -1);
       return target.startsWith(base);
     }
 
