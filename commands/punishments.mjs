@@ -1,5 +1,12 @@
 import { Command } from "@sapphire/framework";
-import { Colors, EmbedBuilder } from "discord.js";
+import {
+  ActionRowBuilder,
+  ButtonBuilder,
+  ButtonStyle,
+  Colors,
+  ComponentType,
+  EmbedBuilder,
+} from "discord.js";
 import fetch from "node-fetch";
 import { resolveDiscordUserId } from "./lib/resolveDiscordMember.mjs";
 import { hasPermission } from "./lib/permissions.mjs";
@@ -10,7 +17,13 @@ import {
 } from "../controllers/userController.js";
 
 const PUNISHMENTS_PERMISSION_NODE = "zander.web.punishments";
-const MAX_PUNISHMENTS_TO_DISPLAY = 10;
+const MAX_PUNISHMENTS_TO_DISPLAY = 50;
+const PUNISHMENTS_PER_PAGE = 5;
+const PAGINATION_TIMEOUT_MS = 2 * 60 * 1000;
+const PAGINATION_CUSTOM_IDS = {
+  previous: "punishments:previous",
+  next: "punishments:next",
+};
 
 function sanitizeText(value) {
   if (value === null || value === undefined) {
@@ -35,8 +48,9 @@ function truncateText(value, maxLength = 256) {
 }
 
 function formatActor(username, userId) {
-  if (username) {
-    return username;
+  const cleanedUsername = sanitizeText(username);
+  if (cleanedUsername) {
+    return cleanedUsername;
   }
 
   if (userId) {
@@ -135,36 +149,45 @@ function formatPunishmentDetails(punishment) {
   const lines = [];
 
   lines.push(
-    `Issued: ${formatDiscordTimestamp(punishment.dateStart, {
+    `**Issued:** ${formatDiscordTimestamp(punishment.dateStart, {
       fallback: "Unknown",
     })}`
   );
 
-  const reason = truncateText(sanitizeText(punishment.reason));
+  const reason = truncateText(sanitizeText(punishment.reason), 512);
   if (reason) {
-    lines.push(`Reason: ${reason}`);
+    lines.push(`**Reason:** ${reason}`);
+  }
+
+  const server = sanitizeText(punishment.server);
+  if (server) {
+    lines.push(`**Server:** ${server}`);
   }
 
   const status = formatPunishmentStatus(punishment);
   if (status) {
-    lines.push(`Status: ${status}`);
+    lines.push(`**Status:** ${status}`);
   }
 
   if (shouldIncludeExpiry(punishment)) {
     lines.push(
-      `Expires: ${formatDiscordTimestamp(punishment.dateEnd, {
+      `**Expires:** ${formatDiscordTimestamp(punishment.dateEnd, {
         fallback: "No expiry",
       })}`
     );
   }
 
   if (hasTimestamp(punishment.dateRemoved)) {
-    lines.push(`Removed: ${formatDiscordTimestamp(punishment.dateRemoved)}`);
+    lines.push(
+      `**Removed:** ${formatDiscordTimestamp(punishment.dateRemoved, {
+        fallback: "Unknown",
+      })}`
+    );
   }
 
-  const removalReason = truncateText(sanitizeText(punishment.reasonRemoved));
+  const removalReason = truncateText(sanitizeText(punishment.reasonRemoved), 512);
   if (removalReason) {
-    lines.push(`Removal reason: ${removalReason}`);
+    lines.push(`**Removal Reason:** ${removalReason}`);
   }
 
   const actor = formatActor(
@@ -172,7 +195,7 @@ function formatPunishmentDetails(punishment) {
     punishment.bannedByUserId
   );
   if (actor) {
-    lines.push(`By: ${actor}`);
+    lines.push(`**Issued By:** ${actor}`);
   }
 
   if (hasTimestamp(punishment.dateRemoved)) {
@@ -182,20 +205,109 @@ function formatPunishmentDetails(punishment) {
     );
 
     if (removedBy) {
-      lines.push(`Removed by: ${removedBy}`);
+      lines.push(`**Removed By:** ${removedBy}`);
     }
   }
 
   if (parseFlag(punishment.silent)) {
-    lines.push("Silent: Yes");
+    lines.push("**Silent:** Yes");
   }
 
-  let value = lines.join("\n");
+  if (!lines.length) {
+    return "No additional details available.";
+  }
+
+  const value = lines.join("\n");
   if (value.length > 1024) {
-    value = `${value.slice(0, 1021)}...`;
+    return `${value.slice(0, 1021)}...`;
   }
 
-  return value || "No additional details available.";
+  return value;
+}
+
+function buildPunishmentsEmbed({
+  profileDisplayName,
+  profileData,
+  punishments,
+  totalPunishments,
+  truncated,
+  page,
+}) {
+  const totalPages = Math.max(
+    1,
+    Math.ceil(punishments.length / PUNISHMENTS_PER_PAGE)
+  );
+
+  const embed = new EmbedBuilder()
+    .setTitle(`Punishments for ${profileDisplayName}`)
+    .setColor(Colors.DarkRed)
+    .setTimestamp(new Date())
+    .setFooter({ text: `Page ${page + 1} of ${totalPages}` });
+
+  const descriptionParts = [];
+
+  if (profileData?.discordId) {
+    descriptionParts.push(`Linked Discord: <@${profileData.discordId}>`);
+  }
+
+  let totalLine = `Total punishments: ${totalPunishments}`;
+  if (truncated) {
+    totalLine += ` (showing first ${punishments.length})`;
+  }
+  totalLine += ".";
+  descriptionParts.push(totalLine);
+
+  const start = page * PUNISHMENTS_PER_PAGE;
+  const pagePunishments = punishments.slice(
+    start,
+    start + PUNISHMENTS_PER_PAGE
+  );
+  const end = Math.min(start + pagePunishments.length, punishments.length);
+
+  if (totalPages > 1) {
+    descriptionParts.push(
+      `Viewing punishments ${start + 1}-${end} of ${punishments.length}.`
+    );
+  }
+
+  if (descriptionParts.length) {
+    embed.setDescription(descriptionParts.join("\n"));
+  }
+
+  const fields = pagePunishments
+    .map((punishment, index) => ({
+      name: `${start + index + 1}. ${toTitleCase(punishment.type)}`,
+      value: formatPunishmentDetails(punishment),
+    }))
+    .filter((field) => field.value);
+
+  if (fields.length) {
+    embed.addFields(fields);
+  }
+
+  return embed;
+}
+
+function buildPaginationComponents(page, totalPages) {
+  if (totalPages <= 1) {
+    return [];
+  }
+
+  const previousButton = new ButtonBuilder()
+    .setCustomId(PAGINATION_CUSTOM_IDS.previous)
+    .setLabel("Previous")
+    .setStyle(ButtonStyle.Secondary)
+    .setEmoji("◀️")
+    .setDisabled(page === 0);
+
+  const nextButton = new ButtonBuilder()
+    .setCustomId(PAGINATION_CUSTOM_IDS.next)
+    .setLabel("Next")
+    .setStyle(ButtonStyle.Secondary)
+    .setEmoji("▶️")
+    .setDisabled(page >= totalPages - 1);
+
+  return [new ActionRowBuilder().addComponents(previousButton, nextButton)];
 }
 
 function getProfileDisplayName(profileData = {}) {
@@ -389,46 +501,127 @@ export class PunishmentsCommand extends Command {
       });
     }
 
-    const descriptionParts = [];
-    if (profileData.discordId) {
-      descriptionParts.push(`Linked Discord: <@${profileData.discordId}>`);
+    const limitedPunishments = punishments.slice(0, MAX_PUNISHMENTS_TO_DISPLAY);
+    const truncated = limitedPunishments.length < punishments.length;
+    const totalPages = Math.max(
+      1,
+      Math.ceil(limitedPunishments.length / PUNISHMENTS_PER_PAGE)
+    );
+
+    let currentPage = 0;
+
+    const initialEmbed = buildPunishmentsEmbed({
+      profileDisplayName,
+      profileData,
+      punishments: limitedPunishments,
+      totalPunishments: punishments.length,
+      truncated,
+      page: currentPage,
+    });
+
+    const initialComponents = buildPaginationComponents(
+      currentPage,
+      totalPages
+    );
+
+    await interaction.editReply({
+      embeds: [initialEmbed],
+      components: initialComponents,
+    });
+
+    if (totalPages <= 1) {
+      return;
     }
 
-    if (punishments.length > MAX_PUNISHMENTS_TO_DISPLAY) {
-      descriptionParts.push(
-        `Total punishments: ${punishments.length} (showing latest ${MAX_PUNISHMENTS_TO_DISPLAY}).`
-      );
-    } else {
-      descriptionParts.push(`Total punishments: ${punishments.length}.`);
+    let replyMessage;
+    try {
+      replyMessage = await interaction.fetchReply();
+    } catch (error) {
+      console.error("Failed to fetch punishments reply message", error);
+      return;
     }
 
-    const embed = new EmbedBuilder()
-      .setTitle(`Punishment history for ${profileDisplayName}`)
-      .setColor(Colors.DarkRed)
-      .setTimestamp(new Date());
-
-    if (descriptionParts.length) {
-      embed.setDescription(descriptionParts.join("\n"));
+    if (
+      !replyMessage ||
+      typeof replyMessage.createMessageComponentCollector !== "function"
+    ) {
+      return;
     }
 
-    const fields = punishments
-      .slice(0, MAX_PUNISHMENTS_TO_DISPLAY)
-      .map((punishment, index) => ({
-        name: `${index + 1}. ${toTitleCase(punishment.type)}`,
-        value: formatPunishmentDetails(punishment),
-      }))
-      .filter((field) => field.value);
+    const collector = replyMessage.createMessageComponentCollector({
+      componentType: ComponentType.Button,
+      time: PAGINATION_TIMEOUT_MS,
+      filter: (componentInteraction) => {
+        if (componentInteraction.user.id !== interaction.user.id) {
+          return false;
+        }
 
-    if (!fields.length) {
-      return interaction.editReply({
-        content: `No readable punishments were found for ${profileDisplayName}.`,
-      });
-    }
+        if (
+          componentInteraction.customId !== PAGINATION_CUSTOM_IDS.previous &&
+          componentInteraction.customId !== PAGINATION_CUSTOM_IDS.next
+        ) {
+          return false;
+        }
 
-    embed.addFields(fields);
+        return (
+          componentInteraction.message?.interaction?.id === interaction.id
+        );
+      },
+    });
 
-    return interaction.editReply({
-      embeds: [embed],
+    collector.on("collect", async (componentInteraction) => {
+      try {
+        if (
+          componentInteraction.customId === PAGINATION_CUSTOM_IDS.previous &&
+          currentPage > 0
+        ) {
+          currentPage -= 1;
+        } else if (
+          componentInteraction.customId === PAGINATION_CUSTOM_IDS.next &&
+          currentPage < totalPages - 1
+        ) {
+          currentPage += 1;
+        } else {
+          await componentInteraction.deferUpdate();
+          return;
+        }
+
+        const updatedEmbed = buildPunishmentsEmbed({
+          profileDisplayName,
+          profileData,
+          punishments: limitedPunishments,
+          totalPunishments: punishments.length,
+          truncated,
+          page: currentPage,
+        });
+
+        const updatedComponents = buildPaginationComponents(
+          currentPage,
+          totalPages
+        );
+
+        await componentInteraction.update({
+          embeds: [updatedEmbed],
+          components: updatedComponents,
+        });
+      } catch (error) {
+        console.error("Failed to update punishment pagination", error);
+        try {
+          await componentInteraction.deferUpdate();
+        } catch (deferError) {
+          console.error("Failed to defer pagination interaction", deferError);
+        }
+      }
+    });
+
+    collector.on("end", async () => {
+      try {
+        await interaction.editReply({
+          components: [],
+        });
+      } catch (error) {
+        console.error("Failed to clear punishment pagination components", error);
+      }
     });
   }
 }
