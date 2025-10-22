@@ -1,0 +1,115 @@
+<%- include("../../modules/header.ejs", {
+    pageTitle: `${pageTitle} :: Forums`,
+    pageDescription: category && category.description ? category.description : `Discussions in ${pageTitle}`
+}) %>
+
+<%- include("../../modules/navigationBar.ejs") %>
+
+<%- include("../../partials/miniHeader.ejs", {
+  headerTitle: category ? category.name : pageTitle,
+  backgroundImage: globalImage
+}) %>
+
+<div class="container my-5 forums-container">
+  <div class="row g-4">
+    <div class="col-lg-3">
+      <%- include("./partials/sidebar.ejs", {
+        categories: categories,
+        activeCategory: activeCategory
+      }) %>
+    </div>
+    <div class="col-lg-9">
+      <% if (req.cookies.alertType) { %>
+        <%- include("../../partials/alert.ejs", {
+          alertType: req.cookies.alertType,
+          content: req.cookies.alertContent
+        }) %>
+      <% } %>
+
+      <div class="forums-card card shadow-sm">
+        <div class="card-body">
+          <div class="d-flex justify-content-between align-items-center mb-3">
+            <div>
+              <h4 class="mb-1"><%= category ? category.name : pageTitle %></h4>
+              <% if (category && category.description) { %>
+                <p class="text-muted mb-0"><%= category.description %></p>
+              <% } else { %>
+                <p class="text-muted mb-0">Discussions available within this category.</p>
+              <% } %>
+            </div>
+            <% if (canStartDiscussion) { %>
+              <a class="btn btn-main" href="/forums/category/<%= category.slug %>/new"><i class="fa-solid fa-plus me-2"></i>New Discussion</a>
+            <% } %>
+          </div>
+
+          <% if (!discussions.length) { %>
+            <div class="text-center py-5 text-muted">
+              <i class="fa-regular fa-comments fa-2x mb-3"></i>
+              <p class="mb-0">There are no discussions here yet.</p>
+            </div>
+          <% } else { %>
+            <div class="table-responsive forums-table-wrapper">
+              <table class="table align-middle forums-table">
+                <thead>
+                  <tr>
+                    <th scope="col">Discussion</th>
+                    <th scope="col" class="text-center">Replies</th>
+                    <th scope="col">Latest Post</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <% discussions.forEach(function(discussion) { %>
+                    <tr class="forums-table-row <%= discussion.isSticky ? 'is-sticky' : '' %> <%= discussion.isArchived ? 'is-archived' : '' %>">
+                      <td>
+                        <div class="forums-discussion-title">
+                          <% if (discussion.isSticky) { %>
+                            <span class="forums-badge sticky">Sticky</span>
+                          <% } %>
+                          <% if (discussion.isLocked) { %>
+                            <span class="forums-badge locked"><i class="fa-solid fa-lock"></i></span>
+                          <% } %>
+                          <% if (discussion.isArchived) { %>
+                            <span class="forums-badge archived">Archived</span>
+                          <% } %>
+                          <a href="/forums/discussion/<%= discussion.discussionId %>/<%= discussion.slug %>"><%= discussion.title %></a>
+                        </div>
+                        <div class="forums-discussion-meta text-muted">
+                          <% if (discussion.author) { %>
+                            started by <a href="/profile/<%= discussion.author.username %>"><%= discussion.author.username %></a>
+                          <% } %>
+                          · <%= moment(discussion.createdAt).fromNow() %>
+                        </div>
+                      </td>
+                      <td class="text-center"><strong><%= discussion.replyCount %></strong></td>
+                      <td>
+                        <% if (discussion.latestPost && discussion.latestPost.user) { %>
+                          <div class="forums-latest-post d-flex align-items-center">
+                            <img src="<%= discussion.latestPost.user.avatarUrl %>" alt="<%= discussion.latestPost.user.username %> avatar" class="forums-avatar me-3" loading="lazy">
+                            <div>
+                              <div class="fw-semibold"><a href="/profile/<%= discussion.latestPost.user.username %>"><%= discussion.latestPost.user.username %></a></div>
+                              <div class="text-muted small"><%= moment(discussion.latestPost.createdAt).fromNow() %></div>
+                            </div>
+                          </div>
+                        <% } else { %>
+                          <span class="text-muted">No replies yet</span>
+                        <% } %>
+                      </td>
+                    </tr>
+                  <% }); %>
+                </tbody>
+              </table>
+            </div>
+          <% } %>
+
+          <%- include("./partials/pagination.ejs", {
+            pagination: pagination,
+            basePath: `/forums/category/${category.slug}`,
+            query: req.query
+          }) %>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<%- include("../../modules/footer.ejs") %>

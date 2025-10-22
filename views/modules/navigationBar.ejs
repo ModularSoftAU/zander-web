@@ -34,6 +34,9 @@
                     <% if (features.ranks) { %>
                         <li class="nav-item"><a class="nav-link" href="/ranks">Ranks</a></li>
                     <% } %>
+                    <% if (features.forums) { %>
+                        <li class="nav-item"><a class="nav-link" href="/forums">Forums</a></li>
+                    <% } %>
                     <li class="nav-item"><a class="nav-link" href="/webstore">Webstore</a></li>
                     <% if (req.session?.user) { %>
                         <li class="nav-item dropdown">

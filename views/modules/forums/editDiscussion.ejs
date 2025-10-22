@@ -1,0 +1,56 @@
+<%- include("../../modules/header.ejs", {
+    pageTitle: `Edit Discussion :: ${discussion.title}`,
+    pageDescription: "Update your discussion"
+}) %>
+
+<%- include("../../modules/navigationBar.ejs") %>
+
+<%- include("../../partials/miniHeader.ejs", {
+  headerTitle: `Edit: ${discussion.title}`,
+  backgroundImage: globalImage
+}) %>
+
+<div class="container my-5 forums-container">
+  <div class="row g-4">
+    <div class="col-lg-3">
+      <%- include("./partials/sidebar.ejs", {
+        categories: categories,
+        activeCategory: category
+      }) %>
+    </div>
+    <div class="col-lg-9">
+      <% if (req.cookies.alertType) { %>
+        <%- include("../../partials/alert.ejs", {
+          alertType: req.cookies.alertType,
+          content: req.cookies.alertContent
+        }) %>
+      <% } %>
+
+      <div class="forums-card card shadow-sm">
+        <div class="card-body">
+          <h4 class="mb-3">Edit discussion</h4>
+          <form action="/forums/discussion/<%= discussion.discussionId %>/edit" method="post" class="forums-form">
+            <div class="mb-3">
+              <label class="form-label" for="discussionTitle">Title</label>
+              <input type="text" class="form-control" id="discussionTitle" name="title" maxlength="200" value="<%= discussion.title %>" required>
+            </div>
+            <div class="mb-3">
+              <label class="form-label" for="discussionContent">Content</label>
+              <%- include("../../partials/summerNoteEditor.ejs", {
+                editorElementName: "discussionContent",
+                editorPOSTElementName: "content",
+                editorElementText: originalPost ? originalPost.content : ""
+              }) %>
+            </div>
+            <div class="text-end">
+              <a class="btn btn-link" href="/forums/discussion/<%= discussion.discussionId %>/<%= discussion.slug %>">Cancel</a>
+              <button type="submit" class="btn btn-main">Save Changes</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<%- include("../../modules/footer.ejs") %>

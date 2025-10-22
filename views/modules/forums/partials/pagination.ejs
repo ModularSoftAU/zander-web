@@ -1,0 +1,37 @@
+<% if (pagination && pagination.totalPages > 1) { %>
+  <nav class="forums-pagination" aria-label="Forum navigation">
+    <ul class="pagination justify-content-center">
+      <% const buildLink = (targetPage) => {
+           const params = new URLSearchParams();
+           if (query) {
+             Object.keys(query).forEach((key) => {
+               if (key === "page") return;
+               const value = query[key];
+               if (value === undefined || value === null || value === "") return;
+               params.append(key, value);
+             });
+           }
+           if (targetPage > 1) {
+             params.set("page", targetPage);
+           }
+           const queryString = params.toString();
+           return `${basePath}${queryString ? `?${queryString}` : ""}`;
+         };
+      %>
+      <li class="page-item <%= pagination.hasPrev ? "" : "disabled" %>">
+        <a class="page-link" href="<%= pagination.hasPrev ? buildLink(pagination.currentPage - 1) : '#' %>">Previous</a>
+      </li>
+      <% const start = Math.max(1, pagination.currentPage - 2);
+         const end = Math.min(pagination.totalPages, pagination.currentPage + 2);
+         for (let i = start; i <= end; i++) {
+      %>
+        <li class="page-item <%= pagination.currentPage === i ? 'active' : '' %>">
+          <a class="page-link" href="<%= buildLink(i) %>"><%= i %></a>
+        </li>
+      <% } %>
+      <li class="page-item <%= pagination.hasNext ? "" : "disabled" %>">
+        <a class="page-link" href="<%= pagination.hasNext ? buildLink(pagination.currentPage + 1) : '#' %>">Next</a>
+      </li>
+    </ul>
+  </nav>
+<% } %>

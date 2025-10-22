@@ -1,0 +1,161 @@
+<%- include("../../modules/header.ejs", {
+    pageTitle: `${discussion.title} :: ${category ? category.name : 'Forums'}`,
+    pageDescription: category && category.description ? category.description : "Forum discussion"
+}) %>
+
+<%- include("../../modules/navigationBar.ejs") %>
+
+<%- include("../../partials/miniHeader.ejs", {
+  headerTitle: discussion.title,
+  backgroundImage: globalImage
+}) %>
+
+<div class="container my-5 forums-container">
+  <div class="row g-4">
+    <div class="col-lg-3">
+      <%- include("./partials/sidebar.ejs", {
+        categories: categories,
+        activeCategory: category
+      }) %>
+    </div>
+    <div class="col-lg-9">
+      <% if (req.cookies.alertType) { %>
+        <%- include("../../partials/alert.ejs", {
+          alertType: req.cookies.alertType,
+          content: req.cookies.alertContent
+        }) %>
+      <% } %>
+
+      <div class="forums-card card shadow-sm mb-4">
+        <div class="card-body">
+          <div class="d-flex justify-content-between align-items-start flex-wrap gap-3">
+            <div>
+              <div class="d-flex align-items-center gap-2 mb-2">
+                <% if (discussion.isSticky) { %>
+                  <span class="forums-badge sticky">Sticky</span>
+                <% } %>
+                <% if (discussion.isLocked) { %>
+                  <span class="forums-badge locked"><i class="fa-solid fa-lock"></i> Locked</span>
+                <% } %>
+                <% if (discussion.isArchived) { %>
+                  <span class="forums-badge archived">Archived</span>
+                <% } %>
+              </div>
+              <div class="text-muted">
+                Posted in <a href="/forums/category/<%= category.slug %>"><%= category.name %></a>
+                <% if (discussion.createdBy && posts.length) { %>
+                  · <%= moment(discussion.createdAt).format('MMM D, YYYY [at] h:mm A') %>
+                <% } %>
+              </div>
+            </div>
+            <div class="d-flex flex-wrap gap-2">
+              <% const canEditDiscussion = canModerate || (currentUserId && currentUserId === discussion.createdBy); %>
+              <% if (canEditDiscussion) { %>
+                <a class="btn btn-sm btn-outline-secondary" href="/forums/discussion/<%= discussion.discussionId %>/edit"><i class="fa-solid fa-pen"></i> Edit</a>
+              <% } %>
+              <% if (canModerate) { %>
+                <form action="/forums/discussion/<%= discussion.discussionId %>/moderate" method="post" class="d-inline">
+                  <input type="hidden" name="action" value="<%= discussion.isLocked ? 'unlock' : 'lock' %>">
+                  <button type="submit" class="btn btn-sm btn-outline-warning"><i class="fa-solid fa-lock"></i> <%= discussion.isLocked ? 'Unlock' : 'Lock' %></button>
+                </form>
+                <form action="/forums/discussion/<%= discussion.discussionId %>/moderate" method="post" class="d-inline">
+                  <input type="hidden" name="action" value="<%= discussion.isSticky ? 'unsticky' : 'sticky' %>">
+                  <button type="submit" class="btn btn-sm btn-outline-info"><i class="fa-solid fa-thumbtack"></i> <%= discussion.isSticky ? 'Unpin' : 'Pin' %></button>
+                </form>
+                <form action="/forums/discussion/<%= discussion.discussionId %>/moderate" method="post" class="d-inline">
+                  <input type="hidden" name="action" value="<%= discussion.isArchived ? 'unarchive' : 'archive' %>">
+                  <button type="submit" class="btn btn-sm btn-outline-danger"><i class="fa-solid fa-box-archive"></i> <%= discussion.isArchived ? 'Unarchive' : 'Archive' %></button>
+                </form>
+              <% } %>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="forums-thread">
+        <% posts.forEach(function(post) { %>
+          <article class="forums-post card shadow-sm mb-4 <%= post.isOriginal ? 'original-post' : '' %>">
+            <div class="card-body">
+              <div class="d-flex gap-4">
+                <div class="forums-post-sidebar text-center">
+                  <% if (post.user) { %>
+                    <img src="<%= post.user.avatarUrl %>" alt="<%= post.user.username %> avatar" class="forums-avatar mb-2" loading="lazy">
+                    <div class="fw-semibold"><a href="/profile/<%= post.user.username %>"><%= post.user.username %></a></div>
+                    <% if (post.user.ranks && post.user.ranks.length) { %>
+                      <div class="d-flex flex-column gap-1 mt-2">
+                        <% post.user.ranks.forEach(function(rank) { %>
+                          <span class="rank-pill" style="background-color: <%= rank.badgeColour || '#f1f5f9' %>; color: <%= rank.textColour || '#111827' %>"><%= rank.displayName %></span>
+                        <% }); %>
+                      </div>
+                    <% } %>
+                  <% } else { %>
+                    <div class="fw-semibold">Unknown</div>
+                  <% } %>
+                </div>
+                <div class="forums-post-content flex-grow-1">
+                  <div class="forums-post-meta d-flex justify-content-between align-items-start flex-wrap gap-2">
+                    <div class="text-muted small">
+                      Posted <%= moment(post.createdAt).format('MMM D, YYYY [at] h:mm A') %>
+                      <% if (post.updatedAt && post.updatedAt !== post.createdAt) { %>
+                        · <span data-bs-toggle="tooltip" title="Edited <%= moment(post.updatedAt).format('MMM D, YYYY [at] h:mm A') %>">edited</span>
+                      <% } %>
+                    </div>
+                    <div class="d-flex gap-2">
+                      <% const isAuthor = currentUserId && post.user && currentUserId === post.user.userId; %>
+                      <% if (post.revisions && post.revisions.length) { %>
+                        <a class="btn btn-sm btn-outline-secondary" href="/forums/post/<%= post.postId %>/revisions"><i class="fa-solid fa-clock-rotate-left"></i> History (<%= post.revisions.length %>)</a>
+                      <% } %>
+                      <% if (post.isOriginal) { %>
+                        <% if (canModerate || (currentUserId && currentUserId === discussion.createdBy)) { %>
+                          <a class="btn btn-sm btn-outline-secondary" href="/forums/discussion/<%= discussion.discussionId %>/edit"><i class="fa-solid fa-pen"></i> Edit</a>
+                        <% } %>
+                      <% } else { %>
+                        <% if (canModerate || isAuthor) { %>
+                          <a class="btn btn-sm btn-outline-secondary" href="/forums/post/<%= post.postId %>/edit"><i class="fa-solid fa-pen"></i> Edit</a>
+                        <% } %>
+                        <% if (canModerate || isAuthor || canDeleteAnyPost) { %>
+                          <form action="/forums/post/<%= post.postId %>/delete" method="post" class="d-inline" onsubmit="return confirm('Delete this reply?');">
+                            <button type="submit" class="btn btn-sm btn-outline-danger"><i class="fa-solid fa-trash"></i> Delete</button>
+                          </form>
+                        <% } %>
+                      <% } %>
+                    </div>
+                  </div>
+                  <div class="forums-post-body mt-3">
+                    <%- post.content %>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </article>
+        <% }); %>
+      </div>
+
+      <% if (discussion.isArchived) { %>
+        <div class="alert alert-warning"><i class="fa-solid fa-box-archive me-2"></i>This discussion has been archived and can no longer receive new replies.</div>
+      <% } else if (discussion.isLocked) { %>
+        <div class="alert alert-info"><i class="fa-solid fa-lock me-2"></i>This discussion is locked. New replies are disabled.</div>
+      <% } %>
+
+      <% if (canReply) { %>
+        <div class="forums-card card shadow-sm mt-4">
+          <div class="card-body">
+            <h5 class="mb-3">Post a reply</h5>
+            <form action="/forums/discussion/<%= discussion.discussionId %>/<%= discussion.slug %>/reply" method="post">
+              <%- include("../../partials/summerNoteEditor.ejs", {
+                editorElementName: "discussionReply",
+                editorPOSTElementName: "content",
+                editorElementText: ""
+              }) %>
+              <div class="text-end mt-3">
+                <button type="submit" class="btn btn-main">Submit Reply</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      <% } %>
+    </div>
+  </div>
+</div>
+
+<%- include("../../modules/footer.ejs") %>

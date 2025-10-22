@@ -1,0 +1,72 @@
+<%- include("../../modules/header.ejs", {
+    pageTitle: `Revision History :: ${discussion.title}`,
+    pageDescription: "View changes made to this post"
+}) %>
+
+<%- include("../../modules/navigationBar.ejs") %>
+
+<%- include("../../partials/miniHeader.ejs", {
+  headerTitle: `Revision History`,
+  backgroundImage: globalImage
+}) %>
+
+<div class="container my-5 forums-container">
+  <div class="row g-4">
+    <div class="col-lg-3">
+      <%- include("./partials/sidebar.ejs", {
+        categories: categories,
+        activeCategory: category
+      }) %>
+    </div>
+    <div class="col-lg-9">
+      <div class="forums-card card shadow-sm mb-4">
+        <div class="card-body">
+          <div class="d-flex justify-content-between align-items-center mb-3">
+            <div>
+              <h4 class="mb-1">Revision history</h4>
+              <p class="text-muted mb-0">Changes made to a post in <a href="/forums/discussion/<%= discussion.discussionId %>/<%= discussion.slug %>"><%= discussion.title %></a>.</p>
+            </div>
+            <a class="btn btn-outline-secondary" href="/forums/discussion/<%= discussion.discussionId %>/<%= discussion.slug %>"><i class="fa-solid fa-arrow-left me-2"></i>Back to discussion</a>
+          </div>
+
+          <div class="forums-revision-current mb-4">
+            <h6>Current content</h6>
+            <div class="forums-post-body border rounded p-3">
+              <%- post.content %>
+            </div>
+          </div>
+
+          <% if (!revisions.length) { %>
+            <div class="text-muted text-center py-5">
+              <i class="fa-regular fa-file-lines fa-2x mb-3"></i>
+              <p class="mb-0">No revisions have been recorded for this post.</p>
+            </div>
+          <% } else { %>
+            <div class="forums-revision-list">
+              <% revisions.forEach(function(revision, index) { %>
+                <div class="forums-revision-entry card mb-3">
+                  <div class="card-header d-flex justify-content-between align-items-center">
+                    <div>
+                      <strong>Revision <%= revisions.length - index %></strong>
+                      · <%= moment(revision.createdAt).format('MMM D, YYYY [at] h:mm A') %>
+                      <% if (revision.editorUsername) { %>
+                        · by <a href="/profile/<%= revision.editorUsername %>"><%= revision.editorUsername %></a>
+                      <% } %>
+                    </div>
+                  </div>
+                  <div class="card-body">
+                    <div class="forums-post-body">
+                      <%- revision.previousContent %>
+                    </div>
+                  </div>
+                </div>
+              <% }); %>
+            </div>
+          <% } %>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<%- include("../../modules/footer.ejs") %>

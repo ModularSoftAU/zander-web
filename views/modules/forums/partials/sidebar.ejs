@@ -1,0 +1,54 @@
+<%
+  function renderSidebarItems(nodes, activeCategory, depth) {
+    nodes.forEach(function (node) {
+      if (!node.isAccessible) {
+        if (node.children && node.children.length) {
+          renderSidebarItems(node.children, activeCategory, depth + 1);
+        }
+        return;
+      }
+%>
+  <li class="forums-sidebar-item <%= depth > 0 ? 'child' : '' %> <%= activeCategory && activeCategory.categoryId === node.categoryId ? 'active' : '' %>">
+    <a href="/forums/category/<%= node.slug %>"><%= node.name %></a>
+  </li>
+<%
+      if (node.children && node.children.length) {
+        renderSidebarItems(node.children, activeCategory, depth + 1);
+      }
+    });
+  }
+%>
+
+<div class="forums-sidebar card shadow-sm">
+  <div class="card-header bg-light">
+    <strong>Navigation</strong>
+  </div>
+  <div class="card-body p-0">
+    <nav>
+      <ul class="forums-sidebar-list">
+        <li class="forums-sidebar-item <%= !activeCategory ? 'active' : '' %>">
+          <a href="/forums">Recent Discussions</a>
+        </li>
+      </ul>
+      <% categories.forEach(function(section) { %>
+        <div class="forums-sidebar-section">
+          <div class="forums-sidebar-heading"><%= section.name %></div>
+          <ul class="forums-sidebar-list">
+            <% if (section.isAccessible && section.children && section.children.length) { %>
+              <li class="forums-sidebar-item child <%= activeCategory && activeCategory.categoryId === section.categoryId ? 'active' : '' %>">
+                <a href="/forums/category/<%= section.slug %>">All <%= section.name %></a>
+              </li>
+            <% } else if (section.isAccessible && (!section.children || !section.children.length)) { %>
+              <li class="forums-sidebar-item <%= activeCategory && activeCategory.categoryId === section.categoryId ? 'active' : '' %>">
+                <a href="/forums/category/<%= section.slug %>"><%= section.name %></a>
+              </li>
+            <% } %>
+            <% if (section.children && section.children.length) { %>
+              <% renderSidebarItems(section.children, activeCategory, 1); %>
+            <% } %>
+          </ul>
+        </div>
+      <% }); %>
+    </nav>
+  </div>
+</div>

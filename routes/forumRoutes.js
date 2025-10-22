@@ -1,0 +1,1077 @@
+import {
+  getCategoriesForUser,
+  getCategoryBySlug,
+  getDiscussionWithCategory,
+  getDiscussionPosts,
+  createDiscussion,
+  updateDiscussion,
+  deleteDiscussion,
+  createReply,
+  updatePost,
+  deletePost,
+  getPostById,
+  getRecentDiscussions,
+  getCategoryDiscussions,
+  setDiscussionFlags,
+  permissionMatch,
+  getPostRevisions,
+} from "../controllers/forumController.js";
+import {
+  getGlobalImage,
+  isFeatureWebRouteEnabled,
+  isLoggedIn,
+  setBannerCookie,
+} from "../api/common.js";
+import { getWebAnnouncement } from "../controllers/announcementController.js";
+
+const PERMISSIONS = {
+  MODERATE: "zander.forums.moderate",
+  DELETE_POST: "zander.forums.post.delete",
+  VIEW_ARCHIVED: "zander.forums.viewArchived",
+};
+
+function getUserPermissions(req) {
+  return Array.isArray(req.session?.user?.permissions)
+    ? req.session.user.permissions
+    : [];
+}
+
+function getCurrentUserId(req) {
+  return req.session?.user?.userId || null;
+}
+
+function isContentEmpty(rawValue) {
+  if (rawValue === undefined || rawValue === null) {
+    return true;
+  }
+
+  const stripped = String(rawValue)
+    .replace(/<[^>]*>/g, " ")
+    .replace(/&nbsp;/gi, " ")
+    .trim();
+
+  return stripped.length === 0;
+}
+
+function userCanViewCategory(category, req) {
+  const permissions = getUserPermissions(req);
+  return permissionMatch(permissions, category.viewPermission);
+}
+
+function userCanPostInCategory(category, req) {
+  if (!isLoggedIn(req)) {
+    return false;
+  }
+
+  if (!category.postPermission) {
+    return true;
+  }
+
+  const permissions = getUserPermissions(req);
+  return permissionMatch(permissions, category.postPermission);
+}
+
+function userCanModerate(req) {
+  const permissions = getUserPermissions(req);
+  return permissionMatch(permissions, PERMISSIONS.MODERATE);
+}
+
+function userCanDeleteAnyPost(req) {
+  const permissions = getUserPermissions(req);
+  return (
+    permissionMatch(permissions, PERMISSIONS.DELETE_POST) ||
+    permissionMatch(permissions, PERMISSIONS.MODERATE)
+  );
+}
+
+function includeArchivedDiscussions(req) {
+  const permissions = getUserPermissions(req);
+  return (
+    permissionMatch(permissions, PERMISSIONS.MODERATE) ||
+    permissionMatch(permissions, PERMISSIONS.VIEW_ARCHIVED)
+  );
+}
+
+function paginate(total, page, perPage) {
+  const totalPages = Math.max(1, Math.ceil(total / perPage));
+  const currentPage = Math.min(Math.max(1, page), totalPages);
+
+  return {
+    total,
+    perPage,
+    currentPage,
+    totalPages,
+    hasPrev: currentPage > 1,
+    hasNext: currentPage < totalPages,
+  };
+}
+
+async function renderForumsView(res, req, viewPath, data, config, features) {
+  return res.view(viewPath, {
+    ...data,
+    config,
+    features,
+    req,
+    globalImage: await getGlobalImage(),
+    announcementWeb: await getWebAnnouncement(),
+  });
+}
+
+export default function forumRoutes(
+  app,
+  client,
+  fetch,
+  moment,
+  config,
+  db,
+  features,
+  lang
+) {
+  const ensureFeature = async (req, res) => {
+    if (!features.forums) {
+      await isFeatureWebRouteEnabled(features.forums, req, res, features);
+      return false;
+    }
+
+    return true;
+  };
+
+  app.get("/fourms", async function (req, res) {
+    if (!(await ensureFeature(req, res))) {
+      return;
+    }
+
+    return res.redirect(301, "/forums");
+  });
+
+  app.get("/forums", async function (req, res) {
+    if (!(await ensureFeature(req, res))) {
+      return;
+    }
+
+    const permissions = getUserPermissions(req);
+    const includeArchived = includeArchivedDiscussions(req);
+    const categoryData = await getCategoriesForUser(permissions);
+    const categoryIds = (categoryData.flat || []).map(
+      (category) => category.categoryId
+    );
+
+    const page = Number.parseInt(req.query.page, 10) || 1;
+    const perPage = 20;
+
+    const { discussions, total } = await getRecentDiscussions({
+      categoryIds,
+      page,
+      perPage,
+      includeArchived,
+    });
+
+    return renderForumsView(
+      res,
+      req,
+      "modules/forums/index",
+      {
+        pageTitle: `Recent Discussions`,
+        categories: categoryData.tree,
+        discussions,
+        activeCategory: null,
+        pagination: paginate(total, page, perPage),
+        moment,
+        canModerate: userCanModerate(req),
+      },
+      config,
+      features
+    );
+  });
+
+  app.get("/forums/category/:slug", async function (req, res) {
+    if (!(await ensureFeature(req, res))) {
+      return;
+    }
+
+    const slug = req.params.slug;
+    const category = await getCategoryBySlug(slug);
+
+    const permissions = getUserPermissions(req);
+    const categoryTree = await getCategoriesForUser(permissions);
+
+    if (!category || !userCanViewCategory(category, req)) {
+      return renderForumsView(
+        res,
+        req,
+        "session/notFound",
+        {
+          pageTitle: `404 Not Found`,
+        },
+        config,
+        features
+      );
+    }
+
+    const includeArchived = includeArchivedDiscussions(req);
+    const page = Number.parseInt(req.query.page, 10) || 1;
+    const perPage = 20;
+
+    const { discussions, total } = await getCategoryDiscussions({
+      categoryId: category.categoryId,
+      page,
+      perPage,
+      includeArchived,
+    });
+
+    return renderForumsView(
+      res,
+      req,
+      "modules/forums/category",
+      {
+        pageTitle: `${category.name}`,
+        categories: categoryTree.tree,
+        activeCategory: category,
+        category,
+        discussions,
+        pagination: paginate(total, page, perPage),
+        moment,
+        canModerate: userCanModerate(req),
+        canStartDiscussion:
+          userCanPostInCategory(category, req) || userCanModerate(req),
+      },
+      config,
+      features
+    );
+  });
+
+  app.get("/forums/category/:slug/new", async function (req, res) {
+    if (!(await ensureFeature(req, res))) {
+      return;
+    }
+
+    const slug = req.params.slug;
+    const category = await getCategoryBySlug(slug);
+
+    if (!category || !userCanViewCategory(category, req)) {
+      return renderForumsView(
+        res,
+        req,
+        "session/notFound",
+        {
+          pageTitle: `404 Not Found`,
+        },
+        config,
+        features
+      );
+    }
+
+    if (!userCanPostInCategory(category, req) && !userCanModerate(req)) {
+      if (!isLoggedIn(req)) {
+        await setBannerCookie(
+          "warning",
+          "You need to be signed in to start a discussion.",
+          res
+        );
+        return res.redirect(`/login`);
+      }
+
+      return renderForumsView(
+        res,
+        req,
+        "session/noPermission",
+        {
+          pageTitle: `Access Restricted`,
+        },
+        config,
+        features
+      );
+    }
+
+    const permissions = getUserPermissions(req);
+    const categoryTree = await getCategoriesForUser(permissions);
+
+    return renderForumsView(
+      res,
+      req,
+      "modules/forums/newDiscussion",
+      {
+        pageTitle: `Start a Discussion`,
+        categories: categoryTree.tree,
+        activeCategory: category,
+        category,
+      },
+      config,
+      features
+    );
+  });
+
+  app.post("/forums/category/:slug", async function (req, res) {
+    if (!(await ensureFeature(req, res))) {
+      return;
+    }
+
+    const slug = req.params.slug;
+    const category = await getCategoryBySlug(slug);
+
+    if (!category || !userCanViewCategory(category, req)) {
+      return renderForumsView(
+        res,
+        req,
+        "session/notFound",
+        {
+          pageTitle: `404 Not Found`,
+        },
+        config,
+        features
+      );
+    }
+
+    if (!userCanPostInCategory(category, req) && !userCanModerate(req)) {
+      await setBannerCookie(
+        "danger",
+        "You do not have permission to start a discussion in this category.",
+        res
+      );
+      return res.redirect(`/forums/category/${category.slug}`);
+    }
+
+    const title = (req.body.title || "").trim();
+    const content = req.body.content || "";
+
+    const userId = getCurrentUserId(req);
+
+    if (!userId) {
+      await setBannerCookie(
+        "warning",
+        "You need to be signed in to start a discussion.",
+        res
+      );
+      return res.redirect(`/login`);
+    }
+
+    if (!title || isContentEmpty(content)) {
+      await setBannerCookie(
+        "danger",
+        "Both a title and content are required to create a discussion.",
+        res
+      );
+      return res.redirect(`/forums/category/${category.slug}/new`);
+    }
+
+    try {
+      const discussion = await createDiscussion({
+        categoryId: category.categoryId,
+        userId,
+        title,
+        content,
+      });
+
+      await setBannerCookie(
+        "success",
+        "Discussion created successfully.",
+        res
+      );
+
+      return res.redirect(
+        `/forums/discussion/${discussion.discussionId}/${discussion.slug}`
+      );
+    } catch (error) {
+      console.error("[FORUMS] Failed to create discussion", error);
+      await setBannerCookie(
+        "danger",
+        "We were unable to create your discussion. Please try again.",
+        res
+      );
+      return res.redirect(`/forums/category/${category.slug}`);
+    }
+  });
+
+  app.get("/forums/discussion/:discussionId/:slug?", async function (req, res) {
+    if (!(await ensureFeature(req, res))) {
+      return;
+    }
+
+    const discussionId = Number.parseInt(req.params.discussionId, 10);
+    const result = await getDiscussionWithCategory(discussionId);
+
+    if (!result) {
+      return renderForumsView(
+        res,
+        req,
+        "session/notFound",
+        {
+          pageTitle: `404 Not Found`,
+        },
+        config,
+        features
+      );
+    }
+
+    const { discussion, category } = result;
+
+    if (!userCanViewCategory(category, req)) {
+      return renderForumsView(
+        res,
+        req,
+        "session/notFound",
+        {
+          pageTitle: `404 Not Found`,
+        },
+        config,
+        features
+      );
+    }
+
+    if (req.params.slug && req.params.slug !== discussion.slug) {
+      return res.redirect(
+        `/forums/discussion/${discussion.discussionId}/${discussion.slug}`
+      );
+    }
+
+    const permissions = getUserPermissions(req);
+    const categoryTree = await getCategoriesForUser(permissions);
+    const posts = await getDiscussionPosts(discussionId);
+
+    const canModerate = userCanModerate(req);
+    const canReply =
+      !discussion.isLocked &&
+      !discussion.isArchived &&
+      (userCanPostInCategory(category, req) || canModerate);
+
+    return renderForumsView(
+      res,
+      req,
+      "modules/forums/discussion",
+      {
+        pageTitle: `${discussion.title}`,
+        categories: categoryTree.tree,
+        activeCategory: category,
+        category,
+        discussion,
+        posts,
+        moment,
+        canReply,
+        canModerate,
+        currentUserId: req.session?.user?.userId || null,
+        canDeleteAnyPost: userCanDeleteAnyPost(req),
+      },
+      config,
+      features
+    );
+  });
+
+  app.post(
+    "/forums/discussion/:discussionId/:slug?/reply",
+    async function (req, res) {
+      if (!(await ensureFeature(req, res))) {
+        return;
+      }
+
+      const discussionId = Number.parseInt(req.params.discussionId, 10);
+      const result = await getDiscussionWithCategory(discussionId);
+
+      if (!result) {
+        await setBannerCookie("danger", "Discussion not found.", res);
+        return res.redirect("/forums");
+      }
+
+      const { discussion, category } = result;
+
+      if (!userCanViewCategory(category, req)) {
+        await setBannerCookie("danger", "You cannot reply to this discussion.", res);
+        return res.redirect("/forums");
+      }
+
+      if (discussion.isLocked && !userCanModerate(req)) {
+        await setBannerCookie("warning", "This discussion is locked.", res);
+        return res.redirect(
+          `/forums/discussion/${discussion.discussionId}/${discussion.slug}`
+        );
+      }
+
+      if (discussion.isArchived && !userCanModerate(req)) {
+        await setBannerCookie(
+          "warning",
+          "This discussion has been archived.",
+          res
+        );
+        return res.redirect(
+          `/forums/discussion/${discussion.discussionId}/${discussion.slug}`
+        );
+      }
+
+      const userId = getCurrentUserId(req);
+
+      if (!userId) {
+        await setBannerCookie(
+          "warning",
+          "You need to be signed in to reply.",
+          res
+        );
+        return res.redirect(`/login`);
+      }
+
+      if (!userCanPostInCategory(category, req) && !userCanModerate(req)) {
+        await setBannerCookie(
+          "danger",
+          "You do not have permission to reply in this category.",
+          res
+        );
+        return res.redirect(
+          `/forums/discussion/${discussion.discussionId}/${discussion.slug}`
+        );
+      }
+
+      const content = req.body.content || "";
+      if (isContentEmpty(content)) {
+        await setBannerCookie(
+          "danger",
+          "Reply content cannot be empty.",
+          res
+        );
+        return res.redirect(
+          `/forums/discussion/${discussion.discussionId}/${discussion.slug}`
+        );
+      }
+
+      try {
+        await createReply({
+          discussionId,
+          userId,
+          content,
+        });
+        await setBannerCookie("success", "Reply posted.", res);
+      } catch (error) {
+        console.error("[FORUMS] Failed to create reply", error);
+        await setBannerCookie(
+          "danger",
+          "We were unable to post your reply. Please try again.",
+          res
+        );
+      }
+
+      return res.redirect(
+        `/forums/discussion/${discussion.discussionId}/${discussion.slug}`
+      );
+    }
+  );
+
+  app.get("/forums/discussion/:discussionId/edit", async function (req, res) {
+    if (!(await ensureFeature(req, res))) {
+      return;
+    }
+
+    const discussionId = Number.parseInt(req.params.discussionId, 10);
+    const result = await getDiscussionWithCategory(discussionId);
+
+    if (!result) {
+      return renderForumsView(
+        res,
+        req,
+        "session/notFound",
+        {
+          pageTitle: `404 Not Found`,
+        },
+        config,
+        features
+      );
+    }
+
+    const { discussion, category } = result;
+
+    if (!userCanViewCategory(category, req)) {
+      return renderForumsView(
+        res,
+        req,
+        "session/notFound",
+        {
+          pageTitle: `404 Not Found`,
+        },
+        config,
+        features
+      );
+    }
+
+    const canModerate = userCanModerate(req);
+    const isAuthor = getCurrentUserId(req) === discussion.createdBy;
+
+    if (!canModerate && !isAuthor) {
+      return renderForumsView(
+        res,
+        req,
+        "session/noPermission",
+        {
+          pageTitle: `Access Restricted`,
+        },
+        config,
+        features
+      );
+    }
+
+    const posts = await getDiscussionPosts(discussionId);
+    const originalPost = posts.find((post) => post.isOriginal);
+
+    const permissions = getUserPermissions(req);
+    const categoryTree = await getCategoriesForUser(permissions);
+
+    return renderForumsView(
+      res,
+      req,
+      "modules/forums/editDiscussion",
+      {
+        pageTitle: `Edit Discussion`,
+        categories: categoryTree.tree,
+        activeCategory: category,
+        category,
+        discussion,
+        originalPost,
+      },
+      config,
+      features
+    );
+  });
+
+  app.post("/forums/discussion/:discussionId/edit", async function (req, res) {
+    if (!(await ensureFeature(req, res))) {
+      return;
+    }
+
+    const discussionId = Number.parseInt(req.params.discussionId, 10);
+    const result = await getDiscussionWithCategory(discussionId);
+
+    if (!result) {
+      await setBannerCookie("danger", "Discussion not found.", res);
+      return res.redirect("/forums");
+    }
+
+    const { discussion, category } = result;
+
+    const canModerate = userCanModerate(req);
+    const isAuthor = req.session?.user?.userId === discussion.createdBy;
+
+    if (!canModerate && !isAuthor) {
+      await setBannerCookie(
+        "danger",
+        "You do not have permission to edit this discussion.",
+        res
+      );
+      return res.redirect(
+        `/forums/discussion/${discussion.discussionId}/${discussion.slug}`
+      );
+    }
+
+    const title = (req.body.title || "").trim();
+    const content = req.body.content || "";
+
+    if (!title || isContentEmpty(content)) {
+      await setBannerCookie(
+        "danger",
+        "A title and body are required.",
+        res
+      );
+      return res.redirect(
+        `/forums/discussion/${discussion.discussionId}/${discussion.slug}`
+      );
+    }
+
+    try {
+      await updateDiscussion(discussionId, {
+        title,
+        content,
+        editorUserId: getCurrentUserId(req),
+      });
+
+      await setBannerCookie("success", "Discussion updated.", res);
+    } catch (error) {
+      console.error("[FORUMS] Failed to update discussion", error);
+      await setBannerCookie(
+        "danger",
+        "We were unable to update the discussion.",
+        res
+      );
+    }
+
+    return res.redirect(
+      `/forums/discussion/${discussion.discussionId}/${discussion.slug}`
+    );
+  });
+
+  app.post("/forums/discussion/:discussionId/delete", async function (req, res) {
+    if (!(await ensureFeature(req, res))) {
+      return;
+    }
+
+    const discussionId = Number.parseInt(req.params.discussionId, 10);
+    const result = await getDiscussionWithCategory(discussionId);
+
+    if (!result) {
+      await setBannerCookie("danger", "Discussion not found.", res);
+      return res.redirect("/forums");
+    }
+
+    const { discussion, category } = result;
+
+    const canModerate = userCanModerate(req);
+    const isAuthor = getCurrentUserId(req) === discussion.createdBy;
+
+    if (!canModerate && !isAuthor) {
+      await setBannerCookie(
+        "danger",
+        "You do not have permission to delete this discussion.",
+        res
+      );
+      return res.redirect(
+        `/forums/discussion/${discussion.discussionId}/${discussion.slug}`
+      );
+    }
+
+    try {
+      await deleteDiscussion(discussionId);
+      await setBannerCookie("success", "Discussion deleted.", res);
+      return res.redirect(`/forums/category/${category.slug}`);
+    } catch (error) {
+      console.error("[FORUMS] Failed to delete discussion", error);
+      await setBannerCookie(
+        "danger",
+        "We were unable to delete the discussion.",
+        res
+      );
+      return res.redirect(
+        `/forums/discussion/${discussion.discussionId}/${discussion.slug}`
+      );
+    }
+  });
+
+  app.get("/forums/post/:postId/edit", async function (req, res) {
+    if (!(await ensureFeature(req, res))) {
+      return;
+    }
+
+    const postId = Number.parseInt(req.params.postId, 10);
+    const post = await getPostById(postId);
+
+    if (!post) {
+      return renderForumsView(
+        res,
+        req,
+        "session/notFound",
+        {
+          pageTitle: `404 Not Found`,
+        },
+        config,
+        features
+      );
+    }
+
+    const result = await getDiscussionWithCategory(post.discussionId);
+
+    if (!result || !userCanViewCategory(result.category, req)) {
+      return renderForumsView(
+        res,
+        req,
+        "session/notFound",
+        {
+          pageTitle: `404 Not Found`,
+        },
+        config,
+        features
+      );
+    }
+
+    if (post.isOriginal) {
+      return res.redirect(
+        `/forums/discussion/${post.discussionId}/edit`
+      );
+    }
+
+    const canModerate = userCanModerate(req);
+    const isAuthor = getCurrentUserId(req) === post.userId;
+
+    if (!canModerate && !isAuthor) {
+      return renderForumsView(
+        res,
+        req,
+        "session/noPermission",
+        {
+          pageTitle: `Access Restricted`,
+        },
+        config,
+        features
+      );
+    }
+
+    const permissions = getUserPermissions(req);
+    const categoryTree = await getCategoriesForUser(permissions);
+
+    return renderForumsView(
+      res,
+      req,
+      "modules/forums/editPost",
+      {
+        pageTitle: `Edit Reply`,
+        categories: categoryTree.tree,
+        activeCategory: result.category,
+        category: result.category,
+        discussion: result.discussion,
+        post,
+      },
+      config,
+      features
+    );
+  });
+
+  app.post("/forums/post/:postId/edit", async function (req, res) {
+    if (!(await ensureFeature(req, res))) {
+      return;
+    }
+
+    const postId = Number.parseInt(req.params.postId, 10);
+    const post = await getPostById(postId);
+
+    if (!post) {
+      await setBannerCookie("danger", "Post not found.", res);
+      return res.redirect("/forums");
+    }
+
+    if (post.isOriginal) {
+      return res.redirect(`/forums/discussion/${post.discussionId}/edit`);
+    }
+
+    const result = await getDiscussionWithCategory(post.discussionId);
+
+    if (!result || !userCanViewCategory(result.category, req)) {
+      await setBannerCookie(
+        "danger",
+        "You do not have permission to edit this post.",
+        res
+      );
+      return res.redirect("/forums");
+    }
+
+    const canModerate = userCanModerate(req);
+    const isAuthor = getCurrentUserId(req) === post.userId;
+
+    if (!canModerate && !isAuthor) {
+      await setBannerCookie(
+        "danger",
+        "You do not have permission to edit this post.",
+        res
+      );
+      return res.redirect(
+        `/forums/discussion/${result.discussion.discussionId}/${result.discussion.slug}`
+      );
+    }
+
+    const content = req.body.content || "";
+    if (isContentEmpty(content)) {
+      await setBannerCookie("danger", "Post content cannot be empty.", res);
+      return res.redirect(
+        `/forums/discussion/${result.discussion.discussionId}/${result.discussion.slug}`
+      );
+    }
+
+    try {
+      await updatePost(postId, {
+        content,
+        editorUserId: getCurrentUserId(req),
+      });
+      await setBannerCookie("success", "Post updated.", res);
+    } catch (error) {
+      console.error("[FORUMS] Failed to update post", error);
+      await setBannerCookie(
+        "danger",
+        "We were unable to update the post.",
+        res
+      );
+    }
+
+    return res.redirect(
+      `/forums/discussion/${result.discussion.discussionId}/${result.discussion.slug}`
+    );
+  });
+
+  app.post("/forums/post/:postId/delete", async function (req, res) {
+    if (!(await ensureFeature(req, res))) {
+      return;
+    }
+
+    const postId = Number.parseInt(req.params.postId, 10);
+    const post = await getPostById(postId);
+
+    if (!post) {
+      await setBannerCookie("danger", "Post not found.", res);
+      return res.redirect("/forums");
+    }
+
+    const result = await getDiscussionWithCategory(post.discussionId);
+
+    if (!result || !userCanViewCategory(result.category, req)) {
+      await setBannerCookie(
+        "danger",
+        "You do not have permission to delete this post.",
+        res
+      );
+      return res.redirect("/forums");
+    }
+
+    if (post.isOriginal) {
+      await setBannerCookie(
+        "danger",
+        "The first post in a discussion cannot be deleted individually.",
+        res
+      );
+      return res.redirect(
+        `/forums/discussion/${result.discussion.discussionId}/${result.discussion.slug}`
+      );
+    }
+
+    const canModerate = userCanModerate(req);
+    const isAuthor = getCurrentUserId(req) === post.userId;
+
+    if (!canModerate && !isAuthor && !userCanDeleteAnyPost(req)) {
+      await setBannerCookie(
+        "danger",
+        "You do not have permission to delete this post.",
+        res
+      );
+      return res.redirect(
+        `/forums/discussion/${result.discussion.discussionId}/${result.discussion.slug}`
+      );
+    }
+
+    try {
+      await deletePost(postId);
+      await setBannerCookie("success", "Post deleted.", res);
+    } catch (error) {
+      console.error("[FORUMS] Failed to delete post", error);
+      await setBannerCookie(
+        "danger",
+        "We were unable to delete the post.",
+        res
+      );
+    }
+
+    return res.redirect(
+      `/forums/discussion/${result.discussion.discussionId}/${result.discussion.slug}`
+    );
+  });
+
+  app.post(
+    "/forums/discussion/:discussionId/moderate",
+    async function (req, res) {
+      if (!(await ensureFeature(req, res))) {
+        return;
+      }
+
+      if (!userCanModerate(req)) {
+        await setBannerCookie(
+          "danger",
+          "You do not have permission to perform moderation actions.",
+          res
+        );
+        return res.redirect("/forums");
+      }
+
+      const discussionId = Number.parseInt(req.params.discussionId, 10);
+      const result = await getDiscussionWithCategory(discussionId);
+
+      if (!result) {
+        await setBannerCookie("danger", "Discussion not found.", res);
+        return res.redirect("/forums");
+      }
+
+      const action = (req.body.action || "").toLowerCase();
+
+      const updates = {};
+      if (action === "lock") updates.isLocked = true;
+      if (action === "unlock") updates.isLocked = false;
+      if (action === "sticky") updates.isSticky = true;
+      if (action === "unsticky") updates.isSticky = false;
+      if (action === "archive") updates.isArchived = true;
+      if (action === "unarchive") updates.isArchived = false;
+
+      if (!Object.keys(updates).length) {
+        await setBannerCookie(
+          "warning",
+          "Unknown moderation action.",
+          res
+        );
+        return res.redirect(
+          `/forums/discussion/${result.discussion.discussionId}/${result.discussion.slug}`
+        );
+      }
+
+      try {
+        await setDiscussionFlags(discussionId, updates);
+        await setBannerCookie("success", "Discussion updated.", res);
+      } catch (error) {
+        console.error("[FORUMS] Failed to update discussion flags", error);
+        await setBannerCookie(
+          "danger",
+          "Unable to update the discussion state.",
+          res
+        );
+      }
+
+      return res.redirect(
+        `/forums/discussion/${result.discussion.discussionId}/${result.discussion.slug}`
+      );
+    }
+  );
+
+  app.get("/forums/post/:postId/revisions", async function (req, res) {
+    if (!(await ensureFeature(req, res))) {
+      return;
+    }
+
+    const postId = Number.parseInt(req.params.postId, 10);
+    const post = await getPostById(postId);
+
+    if (!post) {
+      return renderForumsView(
+        res,
+        req,
+        "session/notFound",
+        {
+          pageTitle: `404 Not Found`,
+        },
+        config,
+        features
+      );
+    }
+
+    const result = await getDiscussionWithCategory(post.discussionId);
+
+    if (!result || !userCanViewCategory(result.category, req)) {
+      return renderForumsView(
+        res,
+        req,
+        "session/notFound",
+        {
+          pageTitle: `404 Not Found`,
+        },
+        config,
+        features
+      );
+    }
+
+    const revisions = await getPostRevisions(postId);
+
+    const permissions = getUserPermissions(req);
+    const categoryTree = await getCategoriesForUser(permissions);
+
+    return renderForumsView(
+      res,
+      req,
+      "modules/forums/revisions",
+      {
+        pageTitle: `Post Revisions`,
+        categories: categoryTree.tree,
+        activeCategory: result.category,
+        category: result.category,
+        discussion: result.discussion,
+        post,
+        revisions,
+        moment,
+      },
+      config,
+      features
+    );
+  });
+}
