@@ -382,7 +382,7 @@ export default function forumRoutes(
     }
   });
 
-  app.get("/forums/discussion/:discussionId/:slug?", async function (req, res) {
+  const discussionViewHandler = async function (req, res) {
     if (!(await ensureFeature(req, res))) {
       return;
     }
@@ -454,7 +454,10 @@ export default function forumRoutes(
       config,
       features
     );
-  });
+  };
+
+  app.get("/forums/discussion/:discussionId", discussionViewHandler);
+  app.get("/forums/discussion/:discussionId/:slug", discussionViewHandler);
 
   const discussionReplyHandler = async function (req, res) {
     if (!(await ensureFeature(req, res))) {
