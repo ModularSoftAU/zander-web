@@ -22,6 +22,7 @@ import {
   isLoggedIn,
   setBannerCookie,
 } from "../api/common.js";
+import { UserGetter } from "../controllers/userController.js";
 import { getWebAnnouncement } from "../controllers/announcementController.js";
 
 const PERMISSIONS = {
@@ -106,6 +107,41 @@ function paginate(total, page, perPage) {
   };
 }
 
+function getSiteBaseUrl(req) {
+  const configuredAddress =
+    typeof process.env.siteAddress === "string"
+      ? process.env.siteAddress.trim()
+      : "";
+
+  if (configuredAddress) {
+    return configuredAddress.replace(/\/$/, "");
+  }
+
+  const host = req.headers["x-forwarded-host"] || req.headers.host;
+  const protocol =
+    req.headers["x-forwarded-proto"] || req.protocol || "https";
+
+  if (protocol && host) {
+    return `${protocol}://${host}`;
+  }
+
+  return "";
+}
+
+function buildPostPermalink(req, discussion, postId) {
+  if (!discussion || !postId) {
+    return "";
+  }
+
+  const baseUrl = getSiteBaseUrl(req);
+  if (!baseUrl) {
+    return "";
+  }
+
+  const slug = discussion.slug ? `/${discussion.slug}` : "";
+  return `${baseUrl}/forums/discussion/${discussion.discussionId}${slug}#post-${postId}`;
+}
+
 async function renderForumsView(res, req, viewPath, data, config, features) {
   return res.view(viewPath, {
     ...data,
@@ -135,6 +171,8 @@ export default function forumRoutes(
 
     return true;
   };
+
+  const userGetter = new UserGetter();
 
   app.get("/fourms", async function (req, res) {
     if (!(await ensureFeature(req, res))) {
@@ -956,6 +994,160 @@ export default function forumRoutes(
     return res.redirect(
       `/forums/discussion/${result.discussion.discussionId}/${result.discussion.slug}`
     );
+  });
+
+  app.post("/forums/post/:postId/report", async function (req, res) {
+    if (!(await ensureFeature(req, res))) {
+      return;
+    }
+
+    if (!features.report) {
+      res.status(404);
+      return res.send({
+        success: false,
+        message: "Reporting is currently disabled.",
+      });
+    }
+
+    if (!isLoggedIn(req)) {
+      res.status(401);
+      return res.send({
+        success: false,
+        message: "You must be logged in to report forum posts.",
+      });
+    }
+
+    const postId = Number.parseInt(req.params.postId, 10);
+    if (!Number.isFinite(postId) || postId <= 0) {
+      res.status(400);
+      return res.send({
+        success: false,
+        message: "Invalid post identifier.",
+      });
+    }
+
+    const rawReason =
+      typeof req.body?.reportReason === "string" ? req.body.reportReason : "";
+    const reason = rawReason.trim();
+
+    if (!reason) {
+      res.status(400);
+      return res.send({
+        success: false,
+        message: "Please provide a reason for your report.",
+      });
+    }
+
+    const rawDetails =
+      typeof req.body?.reportReasonEvidence === "string"
+        ? req.body.reportReasonEvidence
+        : "";
+    const details = rawDetails.trim();
+
+    try {
+      const post = await getPostById(postId);
+      if (!post) {
+        res.status(404);
+        return res.send({
+          success: false,
+          message: "Post not found.",
+        });
+      }
+
+      const info = await getDiscussionWithCategory(post.discussionId);
+      if (!info || !info.discussion || !info.category) {
+        res.status(404);
+        return res.send({
+          success: false,
+          message: "Discussion not found.",
+        });
+      }
+
+      if (!userCanViewCategory(info.category, req)) {
+        res.status(403);
+        return res.send({
+          success: false,
+          message: "You do not have permission to report this post.",
+        });
+      }
+
+      const author = post.userId ? await userGetter.byUserId(post.userId) : null;
+      if (!author || !author.username) {
+        res.status(404);
+        return res.send({
+          success: false,
+          message: "Unable to resolve the post author.",
+        });
+      }
+
+      const truncatedReason = reason.length > 100 ? reason.slice(0, 100) : reason;
+      const permalink = buildPostPermalink(req, info.discussion, post.postId);
+      const evidenceParts = [];
+
+      if (permalink) {
+        evidenceParts.push(`Forum link: ${permalink}`);
+      }
+
+      if (details) {
+        evidenceParts.push(details);
+      }
+
+      const reporterUsername = req.session?.user?.username;
+      if (!reporterUsername) {
+        res.status(401);
+        return res.send({
+          success: false,
+          message: "You must be logged in to report forum posts.",
+        });
+      }
+
+      const reportBody = {
+        reporterUser: reporterUsername,
+        reportedUser: author.username,
+        reportReason: truncatedReason,
+        reportReasonEvidence: evidenceParts.join("\n\n") || null,
+        reportPlatform: "FORUM",
+      };
+
+      const apiResponse = await fetch(
+        `${process.env.siteAddress}/api/report/create`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "x-access-token": process.env.apiKey,
+          },
+          body: JSON.stringify(reportBody),
+        }
+      );
+
+      const data = await apiResponse.json().catch(() => null);
+
+      if (!apiResponse.ok || !data?.success) {
+        const message =
+          data?.message ||
+          "Unable to submit your report right now. Please try again later.";
+
+        res.status(apiResponse.status >= 400 ? apiResponse.status : 500);
+        return res.send({
+          success: false,
+          message,
+        });
+      }
+
+      return res.send({
+        success: true,
+        message:
+          data.message || "Thanks for letting us know. Your report has been received.",
+      });
+    } catch (error) {
+      console.error("Failed to submit forum report:", error);
+      res.status(500);
+      return res.send({
+        success: false,
+        message: "An unexpected error occurred while submitting your report.",
+      });
+    }
   });
 
   app.post(

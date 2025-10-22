@@ -10,6 +10,10 @@
   backgroundImage: globalImage
 }) %>
 
+<% const currentUser = req.session?.user || null; %>
+<% const canReportContent = features.report && currentUser; %>
+<% const discussionBasePath = `/forums/discussion/${discussion.discussionId}${discussion.slug ? '/' + discussion.slug : ''}`; %>
+
 <div class="container my-5 forums-container">
   <div class="row g-4">
     <div class="col-lg-3">
@@ -74,7 +78,7 @@
 
       <div class="forums-thread">
         <% posts.forEach(function(post) { %>
-          <article class="forums-post card shadow-sm mb-4 <%= post.isOriginal ? 'original-post' : '' %>">
+          <article id="post-<%= post.postId %>" class="forums-post card shadow-sm mb-4 <%= post.isOriginal ? 'original-post' : '' %>">
             <div class="card-body">
               <div class="d-flex gap-4">
                 <div class="forums-post-sidebar text-center">
@@ -119,6 +123,20 @@
                           </form>
                         <% } %>
                       <% } %>
+                      <% if (canReportContent && post.user) { %>
+                        <button
+                          type="button"
+                          class="btn btn-sm btn-outline-danger forums-report-button"
+                          data-bs-toggle="modal"
+                          data-bs-target="#reportPostModal"
+                          data-post-id="<%= post.postId %>"
+                          data-post-type="<%= post.isOriginal ? 'discussion' : 'reply' %>"
+                          data-username="<%= post.user.username %>"
+                          data-post-url="<%= discussionBasePath %>#post-<%= post.postId %>"
+                        >
+                          <i class="fa-solid fa-flag"></i> Report
+                        </button>
+                      <% } %>
                     </div>
                   </div>
                   <div class="forums-post-body mt-3">
@@ -157,5 +175,213 @@
     </div>
   </div>
 </div>
+
+<% if (canReportContent) { %>
+  <div class="modal fade" id="reportPostModal" tabindex="-1" aria-labelledby="reportPostModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <form id="reportPostForm" novalidate>
+          <div class="modal-header">
+            <h5 class="modal-title" id="reportPostModalLabel">Report forum content</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            <div class="alert d-none" data-report-feedback role="alert"></div>
+            <p class="text-muted small mb-2" data-report-target></p>
+            <a class="small text-break d-none" data-report-link target="_blank" rel="noopener"></a>
+            <div class="mb-3">
+              <label for="reportReasonInput" class="form-label">Reason</label>
+              <input
+                type="text"
+                class="form-control"
+                id="reportReasonInput"
+                name="reportReason"
+                maxlength="100"
+                required
+              >
+              <div class="form-text">Provide a short summary (max 100 characters).</div>
+            </div>
+            <div class="mb-3">
+              <label for="reportEvidenceInput" class="form-label">Additional details (optional)</label>
+              <textarea
+                class="form-control"
+                id="reportEvidenceInput"
+                name="reportReasonEvidence"
+                rows="4"
+                placeholder="Include any supporting details or links."
+              ></textarea>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+            <button type="submit" class="btn btn-danger">Submit report</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    (() => {
+      const reportModal = document.getElementById('reportPostModal');
+      if (!reportModal) {
+        return;
+      }
+
+      const reportForm = document.getElementById('reportPostForm');
+      const reasonInput = reportForm.querySelector('#reportReasonInput');
+      const evidenceInput = reportForm.querySelector('#reportEvidenceInput');
+      const feedbackEl = reportForm.querySelector('[data-report-feedback]');
+      const targetEl = reportForm.querySelector('[data-report-target]');
+      const linkEl = reportForm.querySelector('[data-report-link]');
+      const submitButton = reportForm.querySelector('button[type="submit"]');
+      const defaultSubmitText = submitButton.textContent;
+
+      const hideFeedback = () => {
+        feedbackEl.classList.add('d-none');
+        feedbackEl.classList.remove('alert-success', 'alert-danger');
+        feedbackEl.textContent = '';
+      };
+
+      const showFeedback = (type, message) => {
+        feedbackEl.classList.remove('d-none');
+        feedbackEl.classList.toggle('alert-success', type === 'success');
+        feedbackEl.classList.toggle('alert-danger', type !== 'success');
+        feedbackEl.textContent = message;
+      };
+
+      reportModal.addEventListener('show.bs.modal', (event) => {
+        const trigger = event.relatedTarget;
+        hideFeedback();
+        reportForm.reset();
+
+        if (!trigger) {
+          reportForm.removeAttribute('action');
+          targetEl.textContent = '';
+          linkEl.classList.add('d-none');
+          linkEl.textContent = '';
+          linkEl.removeAttribute('href');
+          submitButton.disabled = false;
+          submitButton.textContent = defaultSubmitText;
+          return;
+        }
+
+        const postId = trigger.getAttribute('data-post-id');
+        const username = trigger.getAttribute('data-username') || 'this user';
+        const postType = trigger.getAttribute('data-post-type') || 'post';
+        const postUrl = trigger.getAttribute('data-post-url') || '';
+
+        if (!postId) {
+          reportForm.removeAttribute('action');
+          targetEl.textContent = 'Unable to determine which post to report.';
+          linkEl.classList.add('d-none');
+          linkEl.textContent = '';
+          linkEl.removeAttribute('href');
+          submitButton.disabled = true;
+          submitButton.textContent = defaultSubmitText;
+          return;
+        }
+
+        reportForm.setAttribute('action', `/forums/post/${postId}/report`);
+        targetEl.textContent = `Reporting ${username}'s ${postType}.`;
+
+        if (postUrl) {
+          let absoluteUrl = postUrl;
+          try {
+            absoluteUrl = new URL(postUrl, window.location.origin).toString();
+          } catch (error) {
+            console.warn('Unable to resolve post URL', error);
+          }
+
+          linkEl.textContent = absoluteUrl;
+          linkEl.setAttribute('href', absoluteUrl);
+          linkEl.classList.remove('d-none');
+        } else {
+          linkEl.textContent = '';
+          linkEl.removeAttribute('href');
+          linkEl.classList.add('d-none');
+        }
+
+        submitButton.disabled = false;
+        submitButton.textContent = defaultSubmitText;
+      });
+
+      reportModal.addEventListener('hidden.bs.modal', () => {
+        hideFeedback();
+        reportForm.reset();
+        reportForm.removeAttribute('action');
+        linkEl.textContent = '';
+        linkEl.removeAttribute('href');
+        linkEl.classList.add('d-none');
+        submitButton.disabled = false;
+        submitButton.textContent = defaultSubmitText;
+      });
+
+      reportForm.addEventListener('submit', async (event) => {
+        event.preventDefault();
+        hideFeedback();
+
+        const action = reportForm.getAttribute('action');
+        if (!action) {
+          showFeedback('danger', 'Unable to determine which post to report.');
+          return;
+        }
+
+        const reason = reasonInput.value.trim();
+        const details = evidenceInput.value.trim();
+
+        if (!reason) {
+          showFeedback('danger', 'Please provide a reason for your report.');
+          reasonInput.focus();
+          return;
+        }
+
+        submitButton.disabled = true;
+        submitButton.textContent = 'Submitting...';
+
+        try {
+          const response = await fetch(action, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              reportReason: reason,
+              reportReasonEvidence: details,
+            }),
+          });
+
+          const data = await response.json().catch(() => null);
+
+          if (response.ok && data?.success) {
+            showFeedback('success', data.message || 'Thanks, your report has been submitted.');
+            reportForm.reset();
+
+            setTimeout(() => {
+              const modalConstructor = window.bootstrap && window.bootstrap.Modal;
+              if (modalConstructor) {
+                const modalInstance = modalConstructor.getInstance(reportModal);
+                if (modalInstance) {
+                  modalInstance.hide();
+                }
+              }
+            }, 1200);
+          } else {
+            const message =
+              data?.message ||
+              (response.status === 401
+                ? 'You must be logged in to report posts.'
+                : 'Unable to submit your report right now. Please try again later.');
+            showFeedback('danger', message);
+          }
+        } catch (error) {
+          console.error('Failed to submit forum report', error);
+          showFeedback('danger', 'An unexpected error occurred. Please try again later.');
+        } finally {
+          submitButton.disabled = false;
+          submitButton.textContent = defaultSubmitText;
+        }
+      });
+    })();
+  </script>
+<% } %>
 
 <%- include("../../modules/footer.ejs") %>
