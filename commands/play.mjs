@@ -26,8 +26,7 @@ export class PlayCommand extends Command {
       const noServersEmbed = new EmbedBuilder()
         .setTitle(`No Servers`)
         .setDescription(apiData.message)
-        .setColor(Colors.Red)
-        .setImage("https://placehold.co/600x400?text=Network+Servers");
+        .setColor(Colors.Red);
 
       interaction.reply({
         embeds: [noServersEmbed],
@@ -38,7 +37,9 @@ export class PlayCommand extends Command {
         .setTitle(`Network Servers`)
         .setDescription(`Get started! Jump on and play with our community!`)
         .setColor(Colors.DarkGold)
-        .setImage("https://placehold.co/600x400?text=Network+Servers");
+        .setImage(
+          `${process.env.siteAddress}/assets/images/bedrockConnection.png`
+        );
 
       // Loop through the server data and add them to the embed
       apiData.data.forEach((server) => {
