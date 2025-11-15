@@ -113,6 +113,7 @@
     const FALLBACK_IMAGE = '/images/meta-siteLogo.png';
     let controller = null;
     let shops = [];
+    let baseStatus = { message: DEFAULT_STATUS, tone: 'default' };
 
     function setStatus(message, tone = 'default') {
       statusEl.textContent = message;
@@ -276,7 +277,7 @@
       renderList(filtered);
 
       if (!shops.length) {
-        setStatus('No shops are available right now. Please check back later.', 'default');
+        setStatus(baseStatus.message, baseStatus.tone);
         return;
       }
 
@@ -286,8 +287,12 @@
       }
 
       if (!query && filtered.length === shops.length) {
-        const summary = `${shops.length.toLocaleString()} shops loaded. ${DEFAULT_STATUS}`;
-        setStatus(summary, 'default');
+        if (shops.length && baseStatus.message === DEFAULT_STATUS) {
+          const summary = `${shops.length.toLocaleString()} shops loaded. ${DEFAULT_STATUS}`;
+          setStatus(summary, 'default');
+        } else {
+          setStatus(baseStatus.message, baseStatus.tone);
+        }
         return;
       }
 
@@ -334,6 +339,9 @@
         }
 
         const payload = await response.json();
+        const payloadMessage = typeof payload?.message === 'string' ? payload.message.trim() : '';
+        const payloadTone = payload?.success === false ? 'error' : 'default';
+
         shops = normalisePayload(payload);
 
         if (!Array.isArray(shops)) {
@@ -341,11 +349,18 @@
         }
 
         if (!shops.length) {
-          setStatus('No shops are available right now. Please check back later.', 'default');
+          baseStatus = {
+            message: payloadMessage || 'No shops are available right now. Please check back later.',
+            tone: payloadMessage ? payloadTone : 'default',
+          };
         } else {
-          setStatus(DEFAULT_STATUS, 'default');
+          baseStatus = {
+            message: payloadMessage || DEFAULT_STATUS,
+            tone: payloadMessage ? payloadTone : 'default',
+          };
         }
 
+        setStatus(baseStatus.message, baseStatus.tone);
         applyFilter();
       } catch (error) {
         if (error.name === 'AbortError') {
@@ -354,6 +369,11 @@
 
         console.error('Failed to load shop directory', error);
         setStatus(error.message || 'We could not load the shop directory. Please try again shortly.', 'error');
+        shops = [];
+        baseStatus = {
+          message: error.message || 'We could not load the shop directory. Please try again shortly.',
+          tone: 'error',
+        };
         listEl.innerHTML = '';
         listEl.dataset.empty = 'true';
         toggleRetry(true);

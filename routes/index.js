@@ -187,16 +187,22 @@ export default function applicationSiteRoutes(
         headers: { "x-access-token": process.env.apiKey },
       });
 
+      const rawBody = await shopResponse.text();
+      let parsedBody = null;
+
+      if (rawBody) {
+        try {
+          parsedBody = JSON.parse(rawBody);
+        } catch (parseError) {
+          console.error("Failed to parse shop directory payload", parseError);
+        }
+      }
+
       if (!shopResponse.ok) {
         let errorMessage = "Unable to load shop directory data.";
 
-        try {
-          const errorPayload = await shopResponse.json();
-          if (errorPayload?.message) {
-            errorMessage = errorPayload.message;
-          }
-        } catch (parseError) {
-          console.error("Failed to parse shop directory error payload", parseError);
+        if (parsedBody && typeof parsedBody.message === "string") {
+          errorMessage = parsedBody.message;
         }
 
         return res.status(shopResponse.status).json({
@@ -205,7 +211,36 @@ export default function applicationSiteRoutes(
         });
       }
 
-      const shopApiData = await shopResponse.json();
+      let shopApiData = parsedBody;
+      let parsingWarning = null;
+
+      if (parsedBody === null) {
+        parsingWarning =
+          "We couldn't read the shop directory data just now. Showing an empty list instead.";
+        shopApiData = {
+          success: false,
+          data: [],
+          message: parsingWarning,
+        };
+      } else if (parsedBody === undefined) {
+        shopApiData = {
+          success: true,
+          data: [],
+        };
+      } else if (typeof parsedBody !== "object") {
+        parsingWarning =
+          "We received an unexpected shop directory response. Showing an empty list instead.";
+        shopApiData = {
+          success: false,
+          data: [],
+          message: parsingWarning,
+        };
+      }
+
+      if (shopApiData && typeof shopApiData === "object" && parsingWarning) {
+        shopApiData.message = parsingWarning;
+      }
+
       shopDirectoryCache = {
         payload: shopApiData,
         timestamp: Date.now(),
@@ -213,9 +248,9 @@ export default function applicationSiteRoutes(
       return res.json(shopApiData);
     } catch (error) {
       console.error("Failed to load shop directory data", error);
-      return res.status(500).json({
+      return res.status(503).json({
         success: false,
-        message: "An unexpected error occurred while loading shop directory data.",
+        message: "We couldn't reach the shop directory service. Please try again shortly.",
       });
     }
   });
