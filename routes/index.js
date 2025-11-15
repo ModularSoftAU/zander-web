@@ -169,9 +169,20 @@ export default function applicationSiteRoutes(
       });
 
       if (!shopResponse.ok) {
+        let errorMessage = "Unable to load shop directory data.";
+
+        try {
+          const errorPayload = await shopResponse.json();
+          if (errorPayload?.message) {
+            errorMessage = errorPayload.message;
+          }
+        } catch (parseError) {
+          console.error("Failed to parse shop directory error payload", parseError);
+        }
+
         return res.status(shopResponse.status).json({
           success: false,
-          message: "Unable to load shop directory data.",
+          message: errorMessage,
         });
       }
 

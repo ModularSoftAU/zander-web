@@ -2174,6 +2174,14 @@ a:focus {
   color: #c0392b;
 }
 
+.shop-directory-loader .shop-directory-retry {
+  min-width: 8rem;
+}
+
+.shop-directory-loader .shop-directory-retry:disabled {
+  opacity: 0.65;
+}
+
 .shop-directory-spinner {
   width: 3rem;
   height: 3rem;

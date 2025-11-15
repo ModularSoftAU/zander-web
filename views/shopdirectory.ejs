@@ -44,6 +44,58 @@
       const $shopTable = $('#shopTable');
       const $shopTableBody = $('#shopTableBody');
       const $shopTableLoader = $('#shopTableLoader');
+      const MAX_ATTEMPTS = 3;
+
+      function prepareForLoad(message = 'Loading shop listings…') {
+        if ($.fn.DataTable && $.fn.DataTable.isDataTable($shopTable)) {
+          $shopTable.DataTable().clear().destroy();
+        }
+
+        $shopTableBody.empty();
+        $shopTable.addClass('shop-table-hidden');
+        $shopTable.attr('aria-busy', 'true');
+
+        $shopTableLoader
+          .removeClass('shop-directory-loader--hidden shop-directory-loader--error')
+          .attr('aria-hidden', 'false');
+
+        $shopTableLoader
+          .find('.shop-directory-loading-text')
+          .text(message);
+
+        $shopTableLoader.find('.shop-directory-retry').remove();
+      }
+
+      function hideLoader() {
+        $shopTableLoader
+          .addClass('shop-directory-loader--hidden')
+          .removeClass('shop-directory-loader--error')
+          .attr('aria-hidden', 'true');
+      }
+
+      function showError(message) {
+        $shopTableLoader
+          .removeClass('shop-directory-loader--hidden')
+          .addClass('shop-directory-loader--error')
+          .attr('aria-hidden', 'false');
+
+        $shopTableLoader
+          .find('.shop-directory-loading-text')
+          .text(message);
+
+        let $retryButton = $shopTableLoader.find('.shop-directory-retry');
+
+        if (!$retryButton.length) {
+          $retryButton = $('<button>')
+            .attr('type', 'button')
+            .addClass('btn btn-primary btn-sm shop-directory-retry')
+            .text('Try again');
+
+          $shopTableLoader.append($retryButton);
+        } else {
+          $retryButton.prop('disabled', false).text('Try again');
+        }
+      }
 
       function buildShopRow(shop) {
         const $row = $('<tr>');
@@ -94,14 +146,25 @@
         $row.append($stockCell);
 
         const $locationCell = $('<td>').attr('data-label', 'Location').addClass('shop-location');
-        const coordinates = [shop?.x, shop?.y, shop?.z].filter(coord => coord !== undefined && coord !== null).join(', ');
+        const coordinates = [shop?.x, shop?.y, shop?.z]
+          .filter((coord) => coord !== undefined && coord !== null)
+          .join(', ');
         $('<code>').text(coordinates || 'N/A').appendTo($locationCell);
         $row.append($locationCell);
 
         return $row;
       }
 
-      function initialiseTable() {
+      function initialiseTable(emptyMessage) {
+        if (typeof $.fn.DataTable !== 'function') {
+          console.warn('DataTables library is unavailable; rendering plain table instead.');
+          return false;
+        }
+
+        if ($.fn.DataTable.isDataTable($shopTable)) {
+          $shopTable.DataTable().destroy();
+        }
+
         const shopTable = $shopTable.DataTable({
           paging: true,
           searching: true,
@@ -116,11 +179,10 @@
           ],
           language: {
             search: '',
-            searchPlaceholder: 'Search items, shop owners or locations...'
+            searchPlaceholder: 'Search items, shop owners or locations...',
+            emptyTable: emptyMessage || 'No shop listings available.'
           }
         });
-
-        shopTable.columns.adjust();
 
         const $shopTableFilter = $('#shopTable_filter');
         const $shopTableLength = $('#shopTable_length');
@@ -135,19 +197,30 @@
 
         $shopTableFilter.addClass('shop-table-search');
         $shopTableLength.addClass('shop-table-length');
+
+        return true;
       }
 
-      async function loadShopDirectory() {
+      async function requestShopDirectory(attempt = 1) {
         try {
-          $shopTable.attr('aria-busy', 'true');
+          const response = await fetch('/shopdirectory/data', { cache: 'no-store' });
 
-          const response = await fetch('/shopdirectory/data');
+          let payload = {};
 
-          if (!response.ok) {
-            throw new Error('Unable to load shop listings.');
+          try {
+            payload = await response.json();
+          } catch (parseError) {
+            console.error('Unable to parse shop directory response as JSON', parseError);
+            throw new Error('Received an invalid response while loading shop listings.');
           }
 
-          const payload = await response.json();
+          const apiMessage = typeof payload?.message === 'string' ? payload.message : '';
+          const noShopsAvailable = /no shops available/i.test(apiMessage);
+
+          if (!response.ok || (payload?.success === false && !noShopsAvailable)) {
+            throw new Error(apiMessage || `Unable to load shop listings (status ${response.status}).`);
+          }
+
           const listings = Array.isArray(payload?.data) ? payload.data : [];
 
           listings.forEach((shop) => {
@@ -155,22 +228,44 @@
           });
 
           $shopTable.removeClass('shop-table-hidden');
-          initialiseTable();
-          $shopTableLoader
-            .addClass('shop-directory-loader--hidden')
-            .attr('aria-hidden', 'true');
+
+          initialiseTable(noShopsAvailable ? (apiMessage || 'There are no shops available.') : undefined);
+
+          hideLoader();
           $shopTable.attr('aria-busy', 'false');
         } catch (error) {
-          console.error(error);
-          $shopTableLoader
-            .addClass('shop-directory-loader--error')
-            .find('.shop-directory-loading-text')
-            .text('We\'re having trouble loading the shop listings. Please refresh to try again.');
+          console.error('Failed to load shop directory listings', error);
           $shopTable.attr('aria-busy', 'false');
+
+          if (attempt < MAX_ATTEMPTS) {
+            const nextAttempt = attempt + 1;
+            const retryDelay = Math.min(5000, attempt * 2000);
+
+            $shopTableLoader
+              .removeClass('shop-directory-loader--error')
+              .find('.shop-directory-loading-text')
+              .text(`Still loading shop listings… retry ${nextAttempt} of ${MAX_ATTEMPTS} shortly.`);
+
+            setTimeout(() => requestShopDirectory(nextAttempt), retryDelay);
+            return;
+          }
+
+          showError(
+            error?.message ||
+              "We're having trouble loading the shop listings. Please refresh to try again."
+          );
         }
       }
 
-      loadShopDirectory();
+      $shopTableLoader.on('click', '.shop-directory-retry', function () {
+        const $button = $(this);
+        $button.prop('disabled', true).text('Retrying…');
+        prepareForLoad('Retrying shop listings…');
+        requestShopDirectory();
+      });
+
+      prepareForLoad();
+      requestShopDirectory();
     });
   </script>
 </section>
