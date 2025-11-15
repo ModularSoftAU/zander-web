@@ -591,6 +591,127 @@ input[type="email"]:focus, input[type="password"]:focus, input[type="text"]:focu
   }
 }
 
+.shop-directory-table-wrapper {
+  overflow-x: auto;
+}
+
+.shop-directory-table {
+  width: 100%;
+  border-spacing: 0;
+}
+
+.shop-directory__item-content,
+.shop-directory__owner-content {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.shop-directory__item-image {
+  width: 48px;
+  height: 48px;
+  border-radius: 8px;
+  object-fit: cover;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.shop-directory__item-name {
+  font-weight: 600;
+  color: inherit;
+}
+
+.shop-directory__owner-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.shop-directory__owner-name {
+  font-weight: 600;
+}
+
+.shop-directory__location code {
+  word-break: break-word;
+}
+
+@media (max-width: 992px) {
+  .shop-directory__item-image {
+    width: 40px;
+    height: 40px;
+  }
+}
+
+@media (max-width: 768px) {
+  .shop-directory-table-wrapper {
+    overflow: visible;
+  }
+
+  .shop-directory-table thead {
+    display: none;
+  }
+
+  .shop-directory-table,
+  .shop-directory-table tbody,
+  .shop-directory-table tr,
+  .shop-directory-table td {
+    display: block;
+    width: 100%;
+  }
+
+  .shop-directory-table tbody {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+  }
+
+  .shop-directory-table tbody tr {
+    border: 1px solid rgba(47, 80, 140, 0.2);
+    border-radius: 16px;
+    padding: 1.25rem;
+    background: rgba(255, 255, 255, 0.95);
+    box-shadow: 0 16px 32px rgba(15, 23, 42, 0.06);
+  }
+
+  .shop-directory-table tbody tr td {
+    padding: 0.35rem 0;
+    font-size: 0.95rem;
+  }
+
+  .shop-directory-table tbody tr td:not(:last-child) {
+    border-bottom: 1px solid rgba(111, 139, 164, 0.15);
+  }
+
+  .shop-directory-table tbody tr td::before {
+    content: attr(data-label);
+    display: block;
+    font-size: 0.75rem;
+    letter-spacing: 0.06em;
+    font-weight: 700;
+    text-transform: uppercase;
+    color: #6f8ba4;
+    margin-bottom: 0.2rem;
+  }
+
+  .shop-directory__item-content,
+  .shop-directory__owner-content {
+    gap: 0.5rem;
+  }
+
+  .shop-directory__item-name,
+  .shop-directory__owner-name {
+    font-size: 1rem;
+  }
+
+  .shop-directory-table code {
+    font-size: 1rem;
+    background: rgba(47, 80, 140, 0.08);
+    border-radius: 8px;
+    padding: 0.35rem 0.5rem;
+    display: inline-block;
+  }
+}
+
 .overly-2 {
   position: relative;
 }
