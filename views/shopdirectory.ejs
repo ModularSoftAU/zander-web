@@ -10,42 +10,86 @@
   backgroundImage: globalImage
 }) %>
 
-<section class="section">
+<section class="section section-shop-directory">
   <div class="container">
-    <table id="shopTable" class="display">
-      <thead>
-        <tr>
-          <th>Item</th>
-          <th>Shop Owner</th>
-          <th>Amount</th>
-          <th>Price</th>
-          <th>Stock</th>
-          <th>Location</th>
-        </tr>
-      </thead>
-      <tbody>
-        <% shopApiData.data.forEach(shop => { %>
+    <div class="shop-directory-header">
+      <h2 class="h3">Find the perfect shop for your next purchase</h2>
+      <p class="shop-directory-subtitle mb-0">Use the search and filters below to quickly discover items, compare prices, and jump straight to the shop owner's profile.</p>
+    </div>
+
+    <div class="table-responsive shop-table-wrapper">
+      <table id="shopTable" class="display table table-striped table-hover align-middle w-100">
+        <thead class="table-light">
           <tr>
-            <td><img src="<%= shop.itemData.image %>" alt="<%= shop.itemData.displayName %>"> <%= shop.itemData.displayName %></td>
-            <td><img src="<%= shop.userData.profilePicture %>" alt="<%= shop.userData.username %>" height="20px"> <a href="/profile/<%= shop.userData.username %>"><%= shop.userData.username %></a></td>
-            <td><code><%= shop.amount %></code></td>
-            <td><code><%= shop.price %></code></td>
-            <td><code><%= shop.stock %></code></td>
-            <td><code><%= shop.x %>, <%= shop.y %>, <%= shop.z %></code></td>
+            <th scope="col">Item</th>
+            <th scope="col">Shop Owner</th>
+            <th scope="col">Amount</th>
+            <th scope="col">Price</th>
+            <th scope="col">Stock</th>
+            <th scope="col">Location</th>
           </tr>
-        <% }) %>
-      </tbody>
-    </table>
+        </thead>
+        <tbody>
+          <% shopApiData.data.forEach(shop => { %>
+            <tr>
+              <td data-label="Item">
+                <div class="shop-item-cell">
+                  <img src="<%= shop.itemData.image %>" alt="<%= shop.itemData.displayName %>" class="shop-item-image">
+                  <span class="shop-item-name"><%= shop.itemData.displayName %></span>
+                </div>
+              </td>
+              <td data-label="Shop Owner">
+                <div class="shop-owner-cell">
+                  <img src="<%= shop.userData.profilePicture %>" alt="<%= shop.userData.username %>" class="shop-owner-avatar">
+                  <a href="/profile/<%= shop.userData.username %>" class="shop-owner-link"><%= shop.userData.username %></a>
+                </div>
+              </td>
+              <td data-label="Amount" class="text-nowrap"><code><%= shop.amount %></code></td>
+              <td data-label="Price" class="text-nowrap"><code><%= shop.price %></code></td>
+              <td data-label="Stock" class="text-nowrap"><code><%= shop.stock %></code></td>
+              <td data-label="Location" class="shop-location"><code><%= shop.x %>, <%= shop.y %>, <%= shop.z %></code></td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    </div>
   </div>
 
   <script>
     $(document).ready(function() {
-      $('#shopTable').DataTable({
-        "paging": true,
-        "searching": true,
-        "ordering": true,
-        "info": true
+      const shopTable = $('#shopTable').DataTable({
+        paging: true,
+        searching: true,
+        ordering: true,
+        info: true,
+        responsive: true,
+        autoWidth: false,
+        columnDefs: [
+          { targets: 0, responsivePriority: 1 },
+          { targets: 1, responsivePriority: 2 },
+          { targets: [2, 3, 4, 5], responsivePriority: 3 }
+        ],
+        language: {
+          search: '',
+          searchPlaceholder: 'Search items, shop owners or locations...'
+        }
       });
+
+      shopTable.columns.adjust();
+
+      const shopTableFilter = $('#shopTable_filter');
+      const shopTableLength = $('#shopTable_length');
+
+      shopTableFilter.find('input')
+        .addClass('form-control form-control-sm')
+        .attr('aria-label', 'Search shop directory');
+
+      shopTableLength.find('select')
+        .addClass('form-select form-select-sm')
+        .attr('aria-label', 'Select number of shop records to display');
+
+      shopTableFilter.addClass('shop-table-search');
+      shopTableLength.addClass('shop-table-length');
     });
   </script>
 </section>
