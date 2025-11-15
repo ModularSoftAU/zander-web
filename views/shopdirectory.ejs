@@ -18,7 +18,12 @@
     </div>
 
     <div class="table-responsive shop-table-wrapper">
-      <table id="shopTable" class="display table table-striped table-hover align-middle w-100">
+      <div class="shop-directory-loader" id="shopTableLoader" role="status" aria-live="polite">
+        <div class="shop-directory-spinner" aria-hidden="true"></div>
+        <p class="shop-directory-loading-text mb-0">Loading shop listings…</p>
+      </div>
+
+      <table id="shopTable" class="display table table-striped table-hover align-middle w-100 shop-table-hidden" aria-describedby="shopTableLoader">
         <thead class="table-light">
           <tr>
             <th scope="col">Item</th>
@@ -29,67 +34,143 @@
             <th scope="col">Location</th>
           </tr>
         </thead>
-        <tbody>
-          <% shopApiData.data.forEach(shop => { %>
-            <tr>
-              <td data-label="Item">
-                <div class="shop-item-cell">
-                  <img src="<%= shop.itemData.image %>" alt="<%= shop.itemData.displayName %>" class="shop-item-image">
-                  <span class="shop-item-name"><%= shop.itemData.displayName %></span>
-                </div>
-              </td>
-              <td data-label="Shop Owner">
-                <div class="shop-owner-cell">
-                  <img src="<%= shop.userData.profilePicture %>" alt="<%= shop.userData.username %>" class="shop-owner-avatar">
-                  <a href="/profile/<%= shop.userData.username %>" class="shop-owner-link"><%= shop.userData.username %></a>
-                </div>
-              </td>
-              <td data-label="Amount" class="text-nowrap"><code><%= shop.amount %></code></td>
-              <td data-label="Price" class="text-nowrap"><code><%= shop.price %></code></td>
-              <td data-label="Stock" class="text-nowrap"><code><%= shop.stock %></code></td>
-              <td data-label="Location" class="shop-location"><code><%= shop.x %>, <%= shop.y %>, <%= shop.z %></code></td>
-            </tr>
-          <% }) %>
-        </tbody>
+        <tbody id="shopTableBody"></tbody>
       </table>
     </div>
   </div>
 
   <script>
     $(document).ready(function() {
-      const shopTable = $('#shopTable').DataTable({
-        paging: true,
-        searching: true,
-        ordering: true,
-        info: true,
-        responsive: true,
-        autoWidth: false,
-        columnDefs: [
-          { targets: 0, responsivePriority: 1 },
-          { targets: 1, responsivePriority: 2 },
-          { targets: [2, 3, 4, 5], responsivePriority: 3 }
-        ],
-        language: {
-          search: '',
-          searchPlaceholder: 'Search items, shop owners or locations...'
+      const $shopTable = $('#shopTable');
+      const $shopTableBody = $('#shopTableBody');
+      const $shopTableLoader = $('#shopTableLoader');
+
+      function buildShopRow(shop) {
+        const $row = $('<tr>');
+
+        const itemImage = shop?.itemData?.image || '/images/meta-siteLogo.png';
+        const itemName = shop?.itemData?.displayName || 'Unknown Item';
+        const ownerAvatar = shop?.userData?.profilePicture || '/images/meta-siteLogo.png';
+        const ownerUsername = shop?.userData?.username || 'Unknown';
+        const hasOwnerProfile = Boolean(shop?.userData?.username);
+        const ownerProfileUrl = `/profile/${ownerUsername}`;
+
+        const $itemCell = $('<td>').attr('data-label', 'Item');
+        const $itemWrapper = $('<div>').addClass('shop-item-cell');
+        $('<img>').addClass('shop-item-image').attr({ src: itemImage, alt: itemName }).appendTo($itemWrapper);
+        $('<span>').addClass('shop-item-name').text(itemName).appendTo($itemWrapper);
+        $itemCell.append($itemWrapper);
+        $row.append($itemCell);
+
+        const $ownerCell = $('<td>').attr('data-label', 'Shop Owner');
+        const $ownerWrapper = $('<div>').addClass('shop-owner-cell');
+        $('<img>').addClass('shop-owner-avatar').attr({ src: ownerAvatar, alt: ownerUsername }).appendTo($ownerWrapper);
+        if (hasOwnerProfile) {
+          $('<a>')
+            .addClass('shop-owner-link')
+            .attr('href', ownerProfileUrl)
+            .text(ownerUsername)
+            .appendTo($ownerWrapper);
+        } else {
+          $('<span>')
+            .addClass('shop-owner-link shop-owner-link--placeholder')
+            .attr('aria-label', 'Unknown shop owner')
+            .text(ownerUsername)
+            .appendTo($ownerWrapper);
         }
-      });
+        $ownerCell.append($ownerWrapper);
+        $row.append($ownerCell);
 
-      shopTable.columns.adjust();
+        const $amountCell = $('<td>').attr('data-label', 'Amount').addClass('text-nowrap');
+        $('<code>').text(shop?.amount ?? '0').appendTo($amountCell);
+        $row.append($amountCell);
 
-      const shopTableFilter = $('#shopTable_filter');
-      const shopTableLength = $('#shopTable_length');
+        const $priceCell = $('<td>').attr('data-label', 'Price').addClass('text-nowrap');
+        $('<code>').text(shop?.price ?? '0').appendTo($priceCell);
+        $row.append($priceCell);
 
-      shopTableFilter.find('input')
-        .addClass('form-control form-control-sm')
-        .attr('aria-label', 'Search shop directory');
+        const $stockCell = $('<td>').attr('data-label', 'Stock').addClass('text-nowrap');
+        $('<code>').text(shop?.stock ?? '0').appendTo($stockCell);
+        $row.append($stockCell);
 
-      shopTableLength.find('select')
-        .addClass('form-select form-select-sm')
-        .attr('aria-label', 'Select number of shop records to display');
+        const $locationCell = $('<td>').attr('data-label', 'Location').addClass('shop-location');
+        const coordinates = [shop?.x, shop?.y, shop?.z].filter(coord => coord !== undefined && coord !== null).join(', ');
+        $('<code>').text(coordinates || 'N/A').appendTo($locationCell);
+        $row.append($locationCell);
 
-      shopTableFilter.addClass('shop-table-search');
-      shopTableLength.addClass('shop-table-length');
+        return $row;
+      }
+
+      function initialiseTable() {
+        const shopTable = $shopTable.DataTable({
+          paging: true,
+          searching: true,
+          ordering: true,
+          info: true,
+          responsive: true,
+          autoWidth: false,
+          columnDefs: [
+            { targets: 0, responsivePriority: 1 },
+            { targets: 1, responsivePriority: 2 },
+            { targets: [2, 3, 4, 5], responsivePriority: 3 }
+          ],
+          language: {
+            search: '',
+            searchPlaceholder: 'Search items, shop owners or locations...'
+          }
+        });
+
+        shopTable.columns.adjust();
+
+        const $shopTableFilter = $('#shopTable_filter');
+        const $shopTableLength = $('#shopTable_length');
+
+        $shopTableFilter.find('input')
+          .addClass('form-control form-control-sm')
+          .attr('aria-label', 'Search shop directory');
+
+        $shopTableLength.find('select')
+          .addClass('form-select form-select-sm')
+          .attr('aria-label', 'Select number of shop records to display');
+
+        $shopTableFilter.addClass('shop-table-search');
+        $shopTableLength.addClass('shop-table-length');
+      }
+
+      async function loadShopDirectory() {
+        try {
+          $shopTable.attr('aria-busy', 'true');
+
+          const response = await fetch('/shopdirectory/data');
+
+          if (!response.ok) {
+            throw new Error('Unable to load shop listings.');
+          }
+
+          const payload = await response.json();
+          const listings = Array.isArray(payload?.data) ? payload.data : [];
+
+          listings.forEach((shop) => {
+            $shopTableBody.append(buildShopRow(shop));
+          });
+
+          $shopTable.removeClass('shop-table-hidden');
+          initialiseTable();
+          $shopTableLoader
+            .addClass('shop-directory-loader--hidden')
+            .attr('aria-hidden', 'true');
+          $shopTable.attr('aria-busy', 'false');
+        } catch (error) {
+          console.error(error);
+          $shopTableLoader
+            .addClass('shop-directory-loader--error')
+            .find('.shop-directory-loading-text')
+            .text('We\'re having trouble loading the shop listings. Please refresh to try again.');
+          $shopTable.attr('aria-busy', 'false');
+        }
+      }
+
+      loadShopDirectory();
     });
   </script>
 </section>
