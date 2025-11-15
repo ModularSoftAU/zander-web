@@ -5,6 +5,7 @@ const filter = require("../../filter.json");
 import { UserGetter } from "../../controllers/userController.js";
 import { MessageBuilder, Webhook } from "discord-webhook-node";
 import { Colors } from "discord.js";
+import { sendWebhookMessage } from "../../lib/discord/webhooks.mjs";
 
 export default function filterApiRoute(
   app,
@@ -118,7 +119,18 @@ export default function filterApiRoute(
             .setTimestamp();
 
           console.log("Sending flagged content to staff channel...");
-          await staffChannelHook.send(embed);
+          const webhookSent = await sendWebhookMessage(
+            staffChannelHook,
+            embed,
+            { context: "api/filter" }
+          );
+
+          if (!webhookSent) {
+            return res.send({
+              success: false,
+              message: "Content flagged, but staff could not be notified.",
+            });
+          }
 
           return res.send({
             success: false,
