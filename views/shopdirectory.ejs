@@ -1,6 +1,6 @@
 <%- include("modules/header.ejs", {
     pageTitle: pageTitle,
-    pageDescription: "The Shop Directory provides a comprehensive listing of available shops, showcasing items for sale, their prices, stock levels, and the shop owners' details to help you find what you're looking for quickly and easily."
+    pageDescription: "The Shop Directory highlights every community shop with clear pricing, stock and owner information so you can jump straight into the world of trading.",
 }) %>
 
 <%- include("modules/navigationBar.ejs") %>
@@ -10,264 +10,373 @@
   backgroundImage: globalImage
 }) %>
 
-<section class="section section-shop-directory">
+<section class="section section-shop-directory" data-page="shop-directory">
   <div class="container">
-    <div class="shop-directory-header">
-      <h2 class="h3">Find the perfect shop for your next purchase</h2>
-      <p class="shop-directory-subtitle mb-0">Use the search and filters below to quickly discover items, compare prices, and jump straight to the shop owner's profile.</p>
+    <div class="shop-directory-hero text-center">
+      <h2 class="h3">Explore every shop in one place</h2>
+      <p class="shop-directory-subtitle mb-0">Browse the marketplace, compare prices, and head straight to the owners who stock what you need.</p>
     </div>
 
-    <div class="table-responsive shop-table-wrapper">
-      <div class="shop-directory-loader" id="shopTableLoader" role="status" aria-live="polite">
+    <div class="shop-directory-controls" role="region" aria-label="Shop directory controls">
+      <label class="shop-directory-search" for="shopSearch">
+        <span class="shop-directory-search-label">Search</span>
+        <input
+          type="search"
+          id="shopSearch"
+          class="form-control"
+          placeholder="Search by item or owner"
+          autocomplete="off"
+          spellcheck="false"
+          enterkeyhint="search"
+        />
+      </label>
+      <button type="button" class="btn btn-outline-primary shop-directory-refresh" data-shop-refresh>
+        Refresh
+      </button>
+    </div>
+
+    <p class="shop-directory-status" id="shopStatus" role="status" aria-live="polite"></p>
+
+    <div class="shop-directory-surface" data-shop-surface>
+      <div class="shop-directory-loader" data-shop-loader role="status" aria-live="polite">
         <div class="shop-directory-spinner" aria-hidden="true"></div>
-        <p class="shop-directory-loading-text mb-0">Loading shop listings…</p>
+        <p class="mb-0">Loading shop listings…</p>
       </div>
 
-      <table id="shopTable" class="display table table-striped table-hover align-middle w-100 shop-table-hidden" aria-describedby="shopTableLoader">
-        <thead class="table-light">
-          <tr>
-            <th scope="col">Item</th>
-            <th scope="col">Shop Owner</th>
-            <th scope="col">Amount</th>
-            <th scope="col">Price</th>
-            <th scope="col">Stock</th>
-            <th scope="col">Location</th>
-          </tr>
-        </thead>
-        <tbody id="shopTableBody"></tbody>
-      </table>
+      <ul class="shop-directory-list" data-shop-list aria-live="polite" aria-busy="true"></ul>
+
+      <button type="button" class="btn btn-outline-primary shop-directory-retry" data-shop-retry hidden>
+        Try again
+      </button>
     </div>
   </div>
+</section>
 
-  <script>
-    $(document).ready(function() {
-      const $shopTable = $('#shopTable');
-      const $shopTableBody = $('#shopTableBody');
-      const $shopTableLoader = $('#shopTableLoader');
-      const MAX_ATTEMPTS = 3;
+<template id="shop-card-template">
+  <li class="shop-card">
+    <header class="shop-card-top">
+      <div class="shop-card-item">
+        <span class="shop-card-label">Item</span>
+        <div class="shop-card-item-details">
+          <img class="shop-card-item-image" data-shop-item-image src="/images/meta-siteLogo.png" alt="" loading="lazy" />
+          <p class="shop-card-item-name" data-shop-item-name>Unknown item</p>
+        </div>
+      </div>
+      <div class="shop-card-owner">
+        <span class="shop-card-label">Owner</span>
+        <div class="shop-card-owner-details">
+          <img class="shop-card-owner-avatar" data-shop-owner-avatar src="/images/meta-siteLogo.png" alt="" loading="lazy" />
+          <a class="shop-card-owner-link" data-shop-owner-link href="#">Owner</a>
+          <span class="shop-card-owner-text" data-shop-owner-text hidden>Owner</span>
+        </div>
+      </div>
+    </header>
 
-      function prepareForLoad(message = 'Loading shop listings…') {
-        if ($.fn.DataTable && $.fn.DataTable.isDataTable($shopTable)) {
-          $shopTable.DataTable().clear().destroy();
-        }
+    <dl class="shop-card-stats">
+      <div class="shop-card-stat">
+        <dt>Price</dt>
+        <dd data-shop-item-price>—</dd>
+      </div>
+      <div class="shop-card-stat">
+        <dt>Amount</dt>
+        <dd data-shop-item-amount>—</dd>
+      </div>
+      <div class="shop-card-stat">
+        <dt>Stock</dt>
+        <dd data-shop-item-stock>—</dd>
+      </div>
+    </dl>
 
-        $shopTableBody.empty();
-        $shopTable.addClass('shop-table-hidden');
-        $shopTable.attr('aria-busy', 'true');
+    <footer class="shop-card-footer">
+      <span class="shop-card-label">Location</span>
+      <code class="shop-card-location" data-shop-item-location>N/A</code>
+    </footer>
+  </li>
+</template>
 
-        $shopTableLoader
-          .removeClass('shop-directory-loader--hidden shop-directory-loader--error')
-          .attr('aria-hidden', 'false');
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    const listEl = document.querySelector('[data-shop-list]');
+    const loaderEl = document.querySelector('[data-shop-loader]');
+    const retryButton = document.querySelector('[data-shop-retry]');
+    const refreshButton = document.querySelector('[data-shop-refresh]');
+    const searchInput = document.getElementById('shopSearch');
+    const statusEl = document.getElementById('shopStatus');
+    const template = document.getElementById('shop-card-template');
 
-        $shopTableLoader
-          .find('.shop-directory-loading-text')
-          .text(message);
+    if (!listEl || !loaderEl || !retryButton || !refreshButton || !searchInput || !statusEl || !template) {
+      console.error('Shop directory markup is incomplete.');
+      return;
+    }
 
-        $shopTableLoader.find('.shop-directory-retry').remove();
+    const DEFAULT_STATUS = 'Use the search box to quickly narrow down the shops shown below.';
+    const FALLBACK_IMAGE = '/images/meta-siteLogo.png';
+    let controller = null;
+    let shops = [];
+
+    function setStatus(message, tone = 'default') {
+      statusEl.textContent = message;
+      statusEl.classList.toggle('shop-directory-status--error', tone === 'error');
+    }
+
+    function toggleLoader(visible, message = 'Loading shop listings…') {
+      const statusText = loaderEl.querySelector('p');
+      if (statusText) {
+        statusText.textContent = message;
       }
 
-      function hideLoader() {
-        $shopTableLoader
-          .addClass('shop-directory-loader--hidden')
-          .removeClass('shop-directory-loader--error')
-          .attr('aria-hidden', 'true');
+      loaderEl.hidden = !visible;
+      listEl.setAttribute('aria-busy', visible ? 'true' : 'false');
+    }
+
+    function toggleRetry(show) {
+      retryButton.hidden = !show;
+      retryButton.disabled = !show;
+    }
+
+    function formatValue(value) {
+      if (value === null || value === undefined) {
+        return '—';
       }
 
-      function showError(message) {
-        $shopTableLoader
-          .removeClass('shop-directory-loader--hidden')
-          .addClass('shop-directory-loader--error')
-          .attr('aria-hidden', 'false');
-
-        $shopTableLoader
-          .find('.shop-directory-loading-text')
-          .text(message);
-
-        let $retryButton = $shopTableLoader.find('.shop-directory-retry');
-
-        if (!$retryButton.length) {
-          $retryButton = $('<button>')
-            .attr('type', 'button')
-            .addClass('btn btn-primary btn-sm shop-directory-retry')
-            .text('Try again');
-
-          $shopTableLoader.append($retryButton);
-        } else {
-          $retryButton.prop('disabled', false).text('Try again');
-        }
+      if (typeof value === 'number') {
+        return value.toLocaleString();
       }
 
-      function buildShopRow(shop) {
-        const $row = $('<tr>');
-
-        const itemImage = shop?.itemData?.image || '/images/meta-siteLogo.png';
-        const itemName = shop?.itemData?.displayName || 'Unknown Item';
-        const ownerAvatar = shop?.userData?.profilePicture || '/images/meta-siteLogo.png';
-        const ownerUsername = shop?.userData?.username || 'Unknown';
-        const hasOwnerProfile = Boolean(shop?.userData?.username);
-        const ownerProfileUrl = `/profile/${ownerUsername}`;
-
-        const $itemCell = $('<td>').attr('data-label', 'Item');
-        const $itemWrapper = $('<div>').addClass('shop-item-cell');
-        $('<img>').addClass('shop-item-image').attr({ src: itemImage, alt: itemName }).appendTo($itemWrapper);
-        $('<span>').addClass('shop-item-name').text(itemName).appendTo($itemWrapper);
-        $itemCell.append($itemWrapper);
-        $row.append($itemCell);
-
-        const $ownerCell = $('<td>').attr('data-label', 'Shop Owner');
-        const $ownerWrapper = $('<div>').addClass('shop-owner-cell');
-        $('<img>').addClass('shop-owner-avatar').attr({ src: ownerAvatar, alt: ownerUsername }).appendTo($ownerWrapper);
-        if (hasOwnerProfile) {
-          $('<a>')
-            .addClass('shop-owner-link')
-            .attr('href', ownerProfileUrl)
-            .text(ownerUsername)
-            .appendTo($ownerWrapper);
-        } else {
-          $('<span>')
-            .addClass('shop-owner-link shop-owner-link--placeholder')
-            .attr('aria-label', 'Unknown shop owner')
-            .text(ownerUsername)
-            .appendTo($ownerWrapper);
-        }
-        $ownerCell.append($ownerWrapper);
-        $row.append($ownerCell);
-
-        const $amountCell = $('<td>').attr('data-label', 'Amount').addClass('text-nowrap');
-        $('<code>').text(shop?.amount ?? '0').appendTo($amountCell);
-        $row.append($amountCell);
-
-        const $priceCell = $('<td>').attr('data-label', 'Price').addClass('text-nowrap');
-        $('<code>').text(shop?.price ?? '0').appendTo($priceCell);
-        $row.append($priceCell);
-
-        const $stockCell = $('<td>').attr('data-label', 'Stock').addClass('text-nowrap');
-        $('<code>').text(shop?.stock ?? '0').appendTo($stockCell);
-        $row.append($stockCell);
-
-        const $locationCell = $('<td>').attr('data-label', 'Location').addClass('shop-location');
-        const coordinates = [shop?.x, shop?.y, shop?.z]
-          .filter((coord) => coord !== undefined && coord !== null)
-          .join(', ');
-        $('<code>').text(coordinates || 'N/A').appendTo($locationCell);
-        $row.append($locationCell);
-
-        return $row;
+      if (typeof value === 'string' && value.trim().length === 0) {
+        return '—';
       }
 
-      function initialiseTable(emptyMessage) {
-        if (typeof $.fn.DataTable !== 'function') {
-          console.warn('DataTables library is unavailable; rendering plain table instead.');
-          return false;
-        }
+      return String(value);
+    }
 
-        if ($.fn.DataTable.isDataTable($shopTable)) {
-          $shopTable.DataTable().destroy();
-        }
-
-        const shopTable = $shopTable.DataTable({
-          paging: true,
-          searching: true,
-          ordering: true,
-          info: true,
-          responsive: true,
-          autoWidth: false,
-          columnDefs: [
-            { targets: 0, responsivePriority: 1 },
-            { targets: 1, responsivePriority: 2 },
-            { targets: [2, 3, 4, 5], responsivePriority: 3 }
-          ],
-          language: {
-            search: '',
-            searchPlaceholder: 'Search items, shop owners or locations...',
-            emptyTable: emptyMessage || 'No shop listings available.'
-          }
-        });
-
-        const $shopTableFilter = $('#shopTable_filter');
-        const $shopTableLength = $('#shopTable_length');
-
-        $shopTableFilter.find('input')
-          .addClass('form-control form-control-sm')
-          .attr('aria-label', 'Search shop directory');
-
-        $shopTableLength.find('select')
-          .addClass('form-select form-select-sm')
-          .attr('aria-label', 'Select number of shop records to display');
-
-        $shopTableFilter.addClass('shop-table-search');
-        $shopTableLength.addClass('shop-table-length');
-
-        return true;
+    function buildLocation(shop) {
+      const coordinates = [shop?.x, shop?.y, shop?.z].filter((coord) => coord !== null && coord !== undefined);
+      if (!coordinates.length) {
+        return 'N/A';
       }
 
-      async function requestShopDirectory(attempt = 1) {
-        try {
-          const response = await fetch('/shopdirectory/data', { cache: 'no-store' });
+      return coordinates.map((coord) => {
+        return typeof coord === 'number' ? coord.toLocaleString() : coord;
+      }).join(', ');
+    }
 
-          let payload = {};
+    function resolveImageUrl(url) {
+      if (!url || typeof url !== 'string') {
+        return FALLBACK_IMAGE;
+      }
 
-          try {
-            payload = await response.json();
-          } catch (parseError) {
-            console.error('Unable to parse shop directory response as JSON', parseError);
-            throw new Error('Received an invalid response while loading shop listings.');
-          }
+      return url;
+    }
 
-          const apiMessage = typeof payload?.message === 'string' ? payload.message : '';
-          const noShopsAvailable = /no shops available/i.test(apiMessage);
+    function normalisePayload(payload) {
+      if (Array.isArray(payload)) {
+        return payload;
+      }
 
-          if (!response.ok || (payload?.success === false && !noShopsAvailable)) {
-            throw new Error(apiMessage || `Unable to load shop listings (status ${response.status}).`);
-          }
+      if (payload && Array.isArray(payload.data)) {
+        return payload.data;
+      }
 
-          const listings = Array.isArray(payload?.data) ? payload.data : [];
+      if (payload && Array.isArray(payload.shops)) {
+        return payload.shops;
+      }
 
-          listings.forEach((shop) => {
-            $shopTableBody.append(buildShopRow(shop));
-          });
+      return [];
+    }
 
-          $shopTable.removeClass('shop-table-hidden');
+    function createCard(shop) {
+      const fragment = template.content.cloneNode(true);
+      const itemImageEl = fragment.querySelector('[data-shop-item-image]');
+      const itemNameEl = fragment.querySelector('[data-shop-item-name]');
+      const ownerAvatarEl = fragment.querySelector('[data-shop-owner-avatar]');
+      const ownerLinkEl = fragment.querySelector('[data-shop-owner-link]');
+      const ownerTextEl = fragment.querySelector('[data-shop-owner-text]');
+      const priceEl = fragment.querySelector('[data-shop-item-price]');
+      const amountEl = fragment.querySelector('[data-shop-item-amount]');
+      const stockEl = fragment.querySelector('[data-shop-item-stock]');
+      const locationEl = fragment.querySelector('[data-shop-item-location]');
 
-          initialiseTable(noShopsAvailable ? (apiMessage || 'There are no shops available.') : undefined);
+      const itemName = shop?.itemData?.displayName || shop?.itemName || 'Unknown item';
+      const itemImage = resolveImageUrl(shop?.itemData?.image || shop?.itemImage);
+      const ownerUsername = shop?.userData?.username || shop?.ownerName || '';
+      const ownerAvatar = resolveImageUrl(shop?.userData?.profilePicture || shop?.ownerAvatar);
 
-          hideLoader();
-          $shopTable.attr('aria-busy', 'false');
-        } catch (error) {
-          console.error('Failed to load shop directory listings', error);
-          $shopTable.attr('aria-busy', 'false');
+      if (itemImageEl) {
+        itemImageEl.src = itemImage;
+        itemImageEl.alt = itemName;
+      }
 
-          if (attempt < MAX_ATTEMPTS) {
-            const nextAttempt = attempt + 1;
-            const retryDelay = Math.min(5000, attempt * 2000);
+      if (itemNameEl) {
+        itemNameEl.textContent = itemName;
+      }
 
-            $shopTableLoader
-              .removeClass('shop-directory-loader--error')
-              .find('.shop-directory-loading-text')
-              .text(`Still loading shop listings… retry ${nextAttempt} of ${MAX_ATTEMPTS} shortly.`);
+      if (ownerAvatarEl) {
+        ownerAvatarEl.src = ownerAvatar;
+        ownerAvatarEl.alt = ownerUsername || 'Unknown owner';
+      }
 
-            setTimeout(() => requestShopDirectory(nextAttempt), retryDelay);
-            return;
-          }
-
-          showError(
-            error?.message ||
-              "We're having trouble loading the shop listings. Please refresh to try again."
-          );
+      if (ownerUsername && ownerLinkEl) {
+        ownerLinkEl.textContent = ownerUsername;
+        ownerLinkEl.href = `/profile/${encodeURIComponent(ownerUsername)}`;
+        ownerLinkEl.hidden = false;
+        if (ownerTextEl) {
+          ownerTextEl.hidden = true;
+        }
+      } else if (ownerTextEl) {
+        ownerTextEl.textContent = ownerUsername || 'Unknown owner';
+        ownerTextEl.hidden = false;
+        if (ownerLinkEl) {
+          ownerLinkEl.hidden = true;
         }
       }
 
-      $shopTableLoader.on('click', '.shop-directory-retry', function () {
-        const $button = $(this);
-        $button.prop('disabled', true).text('Retrying…');
-        prepareForLoad('Retrying shop listings…');
-        requestShopDirectory();
+      if (priceEl) {
+        priceEl.textContent = formatValue(shop?.price);
+      }
+
+      if (amountEl) {
+        amountEl.textContent = formatValue(shop?.amount);
+      }
+
+      if (stockEl) {
+        stockEl.textContent = formatValue(shop?.stock);
+      }
+
+      if (locationEl) {
+        locationEl.textContent = buildLocation(shop);
+      }
+
+      return fragment;
+    }
+
+    function renderList(items) {
+      const fragment = document.createDocumentFragment();
+      items.forEach((shop) => {
+        fragment.appendChild(createCard(shop));
       });
 
-      prepareForLoad();
-      requestShopDirectory();
+      listEl.innerHTML = '';
+      listEl.appendChild(fragment);
+      listEl.dataset.empty = items.length === 0 ? 'true' : 'false';
+    }
+
+    function applyFilter() {
+      const query = searchInput.value.trim().toLowerCase();
+      let filtered = shops;
+
+      if (query) {
+        filtered = shops.filter((shop) => {
+          const itemName = (shop?.itemData?.displayName || shop?.itemName || '').toLowerCase();
+          const ownerName = (shop?.userData?.username || shop?.ownerName || '').toLowerCase();
+          return itemName.includes(query) || ownerName.includes(query);
+        });
+      }
+
+      renderList(filtered);
+
+      if (!shops.length) {
+        setStatus('No shops are available right now. Please check back later.', 'default');
+        return;
+      }
+
+      if (!filtered.length) {
+        setStatus('No shops match your search just yet. Try a different item or owner name.', 'default');
+        return;
+      }
+
+      if (!query && filtered.length === shops.length) {
+        const summary = `${shops.length.toLocaleString()} shops loaded. ${DEFAULT_STATUS}`;
+        setStatus(summary, 'default');
+        return;
+      }
+
+      const summary = filtered.length === shops.length
+        ? `${shops.length.toLocaleString()} shops loaded.`
+        : `Showing ${filtered.length.toLocaleString()} of ${shops.length.toLocaleString()} shops.`;
+
+      setStatus(summary, 'default');
+    }
+
+    async function loadShops({ showLoader = true, refresh = false } = {}) {
+      if (controller) {
+        controller.abort();
+      }
+
+      controller = new AbortController();
+      toggleRetry(false);
+      setStatus(refresh ? 'Refreshing the shop directory…' : 'Fetching the latest shop data…', 'default');
+
+      if (showLoader) {
+        toggleLoader(true, refresh ? 'Refreshing shop listings…' : 'Loading shop listings…');
+      }
+
+      try {
+        const fetchUrl = refresh ? '/shopdirectory/data?refresh=true' : '/shopdirectory/data';
+        const response = await fetch(fetchUrl, {
+          method: 'GET',
+          headers: { 'Accept': 'application/json' },
+          signal: controller.signal,
+        });
+
+        if (!response.ok) {
+          let errorMessage = `Unable to load shop directory (status ${response.status}).`;
+          try {
+            const errorPayload = await response.json();
+            if (errorPayload && typeof errorPayload.message === 'string') {
+              errorMessage = errorPayload.message;
+            }
+          } catch (error) {
+            // Ignore parsing errors for non-JSON responses.
+          }
+
+          throw new Error(errorMessage);
+        }
+
+        const payload = await response.json();
+        shops = normalisePayload(payload);
+
+        if (!Array.isArray(shops)) {
+          shops = [];
+        }
+
+        if (!shops.length) {
+          setStatus('No shops are available right now. Please check back later.', 'default');
+        } else {
+          setStatus(DEFAULT_STATUS, 'default');
+        }
+
+        applyFilter();
+      } catch (error) {
+        if (error.name === 'AbortError') {
+          return;
+        }
+
+        console.error('Failed to load shop directory', error);
+        setStatus(error.message || 'We could not load the shop directory. Please try again shortly.', 'error');
+        listEl.innerHTML = '';
+        listEl.dataset.empty = 'true';
+        toggleRetry(true);
+      } finally {
+        toggleLoader(false);
+      }
+    }
+
+    retryButton.addEventListener('click', () => {
+      retryButton.disabled = true;
+      loadShops({ showLoader: true, refresh: true });
     });
-  </script>
-</section>
+
+    refreshButton.addEventListener('click', () => {
+      loadShops({ showLoader: true, refresh: true });
+    });
+
+    searchInput.addEventListener('input', () => {
+      applyFilter();
+    });
+
+    loadShops({ showLoader: true });
+  });
+</script>
 
 <%- include("modules/footer.ejs") %>

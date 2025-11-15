@@ -12,6 +12,12 @@ import profileSiteRoutes from "./profileRoutes.js";
 
 const rankData = require("../ranks.json");
 
+const SHOP_DIRECTORY_CACHE_TTL = 60 * 1000;
+let shopDirectoryCache = {
+  payload: null,
+  timestamp: 0,
+};
+
 export default function applicationSiteRoutes(
   app,
   client,
@@ -162,6 +168,19 @@ export default function applicationSiteRoutes(
       });
     }
 
+    res.set("Cache-Control", "no-store");
+
+    const refreshRequested = req.query?.refresh === "true";
+    const now = Date.now();
+
+    if (
+      !refreshRequested &&
+      shopDirectoryCache.payload &&
+      now - shopDirectoryCache.timestamp < SHOP_DIRECTORY_CACHE_TTL
+    ) {
+      return res.json(shopDirectoryCache.payload);
+    }
+
     try {
       const shopFetchURL = `${process.env.siteAddress}/api/shop/get`;
       const shopResponse = await fetch(shopFetchURL, {
@@ -187,6 +206,10 @@ export default function applicationSiteRoutes(
       }
 
       const shopApiData = await shopResponse.json();
+      shopDirectoryCache = {
+        payload: shopApiData,
+        timestamp: Date.now(),
+      };
       return res.json(shopApiData);
     } catch (error) {
       console.error("Failed to load shop directory data", error);
