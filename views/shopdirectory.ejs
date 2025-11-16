@@ -29,13 +29,13 @@
             <tr>
               <td data-label="Item" class="shop-directory__item">
                 <div class="shop-directory__item-content">
-                  <img src="<%= shop.itemData.image %>" alt="<%= shop.itemData.displayName %>" class="shop-directory__item-image">
+                  <img src="<%= shop.itemData.image %>" alt="<%= shop.itemData.displayName %>" class="shop-directory__item-image" loading="lazy">
                   <span class="shop-directory__item-name"><%= shop.itemData.displayName %></span>
                 </div>
               </td>
               <td data-label="Shop Owner" class="shop-directory__owner">
                 <div class="shop-directory__owner-content">
-                  <img src="<%= shop.userData.profilePicture %>" alt="<%= shop.userData.username %>" class="shop-directory__owner-avatar">
+                  <img src="<%= shop.userData.profilePicture %>" alt="<%= shop.userData.username %>" class="shop-directory__owner-avatar" loading="lazy">
                   <a href="/profile/<%= shop.userData.username %>" class="shop-directory__owner-name"><%= shop.userData.username %></a>
                 </div>
               </td>
@@ -58,7 +58,11 @@
         "paging": true,
         "searching": true,
         "ordering": true,
-        "info": true
+        "info": true,
+        "pageLength": 25,
+        "lengthChange": false,
+        "deferRender": true,
+        "responsive": true
       });
     });
   </script>
