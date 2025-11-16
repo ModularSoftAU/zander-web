@@ -8,9 +8,9 @@ import {
   EmbedBuilder,
 } from "discord.js";
 import fetch from "node-fetch";
-import { resolveDiscordUserId } from "./lib/resolveDiscordMember.mjs";
-import { hasPermission } from "./lib/permissions.mjs";
-import { formatDiscordTimestamp } from "./lib/discordFormatting.mjs";
+import { resolveDiscordUserId } from "../lib/discord/resolveDiscordMember.mjs";
+import { hasPermission } from "../lib/discord/permissions.mjs";
+import { formatDiscordTimestamp } from "../lib/discord/discordFormatting.mjs";
 import {
   getUserPermissions,
   UserGetter,

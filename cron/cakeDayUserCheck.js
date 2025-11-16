@@ -6,19 +6,20 @@ import { createRequire } from "module";
 const require = createRequire(import.meta.url);
 const config = require("../config.json");
 import moment from "moment";
+import { sendWebhookMessage } from "../lib/discord/webhooks.mjs";
 
 var cakeDayUserCheckTask = cron.schedule("0 7 * * *", () => {
   try {
     db.query(
       `SELECT * FROM users WHERE DATE_FORMAT(joined, '%m-%d') = DATE_FORMAT(CURDATE(), '%m-%d') AND YEAR(joined) != YEAR(CURDATE()) AND account_registered IS NOT NULL;`,
-      function (error, results, fields) {
+      async function (error, results, fields) {
         if (error) {
           return console.log(`Error: ${error}`);
         }
 
         const welcomeHook = new Webhook(config.discord.webhooks.welcome);
 
-        results.forEach((user) => {
+        for (const user of results) {
           const joinDate = moment(user.joined); // Parse the join date
           const years = moment().diff(joinDate, "years"); // Calculate the difference in years
 
@@ -32,8 +33,10 @@ var cakeDayUserCheckTask = cron.schedule("0 7 * * *", () => {
               `To get your cake day mention, make sure you are a member on our website.`
             );
 
-          welcomeHook.send(embed);
-        });
+          await sendWebhookMessage(welcomeHook, embed, {
+            context: "cron/cakeDayUserCheck",
+          });
+        }
       }
     );
   } catch (error) {

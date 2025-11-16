@@ -3,6 +3,7 @@ import {
   updateAudit_lastMinecraftMessage,
 } from "../../controllers/auditController.js";
 import { Webhook } from "discord-webhook-node";
+import { sendWebhookMessage } from "../../lib/discord/webhooks.mjs";
 import { isFeatureEnabled, required } from "../common.js";
 
 export default function discordApiRoute(
@@ -25,9 +26,18 @@ export default function discordApiRoute(
         config.discord.webhooks.networkChatLog
       );
 
-      networkChatLogHook.send(
-        `:twisted_rightwards_arrows: | \`${username}\` switched to \`${server}\``
+      const webhookSent = await sendWebhookMessage(
+        networkChatLogHook,
+        `:twisted_rightwards_arrows: | \`${username}\` switched to \`${server}\``,
+        { context: "api/discord#switch" }
       );
+
+      if (!webhookSent) {
+        return res.send({
+          success: false,
+          message: "Unable to deliver Discord notification right now.",
+        });
+      }
 
       return res.send({
         success: true,
@@ -68,7 +78,18 @@ export default function discordApiRoute(
         config.discord.webhooks.networkChatLog
       );
 
-      networkChatLogHook.send(`**${server}** | \`${username}\` :: ${content}`);
+      const webhookSent = await sendWebhookMessage(
+        networkChatLogHook,
+        `**${server}** | \`${username}\` :: ${content}`,
+        { context: "api/discord#chat" }
+      );
+
+      if (!webhookSent) {
+        return res.send({
+          success: false,
+          message: "Unable to deliver Discord notification right now.",
+        });
+      }
 
       return res.send({
         success: true,
@@ -88,20 +109,29 @@ export default function discordApiRoute(
     //
     // Send Discord Message to Log
     //
-     try {
-       const networkChatLogHook = new Webhook(
-         config.discord.webhooks.networkChatLog
-       );
+    try {
+      const networkChatLogHook = new Webhook(
+        config.discord.webhooks.networkChatLog
+      );
 
-       networkChatLogHook.send(
-         `:ballot_box_with_check: | \`${username}\` has joined the Network.`
-       );
-     } catch (error) {
-       return res.send({
-         success: false,
-         message: `${error}`,
-       });
-     }
+      const webhookSent = await sendWebhookMessage(
+        networkChatLogHook,
+        `:ballot_box_with_check: | \`${username}\` has joined the Network.`,
+        { context: "api/discord#join" }
+      );
+
+      if (!webhookSent) {
+        return res.send({
+          success: false,
+          message: "Unable to deliver Discord notification right now.",
+        });
+      }
+    } catch (error) {
+      return res.send({
+        success: false,
+        message: `${error}`,
+      });
+    }
   });
 
   app.post(baseEndpoint + "/leave", async function (req, res) {
@@ -123,24 +153,33 @@ export default function discordApiRoute(
     //
     // Send Discord Message to Log
     //
-    try {
-      const networkChatLogHook = new Webhook(
-        config.discord.webhooks.networkChatLog
-      );
+      try {
+        const networkChatLogHook = new Webhook(
+          config.discord.webhooks.networkChatLog
+        );
 
-      networkChatLogHook.send(
-        `:negative_squared_cross_mark: | \`${username}\` has left the Network.`
-      );
+        const webhookSent = await sendWebhookMessage(
+          networkChatLogHook,
+          `:negative_squared_cross_mark: | \`${username}\` has left the Network.`,
+          { context: "api/discord#leave" }
+        );
 
-      res.send({
-        success: true,
-      });
-    } catch (error) {
-      res.send({
-        success: false,
-        message: `${error}`,
-      });
-    }
+        if (!webhookSent) {
+          return res.send({
+            success: false,
+            message: "Unable to deliver Discord notification right now.",
+          });
+        }
+
+        res.send({
+          success: true,
+        });
+      } catch (error) {
+        res.send({
+          success: false,
+          message: `${error}`,
+        });
+      }
 
     return res;
   });
@@ -151,24 +190,33 @@ export default function discordApiRoute(
     const command = required(req.body, "command", res);
     const server = required(req.body, "server", res);
 
-    try {
-      const networkChatLogHook = new Webhook(
-        config.discord.webhooks.networkChatLog
-      );
+      try {
+        const networkChatLogHook = new Webhook(
+          config.discord.webhooks.networkChatLog
+        );
 
-      networkChatLogHook.send(
-        `:floppy_disk: | **${server}** | \`${username}\` executed command \`${command}\``
-      );
+        const webhookSent = await sendWebhookMessage(
+          networkChatLogHook,
+          `:floppy_disk: | **${server}** | \`${username}\` executed command \`${command}\``,
+          { context: "api/discord#spy-command" }
+        );
 
-      return res.send({
-        success: true,
-      });
-    } catch (error) {
-      return res.send({
-        success: false,
-        message: `${error}`,
-      });
-    }
+        if (!webhookSent) {
+          return res.send({
+            success: false,
+            message: "Unable to deliver Discord notification right now.",
+          });
+        }
+
+        return res.send({
+          success: true,
+        });
+      } catch (error) {
+        return res.send({
+          success: false,
+          message: `${error}`,
+        });
+      }
 
     return res;
   });
@@ -185,9 +233,18 @@ export default function discordApiRoute(
         config.discord.webhooks.networkChatLog
       );
 
-      networkChatLogHook.send(
-        `:speaking_head: | **${server}** | \`${usernameFrom}\` => \`${usernameTo}\`: \`${directMessage}\``
+      const webhookSent = await sendWebhookMessage(
+        networkChatLogHook,
+        `:speaking_head: | **${server}** | \`${usernameFrom}\` => \`${usernameTo}\`: \`${directMessage}\``,
+        { context: "api/discord#spy-directMessage" }
       );
+
+      if (!webhookSent) {
+        return res.send({
+          success: false,
+          message: "Unable to deliver Discord notification right now.",
+        });
+      }
 
       return res.send({
         success: true,
