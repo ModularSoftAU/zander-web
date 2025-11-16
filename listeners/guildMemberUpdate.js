@@ -6,6 +6,7 @@ const config = require("../config.json");
 import { EmbedBuilder } from "discord.js";
 const features = require("../features.json");
 import { MessageBuilder, Webhook } from "discord-webhook-node";
+import { sendWebhookMessage } from "../lib/discord/webhooks.mjs";
 
 export class GuildMemberUpdateListener extends Listener {
   constructor(context, options) {
@@ -16,7 +17,7 @@ export class GuildMemberUpdateListener extends Listener {
     });
   }
 
-  run(oldMember, newMember) {
+  async run(oldMember, newMember) {
     if (features.discord.events.guildMemberVerify) {
       if (!newMember.guild) return;
       if (newMember.user.bot) return;
@@ -39,7 +40,9 @@ export class GuildMemberUpdateListener extends Listener {
             randomJoinMessage.replace("%USERNAME%", newMember.user.username)
           )
           .setColor(`#${randomColor}`);
-        welcomeHook.send(embed);
+        await sendWebhookMessage(welcomeHook, embed, {
+          context: "listeners/guildMemberUpdate",
+        });
       }
       return;
     }
