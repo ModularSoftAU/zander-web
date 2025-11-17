@@ -12,6 +12,7 @@ export default function shopApiRoute(app, config, db, features, lang) {
     const includeOutOfStock = optional(req.query, "includeOutOfStock");
     const includeOutOfStockValue =
       String(includeOutOfStock).toLowerCase() === "true";
+    const owner = optional(req.query, "owner");
     const concurrencyLimit = pLimit(10);
 
     const rawLimit = Number.parseInt(req.query.limit, 10);
@@ -20,27 +21,6 @@ export default function shopApiRoute(app, config, db, features, lang) {
     const offsetValue = Math.max(rawOffset || 0, 0);
 
     try {
-      const dbQueryParams = [];
-      const whereParts = [];
-
-      if (material) {
-        whereParts.push("(item LIKE ? OR item LIKE ?)");
-        dbQueryParams.push(`%${material}%`);
-        dbQueryParams.push(`%${material.toUpperCase().replace(/ /g, "_")}%`);
-      }
-
-      if (!includeOutOfStockValue) {
-        whereParts.push("stock > 0");
-      }
-
-      const whereClause = whereParts.length
-        ? `WHERE ${whereParts.join(" AND ")}`
-        : "";
-
-      const dataQuery = `SELECT * FROM shoppingDirectory ${whereClause} ORDER BY id DESC LIMIT ? OFFSET ?`;
-
-      const countQuery = `SELECT COUNT(*) as total FROM shoppingDirectory ${whereClause}`;
-
       const runQuery = (query, params = []) =>
         new Promise((resolve, reject) => {
           db.query(query, params, (error, results) => {
@@ -54,6 +34,56 @@ export default function shopApiRoute(app, config, db, features, lang) {
           });
         });
 
+      const dbQueryParams = [];
+      const whereParts = [];
+      let ownerId;
+
+      if (material) {
+        whereParts.push("(item LIKE ? OR item LIKE ?)");
+        dbQueryParams.push(`%${material}%`);
+        dbQueryParams.push(`%${material.toUpperCase().replace(/ /g, "_")}%`);
+      }
+
+      if (owner) {
+        const ownerResults = await runQuery(
+          "SELECT id FROM users WHERE username = ?",
+          [owner]
+        );
+        ownerId = ownerResults?.[0]?.id;
+
+        if (!ownerId) {
+          res.send({
+            success: true,
+            data: [],
+            message: "No shops available for that owner.",
+            meta: {
+              total: 0,
+              limit: limitValue,
+              offset: offsetValue,
+              hasMore: false,
+            },
+          });
+          return;
+        }
+      }
+
+      if (!includeOutOfStockValue) {
+        whereParts.push("stock > 0");
+      }
+
+      if (ownerId) {
+        whereParts.push("userId = ?");
+        dbQueryParams.push(ownerId);
+      }
+
+      const whereClause = whereParts.length
+        ? `WHERE ${whereParts.join(" AND ")}`
+        : "";
+
+      const dataQuery = `SELECT * FROM shoppingDirectory ${whereClause} ORDER BY id DESC LIMIT ? OFFSET ?`;
+
+      const countQuery = `SELECT COUNT(*) as total FROM shoppingDirectory ${whereClause}`;
+
       const totalResults = await runQuery(countQuery, dbQueryParams);
       const total = totalResults?.[0]?.total || 0;
 
@@ -64,8 +94,9 @@ export default function shopApiRoute(app, config, db, features, lang) {
       ]);
 
       if (!shopResults.length) {
-        res.send({
-          success: false,
+        return res.send({
+          success: true,
+          data: [],
           message: "There are no shops available.",
           meta: {
             total,
@@ -74,7 +105,6 @@ export default function shopApiRoute(app, config, db, features, lang) {
             hasMore: false,
           },
         });
-        return;
       }
 
       try {

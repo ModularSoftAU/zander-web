@@ -145,13 +145,15 @@ export default function applicationSiteRoutes(
     isFeatureWebRouteEnabled(features.shopdirectory, req, res, features);
 
     const includeOutOfStock = req.query.includeOutOfStock === "true";
+    const owner = (req.query.owner || "").trim();
     //
     // Get all Shops
     //
     const includeOutOfStockParam = includeOutOfStock
       ? "&includeOutOfStock=true"
       : "";
-    const shopFetchURL = `${process.env.siteAddress}/api/shop/get?limit=50&offset=0${includeOutOfStockParam}`;
+    const ownerParam = owner ? `&owner=${encodeURIComponent(owner)}` : "";
+    const shopFetchURL = `${process.env.siteAddress}/api/shop/get?limit=50&offset=0${includeOutOfStockParam}${ownerParam}`;
     const shopResponse = await fetch(shopFetchURL, {
       headers: { "x-access-token": process.env.apiKey },
     });
@@ -164,6 +166,7 @@ export default function applicationSiteRoutes(
       features: features,
       shopApiData: shopApiData,
       includeOutOfStock,
+      owner,
       globalImage: await getGlobalImage(),
       announcementWeb: await getWebAnnouncement(),
     });
