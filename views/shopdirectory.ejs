@@ -13,6 +13,13 @@
 <section class="section">
   <div class="container">
     <div class="shop-directory">
+      <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-2 mb-3">
+        <div class="form-check">
+          <input class="form-check-input" type="checkbox" id="includeOutOfStock" <%= includeOutOfStock ? "checked" : "" %>>
+          <label class="form-check-label" for="includeOutOfStock">Show out of stock shops</label>
+        </div>
+        <small class="text-muted">Toggle to include shops that currently have no stock available.</small>
+      </div>
       <table id="shopTable" class="display shop-directory__table">
         <thead>
           <tr>
@@ -31,7 +38,7 @@
                 <img src="<%= shop.itemData.image %>" alt="<%= shop.itemData.displayName %>" class="shop-directory__item-image" loading="lazy" decoding="async" width="40" height="40">
                 <span class="shop-directory__item-name"><%= shop.itemData.displayName %></span>
               </td>
-              <td data-label="Shop Owner" class="shop-directory__owner">
+              <td data-label="Shop Owner" class="shop-directory__owner" data-order="<%= shop.userData.username %>">
                 <img src="<%= shop.userData.profilePicture %>" alt="<%= shop.userData.username %>" class="shop-directory__owner-avatar" loading="lazy" decoding="async" width="28" height="28">
                 <a href="/profile/<%= shop.userData.username %>"><%= shop.userData.username %></a>
               </td>
@@ -63,15 +70,17 @@
         "deferRender": true,
         "order": [],
         "columnDefs": [
-          { "targets": [0, 1], "orderable": false }
+          { "targets": [0], "orderable": false }
         ]
       });
 
       const meta = <%- JSON.stringify(shopApiData.meta || {}) %>;
       const loadMoreButton = document.getElementById('loadMoreShops');
       const loadMoreStatus = document.getElementById('loadMoreStatus');
+      const includeOutOfStockToggle = document.getElementById('includeOutOfStock');
       let loadedCount = <%- (shopApiData.data || []).length %>;
       const pageSize = meta.limit || 50;
+      let includeOutOfStock = <%= includeOutOfStock ? "true" : "false" %>;
 
       const setStatus = (message, isError = false) => {
         if (!loadMoreStatus) return;
@@ -113,6 +122,7 @@
         const ownerCell = document.createElement('td');
         ownerCell.dataset.label = 'Shop Owner';
         ownerCell.className = 'shop-directory__owner';
+        ownerCell.setAttribute('data-order', shop?.userData?.username || '');
         const ownerAvatar = document.createElement('img');
         ownerAvatar.src = shop?.userData?.profilePicture || '';
         ownerAvatar.alt = shop?.userData?.username || 'Owner';
@@ -169,6 +179,31 @@
         shopTable.draw(false);
       };
 
+      const buildQueryString = (offsetValue, limitValue) => {
+        const params = new URLSearchParams({
+          offset: offsetValue,
+          limit: limitValue,
+        });
+
+        if (includeOutOfStock) {
+          params.set('includeOutOfStock', 'true');
+        }
+
+        return params.toString();
+      };
+
+      const fetchShops = async (offsetValue, limitValue) => {
+        const queryString = buildQueryString(offsetValue, limitValue);
+        const response = await fetch(`/api/shop/get?${queryString}`);
+        return response.json();
+      };
+
+      const resetTable = () => {
+        shopTable.clear();
+        shopTable.draw();
+        loadedCount = 0;
+      };
+
       const totalToShow = meta.total || loadedCount;
       setStatus(`Showing ${loadedCount} of ${totalToShow} shops.`);
       updateButtonState();
@@ -180,11 +215,18 @@
         setStatus('Loading more shops...');
 
         try {
-          const response = await fetch(`/api/shop/get?offset=${loadedCount}&limit=${pageSize}`);
-          const payload = await response.json();
+          const payload = await fetchShops(loadedCount, pageSize);
 
-          if (!payload?.success || !payload?.data?.length) {
-            throw new Error(payload?.message || 'No additional shops found.');
+          if (!payload?.success) {
+            throw new Error(payload?.message || 'Unable to load additional shops.');
+          }
+
+          if (!payload?.data?.length) {
+            meta.hasMore = payload.meta?.hasMore ?? false;
+            meta.total = payload.meta?.total ?? meta.total;
+            setStatus('All shops loaded.');
+            updateButtonState();
+            return;
           }
 
           addShopsToTable(payload.data);
@@ -199,6 +241,42 @@
           setStatus('Unable to load more shops right now. Please try again.', true);
           loadMoreButton.disabled = false;
           loadMoreButton.textContent = 'Load more shops';
+        }
+      });
+
+      includeOutOfStockToggle?.addEventListener('change', async (event) => {
+        includeOutOfStock = event.target.checked;
+        setStatus('Updating shops...');
+        loadMoreButton.disabled = true;
+
+        try {
+          const payload = await fetchShops(0, pageSize);
+
+          if (!payload?.success) {
+            throw new Error(payload?.message || 'Unable to fetch shops.');
+          }
+
+          resetTable();
+          addShopsToTable(payload.data || []);
+          loadedCount = payload.data?.length || 0;
+          meta.hasMore = payload.meta?.hasMore ?? false;
+          meta.total = payload.meta?.total ?? loadedCount;
+          meta.limit = payload.meta?.limit ?? pageSize;
+
+          if (!payload?.data?.length) {
+            setStatus('No shops to display with the current filters.');
+            updateButtonState();
+            return;
+          }
+
+          setStatus(`Showing ${loadedCount} of ${meta.total || loadedCount} shops.`);
+          updateButtonState();
+        } catch (error) {
+          console.error(error);
+          setStatus('Unable to update shop list right now. Please try again.', true);
+          event.target.checked = !includeOutOfStock;
+          includeOutOfStock = event.target.checked;
+          updateButtonState();
         }
       });
     });

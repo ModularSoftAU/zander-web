@@ -9,6 +9,9 @@ export default function shopApiRoute(app, config, db, features, lang) {
     isFeatureEnabled(features.shopdirectory, res, lang);
 
     const material = optional(req.query, "material");
+    const includeOutOfStock = optional(req.query, "includeOutOfStock");
+    const includeOutOfStockValue =
+      String(includeOutOfStock).toLowerCase() === "true";
     const concurrencyLimit = pLimit(10);
 
     const rawLimit = Number.parseInt(req.query.limit, 10);
@@ -18,19 +21,20 @@ export default function shopApiRoute(app, config, db, features, lang) {
 
     try {
       const dbQueryParams = [];
-      const searchClause = [];
+      const whereParts = [];
 
       if (material) {
-        searchClause.push(
-          "item LIKE ?",
-          "item LIKE ?"
-        );
+        whereParts.push("(item LIKE ? OR item LIKE ?)");
         dbQueryParams.push(`%${material}%`);
         dbQueryParams.push(`%${material.toUpperCase().replace(/ /g, "_")}%`);
       }
 
-      const whereClause = searchClause.length
-        ? `WHERE ${searchClause.join(" OR ")}`
+      if (!includeOutOfStockValue) {
+        whereParts.push("stock > 0");
+      }
+
+      const whereClause = whereParts.length
+        ? `WHERE ${whereParts.join(" AND ")}`
         : "";
 
       const dataQuery = `SELECT * FROM shoppingDirectory ${whereClause} ORDER BY id DESC LIMIT ? OFFSET ?`;
