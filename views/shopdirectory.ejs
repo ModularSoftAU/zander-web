@@ -12,30 +12,38 @@
 
 <section class="section">
   <div class="container">
-    <table id="shopTable" class="display">
-      <thead>
-        <tr>
-          <th>Item</th>
-          <th>Shop Owner</th>
-          <th>Amount</th>
-          <th>Price</th>
-          <th>Stock</th>
-          <th>Location</th>
-        </tr>
-      </thead>
-      <tbody>
-        <% shopApiData.data.forEach(shop => { %>
+    <div class="shop-directory">
+      <table id="shopTable" class="display shop-directory__table">
+        <thead>
           <tr>
-            <td><img src="<%= shop.itemData.image %>" alt="<%= shop.itemData.displayName %>"> <%= shop.itemData.displayName %></td>
-            <td><img src="<%= shop.userData.profilePicture %>" alt="<%= shop.userData.username %>" height="20px"> <a href="/profile/<%= shop.userData.username %>"><%= shop.userData.username %></a></td>
-            <td><code><%= shop.amount %></code></td>
-            <td><code><%= shop.price %></code></td>
-            <td><code><%= shop.stock %></code></td>
-            <td><code><%= shop.x %>, <%= shop.y %>, <%= shop.z %></code></td>
+            <th>Item</th>
+            <th>Shop Owner</th>
+            <th>Amount</th>
+            <th>Price</th>
+            <th>Stock</th>
+            <th>Location</th>
           </tr>
-        <% }) %>
-      </tbody>
-    </table>
+        </thead>
+        <tbody>
+          <% shopApiData.data.forEach(shop => { %>
+            <tr>
+              <td data-label="Item" class="shop-directory__item">
+                <img src="<%= shop.itemData.image %>" alt="<%= shop.itemData.displayName %>" class="shop-directory__item-image">
+                <span class="shop-directory__item-name"><%= shop.itemData.displayName %></span>
+              </td>
+              <td data-label="Shop Owner" class="shop-directory__owner">
+                <img src="<%= shop.userData.profilePicture %>" alt="<%= shop.userData.username %>" class="shop-directory__owner-avatar">
+                <a href="/profile/<%= shop.userData.username %>"><%= shop.userData.username %></a>
+              </td>
+              <td data-label="Amount"><code><%= shop.amount %></code></td>
+              <td data-label="Price"><code><%= shop.price %></code></td>
+              <td data-label="Stock"><code><%= shop.stock %></code></td>
+              <td data-label="Location"><code><%= shop.x %>, <%= shop.y %>, <%= shop.z %></code></td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    </div>
   </div>
 
   <script>
