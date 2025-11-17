@@ -28,11 +28,11 @@
           <% shopApiData.data.forEach(shop => { %>
             <tr>
               <td data-label="Item" class="shop-directory__item">
-                <img src="<%= shop.itemData.image %>" alt="<%= shop.itemData.displayName %>" class="shop-directory__item-image">
+                <img src="<%= shop.itemData.image %>" alt="<%= shop.itemData.displayName %>" class="shop-directory__item-image" loading="lazy" decoding="async" width="40" height="40">
                 <span class="shop-directory__item-name"><%= shop.itemData.displayName %></span>
               </td>
               <td data-label="Shop Owner" class="shop-directory__owner">
-                <img src="<%= shop.userData.profilePicture %>" alt="<%= shop.userData.username %>" class="shop-directory__owner-avatar">
+                <img src="<%= shop.userData.profilePicture %>" alt="<%= shop.userData.username %>" class="shop-directory__owner-avatar" loading="lazy" decoding="async" width="28" height="28">
                 <a href="/profile/<%= shop.userData.username %>"><%= shop.userData.username %></a>
               </td>
               <td data-label="Amount"><code><%= shop.amount %></code></td>
@@ -52,7 +52,14 @@
         "paging": true,
         "searching": true,
         "ordering": true,
-        "info": true
+        "info": true,
+        "pageLength": 25,
+        "lengthMenu": [[10, 25, 50, 100], [10, 25, 50, 100]],
+        "deferRender": true,
+        "order": [],
+        "columnDefs": [
+          { "targets": [0, 1], "orderable": false }
+        ]
       });
     });
   </script>
