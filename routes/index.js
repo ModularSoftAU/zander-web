@@ -147,7 +147,7 @@ export default function applicationSiteRoutes(
     //
     // Get all Shops
     //
-    const shopFetchURL = `${process.env.siteAddress}/api/shop/get`;
+    const shopFetchURL = `${process.env.siteAddress}/api/shop/get?limit=50&offset=0`;
     const shopResponse = await fetch(shopFetchURL, {
       headers: { "x-access-token": process.env.apiKey },
     });

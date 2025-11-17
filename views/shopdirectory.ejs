@@ -25,7 +25,7 @@
           </tr>
         </thead>
         <tbody>
-          <% shopApiData.data.forEach(shop => { %>
+          <% (shopApiData.data || []).forEach(shop => { %>
             <tr>
               <td data-label="Item" class="shop-directory__item">
                 <img src="<%= shop.itemData.image %>" alt="<%= shop.itemData.displayName %>" class="shop-directory__item-image" loading="lazy" decoding="async" width="40" height="40">
@@ -43,12 +43,17 @@
           <% }) %>
         </tbody>
       </table>
+      <div class="mt-3 d-flex justify-content-between align-items-center">
+        <button id="loadMoreShops" class="btn btn-primary" <%= shopApiData.meta?.hasMore ? "" : "disabled" %>>Load more shops</button>
+        <small id="loadMoreStatus" class="text-muted"></small>
+      </div>
     </div>
   </div>
 
   <script>
     $(document).ready(function() {
-      $('#shopTable').DataTable({
+      const tableElement = $('#shopTable');
+      const shopTable = tableElement.DataTable({
         "paging": true,
         "searching": true,
         "ordering": true,
@@ -60,6 +65,141 @@
         "columnDefs": [
           { "targets": [0, 1], "orderable": false }
         ]
+      });
+
+      const meta = <%- JSON.stringify(shopApiData.meta || {}) %>;
+      const loadMoreButton = document.getElementById('loadMoreShops');
+      const loadMoreStatus = document.getElementById('loadMoreStatus');
+      let loadedCount = <%- (shopApiData.data || []).length %>;
+      const pageSize = meta.limit || 50;
+
+      const setStatus = (message, isError = false) => {
+        if (!loadMoreStatus) return;
+        loadMoreStatus.textContent = message;
+        loadMoreStatus.classList.toggle('text-danger', isError);
+        loadMoreStatus.classList.toggle('text-muted', !isError);
+      };
+
+      const updateButtonState = () => {
+        if (!loadMoreButton) return;
+        if (meta.hasMore) {
+          loadMoreButton.disabled = false;
+          loadMoreButton.textContent = 'Load more shops';
+        } else {
+          loadMoreButton.disabled = true;
+          loadMoreButton.textContent = 'All shops loaded';
+        }
+      };
+
+      const createShopRow = (shop) => {
+        const row = document.createElement('tr');
+
+        const itemCell = document.createElement('td');
+        itemCell.dataset.label = 'Item';
+        itemCell.className = 'shop-directory__item';
+        const itemImage = document.createElement('img');
+        itemImage.src = shop?.itemData?.image || '';
+        itemImage.alt = shop?.itemData?.displayName || 'Item';
+        itemImage.className = 'shop-directory__item-image';
+        itemImage.loading = 'lazy';
+        itemImage.decoding = 'async';
+        itemImage.width = 40;
+        itemImage.height = 40;
+        const itemName = document.createElement('span');
+        itemName.className = 'shop-directory__item-name';
+        itemName.textContent = shop?.itemData?.displayName || shop?.item || 'Unknown Item';
+        itemCell.append(itemImage, itemName);
+
+        const ownerCell = document.createElement('td');
+        ownerCell.dataset.label = 'Shop Owner';
+        ownerCell.className = 'shop-directory__owner';
+        const ownerAvatar = document.createElement('img');
+        ownerAvatar.src = shop?.userData?.profilePicture || '';
+        ownerAvatar.alt = shop?.userData?.username || 'Owner';
+        ownerAvatar.className = 'shop-directory__owner-avatar';
+        ownerAvatar.loading = 'lazy';
+        ownerAvatar.decoding = 'async';
+        ownerAvatar.width = 28;
+        ownerAvatar.height = 28;
+        const ownerLink = document.createElement('a');
+        ownerLink.href = `/profile/${shop?.userData?.username || ''}`;
+        ownerLink.textContent = shop?.userData?.username || 'Unknown';
+        ownerCell.append(ownerAvatar, ownerLink);
+
+        const amountCell = document.createElement('td');
+        amountCell.dataset.label = 'Amount';
+        const amountCode = document.createElement('code');
+        amountCode.textContent = shop?.amount ?? '';
+        amountCell.append(amountCode);
+
+        const priceCell = document.createElement('td');
+        priceCell.dataset.label = 'Price';
+        const priceCode = document.createElement('code');
+        priceCode.textContent = shop?.price ?? '';
+        priceCell.append(priceCode);
+
+        const stockCell = document.createElement('td');
+        stockCell.dataset.label = 'Stock';
+        const stockCode = document.createElement('code');
+        stockCode.textContent = shop?.stock ?? '';
+        stockCell.append(stockCode);
+
+        const locationCell = document.createElement('td');
+        locationCell.dataset.label = 'Location';
+        const locationCode = document.createElement('code');
+        locationCode.textContent = `${shop?.x ?? ''}, ${shop?.y ?? ''}, ${shop?.z ?? ''}`;
+        locationCell.append(locationCode);
+
+        row.append(
+          itemCell,
+          ownerCell,
+          amountCell,
+          priceCell,
+          stockCell,
+          locationCell
+        );
+
+        return row;
+      };
+
+      const addShopsToTable = (shops) => {
+        shops.forEach((shop) => {
+          shopTable.row.add(createShopRow(shop));
+        });
+        shopTable.draw(false);
+      };
+
+      const totalToShow = meta.total || loadedCount;
+      setStatus(`Showing ${loadedCount} of ${totalToShow} shops.`);
+      updateButtonState();
+
+      loadMoreButton?.addEventListener('click', async () => {
+        if (!meta.hasMore) return;
+        loadMoreButton.disabled = true;
+        loadMoreButton.textContent = 'Loading...';
+        setStatus('Loading more shops...');
+
+        try {
+          const response = await fetch(`/api/shop/get?offset=${loadedCount}&limit=${pageSize}`);
+          const payload = await response.json();
+
+          if (!payload?.success || !payload?.data?.length) {
+            throw new Error(payload?.message || 'No additional shops found.');
+          }
+
+          addShopsToTable(payload.data);
+          loadedCount += payload.data.length;
+          meta.hasMore = payload.meta?.hasMore ?? false;
+          meta.total = payload.meta?.total ?? meta.total;
+
+          setStatus(`Showing ${loadedCount} of ${meta.total || loadedCount} shops.`);
+          updateButtonState();
+        } catch (error) {
+          console.error(error);
+          setStatus('Unable to load more shops right now. Please try again.', true);
+          loadMoreButton.disabled = false;
+          loadMoreButton.textContent = 'Load more shops';
+        }
       });
     });
   </script>
