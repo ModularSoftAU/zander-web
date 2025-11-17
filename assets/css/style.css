@@ -2048,6 +2048,23 @@ a:focus {
 .shop-directory__table {
     width: 100%;
     border-spacing: 0;
+    table-layout: auto;
+}
+
+.shop-directory__table thead {
+    display: table-header-group;
+}
+
+.shop-directory__table tbody {
+    display: table-row-group;
+}
+
+.shop-directory__table tr {
+    display: table-row;
+}
+
+.shop-directory__table td {
+    display: table-cell;
 }
 
 .shop-directory__table td,
@@ -2060,6 +2077,7 @@ a:focus {
     display: flex;
     align-items: center;
     gap: 10px;
+    white-space: nowrap;
 }
 
 .shop-directory__item-image {
@@ -2145,6 +2163,7 @@ a:focus {
         border: none;
         padding: 4px 0;
         width: 100%;
+        white-space: normal;
     }
 
     .shop-directory__table td::before {
@@ -2160,6 +2179,7 @@ a:focus {
     .shop-directory__owner {
         flex-direction: row;
         width: 100%;
+        white-space: normal;
     }
 
     .shop-directory__item-name,
