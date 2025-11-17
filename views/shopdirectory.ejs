@@ -97,6 +97,7 @@
       const applyOwnerFilterButton = document.getElementById('applyOwnerFilter');
       const clearOwnerFilterButton = document.getElementById('clearOwnerFilter');
       let loadedCount = <%- (shopApiData.data || []).length %>;
+      let nextOffset = (meta.offset || 0) + loadedCount;
       const pageSize = meta.limit || 50;
       let includeOutOfStock = <%- JSON.stringify(includeOutOfStock) %>;
       let ownerFilter = <%- JSON.stringify(owner || "") %>;
@@ -225,13 +226,19 @@
         if (!response.ok) {
           throw new Error('Unable to reach shop directory.');
         }
-        return response.json();
+
+        try {
+          return await response.json();
+        } catch (parseError) {
+          throw new Error('Received an invalid response from the shop API.');
+        }
       };
 
       const resetTable = () => {
         shopTable.clear();
         shopTable.draw();
         loadedCount = 0;
+        nextOffset = 0;
       };
 
       const handleRefresh = async () => {
@@ -249,6 +256,7 @@
           resetTable();
           addShopsToTable(payload.data || []);
           loadedCount = payload.data?.length || 0;
+          nextOffset = (payload.meta?.offset ?? 0) + loadedCount;
           meta.hasMore = payload.meta?.hasMore ?? false;
           meta.total = payload.meta?.total ?? loadedCount;
           meta.limit = payload.meta?.limit ?? pageSize;
@@ -277,7 +285,7 @@
         setStatus('Loading more shops...');
 
         try {
-          const payload = await fetchShops(loadedCount, pageSize);
+          const payload = await fetchShops(nextOffset, pageSize);
 
           if (!payload?.success) {
             throw new Error(payload?.message || 'Unable to load additional shops.');
@@ -286,6 +294,7 @@
           if (!payload?.data?.length) {
             meta.hasMore = payload.meta?.hasMore ?? false;
             meta.total = payload.meta?.total ?? meta.total;
+            nextOffset = payload.meta?.offset ?? nextOffset;
             setStatus('All shops loaded.');
             updateButtonState();
             return;
@@ -293,6 +302,7 @@
 
           addShopsToTable(payload.data);
           loadedCount += payload.data.length;
+          nextOffset = (payload.meta?.offset ?? nextOffset) + payload.data.length;
           meta.hasMore = payload.meta?.hasMore ?? false;
           meta.total = payload.meta?.total ?? meta.total;
 
