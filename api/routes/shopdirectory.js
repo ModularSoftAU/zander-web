@@ -20,12 +20,26 @@ export default function shopApiRoute(app, config, db, features, lang) {
     const limitValue = Math.min(Math.max(rawLimit || 50, 1), 200);
     const offsetValue = Math.max(rawOffset || 0, 0);
 
+    const requestContext = {
+      limitValue,
+      offsetValue,
+      includeOutOfStock: includeOutOfStockValue,
+      material,
+      owner,
+    };
+
+    console.info("[Shop API] Incoming request", requestContext);
+
     try {
       const runQuery = (query, params = []) =>
         new Promise((resolve, reject) => {
           db.query(query, params, (error, results) => {
             if (error) {
-              console.error("Database error:", error);
+              console.error("[Shop API] Database error", {
+                error,
+                query,
+                params,
+              });
               reject(error);
               return;
             }
@@ -52,6 +66,9 @@ export default function shopApiRoute(app, config, db, features, lang) {
         ownerId = ownerResults?.[0]?.id;
 
         if (!ownerId) {
+          console.info("[Shop API] Owner filter returned no results", {
+            owner,
+          });
           res.send({
             success: true,
             data: [],
@@ -93,6 +110,12 @@ export default function shopApiRoute(app, config, db, features, lang) {
         offsetValue,
       ]);
 
+      console.info("[Shop API] Query results", {
+        total,
+        returned: shopResults.length,
+        hasMore: offsetValue + shopResults.length < total,
+      });
+
       if (!shopResults.length) {
         return res.send({
           success: true,
@@ -121,10 +144,16 @@ export default function shopApiRoute(app, config, db, features, lang) {
                 if (itemResponse.ok) {
                   itemApiData = await itemResponse.json();
                 } else {
-                  console.error(`Failed to fetch item data: ${itemResponse.status}`);
+                  console.error("[Shop API] Failed to fetch item data", {
+                    status: itemResponse.status,
+                    item: itemName,
+                  });
                 }
               } catch (itemError) {
-                console.error("Error fetching item data:", itemError);
+                console.error("[Shop API] Error fetching item data", {
+                  error: itemError,
+                  item: itemName,
+                });
               }
 
               // Fetch user data from internal API
@@ -137,10 +166,16 @@ export default function shopApiRoute(app, config, db, features, lang) {
                 if (userResponse.ok) {
                   userApiData = await userResponse.json();
                 } else {
-                  console.error(`Failed to fetch user data: ${userResponse.status}`);
+                  console.error("[Shop API] Failed to fetch user data", {
+                    status: userResponse.status,
+                    userId: shop.userId,
+                  });
                 }
               } catch (userError) {
-                console.error("Error fetching user data:", userError);
+                console.error("[Shop API] Error fetching user data", {
+                  error: userError,
+                  userId: shop.userId,
+                });
               }
 
               // Get user profile picture
@@ -150,7 +185,10 @@ export default function shopApiRoute(app, config, db, features, lang) {
                   userApiData.data?.[0]?.username
                 );
               } catch (profileError) {
-                console.error("Error fetching profile picture:", profileError);
+                console.error("[Shop API] Error fetching profile picture", {
+                  error: profileError,
+                  username: userApiData.data?.[0]?.username,
+                });
               }
 
               // Return the enriched shop data
@@ -178,14 +216,19 @@ export default function shopApiRoute(app, config, db, features, lang) {
           },
         });
       } catch (fetchError) {
-        console.error("Error processing shop data:", fetchError);
+        console.error("[Shop API] Error processing shop data", {
+          error: fetchError,
+        });
         res.send({
           success: false,
           message: "Error processing shop data.",
         });
       }
     } catch (error) {
-      console.error("Unhandled error:", error);
+      console.error("[Shop API] Unhandled error", {
+        error,
+        requestContext,
+      });
       res.send({
         success: false,
         message: `${error}`,

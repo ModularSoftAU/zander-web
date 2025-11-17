@@ -220,16 +220,52 @@
         return params.toString();
       };
 
+      const logErrorContext = (context, error, extra = {}) => {
+        console.error(`[Shop Directory] ${context}`, {
+          error,
+          ...extra,
+        });
+      };
+
       const fetchShops = async (offsetValue, limitValue) => {
         const queryString = buildQueryString(offsetValue, limitValue);
-        const response = await fetch(`/api/shop/get?${queryString}`);
+        let response;
+
+        try {
+          response = await fetch(`/api/shop/get?${queryString}`);
+        } catch (networkError) {
+          logErrorContext('Network error during fetch', networkError, {
+            offset: offsetValue,
+            limit: limitValue,
+            includeOutOfStock,
+            ownerFilter,
+          });
+          throw new Error('Unable to reach shop directory.');
+        }
+
         if (!response.ok) {
+          const responseText = await response.text();
+          logErrorContext('Non-OK response from shop API', null, {
+            status: response.status,
+            statusText: response.statusText,
+            body: responseText,
+            offset: offsetValue,
+            limit: limitValue,
+            includeOutOfStock,
+            ownerFilter,
+          });
           throw new Error('Unable to reach shop directory.');
         }
 
         try {
           return await response.json();
         } catch (parseError) {
+          logErrorContext('Failed to parse shop API response', parseError, {
+            offset: offsetValue,
+            limit: limitValue,
+            includeOutOfStock,
+            ownerFilter,
+          });
           throw new Error('Received an invalid response from the shop API.');
         }
       };
@@ -267,7 +303,12 @@
             setStatus(`Showing ${loadedCount} of ${meta.total || loadedCount} shops.`);
           }
         } catch (error) {
-          console.error(error);
+          logErrorContext('Refresh failed', error, {
+            nextOffset,
+            pageSize,
+            includeOutOfStock,
+            ownerFilter,
+          });
           setStatus('Unable to update shop list right now. Please try again.', true);
         }
 
@@ -309,7 +350,12 @@
           setStatus(`Showing ${loadedCount} of ${meta.total || loadedCount} shops.`);
           updateButtonState();
         } catch (error) {
-          console.error(error);
+          logErrorContext('Load more failed', error, {
+            nextOffset,
+            pageSize,
+            includeOutOfStock,
+            ownerFilter,
+          });
           setStatus('Unable to load more shops right now. Please try again.', true);
           loadMoreButton.disabled = false;
           loadMoreButton.textContent = 'Load more shops';
