@@ -2080,6 +2080,41 @@ a:focus {
         overflow: visible;
     }
 
+    .shop-directory .dataTables_wrapper {
+        width: 100%;
+    }
+
+    .shop-directory .dataTables_wrapper .row {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        margin: 0;
+    }
+
+    .shop-directory .dataTables_length,
+    .shop-directory .dataTables_filter,
+    .shop-directory .dataTables_info,
+    .shop-directory .dataTables_paginate {
+        width: 100%;
+    }
+
+    .shop-directory .dataTables_filter label,
+    .shop-directory .dataTables_length label {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+        width: 100%;
+    }
+
+    .shop-directory .dataTables_filter input {
+        width: 100%;
+    }
+
+    .shop-directory .dataTables_length select {
+        min-width: 90px;
+    }
+
     .shop-directory__table thead {
         display: none;
     }
@@ -2091,37 +2126,49 @@ a:focus {
     }
 
     .shop-directory__table tr {
-        display: grid;
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-        gap: 6px 12px;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
         padding: 12px;
         border: 1px solid #e9ecef;
         border-radius: 12px;
         background: #fff;
         box-shadow: 0 6px 20px rgba(0, 0, 0, 0.05);
+        width: 100%;
     }
 
     .shop-directory__table td {
         display: flex;
-        align-items: center;
+        align-items: flex-start;
+        justify-content: space-between;
         gap: 8px;
         border: none;
-        padding: 6px 0;
+        padding: 4px 0;
+        width: 100%;
     }
 
     .shop-directory__table td::before {
         content: attr(data-label);
         font-weight: 600;
         color: #6c757d;
-        min-width: 90px;
+        min-width: 84px;
+        margin-right: 8px;
+        flex-shrink: 0;
     }
 
     .shop-directory__item,
     .shop-directory__owner {
         flex-direction: row;
+        width: 100%;
     }
 
-    .shop-directory__item-name {
+    .shop-directory__item-name,
+    .shop-directory__owner a {
         font-weight: 600;
+        word-break: break-word;
+    }
+
+    .shop-directory__table code {
+        word-break: break-word;
     }
 }
