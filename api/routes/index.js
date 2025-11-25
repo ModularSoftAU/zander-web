@@ -19,7 +19,7 @@ export default (app, client, moment, config, db, features, lang) => {
   webApiRoute(app, config, db, features, lang);
   rankApiRoute(app, config, db, features, lang);
   filterApiRoute(app, config, db, features, lang);
-  giveApiRoute(app);
+  giveApiRoute(app, config);
 
   app.get("/api/heartbeat", async function (req, res) {
     return res.send({

@@ -1,7 +1,6 @@
 import { getMonthlyRevenue } from "../../controllers/tebexController.js";
-import config from "../../config.json" assert { type: "json" };
 
-export default function giveApiRoute(app) {
+export default function giveApiRoute(app, config) {
   app.get("/api/give/goal", async function (req, res) {
     try {
       const monthlyRevenue = await getMonthlyRevenue();

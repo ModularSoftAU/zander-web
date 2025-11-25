@@ -14,7 +14,7 @@
       "refund": "https://raw.githubusercontent.com/craftingforchrist/Legal/master/refund.md"
     },
     "platforms": {
-      "webstore": "https://crafting-for-christ.tebex.io",
+      "webstore": "https://craftingforchrist.net/webstore",
       "discord": "https://discord.com/",
       "issueTracker": "https://github.com/craftingforchrist/Issues/issues",
       "knowledgebase": "https://guides.craftingforchrist.net/",
@@ -39,8 +39,5 @@
     "roles": {
       "verified": "IDTAG"
     }
-  },
-  "tebex": {
-    "secretKey": "YOUR_TEBEX_SECRET_KEY"
   }
 }

@@ -5,73 +5,91 @@
 
 <%- include("../navigationBar.ejs") %>
 
-<%- include("../../partials/miniHeader.ejs", {
-  headerTitle: "Give",
-  backgroundImage: globalImage
-}) %>
+<style>
+    .hero-section {
+        background: url('<%= globalImage %>') no-repeat center center;
+        background-size: cover;
+        padding: 100px 0;
+        color: white;
+        text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+    }
+    .section-light {
+        background-color: #f8f9fa;
+    }
+    .section-dark {
+        background-color: #e9ecef;
+    }
+    .card-icon {
+        font-size: 3rem;
+    }
+</style>
 
-<section class="section">
+<!-- Hero Section -->
+<div class="hero-section text-center">
     <div class="container">
-        <!-- Hero Section -->
+        <h1 class="display-4">🙏 Support the Crafting For Christ Network</h1>
+        <p class="lead">Crafting For Christ exists to provide a safe, encouraging, Christ-centred community for players around the world. Your generosity helps keep the network running, growing, and reaching more people every day.</p>
+        <a href="/ranks" class="btn btn-primary btn-lg">View Ranks & Perks</a>
+        <a href="<%= config.siteConfiguration.platforms.webstore %>" class="btn btn-secondary btn-lg">Give a Gift or Rank</a>
+    </div>
+</div>
+
+<section class="section section-light">
+    <div class="container">
+        <!-- Why We Give Section -->
         <div class="row text-center">
             <div class="col-12">
-                <h1 class="mb-4">🙏 Support the Crafting For Christ Network</h1>
-                <p class="lead mb-5">Crafting For Christ exists to provide a safe, encouraging, Christ-centred community for players around the world. Your generosity helps keep the network running, growing, and reaching more people every day.</p>
-                <a href="/ranks" class="btn btn-primary">View Ranks & Perks</a>
-                <a href="<%= config.siteConfiguration.platforms.webstore %>" class="btn btn-secondary">Give a Gift or Rank</a>
-            </div>
-        </div>
-
-        <!-- Why We Give Section -->
-        <div class="row mt-5">
-            <div class="col-12 text-center">
                 <h2 class="mb-4">✨ Why Support the Network?</h2>
                 <p>Crafting For Christ is fully community-funded. Your support directly helps us continue providing:</p>
             </div>
             <div class="col-md-3">
-                <div class="card h-100 shadow-sm">
+                <div class="card h-100 shadow-sm border-0">
                     <div class="card-body">
                         <div class="text-center mb-4">
-                            <i class="fas fa-server fa-3x text-primary"></i>
+                            <i class="fas fa-server card-icon text-primary"></i>
                         </div>
                         <p class="card-text text-center">Reliable and high-performance Minecraft servers</p>
                     </div>
                 </div>
             </div>
             <div class="col-md-3">
-                <div class="card h-100 shadow-sm">
+                <div class="card h-100 shadow-sm border-0">
                     <div class="card-body">
                         <div class="text-center mb-4">
-                            <i class="fas fa-shield-alt fa-3x text-success"></i>
+                            <i class="fas fa-shield-alt card-icon text-success"></i>
                         </div>
                         <p class="card-text text-center">A safe, wholesome place to play and grow</p>
                     </div>
                 </div>
             </div>
             <div class="col-md-3">
-                <div class="card h-100 shadow-sm">
+                <div class="card h-100 shadow-sm border-0">
                     <div class="card-body">
                         <div class="text-center mb-4">
-                            <i class="fas fa-calendar-alt fa-3x text-info"></i>
+                            <i class="fas fa-calendar-alt card-icon text-info"></i>
                         </div>
                         <p class="card-text text-center">Resources for events, ministry projects, and outreach</p>
                     </div>
                 </div>
             </div>
             <div class="col-md-3">
-                <div class="card h-100 shadow-sm">
+                <div class="card h-100 shadow-sm border-0">
                     <div class="card-body">
                         <div class="text-center mb-4">
-                            <i class="fas fa-users fa-3x text-warning"></i>
+                            <i class="fas fa-users card-icon text-warning"></i>
                         </div>
                         <p class="card-text text-center">An environment where friendships and faith flourish</p>
                     </div>
                 </div>
             </div>
         </div>
+    </div>
+</section>
 
+<section class="section section-dark">
+    <div class="container">
         <!-- Monthly Operations Goal Section -->
-        <div class="row mt-5">
+        <div class="row">
             <div class="col-12 text-center">
                 <h2 class="mb-4">💰 Monthly Operations Budget</h2>
                 <p>Each month, we trust God to provide what’s needed to keep the network running. Below is our current month’s support progress:</p>
@@ -82,15 +100,19 @@
                 <p><small>Every purchase or donation made through our store contributes directly to this goal.</small></p>
             </div>
         </div>
+    </div>
+</section>
 
+<section class="section section-light">
+    <div class="container">
         <!-- Ways to Support Section -->
-        <div class="row mt-5">
+        <div class="row">
             <div class="col-12 text-center">
                 <h2 class="mb-4">💬 How You Can Support</h2>
                 <p>There are two main ways you can help sustain the ministry:</p>
             </div>
             <div class="col-md-6">
-                <div class="card h-100 shadow-sm">
+                <div class="card h-100 shadow-sm border-0">
                     <div class="card-body">
                         <h4 class="card-title">1. Purchasing a Rank</h4>
                         <p class="card-text">Rank purchases help fund operations and come with fun perks and cosmetics.</p>
@@ -99,7 +121,7 @@
                 </div>
             </div>
             <div class="col-md-6">
-                <div class="card h-100 shadow-sm">
+                <div class="card h-100 shadow-sm border-0">
                     <div class="card-body">
                         <h4 class="card-title">2. Monthly Support Tiers</h4>
                         <p class="card-text">Recurring support is the most impactful way to help us meet our monthly operations budget.</p>
@@ -111,9 +133,13 @@
                 <p>You can also gift a rank to bless another player!</p>
             </div>
         </div>
+    </div>
+</section>
 
+<section class="section section-dark">
+    <div class="container">
         <!-- Heart & Mission Reminder Section -->
-        <div class="row mt-5">
+        <div class="row">
             <div class="col-12 text-center">
                 <h2 class="mb-4">❤️ Why Your Support Matters</h2>
                 <p>Your contributions make a real difference. Because of your support, players from all over the world are finding a community where they can:</p>
@@ -131,17 +157,13 @@
                 <p>Crafting For Christ is more than a server — it’s a ministry. You’re helping keep that ministry alive.</p>
             </div>
         </div>
+    </div>
+</section>
 
-        <!-- Special Updates Section -->
-        <div class="row mt-5">
-            <div class="col-12 text-center">
-                <h2 class="mb-4">📢 Current Network Update</h2>
-                <p>This is a placeholder where updates like the server migration announcement can be inserted throughout the year.</p>
-            </div>
-        </div>
-
+<section class="section section-light">
+    <div class="container">
         <!-- Thank You Section -->
-        <div class="row mt-5">
+        <div class="row">
             <div class="col-12 text-center">
                 <h2 class="mb-4">🙏 Thank You</h2>
                 <p>Thank you for praying for our team, supporting the network, and being part of our community. Your generosity helps us continue doing what God has called us to do.</p>

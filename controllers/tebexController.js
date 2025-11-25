@@ -1,4 +1,3 @@
-import config from "../config.json" assert { type: "json" };
 import fetch from "node-fetch";
 
 /**
@@ -7,27 +6,20 @@ import fetch from "node-fetch";
  * @returns {Promise<number>} The total revenue for the current month.
  */
 export async function getMonthlyRevenue() {
-  // --- Mocked Data ---
-  // This function currently returns a randomized value for demonstration purposes.
-  // To implement live data, replace the mocked section with a real API call to Tebex.
-  //
-  // Example using the Tebex API:
-  //
-  // const response = await fetch("https://plugin.tebex.io/analytics/payments", {
-  //   headers: {
-  //     "X-Tebex-Secret": config.tebex.secretKey,
-  //     "Content-Type": "application/json"
-  //   }
-  // });
-  // const data = await response.json();
-  //
-  // // You would then need to process the data to get the current month's revenue.
-  // // This is a simplified example and might need to be adjusted based on the
-  // // actual structure of the Tebex API response.
-  //
-  // return data.totals.current_month;
+  const response = await fetch("https://plugin.tebex.io/analytics/payments", {
+    headers: {
+      "X-Tebex-Secret": process.env.TEBEX_SECRET_KEY,
+      "Content-Type": "application/json"
+    }
+  });
 
-  // Mocked implementation: returns a random value between 30 and 90.
-  const mockedRevenue = Math.floor(Math.random() * (90 - 30 + 1)) + 30;
-  return Promise.resolve(mockedRevenue);
+  if (!response.ok) {
+    throw new Error(`Tebex API returned status: ${response.status}`);
+  }
+
+  const data = await response.json();
+
+  // Assuming the API returns a structure like { totals: { current_month: 123.45 } }
+  // You may need to adjust this based on the actual API response.
+  return data.totals.current_month || 0;
 }
