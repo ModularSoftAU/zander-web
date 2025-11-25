@@ -110,6 +110,41 @@ export default function applicationSiteRoutes(
   });
 
   //
+  // Give
+  //
+  app.get("/give", async function (req, res) {
+    let supportProgress = {
+      monthlyOperationsBudget: config?.finance?.monthlyOperationsBudget || 0,
+      currentMonthRevenue: 0,
+      percentageFunded: 0,
+    };
+
+    try {
+      const fetchURL = `${process.env.siteAddress}/api/support/monthly-progress`;
+      const response = await fetch(fetchURL, {
+        headers: { "x-access-token": process.env.apiKey },
+      });
+
+      const apiData = await response.json();
+      if (apiData?.success && apiData.data) {
+        supportProgress = apiData.data;
+      }
+    } catch (error) {
+      console.error("Unable to load support progress", error);
+    }
+
+    return res.view("give", {
+      pageTitle: `Give`,
+      config: config,
+      req: req,
+      features: features,
+      supportProgress: supportProgress,
+      globalImage: await getGlobalImage(),
+      announcementWeb: await getWebAnnouncement(),
+    });
+  });
+
+  //
   // Report
   //
   app.get("/report", async function (req, res) {
