@@ -103,4 +103,18 @@ export default function applicationSiteRoutes(
       announcementWeb: await getWebAnnouncement(),
     });
   });
+
+  //
+  // Give
+  //
+  app.get("/give", async function (req, res) {
+    return res.view("modules/give/give", {
+      pageTitle: `Give`,
+      config: config,
+      req: req,
+      features: features,
+      globalImage: await getGlobalImage(),
+      announcementWeb: await getWebAnnouncement(),
+    });
+  });
 }
