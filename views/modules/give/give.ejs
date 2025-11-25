@@ -12,57 +12,161 @@
 
 <section class="section">
     <div class="container">
+        <!-- Hero Section -->
         <div class="row text-center">
             <div class="col-12">
-                <h2 class="mb-4">Support the Future of Our Network</h2>
-                <p class="lead mb-5">Our Minecraft network is migrating to a new, high-performance hosting provider to better serve our community. Your support helps us cover the increased operational costs and continue providing a place where you can play, grow, and be encouraged.</p>
+                <h1 class="mb-4">🙏 Support the Crafting For Christ Network</h1>
+                <p class="lead mb-5">Crafting For Christ exists to provide a safe, encouraging, Christ-centred community for players around the world. Your generosity helps keep the network running, growing, and reaching more people every day.</p>
+                <a href="/ranks" class="btn btn-primary">View Ranks & Perks</a>
+                <a href="<%= config.siteConfiguration.platforms.webstore %>" class="btn btn-secondary">Give a Gift or Rank</a>
             </div>
         </div>
-        <div class="row">
-            <div class="col-lg-4 col-md-6 mb-4">
+
+        <!-- Why We Give Section -->
+        <div class="row mt-5">
+            <div class="col-12 text-center">
+                <h2 class="mb-4">✨ Why Support the Network?</h2>
+                <p>Crafting For Christ is fully community-funded. Your support directly helps us continue providing:</p>
+            </div>
+            <div class="col-md-3">
                 <div class="card h-100 shadow-sm">
                     <div class="card-body">
                         <div class="text-center mb-4">
                             <i class="fas fa-server fa-3x text-primary"></i>
                         </div>
-                        <h4 class="card-title text-center">Why We're Moving</h4>
-                        <p class="card-text">This migration will improve the quality, reliability, and performance of our entire network, ensuring a smoother and more enjoyable experience for everyone.</p>
+                        <p class="card-text text-center">Reliable and high-performance Minecraft servers</p>
                     </div>
                 </div>
             </div>
-            <div class="col-lg-4 col-md-6 mb-4">
+            <div class="col-md-3">
                 <div class="card h-100 shadow-sm">
                     <div class="card-body">
                         <div class="text-center mb-4">
-                            <i class="fas fa-dollar-sign fa-3x text-success"></i>
+                            <i class="fas fa-shield-alt fa-3x text-success"></i>
                         </div>
-                        <h4 class="card-title text-center">How You Can Help</h4>
-                        <p class="card-text">Better hosting comes with increased costs. You can support us by purchasing a rank or subscribing to a monthly tier. Every contribution helps keep the network running smoothly.</p>
-                        <div class="text-center mt-4">
-                            <a href="https://craftingforchrist.net/ranks" target="_blank" class="btn btn-primary">Support the Server</a>
-                        </div>
+                        <p class="card-text text-center">A safe, wholesome place to play and grow</p>
                     </div>
                 </div>
             </div>
-            <div class="col-lg-4 col-md-6 mb-4">
+            <div class="col-md-3">
                 <div class="card h-100 shadow-sm">
                     <div class="card-body">
                         <div class="text-center mb-4">
-                            <i class="fas fa-file-invoice-dollar fa-3x text-info"></i>
+                            <i class="fas fa-calendar-alt fa-3x text-info"></i>
                         </div>
-                        <h4 class="card-title text-center">Financial Transparency</h4>
-                        <p class="card-text">We believe in transparency. In the next 1–2 weeks, we will publish a page outlining our financial status, which will be updated regularly to keep our community informed.</p>
+                        <p class="card-text text-center">Resources for events, ministry projects, and outreach</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card h-100 shadow-sm">
+                    <div class="card-body">
+                        <div class="text-center mb-4">
+                            <i class="fas fa-users fa-3x text-warning"></i>
+                        </div>
+                        <p class="card-text text-center">An environment where friendships and faith flourish</p>
                     </div>
                 </div>
             </div>
         </div>
+
+        <!-- Monthly Operations Goal Section -->
         <div class="row mt-5">
             <div class="col-12 text-center">
-                <h3>Thank You!</h3>
-                <p>A big thank-you to our current hosting provider and to our awesome community for continuing to play, pray, and grow with us. ❤️</p>
+                <h2 class="mb-4">💰 Monthly Operations Budget</h2>
+                <p>Each month, we trust God to provide what’s needed to keep the network running. Below is our current month’s support progress:</p>
+                <div class="progress" style="height: 30px;">
+                    <div id="progress-bar" class="progress-bar" role="progressbar" style="width: 0%;" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
+                </div>
+                <p class="mt-3"><span id="progress-text"></span></p>
+                <p><small>Every purchase or donation made through our store contributes directly to this goal.</small></p>
+            </div>
+        </div>
+
+        <!-- Ways to Support Section -->
+        <div class="row mt-5">
+            <div class="col-12 text-center">
+                <h2 class="mb-4">💬 How You Can Support</h2>
+                <p>There are two main ways you can help sustain the ministry:</p>
+            </div>
+            <div class="col-md-6">
+                <div class="card h-100 shadow-sm">
+                    <div class="card-body">
+                        <h4 class="card-title">1. Purchasing a Rank</h4>
+                        <p class="card-text">Rank purchases help fund operations and come with fun perks and cosmetics.</p>
+                        <a href="/ranks" class="btn btn-primary">Explore ranks and perks</a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="card h-100 shadow-sm">
+                    <div class="card-body">
+                        <h4 class="card-title">2. Monthly Support Tiers</h4>
+                        <p class="card-text">Recurring support is the most impactful way to help us meet our monthly operations budget.</p>
+                        <a href="<%= config.siteConfiguration.platforms.webstore %>" class="btn btn-secondary">Visit the webstore to subscribe or give</a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-12 text-center mt-3">
+                <p>You can also gift a rank to bless another player!</p>
+            </div>
+        </div>
+
+        <!-- Heart & Mission Reminder Section -->
+        <div class="row mt-5">
+            <div class="col-12 text-center">
+                <h2 class="mb-4">❤️ Why Your Support Matters</h2>
+                <p>Your contributions make a real difference. Because of your support, players from all over the world are finding a community where they can:</p>
+            </div>
+            <div class="col-md-4">
+                <p><i class="fas fa-check-circle text-success"></i> Meet positive, Christ-following friends</p>
+            </div>
+            <div class="col-md-4">
+                <p><i class="fas fa-check-circle text-success"></i> Find prayer, encouragement, and support</p>
+            </div>
+            <div class="col-md-4">
+                <p><i class="fas fa-check-circle text-success"></i> Participate in events, worship nights, and community projects</p>
+            </div>
+            <div class="col-12 text-center">
+                <p>Crafting For Christ is more than a server — it’s a ministry. You’re helping keep that ministry alive.</p>
+            </div>
+        </div>
+
+        <!-- Special Updates Section -->
+        <div class="row mt-5">
+            <div class="col-12 text-center">
+                <h2 class="mb-4">📢 Current Network Update</h2>
+                <p>This is a placeholder where updates like the server migration announcement can be inserted throughout the year.</p>
+            </div>
+        </div>
+
+        <!-- Thank You Section -->
+        <div class="row mt-5">
+            <div class="col-12 text-center">
+                <h2 class="mb-4">🙏 Thank You</h2>
+                <p>Thank you for praying for our team, supporting the network, and being part of our community. Your generosity helps us continue doing what God has called us to do.</p>
+                <p class="lead">“And whatever you do, whether in word or deed, do it all in the name of the Lord Jesus…” — Colossians 3:17</p>
             </div>
         </div>
     </div>
 </section>
+
+<script>
+  document.addEventListener("DOMContentLoaded", function() {
+    fetch("/api/give/goal")
+      .then(response => response.json())
+      .then(data => {
+        if (data.success) {
+          const progressBar = document.getElementById("progress-bar");
+          const progressText = document.getElementById("progress-text");
+
+          progressBar.style.width = data.percentage + "%";
+          progressBar.setAttribute("aria-valuenow", data.percentage);
+          progressBar.innerText = data.percentage + "% Funded";
+          progressText.innerText = "$" + data.current + " raised of $" + data.goal + " goal";
+        }
+      });
+  });
+</script>
 
 <%- include("../footer.ejs") %>

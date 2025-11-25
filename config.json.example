@@ -6,6 +6,7 @@
     "keywords": "Christian, Minecraft, Faith, Gaming, Ministry, Community, Believers, Experience, Crafting, Creativity, Worship, Scripture, Fellowship, Gameplay, Builds, Christian Minecraft Server, Faith-based Gaming Community, Minecraft for Christians, Christ-Centered Gameplay, Bible-inspired Builds, Virtual Fellowship, Gaming Ministry, Christian Gaming Experience, Building Faith in Minecraft, Community of Faithful Gamers, Gaming and Worship, Scripture-based Creativity, Christian Fellowship in Minecraft",
     "email": "support@craftingforchrist.net",
     "googleTag": "G-1234567891",
+    "monthlyOperationsGoal": 100,
     "policy": {
       "termsOfService": "https://raw.githubusercontent.com/craftingforchrist/Legal/master/terms.md",
       "rules": "https://raw.githubusercontent.com/craftingforchrist/Legal/master/rules.md",
@@ -38,5 +39,8 @@
     "roles": {
       "verified": "IDTAG"
     }
+  },
+  "tebex": {
+    "secretKey": "YOUR_TEBEX_SECRET_KEY"
   }
 }
