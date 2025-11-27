@@ -32,6 +32,7 @@
     "@fastify/static": "^6.11.2",
     "@fastify/view": "^8.2.0",
     "@sapphire/framework": "^4.7.2",
+    "@prisma/client": "^5.18.0",
     "bcrypt": "^5.0.1",
     "crypto": "^1.0.1",
     "discord-webhook-node": "^1.1.8",
@@ -41,7 +42,6 @@
     "fastify": "^4.25.2",
     "mailtrap": "^3.2.0",
     "moment": ">=2.29.2",
-    "mysql": "^2.18.1",
     "node-cron": "^3.0.3",
     "node-fetch": "^3.3.2",
     "nodemailer": "^6.9.7",
@@ -50,5 +50,8 @@
     "path": "^0.12.7",
     "querystring": "^0.2.1",
     "zero-md": "^2.3.1"
+  },
+  "devDependencies": {
+    "prisma": "^5.18.0"
   }
 }

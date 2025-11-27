@@ -676,27 +676,23 @@ export async function getUserPermissions(userData = {}) {
 }
 
 export async function getUserStats(userId) {
-  return new Promise((resolve) => {
-    db.query(
-      `SELECT SUM(TIME_TO_SEC(TIMEDIFF(COALESCE(sessionEnd, NOW()), sessionStart))) AS totalSeconds FROM gameSessions WHERE userId=?; SELECT COUNT(*) AS totalLogins FROM gameSessions WHERE userId = ?;`,
-      [userId, userId],
-      async function (err, results) {
-        if (err) {
-          throw err;
-        }
+  const totalSecondsResults = await db.query(
+    `SELECT SUM(TIME_TO_SEC(TIMEDIFF(COALESCE(sessionEnd, NOW()), sessionStart))) AS totalSeconds FROM gameSessions WHERE userId=?`,
+    [userId]
+  );
 
-        const seconds = results[0][0].totalSeconds;
-        const logins = results[1][0].totalLogins;
+  const totalLoginsResults = await db.query(
+    `SELECT COUNT(*) AS totalLogins FROM gameSessions WHERE userId = ?`,
+    [userId]
+  );
 
-        const userStats = {
-          totalPlaytime: convertSecondsToDuration(seconds),
-          totalLogins: logins,
-        };
+  const seconds = totalSecondsResults?.[0]?.totalSeconds ?? 0;
+  const logins = totalLoginsResults?.[0]?.totalLogins ?? 0;
 
-        resolve(userStats);
-      }
-    );
-  });
+  return {
+    totalPlaytime: convertSecondsToDuration(seconds),
+    totalLogins: logins,
+  };
 }
 
 export function convertSecondsToDuration(seconds) {

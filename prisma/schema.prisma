@@ -1,0 +1,254 @@
+// Prisma schema representing the existing Zander database structure.
+// The datasource falls back to DATABASE_URL, or you can override the URL
+// at runtime in PrismaClient instantiation.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+enum ProfilePictureType {
+  CRAFTATAR
+  GRAVATAR
+}
+
+enum ServerType {
+  INTERNAL
+  EXTERNAL
+  VERIFICATION
+}
+
+enum AnnouncementType {
+  motd @map("motd")
+  tip  @map("tip")
+  web  @map("web")
+}
+
+model User {
+  userId                     Int                     @id @default(autoincrement())
+  uuid                       String                  @unique @db.VarChar(36)
+  username                   String                  @db.VarChar(16)
+  discordId                  String?                 @db.VarChar(18)
+  email                      String?                 @unique @db.VarChar(254)
+  password_hash              String?                 @db.VarChar(255)
+  email_verified             Boolean?                @default(false)
+  email_verified_at          DateTime?
+  joined                     DateTime                @default(now())
+  profilePicture_type        ProfilePictureType      @default(CRAFTATAR)
+  profilePicture_email       String?                 @db.VarChar(70)
+  account_registered         DateTime?
+  account_disabled           Boolean                 @default(false)
+  social_aboutMe             String?                 @db.MediumText
+  social_interests           String?                 @db.VarChar(50)
+  social_discord             String?                 @db.VarChar(32)
+  social_steam               String?                 @db.VarChar(100)
+  social_twitch              String?                 @db.VarChar(25)
+  social_youtube             String?                 @db.VarChar(100)
+  social_twitter_x           String?                 @db.VarChar(15)
+  social_instagram           String?                 @db.VarChar(30)
+  social_reddit              String?                 @db.VarChar(38)
+  social_spotify             String?                 @db.VarChar(100)
+  audit_lastDiscordMessage   DateTime?
+  audit_lastDiscordVoice     DateTime?
+  audit_lastMinecraftLogin   DateTime?
+  audit_lastMinecraftMessage DateTime?
+  audit_lastMinecraftPunishment DateTime?
+  audit_lastDiscordPunishment   DateTime?
+  audit_lastWebsiteLogin     DateTime?
+
+  emailVerifications UserEmailVerifications[]
+  passwordResets     UserPasswordResets[]
+  gameSessions       GameSessions[]
+
+  @@index([uuid])
+  @@map("users")
+}
+
+model UserEmailVerifications {
+  verificationId Int      @id @default(autoincrement())
+  userId         Int
+  codeHash       String   @db.VarChar(255)
+  expiresAt      DateTime
+  consumed       Boolean? @default(false)
+  createdAt      DateTime? @default(now())
+  consumedAt     DateTime?
+
+  user User @relation(fields: [userId], references: [userId], onDelete: Cascade)
+
+  @@index([userId], map: "userEmailVerifications_userId")
+  @@map("userEmailVerifications")
+}
+
+model UserPasswordResets {
+  resetId    Int      @id @default(autoincrement())
+  userId     Int
+  codeHash   String   @db.VarChar(255)
+  expiresAt  DateTime
+  consumed   Boolean? @default(false)
+  createdAt  DateTime? @default(now())
+  consumedAt DateTime?
+
+  user User @relation(fields: [userId], references: [userId], onDelete: Cascade)
+
+  @@index([userId], map: "userPasswordResets_userId")
+  @@map("userPasswordResets")
+}
+
+model UserVerifyLink {
+  verifyId   Int     @id @default(autoincrement())
+  uuid       String  @unique @db.VarChar(36)
+  username   String  @db.Text
+  linkCode   String? @db.VarChar(6)
+  codeExpiry DateTime
+
+  @@map("userVerifyLink")
+}
+
+model Servers {
+  serverId               Int        @id @default(autoincrement())
+  displayName            String?    @db.Text
+  serverConnectionAddress String?    @db.Text
+  serverType             ServerType?
+  position               Int?
+
+  @@map("servers")
+}
+
+model ServerStatus {
+  serverStatusId Int      @id @default(autoincrement())
+  statusInfo     Json?
+  lastUpdated    DateTime?
+
+  @@map("serverStatus")
+}
+
+model GameSessions {
+  sessionId   Int      @id @default(autoincrement())
+  userId      Int
+  sessionStart DateTime @default(now())
+  sessionEnd  DateTime?
+  ipAddress   String?  @db.VarChar(45)
+  server      String?  @db.Text
+
+  user User? @relation(fields: [userId], references: [userId])
+
+  @@index([sessionStart], map: "gameSessions_sessionStart")
+  @@index([sessionEnd], map: "gameSessions_sessionEnd")
+  @@map("gameSessions")
+}
+
+model Announcements {
+  announcementId Int               @id @default(autoincrement())
+  enabled        Boolean?          @default(true)
+  announcementType AnnouncementType?
+  body           String?           @db.Text
+  colourMessageFormat String?      @db.Text
+  link           String?           @db.Text
+  updatedDate    DateTime?
+
+  @@map("announcements")
+}
+
+model Applications {
+  applicationId      Int     @id @default(autoincrement())
+  displayName        String? @db.VarChar(30)
+  description        String? @db.Text
+  displayIcon        String? @db.VarChar(40)
+  requirementsMarkdown String? @db.Text
+  redirectUrl        String? @db.Text
+  position           Int?
+  applicationStatus  Boolean? @default(false)
+
+  @@map("applications")
+}
+
+model Reports {
+  reportId            Int      @id @default(autoincrement())
+  reporterId          Int
+  reportedUser        String   @db.VarChar(30)
+  reportReason        String   @db.VarChar(100)
+  reportReasonEvidence String? @db.MediumText
+  reportPlatform      String   @db.VarChar(10)
+  reportDateTime      DateTime @default(now())
+
+  @@map("reports")
+}
+
+model Vault {
+  vaultId     Int     @id @default(autoincrement())
+  displayName String? @db.VarChar(30)
+  description String? @db.MediumText
+  redirectUrl String? @db.Text
+  position    Int?
+
+  @@map("vault")
+}
+
+model Bridge {
+  bridgeId      Int      @id @default(autoincrement())
+  command       String?  @db.Text
+  targetServer  String?  @db.VarChar(30)
+  processed     Boolean? @default(false)
+  bridgeDateTime DateTime @default(now())
+
+  @@map("bridge")
+}
+
+model ExecutorTasks {
+  executorTaskId Int      @id @default(autoincrement())
+  slug           String   @db.VarChar(64)
+  command        String   @db.Text
+  status         String   @db.VarChar(16) @default("pending")
+  routineSlug    String?  @db.VarChar(64)
+  metadata       String?  @db.Text
+  result         String?  @db.Text
+  priority       Int?     @default(0)
+  executedBy     String?  @db.VarChar(64)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  processedAt    DateTime?
+
+  @@index([status, slug], map: "idx_executorTasks_status_slug")
+  @@index([routineSlug], map: "idx_executorTasks_routineSlug")
+  @@map("executorTasks")
+}
+
+model ExecutorRoutines {
+  executorRoutineId Int      @id @default(autoincrement())
+  routineSlug       String   @db.VarChar(64)
+  displayName       String?  @db.VarChar(120)
+  description       String?  @db.Text
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@unique([routineSlug], map: "uq_executorRoutines_routineSlug")
+  @@map("executorRoutines")
+}
+
+model ExecutorRoutineSteps {
+  executorRoutineStepId Int      @id @default(autoincrement())
+  executorRoutineId     Int
+  stepOrder             Int      @default(0)
+  slug                  String   @db.VarChar(64)
+  command               String   @db.Text
+  metadata              String?  @db.Text
+  createdAt             DateTime @default(now())
+
+  @@index([executorRoutineId, stepOrder], map: "idx_executorRoutineSteps_routine")
+  @@map("executorRoutineSteps")
+}
+
+model Logs {
+  logId           Int      @id @default(autoincrement())
+  creatorId       Int
+  logFeature      String?  @db.VarChar(30)
+  logType         String?  @db.VarChar(30)
+  description     String?  @db.Text
+  actionedDateTime DateTime @default(now())
+
+  @@map("logs")
+}
