@@ -8,7 +8,7 @@
 }) %>
 
 <%- include("../partials/miniHeader.ejs", {
-  headerTitle: "Feature Disabled",
+  headerTitle: "Something Went Wrong",
   backgroundImage: globalImage
 }) %>
 
@@ -22,19 +22,92 @@
       </div>
       <div class="col-12 col-md-6">
           <h3>There was an error ;-;</h3>
-          <% if (error.message) { %>
+          <% if (error?.message) { %>
+            <p class="text-muted">Error message:</p>
             <code><%= error.message %></code>
           <% } %>
 
-          <% if (error) { %>
+          <% if (error && !error.message) { %>
+            <p class="text-muted">Details:</p>
             <code><%= error %></code>
           <% } %>
 
-          <br><br><br>
-          <small class="text-muted">If this continues to happen, please report this by either <a style="color: rgb(75, 64, 224);" href="mailto:<%= config.siteConfiguration.email %>">e-mailing our Support Team</a> or <a style="color: rgb(75, 64, 224);" href="/discord">join our Community Discord and open a ticket</a>.</small>
+          <div class="card mt-4">
+            <div class="card-body">
+              <h5 class="card-title">Send a crash report</h5>
+              <p class="card-text">Share what you were doing before the error. This helps us fix issues faster.</p>
+              <form id="crashReportForm">
+                <div class="form-group">
+                  <label for="crashReportNotes">What happened? (optional)</label>
+                  <textarea
+                    id="crashReportNotes"
+                    class="form-control"
+                    rows="3"
+                    placeholder="Tell us what led to this error"
+                  ></textarea>
+                </div>
+                <button id="crashReportSubmit" type="submit" class="btn btn-primary mt-2">Send crash report</button>
+                <div id="crashReportStatus" class="mt-2 text-muted"></div>
+              </form>
+              <small class="text-muted">You can also <a style="color: rgb(75, 64, 224);" href="mailto:<%= config.siteConfiguration.email %>">email our Support Team</a> or <a style="color: rgb(75, 64, 224);" href="/discord">join our Community Discord</a>.</small>
+            </div>
+          </div>
       </div>
     </div>
   </div>
 </section>
+
+<script>
+  (function () {
+    const crashReportForm = document.getElementById("crashReportForm");
+    if (!crashReportForm) return;
+
+    const crashReportNotes = document.getElementById("crashReportNotes");
+    const crashReportStatus = document.getElementById("crashReportStatus");
+    const crashReportSubmit = document.getElementById("crashReportSubmit");
+
+    const serverErrorMessage = <%- JSON.stringify(error?.message || null) %>;
+    const serverErrorStack = <%- JSON.stringify(error?.stack || null) %>;
+    const statusCode = <%- JSON.stringify(typeof error?.statusCode === "number" ? error.statusCode : null) %>;
+
+    crashReportForm.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      crashReportStatus.classList.remove("text-danger");
+      crashReportStatus.textContent = "Sending report...";
+      crashReportSubmit.disabled = true;
+
+      try {
+        const response = await fetch("/api/crash-report", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            summary: crashReportNotes.value,
+            errorMessage: serverErrorMessage,
+            errorStack: serverErrorStack,
+            statusCode: statusCode,
+            pageUrl: window.location.href,
+          }),
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+          crashReportStatus.textContent = data.message || "Crash report sent. Thank you!";
+          crashReportNotes.disabled = true;
+        } else {
+          crashReportStatus.textContent =
+            data.message || "We couldn't send the crash report. Please try again soon.";
+          crashReportStatus.classList.add("text-danger");
+          crashReportSubmit.disabled = false;
+        }
+      } catch (sendError) {
+        crashReportStatus.textContent =
+          "There was a problem sending the crash report. Please try again soon.";
+        crashReportStatus.classList.add("text-danger");
+        crashReportSubmit.disabled = false;
+      }
+    });
+  })();
+</script>
 
 <%- include("../modules/footer.ejs") %>

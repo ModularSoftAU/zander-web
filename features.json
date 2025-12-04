@@ -8,6 +8,7 @@
       "guildMemberVerify": true
     }
   },
+  "crashReports": true,
   "server": true,
   "ranks": true,
   "report": true,

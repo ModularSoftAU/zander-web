@@ -35,7 +35,8 @@
       "networkChatLog": "WEBHOOKURL",
       "adminLog": "WEBHOOKURL",
       "staffChannel": "WEBHOOKURL",
-      "staffAuditLog": "WEBHOOKURL"
+      "staffAuditLog": "WEBHOOKURL",
+      "crashReport": "WEBHOOKURL"
     },
     "roles": {
       "verified": "ROLEID"

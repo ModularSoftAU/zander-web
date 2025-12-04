@@ -16,6 +16,7 @@ const features = require("./features.json");
 const lang = require("./lang.json");
 import db from "./controllers/databaseController.js";
 import { getWebAnnouncement } from "./controllers/announcementController.js";
+import { sendCrashReport } from "./controllers/crashReportController.js";
 
 // Paths
 import path from "path";
@@ -37,6 +38,7 @@ import("./cron/staffAuditReportCron.js");
 import siteRoutes from "./routes/index.js";
 import apiRoutes from "./api/routes/index.js";
 import apiRedirectRoutes from "./api/internal_redirect/index.js";
+import crashReportApiRoute from "./api/routes/crashReport.js";
 
 // API token authentication
 import verifyToken from "./api/routes/verifyToken.js";
@@ -84,6 +86,21 @@ const buildApp = async () => {
         ? error.statusCode
         : 500;
 
+    if (features?.crashReports !== false) {
+      try {
+        await sendCrashReport({
+          config,
+          context: "fastify-errorHandler",
+          error,
+          statusCode,
+          request: req,
+          pageUrl: req?.url,
+        });
+      } catch (crashReportError) {
+        app.log.error("Crash reporting failed", crashReportError);
+      }
+    }
+
     res.status(statusCode);
 
     return res.view("session/error", {
@@ -111,6 +128,11 @@ const buildApp = async () => {
   });
 
   await app.register(await import("@fastify/formbody"));
+
+  await app.register((instance, options, next) => {
+    crashReportApiRoute(instance, config, features, lang);
+    next();
+  });
 
   await app.register((instance, options, next) => {
     // API routes (Token authenticated)
