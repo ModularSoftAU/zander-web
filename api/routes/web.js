@@ -18,13 +18,14 @@ export default async function webApiRoute(app, config, db, features, lang) {
   app.get(baseEndpoint + "/statistics", async function (req, res) {
     // There is no isFeatureEnabled() due to being a critical endpoint.
     try {
-      const threeMonthsAgoQuery = Prisma.sql`DATE_SUB(NOW(), INTERVAL 3 MONTH)`;
+      const threeMonthsAgo = new Date();
+      threeMonthsAgo.setMonth(threeMonthsAgo.getMonth() - 3);
 
       const communityMembersQuery = Prisma.sql`
         SELECT COUNT(DISTINCT gs.userId) AS communityMembers
         FROM gameSessions gs
         JOIN users u ON gs.userId = u.userId
-        WHERE gs.sessionStart >= ${threeMonthsAgoQuery}
+        WHERE gs.sessionStart >= ${threeMonthsAgo}
           AND u.account_disabled = 0
       `;
 
@@ -32,7 +33,7 @@ export default async function webApiRoute(app, config, db, features, lang) {
         SELECT ROUND(SUM(TIMESTAMPDIFF(SECOND, gs.sessionStart, COALESCE(gs.sessionEnd, NOW()))) / 3600) AS timePlayed
         FROM gameSessions gs
         JOIN users u ON gs.userId = u.userId
-        WHERE gs.sessionStart >= ${threeMonthsAgoQuery}
+        WHERE gs.sessionStart >= ${threeMonthsAgo}
           AND u.account_disabled = 0
       `;
 
