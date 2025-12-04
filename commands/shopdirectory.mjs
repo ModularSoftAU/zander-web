@@ -57,13 +57,27 @@ export class ShopDirectoryCommand extends Command {
     const shopApiURL = `${process.env.siteAddress}/api/shop/get?material=${encodeURIComponent(material)}`;    
 
     try {
-      // Fetch shop data from the API
       const response = await fetch(shopApiURL, {
         headers: { "x-access-token": process.env.apiKey },
       });
-      const apiData = await response.json();
 
-      if (!apiData.success || !apiData.data.length) {
+      const rawBody = await response.text();
+      let apiData;
+      try {
+        apiData = rawBody ? JSON.parse(rawBody) : null;
+      } catch (parseError) {
+        throw new Error(
+          `Shop API returned invalid JSON (status ${response.status}). Body: ${rawBody}`
+        );
+      }
+
+      if (!response.ok) {
+        throw new Error(
+          `Shop API responded with ${response.status}. Body: ${rawBody}`
+        );
+      }
+
+      if (!apiData?.success || !apiData.data?.length) {
         const noItemsEmbed = new EmbedBuilder()
           .setTitle("No Shop Items Found")
           .setDescription(
