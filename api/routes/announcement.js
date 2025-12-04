@@ -31,8 +31,6 @@ export default function announcementApiRoute(app, config, db, features, lang) {
             });
           }
 
-          console.log(results);
-
           res.send({
             success: true,
             data: results,

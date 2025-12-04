@@ -15,8 +15,6 @@ export default function applicationApiRoute(app, config, db, features, lang) {
     try {
       function getApplications(dbQuery) {
         db.query(dbQuery, function (error, results, fields) {
-          console.log(results);
-          
           if (error) {
             return res.send({
               success: false,

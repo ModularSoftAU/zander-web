@@ -186,8 +186,6 @@ export async function postAPIRequest(
 
   const data = await response.json();
 
-  console.log(data);
-
   if (data.alertType) {
     setBannerCookie(`${data.alertType}`, `${data.alertContent}`, res);
   }
@@ -196,7 +194,7 @@ export async function postAPIRequest(
     return res.redirect(failureRedirectURL);
   }
 
-  return console.log(data);
+  return data;
 }
 
 /*
@@ -245,7 +243,7 @@ export async function setBannerCookie(alertType, alertContent, res) {
     // Make sure to send the res
     return res;
   } catch (error) {
-    console.log(error);
+    console.error(error);
   }
 }
 

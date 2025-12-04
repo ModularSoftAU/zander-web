@@ -84,7 +84,7 @@ export default function userApiRoute(app, config, db, features, lang) {
         });
       }
     } catch (error) {
-      console.log(error);
+      console.error(error);
       return res.send({
         success: false,
         message: `${error}`,
@@ -506,7 +506,6 @@ export default function userApiRoute(app, config, db, features, lang) {
       });
 
       const dataResponse = await response.json();
-      console.log(dataResponse);
 
       if (dataResponse.success == true) {
         try {
@@ -518,7 +517,6 @@ export default function userApiRoute(app, config, db, features, lang) {
           });
         }
       } else {
-        console.log(`Illegal words detected.`);
         setBannerCookie(
           "danger",
           `Illegal words detected, changes not applied.`,
@@ -526,7 +524,7 @@ export default function userApiRoute(app, config, db, features, lang) {
         );
       }
     } catch (error) {
-      console.log(error);
+      console.error(error);
       return;
     }
 
@@ -551,7 +549,6 @@ export default function userApiRoute(app, config, db, features, lang) {
       });
 
       const dataResponse = await response.json();
-      console.log(dataResponse);
 
       if (dataResponse.success == true) {
         try {
@@ -564,7 +561,7 @@ export default function userApiRoute(app, config, db, features, lang) {
         }
       }
     } catch (error) {
-      console.log(error);
+      console.error(error);
       return;
     }
 

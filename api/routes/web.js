@@ -62,7 +62,7 @@ export default async function webApiRoute(app, config, db, features, lang) {
         },
       });
     } catch (err) {
-      console.log(err);
+      console.error(err);
       return res.send({ success: false, message: "Failed to load statistics" });
     }
   });

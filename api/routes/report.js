@@ -91,12 +91,9 @@ export default function reportApiRoute(app, config, db, features, lang) {
           reportPlatform,
         ],
         async function (error, results, fields) {
-          console.log(req.body);
-          
           if (error) {
-            console.log(error);
-            console.log(results);
-            
+            console.error(error);
+
             return res.send({
               success: false,
               message: `Report has failed, please try again later.`,

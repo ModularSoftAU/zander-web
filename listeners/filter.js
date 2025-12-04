@@ -36,7 +36,6 @@ export class GuildMessageListener extends Listener {
         });
 
         const dataResponse = await response.json();
-        console.log(dataResponse);
 
         if (dataResponse.success === false) {
           // Create an embed to warn the user
@@ -58,7 +57,7 @@ export class GuildMessageListener extends Listener {
           }, 500); // Delay of 500ms before deleting the message
         }
       } catch (error) {
-        console.log(error);
+        console.error(error);
       }
     }
   }

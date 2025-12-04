@@ -25,7 +25,8 @@ export class GuildMessageListener extends Listener {
       try {
         updateAudit_lastDiscordVoice(new Date(), user.id);
       } catch (error) {
-        return console.log(error);
+        console.error(error);
+        return;
       }
     }
   }
