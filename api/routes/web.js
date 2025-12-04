@@ -1,3 +1,5 @@
+import { Prisma } from "@prisma/client";
+
 export default async function webApiRoute(app, config, db, features, lang) {
   const baseEndpoint = "/api/web";
 
@@ -16,34 +18,42 @@ export default async function webApiRoute(app, config, db, features, lang) {
   app.get(baseEndpoint + "/statistics", async function (req, res) {
     // There is no isFeatureEnabled() due to being a critical endpoint.
     try {
+      const threeMonthsAgoQuery = Prisma.sql`DATE_SUB(NOW(), INTERVAL 3 MONTH)`;
+
+      const communityMembersQuery = Prisma.sql`
+        SELECT COUNT(DISTINCT gs.userId) AS communityMembers
+        FROM gameSessions gs
+        JOIN users u ON gs.userId = u.userId
+        WHERE gs.sessionStart >= ${threeMonthsAgoQuery}
+          AND u.account_disabled = 0
+      `;
+
+      const timePlayedQuery = Prisma.sql`
+        SELECT ROUND(SUM(TIMESTAMPDIFF(SECOND, gs.sessionStart, COALESCE(gs.sessionEnd, NOW()))) / 3600) AS timePlayed
+        FROM gameSessions gs
+        JOIN users u ON gs.userId = u.userId
+        WHERE gs.sessionStart >= ${threeMonthsAgoQuery}
+          AND u.account_disabled = 0
+      `;
+
+      const staffQuery = Prisma.sql`
+        SELECT COUNT(*) AS totalStaff
+        FROM (
+          SELECT u.uuid
+          FROM userRanks ur
+          JOIN ranks r ON ur.rankSlug = r.rankSlug
+          JOIN users u ON u.uuid = ur.uuid
+          WHERE r.isStaff = 1
+            AND u.account_disabled = 0
+          GROUP BY u.uuid
+        ) staffRoster
+      `;
+
       const [communityMembersResult, timePlayedResult, staffResult] =
         await Promise.all([
-          db.query(`
-            SELECT COUNT(DISTINCT gs.userId) AS communityMembers
-            FROM gameSessions gs
-            JOIN users u ON gs.userId = u.userId
-            WHERE gs.sessionStart >= DATE_SUB(NOW(), INTERVAL 3 MONTH)
-              AND u.account_disabled = 0
-          `),
-          db.query(`
-            SELECT ROUND(SUM(TIMESTAMPDIFF(SECOND, gs.sessionStart, COALESCE(gs.sessionEnd, NOW()))) / 3600) AS timePlayed
-            FROM gameSessions gs
-            JOIN users u ON gs.userId = u.userId
-            WHERE gs.sessionStart >= DATE_SUB(NOW(), INTERVAL 3 MONTH)
-              AND u.account_disabled = 0
-          `),
-          db.query(`
-            SELECT COUNT(*) AS totalStaff
-            FROM (
-              SELECT u.uuid
-              FROM userRanks ur
-              JOIN ranks r ON ur.rankSlug = r.rankSlug
-              JOIN users u ON u.uuid = ur.uuid
-              WHERE r.isStaff = 1
-                AND u.account_disabled = 0
-              GROUP BY u.uuid
-            ) staffRoster
-          `),
+          db.prisma.$queryRaw(communityMembersQuery),
+          db.prisma.$queryRaw(timePlayedQuery),
+          db.prisma.$queryRaw(staffQuery),
         ]);
 
       // General
