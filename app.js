@@ -111,6 +111,7 @@ const buildApp = async () => {
   });
 
   await app.register(await import("@fastify/formbody"));
+  await app.register(await import("@fastify/multipart"));
 
   await app.register((instance, options, next) => {
     // API routes (Token authenticated)

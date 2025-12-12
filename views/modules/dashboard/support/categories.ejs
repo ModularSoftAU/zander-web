@@ -1,0 +1,87 @@
+<%- include('../../../partials/header.ejs') %>
+
+<div class="page-header">
+    <div class="container">
+        <h1>Support Ticket Categories</h1>
+    </div>
+</div>
+
+<div class="container">
+    <div class="card">
+        <div class="card-header">
+            <h2>Categories</h2>
+        </div>
+        <div class="card-body">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Description</th>
+                        <th>Permissions</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <% categories.forEach(category => { %>
+                        <tr>
+                            <td><%= category.name %></td>
+                            <td><%= category.description %></td>
+                            <td>
+                                <% if (category.permissions) { %>
+                                    <% category.permissions.split(',').forEach(roleId => { %>
+                                        <span class="badge bg-primary"><%= roles.find(r => r.id === roleId)?.name %></span>
+                                    <% }) %>
+                                <% } %>
+                            </td>
+                            <td>
+                                <form action="/dashboard/support/categories/<%= category.categoryId %>/delete" method="POST" class="d-inline">
+                                    <button type="submit" class="btn btn-danger">Delete</button>
+                                </form>
+                                <form action="/dashboard/support/categories/<%= category.categoryId %>/permissions" method="POST" class="d-inline">
+                                    <select name="roleId" class="form-control d-inline w-auto">
+                                        <% roles.forEach(role => { %>
+                                            <option value="<%= role.id %>"><%= role.name %></option>
+                                        <% }) %>
+                                    </select>
+                                    <button type="submit" class="btn btn-primary">Add Permission</button>
+                                </form>
+                            </td>
+                        </tr>
+                    <% }) %>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="card mt-4">
+        <div class="card-header">
+            <h2>Add New Category</h2>
+        </div>
+        <div class="card-body">
+            <form action="/dashboard/support/categories" method="POST">
+                <div class="form-group">
+                    <label for="name">Name</label>
+                    <input type="text" name="name" id="name" class="form-control" required>
+                </div>
+                <div class="form-group">
+                    <label for="description">Description</label>
+                    <textarea name="description" id="description" rows="3" class="form-control"></textarea>
+                </div>
+                <button type="submit" class="btn btn-primary">Add Category</button>
+            </form>
+        </div>
+    </div>
+
+    <div class="card mt-4">
+        <div class="card-header">
+            <h2>Discord Support Message</h2>
+        </div>
+        <div class="card-body">
+            <form action="/dashboard/support/message" method="POST">
+                <button type="submit" class="btn btn-primary">Post/Update Support Message</button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<%- include('../../../partials/footer.ejs') %>

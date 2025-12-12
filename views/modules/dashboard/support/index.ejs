@@ -1,0 +1,48 @@
+<%- include('../../../partials/header.ejs') %>
+
+<div class="page-header">
+    <div class="container">
+        <h1>Support Tickets</h1>
+        <a href="/dashboard/support/create" class="btn btn-primary">Create New Ticket</a>
+    </div>
+</div>
+
+<div class="container">
+    <div class="card">
+        <div class="card-header">
+            <h2>My Tickets</h2>
+        </div>
+        <div class="card-body">
+            <% if (tickets.length === 0) { %>
+                <p>You have no support tickets.</p>
+            <% } else { %>
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Ticket ID</th>
+                            <th>Title</th>
+                            <th>Status</th>
+                            <th>Created At</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <% tickets.forEach(ticket => { %>
+                            <tr>
+                                <td>#<%= ticket.ticketId %></td>
+                                <td><%= ticket.title %></td>
+                                <td><%= ticket.status %></td>
+                                <td><%= new Date(ticket.createdAt).toLocaleString() %></td>
+                                <td>
+                                    <a href="/dashboard/support/ticket/<%= ticket.ticketId %>" class="btn btn-primary">View</a>
+                                </td>
+                            </tr>
+                        <% }) %>
+                    </tbody>
+                </table>
+            <% } %>
+        </div>
+    </div>
+</div>
+
+<%- include('../../../partials/footer.ejs') %>

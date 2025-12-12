@@ -109,6 +109,7 @@ export default function sessionSiteRoute(
       uuid: userLoginData.uuid,
       ranks: userRanks,
       permissions: userPermissionData,
+      isStaff: userRanks.some(rank => rank.isStaff),
     };
 
     await updateAudit_lastWebsiteLogin(new Date(), userLoginData.username);
