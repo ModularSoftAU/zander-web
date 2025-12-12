@@ -1,3 +1,11 @@
+CREATE TABLE supportTicketCategories (
+    categoryId INT NOT NULL AUTO_INCREMENT,
+    name VARCHAR(255) NOT NULL,
+    description TEXT,
+    enabled BOOLEAN NOT NULL DEFAULT 1,
+    PRIMARY KEY (categoryId)
+);
+
 CREATE TABLE supportTickets (
     ticketId INT NOT NULL AUTO_INCREMENT,
     userId INT NOT NULL,
@@ -21,14 +29,6 @@ CREATE TABLE supportTicketMessages (
     PRIMARY KEY (messageId),
     FOREIGN KEY (ticketId) REFERENCES supportTickets(ticketId) ON DELETE CASCADE,
     FOREIGN KEY (userId) REFERENCES users(userId) ON DELETE CASCADE
-);
-
-CREATE TABLE supportTicketCategories (
-    categoryId INT NOT NULL AUTO_INCREMENT,
-    name VARCHAR(255) NOT NULL,
-    description TEXT,
-    enabled BOOLEAN NOT NULL DEFAULT 1,
-    PRIMARY KEY (categoryId)
 );
 
 CREATE TABLE supportTicketCategoryPermissions (
