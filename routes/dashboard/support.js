@@ -17,6 +17,7 @@ import {
   getUserRoles,
   getCategoryPermissions,
   getAllTickets,
+  updateTicketStatus,
 } from "../../controllers/supportTicketController.js";
 
 const imgurClient = new ImgurClient({

@@ -9,6 +9,7 @@ import sessionRoutes from "./sessionRoutes.js";
 import policySiteRoutes from "./policyRoutes.js";
 import redirectSiteRoutes from "./redirectRoutes.js";
 import profileSiteRoutes from "./profileRoutes.js";
+import supportSiteRoutes from "./support.js";
 
 const rankData = require("../ranks.json");
 
@@ -27,6 +28,7 @@ export default function applicationSiteRoutes(
   profileSiteRoutes(app, client, fetch, moment, config, db, features, lang);
   policySiteRoutes(app, config, features);
   redirectSiteRoutes(app, config, features);
+  supportSiteRoutes(app, client, fetch, moment, config, db, features, lang);
 
   app.get("/", async function (req, res) {
     const fetchURL = `${process.env.siteAddress}/api/web/statistics`;
