@@ -1,22 +1,23 @@
-<%- include('../../../modules/header.ejs', {
+<%- include('../../modules/header.ejs', {
     pageTitle: pageTitle,
-    pageDescription: "Manage Support Tickets"
+    pageDescription: "Support Tickets"
 }) %>
 
 <div class="page-header">
     <div class="container">
-        <h1>Manage Support Tickets</h1>
+        <h1>Support Tickets</h1>
+        <a href="/support/create" class="btn btn-primary">Create New Ticket</a>
     </div>
 </div>
 
 <div class="container">
     <div class="card">
         <div class="card-header">
-            <h2>All Tickets</h2>
+            <h2>My Tickets</h2>
         </div>
         <div class="card-body">
             <% if (tickets.length === 0) { %>
-                <p>There are no support tickets.</p>
+                <p>You have no support tickets.</p>
             <% } else { %>
                 <table class="table">
                     <thead>
@@ -47,4 +48,4 @@
     </div>
 </div>
 
-<%- include('../../../modules/footer.ejs') %>
+<%- include('modules/footer.ejs') %>

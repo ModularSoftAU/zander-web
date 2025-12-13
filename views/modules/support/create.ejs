@@ -1,4 +1,4 @@
-<%- include('../../../modules/header.ejs', {
+<%- include('../../modules/header.ejs', {
     pageTitle: pageTitle,
     pageDescription: "Create Support Ticket"
 }) %>
@@ -15,7 +15,7 @@
             <h2>New Ticket</h2>
         </div>
         <div class="card-body">
-            <form action="/dashboard/support/create" method="POST" enctype="multipart/form-data">
+            <form action="/support/create" method="POST" enctype="multipart/form-data">
                 <div class="form-group">
                     <label for="title">Title</label>
                     <input type="text" name="title" id="title" class="form-control" required>
@@ -42,4 +42,4 @@
     </div>
 </div>
 
-<%- include('../../../modules/footer.ejs') %>
+<%- include('../../modules/footer.ejs') %>
