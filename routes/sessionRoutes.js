@@ -115,7 +115,11 @@ export default function sessionSiteRoute(
     await updateAudit_lastWebsiteLogin(new Date(), userLoginData.username);
   }
 
-  app.get("/login", async function (req, res) {
+  app.get("/session/login", async function (req, res) {
+    if (req.session.user) {
+      return res.redirect("/dashboard");
+    }
+
     if (!isFeatureWebRouteEnabled(features.web.login, req, res, features))
       return;
 
@@ -136,7 +140,11 @@ export default function sessionSiteRoute(
     });
   });
 
-  app.post("/login", async function (req, res) {
+  app.post("/session/login", async function (req, res) {
+    if (req.session.user) {
+      return res.redirect("/dashboard");
+    }
+
     if (!isFeatureWebRouteEnabled(features.web.login, req, res, features))
       return;
 

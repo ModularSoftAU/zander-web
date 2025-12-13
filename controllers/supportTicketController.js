@@ -118,6 +118,30 @@ export async function getUserIdByDiscordId(discordId) {
     });
 }
 
+export async function getCategoryById(id) {
+    return new Promise((resolve, reject) => {
+        db.query("SELECT * FROM supportTicketCategories WHERE categoryId = ?", [id], (err, results) => {
+            if (err) {
+                reject(err);
+            } else {
+                resolve(results[0]);
+            }
+        });
+    });
+}
+
+export async function updateSupportCategory(id, name, description) {
+    return new Promise((resolve, reject) => {
+        db.query("UPDATE supportTicketCategories SET name = ?, description = ? WHERE categoryId = ?", [name, description, id], (err, results) => {
+            if (err) {
+                reject(err);
+            } else {
+                resolve(results);
+            }
+        });
+    });
+}
+
 export async function createUnlinkedUser(discordId, username) {
     return new Promise((resolve, reject) => {
         db.query("INSERT INTO users (discordId, username, uuid) VALUES (?, ?, UUID())", [discordId, username], (err, results) => {
@@ -180,7 +204,19 @@ export async function getTicketByChannelId(channelId) {
 
 export async function getAllTickets() {
     return new Promise((resolve, reject) => {
-        db.query("SELECT * FROM supportTickets", (err, results) => {
+        db.query("SELECT t.*, u.username FROM supportTickets t JOIN users u ON t.userId = u.userId", (err, results) => {
+            if (err) {
+                reject(err);
+            } else {
+                resolve(results);
+            }
+        });
+    });
+}
+
+export async function getTicketsByCategory(categoryId) {
+    return new Promise((resolve, reject) => {
+        db.query("SELECT t.*, u.username FROM supportTickets t JOIN users u ON t.userId = u.userId WHERE t.categoryId = ?", [categoryId], (err, results) => {
             if (err) {
                 reject(err);
             } else {

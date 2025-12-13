@@ -67,7 +67,7 @@ export default function supportRoutes(
   app.get("/support/ticket/:id", async function (req, res) {
     try {
       if (!req.session.user) {
-        return res.redirect("/login");
+        return res.redirect("/session/login");
       }
 
       const ticket = await getTicketById(req.params.id);
@@ -103,7 +103,7 @@ export default function supportRoutes(
   app.post("/support/ticket/:id", async function (req, res) {
     try {
       if (!req.session.user) {
-        return res.redirect("/login");
+        return res.redirect("/session/login");
       }
 
       const { message } = req.body;
@@ -146,7 +146,7 @@ export default function supportRoutes(
   app.get("/support/create", async function (req, res) {
     try {
       if (!req.session.user) {
-        return res.redirect("/login");
+        return res.redirect("/session/login");
       }
 
       const categories = await getSupportCategories();
@@ -176,7 +176,7 @@ export default function supportRoutes(
   app.post("/support/create", async function (req, res) {
     try {
       if (!req.session.user) {
-        return res.redirect("/login");
+        return res.redirect("/session/login");
       }
 
       const { title, category, message } = req.body;

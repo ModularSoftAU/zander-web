@@ -1,0 +1,41 @@
+<%- include('../../../modules/header.ejs', {
+    pageTitle: "Edit Support Category",
+    pageDescription: "Edit an existing support ticket category"
+}) %>
+
+<div class="container-fluid">
+    <div class="row">
+        <%- include('../dashboard-sidebar.ejs') %>
+
+        <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
+            <div class="page-header">
+                <div class="container">
+                    <h1>Edit Support Category</h1>
+                </div>
+            </div>
+
+            <div class="container">
+                <div class="card">
+                    <div class="card-header">
+                        <h2>Edit Category</h2>
+                    </div>
+                    <div class="card-body">
+                        <form action="/dashboard/support/categories/<%= category.categoryId %>/edit" method="POST">
+                            <div class="form-group">
+                                <label for="name">Category Name</label>
+                                <input type="text" name="name" id="name" class="form-control" value="<%= category.name %>" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="description">Description</label>
+                                <textarea name="description" id="description" rows="3" class="form-control" required><%= category.description %></textarea>
+                            </div>
+                            <button type="submit" class="btn btn-primary">Save Changes</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+</div>
+
+<%- include('../../../modules/footer.ejs') %>

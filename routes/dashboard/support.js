@@ -8,7 +8,10 @@ import {
   createSupportCategory,
   deleteSupportCategory,
   getAllTickets,
+  getTicketsByCategory,
   updateTicketStatus,
+  getCategoryById,
+  updateSupportCategory,
 } from "../../controllers/supportTicketController.js";
 
 export default function supportDashboardRoutes(
@@ -36,6 +39,47 @@ export default function supportDashboardRoutes(
         req,
         features,
         tickets,
+        globalImage: await getGlobalImage(),
+        announcementWeb: await getWebAnnouncement(),
+      });
+    } catch (error) {
+      console.error(error);
+      return res.view("session/error", {
+        pageTitle: "Error",
+        pageDescription: "Error",
+        config,
+        req,
+        error,
+      });
+    }
+  });
+
+  app.get("/dashboard/support/explorer", async function (req, res) {
+    try {
+      if (!req.session.user || !req.session.user.isStaff) {
+        return res.redirect("/session/login");
+      }
+
+      const { category } = req.query;
+      let tickets = [];
+
+      if (category) {
+        tickets = await getTicketsByCategory(category);
+      } else {
+        tickets = await getAllTickets();
+      }
+
+      const categories = await getSupportCategories();
+
+      return res.view("modules/dashboard/support/explorer", {
+        pageTitle: "Support Ticket Explorer",
+        pageDescription: "Support Ticket Explorer",
+        config,
+        req,
+        features,
+        tickets,
+        categories,
+        selectedCategory: category,
         globalImage: await getGlobalImage(),
         announcementWeb: await getWebAnnouncement(),
       });
@@ -118,6 +162,61 @@ export default function supportDashboardRoutes(
 
       const { name, description } = req.body;
       await createSupportCategory(name, description);
+
+      await updateSupportMessage(client);
+
+      return res.redirect("/dashboard/support/categories");
+    } catch (error) {
+      console.error(error);
+      return res.view("session/error", {
+        pageTitle: "Error",
+        pageDescription: "Error",
+        config,
+        req,
+        error,
+      });
+    }
+  });
+
+  app.get("/dashboard/support/categories/:id/edit", async function (req, res) {
+    try {
+      if (!req.session.user || !req.session.user.isStaff) {
+        return res.redirect("/session/login");
+      }
+
+      const category = await getCategoryById(req.params.id);
+
+      return res.view("modules/dashboard/support/edit-category", {
+        pageTitle: "Edit Support Category",
+        pageDescription: "Edit Support Category",
+        config,
+        req,
+        features,
+        category,
+        globalImage: await getGlobalImage(),
+        announcementWeb: await getWebAnnouncement(),
+      });
+    } catch (error) {
+      console.error(error);
+      return res.view("session/error", {
+        pageTitle: "Error",
+        pageDescription: "Error",
+        config,
+        req,
+        error,
+      });
+    }
+  });
+
+  app.post("/dashboard/support/categories/:id/edit", async function (req, res) {
+    try {
+      if (!req.session.user || !req.session.user.isStaff) {
+        return res.redirect("/session/login");
+      }
+
+      const { id } = req.params;
+      const { name, description } = req.body;
+      await updateSupportCategory(id, name, description);
 
       await updateSupportMessage(client);
 

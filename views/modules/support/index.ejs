@@ -3,14 +3,19 @@
     pageDescription: "Support Tickets"
 }) %>
 
-<div class="page-header">
-    <div class="container">
-        <h1>Support Tickets</h1>
-        <a href="/support/create" class="btn btn-primary">Create New Ticket</a>
-    </div>
-</div>
+<div class="container-fluid">
+  <div class="row">
+    <%- include('../dashboard/dashboard-sidebar.ejs') %>
 
-<div class="container">
+    <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
+      <div class="page-header">
+        <div class="container">
+            <h1>Support Tickets</h1>
+            <a href="/support/create" class="btn btn-primary">Create New Ticket</a>
+        </div>
+    </div>
+
+    <div class="container">
     <div class="card">
         <div class="card-header">
             <h2>My Tickets</h2>
@@ -46,6 +51,6 @@
             <% } %>
         </div>
     </div>
+    </div>
 </div>
-
 <%- include('../../modules/footer.ejs') %>

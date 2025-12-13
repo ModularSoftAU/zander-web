@@ -1,5 +1,8 @@
 <div class="sidebar">
-    <nav class="sidebar-nav">
+    <button class="btn btn-primary d-md-none" type="button" data-bs-toggle="collapse" data-bs-target="#sidebar-nav" aria-controls="sidebar-nav" aria-expanded="false" aria-label="Toggle navigation">
+        <i class="fas fa-bars"></i>
+    </button>
+    <nav class="sidebar-nav collapse d-md-block" id="sidebar-nav">
         <ul class="nav">
             <li class="nav-item">
                 <a class="nav-link" href="/dashboard"><i class="fas fa-home"></i> Dashboard</a>
@@ -15,6 +18,9 @@
             </li>
             <li class="nav-item">
                 <a class="nav-link" href="/dashboard/support"><i class="fas fa-ticket-alt"></i> Manage Tickets</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="/dashboard/support/explorer"><i class="fas fa-search"></i> Ticket Explorer</a>
             </li>
             <li class="nav-item">
                 <a class="nav-link" href="/dashboard/vault"><i class="fa-solid fa-vault"></i> Vault</a>

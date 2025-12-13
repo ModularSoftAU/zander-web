@@ -1,0 +1,40 @@
+
+> modularsoft-zander-web@1.0 dev
+> nodemon  --experimental-modules --experimental-json-modules --experimental-specifier-resolution=node
+
+[33m[nodemon] 3.1.11[39m
+[33m[nodemon] to restart at any time, enter `rs`[39m
+[33m[nodemon] watching path(s): *.*[39m
+[33m[nodemon] watching extensions: js,mjs,cjs,json[39m
+[32m[nodemon] starting `node --experimental-modules --experimental-json-modules --experimental-specifier-resolution=node app.js`[39m
+[EMAIL] Transport configured for undefined:587 secure=false requireTLS=true
+
+// modularsoft-zander-web v.1.0
+GitHub Repository: https://github.com/ModularSoftAU/zander-web#readme
+Created By: ModularSoft
+Site and API is listening to the port 8080
+[ERROR] [DB] There was an error connecting:
+ Error: getaddrinfo ENOTFOUND database.example.com
+    at GetAddrInfoReqWrap.onlookupall [as oncomplete] (node:dns:122:26)
+    --------------------
+    at Protocol._enqueue (/app/node_modules/mysql/lib/protocol/Protocol.js:144:48)
+    at Protocol.handshake (/app/node_modules/mysql/lib/protocol/Protocol.js:51:23)
+    at PoolConnection.connect (/app/node_modules/mysql/lib/Connection.js:116:18)
+    at Pool.getConnection (/app/node_modules/mysql/lib/Pool.js:48:16)
+    at file:///app/controllers/databaseController.js:17:6
+    at ModuleJob.run (node:internal/modules/esm/module_job:343:25)
+    at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:665:26)
+    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5)
+/app/node_modules/discord.js/src/client/websocket/WebSocketManager.js:136
+    const invalidToken = new DiscordjsError(ErrorCodes.TokenInvalid);
+                         ^
+
+Error [TokenInvalid]: An invalid token was provided.
+    at WebSocketManager.connect (/app/node_modules/discord.js/src/client/websocket/WebSocketManager.js:136:26)
+    at _SapphireClient.login (/app/node_modules/discord.js/src/client/Client.js:228:21)
+    at _SapphireClient.login (/app/node_modules/@sapphire/framework/dist/lib/SapphireClient.js:79:31) {
+  code: 'TokenInvalid'
+}
+
+Node.js v22.21.1
+[31m[nodemon] app crashed - waiting for file changes before starting...[39m
