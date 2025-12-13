@@ -118,21 +118,9 @@ export async function getUserIdByDiscordId(discordId) {
     });
 }
 
-export async function getUserIdByEmail(email) {
+export async function createUnlinkedUser(discordId, username) {
     return new Promise((resolve, reject) => {
-        db.query("SELECT userId FROM users WHERE email = ?", [email], (err, results) => {
-            if (err) {
-                reject(err);
-            } else {
-                resolve(results[0] ? results[0].userId : null);
-            }
-        });
-    });
-}
-
-export async function createUnlinkedUser(discordId, username, email = null) {
-    return new Promise((resolve, reject) => {
-        db.query("INSERT INTO users (discordId, username, email, uuid) VALUES (?, ?, ?, UUID())", [discordId, username, email], (err, results) => {
+        db.query("INSERT INTO users (discordId, username, uuid) VALUES (?, ?, UUID())", [discordId, username], (err, results) => {
             if (err) {
                 reject(err);
             } else {
