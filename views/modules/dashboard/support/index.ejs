@@ -1,50 +1,76 @@
 <%- include('../../../modules/header.ejs', {
-    pageTitle: pageTitle,
-    pageDescription: "Manage Support Tickets"
+  pageTitle: pageTitle,
+  pageDescription: "Manage Support Tickets"
 }) %>
 
-<div class="page-header">
-    <div class="container">
-        <h1>Manage Support Tickets</h1>
-    </div>
-</div>
+<%- include('../../../modules/navigationBar.ejs') %>
 
-<div class="container">
-    <div class="card">
-        <div class="card-header">
-            <h2>All Tickets</h2>
+<div class="container-fluid">
+  <div class="row">
+    <%- include('../dashboard-sidebar.ejs') %>
+
+    <main role="main" class="col-md-9 ml-sm-auto col-lg-10 px-4">
+      <div class="d-flex flex-column flex-md-row align-items-md-center justify-content-between pt-3 pb-2 mb-4 border-bottom">
+        <div>
+          <h1 class="h2 mb-1">Manage Support Tickets</h1>
+          <p class="text-muted mb-0">Review every ticket in one place and jump directly into the conversation.</p>
         </div>
-        <div class="card-body">
-            <% if (tickets.length === 0) { %>
-                <p>There are no support tickets.</p>
-            <% } else { %>
-                <table class="table">
-                    <thead>
-                        <tr>
-                            <th>Ticket ID</th>
-                            <th>Title</th>
-                            <th>Status</th>
-                            <th>Created At</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <% tickets.forEach(ticket => { %>
-                            <tr>
-                                <td>#<%= ticket.ticketId %></td>
-                                <td><%= ticket.title %></td>
-                                <td><%= ticket.status %></td>
-                                <td><%= new Date(ticket.createdAt).toLocaleString() %></td>
-                                <td>
-                                    <a href="/support/ticket/<%= ticket.ticketId %>" class="btn btn-primary">View</a>
-                                </td>
-                            </tr>
-                        <% }) %>
-                    </tbody>
-                </table>
-            <% } %>
+        <div class="d-flex gap-2">
+          <a href="/dashboard/support/explorer" class="btn btn-outline-primary">Open explorer</a>
+          <a href="/support" class="btn btn-primary">Customer view</a>
         </div>
-    </div>
+      </div>
+
+      <div class="card shadow-sm">
+        <div class="card-header d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-2">
+          <div>
+            <h5 class="card-title mb-1">All tickets</h5>
+            <p class="card-subtitle text-muted mb-0">Live view of every request submitted through Discord or the web.</p>
+          </div>
+          <span class="badge bg-primary fw-semibold">Total: <%= tickets.length %></span>
+        </div>
+        <div class="card-body p-0">
+          <div class="table-responsive">
+            <table class="table align-middle mb-0">
+              <thead class="table-light">
+                <tr>
+                  <th scope="col">Ticket</th>
+                  <th scope="col">Title</th>
+                  <th scope="col">Status</th>
+                  <th scope="col">Created</th>
+                  <th scope="col" class="text-end">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                <% if (!tickets.length) { %>
+                  <tr>
+                    <td colspan="5" class="text-center text-muted py-4">No support tickets found.</td>
+                  </tr>
+                <% } %>
+                <% tickets.forEach(ticket => { %>
+                  <tr>
+                    <td class="fw-semibold">#<%= ticket.ticketId %></td>
+                    <td class="text-truncate" style="max-width: 280px;">
+                      <%= ticket.title %>
+                    </td>
+                    <td>
+                      <span class="badge <%= ticket.status === 'open' ? 'bg-success' : ticket.status === 'closed' ? 'bg-secondary' : 'bg-warning text-dark' %>">
+                        <%= ticket.status %>
+                      </span>
+                    </td>
+                    <td class="text-muted"><%= new Date(ticket.createdAt).toLocaleString() %></td>
+                    <td class="text-end">
+                      <a href="/support/ticket/<%= ticket.ticketId %>" class="btn btn-sm btn-outline-primary">View ticket</a>
+                    </td>
+                  </tr>
+                <% }) %>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
 </div>
 
 <%- include('../../../modules/footer.ejs') %>

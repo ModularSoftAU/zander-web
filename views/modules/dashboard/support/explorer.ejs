@@ -1,67 +1,75 @@
 <%- include('../../../modules/header.ejs', {
     pageTitle: "Support Ticket Explorer",
-    pageDescription: "Browse and manage support tickets by category"
+    pageDescription: "Browse and manage support tickets by category",
 }) %>
+
+<%- include('../../../modules/navigationBar.ejs') %>
 
 <div class="container-fluid">
     <div class="row">
         <%- include('../dashboard-sidebar.ejs') %>
 
         <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
-            <div class="page-header">
-                <div class="container">
-                    <h1>Support Ticket Explorer</h1>
+            <div class="d-flex flex-column flex-md-row align-items-md-center justify-content-between pt-3 pb-2 mb-4 border-bottom">
+                <div>
+                    <h1 class="h2 mb-1">Support Ticket Explorer</h1>
+                    <p class="text-muted mb-0">Filter tickets by category and jump directly into the right thread.</p>
                 </div>
+                <a href="/dashboard/support" class="btn btn-outline-secondary">Back to manager</a>
             </div>
 
-            <div class="container">
-                <div class="card">
-                    <div class="card-header">
-                        <h2>All Tickets</h2>
+            <div class="card shadow-sm">
+                <div class="card-header d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-3">
+                    <div>
+                        <h5 class="card-title mb-1">Browse tickets</h5>
+                        <p class="card-subtitle text-muted mb-0">Use category filtering to narrow down the queue.</p>
                     </div>
-                    <div class="card-body">
-                        <form action="/dashboard/support/explorer" method="GET">
-                            <div class="input-group mb-3">
-                                <select name="category" class="form-control">
-                                    <option value="">All Categories</option>
-                                    <% categories.forEach(category => { %>
-                                        <option value="<%= category.categoryId %>" <%= selectedCategory == category.categoryId ? 'selected' : '' %>><%= category.name %></option>
-                                    <% }) %>
-                                </select>
-                                <button type="submit" class="btn btn-primary">Filter</button>
-                            </div>
-                        </form>
-
-                        <% if (tickets.length === 0) { %>
-                            <p>No support tickets found.</p>
-                        <% } else { %>
-                            <table class="table">
-                                <thead>
+                    <form class="d-flex align-items-center gap-2" action="/dashboard/support/explorer" method="GET">
+                        <label for="category" class="form-label mb-0 text-muted small">Category</label>
+                        <select name="category" id="category" class="form-select">
+                            <option value="">All Categories</option>
+                            <% categories.forEach(category => { %>
+                                <option value="<%= category.categoryId %>" <%= selectedCategory == category.categoryId ? 'selected' : '' %>><%= category.name %></option>
+                            <% }) %>
+                        </select>
+                        <button type="submit" class="btn btn-primary">Apply</button>
+                    </form>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table align-middle mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Ticket</th>
+                                    <th>Title</th>
+                                    <th>Status</th>
+                                    <th>User</th>
+                                    <th>Created</th>
+                                    <th class="text-end">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <% if (!tickets.length) { %>
                                     <tr>
-                                        <th>Ticket ID</th>
-                                        <th>Title</th>
-                                        <th>Status</th>
-                                        <th>User</th>
-                                        <th>Created At</th>
-                                        <th>Actions</th>
+                                        <td colspan="6" class="text-center text-muted py-4">No support tickets found.</td>
                                     </tr>
-                                </thead>
-                                <tbody>
-                                    <% tickets.forEach(ticket => { %>
-                                        <tr>
-                                            <td>#<%= ticket.ticketId %></td>
-                                            <td><%= ticket.title %></td>
-                                            <td><%= ticket.status %></td>
-                                            <td><%= ticket.username %></td>
-                                            <td><%= new Date(ticket.createdAt).toLocaleString() %></td>
-                                            <td>
-                                                <a href="/support/ticket/<%= ticket.ticketId %>" class="btn btn-primary">View</a>
-                                            </td>
-                                        </tr>
-                                    <% }) %>
-                                </tbody>
-                            </table>
-                        <% } %>
+                                <% } %>
+                                <% tickets.forEach(ticket => { %>
+                                    <tr>
+                                        <td class="fw-semibold">#<%= ticket.ticketId %></td>
+                                        <td class="text-truncate" style="max-width: 240px;"><%= ticket.title %></td>
+                                        <td>
+                                            <span class="badge <%= ticket.status === 'open' ? 'bg-success' : ticket.status === 'closed' ? 'bg-secondary' : 'bg-warning text-dark' %>"><%= ticket.status %></span>
+                                        </td>
+                                        <td><span class="text-muted"><%= ticket.username %></span></td>
+                                        <td class="text-muted"><%= new Date(ticket.createdAt).toLocaleString() %></td>
+                                        <td class="text-end">
+                                            <a href="/support/ticket/<%= ticket.ticketId %>" class="btn btn-sm btn-outline-primary">View ticket</a>
+                                        </td>
+                                    </tr>
+                                <% }) %>
+                            </tbody>
+                        </table>
                     </div>
                 </div>
             </div>
