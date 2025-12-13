@@ -5,57 +5,57 @@
 
 <%- include("../modules/navigationBar.ejs") %>
 
-<%- include("../partials/miniHeader.ejs", {
-  headerTitle: "Logs",
-  backgroundImage: globalImage
-}) %>
+<div class="container-fluid">
+    <div class="row">
+        <%- include("../modules/dashboard/dashboard-sidebar.ejs") %>
 
-<div class="row dashboardview">
-    <div class="col-sm-2">
-      <%- include("../modules/dashboard/dashboard-sidebar.ejs") %>
+        <main role="main" class="col-md-9 ml-sm-auto col-lg-10 px-4">
+            <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                <h1 class="h2">Logs</h1>
+            </div>
+
+            <% if (req.cookies.alertType) { %>
+                <%- include("../partials/alert.ejs", {
+                  alertType: req.cookies.alertType,
+                  content: req.cookies.alertContent
+                }) %>
+            <% } %>
+
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Actioned User</th>
+                        <th>Type</th>
+                        <th>Feature</th>
+                        <th>Description</th>
+                        <th>DateTime</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <% if (apiData.success == false) { %>
+                        <%- include("../partials/alert.ejs", {
+                          alertType: "danger",
+                          content: apiData.message
+                        }) %>
+                    <% } else { %>
+                        <% apiData.data.forEach(function (log) { %>
+                            <tr>
+                                <td><%= log.actionedUsername %></td>
+                                <td>
+                                    <%- include("../partials/logPriorityBadge.ejs", {
+                                        type: log.logType
+                                    }) %>
+                                </td>
+                                <td><span class="badge text-bg-primary"><%= log.logFeature %></span></td>
+                                <td><%= log.description %></td>
+                                <td><%= moment(log.actionedDateTime).startOf('hour').fromNow() %></td>
+                            </tr>
+                        <% }) %>
+                    <% } %>
+                </tbody>
+            </table>
+        </main>
     </div>
-    <div class="col" style="padding: 20px;">
-        <% if (req.cookies.alertType) { %>
-            <%- include("../partials/alert.ejs", {
-              alertType: req.cookies.alertType,
-              content: req.cookies.alertContent
-            }) %>
-        <% } %>
-        
-        <table class="table">
-            <thead>
-                <tr>
-                    <th>Actioned User</th>
-                    <th>Type</th>
-                    <th>Feature</th>
-                    <th>Description</th>
-                    <th>DateTime</th>
-                </tr>
-            </thead>
-            <tbody>
-                <% if (apiData.success == false) { %>
-                    <%- include("../partials/alert.ejs", {
-                      alertType: "danger",
-                      content: apiData.message
-                    }) %>
-                <% } else { %>
-                    <% apiData.data.forEach(function (log) { %>
-                        <tr>
-                            <td><%= log.actionedUsername %></td>
-                            <td>
-                                <%- include("../partials/logPriorityBadge.ejs", {
-                                    type: log.logType
-                                }) %>
-                            </td>
-                            <td><span class="badge text-bg-primary"><%= log.logFeature %></span></td>
-                            <td><%= log.description %></td>
-                            <td><%= moment(log.actionedDateTime).startOf('hour').fromNow() %></td>
-                        </tr>
-                    <% }) %>
-                <% } %>
-            </tbody>
-        </table>
-    </div>
-  </div>
+</div>
 
 <%- include("../modules/footer.ejs") %>

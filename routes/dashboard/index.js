@@ -16,11 +16,11 @@ export default function dashboardSiteRoutes(
   features,
   lang
 ) {
+  supportDashboardRoutes(app, client, fetch, moment, config, db, features, lang);
   dashboardSiteRoute(app, config, features, lang);
   dashboardServersSiteRoute(app, fetch, config, db, features, lang);
   dashboardAnnouncementSiteRoute(app, fetch, config, db, features, lang);
   dashboardApplicationsSiteRoute(app, fetch, config, db, features, lang);
   dashboardVaultSiteRoute(app, fetch, config, db, features, lang);
   dashboardRanksSiteRoute(app, fetch, config, db, features, lang);
-  supportDashboardRoutes(app, client, fetch, moment, config, db, features, lang);
 }

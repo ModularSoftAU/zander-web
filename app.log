@@ -256,3 +256,14 @@ GitHub Repository: https://github.com/ModularSoftAU/zander-web#readme
 Created By: ModularSoft
 Site and API is listening to the port 8080
 [31m[nodemon] app crashed - waiting for file changes before starting...[39m
+[32m[nodemon] restarting due to changes...[39m
+[32m[nodemon] starting `node --experimental-modules --experimental-json-modules --experimental-specifier-resolution=node app.js`[39m
+[32m[nodemon] restarting due to changes...[39m
+[32m[nodemon] starting `node --experimental-modules --experimental-json-modules --experimental-specifier-resolution=node app.js`[39m
+[EMAIL] Transport configured for undefined:587 secure=false requireTLS=true
+
+// modularsoft-zander-web v.1.0
+GitHub Repository: https://github.com/ModularSoftAU/zander-web#readme
+Created By: ModularSoft
+Site and API is listening to the port 8080
+[31m[nodemon] app crashed - waiting for file changes before starting...[39m
