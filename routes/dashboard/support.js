@@ -194,7 +194,7 @@ export default function supportDashboardRoutes(
   });
 
   app.get("/dashboard/support/categories", async function (req, res) {
-    if (!req.session.user) {
+    if (!req.session.user || !req.session.user.isStaff) {
       return res.redirect("/session/login");
     }
 
@@ -216,7 +216,7 @@ export default function supportDashboardRoutes(
   app.post(
     "/dashboard/support/categories/:id/permissions",
     async function (req, res) {
-      if (!req.session.user) {
+      if (!req.session.user || !req.session.user.isStaff) {
         return res.redirect("/session/login");
       }
 
@@ -230,7 +230,7 @@ export default function supportDashboardRoutes(
   );
 
   app.post("/dashboard/support/categories", async function (req, res) {
-    if (!req.session.user) {
+    if (!req.session.user || !req.session.user.isStaff) {
       return res.redirect("/session/login");
     }
 
@@ -245,7 +245,7 @@ export default function supportDashboardRoutes(
   app.post(
     "/dashboard/support/categories/:id/delete",
     async function (req, res) {
-      if (!req.session.user) {
+      if (!req.session.user || !req.session.user.isStaff) {
         return res.redirect("/session/login");
       }
 
@@ -259,7 +259,7 @@ export default function supportDashboardRoutes(
   );
 
   app.post("/dashboard/support/message", async function (req, res) {
-    if (!req.session.user) {
+    if (!req.session.user || !req.session.user.isStaff) {
       return res.redirect("/session/login");
     }
 

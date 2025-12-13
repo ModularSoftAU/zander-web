@@ -1,4 +1,4 @@
-<%- include('/partials/header.ejs') %>
+<%- include('../../partials/header.ejs') %>
 
 <div class="page-header">
     <div class="container">
@@ -12,7 +12,7 @@
             <h2>New Ticket</h2>
         </div>
         <div class="card-body">
-            <form action="/support/create" method="POST">
+            <form action="/support/create" method="POST" enctype="multipart/form-data">
                 <div class="form-group">
                     <label for="username">Username</label>
                     <input type="text" name="username" id="username" class="form-control" required>
@@ -37,10 +37,14 @@
                     <label for="message">Message</label>
                     <textarea name="message" id="message" rows="5" class="form-control" required></textarea>
                 </div>
+                <div class="form-group">
+                    <label for="attachment">Attachment</label>
+                    <input type="file" name="attachment" id="attachment" class="form-control">
+                </div>
                 <button type="submit" class="btn btn-primary">Create Ticket</button>
             </form>
         </div>
     </div>
 </div>
 
-<%- include('/partials/footer.ejs') %>
+<%- include('../../partials/footer.ejs') %>

@@ -114,11 +114,15 @@ export class SupportCommand extends Command {
             let attachmentUrl = null;
 
             if (attachment) {
-              const response = await imgurClient.upload({
-                image: attachment.url,
-                type: "url",
-              });
-              attachmentUrl = response.data.link;
+                try {
+                    const response = await imgurClient.upload({
+                        image: attachment.url,
+                        type: "url",
+                    });
+                    attachmentUrl = response.data.link;
+                } catch (error) {
+                    console.error(error);
+                }
             }
 
             let userId = await getUserIdByDiscordId(interaction.user.id);
