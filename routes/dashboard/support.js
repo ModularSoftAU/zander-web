@@ -27,7 +27,7 @@ export default function supportDashboardRoutes(
   app.get("/dashboard/support", async function (req, res) {
     try {
       if (!req.session.user || !req.session.user.isStaff) {
-        return res.redirect("/session/login");
+        return res.redirect("/login");
       }
 
       const tickets = await getAllTickets();
@@ -57,7 +57,7 @@ export default function supportDashboardRoutes(
   app.get("/dashboard/support/explorer", async function (req, res) {
     try {
       if (!req.session.user || !req.session.user.isStaff) {
-        return res.redirect("/session/login");
+        return res.redirect("/login");
       }
 
       const { category } = req.query;
@@ -98,7 +98,7 @@ export default function supportDashboardRoutes(
   app.get("/dashboard/support/categories", async function (req, res) {
     try {
       if (!req.session.user || !req.session.user.isStaff) {
-        return res.redirect("/session/login");
+        return res.redirect("/login");
       }
 
       const categories = await getSupportCategoriesWithPermissions();
@@ -132,7 +132,7 @@ export default function supportDashboardRoutes(
     async function (req, res) {
       try {
         if (!req.session.user || !req.session.user.isStaff) {
-          return res.redirect("/session/login");
+          return res.redirect("/login");
         }
 
         const { id } = req.params;
@@ -157,7 +157,7 @@ export default function supportDashboardRoutes(
   app.post("/dashboard/support/categories", async function (req, res) {
     try {
       if (!req.session.user || !req.session.user.isStaff) {
-        return res.redirect("/session/login");
+        return res.redirect("/login");
       }
 
       const { name, description } = req.body;
@@ -181,7 +181,7 @@ export default function supportDashboardRoutes(
   app.get("/dashboard/support/categories/:id/edit", async function (req, res) {
     try {
       if (!req.session.user || !req.session.user.isStaff) {
-        return res.redirect("/session/login");
+        return res.redirect("/login");
       }
 
       const category = await getCategoryById(req.params.id);
@@ -211,7 +211,7 @@ export default function supportDashboardRoutes(
   app.post("/dashboard/support/categories/:id/edit", async function (req, res) {
     try {
       if (!req.session.user || !req.session.user.isStaff) {
-        return res.redirect("/session/login");
+        return res.redirect("/login");
       }
 
       const { id } = req.params;
@@ -238,7 +238,7 @@ export default function supportDashboardRoutes(
     async function (req, res) {
       try {
         if (!req.session.user || !req.session.user.isStaff) {
-          return res.redirect("/session/login");
+          return res.redirect("/login");
         }
 
         const { id } = req.params;
@@ -263,7 +263,7 @@ export default function supportDashboardRoutes(
   app.post("/dashboard/support/ticket/:id/status", async function (req, res) {
     try {
       if (!req.session.user || !req.session.user.isStaff) {
-        return res.redirect("/session/login");
+        return res.redirect("/login");
       }
 
       await updateTicketStatus(req.params.id, req.body.status);
@@ -284,7 +284,7 @@ export default function supportDashboardRoutes(
   app.post("/dashboard/support/message", async function (req, res) {
     try {
       if (!req.session.user || !req.session.user.isStaff) {
-        return res.redirect("/session/login");
+        return res.redirect("/login");
       }
 
       await postSupportMessage(client);

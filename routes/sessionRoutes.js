@@ -115,7 +115,7 @@ export default function sessionSiteRoute(
     await updateAudit_lastWebsiteLogin(new Date(), userLoginData.username);
   }
 
-  app.get("/session/login", async function (req, res) {
+  app.get("/login", async function (req, res) {
     if (req.session.user) {
       return res.redirect("/dashboard");
     }
@@ -140,7 +140,7 @@ export default function sessionSiteRoute(
     });
   });
 
-  app.post("/session/login", async function (req, res) {
+  app.post("/login", async function (req, res) {
     if (req.session.user) {
       return res.redirect("/dashboard");
     }
