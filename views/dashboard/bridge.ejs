@@ -5,361 +5,1160 @@
 
 <%- include("../modules/navigationBar.ejs") %>
 
-<div class="container-fluid">
-    <div class="row">
-        <%- include("../modules/dashboard/dashboard-sidebar.ejs") %>
+<%- include("../partials/miniHeader.ejs", {
+  headerTitle: "Bridge",
+  backgroundImage: globalImage
+}) %>
 
-        <main role="main" class="col-md-9 ml-sm-auto col-lg-10 px-4">
-            <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
-                <h1 class="h2">Bridge</h1>
-                <div class="btn-toolbar mb-2 mb-md-0">
-                    <%- include("../partials/documentationLink.ejs", {
-                        doclink: "https://modularsoft.org/docs/products/zander/features/bridge/"
-                    }) %>
-                </div>
-            </div>
+<%
+  const pendingList = pendingTasks && pendingTasks.success ? pendingTasks.data : [];
+  const processingList = processingTasks && processingTasks.success ? processingTasks.data : [];
+  const routinesList = routines && routines.success ? routines.data : [];
+%>
 
-            <div class="card bridge-card shadow-sm border-0 mb-4">
-                <div class="card-body">
-                  <h5 class="card-title">Bridge overview</h5>
-                  <p class="text-muted small mb-3">
-                    The bridge links the API with your proxy and Paper servers so commands can be queued, executed, and tracked from one place.
-                  </p>
-                  <ul class="text-muted small ps-3 mb-0">
-                    <li>Queue ad-hoc commands or batches without building JSON by hand.</li>
-                    <li>Trigger reusable routines that target multiple servers with one submission.</li>
-                    <li>Use the management tools to clear stuck work and keep processors healthy.</li>
-                  </ul>
-                </div>
-              </div>
+<div class="row g-0 dashboardview">
+  <div class="col-12 col-lg-2 border-bottom border-lg-0 mb-4 mb-lg-0">
+    <%- include("../modules/dashboard/dashboard-sidebar.ejs") %>
+  </div>
+  <div class="col-12 col-lg-10 bridge-layout">
+    <div class="mb-4">
+      <%- include("../partials/documentationLink.ejs", {
+          doclink: "https://modularsoft.org/docs/products/zander/features/bridge/"
+      }) %>
+    </div>
 
-              <% if (req.cookies.alertType) { %>
-                <%- include("../partials/alert.ejs", {
-                  alertType: req.cookies.alertType,
-                  content: req.cookies.alertContent
-                }) %>
-              <% } %>
+    <div class="card bridge-card shadow-sm border-0 mb-4">
+      <div class="card-body">
+        <h5 class="card-title">Bridge overview</h5>
+        <p class="text-muted small mb-3">
+          The bridge links the API with your proxy and Paper servers so commands can be queued, executed, and tracked from one place.
+        </p>
+        <ul class="text-muted small ps-3 mb-0">
+          <li>Queue ad-hoc commands or batches without building JSON by hand.</li>
+          <li>Trigger reusable routines that target multiple servers with one submission.</li>
+          <li>Use the management tools to clear stuck work and keep processors healthy.</li>
+        </ul>
+      </div>
+    </div>
 
-              <% if (pendingTasks && pendingTasks.success === false) { %>
-                <%- include("../partials/alert.ejs", {
-                  alertType: "danger",
-                  content: pendingTasks.message
-                }) %>
-              <% } %>
+    <% if (req.cookies.alertType) { %>
+      <%- include("../partials/alert.ejs", {
+        alertType: req.cookies.alertType,
+        content: req.cookies.alertContent
+      }) %>
+    <% } %>
 
-              <% if (processingTasks && processingTasks.success === false) { %>
-                <%- include("../partials/alert.ejs", {
-                  alertType: "danger",
-                  content: processingTasks.message
-                }) %>
-              <% } %>
+    <% if (pendingTasks && pendingTasks.success === false) { %>
+      <%- include("../partials/alert.ejs", {
+        alertType: "danger",
+        content: pendingTasks.message
+      }) %>
+    <% } %>
 
-              <div class="card bridge-card shadow-sm border-0">
-                <div class="card-body">
-                  <ul class="nav nav-pills bridge-tablist mb-4" id="bridgeTabs" role="tablist">
-                    <li class="nav-item flex-grow-1" role="presentation">
-                      <button type="button" class="nav-link bridge-tab-button active" data-bridge-tab="queue" role="tab" aria-selected="true">
-                        Queue commands
+    <% if (processingTasks && processingTasks.success === false) { %>
+      <%- include("../partials/alert.ejs", {
+        alertType: "danger",
+        content: processingTasks.message
+      }) %>
+    <% } %>
+
+    <div class="card bridge-card shadow-sm border-0">
+      <div class="card-body">
+        <ul class="nav nav-pills bridge-tablist mb-4" id="bridgeTabs" role="tablist">
+          <li class="nav-item flex-grow-1" role="presentation">
+            <button type="button" class="nav-link bridge-tab-button active" data-bridge-tab="queue" role="tab" aria-selected="true">
+              Queue commands
+            </button>
+          </li>
+          <li class="nav-item flex-grow-1" role="presentation">
+            <button type="button" class="nav-link bridge-tab-button" data-bridge-tab="routines" role="tab" aria-selected="false">
+              Routines
+            </button>
+          </li>
+          <li class="nav-item flex-grow-1" role="presentation">
+            <button type="button" class="nav-link bridge-tab-button" data-bridge-tab="manage" role="tab" aria-selected="false">
+              Queue management
+            </button>
+          </li>
+          <li class="nav-item flex-grow-1" role="presentation">
+            <button type="button" class="nav-link bridge-tab-button" data-bridge-tab="status" role="tab" aria-selected="false">
+              <span class="d-flex align-items-center justify-content-between">
+                <span>Status</span>
+                <span class="badge bg-light text-dark ms-3"><%= pendingList.length + processingList.length %></span>
+              </span>
+            </button>
+          </li>
+        </ul>
+
+        <div class="tab-content" id="bridgeTabContent">
+          <div class="tab-pane active" data-bridge-panel="queue" role="tabpanel">
+            <div class="row g-4 row-cols-1 row-cols-xl-2">
+              <div class="col">
+                <div class="card bridge-card shadow-sm border-0 h-100">
+                  <div class="card-body d-flex flex-column">
+                    <h5 class="card-title">Queue a single command</h5>
+                    <p class="text-muted small mb-4">
+                      Send one command to a specific server slug. Metadata pairs are optional and help processors know who queued the work or why.
+                    </p>
+                    <div class="mt-auto d-flex justify-content-end">
+                      <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#singleCommandModal">
+                        Open form
                       </button>
-                    </li>
-                    <li class="nav-item flex-grow-1" role="presentation">
-                      <button type="button" class="nav-link bridge-tab-button" data-bridge-tab="routines" role="tab" aria-selected="false">
-                        Routines
-                      </button>
-                    </li>
-                    <li class="nav-item flex-grow-1" role="presentation">
-                      <button type="button" class="nav-link bridge-tab-button" data-bridge-tab="manage" role="tab" aria-selected="false">
-                        Queue management
-                      </button>
-                    </li>
-                    <li class="nav-item flex-grow-1" role="presentation">
-                      <button type="button" class="nav-link bridge-tab-button" data-bridge-tab="status" role="tab" aria-selected="false">
-                        <span class="d-flex align-items-center justify-content-between">
-                          <span>Status</span>
-                          <span class="badge bg-light text-dark ms-3"><%= pendingList.length + processingList.length %></span>
-                        </span>
-                      </button>
-                    </li>
-                  </ul>
-
-                  <div class="tab-content" id="bridgeTabContent">
-                    <div class="tab-pane active" data-bridge-panel="queue" role="tabpanel">
-                      <div class="row g-4 row-cols-1 row-cols-xl-2">
-                        <div class="col">
-                          <div class="card bridge-card shadow-sm border-0 h-100">
-                            <div class="card-body d-flex flex-column">
-                              <h5 class="card-title">Queue a single command</h5>
-                              <p class="text-muted small mb-4">
-                                Send one command to a specific server slug. Metadata pairs are optional and help processors know who queued the work or why.
-                              </p>
-                              <div class="mt-auto d-flex justify-content-end">
-                                <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#singleCommandModal">
-                                  Open form
-                                </button>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-
-                        <div class="col">
-                          <div class="card bridge-card shadow-sm border-0 h-100">
-                            <div class="card-body d-flex flex-column">
-                              <h5 class="card-title">Queue multiple commands</h5>
-                              <p class="text-muted small mb-4">
-                                Build a batch of commands inline. Each row becomes an executor task and can target a different server or priority.
-                              </p>
-                              <div class="mt-auto d-flex justify-content-end">
-                                <button type="button" class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#bulkCommandModal">
-                                  Build batch
-                                </button>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                    <div class="tab-pane" data-bridge-panel="routines" role="tabpanel">
-                      <div class="row g-4">
-                        <div class="col-12 col-xl-5">
-                          <div class="card bridge-card shadow-sm border-0 h-100">
-                            <div class="card-body d-flex flex-column">
-                              <h5 class="card-title">Trigger a routine</h5>
-                              <p class="text-muted small mb-4">
-                                Execute every step saved for a routine. Metadata pairs can supply values for placeholders such as the player name.
-                              </p>
-                              <div class="mt-auto d-flex justify-content-end">
-                                <button type="button" class="btn btn-secondary" data-bs-toggle="modal" data-bs-target="#runRoutineModal">
-                                  Run routine
-                                </button>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                        <div class="col-12 col-xl-7">
-                          <div class="card bridge-card shadow-sm border-0 h-100">
-                            <div class="card-body d-flex flex-column">
-                              <h5 class="card-title">Define or update a routine</h5>
-                              <p class="text-muted small mb-4">
-                                Build the steps visually (or load an existing routine to update it) and we will create the JSON payload when you save. Steps execute in ascending order values. Use placeholders like <code>{{player}}</code> to inject metadata into commands automatically.
-                              </p>
-                              <div class="mt-auto d-flex justify-content-end">
-                                <button type="button" class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#routineBuilderModal">
-                                  Open builder
-                                </button>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                    <div class="tab-pane" data-bridge-panel="manage" role="tabpanel">
-                      <div class="row g-4 row-cols-1 row-cols-xl-2">
-                        <div class="col">
-                          <div class="card bridge-card shadow-sm border-0 h-100">
-                            <div class="card-body d-flex flex-column">
-                              <h5 class="card-title">Clear tasks from the queue</h5>
-                              <p class="text-muted small mb-4">
-                                Remove work that is no longer needed. Filters are optional and can be combined to target specific jobs.
-                              </p>
-                              <div class="mt-auto d-flex justify-content-end">
-                                <button type="button" class="btn btn-outline-danger" data-bs-toggle="modal" data-bs-target="#queueClearModal">
-                                  Clear tasks
-                                </button>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                        <div class="col">
-                          <div class="card bridge-card shadow-sm border-0 h-100">
-                            <div class="card-body d-flex flex-column">
-                              <h5 class="card-title">Report a task outcome</h5>
-                              <p class="text-muted small mb-4">
-                                Update a stuck or manually executed task. Completed and failed reports both finalise processing.
-                              </p>
-                              <div class="mt-auto d-flex justify-content-end">
-                                <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#reportTaskModal">
-                                  Report task
-                                </button>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                    <div class="tab-pane" data-bridge-panel="status" role="tabpanel">
-                      <div class="row g-4">
-                        <div class="col-12">
-                          <div class="card bridge-card shadow-sm border-0">
-                            <div class="card-body">
-                              <div class="d-flex flex-column flex-sm-row align-items-sm-center justify-content-between gap-2 mb-3">
-                                <h5 class="card-title mb-0">Pending tasks</h5>
-                                <span class="badge bg-primary rounded-pill"><%= pendingList.length %></span>
-                              </div>
-                              <div class="table-responsive">
-                                <table class="table align-middle">
-                                  <thead>
-                                    <tr>
-                                      <th scope="col">ID</th>
-                                      <th scope="col">Slug</th>
-                                      <th scope="col">Command</th>
-                                      <th scope="col">Priority</th>
-                                      <th scope="col">Routine</th>
-                                      <th scope="col">Created</th>
-                                      <th scope="col"></th>
-                                    </tr>
-                                  </thead>
-                                  <tbody>
-                                    <% if (!pendingList.length) { %>
-                                      <tr>
-                                        <td colspan="7" class="text-center text-muted">No pending tasks</td>
-                                      </tr>
-                                    <% } else { %>
-                                      <% pendingList.forEach(function(task) { %>
-                                        <tr>
-                                          <td><code>#<%= task.executorTaskId %></code></td>
-                                          <td><%= task.slug %></td>
-                                          <td><code><%= task.command %></code></td>
-                                          <td><%= task.priority %></td>
-                                          <td><%= task.routineSlug ? task.routineSlug : "-" %></td>
-                                          <td><%= moment(task.createdAt).fromNow() %></td>
-                                          <td class="text-end">
-                                            <form method="post" action="<%= process.env.siteAddress %>/redirect/bridge/task/reset" class="d-inline">
-                                              <input type="hidden" name="taskId" value="<%= task.executorTaskId %>">
-                                              <button type="submit" class="btn btn-sm btn-outline-secondary">Reset</button>
-                                            </form>
-                                          </td>
-                                        </tr>
-                                      <% }) %>
-                                    <% } %>
-                                  </tbody>
-                                </table>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-
-                        <div class="col-12">
-                          <div class="card bridge-card shadow-sm border-0">
-                            <div class="card-body">
-                              <div class="d-flex flex-column flex-sm-row align-items-sm-center justify-content-between gap-2 mb-3">
-                                <h5 class="card-title mb-0">Processing tasks</h5>
-                                <span class="badge bg-warning text-dark rounded-pill"><%= processingList.length %></span>
-                              </div>
-                              <div class="table-responsive">
-                                <table class="table align-middle">
-                                  <thead>
-                                    <tr>
-                                      <th scope="col">ID</th>
-                                      <th scope="col">Slug</th>
-                                      <th scope="col">Command</th>
-                                      <th scope="col">Status</th>
-                                      <th scope="col">Updated</th>
-                                      <th scope="col">Executed by</th>
-                                      <th scope="col"></th>
-                                    </tr>
-                                  </thead>
-                                  <tbody>
-                                    <% if (!processingList.length) { %>
-                                      <tr>
-                                        <td colspan="7" class="text-center text-muted">No processing tasks</td>
-                                      </tr>
-                                    <% } else { %>
-                                      <% processingList.forEach(function(task) { %>
-                                        <tr>
-                                          <td><code>#<%= task.executorTaskId %></code></td>
-                                          <td><%= task.slug %></td>
-                                          <td><code><%= task.command %></code></td>
-                                          <td><span class="badge bg-warning text-dark"><%= task.status %></span></td>
-                                          <td><%= moment(task.updatedAt).fromNow() %></td>
-                                          <td><%= task.executedBy ? task.executedBy : "-" %></td>
-                                          <td class="text-end">
-                                            <form method="post" action="<%= process.env.siteAddress %>/redirect/bridge/task/report" class="d-inline">
-                                              <input type="hidden" name="taskId" value="<%= task.executorTaskId %>">
-                                              <input type="hidden" name="status" value="completed">
-                                              <button type="submit" class="btn btn-sm btn-outline-success">Mark complete</button>
-                                            </form>
-                                            <form method="post" action="<%= process.env.siteAddress %>/redirect/bridge/task/report" class="d-inline ms-1">
-                                              <input type="hidden" name="taskId" value="<%= task.executorTaskId %>">
-                                              <input type="hidden" name="status" value="failed">
-                                              <button type="submit" class="btn btn-sm btn-outline-danger">Mark failed</button>
-                                            </form>
-                                            <form method="post" action="<%= process.env.siteAddress %>/redirect/bridge/task/reset" class="d-inline ms-1">
-                                              <input type="hidden" name="taskId" value="<%= task.executorTaskId %>">
-                                              <button type="submit" class="btn btn-sm btn-outline-secondary">Reset</button>
-                                            </form>
-                                          </td>
-                                        </tr>
-                                      <% }) %>
-                                    <% } %>
-                                  </tbody>
-                                </table>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-
-                        <div class="col-12">
-                          <div class="card shadow-sm border-0">
-                            <div class="card-body">
-                              <div class="d-flex justify-content-between align-items-center mb-3">
-                                <h5 class="card-title mb-0">Configured routines</h5>
-                                <span class="badge bg-info text-dark rounded-pill"><%= routinesList.length %></span>
-                              </div>
-                              <div class="table-responsive">
-                                <table class="table align-middle">
-                                  <thead>
-                                    <tr>
-                                      <th scope="col">Routine</th>
-                                      <th scope="col">Display name</th>
-                                      <th scope="col">Description</th>
-                                      <th scope="col">Steps</th>
-                                      <th scope="col">Updated</th>
-                                      <th scope="col" class="text-end">Actions</th>
-                                    </tr>
-                                  </thead>
-                                  <tbody>
-                                    <% if (!routinesList.length) { %>
-                                      <tr>
-                                        <td colspan="6" class="text-center text-muted">No routines configured yet</td>
-                                      </tr>
-                                    <% } else { %>
-                                      <% routinesList.forEach(function(routine) { %>
-                                        <tr>
-                                          <td><code><%= routine.routineSlug %></code></td>
-                                          <td><%= routine.displayName || '-' %></td>
-                                          <td><%= routine.description || '-' %></td>
-                                          <td>
-                                            <ul class="list-unstyled mb-0 small">
-                                              <% routine.steps.forEach(function(step) { %>
-                                                <li>
-                                                  <span class="badge bg-light text-dark">#<%= step.order %></span>
-                                                  <strong><%= step.slug %></strong> &mdash; <code><%= step.command %></code>
-                                                </li>
-                                              <% }) %>
-                                            </ul>
-                                          </td>
-                                          <td><%= moment(routine.updatedAt || routine.createdAt).fromNow() %></td>
-                                          <td class="text-end">
-                                            <button type="button" class="btn btn-sm btn-outline-primary" data-routine-edit="<%= routine.routineSlug %>" data-bs-toggle="modal" data-bs-target="#routineBuilderModal">
-                                              Edit
-                                            </button>
-                                          </td>
-                                        </tr>
-                                      <% }) %>
-                                    <% } %>
-                                  </tbody>
-                                </table>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
                     </div>
                   </div>
                 </div>
               </div>
-        </main>
+
+              <div class="col">
+                <div class="card bridge-card shadow-sm border-0 h-100">
+                  <div class="card-body d-flex flex-column">
+                    <h5 class="card-title">Queue multiple commands</h5>
+                    <p class="text-muted small mb-4">
+                      Build a batch of commands inline. Each row becomes an executor task and can target a different server or priority.
+                    </p>
+                    <div class="mt-auto d-flex justify-content-end">
+                      <button type="button" class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#bulkCommandModal">
+                        Build batch
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="tab-pane" data-bridge-panel="routines" role="tabpanel">
+            <div class="row g-4">
+              <div class="col-12 col-xl-5">
+                <div class="card bridge-card shadow-sm border-0 h-100">
+                  <div class="card-body d-flex flex-column">
+                    <h5 class="card-title">Trigger a routine</h5>
+                    <p class="text-muted small mb-4">
+                      Execute every step saved for a routine. Metadata pairs can supply values for placeholders such as the player name.
+                    </p>
+                    <div class="mt-auto d-flex justify-content-end">
+                      <button type="button" class="btn btn-secondary" data-bs-toggle="modal" data-bs-target="#runRoutineModal">
+                        Run routine
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="col-12 col-xl-7">
+                <div class="card bridge-card shadow-sm border-0 h-100">
+                  <div class="card-body d-flex flex-column">
+                    <h5 class="card-title">Define or update a routine</h5>
+                    <p class="text-muted small mb-4">
+                      Build the steps visually (or load an existing routine to update it) and we will create the JSON payload when you save. Steps execute in ascending order values. Use placeholders like <code>{{player}}</code> to inject metadata into commands automatically.
+                    </p>
+                    <div class="mt-auto d-flex justify-content-end">
+                      <button type="button" class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#routineBuilderModal">
+                        Open builder
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="tab-pane" data-bridge-panel="manage" role="tabpanel">
+            <div class="row g-4 row-cols-1 row-cols-xl-2">
+              <div class="col">
+                <div class="card bridge-card shadow-sm border-0 h-100">
+                  <div class="card-body d-flex flex-column">
+                    <h5 class="card-title">Clear tasks from the queue</h5>
+                    <p class="text-muted small mb-4">
+                      Remove work that is no longer needed. Filters are optional and can be combined to target specific jobs.
+                    </p>
+                    <div class="mt-auto d-flex justify-content-end">
+                      <button type="button" class="btn btn-outline-danger" data-bs-toggle="modal" data-bs-target="#queueClearModal">
+                        Clear tasks
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="col">
+                <div class="card bridge-card shadow-sm border-0 h-100">
+                  <div class="card-body d-flex flex-column">
+                    <h5 class="card-title">Report a task outcome</h5>
+                    <p class="text-muted small mb-4">
+                      Update a stuck or manually executed task. Completed and failed reports both finalise processing.
+                    </p>
+                    <div class="mt-auto d-flex justify-content-end">
+                      <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#reportTaskModal">
+                        Report task
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="tab-pane" data-bridge-panel="status" role="tabpanel">
+            <div class="row g-4">
+              <div class="col-12">
+                <div class="card bridge-card shadow-sm border-0">
+                  <div class="card-body">
+                    <div class="d-flex flex-column flex-sm-row align-items-sm-center justify-content-between gap-2 mb-3">
+                      <h5 class="card-title mb-0">Pending tasks</h5>
+                      <span class="badge bg-primary rounded-pill"><%= pendingList.length %></span>
+                    </div>
+                    <div class="table-responsive">
+                      <table class="table align-middle">
+                        <thead>
+                          <tr>
+                            <th scope="col">ID</th>
+                            <th scope="col">Slug</th>
+                            <th scope="col">Command</th>
+                            <th scope="col">Priority</th>
+                            <th scope="col">Routine</th>
+                            <th scope="col">Created</th>
+                            <th scope="col"></th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          <% if (!pendingList.length) { %>
+                            <tr>
+                              <td colspan="7" class="text-center text-muted">No pending tasks</td>
+                            </tr>
+                          <% } else { %>
+                            <% pendingList.forEach(function(task) { %>
+                              <tr>
+                                <td><code>#<%= task.executorTaskId %></code></td>
+                                <td><%= task.slug %></td>
+                                <td><code><%= task.command %></code></td>
+                                <td><%= task.priority %></td>
+                                <td><%= task.routineSlug ? task.routineSlug : "-" %></td>
+                                <td><%= moment(task.createdAt).fromNow() %></td>
+                                <td class="text-end">
+                                  <form method="post" action="<%= process.env.siteAddress %>/redirect/bridge/task/reset" class="d-inline">
+                                    <input type="hidden" name="taskId" value="<%= task.executorTaskId %>">
+                                    <button type="submit" class="btn btn-sm btn-outline-secondary">Reset</button>
+                                  </form>
+                                </td>
+                              </tr>
+                            <% }) %>
+                          <% } %>
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="col-12">
+                <div class="card bridge-card shadow-sm border-0">
+                  <div class="card-body">
+                    <div class="d-flex flex-column flex-sm-row align-items-sm-center justify-content-between gap-2 mb-3">
+                      <h5 class="card-title mb-0">Processing tasks</h5>
+                      <span class="badge bg-warning text-dark rounded-pill"><%= processingList.length %></span>
+                    </div>
+                    <div class="table-responsive">
+                      <table class="table align-middle">
+                        <thead>
+                          <tr>
+                            <th scope="col">ID</th>
+                            <th scope="col">Slug</th>
+                            <th scope="col">Command</th>
+                            <th scope="col">Status</th>
+                            <th scope="col">Updated</th>
+                            <th scope="col">Executed by</th>
+                            <th scope="col"></th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          <% if (!processingList.length) { %>
+                            <tr>
+                              <td colspan="7" class="text-center text-muted">No processing tasks</td>
+                            </tr>
+                          <% } else { %>
+                            <% processingList.forEach(function(task) { %>
+                              <tr>
+                                <td><code>#<%= task.executorTaskId %></code></td>
+                                <td><%= task.slug %></td>
+                                <td><code><%= task.command %></code></td>
+                                <td><span class="badge bg-warning text-dark"><%= task.status %></span></td>
+                                <td><%= moment(task.updatedAt).fromNow() %></td>
+                                <td><%= task.executedBy ? task.executedBy : "-" %></td>
+                                <td class="text-end">
+                                  <form method="post" action="<%= process.env.siteAddress %>/redirect/bridge/task/report" class="d-inline">
+                                    <input type="hidden" name="taskId" value="<%= task.executorTaskId %>">
+                                    <input type="hidden" name="status" value="completed">
+                                    <button type="submit" class="btn btn-sm btn-outline-success">Mark complete</button>
+                                  </form>
+                                  <form method="post" action="<%= process.env.siteAddress %>/redirect/bridge/task/report" class="d-inline ms-1">
+                                    <input type="hidden" name="taskId" value="<%= task.executorTaskId %>">
+                                    <input type="hidden" name="status" value="failed">
+                                    <button type="submit" class="btn btn-sm btn-outline-danger">Mark failed</button>
+                                  </form>
+                                  <form method="post" action="<%= process.env.siteAddress %>/redirect/bridge/task/reset" class="d-inline ms-1">
+                                    <input type="hidden" name="taskId" value="<%= task.executorTaskId %>">
+                                    <button type="submit" class="btn btn-sm btn-outline-secondary">Reset</button>
+                                  </form>
+                                </td>
+                              </tr>
+                            <% }) %>
+                          <% } %>
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="col-12">
+                <div class="card shadow-sm border-0">
+                  <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                      <h5 class="card-title mb-0">Configured routines</h5>
+                      <span class="badge bg-info text-dark rounded-pill"><%= routinesList.length %></span>
+                    </div>
+                    <div class="table-responsive">
+                      <table class="table align-middle">
+                        <thead>
+                          <tr>
+                            <th scope="col">Routine</th>
+                            <th scope="col">Display name</th>
+                            <th scope="col">Description</th>
+                            <th scope="col">Steps</th>
+                            <th scope="col">Updated</th>
+                            <th scope="col" class="text-end">Actions</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          <% if (!routinesList.length) { %>
+                            <tr>
+                              <td colspan="6" class="text-center text-muted">No routines configured yet</td>
+                            </tr>
+                          <% } else { %>
+                            <% routinesList.forEach(function(routine) { %>
+                              <tr>
+                                <td><code><%= routine.routineSlug %></code></td>
+                                <td><%= routine.displayName || '-' %></td>
+                                <td><%= routine.description || '-' %></td>
+                                <td>
+                                  <ul class="list-unstyled mb-0 small">
+                                    <% routine.steps.forEach(function(step) { %>
+                                      <li>
+                                        <span class="badge bg-light text-dark">#<%= step.order %></span>
+                                        <strong><%= step.slug %></strong> &mdash; <code><%= step.command %></code>
+                                      </li>
+                                    <% }) %>
+                                  </ul>
+                                </td>
+                                <td><%= moment(routine.updatedAt || routine.createdAt).fromNow() %></td>
+                                <td class="text-end">
+                                  <button type="button" class="btn btn-sm btn-outline-primary" data-routine-edit="<%= routine.routineSlug %>" data-bs-toggle="modal" data-bs-target="#routineBuilderModal">
+                                    Edit
+                                  </button>
+                                </td>
+                              </tr>
+                            <% }) %>
+                          <% } %>
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
+  </div>
 </div>
+
+
+<div class="modal fade" id="singleCommandModal" tabindex="-1" aria-labelledby="singleCommandModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+    <div class="modal-content">
+      <form method="post" action="<%= process.env.siteAddress %>/redirect/bridge/command/add" id="singleCommandForm">
+        <div class="modal-header">
+          <h5 class="modal-title" id="singleCommandModalLabel">Queue a single command</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <div class="row g-3">
+            <div class="col-12">
+              <label for="command" class="form-label">Command</label>
+              <input type="text" class="form-control" id="command" name="command" placeholder="ban Player Reason" required>
+              <div class="form-text">Commands execute from console, so skip the leading slash. Use metadata placeholders like <code>{{player}}</code> whenever you need to target the triggering user.</div>
+            </div>
+            <div class="col-md-6">
+              <label for="slug" class="form-label">Target slug</label>
+              <input type="text" class="form-control" id="slug" name="slug" placeholder="proxy" required>
+            </div>
+            <div class="col-md-6">
+              <label for="priority" class="form-label">Priority</label>
+              <input type="number" class="form-control" id="priority" name="priority" value="0" step="1">
+              <div class="form-text">Higher numbers are handled first.</div>
+            </div>
+            <div class="col-12">
+              <div class="metadata-builder" data-metadata-builder>
+                <div class="d-flex flex-column flex-sm-row align-items-sm-center justify-content-between gap-2 mb-3">
+                  <span class="form-label mb-0">Metadata (optional)</span>
+                  <button type="button" class="btn btn-sm btn-outline-secondary" data-add-metadata>Add pair</button>
+                </div>
+                <div class="metadata-rows" data-metadata-rows></div>
+                <p class="form-text">Examples: key <code>requestedBy</code> with value <code>Dashboard</code>, or key<code>reason</code> with value <code>Vote reward</code>. Metadata keys can also be referenced in commands using placeholders like <code>{{player}}</code>.</p>
+                <input type="hidden" name="metadataJSON" data-metadata-output>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button type="submit" class="btn btn-primary">Queue command</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade" id="bulkCommandModal" tabindex="-1" aria-labelledby="bulkCommandModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
+    <div class="modal-content">
+      <form method="post" action="<%= process.env.siteAddress %>/redirect/bridge/command/add" id="bulkCommandForm">
+        <div class="modal-header">
+          <h5 class="modal-title" id="bulkCommandModalLabel">Queue multiple commands</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <div class="row g-3">
+            <div class="col-md-6">
+              <label for="bulkSlug" class="form-label">Default target slug</label>
+              <input type="text" class="form-control" id="bulkSlug" name="slug" placeholder="proxy">
+              <div class="form-text">Used when a row leaves its slug empty.</div>
+            </div>
+            <div class="col-md-6">
+              <label for="bulkPriority" class="form-label">Default priority</label>
+              <input type="number" class="form-control" id="bulkPriority" name="priority" value="0" step="1">
+            </div>
+            <div class="col-12">
+              <div class="bulk-builder" data-bulk-builder>
+                <div class="d-flex flex-column flex-sm-row align-items-sm-center justify-content-between gap-2 mb-3">
+                  <span class="form-label mb-0">Commands in this batch</span>
+                  <button type="button" class="btn btn-sm btn-outline-secondary" data-add-bulk-row>Add command</button>
+                </div>
+                <div class="bulk-rows" data-bulk-rows></div>
+                <p class="form-text">Leave slug or priority blank to inherit the defaults above.</p>
+                <input type="hidden" name="tasksJSON" id="bulkTasksJSON" data-bulk-output>
+              </div>
+            </div>
+            <div class="col-12">
+              <div class="metadata-builder" data-metadata-builder>
+                <div class="d-flex flex-column flex-sm-row align-items-sm-center justify-content-between gap-2 mb-3">
+                  <span class="form-label mb-0">Batch metadata (optional)</span>
+                  <button type="button" class="btn btn-sm btn-outline-secondary" data-add-metadata>Add pair</button>
+                </div>
+                <div class="metadata-rows" data-metadata-rows></div>
+                <p class="form-text">This metadata is attached to every task in the batch. Reference it in commands with placeholders like <code>{{player}}</code>.</p>
+                <input type="hidden" name="metadataJSON" data-metadata-output>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button type="submit" class="btn btn-outline-primary">Queue tasks</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade" id="runRoutineModal" tabindex="-1" aria-labelledby="runRoutineModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+    <div class="modal-content">
+      <form method="post" action="<%= process.env.siteAddress %>/redirect/bridge/routine/run" id="runRoutineForm">
+        <div class="modal-header">
+          <h5 class="modal-title" id="runRoutineModalLabel">Trigger a routine</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <div class="row g-3">
+            <div class="col-md-7">
+              <label for="routineSlug" class="form-label">Routine slug</label>
+              <input type="text" class="form-control" id="routineSlug" name="routineSlug" placeholder="vote-reward" required>
+            </div>
+            <div class="col-md-5">
+              <label for="routinePriority" class="form-label">Priority</label>
+              <input type="number" class="form-control" id="routinePriority" name="priority" value="0" step="1">
+            </div>
+            <div class="col-12">
+              <div class="metadata-builder" data-metadata-builder>
+                <div class="d-flex flex-column flex-sm-row align-items-sm-center justify-content-between gap-2 mb-3">
+                  <span class="form-label mb-0">Routine metadata (optional)</span>
+                  <button type="button" class="btn btn-sm btn-outline-secondary" data-add-metadata>Add pair</button>
+                </div>
+                <div class="metadata-rows" data-metadata-rows></div>
+                <p class="form-text">Pairs are injected into each step. Example: key <code>player</code> with value <code>{username}</code>.</p>
+                <input type="hidden" name="metadataJSON" data-metadata-output>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button type="submit" class="btn btn-secondary">Run routine</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade" id="routineBuilderModal" tabindex="-1" aria-labelledby="routineBuilderModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
+    <div class="modal-content">
+      <form method="post" action="<%= process.env.siteAddress %>/redirect/bridge/routine/save" id="routineBuilderForm">
+        <div class="modal-header">
+          <h5 class="modal-title" id="routineBuilderModalLabel">Define or update a routine</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <div class="row g-3">
+            <div class="col-12">
+              <label for="routineSelect" class="form-label">Load an existing routine</label>
+              <div class="d-flex flex-column flex-lg-row align-items-lg-center gap-2">
+                <select class="form-select" id="routineSelect" data-routine-select>
+                  <option value="">Create a new routine</option>
+                  <% routinesList.forEach(function(routine) { %>
+                    <option value="<%= routine.routineSlug %>"><%= routine.displayName || routine.routineSlug %></option>
+                  <% }) %>
+                </select>
+                <button type="button" class="btn btn-outline-secondary" data-routine-clear>Start fresh</button>
+              </div>
+              <div class="text-muted small mt-1" data-routine-active-label>Creating a new routine.</div>
+            </div>
+            <div class="col-md-4">
+              <label for="routineSlugSave" class="form-label">Routine slug</label>
+              <input type="text" class="form-control" id="routineSlugSave" name="routineSlug" placeholder="vote-reward" required>
+            </div>
+            <div class="col-md-4">
+              <label for="displayName" class="form-label">Display name</label>
+              <input type="text" class="form-control" id="displayName" name="displayName" placeholder="Vote reward flow">
+            </div>
+            <div class="col-md-4">
+              <label for="routineDescription" class="form-label">Description</label>
+              <input type="text" class="form-control" id="routineDescription" name="description" placeholder="Executed when a player votes">
+            </div>
+            <div class="col-12">
+              <div class="routine-builder" data-routine-builder>
+                <div class="d-flex flex-column flex-sm-row align-items-sm-center justify-content-between gap-2 mb-3">
+                  <span class="form-label mb-0">Routine steps</span>
+                  <button type="button" class="btn btn-sm btn-outline-secondary" data-add-step>Add step</button>
+                </div>
+                <div class="routine-steps" data-routine-steps></div>
+                <p class="form-text">Provide a slug and command for each step. Metadata pairs are optional and map to placeholders in your commands.</p>
+                <div class="text-danger small d-none" data-routine-error>Please add at least one step with a slug and command.</div>
+                <input type="hidden" name="stepsJSON" data-routine-output>
+                <script type="application/json" data-routines-json><%- JSON.stringify(routinesList || []).replace(/</g, '\u003c') %></script>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button type="submit" class="btn btn-outline-primary">Save routine</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade" id="queueClearModal" tabindex="-1" aria-labelledby="queueClearModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-content">
+      <form method="post" action="<%= process.env.siteAddress %>/redirect/bridge/queue/clear">
+        <div class="modal-header">
+          <h5 class="modal-title" id="queueClearModalLabel">Clear tasks from the queue</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <div class="row g-3">
+            <div class="col-md-4">
+              <label for="clearStatus" class="form-label">Status filter</label>
+              <select class="form-select" id="clearStatus" name="status">
+                <option value="">Any status</option>
+                <option value="pending">Pending</option>
+                <option value="processing">Processing</option>
+                <option value="completed">Completed</option>
+                <option value="failed">Failed</option>
+              </select>
+            </div>
+            <div class="col-md-4">
+              <label for="clearSlug" class="form-label">Target slug</label>
+              <input type="text" class="form-control" id="clearSlug" name="slug" placeholder="proxy">
+            </div>
+            <div class="col-md-4">
+              <label for="clearRoutine" class="form-label">Routine slug</label>
+              <input type="text" class="form-control" id="clearRoutine" name="routineSlug" placeholder="vote-reward">
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button type="submit" class="btn btn-outline-danger">Clear matching tasks</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade" id="reportTaskModal" tabindex="-1" aria-labelledby="reportTaskModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+    <div class="modal-content">
+      <form method="post" action="<%= process.env.siteAddress %>/redirect/bridge/task/report" id="reportTaskForm">
+        <div class="modal-header">
+          <h5 class="modal-title" id="reportTaskModalLabel">Report a task outcome</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <div class="row g-3">
+            <div class="col-md-4">
+              <label for="reportTaskId" class="form-label">Task ID</label>
+              <input type="number" class="form-control" id="reportTaskId" name="taskId" placeholder="42" required>
+            </div>
+            <div class="col-md-4">
+              <label for="reportStatus" class="form-label">Status</label>
+              <select class="form-select" id="reportStatus" name="status" required>
+                <option value="processing">Processing</option>
+                <option value="completed">Completed</option>
+                <option value="failed">Failed</option>
+              </select>
+            </div>
+            <div class="col-md-4">
+              <label for="reportExecutedBy" class="form-label">Executed by</label>
+              <input type="text" class="form-control" id="reportExecutedBy" name="executedBy" placeholder="AdminUser">
+            </div>
+            <div class="col-12">
+              <label for="reportResult" class="form-label">Result / Notes</label>
+              <textarea class="form-control" id="reportResult" name="result" rows="3" placeholder="Command executed manually."></textarea>
+            </div>
+            <div class="col-12">
+              <div class="metadata-builder" data-metadata-builder>
+                <div class="d-flex flex-column flex-sm-row align-items-sm-center justify-content-between gap-2 mb-3">
+                  <span class="form-label mb-0">Metadata (optional)</span>
+                  <button type="button" class="btn btn-sm btn-outline-secondary" data-add-metadata>Add pair</button>
+                </div>
+                <div class="metadata-rows" data-metadata-rows></div>
+                <p class="form-text">Record extra context such as <code>reason</code> or <code>ticketId</code>. Metadata keys become placeholders like <code>{{player}}</code> inside routine commands.</p>
+                <input type="hidden" name="metadataJSON" data-metadata-output>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button type="submit" class="btn btn-success">Submit report</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    const tabButtons = document.querySelectorAll('[data-bridge-tab]');
+    const tabPanels = document.querySelectorAll('[data-bridge-panel]');
+
+    function activateTab(name) {
+      tabButtons.forEach((button) => {
+        const isActive = button.dataset.bridgeTab === name;
+        button.classList.toggle('active', isActive);
+        button.setAttribute('aria-selected', isActive ? 'true' : 'false');
+      });
+
+      tabPanels.forEach((panel) => {
+        const isActive = panel.dataset.bridgePanel === name;
+        panel.classList.toggle('active', isActive);
+        panel.classList.toggle('show', isActive);
+      });
+    }
+
+    tabButtons.forEach((button) => {
+      button.addEventListener('click', function () {
+        activateTab(button.dataset.bridgeTab);
+      });
+    });
+
+    function setupMetadataBuilder(builder) {
+      if (!builder) return;
+      const rowsContainer = builder.querySelector('[data-metadata-rows]');
+      const addButton = builder.querySelector('[data-add-metadata]');
+      const output = builder.querySelector('[data-metadata-output]');
+      const form = builder.closest('form');
+
+      if (!rowsContainer || !addButton || !output || !form) return;
+
+      function addRow(key = '', value = '') {
+        const safeKey = (key || '').replace(/"/g, '&quot;');
+        const safeValue = (value || '').replace(/"/g, '&quot;');
+        const row = document.createElement('div');
+        row.className = 'row g-3 metadata-row align-items-end mb-2';
+        row.innerHTML = `
+          <div class="col-12 col-md-5">
+            <input type="text" class="form-control" placeholder="Key" data-metadata-key value="${safeKey}">
+          </div>
+          <div class="col-12 col-md-5">
+            <input type="text" class="form-control" placeholder="Value" data-metadata-value value="${safeValue}">
+          </div>
+          <div class="col-12 col-md-2 text-md-end">
+            <button type="button" class="btn btn-outline-danger btn-sm" data-remove-row>Remove</button>
+          </div>
+        `;
+
+        row.querySelector('[data-remove-row]').addEventListener('click', function () {
+          row.remove();
+        });
+
+        rowsContainer.appendChild(row);
+      }
+
+      addButton.addEventListener('click', function () {
+        addRow();
+      });
+
+      form.addEventListener('submit', function () {
+        const metadata = {};
+        let hasEntries = false;
+
+        rowsContainer.querySelectorAll('.metadata-row').forEach((row) => {
+          const keyInput = row.querySelector('[data-metadata-key]');
+          const valueInput = row.querySelector('[data-metadata-value]');
+          const key = keyInput ? keyInput.value.trim() : '';
+          const value = valueInput ? valueInput.value.trim() : '';
+
+          if (key && value) {
+            metadata[key] = value;
+            hasEntries = true;
+          }
+        });
+
+        output.value = hasEntries ? JSON.stringify(metadata) : '';
+      });
+    }
+
+    document.querySelectorAll('[data-metadata-builder]').forEach((builder) => {
+      setupMetadataBuilder(builder);
+    });
+
+    const singleCommandForm = document.getElementById('singleCommandForm');
+    if (singleCommandForm) {
+      singleCommandForm.addEventListener('submit', function () {
+        const commandField = singleCommandForm.querySelector('#command');
+        if (commandField) {
+          commandField.value = commandField.value.trim().replace(/^\/+/, '');
+        }
+      });
+    }
+
+    const bulkBuilder = document.querySelector('[data-bulk-builder]');
+    if (bulkBuilder) {
+      const rowsContainer = bulkBuilder.querySelector('[data-bulk-rows]');
+      const addButton = bulkBuilder.querySelector('[data-add-bulk-row]');
+      const output = bulkBuilder.querySelector('[data-bulk-output]');
+      const form = bulkBuilder.closest('form');
+
+      function addBulkRow() {
+        const row = document.createElement('div');
+        row.className = 'bulk-row';
+        row.setAttribute('data-bulk-row', '');
+        row.innerHTML = `
+          <div class="row g-3 align-items-end">
+            <div class="col-12 col-md-6">
+              <label class="form-label">Target slug <span class="text-muted">(optional)</span></label>
+              <input type="text" class="form-control" placeholder="proxy" data-bulk-slug>
+            </div>
+            <div class="col-12 col-md-6">
+              <label class="form-label">Command</label>
+              <input type="text" class="form-control" placeholder="say Hello" data-bulk-command required>
+              <div class="form-text">Do not include the leading slash. Placeholders such as <code>{{player}}</code> will be replaced using metadata from this row or the batch defaults.</div>
+            </div>
+            <div class="col-12 col-md-4">
+              <label class="form-label">Priority <span class="text-muted">(optional)</span></label>
+              <input type="number" class="form-control" placeholder="0" data-bulk-priority>
+            </div>
+            <div class="col-12 col-md-4">
+              <label class="form-label">Metadata key <span class="text-muted">(optional)</span></label>
+              <input type="text" class="form-control" placeholder="Key" data-bulk-metadata-key>
+            </div>
+            <div class="col-12 col-md-4">
+              <label class="form-label">Metadata value <span class="text-muted">(optional)</span></label>
+              <input type="text" class="form-control" placeholder="Value" data-bulk-metadata-value>
+            </div>
+            <div class="col-12 col-sm-4 col-lg-2 d-flex justify-content-sm-end">
+              <button type="button" class="btn btn-outline-danger btn-sm" data-remove-row>Remove command</button>
+            </div>
+          </div>
+        `;
+
+        row.querySelector('[data-remove-row]').addEventListener('click', function () {
+          row.remove();
+        });
+
+        rowsContainer.appendChild(row);
+      }
+
+      if (addButton && rowsContainer && output && form) {
+        addButton.addEventListener('click', function () {
+          addBulkRow();
+        });
+
+        if (!rowsContainer.children.length) {
+          addBulkRow();
+        }
+
+        form.addEventListener('submit', function () {
+          const tasks = [];
+
+          rowsContainer.querySelectorAll('[data-bulk-row]').forEach((row) => {
+            const commandInput = row.querySelector('[data-bulk-command]');
+            const slugInput = row.querySelector('[data-bulk-slug]');
+            const priorityInput = row.querySelector('[data-bulk-priority]');
+            const metadataKeyInput = row.querySelector('[data-bulk-metadata-key]');
+            const metadataValueInput = row.querySelector('[data-bulk-metadata-value]');
+
+            const command = commandInput
+              ? commandInput.value.trim().replace(/^\/+/, '')
+              : '';
+            if (!command) {
+              return;
+            }
+
+            if (commandInput) {
+              commandInput.value = command;
+            }
+
+            const task = { command };
+            const slug = slugInput ? slugInput.value.trim() : '';
+            const priorityRaw = priorityInput ? priorityInput.value.trim() : '';
+            const metadataKey = metadataKeyInput ? metadataKeyInput.value.trim() : '';
+            const metadataValue = metadataValueInput ? metadataValueInput.value.trim() : '';
+
+            if (slug) {
+              task.slug = slug;
+            }
+
+            if (priorityRaw !== '') {
+              const parsedPriority = Number(priorityRaw);
+              if (!Number.isNaN(parsedPriority)) {
+                task.priority = parsedPriority;
+              }
+            }
+
+            if (metadataKey && metadataValue) {
+              task.metadata = { [metadataKey]: metadataValue };
+            }
+
+            tasks.push(task);
+          });
+
+          output.value = tasks.length ? JSON.stringify(tasks) : '';
+        });
+      }
+    }
+
+    const routineBuilder = document.querySelector('[data-routine-builder]');
+    if (routineBuilder) {
+      const stepsContainer = routineBuilder.querySelector('[data-routine-steps]');
+      const addStepButton = routineBuilder.querySelector('[data-add-step]');
+      const output = routineBuilder.querySelector('[data-routine-output]');
+      const errorMessage = routineBuilder.querySelector('[data-routine-error]');
+      const form = routineBuilder.closest('form');
+      const slugInput = form ? form.querySelector('#routineSlugSave') : null;
+      const displayNameInput = form ? form.querySelector('#displayName') : null;
+      const descriptionInput = form ? form.querySelector('#routineDescription') : null;
+      const selectInput = form ? form.querySelector('[data-routine-select]') : null;
+      const clearButton = form ? form.querySelector('[data-routine-clear]') : null;
+      const activeLabel = form ? form.querySelector('[data-routine-active-label]') : null;
+      const routinesDataElement = routineBuilder.querySelector('[data-routines-json]');
+
+      let routinesData = [];
+      if (routinesDataElement) {
+        try {
+          routinesData = JSON.parse(routinesDataElement.textContent || '[]');
+        } catch (error) {
+          console.error('Failed to parse routines JSON', error);
+        }
+
+        routinesDataElement.remove();
+      }
+
+      const defaultActiveMessage = 'Creating a new routine.';
+
+      function updateActiveLabel(routine) {
+        if (!activeLabel) {
+          return;
+        }
+
+        if (routine) {
+          const name = routine.displayName || routine.routineSlug;
+          activeLabel.textContent = `Editing routine “${name}”.`;
+        } else {
+          activeLabel.textContent = defaultActiveMessage;
+        }
+      }
+
+      function addStep(initialData = {}) {
+        const defaultOrder = stepsContainer.children.length + 1;
+        const step = document.createElement('div');
+        step.className = 'routine-step p-3 mb-3';
+        step.innerHTML = `
+          <div class="row g-3 align-items-end">
+            <div class="col-12 col-sm-6 col-lg-3">
+              <label class="form-label">Order</label>
+              <input type="number" class="form-control" data-step-order min="0" value="${defaultOrder}">
+            </div>
+            <div class="col-12 col-lg-4">
+              <label class="form-label">Server slug</label>
+              <input type="text" class="form-control" placeholder="proxy" data-step-slug required>
+            </div>
+            <div class="col-12 col-lg-4">
+              <label class="form-label">Command</label>
+              <input type="text" class="form-control" placeholder="say Welcome" data-step-command required>
+              <div class="form-text">Commands run without a slash. Use placeholders like <code>{{player}}</code> to pull metadata into the command.</div>
+            </div>
+            <div class="col-12 col-lg-1 text-lg-end">
+              <button type="button" class="btn btn-outline-danger btn-sm w-100 mt-2 mt-lg-0" data-remove-step>Remove</button>
+            </div>
+            <div class="col-12 col-md-6">
+              <label class="form-label">Metadata key <span class="text-muted">(optional)</span></label>
+              <input type="text" class="form-control" placeholder="player" data-step-metadata-key>
+            </div>
+            <div class="col-12 col-md-6">
+              <label class="form-label">Metadata value <span class="text-muted">(optional)</span></label>
+              <input type="text" class="form-control" placeholder="ShadowolfYT" data-step-metadata-value>
+            </div>
+          </div>
+        `;
+
+        step.querySelector('[data-remove-step]').addEventListener('click', function () {
+          step.remove();
+        });
+
+        const orderInput = step.querySelector('[data-step-order]');
+        const slugField = step.querySelector('[data-step-slug]');
+        const commandField = step.querySelector('[data-step-command]');
+        const metadataKeyField = step.querySelector('[data-step-metadata-key]');
+        const metadataValueField = step.querySelector('[data-step-metadata-value]');
+
+        if (orderInput) {
+          const orderNumber = Number(initialData.order);
+          orderInput.value = !Number.isNaN(orderNumber) ? orderNumber : defaultOrder;
+        }
+
+        if (slugField && initialData.slug) {
+          slugField.value = initialData.slug;
+        }
+
+        if (commandField && initialData.command) {
+          commandField.value = (initialData.command || '').replace(/^\/+/, '');
+        }
+
+        if (initialData.metadata && typeof initialData.metadata === 'object') {
+          const metadataEntries = Object.entries(initialData.metadata);
+          if (metadataEntries.length) {
+            const [metadataKey, metadataValue] = metadataEntries[0];
+            if (metadataKeyField) {
+              metadataKeyField.value = metadataKey;
+            }
+            if (metadataValueField) {
+              metadataValueField.value = metadataValue;
+            }
+          }
+        }
+
+        stepsContainer.appendChild(step);
+      }
+
+      function resetBuilder(options = {}) {
+        const { clearSelection = false } = options;
+
+        if (slugInput) {
+          slugInput.value = '';
+        }
+
+        if (displayNameInput) {
+          displayNameInput.value = '';
+        }
+
+        if (descriptionInput) {
+          descriptionInput.value = '';
+        }
+
+        if (errorMessage) {
+          errorMessage.classList.add('d-none');
+        }
+
+        stepsContainer.innerHTML = '';
+        addStep();
+        updateActiveLabel(null);
+
+        if (clearSelection && selectInput) {
+          selectInput.value = '';
+        }
+      }
+
+      function populateFromRoutine(routine) {
+        if (!routine) {
+          resetBuilder();
+          return;
+        }
+
+        if (slugInput) {
+          slugInput.value = routine.routineSlug || '';
+        }
+
+        if (displayNameInput) {
+          displayNameInput.value = routine.displayName || '';
+        }
+
+        if (descriptionInput) {
+          descriptionInput.value = routine.description || '';
+        }
+
+        if (errorMessage) {
+          errorMessage.classList.add('d-none');
+        }
+
+        stepsContainer.innerHTML = '';
+
+        const sortedSteps = Array.isArray(routine.steps)
+          ? [...routine.steps].sort((a, b) => {
+              const orderA = typeof a.order === 'number' ? a.order : 0;
+              const orderB = typeof b.order === 'number' ? b.order : 0;
+              return orderA - orderB;
+            })
+          : [];
+
+        if (!sortedSteps.length) {
+          addStep();
+        } else {
+          sortedSteps.forEach((stepData) => addStep(stepData));
+        }
+
+        updateActiveLabel(routine);
+      }
+
+      if (addStepButton && stepsContainer && output && form) {
+        addStepButton.addEventListener('click', function () {
+          addStep();
+        });
+
+        form.addEventListener('submit', function (event) {
+          const steps = [];
+          let hasError = false;
+
+          stepsContainer.querySelectorAll('.routine-step').forEach((stepElement) => {
+            const slugField = stepElement.querySelector('[data-step-slug]');
+            const commandField = stepElement.querySelector('[data-step-command]');
+            const orderField = stepElement.querySelector('[data-step-order]');
+            const metadataKeyField = stepElement.querySelector('[data-step-metadata-key]');
+            const metadataValueField = stepElement.querySelector('[data-step-metadata-value]');
+
+            const slug = slugField ? slugField.value.trim() : '';
+            const command = commandField
+              ? commandField.value.trim().replace(/^\/+/, '')
+              : '';
+            if (commandField) {
+              commandField.value = command;
+            }
+            const orderRaw = orderField ? orderField.value.trim() : '';
+            const metadataKey = metadataKeyField ? metadataKeyField.value.trim() : '';
+            const metadataValue = metadataValueField ? metadataValueField.value.trim() : '';
+
+            if (!slug || !command) {
+              hasError = true;
+              stepElement.classList.add('border-danger');
+              return;
+            }
+
+            stepElement.classList.remove('border-danger');
+
+            const stepData = {
+              slug,
+              command,
+            };
+
+            const orderNumber = Number(orderRaw);
+            if (!Number.isNaN(orderNumber)) {
+              stepData.order = orderNumber;
+            }
+
+            if (metadataKey && metadataValue) {
+              stepData.metadata = { [metadataKey]: metadataValue };
+            }
+
+            steps.push(stepData);
+          });
+
+          if (!steps.length) {
+            hasError = true;
+          }
+
+          if (hasError) {
+            event.preventDefault();
+            event.stopImmediatePropagation();
+            if (errorMessage) {
+              errorMessage.classList.remove('d-none');
+            }
+            return;
+          }
+
+          if (errorMessage) {
+            errorMessage.classList.add('d-none');
+          }
+
+          output.value = JSON.stringify(steps);
+        });
+
+        resetBuilder();
+
+        if (selectInput) {
+          selectInput.addEventListener('change', function () {
+            const selectedSlug = selectInput.value;
+            if (!selectedSlug) {
+              resetBuilder();
+              return;
+            }
+
+            const routine = routinesData.find((item) => item && item.routineSlug === selectedSlug);
+            if (routine) {
+              populateFromRoutine(routine);
+            } else {
+              resetBuilder();
+            }
+          });
+        }
+
+        if (clearButton) {
+          clearButton.addEventListener('click', function () {
+            resetBuilder({ clearSelection: true });
+          });
+        }
+
+        if (selectInput) {
+          const routineEditButtons = document.querySelectorAll('[data-routine-edit]');
+          routineEditButtons.forEach((button) => {
+            button.addEventListener('click', function () {
+              const slug = button.getAttribute('data-routine-edit') || '';
+              selectInput.value = slug;
+              selectInput.dispatchEvent(new Event('change'));
+            });
+          });
+        }
+
+        const routineModal = document.getElementById('routineBuilderModal');
+        if (routineModal) {
+          routineModal.addEventListener('hidden.bs.modal', function () {
+            resetBuilder({ clearSelection: true });
+          });
+        }
+      }
+    }
+  });
+</script>
 
 <%- include("../modules/footer.ejs") %>
