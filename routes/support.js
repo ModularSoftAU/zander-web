@@ -73,7 +73,10 @@ export default function supportRoutes(
       const ticket = await getTicketById(req.params.id);
       const messages = await getTicketMessages(req.params.id);
 
-      if (ticket.userId !== req.session.user.userId) {
+      const isOwner = ticket.userId === req.session.user.userId;
+      const isStaff = req.session.user.isStaff;
+
+      if (!isOwner && !isStaff) {
         return res.redirect("/support");
       }
 
