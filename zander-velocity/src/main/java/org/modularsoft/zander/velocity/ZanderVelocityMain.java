@@ -11,6 +11,8 @@ import com.velocitypowered.api.plugin.annotation.DataDirectory;
 import com.velocitypowered.api.proxy.ProxyServer;
 import dev.dejvokep.boostedyaml.YamlDocument;
 import dev.dejvokep.boostedyaml.dvs.versioning.BasicVersioning;
+import net.luckperms.api.LuckPerms;
+import net.luckperms.api.LuckPermsProvider;
 import dev.dejvokep.boostedyaml.settings.dumper.DumperSettings;
 import dev.dejvokep.boostedyaml.settings.general.GeneralSettings;
 import dev.dejvokep.boostedyaml.settings.loader.LoaderSettings;
@@ -41,7 +43,8 @@ import java.util.Optional;
         name = "zander-velocity",
         version = "1.2.0",
         dependencies = {
-                @Dependency(id = "signedvelocity")
+                @Dependency(id = "signedvelocity"),
+                @Dependency(id = "luckperms", optional = false)
         }
 )
 public class ZanderVelocityMain {
@@ -53,11 +56,16 @@ public class ZanderVelocityMain {
     private static YamlDocument config;
     @Getter
     private final CommandManager commandManager;
+    @Getter
+    private static LuckPerms luckPerms;
 
     @Subscribe
     public void onProxyInitialization(ProxyInitializeEvent event) {
+        // Get LuckPerms
+        luckPerms = LuckPermsProvider.get();
+
         // Event Listeners
-        proxy.getEventManager().register(this, new UserChatEvent());
+        proxy.getEventManager().register(this, new UserChatEvent(luckPerms));
         proxy.getEventManager().register(this, new UserCommandSpyEvent());
         proxy.getEventManager().register(this, new UserOnDisconnect());
         proxy.getEventManager().register(this, new UserOnLogin());
