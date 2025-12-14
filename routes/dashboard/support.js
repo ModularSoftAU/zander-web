@@ -200,7 +200,7 @@ export default function supportDashboardRoutes(
       if (hasTicketsAccess !== true) return hasTicketsAccess;
 
       const categories = await getSupportCategoriesWithPermissions();
-      const roles = await getDiscordRoles();
+      const roles = await getDiscordRoles(req);
 
       return res.view("modules/dashboard/support/categories", {
         pageTitle: "Support Ticket Categories",
@@ -426,8 +426,15 @@ export default function supportDashboardRoutes(
     }
   });
 
-  async function getDiscordRoles() {
-    const guild = await client.guilds.fetch(process.env.DISCORD_GUILD_ID);
+  async function getDiscordRoles(req) {
+    const activeClient = client ?? req?.app?.locals?.client;
+
+    if (!activeClient) {
+      console.warn("Discord client unavailable; returning empty role list for support categories.");
+      return [];
+    }
+
+    const guild = await activeClient.guilds.fetch(process.env.DISCORD_GUILD_ID);
     const roles = await guild.roles.fetch();
     return roles.map((role) => ({ id: role.id, name: role.name }));
   }
