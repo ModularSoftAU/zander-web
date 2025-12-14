@@ -10,6 +10,8 @@ import io.github.ModularEnigma.Response;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.minimessage.MiniMessage;
+import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
+import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
 import net.luckperms.api.LuckPerms;
 import net.luckperms.api.cacheddata.CachedMetaData;
 import net.luckperms.api.model.user.User;
@@ -23,6 +25,7 @@ public class UserChatEvent {
 
     private final LuckPerms luckPerms;
     private final MiniMessage miniMessage = MiniMessage.miniMessage();
+    private final LegacyComponentSerializer legacySerializer = LegacyComponentSerializer.builder().character('&').hexColors().build();
 
     public UserChatEvent(LuckPerms luckPerms) {
         this.luckPerms = luckPerms;
@@ -30,24 +33,35 @@ public class UserChatEvent {
 
     private Component buildRankPrefix(User user) {
         final CachedMetaData metaData = user.getCachedData().getMetaData();
-        String displayName = metaData.getMetaValue("displayname");
-        if (displayName == null || displayName.isEmpty()) {
-            displayName = metaData.getPrefix();
-            if (displayName != null) {
-                displayName = miniMessage.stripTags(displayName);
-            }
-            if (displayName == null || displayName.isEmpty()) {
-                displayName = "Member";
-            }
-        }
 
+        String displayName = metaData.getMetaValue("displayname");
         String rankDescription = metaData.getMetaValue("rank_description");
+
         if (rankDescription == null || rankDescription.isEmpty()) {
             rankDescription = "No description set for this rank.";
         }
 
+        Component prefixComponent;
+        // Use the clean displayname if it exists
+        if (displayName != null && !displayName.isEmpty()) {
+            prefixComponent = miniMessage.deserialize("<dark_gray>[</dark_gray><yellow>" + displayName + "</yellow><dark_gray>]");
+        } else {
+            // Otherwise, fall back to the raw prefix which may contain legacy codes
+            String rawPrefix = metaData.getPrefix();
+            if (rawPrefix != null && !rawPrefix.isEmpty()) {
+                Component legacyPrefix = this.legacySerializer.deserialize(rawPrefix);
+                // For the hover, we need a clean, plain-text version of the prefix
+                displayName = PlainTextComponentSerializer.plainText().serialize(legacyPrefix);
+                prefixComponent = legacyPrefix;
+            } else {
+                // If no prefix exists either, default to "Member"
+                displayName = "Member";
+                prefixComponent = miniMessage.deserialize("<dark_gray>[</dark_gray><yellow>Member</yellow><dark_gray>]");
+            }
+        }
+
         Component hoverComponent = miniMessage.deserialize("<gold>" + displayName + "</gold>\n<gray>" + rankDescription + "</gray>");
-        Component prefixComponent = miniMessage.deserialize("<dark_gray>[</dark_gray><yellow>" + displayName + "</yellow><dark_gray>]");
+
         return prefixComponent.hoverEvent(hoverComponent);
     }
 
@@ -60,11 +74,8 @@ public class UserChatEvent {
             return;
         }
 
-        // Deny the event to prevent the original message from being sent by Velocity.
-        // The formatted message will be broadcast manually.
         event.setResult(PlayerChatEvent.ChatResult.denied());
 
-        // Process filtering and formatting asynchronously to avoid blocking the main thread.
         CompletableFuture.runAsync(() -> {
             String baseApiUrl = ZanderVelocityMain.getConfig().getString(Route.from("BaseAPIURL"));
             String apiKey = ZanderVelocityMain.getConfig().getString(Route.from("APIKey"));
@@ -92,13 +103,11 @@ public class UserChatEvent {
                 ZanderVelocityMain.getLogger().error("Error while filtering chat message: ", e);
             }
 
-            // Load user data, build the component, and broadcast it.
             luckPerms.getUserManager().loadUser(player.getUniqueId()).thenAcceptAsync(user -> {
                 Component prefix = buildRankPrefix(user);
-                Component messageComponent = Component.text(message);
                 Component finalMessage = prefix
                         .append(Component.text(" " + player.getUsername() + ": "))
-                        .append(messageComponent);
+                        .append(Component.text(message));
 
                 for (Player p : ZanderVelocityMain.proxy.getAllPlayers()) {
                     p.sendMessage(finalMessage);
