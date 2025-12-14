@@ -3,8 +3,9 @@
   pageDescription: "This feature has been disabled and is not accessible."
 }) %>
 
+<% const navigationFeatures = typeof features !== "undefined" ? features : []; %>
 <%- include("../modules/navigationBar.ejs", {
-  features: features
+  features: navigationFeatures,
 }) %>
 
 <%- include("../partials/miniHeader.ejs", {
