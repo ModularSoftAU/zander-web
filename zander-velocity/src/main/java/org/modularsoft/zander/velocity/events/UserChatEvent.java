@@ -28,11 +28,6 @@ public class UserChatEvent {
         this.luckPerms = luckPerms;
     }
 
-    private String escapeMiniMessageAttribute(String str) {
-        if (str == null) return "";
-        return str.replace("'", "\\'");
-    }
-
     private Component buildRankPrefix(User user) {
         final CachedMetaData metaData = user.getCachedData().getMetaData();
         String displayName = metaData.getMetaValue("displayname");
@@ -51,11 +46,9 @@ public class UserChatEvent {
             rankDescription = "No description set for this rank.";
         }
 
-        final String hoverText = "<gold>" + escapeMiniMessageAttribute(displayName) + "</gold>\n<gray>" + escapeMiniMessageAttribute(rankDescription) + "</gray>";
-        final String prefixText = "<dark_gray>[</dark_gray><yellow>" + displayName + "</yellow><dark_gray>]";
-        String fullPrefixMiniMessage = "<hover:show_text:'" + hoverText + "'>" + prefixText + "</hover>";
-
-        return miniMessage.deserialize(fullPrefixMiniMessage);
+        Component hoverComponent = miniMessage.deserialize("<gold>" + displayName + "</gold>\n<gray>" + rankDescription + "</gray>");
+        Component prefixComponent = miniMessage.deserialize("<dark_gray>[</dark_gray><yellow>" + displayName + "</yellow><dark_gray>]");
+        return prefixComponent.hoverEvent(hoverComponent);
     }
 
     @Subscribe
@@ -67,15 +60,15 @@ public class UserChatEvent {
             return;
         }
 
-        // Prevent the original message from being sent
+        // Deny the event to prevent the original message from being sent by Velocity.
+        // The formatted message will be broadcast manually.
         event.setResult(PlayerChatEvent.ChatResult.denied());
 
-        // Asynchronously process the chat message
+        // Process filtering and formatting asynchronously to avoid blocking the main thread.
         CompletableFuture.runAsync(() -> {
             String baseApiUrl = ZanderVelocityMain.getConfig().getString(Route.from("BaseAPIURL"));
             String apiKey = ZanderVelocityMain.getConfig().getString(Route.from("APIKey"));
 
-            // --- 1. Asynchronous Chat Filtering ---
             try {
                 Filter phrase = Filter.builder().content(message).build();
                 Request phraseReq = Request.builder()
@@ -84,27 +77,22 @@ public class UserChatEvent {
                         .addHeader("x-access-token", apiKey)
                         .setRequestBody(phrase.toString())
                         .build();
-
-                Response phraseRes = phraseReq.execute(); // This is still blocking, but now off the main thread
+                Response phraseRes = phraseReq.execute();
                 String phraseJson = phraseRes.getBody();
                 boolean success = JsonPath.parse(phraseJson).read("$.success");
 
                 if (!success) {
                     String phraseCaughtMessage = JsonPath.read(phraseJson, "$.message");
                     player.sendMessage(Component.text(phraseCaughtMessage, NamedTextColor.RED));
-                    return; // Stop processing
+                    return;
                 }
-
-                // --- 2. Asynchronous Discord Webhook ---
                 sendToDiscord(player, message, baseApiUrl, apiKey);
-
             } catch (Exception e) {
                 player.sendMessage(Component.text("The chat filter could not be reached. Contact staff if this persists.", NamedTextColor.YELLOW));
                 ZanderVelocityMain.getLogger().error("Error while filtering chat message: ", e);
-                // We can still proceed to format and send the message locally
             }
 
-            // --- 3. Asynchronous LuckPerms User Loading and Message Broadcasting ---
+            // Load user data, build the component, and broadcast it.
             luckPerms.getUserManager().loadUser(player.getUniqueId()).thenAcceptAsync(user -> {
                 Component prefix = buildRankPrefix(user);
                 Component messageComponent = Component.text(message);
@@ -117,9 +105,7 @@ public class UserChatEvent {
                 }
             }).exceptionally(ex -> {
                 ZanderVelocityMain.getLogger().error("Could not load LuckPerms user data for " + player.getUsername(), ex);
-                // Fallback: send without prefix
-                Component messageComponent = Component.text(message);
-                Component finalMessage = Component.text(player.getUsername() + ": ").append(messageComponent);
+                Component finalMessage = Component.text(player.getUsername() + ": ").append(Component.text(message));
                 for (Player p : ZanderVelocityMain.proxy.getAllPlayers()) {
                     p.sendMessage(finalMessage);
                 }

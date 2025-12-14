@@ -41,3 +41,9 @@ lp group <group> meta set rank_description "A short description of the rank."
 ```
 lp group admin meta set rank_description "Has full access to staff & server tools."
 ```
+
+## Important: Disable Backend Chat Formatters
+
+Because Zander now handles all chat formatting on the proxy, you **must** disable any chat formatting plugins on your backend servers (e.g., Paper, Spigot).
+
+If you do not, you may see **duplicate or incorrectly formatted chat messages**, as both the proxy and the backend server will be trying to format the same message.
