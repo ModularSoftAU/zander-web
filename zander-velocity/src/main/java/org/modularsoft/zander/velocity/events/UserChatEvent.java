@@ -107,40 +107,42 @@ public class UserChatEvent {
                 Component prefix = buildRankPrefix(user);
                 Component finalMessage = prefix
                         .append(Component.text(" " + player.getUsername() + ": "))
-                        .append(Component.text(message));
+                        .append(legacySerializer.deserialize(message));
 
-                for (Player p : ZanderVelocityMain.proxy.getAllPlayers()) {
-                    p.sendMessage(finalMessage);
-                }
+                player.getCurrentServer().ifPresent(server -> {
+                    for (Player p : server.getServer().getPlayersConnected()) {
+                        p.sendMessage(finalMessage);
+                    }
+                });
             }).exceptionally(ex -> {
                 ZanderVelocityMain.getLogger().error("Could not load LuckPerms user data for " + player.getUsername(), ex);
-                Component finalMessage = Component.text(player.getUsername() + ": ").append(Component.text(message));
-                for (Player p : ZanderVelocityMain.proxy.getAllPlayers()) {
-                    p.sendMessage(finalMessage);
-                }
+                Component finalMessage = Component.text(player.getUsername() + ": ").append(legacySerializer.deserialize(message));
+                player.getCurrentServer().ifPresent(server -> {
+                    for (Player p : server.getServer().getPlayersConnected()) {
+                        p.sendMessage(finalMessage);
+                    }
+                });
                 return null;
             });
         });
     }
 
     private void sendToDiscord(Player player, String message, String baseApiUrl, String apiKey) {
-        ZanderVelocityMain.proxy.getScheduler().buildTask(ZanderVelocityMain.proxy.getPluginManager().getPlugin("zander-velocity").get(), () -> {
-            try {
-                DiscordChat chat = DiscordChat.builder()
-                        .username(player.getUsername())
-                        .server(player.getCurrentServer().map(s -> s.getServerInfo().getName()).orElse("unknown"))
-                        .content(message)
-                        .build();
-                Request discordChatReq = Request.builder()
-                        .setURL(baseApiUrl + "/discord/chat")
-                        .setMethod(Request.Method.POST)
-                        .addHeader("x-access-token", apiKey)
-                        .setRequestBody(chat.toString())
-                        .build();
-                discordChatReq.execute();
-            } catch (Exception e) {
-                ZanderVelocityMain.getLogger().error("Failed to send message to Discord webhook", e);
-            }
-        }).schedule();
+        try {
+            DiscordChat chat = DiscordChat.builder()
+                    .username(player.getUsername())
+                    .server(player.getCurrentServer().map(s -> s.getServerInfo().getName()).orElse("unknown"))
+                    .content(message)
+                    .build();
+            Request discordChatReq = Request.builder()
+                    .setURL(baseApiUrl + "/discord/chat")
+                    .setMethod(Request.Method.POST)
+                    .addHeader("x-access-token", apiKey)
+                    .setRequestBody(chat.toString())
+                    .build();
+            discordChatReq.execute();
+        } catch (Exception e) {
+            ZanderVelocityMain.getLogger().error("Failed to send message to Discord webhook", e);
+        }
     }
 }
