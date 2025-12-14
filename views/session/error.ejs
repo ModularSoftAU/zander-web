@@ -4,8 +4,11 @@
 }) %>
 
 <% const navigationFeatures = typeof features !== "undefined" ? features : []; %>
+<% const navigationAnnouncement =
+  typeof announcementWeb !== "undefined" ? announcementWeb : null; %>
 <%- include("../modules/navigationBar.ejs", {
   features: navigationFeatures,
+  announcementWeb: navigationAnnouncement,
 }) %>
 
 <%- include("../partials/miniHeader.ejs", {
