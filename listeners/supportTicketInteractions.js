@@ -11,8 +11,9 @@ export class SupportTicketInteractionsListener extends Listener {
 
   async run(interaction) {
     if (interaction.isButton()) {
-      if (interaction.customId === "support_ticket_open") {
-        return startTicketFlow(interaction);
+      if (interaction.customId.startsWith("support_ticket_open")) {
+        const [, parentCategoryId] = interaction.customId.split(":");
+        return startTicketFlow(interaction, { parentCategoryId });
       }
 
       if (interaction.customId === "support_ticket_close") {

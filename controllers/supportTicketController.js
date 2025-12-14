@@ -66,9 +66,10 @@ export async function createSupportTicket(
     userId,
     categoryId,
     title,
-    { discordUserId = null, staffRoleIds = [] } = {}
+    { discordUserId = null, staffRoleIds = [], parentCategoryId = null } = {}
 ) {
     const guild = await client.guilds.fetch(process.env.DISCORD_GUILD_ID);
+    const targetParentId = parentCategoryId ?? process.env.SUPPORT_CATEGORY_ID;
     const permissionOverwrites = [
         {
             id: guild.roles.everyone.id,
@@ -104,7 +105,7 @@ export async function createSupportTicket(
     const channel = await guild.channels.create({
         name: "ticket-pending",
         type: ChannelType.GuildText,
-        parent: process.env.SUPPORT_CATEGORY_ID,
+        parent: targetParentId,
         permissionOverwrites,
         reason: `Support ticket for ${discordUserId ?? `user ${userId}`}`,
     });
