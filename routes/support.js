@@ -210,11 +210,14 @@ export default function supportRoutes(
         }
       }
 
-      const ticketId = await createSupportTicket(
+      const { ticketId } = await createSupportTicket(
         client,
         req.session.user.userId,
         category,
-        title
+        title,
+        {
+          discordUserId: req.session.user.discordId,
+        }
       );
       await createSupportTicketMessage(
         client,

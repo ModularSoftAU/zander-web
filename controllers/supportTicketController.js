@@ -1,5 +1,5 @@
 import db from "./databaseController.js";
-import { ChannelType } from "discord.js";
+import { ChannelType, PermissionFlagsBits } from "discord.js";
 
 export async function getSupportCategories() {
   return new Promise((resolve, reject) => {
@@ -61,21 +61,78 @@ export async function createSupportCategory(name, description) {
   });
 }
 
-export async function createSupportTicket(client, userId, categoryId, title) {
+export async function createSupportTicket(
+    client,
+    userId,
+    categoryId,
+    title,
+    { discordUserId = null, staffRoleIds = [] } = {}
+) {
     const guild = await client.guilds.fetch(process.env.DISCORD_GUILD_ID);
+    const permissionOverwrites = [
+        {
+            id: guild.roles.everyone.id,
+            deny: [PermissionFlagsBits.ViewChannel],
+        },
+    ];
+
+    if (discordUserId) {
+        permissionOverwrites.push({
+            id: discordUserId,
+            allow: [
+                PermissionFlagsBits.ViewChannel,
+                PermissionFlagsBits.SendMessages,
+                PermissionFlagsBits.AttachFiles,
+                PermissionFlagsBits.ReadMessageHistory,
+            ],
+        });
+    }
+
+    staffRoleIds.forEach((roleId) => {
+        permissionOverwrites.push({
+            id: roleId,
+            allow: [
+                PermissionFlagsBits.ViewChannel,
+                PermissionFlagsBits.SendMessages,
+                PermissionFlagsBits.AttachFiles,
+                PermissionFlagsBits.ReadMessageHistory,
+                PermissionFlagsBits.ManageMessages,
+            ],
+        });
+    });
+
     const channel = await guild.channels.create({
-        name: `ticket-${title}`,
+        name: "ticket-pending",
         type: ChannelType.GuildText,
         parent: process.env.SUPPORT_CATEGORY_ID,
+        permissionOverwrites,
+        reason: `Support ticket for ${discordUserId ?? `user ${userId}`}`,
     });
 
     return new Promise((resolve, reject) => {
         db.query(
         "INSERT INTO supportTickets (userId, categoryId, title, discordChannelId) VALUES (?, ?, ?, ?)",
         [userId, categoryId, title, channel.id],
-        (err, results) => {
-            if (err) reject(err);
-            resolve(results.insertId);
+        async (err, results) => {
+            if (err) {
+                try {
+                    await channel.delete("Failed to persist support ticket");
+                } catch (cleanupError) {
+                    console.error("Failed to clean up orphaned ticket channel", cleanupError);
+                }
+                reject(err);
+                return;
+            }
+
+            const ticketId = results.insertId;
+
+            try {
+                await channel.setName(`ticket-${ticketId}`);
+            } catch (renameError) {
+                console.error("Failed to rename ticket channel", renameError);
+            }
+
+            resolve({ ticketId, channel });
         }
         );
     });
@@ -127,6 +184,22 @@ export async function getCategoryById(id) {
                 resolve(results[0]);
             }
         });
+    });
+}
+
+export async function getCategoryPermissions(categoryId) {
+    return new Promise((resolve, reject) => {
+        db.query(
+            "SELECT roleId FROM supportTicketCategoryPermissions WHERE categoryId = ?",
+            [categoryId],
+            (err, results) => {
+                if (err) {
+                    reject(err);
+                } else {
+                    resolve(results.map((row) => row.roleId));
+                }
+            }
+        );
     });
 }
 
@@ -202,6 +275,22 @@ export async function getTicketByChannelId(channelId) {
     });
 }
 
+export async function getTicketDetailsByChannel(channelId) {
+    return new Promise((resolve, reject) => {
+        db.query(
+            "SELECT t.*, u.discordId FROM supportTickets t JOIN users u ON t.userId = u.userId WHERE t.discordChannelId = ?",
+            [channelId],
+            (err, results) => {
+                if (err) {
+                    reject(err);
+                } else {
+                    resolve(results[0]);
+                }
+            }
+        );
+    });
+}
+
 export async function getAllTickets() {
     return new Promise((resolve, reject) => {
         db.query("SELECT t.*, u.username FROM supportTickets t JOIN users u ON t.userId = u.userId", (err, results) => {
@@ -233,18 +322,6 @@ export async function getUserRoles(userId) {
                 reject(err);
             } else {
                 resolve(results.map(r => r.discordRoleId));
-            }
-        });
-    });
-}
-
-export async function getCategoryPermissions(categoryId) {
-    return new Promise((resolve, reject) => {
-        db.query("SELECT roleId FROM supportTicketCategoryPermissions WHERE categoryId = ?", [categoryId], (err, results) => {
-            if (err) {
-                reject(err);
-            } else {
-                resolve(results.map(r => r.roleId));
             }
         });
     });
