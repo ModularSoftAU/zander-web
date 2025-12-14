@@ -1,5 +1,9 @@
 import { getWebAnnouncement } from "../../controllers/announcementController.js";
-import { isFeatureWebRouteEnabled, getGlobalImage } from "../../api/common.js";
+import {
+  isFeatureWebRouteEnabled,
+  getGlobalImage,
+  hasPermission,
+} from "../../api/common.js";
 import { ActionRowBuilder, ButtonBuilder, ButtonStyle } from "discord.js";
 import {
   getSupportCategories,
@@ -8,11 +12,13 @@ import {
   createSupportCategory,
   deleteSupportCategory,
   getAllTickets,
+  getTicketById,
   getTicketsByCategory,
   updateTicketStatus,
   getCategoryById,
   updateSupportCategory,
 } from "../../controllers/supportTicketController.js";
+import { hasPermission as hasPermissionNode } from "../../lib/discord/permissions.mjs";
 
 export default function supportDashboardRoutes(
   app,
@@ -24,12 +30,39 @@ export default function supportDashboardRoutes(
   features,
   lang
 ) {
-  const requireSupportStaff = async (req, res) => {
-    if (!req.session.user) {
-      return res.redirect("/login");
-    }
+  const slugifyCategory = (name, fallback = "") => {
+    const source = name || fallback;
+    return String(source)
+      .toLowerCase()
+      .trim()
+      .replace(/[^a-z0-9\s-]/g, "")
+      .replace(/\s+/g, "-")
+      .replace(/-+/g, "-")
+      .replace(/(^-|-$)/g, "");
+  };
 
-    if (!req.session.user.isStaff) {
+  const getCategorySlug = (category) => {
+    if (!category) return "";
+    if (category.slug) return category.slug;
+    return slugifyCategory(category.name, `category-${category.categoryId}`);
+  };
+
+  const userHasCategoryPermission = (slug, permissions = []) => {
+    if (!slug) return false;
+    const ticketNode = `zander.web.tickets.${slug}`;
+    return (
+      hasPermissionNode(permissions, ticketNode) ||
+      hasPermissionNode(permissions, "zander.web.tickets.*")
+    );
+  };
+
+  const requireTicketPermission = async (req, res) =>
+    await hasPermission("zander.web.tickets", req, res, features);
+
+  const requireCategoryPermission = async (category, req, res) => {
+    const slug = getCategorySlug(category);
+
+    if (!userHasCategoryPermission(slug, req.session.user?.permissions)) {
       return res.view("session/noPermission", {
         pageTitle: "Access Restricted",
         config,
@@ -44,12 +77,30 @@ export default function supportDashboardRoutes(
     return true;
   };
 
+  const filterCategoriesByPermission = (categories, permissions) => {
+    return categories
+      .map((category) => ({ ...category, slug: getCategorySlug(category) }))
+      .filter((category) =>
+        userHasCategoryPermission(category.slug, permissions)
+      );
+  };
+
   app.get("/dashboard/support", async function (req, res) {
     try {
-      const isStaff = await requireSupportStaff(req, res);
-      if (isStaff !== true) return isStaff;
+      const hasTicketsAccess = await requireTicketPermission(req, res);
+      if (hasTicketsAccess !== true) return hasTicketsAccess;
 
-      const tickets = await getAllTickets();
+      const categories = filterCategoriesByPermission(
+        await getSupportCategories(),
+        req.session.user.permissions
+      );
+      const permittedCategoryIds = categories.map(
+        (category) => category.categoryId
+      );
+
+      const tickets = (await getAllTickets()).filter((ticket) =>
+        permittedCategoryIds.includes(ticket.categoryId)
+      );
 
       return res.view("modules/dashboard/support/index", {
         pageTitle: "Support Tickets",
@@ -75,19 +126,43 @@ export default function supportDashboardRoutes(
 
   app.get("/dashboard/support/explorer", async function (req, res) {
     try {
-      const isStaff = await requireSupportStaff(req, res);
-      if (isStaff !== true) return isStaff;
+      const hasTicketsAccess = await requireTicketPermission(req, res);
+      if (hasTicketsAccess !== true) return hasTicketsAccess;
 
       const { category } = req.query;
       let tickets = [];
 
-      if (category) {
-        tickets = await getTicketsByCategory(category);
-      } else {
-        tickets = await getAllTickets();
+      const permittedCategories = filterCategoriesByPermission(
+        await getSupportCategories(),
+        req.session.user.permissions
+      );
+
+      const selectedCategory = permittedCategories.find(
+        (c) => String(c.categoryId) === category
+      );
+
+      if (category && !selectedCategory) {
+        return res.view("session/noPermission", {
+          pageTitle: "Access Restricted",
+          config,
+          req,
+          res,
+          features,
+          globalImage: await getGlobalImage(),
+          announcementWeb: await getWebAnnouncement(),
+        });
       }
 
-      const categories = await getSupportCategories();
+      if (selectedCategory) {
+        tickets = await getTicketsByCategory(selectedCategory.categoryId);
+      } else {
+        const permittedCategoryIds = permittedCategories.map(
+          (c) => c.categoryId
+        );
+        tickets = (await getAllTickets()).filter((ticket) =>
+          permittedCategoryIds.includes(ticket.categoryId)
+        );
+      }
 
       return res.view("modules/dashboard/support/explorer", {
         pageTitle: "Support Ticket Explorer",
@@ -96,8 +171,8 @@ export default function supportDashboardRoutes(
         req,
         features,
         tickets,
-        categories,
-        selectedCategory: category,
+        categories: permittedCategories,
+        selectedCategory: selectedCategory?.categoryId,
         globalImage: await getGlobalImage(),
         announcementWeb: await getWebAnnouncement(),
       });
@@ -115,8 +190,8 @@ export default function supportDashboardRoutes(
 
   app.get("/dashboard/support/categories", async function (req, res) {
     try {
-      const isStaff = await requireSupportStaff(req, res);
-      if (isStaff !== true) return isStaff;
+      const hasTicketsAccess = await requireTicketPermission(req, res);
+      if (hasTicketsAccess !== true) return hasTicketsAccess;
 
       const categories = await getSupportCategoriesWithPermissions();
       const roles = await getDiscordRoles();
@@ -148,8 +223,8 @@ export default function supportDashboardRoutes(
     "/dashboard/support/categories/:id/permissions",
     async function (req, res) {
       try {
-        const isStaff = await requireSupportStaff(req, res);
-        if (isStaff !== true) return isStaff;
+        const hasTicketsAccess = await requireTicketPermission(req, res);
+        if (hasTicketsAccess !== true) return hasTicketsAccess;
 
         const { id } = req.params;
         const { roleId } = req.body;
@@ -172,8 +247,8 @@ export default function supportDashboardRoutes(
 
   app.post("/dashboard/support/categories", async function (req, res) {
     try {
-      const isStaff = await requireSupportStaff(req, res);
-      if (isStaff !== true) return isStaff;
+      const hasTicketsAccess = await requireTicketPermission(req, res);
+      if (hasTicketsAccess !== true) return hasTicketsAccess;
 
       const { name, description } = req.body;
       await createSupportCategory(name, description);
@@ -195,8 +270,8 @@ export default function supportDashboardRoutes(
 
   app.get("/dashboard/support/categories/:id/edit", async function (req, res) {
     try {
-      const isStaff = await requireSupportStaff(req, res);
-      if (isStaff !== true) return isStaff;
+      const hasTicketsAccess = await requireTicketPermission(req, res);
+      if (hasTicketsAccess !== true) return hasTicketsAccess;
 
       const category = await getCategoryById(req.params.id);
 
@@ -224,8 +299,8 @@ export default function supportDashboardRoutes(
 
   app.post("/dashboard/support/categories/:id/edit", async function (req, res) {
     try {
-      const isStaff = await requireSupportStaff(req, res);
-      if (isStaff !== true) return isStaff;
+      const hasTicketsAccess = await requireTicketPermission(req, res);
+      if (hasTicketsAccess !== true) return hasTicketsAccess;
 
       const { id } = req.params;
       const { name, description } = req.body;
@@ -250,8 +325,8 @@ export default function supportDashboardRoutes(
     "/dashboard/support/categories/:id/delete",
     async function (req, res) {
       try {
-        const isStaff = await requireSupportStaff(req, res);
-        if (isStaff !== true) return isStaff;
+        const hasTicketsAccess = await requireTicketPermission(req, res);
+        if (hasTicketsAccess !== true) return hasTicketsAccess;
 
         const { id } = req.params;
         await deleteSupportCategory(id);
@@ -274,10 +349,19 @@ export default function supportDashboardRoutes(
 
   app.post("/dashboard/support/ticket/:id/status", async function (req, res) {
     try {
-      const isStaff = await requireSupportStaff(req, res);
-      if (isStaff !== true) return isStaff;
+      const hasTicketsAccess = await requireTicketPermission(req, res);
+      if (hasTicketsAccess !== true) return hasTicketsAccess;
 
-      await updateTicketStatus(req.params.id, req.body.status);
+      const ticket = await getTicketById(req.params.id);
+      const category = await getCategoryById(ticket.categoryId);
+      const hasCategoryAccess = await requireCategoryPermission(
+        category,
+        req,
+        res
+      );
+      if (hasCategoryAccess !== true) return hasCategoryAccess;
+
+      await updateTicketStatus(ticket.ticketId, req.body.status);
 
       return res.redirect(`/support/ticket/${req.params.id}`);
     } catch (error) {
@@ -294,8 +378,8 @@ export default function supportDashboardRoutes(
 
   app.post("/dashboard/support/message", async function (req, res) {
     try {
-      const isStaff = await requireSupportStaff(req, res);
-      if (isStaff !== true) return isStaff;
+      const hasTicketsAccess = await requireTicketPermission(req, res);
+      if (hasTicketsAccess !== true) return hasTicketsAccess;
 
       await postSupportMessage(client);
 
