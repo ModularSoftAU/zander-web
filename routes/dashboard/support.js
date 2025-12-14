@@ -120,6 +120,9 @@ export default function supportDashboardRoutes(
         config,
         req,
         error,
+        features,
+        globalImage: await getGlobalImage(),
+        announcementWeb: await getWebAnnouncement(),
       });
     }
   });
@@ -184,6 +187,9 @@ export default function supportDashboardRoutes(
         config,
         req,
         error,
+        features,
+        globalImage: await getGlobalImage(),
+        announcementWeb: await getWebAnnouncement(),
       });
     }
   });
@@ -215,6 +221,9 @@ export default function supportDashboardRoutes(
         config,
         req,
         error,
+        features,
+        globalImage: await getGlobalImage(),
+        announcementWeb: await getWebAnnouncement(),
       });
     }
   });
@@ -240,6 +249,9 @@ export default function supportDashboardRoutes(
           config,
           req,
           error,
+          features,
+          globalImage: await getGlobalImage(),
+          announcementWeb: await getWebAnnouncement(),
         });
       }
     }
@@ -264,6 +276,9 @@ export default function supportDashboardRoutes(
         config,
         req,
         error,
+        features,
+        globalImage: await getGlobalImage(),
+        announcementWeb: await getWebAnnouncement(),
       });
     }
   });
@@ -293,6 +308,9 @@ export default function supportDashboardRoutes(
         config,
         req,
         error,
+        features,
+        globalImage: await getGlobalImage(),
+        announcementWeb: await getWebAnnouncement(),
       });
     }
   });
@@ -317,6 +335,9 @@ export default function supportDashboardRoutes(
         config,
         req,
         error,
+        features,
+        globalImage: await getGlobalImage(),
+        announcementWeb: await getWebAnnouncement(),
       });
     }
   });
@@ -342,6 +363,9 @@ export default function supportDashboardRoutes(
           config,
           req,
           error,
+          features,
+          globalImage: await getGlobalImage(),
+          announcementWeb: await getWebAnnouncement(),
         });
       }
     }
@@ -372,6 +396,9 @@ export default function supportDashboardRoutes(
         config,
         req,
         error,
+        features,
+        globalImage: await getGlobalImage(),
+        announcementWeb: await getWebAnnouncement(),
       });
     }
   });
@@ -392,6 +419,9 @@ export default function supportDashboardRoutes(
         config,
         req,
         error,
+        features,
+        globalImage: await getGlobalImage(),
+        announcementWeb: await getWebAnnouncement(),
       });
     }
   });

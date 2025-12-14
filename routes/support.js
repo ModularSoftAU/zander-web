@@ -60,6 +60,9 @@ export default function supportRoutes(
         config,
         req,
         error,
+        features,
+        globalImage: await getGlobalImage(),
+        announcementWeb: await getWebAnnouncement(),
       });
     }
   });
@@ -99,6 +102,9 @@ export default function supportRoutes(
         config,
         req,
         error,
+        features,
+        globalImage: await getGlobalImage(),
+        announcementWeb: await getWebAnnouncement(),
       });
     }
   });
@@ -142,6 +148,9 @@ export default function supportRoutes(
         config,
         req,
         error,
+        features,
+        globalImage: await getGlobalImage(),
+        announcementWeb: await getWebAnnouncement(),
       });
     }
   });
@@ -172,6 +181,9 @@ export default function supportRoutes(
         config,
         req,
         error,
+        features,
+        globalImage: await getGlobalImage(),
+        announcementWeb: await getWebAnnouncement(),
       });
     }
   });
@@ -221,6 +233,9 @@ export default function supportRoutes(
         config,
         req,
         error,
+        features,
+        globalImage: await getGlobalImage(),
+        announcementWeb: await getWebAnnouncement(),
       });
     }
   });
