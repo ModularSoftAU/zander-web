@@ -135,8 +135,8 @@ export async function hasPermission(permissionNode, req, res, features) {
         if (permission === "*") return true;
         if (permission === node) return true;
         if (permission.endsWith(".*")) {
-          const base = permission.slice(0, -1);
-          return node.startsWith(base);
+          const base = permission.slice(0, -2);
+          return node === base || node.startsWith(`${base}.`);
         }
 
         return false;
