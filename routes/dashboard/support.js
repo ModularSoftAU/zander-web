@@ -24,11 +24,30 @@ export default function supportDashboardRoutes(
   features,
   lang
 ) {
+  const requireSupportStaff = async (req, res) => {
+    if (!req.session.user) {
+      return res.redirect("/login");
+    }
+
+    if (!req.session.user.isStaff) {
+      return res.view("session/noPermission", {
+        pageTitle: "Access Restricted",
+        config,
+        req,
+        res,
+        features,
+        globalImage: await getGlobalImage(),
+        announcementWeb: await getWebAnnouncement(),
+      });
+    }
+
+    return true;
+  };
+
   app.get("/dashboard/support", async function (req, res) {
     try {
-      if (!req.session.user || !req.session.user.isStaff) {
-        return res.redirect("/login");
-      }
+      const isStaff = await requireSupportStaff(req, res);
+      if (isStaff !== true) return isStaff;
 
       const tickets = await getAllTickets();
 
@@ -56,9 +75,8 @@ export default function supportDashboardRoutes(
 
   app.get("/dashboard/support/explorer", async function (req, res) {
     try {
-      if (!req.session.user || !req.session.user.isStaff) {
-        return res.redirect("/login");
-      }
+      const isStaff = await requireSupportStaff(req, res);
+      if (isStaff !== true) return isStaff;
 
       const { category } = req.query;
       let tickets = [];
@@ -97,9 +115,8 @@ export default function supportDashboardRoutes(
 
   app.get("/dashboard/support/categories", async function (req, res) {
     try {
-      if (!req.session.user || !req.session.user.isStaff) {
-        return res.redirect("/login");
-      }
+      const isStaff = await requireSupportStaff(req, res);
+      if (isStaff !== true) return isStaff;
 
       const categories = await getSupportCategoriesWithPermissions();
       const roles = await getDiscordRoles();
@@ -131,9 +148,8 @@ export default function supportDashboardRoutes(
     "/dashboard/support/categories/:id/permissions",
     async function (req, res) {
       try {
-        if (!req.session.user || !req.session.user.isStaff) {
-          return res.redirect("/login");
-        }
+        const isStaff = await requireSupportStaff(req, res);
+        if (isStaff !== true) return isStaff;
 
         const { id } = req.params;
         const { roleId } = req.body;
@@ -156,9 +172,8 @@ export default function supportDashboardRoutes(
 
   app.post("/dashboard/support/categories", async function (req, res) {
     try {
-      if (!req.session.user || !req.session.user.isStaff) {
-        return res.redirect("/login");
-      }
+      const isStaff = await requireSupportStaff(req, res);
+      if (isStaff !== true) return isStaff;
 
       const { name, description } = req.body;
       await createSupportCategory(name, description);
@@ -180,9 +195,8 @@ export default function supportDashboardRoutes(
 
   app.get("/dashboard/support/categories/:id/edit", async function (req, res) {
     try {
-      if (!req.session.user || !req.session.user.isStaff) {
-        return res.redirect("/login");
-      }
+      const isStaff = await requireSupportStaff(req, res);
+      if (isStaff !== true) return isStaff;
 
       const category = await getCategoryById(req.params.id);
 
@@ -210,9 +224,8 @@ export default function supportDashboardRoutes(
 
   app.post("/dashboard/support/categories/:id/edit", async function (req, res) {
     try {
-      if (!req.session.user || !req.session.user.isStaff) {
-        return res.redirect("/login");
-      }
+      const isStaff = await requireSupportStaff(req, res);
+      if (isStaff !== true) return isStaff;
 
       const { id } = req.params;
       const { name, description } = req.body;
@@ -237,9 +250,8 @@ export default function supportDashboardRoutes(
     "/dashboard/support/categories/:id/delete",
     async function (req, res) {
       try {
-        if (!req.session.user || !req.session.user.isStaff) {
-          return res.redirect("/login");
-        }
+        const isStaff = await requireSupportStaff(req, res);
+        if (isStaff !== true) return isStaff;
 
         const { id } = req.params;
         await deleteSupportCategory(id);
@@ -262,9 +274,8 @@ export default function supportDashboardRoutes(
 
   app.post("/dashboard/support/ticket/:id/status", async function (req, res) {
     try {
-      if (!req.session.user || !req.session.user.isStaff) {
-        return res.redirect("/login");
-      }
+      const isStaff = await requireSupportStaff(req, res);
+      if (isStaff !== true) return isStaff;
 
       await updateTicketStatus(req.params.id, req.body.status);
 
@@ -283,9 +294,8 @@ export default function supportDashboardRoutes(
 
   app.post("/dashboard/support/message", async function (req, res) {
     try {
-      if (!req.session.user || !req.session.user.isStaff) {
-        return res.redirect("/login");
-      }
+      const isStaff = await requireSupportStaff(req, res);
+      if (isStaff !== true) return isStaff;
 
       await postSupportMessage(client);
 
