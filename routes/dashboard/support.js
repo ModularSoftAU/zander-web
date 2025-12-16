@@ -429,8 +429,10 @@ export default function supportDashboardRoutes(
   async function getDiscordRoles(req) {
     const activeClient = client ?? req?.app?.locals?.client;
 
-    if (!activeClient) {
-      console.warn("Discord client unavailable; returning empty role list for support categories.");
+    if (!activeClient || !activeClient.guilds?.fetch) {
+      console.warn(
+        "Discord client unavailable or guild fetch not ready; returning empty role list for support categories."
+      );
       return [];
     }
 
