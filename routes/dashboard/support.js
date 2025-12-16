@@ -200,12 +200,30 @@ export default function supportDashboardRoutes(
       if (hasTicketsAccess !== true) return hasTicketsAccess;
 
       const categories = await getSupportCategoriesWithPermissions();
-      const roles = await getDiscordRoles(req);
+      const roles = await getLuckPermRoles();
+
+      const roleNameMap = new Map(
+        roles.map((role) => [String(role.id), role.name])
+      );
+
+      const categoriesWithRoleNames = categories.map((category) => {
+        const permissionIds = category.permissions
+          ? category.permissions.split(",").filter(Boolean)
+          : [];
+
+        return {
+          ...category,
+          permissions: permissionIds.map((roleId) => ({
+            roleId,
+            roleName: roleNameMap.get(String(roleId)) || roleId,
+          })),
+        };
+      });
 
       console.info(
         "Loaded support categories",
         categories?.length ?? 0,
-        "and guild roles",
+        "and LuckPerms ranks with Discord roles",
         roles?.length ?? 0
       );
 
@@ -215,7 +233,7 @@ export default function supportDashboardRoutes(
         config,
         req,
         features,
-        categories,
+        categories: categoriesWithRoleNames,
         roles,
         globalImage: await getGlobalImage(),
         announcementWeb: await getWebAnnouncement(),
@@ -433,41 +451,62 @@ export default function supportDashboardRoutes(
     }
   });
 
-  async function getDiscordRoles(req) {
-    const activeClient = client ?? req?.app?.locals?.client;
-
-    if (!activeClient) {
-      console.warn(
-        "getDiscordRoles: Discord client missing; returning empty role list for support categories."
-      );
-      return [];
-    }
-
-    if (!activeClient.guilds || typeof activeClient.guilds.fetch !== "function") {
-      console.warn(
-        "getDiscordRoles: Guild manager unavailable on client; returning empty role list for support categories."
-      );
-      return [];
-    }
-
+  async function getLuckPermRoles() {
     try {
-      const guild = await activeClient.guilds.fetch(process.env.DISCORD_GUILD_ID);
-      const roles = await guild.roles.fetch();
+      const ranks = await new Promise((resolve, reject) => {
+        db.query(
+          "SELECT rankSlug, displayName, discordRoleId FROM ranks WHERE discordRoleId IS NOT NULL AND discordRoleId != ''",
+          (error, results) => {
+            if (error) {
+              reject(error);
+            } else {
+              resolve(results);
+            }
+          }
+        );
+      });
 
-      console.info(
-        "getDiscordRoles: fetched guild roles for support categories",
-        roles?.size ?? 0
-      );
-
-      return roles.map((role) => ({ id: role.id, name: role.name }));
+      return ranks.map((rank) => ({
+        id: rank.discordRoleId,
+        name: rank.displayName || rank.rankSlug,
+        rankSlug: rank.rankSlug,
+      }));
     } catch (error) {
-      console.error("getDiscordRoles: failed to fetch guild roles", error);
+      console.error(
+        "getLuckPermRoles: failed to fetch rank Discord role mappings for support categories",
+        error
+      );
       return [];
     }
   }
 
   async function postSupportMessage(client) {
-    const channel = await client.channels.fetch(process.env.SUPPORT_CHANNEL_ID);
+    if (!client) {
+      console.warn(
+        "postSupportMessage: Discord client unavailable; skipping support panel update"
+      );
+      return;
+    }
+
+    const supportChannelId = process.env.SUPPORT_CHANNEL_ID;
+
+    if (!supportChannelId) {
+      console.warn(
+        "postSupportMessage: SUPPORT_CHANNEL_ID is not configured; skipping support panel update"
+      );
+      return;
+    }
+
+    let channel;
+    try {
+      channel = await client.channels.fetch(supportChannelId);
+    } catch (error) {
+      console.error(
+        "postSupportMessage: failed to fetch support channel for ticket panel",
+        error
+      );
+      return;
+    }
     const categories = await getSupportCategories();
 
     const buttons = categories.map((category) =>
@@ -486,7 +525,32 @@ export default function supportDashboardRoutes(
   }
 
   async function updateSupportMessage(client) {
-    const channel = await client.channels.fetch(process.env.SUPPORT_CHANNEL_ID);
+    if (!client) {
+      console.warn(
+        "updateSupportMessage: Discord client unavailable; skipping support panel refresh"
+      );
+      return;
+    }
+
+    const supportChannelId = process.env.SUPPORT_CHANNEL_ID;
+
+    if (!supportChannelId) {
+      console.warn(
+        "updateSupportMessage: SUPPORT_CHANNEL_ID is not configured; skipping support panel refresh"
+      );
+      return;
+    }
+
+    let channel;
+    try {
+      channel = await client.channels.fetch(supportChannelId);
+    } catch (error) {
+      console.error(
+        "updateSupportMessage: failed to fetch support channel for ticket panel",
+        error
+      );
+      return;
+    }
     const messages = await channel.messages.fetch({ limit: 100 });
     const message = messages.find(
       (m) => m.author.id === client.user.id && m.components.length > 0
