@@ -33,7 +33,6 @@ export class SupportCommand extends Command {
         subcommand
           .setName("panel")
           .setDescription("Post a Create Ticket button in this channel.")
-          .setDefaultMemberPermissions(PermissionFlagsBits.ManageChannels)
           .addChannelOption((option) =>
             option
               .setName("channel")
@@ -59,6 +58,13 @@ export class SupportCommand extends Command {
     }
 
     if (subcommand === "panel") {
+      if (!interaction.memberPermissions.has(PermissionFlagsBits.ManageChannels)) {
+        return interaction.reply({
+          content: "You need Manage Channels permission to post a ticket panel.",
+          ephemeral: true,
+        });
+      }
+
       const targetChannel =
         interaction.options.getChannel("channel") ?? interaction.channel;
       const ticketCategory = interaction.options.getChannel("ticket_category");
