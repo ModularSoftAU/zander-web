@@ -43,7 +43,8 @@ export default async function webApiRoute(app, config, db, features, lang) {
   `,
       async function (err, results) {
         if (err) {
-          return console.log(err);
+          console.error(err);
+          return;
         }
 
         // General

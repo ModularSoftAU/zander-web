@@ -202,6 +202,13 @@ export default function supportDashboardRoutes(
       const categories = await getSupportCategoriesWithPermissions();
       const roles = await getDiscordRoles(req);
 
+      console.info(
+        "Loaded support categories",
+        categories?.length ?? 0,
+        "and guild roles",
+        roles?.length ?? 0
+      );
+
       return res.view("modules/dashboard/support/categories", {
         pageTitle: "Support Ticket Categories",
         pageDescription: "Support Ticket Categories",
@@ -214,7 +221,7 @@ export default function supportDashboardRoutes(
         announcementWeb: await getWebAnnouncement(),
       });
     } catch (error) {
-      console.error(error);
+      console.error("Failed to render support categories dashboard", error);
       return res.view("session/error", {
         pageTitle: "Error",
         pageDescription: "Error",
@@ -429,16 +436,34 @@ export default function supportDashboardRoutes(
   async function getDiscordRoles(req) {
     const activeClient = client ?? req?.app?.locals?.client;
 
-    if (!activeClient || !activeClient.guilds?.fetch) {
+    if (!activeClient) {
       console.warn(
-        "Discord client unavailable or guild fetch not ready; returning empty role list for support categories."
+        "getDiscordRoles: Discord client missing; returning empty role list for support categories."
       );
       return [];
     }
 
-    const guild = await activeClient.guilds.fetch(process.env.DISCORD_GUILD_ID);
-    const roles = await guild.roles.fetch();
-    return roles.map((role) => ({ id: role.id, name: role.name }));
+    if (!activeClient.guilds || typeof activeClient.guilds.fetch !== "function") {
+      console.warn(
+        "getDiscordRoles: Guild manager unavailable on client; returning empty role list for support categories."
+      );
+      return [];
+    }
+
+    try {
+      const guild = await activeClient.guilds.fetch(process.env.DISCORD_GUILD_ID);
+      const roles = await guild.roles.fetch();
+
+      console.info(
+        "getDiscordRoles: fetched guild roles for support categories",
+        roles?.size ?? 0
+      );
+
+      return roles.map((role) => ({ id: role.id, name: role.name }));
+    } catch (error) {
+      console.error("getDiscordRoles: failed to fetch guild roles", error);
+      return [];
+    }
   }
 
   async function postSupportMessage(client) {

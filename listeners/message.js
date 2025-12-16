@@ -23,7 +23,7 @@ export class GuildMessageListener extends Listener {
     try {
       updateAudit_lastDiscordMessage(new Date(), message.author.id);
     } catch (error) {
-      return console.log(error);
+      console.error("message listener: failed to update audit log", error);
     }
   }
 }
