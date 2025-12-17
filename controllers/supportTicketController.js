@@ -1,3 +1,4 @@
+import config from "../config.json";
 import db from "./databaseController.js";
 import { ChannelType, PermissionFlagsBits } from "discord.js";
 
@@ -114,7 +115,7 @@ export async function createSupportTicket(
     title,
     { discordUserId = null, staffRoleIds = [], parentCategoryId = null } = {},
 ) {
-    const guildId = process.env.DISCORD_GUILD_ID;
+    const guildId = config.discord?.guildId ?? process.env.DISCORD_GUILD_ID;
 
     if (!guildId) {
         throw new Error("DISCORD_GUILD_ID is not configured for ticket creation");
