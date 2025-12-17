@@ -1,6 +1,40 @@
 import db from "./databaseController.js";
 import { ChannelType, PermissionFlagsBits } from "discord.js";
 
+let discordChannelColumnCheck;
+
+async function ensureDiscordChannelColumn() {
+    if (!discordChannelColumnCheck) {
+        discordChannelColumnCheck = new Promise((resolve) => {
+            db.query("SHOW COLUMNS FROM supportTickets LIKE 'discordChannelId'", (err, results) => {
+                if (err) {
+                    console.error("Failed to verify supportTickets.discordChannelId column", err);
+                    resolve(false);
+                    return;
+                }
+
+                if (results.length > 0) {
+                    resolve(true);
+                    return;
+                }
+
+                db.query("ALTER TABLE supportTickets ADD COLUMN discordChannelId VARCHAR(255)", (alterErr) => {
+                    if (alterErr) {
+                        console.error("Failed to add missing supportTickets.discordChannelId column", alterErr);
+                        resolve(false);
+                        return;
+                    }
+
+                    console.info("Added missing supportTickets.discordChannelId column for Discord ticket linking");
+                    resolve(true);
+                });
+            });
+        });
+    }
+
+    return discordChannelColumnCheck;
+}
+
 export async function getSupportCategories() {
   return new Promise((resolve, reject) => {
     db.query("SELECT * FROM supportTicketCategories", (err, results) => {
@@ -78,9 +112,20 @@ export async function createSupportTicket(
     userId,
     categoryId,
     title,
-    { discordUserId = null, staffRoleIds = [], parentCategoryId = null } = {}
+    { discordUserId = null, staffRoleIds = [], parentCategoryId = null } = {},
 ) {
-    const guild = await client.guilds.fetch(process.env.DISCORD_GUILD_ID);
+    let guild;
+    try {
+        guild = await client.guilds.fetch(process.env.DISCORD_GUILD_ID);
+    } catch (guildError) {
+        console.error("Failed to fetch Discord guild for support ticket creation", guildError);
+        throw guildError;
+    }
+
+    if (!guild) {
+        throw new Error("Discord guild is unavailable for ticket creation");
+    }
+
     const targetParentId = parentCategoryId ?? process.env.SUPPORT_CATEGORY_ID;
     const permissionOverwrites = [
         {
@@ -122,11 +167,17 @@ export async function createSupportTicket(
         reason: `Support ticket for ${discordUserId ?? `user ${userId}`}`,
     });
 
+    const hasChannelColumn = await ensureDiscordChannelColumn();
+
     return new Promise((resolve, reject) => {
-        db.query(
-        "INSERT INTO supportTickets (userId, categoryId, title, discordChannelId) VALUES (?, ?, ?, ?)",
-        [userId, categoryId, title, channel.id],
-        async (err, results) => {
+        const query = hasChannelColumn
+            ? "INSERT INTO supportTickets (userId, categoryId, title, discordChannelId) VALUES (?, ?, ?, ?)"
+            : "INSERT INTO supportTickets (userId, categoryId, title) VALUES (?, ?, ?)";
+        const params = hasChannelColumn
+            ? [userId, categoryId, title, channel.id]
+            : [userId, categoryId, title];
+
+        db.query(query, params, async (err, results) => {
             if (err) {
                 try {
                     await channel.delete("Failed to persist support ticket");
@@ -146,22 +197,25 @@ export async function createSupportTicket(
             }
 
             resolve({ ticketId, channel });
-        }
-        );
+        });
     });
 }
 
 export async function createSupportTicketMessage(client, ticketId, userId, message, attachmentUrl = null, source = "web") {
     if (source === "web") {
         const ticket = await getTicketById(ticketId);
-        const channel = await client.channels.fetch(ticket.discordChannelId);
+        if (!ticket?.discordChannelId) {
+            console.warn("No Discord channel stored for ticket", ticketId);
+        } else {
+            const channel = await client.channels.fetch(ticket.discordChannelId);
 
-        let content = `**User ${userId} said:**\n${message}`;
-        if (attachmentUrl) {
-            content += `\n\n**Attachment:** ${attachmentUrl}`;
+            let content = `**User ${userId} said:**\n${message}`;
+            if (attachmentUrl) {
+                content += `\n\n**Attachment:** ${attachmentUrl}`;
+            }
+
+            await channel.send(content);
         }
-
-        await channel.send(content);
     }
 
     return new Promise((resolve, reject) => {
@@ -277,6 +331,11 @@ export async function getTicketMessages(ticketId) {
 }
 
 export async function getTicketByChannelId(channelId) {
+    const hasChannelColumn = await ensureDiscordChannelColumn();
+    if (!hasChannelColumn) {
+        return null;
+    }
+
     return new Promise((resolve, reject) => {
         db.query("SELECT * FROM supportTickets WHERE discordChannelId = ?", [channelId], (err, results) => {
             if (err) {
@@ -289,6 +348,11 @@ export async function getTicketByChannelId(channelId) {
 }
 
 export async function getTicketDetailsByChannel(channelId) {
+    const hasChannelColumn = await ensureDiscordChannelColumn();
+    if (!hasChannelColumn) {
+        return null;
+    }
+
     return new Promise((resolve, reject) => {
         db.query(
             "SELECT t.*, u.discordId FROM supportTickets t JOIN users u ON t.userId = u.userId WHERE t.discordChannelId = ?",
