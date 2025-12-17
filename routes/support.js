@@ -170,6 +170,13 @@ export default function supportRoutes(
         }
       }
 
+      console.info("Submitting web ticket reply", {
+        ticketId: req.params.id,
+        userId: req.session.user.userId,
+        hasAttachment: Boolean(attachmentUrl),
+        messageLength: message.length,
+      });
+
       await createSupportTicketMessage(
         client,
         req.params.id,
@@ -181,6 +188,11 @@ export default function supportRoutes(
       await syncParticipantsForMessage(client, ticket.ticketId, {
         userId: req.session.user.userId,
         rankSlugs: userRankSlugs,
+      });
+
+      console.info("Completed web ticket reply", {
+        ticketId: req.params.id,
+        userId: req.session.user.userId,
       });
 
       return res.redirect(`/support/ticket/${req.params.id}`);

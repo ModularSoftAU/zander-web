@@ -489,6 +489,14 @@ export async function applyTicketParticipantPermissions(client, ticketId) {
 }
 
 export async function createSupportTicketMessage(client, ticketId, userId, message, attachmentUrl = null, source = "web") {
+    console.info("createSupportTicketMessage invoked", {
+        ticketId,
+        userId,
+        source,
+        hasAttachment: Boolean(attachmentUrl),
+        messageLength: message?.length ?? 0,
+    });
+
     if (source === "web") {
         try {
             const ticket = await getTicketById(ticketId);
@@ -512,6 +520,10 @@ export async function createSupportTicketMessage(client, ticketId, userId, messa
 
                     try {
                         await channel.send(content);
+                        console.info("Sent web reply to Discord channel", {
+                            ticketId,
+                            channelId: ticket.discordChannelId,
+                        });
                     } catch (error) {
                         console.error("Failed to send web reply to Discord channel", ticketId, error);
                     }
@@ -524,12 +536,22 @@ export async function createSupportTicketMessage(client, ticketId, userId, messa
 
     return new Promise((resolve, reject) => {
         db.query(
-        "INSERT INTO supportTicketMessages (ticketId, userId, message, attachments) VALUES (?, ?, ?, ?)",
-        [ticketId, userId, message, JSON.stringify([attachmentUrl])],
-        (err, results) => {
-            if (err) reject(err);
-            resolve(results.insertId);
-        }
+            "INSERT INTO supportTicketMessages (ticketId, userId, message, attachments) VALUES (?, ?, ?, ?)",
+            [ticketId, userId, message, JSON.stringify([attachmentUrl])],
+            (err, results) => {
+                if (err) {
+                    console.error("Failed to persist support ticket message", { ticketId, userId }, err);
+                    reject(err);
+                    return;
+                }
+
+                console.info("Persisted support ticket message", {
+                    ticketId,
+                    userId,
+                    messageId: results.insertId,
+                });
+                resolve(results.insertId);
+            },
         );
     });
 }
