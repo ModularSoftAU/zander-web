@@ -9,6 +9,10 @@ import {
   EmbedBuilder,
 } from "discord.js";
 import { startTicketFlow } from "../lib/discord/ticketFlow.mjs";
+import {
+  getSupportPanelConfig,
+  saveSupportPanelConfig,
+} from "../controllers/supportTicketController.js";
 
 export class SupportCommand extends Command {
   constructor(context, options) {
@@ -45,6 +49,27 @@ export class SupportCommand extends Command {
               .setDescription("Discord category where ticket channels will be created.")
               .addChannelTypes(ChannelType.GuildCategory)
           )
+      )
+      .addSubcommand((subcommand) =>
+        subcommand
+          .setName("config")
+          .setDescription(
+            "Set the default channel and category used for ticket panels and ticket channels."
+          )
+          .addChannelOption((option) =>
+            option
+              .setName("channel")
+              .setDescription("Default channel where the ticket panel message will be posted.")
+              .addChannelTypes(ChannelType.GuildText)
+          )
+          .addChannelOption((option) =>
+            option
+              .setName("ticket_category")
+              .setDescription(
+                "Default Discord category where ticket channels will be created."
+              )
+              .addChannelTypes(ChannelType.GuildCategory)
+          )
       );
 
     registry.registerChatInputCommand(builder);
@@ -65,9 +90,39 @@ export class SupportCommand extends Command {
         });
       }
 
-      const targetChannel =
-        interaction.options.getChannel("channel") ?? interaction.channel;
-      const ticketCategory = interaction.options.getChannel("ticket_category");
+      const panelConfig = await getSupportPanelConfig();
+
+      const suppliedChannel = interaction.options.getChannel("channel");
+      const suppliedCategory = interaction.options.getChannel("ticket_category");
+
+      let targetChannel = suppliedChannel ?? null;
+
+      if (!targetChannel && panelConfig.panelChannelId) {
+        try {
+          targetChannel = await interaction.client.channels.fetch(
+            panelConfig.panelChannelId
+          );
+        } catch (error) {
+          console.warn("ticket panel config channel fetch failed", error);
+        }
+      }
+
+      if (!targetChannel) {
+        targetChannel = interaction.channel;
+      }
+
+      let ticketCategory = suppliedCategory ?? null;
+
+      if (!ticketCategory && panelConfig.parentCategoryId) {
+        try {
+          ticketCategory = await interaction.client.channels.fetch(
+            panelConfig.parentCategoryId
+          );
+        } catch (error) {
+          console.warn("ticket panel config category fetch failed", error);
+        }
+      }
+
       const parentCategoryId = ticketCategory?.id ?? process.env.SUPPORT_CATEGORY_ID ?? "";
 
       const createButton = new ButtonBuilder()
@@ -100,6 +155,34 @@ export class SupportCommand extends Command {
         content: `Posted a Create Ticket panel in ${targetChannel} using the ${
           ticketCategory ? `\`${ticketCategory.name}\`` : "default"
         } ticket category.`,
+        ephemeral: true,
+      });
+    }
+
+    if (subcommand === "config") {
+      if (!interaction.memberPermissions.has(PermissionFlagsBits.ManageChannels)) {
+        return interaction.reply({
+          content: "You need Manage Channels permission to configure the ticket panel.",
+          ephemeral: true,
+        });
+      }
+
+      const targetChannel = interaction.options.getChannel("channel");
+      const ticketCategory = interaction.options.getChannel("ticket_category");
+
+      await saveSupportPanelConfig({
+        panelChannelId: targetChannel?.id ?? null,
+        parentCategoryId: ticketCategory?.id ?? null,
+      });
+
+      return interaction.reply({
+        content: `Saved ticket panel defaults: ${
+          targetChannel ? `channel set to ${targetChannel}` : "no default channel set"
+        } and ${
+          ticketCategory
+            ? `ticket category set to \`${ticketCategory.name}\``
+            : "no default ticket category set"
+        }.`,
         ephemeral: true,
       });
     }

@@ -17,6 +17,7 @@ import {
   updateTicketStatus,
   getCategoryById,
   updateSupportCategory,
+  getSupportPanelConfig,
 } from "../../controllers/supportTicketController.js";
 import { hasPermission as hasPermissionNode } from "../../lib/discord/permissions.mjs";
 
@@ -504,7 +505,8 @@ export default function supportDashboardRoutes(
       return;
     }
 
-    const supportChannelId = process.env.SUPPORT_CHANNEL_ID;
+    const { panelChannelId } = await getSupportPanelConfig();
+    const supportChannelId = panelChannelId || process.env.SUPPORT_CHANNEL_ID;
 
     if (!supportChannelId) {
       console.warn(
@@ -548,7 +550,8 @@ export default function supportDashboardRoutes(
       return;
     }
 
-    const supportChannelId = process.env.SUPPORT_CHANNEL_ID;
+    const { panelChannelId } = await getSupportPanelConfig();
+    const supportChannelId = panelChannelId || process.env.SUPPORT_CHANNEL_ID;
 
     if (!supportChannelId) {
       console.warn(
