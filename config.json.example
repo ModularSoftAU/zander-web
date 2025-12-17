@@ -30,6 +30,8 @@
   "discord": {
     "guildId": "GUILDID",
     "onlinePlayerChannel": "CHANNELID",
+    "supportPanelChannelId": "CHANNELID",
+    "supportTicketCategoryId": "CATEGORYID",
     "webhooks": {
       "welcome": "WEBHOOKURL",
       "networkChatLog": "WEBHOOKURL",

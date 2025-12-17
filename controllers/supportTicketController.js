@@ -3,7 +3,6 @@ import db from "./databaseController.js";
 import { ChannelType, PermissionFlagsBits } from "discord.js";
 
 let discordChannelColumnCheck;
-let panelConfigTableCheck;
 
 async function ensureDiscordChannelColumn() {
     if (!discordChannelColumnCheck) {
@@ -37,70 +36,6 @@ async function ensureDiscordChannelColumn() {
     return discordChannelColumnCheck;
 }
 
-async function ensureSupportPanelConfigTable() {
-    if (!panelConfigTableCheck) {
-        panelConfigTableCheck = new Promise((resolve) => {
-            db.query(
-                "CREATE TABLE IF NOT EXISTS supportPanelConfig (id INT PRIMARY KEY, panelChannelId VARCHAR(64), parentCategoryId VARCHAR(64), updatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP)",
-                (err) => {
-                    if (err) {
-                        console.error("Failed to ensure supportPanelConfig table", err);
-                        resolve(false);
-                        return;
-                    }
-
-                    db.query(
-                        "INSERT IGNORE INTO supportPanelConfig (id, panelChannelId, parentCategoryId) VALUES (1, NULL, NULL)",
-                        (seedErr) => {
-                            if (seedErr) {
-                                console.error("Failed to seed supportPanelConfig table", seedErr);
-                            }
-                            resolve(true);
-                        },
-                    );
-                },
-            );
-        });
-    }
-
-    return panelConfigTableCheck;
-}
-
-export async function getSupportPanelConfig() {
-    await ensureSupportPanelConfigTable();
-
-    return new Promise((resolve) => {
-        db.query("SELECT panelChannelId, parentCategoryId FROM supportPanelConfig WHERE id = 1 LIMIT 1", (err, results) => {
-            if (err) {
-                console.error("Failed to fetch support panel configuration", err);
-                resolve({ panelChannelId: null, parentCategoryId: null });
-                return;
-            }
-
-            resolve(results?.[0] ?? { panelChannelId: null, parentCategoryId: null });
-        });
-    });
-}
-
-export async function saveSupportPanelConfig({ panelChannelId = null, parentCategoryId = null } = {}) {
-    await ensureSupportPanelConfigTable();
-
-    return new Promise((resolve, reject) => {
-        db.query(
-            "INSERT INTO supportPanelConfig (id, panelChannelId, parentCategoryId) VALUES (1, ?, ?) ON DUPLICATE KEY UPDATE panelChannelId = VALUES(panelChannelId), parentCategoryId = VALUES(parentCategoryId)",
-            [panelChannelId, parentCategoryId],
-            (err) => {
-                if (err) {
-                    console.error("Failed to persist support panel configuration", err);
-                    reject(err);
-                    return;
-                }
-
-                resolve();
-            },
-        );
-    });
-}
 
 export async function getSupportCategories() {
   return new Promise((resolve, reject) => {
@@ -205,8 +140,8 @@ export async function createSupportTicket(
             : null;
 
     if (!targetParentId) {
-        const { parentCategoryId: storedParentCategoryId } = await getSupportPanelConfig();
-        targetParentId = storedParentCategoryId || process.env.SUPPORT_CATEGORY_ID || null;
+        targetParentId =
+            config.discord?.supportTicketCategoryId ?? process.env.SUPPORT_CATEGORY_ID ?? null;
     }
     const permissionOverwrites = [
         {
