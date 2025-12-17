@@ -1,6 +1,7 @@
 import config from "../config.json" assert { type: "json" };
 import db from "./databaseController.js";
 import { ChannelType, PermissionFlagsBits } from "discord.js";
+import { hashEmail } from "../api/common.js";
 
 let discordChannelColumnCheck;
 let ticketParticipantTableCheck;
@@ -190,8 +191,7 @@ export async function createSupportTicket(
             : null;
 
     if (!targetParentId) {
-        targetParentId =
-            config.discord?.supportTicketCategoryId ?? process.env.SUPPORT_CATEGORY_ID ?? null;
+        targetParentId = config.discord?.supportTicketCategoryId ?? process.env.SUPPORT_CATEGORY_ID ?? null;
     }
     const permissionOverwrites = [
         {
@@ -233,7 +233,16 @@ export async function createSupportTicket(
     };
 
     if (targetParentId) {
-        channelCreationOptions.parent = targetParentId;
+        try {
+            const parentChannel = await guild.channels.fetch(targetParentId);
+            if (parentChannel?.type === ChannelType.GuildCategory) {
+                channelCreationOptions.parent = parentChannel.id;
+            } else {
+                console.warn("Configured ticket parent is not a category; creating channel without parent");
+            }
+        } catch (parentError) {
+            console.error("Failed to fetch configured ticket parent category", parentError);
+        }
     }
 
     const channel = await guild.channels.create(channelCreationOptions);
@@ -633,15 +642,79 @@ export async function getTicketById(ticketId) {
 }
 
 export async function getTicketMessages(ticketId) {
-    return new Promise((resolve, reject) => {
-        db.query("SELECT m.*, u.username FROM supportTicketMessages m JOIN users u ON m.userId = u.userId WHERE m.ticketId = ?", [ticketId], (err, results) => {
-            if (err) {
-                reject(err);
-            } else {
-                resolve(results);
-            }
-        });
+    const baseMessages = await new Promise((resolve, reject) => {
+        db.query(
+            "SELECT m.*, u.username, u.discordId, u.profilePicture_type, u.profilePicture_email, u.uuid FROM supportTicketMessages m JOIN users u ON m.userId = u.userId WHERE m.ticketId = ? ORDER BY m.createdAt ASC",
+            [ticketId],
+            (err, results) => {
+                if (err) {
+                    reject(err);
+                } else {
+                    resolve(results);
+                }
+            },
+        );
     });
+
+    if (!baseMessages.length) return [];
+
+    const uniqueUserIds = [...new Set(baseMessages.map((message) => message.userId))];
+    let userRanks = {};
+
+    if (uniqueUserIds.length > 0) {
+        userRanks = await new Promise((resolve) => {
+            db.query(
+                `SELECT ur.userId, ur.rankSlug, r.displayName, r.rankBadgeColour, r.rankTextColour
+                 FROM userRanks ur
+                 LEFT JOIN ranks r ON ur.rankSlug = r.rankSlug
+                 WHERE ur.userId IN (?)`,
+                [uniqueUserIds],
+                (err, results) => {
+                    if (err) {
+                        console.error("Failed to load ranks for ticket messages", err);
+                        resolve({});
+                        return;
+                    }
+
+                    const grouped = {};
+                    results.forEach((row) => {
+                        if (!grouped[row.userId]) grouped[row.userId] = [];
+                        grouped[row.userId].push({
+                            rankSlug: row.rankSlug,
+                            displayName: row.displayName || row.rankSlug,
+                            badgeColor: row.rankBadgeColour,
+                            textColor: row.rankTextColour,
+                        });
+                    });
+                    resolve(grouped);
+                },
+            );
+        });
+    }
+
+    const resolvedMessages = [];
+
+    for (const message of baseMessages) {
+        let avatarUrl = null;
+        try {
+            if (message.profilePicture_type === "GRAVATAR" && message.profilePicture_email) {
+                const emailHash = await hashEmail(message.profilePicture_email);
+                avatarUrl = `https://gravatar.com/avatar/${emailHash}?size=200`;
+            } else if (message.profilePicture_type === "CRAFTATAR" && message.uuid) {
+                avatarUrl = `https://crafthead.net/helm/${message.uuid}`;
+            }
+        } catch (avatarError) {
+            console.error("Failed to build avatar for ticket message", avatarError);
+        }
+
+        resolvedMessages.push({
+            ...message,
+            avatarUrl,
+            ranks: userRanks[message.userId] || [],
+        });
+    }
+
+    return resolvedMessages;
 }
 
 export async function getTicketByChannelId(channelId) {

@@ -76,15 +76,35 @@
         </div>
         <div class="card-body">
             <% messages.forEach(message => { %>
+                <% const topRank = (message.ranks && message.ranks.length) ? message.ranks[0] : null; %>
                 <div class="card mb-3">
-                    <div class="card-body">
-                        <p><strong><%= message.username %></strong> - <%= new Date(message.createdAt).toLocaleString() %></p>
-                        <p><%= message.message %></p>
-                        <% if (message.attachments) { %>
-                            <% JSON.parse(message.attachments).forEach(attachment => { %>
-                                <a href="<%= attachment %>" target="_blank">View Attachment</a>
-                            <% }) %>
-                        <% } %>
+                    <div class="card-body d-flex">
+                        <div class="me-3">
+                            <% if (message.avatarUrl) { %>
+                                <img src="<%= message.avatarUrl %>" alt="<%= message.username %> avatar" class="rounded-circle" width="56" height="56">
+                            <% } else { %>
+                                <div class="rounded-circle bg-secondary" style="width:56px;height:56px;"></div>
+                            <% } %>
+                        </div>
+                        <div class="flex-fill">
+                            <div class="d-flex align-items-center gap-2">
+                                <strong style="color: <%= topRank?.badgeColor || '#0f172a' %>;"><%= message.username %></strong>
+                                <span class="text-muted small"><%= new Date(message.createdAt).toLocaleString() %></span>
+                            </div>
+                            <% if (message.ranks && message.ranks.length) { %>
+                                <div class="d-flex flex-wrap gap-1 mt-1">
+                                    <% message.ranks.forEach((rank) => { %>
+                                        <span class="badge" style="background-color: <%= rank.badgeColor || '#1f2937' %>; color: <%= rank.textColor || '#ffffff' %>;"><%= rank.displayName %></span>
+                                    <% }); %>
+                                </div>
+                            <% } %>
+                            <p class="mt-2 mb-1"><%= message.message %></p>
+                            <% if (message.attachments) { %>
+                                <% JSON.parse(message.attachments).filter(att => att).forEach(attachment => { %>
+                                    <a href="<%= attachment %>" target="_blank" class="d-inline-block me-2">View Attachment</a>
+                                <% }) %>
+                            <% } %>
+                        </div>
                     </div>
                 </div>
             <% }) %>
