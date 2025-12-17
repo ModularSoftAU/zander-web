@@ -58,7 +58,11 @@
                                         <td>
                                             <% if (category.permissions && category.permissions.length > 0) { %>
                                                 <% category.permissions.forEach(permission => { %>
-                                                    <span class="badge bg-secondary mb-1"><%= permission.roleName %></span><br>
+                                                    <% const badgeStyle = [];
+                                                       if (permission.badgeColor) badgeStyle.push(`background-color: ${permission.badgeColor}`);
+                                                       if (permission.textColor) badgeStyle.push(`color: ${permission.textColor}`);
+                                                    %>
+                                                    <span class="badge mb-1 <%= permission.badgeColor ? '' : 'bg-secondary' %>" style="<%= badgeStyle.join('; ') %>"><%= permission.roleName %></span><br>
                                                 <% }) %>
                                             <% } else { %>
                                                 <span class="text-muted">No permissions set.</span>

@@ -206,6 +206,10 @@ export default function supportDashboardRoutes(
         roles.map((role) => [String(role.id), role.name])
       );
 
+      const roleStyleMap = new Map(
+        roles.map((role) => [String(role.id), role])
+      );
+
       const categoriesWithRoleNames = categories.map((category) => {
         const permissionIds = category.permissions
           ? category.permissions.split(",").filter(Boolean)
@@ -215,10 +219,15 @@ export default function supportDashboardRoutes(
 
         return {
           ...category,
-          permissions: permissionIds.map((roleId) => ({
-            roleId,
-            roleName: roleNameMap.get(String(roleId)) || roleId,
-          })),
+          permissions: permissionIds.map((roleId) => {
+            const roleMeta = roleStyleMap.get(String(roleId));
+            return {
+              roleId,
+              roleName: roleMeta?.name || roleId,
+              badgeColor: roleMeta?.rankBadgeColour,
+              textColor: roleMeta?.rankTextColour,
+            };
+          }),
           availableRoles: roles.filter(
             (role) => !permissionIdSet.has(String(role.id))
           ),
@@ -460,7 +469,7 @@ export default function supportDashboardRoutes(
     try {
       const ranks = await new Promise((resolve, reject) => {
         db.query(
-          "SELECT rankSlug, displayName, discordRoleId FROM ranks WHERE discordRoleId IS NOT NULL AND discordRoleId != ''",
+          "SELECT rankSlug, displayName, discordRoleId, rankBadgeColour, rankTextColour FROM ranks WHERE discordRoleId IS NOT NULL AND discordRoleId != ''",
           (error, results) => {
             if (error) {
               reject(error);
@@ -475,6 +484,8 @@ export default function supportDashboardRoutes(
         id: rank.discordRoleId,
         name: rank.displayName || rank.rankSlug,
         rankSlug: rank.rankSlug,
+        rankBadgeColour: rank.rankBadgeColour,
+        rankTextColour: rank.rankTextColour,
       }));
     } catch (error) {
       console.error(
