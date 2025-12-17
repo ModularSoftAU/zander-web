@@ -38,11 +38,23 @@ export async function getCategoryName(categoryId) {
 export async function addCategoryPermission(categoryId, roleId) {
   return new Promise((resolve, reject) => {
     db.query(
-      "INSERT INTO supportTicketCategoryPermissions (categoryId, roleId) VALUES (?, ?)",
+      "SELECT 1 FROM supportTicketCategoryPermissions WHERE categoryId = ? AND roleId = ? LIMIT 1",
       [categoryId, roleId],
-      (err, results) => {
-        if (err) reject(err);
-        resolve(results);
+      (existingErr, existingResults) => {
+        if (existingErr) return reject(existingErr);
+
+        if (existingResults.length > 0) {
+          return resolve({ alreadyExists: true });
+        }
+
+        db.query(
+          "INSERT INTO supportTicketCategoryPermissions (categoryId, roleId) VALUES (?, ?)",
+          [categoryId, roleId],
+          (err, results) => {
+            if (err) reject(err);
+            resolve(results);
+          }
+        );
       }
     );
   });

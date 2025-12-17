@@ -65,12 +65,18 @@
                                             <% } %>
                                             <form action="/dashboard/support/categories/<%= category.categoryId %>/permissions" method="POST" class="mt-2">
                                                 <div class="input-group input-group-sm">
-                                                    <select name="roleId" class="form-select">
-                                                        <% roles.forEach(role => { %>
-                                                            <option value="<%= role.id %>"><%= role.name %></option>
-                                                        <% }) %>
-                                                    </select>
-                                                    <button type="submit" class="btn btn-success">Add Role</button>
+                                                    <% const availableRoles = category.availableRoles && category.availableRoles.length > 0 ? category.availableRoles : []; %>
+                                                    <% if (availableRoles.length > 0) { %>
+                                                        <select name="roleId" class="form-select">
+                                                            <% availableRoles.forEach(role => { %>
+                                                                <option value="<%= role.id %>"><%= role.name %></option>
+                                                            <% }) %>
+                                                        </select>
+                                                        <button type="submit" class="btn btn-success">Add Role</button>
+                                                    <% } else { %>
+                                                        <span class="form-control text-muted">All eligible roles added</span>
+                                                        <button class="btn btn-success" type="button" disabled>All Added</button>
+                                                    <% } %>
                                                 </div>
                                             </form>
                                         </td>

@@ -211,12 +211,17 @@ export default function supportDashboardRoutes(
           ? category.permissions.split(",").filter(Boolean)
           : [];
 
+        const permissionIdSet = new Set(permissionIds.map((id) => String(id)));
+
         return {
           ...category,
           permissions: permissionIds.map((roleId) => ({
             roleId,
             roleName: roleNameMap.get(String(roleId)) || roleId,
           })),
+          availableRoles: roles.filter(
+            (role) => !permissionIdSet.has(String(role.id))
+          ),
         };
       });
 
