@@ -68,10 +68,12 @@ export class SupportCommand extends Command {
       const targetChannel =
         interaction.options.getChannel("channel") ?? interaction.channel;
       const ticketCategory = interaction.options.getChannel("ticket_category");
-      const parentCategoryId = ticketCategory?.id ?? process.env.SUPPORT_CATEGORY_ID;
+      const parentCategoryId = ticketCategory?.id ?? process.env.SUPPORT_CATEGORY_ID ?? "";
 
       const createButton = new ButtonBuilder()
-        .setCustomId(`support_ticket_open:${parentCategoryId}`)
+        .setCustomId(
+          parentCategoryId ? `support_ticket_open:${parentCategoryId}` : "support_ticket_open"
+        )
         .setLabel("Create Ticket")
         .setStyle(ButtonStyle.Primary);
 

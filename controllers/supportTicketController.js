@@ -133,7 +133,10 @@ export async function createSupportTicket(
         throw new Error("Discord guild is unavailable for ticket creation");
     }
 
-    const targetParentId = parentCategoryId ?? process.env.SUPPORT_CATEGORY_ID;
+    const targetParentId =
+        parentCategoryId && parentCategoryId !== "undefined" && parentCategoryId !== ""
+            ? parentCategoryId
+            : process.env.SUPPORT_CATEGORY_ID || null;
     const permissionOverwrites = [
         {
             id: guild.roles.everyone.id,
@@ -166,13 +169,18 @@ export async function createSupportTicket(
         });
     });
 
-    const channel = await guild.channels.create({
+    const channelCreationOptions = {
         name: "ticket-pending",
         type: ChannelType.GuildText,
-        parent: targetParentId,
         permissionOverwrites,
         reason: `Support ticket for ${discordUserId ?? `user ${userId}`}`,
-    });
+    };
+
+    if (targetParentId) {
+        channelCreationOptions.parent = targetParentId;
+    }
+
+    const channel = await guild.channels.create(channelCreationOptions);
 
     const hasChannelColumn = await ensureDiscordChannelColumn();
 
