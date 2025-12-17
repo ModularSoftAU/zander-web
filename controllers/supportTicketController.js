@@ -114,15 +114,21 @@ export async function createSupportTicket(
     title,
     { discordUserId = null, staffRoleIds = [], parentCategoryId = null } = {},
 ) {
+    const guildId = process.env.DISCORD_GUILD_ID;
+
+    if (!guildId) {
+        throw new Error("DISCORD_GUILD_ID is not configured for ticket creation");
+    }
+
     let guild;
     try {
-        guild = await client.guilds.fetch(process.env.DISCORD_GUILD_ID);
+        guild = await client.guilds.fetch(guildId);
     } catch (guildError) {
         console.error("Failed to fetch Discord guild for support ticket creation", guildError);
         throw guildError;
     }
 
-    if (!guild) {
+    if (!guild || !guild.roles?.everyone) {
         throw new Error("Discord guild is unavailable for ticket creation");
     }
 
