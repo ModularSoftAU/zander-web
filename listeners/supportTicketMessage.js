@@ -4,6 +4,7 @@ import {
     getTicketByChannelId,
     getUserIdByDiscordId,
     createUnlinkedUser,
+    syncParticipantsForMessage,
 } from "../controllers/supportTicketController.js";
 import { ImgurClient } from "imgur";
 
@@ -54,6 +55,13 @@ export class SupportTicketMessageListener extends Listener {
         attachmentUrl,
         "discord"
       );
+
+      const memberRoleIds = Array.from(message.member?.roles.cache.keys() || []);
+
+      await syncParticipantsForMessage(this.container.client, ticket.ticketId, {
+        userId,
+        discordRoleIds: memberRoleIds,
+      });
     }
   }
 }

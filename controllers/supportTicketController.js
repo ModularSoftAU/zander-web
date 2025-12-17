@@ -351,6 +351,75 @@ export async function addTicketGroupParticipant(ticketId, group) {
     });
 }
 
+async function hasExistingGroupParticipant(ticketId, roleId) {
+    const hasTable = await ensureTicketParticipantTable();
+    if (!hasTable) return true;
+
+    return new Promise((resolve) => {
+        db.query(
+            "SELECT 1 FROM supportTicketParticipants WHERE ticketId = ? AND roleId = ? LIMIT 1",
+            [ticketId, roleId],
+            (err, results) => {
+                if (err) {
+                    console.error("hasExistingGroupParticipant: failed to check role participant", err);
+                    resolve(true);
+                } else {
+                    resolve(results.length > 0);
+                }
+            },
+        );
+    });
+}
+
+async function hasExistingUserParticipant(ticketId, userId) {
+    const hasTable = await ensureTicketParticipantTable();
+    if (!hasTable) return true;
+
+    return new Promise((resolve) => {
+        db.query(
+            "SELECT 1 FROM supportTicketParticipants WHERE ticketId = ? AND userId = ? LIMIT 1",
+            [ticketId, userId],
+            (err, results) => {
+                if (err) {
+                    console.error("hasExistingUserParticipant: failed to check user participant", err);
+                    resolve(true);
+                } else {
+                    resolve(results.length > 0);
+                }
+            },
+        );
+    });
+}
+
+export async function syncParticipantsForMessage(client, ticketId, { userId, discordRoleIds = [], rankSlugs = [] }) {
+    const rankOptions = await getLuckPermRankRoles();
+    const newParticipantPromises = [];
+
+    if (userId && !(await hasExistingUserParticipant(ticketId, userId))) {
+        newParticipantPromises.push(addTicketUserParticipant(ticketId, { userId }));
+    }
+
+    const eligibleRanks = rankOptions.filter(
+        (rank) => discordRoleIds.includes(rank.id) || rankSlugs.includes(rank.rankSlug),
+    );
+
+    for (const rank of eligibleRanks) {
+        const exists = await hasExistingGroupParticipant(ticketId, rank.id);
+        if (!exists) {
+            newParticipantPromises.push(addTicketGroupParticipant(ticketId, rank));
+        }
+    }
+
+    if (newParticipantPromises.length > 0) {
+        try {
+            await Promise.all(newParticipantPromises);
+            await applyTicketParticipantPermissions(client, ticketId);
+        } catch (error) {
+            console.error("syncParticipantsForMessage: failed to add participants", error);
+        }
+    }
+}
+
 export async function applyTicketParticipantPermissions(client, ticketId) {
     const hasChannelColumn = await ensureDiscordChannelColumn();
     const hasTable = await ensureTicketParticipantTable();

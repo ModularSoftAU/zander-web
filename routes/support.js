@@ -14,6 +14,7 @@ import {
   addTicketUserParticipant,
   addTicketGroupParticipant,
   applyTicketParticipantPermissions,
+  syncParticipantsForMessage,
 } from "../controllers/supportTicketController.js";
 
 const imgurClient = new ImgurClient({
@@ -176,6 +177,11 @@ export default function supportRoutes(
         message,
         attachmentUrl
       );
+
+      await syncParticipantsForMessage(client, ticket.ticketId, {
+        userId: req.session.user.userId,
+        rankSlugs: userRankSlugs,
+      });
 
       return res.redirect(`/support/ticket/${req.params.id}`);
     } catch (error) {
@@ -369,6 +375,11 @@ export default function supportRoutes(
         message,
         attachmentUrl
       );
+
+      await syncParticipantsForMessage(client, ticketId, {
+        userId: req.session.user.userId,
+        rankSlugs: req.session.user.ranks?.map((rank) => rank.rankSlug) || [],
+      });
 
       return res.redirect("/support");
     } catch (error) {
