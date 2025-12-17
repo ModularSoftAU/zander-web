@@ -481,18 +481,35 @@ export async function applyTicketParticipantPermissions(client, ticketId) {
 
 export async function createSupportTicketMessage(client, ticketId, userId, message, attachmentUrl = null, source = "web") {
     if (source === "web") {
-        const ticket = await getTicketById(ticketId);
-        if (!ticket?.discordChannelId) {
-            console.warn("No Discord channel stored for ticket", ticketId);
-        } else {
-            const channel = await client.channels.fetch(ticket.discordChannelId);
+        try {
+            const ticket = await getTicketById(ticketId);
+            if (!ticket?.discordChannelId) {
+                console.warn("No Discord channel stored for ticket", ticketId);
+            } else if (!client) {
+                console.warn("Discord client unavailable; skipping channel post for web reply", ticketId);
+            } else {
+                let channel;
+                try {
+                    channel = await client.channels.fetch(ticket.discordChannelId);
+                } catch (error) {
+                    console.error("Failed to fetch Discord channel for ticket", ticketId, error);
+                }
 
-            let content = `**User ${userId} said:**\n${message}`;
-            if (attachmentUrl) {
-                content += `\n\n**Attachment:** ${attachmentUrl}`;
+                if (channel) {
+                    let content = `**User ${userId} said:**\n${message}`;
+                    if (attachmentUrl) {
+                        content += `\n\n**Attachment:** ${attachmentUrl}`;
+                    }
+
+                    try {
+                        await channel.send(content);
+                    } catch (error) {
+                        console.error("Failed to send web reply to Discord channel", ticketId, error);
+                    }
+                }
             }
-
-            await channel.send(content);
+        } catch (error) {
+            console.error("createSupportTicketMessage: failed to post to Discord", error);
         }
     }
 
