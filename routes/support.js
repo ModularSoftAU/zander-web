@@ -1,5 +1,5 @@
 import { getWebAnnouncement } from "../controllers/announcementController.js";
-import { isFeatureWebRouteEnabled, getGlobalImage } from "../api/common.js";
+import { isFeatureWebRouteEnabled, getGlobalImage, setBannerCookie } from "../api/common.js";
 import { ImgurClient } from "imgur";
 import {
   getSupportCategories,
@@ -8,6 +8,12 @@ import {
   getTicketsByUserId,
   getTicketById,
   getTicketMessages,
+  getTicketParticipants,
+  getLuckPermRankRoles,
+  findUserByIdentifier,
+  addTicketUserParticipant,
+  addTicketGroupParticipant,
+  applyTicketParticipantPermissions,
 } from "../controllers/supportTicketController.js";
 
 const imgurClient = new ImgurClient({
@@ -75,11 +81,20 @@ export default function supportRoutes(
 
       const ticket = await getTicketById(req.params.id);
       const messages = await getTicketMessages(req.params.id);
+      const participants = await getTicketParticipants(req.params.id);
+      const rankOptions = await getLuckPermRankRoles();
 
       const isOwner = ticket.userId === req.session.user.userId;
       const isStaff = req.session.user.isStaff;
+      const userRankSlugs = req.session.user.ranks?.map((rank) => rank.rankSlug) || [];
+      const isParticipantUser = participants.users.some(
+        (participant) => participant.userId === req.session.user.userId
+      );
+      const isParticipantRank = userRankSlugs.some((slug) =>
+        participants.groups.some((group) => group.rankSlug === slug)
+      );
 
-      if (!isOwner && !isStaff) {
+      if (!isOwner && !isStaff && !isParticipantUser && !isParticipantRank) {
         return res.redirect("/support");
       }
 
@@ -91,6 +106,8 @@ export default function supportRoutes(
         features,
         ticket,
         messages,
+        participants,
+        rankOptions,
         globalImage: await getGlobalImage(),
         announcementWeb: await getWebAnnouncement(),
       });
@@ -115,7 +132,28 @@ export default function supportRoutes(
         return res.redirect("/login");
       }
 
-      const { message } = req.body;
+      const ticket = await getTicketById(req.params.id);
+      const participants = await getTicketParticipants(req.params.id);
+      const userRankSlugs = req.session.user.ranks?.map((rank) => rank.rankSlug) || [];
+      const isOwner = ticket.userId === req.session.user.userId;
+      const isStaff = req.session.user.isStaff;
+      const isParticipantUser = participants.users.some(
+        (participant) => participant.userId === req.session.user.userId
+      );
+      const isParticipantRank = userRankSlugs.some((slug) =>
+        participants.groups.some((group) => group.rankSlug === slug)
+      );
+
+      if (!isOwner && !isStaff && !isParticipantUser && !isParticipantRank) {
+        return res.redirect("/support");
+      }
+
+      const body = req.body || {};
+      const message = (body.message || "").trim();
+      if (!message) {
+        setBannerCookie("warning", "Please enter a message before replying.", res);
+        return res.redirect(`/support/ticket/${req.params.id}`);
+      }
       const attachment = req.raw.files ? req.raw.files.attachment : null;
       let attachmentUrl = null;
 
@@ -140,6 +178,111 @@ export default function supportRoutes(
       );
 
       return res.redirect(`/support/ticket/${req.params.id}`);
+    } catch (error) {
+      console.error(error);
+      return res.view("session/error", {
+        pageTitle: "Error",
+        pageDescription: "Error",
+        config,
+        req,
+        error,
+        features,
+        globalImage: await getGlobalImage(),
+        announcementWeb: await getWebAnnouncement(),
+      });
+    }
+  });
+
+  app.post("/support/ticket/:id/add-user", async function (req, res) {
+    try {
+      if (!req.session.user) {
+        return res.redirect("/login");
+      }
+
+      const ticket = await getTicketById(req.params.id);
+      const participants = await getTicketParticipants(req.params.id);
+      const userRankSlugs = req.session.user.ranks?.map((rank) => rank.rankSlug) || [];
+      const isOwner = ticket.userId === req.session.user.userId;
+      const isStaff = req.session.user.isStaff;
+      const isParticipantUser = participants.users.some(
+        (participant) => participant.userId === req.session.user.userId
+      );
+      const isParticipantRank = userRankSlugs.some((slug) =>
+        participants.groups.some((group) => group.rankSlug === slug)
+      );
+
+      if (!isOwner && !isStaff && !isParticipantUser && !isParticipantRank) {
+        return res.redirect("/support");
+      }
+
+      const userIdentifier = (req.body?.userIdentifier || "").trim();
+      if (!userIdentifier) {
+        setBannerCookie("warning", "Provide a username or user ID to add.", res);
+        return res.redirect(`/support/ticket/${req.params.id}`);
+      }
+
+      const user = await findUserByIdentifier(userIdentifier);
+      if (!user) {
+        setBannerCookie("danger", "User not found.", res);
+        return res.redirect(`/support/ticket/${req.params.id}`);
+      }
+
+      await addTicketUserParticipant(ticket.ticketId, user);
+      await applyTicketParticipantPermissions(client, ticket.ticketId);
+
+      setBannerCookie("success", "User added to ticket.", res);
+      return res.redirect(`/support/ticket/${ticket.ticketId}`);
+    } catch (error) {
+      console.error(error);
+      return res.view("session/error", {
+        pageTitle: "Error",
+        pageDescription: "Error",
+        config,
+        req,
+        error,
+        features,
+        globalImage: await getGlobalImage(),
+        announcementWeb: await getWebAnnouncement(),
+      });
+    }
+  });
+
+  app.post("/support/ticket/:id/add-group", async function (req, res) {
+    try {
+      if (!req.session.user) {
+        return res.redirect("/login");
+      }
+
+      const ticket = await getTicketById(req.params.id);
+      const participants = await getTicketParticipants(req.params.id);
+      const userRankSlugs = req.session.user.ranks?.map((rank) => rank.rankSlug) || [];
+      const isOwner = ticket.userId === req.session.user.userId;
+      const isStaff = req.session.user.isStaff;
+      const isParticipantUser = participants.users.some(
+        (participant) => participant.userId === req.session.user.userId
+      );
+      const isParticipantRank = userRankSlugs.some((slug) =>
+        participants.groups.some((group) => group.rankSlug === slug)
+      );
+
+      if (!isOwner && !isStaff && !isParticipantUser && !isParticipantRank) {
+        return res.redirect("/support");
+      }
+
+      const rankOptions = await getLuckPermRankRoles();
+      const selectedRoleId = req.body?.groupRoleId;
+      const selectedRank = rankOptions.find((rank) => rank.id === selectedRoleId);
+
+      if (!selectedRank) {
+        setBannerCookie("warning", "Select a valid group to add.", res);
+        return res.redirect(`/support/ticket/${req.params.id}`);
+      }
+
+      await addTicketGroupParticipant(ticket.ticketId, selectedRank);
+      await applyTicketParticipantPermissions(client, ticket.ticketId);
+
+      setBannerCookie("success", "Group added to ticket.", res);
+      return res.redirect(`/support/ticket/${ticket.ticketId}`);
     } catch (error) {
       console.error(error);
       return res.view("session/error", {

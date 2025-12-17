@@ -3,6 +3,7 @@ import db from "./databaseController.js";
 import { ChannelType, PermissionFlagsBits } from "discord.js";
 
 let discordChannelColumnCheck;
+let ticketParticipantTableCheck;
 
 async function ensureDiscordChannelColumn() {
     if (!discordChannelColumnCheck) {
@@ -34,6 +35,27 @@ async function ensureDiscordChannelColumn() {
     }
 
     return discordChannelColumnCheck;
+}
+
+async function ensureTicketParticipantTable() {
+    if (!ticketParticipantTableCheck) {
+        ticketParticipantTableCheck = new Promise((resolve) => {
+            db.query(
+                "CREATE TABLE IF NOT EXISTS supportTicketParticipants (\n                  participantId INT AUTO_INCREMENT PRIMARY KEY,\n                  ticketId INT NOT NULL,\n                  userId INT NULL,\n                  roleId VARCHAR(255) NULL,\n                  rankSlug VARCHAR(255) NULL,\n                  roleName VARCHAR(255) NULL,\n                  badgeColor VARCHAR(255) NULL,\n                  textColor VARCHAR(255) NULL,\n                  createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,\n                  UNIQUE KEY ticket_user_unique (ticketId, userId),\n                  UNIQUE KEY ticket_role_unique (ticketId, roleId),\n                  FOREIGN KEY (ticketId) REFERENCES supportTickets(ticketId) ON DELETE CASCADE\n                )",
+                (err) => {
+                    if (err) {
+                        console.error("Failed to ensure supportTicketParticipants table", err);
+                        resolve(false);
+                        return;
+                    }
+
+                    resolve(true);
+                },
+            );
+        });
+    }
+
+    return ticketParticipantTableCheck;
 }
 
 
@@ -107,6 +129,34 @@ export async function createSupportCategory(name, description) {
       }
     );
   });
+}
+
+export async function getLuckPermRankRoles() {
+    try {
+        const ranks = await new Promise((resolve, reject) => {
+            db.query(
+                "SELECT rankSlug, displayName, discordRoleId, rankBadgeColour, rankTextColour FROM ranks WHERE discordRoleId IS NOT NULL AND discordRoleId != ''",
+                (error, results) => {
+                    if (error) {
+                        reject(error);
+                    } else {
+                        resolve(results);
+                    }
+                },
+            );
+        });
+
+        return ranks.map((rank) => ({
+            id: rank.discordRoleId,
+            name: rank.displayName || rank.rankSlug,
+            rankSlug: rank.rankSlug,
+            badgeColor: rank.rankBadgeColour,
+            textColor: rank.rankTextColour,
+        }));
+    } catch (error) {
+        console.error("getLuckPermRankRoles: failed to fetch rank Discord role mappings", error);
+        return [];
+    }
 }
 
 export async function createSupportTicket(
@@ -222,6 +272,144 @@ export async function createSupportTicket(
     });
 }
 
+export async function getTicketParticipants(ticketId) {
+    const hasTable = await ensureTicketParticipantTable();
+    if (!hasTable) return { users: [], groups: [] };
+
+    return new Promise((resolve) => {
+        db.query(
+            "SELECT p.*, u.username, u.discordId FROM supportTicketParticipants p LEFT JOIN users u ON p.userId = u.userId WHERE p.ticketId = ?",
+            [ticketId],
+            (err, results) => {
+                if (err) {
+                    console.error("getTicketParticipants: failed to load participants", err);
+                    resolve({ users: [], groups: [] });
+                    return;
+                }
+
+                const users = results
+                    .filter((row) => row.userId)
+                    .map((row) => ({
+                        participantId: row.participantId,
+                        userId: row.userId,
+                        username: row.username,
+                        discordId: row.discordId,
+                    }));
+
+                const groups = results
+                    .filter((row) => row.roleId)
+                    .map((row) => ({
+                        participantId: row.participantId,
+                        roleId: row.roleId,
+                        roleName: row.roleName,
+                        rankSlug: row.rankSlug,
+                        badgeColor: row.badgeColor,
+                        textColor: row.textColor,
+                    }));
+
+                resolve({ users, groups });
+            },
+        );
+    });
+}
+
+export async function addTicketUserParticipant(ticketId, user) {
+    const hasTable = await ensureTicketParticipantTable();
+    if (!hasTable) return null;
+
+    return new Promise((resolve, reject) => {
+        db.query(
+            "INSERT IGNORE INTO supportTicketParticipants (ticketId, userId) VALUES (?, ?)",
+            [ticketId, user.userId],
+            (err, results) => {
+                if (err) {
+                    reject(err);
+                } else {
+                    resolve(results.insertId);
+                }
+            },
+        );
+    });
+}
+
+export async function addTicketGroupParticipant(ticketId, group) {
+    const hasTable = await ensureTicketParticipantTable();
+    if (!hasTable) return null;
+
+    return new Promise((resolve, reject) => {
+        db.query(
+            "INSERT IGNORE INTO supportTicketParticipants (ticketId, roleId, rankSlug, roleName, badgeColor, textColor) VALUES (?, ?, ?, ?, ?, ?)",
+            [ticketId, group.id, group.rankSlug, group.name, group.badgeColor, group.textColor],
+            (err, results) => {
+                if (err) {
+                    reject(err);
+                } else {
+                    resolve(results.insertId);
+                }
+            },
+        );
+    });
+}
+
+export async function applyTicketParticipantPermissions(client, ticketId) {
+    const hasChannelColumn = await ensureDiscordChannelColumn();
+    const hasTable = await ensureTicketParticipantTable();
+
+    if (!hasChannelColumn || !hasTable) return;
+
+    const ticket = await getTicketById(ticketId);
+    if (!ticket?.discordChannelId) {
+        return;
+    }
+
+    const participants = await getTicketParticipants(ticketId);
+
+    if (!client) {
+        console.warn("applyTicketParticipantPermissions: Discord client unavailable; skipping channel permission updates");
+        return;
+    }
+
+    let channel;
+    try {
+        channel = await client.channels.fetch(ticket.discordChannelId);
+    } catch (error) {
+        console.error("applyTicketParticipantPermissions: failed to fetch ticket channel", error);
+        return;
+    }
+
+    const permissionUpdates = [];
+
+    participants.users
+        .filter((user) => user.discordId)
+        .forEach((user) => {
+            permissionUpdates.push(
+                channel.permissionOverwrites.edit(user.discordId, {
+                    ViewChannel: true,
+                    SendMessages: true,
+                    AttachFiles: true,
+                    ReadMessageHistory: true,
+                }),
+            );
+        });
+
+    participants.groups.forEach((group) => {
+        permissionUpdates.push(
+            channel.permissionOverwrites.edit(group.roleId, {
+                ViewChannel: true,
+                SendMessages: true,
+                AttachFiles: true,
+                ReadMessageHistory: true,
+            }),
+        );
+    });
+
+    try {
+        await Promise.all(permissionUpdates);
+    } catch (error) {
+        console.error("applyTicketParticipantPermissions: failed to update channel permissions", error);
+    }
+}
+
 export async function createSupportTicketMessage(client, ticketId, userId, message, attachmentUrl = null, source = "web") {
     if (source === "web") {
         const ticket = await getTicketById(ticketId);
@@ -287,6 +475,25 @@ export async function getCategoryPermissions(categoryId) {
                     resolve(results.map((row) => row.roleId));
                 }
             }
+        );
+    });
+}
+
+export async function findUserByIdentifier(identifier) {
+    const lookup = identifier?.trim();
+    if (!lookup) return null;
+
+    return new Promise((resolve, reject) => {
+        db.query(
+            "SELECT userId, username, discordId FROM users WHERE username = ? OR userId = ? LIMIT 1",
+            [lookup, lookup],
+            (err, results) => {
+                if (err) {
+                    reject(err);
+                } else {
+                    resolve(results[0] || null);
+                }
+            },
         );
     });
 }
@@ -422,6 +629,22 @@ export async function getUserRoles(userId) {
                 resolve(results.map(r => r.discordRoleId));
             }
         });
+    });
+}
+
+export async function getUserRankSlugs(userId) {
+    return new Promise((resolve, reject) => {
+        db.query(
+            "SELECT rankSlug FROM userRanks WHERE userId = ?",
+            [userId],
+            (err, results) => {
+                if (err) {
+                    reject(err);
+                } else {
+                    resolve(results.map((r) => r.rankSlug));
+                }
+            },
+        );
     });
 }
 
