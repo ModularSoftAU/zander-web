@@ -4,7 +4,7 @@ import {
   getSupportCategories,
   createSupportTicket,
   createSupportTicketMessage,
-  getTicketsByUserId,
+  getTicketsAccessibleByUser,
   getTicketById,
   getTicketMessages,
   getTicketParticipants,
@@ -43,7 +43,8 @@ export default function supportRoutes(
           });
       }
 
-      const tickets = await getTicketsByUserId(req.session.user.userId);
+      const userRankSlugs = req.session.user.ranks?.map((rank) => rank.rankSlug) || [];
+      const tickets = await getTicketsAccessibleByUser(req.session.user.userId, userRankSlugs);
 
       return res.view("modules/support/index", {
         pageTitle: "Support Tickets",

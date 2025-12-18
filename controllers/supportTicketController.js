@@ -1000,6 +1000,46 @@ export async function getTicketsByUserId(userId) {
     });
 }
 
+export async function getTicketsAccessibleByUser(userId, rankSlugs = []) {
+    const hasParticipants = await ensureTicketParticipantTable();
+    if (!hasParticipants || !Array.isArray(rankSlugs)) {
+        return getTicketsByUserId(userId);
+    }
+
+    const distinctTicketsQuery = [
+        "SELECT DISTINCT st.* FROM supportTickets st",
+        "LEFT JOIN supportTicketParticipants pUser ON pUser.ticketId = st.ticketId AND pUser.userId = ?",
+    ];
+
+    const params = [userId];
+
+    if (rankSlugs.length) {
+        distinctTicketsQuery.push(
+            "LEFT JOIN supportTicketParticipants pGroup ON pGroup.ticketId = st.ticketId AND pGroup.rankSlug IN (?)",
+        );
+        params.push(rankSlugs);
+    }
+
+    distinctTicketsQuery.push("WHERE st.userId = ? OR pUser.userId IS NOT NULL");
+    params.push(userId);
+
+    if (rankSlugs.length) {
+        distinctTicketsQuery.push("OR pGroup.rankSlug IS NOT NULL");
+    }
+
+    const queryString = distinctTicketsQuery.join(" ");
+
+    return new Promise((resolve, reject) => {
+        db.query(queryString, params, (err, results) => {
+            if (err) {
+                reject(err);
+            } else {
+                resolve(results);
+            }
+        });
+    });
+}
+
 export async function getTicketById(ticketId) {
     return new Promise((resolve, reject) => {
         db.query("SELECT * FROM supportTickets WHERE ticketId = ?", [ticketId], (err, results) => {
