@@ -538,10 +538,57 @@ export async function createSupportTicketMessage(client, ticketId, userId, messa
                 }
 
                 if (channel) {
-                    const content = `**User ${userId} said:**\n${message}`;
+                    let senderProfile = null;
 
                     try {
-                        const sentMessage = await channel.send(content);
+                        senderProfile = await new Promise((resolve) => {
+                            db.query(
+                                "SELECT username, profilePicture_type, profilePicture_email, uuid FROM users WHERE userId = ? LIMIT 1",
+                                [userId],
+                                (err, results) => {
+                                    if (err) {
+                                        console.error("Failed to load user profile for ticket message", err);
+                                        resolve(null);
+                                        return;
+                                    }
+
+                                    resolve(results?.[0] || null);
+                                },
+                            );
+                        });
+                    } catch (profileError) {
+                        console.error("createSupportTicketMessage: error loading sender profile", profileError);
+                    }
+
+                    let avatarUrl = null;
+                    if (senderProfile) {
+                        try {
+                            if (senderProfile.profilePicture_type === "GRAVATAR" && senderProfile.profilePicture_email) {
+                                const emailHash = await hashEmail(senderProfile.profilePicture_email);
+                                avatarUrl = `https://gravatar.com/avatar/${emailHash}?size=200`;
+                            } else if (senderProfile.profilePicture_type === "CRAFTATAR" && senderProfile.uuid) {
+                                avatarUrl = `https://crafthead.net/helm/${senderProfile.uuid}`;
+                            }
+                        } catch (avatarError) {
+                            console.error("createSupportTicketMessage: failed to build avatar for sender", avatarError);
+                        }
+                    }
+
+                    const embed = {
+                        author: {
+                            name: senderProfile?.username || `User ${userId}`,
+                        },
+                        description: message,
+                        timestamp: new Date().toISOString(),
+                    };
+
+                    if (avatarUrl) {
+                        embed.author.icon_url = avatarUrl;
+                        embed.thumbnail = { url: avatarUrl };
+                    }
+
+                    try {
+                        const sentMessage = await channel.send({ embeds: [embed] });
                         console.info("Sent web reply to Discord channel", {
                             ticketId,
                             channelId: ticket.discordChannelId,
