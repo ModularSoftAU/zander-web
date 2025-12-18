@@ -505,6 +505,11 @@ export async function createSupportTicketMessage(client, ticketId, userId, messa
             } else if (!client) {
                 console.warn("Discord client unavailable; skipping channel post for web reply", ticketId);
             } else {
+                console.info("Fetching Discord channel for web reply", {
+                    ticketId,
+                    channelId: ticket.discordChannelId,
+                });
+
                 let channel;
                 try {
                     channel = await client.channels.fetch(ticket.discordChannelId);
@@ -519,14 +524,17 @@ export async function createSupportTicketMessage(client, ticketId, userId, messa
                     }
 
                     try {
-                        await channel.send(content);
+                        const sentMessage = await channel.send(content);
                         console.info("Sent web reply to Discord channel", {
                             ticketId,
                             channelId: ticket.discordChannelId,
+                            discordMessageId: sentMessage?.id,
                         });
                     } catch (error) {
                         console.error("Failed to send web reply to Discord channel", ticketId, error);
                     }
+                } else {
+                    console.warn("Discord channel fetch returned null for ticket", ticketId);
                 }
             }
         } catch (error) {
@@ -549,6 +557,7 @@ export async function createSupportTicketMessage(client, ticketId, userId, messa
                     ticketId,
                     userId,
                     messageId: results.insertId,
+                    source,
                 });
                 resolve(results.insertId);
             },

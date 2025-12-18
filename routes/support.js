@@ -177,13 +177,19 @@ export default function supportRoutes(
         messageLength: message.length,
       });
 
-      await createSupportTicketMessage(
+      const messageId = await createSupportTicketMessage(
         client,
         req.params.id,
         req.session.user.userId,
         message,
         attachmentUrl
       );
+
+      console.info("Web ticket reply persisted", {
+        ticketId: req.params.id,
+        userId: req.session.user.userId,
+        messageId,
+      });
 
       await syncParticipantsForMessage(client, ticket.ticketId, {
         userId: req.session.user.userId,
