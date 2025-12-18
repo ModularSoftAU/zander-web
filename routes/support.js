@@ -155,7 +155,7 @@ export default function supportRoutes(
         setBannerCookie("warning", "Please enter a message before replying.", res);
         return res.redirect(`/support/ticket/${req.params.id}`);
       }
-      const attachment = req.raw.files ? req.raw.files.attachment : null;
+      const attachment = req.raw?.files?.attachment || req.files?.attachment || null;
       let attachmentUrl = null;
 
       if (attachment) {
@@ -177,13 +177,23 @@ export default function supportRoutes(
         messageLength: message.length,
       });
 
-      const messageId = await createSupportTicketMessage(
-        client,
-        req.params.id,
-        req.session.user.userId,
-        message,
-        attachmentUrl
-      );
+      let messageId;
+      try {
+        messageId = await createSupportTicketMessage(
+          client,
+          req.params.id,
+          req.session.user.userId,
+          message,
+          attachmentUrl
+        );
+      } catch (createError) {
+        console.error("Failed to create support ticket message", {
+          ticketId: req.params.id,
+          userId: req.session.user.userId,
+        }, createError);
+        setBannerCookie("danger", "Unable to submit your reply right now. Please try again.", res);
+        return res.redirect(`/support/ticket/${req.params.id}`);
+      }
 
       console.info("Web ticket reply persisted", {
         ticketId: req.params.id,

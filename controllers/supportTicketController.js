@@ -458,10 +458,11 @@ export async function applyTicketParticipantPermissions(client, ticketId) {
     const permissionUpdates = [];
 
     participants.users
-        .filter((user) => user.discordId)
-        .forEach((user) => {
+        .map((user) => (user.discordId ? String(user.discordId).trim() : ""))
+        .filter((id) => Boolean(id))
+        .forEach((discordId) => {
             permissionUpdates.push(
-                channel.permissionOverwrites.edit(user.discordId, {
+                channel.permissionOverwrites.edit(discordId, {
                     ViewChannel: true,
                     SendMessages: true,
                     AttachFiles: true,
@@ -470,16 +471,19 @@ export async function applyTicketParticipantPermissions(client, ticketId) {
             );
         });
 
-    participants.groups.forEach((group) => {
-        permissionUpdates.push(
-            channel.permissionOverwrites.edit(group.roleId, {
-                ViewChannel: true,
-                SendMessages: true,
-                AttachFiles: true,
-                ReadMessageHistory: true,
-            }),
-        );
-    });
+    participants.groups
+        .map((group) => (group.roleId ? String(group.roleId).trim() : ""))
+        .filter((roleId) => Boolean(roleId))
+        .forEach((roleId) => {
+            permissionUpdates.push(
+                channel.permissionOverwrites.edit(roleId, {
+                    ViewChannel: true,
+                    SendMessages: true,
+                    AttachFiles: true,
+                    ReadMessageHistory: true,
+                }),
+            );
+        });
 
     try {
         await Promise.all(permissionUpdates);
@@ -611,8 +615,8 @@ export async function findUserByIdentifier(identifier) {
 
     return new Promise((resolve, reject) => {
         db.query(
-            "SELECT userId, username, discordId FROM users WHERE username = ? OR userId = ? LIMIT 1",
-            [lookup, lookup],
+            "SELECT userId, username, discordId FROM users WHERE LOWER(username) = LOWER(?) OR userId = ? OR discordId = ? LIMIT 1",
+            [lookup, lookup, lookup],
             (err, results) => {
                 if (err) {
                     reject(err);
