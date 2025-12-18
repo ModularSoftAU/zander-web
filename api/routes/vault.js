@@ -15,7 +15,6 @@ export default function vaultApiRoute(app, config, db, features, lang) {
     try {
       function getVault(dbQuery) {
         db.query(dbQuery, function (error, results, fields) {
-          console.log(results);
           
           if (error) {
             res.send({

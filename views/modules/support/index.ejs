@@ -5,18 +5,17 @@
 
 <%- include('../../modules/navigationBar.ejs') %>
 
-<div class="page-header">
-    <div class="container">
-        <h1>Support Tickets</h1>
+<%- include('../../partials/miniHeader.ejs', {
+    headerTitle: "Support Tickets",
+    globalImage,
+}) %>
+
+<div class="container my-4">
+    <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+        <h2 class="mb-0">My Tickets</h2>
         <a href="/support/create" class="btn btn-primary">Create New Ticket</a>
     </div>
-</div>
-
-<div class="container">
     <div class="card">
-        <div class="card-header">
-            <h2>My Tickets</h2>
-        </div>
         <div class="card-body">
             <% if (tickets.length === 0) { %>
                 <p>You have no support tickets.</p>
@@ -36,8 +35,15 @@
                             <tr>
                                 <td>#<%= ticket.ticketId %></td>
                                 <td><%= ticket.title %></td>
-                                <td><%= ticket.status %></td>
-                                <td><%= new Date(ticket.createdAt).toLocaleString() %></td>
+                                <% const statusClass = {
+                                    open: "bg-success",
+                                    closed: "bg-secondary",
+                                    pending: "bg-warning text-dark"
+                                }[ticket.status] || "bg-secondary"; %>
+                                <td>
+                                    <span class="badge rounded-pill <%= statusClass %>"><%= ticket.status %></span>
+                                </td>
+                                <td><span class="local-datetime" data-timestamp="<%= new Date(ticket.createdAt).toISOString() %>"></span></td>
                                 <td>
                                     <a href="/support/ticket/<%= ticket.ticketId %>" class="btn btn-primary">View</a>
                                 </td>
@@ -49,5 +55,16 @@
         </div>
     </div>
 </div>
+
+<script>
+    document.addEventListener("DOMContentLoaded", () => {
+        document.querySelectorAll(".local-datetime").forEach((element) => {
+            const timestamp = element.getAttribute("data-timestamp");
+            if (!timestamp) return;
+            const date = new Date(timestamp);
+            element.textContent = date.toLocaleString();
+        });
+    });
+</script>
 
 <%- include('../../modules/footer.ejs') %>

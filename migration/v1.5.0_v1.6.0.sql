@@ -25,6 +25,7 @@ CREATE TABLE supportTicketMessages (
     userId INT NOT NULL,
     message TEXT NOT NULL,
     attachments JSON,
+    isInternal TINYINT(1) NOT NULL DEFAULT 0,
     createdAt DATETIME NOT NULL DEFAULT NOW(),
     PRIMARY KEY (messageId),
     FOREIGN KEY (ticketId) REFERENCES supportTickets(ticketId) ON DELETE CASCADE,

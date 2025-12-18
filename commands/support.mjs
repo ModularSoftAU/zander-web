@@ -1,27 +1,31 @@
 import { Command } from "@sapphire/framework";
-import { SlashCommandBuilder, ActionRowBuilder, StringSelectMenuBuilder, ModalBuilder, TextInputBuilder, TextInputStyle } from "discord.js";
-import { ImgurClient } from "imgur";
 import {
-    getSupportCategories,
-    getCategoryName,
-    createSupportTicket,
-    createSupportTicketMessage,
-    getUserIdByDiscordId,
-    createUnlinkedUser,
+  SlashCommandBuilder,
+  ButtonBuilder,
+  ButtonStyle,
+  PermissionFlagsBits,
+  ActionRowBuilder,
+  ChannelType,
+  EmbedBuilder,
+} from "discord.js";
+import config from "../config.json" assert { type: "json" };
+import { startTicketFlow } from "../lib/discord/ticketFlow.mjs";
+import {
+  addTicketGroupParticipant,
+  addTicketUserParticipant,
+  applyTicketParticipantPermissions,
+  createUnlinkedUser,
+  getCategoryPermissions,
+  getTicketDetailsByChannel,
+  getUserIdByDiscordId,
 } from "../controllers/supportTicketController.js";
-
-const imgurClient = new ImgurClient({
-    clientId: process.env.IMGUR_CLIENT_ID,
-    clientSecret: process.env.IMGUR_CLIENT_SECRET,
-    refreshToken: process.env.IMGUR_REFRESH_TOKEN,
-});
 
 export class SupportCommand extends Command {
   constructor(context, options) {
     super(context, {
       ...options,
-      name: "support",
-      description: "Manage support tickets.",
+      name: "ticket",
+      description: "Create and manage support tickets.",
     });
   }
 
@@ -30,15 +34,42 @@ export class SupportCommand extends Command {
       .setName(this.name)
       .setDescription(this.description)
       .addSubcommand((subcommand) =>
+        subcommand.setName("create").setDescription("Open a new support ticket.")
+      )
+      .addSubcommand((subcommand) =>
+        subcommand.setName("submit").setDescription("Submit a support ticket.")
+      )
+      .addSubcommand((subcommand) =>
         subcommand
-            .setName("create")
-            .setDescription("Create a new support ticket.")
-            .addAttachmentOption((option) =>
-                option
-                    .setName("attachment")
-                    .setDescription("An image to attach to the ticket.")
-                    .setRequired(false)
-            )
+          .setName("panel")
+          .setDescription("Post a Create Ticket button in this channel.")
+          .addChannelOption((option) =>
+            option
+              .setName("channel")
+              .setDescription("Channel to place the Create Ticket button in.")
+              .addChannelTypes(ChannelType.GuildText)
+          )
+          .addChannelOption((option) =>
+            option
+              .setName("ticket_category")
+              .setDescription("Discord category where ticket channels will be created.")
+              .addChannelTypes(ChannelType.GuildCategory)
+          )
+      )
+      .addSubcommand((subcommand) =>
+        subcommand
+          .setName("add")
+          .setDescription("Add a user or role to the current ticket.")
+          .addUserOption((option) =>
+            option
+              .setName("user")
+              .setDescription("Discord user to add to the ticket")
+          )
+          .addRoleOption((option) =>
+            option
+              .setName("role")
+              .setDescription("Discord role to grant access to the ticket")
+          )
       );
 
     registry.registerChatInputCommand(builder);
@@ -47,123 +78,177 @@ export class SupportCommand extends Command {
   async chatInputRun(interaction) {
     const subcommand = interaction.options.getSubcommand();
 
-    if (subcommand === "create") {
-      const categories = await getSupportCategories();
+    if (subcommand === "create" || subcommand === "submit") {
+      return startTicketFlow(interaction);
+    }
 
-      if (!categories.length) {
+    if (subcommand === "add") {
+      const userOption = interaction.options.getUser("user");
+      const roleOption = interaction.options.getRole("role");
+
+      if (!userOption && !roleOption) {
         return interaction.reply({
-          content: "There are no support categories available at the moment.",
+          content: "Provide a user or role to add to this ticket.",
           ephemeral: true,
         });
       }
 
-      const selectMenu = new StringSelectMenuBuilder()
-        .setCustomId("support_category_select")
-        .setPlaceholder("Select a category")
-        .addOptions(
-          categories.map((category) => ({
-            label: category.name,
-            value: category.categoryId.toString(),
-          }))
-        );
+      const ticketDetails = await getTicketDetailsByChannel(interaction.channel.id);
 
-      const row = new ActionRowBuilder().addComponents(selectMenu);
+      if (!ticketDetails) {
+        return interaction.reply({
+          content: "This channel is not linked to a ticket.",
+          ephemeral: true,
+        });
+      }
 
-      await interaction.reply({
-        content: "Please select a category for your support ticket:",
-        components: [row],
-        ephemeral: true,
-      });
+      const categoryStaffRoles = await getCategoryPermissions(ticketDetails.categoryId);
+      const member = await interaction.guild.members.fetch(interaction.user.id);
+      const hasPermission =
+        member.permissions.has(PermissionFlagsBits.ManageChannels) ||
+        member.roles.cache.some((role) => categoryStaffRoles.includes(role.id));
 
-      const filter = (i) => i.customId === "support_category_select" && i.user.id === interaction.user.id;
-      const collector = interaction.channel.createMessageComponentCollector({ filter, time: 60000 });
+      if (!hasPermission) {
+        return interaction.reply({
+          content: "You need support staff permissions to update ticket access.",
+          ephemeral: true,
+        });
+      }
 
-      collector.on("collect", async (i) => {
-        const categoryId = i.values[0];
+      await interaction.deferReply({ ephemeral: true });
 
-        const modal = new ModalBuilder()
-          .setCustomId(`support_ticket_modal_${categoryId}`)
-          .setTitle("Create Support Ticket");
+      const additions = [];
 
-        const titleInput = new TextInputBuilder()
-          .setCustomId("title")
-          .setLabel("Title")
-          .setStyle(TextInputStyle.Short)
-          .setRequired(true);
+      if (userOption) {
+        let targetUserId = await getUserIdByDiscordId(userOption.id);
 
-        const messageInput = new TextInputBuilder()
-          .setCustomId("message")
-          .setLabel("Message")
-          .setStyle(TextInputStyle.Paragraph)
-          .setRequired(true);
-
-        const firstActionRow = new ActionRowBuilder().addComponents(titleInput);
-        const secondActionRow = new ActionRowBuilder().addComponents(messageInput);
-
-        modal.addComponents(firstActionRow, secondActionRow);
-
-        await i.showModal(modal);
-
-        const modalFilter = (modalInteraction) => modalInteraction.customId === `support_ticket_modal_${categoryId}` && modalInteraction.user.id === interaction.user.id;
-        try {
-            const modalInteraction = await i.awaitModalSubmit({ filter: modalFilter, time: 60000 });
-
-            const title = modalInteraction.fields.getTextInputValue("title");
-            const message = modalInteraction.fields.getTextInputValue("message");
-            const attachment = interaction.options.getAttachment("attachment");
-            let attachmentUrl = null;
-
-            if (attachment) {
-                try {
-                    const response = await imgurClient.upload({
-                        image: attachment.url,
-                        type: "url",
-                    });
-                    attachmentUrl = response.data.link;
-                } catch (error) {
-                    console.error(error);
-                }
-            }
-
-            let userId = await getUserIdByDiscordId(interaction.user.id);
-            let unlinked = false;
-
-            if (!userId) {
-              userId = await createUnlinkedUser(interaction.user.id, interaction.user.username);
-              unlinked = true;
-            }
-
-            const ticketId = await createSupportTicket(interaction.client, userId, categoryId, title);
-            await createSupportTicketMessage(interaction.client, ticketId, userId, message, attachmentUrl);
-
-            const categoryName = await getCategoryName(categoryId);
-            await this.sendNewTicketNotification(interaction.client, ticketId, title, categoryName, interaction.user.username);
-
-            let replyMessage = "Your support ticket has been created successfully!";
-            if (unlinked) {
-              replyMessage += "\n\nTo view and manage your ticket on our website, please register an account and link your Discord.";
-            }
-
-            await modalInteraction.reply({
-              content: replyMessage,
-              ephemeral: true,
-            });
-        } catch (err) {
-            if (err.code === 'InteractionCollectorError') {
-                await i.followUp({ content: 'You did not respond in time.', ephemeral: true });
-            } else {
-                console.error(err);
-                await i.followUp({ content: 'Ticket creation failed.', ephemeral: true });
-            }
+        if (!targetUserId) {
+          try {
+            targetUserId = await createUnlinkedUser(userOption.id, userOption.username);
+          } catch (userCreateError) {
+            console.error("ticket add: failed to create placeholder user", userCreateError);
+          }
         }
+
+        if (targetUserId) {
+          try {
+            await addTicketUserParticipant(ticketDetails.ticketId, { userId: targetUserId });
+            additions.push(`Added user ${userOption.tag}`);
+          } catch (userAddError) {
+            console.error("ticket add: failed to add user participant", userAddError);
+            additions.push(`Failed to add ${userOption.tag}`);
+          }
+        } else {
+          additions.push(`Unable to add ${userOption.tag} (no linked account).`);
+        }
+      }
+
+      if (roleOption) {
+        try {
+          await addTicketGroupParticipant(ticketDetails.ticketId, {
+            id: roleOption.id,
+            name: roleOption.name,
+            rankSlug: null,
+            badgeColor: null,
+            textColor: null,
+          });
+          additions.push(`Added role ${roleOption.name}`);
+        } catch (roleAddError) {
+          console.error("ticket add: failed to add role participant", roleAddError);
+          additions.push(`Failed to add role ${roleOption.name}`);
+        }
+      }
+
+      try {
+        await applyTicketParticipantPermissions(interaction.client, ticketDetails.ticketId);
+      } catch (permissionError) {
+        console.error("ticket add: failed to apply participant permissions", permissionError);
+        additions.push("Warning: could not refresh channel permissions.");
+      }
+
+      return interaction.editReply({
+        content: additions.join("\n") || "No changes applied.",
       });
     }
-  }
 
-  async sendNewTicketNotification(client, ticketId, title, categoryName, username) {
-    const channel = await client.channels.fetch(process.env.SUPPORT_NOTIFICATION_CHANNEL_ID);
-    await channel.send(
-        `A new support ticket has been created!\n\n**Ticket ID:** ${ticketId}\n**Title:** ${title}\n**Category:** ${categoryName}\n**User:** ${username}`
-    );
+    if (subcommand === "panel") {
+      if (!interaction.memberPermissions.has(PermissionFlagsBits.ManageChannels)) {
+        return interaction.reply({
+          content: "You need Manage Channels permission to post a ticket panel.",
+          ephemeral: true,
+        });
+      }
+
+      const configuredPanelChannelId =
+        config.discord?.supportPanelChannelId ?? process.env.SUPPORT_CHANNEL_ID;
+      const configuredTicketCategoryId =
+        config.discord?.supportTicketCategoryId ?? process.env.SUPPORT_CATEGORY_ID;
+
+      const suppliedChannel = interaction.options.getChannel("channel");
+      const suppliedCategory = interaction.options.getChannel("ticket_category");
+
+      let targetChannel = suppliedChannel ?? null;
+
+      if (!targetChannel && configuredPanelChannelId) {
+        try {
+          targetChannel = await interaction.client.channels.fetch(
+            configuredPanelChannelId
+          );
+        } catch (error) {
+          console.warn("ticket panel config channel fetch failed", error);
+        }
+      }
+
+      if (!targetChannel) {
+        targetChannel = interaction.channel;
+      }
+
+      let ticketCategory = suppliedCategory ?? null;
+
+      if (!ticketCategory && configuredTicketCategoryId) {
+        try {
+          ticketCategory = await interaction.client.channels.fetch(
+            configuredTicketCategoryId
+          );
+        } catch (error) {
+          console.warn("ticket panel config category fetch failed", error);
+        }
+      }
+
+      const parentCategoryId = ticketCategory?.id ?? configuredTicketCategoryId ?? "";
+
+      const createButton = new ButtonBuilder()
+        .setCustomId(
+          parentCategoryId ? `support_ticket_open:${parentCategoryId}` : "support_ticket_open"
+        )
+        .setLabel("Create Ticket")
+        .setStyle(ButtonStyle.Primary);
+
+      const infoEmbed = new EmbedBuilder()
+        .setTitle("Need help? Open a ticket")
+        .setDescription(
+          [
+            "Submit your issue privately to the support team.",
+            "\n**How it works:**",
+            "• Click **Create Ticket** to choose a category.",
+            "• Fill out the subject and description in the modal form.",
+            "• A private channel will be created for you and our staff.",
+            "• Use the Close button in the ticket to wrap up when you're done.",
+          ].join("\n")
+        )
+        .setColor(0x2b6cb0);
+
+      await targetChannel.send({
+        embeds: [infoEmbed],
+        components: [new ActionRowBuilder().addComponents(createButton)],
+      });
+
+      return interaction.reply({
+        content: `Posted a Create Ticket panel in ${targetChannel} using the ${
+          ticketCategory ? `\`${ticketCategory.name}\`` : "default"
+        } ticket category.`,
+        ephemeral: true,
+      });
+    }
   }
 }

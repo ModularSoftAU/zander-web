@@ -41,22 +41,17 @@ export default function filterApiRoute(
         userData = discordUserGetData;
       }
 
-      // Log the received content to ensure it's correct
-      console.log("Received content:", content);
-
       // Check for words in the whitelist from filter.json
       const contentWords = content.split(/\s+/); // Split content into words
       const isWhitelisted = contentWords.some((word) =>
         filter.phrasesWhitelist.includes(word.toLowerCase())
       );
 
-      if (isWhitelisted) {
-        console.log("Content contains whitelisted word, passing through.");
+      if (isWhitelisted)
         return res.send({
           success: true,
           message: "Content is clean. No flags detected.",
         });
-      }
 
       let urlDetected = false;
       let flaggedFor = [];
@@ -69,7 +64,6 @@ export default function filterApiRoute(
         filter.links.forEach((link) => {
           const regex = new RegExp(link, "i");
           if (regex.test(content)) {
-            console.log(`URL detected: ${link}`);
             urlDetected = true;
             flaggedFor.push("URL/Advertising");
           }
@@ -87,15 +81,12 @@ export default function filterApiRoute(
         });
 
         profanityData = await response.json();
-        console.log("Profanity Data:", profanityData);
       } catch (error) {
-        console.log("Error calling profanity API:", error);
+        console.error("Error calling profanity API:", error);
       }
 
-      if (profanityData.score >= 1) {
-        console.log("Profanity detected with score:", profanityData.score);
+      if (profanityData.score >= 1)
         flaggedFor.push(`Profanity (Score: ${profanityData.score})`);
-      }
 
       // If any flags are detected, send the alert
       if (
@@ -118,7 +109,6 @@ export default function filterApiRoute(
             .setColor(Colors.Red)
             .setTimestamp();
 
-          console.log("Sending flagged content to staff channel...");
           const webhookSent = await sendWebhookMessage(
             staffChannelHook,
             embed,
@@ -137,7 +127,7 @@ export default function filterApiRoute(
             message: lang.filter.phraseCaught || "Content flagged.",
           });
         } catch (error) {
-          console.log("Error sending to webhook:", error);
+          console.error("Error sending to webhook:", error);
           return res.send({
             success: false,
             message: `${error}`,
@@ -151,7 +141,7 @@ export default function filterApiRoute(
         message: "Content is clean. No flags detected.",
       });
     } catch (error) {
-      console.log("Error processing request:", error);
+      console.error("Error processing request:", error);
       return res.status(500).send({
         success: false,
         message: error.message || "Internal Server Error",

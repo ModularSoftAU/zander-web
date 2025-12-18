@@ -5,6 +5,8 @@
 
 <%- include('../dashboard-header.ejs') %>
 
+<%- include('../../../modules/navigationBar.ejs') %>
+
 <div class="container-fluid">
     <div class="row">
         <%- include('../dashboard-sidebar.ejs') %>
@@ -56,19 +58,29 @@
                                         <td>
                                             <% if (category.permissions && category.permissions.length > 0) { %>
                                                 <% category.permissions.forEach(permission => { %>
-                                                    <span class="badge bg-secondary mb-1"><%= permission.roleName %></span><br>
+                                                    <% const badgeStyle = [];
+                                                       if (permission.badgeColor) badgeStyle.push(`background-color: ${permission.badgeColor}`);
+                                                       if (permission.textColor) badgeStyle.push(`color: ${permission.textColor}`);
+                                                    %>
+                                                    <span class="badge mb-1 <%= permission.badgeColor ? '' : 'bg-secondary' %>" style="<%= badgeStyle.join('; ') %>"><%= permission.roleName %></span><br>
                                                 <% }) %>
                                             <% } else { %>
                                                 <span class="text-muted">No permissions set.</span>
                                             <% } %>
                                             <form action="/dashboard/support/categories/<%= category.categoryId %>/permissions" method="POST" class="mt-2">
                                                 <div class="input-group input-group-sm">
-                                                    <select name="roleId" class="form-select">
-                                                        <% roles.forEach(role => { %>
-                                                            <option value="<%= role.id %>"><%= role.name %></option>
-                                                        <% }) %>
-                                                    </select>
-                                                    <button type="submit" class="btn btn-success">Add Role</button>
+                                                    <% const availableRoles = category.availableRoles && category.availableRoles.length > 0 ? category.availableRoles : []; %>
+                                                    <% if (availableRoles.length > 0) { %>
+                                                        <select name="roleId" class="form-select">
+                                                            <% availableRoles.forEach(role => { %>
+                                                                <option value="<%= role.id %>"><%= role.name %></option>
+                                                            <% }) %>
+                                                        </select>
+                                                        <button type="submit" class="btn btn-success">Add Role</button>
+                                                    <% } else { %>
+                                                        <span class="form-control text-muted">All eligible roles added</span>
+                                                        <button class="btn btn-success" type="button" disabled>All Added</button>
+                                                    <% } %>
                                                 </div>
                                             </form>
                                         </td>

@@ -3,6 +3,13 @@
     pageDescription: "The dashboard for the Network Administration Panel"
 }) %>
 
+<%- include("../modules/navigationBar.ejs") %>
+
+<%- include("../partials/miniHeader.ejs", {
+  headerTitle: "Dashboard",
+  backgroundImage: globalImage
+}) %>
+
 <%- include("../modules/dashboard/dashboard-header.ejs") %>
 
 <div class="container-fluid">
