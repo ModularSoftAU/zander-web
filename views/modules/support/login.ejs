@@ -1,12 +1,16 @@
-<%- include('../../modules/header.ejs') %>
+<%- include('../../modules/header.ejs', {
+    pageTitle: 'Support Tickets',
+    pageDescription: 'Support Tickets'
+}) %>
 
-<div class="page-header">
-    <div class="container">
-        <h1>Support Tickets</h1>
-    </div>
-</div>
+<%- include('../../modules/navigationBar.ejs') %>
 
-<div class="container">
+<%- include('../../partials/miniHeader.ejs', {
+    headerTitle: 'Support Tickets',
+    globalImage,
+}) %>
+
+<div class="container my-4">
     <div class="card">
         <div class="card-header">
             <h2>Login Required</h2>
