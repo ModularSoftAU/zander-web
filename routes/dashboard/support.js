@@ -17,6 +17,7 @@ import {
   getTicketsByCategory,
   updateTicketStatus,
   getCategoryById,
+  getCategoryPermissions,
   updateSupportCategory,
   deleteTicketChannel,
   recreateTicketChannel,
@@ -282,7 +283,9 @@ export default function supportDashboardRoutes(
 
         await addCategoryPermission(id, roleId);
 
-        return res.redirect("/dashboard/support/categories");
+        return res.redirect(
+          req.body?.redirect || "/dashboard/support/categories"
+        );
       } catch (error) {
         console.error(error);
         return res.view("session/error", {
@@ -310,7 +313,9 @@ export default function supportDashboardRoutes(
 
         await removeCategoryPermission(id, roleId);
 
-        return res.redirect("/dashboard/support/categories");
+        return res.redirect(
+          req.body?.redirect || "/dashboard/support/categories"
+        );
       } catch (error) {
         console.error(error);
         return res.view("session/error", {
@@ -359,6 +364,32 @@ export default function supportDashboardRoutes(
       if (hasTicketsAccess !== true) return hasTicketsAccess;
 
       const category = await getCategoryById(req.params.id);
+      const roles = await getLuckPermRoles();
+      const categoryPermissions =
+        (await getCategoryPermissions(category.categoryId)) || [];
+
+      const roleStyleMap = new Map(
+        roles.map((role) => [String(role.id), role])
+      );
+      const permissionIdSet = new Set(
+        categoryPermissions.map((roleId) => String(roleId))
+      );
+
+      const categoryWithPermissions = {
+        ...category,
+        permissions: categoryPermissions.map((roleId) => {
+          const roleMeta = roleStyleMap.get(String(roleId));
+          return {
+            roleId,
+            roleName: roleMeta?.name || roleId,
+            badgeColor: roleMeta?.rankBadgeColour,
+            textColor: roleMeta?.rankTextColour,
+          };
+        }),
+        availableRoles: roles.filter(
+          (role) => !permissionIdSet.has(String(role.id))
+        ),
+      };
 
       return res.view("modules/dashboard/support/edit-category", {
         pageTitle: "Edit Support Category",
@@ -366,7 +397,8 @@ export default function supportDashboardRoutes(
         config,
         req,
         features,
-        category,
+        category: categoryWithPermissions,
+        roles,
         globalImage: await getGlobalImage(),
         announcementWeb: await getWebAnnouncement(),
       });
