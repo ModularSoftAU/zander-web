@@ -17,6 +17,7 @@ import {
   updateTicketStatus,
   getCategoryById,
   updateSupportCategory,
+  deleteTicketChannel,
 } from "../../controllers/supportTicketController.js";
 import { hasPermission as hasPermissionNode } from "../../lib/discord/permissions.mjs";
 
@@ -425,6 +426,10 @@ export default function supportDashboardRoutes(
       if (hasCategoryAccess !== true) return hasCategoryAccess;
 
       await updateTicketStatus(ticket.ticketId, req.body.status);
+
+      if (req.body.status === "closed") {
+        await deleteTicketChannel(client, ticket.ticketId, "Ticket closed from dashboard");
+      }
 
       return res.redirect(`/support/ticket/${req.params.id}`);
     } catch (error) {

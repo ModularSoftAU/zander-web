@@ -509,6 +509,47 @@ export async function applyTicketParticipantPermissions(client, ticketId) {
     }
 }
 
+export async function deleteTicketChannel(client, ticketId, reason = "Ticket closed") {
+    const hasChannelColumn = await ensureDiscordChannelColumn();
+    if (!hasChannelColumn) {
+        return false;
+    }
+
+    const ticket = await getTicketById(ticketId);
+    if (!ticket?.discordChannelId) {
+        return false;
+    }
+
+    if (!client) {
+        console.warn("deleteTicketChannel: Discord client unavailable; skipping channel removal", { ticketId });
+    } else {
+        try {
+            const channel = await client.channels.fetch(ticket.discordChannelId);
+            if (channel) {
+                await channel.delete(reason);
+            }
+        } catch (error) {
+            console.error("deleteTicketChannel: failed to delete Discord channel", {
+                ticketId,
+                channelId: ticket.discordChannelId,
+            }, error);
+        }
+    }
+
+    return new Promise((resolve) => {
+        db.query(
+            "UPDATE supportTickets SET discordChannelId = NULL WHERE ticketId = ?",
+            [ticketId],
+            (err) => {
+                if (err) {
+                    console.error("deleteTicketChannel: failed to clear channel id", { ticketId }, err);
+                }
+                resolve(!err);
+            },
+        );
+    });
+}
+
 export async function createSupportTicketMessage(client, ticketId, userId, message, source = "web") {
     console.info("createSupportTicketMessage invoked", {
         ticketId,
