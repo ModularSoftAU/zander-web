@@ -237,6 +237,31 @@ export async function getSupportCategories() {
   });
 }
 
+export async function ensureUncategorisedCategory() {
+  return new Promise((resolve, reject) => {
+    db.query(
+      "SELECT categoryId FROM supportTicketCategories WHERE name = ? LIMIT 1",
+      ["Uncategorised"],
+      (lookupErr, results) => {
+        if (lookupErr) return reject(lookupErr);
+
+        if (results.length > 0) {
+          return resolve(results[0].categoryId);
+        }
+
+        db.query(
+          "INSERT INTO supportTicketCategories (name, description, enabled) VALUES (?, ?, 0)",
+          ["Uncategorised", "Manual tickets created by staff"],
+          (insertErr, insertResults) => {
+            if (insertErr) return reject(insertErr);
+            resolve(insertResults.insertId);
+          }
+        );
+      }
+    );
+  });
+}
+
 export async function getSupportCategoriesWithPermissions() {
   return new Promise((resolve, reject) => {
     db.query(
@@ -369,13 +394,17 @@ export async function createSupportTicket(
         throw new Error("Discord guild is unavailable for ticket creation");
     }
 
-    let targetParentId =
-        parentCategoryId && parentCategoryId !== "undefined" && parentCategoryId !== ""
-            ? parentCategoryId
-            : null;
+    let targetParentId = null;
 
-    if (!targetParentId) {
-        targetParentId = config.discord?.supportTicketCategoryId ?? process.env.SUPPORT_CATEGORY_ID ?? null;
+    if (parentCategoryId !== false) {
+        targetParentId =
+            parentCategoryId && parentCategoryId !== "undefined" && parentCategoryId !== ""
+                ? parentCategoryId
+                : null;
+
+        if (!targetParentId) {
+            targetParentId = config.discord?.supportTicketCategoryId ?? process.env.SUPPORT_CATEGORY_ID ?? null;
+        }
     }
     const permissionOverwrites = [
         {

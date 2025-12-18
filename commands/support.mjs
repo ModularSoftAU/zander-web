@@ -15,6 +15,9 @@ import {
   addTicketUserParticipant,
   applyTicketParticipantPermissions,
   createUnlinkedUser,
+  createSupportTicket,
+  createSupportTicketMessage,
+  ensureUncategorisedCategory,
   getCategoryPermissions,
   getTicketDetailsByChannel,
   getUserIdByDiscordId,
@@ -69,6 +72,44 @@ export class SupportCommand extends Command {
             option
               .setName("role")
               .setDescription("Discord role to grant access to the ticket")
+          )
+      )
+      .addSubcommand((subcommand) =>
+        subcommand
+          .setName("manual")
+          .setDescription("Staff: create an uncategorised ticket for a user.")
+          .addUserOption((option) =>
+            option
+              .setName("user")
+              .setDescription("Discord user the ticket is for")
+              .setRequired(true)
+          )
+          .addStringOption((option) =>
+            option
+              .setName("subject")
+              .setDescription("Ticket subject")
+              .setRequired(true)
+          )
+          .addStringOption((option) =>
+            option
+              .setName("description")
+              .setDescription("Ticket description")
+              .setRequired(true)
+          )
+          .addRoleOption((option) =>
+            option
+              .setName("role")
+              .setDescription("Additional role to give access to the ticket")
+          )
+          .addRoleOption((option) =>
+            option
+              .setName("role_two")
+              .setDescription("Second role to give access to the ticket")
+          )
+          .addRoleOption((option) =>
+            option
+              .setName("role_three")
+              .setDescription("Third role to give access to the ticket")
           )
       );
 
@@ -168,6 +209,166 @@ export class SupportCommand extends Command {
 
       return interaction.editReply({
         content: additions.join("\n") || "No changes applied.",
+      });
+    }
+
+    if (subcommand === "manual") {
+      if (!interaction.memberPermissions.has(PermissionFlagsBits.ManageChannels)) {
+        return interaction.reply({
+          content: "You need Manage Channels permission to create a manual ticket.",
+          ephemeral: true,
+        });
+      }
+
+      const targetUser = interaction.options.getUser("user", true);
+      const subject = interaction.options.getString("subject", true);
+      const description = interaction.options.getString("description", true);
+
+      const requestedRoles = [
+        interaction.options.getRole("role"),
+        interaction.options.getRole("role_two"),
+        interaction.options.getRole("role_three"),
+      ].filter(Boolean);
+
+      let userId = await getUserIdByDiscordId(targetUser.id);
+
+      if (!userId) {
+        try {
+          userId = await createUnlinkedUser(targetUser.id, targetUser.username);
+        } catch (userCreateError) {
+          console.error("ticket manual: failed to create placeholder user", userCreateError);
+        }
+      }
+
+      if (!userId) {
+        return interaction.reply({
+          content: "Unable to link that user to a ticket record. Please try again.",
+          ephemeral: true,
+        });
+      }
+
+      await interaction.deferReply({ ephemeral: true });
+
+      let categoryId;
+      try {
+        categoryId = await ensureUncategorisedCategory();
+      } catch (categoryError) {
+        console.error("ticket manual: failed to resolve uncategorised category", categoryError);
+        return interaction.editReply({
+          content: "Couldn't prepare an uncategorised ticket. Please try again later.",
+        });
+      }
+
+      const staffRoleIds = requestedRoles.map((role) => role.id);
+
+      let ticketRecord;
+      try {
+        ticketRecord = await createSupportTicket(
+          interaction.client,
+          userId,
+          categoryId,
+          subject,
+          {
+            discordUserId: targetUser.id,
+            staffRoleIds,
+            parentCategoryId: false,
+          }
+        );
+      } catch (ticketError) {
+        console.error("ticket manual: failed to create ticket", ticketError);
+        return interaction.editReply({
+          content: "Couldn't create that ticket right now. Please try again shortly.",
+        });
+      }
+
+      const { ticketId, channel } = ticketRecord;
+
+      try {
+        await addTicketUserParticipant(ticketId, { userId });
+      } catch (participantError) {
+        console.error("ticket manual: failed to add user participant", participantError);
+      }
+
+      for (const role of requestedRoles) {
+        try {
+          await addTicketGroupParticipant(ticketId, {
+            id: role.id,
+            name: role.name,
+            rankSlug: null,
+            badgeColor: null,
+            textColor: null,
+          });
+        } catch (participantError) {
+          console.error("ticket manual: failed to add role participant", participantError);
+        }
+      }
+
+      try {
+        await applyTicketParticipantPermissions(interaction.client, ticketId);
+      } catch (permissionError) {
+        console.error("ticket manual: failed to apply participant permissions", permissionError);
+      }
+
+      const siteBaseUrl =
+        (config.siteConfiguration && config.siteConfiguration.siteUrl) ||
+        process.env.SITE_URL ||
+        "https://craftingforchrist.net";
+      const normalizedSiteUrl = siteBaseUrl.endsWith("/")
+        ? siteBaseUrl.slice(0, -1)
+        : siteBaseUrl;
+      const ticketUrl = `${normalizedSiteUrl}/support/ticket/${ticketId}`;
+
+      try {
+        await createSupportTicketMessage(
+          interaction.client,
+          ticketId,
+          userId,
+          description,
+          "discord"
+        );
+      } catch (messageError) {
+        console.error("ticket manual: failed to log ticket description", messageError);
+      }
+
+      const ticketEmbed = new EmbedBuilder()
+        .setTitle(`Ticket #${ticketId}: ${subject}`)
+        .setDescription(description)
+        .addFields(
+          { name: "Opened for", value: `${targetUser.tag} (<@${targetUser.id}>)` },
+          { name: "Category", value: "Uncategorised" },
+          { name: "Created by", value: `${interaction.user.tag}` }
+        )
+        .setTimestamp(new Date())
+        .setColor(0x2b6cb0);
+
+      const closeButton = new ButtonBuilder()
+        .setCustomId("support_ticket_close")
+        .setLabel("Close Ticket")
+        .setStyle(ButtonStyle.Danger);
+
+      const viewOnlineButton = new ButtonBuilder()
+        .setStyle(ButtonStyle.Link)
+        .setLabel("View Ticket Online")
+        .setURL(ticketUrl);
+
+      try {
+        const message = await channel.send({
+          content: `<@${targetUser.id}> a ticket has been created for you by ${interaction.user.tag}.`,
+          embeds: [ticketEmbed],
+          components: [new ActionRowBuilder().addComponents(viewOnlineButton, closeButton)],
+        });
+
+        try {
+          await message.pin();
+        } catch (pinError) {
+          console.error("ticket manual: failed to pin opener message", pinError);
+        }
+      } catch (channelError) {
+        console.error("ticket manual: failed to post opener message", channelError);
+      }
+
+      return interaction.editReply({
+        content: `Ticket created in ${channel} with reference #${ticketId}.`,
       });
     }
 
