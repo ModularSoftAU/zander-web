@@ -101,7 +101,8 @@
                         </div>
                         <div class="flex-fill">
                             <div class="d-flex align-items-center gap-2 flex-wrap">
-                                <strong style="color: <%= topRank?.badgeColor || '#0f172a' %>;"><%= message.username %></strong>
+                                <% const usernameContent = message.profileUrl ? `<a href="${message.profileUrl}" class="text-decoration-none" style="color: ${topRank?.badgeColor || '#0f172a'};">${message.username}</a>` : `<span style="color: ${topRank?.badgeColor || '#0f172a'};">${message.username}</span>`; %>
+                                <strong><%- usernameContent %></strong>
                                 <% if (message.isInternal) { %>
                                     <span class="badge bg-warning text-dark">Internal note</span>
                                 <% } %>
@@ -114,7 +115,7 @@
                                     <% }); %>
                                 </div>
                             <% } %>
-                            <p class="mt-2 mb-1"><%= message.message %></p>
+                            <p class="mt-2 mb-1"><%- message.renderedMessage %></p>
                         </div>
                     </div>
                 </div>

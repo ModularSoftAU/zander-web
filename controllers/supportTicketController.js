@@ -1078,6 +1078,43 @@ export async function getTicketMessages(ticketId, includeInternal = false) {
     const uniqueUserIds = [...new Set(filteredMessages.map((message) => message.userId))];
     let userRanks = {};
 
+    const mentionMatches = new Set();
+    filteredMessages.forEach((message) => {
+        const regex = /<@(\d+)>/g;
+        let match;
+        while ((match = regex.exec(message.message))) {
+            mentionMatches.add(match[1]);
+        }
+    });
+
+    let mentionUsers = {};
+    if (mentionMatches.size > 0) {
+        mentionUsers = await new Promise((resolve) => {
+            db.query(
+                "SELECT userId, username, discordId FROM users WHERE discordId IN (?)",
+                [[...mentionMatches]],
+                (err, results) => {
+                    if (err) {
+                        console.error("Failed to load mention users for ticket messages", err);
+                        resolve({});
+                        return;
+                    }
+
+                    const lookup = {};
+                    results.forEach((row) => {
+                        lookup[row.discordId] = {
+                            userId: row.userId,
+                            username: row.username,
+                            profileUrl: row.username ? `/profile/${encodeURIComponent(row.username)}` : null,
+                        };
+                    });
+
+                    resolve(lookup);
+                },
+            );
+        });
+    }
+
     if (uniqueUserIds.length > 0) {
         userRanks = await new Promise((resolve) => {
             db.query(
@@ -1111,6 +1148,14 @@ export async function getTicketMessages(ticketId, includeInternal = false) {
 
     const resolvedMessages = [];
 
+    const escapeHtml = (value = "") =>
+        value
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#39;");
+
     for (const message of filteredMessages) {
         let avatarUrl = null;
         try {
@@ -1124,11 +1169,24 @@ export async function getTicketMessages(ticketId, includeInternal = false) {
             console.error("Failed to build avatar for ticket message", avatarError);
         }
 
+        const profileUrl = message.username ? `/profile/${encodeURIComponent(message.username)}` : null;
+
+        const escapedMessage = escapeHtml(message.message || "");
+        const renderedMessage = escapedMessage.replace(/&lt;@(\d+)&gt;/g, (match, discordId) => {
+            const mentionUser = mentionUsers[discordId];
+            if (mentionUser?.profileUrl && mentionUser?.username) {
+                return `<a href="${mentionUser.profileUrl}" class="fw-semibold">@${escapeHtml(mentionUser.username)}</a>`;
+            }
+            return `@${discordId}`;
+        });
+
         resolvedMessages.push({
             ...message,
             avatarUrl,
+            profileUrl,
             ranks: userRanks[message.userId] || [],
             isInternal: Boolean(message.isInternal),
+            renderedMessage,
         });
     }
 
