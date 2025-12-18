@@ -30,9 +30,10 @@
                             <label for="category" class="form-label">Category</label>
                             <select name="category" id="category" class="form-select" required>
                                 <% categories.forEach(category => { %>
-                                    <option value="<%= category.categoryId %>"><%= category.name %></option>
+                                    <option value="<%= category.categoryId %>" data-description="<%= category.description || 'No description available.' %>"><%= category.name %></option>
                                 <% }) %>
                             </select>
+                            <div class="form-text text-muted" id="category-description">Select a category to see its description.</div>
                         </div>
                         <div class="col-12">
                             <label for="message" class="form-label">Message</label>
@@ -65,5 +66,25 @@
         </div>
     </div>
 </div>
+
+<script>
+    (() => {
+        const categorySelect = document.getElementById('category');
+        const descriptionEl = document.getElementById('category-description');
+
+        if (!categorySelect || !descriptionEl) return;
+
+        const updateDescription = () => {
+            const selected = categorySelect.selectedOptions[0];
+            const description = selected?.dataset?.description?.trim();
+            descriptionEl.textContent = description && description.length
+                ? description
+                : 'No description available for this category.';
+        };
+
+        categorySelect.addEventListener('change', updateDescription);
+        updateDescription();
+    })();
+</script>
 
 <%- include('../../modules/footer.ejs') %>

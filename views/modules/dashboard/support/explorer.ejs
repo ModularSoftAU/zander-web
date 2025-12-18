@@ -29,11 +29,12 @@
                     <form class="d-flex align-items-center gap-2" action="/dashboard/support/explorer" method="GET">
                         <label for="category" class="form-label mb-0 text-muted small">Category</label>
                         <select name="category" id="category" class="form-select">
-                            <option value="">All Categories</option>
+                            <option value="" data-description="Viewing every category.">All Categories</option>
                             <% categories.forEach(category => { %>
-                                <option value="<%= category.categoryId %>" <%= selectedCategory == category.categoryId ? 'selected' : '' %>><%= category.name %></option>
+                                <option value="<%= category.categoryId %>" data-description="<%= category.description || 'No description available.' %>" <%= selectedCategory == category.categoryId ? 'selected' : '' %>><%= category.name %></option>
                             <% }) %>
                         </select>
+                        <div class="form-text text-muted" id="category-filter-description">Viewing every category.</div>
                         <button type="submit" class="btn btn-primary">Apply</button>
                     </form>
                 </div>
@@ -78,5 +79,25 @@
         </main>
     </div>
 </div>
+
+<script>
+    (() => {
+        const categorySelect = document.getElementById('category');
+        const descriptionEl = document.getElementById('category-filter-description');
+
+        if (!categorySelect || !descriptionEl) return;
+
+        const updateDescription = () => {
+            const selected = categorySelect.selectedOptions[0];
+            const description = selected?.dataset?.description?.trim();
+            descriptionEl.textContent = description && description.length
+                ? description
+                : 'No description available for this category.';
+        };
+
+        categorySelect.addEventListener('change', updateDescription);
+        updateDescription();
+    })();
+</script>
 
 <%- include('../../../modules/footer.ejs') %>
