@@ -19,6 +19,10 @@ import {
   recreateTicketChannel,
   getCategoryName,
   getCategoryPermissions,
+  setTicketLockState,
+  setTicketEscalationState,
+  searchUsersByUsername,
+  getUserById,
 } from "../controllers/supportTicketController.js";
 import { ActionRowBuilder, ButtonBuilder, ButtonStyle, EmbedBuilder } from "discord.js";
 
@@ -32,6 +36,20 @@ export default function supportRoutes(
   features,
   lang
 ) {
+  const userHasPermissionNode = (permissions = [], node) => {
+    const normalized = permissions || [];
+    return normalized.some((permission) => {
+      if (!permission) return false;
+      if (permission === "*") return true;
+      if (permission === node) return true;
+      if (permission.endsWith(".*")) {
+        const base = permission.slice(0, -2);
+        return node === base || node.startsWith(`${base}.`);
+      }
+      return false;
+    });
+  };
+
   app.get("/support", async function (req, res) {
     try {
       if (!req.session.user) {
@@ -90,6 +108,10 @@ export default function supportRoutes(
 
       const isOwner = ticket.userId === req.session.user.userId;
       const isStaff = req.session.user.isStaff;
+      const permissions = req.session.user.permissions || [];
+      const canEscalate = userHasPermissionNode(permissions, "zander.web.ticket.escalate");
+      const canReplyDuringEscalation = !ticket.isEscalated || isOwner || canEscalate;
+      const canManageLock = isStaff;
       const userRankSlugs = req.session.user.ranks?.map((rank) => rank.rankSlug) || [];
       const isParticipantUser = participants.users.some(
         (participant) => participant.userId === req.session.user.userId
@@ -116,6 +138,9 @@ export default function supportRoutes(
         rankOptions,
         isOwner,
         isStaff,
+        canEscalate,
+        canReplyDuringEscalation,
+        canManageLock,
         globalImage: await getGlobalImage(),
         announcementWeb: await getWebAnnouncement(),
       });
@@ -145,6 +170,8 @@ export default function supportRoutes(
       const userRankSlugs = req.session.user.ranks?.map((rank) => rank.rankSlug) || [];
       const isOwner = ticket.userId === req.session.user.userId;
       const isStaff = req.session.user.isStaff;
+      const permissions = req.session.user.permissions || [];
+      const canEscalate = userHasPermissionNode(permissions, "zander.web.ticket.escalate");
       const isParticipantUser = participants.users.some(
         (participant) => participant.userId === req.session.user.userId
       );
@@ -154,6 +181,11 @@ export default function supportRoutes(
 
       if (!isOwner && !isStaff && !isParticipantUser && !isParticipantRank) {
         return res.redirect("/support");
+      }
+
+      if (ticket.isEscalated && !isOwner && !canEscalate) {
+        setBannerCookie("warning", "This ticket is escalated. Only the opener and escalation staff may reply.", res);
+        return res.redirect(`/support/ticket/${req.params.id}`);
       }
 
       const body = req.body || {};
@@ -239,6 +271,7 @@ export default function supportRoutes(
       const ticket = await getTicketById(req.params.id);
       const isOwner = ticket.userId === req.session.user.userId;
       const isStaff = req.session.user.isStaff;
+      const username = req.session.user.username || `User ${req.session.user.userId}`;
 
       if (!isOwner && !isStaff) {
         setBannerCookie("danger", "You do not have access to this ticket.", res);
@@ -251,7 +284,27 @@ export default function supportRoutes(
         return res.redirect(`/support/ticket/${req.params.id}`);
       }
 
+      if (ticket.isLocked && nextStatus === "open" && !isStaff) {
+        setBannerCookie(
+          "warning",
+          "This ticket is locked and can only be reopened by staff.",
+          res
+        );
+        return res.redirect(`/support/ticket/${req.params.id}`);
+      }
+
       await updateTicketStatus(ticket.ticketId, nextStatus);
+
+      const statusMessage = nextStatus === "closed"
+        ? `Ticket closed by ${username}`
+        : `Ticket reopened by ${username}`;
+      try {
+        await createSupportTicketMessage(client, ticket.ticketId, req.session.user.userId, statusMessage, "web", {
+          messageType: "status",
+        });
+      } catch (statusLogError) {
+        console.error("Failed to persist status change message", statusLogError);
+      }
 
       if (nextStatus === "closed") {
         await deleteTicketChannel(client, ticket.ticketId, "Ticket closed from web view");
@@ -301,6 +354,124 @@ export default function supportRoutes(
     }
   });
 
+  app.post("/support/ticket/:id/escalation", async function (req, res) {
+    try {
+      if (!req.session.user) {
+        return res.redirect("/login");
+      }
+
+      const ticket = await getTicketById(req.params.id);
+      const isStaff = req.session.user.isStaff;
+      const permissions = req.session.user.permissions || [];
+
+      if (!isStaff || !userHasPermissionNode(permissions, "zander.web.ticket.escalate")) {
+        setBannerCookie("danger", "You do not have permission to escalate this ticket.", res);
+        return res.redirect(`/support/ticket/${req.params.id}`);
+      }
+
+      const action = (req.body?.action || "").toLowerCase();
+      if (!["escalate", "deescalate"].includes(action)) {
+        setBannerCookie("warning", "Invalid escalation request.", res);
+        return res.redirect(`/support/ticket/${req.params.id}`);
+      }
+
+      const shouldEscalate = action === "escalate";
+      await setTicketEscalationState(ticket.ticketId, shouldEscalate);
+
+      try {
+        await createSupportTicketMessage(
+          client,
+          ticket.ticketId,
+          req.session.user.userId,
+          shouldEscalate
+            ? `${req.session.user.username || "Staff"} escalated this ticket`
+            : `${req.session.user.username || "Staff"} deescalated this ticket`,
+          "web",
+          { messageType: "status" }
+        );
+      } catch (escalationLogError) {
+        console.error("Failed to log escalation event", escalationLogError);
+      }
+
+      setBannerCookie(
+        "success",
+        shouldEscalate ? "Ticket escalated." : "Ticket deescalated.",
+        res
+      );
+      return res.redirect(`/support/ticket/${ticket.ticketId}`);
+    } catch (error) {
+      console.error(error);
+      return res.view("session/error", {
+        pageTitle: "Error",
+        pageDescription: "Error",
+        config,
+        req,
+        error,
+        features,
+        globalImage: await getGlobalImage(),
+        announcementWeb: await getWebAnnouncement(),
+      });
+    }
+  });
+
+  app.post("/support/ticket/:id/lock", async function (req, res) {
+    try {
+      if (!req.session.user) {
+        return res.redirect("/login");
+      }
+
+      const ticket = await getTicketById(req.params.id);
+      const isStaff = req.session.user.isStaff;
+      if (!isStaff) {
+        setBannerCookie("danger", "You do not have permission to lock this ticket.", res);
+        return res.redirect(`/support/ticket/${req.params.id}`);
+      }
+
+      const action = (req.body?.action || "").toLowerCase();
+      if (!["lock", "unlock"].includes(action)) {
+        setBannerCookie("warning", "Invalid lock request.", res);
+        return res.redirect(`/support/ticket/${req.params.id}`);
+      }
+
+      const shouldLock = action === "lock";
+      await setTicketLockState(ticket.ticketId, shouldLock);
+
+      try {
+        await createSupportTicketMessage(
+          client,
+          ticket.ticketId,
+          req.session.user.userId,
+          shouldLock
+            ? `${req.session.user.username || "Staff"} locked this ticket`
+            : `${req.session.user.username || "Staff"} unlocked this ticket`,
+          "web",
+          { messageType: "status" }
+        );
+      } catch (lockLogError) {
+        console.error("Failed to log lock event", lockLogError);
+      }
+
+      setBannerCookie(
+        "success",
+        shouldLock ? "Ticket locked." : "Ticket unlocked.",
+        res
+      );
+      return res.redirect(`/support/ticket/${ticket.ticketId}`);
+    } catch (error) {
+      console.error(error);
+      return res.view("session/error", {
+        pageTitle: "Error",
+        pageDescription: "Error",
+        config,
+        req,
+        error,
+        features,
+        globalImage: await getGlobalImage(),
+        announcementWeb: await getWebAnnouncement(),
+      });
+    }
+  });
+
   app.post("/support/ticket/:id/add-user", async function (req, res) {
     try {
       if (!req.session.user) {
@@ -324,12 +495,14 @@ export default function supportRoutes(
       }
 
       const userIdentifier = (req.body?.userIdentifier || "").trim();
-      if (!userIdentifier) {
+      const userIdFromForm = parseInt(req.body?.userId, 10);
+
+      if (!userIdentifier && !userIdFromForm) {
         setBannerCookie("warning", "Provide a username or user ID to add.", res);
         return res.redirect(`/support/ticket/${req.params.id}`);
       }
 
-      const user = await findUserByIdentifier(userIdentifier);
+      const user = userIdFromForm ? await getUserById(userIdFromForm) : await findUserByIdentifier(userIdentifier);
       if (!user) {
         setBannerCookie("danger", "User not found.", res);
         return res.redirect(`/support/ticket/${req.params.id}`);
@@ -403,6 +576,27 @@ export default function supportRoutes(
         globalImage: await getGlobalImage(),
         announcementWeb: await getWebAnnouncement(),
       });
+    }
+  });
+
+  app.get("/support/users/search", async function (req, res) {
+    try {
+      if (!req.session.user) {
+        return res.status(401).json({ results: [] });
+      }
+
+      const query = req.query?.q || "";
+      const results = await searchUsersByUsername(query);
+      return res.json({
+        results: results.map((user) => ({
+          userId: user.userId,
+          username: user.username,
+          avatarUrl: user.avatarUrl,
+        })),
+      });
+    } catch (error) {
+      console.error("support user search failed", error);
+      return res.status(500).json({ results: [] });
     }
   });
 
