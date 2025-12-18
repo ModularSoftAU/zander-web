@@ -345,10 +345,16 @@ export async function addTicketGroupParticipant(ticketId, group) {
     const hasTable = await ensureTicketParticipantTable();
     if (!hasTable) return null;
 
+    const roleId = group?.id ? String(group.id).trim() : "";
+    if (!/^\d{5,}$/.test(roleId)) {
+        console.warn("addTicketGroupParticipant: skipping invalid Discord role id", { ticketId, roleId });
+        return null;
+    }
+
     return new Promise((resolve, reject) => {
         db.query(
             "INSERT IGNORE INTO supportTicketParticipants (ticketId, roleId, rankSlug, roleName, badgeColor, textColor) VALUES (?, ?, ?, ?, ?, ?)",
-            [ticketId, group.id, group.rankSlug, group.name, group.badgeColor, group.textColor],
+            [ticketId, roleId, group.rankSlug, group.name, group.badgeColor, group.textColor],
             (err, results) => {
                 if (err) {
                     reject(err);
@@ -409,7 +415,10 @@ export async function syncParticipantsForMessage(client, ticketId, { userId, dis
     }
 
     const eligibleRanks = rankOptions.filter(
-        (rank) => discordRoleIds.includes(rank.id) || rankSlugs.includes(rank.rankSlug),
+        (rank) =>
+            rank.id &&
+            /^\d{5,}$/.test(rank.id) &&
+            (discordRoleIds.includes(rank.id) || rankSlugs.includes(rank.rankSlug)),
     );
 
     for (const rank of eligibleRanks) {
@@ -457,9 +466,11 @@ export async function applyTicketParticipantPermissions(client, ticketId) {
 
     const permissionUpdates = [];
 
+    const isSnowflake = (value) => Boolean(value) && /^\d{5,}$/.test(String(value).trim());
+
     participants.users
         .map((user) => (user.discordId ? String(user.discordId).trim() : ""))
-        .filter((id) => Boolean(id))
+        .filter((id) => isSnowflake(id))
         .forEach((discordId) => {
             permissionUpdates.push(
                 channel.permissionOverwrites.edit(discordId, {
@@ -473,7 +484,13 @@ export async function applyTicketParticipantPermissions(client, ticketId) {
 
     participants.groups
         .map((group) => (group.roleId ? String(group.roleId).trim() : ""))
-        .filter((roleId) => Boolean(roleId))
+        .filter((roleId) => {
+            const valid = isSnowflake(roleId);
+            if (!valid) {
+                console.warn("applyTicketParticipantPermissions: skipping invalid role id", { ticketId, roleId });
+            }
+            return valid;
+        })
         .forEach((roleId) => {
             permissionUpdates.push(
                 channel.permissionOverwrites.edit(roleId, {

@@ -282,7 +282,7 @@ export default function supportRoutes(
 
       const rankOptions = await getLuckPermRankRoles();
       const selectedRoleId = req.body?.groupRoleId;
-      const selectedRank = rankOptions.find((rank) => rank.id === selectedRoleId);
+      const selectedRank = rankOptions.find((rank) => rank.id === selectedRoleId && /^\d{5,}$/.test(rank.id));
 
       if (!selectedRank) {
         setBannerCookie("warning", "Select a valid group to add.", res);
