@@ -18,11 +18,13 @@ import {
   deleteTicketChannel,
   recreateTicketChannel,
   getCategoryName,
+  getCategoryById,
   getCategoryPermissions,
   setTicketLockState,
   setTicketEscalationState,
   searchUsersByUsername,
   getUserById,
+  updateTicketCategory,
 } from "../controllers/supportTicketController.js";
 import { ActionRowBuilder, ButtonBuilder, ButtonStyle, EmbedBuilder } from "discord.js";
 
@@ -125,6 +127,7 @@ export default function supportRoutes(
       }
 
       const messages = await getTicketMessages(req.params.id, isStaff);
+      const categories = await getSupportCategories();
 
       return res.view("modules/support/ticket", {
         pageTitle: `Ticket #${ticket.ticketId}`,
@@ -141,6 +144,7 @@ export default function supportRoutes(
         canEscalate,
         canReplyDuringEscalation,
         canManageLock,
+        categories,
         globalImage: await getGlobalImage(),
         announcementWeb: await getWebAnnouncement(),
       });
@@ -339,6 +343,78 @@ export default function supportRoutes(
       }
 
       return res.redirect(`/support/ticket/${req.params.id}`);
+    } catch (error) {
+      console.error(error);
+      return res.view("session/error", {
+        pageTitle: "Error",
+        pageDescription: "Error",
+        config,
+        req,
+        error,
+        features,
+        globalImage: await getGlobalImage(),
+        announcementWeb: await getWebAnnouncement(),
+      });
+    }
+  });
+
+  app.post("/support/ticket/:id/category", async function (req, res) {
+    try {
+      if (!req.session.user) {
+        return res.redirect("/login");
+      }
+
+      const ticket = await getTicketById(req.params.id);
+      if (!ticket) {
+        setBannerCookie("danger", "Ticket not found.", res);
+        return res.redirect("/support");
+      }
+
+      if (!req.session.user.isStaff) {
+        setBannerCookie("danger", "Only staff can reassign tickets.", res);
+        return res.redirect(`/support/ticket/${req.params.id}`);
+      }
+
+      const nextCategoryId = parseInt(req.body?.categoryId, 10);
+      if (!nextCategoryId || Number.isNaN(nextCategoryId)) {
+        setBannerCookie("warning", "Select a valid category to reassign.", res);
+        return res.redirect(`/support/ticket/${req.params.id}`);
+      }
+
+      const [nextCategory, previousCategory] = await Promise.all([
+        getCategoryById(nextCategoryId),
+        getCategoryById(ticket.categoryId),
+      ]);
+
+      if (!nextCategory || nextCategory.enabled === 0) {
+        setBannerCookie("warning", "That category is not available.", res);
+        return res.redirect(`/support/ticket/${req.params.id}`);
+      }
+
+      if (ticket.categoryId === nextCategoryId) {
+        setBannerCookie("info", "Ticket is already in that category.", res);
+        return res.redirect(`/support/ticket/${req.params.id}`);
+      }
+
+      await updateTicketCategory(client, ticket.ticketId, nextCategoryId);
+
+      try {
+        await createSupportTicketMessage(
+          client,
+          ticket.ticketId,
+          req.session.user.userId,
+          `${req.session.user.username || "Staff"} moved this ticket from ${
+            previousCategory?.name || `Category ${ticket.categoryId}`
+          } to ${nextCategory.name}`,
+          "web",
+          { messageType: "status" }
+        );
+      } catch (categoryLogError) {
+        console.error("Failed to log category change", categoryLogError);
+      }
+
+      setBannerCookie("success", "Ticket category updated.", res);
+      return res.redirect(`/support/ticket/${ticket.ticketId}`);
     } catch (error) {
       console.error(error);
       return res.view("session/error", {

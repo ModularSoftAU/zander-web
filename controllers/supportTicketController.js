@@ -1093,6 +1093,91 @@ export async function getCategoryPermissions(categoryId) {
     });
 }
 
+export async function updateTicketCategory(client, ticketId, newCategoryId) {
+    const hasChannelColumn = await ensureDiscordChannelColumn();
+
+    const ticket = await getTicketById(ticketId);
+    if (!ticket) {
+        throw new Error("Ticket not found");
+    }
+
+    const previousCategoryId = ticket.categoryId;
+    if (previousCategoryId === newCategoryId) {
+        return { changed: false, previousCategoryId, nextCategoryId: newCategoryId };
+    }
+
+    const [previousPermissions, nextPermissions] = await Promise.all([
+        getCategoryPermissions(previousCategoryId),
+        getCategoryPermissions(newCategoryId),
+    ]);
+
+    await new Promise((resolve, reject) => {
+        db.query(
+            "UPDATE supportTickets SET categoryId = ? WHERE ticketId = ?",
+            [newCategoryId, ticketId],
+            (err) => {
+                if (err) {
+                    reject(err);
+                } else {
+                    resolve();
+                }
+            },
+        );
+    });
+
+    if (!hasChannelColumn || !client || !ticket.discordChannelId) {
+        return { changed: true, previousCategoryId, nextCategoryId: newCategoryId };
+    }
+
+    let channel;
+    try {
+        channel = await client.channels.fetch(ticket.discordChannelId);
+    } catch (channelError) {
+        console.error("updateTicketCategory: failed to fetch Discord channel", channelError);
+        return { changed: true, previousCategoryId, nextCategoryId: newCategoryId };
+    }
+
+    if (!channel) {
+        return { changed: true, previousCategoryId, nextCategoryId: newCategoryId };
+    }
+
+    const permissionPromises = [];
+    const isSnowflake = (value) => Boolean(value) && /^\d{5,}$/.test(String(value).trim());
+
+    previousPermissions
+        .filter((roleId) => roleId && !nextPermissions.includes(roleId))
+        .forEach((roleId) => {
+            if (!isSnowflake(roleId)) return;
+            permissionPromises.push(
+                channel.permissionOverwrites.delete(roleId).catch((error) => {
+                    console.error("updateTicketCategory: failed to remove old role permission", { roleId, ticketId }, error);
+                }),
+            );
+        });
+
+    nextPermissions
+        .filter((roleId) => isSnowflake(roleId))
+        .forEach((roleId) => {
+            permissionPromises.push(
+                channel.permissionOverwrites.edit(roleId, {
+                    ViewChannel: true,
+                    SendMessages: true,
+                    AttachFiles: true,
+                    ReadMessageHistory: true,
+                    ManageMessages: true,
+                }),
+            );
+        });
+
+    try {
+        await Promise.all(permissionPromises);
+    } catch (permissionError) {
+        console.error("updateTicketCategory: failed to update Discord permissions", permissionError);
+    }
+
+    return { changed: true, previousCategoryId, nextCategoryId: newCategoryId };
+}
+
 export async function getUserById(userId) {
     if (!userId) return null;
 
