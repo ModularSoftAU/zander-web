@@ -1,5 +1,10 @@
 import { Listener } from "@sapphire/framework";
-import { handleTicketClose, startTicketFlow } from "../lib/discord/ticketFlow.mjs";
+import {
+  handleTicketClose,
+  handleTicketCloseCancel,
+  handleTicketCloseConfirmation,
+  startTicketFlow,
+} from "../lib/discord/ticketFlow.mjs";
 
 export class SupportTicketInteractionsListener extends Listener {
   constructor(context, options) {
@@ -18,6 +23,14 @@ export class SupportTicketInteractionsListener extends Listener {
 
       if (interaction.customId === "support_ticket_close") {
         return handleTicketClose(interaction);
+      }
+
+      if (interaction.customId.startsWith("support_ticket_close_confirm")) {
+        return handleTicketCloseConfirmation(interaction);
+      }
+
+      if (interaction.customId.startsWith("support_ticket_close_cancel")) {
+        return handleTicketCloseCancel(interaction);
       }
     }
   }
