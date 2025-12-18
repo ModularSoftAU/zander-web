@@ -18,6 +18,7 @@ import {
   getCategoryById,
   updateSupportCategory,
   deleteTicketChannel,
+  recreateTicketChannel,
 } from "../../controllers/supportTicketController.js";
 import { hasPermission as hasPermissionNode } from "../../lib/discord/permissions.mjs";
 
@@ -425,10 +426,33 @@ export default function supportDashboardRoutes(
       );
       if (hasCategoryAccess !== true) return hasCategoryAccess;
 
-      await updateTicketStatus(ticket.ticketId, req.body.status);
+      const newStatus = req.body.status;
+      await updateTicketStatus(ticket.ticketId, newStatus);
 
-      if (req.body.status === "closed") {
+      if (newStatus === "closed") {
         await deleteTicketChannel(client, ticket.ticketId, "Ticket closed from dashboard");
+      } else if (newStatus === "open") {
+        let needsChannel = !ticket.discordChannelId;
+
+        if (!needsChannel && client) {
+          try {
+            await client.channels.fetch(ticket.discordChannelId);
+          } catch (fetchError) {
+            console.warn(
+              "dashboard reopen: stored channel missing, recreating",
+              fetchError
+            );
+            needsChannel = true;
+          }
+        }
+
+        if (needsChannel) {
+          try {
+            await recreateTicketChannel(client, ticket.ticketId);
+          } catch (recreateError) {
+            console.error("Failed to recreate ticket channel on reopen", recreateError);
+          }
+        }
       }
 
       return res.redirect(`/support/ticket/${req.params.id}`);

@@ -281,6 +281,185 @@ export async function createSupportTicket(
     });
 }
 
+export async function recreateTicketChannel(
+    client,
+    ticketId,
+    { parentCategoryId = null } = {},
+) {
+    const hasChannelColumn = await ensureDiscordChannelColumn();
+    if (!hasChannelColumn) {
+        throw new Error("supportTickets.discordChannelId column is unavailable");
+    }
+
+    const ticket = await getTicketById(ticketId);
+    if (!ticket) {
+        throw new Error(`Ticket ${ticketId} not found`);
+    }
+
+    const guildId = config.discord?.guildId ?? process.env.DISCORD_GUILD_ID;
+    if (!guildId) {
+        throw new Error("DISCORD_GUILD_ID is not configured for ticket recreation");
+    }
+
+    let guild;
+    try {
+        guild = await client.guilds.fetch(guildId);
+    } catch (guildError) {
+        console.error("Failed to fetch Discord guild for ticket recreation", guildError);
+        throw guildError;
+    }
+
+    if (!guild || !guild.roles?.everyone) {
+        throw new Error("Discord guild is unavailable for ticket recreation");
+    }
+
+    let owner;
+    try {
+        owner = await new Promise((resolve) => {
+            db.query(
+                "SELECT userId, username, discordId FROM users WHERE userId = ? LIMIT 1",
+                [ticket.userId],
+                (err, results) => {
+                    if (err) {
+                        console.error("recreateTicketChannel: failed to load ticket owner", err);
+                        resolve(null);
+                        return;
+                    }
+
+                    resolve(results?.[0] || null);
+                },
+            );
+        });
+    } catch (ownerError) {
+        console.error("recreateTicketChannel: error loading owner", ownerError);
+    }
+
+    const staffRoleIds = await getCategoryPermissions(ticket.categoryId);
+
+    const resolvedParentId =
+        parentCategoryId && parentCategoryId !== "undefined" && parentCategoryId !== ""
+            ? parentCategoryId
+            : config.discord?.supportTicketCategoryId ?? process.env.SUPPORT_CATEGORY_ID ?? null;
+
+    const permissionOverwrites = [
+        {
+            id: guild.roles.everyone.id,
+            deny: [PermissionFlagsBits.ViewChannel],
+        },
+    ];
+
+    if (owner?.discordId) {
+        permissionOverwrites.push({
+            id: owner.discordId,
+            allow: [
+                PermissionFlagsBits.ViewChannel,
+                PermissionFlagsBits.SendMessages,
+                PermissionFlagsBits.AttachFiles,
+                PermissionFlagsBits.ReadMessageHistory,
+            ],
+        });
+    }
+
+    staffRoleIds.forEach((roleId) => {
+        permissionOverwrites.push({
+            id: roleId,
+            allow: [
+                PermissionFlagsBits.ViewChannel,
+                PermissionFlagsBits.SendMessages,
+                PermissionFlagsBits.AttachFiles,
+                PermissionFlagsBits.ReadMessageHistory,
+                PermissionFlagsBits.ManageMessages,
+            ],
+        });
+    });
+
+    const channelOptions = {
+        name: `ticket-${ticket.ticketId}`,
+        type: ChannelType.GuildText,
+        permissionOverwrites,
+        reason: `Ticket #${ticket.ticketId} reopened`,
+    };
+
+    if (resolvedParentId) {
+        try {
+            const parentChannel = await guild.channels.fetch(resolvedParentId);
+            if (parentChannel?.type === ChannelType.GuildCategory) {
+                channelOptions.parent = parentChannel.id;
+            } else {
+                console.warn("Configured ticket parent is not a category during reopen; creating without parent");
+            }
+        } catch (parentError) {
+            console.error("Failed to fetch configured ticket parent category during reopen", parentError);
+        }
+    }
+
+    const channel = await guild.channels.create(channelOptions);
+
+    await new Promise((resolve) => {
+        db.query(
+            "UPDATE supportTickets SET discordChannelId = ? WHERE ticketId = ?",
+            [channel.id, ticket.ticketId],
+            (err) => {
+                if (err) {
+                    console.error("recreateTicketChannel: failed to persist new channel id", err);
+                }
+                resolve();
+            },
+        );
+    });
+
+    const siteBaseUrl =
+        (config.siteConfiguration && config.siteConfiguration.siteUrl) ||
+        process.env.SITE_URL ||
+        "https://craftingforchrist.net";
+    const normalizedSiteUrl = siteBaseUrl.endsWith("/") ? siteBaseUrl.slice(0, -1) : siteBaseUrl;
+    const ticketUrl = `${normalizedSiteUrl}/support/ticket/${ticket.ticketId}`;
+
+    const reopenEmbed = {
+        title: `Ticket #${ticket.ticketId}: ${ticket.title}`,
+        description: "Ticket reopened from the web dashboard.",
+        timestamp: new Date().toISOString(),
+        color: 0x2b6cb0,
+        fields: [],
+    };
+
+    if (owner?.username) {
+        reopenEmbed.fields.push({ name: "Owner", value: owner.username, inline: true });
+    }
+
+    const viewOnlineButton = {
+        type: 2,
+        style: 5,
+        label: "View Ticket Online",
+        url: ticketUrl,
+    };
+
+    const closeButton = {
+        type: 2,
+        style: 4,
+        custom_id: "support_ticket_close",
+        label: "Close Ticket",
+    };
+
+    try {
+        await channel.send({
+            content: owner?.discordId ? `<@${owner.discordId}> Ticket reopened.` : "Ticket reopened.",
+            embeds: [reopenEmbed],
+            components: [{ type: 1, components: [viewOnlineButton, closeButton] }],
+        });
+    } catch (sendError) {
+        console.error("recreateTicketChannel: failed to post reopen message", sendError);
+    }
+
+    try {
+        await applyTicketParticipantPermissions(client, ticket.ticketId);
+    } catch (participantError) {
+        console.error("recreateTicketChannel: failed to reapply participant permissions", participantError);
+    }
+
+    return channel;
+}
+
 export async function getTicketParticipants(ticketId) {
     const hasTable = await ensureTicketParticipantTable();
     if (!hasTable) return { users: [], groups: [] };
