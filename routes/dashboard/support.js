@@ -9,6 +9,7 @@ import {
   getSupportCategories,
   getSupportCategoriesWithPermissions,
   addCategoryPermission,
+  removeCategoryPermission,
   createSupportCategory,
   deleteSupportCategory,
   getAllTickets,
@@ -280,6 +281,34 @@ export default function supportDashboardRoutes(
         const { roleId } = req.body;
 
         await addCategoryPermission(id, roleId);
+
+        return res.redirect("/dashboard/support/categories");
+      } catch (error) {
+        console.error(error);
+        return res.view("session/error", {
+          pageTitle: "Error",
+          pageDescription: "Error",
+          config,
+          req,
+          error,
+          features,
+          globalImage: await getGlobalImage(),
+          announcementWeb: await getWebAnnouncement(),
+        });
+      }
+    }
+  );
+
+  app.post(
+    "/dashboard/support/categories/:id/permissions/:roleId/delete",
+    async function (req, res) {
+      try {
+        const hasTicketsAccess = await requireTicketPermission(req, res);
+        if (hasTicketsAccess !== true) return hasTicketsAccess;
+
+        const { id, roleId } = req.params;
+
+        await removeCategoryPermission(id, roleId);
 
         return res.redirect("/dashboard/support/categories");
       } catch (error) {

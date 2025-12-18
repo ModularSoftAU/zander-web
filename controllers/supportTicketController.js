@@ -160,6 +160,22 @@ export async function addCategoryPermission(categoryId, roleId) {
   });
 }
 
+export async function removeCategoryPermission(categoryId, roleId) {
+    return new Promise((resolve, reject) => {
+        db.query(
+            "DELETE FROM supportTicketCategoryPermissions WHERE categoryId = ? AND roleId = ?",
+            [categoryId, roleId],
+            (err, results) => {
+                if (err) {
+                    reject(err);
+                } else {
+                    resolve(results);
+                }
+            },
+        );
+    });
+}
+
 export async function createSupportCategory(name, description) {
   return new Promise((resolve, reject) => {
     db.query(

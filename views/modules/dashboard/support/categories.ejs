@@ -57,13 +57,20 @@
                                         <td><%= category.description %></td>
                                         <td>
                                             <% if (category.permissions && category.permissions.length > 0) { %>
-                                                <% category.permissions.forEach(permission => { %>
-                                                    <% const badgeStyle = [];
-                                                       if (permission.badgeColor) badgeStyle.push(`background-color: ${permission.badgeColor}`);
-                                                       if (permission.textColor) badgeStyle.push(`color: ${permission.textColor}`);
-                                                    %>
-                                                    <span class="badge mb-1 <%= permission.badgeColor ? '' : 'bg-secondary' %>" style="<%= badgeStyle.join('; ') %>"><%= permission.roleName %></span><br>
-                                                <% }) %>
+                                                <div class="d-flex flex-wrap align-items-center gap-2">
+                                                    <% category.permissions.forEach(permission => { %>
+                                                        <% const badgeStyle = [];
+                                                           if (permission.badgeColor) badgeStyle.push(`background-color: ${permission.badgeColor}`);
+                                                           if (permission.textColor) badgeStyle.push(`color: ${permission.textColor}`);
+                                                        %>
+                                                        <div class="d-flex align-items-center gap-2">
+                                                            <span class="badge mb-1 <%= permission.badgeColor ? '' : 'bg-secondary' %>" style="<%= badgeStyle.join('; ') %>"><%= permission.roleName %></span>
+                                                            <form action="/dashboard/support/categories/<%= category.categoryId %>/permissions/<%= permission.roleId %>/delete" method="POST" class="d-inline">
+                                                                <button type="submit" class="btn btn-sm btn-outline-danger">Remove</button>
+                                                            </form>
+                                                        </div>
+                                                    <% }) %>
+                                                </div>
                                             <% } else { %>
                                                 <span class="text-muted">No permissions set.</span>
                                             <% } %>

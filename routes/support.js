@@ -17,7 +17,10 @@ import {
   updateTicketStatus,
   deleteTicketChannel,
   recreateTicketChannel,
+  getCategoryName,
+  getCategoryPermissions,
 } from "../controllers/supportTicketController.js";
+import { ActionRowBuilder, ButtonBuilder, ButtonStyle, EmbedBuilder } from "discord.js";
 
 export default function supportRoutes(
   app,
@@ -444,15 +447,20 @@ export default function supportRoutes(
 
       const { title, category, message } = req.body;
 
-      const { ticketId } = await createSupportTicket(
+      const staffRoleIds = await getCategoryPermissions(category);
+      const categoryName = await getCategoryName(category);
+
+      const ticketRecord = await createSupportTicket(
         client,
         req.session.user.userId,
         category,
         title,
         {
           discordUserId: req.session.user.discordId,
+          staffRoleIds,
         }
       );
+      const { ticketId, channel } = ticketRecord;
       await createSupportTicketMessage(
         client,
         ticketId,
@@ -464,6 +472,55 @@ export default function supportRoutes(
         userId: req.session.user.userId,
         rankSlugs: req.session.user.ranks?.map((rank) => rank.rankSlug) || [],
       });
+
+      if (channel) {
+        const siteBaseUrl =
+          (config.siteConfiguration && config.siteConfiguration.siteUrl) ||
+          process.env.SITE_URL ||
+          "https://craftingforchrist.net";
+        const normalizedSiteUrl = siteBaseUrl.endsWith("/")
+          ? siteBaseUrl.slice(0, -1)
+          : siteBaseUrl;
+        const ticketUrl = `${normalizedSiteUrl}/support/ticket/${ticketId}`;
+
+        const ticketEmbed = new EmbedBuilder()
+          .setTitle(`Ticket #${ticketId}: ${title}`)
+          .setDescription(message)
+          .addFields(
+            { name: "Opened by", value: `${req.session.user.username || "Web user"}` },
+            { name: "Category", value: categoryName || "Uncategorized" }
+          )
+          .setTimestamp(new Date())
+          .setColor(0x2b6cb0);
+
+        const closeButton = new ButtonBuilder()
+          .setCustomId("support_ticket_close")
+          .setLabel("Close Ticket")
+          .setStyle(ButtonStyle.Danger);
+
+        const viewOnlineButton = new ButtonBuilder()
+          .setStyle(ButtonStyle.Link)
+          .setLabel("View Ticket Online")
+          .setURL(ticketUrl);
+
+        try {
+          const createdMessage = await channel.send({
+            content: req.session.user.discordId
+              ? `<@${req.session.user.discordId}> your ticket has been created.`
+              : "A ticket has been created.",
+            embeds: [ticketEmbed],
+            components: [new ActionRowBuilder().addComponents(viewOnlineButton, closeButton)],
+          });
+
+          try {
+            await createdMessage.pin();
+          } catch (pinError) {
+            console.error("Failed to pin ticket opener message from web", pinError);
+          }
+        } catch (channelError) {
+          console.error("Failed to send ticket created embed from web", channelError);
+        }
+      }
 
       return res.redirect("/support");
     } catch (error) {
