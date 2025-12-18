@@ -5,6 +5,7 @@ import { hashEmail } from "../api/common.js";
 
 let discordChannelColumnCheck;
 let ticketParticipantTableCheck;
+let ticketMessageInternalColumnCheck;
 
 async function ensureDiscordChannelColumn() {
     if (!discordChannelColumnCheck) {
@@ -57,6 +58,46 @@ async function ensureTicketParticipantTable() {
     }
 
     return ticketParticipantTableCheck;
+}
+
+async function ensureTicketMessageInternalColumn() {
+    if (!ticketMessageInternalColumnCheck) {
+        ticketMessageInternalColumnCheck = new Promise((resolve) => {
+            db.query("SHOW COLUMNS FROM supportTicketMessages LIKE 'isInternal'", (err, results) => {
+                if (err) {
+                    console.error("Failed to verify supportTicketMessages.isInternal column", err);
+                    resolve(false);
+                    return;
+                }
+
+                if (results.length > 0) {
+                    resolve(true);
+                    return;
+                }
+
+                db.query(
+                    "ALTER TABLE supportTicketMessages ADD COLUMN isInternal TINYINT(1) NOT NULL DEFAULT 0",
+                    (alterErr) => {
+                        if (alterErr) {
+                            console.error(
+                                "Failed to add missing supportTicketMessages.isInternal column",
+                                alterErr,
+                            );
+                            resolve(false);
+                            return;
+                        }
+
+                        console.info(
+                            "Added missing supportTicketMessages.isInternal column for reply visibility",
+                        );
+                        resolve(true);
+                    },
+                );
+            });
+        });
+    }
+
+    return ticketMessageInternalColumnCheck;
 }
 
 
@@ -729,15 +770,26 @@ export async function deleteTicketChannel(client, ticketId, reason = "Ticket clo
     });
 }
 
-export async function createSupportTicketMessage(client, ticketId, userId, message, source = "web") {
+export async function createSupportTicketMessage(
+    client,
+    ticketId,
+    userId,
+    message,
+    source = "web",
+    options = {},
+) {
+    const isInternal = Boolean(options.isInternal);
     console.info("createSupportTicketMessage invoked", {
         ticketId,
         userId,
         source,
         messageLength: message?.length ?? 0,
+        isInternal,
     });
 
-    if (source === "web") {
+    const hasInternalColumn = await ensureTicketMessageInternalColumn();
+
+    if (source === "web" && !isInternal) {
         try {
             const ticket = await getTicketById(ticketId);
             if (!ticket?.discordChannelId) {
@@ -827,25 +879,29 @@ export async function createSupportTicketMessage(client, ticketId, userId, messa
     }
 
     return new Promise((resolve, reject) => {
-        db.query(
-            "INSERT INTO supportTicketMessages (ticketId, userId, message, attachments) VALUES (?, ?, ?, ?)",
-            [ticketId, userId, message, JSON.stringify([])],
-            (err, results) => {
-                if (err) {
-                    console.error("Failed to persist support ticket message", { ticketId, userId }, err);
-                    reject(err);
-                    return;
-                }
+        const insertQuery = hasInternalColumn
+            ? "INSERT INTO supportTicketMessages (ticketId, userId, message, attachments, isInternal) VALUES (?, ?, ?, ?, ?)"
+            : "INSERT INTO supportTicketMessages (ticketId, userId, message, attachments) VALUES (?, ?, ?, ?)";
+        const params = hasInternalColumn
+            ? [ticketId, userId, message, JSON.stringify([]), isInternal ? 1 : 0]
+            : [ticketId, userId, message, JSON.stringify([])];
 
-                console.info("Persisted support ticket message", {
-                    ticketId,
-                    userId,
-                    messageId: results.insertId,
-                    source,
-                });
-                resolve(results.insertId);
-            },
-        );
+        db.query(insertQuery, params, (err, results) => {
+            if (err) {
+                console.error("Failed to persist support ticket message", { ticketId, userId }, err);
+                reject(err);
+                return;
+            }
+
+            console.info("Persisted support ticket message", {
+                ticketId,
+                userId,
+                messageId: results.insertId,
+                source,
+                isInternal,
+            });
+            resolve(results.insertId);
+        });
     });
 }
 
@@ -956,10 +1012,12 @@ export async function getTicketById(ticketId) {
     });
 }
 
-export async function getTicketMessages(ticketId) {
+export async function getTicketMessages(ticketId, includeInternal = false) {
+    const hasInternalColumn = await ensureTicketMessageInternalColumn();
     const baseMessages = await new Promise((resolve, reject) => {
+        const internalSelect = hasInternalColumn ? "" : ", 0 as isInternal";
         db.query(
-            "SELECT m.*, u.username, u.discordId, u.profilePicture_type, u.profilePicture_email, u.uuid FROM supportTicketMessages m JOIN users u ON m.userId = u.userId WHERE m.ticketId = ? ORDER BY m.createdAt ASC",
+            `SELECT m.*, u.username, u.discordId, u.profilePicture_type, u.profilePicture_email, u.uuid${internalSelect} FROM supportTicketMessages m JOIN users u ON m.userId = u.userId WHERE m.ticketId = ? ORDER BY m.createdAt ASC`,
             [ticketId],
             (err, results) => {
                 if (err) {
@@ -973,7 +1031,11 @@ export async function getTicketMessages(ticketId) {
 
     if (!baseMessages.length) return [];
 
-    const uniqueUserIds = [...new Set(baseMessages.map((message) => message.userId))];
+    const filteredMessages = includeInternal
+        ? baseMessages
+        : baseMessages.filter((message) => !message.isInternal);
+
+    const uniqueUserIds = [...new Set(filteredMessages.map((message) => message.userId))];
     let userRanks = {};
 
     if (uniqueUserIds.length > 0) {
@@ -1009,7 +1071,7 @@ export async function getTicketMessages(ticketId) {
 
     const resolvedMessages = [];
 
-    for (const message of baseMessages) {
+    for (const message of filteredMessages) {
         let avatarUrl = null;
         try {
             if (message.profilePicture_type === "GRAVATAR" && message.profilePicture_email) {
@@ -1026,6 +1088,7 @@ export async function getTicketMessages(ticketId) {
             ...message,
             avatarUrl,
             ranks: userRanks[message.userId] || [],
+            isInternal: Boolean(message.isInternal),
         });
     }
 

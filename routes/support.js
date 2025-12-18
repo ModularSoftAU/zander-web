@@ -14,6 +14,9 @@ import {
   addTicketGroupParticipant,
   applyTicketParticipantPermissions,
   syncParticipantsForMessage,
+  updateTicketStatus,
+  deleteTicketChannel,
+  recreateTicketChannel,
 } from "../controllers/supportTicketController.js";
 
 export default function supportRoutes(
@@ -74,7 +77,10 @@ export default function supportRoutes(
       }
 
       const ticket = await getTicketById(req.params.id);
-      const messages = await getTicketMessages(req.params.id);
+      if (!ticket) {
+        setBannerCookie("danger", "Ticket not found.", res);
+        return res.redirect("/support");
+      }
       const participants = await getTicketParticipants(req.params.id);
       const rankOptions = await getLuckPermRankRoles();
 
@@ -92,6 +98,8 @@ export default function supportRoutes(
         return res.redirect("/support");
       }
 
+      const messages = await getTicketMessages(req.params.id, isStaff);
+
       return res.view("modules/support/ticket", {
         pageTitle: `Ticket #${ticket.ticketId}`,
         pageDescription: `Ticket #${ticket.ticketId}`,
@@ -102,6 +110,8 @@ export default function supportRoutes(
         messages,
         participants,
         rankOptions,
+        isOwner,
+        isStaff,
         globalImage: await getGlobalImage(),
         announcementWeb: await getWebAnnouncement(),
       });
@@ -144,6 +154,15 @@ export default function supportRoutes(
 
       const body = req.body || {};
       const message = (body.message || "").trim();
+      const visibility = (body.visibility || "public").toLowerCase();
+      const isInternal = visibility === "internal" && isStaff;
+      if (visibility === "internal" && !isStaff) {
+        setBannerCookie(
+          "warning",
+          "Only staff can add internal notes; your reply was sent as a public message.",
+          res
+        );
+      }
       if (!message) {
         setBannerCookie("warning", "Please enter a message before replying.", res);
         return res.redirect(`/support/ticket/${req.params.id}`);
@@ -161,7 +180,9 @@ export default function supportRoutes(
           client,
           req.params.id,
           req.session.user.userId,
-          message
+          message,
+          "web",
+          { isInternal }
         );
       } catch (createError) {
         console.error("Failed to create support ticket message", {
@@ -176,6 +197,7 @@ export default function supportRoutes(
         ticketId: req.params.id,
         userId: req.session.user.userId,
         messageId,
+        isInternal,
       });
 
       await syncParticipantsForMessage(client, ticket.ticketId, {
@@ -187,6 +209,77 @@ export default function supportRoutes(
         ticketId: req.params.id,
         userId: req.session.user.userId,
       });
+
+      return res.redirect(`/support/ticket/${req.params.id}`);
+    } catch (error) {
+      console.error(error);
+      return res.view("session/error", {
+        pageTitle: "Error",
+        pageDescription: "Error",
+        config,
+        req,
+        error,
+        features,
+        globalImage: await getGlobalImage(),
+        announcementWeb: await getWebAnnouncement(),
+      });
+    }
+  });
+
+  app.post("/support/ticket/:id/status", async function (req, res) {
+    try {
+      if (!req.session.user) {
+        return res.redirect("/login");
+      }
+
+      const ticket = await getTicketById(req.params.id);
+      const isOwner = ticket.userId === req.session.user.userId;
+      const isStaff = req.session.user.isStaff;
+
+      if (!isOwner && !isStaff) {
+        setBannerCookie("danger", "You do not have access to this ticket.", res);
+        return res.redirect("/support");
+      }
+
+      const nextStatus = (req.body.status || "").toLowerCase();
+      if (!["open", "closed"].includes(nextStatus)) {
+        setBannerCookie("warning", "Invalid ticket status provided.", res);
+        return res.redirect(`/support/ticket/${req.params.id}`);
+      }
+
+      await updateTicketStatus(ticket.ticketId, nextStatus);
+
+      if (nextStatus === "closed") {
+        await deleteTicketChannel(client, ticket.ticketId, "Ticket closed from web view");
+        setBannerCookie("success", "Ticket closed and channel cleanup scheduled.", res);
+      } else if (nextStatus === "open") {
+        let needsChannel = !ticket.discordChannelId;
+
+        if (!needsChannel && client) {
+          try {
+            await client.channels.fetch(ticket.discordChannelId);
+          } catch (fetchError) {
+            console.warn("ticket reopen: stored channel missing, recreating", fetchError);
+            needsChannel = true;
+          }
+        }
+
+        if (needsChannel) {
+          try {
+            await recreateTicketChannel(client, ticket.ticketId);
+          } catch (recreateError) {
+            console.error("Failed to recreate ticket channel on reopen", recreateError);
+            setBannerCookie(
+              "danger",
+              "Ticket reopened, but we couldn't recreate the Discord channel.",
+              res
+            );
+            return res.redirect(`/support/ticket/${req.params.id}`);
+          }
+        }
+
+        setBannerCookie("success", "Ticket reopened.", res);
+      }
 
       return res.redirect(`/support/ticket/${req.params.id}`);
     } catch (error) {

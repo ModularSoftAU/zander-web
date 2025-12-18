@@ -5,18 +5,17 @@
 
 <%- include('../../modules/navigationBar.ejs') %>
 
-<div class="page-header">
-    <div class="container">
-        <h1>Support Tickets</h1>
+<%- include('../../partials/miniHeader.ejs', {
+    headerTitle: "Support Tickets",
+    globalImage,
+}) %>
+
+<div class="container my-4">
+    <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+        <h2 class="mb-0">My Tickets</h2>
         <a href="/support/create" class="btn btn-primary">Create New Ticket</a>
     </div>
-</div>
-
-<div class="container">
     <div class="card">
-        <div class="card-header">
-            <h2>My Tickets</h2>
-        </div>
         <div class="card-body">
             <% if (tickets.length === 0) { %>
                 <p>You have no support tickets.</p>
