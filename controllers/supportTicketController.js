@@ -492,12 +492,11 @@ export async function applyTicketParticipantPermissions(client, ticketId) {
     }
 }
 
-export async function createSupportTicketMessage(client, ticketId, userId, message, attachmentUrl = null, source = "web") {
+export async function createSupportTicketMessage(client, ticketId, userId, message, source = "web") {
     console.info("createSupportTicketMessage invoked", {
         ticketId,
         userId,
         source,
-        hasAttachment: Boolean(attachmentUrl),
         messageLength: message?.length ?? 0,
     });
 
@@ -522,10 +521,7 @@ export async function createSupportTicketMessage(client, ticketId, userId, messa
                 }
 
                 if (channel) {
-                    let content = `**User ${userId} said:**\n${message}`;
-                    if (attachmentUrl) {
-                        content += `\n\n**Attachment:** ${attachmentUrl}`;
-                    }
+                    const content = `**User ${userId} said:**\n${message}`;
 
                     try {
                         const sentMessage = await channel.send(content);
@@ -549,7 +545,7 @@ export async function createSupportTicketMessage(client, ticketId, userId, messa
     return new Promise((resolve, reject) => {
         db.query(
             "INSERT INTO supportTicketMessages (ticketId, userId, message, attachments) VALUES (?, ?, ?, ?)",
-            [ticketId, userId, message, JSON.stringify([attachmentUrl])],
+            [ticketId, userId, message, JSON.stringify([])],
             (err, results) => {
                 if (err) {
                     console.error("Failed to persist support ticket message", { ticketId, userId }, err);

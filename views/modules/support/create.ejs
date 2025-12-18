@@ -21,7 +21,7 @@
                     <p class="text-muted mb-0">Share a clear title and message so we can route your request quickly.</p>
                 </div>
                 <div class="card-body">
-                    <form action="/support/create" method="POST" enctype="multipart/form-data" class="row g-3">
+                    <form action="/support/create" method="POST" class="row g-3">
                         <div class="col-12">
                             <label for="title" class="form-label">Title</label>
                             <input type="text" name="title" id="title" class="form-control" placeholder="Brief summary of the issue" required>
@@ -33,11 +33,6 @@
                                     <option value="<%= category.categoryId %>"><%= category.name %></option>
                                 <% }) %>
                             </select>
-                        </div>
-                        <div class="col-md-6">
-                            <label for="attachment" class="form-label">Attachment (optional)</label>
-                            <input type="file" name="attachment" id="attachment" class="form-control" accept="image/*">
-                            <small class="text-muted">Images help us troubleshoot faster.</small>
                         </div>
                         <div class="col-12">
                             <label for="message" class="form-label">Message</label>

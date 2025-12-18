@@ -1,6 +1,5 @@
 import { getWebAnnouncement } from "../controllers/announcementController.js";
 import { isFeatureWebRouteEnabled, getGlobalImage, setBannerCookie } from "../api/common.js";
-import { ImgurClient } from "imgur";
 import {
   getSupportCategories,
   createSupportTicket,
@@ -16,12 +15,6 @@ import {
   applyTicketParticipantPermissions,
   syncParticipantsForMessage,
 } from "../controllers/supportTicketController.js";
-
-const imgurClient = new ImgurClient({
-  clientId: process.env.IMGUR_CLIENT_ID,
-  clientSecret: process.env.IMGUR_CLIENT_SECRET,
-  refreshToken: process.env.IMGUR_REFRESH_TOKEN,
-});
 
 export default function supportRoutes(
   app,
@@ -155,25 +148,10 @@ export default function supportRoutes(
         setBannerCookie("warning", "Please enter a message before replying.", res);
         return res.redirect(`/support/ticket/${req.params.id}`);
       }
-      const attachment = req.raw?.files?.attachment || req.files?.attachment || null;
-      let attachmentUrl = null;
-
-      if (attachment) {
-        try {
-          const response = await imgurClient.upload({
-            image: attachment.data,
-            type: "stream",
-          });
-          attachmentUrl = response.data.link;
-        } catch (error) {
-          console.error(error);
-        }
-      }
 
       console.info("Submitting web ticket reply", {
         ticketId: req.params.id,
         userId: req.session.user.userId,
-        hasAttachment: Boolean(attachmentUrl),
         messageLength: message.length,
       });
 
@@ -183,8 +161,7 @@ export default function supportRoutes(
           client,
           req.params.id,
           req.session.user.userId,
-          message,
-          attachmentUrl
+          message
         );
       } catch (createError) {
         console.error("Failed to create support ticket message", {
@@ -372,20 +349,6 @@ export default function supportRoutes(
       }
 
       const { title, category, message } = req.body;
-      const attachment = req.raw.files ? req.raw.files.attachment : null;
-      let attachmentUrl = null;
-
-      if (attachment) {
-        try {
-          const response = await imgurClient.upload({
-            image: attachment.data,
-            type: "stream",
-          });
-          attachmentUrl = response.data.link;
-        } catch (error) {
-          console.error(error);
-        }
-      }
 
       const { ticketId } = await createSupportTicket(
         client,
@@ -400,8 +363,7 @@ export default function supportRoutes(
         client,
         ticketId,
         req.session.user.userId,
-        message,
-        attachmentUrl
+        message
       );
 
       await syncParticipantsForMessage(client, ticketId, {
