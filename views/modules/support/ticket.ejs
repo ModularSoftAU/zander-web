@@ -124,8 +124,15 @@
                         <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="ticketActions">
                             <li><button class="dropdown-item" type="button" data-bs-toggle="modal" data-bs-target="#addUserModal">Add user</button></li>
                             <li><button class="dropdown-item" type="button" data-bs-toggle="modal" data-bs-target="#addGroupModal">Add group</button></li>
+                            <% if (participants.users.length) { %>
+                                <li><button class="dropdown-item" type="button" data-bs-toggle="modal" data-bs-target="#removeUserModal">Remove user</button></li>
+                            <% } %>
+                            <% if (participants.groups.length) { %>
+                                <li><button class="dropdown-item" type="button" data-bs-toggle="modal" data-bs-target="#removeGroupModal">Remove group</button></li>
+                            <% } %>
                             <% if (isStaff) { %>
                                 <li><hr class="dropdown-divider"></li>
+                                <li><button class="dropdown-item" type="button" data-bs-toggle="modal" data-bs-target="#changeStatusModal">Change status</button></li>
                                 <li><button class="dropdown-item" type="button" data-bs-toggle="modal" data-bs-target="#changeCategoryModal">Change category</button></li>
                             <% } %>
                             <% if (canEscalate) { %>
@@ -152,7 +159,7 @@
             <% } %>
         </div>
         <div class="card-body">
-            <% if (ticket.status === 'open') { %>
+            <% if (ticket.status === 'open' || ticket.status === 'pending') { %>
                 <% if (!canReplyDuringEscalation) { %>
                     <p class="mb-0 text-muted">This ticket is escalated. Only escalation staff or the ticket opener may reply.</p>
                 <% } else { %>
@@ -238,6 +245,95 @@
                 </div>
             </div>
         </div>
+        <% if (participants.users.length) { %>
+            <div class="modal fade" id="removeUserModal" tabindex="-1" aria-labelledby="removeUserModalLabel" aria-hidden="true">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="removeUserModalLabel">Remove user from ticket</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <form action="/support/ticket/<%= ticket.ticketId %>/remove-user" method="POST">
+                            <div class="modal-body">
+                                <div class="form-group">
+                                    <label for="removeUserId">Select user</label>
+                                    <select class="form-control" id="removeUserId" name="removeUserId" required>
+                                        <option value="">Select user</option>
+                                        <% participants.users.forEach((participant) => { %>
+                                            <option value="<%= participant.userId %>"><%= participant.username || participant.userId %></option>
+                                        <% }) %>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                                <button type="submit" class="btn btn-danger">Remove user</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        <% } %>
+
+        <% if (participants.groups.length) { %>
+            <div class="modal fade" id="removeGroupModal" tabindex="-1" aria-labelledby="removeGroupModalLabel" aria-hidden="true">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="removeGroupModalLabel">Remove group from ticket</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <form action="/support/ticket/<%= ticket.ticketId %>/remove-group" method="POST">
+                            <div class="modal-body">
+                                <div class="form-group">
+                                    <label for="removeGroupRoleId">Select group</label>
+                                    <select class="form-control" id="removeGroupRoleId" name="removeGroupRoleId" required>
+                                        <option value="">Select group</option>
+                                        <% participants.groups.forEach((group) => { %>
+                                            <option value="<%= group.roleId %>"><%= group.roleName || group.rankSlug || group.roleId %></option>
+                                        <% }) %>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                                <button type="submit" class="btn btn-danger">Remove group</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        <% } %>
+
+        <% if (isStaff) { %>
+            <div class="modal fade" id="changeStatusModal" tabindex="-1" aria-labelledby="changeStatusModalLabel" aria-hidden="true">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="changeStatusModalLabel">Change ticket status</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <form action="/support/ticket/<%= ticket.ticketId %>/status" method="POST">
+                            <div class="modal-body">
+                                <div class="form-group">
+                                    <label for="statusSelect">Select status</label>
+                                    <select class="form-control" id="statusSelect" name="status" required>
+                                        <option value="open" <%= ticket.status === 'open' ? 'selected' : '' %>>Open</option>
+                                        <option value="pending" <%= ticket.status === 'pending' ? 'selected' : '' %>>Pending</option>
+                                        <option value="closed" <%= ticket.status === 'closed' ? 'selected' : '' %>>Closed</option>
+                                    </select>
+                                </div>
+                                <p class="text-muted small mb-0">Locking and escalation controls are available in the actions menu.</p>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                                <button type="submit" class="btn btn-primary">Update status</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        <% } %>
         <% if (isStaff) { %>
             <div class="modal fade" id="changeCategoryModal" tabindex="-1" aria-labelledby="changeCategoryModalLabel" aria-hidden="true">
                 <div class="modal-dialog">

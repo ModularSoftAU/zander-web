@@ -798,6 +798,44 @@ async function hasExistingUserParticipant(ticketId, userId) {
     });
 }
 
+export async function removeTicketUserParticipant(ticketId, userId) {
+    const hasTable = await ensureTicketParticipantTable();
+    if (!hasTable) return false;
+
+    return new Promise((resolve, reject) => {
+        db.query(
+            "DELETE FROM supportTicketParticipants WHERE ticketId = ? AND userId = ?",
+            [ticketId, userId],
+            (err, results) => {
+                if (err) {
+                    reject(err);
+                } else {
+                    resolve(results.affectedRows > 0);
+                }
+            },
+        );
+    });
+}
+
+export async function removeTicketGroupParticipant(ticketId, roleId) {
+    const hasTable = await ensureTicketParticipantTable();
+    if (!hasTable) return false;
+
+    return new Promise((resolve, reject) => {
+        db.query(
+            "DELETE FROM supportTicketParticipants WHERE ticketId = ? AND roleId = ?",
+            [ticketId, roleId],
+            (err, results) => {
+                if (err) {
+                    reject(err);
+                } else {
+                    resolve(results.affectedRows > 0);
+                }
+            },
+        );
+    });
+}
+
 export async function syncParticipantsForMessage(client, ticketId, { userId, discordRoleIds = [], rankSlugs = [] }) {
     const rankOptions = await getLuckPermRankRoles();
     const newParticipantPromises = [];
@@ -827,6 +865,64 @@ export async function syncParticipantsForMessage(client, ticketId, { userId, dis
         } catch (error) {
             console.error("syncParticipantsForMessage: failed to add participants", error);
         }
+    }
+}
+
+export async function removeTicketParticipantPermissions(
+    client,
+    ticketId,
+    { discordIds = [], roleIds = [] } = {},
+) {
+    const hasChannelColumn = await ensureDiscordChannelColumn();
+    if (!hasChannelColumn) return;
+
+    const ticket = await getTicketById(ticketId);
+    if (!ticket?.discordChannelId) {
+        return;
+    }
+
+    if (!client) {
+        console.warn("removeTicketParticipantPermissions: Discord client unavailable; skipping channel permission updates");
+        return;
+    }
+
+    let channel;
+    try {
+        channel = await client.channels.fetch(ticket.discordChannelId);
+    } catch (error) {
+        console.error("removeTicketParticipantPermissions: failed to fetch ticket channel", error);
+        return;
+    }
+
+    const isSnowflake = (value) => Boolean(value) && /^\d{5,}$/.test(String(value).trim());
+    const removals = [];
+
+    discordIds
+        .map((id) => String(id).trim())
+        .filter((id) => isSnowflake(id))
+        .forEach((id) => {
+            removals.push(
+                channel.permissionOverwrites.delete(id).catch((error) => {
+                    console.error("removeTicketParticipantPermissions: failed to remove user overwrite", { ticketId, id }, error);
+                }),
+            );
+        });
+
+    roleIds
+        .map((id) => String(id).trim())
+        .filter((id) => isSnowflake(id))
+        .forEach((id) => {
+            removals.push(
+                channel.permissionOverwrites.delete(id).catch((error) => {
+                    console.error("removeTicketParticipantPermissions: failed to remove role overwrite", { ticketId, id }, error);
+                }),
+            );
+        });
+
+    try {
+        await Promise.all(removals);
+    } catch (error) {
+        console.error("removeTicketParticipantPermissions: failed to update channel permissions", error);
     }
 }
 

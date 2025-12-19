@@ -12,7 +12,10 @@ import {
   findUserByIdentifier,
   addTicketUserParticipant,
   addTicketGroupParticipant,
+  removeTicketUserParticipant,
+  removeTicketGroupParticipant,
   applyTicketParticipantPermissions,
+  removeTicketParticipantPermissions,
   syncParticipantsForMessage,
   updateTicketStatus,
   deleteTicketChannel,
@@ -284,7 +287,7 @@ export default function supportRoutes(
       }
 
       const nextStatus = (req.body.status || "").toLowerCase();
-      if (!["open", "closed"].includes(nextStatus)) {
+      if (!["open", "closed", "pending"].includes(nextStatus)) {
         setBannerCookie("warning", "Invalid ticket status provided.", res);
         return res.redirect(`/support/ticket/${req.params.id}`);
       }
@@ -302,6 +305,8 @@ export default function supportRoutes(
 
       const statusMessage = nextStatus === "closed"
         ? `Ticket closed by ${username}`
+        : nextStatus === "pending"
+        ? `Ticket set to pending by ${username}`
         : `Ticket reopened by ${username}`;
       try {
         await createSupportTicketMessage(client, ticket.ticketId, req.session.user.userId, statusMessage, "web", {
@@ -341,6 +346,8 @@ export default function supportRoutes(
         }
 
         setBannerCookie("success", "Ticket reopened.", res);
+      } else if (nextStatus === "pending") {
+        setBannerCookie("success", "Ticket marked as pending.", res);
       }
 
       return res.redirect(`/support/ticket/${req.params.id}`);
@@ -587,6 +594,18 @@ export default function supportRoutes(
 
       await addTicketUserParticipant(ticket.ticketId, user);
       await applyTicketParticipantPermissions(client, ticket.ticketId);
+      try {
+        await createSupportTicketMessage(
+          client,
+          ticket.ticketId,
+          req.session.user.userId,
+          `${req.session.user.username || "Staff"} added user ${user.username || user.userId} to this ticket.`,
+          "web",
+          { messageType: "status" }
+        );
+      } catch (messageError) {
+        console.error("Failed to log add user event", messageError);
+      }
 
       setBannerCookie("success", "User added to ticket.", res);
       return res.redirect(`/support/ticket/${ticket.ticketId}`);
@@ -638,8 +657,155 @@ export default function supportRoutes(
 
       await addTicketGroupParticipant(ticket.ticketId, selectedRank);
       await applyTicketParticipantPermissions(client, ticket.ticketId);
+      try {
+        await createSupportTicketMessage(
+          client,
+          ticket.ticketId,
+          req.session.user.userId,
+          `${req.session.user.username || "Staff"} added group ${selectedRank.name || selectedRank.rankSlug} to this ticket.`,
+          "web",
+          { messageType: "status" }
+        );
+      } catch (messageError) {
+        console.error("Failed to log add group event", messageError);
+      }
 
       setBannerCookie("success", "Group added to ticket.", res);
+      return res.redirect(`/support/ticket/${ticket.ticketId}`);
+    } catch (error) {
+      console.error(error);
+      return res.view("session/error", {
+        pageTitle: "Error",
+        pageDescription: "Error",
+        config,
+        req,
+        error,
+        features,
+        globalImage: await getGlobalImage(),
+        announcementWeb: await getWebAnnouncement(),
+      });
+    }
+  });
+
+  app.post("/support/ticket/:id/remove-user", async function (req, res) {
+    try {
+      if (!req.session.user) {
+        return res.redirect("/login");
+      }
+
+      const ticket = await getTicketById(req.params.id);
+      const participants = await getTicketParticipants(req.params.id);
+      const userRankSlugs = req.session.user.ranks?.map((rank) => rank.rankSlug) || [];
+      const isOwner = ticket.userId === req.session.user.userId;
+      const isStaff = req.session.user.isStaff;
+      const isParticipantUser = participants.users.some(
+        (participant) => participant.userId === req.session.user.userId
+      );
+      const isParticipantRank = userRankSlugs.some((slug) =>
+        participants.groups.some((group) => group.rankSlug === slug)
+      );
+
+      if (!isOwner && !isStaff && !isParticipantUser && !isParticipantRank) {
+        return res.redirect("/support");
+      }
+
+      const userIdFromForm = parseInt(req.body?.removeUserId, 10);
+      if (!userIdFromForm) {
+        setBannerCookie("warning", "Select a user to remove.", res);
+        return res.redirect(`/support/ticket/${req.params.id}`);
+      }
+
+      const user = await getUserById(userIdFromForm);
+      if (!user) {
+        setBannerCookie("danger", "User not found.", res);
+        return res.redirect(`/support/ticket/${req.params.id}`);
+      }
+
+      await removeTicketUserParticipant(ticket.ticketId, user.userId);
+      if (user.discordId) {
+        await removeTicketParticipantPermissions(client, ticket.ticketId, {
+          discordIds: [user.discordId],
+        });
+      }
+
+      try {
+        await createSupportTicketMessage(
+          client,
+          ticket.ticketId,
+          req.session.user.userId,
+          `${req.session.user.username || "Staff"} removed user ${user.username || user.userId} from this ticket.`,
+          "web",
+          { messageType: "status" }
+        );
+      } catch (messageError) {
+        console.error("Failed to log remove user event", messageError);
+      }
+
+      setBannerCookie("success", "User removed from ticket.", res);
+      return res.redirect(`/support/ticket/${ticket.ticketId}`);
+    } catch (error) {
+      console.error(error);
+      return res.view("session/error", {
+        pageTitle: "Error",
+        pageDescription: "Error",
+        config,
+        req,
+        error,
+        features,
+        globalImage: await getGlobalImage(),
+        announcementWeb: await getWebAnnouncement(),
+      });
+    }
+  });
+
+  app.post("/support/ticket/:id/remove-group", async function (req, res) {
+    try {
+      if (!req.session.user) {
+        return res.redirect("/login");
+      }
+
+      const ticket = await getTicketById(req.params.id);
+      const participants = await getTicketParticipants(req.params.id);
+      const userRankSlugs = req.session.user.ranks?.map((rank) => rank.rankSlug) || [];
+      const isOwner = ticket.userId === req.session.user.userId;
+      const isStaff = req.session.user.isStaff;
+      const isParticipantUser = participants.users.some(
+        (participant) => participant.userId === req.session.user.userId
+      );
+      const isParticipantRank = userRankSlugs.some((slug) =>
+        participants.groups.some((group) => group.rankSlug === slug)
+      );
+
+      if (!isOwner && !isStaff && !isParticipantUser && !isParticipantRank) {
+        return res.redirect("/support");
+      }
+
+      const roleId = (req.body?.removeGroupRoleId || "").trim();
+      const group = participants.groups.find((participant) => participant.roleId === roleId);
+      if (!group) {
+        setBannerCookie("warning", "Select a valid group to remove.", res);
+        return res.redirect(`/support/ticket/${req.params.id}`);
+      }
+
+      await removeTicketGroupParticipant(ticket.ticketId, group.roleId);
+      await removeTicketParticipantPermissions(client, ticket.ticketId, {
+        roleIds: [group.roleId],
+      });
+
+      try {
+        await createSupportTicketMessage(
+          client,
+          ticket.ticketId,
+          req.session.user.userId,
+          `${req.session.user.username || "Staff"} removed group ${group.roleName || group.rankSlug || group.roleId} from this ticket.`,
+          "web",
+          { messageType: "status" }
+        );
+      } catch (messageError) {
+        console.error("Failed to log remove group event", messageError);
+      }
+
+      setBannerCookie("success", "Group removed from ticket.", res);
       return res.redirect(`/support/ticket/${ticket.ticketId}`);
     } catch (error) {
       console.error(error);
