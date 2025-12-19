@@ -25,6 +25,7 @@ import {
   searchUsersByUsername,
   getUserById,
   updateTicketCategory,
+  ensureUncategorisedCategory,
 } from "../controllers/supportTicketController.js";
 import { ActionRowBuilder, ButtonBuilder, ButtonStyle, EmbedBuilder } from "discord.js";
 
@@ -683,6 +684,7 @@ export default function supportRoutes(
       }
 
       const categories = await getSupportCategories();
+      const isStaff = req.session.user.isStaff;
 
       return res.view("modules/support/create", {
         pageTitle: "Create Support Ticket",
@@ -691,6 +693,7 @@ export default function supportRoutes(
         req,
         features,
         categories,
+        isStaff,
         globalImage: await getGlobalImage(),
         announcementWeb: await getWebAnnouncement(),
       });
@@ -715,19 +718,41 @@ export default function supportRoutes(
         return res.redirect("/login");
       }
 
-      const { title, category, message } = req.body;
+      const { title, category, message, manualUserId } = req.body;
+      const isStaff = req.session.user.isStaff;
+      const isManual = Boolean(manualUserId) && isStaff;
 
-      const staffRoleIds = await getCategoryPermissions(category);
-      const categoryName = await getCategoryName(category);
+      let selectedCategoryId = category;
+      let staffRoleIds = [];
+      let categoryName = "";
+      let manualUser = null;
+      let parentCategoryId = null;
+
+      if (isManual) {
+        manualUser = await getUserById(manualUserId);
+        if (!manualUser) {
+          setBannerCookie("danger", "We couldn't find that user for a manual ticket.", res);
+          return res.redirect("/support/create");
+        }
+
+        selectedCategoryId = await ensureUncategorisedCategory();
+        staffRoleIds = [];
+        categoryName = "Uncategorised";
+        parentCategoryId = false;
+      } else {
+        staffRoleIds = await getCategoryPermissions(category);
+        categoryName = await getCategoryName(category);
+      }
 
       const ticketRecord = await createSupportTicket(
         client,
         req.session.user.userId,
-        category,
+        selectedCategoryId,
         title,
         {
           discordUserId: req.session.user.discordId,
           staffRoleIds,
+          parentCategoryId,
         }
       );
       const { ticketId, channel } = ticketRecord;
@@ -742,6 +767,15 @@ export default function supportRoutes(
         userId: req.session.user.userId,
         rankSlugs: req.session.user.ranks?.map((rank) => rank.rankSlug) || [],
       });
+
+      if (manualUser) {
+        try {
+          await addTicketUserParticipant(ticketId, { userId: manualUser.userId });
+          await applyTicketParticipantPermissions(client, ticketId);
+        } catch (participantError) {
+          console.error("Failed to add manual ticket participant", participantError);
+        }
+      }
 
       if (channel) {
         const siteBaseUrl =
@@ -758,6 +792,9 @@ export default function supportRoutes(
           .setDescription(message)
           .addFields(
             { name: "Opened by", value: `${req.session.user.username || "Web user"}` },
+            ...(manualUser
+              ? [{ name: "Added user", value: manualUser.username || `User ${manualUser.userId}` }]
+              : []),
             { name: "Category", value: categoryName || "Uncategorized" }
           )
           .setTimestamp(new Date())
@@ -775,7 +812,9 @@ export default function supportRoutes(
 
         try {
           const createdMessage = await channel.send({
-            content: req.session.user.discordId
+            content: manualUser?.discordId
+              ? `<@${manualUser.discordId}> a ticket has been created for you.`
+              : req.session.user.discordId
               ? `<@${req.session.user.discordId}> your ticket has been created.`
               : "A ticket has been created.",
             embeds: [ticketEmbed],

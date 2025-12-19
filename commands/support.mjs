@@ -230,24 +230,40 @@ export class SupportCommand extends Command {
         interaction.options.getRole("role_three"),
       ].filter(Boolean);
 
-      let userId = await getUserIdByDiscordId(targetUser.id);
+      let ownerUserId = await getUserIdByDiscordId(interaction.user.id);
 
-      if (!userId) {
+      if (!ownerUserId) {
         try {
-          userId = await createUnlinkedUser(targetUser.id, targetUser.username);
+          ownerUserId = await createUnlinkedUser(interaction.user.id, interaction.user.username);
         } catch (userCreateError) {
-          console.error("ticket manual: failed to create placeholder user", userCreateError);
+          console.error("ticket manual: failed to create owner placeholder user", userCreateError);
         }
       }
 
-      if (!userId) {
+      if (!ownerUserId) {
         return interaction.reply({
-          content: "Unable to link that user to a ticket record. Please try again.",
+          content: "Unable to link your account to a ticket record. Please try again.",
           ephemeral: true,
         });
       }
 
       await interaction.deferReply({ ephemeral: true });
+
+      let targetUserId = await getUserIdByDiscordId(targetUser.id);
+
+      if (!targetUserId) {
+        try {
+          targetUserId = await createUnlinkedUser(targetUser.id, targetUser.username);
+        } catch (userCreateError) {
+          console.error("ticket manual: failed to create placeholder user", userCreateError);
+        }
+      }
+
+      if (!targetUserId) {
+        return interaction.editReply({
+          content: "Unable to link that user to a ticket record. Please try again.",
+        });
+      }
 
       let categoryId;
       try {
@@ -265,11 +281,11 @@ export class SupportCommand extends Command {
       try {
         ticketRecord = await createSupportTicket(
           interaction.client,
-          userId,
+          ownerUserId,
           categoryId,
           subject,
           {
-            discordUserId: targetUser.id,
+            discordUserId: interaction.user.id,
             staffRoleIds,
             parentCategoryId: false,
           }
@@ -284,7 +300,7 @@ export class SupportCommand extends Command {
       const { ticketId, channel } = ticketRecord;
 
       try {
-        await addTicketUserParticipant(ticketId, { userId });
+        await addTicketUserParticipant(ticketId, { userId: targetUserId });
       } catch (participantError) {
         console.error("ticket manual: failed to add user participant", participantError);
       }
@@ -322,7 +338,7 @@ export class SupportCommand extends Command {
         await createSupportTicketMessage(
           interaction.client,
           ticketId,
-          userId,
+          ownerUserId,
           description,
           "discord"
         );
@@ -334,7 +350,8 @@ export class SupportCommand extends Command {
         .setTitle(`Ticket #${ticketId}: ${subject}`)
         .setDescription(description)
         .addFields(
-          { name: "Opened for", value: `${targetUser.tag} (<@${targetUser.id}>)` },
+          { name: "Opened by", value: `${interaction.user.tag} (<@${interaction.user.id}>)` },
+          { name: "Added user", value: `${targetUser.tag} (<@${targetUser.id}>)` },
           { name: "Category", value: "Uncategorised" },
           { name: "Created by", value: `${interaction.user.tag}` }
         )
@@ -353,7 +370,7 @@ export class SupportCommand extends Command {
 
       try {
         const message = await channel.send({
-          content: `<@${targetUser.id}> a ticket has been created for you by ${interaction.user.tag}.`,
+          content: `<@${targetUser.id}> a ticket has been created by ${interaction.user.tag}.`,
           embeds: [ticketEmbed],
           components: [new ActionRowBuilder().addComponents(viewOnlineButton, closeButton)],
         });
