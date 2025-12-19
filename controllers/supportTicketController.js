@@ -9,6 +9,7 @@ let ticketMessageInternalColumnCheck;
 let ticketLockColumnCheck;
 let ticketEscalationColumnCheck;
 let ticketMessageTypeColumnCheck;
+let ticketCategoryDiscordColumnCheck;
 
 async function ensureDiscordChannelColumn() {
     if (!discordChannelColumnCheck) {
@@ -208,6 +209,52 @@ async function ensureTicketMessageTypeColumn() {
     return ticketMessageTypeColumnCheck;
 }
 
+async function ensureTicketCategoryDiscordColumn() {
+    if (!ticketCategoryDiscordColumnCheck) {
+        ticketCategoryDiscordColumnCheck = new Promise((resolve) => {
+            db.query(
+                "SHOW COLUMNS FROM supportTicketCategories LIKE 'discordCategoryId'",
+                (err, results) => {
+                    if (err) {
+                        console.error(
+                            "Failed to verify supportTicketCategories.discordCategoryId column",
+                            err,
+                        );
+                        resolve(false);
+                        return;
+                    }
+
+                    if (results.length > 0) {
+                        resolve(true);
+                        return;
+                    }
+
+                    db.query(
+                        "ALTER TABLE supportTicketCategories ADD COLUMN discordCategoryId VARCHAR(255) NULL",
+                        (alterErr) => {
+                            if (alterErr) {
+                                console.error(
+                                    "Failed to add supportTicketCategories.discordCategoryId column",
+                                    alterErr,
+                                );
+                                resolve(false);
+                                return;
+                            }
+
+                            console.info(
+                                "Added supportTicketCategories.discordCategoryId column for Discord category mapping",
+                            );
+                            resolve(true);
+                        },
+                    );
+                },
+            );
+        });
+    }
+
+    return ticketCategoryDiscordColumnCheck;
+}
+
 async function buildAvatarUrl(profile) {
     if (!profile) return null;
 
@@ -235,6 +282,34 @@ export async function getSupportCategories() {
       resolve(results);
     });
   });
+}
+
+export async function getCategoryDiscordParentId(categoryId) {
+    const hasColumn = await ensureTicketCategoryDiscordColumn();
+    if (!hasColumn || !categoryId) return null;
+
+    return new Promise((resolve) => {
+        db.query(
+            "SELECT discordCategoryId FROM supportTicketCategories WHERE categoryId = ? LIMIT 1",
+            [categoryId],
+            (err, results) => {
+                if (err) {
+                    console.error("getCategoryDiscordParentId: failed to lookup category", err);
+                    resolve(null);
+                    return;
+                }
+
+                const discordCategoryId = results?.[0]?.discordCategoryId;
+                const normalized = discordCategoryId ? String(discordCategoryId).trim() : "";
+                if (!/^\d{5,}$/.test(normalized)) {
+                    resolve(null);
+                    return;
+                }
+
+                resolve(normalized);
+            },
+        );
+    });
 }
 
 export async function ensureUncategorisedCategory() {
@@ -403,7 +478,16 @@ export async function createSupportTicket(
                 : null;
 
         if (!targetParentId) {
-            targetParentId = config.discord?.supportTicketCategoryId ?? process.env.SUPPORT_CATEGORY_ID ?? null;
+            try {
+                targetParentId = await getCategoryDiscordParentId(categoryId);
+            } catch (categoryError) {
+                console.error("Failed to resolve category Discord parent", categoryError);
+            }
+        }
+
+        if (!targetParentId) {
+            targetParentId =
+                config.discord?.supportTicketCategoryId ?? process.env.SUPPORT_CATEGORY_ID ?? null;
         }
     }
     const permissionOverwrites = [
@@ -549,10 +633,23 @@ export async function recreateTicketChannel(
 
     const staffRoleIds = await getCategoryPermissions(ticket.categoryId);
 
-    const resolvedParentId =
+    let resolvedParentId =
         parentCategoryId && parentCategoryId !== "undefined" && parentCategoryId !== ""
             ? parentCategoryId
-            : config.discord?.supportTicketCategoryId ?? process.env.SUPPORT_CATEGORY_ID ?? null;
+            : null;
+
+    if (!resolvedParentId) {
+        try {
+            resolvedParentId = await getCategoryDiscordParentId(ticket.categoryId);
+        } catch (categoryError) {
+            console.error("recreateTicketChannel: failed to resolve category Discord parent", categoryError);
+        }
+    }
+
+    if (!resolvedParentId) {
+        resolvedParentId =
+            config.discord?.supportTicketCategoryId ?? process.env.SUPPORT_CATEGORY_ID ?? null;
+    }
 
     const permissionOverwrites = [
         {
