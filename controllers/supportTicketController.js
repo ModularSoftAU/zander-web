@@ -1524,10 +1524,11 @@ export async function getTicketMessages(ticketId, includeInternal = false) {
     if (uniqueUserIds.length > 0) {
         userRanks = await new Promise((resolve) => {
             db.query(
-                `SELECT ur.userId, ur.rankSlug, r.displayName, r.rankBadgeColour, r.rankTextColour
+                `SELECT ur.userId, ur.rankSlug, r.displayName, r.rankBadgeColour, r.rankTextColour, r.priority
                  FROM userRanks ur
                  LEFT JOIN ranks r ON ur.rankSlug = r.rankSlug
-                 WHERE ur.userId IN (?)`,
+                 WHERE ur.userId IN (?)
+                 ORDER BY CAST(r.priority AS SIGNED) DESC`,
                 [uniqueUserIds],
                 (err, results) => {
                     if (err) {
@@ -1544,7 +1545,11 @@ export async function getTicketMessages(ticketId, includeInternal = false) {
                             displayName: row.displayName || row.rankSlug,
                             badgeColor: row.rankBadgeColour,
                             textColor: row.rankTextColour,
+                            priority: Number(row.priority) || 0,
                         });
+                    });
+                    Object.values(grouped).forEach((ranks) => {
+                        ranks.sort((a, b) => (b.priority || 0) - (a.priority || 0));
                     });
                     resolve(grouped);
                 },

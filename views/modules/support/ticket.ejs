@@ -108,7 +108,7 @@
     <div class="card mt-4">
         <div class="card-header d-flex justify-content-between align-items-center flex-wrap gap-2">
             <h2 class="mb-0">Reply</h2>
-            <% if (isStaff || isOwner) { %>
+            <% if (canManageTicket) { %>
                 <div class="d-flex align-items-center gap-2 flex-wrap">
                     <form action="/support/ticket/<%= ticket.ticketId %>/status" method="POST" class="d-flex">
                         <% if (ticket.status === 'open') { %>
@@ -192,7 +192,7 @@
         </div>
     </div>
 
-    <% if (isStaff || isOwner) { %>
+    <% if (canManageTicket) { %>
         <div class="modal fade" id="addUserModal" tabindex="-1" aria-labelledby="addUserModalLabel" aria-hidden="true">
             <div class="modal-dialog">
                 <div class="modal-content">

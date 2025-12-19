@@ -125,8 +125,9 @@ export default function supportRoutes(
       const isParticipantRank = userRankSlugs.some((slug) =>
         participants.groups.some((group) => group.rankSlug === slug)
       );
+      const canManageTicket = isOwner || isStaff || isParticipantUser || isParticipantRank;
 
-      if (!isOwner && !isStaff && !isParticipantUser && !isParticipantRank) {
+      if (!canManageTicket) {
         return res.redirect("/support");
       }
 
@@ -145,6 +146,7 @@ export default function supportRoutes(
         rankOptions,
         isOwner,
         isStaff,
+        canManageTicket,
         canEscalate,
         canReplyDuringEscalation,
         canManageLock,
