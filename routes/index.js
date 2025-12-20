@@ -2,7 +2,7 @@ import { createRequire } from "module";
 const require = createRequire(import.meta.url);
 
 import { getWebAnnouncement } from "../controllers/announcementController.js";
-import { isFeatureWebRouteEnabled, getGlobalImage } from "../api/common.js";
+import { isFeatureWebRouteEnabled, getGlobalImage, hasPermission } from "../api/common.js";
 
 import dashboardSiteRoutes from "./dashboard/index.js";
 import sessionRoutes from "./sessionRoutes.js";
@@ -186,6 +186,40 @@ export default function applicationSiteRoutes(
       features: features,
       globalImage: await getGlobalImage(),
       announcementWeb: await getWebAnnouncement(),
+    });
+  });
+
+  //
+  // Punishments
+  //
+  app.get("/punishments", async function (req, res) {
+    const permissionBoolean = await hasPermission(
+      "zander.web.punishment.view",
+      req,
+      res,
+      features
+    );
+
+    if (!permissionBoolean) return;
+
+    const page = Math.max(parseInt(req.query.page, 10) || 1, 1);
+    const limit = Math.min(Math.max(parseInt(req.query.limit, 10) || 25, 1), 100);
+
+    const fetchURL = `${process.env.siteAddress}/api/punishments/get?page=${page}&limit=${limit}`;
+    const response = await fetch(fetchURL, {
+      headers: { "x-access-token": process.env.apiKey },
+    });
+    const apiData = await response.json();
+
+    return res.view("modules/punishments/punishments", {
+      pageTitle: `Punishments`,
+      config: config,
+      req: req,
+      features: features,
+      globalImage: await getGlobalImage(),
+      announcementWeb: await getWebAnnouncement(),
+      apiData: apiData,
+      moment: moment,
     });
   });
 }
