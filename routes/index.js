@@ -184,6 +184,60 @@ export default function applicationSiteRoutes(
     }
   });
 
+  app.get("/appeal/start", async function (req, res) {
+    try {
+      if (!req.session.user) {
+        const returnTo = encodeURIComponent(req.url);
+        return res.redirect(`/login?returnTo=${returnTo}`);
+      }
+
+      const punishmentIndex = Number.parseInt(req.query.punishmentIndex, 10);
+      if (!Number.isInteger(punishmentIndex) || punishmentIndex < 0) {
+        return res.redirect("/appeal");
+      }
+
+      const fetchPunishmentsURL = `${process.env.siteAddress}/api/user/punishments?username=${encodeURIComponent(
+        req.session.user.username
+      )}`;
+      const punishmentsResponse = await fetch(fetchPunishmentsURL, {
+        headers: { "x-access-token": process.env.apiKey },
+      });
+      const appealPunishmentsApiData = await punishmentsResponse.json();
+      const punishments = Array.isArray(appealPunishmentsApiData.data)
+        ? appealPunishmentsApiData.data
+        : [];
+      const punishment = punishments[punishmentIndex];
+
+      if (!punishment) {
+        return res.redirect("/appeal");
+      }
+
+      return res.view("modules/appeal/appeal-form", {
+        pageTitle: "Punishment Appeal",
+        config: config,
+        req: req,
+        features: features,
+        punishmentIndex: punishmentIndex,
+        punishment: punishment,
+        moment: moment,
+        globalImage: await getGlobalImage(),
+        announcementWeb: await getWebAnnouncement(),
+      });
+    } catch (error) {
+      console.error(error);
+      return res.view("session/error", {
+        pageTitle: "Error",
+        pageDescription: "Error",
+        config: config,
+        req: req,
+        error: error,
+        features: features,
+        globalImage: await getGlobalImage(),
+        announcementWeb: await getWebAnnouncement(),
+      });
+    }
+  });
+
   //
   // Shop Directory
   // 

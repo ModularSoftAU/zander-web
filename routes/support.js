@@ -101,7 +101,8 @@ export default function supportRoutes(
   app.post("/appeal", async function (req, res) {
     try {
       if (!req.session.user) {
-        return res.redirect("/login");
+        const returnTo = encodeURIComponent(req.url);
+        return res.redirect(`/login?returnTo=${returnTo}`);
       }
 
       const { punishmentIndex, appealReason, appealDetails } = req.body;
@@ -216,7 +217,8 @@ export default function supportRoutes(
   app.get("/support/ticket/:id", async function (req, res) {
     try {
       if (!req.session.user) {
-        return res.redirect("/login");
+        const returnTo = encodeURIComponent(req.url);
+        return res.redirect(`/login?returnTo=${returnTo}`);
       }
 
       const ticket = await getTicketById(req.params.id);
@@ -287,7 +289,8 @@ export default function supportRoutes(
   app.post("/support/ticket/:id", async function (req, res) {
     try {
       if (!req.session.user) {
-        return res.redirect("/login");
+        const returnTo = encodeURIComponent(req.url);
+        return res.redirect(`/login?returnTo=${returnTo}`);
       }
 
       const ticket = await getTicketById(req.params.id);
@@ -390,7 +393,8 @@ export default function supportRoutes(
   app.post("/support/ticket/:id/status", async function (req, res) {
     try {
       if (!req.session.user) {
-        return res.redirect("/login");
+        const returnTo = encodeURIComponent(req.url);
+        return res.redirect(`/login?returnTo=${returnTo}`);
       }
 
       const ticket = await getTicketById(req.params.id);
@@ -486,7 +490,8 @@ export default function supportRoutes(
   app.post("/support/ticket/:id/category", async function (req, res) {
     try {
       if (!req.session.user) {
-        return res.redirect("/login");
+        const returnTo = encodeURIComponent("/appeal");
+        return res.redirect(`/login?returnTo=${returnTo}`);
       }
 
       const ticket = await getTicketById(req.params.id);

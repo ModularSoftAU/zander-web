@@ -1,0 +1,93 @@
+<%- include("../../modules/header.ejs", {
+    pageTitle: pageTitle,
+    pageDescription: "Submit your punishment appeal."
+}) %>
+
+<%- include("../../modules/navigationBar.ejs") %>
+
+<div class="page-header">
+    <div class="container">
+        <h1 class="mb-1">Appeal</h1>
+        <p class="text-muted mb-0">Share your appeal details for the selected punishment.</p>
+    </div>
+</div>
+
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card shadow-sm border-0 mb-4">
+                <div class="card-body p-4">
+                    <% const punishedBy = punishment.bannedByUsername || punishment.bannedByUuid || "System"; %>
+                    <% const dateLabel = moment(punishment.dateStart).isValid() ? moment(punishment.dateStart).format("LLL") : "Unknown date"; %>
+                    <% const punishmentId = punishment.id || punishment.punishmentId || punishment.punishment_id || "-"; %>
+                    <% const typeLabel = punishment.type || "Unknown"; %>
+                    <% let typeBadge = "bg-secondary"; %>
+                    <% if (typeLabel === "ban") typeBadge = "bg-danger"; %>
+                    <% if (typeLabel === "mute") typeBadge = "bg-warning text-dark"; %>
+                    <% if (typeLabel === "kick") typeBadge = "bg-secondary"; %>
+                    <% if (typeLabel === "warning") typeBadge = "bg-info text-dark"; %>
+                    <% let expiryLabel = "—"; %>
+                    <% if (punishment.type === "ban") { %>
+                        <% if (moment(punishment.dateEnd).isValid()) { %>
+                            <% expiryLabel = moment(punishment.dateEnd).isAfter(moment()) ? moment(punishment.dateEnd).fromNow(true) : "Expired"; %>
+                        <% } else { %>
+                            <% expiryLabel = "Permanent"; %>
+                        <% } %>
+                    <% } %>
+
+                    <h5 class="mb-3">Selected punishment</h5>
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <div class="text-muted small">Punishment ID</div>
+                            <div class="fw-semibold"><%= punishmentId %></div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="text-muted small">Type</div>
+                            <div><span class="badge <%= typeBadge %> text-uppercase"><%= typeLabel %></span></div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="text-muted small">Reason</div>
+                            <div class="fw-semibold"><%= punishment.reason || "No reason provided." %></div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="text-muted small">Punished By</div>
+                            <div class="fw-semibold"><%= punishedBy %></div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="text-muted small">Date</div>
+                            <div class="fw-semibold"><%= dateLabel %></div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="text-muted small">Expires</div>
+                            <div class="fw-semibold"><%= expiryLabel %></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card shadow-sm border-0">
+                <div class="card-body p-4">
+                    <form action="/appeal" method="POST">
+                        <input type="hidden" name="punishmentIndex" value="<%= punishmentIndex %>">
+                        <div class="mb-3">
+                            <label for="appealReason" class="form-label">Why should this punishment be appealed?</label>
+                            <textarea class="form-control" id="appealReason" name="appealReason" rows="4" required></textarea>
+                        </div>
+
+                        <div class="mb-4">
+                            <label for="appealDetails" class="form-label">Additional information (optional)</label>
+                            <textarea class="form-control" id="appealDetails" name="appealDetails" rows="4"></textarea>
+                        </div>
+
+                        <div class="d-flex justify-content-between gap-2">
+                            <a href="/appeal" class="btn btn-outline-secondary">Back</a>
+                            <button type="submit" class="btn btn-primary">Submit Appeal</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<%- include("../../modules/footer.ejs") %>
