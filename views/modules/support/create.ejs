@@ -21,7 +21,7 @@
                     <p class="text-muted mb-0">Share a clear title and message so we can route your request quickly.</p>
                 </div>
                 <div class="card-body">
-                    <form action="/support/create" method="POST" class="row g-3">
+                    <form action="/support/create" method="POST" class="row g-3" id="supportCreateForm">
                         <div class="col-12">
                             <label for="title" class="form-label">Title</label>
                             <input type="text" name="title" id="title" class="form-control" placeholder="Brief summary of the issue" required>
@@ -35,6 +35,21 @@
                             </select>
                             <div class="form-text text-muted" id="category-description">Select a category to see its description.</div>
                         </div>
+                        <% if (isStaff) { %>
+                            <div class="col-12">
+                                <div class="border rounded-3 p-3 bg-light" id="manualTicketFields">
+                                    <div class="form-check form-switch mb-2">
+                                        <input class="form-check-input" type="checkbox" id="manualTicketToggle">
+                                        <label class="form-check-label" for="manualTicketToggle">Create a manual staff-owned ticket</label>
+                                    </div>
+                                    <p class="text-muted small mb-3">Manual tickets are uncategorised, owned by you, and include another user as a participant.</p>
+                                    <label for="manualUserSearch" class="form-label">Add user to ticket</label>
+                                    <input type="text" id="manualUserSearch" class="form-control" placeholder="Start typing a username" autocomplete="off">
+                                    <input type="hidden" name="manualUserId" id="manualUserId">
+                                    <div class="list-group mt-2" id="manualUserSuggestions"></div>
+                                </div>
+                            </div>
+                        <% } %>
                         <div class="col-12">
                             <label for="message" class="form-label">Message</label>
                             <textarea name="message" id="message" rows="6" class="form-control" placeholder="Include steps to reproduce, expected behavior, and any extra context." required></textarea>
@@ -71,6 +86,11 @@
     (() => {
         const categorySelect = document.getElementById('category');
         const descriptionEl = document.getElementById('category-description');
+        const manualToggle = document.getElementById('manualTicketToggle');
+        const manualUserSearch = document.getElementById('manualUserSearch');
+        const manualUserId = document.getElementById('manualUserId');
+        const manualUserSuggestions = document.getElementById('manualUserSuggestions');
+        const createForm = document.getElementById('supportCreateForm');
 
         if (!categorySelect || !descriptionEl) return;
 
@@ -84,6 +104,110 @@
 
         categorySelect.addEventListener('change', updateDescription);
         updateDescription();
+
+        if (manualToggle && manualUserSearch && manualUserId && manualUserSuggestions) {
+            let searchTimeout;
+
+            const clearSuggestions = () => {
+                manualUserSuggestions.innerHTML = '';
+            };
+
+            const setManualState = () => {
+                const enabled = manualToggle.checked;
+                manualUserSearch.disabled = !enabled;
+                manualUserSearch.required = enabled;
+                if (categorySelect) {
+                    categorySelect.disabled = enabled;
+                }
+                if (!enabled) {
+                    manualUserSearch.value = '';
+                    manualUserId.value = '';
+                    clearSuggestions();
+                }
+            };
+
+            const renderSuggestions = (results = []) => {
+                clearSuggestions();
+                if (!results.length) return;
+
+                results.forEach((user) => {
+                    const item = document.createElement('button');
+                    item.type = 'button';
+                    item.className = 'list-group-item list-group-item-action d-flex align-items-center gap-2';
+                    item.dataset.userId = user.userId;
+                    item.dataset.username = user.username;
+
+                    if (user.avatarUrl) {
+                        const img = document.createElement('img');
+                        img.src = user.avatarUrl;
+                        img.alt = `${user.username} avatar`;
+                        img.width = 32;
+                        img.height = 32;
+                        img.className = 'rounded';
+                        item.appendChild(img);
+                    } else {
+                        const placeholder = document.createElement('div');
+                        placeholder.className = 'rounded bg-secondary';
+                        placeholder.style.width = '32px';
+                        placeholder.style.height = '32px';
+                        item.appendChild(placeholder);
+                    }
+
+                    const label = document.createElement('span');
+                    label.textContent = user.username;
+                    label.className = 'flex-fill text-start';
+                    item.appendChild(label);
+
+                    item.addEventListener('click', () => {
+                        manualUserSearch.value = user.username;
+                        manualUserId.value = user.userId;
+                        clearSuggestions();
+                    });
+
+                    manualUserSuggestions.appendChild(item);
+                });
+            };
+
+            const searchUsers = async (term) => {
+                if (!term || term.length < 2) {
+                    clearSuggestions();
+                    return;
+                }
+
+                try {
+                    const response = await fetch(`/support/users/search?q=${encodeURIComponent(term)}`);
+                    if (!response.ok) {
+                        clearSuggestions();
+                        return;
+                    }
+
+                    const data = await response.json();
+                    renderSuggestions(data.results || []);
+                } catch (searchError) {
+                    console.error('Failed to search users', searchError);
+                    clearSuggestions();
+                }
+            };
+
+            manualToggle.addEventListener('change', setManualState);
+            manualUserSearch.addEventListener('input', (event) => {
+                const value = event.target.value || '';
+                manualUserId.value = '';
+                clearTimeout(searchTimeout);
+                searchTimeout = setTimeout(() => searchUsers(value.trim()), 250);
+            });
+
+            if (createForm) {
+                createForm.addEventListener('submit', (event) => {
+                    if (manualToggle.checked && !manualUserId.value) {
+                        event.preventDefault();
+                        manualUserSearch.focus();
+                    }
+                });
+            }
+
+            setManualState();
+        }
     })();
 </script>
 

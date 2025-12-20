@@ -6,6 +6,10 @@ import { hashEmail } from "../api/common.js";
 let discordChannelColumnCheck;
 let ticketParticipantTableCheck;
 let ticketMessageInternalColumnCheck;
+let ticketLockColumnCheck;
+let ticketEscalationColumnCheck;
+let ticketMessageTypeColumnCheck;
+let ticketCategoryDiscordColumnCheck;
 
 async function ensureDiscordChannelColumn() {
     if (!discordChannelColumnCheck) {
@@ -100,6 +104,176 @@ async function ensureTicketMessageInternalColumn() {
     return ticketMessageInternalColumnCheck;
 }
 
+async function ensureTicketLockColumn() {
+    if (!ticketLockColumnCheck) {
+        ticketLockColumnCheck = new Promise((resolve) => {
+            db.query("SHOW COLUMNS FROM supportTickets LIKE 'isLocked'", (err, results) => {
+                if (err) {
+                    console.error("Failed to verify supportTickets.isLocked column", err);
+                    resolve(false);
+                    return;
+                }
+
+                if (results.length > 0) {
+                    resolve(true);
+                    return;
+                }
+
+                db.query(
+                    "ALTER TABLE supportTickets ADD COLUMN isLocked TINYINT(1) NOT NULL DEFAULT 0",
+                    (alterErr) => {
+                        if (alterErr) {
+                            console.error("Failed to add supportTickets.isLocked column", alterErr);
+                            resolve(false);
+                            return;
+                        }
+
+                        console.info("Added supportTickets.isLocked column for ticket locking");
+                        resolve(true);
+                    },
+                );
+            });
+        });
+    }
+
+    return ticketLockColumnCheck;
+}
+
+async function ensureTicketEscalationColumn() {
+    if (!ticketEscalationColumnCheck) {
+        ticketEscalationColumnCheck = new Promise((resolve) => {
+            db.query("SHOW COLUMNS FROM supportTickets LIKE 'isEscalated'", (err, results) => {
+                if (err) {
+                    console.error("Failed to verify supportTickets.isEscalated column", err);
+                    resolve(false);
+                    return;
+                }
+
+                if (results.length > 0) {
+                    resolve(true);
+                    return;
+                }
+
+                db.query(
+                    "ALTER TABLE supportTickets ADD COLUMN isEscalated TINYINT(1) NOT NULL DEFAULT 0",
+                    (alterErr) => {
+                        if (alterErr) {
+                            console.error("Failed to add supportTickets.isEscalated column", alterErr);
+                            resolve(false);
+                            return;
+                        }
+
+                        console.info("Added supportTickets.isEscalated column for ticket escalation");
+                        resolve(true);
+                    },
+                );
+            });
+        });
+    }
+
+    return ticketEscalationColumnCheck;
+}
+
+async function ensureTicketMessageTypeColumn() {
+    if (!ticketMessageTypeColumnCheck) {
+        ticketMessageTypeColumnCheck = new Promise((resolve) => {
+            db.query("SHOW COLUMNS FROM supportTicketMessages LIKE 'messageType'", (err, results) => {
+                if (err) {
+                    console.error("Failed to verify supportTicketMessages.messageType column", err);
+                    resolve(false);
+                    return;
+                }
+
+                if (results.length > 0) {
+                    resolve(true);
+                    return;
+                }
+
+                db.query(
+                    "ALTER TABLE supportTicketMessages ADD COLUMN messageType VARCHAR(32) NOT NULL DEFAULT 'message' AFTER message",
+                    (alterErr) => {
+                        if (alterErr) {
+                            console.error("Failed to add supportTicketMessages.messageType column", alterErr);
+                            resolve(false);
+                            return;
+                        }
+
+                        console.info("Added supportTicketMessages.messageType column for status events");
+                        resolve(true);
+                    },
+                );
+            });
+        });
+    }
+
+    return ticketMessageTypeColumnCheck;
+}
+
+async function ensureTicketCategoryDiscordColumn() {
+    if (!ticketCategoryDiscordColumnCheck) {
+        ticketCategoryDiscordColumnCheck = new Promise((resolve) => {
+            db.query(
+                "SHOW COLUMNS FROM supportTicketCategories LIKE 'discordCategoryId'",
+                (err, results) => {
+                    if (err) {
+                        console.error(
+                            "Failed to verify supportTicketCategories.discordCategoryId column",
+                            err,
+                        );
+                        resolve(false);
+                        return;
+                    }
+
+                    if (results.length > 0) {
+                        resolve(true);
+                        return;
+                    }
+
+                    db.query(
+                        "ALTER TABLE supportTicketCategories ADD COLUMN discordCategoryId VARCHAR(255) NULL",
+                        (alterErr) => {
+                            if (alterErr) {
+                                console.error(
+                                    "Failed to add supportTicketCategories.discordCategoryId column",
+                                    alterErr,
+                                );
+                                resolve(false);
+                                return;
+                            }
+
+                            console.info(
+                                "Added supportTicketCategories.discordCategoryId column for Discord category mapping",
+                            );
+                            resolve(true);
+                        },
+                    );
+                },
+            );
+        });
+    }
+
+    return ticketCategoryDiscordColumnCheck;
+}
+
+async function buildAvatarUrl(profile) {
+    if (!profile) return null;
+
+    try {
+        if (profile.profilePicture_type === "GRAVATAR" && profile.profilePicture_email) {
+            const emailHash = await hashEmail(profile.profilePicture_email);
+            return `https://gravatar.com/avatar/${emailHash}?size=200`;
+        }
+
+        if (profile.profilePicture_type === "CRAFTATAR" && profile.uuid) {
+            return `https://crafthead.net/helm/${profile.uuid}`;
+        }
+    } catch (avatarError) {
+        console.error("buildAvatarUrl: failed to build avatar", avatarError);
+    }
+
+    return null;
+}
+
 
 export async function getSupportCategories() {
   return new Promise((resolve, reject) => {
@@ -107,6 +281,59 @@ export async function getSupportCategories() {
       if (err) reject(err);
       resolve(results);
     });
+  });
+}
+
+export async function getCategoryDiscordParentId(categoryId) {
+    const hasColumn = await ensureTicketCategoryDiscordColumn();
+    if (!hasColumn || !categoryId) return null;
+
+    return new Promise((resolve) => {
+        db.query(
+            "SELECT discordCategoryId FROM supportTicketCategories WHERE categoryId = ? LIMIT 1",
+            [categoryId],
+            (err, results) => {
+                if (err) {
+                    console.error("getCategoryDiscordParentId: failed to lookup category", err);
+                    resolve(null);
+                    return;
+                }
+
+                const discordCategoryId = results?.[0]?.discordCategoryId;
+                const normalized = discordCategoryId ? String(discordCategoryId).trim() : "";
+                if (!/^\d{5,}$/.test(normalized)) {
+                    resolve(null);
+                    return;
+                }
+
+                resolve(normalized);
+            },
+        );
+    });
+}
+
+export async function ensureUncategorisedCategory() {
+  return new Promise((resolve, reject) => {
+    db.query(
+      "SELECT categoryId FROM supportTicketCategories WHERE name = ? LIMIT 1",
+      ["Uncategorised"],
+      (lookupErr, results) => {
+        if (lookupErr) return reject(lookupErr);
+
+        if (results.length > 0) {
+          return resolve(results[0].categoryId);
+        }
+
+        db.query(
+          "INSERT INTO supportTicketCategories (name, description, enabled) VALUES (?, ?, 0)",
+          ["Uncategorised", "Manual tickets created by staff"],
+          (insertErr, insertResults) => {
+            if (insertErr) return reject(insertErr);
+            resolve(insertResults.insertId);
+          }
+        );
+      }
+    );
   });
 }
 
@@ -158,6 +385,22 @@ export async function addCategoryPermission(categoryId, roleId) {
       }
     );
   });
+}
+
+export async function removeCategoryPermission(categoryId, roleId) {
+    return new Promise((resolve, reject) => {
+        db.query(
+            "DELETE FROM supportTicketCategoryPermissions WHERE categoryId = ? AND roleId = ?",
+            [categoryId, roleId],
+            (err, results) => {
+                if (err) {
+                    reject(err);
+                } else {
+                    resolve(results);
+                }
+            },
+        );
+    });
 }
 
 export async function createSupportCategory(name, description) {
@@ -226,13 +469,26 @@ export async function createSupportTicket(
         throw new Error("Discord guild is unavailable for ticket creation");
     }
 
-    let targetParentId =
-        parentCategoryId && parentCategoryId !== "undefined" && parentCategoryId !== ""
-            ? parentCategoryId
-            : null;
+    let targetParentId = null;
 
-    if (!targetParentId) {
-        targetParentId = config.discord?.supportTicketCategoryId ?? process.env.SUPPORT_CATEGORY_ID ?? null;
+    if (parentCategoryId !== false) {
+        targetParentId =
+            parentCategoryId && parentCategoryId !== "undefined" && parentCategoryId !== ""
+                ? parentCategoryId
+                : null;
+
+        if (!targetParentId) {
+            try {
+                targetParentId = await getCategoryDiscordParentId(categoryId);
+            } catch (categoryError) {
+                console.error("Failed to resolve category Discord parent", categoryError);
+            }
+        }
+
+        if (!targetParentId) {
+            targetParentId =
+                config.discord?.supportTicketCategoryId ?? process.env.SUPPORT_CATEGORY_ID ?? null;
+        }
     }
     const permissionOverwrites = [
         {
@@ -377,10 +633,23 @@ export async function recreateTicketChannel(
 
     const staffRoleIds = await getCategoryPermissions(ticket.categoryId);
 
-    const resolvedParentId =
+    let resolvedParentId =
         parentCategoryId && parentCategoryId !== "undefined" && parentCategoryId !== ""
             ? parentCategoryId
-            : config.discord?.supportTicketCategoryId ?? process.env.SUPPORT_CATEGORY_ID ?? null;
+            : null;
+
+    if (!resolvedParentId) {
+        try {
+            resolvedParentId = await getCategoryDiscordParentId(ticket.categoryId);
+        } catch (categoryError) {
+            console.error("recreateTicketChannel: failed to resolve category Discord parent", categoryError);
+        }
+    }
+
+    if (!resolvedParentId) {
+        resolvedParentId =
+            config.discord?.supportTicketCategoryId ?? process.env.SUPPORT_CATEGORY_ID ?? null;
+    }
 
     const permissionOverwrites = [
         {
@@ -626,6 +895,44 @@ async function hasExistingUserParticipant(ticketId, userId) {
     });
 }
 
+export async function removeTicketUserParticipant(ticketId, userId) {
+    const hasTable = await ensureTicketParticipantTable();
+    if (!hasTable) return false;
+
+    return new Promise((resolve, reject) => {
+        db.query(
+            "DELETE FROM supportTicketParticipants WHERE ticketId = ? AND userId = ?",
+            [ticketId, userId],
+            (err, results) => {
+                if (err) {
+                    reject(err);
+                } else {
+                    resolve(results.affectedRows > 0);
+                }
+            },
+        );
+    });
+}
+
+export async function removeTicketGroupParticipant(ticketId, roleId) {
+    const hasTable = await ensureTicketParticipantTable();
+    if (!hasTable) return false;
+
+    return new Promise((resolve, reject) => {
+        db.query(
+            "DELETE FROM supportTicketParticipants WHERE ticketId = ? AND roleId = ?",
+            [ticketId, roleId],
+            (err, results) => {
+                if (err) {
+                    reject(err);
+                } else {
+                    resolve(results.affectedRows > 0);
+                }
+            },
+        );
+    });
+}
+
 export async function syncParticipantsForMessage(client, ticketId, { userId, discordRoleIds = [], rankSlugs = [] }) {
     const rankOptions = await getLuckPermRankRoles();
     const newParticipantPromises = [];
@@ -655,6 +962,64 @@ export async function syncParticipantsForMessage(client, ticketId, { userId, dis
         } catch (error) {
             console.error("syncParticipantsForMessage: failed to add participants", error);
         }
+    }
+}
+
+export async function removeTicketParticipantPermissions(
+    client,
+    ticketId,
+    { discordIds = [], roleIds = [] } = {},
+) {
+    const hasChannelColumn = await ensureDiscordChannelColumn();
+    if (!hasChannelColumn) return;
+
+    const ticket = await getTicketById(ticketId);
+    if (!ticket?.discordChannelId) {
+        return;
+    }
+
+    if (!client) {
+        console.warn("removeTicketParticipantPermissions: Discord client unavailable; skipping channel permission updates");
+        return;
+    }
+
+    let channel;
+    try {
+        channel = await client.channels.fetch(ticket.discordChannelId);
+    } catch (error) {
+        console.error("removeTicketParticipantPermissions: failed to fetch ticket channel", error);
+        return;
+    }
+
+    const isSnowflake = (value) => Boolean(value) && /^\d{5,}$/.test(String(value).trim());
+    const removals = [];
+
+    discordIds
+        .map((id) => String(id).trim())
+        .filter((id) => isSnowflake(id))
+        .forEach((id) => {
+            removals.push(
+                channel.permissionOverwrites.delete(id).catch((error) => {
+                    console.error("removeTicketParticipantPermissions: failed to remove user overwrite", { ticketId, id }, error);
+                }),
+            );
+        });
+
+    roleIds
+        .map((id) => String(id).trim())
+        .filter((id) => isSnowflake(id))
+        .forEach((id) => {
+            removals.push(
+                channel.permissionOverwrites.delete(id).catch((error) => {
+                    console.error("removeTicketParticipantPermissions: failed to remove role overwrite", { ticketId, id }, error);
+                }),
+            );
+        });
+
+    try {
+        await Promise.all(removals);
+    } catch (error) {
+        console.error("removeTicketParticipantPermissions: failed to update channel permissions", error);
     }
 }
 
@@ -779,15 +1144,18 @@ export async function createSupportTicketMessage(
     options = {},
 ) {
     const isInternal = Boolean(options.isInternal);
+    const messageType = typeof options.messageType === "string" ? options.messageType : "message";
     console.info("createSupportTicketMessage invoked", {
         ticketId,
         userId,
         source,
         messageLength: message?.length ?? 0,
         isInternal,
+        messageType,
     });
 
     const hasInternalColumn = await ensureTicketMessageInternalColumn();
+    const hasMessageTypeColumn = await ensureTicketMessageTypeColumn();
 
     if (source === "web" && !isInternal) {
         try {
@@ -832,19 +1200,7 @@ export async function createSupportTicketMessage(
                         console.error("createSupportTicketMessage: error loading sender profile", profileError);
                     }
 
-                    let avatarUrl = null;
-                    if (senderProfile) {
-                        try {
-                            if (senderProfile.profilePicture_type === "GRAVATAR" && senderProfile.profilePicture_email) {
-                                const emailHash = await hashEmail(senderProfile.profilePicture_email);
-                                avatarUrl = `https://gravatar.com/avatar/${emailHash}?size=200`;
-                            } else if (senderProfile.profilePicture_type === "CRAFTATAR" && senderProfile.uuid) {
-                                avatarUrl = `https://crafthead.net/helm/${senderProfile.uuid}`;
-                            }
-                        } catch (avatarError) {
-                            console.error("createSupportTicketMessage: failed to build avatar for sender", avatarError);
-                        }
-                    }
+                    const avatarUrl = await buildAvatarUrl(senderProfile);
 
                     const embed = {
                         author: {
@@ -879,12 +1235,26 @@ export async function createSupportTicketMessage(
     }
 
     return new Promise((resolve, reject) => {
-        const insertQuery = hasInternalColumn
-            ? "INSERT INTO supportTicketMessages (ticketId, userId, message, attachments, isInternal) VALUES (?, ?, ?, ?, ?)"
-            : "INSERT INTO supportTicketMessages (ticketId, userId, message, attachments) VALUES (?, ?, ?, ?)";
-        const params = hasInternalColumn
-            ? [ticketId, userId, message, JSON.stringify([]), isInternal ? 1 : 0]
-            : [ticketId, userId, message, JSON.stringify([])];
+        let insertQuery;
+        const params = [ticketId, userId, message, JSON.stringify([])];
+
+        if (hasMessageTypeColumn) {
+            insertQuery =
+                "INSERT INTO supportTicketMessages (ticketId, userId, message, attachments, messageType" +
+                (hasInternalColumn ? ", isInternal" : "") +
+                ") VALUES (?, ?, ?, ?, ?" +
+                (hasInternalColumn ? ", ?" : "") +
+                ")";
+            params.push(messageType);
+        } else {
+            insertQuery = hasInternalColumn
+                ? "INSERT INTO supportTicketMessages (ticketId, userId, message, attachments, isInternal) VALUES (?, ?, ?, ?, ?)"
+                : "INSERT INTO supportTicketMessages (ticketId, userId, message, attachments) VALUES (?, ?, ?, ?)";
+        }
+
+        if (hasInternalColumn) {
+            params.push(isInternal ? 1 : 0);
+        }
 
         db.query(insertQuery, params, (err, results) => {
             if (err) {
@@ -945,6 +1315,110 @@ export async function getCategoryPermissions(categoryId) {
     });
 }
 
+export async function updateTicketCategory(client, ticketId, newCategoryId) {
+    const hasChannelColumn = await ensureDiscordChannelColumn();
+
+    const ticket = await getTicketById(ticketId);
+    if (!ticket) {
+        throw new Error("Ticket not found");
+    }
+
+    const previousCategoryId = ticket.categoryId;
+    if (previousCategoryId === newCategoryId) {
+        return { changed: false, previousCategoryId, nextCategoryId: newCategoryId };
+    }
+
+    const [previousPermissions, nextPermissions] = await Promise.all([
+        getCategoryPermissions(previousCategoryId),
+        getCategoryPermissions(newCategoryId),
+    ]);
+
+    await new Promise((resolve, reject) => {
+        db.query(
+            "UPDATE supportTickets SET categoryId = ? WHERE ticketId = ?",
+            [newCategoryId, ticketId],
+            (err) => {
+                if (err) {
+                    reject(err);
+                } else {
+                    resolve();
+                }
+            },
+        );
+    });
+
+    if (!hasChannelColumn || !client || !ticket.discordChannelId) {
+        return { changed: true, previousCategoryId, nextCategoryId: newCategoryId };
+    }
+
+    let channel;
+    try {
+        channel = await client.channels.fetch(ticket.discordChannelId);
+    } catch (channelError) {
+        console.error("updateTicketCategory: failed to fetch Discord channel", channelError);
+        return { changed: true, previousCategoryId, nextCategoryId: newCategoryId };
+    }
+
+    if (!channel) {
+        return { changed: true, previousCategoryId, nextCategoryId: newCategoryId };
+    }
+
+    const permissionPromises = [];
+    const isSnowflake = (value) => Boolean(value) && /^\d{5,}$/.test(String(value).trim());
+
+    previousPermissions
+        .filter((roleId) => roleId && !nextPermissions.includes(roleId))
+        .forEach((roleId) => {
+            if (!isSnowflake(roleId)) return;
+            permissionPromises.push(
+                channel.permissionOverwrites.delete(roleId).catch((error) => {
+                    console.error("updateTicketCategory: failed to remove old role permission", { roleId, ticketId }, error);
+                }),
+            );
+        });
+
+    nextPermissions
+        .filter((roleId) => isSnowflake(roleId))
+        .forEach((roleId) => {
+            permissionPromises.push(
+                channel.permissionOverwrites.edit(roleId, {
+                    ViewChannel: true,
+                    SendMessages: true,
+                    AttachFiles: true,
+                    ReadMessageHistory: true,
+                    ManageMessages: true,
+                }),
+            );
+        });
+
+    try {
+        await Promise.all(permissionPromises);
+    } catch (permissionError) {
+        console.error("updateTicketCategory: failed to update Discord permissions", permissionError);
+    }
+
+    return { changed: true, previousCategoryId, nextCategoryId: newCategoryId };
+}
+
+export async function getUserById(userId) {
+    if (!userId) return null;
+
+    return new Promise((resolve) => {
+        db.query(
+            "SELECT userId, username, discordId, profilePicture_type, profilePicture_email, uuid FROM users WHERE userId = ? LIMIT 1",
+            [userId],
+            (err, results) => {
+                if (err) {
+                    console.error("getUserById: failed to lookup user", err);
+                    resolve(null);
+                } else {
+                    resolve(results?.[0] || null);
+                }
+            },
+        );
+    });
+}
+
 export async function findUserByIdentifier(identifier) {
     const lookup = identifier?.trim();
     if (!lookup) return null;
@@ -973,6 +1447,33 @@ export async function updateSupportCategory(id, name, description) {
                 resolve(results);
             }
         });
+    });
+}
+
+export async function searchUsersByUsername(query) {
+    const term = query?.trim();
+    if (!term || term.length < 2) return [];
+
+    return new Promise((resolve) => {
+        db.query(
+            "SELECT userId, username, profilePicture_type, profilePicture_email, uuid FROM users WHERE username LIKE ? ORDER BY username ASC LIMIT 8",
+            [`${term}%`],
+            async (err, results) => {
+                if (err) {
+                    console.error("searchUsersByUsername: failed to run query", err);
+                    resolve([]);
+                    return;
+                }
+
+                const enriched = await Promise.all(
+                    results.map(async (row) => ({
+                        ...row,
+                        avatarUrl: await buildAvatarUrl(row),
+                    })),
+                );
+                resolve(enriched);
+            },
+        );
     });
 }
 
@@ -1054,10 +1555,12 @@ export async function getTicketById(ticketId) {
 
 export async function getTicketMessages(ticketId, includeInternal = false) {
     const hasInternalColumn = await ensureTicketMessageInternalColumn();
+    const hasMessageTypeColumn = await ensureTicketMessageTypeColumn();
     const baseMessages = await new Promise((resolve, reject) => {
         const internalSelect = hasInternalColumn ? "" : ", 0 as isInternal";
+        const typeSelect = hasMessageTypeColumn ? "" : ", 'message' as messageType";
         db.query(
-            `SELECT m.*, u.username, u.discordId, u.profilePicture_type, u.profilePicture_email, u.uuid${internalSelect} FROM supportTicketMessages m JOIN users u ON m.userId = u.userId WHERE m.ticketId = ? ORDER BY m.createdAt ASC`,
+            `SELECT m.*, u.username, u.discordId, u.profilePicture_type, u.profilePicture_email, u.uuid${internalSelect}${typeSelect} FROM supportTicketMessages m JOIN users u ON m.userId = u.userId WHERE m.ticketId = ? ORDER BY m.createdAt ASC`,
             [ticketId],
             (err, results) => {
                 if (err) {
@@ -1118,10 +1621,11 @@ export async function getTicketMessages(ticketId, includeInternal = false) {
     if (uniqueUserIds.length > 0) {
         userRanks = await new Promise((resolve) => {
             db.query(
-                `SELECT ur.userId, ur.rankSlug, r.displayName, r.rankBadgeColour, r.rankTextColour
+                `SELECT ur.userId, ur.rankSlug, r.displayName, r.rankBadgeColour, r.rankTextColour, r.priority
                  FROM userRanks ur
                  LEFT JOIN ranks r ON ur.rankSlug = r.rankSlug
-                 WHERE ur.userId IN (?)`,
+                 WHERE ur.userId IN (?)
+                 ORDER BY CAST(r.priority AS SIGNED) DESC`,
                 [uniqueUserIds],
                 (err, results) => {
                     if (err) {
@@ -1138,7 +1642,11 @@ export async function getTicketMessages(ticketId, includeInternal = false) {
                             displayName: row.displayName || row.rankSlug,
                             badgeColor: row.rankBadgeColour,
                             textColor: row.rankTextColour,
+                            priority: Number(row.priority) || 0,
                         });
+                    });
+                    Object.values(grouped).forEach((ranks) => {
+                        ranks.sort((a, b) => (b.priority || 0) - (a.priority || 0));
                     });
                     resolve(grouped);
                 },
@@ -1157,17 +1665,7 @@ export async function getTicketMessages(ticketId, includeInternal = false) {
             .replace(/'/g, "&#39;");
 
     for (const message of filteredMessages) {
-        let avatarUrl = null;
-        try {
-            if (message.profilePicture_type === "GRAVATAR" && message.profilePicture_email) {
-                const emailHash = await hashEmail(message.profilePicture_email);
-                avatarUrl = `https://gravatar.com/avatar/${emailHash}?size=200`;
-            } else if (message.profilePicture_type === "CRAFTATAR" && message.uuid) {
-                avatarUrl = `https://crafthead.net/helm/${message.uuid}`;
-            }
-        } catch (avatarError) {
-            console.error("Failed to build avatar for ticket message", avatarError);
-        }
+        const avatarUrl = await buildAvatarUrl(message);
 
         const profileUrl = message.username ? `/profile/${encodeURIComponent(message.username)}` : null;
 
@@ -1186,6 +1684,7 @@ export async function getTicketMessages(ticketId, includeInternal = false) {
             profileUrl,
             ranks: userRanks[message.userId] || [],
             isInternal: Boolean(message.isInternal),
+            messageType: message.messageType || "message",
             renderedMessage,
         });
     }
@@ -1292,6 +1791,40 @@ export async function updateTicketStatus(ticketId, status) {
                 resolve(results);
             }
         });
+    });
+}
+
+export async function setTicketLockState(ticketId, isLocked) {
+    const hasLockColumn = await ensureTicketLockColumn();
+    if (!hasLockColumn) return null;
+
+    return new Promise((resolve, reject) => {
+        db.query("UPDATE supportTickets SET isLocked = ? WHERE ticketId = ?", [isLocked ? 1 : 0, ticketId], (err, results) => {
+            if (err) {
+                reject(err);
+            } else {
+                resolve(results);
+            }
+        });
+    });
+}
+
+export async function setTicketEscalationState(ticketId, isEscalated) {
+    const hasEscalationColumn = await ensureTicketEscalationColumn();
+    if (!hasEscalationColumn) return null;
+
+    return new Promise((resolve, reject) => {
+        db.query(
+            "UPDATE supportTickets SET isEscalated = ? WHERE ticketId = ?",
+            [isEscalated ? 1 : 0, ticketId],
+            (err, results) => {
+                if (err) {
+                    reject(err);
+                } else {
+                    resolve(results);
+                }
+            },
+        );
     });
 }
 

@@ -7,6 +7,11 @@
 
 <%- include('../../../modules/navigationBar.ejs') %>
 
+<%- include('../../../partials/miniHeader.ejs', {
+    headerTitle: "Manage Support Categories",
+    globalImage,
+}) %>
+
 <div class="container-fluid">
     <div class="row">
         <%- include('../dashboard-sidebar.ejs') %>
@@ -46,7 +51,6 @@
                                 <tr>
                                     <th>Name</th>
                                     <th>Description</th>
-                                    <th>Permissions</th>
                                     <th>Actions</th>
                                 </tr>
                             </thead>
@@ -55,35 +59,6 @@
                                     <tr>
                                         <td><%= category.name %></td>
                                         <td><%= category.description %></td>
-                                        <td>
-                                            <% if (category.permissions && category.permissions.length > 0) { %>
-                                                <% category.permissions.forEach(permission => { %>
-                                                    <% const badgeStyle = [];
-                                                       if (permission.badgeColor) badgeStyle.push(`background-color: ${permission.badgeColor}`);
-                                                       if (permission.textColor) badgeStyle.push(`color: ${permission.textColor}`);
-                                                    %>
-                                                    <span class="badge mb-1 <%= permission.badgeColor ? '' : 'bg-secondary' %>" style="<%= badgeStyle.join('; ') %>"><%= permission.roleName %></span><br>
-                                                <% }) %>
-                                            <% } else { %>
-                                                <span class="text-muted">No permissions set.</span>
-                                            <% } %>
-                                            <form action="/dashboard/support/categories/<%= category.categoryId %>/permissions" method="POST" class="mt-2">
-                                                <div class="input-group input-group-sm">
-                                                    <% const availableRoles = category.availableRoles && category.availableRoles.length > 0 ? category.availableRoles : []; %>
-                                                    <% if (availableRoles.length > 0) { %>
-                                                        <select name="roleId" class="form-select">
-                                                            <% availableRoles.forEach(role => { %>
-                                                                <option value="<%= role.id %>"><%= role.name %></option>
-                                                            <% }) %>
-                                                        </select>
-                                                        <button type="submit" class="btn btn-success">Add Role</button>
-                                                    <% } else { %>
-                                                        <span class="form-control text-muted">All eligible roles added</span>
-                                                        <button class="btn btn-success" type="button" disabled>All Added</button>
-                                                    <% } %>
-                                                </div>
-                                            </form>
-                                        </td>
                                         <td>
                                             <div class="btn-group">
                                                 <a href="/dashboard/support/categories/<%= category.categoryId %>/edit" class="btn btn-sm btn-primary">Edit</a>
