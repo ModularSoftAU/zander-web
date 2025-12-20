@@ -100,24 +100,18 @@ export default function supportRoutes(
 
   app.get("/appeal", async function (req, res) {
     try {
-      if (!req.session.user) {
-        return res.view("session/notLoggedIn", {
-          pageTitle: "Access Restricted",
-          config,
-          req,
-          features,
-          globalImage: await getGlobalImage(),
-          announcementWeb: await getWebAnnouncement(),
-        });
-      }
+      const isLoggedIn = Boolean(req.session.user);
+      let appealPunishmentsApiData = { success: true, data: [] };
 
-      const fetchPunishmentsURL = `${process.env.siteAddress}/api/user/punishments?username=${encodeURIComponent(
-        req.session.user.username
-      )}`;
-      const punishmentsResponse = await fetch(fetchPunishmentsURL, {
-        headers: { "x-access-token": process.env.apiKey },
-      });
-      const appealPunishmentsApiData = await punishmentsResponse.json();
+      if (isLoggedIn) {
+        const fetchPunishmentsURL = `${process.env.siteAddress}/api/user/punishments?username=${encodeURIComponent(
+          req.session.user.username
+        )}`;
+        const punishmentsResponse = await fetch(fetchPunishmentsURL, {
+          headers: { "x-access-token": process.env.apiKey },
+        });
+        appealPunishmentsApiData = await punishmentsResponse.json();
+      }
 
       return res.view("modules/appeal/appeal", {
         pageTitle: "Punishment Appeal",
@@ -126,6 +120,7 @@ export default function supportRoutes(
         features,
         appealPunishmentsApiData,
         moment,
+        isLoggedIn,
         globalImage: await getGlobalImage(),
         announcementWeb: await getWebAnnouncement(),
       });
