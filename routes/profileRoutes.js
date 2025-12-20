@@ -140,6 +140,23 @@ export default function profileSiteRoutes(
         }
 
         //
+        // Grab user punishments
+        //
+        let profilePunishmentsApiData = { success: true, data: [] };
+        if (
+          contextPermissions &&
+          contextPermissions.includes("zander.web.punishments")
+        ) {
+          const fetchPunishmentsURL = `${process.env.siteAddress}/api/user/punishments?username=${encodeURIComponent(
+            username
+          )}`;
+          const punishmentsResponse = await fetch(fetchPunishmentsURL, {
+            headers: { "x-access-token": process.env.apiKey },
+          });
+          profilePunishmentsApiData = await punishmentsResponse.json();
+        }
+
+        //
         // Render the profile page
         //
         return res.view("modules/profile/profile", {
@@ -155,6 +172,7 @@ export default function profileSiteRoutes(
           profileApiData: profileApiData.data[0],
           profileRanks: await fetchUserRanks(profileApiData.data[0].username),
           profileReportsApiData: profileReportsApiData,
+          profilePunishmentsApiData: profilePunishmentsApiData,
           profileStats: await getUserStats(profileApiData.data[0].userId),
           profileSession: await getUserLastSession(
             profileApiData.data[0].userId
