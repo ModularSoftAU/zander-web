@@ -98,47 +98,6 @@ export default function supportRoutes(
     }
   });
 
-  app.get("/appeal", async function (req, res) {
-    try {
-      const isLoggedIn = Boolean(req.session.user);
-      let appealPunishmentsApiData = { success: true, data: [] };
-
-      if (isLoggedIn) {
-        const fetchPunishmentsURL = `${process.env.siteAddress}/api/user/punishments?username=${encodeURIComponent(
-          req.session.user.username
-        )}`;
-        const punishmentsResponse = await fetch(fetchPunishmentsURL, {
-          headers: { "x-access-token": process.env.apiKey },
-        });
-        appealPunishmentsApiData = await punishmentsResponse.json();
-      }
-
-      return res.view("modules/appeal/appeal", {
-        pageTitle: "Punishment Appeal",
-        config,
-        req,
-        features,
-        appealPunishmentsApiData,
-        moment,
-        isLoggedIn,
-        globalImage: await getGlobalImage(),
-        announcementWeb: await getWebAnnouncement(),
-      });
-    } catch (error) {
-      console.error(error);
-      return res.view("session/error", {
-        pageTitle: "Error",
-        pageDescription: "Error",
-        config,
-        req,
-        error,
-        features,
-        globalImage: await getGlobalImage(),
-        announcementWeb: await getWebAnnouncement(),
-      });
-    }
-  });
-
   app.post("/appeal", async function (req, res) {
     try {
       if (!req.session.user) {
