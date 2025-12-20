@@ -3,6 +3,7 @@ const require = createRequire(import.meta.url);
 
 import { getWebAnnouncement } from "../controllers/announcementController.js";
 import { isFeatureWebRouteEnabled, getGlobalImage, hasPermission } from "../api/common.js";
+import { getTicketsAccessibleByUser } from "../controllers/supportTicketController.js";
 
 import dashboardSiteRoutes from "./dashboard/index.js";
 import sessionRoutes from "./sessionRoutes.js";
@@ -147,6 +148,7 @@ export default function applicationSiteRoutes(
     try {
       const isLoggedIn = Boolean(req.session.user);
       let appealPunishmentsApiData = { success: true, data: [] };
+      let appealTicketsByKey = {};
 
       if (isLoggedIn) {
         const fetchPunishmentsURL = `${process.env.siteAddress}/api/user/punishments?username=${encodeURIComponent(
@@ -156,6 +158,23 @@ export default function applicationSiteRoutes(
           headers: { "x-access-token": process.env.apiKey },
         });
         appealPunishmentsApiData = await punishmentsResponse.json();
+
+        const userRankSlugs =
+          req.session.user.ranks?.map((rank) => rank.rankSlug) || [];
+        const tickets = await getTicketsAccessibleByUser(
+          req.session.user.userId,
+          userRankSlugs
+        );
+        appealTicketsByKey = (tickets || []).reduce((acc, ticket) => {
+          if (ticket.status === "closed") {
+            return acc;
+          }
+          const match = String(ticket.title || "").match(/Appeal #([^\s]+)/);
+          if (match && match[1]) {
+            acc[match[1]] = ticket.ticketId;
+          }
+          return acc;
+        }, {});
       }
 
       return res.view("modules/appeal/appeal", {
@@ -164,6 +183,7 @@ export default function applicationSiteRoutes(
         req: req,
         features: features,
         appealPunishmentsApiData: appealPunishmentsApiData,
+        appealTicketsByKey: appealTicketsByKey,
         moment: moment,
         isLoggedIn: isLoggedIn,
         globalImage: await getGlobalImage(),
@@ -212,12 +232,33 @@ export default function applicationSiteRoutes(
         return res.redirect("/appeal");
       }
 
+      const fallbackKey = moment(punishment.dateStart).isValid()
+        ? `${punishment.type || "unknown"}-${moment(punishment.dateStart).valueOf()}`
+        : String(punishmentIndex);
+      const punishmentKey = String(
+        punishment.id || punishment.punishmentId || punishment.punishment_id || fallbackKey
+      );
+      const userRankSlugs =
+        req.session.user.ranks?.map((rank) => rank.rankSlug) || [];
+      const tickets = await getTicketsAccessibleByUser(
+        req.session.user.userId,
+        userRankSlugs
+      );
+      const existingTicket = (tickets || []).find((ticket) => {
+        if (ticket.status === "closed") return false;
+        return String(ticket.title || "").includes(`Appeal #${punishmentKey}`);
+      });
+      if (existingTicket) {
+        return res.redirect(`/support/ticket/${existingTicket.ticketId}`);
+      }
+
       return res.view("modules/appeal/appeal-form", {
         pageTitle: "Punishment Appeal",
         config: config,
         req: req,
         features: features,
         punishmentIndex: punishmentIndex,
+        punishmentKey: punishmentKey,
         punishment: punishment,
         moment: moment,
         globalImage: await getGlobalImage(),

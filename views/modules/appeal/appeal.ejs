@@ -5,12 +5,10 @@
 
 <%- include("../../modules/navigationBar.ejs") %>
 
-<div class="page-header">
-    <div class="container">
-        <h1 class="mb-1">Appeal</h1>
-        <p class="text-muted mb-0">Start a punishment appeal by selecting a recent action below.</p>
-    </div>
-</div>
+<%- include("../../partials/miniHeader.ejs", {
+    headerTitle: "Appeal",
+    globalImage,
+}) %>
 
 <div class="container py-5">
     <div class="row justify-content-center">
@@ -60,10 +58,12 @@
                                     </thead>
                                     <tbody>
                                         <% punishments.forEach(function (punishment, index) { %>
+                                            <% const typeLabel = punishment.type || "Unknown"; %>
                                             <% const punishedBy = punishment.bannedByUsername || punishment.bannedByUuid || "System"; %>
                                             <% const dateLabel = moment(punishment.dateStart).isValid() ? moment(punishment.dateStart).format("LLL") : "Unknown date"; %>
                                             <% const punishmentId = punishment.id || punishment.punishmentId || punishment.punishment_id || "-"; %>
-                                            <% const typeLabel = punishment.type || "Unknown"; %>
+                                            <% const fallbackKey = moment(punishment.dateStart).isValid() ? `${typeLabel}-${moment(punishment.dateStart).valueOf()}` : String(index); %>
+                                            <% const punishmentKey = String(punishment.id || punishment.punishmentId || punishment.punishment_id || fallbackKey); %>
                                             <% let typeBadge = "bg-secondary"; %>
                                             <% if (typeLabel === "ban") typeBadge = "bg-danger"; %>
                                             <% if (typeLabel === "mute") typeBadge = "bg-warning text-dark"; %>
@@ -85,7 +85,11 @@
                                                 <td><%= punishedBy %></td>
                                                 <td><%= expiryLabel %></td>
                                                 <td class="text-end">
-                                                    <a href="/appeal/start?punishmentIndex=<%= index %>" class="btn btn-sm btn-primary">Appeal</a>
+                                                    <% if (appealTicketsByKey && appealTicketsByKey[punishmentKey]) { %>
+                                                        <a href="/support/ticket/<%= appealTicketsByKey[punishmentKey] %>" class="btn btn-sm btn-outline-primary">View ticket</a>
+                                                    <% } else { %>
+                                                        <a href="/appeal/start?punishmentIndex=<%= index %>" class="btn btn-sm btn-primary">Appeal</a>
+                                                    <% } %>
                                                 </td>
                                             </tr>
                                         <% }) %>

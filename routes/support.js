@@ -137,6 +137,31 @@ export default function supportRoutes(
         return res.redirect("/appeal");
       }
 
+      const fallbackKey = moment(punishment.dateStart).isValid()
+        ? `${punishment.type || "unknown"}-${moment(punishment.dateStart).valueOf()}`
+        : String(index);
+      const punishmentKey = String(
+        punishment.id || punishment.punishmentId || punishment.punishment_id || fallbackKey
+      );
+      const userRankSlugs =
+        req.session.user.ranks?.map((rank) => rank.rankSlug) || [];
+      const tickets = await getTicketsAccessibleByUser(
+        req.session.user.userId,
+        userRankSlugs
+      );
+      const existingTicket = (tickets || []).find((ticket) => {
+        if (ticket.status === "closed") return false;
+        return String(ticket.title || "").includes(`Appeal #${punishmentKey}`);
+      });
+      if (existingTicket) {
+        setBannerCookie(
+          "warning",
+          "You already have an appeal in progress for this punishment.",
+          res
+        );
+        return res.redirect(`/support/ticket/${existingTicket.ticketId}`);
+      }
+
       const punishedBy = punishment.bannedByUsername || punishment.bannedByUuid || "System";
       const dateLabel = moment(punishment.dateStart).isValid()
         ? moment(punishment.dateStart).format("LLL")
@@ -152,7 +177,7 @@ export default function supportRoutes(
         }
       }
 
-      const title = `Punishment Appeal - ${punishment.type || "unknown"} - ${dateLabel}`;
+      const title = `Appeal #${punishmentKey} - ${punishment.type || "unknown"} - ${dateLabel}`;
       const categoryId = await ensureUncategorisedCategory();
       const ticketRecord = await createSupportTicket(
         client,

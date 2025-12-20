@@ -102,15 +102,20 @@
                                                     <th scope="col">Type</th>
                                                     <th scope="col">Reason</th>
                                                     <th scope="col">Expires</th>
+                                                    <% if (canAppeal) { %>
+                                                        <th scope="col" class="text-end">Action</th>
+                                                    <% } %>
                                                 </tr>
                                             </thead>
                                             <tbody>
-                                                <% punishments.forEach(function (punishment) { %>
+                                                <% punishments.forEach(function (punishment, index) { %>
                                                     <% const appealReason = punishment.reasonRemoved || punishment.removedByReason || ""; %>
                                                     <% const isAppealed = String(appealReason).toLowerCase().includes("appeal"); %>
-                                                    <% const punishmentId = punishment.id || punishment.punishmentId || punishment.punishment_id || "-"; %>
                                                     <% const punishedBy = punishment.bannedByUsername || punishment.bannedByUuid || "System"; %>
                                                     <% const typeLabel = punishment.type || "Unknown"; %>
+                                                    <% const punishmentId = punishment.id || punishment.punishmentId || punishment.punishment_id || "-"; %>
+                                                    <% const fallbackKey = moment(punishment.dateStart).isValid() ? `${typeLabel}-${moment(punishment.dateStart).valueOf()}` : String(index); %>
+                                                    <% const punishmentKey = String(punishment.id || punishment.punishmentId || punishment.punishment_id || fallbackKey); %>
                                                     <% let typeBadge = "bg-secondary"; %>
                                                     <% if (typeLabel === "ban") typeBadge = "bg-danger"; %>
                                                     <% if (typeLabel === "mute") typeBadge = "bg-warning text-dark"; %>
@@ -136,6 +141,15 @@
                                                         </td>
                                                         <td><%= punishment.reason || "No reason provided." %></td>
                                                         <td><%= expiryLabel %></td>
+                                                        <% if (canAppeal) { %>
+                                                            <td class="text-end">
+                                                                <% if (appealTicketsByKey && appealTicketsByKey[punishmentKey]) { %>
+                                                                    <a href="/support/ticket/<%= appealTicketsByKey[punishmentKey] %>" class="btn btn-sm btn-outline-primary">View ticket</a>
+                                                                <% } else { %>
+                                                                    <a href="/appeal/start?punishmentIndex=<%= index %>" class="btn btn-sm btn-primary">Appeal</a>
+                                                                <% } %>
+                                                            </td>
+                                                        <% } %>
                                                     </tr>
                                                 <% }) %>
                                             </tbody>
