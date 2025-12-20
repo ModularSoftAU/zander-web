@@ -108,8 +108,14 @@
                                                 <% punishments.forEach(function (punishment) { %>
                                                     <% const appealReason = punishment.reasonRemoved || punishment.removedByReason || ""; %>
                                                     <% const isAppealed = String(appealReason).toLowerCase().includes("appeal"); %>
-                                                    <% const punishmentId = punishment.id || punishment.punishmentId || punishment.punishment_id || "—"; %>
+                                                    <% const punishmentId = punishment.id || punishment.punishmentId || punishment.punishment_id || "-"; %>
                                                     <% const punishedBy = punishment.bannedByUsername || punishment.bannedByUuid || "System"; %>
+                                                    <% const typeLabel = punishment.type || "Unknown"; %>
+                                                    <% let typeBadge = "bg-secondary"; %>
+                                                    <% if (typeLabel === "ban") typeBadge = "bg-danger"; %>
+                                                    <% if (typeLabel === "mute") typeBadge = "bg-warning text-dark"; %>
+                                                    <% if (typeLabel === "kick") typeBadge = "bg-secondary"; %>
+                                                    <% if (typeLabel === "warning") typeBadge = "bg-info text-dark"; %>
                                                     <% let expiryLabel = "—"; %>
                                                     <% if (punishment.type === "ban") { %>
                                                         <% if (moment(punishment.dateEnd).isValid()) { %>
@@ -125,7 +131,9 @@
                                                     <tr class="<%= isAppealed ? 'table-warning' : '' %>">
                                                         <th scope="row"><%= punishmentId %></th>
                                                         <td><%= punishedBy %></td>
-                                                        <td class="text-uppercase"><%= punishment.type || "Unknown" %></td>
+                                                        <td>
+                                                            <span class="badge <%= typeBadge %> text-uppercase"><%= typeLabel %></span>
+                                                        </td>
                                                         <td><%= punishment.reason || "No reason provided." %></td>
                                                         <td><%= expiryLabel %></td>
                                                     </tr>

@@ -1,0 +1,79 @@
+<%- include("../../modules/header.ejs", {
+    pageTitle: pageTitle,
+    pageDescription: "Submit a punishment appeal for staff review."
+}) %>
+
+<%- include("../../modules/navigationBar.ejs") %>
+
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="mb-4">
+                <h2 class="mb-2">Punishment Appeal</h2>
+                <p class="text-muted mb-0">
+                    Appeals are reviewed by staff. Please provide clear and respectful details so we can investigate.
+                </p>
+            </div>
+
+            <div class="card shadow-sm border-0 mb-4">
+                <div class="card-body p-4">
+                    <h5 class="mb-3">Before you start</h5>
+                    <ol class="text-muted mb-0">
+                        <li>Make sure you have an account and are signed in.</li>
+                        <li>Select the punishment you want to appeal.</li>
+                        <li>Fill in the appeal information carefully and submit.</li>
+                    </ol>
+                </div>
+            </div>
+
+            <div class="card shadow-sm border-0">
+                <div class="card-body p-4">
+                    <% const punishments = appealPunishmentsApiData && Array.isArray(appealPunishmentsApiData.data) ? appealPunishmentsApiData.data : []; %>
+                    <% if (!punishments.length) { %>
+                        <div class="alert alert-warning mb-0" role="alert">
+                            We couldn't find any punishments tied to your account.
+                        </div>
+                    <% } else { %>
+                        <form action="/appeal" method="POST">
+                            <div class="mb-3">
+                                <label for="punishmentIndex" class="form-label">Select a punishment</label>
+                                <select class="form-select" id="punishmentIndex" name="punishmentIndex" required>
+                                    <option value="" disabled selected>Select a punishment...</option>
+                                    <% punishments.forEach(function (punishment, index) { %>
+                                        <% const punishedBy = punishment.bannedByUsername || punishment.bannedByUuid || "System"; %>
+                                        <% const dateLabel = moment(punishment.dateStart).isValid() ? moment(punishment.dateStart).format("LLL") : "Unknown date"; %>
+                                        <% let expiryLabel = "—"; %>
+                                        <% if (punishment.type === "ban") { %>
+                                            <% if (moment(punishment.dateEnd).isValid()) { %>
+                                                <% expiryLabel = moment(punishment.dateEnd).isAfter(moment()) ? moment(punishment.dateEnd).fromNow(true) : "Expired"; %>
+                                            <% } else { %>
+                                                <% expiryLabel = "Permanent"; %>
+                                            <% } %>
+                                        <% } %>
+                                        <option value="<%= index %>">
+                                            <%= (punishment.type || "Unknown").toUpperCase() %> • <%= punishment.reason || "No reason" %> • <%= dateLabel %> • By <%= punishedBy %> • Expires: <%= expiryLabel %>
+                                        </option>
+                                    <% }) %>
+                                </select>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="appealReason" class="form-label">Why should this punishment be appealed?</label>
+                                <textarea class="form-control" id="appealReason" name="appealReason" rows="4" required></textarea>
+                            </div>
+
+                            <div class="mb-4">
+                                <label for="appealDetails" class="form-label">Additional information (optional)</label>
+                                <textarea class="form-control" id="appealDetails" name="appealDetails" rows="4"></textarea>
+                            </div>
+
+                            <button type="submit" class="btn btn-primary">Submit Appeal</button>
+                        </form>
+                    <% } %>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<%- include("../../modules/footer.ejs") %>

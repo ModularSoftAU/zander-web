@@ -98,6 +98,167 @@ export default function supportRoutes(
     }
   });
 
+  app.get("/appeal", async function (req, res) {
+    try {
+      if (!req.session.user) {
+        return res.view("session/notLoggedIn", {
+          pageTitle: "Access Restricted",
+          config,
+          req,
+          features,
+          globalImage: await getGlobalImage(),
+          announcementWeb: await getWebAnnouncement(),
+        });
+      }
+
+      const fetchPunishmentsURL = `${process.env.siteAddress}/api/user/punishments?username=${encodeURIComponent(
+        req.session.user.username
+      )}`;
+      const punishmentsResponse = await fetch(fetchPunishmentsURL, {
+        headers: { "x-access-token": process.env.apiKey },
+      });
+      const appealPunishmentsApiData = await punishmentsResponse.json();
+
+      return res.view("modules/appeal/appeal", {
+        pageTitle: "Punishment Appeal",
+        config,
+        req,
+        features,
+        appealPunishmentsApiData,
+        moment,
+        globalImage: await getGlobalImage(),
+        announcementWeb: await getWebAnnouncement(),
+      });
+    } catch (error) {
+      console.error(error);
+      return res.view("session/error", {
+        pageTitle: "Error",
+        pageDescription: "Error",
+        config,
+        req,
+        error,
+        features,
+        globalImage: await getGlobalImage(),
+        announcementWeb: await getWebAnnouncement(),
+      });
+    }
+  });
+
+  app.post("/appeal", async function (req, res) {
+    try {
+      if (!req.session.user) {
+        return res.redirect("/login");
+      }
+
+      const { punishmentIndex, appealReason, appealDetails } = req.body;
+      const index = Number.parseInt(punishmentIndex, 10);
+      const reason = (appealReason || "").trim();
+      const details = (appealDetails || "").trim();
+
+      if (!Number.isInteger(index) || index < 0) {
+        setBannerCookie("warning", "Please select a punishment to appeal.", res);
+        return res.redirect("/appeal");
+      }
+
+      if (!reason) {
+        setBannerCookie("warning", "Please provide a reason for your appeal.", res);
+        return res.redirect("/appeal");
+      }
+
+      const fetchPunishmentsURL = `${process.env.siteAddress}/api/user/punishments?username=${encodeURIComponent(
+        req.session.user.username
+      )}`;
+      const punishmentsResponse = await fetch(fetchPunishmentsURL, {
+        headers: { "x-access-token": process.env.apiKey },
+      });
+      const appealPunishmentsApiData = await punishmentsResponse.json();
+      const punishments = Array.isArray(appealPunishmentsApiData.data)
+        ? appealPunishmentsApiData.data
+        : [];
+      const punishment = punishments[index];
+
+      if (!punishment) {
+        setBannerCookie("warning", "We couldn't find that punishment to appeal.", res);
+        return res.redirect("/appeal");
+      }
+
+      const punishedBy = punishment.bannedByUsername || punishment.bannedByUuid || "System";
+      const dateLabel = moment(punishment.dateStart).isValid()
+        ? moment(punishment.dateStart).format("LLL")
+        : "Unknown date";
+      let expiryLabel = "—";
+      if (punishment.type === "ban") {
+        if (moment(punishment.dateEnd).isValid()) {
+          expiryLabel = moment(punishment.dateEnd).isAfter(moment())
+            ? moment(punishment.dateEnd).fromNow(true)
+            : "Expired";
+        } else {
+          expiryLabel = "Permanent";
+        }
+      }
+
+      const title = `Punishment Appeal - ${punishment.type || "unknown"} - ${dateLabel}`;
+      const categoryId = await ensureUncategorisedCategory();
+      const ticketRecord = await createSupportTicket(
+        client,
+        req.session.user.userId,
+        categoryId,
+        title,
+        {
+          discordUserId: req.session.user.discordId,
+          staffRoleIds: [],
+          parentCategoryId: false,
+        }
+      );
+
+      const message = [
+        "Punishment Appeal Submitted",
+        "",
+        `Punished By: ${punishedBy}`,
+        `Type: ${punishment.type || "Unknown"}`,
+        `Reason: ${punishment.reason || "No reason provided."}`,
+        `Start: ${dateLabel}`,
+        `Expires: ${expiryLabel}`,
+        "",
+        "Appeal Reason:",
+        reason,
+        "",
+        "Additional Information:",
+        details || "N/A",
+      ].join("\n");
+
+      await createSupportTicketMessage(
+        client,
+        ticketRecord.ticketId,
+        req.session.user.userId,
+        message
+      );
+
+      await syncParticipantsForMessage(client, ticketRecord.ticketId, {
+        userId: req.session.user.userId,
+        rankSlugs: req.session.user.ranks?.map((rank) => rank.rankSlug) || [],
+      });
+
+      if (punishment.bannedByUserId && punishment.bannedByUserId !== req.session.user.userId) {
+        try {
+          await addTicketUserParticipant(ticketRecord.ticketId, {
+            userId: punishment.bannedByUserId,
+          });
+          await applyTicketParticipantPermissions(client, ticketRecord.ticketId);
+        } catch (participantError) {
+          console.error("Failed to add punished-by participant to appeal ticket", participantError);
+        }
+      }
+
+      setBannerCookie("success", "Your appeal has been submitted.", res);
+      return res.redirect(`/support/ticket/${ticketRecord.ticketId}`);
+    } catch (error) {
+      console.error(error);
+      setBannerCookie("danger", "We couldn't submit your appeal. Please try again.", res);
+      return res.redirect("/appeal");
+    }
+  });
+
   app.get("/support/ticket/:id", async function (req, res) {
     try {
       if (!req.session.user) {
