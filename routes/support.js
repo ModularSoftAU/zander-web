@@ -98,10 +98,152 @@ export default function supportRoutes(
     }
   });
 
+  app.post("/appeal", async function (req, res) {
+    try {
+      if (!req.session.user) {
+        const returnTo = encodeURIComponent(req.url);
+        return res.redirect(`/login?returnTo=${returnTo}`);
+      }
+
+      const { punishmentIndex, appealReason, appealDetails } = req.body;
+      const index = Number.parseInt(punishmentIndex, 10);
+      const reason = (appealReason || "").trim();
+      const details = (appealDetails || "").trim();
+
+      if (!Number.isInteger(index) || index < 0) {
+        setBannerCookie("warning", "Please select a punishment to appeal.", res);
+        return res.redirect("/appeal");
+      }
+
+      if (!reason) {
+        setBannerCookie("warning", "Please provide a reason for your appeal.", res);
+        return res.redirect("/appeal");
+      }
+
+      const fetchPunishmentsURL = `${process.env.siteAddress}/api/user/punishments?username=${encodeURIComponent(
+        req.session.user.username
+      )}`;
+      const punishmentsResponse = await fetch(fetchPunishmentsURL, {
+        headers: { "x-access-token": process.env.apiKey },
+      });
+      const appealPunishmentsApiData = await punishmentsResponse.json();
+      const punishments = Array.isArray(appealPunishmentsApiData.data)
+        ? appealPunishmentsApiData.data
+        : [];
+      const punishment = punishments[index];
+
+      if (!punishment) {
+        setBannerCookie("warning", "We couldn't find that punishment to appeal.", res);
+        return res.redirect("/appeal");
+      }
+
+      const fallbackKey = moment(punishment.dateStart).isValid()
+        ? `${punishment.type || "unknown"}-${moment(punishment.dateStart).valueOf()}`
+        : String(index);
+      const punishmentKey = String(
+        punishment.id || punishment.punishmentId || punishment.punishment_id || fallbackKey
+      );
+      const userRankSlugs =
+        req.session.user.ranks?.map((rank) => rank.rankSlug) || [];
+      const tickets = await getTicketsAccessibleByUser(
+        req.session.user.userId,
+        userRankSlugs
+      );
+      const existingTicket = (tickets || []).find((ticket) => {
+        if (ticket.status === "closed") return false;
+        return String(ticket.title || "").includes(`Appeal #${punishmentKey}`);
+      });
+      if (existingTicket) {
+        setBannerCookie(
+          "warning",
+          "You already have an appeal in progress for this punishment.",
+          res
+        );
+        return res.redirect(`/support/ticket/${existingTicket.ticketId}`);
+      }
+
+      const punishedBy = punishment.bannedByUsername || punishment.bannedByUuid || "System";
+      const dateLabel = moment(punishment.dateStart).isValid()
+        ? moment(punishment.dateStart).format("LLL")
+        : "Unknown date";
+      let expiryLabel = "—";
+      if (punishment.type === "ban") {
+        if (moment(punishment.dateEnd).isValid()) {
+          expiryLabel = moment(punishment.dateEnd).isAfter(moment())
+            ? moment(punishment.dateEnd).fromNow(true)
+            : "Expired";
+        } else {
+          expiryLabel = "Permanent";
+        }
+      }
+
+      const title = `Appeal #${punishmentKey} - ${punishment.type || "unknown"} - ${dateLabel}`;
+      const categoryId = await ensureUncategorisedCategory();
+      const ticketRecord = await createSupportTicket(
+        client,
+        req.session.user.userId,
+        categoryId,
+        title,
+        {
+          discordUserId: req.session.user.discordId,
+          staffRoleIds: [],
+          parentCategoryId: false,
+        }
+      );
+
+      const message = [
+        "Punishment Appeal Submitted",
+        "",
+        `Punished By: ${punishedBy}`,
+        `Type: ${punishment.type || "Unknown"}`,
+        `Reason: ${punishment.reason || "No reason provided."}`,
+        `Start: ${dateLabel}`,
+        `Expires: ${expiryLabel}`,
+        "",
+        "Appeal Reason:",
+        reason,
+        "",
+        "Additional Information:",
+        details || "N/A",
+      ].join("\n");
+
+      await createSupportTicketMessage(
+        client,
+        ticketRecord.ticketId,
+        req.session.user.userId,
+        message
+      );
+
+      await syncParticipantsForMessage(client, ticketRecord.ticketId, {
+        userId: req.session.user.userId,
+        rankSlugs: req.session.user.ranks?.map((rank) => rank.rankSlug) || [],
+      });
+
+      if (punishment.bannedByUserId && punishment.bannedByUserId !== req.session.user.userId) {
+        try {
+          await addTicketUserParticipant(ticketRecord.ticketId, {
+            userId: punishment.bannedByUserId,
+          });
+          await applyTicketParticipantPermissions(client, ticketRecord.ticketId);
+        } catch (participantError) {
+          console.error("Failed to add punished-by participant to appeal ticket", participantError);
+        }
+      }
+
+      setBannerCookie("success", "Your appeal has been submitted.", res);
+      return res.redirect(`/support/ticket/${ticketRecord.ticketId}`);
+    } catch (error) {
+      console.error(error);
+      setBannerCookie("danger", "We couldn't submit your appeal. Please try again.", res);
+      return res.redirect("/appeal");
+    }
+  });
+
   app.get("/support/ticket/:id", async function (req, res) {
     try {
       if (!req.session.user) {
-        return res.redirect("/login");
+        const returnTo = encodeURIComponent(req.url);
+        return res.redirect(`/login?returnTo=${returnTo}`);
       }
 
       const ticket = await getTicketById(req.params.id);
@@ -172,7 +314,8 @@ export default function supportRoutes(
   app.post("/support/ticket/:id", async function (req, res) {
     try {
       if (!req.session.user) {
-        return res.redirect("/login");
+        const returnTo = encodeURIComponent(req.url);
+        return res.redirect(`/login?returnTo=${returnTo}`);
       }
 
       const ticket = await getTicketById(req.params.id);
@@ -275,7 +418,8 @@ export default function supportRoutes(
   app.post("/support/ticket/:id/status", async function (req, res) {
     try {
       if (!req.session.user) {
-        return res.redirect("/login");
+        const returnTo = encodeURIComponent(req.url);
+        return res.redirect(`/login?returnTo=${returnTo}`);
       }
 
       const ticket = await getTicketById(req.params.id);
@@ -371,7 +515,8 @@ export default function supportRoutes(
   app.post("/support/ticket/:id/category", async function (req, res) {
     try {
       if (!req.session.user) {
-        return res.redirect("/login");
+        const returnTo = encodeURIComponent("/appeal");
+        return res.redirect(`/login?returnTo=${returnTo}`);
       }
 
       const ticket = await getTicketById(req.params.id);

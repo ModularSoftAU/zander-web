@@ -11,6 +11,7 @@ import {
   linkDiscordAccount,
   unlinkDiscordAccount,
 } from "../controllers/userController.js";
+import { getTicketsAccessibleByUser } from "../controllers/supportTicketController.js";
 
 export default function profileSiteRoutes(
   app,
@@ -140,6 +141,46 @@ export default function profileSiteRoutes(
         }
 
         //
+        // Grab user punishments
+        //
+        let profilePunishmentsApiData = { success: true, data: [] };
+        if (
+          contextPermissions &&
+          contextPermissions.includes("zander.web.punishments")
+        ) {
+          const fetchPunishmentsURL = `${process.env.siteAddress}/api/user/punishments?username=${encodeURIComponent(
+            username
+          )}`;
+          const punishmentsResponse = await fetch(fetchPunishmentsURL, {
+            headers: { "x-access-token": process.env.apiKey },
+          });
+          profilePunishmentsApiData = await punishmentsResponse.json();
+        }
+
+        const canAppeal =
+          req.session.user &&
+          req.session.user.username === profileApiData.data[0].username;
+        let appealTicketsByKey = {};
+        if (canAppeal) {
+          const userRankSlugs =
+            req.session.user.ranks?.map((rank) => rank.rankSlug) || [];
+          const tickets = await getTicketsAccessibleByUser(
+            req.session.user.userId,
+            userRankSlugs
+          );
+          appealTicketsByKey = (tickets || []).reduce((acc, ticket) => {
+            if (ticket.status === "closed") {
+              return acc;
+            }
+            const match = String(ticket.title || "").match(/Appeal #([^\s]+)/);
+            if (match && match[1]) {
+              acc[match[1]] = ticket.ticketId;
+            }
+            return acc;
+          }, {});
+        }
+
+        //
         // Render the profile page
         //
         return res.view("modules/profile/profile", {
@@ -155,6 +196,9 @@ export default function profileSiteRoutes(
           profileApiData: profileApiData.data[0],
           profileRanks: await fetchUserRanks(profileApiData.data[0].username),
           profileReportsApiData: profileReportsApiData,
+          profilePunishmentsApiData: profilePunishmentsApiData,
+          appealTicketsByKey: appealTicketsByKey,
+          canAppeal: canAppeal,
           profileStats: await getUserStats(profileApiData.data[0].userId),
           profileSession: await getUserLastSession(
             profileApiData.data[0].userId

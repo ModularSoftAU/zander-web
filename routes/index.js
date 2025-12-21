@@ -2,7 +2,8 @@ import { createRequire } from "module";
 const require = createRequire(import.meta.url);
 
 import { getWebAnnouncement } from "../controllers/announcementController.js";
-import { isFeatureWebRouteEnabled, getGlobalImage } from "../api/common.js";
+import { isFeatureWebRouteEnabled, getGlobalImage, hasPermission } from "../api/common.js";
+import { getTicketsAccessibleByUser } from "../controllers/supportTicketController.js";
 
 import dashboardSiteRoutes from "./dashboard/index.js";
 import sessionRoutes from "./sessionRoutes.js";
@@ -141,6 +142,144 @@ export default function applicationSiteRoutes(
   });
 
   //
+  // Punishment Appeals
+  //
+  app.get("/appeal", async function (req, res) {
+    try {
+      const isLoggedIn = Boolean(req.session.user);
+      let appealPunishmentsApiData = { success: true, data: [] };
+      let appealTicketsByKey = {};
+
+      if (isLoggedIn) {
+        const fetchPunishmentsURL = `${process.env.siteAddress}/api/user/punishments?username=${encodeURIComponent(
+          req.session.user.username
+        )}`;
+        const punishmentsResponse = await fetch(fetchPunishmentsURL, {
+          headers: { "x-access-token": process.env.apiKey },
+        });
+        appealPunishmentsApiData = await punishmentsResponse.json();
+
+        const userRankSlugs =
+          req.session.user.ranks?.map((rank) => rank.rankSlug) || [];
+        const tickets = await getTicketsAccessibleByUser(
+          req.session.user.userId,
+          userRankSlugs
+        );
+        appealTicketsByKey = (tickets || []).reduce((acc, ticket) => {
+          if (ticket.status === "closed") {
+            return acc;
+          }
+          const match = String(ticket.title || "").match(/Appeal #([^\s]+)/);
+          if (match && match[1]) {
+            acc[match[1]] = ticket.ticketId;
+          }
+          return acc;
+        }, {});
+      }
+
+      return res.view("modules/appeal/appeal", {
+        pageTitle: "Punishment Appeal",
+        config: config,
+        req: req,
+        features: features,
+        appealPunishmentsApiData: appealPunishmentsApiData,
+        appealTicketsByKey: appealTicketsByKey,
+        moment: moment,
+        isLoggedIn: isLoggedIn,
+        globalImage: await getGlobalImage(),
+        announcementWeb: await getWebAnnouncement(),
+      });
+    } catch (error) {
+      console.error(error);
+      return res.view("session/error", {
+        pageTitle: "Error",
+        pageDescription: "Error",
+        config: config,
+        req: req,
+        error: error,
+        features: features,
+        globalImage: await getGlobalImage(),
+        announcementWeb: await getWebAnnouncement(),
+      });
+    }
+  });
+
+  app.get("/appeal/start", async function (req, res) {
+    try {
+      if (!req.session.user) {
+        const returnTo = encodeURIComponent(req.url);
+        return res.redirect(`/login?returnTo=${returnTo}`);
+      }
+
+      const punishmentIndex = Number.parseInt(req.query.punishmentIndex, 10);
+      if (!Number.isInteger(punishmentIndex) || punishmentIndex < 0) {
+        return res.redirect("/appeal");
+      }
+
+      const fetchPunishmentsURL = `${process.env.siteAddress}/api/user/punishments?username=${encodeURIComponent(
+        req.session.user.username
+      )}`;
+      const punishmentsResponse = await fetch(fetchPunishmentsURL, {
+        headers: { "x-access-token": process.env.apiKey },
+      });
+      const appealPunishmentsApiData = await punishmentsResponse.json();
+      const punishments = Array.isArray(appealPunishmentsApiData.data)
+        ? appealPunishmentsApiData.data
+        : [];
+      const punishment = punishments[punishmentIndex];
+
+      if (!punishment) {
+        return res.redirect("/appeal");
+      }
+
+      const fallbackKey = moment(punishment.dateStart).isValid()
+        ? `${punishment.type || "unknown"}-${moment(punishment.dateStart).valueOf()}`
+        : String(punishmentIndex);
+      const punishmentKey = String(
+        punishment.id || punishment.punishmentId || punishment.punishment_id || fallbackKey
+      );
+      const userRankSlugs =
+        req.session.user.ranks?.map((rank) => rank.rankSlug) || [];
+      const tickets = await getTicketsAccessibleByUser(
+        req.session.user.userId,
+        userRankSlugs
+      );
+      const existingTicket = (tickets || []).find((ticket) => {
+        if (ticket.status === "closed") return false;
+        return String(ticket.title || "").includes(`Appeal #${punishmentKey}`);
+      });
+      if (existingTicket) {
+        return res.redirect(`/support/ticket/${existingTicket.ticketId}`);
+      }
+
+      return res.view("modules/appeal/appeal-form", {
+        pageTitle: "Punishment Appeal",
+        config: config,
+        req: req,
+        features: features,
+        punishmentIndex: punishmentIndex,
+        punishmentKey: punishmentKey,
+        punishment: punishment,
+        moment: moment,
+        globalImage: await getGlobalImage(),
+        announcementWeb: await getWebAnnouncement(),
+      });
+    } catch (error) {
+      console.error(error);
+      return res.view("session/error", {
+        pageTitle: "Error",
+        pageDescription: "Error",
+        config: config,
+        req: req,
+        error: error,
+        features: features,
+        globalImage: await getGlobalImage(),
+        announcementWeb: await getWebAnnouncement(),
+      });
+    }
+  });
+
+  //
   // Shop Directory
   // 
   app.get("/shopdirectory", async function (req, res) {
@@ -186,6 +325,40 @@ export default function applicationSiteRoutes(
       features: features,
       globalImage: await getGlobalImage(),
       announcementWeb: await getWebAnnouncement(),
+    });
+  });
+
+  //
+  // Punishments
+  //
+  app.get("/punishments", async function (req, res) {
+    const permissionBoolean = await hasPermission(
+      "zander.web.punishment.view",
+      req,
+      res,
+      features
+    );
+
+    if (!permissionBoolean) return;
+
+    const page = Math.max(parseInt(req.query.page, 10) || 1, 1);
+    const limit = Math.min(Math.max(parseInt(req.query.limit, 10) || 25, 1), 100);
+
+    const fetchURL = `${process.env.siteAddress}/api/punishments/get?page=${page}&limit=${limit}`;
+    const response = await fetch(fetchURL, {
+      headers: { "x-access-token": process.env.apiKey },
+    });
+    const apiData = await response.json();
+
+    return res.view("modules/punishments/punishments", {
+      pageTitle: `Punishments`,
+      config: config,
+      req: req,
+      features: features,
+      globalImage: await getGlobalImage(),
+      announcementWeb: await getWebAnnouncement(),
+      apiData: apiData,
+      moment: moment,
     });
   });
 }

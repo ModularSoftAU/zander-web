@@ -116,7 +116,43 @@ export default function sessionSiteRoute(
   }
 
   app.get("/login", async function (req, res) {
+    if (req.query.returnTo && typeof req.query.returnTo === "string") {
+      const sanitizedReturnTo = req.query.returnTo.startsWith("/")
+        ? req.query.returnTo
+        : null;
+      if (sanitizedReturnTo) {
+        req.session.returnTo = sanitizedReturnTo;
+      }
+    }
+
+    if (!req.session.returnTo && req.headers.referer) {
+      try {
+        const refererUrl = new URL(req.headers.referer);
+        const siteAddress = process.env.siteAddress;
+        const isSameHost =
+          (siteAddress && req.headers.referer.startsWith(siteAddress)) ||
+          (req.headers.host && refererUrl.host === req.headers.host);
+        if (isSameHost) {
+          const refererPath = `${refererUrl.pathname}${refererUrl.search}`;
+          if (!refererPath.startsWith("/login") && !refererPath.startsWith("/logout")) {
+            req.session.returnTo = refererPath;
+          }
+        }
+      } catch (error) {
+        // Ignore invalid referer values.
+      }
+    }
+
     if (req.session.user) {
+      const returnTo =
+        typeof req.session.returnTo === "string" &&
+        req.session.returnTo.startsWith("/")
+          ? req.session.returnTo
+          : null;
+      if (returnTo) {
+        delete req.session.returnTo;
+        return res.redirect(returnTo);
+      }
       return res.redirect("/dashboard");
     }
 
@@ -210,6 +246,15 @@ export default function sessionSiteRoute(
       await hydrateUserSession(req, user);
       delete req.session.passwordReset;
       setBannerCookie("success", "Logged in successfully.", res);
+      const returnTo =
+        typeof req.session.returnTo === "string" &&
+        req.session.returnTo.startsWith("/")
+          ? req.session.returnTo
+          : null;
+      if (returnTo) {
+        delete req.session.returnTo;
+        return res.redirect(returnTo);
+      }
       return res.redirect(`${process.env.siteAddress}/`);
     } catch (error) {
       logRouteError("local login attempt", error);
@@ -221,6 +266,15 @@ export default function sessionSiteRoute(
   app.get("/login/discord", async function (req, res) {
     if (!isFeatureWebRouteEnabled(features.web.login, req, res, features))
       return;
+
+    if (req.query.returnTo && typeof req.query.returnTo === "string") {
+      const sanitizedReturnTo = req.query.returnTo.startsWith("/")
+        ? req.query.returnTo
+        : null;
+      if (sanitizedReturnTo) {
+        req.session.returnTo = sanitizedReturnTo;
+      }
+    }
 
     return res.redirect(buildDiscordAuthorizeUrl());
   });
@@ -287,6 +341,15 @@ export default function sessionSiteRoute(
       await hydrateUserSession(req, userLoginData);
       delete req.session.passwordReset;
 
+      const returnTo =
+        typeof req.session.returnTo === "string" &&
+        req.session.returnTo.startsWith("/")
+          ? req.session.returnTo
+          : null;
+      if (returnTo) {
+        delete req.session.returnTo;
+        return res.redirect(returnTo);
+      }
       return res.redirect(`${process.env.siteAddress}/`);
     } catch (error) {
       logRouteError("discord OAuth callback", error);
