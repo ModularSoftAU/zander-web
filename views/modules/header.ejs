@@ -20,6 +20,8 @@
   <meta name="author" content="<%= config.siteConfiguration.siteName %>">
   <meta name="theme-color" content="#2f508c">
   <link rel="canonical" href="<%= process.env.siteAddress %>">
+  <link rel="manifest" href="/manifest.webmanifest">
+  <link rel="apple-touch-icon" href="/images/siteLogo.png">
 
   <!-- Open Graph / Facebook -->
   <meta property="og:type" content="website">
@@ -70,6 +72,7 @@
   </script>
 
   <script defer src="https://cdn.jsdelivr.net/gh/zerodevx/zero-md@2/dist/zero-md.legacy.min.js"></script>
+  <script defer src="/js/notifications.js"></script>
 </head>
 
 <body id="top">

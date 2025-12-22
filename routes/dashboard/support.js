@@ -16,6 +16,7 @@ import {
   getTicketById,
   getTicketsByCategory,
   updateTicketStatus,
+  notifyTicketStatusChange,
   getCategoryById,
   getCategoryPermissions,
   updateSupportCategory,
@@ -489,6 +490,10 @@ export default function supportDashboardRoutes(
 
       const newStatus = req.body.status;
       await updateTicketStatus(ticket.ticketId, newStatus);
+      await notifyTicketStatusChange(ticket.ticketId, newStatus, {
+        userId: req.session.user.userId,
+        name: req.session.user.username,
+      });
 
       if (newStatus === "closed") {
         await deleteTicketChannel(client, ticket.ticketId, "Ticket closed from dashboard");

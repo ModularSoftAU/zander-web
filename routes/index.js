@@ -11,6 +11,7 @@ import policySiteRoutes from "./policyRoutes.js";
 import redirectSiteRoutes from "./redirectRoutes.js";
 import profileSiteRoutes from "./profileRoutes.js";
 import supportRoutes from "./support.js";
+import notificationRoutes from "./notificationRoutes.js";
 
 const rankData = require("../ranks.json");
 
@@ -30,6 +31,7 @@ export default function applicationSiteRoutes(
   policySiteRoutes(app, config, features);
   redirectSiteRoutes(app, config, features);
   supportRoutes(app, client, fetch, moment, config, db, features, lang);
+  notificationRoutes(app, config, features);
 
   app.get("/", async function (req, res) {
     const fetchURL = `${process.env.siteAddress}/api/web/statistics`;

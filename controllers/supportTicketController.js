@@ -2,6 +2,7 @@ import config from "../config.json" assert { type: "json" };
 import db from "./databaseController.js";
 import { ChannelType, PermissionFlagsBits } from "discord.js";
 import { hashEmail } from "../api/common.js";
+import { createNotificationsForUsers } from "./notificationController.js";
 
 let discordChannelColumnCheck;
 let ticketParticipantTableCheck;
@@ -10,6 +11,66 @@ let ticketLockColumnCheck;
 let ticketEscalationColumnCheck;
 let ticketMessageTypeColumnCheck;
 let ticketCategoryDiscordColumnCheck;
+
+const MAX_NOTIFICATION_MESSAGE_LENGTH = 160;
+
+function buildTicketNotificationTarget(ticket) {
+    if (!ticket) {
+        return {
+            label: "Ticket",
+            targetType: "ticket",
+            url: "/support",
+        };
+    }
+
+    const match = String(ticket.title || "").match(/Appeal #([^\s]+)/i);
+    const label = match ? `Appeal #${match[1]}` : `Ticket #${ticket.ticketId}`;
+    const targetType = match ? "appeal" : "ticket";
+    const url = `/support/ticket/${ticket.ticketId}`;
+
+    return { label, targetType, url };
+}
+
+function trimNotificationMessage(message) {
+    const normalized = String(message || "").trim();
+    if (!normalized) {
+        return "View the update for details.";
+    }
+
+    if (normalized.length <= MAX_NOTIFICATION_MESSAGE_LENGTH) {
+        return normalized;
+    }
+
+    return `${normalized.slice(0, MAX_NOTIFICATION_MESSAGE_LENGTH - 3)}...`;
+}
+
+async function notifyTicketParticipants({ ticket, ticketId, actorUserId, notificationType, title, message }) {
+    const ticketRecord = ticket || (ticketId ? await getTicketById(ticketId) : null);
+    if (!ticketRecord) return;
+
+    const participants = await getTicketParticipants(ticketRecord.ticketId);
+    const userIds = new Set([ticketRecord.userId, ...participants.users.map((user) => user.userId)]);
+
+    if (actorUserId) {
+        userIds.delete(actorUserId);
+    }
+
+    if (!userIds.size) return;
+
+    const target = buildTicketNotificationTarget(ticketRecord);
+
+    try {
+        await createNotificationsForUsers([...userIds], {
+            ticketId: ticketRecord.ticketId,
+            notificationType,
+            title,
+            message,
+            url: target.url,
+        });
+    } catch (error) {
+        console.error("Failed to send ticket notifications", error);
+    }
+}
 
 async function ensureDiscordChannelColumn() {
     if (!discordChannelColumnCheck) {
@@ -1256,7 +1317,7 @@ export async function createSupportTicketMessage(
             params.push(isInternal ? 1 : 0);
         }
 
-        db.query(insertQuery, params, (err, results) => {
+        db.query(insertQuery, params, async (err, results) => {
             if (err) {
                 console.error("Failed to persist support ticket message", { ticketId, userId }, err);
                 reject(err);
@@ -1270,8 +1331,60 @@ export async function createSupportTicketMessage(
                 source,
                 isInternal,
             });
+
+            if (!isInternal) {
+                try {
+                    const ticket = await getTicketById(ticketId);
+                    const target = buildTicketNotificationTarget(ticket);
+                    const actor = await getUserById(userId);
+                    const actorName = actor?.username || `User ${userId}`;
+
+                    if (messageType === "status") {
+                        const title = `Status updated for ${target.label}`;
+                        const statusMessage = trimNotificationMessage(message || `${actorName} updated the status.`);
+                        await notifyTicketParticipants({
+                            ticket,
+                            actorUserId: userId,
+                            notificationType: "status",
+                            title,
+                            message: statusMessage,
+                        });
+                    } else if (messageType === "message") {
+                        const title = `New comment on ${target.label}`;
+                        const commentMessage = `${actorName} commented: ${trimNotificationMessage(message)}`;
+                        await notifyTicketParticipants({
+                            ticket,
+                            actorUserId: userId,
+                            notificationType: "comment",
+                            title,
+                            message: commentMessage,
+                        });
+                    }
+                } catch (notificationError) {
+                    console.error("Failed to prepare ticket notification", notificationError);
+                }
+            }
             resolve(results.insertId);
         });
+    });
+}
+
+export async function notifyTicketStatusChange(ticketId, status, actor) {
+    const ticket = await getTicketById(ticketId);
+    if (!ticket) return;
+
+    const target = buildTicketNotificationTarget(ticket);
+    const actorName = actor?.name || "Staff";
+    const statusLabel = status || ticket.status || "updated";
+    const title = `Status updated for ${target.label}`;
+    const message = `${actorName} set the status to ${statusLabel}.`;
+
+    await notifyTicketParticipants({
+        ticket,
+        actorUserId: actor?.userId ?? null,
+        notificationType: "status",
+        title,
+        message,
     });
 }
 
