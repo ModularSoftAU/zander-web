@@ -179,6 +179,8 @@ export default function supportRoutes(
 
       const title = `Appeal #${punishmentKey} - ${punishment.type || "unknown"} - ${dateLabel}`;
       const categoryId = await ensureUncategorisedCategory();
+      const staffRoleIds = await getCategoryPermissions(categoryId);
+      const categoryName = await getCategoryName(categoryId);
       const ticketRecord = await createSupportTicket(
         client,
         req.session.user.userId,
@@ -186,8 +188,7 @@ export default function supportRoutes(
         title,
         {
           discordUserId: req.session.user.discordId,
-          staffRoleIds: [],
-          parentCategoryId: false,
+          staffRoleIds,
         }
       );
 
@@ -227,6 +228,56 @@ export default function supportRoutes(
           await applyTicketParticipantPermissions(client, ticketRecord.ticketId);
         } catch (participantError) {
           console.error("Failed to add punished-by participant to appeal ticket", participantError);
+        }
+      }
+
+      if (ticketRecord.channel) {
+        const siteBaseUrl =
+          (config.siteConfiguration && config.siteConfiguration.siteUrl) ||
+          process.env.SITE_URL ||
+          "https://craftingforchrist.net";
+        const normalizedSiteUrl = siteBaseUrl.endsWith("/")
+          ? siteBaseUrl.slice(0, -1)
+          : siteBaseUrl;
+        const ticketUrl = `${normalizedSiteUrl}/support/ticket/${ticketRecord.ticketId}`;
+
+        const ticketEmbed = new EmbedBuilder()
+          .setTitle(`Appeal Ticket #${ticketRecord.ticketId}`)
+          .setDescription(message)
+          .addFields(
+            { name: "Opened by", value: `${req.session.user.username || "Web user"}` },
+            { name: "Punished by", value: `${punishedBy}` },
+            { name: "Category", value: categoryName || "Uncategorized" }
+          )
+          .setTimestamp(new Date())
+          .setColor(0x2b6cb0);
+
+        const closeButton = new ButtonBuilder()
+          .setCustomId("support_ticket_close")
+          .setLabel("Close Ticket")
+          .setStyle(ButtonStyle.Danger);
+
+        const viewOnlineButton = new ButtonBuilder()
+          .setStyle(ButtonStyle.Link)
+          .setLabel("View Ticket Online")
+          .setURL(ticketUrl);
+
+        try {
+          const createdMessage = await ticketRecord.channel.send({
+            content: req.session.user.discordId
+              ? `<@${req.session.user.discordId}> your appeal ticket has been created.`
+              : "An appeal ticket has been created.",
+            embeds: [ticketEmbed],
+            components: [new ActionRowBuilder().addComponents(viewOnlineButton, closeButton)],
+          });
+
+          try {
+            await createdMessage.pin();
+          } catch (pinError) {
+            console.error("Failed to pin appeal ticket opener message", pinError);
+          }
+        } catch (channelError) {
+          console.error("Failed to send appeal ticket embed", channelError);
         }
       }
 
@@ -1051,7 +1102,7 @@ export default function supportRoutes(
         selectedCategoryId = await ensureUncategorisedCategory();
         staffRoleIds = [];
         categoryName = "Uncategorised";
-        parentCategoryId = false;
+        parentCategoryId = null;
       } else {
         staffRoleIds = await getCategoryPermissions(category);
         categoryName = await getCategoryName(category);
