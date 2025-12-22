@@ -1205,6 +1205,7 @@ export async function createSupportTicketMessage(
     options = {},
 ) {
     const isInternal = Boolean(options.isInternal);
+    const skipDiscordPost = Boolean(options.skipDiscordPost);
     const messageType = typeof options.messageType === "string" ? options.messageType : "message";
     console.info("createSupportTicketMessage invoked", {
         ticketId,
@@ -1213,12 +1214,13 @@ export async function createSupportTicketMessage(
         messageLength: message?.length ?? 0,
         isInternal,
         messageType,
+        skipDiscordPost,
     });
 
     const hasInternalColumn = await ensureTicketMessageInternalColumn();
     const hasMessageTypeColumn = await ensureTicketMessageTypeColumn();
 
-    if (source === "web" && !isInternal) {
+    if (source === "web" && !isInternal && !skipDiscordPost) {
         try {
             const ticket = await getTicketById(ticketId);
             if (!ticket?.discordChannelId) {
