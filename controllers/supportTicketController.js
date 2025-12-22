@@ -995,17 +995,41 @@ export async function removeTicketGroupParticipant(ticketId, roleId) {
 }
 
 export async function syncParticipantsForMessage(client, ticketId, { userId, discordRoleIds = [], rankSlugs = [] }) {
+    const ticket = await getTicketById(ticketId);
+    const categoryPermissions = ticket ? await getCategoryPermissions(ticket.categoryId) : [];
+    const allowedRoleIds = new Set(categoryPermissions || []);
     const rankOptions = await getLuckPermRankRoles();
     const newParticipantPromises = [];
+    const removalPromises = [];
 
     if (userId && !(await hasExistingUserParticipant(ticketId, userId))) {
         newParticipantPromises.push(addTicketUserParticipant(ticketId, { userId }));
+    }
+
+    if (allowedRoleIds.size > 0) {
+        const participants = await getTicketParticipants(ticketId);
+        const invalidGroups = participants.groups.filter(
+            (group) => group.roleId && !allowedRoleIds.has(group.roleId),
+        );
+
+        for (const group of invalidGroups) {
+            removalPromises.push(removeTicketGroupParticipant(ticketId, group.roleId));
+        }
+
+        if (invalidGroups.length > 0) {
+            removalPromises.push(
+                removeTicketParticipantPermissions(client, ticketId, {
+                    roleIds: invalidGroups.map((group) => group.roleId),
+                }),
+            );
+        }
     }
 
     const eligibleRanks = rankOptions.filter(
         (rank) =>
             rank.id &&
             /^\d{5,}$/.test(rank.id) &&
+            allowedRoleIds.has(rank.id) &&
             (discordRoleIds.includes(rank.id) || rankSlugs.includes(rank.rankSlug)),
     );
 
@@ -1013,6 +1037,14 @@ export async function syncParticipantsForMessage(client, ticketId, { userId, dis
         const exists = await hasExistingGroupParticipant(ticketId, rank.id);
         if (!exists) {
             newParticipantPromises.push(addTicketGroupParticipant(ticketId, rank));
+        }
+    }
+
+    if (removalPromises.length > 0) {
+        try {
+            await Promise.all(removalPromises);
+        } catch (error) {
+            console.error("syncParticipantsForMessage: failed to remove stale participants", error);
         }
     }
 
