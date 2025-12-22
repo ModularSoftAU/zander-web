@@ -919,6 +919,11 @@ export default function supportRoutes(
         return res.redirect(`/support/ticket/${req.params.id}`);
       }
 
+      if (user.userId === ticket.userId) {
+        setBannerCookie("warning", "Ticket creators cannot remove themselves.", res);
+        return res.redirect(`/support/ticket/${req.params.id}`);
+      }
+
       await removeTicketUserParticipant(ticket.ticketId, user.userId);
       if (user.discordId) {
         await removeTicketParticipantPermissions(client, ticket.ticketId, {
