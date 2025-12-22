@@ -1028,12 +1028,12 @@ export default function supportRoutes(
   app.get("/support/users/search", async function (req, res) {
     try {
       if (!req.session.user) {
-        return res.status(401).json({ results: [] });
+        return res.status(401).send({ results: [] });
       }
 
       const query = req.query?.q || "";
       const results = await searchUsersByUsername(query);
-      return res.json({
+      return res.send({
         results: results.map((user) => ({
           userId: user.userId,
           username: user.username,
@@ -1042,7 +1042,7 @@ export default function supportRoutes(
       });
     } catch (error) {
       console.error("support user search failed", error);
-      return res.status(500).json({ results: [] });
+      return res.status(500).send({ results: [] });
     }
   });
 
