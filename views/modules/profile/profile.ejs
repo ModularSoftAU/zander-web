@@ -144,7 +144,7 @@
                                                         <% if (canAppeal) { %>
                                                             <td class="text-end">
                                                                 <% if (appealTicketsByKey && appealTicketsByKey[punishmentKey]) { %>
-                                                                    <a href="/support/ticket/<%= appealTicketsByKey[punishmentKey] %>" class="btn btn-sm btn-outline-primary">Open ticket</a>
+                                                                    <a href="/support/ticket/<%= appealTicketsByKey[punishmentKey] %>" class="btn btn-sm btn-outline-primary">View ticket</a>
                                                                 <% } else { %>
                                                                     <a href="/appeal/start?punishmentIndex=<%= index %>" class="btn btn-sm btn-primary">Appeal</a>
                                                                 <% } %>
