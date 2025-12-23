@@ -525,14 +525,18 @@ export class SupportCommand extends Command {
       }
 
       try {
+        await interaction.editReply({ content: "Ticket closed." });
+      } catch (replyError) {
+        console.warn("ticket close: failed to edit reply", replyError);
+      }
+
+      try {
         await deleteTicketChannel(interaction.client, ticketDetails.ticketId, "Ticket closed from Discord");
       } catch (closeError) {
         console.error("ticket close: failed to close ticket channel", closeError);
       }
 
-      return interaction.editReply({
-        content: "Ticket closed.",
-      });
+      return null;
     }
 
     if (subcommand === "manual") {
