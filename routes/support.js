@@ -1145,7 +1145,9 @@ export default function supportRoutes(
         client,
         ticketId,
         req.session.user.userId,
-        message
+        message,
+        "web",
+        { skipDiscordPost: true }
       );
 
       await syncParticipantsForMessage(client, ticketId, {
