@@ -6,6 +6,8 @@
   const isStandalone = () =>
     window.matchMedia("(display-mode: standalone)").matches ||
     window.navigator.standalone === true;
+  const installPromptKey = "installPromptDismissed";
+  let deferredInstallPrompt = null;
   const isAuthenticated = () =>
     document.body?.dataset?.authenticated === "true";
 
@@ -77,6 +79,52 @@
     document.body.prepend(banner);
   };
 
+  const showInstallBanner = () => {
+    if (isStandalone()) return;
+    if (!deferredInstallPrompt) return;
+    if (localStorage.getItem(installPromptKey)) return;
+    if (document.querySelector(".install-app-banner")) return;
+
+    const banner = document.createElement("div");
+    banner.className = "alert alert-info install-app-banner";
+    banner.style.position = "sticky";
+    banner.style.top = "0";
+    banner.style.zIndex = "1030";
+    banner.style.marginBottom = "0";
+    banner.innerHTML = `
+      <div class="container d-flex flex-wrap align-items-center justify-content-between gap-2">
+        <div>Install the app for quicker access and notifications.</div>
+        <div class="d-flex gap-2">
+          <button type="button" class="btn btn-sm btn-primary" data-action="install">Install</button>
+          <button type="button" class="btn btn-sm btn-outline-secondary" data-action="dismiss">Not now</button>
+        </div>
+      </div>
+    `;
+
+    banner.addEventListener("click", async (event) => {
+      const action = event.target?.getAttribute?.("data-action");
+      if (!action) return;
+
+      if (action === "dismiss") {
+        localStorage.setItem(installPromptKey, "true");
+        banner.remove();
+        return;
+      }
+
+      if (action === "install" && deferredInstallPrompt) {
+        deferredInstallPrompt.prompt();
+        try {
+          await deferredInstallPrompt.userChoice;
+        } finally {
+          deferredInstallPrompt = null;
+          banner.remove();
+        }
+      }
+    });
+
+    document.body.prepend(banner);
+  };
+
   const getLastSeenId = () => Number(localStorage.getItem("lastNotificationId") || 0);
   const setLastSeenId = (notificationId) => {
     localStorage.setItem("lastNotificationId", String(notificationId));
@@ -137,9 +185,16 @@
   const startPolling = async () => {
     await requestPermissionIfNeeded();
     maybeShowPermissionBanner();
+    showInstallBanner();
     await handleUpdates();
     setInterval(handleUpdates, pollIntervalMs);
   };
+
+  window.addEventListener("beforeinstallprompt", (event) => {
+    event.preventDefault();
+    deferredInstallPrompt = event;
+    showInstallBanner();
+  });
 
   if ("serviceWorker" in navigator) {
     navigator.serviceWorker.register("/sw.js").catch((error) => {
