@@ -144,9 +144,12 @@ export default function profileSiteRoutes(
         // Grab user punishments
         //
         let profilePunishmentsApiData = { success: true, data: [] };
+        const isViewingOwnProfile =
+          req.session.user && req.session.user.username === username;
         if (
-          contextPermissions &&
-          contextPermissions.includes("zander.web.punishments")
+          isViewingOwnProfile ||
+          (contextPermissions &&
+            contextPermissions.includes("zander.web.punishments"))
         ) {
           const fetchPunishmentsURL = `${process.env.siteAddress}/api/user/punishments?username=${encodeURIComponent(
             username
@@ -157,9 +160,7 @@ export default function profileSiteRoutes(
           profilePunishmentsApiData = await punishmentsResponse.json();
         }
 
-        const canAppeal =
-          req.session.user &&
-          req.session.user.username === profileApiData.data[0].username;
+        const canAppeal = isViewingOwnProfile;
         let appealTicketsByKey = {};
         if (canAppeal) {
           const userRankSlugs =
