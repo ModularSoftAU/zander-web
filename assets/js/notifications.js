@@ -6,6 +6,9 @@
   const isStandalone = () =>
     window.matchMedia("(display-mode: standalone)").matches ||
     window.navigator.standalone === true;
+  const isMobileDevice = () =>
+    /Android|iPhone|iPad|iPod/i.test(navigator.userAgent || "") ||
+    navigator.userAgentData?.mobile === true;
 
   const shouldRequestPermission = () => {
     if (!canUseNotifications()) return false;
@@ -24,6 +27,55 @@
     } catch (error) {
       console.warn("Notification permission request failed", error);
     }
+  };
+
+  const maybeShowPermissionBanner = () => {
+    if (!canUseNotifications()) return;
+    if (!isMobileDevice()) return;
+    if (Notification.permission !== "default") return;
+    if (localStorage.getItem("notificationsBannerDismissed")) return;
+    if (document.querySelector(".notification-permission-banner")) return;
+
+    const banner = document.createElement("div");
+    banner.className = "alert alert-info notification-permission-banner";
+    banner.style.position = "sticky";
+    banner.style.top = "0";
+    banner.style.zIndex = "1030";
+    banner.style.marginBottom = "0";
+    banner.innerHTML = `
+      <div class="container d-flex flex-wrap align-items-center justify-content-between gap-2">
+        <div>Enable notifications to receive ticket updates on your device.</div>
+        <div class="d-flex gap-2">
+          <button type="button" class="btn btn-sm btn-primary" data-action="enable">Enable</button>
+          <button type="button" class="btn btn-sm btn-outline-secondary" data-action="dismiss">Not now</button>
+        </div>
+      </div>
+    `;
+
+    banner.addEventListener("click", async (event) => {
+      const action = event.target?.getAttribute?.("data-action");
+      if (!action) return;
+
+      if (action === "dismiss") {
+        localStorage.setItem("notificationsBannerDismissed", "true");
+        banner.remove();
+        return;
+      }
+
+      if (action === "enable") {
+        try {
+          const permission = await Notification.requestPermission();
+          localStorage.setItem("notificationsPermissionPrompted", "true");
+          if (permission !== "default") {
+            banner.remove();
+          }
+        } catch (error) {
+          console.warn("Notification permission request failed", error);
+        }
+      }
+    });
+
+    document.body.prepend(banner);
   };
 
   const getLastSeenId = () => Number(localStorage.getItem("lastNotificationId") || 0);
@@ -85,6 +137,7 @@
 
   const startPolling = async () => {
     await requestPermissionIfNeeded();
+    maybeShowPermissionBanner();
     await handleUpdates();
     setInterval(handleUpdates, pollIntervalMs);
   };
