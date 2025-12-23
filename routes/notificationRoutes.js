@@ -5,6 +5,8 @@ import {
   getUserNotifications,
   getNotificationById,
   markNotificationRead,
+  markAllNotificationsRead,
+  deleteNotification,
 } from "../controllers/notificationController.js";
 
 export default function notificationRoutes(app, config, features) {
@@ -87,5 +89,50 @@ export default function notificationRoutes(app, config, features) {
     await markNotificationRead(notificationId, req.session.user.userId);
 
     return res.redirect(notification.url || "/notifications");
+  });
+
+  app.post("/notifications/mark-all", async function (req, res) {
+    if (!req.session.user) {
+      return res.view("session/notLoggedIn", {
+        pageTitle: "Not Logged In",
+        config,
+        req,
+        features,
+        globalImage: await getGlobalImage(),
+        announcementWeb: await getWebAnnouncement(),
+      });
+    }
+
+    await markAllNotificationsRead(req.session.user.userId);
+    setBannerCookie("success", "All notifications marked as read.", res);
+    return res.redirect("/notifications");
+  });
+
+  app.post("/notifications/:id/dismiss", async function (req, res) {
+    if (!req.session.user) {
+      return res.view("session/notLoggedIn", {
+        pageTitle: "Not Logged In",
+        config,
+        req,
+        features,
+        globalImage: await getGlobalImage(),
+        announcementWeb: await getWebAnnouncement(),
+      });
+    }
+
+    const notificationId = Number(req.params.id);
+    if (!notificationId) {
+      setBannerCookie("warning", "Notification not found.", res);
+      return res.redirect("/notifications");
+    }
+
+    const deleted = await deleteNotification(notificationId, req.session.user.userId);
+    if (!deleted) {
+      setBannerCookie("warning", "Notification not found.", res);
+      return res.redirect("/notifications");
+    }
+
+    setBannerCookie("success", "Notification dismissed.", res);
+    return res.redirect("/notifications");
   });
 }

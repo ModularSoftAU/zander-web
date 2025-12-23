@@ -13,25 +13,35 @@
 <div class="container">
     <div class="card">
         <div class="card-header d-flex justify-content-between align-items-center flex-wrap gap-2">
-            <h2 class="mb-0">Notifications</h2>
-            <span class="badge bg-primary">Unread: <%= unreadCount %></span>
+            <div class="d-flex align-items-center gap-2 flex-wrap">
+                <h2 class="mb-0">Notifications</h2>
+                <span class="badge bg-primary">Unread: <%= unreadCount %></span>
+            </div>
+            <form action="/notifications/mark-all" method="POST">
+                <button type="submit" class="btn btn-sm btn-outline-primary">Mark all as read</button>
+            </form>
         </div>
         <div class="list-group list-group-flush">
             <% if (notifications && notifications.length) { %>
                 <% notifications.forEach((notification) => { %>
-                    <a
-                        href="/notifications/visit/<%= notification.notificationId %>"
-                        class="list-group-item list-group-item-action d-flex flex-column gap-2 <%= notification.isRead ? '' : 'bg-light' %>"
-                    >
-                        <div class="d-flex justify-content-between align-items-center">
-                            <div class="fw-semibold"><%= notification.title %></div>
-                            <% if (!notification.isRead) { %>
-                                <span class="badge bg-primary">New</span>
-                            <% } %>
-                        </div>
-                        <div class="text-muted"><%= notification.message %></div>
-                        <small class="text-muted"><%= new Date(notification.createdAt).toLocaleString() %></small>
-                    </a>
+                    <div class="list-group-item d-flex align-items-start gap-2 <%= notification.isRead ? '' : 'bg-light' %>">
+                        <a
+                            href="/notifications/visit/<%= notification.notificationId %>"
+                            class="list-group-item-action flex-grow-1 text-decoration-none text-dark"
+                        >
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div class="fw-semibold"><%= notification.title %></div>
+                                <% if (!notification.isRead) { %>
+                                    <span class="badge bg-primary">New</span>
+                                <% } %>
+                            </div>
+                            <div class="text-muted"><%= notification.message %></div>
+                            <small class="text-muted"><%= new Date(notification.createdAt).toLocaleString() %></small>
+                        </a>
+                        <form action="/notifications/<%= notification.notificationId %>/dismiss" method="POST">
+                            <button type="submit" class="btn btn-sm btn-outline-secondary" aria-label="Dismiss notification">×</button>
+                        </form>
+                    </div>
                 <% }) %>
             <% } else { %>
                 <div class="list-group-item text-muted">You're all caught up.</div>

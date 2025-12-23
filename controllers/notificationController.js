@@ -178,3 +178,45 @@ export async function markNotificationRead(notificationId, userId) {
     );
   });
 }
+
+export async function markAllNotificationsRead(userId) {
+  const hasTable = await ensureNotificationTable();
+  if (!hasTable) return false;
+
+  return new Promise((resolve) => {
+    db.query(
+      "UPDATE userNotifications SET isRead = 1 WHERE userId = ? AND isRead = 0",
+      [userId],
+      (err, results) => {
+        if (err) {
+          console.error("Failed to mark all notifications as read", err);
+          resolve(false);
+          return;
+        }
+
+        resolve(results.affectedRows >= 0);
+      },
+    );
+  });
+}
+
+export async function deleteNotification(notificationId, userId) {
+  const hasTable = await ensureNotificationTable();
+  if (!hasTable) return false;
+
+  return new Promise((resolve) => {
+    db.query(
+      "DELETE FROM userNotifications WHERE notificationId = ? AND userId = ?",
+      [notificationId, userId],
+      (err, results) => {
+        if (err) {
+          console.error("Failed to delete notification", err);
+          resolve(false);
+          return;
+        }
+
+        resolve(results.affectedRows > 0);
+      },
+    );
+  });
+}
