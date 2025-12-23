@@ -299,7 +299,7 @@ export default function supportRoutes(
         return res.redirect(`/login?returnTo=${returnTo}`);
       }
 
-      const isDiscordLinked = Boolean(req.session.user.discordId);
+      const isMinecraftLinked = Boolean(req.session.user.uuid);
 
       const ticket = await getTicketById(req.params.id);
       if (!ticket) {
@@ -308,6 +308,7 @@ export default function supportRoutes(
       }
       const participants = await getTicketParticipants(req.params.id);
       const rankOptions = await getLuckPermRankRoles();
+      const ownerUser = await getUserById(ticket.userId);
 
       const isOwner = ticket.userId === req.session.user.userId;
       const isStaff = req.session.user.isStaff;
@@ -341,9 +342,10 @@ export default function supportRoutes(
         messages,
         participants,
         rankOptions,
+        ownerUser,
         isOwner,
         isStaff,
-        isDiscordLinked,
+        isMinecraftLinked,
         canManageTicket,
         canEscalate,
         canReplyDuringEscalation,
@@ -374,10 +376,10 @@ export default function supportRoutes(
         return res.redirect(`/login?returnTo=${returnTo}`);
       }
 
-      if (!req.session.user.discordId) {
+      if (!req.session.user.uuid) {
         setBannerCookie(
           "warning",
-          "Please link your Discord account before replying to tickets.",
+          "Please link your Minecraft account before replying to tickets.",
           res
         );
         return res.redirect(`/support/ticket/${req.params.id}`);

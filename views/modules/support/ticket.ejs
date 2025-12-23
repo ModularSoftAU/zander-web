@@ -38,7 +38,7 @@
             <div class="mt-3">
                 <h4>Participants</h4>
                 <div class="d-flex flex-wrap gap-2">
-                    <span class="badge bg-primary">Owner: <%= ticket.userId %></span>
+                    <span class="badge bg-primary">Owner: <%= ownerUser?.username || ticket.userId %></span>
                     <% participants.users.forEach((participant) => { %>
                         <span class="badge bg-info text-dark">User: <%= participant.username || participant.userId %></span>
                     <% }); %>
@@ -160,8 +160,8 @@
         </div>
         <div class="card-body">
             <% if (ticket.status === 'open' || ticket.status === 'pending') { %>
-                <% if (!isDiscordLinked) { %>
-                    <p class="mb-0 text-muted">Link your Discord account to reply to this ticket.</p>
+                <% if (!isMinecraftLinked) { %>
+                    <p class="mb-0 text-muted">Link your Minecraft account to reply to this ticket.</p>
                 <% } else if (!canReplyDuringEscalation) { %>
                     <p class="mb-0 text-muted">This ticket is escalated. Only escalation staff or the ticket opener may reply.</p>
                 <% } else { %>
