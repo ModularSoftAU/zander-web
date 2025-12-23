@@ -591,6 +591,7 @@ export async function createSupportTicket(
     };
 
     if (targetParentId) {
+        channelCreationOptions.parent = targetParentId;
         try {
             const parentChannel = await guild.channels.fetch(targetParentId);
             if (parentChannel?.type === ChannelType.GuildCategory) {
@@ -760,6 +761,7 @@ export async function recreateTicketChannel(
     };
 
     if (resolvedParentId) {
+        channelOptions.parent = resolvedParentId;
         try {
             const parentChannel = await guild.channels.fetch(resolvedParentId);
             if (parentChannel?.type === ChannelType.GuildCategory) {
