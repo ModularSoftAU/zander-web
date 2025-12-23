@@ -75,4 +75,4 @@
   <script defer src="/js/notifications.js"></script>
 </head>
 
-<body id="top">
+<body id="top" data-authenticated="<%= req.session?.user ? 'true' : 'false' %>">

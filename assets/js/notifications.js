@@ -6,9 +6,8 @@
   const isStandalone = () =>
     window.matchMedia("(display-mode: standalone)").matches ||
     window.navigator.standalone === true;
-  const isMobileDevice = () =>
-    /Android|iPhone|iPad|iPod/i.test(navigator.userAgent || "") ||
-    navigator.userAgentData?.mobile === true;
+  const isAuthenticated = () =>
+    document.body?.dataset?.authenticated === "true";
 
   const shouldRequestPermission = () => {
     if (!canUseNotifications()) return false;
@@ -31,7 +30,7 @@
 
   const maybeShowPermissionBanner = () => {
     if (!canUseNotifications()) return;
-    if (!isMobileDevice()) return;
+    if (!isAuthenticated()) return;
     if (Notification.permission !== "default") return;
     if (localStorage.getItem("notificationsBannerDismissed")) return;
     if (document.querySelector(".notification-permission-banner")) return;
@@ -44,7 +43,7 @@
     banner.style.marginBottom = "0";
     banner.innerHTML = `
       <div class="container d-flex flex-wrap align-items-center justify-content-between gap-2">
-        <div>Enable notifications to receive ticket updates on your device.</div>
+        <div>Enable notifications to receive updates on your device.</div>
         <div class="d-flex gap-2">
           <button type="button" class="btn btn-sm btn-primary" data-action="enable">Enable</button>
           <button type="button" class="btn btn-sm btn-outline-secondary" data-action="dismiss">Not now</button>
