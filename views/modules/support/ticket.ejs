@@ -160,7 +160,9 @@
         </div>
         <div class="card-body">
             <% if (ticket.status === 'open' || ticket.status === 'pending') { %>
-                <% if (!canReplyDuringEscalation) { %>
+                <% if (!isDiscordLinked) { %>
+                    <p class="mb-0 text-muted">Link your Discord account to reply to this ticket.</p>
+                <% } else if (!canReplyDuringEscalation) { %>
                     <p class="mb-0 text-muted">This ticket is escalated. Only escalation staff or the ticket opener may reply.</p>
                 <% } else { %>
                     <form action="/support/ticket/<%= ticket.ticketId %>" method="POST">

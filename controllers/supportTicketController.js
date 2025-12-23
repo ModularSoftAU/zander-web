@@ -596,7 +596,15 @@ export async function createSupportTicket(
             if (parentChannel?.type === ChannelType.GuildCategory) {
                 channelCreationOptions.parent = parentChannel.id;
             } else {
-                console.warn("Configured ticket parent is not a category; creating channel without parent");
+                console.warn("Configured ticket parent is not a category; attempting fallback");
+                const fallbackParentId =
+                    config.discord?.supportTicketCategoryId ?? process.env.SUPPORT_CATEGORY_ID ?? null;
+                if (fallbackParentId && fallbackParentId !== targetParentId) {
+                    const fallbackChannel = await guild.channels.fetch(fallbackParentId);
+                    if (fallbackChannel?.type === ChannelType.GuildCategory) {
+                        channelCreationOptions.parent = fallbackChannel.id;
+                    }
+                }
             }
         } catch (parentError) {
             console.error("Failed to fetch configured ticket parent category", parentError);
@@ -757,7 +765,15 @@ export async function recreateTicketChannel(
             if (parentChannel?.type === ChannelType.GuildCategory) {
                 channelOptions.parent = parentChannel.id;
             } else {
-                console.warn("Configured ticket parent is not a category during reopen; creating without parent");
+                console.warn("Configured ticket parent is not a category during reopen; attempting fallback");
+                const fallbackParentId =
+                    config.discord?.supportTicketCategoryId ?? process.env.SUPPORT_CATEGORY_ID ?? null;
+                if (fallbackParentId && fallbackParentId !== resolvedParentId) {
+                    const fallbackChannel = await guild.channels.fetch(fallbackParentId);
+                    if (fallbackChannel?.type === ChannelType.GuildCategory) {
+                        channelOptions.parent = fallbackChannel.id;
+                    }
+                }
             }
         } catch (parentError) {
             console.error("Failed to fetch configured ticket parent category during reopen", parentError);

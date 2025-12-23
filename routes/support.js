@@ -299,6 +299,8 @@ export default function supportRoutes(
         return res.redirect(`/login?returnTo=${returnTo}`);
       }
 
+      const isDiscordLinked = Boolean(req.session.user.discordId);
+
       const ticket = await getTicketById(req.params.id);
       if (!ticket) {
         setBannerCookie("danger", "Ticket not found.", res);
@@ -341,6 +343,7 @@ export default function supportRoutes(
         rankOptions,
         isOwner,
         isStaff,
+        isDiscordLinked,
         canManageTicket,
         canEscalate,
         canReplyDuringEscalation,
@@ -369,6 +372,15 @@ export default function supportRoutes(
       if (!req.session.user) {
         const returnTo = encodeURIComponent(req.url);
         return res.redirect(`/login?returnTo=${returnTo}`);
+      }
+
+      if (!req.session.user.discordId) {
+        setBannerCookie(
+          "warning",
+          "Please link your Discord account before replying to tickets.",
+          res
+        );
+        return res.redirect(`/support/ticket/${req.params.id}`);
       }
 
       const ticket = await getTicketById(req.params.id);
