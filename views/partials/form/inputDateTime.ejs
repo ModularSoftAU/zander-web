@@ -5,7 +5,7 @@
     <% if (elementValue) { %>
         value="<%= elementValue %>"
     <% } %>
-    <% if (elementAttributes) { %>
+    <% if (typeof elementAttributes !== "undefined" && elementAttributes) { %>
         <%- elementAttributes %>
     <% } %>
     <% if (required) { %>
