@@ -35,7 +35,7 @@ const schedulerTask = cron.schedule("*/1 * * * *", async () => {
 
   try {
     const pendingMessages = await executeQuery(
-      `SELECT * FROM scheduledDiscordMessages WHERE status='scheduled' AND sentAt IS NULL AND scheduledFor <= NOW() ORDER BY scheduledFor ASC LIMIT 20`
+      `SELECT * FROM scheduledDiscordMessages WHERE status='scheduled' AND sentAt IS NULL AND scheduledFor <= UTC_TIMESTAMP() ORDER BY scheduledFor ASC LIMIT 20`
     );
 
     for (const message of pendingMessages) {
@@ -82,7 +82,7 @@ const schedulerTask = cron.schedule("*/1 * * * *", async () => {
         await channel.send({ embeds: [embed] });
 
         await executeQuery(
-          "UPDATE scheduledDiscordMessages SET status='sent', sentAt=NOW(), lastError=NULL WHERE scheduleId=?",
+          "UPDATE scheduledDiscordMessages SET status='sent', sentAt=UTC_TIMESTAMP(), lastError=NULL WHERE scheduleId=?",
           [message.scheduleId]
         );
       } catch (error) {
