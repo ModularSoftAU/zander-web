@@ -3,6 +3,7 @@ import {
   required,
   optional,
   generateLog,
+  hashEmail,
 } from "../common.js";
 
 export default function schedulerApiRoute(
@@ -20,7 +21,7 @@ export default function schedulerApiRoute(
     const status = optional(req.query, "status");
 
     const baseQuery =
-      "SELECT s.*, u.username FROM scheduledDiscordMessages s LEFT JOIN users u ON s.createdBy = u.userId";
+      "SELECT s.*, u.username, u.profilePicture_type, u.profilePicture_email, u.uuid FROM scheduledDiscordMessages s LEFT JOIN users u ON s.createdBy = u.userId";
     const queryParams = [];
     let dbQuery = baseQuery;
 
@@ -31,7 +32,7 @@ export default function schedulerApiRoute(
 
     dbQuery += " ORDER BY s.scheduledFor ASC";
 
-    db.query(dbQuery, queryParams, function (error, results) {
+    db.query(dbQuery, queryParams, async function (error, results) {
       if (error) {
         return res.send({
           success: false,
@@ -46,9 +47,32 @@ export default function schedulerApiRoute(
         });
       }
 
+      const enhancedResults = await Promise.all(
+        results.map(async (row) => {
+          let profilePictureUrl = null;
+
+          if (
+            row.profilePicture_type === "GRAVATAR" &&
+            row.profilePicture_email
+          ) {
+            const emailHash = await hashEmail(row.profilePicture_email);
+            profilePictureUrl = `https://gravatar.com/avatar/${emailHash}?size=80`;
+          }
+
+          if (row.profilePicture_type === "CRAFTATAR" && row.uuid) {
+            profilePictureUrl = `https://crafthead.net/helm/${row.uuid}`;
+          }
+
+          return {
+            ...row,
+            profilePictureUrl,
+          };
+        })
+      );
+
       return res.send({
         success: true,
-        data: results,
+        data: enhancedResults,
       });
     });
 

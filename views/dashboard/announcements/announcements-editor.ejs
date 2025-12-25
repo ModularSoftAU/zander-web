@@ -10,7 +10,6 @@
         <%- include("../../modules/dashboard/dashboard-sidebar.ejs") %>
 
         <main role="main" class="col-md-9 ml-sm-auto col-lg-10 px-4">
-            <% const formatDateTimeLocal = (value) => value ? new Date(value).toISOString().slice(0, 16) : null; %>
             <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
                 <h1 class="h2"><%= type === 'create' ? 'Create' : 'Edit' %> Announcement</h1>
                 <div class="btn-toolbar mb-2 mb-md-0">
@@ -297,8 +296,9 @@
                                 <% if (type === 'edit') { %>
                                     <%- include("../../partials/form/inputDateTime.ejs", {
                                         elementName: "startDate",
-                                        elementValue: formatDateTimeLocal(announcementApiData.startDate),
-                                        required: false
+                                        elementValue: null,
+                                        required: false,
+                                        elementAttributes: `data-iso="${announcementApiData.startDate || ""}"`
                                     }) %>
                                 <% } %>
                                 <small class="text-muted">Leave blank to publish immediately.</small>
@@ -318,8 +318,9 @@
                                 <% if (type === 'edit') { %>
                                     <%- include("../../partials/form/inputDateTime.ejs", {
                                         elementName: "endDate",
-                                        elementValue: formatDateTimeLocal(announcementApiData.endDate),
-                                        required: false
+                                        elementValue: null,
+                                        required: false,
+                                        elementAttributes: `data-iso="${announcementApiData.endDate || ""}"`
                                     }) %>
                                 <% } %>
                                 <small class="text-muted">Leave blank to keep this announcement active.</small>
@@ -340,3 +341,21 @@
 </div>
 
 <%- include("../../modules/footer.ejs") %>
+
+<script>
+    const toLocalDateTimeInput = (isoString) => {
+        if (!isoString) return "";
+        const date = new Date(isoString);
+        if (Number.isNaN(date.getTime())) return "";
+        const offset = date.getTimezoneOffset();
+        const local = new Date(date.getTime() - offset * 60000);
+        return local.toISOString().slice(0, 16);
+    };
+
+    document.querySelectorAll("input[data-iso]").forEach((input) => {
+        const value = toLocalDateTimeInput(input.dataset.iso);
+        if (value) {
+            input.value = value;
+        }
+    });
+</script>

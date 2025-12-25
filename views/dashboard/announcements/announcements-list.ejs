@@ -45,14 +45,16 @@
                         }) %>
                     <% } else { %>
                         <% apiData.data.forEach(function (announcement) { %>
-                            <% const startDateLabel = announcement.startDate ? new Date(announcement.startDate).toLocaleString() : "Now"; %>
-                            <% const endDateLabel = announcement.endDate ? new Date(announcement.endDate).toLocaleString() : "No end"; %>
                             <tr>
                                 <td><span class="badge text-bg-primary"><%= announcement.announcementType %></span></td>
                                 <td><%= announcement.colourMessageFormat %></td>
                                 <td>
                                     <% if (announcement.startDate || announcement.endDate) { %>
-                                        <small><%= startDateLabel %> → <%= endDateLabel %></small>
+                                        <small>
+                                            <span class="js-datetime" data-iso="<%= announcement.startDate || '' %>" data-fallback="Now"></span>
+                                            →
+                                            <span class="js-datetime" data-iso="<%= announcement.endDate || '' %>" data-fallback="No end"></span>
+                                        </small>
                                     <% } else { %>
                                         <small>Always active</small>
                                     <% } %>
@@ -84,3 +86,21 @@
 </div>
 
 <%- include("../../modules/footer.ejs") %>
+
+<script>
+    document.querySelectorAll(".js-datetime").forEach((element) => {
+        const isoValue = element.dataset.iso;
+        if (!isoValue) {
+            element.textContent = element.dataset.fallback || "";
+            return;
+        }
+
+        const date = new Date(isoValue);
+        if (Number.isNaN(date.getTime())) {
+            element.textContent = element.dataset.fallback || "";
+            return;
+        }
+
+        element.textContent = date.toLocaleString();
+    });
+</script>

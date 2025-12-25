@@ -5,6 +5,9 @@
     <% if (elementValue) { %>
         value="<%= elementValue %>"
     <% } %>
+    <% if (elementAttributes) { %>
+        <%- elementAttributes %>
+    <% } %>
     <% if (required) { %>
         required
     <% } %>
