@@ -119,7 +119,7 @@
                         </div>
 
                         <!-- Banner Body -->
-                        <div class="mb-3">
+                        <div class="mb-3" data-announcement-field="body">
                             <label for="body">Banner Body</label>
 
                             <% if (type === 'create') { %>
@@ -139,7 +139,7 @@
                         </div>
 
                         <!-- Colour Message Body Format -->
-                        <div class="mb-3">
+                        <div class="mb-3" data-announcement-field="colourMessageFormat">
                             <label for="colourMessageFormat">Colour Message Format</label>
 
                             <% if (type === 'create') { %>
@@ -160,7 +160,7 @@
 
                         <div class="row">
                             <!-- Announcement Link -->
-                            <div class="mb-3 col">
+                            <div class="mb-3 col" data-announcement-field="link">
                                 <label for="position">Announcement Link</label>
 
                                 <% if (type === 'create') { %>
@@ -180,7 +180,7 @@
                             </div>
 
                             <!-- Popup Button Text -->
-                            <div class="mb-3 col">
+                            <div class="mb-3 col" data-announcement-field="popupButtonText">
                                 <label for="popupButtonText">Popup Button Text</label>
 
                                 <% if (type === 'create') { %>
@@ -261,7 +261,7 @@
                             </div>
                         </div>
 
-                        <div class="mb-3">
+                        <div class="mb-3" data-announcement-field="popupImageUrl">
                             <label for="popupImageUrl">Popup Image URL</label>
 
                             <% if (type === 'create') { %>
@@ -358,4 +358,35 @@
             input.value = value;
         }
     });
+
+    const announcementTypeSelect = document.querySelector("select[name='announcementType']");
+    const fieldGroups = document.querySelectorAll("[data-announcement-field]");
+
+    const updateAnnouncementFields = () => {
+        const type = announcementTypeSelect?.value || "";
+
+        fieldGroups.forEach((group) => {
+            const field = group.dataset.announcementField;
+            let visible = true;
+
+            if (field === "popupButtonText" || field === "popupImageUrl") {
+                visible = type === "popup";
+            }
+
+            if (field === "colourMessageFormat") {
+                visible = type === "motd" || type === "tip";
+            }
+
+            if (field === "link") {
+                visible = type === "web" || type === "popup";
+            }
+
+            group.classList.toggle("d-none", !visible);
+        });
+    };
+
+    if (announcementTypeSelect) {
+        announcementTypeSelect.addEventListener("change", updateAnnouncementFields);
+        updateAnnouncementFields();
+    }
 </script>

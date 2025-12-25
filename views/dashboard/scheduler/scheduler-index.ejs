@@ -205,7 +205,7 @@
                             }) %>
                         </div>
 
-                        <div class="mb-3">
+                        <div class="mb-3" data-announcement-field="body">
                             <label for="body">Announcement Text</label>
                             <%- include("../../partials/form/inputTextArea.ejs", {
                                 elementName: "body",
@@ -214,7 +214,7 @@
                             }) %>
                         </div>
 
-                        <div class="mb-3">
+                        <div class="mb-3" data-announcement-field="colourMessageFormat">
                             <label for="colourMessageFormat">Colour Message Format</label>
                             <%- include("../../partials/form/inputTextArea.ejs", {
                                 elementName: "colourMessageFormat",
@@ -223,7 +223,7 @@
                             }) %>
                         </div>
 
-                        <div class="mb-3">
+                        <div class="mb-3" data-announcement-field="link">
                             <label for="link">Announcement Link</label>
                             <%- include("../../partials/form/inputText.ejs", {
                                 elementName: "link",
@@ -232,7 +232,7 @@
                             }) %>
                         </div>
 
-                        <div class="mb-3">
+                        <div class="mb-3" data-announcement-field="popupButtonText">
                             <label for="popupButtonText">Popup Button Text</label>
                             <%- include("../../partials/form/inputText.ejs", {
                                 elementName: "popupButtonText",
@@ -242,7 +242,7 @@
                             <small class="text-muted">Optional label for popup call-to-action button.</small>
                         </div>
 
-                        <div class="mb-3">
+                        <div class="mb-3" data-announcement-field="popupImageUrl">
                             <label for="popupImageUrl">Popup Image URL</label>
                             <%- include("../../partials/form/inputText.ejs", {
                                 elementName: "popupImageUrl",
@@ -380,7 +380,7 @@
 </div>
 
 <script>
-    const setupWizard = (modalId) => {
+    const setupWizard = (modalId, onStepReset) => {
         const modal = document.getElementById(modalId);
         if (!modal) return;
 
@@ -421,13 +421,47 @@
             if (form) {
                 form.reset();
             }
+            if (onStepReset) {
+                onStepReset();
+            }
         });
 
         renderStep();
     };
 
-    setupWizard("announcementWizardModal");
+    setupWizard("announcementWizardModal", updateAnnouncementWizardFields);
     setupWizard("discordWizardModal");
+
+    const announcementTypeSelect = document.querySelector("#announcementWizardForm select[name='announcementType']");
+    const announcementFieldGroups = document.querySelectorAll("#announcementWizardForm [data-announcement-field]");
+
+    const updateAnnouncementWizardFields = () => {
+        const type = announcementTypeSelect?.value || "";
+
+        announcementFieldGroups.forEach((group) => {
+            const field = group.dataset.announcementField;
+            let visible = true;
+
+            if (field === "popupButtonText" || field === "popupImageUrl") {
+                visible = type === "popup";
+            }
+
+            if (field === "colourMessageFormat") {
+                visible = type === "motd" || type === "tip";
+            }
+
+            if (field === "link") {
+                visible = type === "web" || type === "popup";
+            }
+
+            group.classList.toggle("d-none", !visible);
+        });
+    };
+
+    if (announcementTypeSelect) {
+        announcementTypeSelect.addEventListener("change", updateAnnouncementWizardFields);
+        updateAnnouncementWizardFields();
+    }
 
     document.querySelectorAll(".js-datetime").forEach((element) => {
         const isoValue = element.dataset.iso;
