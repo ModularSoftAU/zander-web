@@ -55,6 +55,13 @@ export default function announcementApiRoute(app, config, db, features, lang) {
         return res;
       }
 
+      // Get popup announcements
+      if (announcementType === "popup") {
+        let dbQuery = `SELECT * FROM announcements WHERE announcementType='popup' AND enabled=1${activeWindowFilter} ORDER BY COALESCE(startDate, updatedDate, NOW()) ASC;`;
+        getAnnouncements(dbQuery);
+        return res;
+      }
+
       // Get 1 tip announcement
       if (announcementType === "tip") {
         let dbQuery = `SELECT * FROM announcements WHERE announcementType='tip' AND enabled=1${activeWindowFilter} ORDER BY RAND() LIMIT 1;`;
@@ -106,6 +113,8 @@ export default function announcementApiRoute(app, config, db, features, lang) {
     const body = optional(req.body, "body", res);
     const colourMessageFormat = optional(req.body, "colourMessageFormat", res);
     const link = optional(req.body, "link", res);
+    const popupButtonText = optional(req.body, "popupButtonText", res);
+    const popupImageUrl = optional(req.body, "popupImageUrl", res);
     const startDateRaw = optional(req.body, "startDate", res);
     const endDateRaw = optional(req.body, "endDate", res);
     const startDate =
@@ -114,13 +123,15 @@ export default function announcementApiRoute(app, config, db, features, lang) {
 
     try {
       db.query(
-        `INSERT INTO announcements (enabled, body, announcementType, link, colourMessageFormat, startDate, endDate) VALUES (?, ?, ?, ?, ?, ?, ?)`,
+        `INSERT INTO announcements (enabled, body, announcementType, link, colourMessageFormat, popupButtonText, popupImageUrl, startDate, endDate) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [
           enabled,
           body,
           announcementType,
           link,
           colourMessageFormat,
+          popupButtonText,
+          popupImageUrl,
           startDate,
           endDate,
         ],
@@ -167,6 +178,8 @@ export default function announcementApiRoute(app, config, db, features, lang) {
     const body = optional(req.body, "body", res);
     const colourMessageFormat = optional(req.body, "colourMessageFormat", res);
     const link = optional(req.body, "link", res);
+    const popupButtonText = optional(req.body, "popupButtonText", res);
+    const popupImageUrl = optional(req.body, "popupImageUrl", res);
     const startDateRaw = optional(req.body, "startDate", res);
     const endDateRaw = optional(req.body, "endDate", res);
     const startDate =
@@ -183,6 +196,8 @@ export default function announcementApiRoute(app, config, db, features, lang) {
                   body=?,
                   colourMessageFormat=?,
                   link=?,
+                  popupButtonText=?,
+                  popupImageUrl=?,
                   startDate=?,
                   endDate=?
               WHERE announcementId=?;`,
@@ -192,6 +207,8 @@ export default function announcementApiRoute(app, config, db, features, lang) {
           body,
           colourMessageFormat,
           link,
+          popupButtonText,
+          popupImageUrl,
           startDate,
           endDate,
           announcementId,

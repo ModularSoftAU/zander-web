@@ -218,10 +218,12 @@ CREATE TABLE gameSessions (
 CREATE TABLE announcements (
 	announcementId INT NOT NULL AUTO_INCREMENT,
     enabled BOOLEAN DEFAULT 1,
-    announcementType ENUM('motd', 'tip', 'web'),
+    announcementType ENUM('motd', 'tip', 'web', 'popup'),
     body TEXT,
     colourMessageFormat TEXT,
     link TEXT,
+    popupButtonText VARCHAR(60),
+    popupImageUrl TEXT,
     startDate DATETIME,
     endDate DATETIME,
     updatedDate DATETIME,

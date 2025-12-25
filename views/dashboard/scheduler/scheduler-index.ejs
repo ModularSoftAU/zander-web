@@ -57,6 +57,12 @@
                                                 optionValue: "web",
                                                 selected: false,
                                                 disabled: false
+                                            },
+                                            {
+                                                optionName: "Website Popup Announcement",
+                                                optionValue: "popup",
+                                                selected: false,
+                                                disabled: false
                                             }
                                         ]
                                     }) %>
@@ -87,6 +93,26 @@
                                         elementValue: null,
                                         required: false
                                     }) %>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label for="popupButtonText">Popup Button Text</label>
+                                    <%- include("../../partials/form/inputText.ejs", {
+                                        elementName: "popupButtonText",
+                                        elementValue: null,
+                                        required: false
+                                    }) %>
+                                    <small class="text-muted">Optional label for popup call-to-action button.</small>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label for="popupImageUrl">Popup Image URL</label>
+                                    <%- include("../../partials/form/inputText.ejs", {
+                                        elementName: "popupImageUrl",
+                                        elementValue: null,
+                                        required: false
+                                    }) %>
+                                    <small class="text-muted">Optional banner image for popup announcements.</small>
                                 </div>
 
                                 <div class="mb-3">

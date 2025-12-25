@@ -1,0 +1,145 @@
+<div id="announcement-popup-overlay" class="announcement-popup-overlay" hidden>
+    <div class="announcement-popup">
+        <button type="button" class="announcement-popup-close" aria-label="Close popup">×</button>
+        <div class="announcement-popup-image" hidden>
+            <img src="" alt="Announcement banner">
+        </div>
+        <div class="announcement-popup-body">
+            <p class="announcement-popup-text"></p>
+        </div>
+        <div class="announcement-popup-actions" hidden>
+            <a class="btn btn-primary announcement-popup-button" href="#" target="_blank" rel="noopener noreferrer"></a>
+        </div>
+    </div>
+</div>
+
+<style>
+    .announcement-popup-overlay {
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.5);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 2000;
+        padding: 16px;
+    }
+
+    .announcement-popup {
+        position: relative;
+        background: #fff;
+        border-radius: 12px;
+        max-width: 520px;
+        width: 100%;
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+        overflow: hidden;
+    }
+
+    .announcement-popup-image img {
+        width: 100%;
+        display: block;
+    }
+
+    .announcement-popup-body {
+        padding: 20px;
+    }
+
+    .announcement-popup-text {
+        margin: 0;
+        font-size: 1rem;
+        color: #222;
+    }
+
+    .announcement-popup-actions {
+        padding: 0 20px 20px;
+        display: flex;
+        justify-content: flex-start;
+    }
+
+    .announcement-popup-close {
+        position: absolute;
+        top: 8px;
+        right: 10px;
+        border: none;
+        background: transparent;
+        font-size: 24px;
+        cursor: pointer;
+        color: #555;
+    }
+</style>
+
+<script>
+    document.addEventListener("DOMContentLoaded", () => {
+        if (window.location.pathname.startsWith("/dashboard")) {
+            return;
+        }
+
+        const overlay = document.getElementById("announcement-popup-overlay");
+        const popupText = overlay?.querySelector(".announcement-popup-text");
+        const popupImage = overlay?.querySelector(".announcement-popup-image");
+        const popupImageTag = overlay?.querySelector(".announcement-popup-image img");
+        const popupActions = overlay?.querySelector(".announcement-popup-actions");
+        const popupButton = overlay?.querySelector(".announcement-popup-button");
+        const popupClose = overlay?.querySelector(".announcement-popup-close");
+
+        if (!overlay || !popupText || !popupClose) {
+            return;
+        }
+
+        const dismissedKey = (id) => `popupAnnouncementDismissed:${id}`;
+        let queue = [];
+
+        const showPopup = (announcement) => {
+            popupText.textContent = announcement.body || "";
+
+            if (announcement.popupImageUrl) {
+                popupImageTag.src = announcement.popupImageUrl;
+                popupImage.hidden = false;
+            } else {
+                popupImage.hidden = true;
+            }
+
+            if (announcement.popupButtonText && announcement.link) {
+                popupButton.textContent = announcement.popupButtonText;
+                popupButton.href = announcement.link;
+                popupActions.hidden = false;
+            } else {
+                popupActions.hidden = true;
+            }
+
+            overlay.hidden = false;
+
+            popupClose.onclick = () => {
+                overlay.hidden = true;
+                if (announcement.announcementId) {
+                    localStorage.setItem(dismissedKey(announcement.announcementId), "true");
+                }
+                if (queue.length) {
+                    setTimeout(() => showPopup(queue.shift()), 1000);
+                }
+            };
+        };
+
+        const loadAnnouncements = async () => {
+            try {
+                const response = await fetch("/announcement/popup");
+                const data = await response.json();
+                if (!data.success || !Array.isArray(data.data)) {
+                    return;
+                }
+
+                queue = data.data.filter((announcement) => !localStorage.getItem(dismissedKey(announcement.announcementId)));
+
+                if (!queue.length) {
+                    return;
+                }
+
+                setTimeout(() => showPopup(queue.shift()), 5000);
+            } catch (error) {
+                console.error("Failed to load popup announcements", error);
+            }
+        };
+
+        loadAnnouncements();
+    });
+</script>

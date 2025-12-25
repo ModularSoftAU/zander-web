@@ -67,6 +67,12 @@
                                                 optionValue: "web",
                                                 selected: false,
                                                 disabled: false
+                                            },
+                                            {
+                                                optionName: "Website Popup Announcement",
+                                                optionValue: "popup",
+                                                selected: false,
+                                                disabled: false
                                             }
                                         ]
                                     }) %>
@@ -98,6 +104,12 @@
                                             {
                                                 optionName: "Website Banner",
                                                 optionValue: "web",
+                                                selected: false,
+                                                disabled: false
+                                            },
+                                            {
+                                                optionName: "Website Popup Announcement",
+                                                optionValue: "popup",
                                                 selected: false,
                                                 disabled: false
                                             }
@@ -168,6 +180,27 @@
                                 <% } %>
                             </div>
 
+                            <!-- Popup Button Text -->
+                            <div class="mb-3 col">
+                                <label for="popupButtonText">Popup Button Text</label>
+
+                                <% if (type === 'create') { %>
+                                    <%- include("../../partials/form/inputText.ejs", {
+                                        elementName: "popupButtonText",
+                                        elementValue: null,
+                                        required: false
+                                    }) %>
+                                <% } %>
+                                <% if (type === 'edit') { %>
+                                    <%- include("../../partials/form/inputText.ejs", {
+                                        elementName: "popupButtonText",
+                                        elementValue: announcementApiData.popupButtonText,
+                                        required: false
+                                    }) %>
+                                <% } %>
+                                <small class="text-muted">Optional label for popup call-to-action button.</small>
+                            </div>
+
                             <!-- Announcement Visability -->
                             <div class="mb-3 col">
                                 <label for="enabled">Announcement Visability</label>
@@ -227,6 +260,26 @@
                                     }) %>
                                 <% } %>
                             </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="popupImageUrl">Popup Image URL</label>
+
+                            <% if (type === 'create') { %>
+                                <%- include("../../partials/form/inputText.ejs", {
+                                    elementName: "popupImageUrl",
+                                    elementValue: null,
+                                    required: false
+                                }) %>
+                            <% } %>
+                            <% if (type === 'edit') { %>
+                                <%- include("../../partials/form/inputText.ejs", {
+                                    elementName: "popupImageUrl",
+                                    elementValue: announcementApiData.popupImageUrl,
+                                    required: false
+                                }) %>
+                            <% } %>
+                            <small class="text-muted">Optional banner image for popup announcements.</small>
                         </div>
 
                         <div class="row">

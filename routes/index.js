@@ -1,7 +1,10 @@
 import { createRequire } from "module";
 const require = createRequire(import.meta.url);
 
-import { getWebAnnouncement } from "../controllers/announcementController.js";
+import {
+  getPopupAnnouncements,
+  getWebAnnouncement,
+} from "../controllers/announcementController.js";
 import { isFeatureWebRouteEnabled, getGlobalImage, hasPermission } from "../api/common.js";
 import { getTicketsAccessibleByUser } from "../controllers/supportTicketController.js";
 
@@ -48,6 +51,22 @@ export default function applicationSiteRoutes(
       globalImage: await getGlobalImage(),
       statApiData: statApiData,
       announcementWeb: await getWebAnnouncement(),
+    });
+  });
+
+  app.get("/announcement/popup", async function (req, res) {
+    if (!features.announcements) {
+      return res.send({
+        success: false,
+        message: "Announcements disabled.",
+      });
+    }
+
+    const popupAnnouncements = await getPopupAnnouncements();
+
+    return res.send({
+      success: popupAnnouncements.length > 0,
+      data: popupAnnouncements,
     });
   });
 

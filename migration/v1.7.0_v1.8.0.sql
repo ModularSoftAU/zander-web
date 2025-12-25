@@ -1,4 +1,7 @@
 ALTER TABLE announcements
+  MODIFY COLUMN announcementType ENUM('motd', 'tip', 'web', 'popup'),
+  ADD COLUMN popupButtonText VARCHAR(60) NULL,
+  ADD COLUMN popupImageUrl TEXT NULL,
   ADD COLUMN startDate DATETIME NULL,
   ADD COLUMN endDate DATETIME NULL;
 
