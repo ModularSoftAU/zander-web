@@ -493,7 +493,8 @@
     const parseDateValue = (value) => {
         if (!value) return null;
         const normalized = value.includes(" ") ? value.replace(" ", "T") : value;
-        const date = new Date(normalized);
+        const withTimezone = normalized.endsWith("Z") ? normalized : `${normalized}Z`;
+        const date = new Date(withTimezone);
         if (Number.isNaN(date.getTime())) {
             return null;
         }

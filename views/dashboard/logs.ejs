@@ -1,15 +1,15 @@
-<%- include("../../modules/header.ejs", {
+<%- include("../modules/header.ejs", {
     pageTitle: pageTitle,
     pageDescription: "Logs of all Network Administration events."
 }) %>
 
-<%- include("../../modules/navigationBar.ejs") %>
+<%- include("../modules/navigationBar.ejs") %>
 
-<%- include("../../modules/dashboard/dashboard-header.ejs") %>
+<%- include("../modules/dashboard/dashboard-header.ejs") %>
 
 <div class="container-fluid">
     <div class="row">
-        <%- include("../../modules/dashboard/dashboard-sidebar.ejs") %>
+        <%- include("../modules/dashboard/dashboard-sidebar.ejs") %>
 
         <main role="main" class="col-md-9 ml-sm-auto col-lg-10 px-4">
             <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
@@ -63,7 +63,7 @@
                     </thead>
                     <tbody>
                         <% if (apiData.success == false) { %>
-                            <%- include("../../partials/alert.ejs", {
+                            <%- include("../partials/alert.ejs", {
                               alertType: "danger",
                               content: apiData.message
                             }) %>
@@ -72,7 +72,7 @@
                                 <tr>
                                     <td data-label="Actioned User"><%= log.actionedUsername %></td>
                                     <td data-label="Type">
-                                        <%- include("../../partials/logPriorityBadge.ejs", {
+                                        <%- include("../partials/logPriorityBadge.ejs", {
                                             type: log.logType
                                         }) %>
                                     </td>
@@ -91,7 +91,7 @@
     </div>
 </div>
 
-<%- include("../../modules/footer.ejs") %>
+<%- include("../modules/footer.ejs") %>
 
 <style>
     @media (max-width: 768px) {
@@ -130,7 +130,8 @@
     const parseDateValue = (value) => {
         if (!value) return null;
         const normalized = value.includes(" ") ? value.replace(" ", "T") : value;
-        const date = new Date(normalized);
+        const withTimezone = normalized.endsWith("Z") ? normalized : `${normalized}Z`;
+        const date = new Date(withTimezone);
         if (Number.isNaN(date.getTime())) {
             return null;
         }
