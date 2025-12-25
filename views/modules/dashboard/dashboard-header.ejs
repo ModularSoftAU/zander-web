@@ -6,10 +6,12 @@
 </nav>
 
 <style>
-  @media (max-width: 768px) {
-    header .header-top-bar,
-    header #navbar {
-      display: none;
-    }
+  #sidebarMenu {
+    display: none;
+  }
+
+  #sidebarMenu + main {
+    flex: 0 0 100%;
+    max-width: 100%;
   }
 </style>
