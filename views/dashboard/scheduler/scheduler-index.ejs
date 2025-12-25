@@ -342,20 +342,16 @@
 
                         <div class="mb-3">
                             <label for="embedDescription">Embed Description</label>
-                            <%- include("../../partials/form/inputTextArea.ejs", {
-                                elementName: "embedDescription",
-                                elementValue: null,
-                                required: false
+                            <%- include("../../partials/summerNoteEditor.ejs", {
+                                editorElementName: "embedDescriptionEditor",
+                                editorPOSTElementName: "embedDescription",
+                                editorElementText: ""
                             }) %>
                         </div>
 
                         <div class="mb-3">
                             <label for="embedColor">Embed Color (Hex)</label>
-                            <%- include("../../partials/form/inputText.ejs", {
-                                elementName: "embedColor",
-                                elementValue: null,
-                                required: false
-                            }) %>
+                            <input type="color" class="form-control form-control-color" name="embedColor" value="#5865f2">
                         </div>
                     </div>
 
