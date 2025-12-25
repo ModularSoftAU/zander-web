@@ -1,0 +1,290 @@
+<%- include("../../modules/header.ejs", {
+    pageTitle: pageTitle,
+    pageDescription: "Schedule announcements and Discord embeds."
+}) %>
+
+<%- include("../../modules/navigationBar.ejs") %>
+
+<div class="container-fluid">
+    <div class="row">
+        <%- include("../../modules/dashboard/dashboard-sidebar.ejs") %>
+
+        <main role="main" class="col-md-9 ml-sm-auto col-lg-10 px-4">
+            <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                <h1 class="h2">Scheduler</h1>
+            </div>
+
+            <% if (req.cookies.alertType) { %>
+                <%- include("../../partials/alert.ejs", {
+                  alertType: req.cookies.alertType,
+                  content: req.cookies.alertContent
+                }) %>
+            <% } %>
+
+            <div class="row">
+                <div class="col-lg-6">
+                    <div class="card mb-4">
+                        <div class="card-body">
+                            <h5 class="card-title">Schedule Announcement</h5>
+                            <form method="post" action="<%= process.env.siteAddress %>/redirect/announcement/create">
+                                <div class="mb-3">
+                                    <label for="announcementType">Announcement Type</label>
+                                    <%- include("../../partials/form/inputSelect.ejs", {
+                                        elementName: "announcementType",
+                                        elementValue: "null",
+                                        required: true,
+                                        optionElements: [
+                                            {
+                                                optionName: "Select a Type",
+                                                optionValue: "null",
+                                                selected: true,
+                                                disabled: true
+                                            },
+                                            {
+                                                optionName: "Server Ping MOTD",
+                                                optionValue: "motd",
+                                                selected: false,
+                                                disabled: false
+                                            },
+                                            {
+                                                optionName: "In-Game Tip",
+                                                optionValue: "tip",
+                                                selected: false,
+                                                disabled: false
+                                            },
+                                            {
+                                                optionName: "Website Banner",
+                                                optionValue: "web",
+                                                selected: false,
+                                                disabled: false
+                                            }
+                                        ]
+                                    }) %>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label for="body">Banner Body</label>
+                                    <%- include("../../partials/form/inputTextArea.ejs", {
+                                        elementName: "body",
+                                        elementValue: null,
+                                        required: false
+                                    }) %>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label for="colourMessageFormat">Colour Message Format</label>
+                                    <%- include("../../partials/form/inputTextArea.ejs", {
+                                        elementName: "colourMessageFormat",
+                                        elementValue: null,
+                                        required: false
+                                    }) %>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label for="link">Announcement Link</label>
+                                    <%- include("../../partials/form/inputText.ejs", {
+                                        elementName: "link",
+                                        elementValue: null,
+                                        required: false
+                                    }) %>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label for="enabled">Announcement Visibility</label>
+                                    <%- include("../../partials/form/inputSelect.ejs", {
+                                        elementName: "enabled",
+                                        elementValue: "1",
+                                        required: true,
+                                        optionElements: [
+                                            {
+                                                optionName: "Enabled",
+                                                optionValue: "1",
+                                                selected: true,
+                                                disabled: false
+                                            },
+                                            {
+                                                optionName: "Disabled",
+                                                optionValue: "0",
+                                                selected: false,
+                                                disabled: false
+                                            }
+                                        ]
+                                    }) %>
+                                </div>
+
+                                <div class="row">
+                                    <div class="mb-3 col">
+                                        <label for="startDate">Start Date</label>
+                                        <%- include("../../partials/form/inputDateTime.ejs", {
+                                            elementName: "startDate",
+                                            elementValue: null,
+                                            required: false
+                                        }) %>
+                                    </div>
+
+                                    <div class="mb-3 col">
+                                        <label for="endDate">End Date</label>
+                                        <%- include("../../partials/form/inputDateTime.ejs", {
+                                            elementName: "endDate",
+                                            elementValue: null,
+                                            required: false
+                                        }) %>
+                                    </div>
+                                </div>
+
+                                <button type="submit" class="btn btn-primary"><i class="fas fa-calendar"></i> Schedule Announcement</button>
+                            </form>
+                        </div>
+                    </div>
+
+                    <div class="card mb-4">
+                        <div class="card-body">
+                            <h5 class="card-title">Temporary Announcements</h5>
+                            <% const scheduledAnnouncements = announcementsData.success ? announcementsData.data.filter((announcement) => announcement.startDate || announcement.endDate) : []; %>
+                            <% if (!announcementsData.success || scheduledAnnouncements.length === 0) { %>
+                                <p class="text-muted mb-0">No temporary announcements scheduled.</p>
+                            <% } else { %>
+                                <table class="table table-sm">
+                                    <thead>
+                                        <tr>
+                                            <th>Type</th>
+                                            <th>Schedule</th>
+                                            <th>Status</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <% scheduledAnnouncements.forEach((announcement) => { %>
+                                            <% const startDateLabel = announcement.startDate ? new Date(announcement.startDate).toLocaleString() : "Now"; %>
+                                            <% const endDateLabel = announcement.endDate ? new Date(announcement.endDate).toLocaleString() : "No end"; %>
+                                            <tr>
+                                                <td><span class="badge text-bg-primary"><%= announcement.announcementType %></span></td>
+                                                <td><small><%= startDateLabel %> → <%= endDateLabel %></small></td>
+                                                <td>
+                                                    <% if (announcement.enabled === 1) { %>
+                                                        <span class="badge text-bg-success">Enabled</span>
+                                                    <% } else { %>
+                                                        <span class="badge text-bg-secondary">Disabled</span>
+                                                    <% } %>
+                                                </td>
+                                            </tr>
+                                        <% }) %>
+                                    </tbody>
+                                </table>
+                            <% } %>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-lg-6">
+                    <div class="card mb-4">
+                        <div class="card-body">
+                            <h5 class="card-title">Schedule Discord Embed</h5>
+                            <form method="post" action="<%= process.env.siteAddress %>/redirect/scheduler/discord/create">
+                                <% const channelMap = Object.fromEntries(discordChannels.map((channel) => [channel.id, channel.name])); %>
+                                <% const channelOptions = [
+                                    {
+                                        optionName: "Select a Channel",
+                                        optionValue: "null",
+                                        selected: true,
+                                        disabled: true
+                                    },
+                                    ...discordChannels.map((channel) => ({
+                                        optionName: `#${channel.name}`,
+                                        optionValue: channel.id,
+                                        selected: false,
+                                        disabled: false
+                                    }))
+                                ]; %>
+
+                                <div class="mb-3">
+                                    <label for="channelId">Channel</label>
+                                    <%- include("../../partials/form/inputSelect.ejs", {
+                                        elementName: "channelId",
+                                        elementValue: "null",
+                                        required: true,
+                                        optionElements: channelOptions
+                                    }) %>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label for="embedTitle">Embed Title</label>
+                                    <%- include("../../partials/form/inputText.ejs", {
+                                        elementName: "embedTitle",
+                                        elementValue: null,
+                                        required: false
+                                    }) %>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label for="embedDescription">Embed Description</label>
+                                    <%- include("../../partials/form/inputTextArea.ejs", {
+                                        elementName: "embedDescription",
+                                        elementValue: null,
+                                        required: false
+                                    }) %>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label for="embedColor">Embed Color (Hex)</label>
+                                    <%- include("../../partials/form/inputText.ejs", {
+                                        elementName: "embedColor",
+                                        elementValue: null,
+                                        required: false
+                                    }) %>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label for="scheduledFor">Send At</label>
+                                    <%- include("../../partials/form/inputDateTime.ejs", {
+                                        elementName: "scheduledFor",
+                                        elementValue: null,
+                                        required: true
+                                    }) %>
+                                </div>
+
+                                <button type="submit" class="btn btn-primary"><i class="fab fa-discord"></i> Schedule Discord Embed</button>
+                            </form>
+                        </div>
+                    </div>
+
+                    <div class="card mb-4">
+                        <div class="card-body">
+                            <h5 class="card-title">Scheduled Discord Messages</h5>
+                            <% if (!scheduledMessages.success) { %>
+                                <p class="text-muted mb-0">No scheduled Discord messages found.</p>
+                            <% } else { %>
+                                <table class="table table-sm">
+                                    <thead>
+                                        <tr>
+                                            <th>Channel</th>
+                                            <th>Scheduled For</th>
+                                            <th>Status</th>
+                                            <th>Action</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <% scheduledMessages.data.forEach((message) => { %>
+                                            <tr>
+                                                <td>#<%= channelMap[message.channelId] || message.channelId %></td>
+                                                <td><small><%= new Date(message.scheduledFor).toLocaleString() %></small></td>
+                                                <td><span class="badge text-bg-secondary"><%= message.status %></span></td>
+                                                <td>
+                                                    <form action="<%= process.env.siteAddress %>/redirect/scheduler/discord/delete" method="post">
+                                                        <input type="hidden" name="scheduleId" value="<%= message.scheduleId %>">
+                                                        <button class="btn btn-sm btn-danger" type="submit">Delete</button>
+                                                    </form>
+                                                </td>
+                                            </tr>
+                                        <% }) %>
+                                    </tbody>
+                                </table>
+                            <% } %>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+</div>
+
+<%- include("../../modules/footer.ejs") %>

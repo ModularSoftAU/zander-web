@@ -29,6 +29,7 @@ import("./cron/userCodeExpiryCron.js");
 import("./cron/bridgeCleanupCron.js");
 import("./cron/cakeDayUserCheck.js");
 import("./cron/staffAuditReportCron.js");
+import("./cron/schedulerCron.js");
 
 //
 // Website Related

@@ -38,6 +38,9 @@ export default function announcementApiRoute(app, config, db, features, lang) {
         });
       }
 
+      const activeWindowFilter =
+        " AND (startDate IS NULL OR startDate <= NOW()) AND (endDate IS NULL OR endDate >= NOW())";
+
       // Get Announcement by specific ID.
       if (announcementId) {
         let dbQuery = `SELECT * FROM announcements WHERE announcementId=${announcementId};`;
@@ -47,28 +50,28 @@ export default function announcementApiRoute(app, config, db, features, lang) {
 
       // Get 1 web announcement
       if (announcementType === "web") {
-        let dbQuery = `SELECT * FROM announcements WHERE announcementType='web' AND enabled=1 ORDER BY RAND() LIMIT 1;`;
+        let dbQuery = `SELECT * FROM announcements WHERE announcementType='web' AND enabled=1${activeWindowFilter} ORDER BY RAND() LIMIT 1;`;
         getAnnouncements(dbQuery);
         return res;
       }
 
       // Get 1 tip announcement
       if (announcementType === "tip") {
-        let dbQuery = `SELECT * FROM announcements WHERE announcementType='tip' AND enabled=1 ORDER BY RAND() LIMIT 1;`;
+        let dbQuery = `SELECT * FROM announcements WHERE announcementType='tip' AND enabled=1${activeWindowFilter} ORDER BY RAND() LIMIT 1;`;
         getAnnouncements(dbQuery);
         return res;
       }
 
       // Get 1 motd announcement
       if (announcementType === "motd") {
-        let dbQuery = `SELECT * FROM announcements WHERE announcementType='motd' AND enabled=1 ORDER BY RAND() LIMIT 1;`;
+        let dbQuery = `SELECT * FROM announcements WHERE announcementType='motd' AND enabled=1${activeWindowFilter} ORDER BY RAND() LIMIT 1;`;
         getAnnouncements(dbQuery);
         return res;
       }
 
       // Show all public announcements
       if (enabled === 1) {
-        let dbQuery = `SELECT * FROM announcements WHERE enabled=1;`;
+        let dbQuery = `SELECT * FROM announcements WHERE enabled=1${activeWindowFilter};`;
         getAnnouncements(dbQuery);
         return res;
       }
@@ -103,17 +106,23 @@ export default function announcementApiRoute(app, config, db, features, lang) {
     const body = optional(req.body, "body", res);
     const colourMessageFormat = optional(req.body, "colourMessageFormat", res);
     const link = optional(req.body, "link", res);
+    const startDateRaw = optional(req.body, "startDate", res);
+    const endDateRaw = optional(req.body, "endDate", res);
+    const startDate =
+      startDateRaw && startDateRaw.trim() !== "" ? startDateRaw : null;
+    const endDate = endDateRaw && endDateRaw.trim() !== "" ? endDateRaw : null;
 
     try {
       db.query(
-        `INSERT INTO announcements (enabled, body, announcementType, link, colourMessageFormat) VALUES (?, ?, ?, ?, ?)`,
+        `INSERT INTO announcements (enabled, body, announcementType, link, colourMessageFormat, startDate, endDate) VALUES (?, ?, ?, ?, ?, ?, ?)`,
         [
           enabled,
           body,
           announcementType,
           link,
           colourMessageFormat,
-          Date.now(),
+          startDate,
+          endDate,
         ],
         function (error, results, fields) {
           if (error) {
@@ -158,6 +167,11 @@ export default function announcementApiRoute(app, config, db, features, lang) {
     const body = optional(req.body, "body", res);
     const colourMessageFormat = optional(req.body, "colourMessageFormat", res);
     const link = optional(req.body, "link", res);
+    const startDateRaw = optional(req.body, "startDate", res);
+    const endDateRaw = optional(req.body, "endDate", res);
+    const startDate =
+      startDateRaw && startDateRaw.trim() !== "" ? startDateRaw : null;
+    const endDate = endDateRaw && endDateRaw.trim() !== "" ? endDateRaw : null;
 
     try {
       db.query(
@@ -168,7 +182,9 @@ export default function announcementApiRoute(app, config, db, features, lang) {
                   announcementType=?,
                   body=?,
                   colourMessageFormat=?,
-                  link=?
+                  link=?,
+                  startDate=?,
+                  endDate=?
               WHERE announcementId=?;`,
         [
           enabled,
@@ -176,6 +192,8 @@ export default function announcementApiRoute(app, config, db, features, lang) {
           body,
           colourMessageFormat,
           link,
+          startDate,
+          endDate,
           announcementId,
         ],
         function (error, results, fields) {

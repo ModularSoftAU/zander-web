@@ -10,6 +10,7 @@
         <%- include("../../modules/dashboard/dashboard-sidebar.ejs") %>
 
         <main role="main" class="col-md-9 ml-sm-auto col-lg-10 px-4">
+            <% const formatDateTimeLocal = (value) => value ? new Date(value).toISOString().slice(0, 16) : null; %>
             <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
                 <h1 class="h2"><%= type === 'create' ? 'Create' : 'Edit' %> Announcement</h1>
                 <div class="btn-toolbar mb-2 mb-md-0">
@@ -225,6 +226,50 @@
                                         ]
                                     }) %>
                                 <% } %>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <!-- Announcement Start Date -->
+                            <div class="mb-3 col">
+                                <label for="startDate">Start Date</label>
+
+                                <% if (type === 'create') { %>
+                                    <%- include("../../partials/form/inputDateTime.ejs", {
+                                        elementName: "startDate",
+                                        elementValue: null,
+                                        required: false
+                                    }) %>
+                                <% } %>
+                                <% if (type === 'edit') { %>
+                                    <%- include("../../partials/form/inputDateTime.ejs", {
+                                        elementName: "startDate",
+                                        elementValue: formatDateTimeLocal(announcementApiData.startDate),
+                                        required: false
+                                    }) %>
+                                <% } %>
+                                <small class="text-muted">Leave blank to publish immediately.</small>
+                            </div>
+
+                            <!-- Announcement End Date -->
+                            <div class="mb-3 col">
+                                <label for="endDate">End Date</label>
+
+                                <% if (type === 'create') { %>
+                                    <%- include("../../partials/form/inputDateTime.ejs", {
+                                        elementName: "endDate",
+                                        elementValue: null,
+                                        required: false
+                                    }) %>
+                                <% } %>
+                                <% if (type === 'edit') { %>
+                                    <%- include("../../partials/form/inputDateTime.ejs", {
+                                        elementName: "endDate",
+                                        elementValue: formatDateTimeLocal(announcementApiData.endDate),
+                                        required: false
+                                    }) %>
+                                <% } %>
+                                <small class="text-muted">Leave blank to keep this announcement active.</small>
                             </div>
                         </div>
 

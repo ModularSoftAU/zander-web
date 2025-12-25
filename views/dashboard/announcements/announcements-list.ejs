@@ -32,6 +32,7 @@
                     <tr>
                         <th>Type</th>
                         <th>Format</th>
+                        <th>Schedule</th>
                         <th>Enabled</th>
                         <th>Action</th>
                     </tr>
@@ -44,9 +45,18 @@
                         }) %>
                     <% } else { %>
                         <% apiData.data.forEach(function (announcement) { %>
+                            <% const startDateLabel = announcement.startDate ? new Date(announcement.startDate).toLocaleString() : "Now"; %>
+                            <% const endDateLabel = announcement.endDate ? new Date(announcement.endDate).toLocaleString() : "No end"; %>
                             <tr>
                                 <td><span class="badge text-bg-primary"><%= announcement.announcementType %></span></td>
                                 <td><%= announcement.colourMessageFormat %></td>
+                                <td>
+                                    <% if (announcement.startDate || announcement.endDate) { %>
+                                        <small><%= startDateLabel %> → <%= endDateLabel %></small>
+                                    <% } else { %>
+                                        <small>Always active</small>
+                                    <% } %>
+                                </td>
                                 <td>
                                     <% if (announcement.enabled === 1) { %>
                                         <i class="fas fa-check-circle" style="color:green"></i>
