@@ -57,7 +57,16 @@ export default function dashboardSiteRoute(app, config, features, lang) {
   app.get("/dashboard/logs", async function (req, res) {
     if (!hasPermission("zander.web.logs", req, res, features)) return;
 
-    const fetchURL = `${process.env.siteAddress}/api/web/logs/get`;
+    const queryParams = new URLSearchParams();
+    if (req.query?.user) {
+      queryParams.set("user", req.query.user);
+    }
+    if (req.query?.feature) {
+      queryParams.set("feature", req.query.feature);
+    }
+    const fetchURL = `${process.env.siteAddress}/api/web/logs/get${
+      queryParams.toString() ? `?${queryParams.toString()}` : ""
+    }`;
     const response = await fetch(fetchURL, {
       headers: { "x-access-token": process.env.apiKey },
     });

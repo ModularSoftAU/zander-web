@@ -163,6 +163,7 @@
             </div>
             <div class="modal-body">
                 <form id="announcementWizardForm" method="post" action="<%= process.env.siteAddress %>/redirect/announcement/create">
+                    <input type="hidden" name="timezoneOffset" value="">
                     <div class="wizard-step" data-step="1">
                         <div class="mb-3">
                             <label for="announcementType">Announcement Type</label>
@@ -318,6 +319,7 @@
             </div>
             <div class="modal-body">
                 <form id="discordWizardForm" method="post" action="<%= process.env.siteAddress %>/redirect/scheduler/discord/create">
+                    <input type="hidden" name="timezoneOffset" value="">
                     <div class="wizard-step" data-step="1">
                         <div class="mb-3">
                             <label for="channelId">Channel</label>
@@ -424,12 +426,18 @@
             if (onStepReset) {
                 onStepReset();
             }
+            applyDateInputMinimums();
+            updateTimezoneOffsets();
         });
 
         renderStep();
     };
 
-    setupWizard("announcementWizardModal", updateAnnouncementWizardFields);
+    setupWizard("announcementWizardModal", () => {
+        updateAnnouncementWizardFields();
+        applyDateInputMinimums();
+        updateTimezoneOffsets();
+    });
     setupWizard("discordWizardModal");
 
     const announcementTypeSelect = document.querySelector("#announcementWizardForm select[name='announcementType']");
@@ -463,15 +471,39 @@
         updateAnnouncementWizardFields();
     }
 
+    const applyDateInputMinimums = () => {
+        const now = new Date();
+        const offset = now.getTimezoneOffset();
+        const local = new Date(now.getTime() - offset * 60000).toISOString().slice(0, 16);
+        document.querySelectorAll("#announcementWizardForm input[type='datetime-local'], #discordWizardForm input[type='datetime-local']").forEach((input) => {
+            input.min = local;
+        });
+    };
+
+    const updateTimezoneOffsets = () => {
+        const offset = String(new Date().getTimezoneOffset());
+        document.querySelectorAll("input[name='timezoneOffset']").forEach((input) => {
+            input.value = offset;
+        });
+    };
+
+    applyDateInputMinimums();
+    updateTimezoneOffsets();
+
+    const parseDateValue = (value) => {
+        if (!value) return null;
+        const normalized = value.includes(" ") ? value.replace(" ", "T") : value;
+        const date = new Date(normalized);
+        if (Number.isNaN(date.getTime())) {
+            return null;
+        }
+        return date;
+    };
+
     document.querySelectorAll(".js-datetime").forEach((element) => {
         const isoValue = element.dataset.iso;
-        if (!isoValue) {
-            element.textContent = element.dataset.fallback || "";
-            return;
-        }
-
-        const date = new Date(isoValue);
-        if (Number.isNaN(date.getTime())) {
+        const date = parseDateValue(isoValue);
+        if (!date) {
             element.textContent = element.dataset.fallback || "";
             return;
         }

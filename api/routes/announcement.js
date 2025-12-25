@@ -117,9 +117,38 @@ export default function announcementApiRoute(app, config, db, features, lang) {
     const popupImageUrl = optional(req.body, "popupImageUrl", res);
     const startDateRaw = optional(req.body, "startDate", res);
     const endDateRaw = optional(req.body, "endDate", res);
-    const startDate =
-      startDateRaw && startDateRaw.trim() !== "" ? startDateRaw : null;
-    const endDate = endDateRaw && endDateRaw.trim() !== "" ? endDateRaw : null;
+    const timezoneOffset = optional(req.body, "timezoneOffset", res);
+    const startDate = normalizeDateTimeInput(
+      startDateRaw && startDateRaw.trim() !== "" ? startDateRaw : null,
+      timezoneOffset
+    );
+    const endDate = normalizeDateTimeInput(
+      endDateRaw && endDateRaw.trim() !== "" ? endDateRaw : null,
+      timezoneOffset
+    );
+
+    const now = new Date();
+
+    if (startDate && startDate.getTime() < now.getTime()) {
+      return res.send({
+        success: false,
+        message: "Start date cannot be in the past.",
+      });
+    }
+
+    if (endDate && endDate.getTime() < now.getTime()) {
+      return res.send({
+        success: false,
+        message: "End date cannot be in the past.",
+      });
+    }
+
+    if (startDate && endDate && endDate.getTime() < startDate.getTime()) {
+      return res.send({
+        success: false,
+        message: "End date must be after the start date.",
+      });
+    }
 
     try {
       db.query(
@@ -132,8 +161,8 @@ export default function announcementApiRoute(app, config, db, features, lang) {
           colourMessageFormat,
           popupButtonText,
           popupImageUrl,
-          startDate,
-          endDate,
+          startDate ? formatDateTimeForDb(startDate) : null,
+          endDate ? formatDateTimeForDb(endDate) : null,
         ],
         function (error, results, fields) {
           if (error) {
@@ -182,9 +211,38 @@ export default function announcementApiRoute(app, config, db, features, lang) {
     const popupImageUrl = optional(req.body, "popupImageUrl", res);
     const startDateRaw = optional(req.body, "startDate", res);
     const endDateRaw = optional(req.body, "endDate", res);
-    const startDate =
-      startDateRaw && startDateRaw.trim() !== "" ? startDateRaw : null;
-    const endDate = endDateRaw && endDateRaw.trim() !== "" ? endDateRaw : null;
+    const timezoneOffset = optional(req.body, "timezoneOffset", res);
+    const startDate = normalizeDateTimeInput(
+      startDateRaw && startDateRaw.trim() !== "" ? startDateRaw : null,
+      timezoneOffset
+    );
+    const endDate = normalizeDateTimeInput(
+      endDateRaw && endDateRaw.trim() !== "" ? endDateRaw : null,
+      timezoneOffset
+    );
+
+    const now = new Date();
+
+    if (startDate && startDate.getTime() < now.getTime()) {
+      return res.send({
+        success: false,
+        message: "Start date cannot be in the past.",
+      });
+    }
+
+    if (endDate && endDate.getTime() < now.getTime()) {
+      return res.send({
+        success: false,
+        message: "End date cannot be in the past.",
+      });
+    }
+
+    if (startDate && endDate && endDate.getTime() < startDate.getTime()) {
+      return res.send({
+        success: false,
+        message: "End date must be after the start date.",
+      });
+    }
 
     try {
       db.query(
@@ -209,8 +267,8 @@ export default function announcementApiRoute(app, config, db, features, lang) {
           link,
           popupButtonText,
           popupImageUrl,
-          startDate,
-          endDate,
+          startDate ? formatDateTimeForDb(startDate) : null,
+          endDate ? formatDateTimeForDb(endDate) : null,
           announcementId,
         ],
         function (error, results, fields) {
@@ -286,4 +344,36 @@ export default function announcementApiRoute(app, config, db, features, lang) {
 
     return res;
   });
+}
+
+function normalizeDateTimeInput(value, timezoneOffset) {
+  if (!value) return null;
+
+  const offsetMinutes =
+    typeof timezoneOffset === "string" || typeof timezoneOffset === "number"
+      ? Number(timezoneOffset)
+      : null;
+
+  if (!Number.isNaN(offsetMinutes)) {
+    const match = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})$/.exec(value);
+    if (match) {
+      const [, year, month, day, hour, minute] = match;
+      const utcMillis =
+        Date.UTC(
+          Number(year),
+          Number(month) - 1,
+          Number(day),
+          Number(hour),
+          Number(minute)
+        ) +
+        offsetMinutes * 60000;
+      return new Date(utcMillis);
+    }
+  }
+
+  return new Date(value);
+}
+
+function formatDateTimeForDb(dateValue) {
+  return dateValue.toISOString().slice(0, 19).replace("T", " ");
 }

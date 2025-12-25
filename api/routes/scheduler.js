@@ -85,15 +85,26 @@ export default function schedulerApiRoute(
     const actioningUser = required(req.body, "actioningUser", res);
     const channelId = required(req.body, "channelId", res);
     const scheduledFor = required(req.body, "scheduledFor", res);
+    const timezoneOffset = optional(req.body, "timezoneOffset", res);
     const embedTitle = optional(req.body, "embedTitle", res);
     const embedDescription = optional(req.body, "embedDescription", res);
     const embedColor = optional(req.body, "embedColor", res);
 
-    const scheduledDate = new Date(scheduledFor);
+    const scheduledDate = normalizeDateTimeInput(
+      scheduledFor,
+      timezoneOffset
+    );
     if (Number.isNaN(scheduledDate.getTime())) {
       return res.send({
         success: false,
         message: "Invalid scheduled date/time.",
+      });
+    }
+
+    if (scheduledDate.getTime() < Date.now()) {
+      return res.send({
+        success: false,
+        message: "Scheduled time cannot be in the past.",
       });
     }
 
@@ -104,7 +115,7 @@ export default function schedulerApiRoute(
         embedTitle,
         embedDescription,
         embedColor,
-        scheduledFor,
+        formatDateTimeForDb(scheduledDate),
         actioningUser,
       ],
       function (error) {
@@ -167,4 +178,36 @@ export default function schedulerApiRoute(
 
     return res;
   });
+}
+
+function normalizeDateTimeInput(value, timezoneOffset) {
+  if (!value) return new Date("");
+
+  const offsetMinutes =
+    typeof timezoneOffset === "string" || typeof timezoneOffset === "number"
+      ? Number(timezoneOffset)
+      : null;
+
+  if (!Number.isNaN(offsetMinutes)) {
+    const match = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})$/.exec(value);
+    if (match) {
+      const [, year, month, day, hour, minute] = match;
+      const utcMillis =
+        Date.UTC(
+          Number(year),
+          Number(month) - 1,
+          Number(day),
+          Number(hour),
+          Number(minute)
+        ) +
+        offsetMinutes * 60000;
+      return new Date(utcMillis);
+    }
+  }
+
+  return new Date(value);
+}
+
+function formatDateTimeForDb(dateValue) {
+  return dateValue.toISOString().slice(0, 19).replace("T", " ");
 }

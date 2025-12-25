@@ -88,15 +88,20 @@
 <%- include("../../modules/footer.ejs") %>
 
 <script>
+    const parseDateValue = (value) => {
+        if (!value) return null;
+        const normalized = value.includes(" ") ? value.replace(" ", "T") : value;
+        const date = new Date(normalized);
+        if (Number.isNaN(date.getTime())) {
+            return null;
+        }
+        return date;
+    };
+
     document.querySelectorAll(".js-datetime").forEach((element) => {
         const isoValue = element.dataset.iso;
-        if (!isoValue) {
-            element.textContent = element.dataset.fallback || "";
-            return;
-        }
-
-        const date = new Date(isoValue);
-        if (Number.isNaN(date.getTime())) {
+        const date = parseDateValue(isoValue);
+        if (!date) {
             element.textContent = element.dataset.fallback || "";
             return;
         }

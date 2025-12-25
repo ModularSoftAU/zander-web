@@ -70,8 +70,31 @@ export default async function webApiRoute(app, config, db, features, lang) {
 
   app.get(baseEndpoint + "/logs/get", async function (req, res) {
     try {
+      const filters = [];
+      const params = [];
+      const userFilter = req.query?.user ? String(req.query.user).trim() : "";
+      const featureFilter = req.query?.feature
+        ? String(req.query.feature).trim()
+        : "";
+
+      if (userFilter) {
+        filters.push("(u.username = ? OR l.creatorId = ?)");
+        params.push(userFilter);
+        params.push(Number.isNaN(Number(userFilter)) ? -1 : Number(userFilter));
+      }
+
+      if (featureFilter) {
+        filters.push("l.logFeature = ?");
+        params.push(featureFilter);
+      }
+
+      const whereClause = filters.length
+        ? `WHERE ${filters.join(" AND ")}`
+        : "";
+
       db.query(
-        `SELECT logId, creatorId, (SELECT username FROM users WHERE userId=creatorId) AS 'actionedUsername', logFeature, logType, description, actionedDateTime FROM logs ORDER BY actionedDateTime DESC;`,
+        `SELECT l.logId, l.creatorId, u.username AS actionedUsername, l.logFeature, l.logType, l.description, l.actionedDateTime FROM logs l LEFT JOIN users u ON l.creatorId = u.userId ${whereClause} ORDER BY l.actionedDateTime DESC;`,
+        params,
         function (error, results, fields) {
           if (error) {
             res.send({
