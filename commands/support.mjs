@@ -117,6 +117,9 @@ export class SupportCommand extends Command {
           )
       )
       .addSubcommand((subcommand) =>
+        subcommand.setName("close").setDescription("Close the current ticket.")
+      )
+      .addSubcommand((subcommand) =>
         subcommand
           .setName("manual")
           .setDescription("Staff: create an uncategorised ticket for a user.")
@@ -468,6 +471,72 @@ export class SupportCommand extends Command {
       return interaction.editReply({
         content: `Updated ticket status to ${state}.`,
       });
+    }
+
+    if (subcommand === "close") {
+      const ticketDetails = await getTicketDetailsByChannel(interaction.channel.id);
+
+      if (!ticketDetails) {
+        return interaction.reply({
+          content: "This channel is not linked to a ticket.",
+          ephemeral: true,
+        });
+      }
+
+      const categoryStaffRoles = await getCategoryPermissions(ticketDetails.categoryId);
+      const member = await interaction.guild.members.fetch(interaction.user.id);
+      const isStaff =
+        member.permissions.has(PermissionFlagsBits.ManageChannels) ||
+        member.roles.cache.some((role) => categoryStaffRoles.includes(role.id));
+      const isOwner = ticketDetails.discordId && ticketDetails.discordId === interaction.user.id;
+
+      if (!isStaff && !isOwner) {
+        return interaction.reply({
+          content: "Only ticket staff or the ticket owner can close this ticket.",
+          ephemeral: true,
+        });
+      }
+
+      await interaction.deferReply({ ephemeral: true });
+
+      const username = interaction.user.tag;
+      const actorUserId = await getUserIdByDiscordId(interaction.user.id);
+
+      try {
+        await updateTicketStatus(ticketDetails.ticketId, "closed");
+
+        if (actorUserId) {
+          await createSupportTicketMessage(
+            interaction.client,
+            ticketDetails.ticketId,
+            actorUserId,
+            `Ticket closed by ${username}`,
+            "discord",
+            { messageType: "status" }
+          );
+        }
+
+        await interaction.channel.send(`🔒 Ticket closed by ${username}. This channel will now close.`);
+      } catch (statusError) {
+        console.error("ticket close: failed to update ticket state", statusError);
+        return interaction.editReply({
+          content: "Failed to close ticket. Please try again.",
+        });
+      }
+
+      try {
+        await interaction.editReply({ content: "Ticket closed." });
+      } catch (replyError) {
+        console.warn("ticket close: failed to edit reply", replyError);
+      }
+
+      try {
+        await deleteTicketChannel(interaction.client, ticketDetails.ticketId, "Ticket closed from Discord");
+      } catch (closeError) {
+        console.error("ticket close: failed to close ticket channel", closeError);
+      }
+
+      return null;
     }
 
     if (subcommand === "manual") {

@@ -179,6 +179,8 @@ export default function supportRoutes(
 
       const title = `Appeal #${punishmentKey} - ${punishment.type || "unknown"} - ${dateLabel}`;
       const categoryId = await ensureUncategorisedCategory();
+      const staffRoleIds = await getCategoryPermissions(categoryId);
+      const categoryName = await getCategoryName(categoryId);
       const ticketRecord = await createSupportTicket(
         client,
         req.session.user.userId,
@@ -186,8 +188,7 @@ export default function supportRoutes(
         title,
         {
           discordUserId: req.session.user.discordId,
-          staffRoleIds: [],
-          parentCategoryId: false,
+          staffRoleIds,
         }
       );
 
@@ -211,7 +212,9 @@ export default function supportRoutes(
         client,
         ticketRecord.ticketId,
         req.session.user.userId,
-        message
+        message,
+        "web",
+        { skipDiscordPost: true }
       );
 
       await syncParticipantsForMessage(client, ticketRecord.ticketId, {
@@ -227,6 +230,56 @@ export default function supportRoutes(
           await applyTicketParticipantPermissions(client, ticketRecord.ticketId);
         } catch (participantError) {
           console.error("Failed to add punished-by participant to appeal ticket", participantError);
+        }
+      }
+
+      if (ticketRecord.channel) {
+        const siteBaseUrl =
+          (config.siteConfiguration && config.siteConfiguration.siteUrl) ||
+          process.env.SITE_URL ||
+          "https://craftingforchrist.net";
+        const normalizedSiteUrl = siteBaseUrl.endsWith("/")
+          ? siteBaseUrl.slice(0, -1)
+          : siteBaseUrl;
+        const ticketUrl = `${normalizedSiteUrl}/support/ticket/${ticketRecord.ticketId}`;
+
+        const ticketEmbed = new EmbedBuilder()
+          .setTitle(`Appeal Ticket #${ticketRecord.ticketId}`)
+          .setDescription(message)
+          .addFields(
+            { name: "Opened by", value: `${req.session.user.username || "Web user"}` },
+            { name: "Punished by", value: `${punishedBy}` },
+            { name: "Category", value: categoryName || "Uncategorized" }
+          )
+          .setTimestamp(new Date())
+          .setColor(0x2b6cb0);
+
+        const closeButton = new ButtonBuilder()
+          .setCustomId("support_ticket_close")
+          .setLabel("Close Ticket")
+          .setStyle(ButtonStyle.Danger);
+
+        const viewOnlineButton = new ButtonBuilder()
+          .setStyle(ButtonStyle.Link)
+          .setLabel("View Ticket Online")
+          .setURL(ticketUrl);
+
+        try {
+          const createdMessage = await ticketRecord.channel.send({
+            content: req.session.user.discordId
+              ? `<@${req.session.user.discordId}> your appeal ticket has been created.`
+              : "An appeal ticket has been created.",
+            embeds: [ticketEmbed],
+            components: [new ActionRowBuilder().addComponents(viewOnlineButton, closeButton)],
+          });
+
+          try {
+            await createdMessage.pin();
+          } catch (pinError) {
+            console.error("Failed to pin appeal ticket opener message", pinError);
+          }
+        } catch (channelError) {
+          console.error("Failed to send appeal ticket embed", channelError);
         }
       }
 
@@ -246,6 +299,8 @@ export default function supportRoutes(
         return res.redirect(`/login?returnTo=${returnTo}`);
       }
 
+      const isMinecraftLinked = Boolean(req.session.user.uuid);
+
       const ticket = await getTicketById(req.params.id);
       if (!ticket) {
         setBannerCookie("danger", "Ticket not found.", res);
@@ -253,6 +308,7 @@ export default function supportRoutes(
       }
       const participants = await getTicketParticipants(req.params.id);
       const rankOptions = await getLuckPermRankRoles();
+      const ownerUser = await getUserById(ticket.userId);
 
       const isOwner = ticket.userId === req.session.user.userId;
       const isStaff = req.session.user.isStaff;
@@ -286,8 +342,10 @@ export default function supportRoutes(
         messages,
         participants,
         rankOptions,
+        ownerUser,
         isOwner,
         isStaff,
+        isMinecraftLinked,
         canManageTicket,
         canEscalate,
         canReplyDuringEscalation,
@@ -316,6 +374,15 @@ export default function supportRoutes(
       if (!req.session.user) {
         const returnTo = encodeURIComponent(req.url);
         return res.redirect(`/login?returnTo=${returnTo}`);
+      }
+
+      if (!req.session.user.uuid) {
+        setBannerCookie(
+          "warning",
+          "Please link your Minecraft account before replying to tickets.",
+          res
+        );
+        return res.redirect(`/support/ticket/${req.params.id}`);
       }
 
       const ticket = await getTicketById(req.params.id);
@@ -868,6 +935,11 @@ export default function supportRoutes(
         return res.redirect(`/support/ticket/${req.params.id}`);
       }
 
+      if (user.userId === ticket.userId) {
+        setBannerCookie("warning", "Ticket creators cannot remove themselves.", res);
+        return res.redirect(`/support/ticket/${req.params.id}`);
+      }
+
       await removeTicketUserParticipant(ticket.ticketId, user.userId);
       if (user.discordId) {
         await removeTicketParticipantPermissions(client, ticket.ticketId, {
@@ -972,12 +1044,12 @@ export default function supportRoutes(
   app.get("/support/users/search", async function (req, res) {
     try {
       if (!req.session.user) {
-        return res.status(401).json({ results: [] });
+        return res.status(401).send({ results: [] });
       }
 
       const query = req.query?.q || "";
       const results = await searchUsersByUsername(query);
-      return res.json({
+      return res.send({
         results: results.map((user) => ({
           userId: user.userId,
           username: user.username,
@@ -986,7 +1058,7 @@ export default function supportRoutes(
       });
     } catch (error) {
       console.error("support user search failed", error);
-      return res.status(500).json({ results: [] });
+      return res.status(500).send({ results: [] });
     }
   });
 
@@ -1051,7 +1123,7 @@ export default function supportRoutes(
         selectedCategoryId = await ensureUncategorisedCategory();
         staffRoleIds = [];
         categoryName = "Uncategorised";
-        parentCategoryId = false;
+        parentCategoryId = null;
       } else {
         staffRoleIds = await getCategoryPermissions(category);
         categoryName = await getCategoryName(category);
@@ -1073,7 +1145,9 @@ export default function supportRoutes(
         client,
         ticketId,
         req.session.user.userId,
-        message
+        message,
+        "web",
+        { skipDiscordPost: true }
       );
 
       await syncParticipantsForMessage(client, ticketId, {

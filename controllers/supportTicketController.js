@@ -2,6 +2,7 @@ import config from "../config.json" assert { type: "json" };
 import db from "./databaseController.js";
 import { ChannelType, PermissionFlagsBits } from "discord.js";
 import { hashEmail } from "../api/common.js";
+import { createNotificationsForUsers } from "./notificationController.js";
 
 let discordChannelColumnCheck;
 let ticketParticipantTableCheck;
@@ -10,6 +11,66 @@ let ticketLockColumnCheck;
 let ticketEscalationColumnCheck;
 let ticketMessageTypeColumnCheck;
 let ticketCategoryDiscordColumnCheck;
+
+const MAX_NOTIFICATION_MESSAGE_LENGTH = 160;
+
+function buildTicketNotificationTarget(ticket) {
+    if (!ticket) {
+        return {
+            label: "Ticket",
+            targetType: "ticket",
+            url: "/support",
+        };
+    }
+
+    const match = String(ticket.title || "").match(/Appeal #([^\s]+)/i);
+    const label = match ? `Appeal #${match[1]}` : `Ticket #${ticket.ticketId}`;
+    const targetType = match ? "appeal" : "ticket";
+    const url = `/support/ticket/${ticket.ticketId}`;
+
+    return { label, targetType, url };
+}
+
+function trimNotificationMessage(message) {
+    const normalized = String(message || "").trim();
+    if (!normalized) {
+        return "View the update for details.";
+    }
+
+    if (normalized.length <= MAX_NOTIFICATION_MESSAGE_LENGTH) {
+        return normalized;
+    }
+
+    return `${normalized.slice(0, MAX_NOTIFICATION_MESSAGE_LENGTH - 3)}...`;
+}
+
+async function notifyTicketParticipants({ ticket, ticketId, actorUserId, notificationType, title, message }) {
+    const ticketRecord = ticket || (ticketId ? await getTicketById(ticketId) : null);
+    if (!ticketRecord) return;
+
+    const participants = await getTicketParticipants(ticketRecord.ticketId);
+    const userIds = new Set([ticketRecord.userId, ...participants.users.map((user) => user.userId)]);
+
+    if (actorUserId) {
+        userIds.delete(actorUserId);
+    }
+
+    if (!userIds.size) return;
+
+    const target = buildTicketNotificationTarget(ticketRecord);
+
+    try {
+        await createNotificationsForUsers([...userIds], {
+            ticketId: ticketRecord.ticketId,
+            notificationType,
+            title,
+            message,
+            url: target.url,
+        });
+    } catch (error) {
+        console.error("Failed to send ticket notifications", error);
+    }
+}
 
 async function ensureDiscordChannelColumn() {
     if (!discordChannelColumnCheck) {
@@ -530,12 +591,21 @@ export async function createSupportTicket(
     };
 
     if (targetParentId) {
+        channelCreationOptions.parent = targetParentId;
         try {
             const parentChannel = await guild.channels.fetch(targetParentId);
             if (parentChannel?.type === ChannelType.GuildCategory) {
                 channelCreationOptions.parent = parentChannel.id;
             } else {
-                console.warn("Configured ticket parent is not a category; creating channel without parent");
+                console.warn("Configured ticket parent is not a category; attempting fallback");
+                const fallbackParentId =
+                    config.discord?.supportTicketCategoryId ?? process.env.SUPPORT_CATEGORY_ID ?? null;
+                if (fallbackParentId && fallbackParentId !== targetParentId) {
+                    const fallbackChannel = await guild.channels.fetch(fallbackParentId);
+                    if (fallbackChannel?.type === ChannelType.GuildCategory) {
+                        channelCreationOptions.parent = fallbackChannel.id;
+                    }
+                }
             }
         } catch (parentError) {
             console.error("Failed to fetch configured ticket parent category", parentError);
@@ -691,12 +761,21 @@ export async function recreateTicketChannel(
     };
 
     if (resolvedParentId) {
+        channelOptions.parent = resolvedParentId;
         try {
             const parentChannel = await guild.channels.fetch(resolvedParentId);
             if (parentChannel?.type === ChannelType.GuildCategory) {
                 channelOptions.parent = parentChannel.id;
             } else {
-                console.warn("Configured ticket parent is not a category during reopen; creating without parent");
+                console.warn("Configured ticket parent is not a category during reopen; attempting fallback");
+                const fallbackParentId =
+                    config.discord?.supportTicketCategoryId ?? process.env.SUPPORT_CATEGORY_ID ?? null;
+                if (fallbackParentId && fallbackParentId !== resolvedParentId) {
+                    const fallbackChannel = await guild.channels.fetch(fallbackParentId);
+                    if (fallbackChannel?.type === ChannelType.GuildCategory) {
+                        channelOptions.parent = fallbackChannel.id;
+                    }
+                }
             }
         } catch (parentError) {
             console.error("Failed to fetch configured ticket parent category during reopen", parentError);
@@ -933,25 +1012,36 @@ export async function removeTicketGroupParticipant(ticketId, roleId) {
     });
 }
 
-export async function syncParticipantsForMessage(client, ticketId, { userId, discordRoleIds = [], rankSlugs = [] }) {
-    const rankOptions = await getLuckPermRankRoles();
+export async function syncParticipantsForMessage(
+    client,
+    ticketId,
+    { userId, discordRoleIds = [], rankSlugs = [], syncGroups = false },
+) {
     const newParticipantPromises = [];
 
     if (userId && !(await hasExistingUserParticipant(ticketId, userId))) {
         newParticipantPromises.push(addTicketUserParticipant(ticketId, { userId }));
     }
 
-    const eligibleRanks = rankOptions.filter(
-        (rank) =>
-            rank.id &&
-            /^\d{5,}$/.test(rank.id) &&
-            (discordRoleIds.includes(rank.id) || rankSlugs.includes(rank.rankSlug)),
-    );
+    if (syncGroups) {
+        const ticket = await getTicketById(ticketId);
+        const categoryPermissions = ticket ? await getCategoryPermissions(ticket.categoryId) : [];
+        const allowedRoleIds = new Set(categoryPermissions || []);
+        const rankOptions = await getLuckPermRankRoles();
 
-    for (const rank of eligibleRanks) {
-        const exists = await hasExistingGroupParticipant(ticketId, rank.id);
-        if (!exists) {
-            newParticipantPromises.push(addTicketGroupParticipant(ticketId, rank));
+        const eligibleRanks = rankOptions.filter(
+            (rank) =>
+                rank.id &&
+                /^\d{5,}$/.test(rank.id) &&
+                allowedRoleIds.has(rank.id) &&
+                (discordRoleIds.includes(rank.id) || rankSlugs.includes(rank.rankSlug)),
+        );
+
+        for (const rank of eligibleRanks) {
+            const exists = await hasExistingGroupParticipant(ticketId, rank.id);
+            if (!exists) {
+                newParticipantPromises.push(addTicketGroupParticipant(ticketId, rank));
+            }
         }
     }
 
@@ -1144,6 +1234,7 @@ export async function createSupportTicketMessage(
     options = {},
 ) {
     const isInternal = Boolean(options.isInternal);
+    const skipDiscordPost = Boolean(options.skipDiscordPost);
     const messageType = typeof options.messageType === "string" ? options.messageType : "message";
     console.info("createSupportTicketMessage invoked", {
         ticketId,
@@ -1152,12 +1243,13 @@ export async function createSupportTicketMessage(
         messageLength: message?.length ?? 0,
         isInternal,
         messageType,
+        skipDiscordPost,
     });
 
     const hasInternalColumn = await ensureTicketMessageInternalColumn();
     const hasMessageTypeColumn = await ensureTicketMessageTypeColumn();
 
-    if (source === "web" && !isInternal) {
+    if (source === "web" && !isInternal && !skipDiscordPost) {
         try {
             const ticket = await getTicketById(ticketId);
             if (!ticket?.discordChannelId) {
@@ -1256,7 +1348,7 @@ export async function createSupportTicketMessage(
             params.push(isInternal ? 1 : 0);
         }
 
-        db.query(insertQuery, params, (err, results) => {
+        db.query(insertQuery, params, async (err, results) => {
             if (err) {
                 console.error("Failed to persist support ticket message", { ticketId, userId }, err);
                 reject(err);
@@ -1270,8 +1362,60 @@ export async function createSupportTicketMessage(
                 source,
                 isInternal,
             });
+
+            if (!isInternal) {
+                try {
+                    const ticket = await getTicketById(ticketId);
+                    const target = buildTicketNotificationTarget(ticket);
+                    const actor = await getUserById(userId);
+                    const actorName = actor?.username || `User ${userId}`;
+
+                    if (messageType === "status") {
+                        const title = `Status updated for ${target.label}`;
+                        const statusMessage = trimNotificationMessage(message || `${actorName} updated the status.`);
+                        await notifyTicketParticipants({
+                            ticket,
+                            actorUserId: userId,
+                            notificationType: "status",
+                            title,
+                            message: statusMessage,
+                        });
+                    } else if (messageType === "message") {
+                        const title = `New comment on ${target.label}`;
+                        const commentMessage = `${actorName} commented: ${trimNotificationMessage(message)}`;
+                        await notifyTicketParticipants({
+                            ticket,
+                            actorUserId: userId,
+                            notificationType: "comment",
+                            title,
+                            message: commentMessage,
+                        });
+                    }
+                } catch (notificationError) {
+                    console.error("Failed to prepare ticket notification", notificationError);
+                }
+            }
             resolve(results.insertId);
         });
+    });
+}
+
+export async function notifyTicketStatusChange(ticketId, status, actor) {
+    const ticket = await getTicketById(ticketId);
+    if (!ticket) return;
+
+    const target = buildTicketNotificationTarget(ticket);
+    const actorName = actor?.name || "Staff";
+    const statusLabel = status || ticket.status || "updated";
+    const title = `Status updated for ${target.label}`;
+    const message = `${actorName} set the status to ${statusLabel}.`;
+
+    await notifyTicketParticipants({
+        ticket,
+        actorUserId: actor?.userId ?? null,
+        notificationType: "status",
+        title,
+        message,
     });
 }
 

@@ -32,7 +32,7 @@
                                 <i class="fa-solid fa-user me-2"></i>About Me
                             </a>
                         </li>
-                        <% if (contextPermissions && contextPermissions.includes('zander.web.punishments')) { %>
+                        <% if ((contextPermissions && contextPermissions.includes('zander.web.punishments')) || canAppeal) { %>
                             <li class="nav-item" role="presentation">
                                 <a class="nav-link profile-tab-link" id="punishments-tab" data-bs-toggle="tab" href="#punishments" role="tab" aria-controls="punishments" aria-selected="false">
                                     <i class="fa-solid fa-shield me-2 text-danger"></i>Punishments
@@ -85,7 +85,7 @@
                             <% } %>
                         </div>
 
-                        <% if (contextPermissions && contextPermissions.includes('zander.web.punishments')) { %>
+                        <% if ((contextPermissions && contextPermissions.includes('zander.web.punishments')) || canAppeal) { %>
                             <div class="tab-pane fade" id="punishments" role="tabpanel" aria-labelledby="punishments-tab">
                                 <% const punishments = profilePunishmentsApiData && Array.isArray(profilePunishmentsApiData.data) ? profilePunishmentsApiData.data : []; %>
                                 <% if (!punishments.length) { %>
@@ -144,7 +144,7 @@
                                                         <% if (canAppeal) { %>
                                                             <td class="text-end">
                                                                 <% if (appealTicketsByKey && appealTicketsByKey[punishmentKey]) { %>
-                                                                    <a href="/support/ticket/<%= appealTicketsByKey[punishmentKey] %>" class="btn btn-sm btn-outline-primary">Open ticket</a>
+                                                                    <a href="/support/ticket/<%= appealTicketsByKey[punishmentKey] %>" class="btn btn-sm btn-outline-primary">View ticket</a>
                                                                 <% } else { %>
                                                                     <a href="/appeal/start?punishmentIndex=<%= index %>" class="btn btn-sm btn-primary">Appeal</a>
                                                                 <% } %>

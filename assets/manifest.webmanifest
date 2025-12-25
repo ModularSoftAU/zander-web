@@ -1,0 +1,20 @@
+{
+  "name": "Crafting For Christ",
+  "short_name": "CFC",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#2f508c",
+  "theme_color": "#2f508c",
+  "icons": [
+    {
+      "src": "/images/siteLogo.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/images/meta-siteLogo.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

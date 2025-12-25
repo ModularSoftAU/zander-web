@@ -37,6 +37,34 @@
                     <li class="nav-item"><a class="nav-link" href="/webstore">Webstore</a></li>
                     <% if (req.session?.user) { %>
                         <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle position-relative" href="#" id="notificationDropdown" role="button" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                <i class="fas fa-bell"></i>
+                                <% if (req.notifications?.unreadCount) { %>
+                                    <span class="badge bg-danger position-absolute top-0 start-100 translate-middle"><%= req.notifications.unreadCount %></span>
+                                <% } %>
+                            </a>
+                            <div class="dropdown-menu dropdown-menu-end p-0" aria-labelledby="notificationDropdown" style="min-width: 280px;">
+                                <div class="px-3 py-2 border-bottom">
+                                    <div class="fw-semibold">Notifications</div>
+                                    <div class="text-muted small"><%= req.notifications?.unreadCount || 0 %> unread</div>
+                                </div>
+                                <% if (req.notifications?.items?.length) { %>
+                                    <% req.notifications.items.forEach((notification) => { %>
+                                        <a class="dropdown-item small py-2" href="/notifications/visit/<%= notification.notificationId %>">
+                                            <div class="fw-semibold <%= notification.isRead ? '' : 'text-primary' %>"><%= notification.title %></div>
+                                            <div class="text-muted text-truncate" style="max-width: 240px;"><%= notification.message %></div>
+                                            <div class="text-muted" style="font-size: 0.75rem;"><%= new Date(notification.createdAt).toLocaleString() %></div>
+                                        </a>
+                                    <% }) %>
+                                <% } else { %>
+                                    <div class="px-3 py-3 text-muted small">No notifications yet.</div>
+                                <% } %>
+                                <div class="border-top">
+                                    <a class="dropdown-item text-center" href="/notifications">View all notifications</a>
+                                </div>
+                            </div>
+                        </li>
+                        <li class="nav-item dropdown">
                             <a class="nav-link dropdown-toggle" href="#" id="dropdown02" role="button" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                                 <img style="padding-inline-end: 5px;" src="<%= req.session.user.profilePicture %>" height="20px" draggable="false">
                                 <%= req.session.user.username %>
