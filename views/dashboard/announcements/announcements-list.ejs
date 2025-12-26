@@ -30,7 +30,8 @@
                 }) %>
             <% } %>
 
-            <table class="table">
+            <div class="table-responsive">
+                <table class="table align-middle announcements-table">
                 <thead>
                     <tr>
                         <th>Type</th>
@@ -49,9 +50,9 @@
                     <% } else { %>
                         <% apiData.data.forEach(function (announcement) { %>
                             <tr>
-                                <td><span class="badge text-bg-primary"><%= announcement.announcementType %></span></td>
-                                <td><%= announcement.colourMessageFormat %></td>
-                                <td>
+                                <td data-label="Type"><span class="badge text-bg-primary"><%= announcement.announcementType %></span></td>
+                                <td data-label="Format"><%= announcement.colourMessageFormat %></td>
+                                <td data-label="Schedule">
                                     <% if (announcement.startDate || announcement.endDate) { %>
                                         <small>
                                             <span class="js-datetime" data-iso="<%= announcement.startDate || '' %>" data-fallback="Now"></span>
@@ -62,17 +63,16 @@
                                         <small>Always active</small>
                                     <% } %>
                                 </td>
-                                <td>
+                                <td data-label="Enabled">
                                     <% if (announcement.enabled === 1) { %>
                                         <i class="fas fa-check-circle" style="color:green"></i>
                                     <% } else { %>
                                         <i class="fas fa-times-circle" style="color: red;"></i>
                                     <% } %>
                                 </td>
-                                <td>
-                                    <div class="btn-group">
-                                        <a href="/dashboard/announcements/edit?announcementId=<%= announcement.announcementId %>"><button class="btn btn-sm btn-warning" type="button">Edit</button></a>
-
+                                <td data-label="Action">
+                                    <div class="d-flex flex-wrap gap-2">
+                                        <a href="/dashboard/announcements/edit?announcementId=<%= announcement.announcementId %>" class="btn btn-sm btn-warning">Edit</a>
                                         <form action="<%= process.env.siteAddress %>/redirect/announcement/delete" method="post">
                                             <input type="hidden" name="announcementId" value="<%= announcement.announcementId %>">
                                             <button class="btn btn-sm btn-danger" type="submit">Delete</button>
@@ -83,13 +83,14 @@
                         <% }) %>
                     <% } %>
                 </tbody>
-            </table>
+                </table>
+            </div>
         </main>
     </div>
 </div>
 
 <div class="modal fade" id="announcementWizardModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title">Schedule Announcement</h5>
@@ -245,6 +246,52 @@
 </div>
 
 <%- include("../../modules/footer.ejs") %>
+
+<style>
+    .modal-backdrop {
+        z-index: 1040;
+    }
+
+    .modal {
+        z-index: 1050;
+    }
+
+    @media (max-width: 768px) {
+        .announcements-table thead {
+            display: none;
+        }
+
+        .announcements-table tr {
+            display: block;
+            border: 1px solid #e6e6e6;
+            border-radius: 12px;
+            padding: 12px;
+            margin-bottom: 12px;
+        }
+
+        .announcements-table td {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 12px;
+            border: none;
+            padding: 6px 0;
+            font-size: 0.9rem;
+            word-break: break-word;
+        }
+
+        .announcements-table td::before {
+            content: attr(data-label);
+            font-weight: 600;
+            color: #5f6b7a;
+            min-width: 110px;
+        }
+
+        #announcementWizardModal .modal-dialog {
+            margin: 0.75rem;
+        }
+    }
+</style>
 
 <script>
     const setupWizard = (modalId, onStepReset) => {
