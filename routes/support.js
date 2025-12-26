@@ -323,6 +323,8 @@ export default function supportRoutes(
       const isParticipantRank = userRankSlugs.some((slug) =>
         participants.groups.some((group) => group.rankSlug === slug)
       );
+      const isAppeal = /Appeal #/i.test(ticket.title || "");
+      const canManageParticipants = isStaff || !isAppeal;
       const canManageTicket = isOwner || isStaff || isParticipantUser || isParticipantRank;
 
       if (!canManageTicket) {
@@ -347,6 +349,8 @@ export default function supportRoutes(
         isStaff,
         isMinecraftLinked,
         canManageTicket,
+        canManageParticipants,
+        isAppeal,
         canEscalate,
         canReplyDuringEscalation,
         canManageLock,
