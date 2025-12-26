@@ -13,6 +13,9 @@
             <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
                 <h1 class="h2">Announcements</h1>
                 <div class="btn-toolbar mb-2 mb-md-0">
+                    <button type="button" class="btn btn-sm btn-primary me-2" data-bs-toggle="modal" data-bs-target="#announcementWizardModal">
+                        Schedule Announcement
+                    </button>
                     <a href="/dashboard/announcements/create" class="btn btn-sm btn-info">Create Announcement</a>
                     <%- include("../../partials/documentationLink.ejs", {
                         doclink: "https://modularsoft.org/docs/products/zander/features/announcement/"
@@ -85,9 +88,272 @@
     </div>
 </div>
 
+<div class="modal fade" id="announcementWizardModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Schedule Announcement</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="announcementWizardForm" method="post" action="<%= process.env.siteAddress %>/redirect/announcement/create">
+                    <input type="hidden" name="timezoneOffset" value="">
+                    <div class="wizard-step" data-step="1">
+                        <div class="mb-3">
+                            <label for="announcementType">Announcement Type</label>
+                            <%- include("../../partials/form/inputSelect.ejs", {
+                                elementName: "announcementType",
+                                elementValue: "null",
+                                required: true,
+                                optionElements: [
+                                    {
+                                        optionName: "Select a Type",
+                                        optionValue: "null",
+                                        selected: true,
+                                        disabled: true
+                                    },
+                                    {
+                                        optionName: "Server Ping MOTD",
+                                        optionValue: "motd",
+                                        selected: false,
+                                        disabled: false
+                                    },
+                                    {
+                                        optionName: "In-Game Tip",
+                                        optionValue: "tip",
+                                        selected: false,
+                                        disabled: false
+                                    },
+                                    {
+                                        optionName: "Website Banner",
+                                        optionValue: "web",
+                                        selected: false,
+                                        disabled: false
+                                    },
+                                    {
+                                        optionName: "Website Popup Announcement",
+                                        optionValue: "popup",
+                                        selected: false,
+                                        disabled: false
+                                    }
+                                ]
+                            }) %>
+                        </div>
+
+                        <div class="mb-3" data-announcement-field="body">
+                            <label for="body">Announcement Text</label>
+                            <%- include("../../partials/form/inputTextArea.ejs", {
+                                elementName: "body",
+                                elementValue: null,
+                                required: false
+                            }) %>
+                        </div>
+
+                        <div class="mb-3" data-announcement-field="colourMessageFormat">
+                            <label for="colourMessageFormat">Colour Message Format</label>
+                            <%- include("../../partials/form/inputTextArea.ejs", {
+                                elementName: "colourMessageFormat",
+                                elementValue: null,
+                                required: false
+                            }) %>
+                        </div>
+
+                        <div class="mb-3" data-announcement-field="link">
+                            <label for="link">Announcement Link</label>
+                            <%- include("../../partials/form/inputText.ejs", {
+                                elementName: "link",
+                                elementValue: null,
+                                required: false
+                            }) %>
+                        </div>
+
+                        <div class="mb-3" data-announcement-field="popupButtonText">
+                            <label for="popupButtonText">Popup Button Text</label>
+                            <%- include("../../partials/form/inputText.ejs", {
+                                elementName: "popupButtonText",
+                                elementValue: null,
+                                required: false
+                            }) %>
+                            <small class="text-muted">Optional label for popup call-to-action button.</small>
+                        </div>
+
+                        <div class="mb-3" data-announcement-field="popupImageUrl">
+                            <label for="popupImageUrl">Popup Image URL</label>
+                            <%- include("../../partials/form/inputText.ejs", {
+                                elementName: "popupImageUrl",
+                                elementValue: null,
+                                required: false
+                            }) %>
+                            <small class="text-muted">Optional banner image for popup announcements.</small>
+                        </div>
+                    </div>
+
+                    <div class="wizard-step d-none" data-step="2">
+                        <div class="mb-3">
+                            <label for="enabled">Announcement Visibility</label>
+                            <%- include("../../partials/form/inputSelect.ejs", {
+                                elementName: "enabled",
+                                elementValue: "1",
+                                required: true,
+                                optionElements: [
+                                    {
+                                        optionName: "Enabled",
+                                        optionValue: "1",
+                                        selected: true,
+                                        disabled: false
+                                    },
+                                    {
+                                        optionName: "Disabled",
+                                        optionValue: "0",
+                                        selected: false,
+                                        disabled: false
+                                    }
+                                ]
+                            }) %>
+                        </div>
+
+                        <div class="row">
+                            <div class="mb-3 col">
+                                <label for="startDate">Start Date</label>
+                                <%- include("../../partials/form/inputDateTime.ejs", {
+                                    elementName: "startDate",
+                                    elementValue: null,
+                                    required: false
+                                }) %>
+                            </div>
+
+                            <div class="mb-3 col">
+                                <label for="endDate">End Date</label>
+                                <%- include("../../partials/form/inputDateTime.ejs", {
+                                    elementName: "endDate",
+                                    elementValue: null,
+                                    required: false
+                                }) %>
+                            </div>
+                        </div>
+                        <small class="text-muted">All times are in your local timezone.</small>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary wizard-back" data-target="announcement">Back</button>
+                <button type="button" class="btn btn-primary wizard-next" data-target="announcement">Next</button>
+                <button type="submit" form="announcementWizardForm" class="btn btn-success d-none wizard-submit">Schedule</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <%- include("../../modules/footer.ejs") %>
 
 <script>
+    const setupWizard = (modalId, onStepReset) => {
+        const modal = document.getElementById(modalId);
+        if (!modal) return;
+
+        const steps = modal.querySelectorAll(".wizard-step");
+        const nextButton = modal.querySelector(".wizard-next");
+        const backButton = modal.querySelector(".wizard-back");
+        const submitButton = modal.querySelector(".wizard-submit");
+        let currentStep = 0;
+
+        const renderStep = () => {
+            steps.forEach((step, index) => {
+                step.classList.toggle("d-none", index !== currentStep);
+            });
+
+            backButton.disabled = currentStep === 0;
+            nextButton.classList.toggle("d-none", currentStep === steps.length - 1);
+            submitButton.classList.toggle("d-none", currentStep !== steps.length - 1);
+        };
+
+        nextButton.addEventListener("click", () => {
+            if (currentStep < steps.length - 1) {
+                currentStep += 1;
+                renderStep();
+            }
+        });
+
+        backButton.addEventListener("click", () => {
+            if (currentStep > 0) {
+                currentStep -= 1;
+                renderStep();
+            }
+        });
+
+        modal.addEventListener("hidden.bs.modal", () => {
+            currentStep = 0;
+            renderStep();
+            const form = modal.querySelector("form");
+            if (form) {
+                form.reset();
+            }
+            if (onStepReset) {
+                onStepReset();
+            }
+            applyDateInputMinimums();
+            updateTimezoneOffsets();
+        });
+
+        renderStep();
+    };
+
+    const announcementTypeSelect = document.querySelector("#announcementWizardForm select[name='announcementType']");
+    const announcementFieldGroups = document.querySelectorAll("#announcementWizardForm [data-announcement-field]");
+
+    const updateAnnouncementWizardFields = () => {
+        const type = announcementTypeSelect?.value || "";
+
+        announcementFieldGroups.forEach((group) => {
+            const field = group.dataset.announcementField;
+            let visible = true;
+
+            if (field === "popupButtonText" || field === "popupImageUrl") {
+                visible = type === "popup";
+            }
+
+            if (field === "colourMessageFormat") {
+                visible = type === "motd" || type === "tip";
+            }
+
+            if (field === "link") {
+                visible = type === "web" || type === "popup";
+            }
+
+            group.classList.toggle("d-none", !visible);
+        });
+    };
+
+    if (announcementTypeSelect) {
+        announcementTypeSelect.addEventListener("change", updateAnnouncementWizardFields);
+        updateAnnouncementWizardFields();
+    }
+
+    const applyDateInputMinimums = () => {
+        const now = new Date();
+        const offset = now.getTimezoneOffset();
+        const local = new Date(now.getTime() - offset * 60000).toISOString().slice(0, 16);
+        document.querySelectorAll("#announcementWizardForm input[type='datetime-local']").forEach((input) => {
+            input.min = local;
+        });
+    };
+
+    const updateTimezoneOffsets = () => {
+        const offset = String(new Date().getTimezoneOffset());
+        document.querySelectorAll("#announcementWizardForm input[name='timezoneOffset']").forEach((input) => {
+            input.value = offset;
+        });
+    };
+
+    applyDateInputMinimums();
+    updateTimezoneOffsets();
+
+    setupWizard("announcementWizardModal", () => {
+        updateAnnouncementWizardFields();
+        applyDateInputMinimums();
+        updateTimezoneOffsets();
+    });
+
     const parseDateValue = (value) => {
         if (!value) return null;
         const normalized = value.includes(" ") ? value.replace(" ", "T") : value;
