@@ -389,6 +389,7 @@
 
     if (announcementTypeSelect) {
         announcementTypeSelect.addEventListener("change", updateAnnouncementFields);
+        announcementTypeSelect.addEventListener("input", updateAnnouncementFields);
         updateAnnouncementFields();
     }
 
