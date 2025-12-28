@@ -185,7 +185,15 @@ export async function postAPIRequest(
     },
   });
 
-  const data = await response.json();
+  let data = null;
+  try {
+    data = await response.json();
+  } catch (error) {
+    const fallbackMessage =
+      "Unexpected response from the server. Please try again.";
+    setBannerCookie("danger", fallbackMessage, res);
+    return res.redirect(failureRedirectURL);
+  }
 
   console.log(data);
 
