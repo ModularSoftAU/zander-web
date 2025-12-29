@@ -250,6 +250,17 @@
               Updates here modify the LuckPerms metadata for this group. Leave a field blank to remove the corresponding node.
             </div>
           </div>
+          <div class="card border-0 shadow-sm mb-3 rank-preview-card">
+            <div class="card-body d-flex align-items-center gap-3">
+              <div class="rank-preview-badge rounded-pill px-3 py-2 text-white fw-semibold">
+                Preview
+              </div>
+              <div>
+                <div class="fw-semibold rank-preview-name">Rank name</div>
+                <small class="text-muted">Badge and text color preview</small>
+              </div>
+            </div>
+          </div>
           <div class="row g-3">
             <div class="col-md-6">
               <label for="rankConfigDisplayName" class="form-label">Display name</label>
@@ -311,8 +322,22 @@
     const modalEl = document.getElementById('rankConfigModal');
     const modalForm = document.getElementById('rankConfigForm');
     const metaLabel = document.getElementById('rankConfigMeta');
+    const previewBadge = document.querySelector('.rank-preview-badge');
+    const previewName = document.querySelector('.rank-preview-name');
     let activeRank = null;
     let activeUser = null;
+
+    function updatePreview() {
+      if (!modalForm || !previewBadge || !previewName) return;
+      const displayName = modalForm.querySelector('#rankConfigDisplayName')?.value || 'Rank name';
+      const badgeColor = modalForm.querySelector('#rankConfigBadgeColour')?.value || '#1f2937';
+      const textColor = modalForm.querySelector('#rankConfigTextColour')?.value || '#ffffff';
+
+      previewName.textContent = displayName;
+      previewBadge.textContent = displayName;
+      previewBadge.style.backgroundColor = badgeColor;
+      previewBadge.style.color = textColor;
+    }
 
     function findRank(slug) {
       if (!slug) return null;
@@ -424,6 +449,8 @@
       if (metaLabel) {
         metaLabel.textContent = `Editing LuckPerms group ${rank.rankSlug}`;
       }
+
+      updatePreview();
     }
 
     document.querySelectorAll('[data-rank-config]').forEach((button) => {
@@ -478,6 +505,8 @@
 
     if (modalForm) {
       modalForm.addEventListener('submit', submitRankConfig);
+      modalForm.addEventListener('input', updatePreview);
+      modalForm.addEventListener('change', updatePreview);
     }
 
     // User tooling
@@ -763,5 +792,17 @@
       max-height: 70vh;
       overflow-y: auto;
     }
+  }
+
+  .modal-backdrop {
+    z-index: 1040;
+  }
+
+  .modal {
+    z-index: 1050;
+  }
+
+  body.modal-open {
+    overflow: hidden;
   }
 </style>
