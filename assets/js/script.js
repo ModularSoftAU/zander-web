@@ -105,6 +105,17 @@
   		]
 	});
 
+	$(document).on('submit', 'form', function (event) {
+		const $form = $(this);
+		if ($form.data('submitting')) {
+			event.preventDefault();
+			return;
+		}
+
+		$form.data('submitting', true);
+		$form.find('button[type="submit"], input[type="submit"]').prop('disabled', true);
+	});
+
 	$('.testimonial-wrap-2').slick({
 		slidesToShow: 2,
 		slidesToScroll: 2,

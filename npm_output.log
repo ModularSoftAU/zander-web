@@ -1,9 +1,0 @@
-
-> modularsoft-zander-web@1.0 dev
-> nodemon  --experimental-modules --experimental-json-modules --experimental-specifier-resolution=node
-
-[33m[nodemon] 3.0.1[39m
-[33m[nodemon] to restart at any time, enter `rs`[39m
-[33m[nodemon] watching path(s): *.*[39m
-[33m[nodemon] watching extensions: js,mjs,cjs,json[39m
-[32m[nodemon] starting `node --experimental-modules --experimental-json-modules --experimental-specifier-resolution=node app.js`[39m

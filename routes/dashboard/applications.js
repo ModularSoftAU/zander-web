@@ -2,6 +2,7 @@ import {
   getGlobalImage,
   hasPermission,
   isFeatureWebRouteEnabled,
+  setBannerCookie,
 } from "../../api/common.js";
 import { getWebAnnouncement } from "../../controllers/announcementController.js";
 
@@ -13,6 +14,18 @@ export default function dashboardApplicationsSiteRoute(
   features,
   lang
 ) {
+  const parseApiResponse = async (response) => {
+    try {
+      const text = await response.text();
+      if (!text) {
+        return { success: false, message: "Empty response from API." };
+      }
+      return JSON.parse(text);
+    } catch (error) {
+      return { success: false, message: "Invalid response from API." };
+    }
+  };
+
   //
   // Applications
   //
@@ -26,7 +39,7 @@ export default function dashboardApplicationsSiteRoute(
     const response = await fetch(fetchURL, {
       headers: { "x-access-token": process.env.apiKey },
     });
-    const apiData = await response.json();
+    const apiData = await parseApiResponse(response);
 
     return res.view("dashboard/applications/application-list", {
       pageTitle: `Dashboard - Applications`,
@@ -67,7 +80,12 @@ export default function dashboardApplicationsSiteRoute(
     const response = await fetch(fetchURL, {
       headers: { "x-access-token": process.env.apiKey },
     });
-    const applicationApiData = await response.json();    
+    const applicationApiData = await parseApiResponse(response);
+
+    if (!applicationApiData.success || !applicationApiData.data?.length) {
+      setBannerCookie("danger", "Application not found.", res);
+      return res.redirect("/dashboard/applications");
+    }
 
     return res.view("dashboard/applications/application-editor", {
       pageTitle: `Dashboard - Application Editor`,
