@@ -2,6 +2,7 @@ import {
   getGlobalImage,
   hasPermission,
   isFeatureWebRouteEnabled,
+  setBannerCookie,
 } from "../../api/common.js";
 import { getWebAnnouncement } from "../../controllers/announcementController.js";
 
@@ -80,6 +81,11 @@ export default function dashboardApplicationsSiteRoute(
       headers: { "x-access-token": process.env.apiKey },
     });
     const applicationApiData = await parseApiResponse(response);
+
+    if (!applicationApiData.success || !applicationApiData.data?.length) {
+      setBannerCookie("danger", "Application not found.", res);
+      return res.redirect("/dashboard/applications");
+    }
 
     return res.view("dashboard/applications/application-editor", {
       pageTitle: `Dashboard - Application Editor`,
