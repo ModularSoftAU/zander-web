@@ -4,6 +4,7 @@ import { Colors } from "discord.js";
 import { sendWebhookMessage } from "../../lib/discord/webhooks.mjs";
 import crypto from "crypto";
 import {
+  createTransactionsForPurchase,
   findWebstoreItem,
   getPurchaseBySessionId,
   hasWebhookEvent,
@@ -163,7 +164,7 @@ export default function webstoreWebhookRoutes(app, config) {
         return res.send({ success: true, message: "Purchase already processed." });
       }
 
-      const item = findWebstoreItem(purchase.itemSlug);
+      const item = await findWebstoreItem(purchase.itemSlug);
       await updatePurchasePayment({
         purchaseId: purchase.purchaseId,
         status: "paid",
@@ -182,10 +183,12 @@ export default function webstoreWebhookRoutes(app, config) {
         await updatePurchaseStatus(purchase.purchaseId, "fulfilled");
       } else {
         const metadata = {
-          username: purchase.minecraftUsername,
+          username: purchase.recipientMinecraftUsername,
+          purchaserUsername: purchase.purchaserMinecraftUsername,
           purchaseId: purchase.purchaseId,
           itemSlug: purchase.itemSlug,
           purchaseType: purchase.purchaseType,
+          isGift: purchase.isGift === 1 || purchase.isGift === true,
         };
 
         const tasks = item.commandTemplates.map((command) => ({
@@ -232,17 +235,27 @@ export default function webstoreWebhookRoutes(app, config) {
         }
       }
 
+      await createTransactionsForPurchase({
+        purchaseId: purchase.purchaseId,
+        payerUserId: purchase.userId,
+        payerMinecraftUsername: purchase.purchaserMinecraftUsername,
+        recipientMinecraftUsername: purchase.recipientMinecraftUsername,
+        amountCents: purchase.amountCents,
+        currency: purchase.currency,
+      });
+
       if (config?.discord?.webhooks?.staffChannel) {
         const staffChannelHook = new Webhook(config.discord.webhooks.staffChannel);
         const embed = new MessageBuilder()
           .setTitle(`${purchase.itemName} Purchased`)
-          .addField("Player", purchase.minecraftUsername, true)
+          .addField("Player", purchase.recipientMinecraftUsername, true)
           .addField("Type", purchase.purchaseType === "subscription" ? "Subscription" : "One-time", true)
           .addField(
             "Amount",
             `${normalizeCurrency(purchase.currency).toUpperCase()} ${purchase.amountCents / 100}`,
             true
           )
+          .addField("Gifted", purchase.isGift ? "Yes" : "No", true)
           .setColor(Colors.Green)
           .setTimestamp();
 

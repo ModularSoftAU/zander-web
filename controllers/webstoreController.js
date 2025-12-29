@@ -1,9 +1,4 @@
-import { createRequire } from "module";
-import path from "path";
 import db from "./databaseController.js";
-
-const require = createRequire(import.meta.url);
-const itemsData = require(path.join(process.cwd(), "webstoreItems.json"));
 
 let webstoreTableCheck;
 
@@ -16,15 +11,6 @@ function query(sql, params = []) {
   });
 }
 
-export function getWebstoreItems() {
-  return itemsData?.items || [];
-}
-
-export function findWebstoreItem(slug) {
-  const items = getWebstoreItems();
-  return items.find((item) => item.slug === slug && item.isActive !== false) || null;
-}
-
 export async function ensureWebstoreTables() {
   if (!webstoreTableCheck) {
     webstoreTableCheck = new Promise((resolve) => {
@@ -35,13 +21,15 @@ export async function ensureWebstoreTables() {
           "  itemSlug VARCHAR(64) NOT NULL,\n" +
           "  itemName VARCHAR(120) NOT NULL,\n" +
           "  purchaseType ENUM('one_time', 'subscription') NOT NULL,\n" +
-          "  minecraftUsername VARCHAR(16) NOT NULL,\n" +
+          "  purchaserMinecraftUsername VARCHAR(16) NOT NULL,\n" +
+          "  recipientMinecraftUsername VARCHAR(16) NOT NULL,\n" +
           "  status ENUM('pending', 'paid', 'fulfilled', 'failed') DEFAULT 'pending',\n" +
           "  stripeSessionId VARCHAR(255) NOT NULL,\n" +
           "  stripePaymentIntentId VARCHAR(255),\n" +
           "  stripeSubscriptionId VARCHAR(255),\n" +
           "  amountCents INT NOT NULL,\n" +
           "  currency VARCHAR(10) NOT NULL,\n" +
+          "  isGift TINYINT(1) DEFAULT 0,\n" +
           "  createdAt DATETIME DEFAULT NOW(),\n" +
           "  updatedAt DATETIME DEFAULT NOW(),\n" +
           "  UNIQUE KEY webstorePurchases_session (stripeSessionId),\n" +
@@ -95,7 +83,96 @@ export async function ensureWebstoreTables() {
                     return;
                   }
 
-                  resolve(true);
+                  db.query(
+                    "CREATE TABLE IF NOT EXISTS webstoreItems (\n" +
+                      "  itemId INT AUTO_INCREMENT PRIMARY KEY,\n" +
+                      "  slug VARCHAR(64) NOT NULL UNIQUE,\n" +
+                      "  displayName VARCHAR(120) NOT NULL,\n" +
+                      "  description TEXT,\n" +
+                      "  priceCents INT NOT NULL,\n" +
+                      "  currency VARCHAR(10) NOT NULL DEFAULT 'usd',\n" +
+                      "  purchaseType ENUM('one_time', 'subscription') NOT NULL,\n" +
+                      "  stripePriceId VARCHAR(120) NOT NULL,\n" +
+                      "  isActive TINYINT(1) DEFAULT 1,\n" +
+                      "  sortOrder INT DEFAULT 0,\n" +
+                      "  createdAt DATETIME DEFAULT NOW(),\n" +
+                      "  updatedAt DATETIME DEFAULT NOW()\n" +
+                      ")",
+                    (itemsErr) => {
+                      if (itemsErr) {
+                        console.error("Failed to ensure webstoreItems table", itemsErr);
+                        resolve(false);
+                        return;
+                      }
+
+                      db.query(
+                        "CREATE TABLE IF NOT EXISTS webstoreItemCommands (\n" +
+                          "  itemCommandId INT AUTO_INCREMENT PRIMARY KEY,\n" +
+                          "  itemId INT NOT NULL,\n" +
+                          "  commandTemplate TEXT NOT NULL,\n" +
+                          "  sortOrder INT DEFAULT 0,\n" +
+                          "  createdAt DATETIME DEFAULT NOW(),\n" +
+                          "  INDEX webstoreItemCommands_item (itemId),\n" +
+                          "  CONSTRAINT fk_webstoreItemCommands_item FOREIGN KEY (itemId) REFERENCES webstoreItems(itemId) ON DELETE CASCADE\n" +
+                          ")",
+                        (commandsErr) => {
+                          if (commandsErr) {
+                            console.error("Failed to ensure webstoreItemCommands table", commandsErr);
+                            resolve(false);
+                            return;
+                          }
+
+                          db.query(
+                            "CREATE TABLE IF NOT EXISTS webstoreTransactions (\n" +
+                              "  transactionId INT AUTO_INCREMENT PRIMARY KEY,\n" +
+                              "  purchaseId INT NOT NULL,\n" +
+                              "  userId INT NOT NULL,\n" +
+                              "  direction ENUM('incoming', 'outgoing') NOT NULL,\n" +
+                              "  counterpartyMinecraftUsername VARCHAR(16) NOT NULL,\n" +
+                              "  amountCents INT NOT NULL,\n" +
+                              "  currency VARCHAR(10) NOT NULL,\n" +
+                              "  createdAt DATETIME DEFAULT NOW(),\n" +
+                              "  INDEX webstoreTransactions_user (userId),\n" +
+                              "  INDEX webstoreTransactions_purchase (purchaseId)\n" +
+                              ")",
+                            (transactionsErr) => {
+                              if (transactionsErr) {
+                                console.error(
+                                  "Failed to ensure webstoreTransactions table",
+                                  transactionsErr
+                                );
+                                resolve(false);
+                                return;
+                              }
+
+                              db.query(
+                                "CREATE TABLE IF NOT EXISTS webstoreContacts (\n" +
+                                  "  contactId INT AUTO_INCREMENT PRIMARY KEY,\n" +
+                                  "  userId INT NOT NULL,\n" +
+                                  "  minecraftUsername VARCHAR(16) NOT NULL,\n" +
+                                  "  lastTransactionAt DATETIME DEFAULT NOW(),\n" +
+                                  "  lastTransactionDirection ENUM('incoming', 'outgoing') NOT NULL,\n" +
+                                  "  UNIQUE KEY webstoreContacts_user (userId, minecraftUsername)\n" +
+                                  ")",
+                                (contactsErr) => {
+                                  if (contactsErr) {
+                                    console.error(
+                                      "Failed to ensure webstoreContacts table",
+                                      contactsErr
+                                    );
+                                    resolve(false);
+                                    return;
+                                  }
+
+                                  resolve(true);
+                                }
+                              );
+                            }
+                          );
+                        }
+                      );
+                    }
+                  );
                 }
               );
             }
@@ -111,8 +188,10 @@ export async function ensureWebstoreTables() {
 export async function createPendingPurchase({
   userId,
   item,
-  minecraftUsername,
+  purchaserMinecraftUsername,
+  recipientMinecraftUsername,
   stripeSessionId,
+  isGift,
 }) {
   await ensureWebstoreTables();
 
@@ -121,14 +200,16 @@ export async function createPendingPurchase({
     item.slug,
     item.displayName,
     item.purchaseType,
-    minecraftUsername,
+    purchaserMinecraftUsername,
+    recipientMinecraftUsername,
     stripeSessionId,
     item.priceCents,
     item.currency,
+    isGift ? 1 : 0,
   ];
 
   const result = await query(
-    "INSERT INTO webstorePurchases (userId, itemSlug, itemName, purchaseType, minecraftUsername, stripeSessionId, amountCents, currency) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+    "INSERT INTO webstorePurchases (userId, itemSlug, itemName, purchaseType, purchaserMinecraftUsername, recipientMinecraftUsername, stripeSessionId, amountCents, currency, isGift) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
     params
   );
 
@@ -164,6 +245,47 @@ export async function getPurchaseBySessionId(stripeSessionId) {
   );
 
   return rows[0] || null;
+}
+
+export async function getWebstoreItems() {
+  await ensureWebstoreTables();
+
+  const items = await query(
+    "SELECT * FROM webstoreItems WHERE isActive = 1 ORDER BY sortOrder ASC, displayName ASC"
+  );
+
+  if (!items.length) return [];
+
+  const itemIds = items.map((item) => item.itemId);
+  const commands = await query(
+    `SELECT itemId, commandTemplate FROM webstoreItemCommands WHERE itemId IN (${itemIds
+      .map(() => "?")
+      .join(",")}) ORDER BY sortOrder ASC, itemCommandId ASC`,
+    itemIds
+  );
+
+  const commandsByItem = commands.reduce((acc, command) => {
+    if (!acc[command.itemId]) acc[command.itemId] = [];
+    acc[command.itemId].push(command.commandTemplate);
+    return acc;
+  }, {});
+
+  return items.map((item) => ({
+    slug: item.slug,
+    displayName: item.displayName,
+    description: item.description,
+    priceCents: item.priceCents,
+    currency: item.currency,
+    purchaseType: item.purchaseType,
+    stripePriceId: item.stripePriceId,
+    isActive: item.isActive === 1,
+    commandTemplates: commandsByItem[item.itemId] || [],
+  }));
+}
+
+export async function findWebstoreItem(slug) {
+  const items = await getWebstoreItems();
+  return items.find((item) => item.slug === slug && item.isActive !== false) || null;
 }
 
 export async function updatePurchasePayment({
@@ -264,6 +386,73 @@ export async function getPurchasesNeedingFulfillment() {
     "SELECT purchaseId FROM webstorePurchases WHERE status IN ('paid')",
     []
   );
+}
+
+export async function createTransactionsForPurchase({
+  purchaseId,
+  payerUserId,
+  payerMinecraftUsername,
+  recipientMinecraftUsername,
+  amountCents,
+  currency,
+}) {
+  await ensureWebstoreTables();
+
+  const transactions = [
+    [
+      purchaseId,
+      payerUserId,
+      "outgoing",
+      recipientMinecraftUsername,
+      amountCents,
+      currency,
+    ],
+  ];
+
+  if (payerMinecraftUsername !== recipientMinecraftUsername) {
+    const recipientRows = await query(
+      "SELECT userId FROM users WHERE username = ? LIMIT 1",
+      [recipientMinecraftUsername]
+    );
+    const recipientUserId = recipientRows?.[0]?.userId;
+    if (recipientUserId) {
+      transactions.push([
+        purchaseId,
+        recipientUserId,
+        "incoming",
+        payerMinecraftUsername,
+        amountCents,
+        currency,
+      ]);
+    }
+  }
+
+  await query(
+    "INSERT INTO webstoreTransactions (purchaseId, userId, direction, counterpartyMinecraftUsername, amountCents, currency) VALUES ?",
+    [transactions]
+  );
+
+  const contactUpdates = transactions.map((transaction) => [
+    transaction[1],
+    transaction[3],
+    transaction[2],
+  ]);
+
+  await query(
+    "INSERT INTO webstoreContacts (userId, minecraftUsername, lastTransactionDirection) VALUES ? ON DUPLICATE KEY UPDATE lastTransactionAt = NOW(), lastTransactionDirection = VALUES(lastTransactionDirection)",
+    [contactUpdates]
+  );
+}
+
+export async function getMonthlyPurchaseTotals(startDate, endDate) {
+  await ensureWebstoreTables();
+
+  const results = await query(
+    "SELECT COALESCE(SUM(amountCents), 0) AS totalCents FROM webstorePurchases WHERE status IN ('paid', 'fulfilled') AND createdAt BETWEEN ? AND ?",
+    [startDate, endDate]
+  );
+
+  return Number(results?.[0]?.totalCents || 0);
 }
 
 export function formatPrice(priceCents, currency) {

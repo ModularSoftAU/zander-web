@@ -1,0 +1,109 @@
+<%- include("modules/header.ejs", {
+    pageTitle: pageTitle,
+    pageDescription: "Support Crafting For Christ and keep the network growing."
+}) %>
+
+<%- include("modules/navigationBar.ejs") %>
+
+<%- include("partials/miniHeader.ejs", {
+  headerTitle: "Support the Server",
+  backgroundImage: globalImage
+}) %>
+
+<section class="section">
+  <div class="container">
+    <div class="mb-5 text-center">
+      <h2>🙏 Support Crafting For Christ</h2>
+      <p class="text-muted">
+        Crafting For Christ is a Minecraft network built around faith, friendship, and fun.
+        Your support helps keep the servers online and the community growing.
+      </p>
+      <div class="d-flex justify-content-center gap-2 flex-wrap">
+        <a href="/ranks" class="btn btn-outline-primary">See Ranks &amp; Perks</a>
+        <a href="/webstore" class="btn btn-primary">Support the Server</a>
+      </div>
+    </div>
+
+    <div class="mb-5">
+      <h3>✨ Why We Ask for Support</h3>
+      <p>Running Minecraft servers costs money every month. Your support helps pay for things like:</p>
+      <ul>
+        <li>Server hosting</li>
+        <li>Backups and security</li>
+        <li>Plugins and updates</li>
+        <li>Events and new features</li>
+      </ul>
+      <p>
+        Our goal is to keep Crafting For Christ a safe, positive, Christ-centred place for everyone to enjoy.
+      </p>
+    </div>
+
+    <div class="mb-5">
+      <h3>💰 This Month’s Server Goal</h3>
+      <p>Each month we have a set goal to cover our server costs.</p>
+      <div class="progress mb-2" style="height: 24px;">
+        <div
+          class="progress-bar"
+          role="progressbar"
+          style="width: <%= progressPercent %>%"
+          aria-valuenow="<%= progressPercent %>"
+          aria-valuemin="0"
+          aria-valuemax="100"
+        >
+          <%= progressPercent %>% funded
+        </div>
+      </div>
+      <p class="text-muted">
+        <strong>$<%= (raisedCents / 100).toFixed(2) %></strong>
+        of <strong>$<%= (monthlyGoalCents / 100).toFixed(2) %></strong>
+      </p>
+      <p class="text-muted">Every purchase or donation through the store helps move this bar forward.</p>
+    </div>
+
+    <div class="mb-5">
+      <h3>💬 How You Can Help</h3>
+      <ol>
+        <li>
+          <strong>Buy a Rank</strong>
+          <p>Ranks help support the server and give you cool in-game perks.</p>
+          <a href="/ranks">View ranks here</a>
+        </li>
+        <li class="mt-3">
+          <strong>Monthly Support</strong>
+          <p>You can also support the server monthly if you want to help long-term.</p>
+          <a href="/webstore">Support or gift here</a>
+          <p class="text-muted mb-0">You can even gift a rank to another player to bless them!</p>
+        </li>
+      </ol>
+    </div>
+
+    <div class="mb-5">
+      <h3>❤️ What Your Support Does</h3>
+      <ul>
+        <li>Keep the servers running smoothly</li>
+        <li>Create a safe place to play</li>
+        <li>Encourage faith and kindness</li>
+        <li>Welcome new players</li>
+      </ul>
+      <p>
+        Crafting For Christ isn’t just a server — it’s a community where people can grow together.
+      </p>
+    </div>
+
+    <div class="mb-5">
+      <h3>📢 Server Updates</h3>
+      <p>
+        This section is used for important updates, like server upgrades, maintenance times, or big changes.
+      </p>
+      <p class="text-muted">(Updates will appear here when needed.)</p>
+    </div>
+
+    <div class="text-center">
+      <h3>🙏 Thank You for Being Here</h3>
+      <p>Thank you for playing, praying, and supporting Crafting For Christ.</p>
+      <p class="text-muted">“Whatever you do, do it all for the glory of God.” ❤️</p>
+    </div>
+  </div>
+</section>
+
+<%- include("modules/footer.ejs") %>
