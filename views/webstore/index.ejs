@@ -1,0 +1,49 @@
+<%- include("modules/header.ejs", {
+    pageTitle: pageTitle,
+    pageDescription: "Support the server with ranks, cosmetics, keys, and more."
+}) %>
+
+<%- include("modules/navigationBar.ejs") %>
+
+<%- include("partials/miniHeader.ejs", {
+  headerTitle: "Webstore",
+  backgroundImage: globalImage
+}) %>
+
+<section class="section">
+  <div class="container">
+    <div class="mb-4">
+      <h3>Welcome, <%= username %></h3>
+      <p class="text-muted mb-0">All purchases are linked to your Minecraft username.</p>
+    </div>
+
+    <div class="row">
+      <% if (!items.length) { %>
+        <div class="col-12">
+          <div class="alert alert-info">The webstore is being stocked. Check back soon!</div>
+        </div>
+      <% } %>
+
+      <% items.forEach(function (item) { %>
+        <div class="col-lg-4 col-md-6 col-sm-12">
+          <div class="service-item mb-4">
+            <div class="feature-item mb-5 mb-lg-0">
+              <h4 class="mb-2"><%= item.displayName %></h4>
+              <p class="text-muted"><%= item.description %></p>
+              <div class="d-flex align-items-center justify-content-between mb-3">
+                <span class="fw-bold"><%= item.priceDisplay %></span>
+                <span class="badge bg-info"><%= item.purchaseType === "subscription" ? "Monthly" : "One-time" %></span>
+              </div>
+              <form method="post" action="/webstore/checkout">
+                <input type="hidden" name="itemSlug" value="<%= item.slug %>">
+                <button type="submit" class="btn btn-primary btn-sm"><%= item.purchaseLabel %></button>
+              </form>
+            </div>
+          </div>
+        </div>
+      <% }) %>
+    </div>
+  </div>
+</section>
+
+<%- include("modules/footer.ejs") %>
