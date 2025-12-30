@@ -19,67 +19,10 @@
       <div class="row g-4">
         <div class="col-12">
           <div class="card shadow-sm">
-            <div class="card-header">
-              <h5 class="card-title mb-1">Create new item</h5>
-              <p class="card-subtitle text-muted mb-0">Add a new product or subscription backed by a Stripe price ID.</p>
-            </div>
-            <div class="card-body">
-              <form method="post" action="/dashboard/webstore/items" class="row g-3">
-                <div class="col-md-4">
-                  <label class="form-label">Slug</label>
-                  <input type="text" name="slug" class="form-control" placeholder="diamond-rank-monthly" required>
-                </div>
-                <div class="col-md-4">
-                  <label class="form-label">Display name</label>
-                  <input type="text" name="displayName" class="form-control" placeholder="Diamond Rank (Monthly)" required>
-                </div>
-                <div class="col-md-4">
-                  <label class="form-label">Stripe price ID</label>
-                  <input type="text" name="stripePriceId" class="form-control" placeholder="price_123" required>
-                </div>
-                <div class="col-md-6">
-                  <label class="form-label">Description</label>
-                  <input type="text" name="description" class="form-control" placeholder="Monthly Diamond rank subscription">
-                </div>
-                <div class="col-md-2">
-                  <label class="form-label">Price (cents)</label>
-                  <input type="number" name="priceCents" class="form-control" min="1" required>
-                </div>
-                <div class="col-md-2">
-                  <label class="form-label">Currency</label>
-                  <input type="text" name="currency" class="form-control" value="usd">
-                </div>
-                <div class="col-md-2">
-                  <label class="form-label">Type</label>
-                  <select name="purchaseType" class="form-select">
-                    <option value="one_time">One-time</option>
-                    <option value="subscription">Subscription</option>
-                  </select>
-                </div>
-                <div class="col-md-2">
-                  <label class="form-label">Sort order</label>
-                  <input type="number" name="sortOrder" class="form-control" value="0">
-                </div>
-                <div class="col-md-2 d-flex align-items-end">
-                  <div class="form-check">
-                    <input class="form-check-input" type="checkbox" name="isActive" id="itemActive" checked>
-                    <label class="form-check-label" for="itemActive">Active</label>
-                  </div>
-                </div>
-                <div class="col-12">
-                  <button type="submit" class="btn btn-primary">Create item</button>
-                </div>
-              </form>
-            </div>
-          </div>
-        </div>
-
-        <div class="col-12">
-          <div class="card shadow-sm">
             <div class="card-header d-flex justify-content-between align-items-center">
               <div>
                 <h5 class="card-title mb-1">Current items</h5>
-                <p class="card-subtitle text-muted mb-0">Add commands for each item and toggle availability.</p>
+                <p class="card-subtitle text-muted mb-0">Items are pulled directly from Stripe. Add commands for each price ID below.</p>
               </div>
               <span class="badge bg-primary">Total items: <%= items.length %></span>
             </div>
@@ -89,7 +32,7 @@
                   <thead class="table-light">
                     <tr>
                       <th>Item</th>
-                      <th>Stripe price</th>
+                      <th>Price</th>
                       <th>Type</th>
                       <th>Commands</th>
                       <th>Status</th>
@@ -105,9 +48,9 @@
                       <tr>
                         <td>
                           <div class="fw-semibold"><%= item.displayName %></div>
-                          <div class="text-muted small">/<%= item.slug %></div>
+                          <div class="text-muted small"><%= item.stripePriceId %></div>
                         </td>
-                        <td class="text-muted"><%= item.stripePriceId %></td>
+                        <td class="text-muted"><%= item.currency.toUpperCase() %> <%= (item.priceCents / 100).toFixed(2) %></td>
                         <td>
                           <span class="badge bg-secondary"><%= item.purchaseType === "subscription" ? "Subscription" : "One-time" %></span>
                         </td>
@@ -121,7 +64,7 @@
                           <% } else { %>
                             <p class="text-muted small mb-2">No commands configured.</p>
                           <% } %>
-                          <form method="post" action="/dashboard/webstore/items/<%= item.itemId %>/commands" class="row g-2">
+                          <form method="post" action="/dashboard/webstore/items/<%= item.stripePriceId %>/commands" class="row g-2">
                             <div class="col-md-8">
                               <input type="text" name="commandTemplate" class="form-control form-control-sm" placeholder="lp user {{username}} parent add diamond" required>
                             </div>
@@ -134,21 +77,7 @@
                           </form>
                         </td>
                         <td>
-                          <form method="post" action="/dashboard/webstore/items/<%= item.itemId %>/status">
-                            <div class="form-check form-switch">
-                              <input
-                                class="form-check-input"
-                                type="checkbox"
-                                name="isActive"
-                                id="status-<%= item.itemId %>"
-                                <%= item.isActive ? "checked" : "" %>
-                                onchange="this.form.submit()"
-                              >
-                              <label class="form-check-label" for="status-<%= item.itemId %>">
-                                <%= item.isActive ? "Active" : "Inactive" %>
-                              </label>
-                            </div>
-                          </form>
+                          <span class="badge bg-success">Active</span>
                         </td>
                       </tr>
                     <% }) %>

@@ -1,4 +1,5 @@
 import db from "./databaseController.js";
+import fetch from "node-fetch";
 
 let webstoreTableCheck;
 
@@ -9,6 +10,63 @@ function query(sql, params = []) {
       return resolve(results);
     });
   });
+}
+
+async function fetchStripePrices() {
+  const apiKey = process.env.STRIPE_SECRET_KEY;
+  if (!apiKey) {
+    throw new Error("Stripe secret key is not configured");
+  }
+
+  const prices = [];
+  let startingAfter = null;
+  let hasMore = true;
+
+  while (hasMore) {
+    const params = new URLSearchParams({
+      limit: "100",
+      active: "true",
+    });
+    params.append("expand[]", "data.product");
+    if (startingAfter) {
+      params.append("starting_after", startingAfter);
+    }
+
+    const response = await fetch(`https://api.stripe.com/v1/prices?${params}`, {
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+      },
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`Stripe API error: ${response.status} ${errorText}`);
+    }
+
+    const data = await response.json();
+    prices.push(...(data.data || []));
+    hasMore = Boolean(data.has_more);
+    startingAfter = data.data?.length ? data.data[data.data.length - 1].id : null;
+  }
+
+  return prices;
+}
+
+async function loadStripeItems() {
+  const prices = await fetchStripePrices();
+
+  return prices
+    .filter((price) => price.active && price.product && price.product.active)
+    .map((price) => ({
+      slug: price.id,
+      stripePriceId: price.id,
+      displayName: price.product?.name || price.nickname || price.id,
+      description: price.product?.description || "",
+      priceCents: price.unit_amount || 0,
+      currency: price.currency || "usd",
+      purchaseType: price.type === "recurring" || price.recurring ? "subscription" : "one_time",
+    }))
+    .sort((a, b) => a.displayName.localeCompare(b.displayName));
 }
 
 export async function ensureWebstoreTables() {
@@ -84,89 +142,64 @@ export async function ensureWebstoreTables() {
                   }
 
                   db.query(
-                    "CREATE TABLE IF NOT EXISTS webstoreItems (\n" +
-                      "  itemId INT AUTO_INCREMENT PRIMARY KEY,\n" +
-                      "  slug VARCHAR(64) NOT NULL UNIQUE,\n" +
-                      "  displayName VARCHAR(120) NOT NULL,\n" +
-                      "  description TEXT,\n" +
-                      "  priceCents INT NOT NULL,\n" +
-                      "  currency VARCHAR(10) NOT NULL DEFAULT 'usd',\n" +
-                      "  purchaseType ENUM('one_time', 'subscription') NOT NULL,\n" +
+                    "CREATE TABLE IF NOT EXISTS webstoreStripeCommands (\n" +
+                      "  commandId INT AUTO_INCREMENT PRIMARY KEY,\n" +
                       "  stripePriceId VARCHAR(120) NOT NULL,\n" +
-                      "  isActive TINYINT(1) DEFAULT 1,\n" +
+                      "  commandTemplate TEXT NOT NULL,\n" +
                       "  sortOrder INT DEFAULT 0,\n" +
                       "  createdAt DATETIME DEFAULT NOW(),\n" +
-                      "  updatedAt DATETIME DEFAULT NOW()\n" +
+                      "  INDEX webstoreStripeCommands_price (stripePriceId)\n" +
                       ")",
-                    (itemsErr) => {
-                      if (itemsErr) {
-                        console.error("Failed to ensure webstoreItems table", itemsErr);
+                    (commandsErr) => {
+                      if (commandsErr) {
+                        console.error("Failed to ensure webstoreStripeCommands table", commandsErr);
                         resolve(false);
                         return;
                       }
 
                       db.query(
-                        "CREATE TABLE IF NOT EXISTS webstoreItemCommands (\n" +
-                          "  itemCommandId INT AUTO_INCREMENT PRIMARY KEY,\n" +
-                          "  itemId INT NOT NULL,\n" +
-                          "  commandTemplate TEXT NOT NULL,\n" +
-                          "  sortOrder INT DEFAULT 0,\n" +
+                        "CREATE TABLE IF NOT EXISTS webstoreTransactions (\n" +
+                          "  transactionId INT AUTO_INCREMENT PRIMARY KEY,\n" +
+                          "  purchaseId INT NOT NULL,\n" +
+                          "  userId INT NOT NULL,\n" +
+                          "  direction ENUM('incoming', 'outgoing') NOT NULL,\n" +
+                          "  counterpartyMinecraftUsername VARCHAR(16) NOT NULL,\n" +
+                          "  amountCents INT NOT NULL,\n" +
+                          "  currency VARCHAR(10) NOT NULL,\n" +
                           "  createdAt DATETIME DEFAULT NOW(),\n" +
-                          "  INDEX webstoreItemCommands_item (itemId),\n" +
-                          "  CONSTRAINT fk_webstoreItemCommands_item FOREIGN KEY (itemId) REFERENCES webstoreItems(itemId) ON DELETE CASCADE\n" +
+                          "  INDEX webstoreTransactions_user (userId),\n" +
+                          "  INDEX webstoreTransactions_purchase (purchaseId)\n" +
                           ")",
-                        (commandsErr) => {
-                          if (commandsErr) {
-                            console.error("Failed to ensure webstoreItemCommands table", commandsErr);
+                        (transactionsErr) => {
+                          if (transactionsErr) {
+                            console.error(
+                              "Failed to ensure webstoreTransactions table",
+                              transactionsErr
+                            );
                             resolve(false);
                             return;
                           }
 
                           db.query(
-                            "CREATE TABLE IF NOT EXISTS webstoreTransactions (\n" +
-                              "  transactionId INT AUTO_INCREMENT PRIMARY KEY,\n" +
-                              "  purchaseId INT NOT NULL,\n" +
+                            "CREATE TABLE IF NOT EXISTS webstoreContacts (\n" +
+                              "  contactId INT AUTO_INCREMENT PRIMARY KEY,\n" +
                               "  userId INT NOT NULL,\n" +
-                              "  direction ENUM('incoming', 'outgoing') NOT NULL,\n" +
-                              "  counterpartyMinecraftUsername VARCHAR(16) NOT NULL,\n" +
-                              "  amountCents INT NOT NULL,\n" +
-                              "  currency VARCHAR(10) NOT NULL,\n" +
-                              "  createdAt DATETIME DEFAULT NOW(),\n" +
-                              "  INDEX webstoreTransactions_user (userId),\n" +
-                              "  INDEX webstoreTransactions_purchase (purchaseId)\n" +
+                              "  minecraftUsername VARCHAR(16) NOT NULL,\n" +
+                              "  lastTransactionAt DATETIME DEFAULT NOW(),\n" +
+                              "  lastTransactionDirection ENUM('incoming', 'outgoing') NOT NULL,\n" +
+                              "  UNIQUE KEY webstoreContacts_user (userId, minecraftUsername)\n" +
                               ")",
-                            (transactionsErr) => {
-                              if (transactionsErr) {
+                            (contactsErr) => {
+                              if (contactsErr) {
                                 console.error(
-                                  "Failed to ensure webstoreTransactions table",
-                                  transactionsErr
+                                  "Failed to ensure webstoreContacts table",
+                                  contactsErr
                                 );
                                 resolve(false);
                                 return;
                               }
 
-                              db.query(
-                                "CREATE TABLE IF NOT EXISTS webstoreContacts (\n" +
-                                  "  contactId INT AUTO_INCREMENT PRIMARY KEY,\n" +
-                                  "  userId INT NOT NULL,\n" +
-                                  "  minecraftUsername VARCHAR(16) NOT NULL,\n" +
-                                  "  lastTransactionAt DATETIME DEFAULT NOW(),\n" +
-                                  "  lastTransactionDirection ENUM('incoming', 'outgoing') NOT NULL,\n" +
-                                  "  UNIQUE KEY webstoreContacts_user (userId, minecraftUsername)\n" +
-                                  ")",
-                                (contactsErr) => {
-                                  if (contactsErr) {
-                                    console.error(
-                                      "Failed to ensure webstoreContacts table",
-                                      contactsErr
-                                    );
-                                    resolve(false);
-                                    return;
-                                  }
-
-                                  resolve(true);
-                                }
-                              );
+                              resolve(true);
                             }
                           );
                         }
@@ -250,94 +283,47 @@ export async function getPurchaseBySessionId(stripeSessionId) {
 export async function getWebstoreItems() {
   await ensureWebstoreTables();
 
-  const items = await query(
-    "SELECT * FROM webstoreItems WHERE isActive = 1 ORDER BY sortOrder ASC, displayName ASC"
-  );
-
+  const items = await loadStripeItems();
   if (!items.length) return [];
 
-  const itemIds = items.map((item) => item.itemId);
+  const priceIds = items.map((item) => item.stripePriceId);
   const commands = await query(
-    `SELECT itemId, commandTemplate FROM webstoreItemCommands WHERE itemId IN (${itemIds
+    `SELECT stripePriceId, commandTemplate FROM webstoreStripeCommands WHERE stripePriceId IN (${priceIds
       .map(() => "?")
-      .join(",")}) ORDER BY sortOrder ASC, itemCommandId ASC`,
-    itemIds
+      .join(",")}) ORDER BY sortOrder ASC, commandId ASC`,
+    priceIds
   );
 
-  const commandsByItem = commands.reduce((acc, command) => {
-    if (!acc[command.itemId]) acc[command.itemId] = [];
-    acc[command.itemId].push(command.commandTemplate);
+  const commandsByPrice = commands.reduce((acc, command) => {
+    if (!acc[command.stripePriceId]) acc[command.stripePriceId] = [];
+    acc[command.stripePriceId].push(command.commandTemplate);
     return acc;
   }, {});
 
   return items.map((item) => ({
-    itemId: item.itemId,
-    slug: item.slug,
-    displayName: item.displayName,
-    description: item.description,
-    priceCents: item.priceCents,
-    currency: item.currency,
-    purchaseType: item.purchaseType,
-    stripePriceId: item.stripePriceId,
-    isActive: item.isActive === 1,
-    commandTemplates: commandsByItem[item.itemId] || [],
+    ...item,
+    commandTemplates: commandsByPrice[item.stripePriceId] || [],
   }));
 }
 
 export async function findWebstoreItem(slug) {
   const items = await getWebstoreItems();
-  return items.find((item) => item.slug === slug && item.isActive !== false) || null;
+  return items.find((item) => item.slug === slug) || null;
 }
 
-export async function createWebstoreItem({
-  slug,
-  displayName,
-  description,
-  priceCents,
-  currency,
-  purchaseType,
+export async function addWebstoreItemCommand({
   stripePriceId,
-  isActive,
+  commandTemplate,
   sortOrder,
 }) {
   await ensureWebstoreTables();
 
   const result = await query(
-    "INSERT INTO webstoreItems (slug, displayName, description, priceCents, currency, purchaseType, stripePriceId, isActive, sortOrder) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
-    [
-      slug,
-      displayName,
-      description || null,
-      priceCents,
-      currency,
-      purchaseType,
-      stripePriceId,
-      isActive ? 1 : 0,
-      sortOrder || 0,
-    ]
+    "INSERT INTO webstoreStripeCommands (stripePriceId, commandTemplate, sortOrder) VALUES (?, ?, ?)",
+    [stripePriceId, commandTemplate, sortOrder || 0]
   );
 
   return result.insertId;
-}
-
-export async function addWebstoreItemCommand({ itemId, commandTemplate, sortOrder }) {
-  await ensureWebstoreTables();
-
-  const result = await query(
-    "INSERT INTO webstoreItemCommands (itemId, commandTemplate, sortOrder) VALUES (?, ?, ?)",
-    [itemId, commandTemplate, sortOrder || 0]
-  );
-
-  return result.insertId;
-}
-
-export async function updateWebstoreItemStatus(itemId, isActive) {
-  await ensureWebstoreTables();
-
-  return query(
-    "UPDATE webstoreItems SET isActive = ?, updatedAt = NOW() WHERE itemId = ?",
-    [isActive ? 1 : 0, itemId]
-  );
 }
 
 export async function updatePurchasePayment({

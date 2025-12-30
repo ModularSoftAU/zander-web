@@ -52,31 +52,14 @@ CREATE TABLE webstoreWebhookEvents (
     CONSTRAINT fk_webstoreWebhookEvents_purchase FOREIGN KEY (purchaseId) REFERENCES webstorePurchases(purchaseId) ON DELETE SET NULL
 );
 
-CREATE TABLE webstoreItems (
-    itemId INT NOT NULL AUTO_INCREMENT,
-    slug VARCHAR(64) NOT NULL UNIQUE,
-    displayName VARCHAR(120) NOT NULL,
-    description TEXT,
-    priceCents INT NOT NULL,
-    currency VARCHAR(10) NOT NULL DEFAULT 'usd',
-    purchaseType ENUM('one_time', 'subscription') NOT NULL,
+CREATE TABLE webstoreStripeCommands (
+    commandId INT NOT NULL AUTO_INCREMENT,
     stripePriceId VARCHAR(120) NOT NULL,
-    isActive TINYINT(1) DEFAULT 1,
-    sortOrder INT DEFAULT 0,
-    createdAt DATETIME DEFAULT NOW(),
-    updatedAt DATETIME DEFAULT NOW(),
-    PRIMARY KEY (itemId)
-);
-
-CREATE TABLE webstoreItemCommands (
-    itemCommandId INT NOT NULL AUTO_INCREMENT,
-    itemId INT NOT NULL,
     commandTemplate TEXT NOT NULL,
     sortOrder INT DEFAULT 0,
     createdAt DATETIME DEFAULT NOW(),
-    PRIMARY KEY (itemCommandId),
-    INDEX webstoreItemCommands_item (itemId),
-    CONSTRAINT fk_webstoreItemCommands_item FOREIGN KEY (itemId) REFERENCES webstoreItems(itemId) ON DELETE CASCADE
+    PRIMARY KEY (commandId),
+    INDEX webstoreStripeCommands_price (stripePriceId)
 );
 
 CREATE TABLE webstoreTransactions (
