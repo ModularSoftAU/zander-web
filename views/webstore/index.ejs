@@ -13,8 +13,14 @@
 <section class="section">
   <div class="container">
     <div class="mb-4">
-      <h3>Welcome, <%= username %></h3>
-      <p class="text-muted mb-0">All purchases are linked to your Minecraft username.</p>
+      <% if (loggedIn) { %>
+        <h3>Welcome, <%= username %></h3>
+        <p class="text-muted mb-0">All purchases are linked to your Minecraft username.</p>
+      <% } else { %>
+        <h3>Webstore</h3>
+        <p class="text-muted mb-2">Log in to complete a purchase or gift an item.</p>
+        <a href="/login?returnTo=/webstore" class="btn btn-outline-primary btn-sm">Login to buy</a>
+      <% } %>
     </div>
 
     <div class="row">
@@ -34,21 +40,25 @@
                 <span class="fw-bold"><%= item.priceDisplay %></span>
                 <span class="badge bg-info"><%= item.purchaseType === "subscription" ? "Monthly" : "One-time" %></span>
               </div>
-              <form method="post" action="/webstore/checkout">
-                <input type="hidden" name="itemSlug" value="<%= item.slug %>">
-                <div class="mb-2">
-                  <label class="form-label">Gift to another player (optional)</label>
-                  <input
-                    type="text"
-                    name="recipientUsername"
-                    class="form-control form-control-sm"
-                    placeholder="Minecraft username"
-                    maxlength="16"
-                  >
-                  <small class="text-muted">Leave blank to buy for yourself.</small>
-                </div>
-                <button type="submit" class="btn btn-primary btn-sm"><%= item.purchaseLabel %></button>
-              </form>
+              <% if (loggedIn) { %>
+                <form method="post" action="/webstore/checkout">
+                  <input type="hidden" name="itemSlug" value="<%= item.slug %>">
+                  <div class="mb-2">
+                    <label class="form-label">Gift to another player (optional)</label>
+                    <input
+                      type="text"
+                      name="recipientUsername"
+                      class="form-control form-control-sm"
+                      placeholder="Minecraft username"
+                      maxlength="16"
+                    >
+                    <small class="text-muted">Leave blank to buy for yourself.</small>
+                  </div>
+                  <button type="submit" class="btn btn-primary btn-sm"><%= item.purchaseLabel %></button>
+                </form>
+              <% } else { %>
+                <a href="/login?returnTo=/webstore" class="btn btn-primary btn-sm">Login to purchase</a>
+              <% } %>
             </div>
           </div>
         </div>

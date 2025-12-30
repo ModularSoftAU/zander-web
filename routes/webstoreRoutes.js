@@ -56,15 +56,13 @@ async function createStripeCheckoutSession({
 
 export default function webstoreRoutes(app, config, features) {
   app.get("/webstore", async function (req, res) {
-    if (!isLoggedIn(req)) {
-      return res.redirect(`/login?returnTo=/webstore`);
-    }
-
     if (req.query?.canceled) {
       setBannerCookie("info", "Checkout canceled. You can try again anytime.", res);
     }
 
-    if (!req.session?.user?.username) {
+    const loggedIn = isLoggedIn(req);
+
+    if (loggedIn && !req.session?.user?.username) {
       setBannerCookie(
         "warning",
         "Please verify your Minecraft account before purchasing.",
@@ -94,7 +92,8 @@ export default function webstoreRoutes(app, config, features) {
       globalImage: await getGlobalImage(),
       announcementWeb: await getWebAnnouncement(),
       items,
-      username: req.session.user.username,
+      username: loggedIn ? req.session.user.username : null,
+      loggedIn,
     });
   });
 
