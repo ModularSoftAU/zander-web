@@ -271,6 +271,7 @@ export async function getWebstoreItems() {
   }, {});
 
   return items.map((item) => ({
+    itemId: item.itemId,
     slug: item.slug,
     displayName: item.displayName,
     description: item.description,
@@ -286,6 +287,57 @@ export async function getWebstoreItems() {
 export async function findWebstoreItem(slug) {
   const items = await getWebstoreItems();
   return items.find((item) => item.slug === slug && item.isActive !== false) || null;
+}
+
+export async function createWebstoreItem({
+  slug,
+  displayName,
+  description,
+  priceCents,
+  currency,
+  purchaseType,
+  stripePriceId,
+  isActive,
+  sortOrder,
+}) {
+  await ensureWebstoreTables();
+
+  const result = await query(
+    "INSERT INTO webstoreItems (slug, displayName, description, priceCents, currency, purchaseType, stripePriceId, isActive, sortOrder) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+    [
+      slug,
+      displayName,
+      description || null,
+      priceCents,
+      currency,
+      purchaseType,
+      stripePriceId,
+      isActive ? 1 : 0,
+      sortOrder || 0,
+    ]
+  );
+
+  return result.insertId;
+}
+
+export async function addWebstoreItemCommand({ itemId, commandTemplate, sortOrder }) {
+  await ensureWebstoreTables();
+
+  const result = await query(
+    "INSERT INTO webstoreItemCommands (itemId, commandTemplate, sortOrder) VALUES (?, ?, ?)",
+    [itemId, commandTemplate, sortOrder || 0]
+  );
+
+  return result.insertId;
+}
+
+export async function updateWebstoreItemStatus(itemId, isActive) {
+  await ensureWebstoreTables();
+
+  return query(
+    "UPDATE webstoreItems SET isActive = ?, updatedAt = NOW() WHERE itemId = ?",
+    [isActive ? 1 : 0, itemId]
+  );
 }
 
 export async function updatePurchasePayment({
