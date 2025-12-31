@@ -62,6 +62,7 @@ async function loadStripeItems() {
       stripePriceId: price.id,
       displayName: price.product?.name || price.nickname || price.id,
       description: price.product?.description || "",
+      imageUrl: price.product?.images?.[0] || null,
       priceCents: price.unit_amount || 0,
       currency: price.currency || "usd",
       purchaseType: price.type === "recurring" || price.recurring ? "subscription" : "one_time",
@@ -426,6 +427,15 @@ export async function getPurchasesNeedingFulfillment() {
   );
 }
 
+export async function getWebstoreContacts(userId, limit = 10) {
+  await ensureWebstoreTables();
+
+  return query(
+    "SELECT minecraftUsername FROM webstoreContacts WHERE userId = ? ORDER BY lastTransactionAt DESC LIMIT ?",
+    [userId, limit]
+  );
+}
+
 export async function createTransactionsForPurchase({
   purchaseId,
   payerUserId,
@@ -493,10 +503,10 @@ export async function getMonthlyPurchaseTotals(startDate, endDate) {
   return Number(results?.[0]?.totalCents || 0);
 }
 
-export function formatPrice(priceCents, currency) {
+export function formatPrice(priceCents, currency, locale = "en-US") {
   const amount = Number(priceCents) || 0;
   const normalizedCurrency = (currency || "usd").toUpperCase();
-  return new Intl.NumberFormat("en-US", {
+  return new Intl.NumberFormat(locale, {
     style: "currency",
     currency: normalizedCurrency,
     minimumFractionDigits: 2,

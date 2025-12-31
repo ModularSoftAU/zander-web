@@ -5,6 +5,7 @@ import {
   createPendingPurchase,
   findWebstoreItem,
   formatPrice,
+  getWebstoreContacts,
   getWebstoreItems,
   getMonthlyPurchaseTotals,
 } from "../controllers/webstoreController.js";
@@ -61,6 +62,10 @@ export default function webstoreRoutes(app, config, features) {
     }
 
     const loggedIn = isLoggedIn(req);
+    const locale =
+      typeof req.headers["accept-language"] === "string"
+        ? req.headers["accept-language"].split(",")[0]
+        : "en-US";
 
     if (loggedIn && !req.session?.user?.username) {
       setBannerCookie(
@@ -75,13 +80,23 @@ export default function webstoreRoutes(app, config, features) {
     try {
       items = (await getWebstoreItems()).map((item) => ({
         ...item,
-        priceDisplay: formatPrice(item.priceCents, item.currency),
+        priceDisplay: formatPrice(item.priceCents, item.currency, locale),
         purchaseLabel:
           item.purchaseType === "subscription" ? "Subscribe" : "Buy once",
       }));
     } catch (error) {
       console.error("Failed to load webstore items", error);
       setBannerCookie("warning", "Webstore items are unavailable right now.", res);
+    }
+
+    let contacts = [];
+    if (loggedIn && req.session?.user?.userId) {
+      try {
+        const rows = await getWebstoreContacts(req.session.user.userId, 10);
+        contacts = rows.map((row) => row.minecraftUsername);
+      } catch (error) {
+        console.error("Failed to load webstore contacts", error);
+      }
     }
 
     return res.view("webstore/index", {
@@ -94,6 +109,7 @@ export default function webstoreRoutes(app, config, features) {
       items,
       username: loggedIn ? req.session.user.username : null,
       loggedIn,
+      contacts,
     });
   });
 
@@ -143,7 +159,13 @@ export default function webstoreRoutes(app, config, features) {
     const recipientUsernameRaw = req.body.recipientUsername
       ? req.body.recipientUsername.trim()
       : "";
+    const purchaseFor = req.body.purchaseFor ? req.body.purchaseFor.trim() : "self";
     const recipientMinecraftUsername = recipientUsernameRaw || purchaserMinecraftUsername;
+
+    if (purchaseFor === "gift" && !recipientUsernameRaw) {
+      setBannerCookie("warning", "Please enter a Minecraft username to gift.", res);
+      return res.redirect("/webstore");
+    }
 
     if (!/^[A-Za-z0-9_]{1,16}$/.test(recipientMinecraftUsername)) {
       setBannerCookie(

@@ -34,6 +34,11 @@
         <div class="col-lg-4 col-md-6 col-sm-12">
           <div class="service-item mb-4">
             <div class="feature-item mb-5 mb-lg-0">
+              <% if (item.imageUrl) { %>
+                <div class="mb-3">
+                  <img src="<%= item.imageUrl %>" alt="<%= item.displayName %> image" class="img-fluid rounded">
+                </div>
+              <% } %>
               <h4 class="mb-2"><%= item.displayName %></h4>
               <p class="text-muted"><%= item.description %></p>
               <div class="d-flex align-items-center justify-content-between mb-3">
@@ -41,21 +46,17 @@
                 <span class="badge bg-info"><%= item.purchaseType === "subscription" ? "Monthly" : "One-time" %></span>
               </div>
               <% if (loggedIn) { %>
-                <form method="post" action="/webstore/checkout">
-                  <input type="hidden" name="itemSlug" value="<%= item.slug %>">
-                  <div class="mb-2">
-                    <label class="form-label">Gift to another player (optional)</label>
-                    <input
-                      type="text"
-                      name="recipientUsername"
-                      class="form-control form-control-sm"
-                      placeholder="Minecraft username"
-                      maxlength="16"
-                    >
-                    <small class="text-muted">Leave blank to buy for yourself.</small>
-                  </div>
-                  <button type="submit" class="btn btn-primary btn-sm"><%= item.purchaseLabel %></button>
-                </form>
+                <button
+                  type="button"
+                  class="btn btn-primary btn-sm"
+                  data-bs-toggle="modal"
+                  data-bs-target="#purchaseModal"
+                  data-item-slug="<%= item.slug %>"
+                  data-item-name="<%= item.displayName %>"
+                  data-item-action="<%= item.purchaseLabel %>"
+                >
+                  <%= item.purchaseLabel %>
+                </button>
               <% } else { %>
                 <a href="/login?returnTo=/webstore" class="btn btn-primary btn-sm">Login to purchase</a>
               <% } %>
@@ -64,6 +65,89 @@
         </div>
       <% }) %>
     </div>
+
+    <% if (loggedIn) { %>
+      <div class="modal fade" id="purchaseModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+          <form method="post" action="/webstore/checkout" class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title" id="purchaseModalTitle">Complete purchase</h5>
+              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+              <input type="hidden" name="itemSlug" id="purchaseModalItemSlug">
+              <div class="mb-3">
+                <label class="form-label">Who is this purchase for?</label>
+                <div class="form-check">
+                  <input class="form-check-input" type="radio" name="purchaseFor" id="purchaseForSelf" value="self" checked>
+                  <label class="form-check-label" for="purchaseForSelf">My account (<%= username %>)</label>
+                </div>
+                <div class="form-check">
+                  <input class="form-check-input" type="radio" name="purchaseFor" id="purchaseForGift" value="gift">
+                  <label class="form-check-label" for="purchaseForGift">Gift to another player</label>
+                </div>
+              </div>
+              <div class="mb-3" id="giftUsernameGroup" style="display: none;">
+                <label class="form-label">Minecraft username</label>
+                <input
+                  type="text"
+                  name="recipientUsername"
+                  id="giftUsernameInput"
+                  class="form-control"
+                  placeholder="Minecraft username"
+                  maxlength="16"
+                  list="giftUsernameList"
+                >
+                <datalist id="giftUsernameList">
+                  <% contacts.forEach(function(contact) { %>
+                    <option value="<%= contact %>"></option>
+                  <% }) %>
+                </datalist>
+                <small class="text-muted">Start typing to autofill recent players.</small>
+              </div>
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+              <button type="submit" class="btn btn-primary" id="purchaseModalSubmit">Continue</button>
+            </div>
+          </form>
+        </div>
+      </div>
+      <script>
+        const purchaseModal = document.getElementById("purchaseModal");
+        if (purchaseModal) {
+          purchaseModal.addEventListener("show.bs.modal", function (event) {
+            const button = event.relatedTarget;
+            const itemSlug = button?.getAttribute("data-item-slug") || "";
+            const itemName = button?.getAttribute("data-item-name") || "purchase";
+            const itemAction = button?.getAttribute("data-item-action") || "Continue";
+            document.getElementById("purchaseModalItemSlug").value = itemSlug;
+            document.getElementById("purchaseModalTitle").textContent = `Purchase ${itemName}`;
+            document.getElementById("purchaseModalSubmit").textContent = itemAction;
+            document.getElementById("purchaseForSelf").checked = true;
+            document.getElementById("giftUsernameGroup").style.display = "none";
+            document.getElementById("giftUsernameInput").value = "";
+          });
+
+          const giftToggle = document.getElementById("purchaseForGift");
+          const selfToggle = document.getElementById("purchaseForSelf");
+          const giftGroup = document.getElementById("giftUsernameGroup");
+          const giftInput = document.getElementById("giftUsernameInput");
+          [giftToggle, selfToggle].forEach((toggle) => {
+            toggle?.addEventListener("change", () => {
+              if (giftToggle?.checked) {
+                giftGroup.style.display = "block";
+                giftInput.setAttribute("required", "required");
+              } else {
+                giftGroup.style.display = "none";
+                giftInput.removeAttribute("required");
+                giftInput.value = "";
+              }
+            });
+          });
+        }
+      </script>
+    <% } %>
   </div>
 </section>
 
