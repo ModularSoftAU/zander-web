@@ -1,0 +1,95 @@
+<%- include("../../modules/header.ejs", {
+  pageTitle: pageTitle,
+  pageDescription: "Manage webstore items and commands."
+}) %>
+
+<%- include("../../modules/navigationBar.ejs") %>
+
+<%- include("../../modules/dashboard/dashboard-header.ejs") %>
+
+<div class="container-fluid">
+  <div class="row">
+    <%- include("../../modules/dashboard/dashboard-sidebar.ejs") %>
+
+    <main role="main" class="col-md-9 ml-sm-auto col-lg-10 px-4">
+      <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+        <h1 class="h2">Webstore Management</h1>
+      </div>
+
+      <div class="row g-4">
+        <div class="col-12">
+          <div class="card shadow-sm">
+            <div class="card-header d-flex justify-content-between align-items-center">
+              <div>
+                <h5 class="card-title mb-1">Current items</h5>
+                <p class="card-subtitle text-muted mb-0">Items are pulled directly from Stripe. Add commands for each price ID below.</p>
+              </div>
+              <span class="badge bg-primary">Total items: <%= items.length %></span>
+            </div>
+            <div class="card-body p-0">
+              <div class="table-responsive">
+                <table class="table mb-0 align-middle">
+                  <thead class="table-light">
+                    <tr>
+                      <th>Item</th>
+                      <th>Price</th>
+                      <th>Type</th>
+                      <th>Commands</th>
+                      <th>Status</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <% if (!items.length) { %>
+                      <tr>
+                        <td colspan="5" class="text-center text-muted py-4">No items available.</td>
+                      </tr>
+                    <% } %>
+                    <% items.forEach(function(item) { %>
+                      <tr>
+                        <td>
+                          <div class="fw-semibold"><%= item.displayName %></div>
+                          <div class="text-muted small"><%= item.stripePriceId %></div>
+                        </td>
+                        <td class="text-muted"><%= item.currency.toUpperCase() %> <%= (item.priceCents / 100).toFixed(2) %></td>
+                        <td>
+                          <span class="badge bg-secondary"><%= item.purchaseType === "subscription" ? "Subscription" : "One-time" %></span>
+                        </td>
+                        <td>
+                          <% if (item.commandTemplates && item.commandTemplates.length) { %>
+                            <ul class="small mb-2">
+                              <% item.commandTemplates.forEach(function(command) { %>
+                                <li><code><%= command %></code></li>
+                              <% }) %>
+                            </ul>
+                          <% } else { %>
+                            <p class="text-muted small mb-2">No commands configured.</p>
+                          <% } %>
+                          <form method="post" action="/dashboard/webstore/items/<%= item.stripePriceId %>/commands" class="row g-2">
+                            <div class="col-md-8">
+                              <input type="text" name="commandTemplate" class="form-control form-control-sm" placeholder="lp user {{username}} parent add diamond" required>
+                            </div>
+                            <div class="col-md-2">
+                              <input type="number" name="sortOrder" class="form-control form-control-sm" value="0">
+                            </div>
+                            <div class="col-md-2">
+                              <button type="submit" class="btn btn-outline-primary btn-sm w-100">Add</button>
+                            </div>
+                          </form>
+                        </td>
+                        <td>
+                          <span class="badge bg-success">Active</span>
+                        </td>
+                      </tr>
+                    <% }) %>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+
+<%- include("../../modules/footer.ejs") %>

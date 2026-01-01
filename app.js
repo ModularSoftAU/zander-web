@@ -30,6 +30,7 @@ import("./cron/bridgeCleanupCron.js");
 import("./cron/cakeDayUserCheck.js");
 import("./cron/staffAuditReportCron.js");
 import("./cron/schedulerCron.js");
+import("./cron/webstoreCommandSyncCron.js");
 
 //
 // Website Related
@@ -39,6 +40,7 @@ import("./cron/schedulerCron.js");
 import siteRoutes from "./routes/index.js";
 import apiRoutes from "./api/routes/index.js";
 import apiRedirectRoutes from "./api/internal_redirect/index.js";
+import webstoreWebhookRoutes from "./api/internal_redirect/webstore.js";
 
 // API token authentication
 import verifyToken from "./api/routes/verifyToken.js";
@@ -126,6 +128,18 @@ const buildApp = async () => {
     // Don't authenticate the Redirect routes. These are
     // protected by
     apiRedirectRoutes(instance, config, lang);
+    next();
+  });
+
+  await app.register((instance, options, next) => {
+    instance.addContentTypeParser(
+      "application/json",
+      { parseAs: "buffer" },
+      (req, body, done) => {
+        done(null, body);
+      }
+    );
+    webstoreWebhookRoutes(instance, config, lang);
     next();
   });
 

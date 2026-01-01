@@ -1139,48 +1139,67 @@ export async function applyTicketParticipantPermissions(client, ticketId) {
         return;
     }
 
-    const permissionUpdates = [];
-
     const isSnowflake = (value) => Boolean(value) && /^\d{5,}$/.test(String(value).trim());
 
-    participants.users
-        .map((user) => (user.discordId ? String(user.discordId).trim() : ""))
-        .filter((id) => isSnowflake(id))
-        .forEach((discordId) => {
-            permissionUpdates.push(
-                channel.permissionOverwrites.edit(discordId, {
-                    ViewChannel: true,
-                    SendMessages: true,
-                    AttachFiles: true,
-                    ReadMessageHistory: true,
-                }),
-            );
-        });
+    const guild = channel.guild;
+    if (!guild) {
+        console.warn("applyTicketParticipantPermissions: missing guild context", { ticketId });
+        return;
+    }
 
-    participants.groups
-        .map((group) => (group.roleId ? String(group.roleId).trim() : ""))
-        .filter((roleId) => {
-            const valid = isSnowflake(roleId);
-            if (!valid) {
-                console.warn("applyTicketParticipantPermissions: skipping invalid role id", { ticketId, roleId });
+    for (const user of participants.users) {
+        const discordId = user.discordId ? String(user.discordId).trim() : "";
+        if (!isSnowflake(discordId)) {
+            continue;
+        }
+
+        try {
+            const member = await guild.members.fetch(discordId);
+            if (!member) {
+                continue;
             }
-            return valid;
-        })
-        .forEach((roleId) => {
-            permissionUpdates.push(
-                channel.permissionOverwrites.edit(roleId, {
-                    ViewChannel: true,
-                    SendMessages: true,
-                    AttachFiles: true,
-                    ReadMessageHistory: true,
-                }),
-            );
-        });
 
-    try {
-        await Promise.all(permissionUpdates);
-    } catch (error) {
-        console.error("applyTicketParticipantPermissions: failed to update channel permissions", error);
+            await channel.permissionOverwrites.edit(member, {
+                ViewChannel: true,
+                SendMessages: true,
+                AttachFiles: true,
+                ReadMessageHistory: true,
+            });
+        } catch (error) {
+            console.warn("applyTicketParticipantPermissions: unable to grant user permission", {
+                ticketId,
+                discordId,
+                error: error?.message ?? error,
+            });
+        }
+    }
+
+    for (const group of participants.groups) {
+        const roleId = group.roleId ? String(group.roleId).trim() : "";
+        if (!isSnowflake(roleId)) {
+            console.warn("applyTicketParticipantPermissions: skipping invalid role id", { ticketId, roleId });
+            continue;
+        }
+
+        try {
+            const role = await guild.roles.fetch(roleId);
+            if (!role) {
+                continue;
+            }
+
+            await channel.permissionOverwrites.edit(role, {
+                ViewChannel: true,
+                SendMessages: true,
+                AttachFiles: true,
+                ReadMessageHistory: true,
+            });
+        } catch (error) {
+            console.warn("applyTicketParticipantPermissions: unable to grant role permission", {
+                ticketId,
+                roleId,
+                error: error?.message ?? error,
+            });
+        }
     }
 }
 
