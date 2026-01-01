@@ -96,13 +96,9 @@
                   class="form-control"
                   placeholder="Minecraft username"
                   maxlength="16"
-                  list="giftUsernameList"
+                  autocomplete="off"
                 >
-                <datalist id="giftUsernameList">
-                  <% contacts.forEach(function(contact) { %>
-                    <option value="<%= contact %>"></option>
-                  <% }) %>
-                </datalist>
+                <div id="giftUserSuggestions" class="list-group mt-2"></div>
                 <small class="text-muted">Start typing to autofill recent players.</small>
               </div>
             </div>
@@ -133,6 +129,74 @@
           const selfToggle = document.getElementById("purchaseForSelf");
           const giftGroup = document.getElementById("giftUsernameGroup");
           const giftInput = document.getElementById("giftUsernameInput");
+          const giftSuggestions = document.getElementById("giftUserSuggestions");
+
+          const clearGiftSuggestions = () => {
+            if (giftSuggestions) {
+              giftSuggestions.innerHTML = "";
+            }
+          };
+
+          const renderGiftSuggestions = (results = []) => {
+            clearGiftSuggestions();
+            if (!results.length || !giftSuggestions) return;
+
+            results.forEach((user) => {
+              const item = document.createElement("button");
+              item.type = "button";
+              item.className = "list-group-item list-group-item-action d-flex align-items-center gap-2";
+              item.dataset.username = user.username;
+
+              if (user.avatarUrl) {
+                const img = document.createElement("img");
+                img.src = user.avatarUrl;
+                img.alt = `${user.username} avatar`;
+                img.width = 32;
+                img.height = 32;
+                img.className = "rounded";
+                item.appendChild(img);
+              } else {
+                const placeholder = document.createElement("div");
+                placeholder.className = "rounded bg-secondary";
+                placeholder.style.width = "32px";
+                placeholder.style.height = "32px";
+                item.appendChild(placeholder);
+              }
+
+              const label = document.createElement("span");
+              label.textContent = user.username;
+              label.className = "flex-fill text-start";
+              item.appendChild(label);
+
+              item.addEventListener("click", () => {
+                giftInput.value = user.username;
+                clearGiftSuggestions();
+              });
+
+              giftSuggestions.appendChild(item);
+            });
+          };
+
+          const searchGiftUsers = async (term) => {
+            if (!term || term.length < 2) {
+              clearGiftSuggestions();
+              return;
+            }
+
+            try {
+              const response = await fetch(`/support/users/search?q=${encodeURIComponent(term)}`);
+              if (!response.ok) {
+                clearGiftSuggestions();
+                return;
+              }
+
+              const data = await response.json();
+              renderGiftSuggestions(data.results || []);
+            } catch (error) {
+              console.error("Failed to search gift users", error);
+              clearGiftSuggestions();
+            }
+          };
           [giftToggle, selfToggle].forEach((toggle) => {
             toggle?.addEventListener("change", () => {
               if (giftToggle?.checked) {
@@ -142,9 +206,20 @@
                 giftGroup.style.display = "none";
                 giftInput.removeAttribute("required");
                 giftInput.value = "";
+                clearGiftSuggestions();
               }
             });
           });
+
+          if (giftInput) {
+            let giftSearchTimeout;
+            giftInput.addEventListener("input", (event) => {
+              clearTimeout(giftSearchTimeout);
+              giftSearchTimeout = setTimeout(() => {
+                searchGiftUsers((event.target.value || "").trim());
+              }, 250);
+            });
+          }
         }
       </script>
     <% } %>

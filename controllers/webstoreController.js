@@ -52,21 +52,38 @@ async function fetchStripePrices() {
   return prices;
 }
 
-async function loadStripeItems() {
+function resolveStripePriceAmount(price, preferredCurrency) {
+  if (!preferredCurrency) {
+    return { amount: price.unit_amount || 0, currency: price.currency || "usd" };
+  }
+
+  const currencyKey = preferredCurrency.toLowerCase();
+  const currencyOption = price.currency_options?.[currencyKey];
+  if (currencyOption?.unit_amount) {
+    return { amount: currencyOption.unit_amount, currency: currencyKey };
+  }
+
+  return { amount: price.unit_amount || 0, currency: price.currency || "usd" };
+}
+
+async function loadStripeItems(preferredCurrency = null) {
   const prices = await fetchStripePrices();
 
   return prices
     .filter((price) => price.active && price.product && price.product.active)
-    .map((price) => ({
-      slug: price.id,
-      stripePriceId: price.id,
-      displayName: price.product?.name || price.nickname || price.id,
-      description: price.product?.description || "",
-      imageUrl: price.product?.images?.[0] || null,
-      priceCents: price.unit_amount || 0,
-      currency: price.currency || "usd",
-      purchaseType: price.type === "recurring" || price.recurring ? "subscription" : "one_time",
-    }))
+    .map((price) => {
+      const resolved = resolveStripePriceAmount(price, preferredCurrency);
+      return {
+        slug: price.id,
+        stripePriceId: price.id,
+        displayName: price.product?.name || price.nickname || price.id,
+        description: price.product?.description || "",
+        imageUrl: price.product?.images?.[0] || null,
+        priceCents: resolved.amount,
+        currency: resolved.currency,
+        purchaseType: price.type === "recurring" || price.recurring ? "subscription" : "one_time",
+      };
+    })
     .sort((a, b) => a.displayName.localeCompare(b.displayName));
 }
 
@@ -281,10 +298,10 @@ export async function getPurchaseBySessionId(stripeSessionId) {
   return rows[0] || null;
 }
 
-export async function getWebstoreItems() {
+export async function getWebstoreItems(preferredCurrency = null) {
   await ensureWebstoreTables();
 
-  const items = await loadStripeItems();
+  const items = await loadStripeItems(preferredCurrency);
   if (!items.length) return [];
 
   const priceIds = items.map((item) => item.stripePriceId);
@@ -424,15 +441,6 @@ export async function getPurchasesNeedingFulfillment() {
   return query(
     "SELECT purchaseId FROM webstorePurchases WHERE status IN ('paid')",
     []
-  );
-}
-
-export async function getWebstoreContacts(userId, limit = 10) {
-  await ensureWebstoreTables();
-
-  return query(
-    "SELECT minecraftUsername FROM webstoreContacts WHERE userId = ? ORDER BY lastTransactionAt DESC LIMIT ?",
-    [userId, limit]
   );
 }
 

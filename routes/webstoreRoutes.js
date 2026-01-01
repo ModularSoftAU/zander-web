@@ -5,10 +5,26 @@ import {
   createPendingPurchase,
   findWebstoreItem,
   formatPrice,
-  getWebstoreContacts,
   getWebstoreItems,
   getMonthlyPurchaseTotals,
 } from "../controllers/webstoreController.js";
+
+function getPreferredCurrency(locale) {
+  if (!locale) return null;
+  const region = locale.split("-")[1] || locale.split("_")[1];
+  if (!region) return null;
+
+  const regionMap = {
+    AU: "aud",
+    US: "usd",
+    GB: "gbp",
+    CA: "cad",
+    NZ: "nzd",
+    EU: "eur",
+  };
+
+  return regionMap[region.toUpperCase()] || null;
+}
 
 async function createStripeCheckoutSession({
   item,
@@ -66,6 +82,7 @@ export default function webstoreRoutes(app, config, features) {
       typeof req.headers["accept-language"] === "string"
         ? req.headers["accept-language"].split(",")[0]
         : "en-US";
+    const preferredCurrency = getPreferredCurrency(locale);
 
     if (loggedIn && !req.session?.user?.username) {
       setBannerCookie(
@@ -78,25 +95,15 @@ export default function webstoreRoutes(app, config, features) {
 
     let items = [];
     try {
-      items = (await getWebstoreItems()).map((item) => ({
+      items = (await getWebstoreItems(preferredCurrency)).map((item) => ({
         ...item,
         priceDisplay: formatPrice(item.priceCents, item.currency, locale),
         purchaseLabel:
-          item.purchaseType === "subscription" ? "Subscribe" : "Buy once",
+          item.purchaseType === "subscription" ? "Subscribe" : "Buy",
       }));
     } catch (error) {
       console.error("Failed to load webstore items", error);
       setBannerCookie("warning", "Webstore items are unavailable right now.", res);
-    }
-
-    let contacts = [];
-    if (loggedIn && req.session?.user?.userId) {
-      try {
-        const rows = await getWebstoreContacts(req.session.user.userId, 10);
-        contacts = rows.map((row) => row.minecraftUsername);
-      } catch (error) {
-        console.error("Failed to load webstore contacts", error);
-      }
     }
 
     return res.view("webstore/index", {
@@ -109,7 +116,6 @@ export default function webstoreRoutes(app, config, features) {
       items,
       username: loggedIn ? req.session.user.username : null,
       loggedIn,
-      contacts,
     });
   });
 
