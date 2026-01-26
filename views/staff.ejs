@@ -1,0 +1,91 @@
+<%- include("modules/header.ejs", {
+    pageTitle: pageTitle,
+    pageDescription: "Featuring all staff of present and past."
+}) %>
+
+<%- include("modules/navigationBar.ejs") %>
+
+<%- include("partials/miniHeader.ejs", {
+  headerTitle: "Staff",
+  globalImage: globalImage
+}) %>
+
+<section class="section">
+  <div class="container">
+
+    <!-- Active Staff -->
+    <% staffData.ranks
+      .sort((a, b) => b.priority - a.priority)
+      .forEach(rank => {
+
+        const totalUsers = staffData.rankUsers.filter(u => u.rankSlug === rank.rankSlug).length;
+
+        // Safety skip (should already be filtered server-side)
+        if (rank.rankSlug === "default" || rank.rankSlug === "retired" || rank.isDonator === 1 || rank.isStaff === 0) {
+          return;
+        }
+
+        // Hide empty staff ranks
+        if (totalUsers === 0) {
+          return;
+        }
+    %>
+
+      <h2 style="color: <%= rank.rankTextColour %>;">
+        <%= rank.displayName %>
+        <span class="badge bg-secondary"><%= totalUsers %></span>
+      </h2>
+
+      <div class="container text-center">
+        <div class="row justify-content-center">
+          <% staffData.rankUsers.forEach(rankUser => { %>
+            <% if (rankUser.rankSlug === rank.rankSlug) { %>
+              <div class="col-md-3 col-sm-6 mb-4">
+                <img
+                  src="<%= rankUser.profilePicture %>"
+                  alt="<%= rankUser.username %>'s Avatar"
+                  class="img-fluid rounded-circle mx-auto d-block"
+                  style="height: 100px; width: 100px; object-fit: cover; margin-bottom: 10px;"
+                >
+                <h4><%= rankUser.username %></h4>
+                <% if (rankUser.title && rankUser.title.length) { %>
+                  <small class="text-muted"><%= rankUser.title %></small>
+                <% } %>
+              </div>
+            <% } %>
+          <% }) %>
+        </div>
+      </div>
+
+      <hr>
+
+    <% }) %>
+
+    <!-- Retired Staff -->
+    <h2 class="mt-5">Retired Staff
+      <span class="badge bg-secondary"><%= staffData.retiredUsers.length %></span>
+    </h2>
+
+    <div class="container text-center">
+      <div class="row justify-content-center">
+        <% staffData.retiredUsers.forEach(user => { %>
+          <div class="col-md-3 col-sm-6 mb-4">
+            <img
+              src="<%= user.profilePicture %>"
+              alt="<%= user.username %>'s Avatar"
+              class="img-fluid rounded-circle mx-auto d-block"
+              style="height: 100px; width: 100px; object-fit: cover; margin-bottom: 10px;"
+            >
+            <h4><%= user.username %></h4>
+            <% if (user.title && user.title.length) { %>
+              <small class="text-muted"><%= user.title %></small>
+            <% } %>
+          </div>
+        <% }) %>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<%- include("modules/footer.ejs") %>
