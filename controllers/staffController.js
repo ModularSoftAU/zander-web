@@ -59,14 +59,14 @@ export async function getStaffPageData() {
     );
   });
 
-  // 2) Fetch rank descriptions from LuckPerms meta (meta.description.%)
+  // 2) Fetch rank descriptions from LuckPerms meta (meta.rank_description.%)
   const rankDescriptions = await new Promise((resolve, reject) => {
     db.query(
       `SELECT
         name AS rankSlug,
-        SUBSTRING_INDEX(permission, 'meta.description.', -1) AS description
+        SUBSTRING_INDEX(permission, 'meta.rank_description.', -1) AS description
        FROM cfcdev_luckperms.luckperms_group_permissions
-       WHERE permission LIKE 'meta.description.%'
+       WHERE permission LIKE 'meta.rank_description.%'
          AND value = 1`,
       function (error, results) {
         if (error) {
