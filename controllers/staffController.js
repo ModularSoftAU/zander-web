@@ -27,13 +27,22 @@ async function toAvatarUrl(row) {
 }
 
 /**
+ * Generates a profile URL for a user.
+ * @param {string} username - The username to generate a profile URL for
+ * @returns {string} The profile URL
+ */
+function toProfileUrl(username) {
+  return `/profile/${encodeURIComponent(username)}`;
+}
+
+/**
  * Fetches all staff page data including active staff ranks, users, and retired staff.
  * Returns data structured for the staff.ejs view template.
  */
 export async function getStaffPageData() {
   // 1) Get all ranks for the "Active Staff" section
   // Excludes default, retired, donator ranks, and non-staff ranks
-  const ranks = await new Promise((resolve, reject) => {
+  const ranksRaw = await new Promise((resolve, reject) => {
     db.query(
       `SELECT rankSlug, displayName, priority, rankTextColour, isStaff, isDonator
        FROM ranks
@@ -50,7 +59,39 @@ export async function getStaffPageData() {
     );
   });
 
-  // 2) Get all users belonging to staff ranks with their per-rank title
+  // 2) Fetch rank descriptions from LuckPerms meta (meta.description.%)
+  const rankDescriptions = await new Promise((resolve, reject) => {
+    db.query(
+      `SELECT
+        name AS rankSlug,
+        SUBSTRING_INDEX(permission, 'meta.description.', -1) AS description
+       FROM cfcdev_luckperms.luckperms_group_permissions
+       WHERE permission LIKE 'meta.description.%'
+         AND value = 1`,
+      function (error, results) {
+        if (error) {
+          // If the query fails (e.g., permission denied), return empty descriptions
+          console.warn("Could not fetch rank descriptions:", error.message);
+          return resolve([]);
+        }
+        resolve(results || []);
+      }
+    );
+  });
+
+  // Create a map of rankSlug -> description
+  const descriptionMap = new Map();
+  rankDescriptions.forEach((row) => {
+    descriptionMap.set(row.rankSlug, row.description);
+  });
+
+  // Merge descriptions into ranks
+  const ranks = ranksRaw.map((r) => ({
+    ...r,
+    description: descriptionMap.get(r.rankSlug) || "",
+  }));
+
+  // 3) Get all users belonging to staff ranks with their per-rank title
   // Users may appear multiple times if they hold multiple staff ranks
   const rankUsersRaw = await new Promise((resolve, reject) => {
     db.query(
@@ -77,17 +118,18 @@ export async function getStaffPageData() {
     );
   });
 
-  // Process rank users and generate avatar URLs
+  // Process rank users and generate avatar URLs and profile URLs
   const rankUsers = await Promise.all(
     rankUsersRaw.map(async (r) => ({
       rankSlug: r.rankSlug,
       username: r.username,
       title: r.title || "",
       profilePicture: await toAvatarUrl(r),
+      profileUrl: toProfileUrl(r.username),
     }))
   );
 
-  // 3) Get retired staff users
+  // 4) Get retired staff users
   const retiredRaw = await new Promise((resolve, reject) => {
     db.query(
       `SELECT
@@ -110,13 +152,14 @@ export async function getStaffPageData() {
     );
   });
 
-  // Process retired users and generate avatar URLs
+  // Process retired users and generate avatar URLs and profile URLs
   const retiredUsers = await Promise.all(
     retiredRaw.map(async (r) => ({
       rankSlug: "retired",
       username: r.username,
       title: r.title || "",
       profilePicture: await toAvatarUrl(r),
+      profileUrl: toProfileUrl(r.username),
     }))
   );
 

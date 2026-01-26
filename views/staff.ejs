@@ -18,7 +18,8 @@
       .sort((a, b) => b.priority - a.priority)
       .forEach(rank => {
 
-        const totalUsers = staffData.rankUsers.filter(u => u.rankSlug === rank.rankSlug).length;
+        const usersInRank = staffData.rankUsers.filter(u => u.rankSlug === rank.rankSlug);
+        const totalUsers = usersInRank.length;
 
         // Safety skip (should already be filtered server-side)
         if (rank.rankSlug === "default" || rank.rankSlug === "retired" || rank.isDonator === 1 || rank.isStaff === 0) {
@@ -31,55 +32,88 @@
         }
     %>
 
-      <h2 style="color: <%= rank.rankTextColour %>;">
-        <%= rank.displayName %>
-        <span class="badge bg-secondary"><%= totalUsers %></span>
-      </h2>
+      <div class="mb-3">
+        <h2 class="mb-1" style="color: <%= rank.rankTextColour %>;">
+          <%= rank.displayName %>
+          <span class="badge bg-secondary"><%= totalUsers %></span>
+        </h2>
 
-      <div class="container text-center">
-        <div class="row justify-content-center">
-          <% staffData.rankUsers.forEach(rankUser => { %>
-            <% if (rankUser.rankSlug === rank.rankSlug) { %>
-              <div class="col-md-3 col-sm-6 mb-4">
-                <img
-                  src="<%= rankUser.profilePicture %>"
-                  alt="<%= rankUser.username %>'s Avatar"
-                  class="img-fluid rounded-circle mx-auto d-block"
-                  style="height: 100px; width: 100px; object-fit: cover; margin-bottom: 10px;"
-                >
-                <h4><%= rankUser.username %></h4>
-                <% if (rankUser.title && rankUser.title.length) { %>
-                  <small class="text-muted"><%= rankUser.title %></small>
+        <% if (rank.description && rank.description.length) { %>
+          <div class="text-muted" style="font-size: 0.95rem;">
+            <%= rank.description %>
+          </div>
+        <% } %>
+      </div>
+
+      <!-- Left-aligned columns -->
+      <div class="row">
+        <% usersInRank.forEach(user => { %>
+          <div class="col-md-3 col-sm-6 mb-4">
+            <div class="d-flex align-items-start">
+              <img
+                src="<%= user.profilePicture %>"
+                alt="<%= user.username %>'s Avatar"
+                class="img-fluid rounded"
+                style="height: 72px; width: 72px; object-fit: cover; margin-right: 12px;"
+              >
+
+              <div>
+                <div style="line-height: 1.1;">
+                  <a href="<%= user.profileUrl %>" style="text-decoration: none;">
+                    <strong><%= user.username %></strong>
+                  </a>
+                </div>
+
+                <% if (user.title && user.title.length) { %>
+                  <div class="text-muted" style="font-size: 0.8rem; margin-top: 2px;">
+                    <%= user.title %>
+                  </div>
                 <% } %>
               </div>
-            <% } %>
-          <% }) %>
-        </div>
+            </div>
+          </div>
+        <% }) %>
       </div>
 
       <hr>
 
     <% }) %>
 
-    <!-- Retired Staff -->
-    <h2 class="mt-5">Retired Staff
-      <span class="badge bg-secondary"><%= staffData.retiredUsers.length %></span>
-    </h2>
+    <!-- Retired Staff (smaller, recognition section) -->
+    <div class="mt-5">
+      <h3 class="mb-2">
+        Retired Staff
+        <span class="badge bg-secondary"><%= staffData.retiredUsers.length %></span>
+      </h3>
+      <div class="text-muted mb-3" style="font-size: 0.9rem;">
+        Past staff members — listed here for recognition.
+      </div>
 
-    <div class="container text-center">
-      <div class="row justify-content-center">
+      <div class="row">
         <% staffData.retiredUsers.forEach(user => { %>
-          <div class="col-md-3 col-sm-6 mb-4">
-            <img
-              src="<%= user.profilePicture %>"
-              alt="<%= user.username %>'s Avatar"
-              class="img-fluid rounded-circle mx-auto d-block"
-              style="height: 100px; width: 100px; object-fit: cover; margin-bottom: 10px;"
-            >
-            <h4><%= user.username %></h4>
-            <% if (user.title && user.title.length) { %>
-              <small class="text-muted"><%= user.title %></small>
-            <% } %>
+          <div class="col-md-3 col-sm-6 mb-3">
+            <div class="d-flex align-items-start">
+              <img
+                src="<%= user.profilePicture %>"
+                alt="<%= user.username %>'s Avatar"
+                class="img-fluid rounded"
+                style="height: 48px; width: 48px; object-fit: cover; margin-right: 10px;"
+              >
+
+              <div>
+                <div style="line-height: 1.1; font-size: 0.95rem;">
+                  <a href="<%= user.profileUrl %>" style="text-decoration: none;">
+                    <strong><%= user.username %></strong>
+                  </a>
+                </div>
+
+                <% if (user.title && user.title.length) { %>
+                  <div class="text-muted" style="font-size: 0.75rem; margin-top: 2px;">
+                    <%= user.title %>
+                  </div>
+                <% } %>
+              </div>
+            </div>
           </div>
         <% }) %>
       </div>
