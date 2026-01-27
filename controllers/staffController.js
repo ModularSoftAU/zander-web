@@ -40,11 +40,11 @@ function toProfileUrl(username) {
  * Returns data structured for the staff.ejs view template.
  */
 export async function getStaffPageData() {
-  // 1) Get all ranks for the "Active Staff" section
+  // 1) Get all ranks for the "Active Staff" section (now includes rankDescription from view)
   // Excludes default, retired, donator ranks, and non-staff ranks
   const ranksRaw = await new Promise((resolve, reject) => {
     db.query(
-      `SELECT rankSlug, displayName, priority, rankTextColour, isStaff, isDonator
+      `SELECT rankSlug, displayName, priority, rankTextColour, isStaff, isDonator, rankDescription
        FROM ranks
        WHERE isStaff = 1
          AND isDonator = 0
@@ -59,48 +59,13 @@ export async function getStaffPageData() {
     );
   });
 
-  // 2) Fetch rank descriptions from LuckPerms meta (meta.rank_description.%)
-  const rankDescriptions = await new Promise((resolve, reject) => {
-    db.query(
-      `SELECT
-        name AS rankSlug,
-        SUBSTRING_INDEX(permission, 'meta.rank_description.', -1) AS description
-       FROM cfcdev_luckperms.luckperms_group_permissions
-       WHERE permission LIKE 'meta.rank_description.%'
-         AND value = 1`,
-      function (error, results) {
-        if (error) {
-          // If the query fails (e.g., permission denied), return empty descriptions
-          console.warn("Could not fetch rank descriptions:", error.message);
-          return resolve([]);
-        }
-        console.log("Rank descriptions fetched:", results);
-        resolve(results || []);
-      }
-    );
-  });
-
-  // Create a map of rankSlug -> description (clean up LuckPerms escaping)
-  const descriptionMap = new Map();
-  rankDescriptions.forEach((row) => {
-    // Remove LuckPerms escape characters (e.g., \. becomes .)
-    const cleanDescription = (row.description || "")
-      .replace(/\\([.,])/g, "$1")  // Unescape \. and \,
-      .replace(/\\$/g, "");         // Remove trailing backslash
-    descriptionMap.set(row.rankSlug, cleanDescription);
-  });
-
-  console.log("Description map:", Object.fromEntries(descriptionMap));
-
-  // Merge descriptions into ranks
+  // Map ranks with description field for template compatibility
   const ranks = ranksRaw.map((r) => ({
     ...r,
-    description: descriptionMap.get(r.rankSlug) || "",
+    description: r.rankDescription || "",
   }));
 
-  console.log("Ranks with descriptions:", ranks.map(r => ({ rankSlug: r.rankSlug, description: r.description })));
-
-  // 3) Get all users belonging to staff ranks with their per-rank title
+  // 2) Get all users belonging to staff ranks with their per-rank title
   // Users may appear multiple times if they hold multiple staff ranks
   const rankUsersRaw = await new Promise((resolve, reject) => {
     db.query(
@@ -138,7 +103,7 @@ export async function getStaffPageData() {
     }))
   );
 
-  // 4) Get retired staff users
+  // 3) Get retired staff users
   const retiredRaw = await new Promise((resolve, reject) => {
     db.query(
       `SELECT

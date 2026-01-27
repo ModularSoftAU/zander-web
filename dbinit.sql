@@ -78,7 +78,7 @@ VALUES ('f78a4d8d-d51b-4b39-98a3-230f2de0c670','CONSOLE',0);
 CREATE VIEW zanderdev.luckPermsPlayers AS
 SELECT * FROM cfcdev_luckperms.luckperms_players;
 
-CREATE VIEW zanderdev.ranks AS 
+CREATE VIEW zanderdev.ranks AS
 SELECT
 	lpGroups.name AS rankSlug,
     COALESCE(SUBSTRING_INDEX(lpGroupDisplayName.permission ,'.', -1), lpGroups.name) AS displayName,
@@ -103,13 +103,14 @@ SELECT
         WHEN 'g' THEN '#DDD605'
         ELSE '#FFFFFF'
 	END AS rankBadgeColour,
-        CASE WHEN 
+        CASE WHEN
 			LEFT(SUBSTRING_INDEX(lpGroupPrefix.permission, '[&', -1), 1) IN ('0','1','2','3','4','5','8','9') THEN '#FFFFFF'
         ELSE '#000000'
 	END AS rankTextColour,
     COALESCE(SUBSTRING_INDEX(lpDiscordId.permission, '.', -1),null) AS discordRoleId,
     COALESCE(RIGHT(lpGroupStaff.permission, 1),'0') AS isStaff,
-    COALESCE(RIGHT(lpGroupDonator.permission, 1),'0') AS isDonator
+    COALESCE(RIGHT(lpGroupDonator.permission, 1),'0') AS isDonator,
+    REPLACE(COALESCE(SUBSTRING_INDEX(lpGroupDescription.permission, 'meta.rank_description.', -1), ''), '\\', '') AS rankDescription
 FROM cfcdev_luckperms.luckperms_groups lpGroups
 	LEFT JOIN cfcdev_luckperms.luckperms_group_permissions lpGroupDisplayName ON lpGroups.name = lpGroupDisplayName.name
 		AND lpGroupDisplayName.permission LIKE 'displayname.%'
@@ -128,7 +129,10 @@ FROM cfcdev_luckperms.luckperms_groups lpGroups
         AND lpGroupDonator.value = 1
 	LEFT JOIN cfcdev_luckperms.luckperms_group_permissions lpDiscordId ON lpGroups.name = lpDiscordId.name
 		AND lpDiscordId.permission LIKE 'meta.discordid.%'
-        AND lpDiscordId.value = 1;
+        AND lpDiscordId.value = 1
+	LEFT JOIN cfcdev_luckperms.luckperms_group_permissions lpGroupDescription ON lpGroups.name = lpGroupDescription.name
+		AND lpGroupDescription.permission LIKE 'meta.rank\_description.%'
+        AND lpGroupDescription.value = 1;
 
 CREATE VIEW zanderdev.userRanks AS
 SELECT
