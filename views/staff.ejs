@@ -45,32 +45,25 @@
         <% } %>
       </div>
 
-      <!-- Left-aligned columns -->
       <div class="row">
         <% usersInRank.forEach(user => { %>
-          <div class="col-md-3 col-sm-6 mb-4">
-            <div class="d-flex align-items-start">
-              <img
-                src="<%= user.profilePicture %>"
-                alt="<%= user.username %>'s Avatar"
-                class="img-fluid rounded"
-                style="height: 72px; width: 72px; object-fit: cover; margin-right: 12px;"
-              >
-
-              <div>
-                <div style="line-height: 1.1;">
-                  <a href="<%= user.profileUrl %>" style="text-decoration: none;">
-                    <strong><%= user.username %></strong>
-                  </a>
-                </div>
-
-                <% if (user.title && user.title.length) { %>
-                  <div class="text-muted" style="font-size: 0.8rem; margin-top: 2px;">
-                    <%= user.title %>
-                  </div>
-                <% } %>
-              </div>
+          <div class="col-md-3 col-sm-6 mb-4 text-center">
+            <img
+              src="<%= user.profilePicture %>"
+              alt="<%= user.username %>'s Avatar"
+              class="img-fluid rounded"
+              style="height: 72px; width: 72px; object-fit: cover; margin-bottom: 8px;"
+            >
+            <div>
+              <a href="<%= user.profileUrl %>" style="text-decoration: none;">
+                <strong><%= user.username %></strong>
+              </a>
             </div>
+            <% if (user.title && user.title.length) { %>
+              <div class="text-muted" style="font-size: 0.8rem;">
+                <%= user.title %>
+              </div>
+            <% } %>
           </div>
         <% }) %>
       </div>
@@ -91,29 +84,23 @@
 
       <div class="row">
         <% staffData.retiredUsers.forEach(user => { %>
-          <div class="col-md-3 col-sm-6 mb-3">
-            <div class="d-flex align-items-start">
-              <img
-                src="<%= user.profilePicture %>"
-                alt="<%= user.username %>'s Avatar"
-                class="img-fluid rounded"
-                style="height: 48px; width: 48px; object-fit: cover; margin-right: 10px;"
-              >
-
-              <div>
-                <div style="line-height: 1.1; font-size: 0.95rem;">
-                  <a href="<%= user.profileUrl %>" style="text-decoration: none;">
-                    <strong><%= user.username %></strong>
-                  </a>
-                </div>
-
-                <% if (user.title && user.title.length) { %>
-                  <div class="text-muted" style="font-size: 0.75rem; margin-top: 2px;">
-                    <%= user.title %>
-                  </div>
-                <% } %>
-              </div>
+          <div class="col-md-3 col-sm-6 mb-3 text-center">
+            <img
+              src="<%= user.profilePicture %>"
+              alt="<%= user.username %>'s Avatar"
+              class="img-fluid rounded"
+              style="height: 48px; width: 48px; object-fit: cover; margin-bottom: 6px;"
+            >
+            <div style="font-size: 0.95rem;">
+              <a href="<%= user.profileUrl %>" style="text-decoration: none;">
+                <strong><%= user.username %></strong>
+              </a>
             </div>
+            <% if (user.title && user.title.length) { %>
+              <div class="text-muted" style="font-size: 0.75rem;">
+                <%= user.title %>
+              </div>
+            <% } %>
           </div>
         <% }) %>
       </div>
