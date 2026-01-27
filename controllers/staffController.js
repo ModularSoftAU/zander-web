@@ -44,7 +44,7 @@ export async function getStaffPageData() {
   // Excludes default, retired, donator ranks, and non-staff ranks
   const ranksRaw = await new Promise((resolve, reject) => {
     db.query(
-      `SELECT rankSlug, displayName, priority, rankTextColour, isStaff, isDonator, rankDescription
+      `SELECT rankSlug, displayName, priority, rankTextColour, rankBadgeColour, isStaff, isDonator, rankDescription
        FROM ranks
        WHERE isStaff = 1
          AND isDonator = 0
