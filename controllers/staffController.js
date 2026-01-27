@@ -74,22 +74,31 @@ export async function getStaffPageData() {
           console.warn("Could not fetch rank descriptions:", error.message);
           return resolve([]);
         }
+        console.log("Rank descriptions fetched:", results);
         resolve(results || []);
       }
     );
   });
 
-  // Create a map of rankSlug -> description
+  // Create a map of rankSlug -> description (clean up LuckPerms escaping)
   const descriptionMap = new Map();
   rankDescriptions.forEach((row) => {
-    descriptionMap.set(row.rankSlug, row.description);
+    // Remove LuckPerms escape characters (e.g., \. becomes .)
+    const cleanDescription = (row.description || "")
+      .replace(/\\([.,])/g, "$1")  // Unescape \. and \,
+      .replace(/\\$/g, "");         // Remove trailing backslash
+    descriptionMap.set(row.rankSlug, cleanDescription);
   });
+
+  console.log("Description map:", Object.fromEntries(descriptionMap));
 
   // Merge descriptions into ranks
   const ranks = ranksRaw.map((r) => ({
     ...r,
     description: descriptionMap.get(r.rankSlug) || "",
   }));
+
+  console.log("Ranks with descriptions:", ranks.map(r => ({ rankSlug: r.rankSlug, description: r.description })));
 
   // 3) Get all users belonging to staff ranks with their per-rank title
   // Users may appear multiple times if they hold multiple staff ranks
