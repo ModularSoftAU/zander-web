@@ -29,6 +29,9 @@ const PERMISSIONS = {
   MODERATE: "zander.forums.moderate",
   DELETE_POST: "zander.forums.post.delete",
   VIEW_ARCHIVED: "zander.forums.viewArchived",
+  STICKY: "zander.forums.discussion.sticky",
+  LOCK: "zander.forums.discussion.lock",
+  ARCHIVE: "zander.forums.discussion.archive",
 };
 
 function getUserPermissions(req) {
@@ -90,6 +93,30 @@ function includeArchivedDiscussions(req) {
   return (
     permissionMatch(permissions, PERMISSIONS.MODERATE) ||
     permissionMatch(permissions, PERMISSIONS.VIEW_ARCHIVED)
+  );
+}
+
+function userCanSticky(req) {
+  const permissions = getUserPermissions(req);
+  return (
+    permissionMatch(permissions, PERMISSIONS.STICKY) ||
+    permissionMatch(permissions, PERMISSIONS.MODERATE)
+  );
+}
+
+function userCanLock(req) {
+  const permissions = getUserPermissions(req);
+  return (
+    permissionMatch(permissions, PERMISSIONS.LOCK) ||
+    permissionMatch(permissions, PERMISSIONS.MODERATE)
+  );
+}
+
+function userCanArchive(req) {
+  const permissions = getUserPermissions(req);
+  return (
+    permissionMatch(permissions, PERMISSIONS.ARCHIVE) ||
+    permissionMatch(permissions, PERMISSIONS.MODERATE)
   );
 }
 
@@ -486,6 +513,9 @@ export default function forumRoutes(
         moment,
         canReply,
         canModerate,
+        canSticky: userCanSticky(req),
+        canLock: userCanLock(req),
+        canArchive: userCanArchive(req),
         currentUserId: req.session?.user?.userId || null,
         canDeleteAnyPost: userCanDeleteAnyPost(req),
       },
@@ -1157,15 +1187,6 @@ export default function forumRoutes(
         return;
       }
 
-      if (!userCanModerate(req)) {
-        await setBannerCookie(
-          "danger",
-          "You do not have permission to perform moderation actions.",
-          res
-        );
-        return res.redirect("/forums");
-      }
-
       const discussionId = Number.parseInt(req.params.discussionId, 10);
       const result = await getDiscussionWithCategory(discussionId);
 
@@ -1175,6 +1196,28 @@ export default function forumRoutes(
       }
 
       const action = (req.body.action || "").toLowerCase();
+
+      // Check specific permissions based on action
+      let hasPermission = false;
+      let permissionMessage = "You do not have permission to perform this action.";
+
+      if (action === "lock" || action === "unlock") {
+        hasPermission = userCanLock(req);
+        permissionMessage = "You do not have permission to lock or unlock discussions.";
+      } else if (action === "sticky" || action === "unsticky") {
+        hasPermission = userCanSticky(req);
+        permissionMessage = "You do not have permission to pin or unpin discussions.";
+      } else if (action === "archive" || action === "unarchive") {
+        hasPermission = userCanArchive(req);
+        permissionMessage = "You do not have permission to archive or unarchive discussions.";
+      }
+
+      if (!hasPermission) {
+        await setBannerCookie("danger", permissionMessage, res);
+        return res.redirect(
+          `/forums/discussion/${result.discussion.discussionId}/${result.discussion.slug}`
+        );
+      }
 
       const updates = {};
       if (action === "lock") updates.isLocked = true;

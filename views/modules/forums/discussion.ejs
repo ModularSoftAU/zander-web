@@ -57,15 +57,19 @@
               <% if (canEditDiscussion) { %>
                 <a class="btn btn-sm btn-outline-secondary" href="/forums/discussion/<%= discussion.discussionId %>/edit"><i class="fa-solid fa-pen"></i> Edit</a>
               <% } %>
-              <% if (canModerate) { %>
+              <% if (canLock) { %>
                 <form action="/forums/discussion/<%= discussion.discussionId %>/moderate" method="post" class="d-inline">
                   <input type="hidden" name="action" value="<%= discussion.isLocked ? 'unlock' : 'lock' %>">
                   <button type="submit" class="btn btn-sm btn-outline-warning"><i class="fa-solid fa-lock"></i> <%= discussion.isLocked ? 'Unlock' : 'Lock' %></button>
                 </form>
+              <% } %>
+              <% if (canSticky) { %>
                 <form action="/forums/discussion/<%= discussion.discussionId %>/moderate" method="post" class="d-inline">
                   <input type="hidden" name="action" value="<%= discussion.isSticky ? 'unsticky' : 'sticky' %>">
                   <button type="submit" class="btn btn-sm btn-outline-info"><i class="fa-solid fa-thumbtack"></i> <%= discussion.isSticky ? 'Unpin' : 'Pin' %></button>
                 </form>
+              <% } %>
+              <% if (canArchive) { %>
                 <form action="/forums/discussion/<%= discussion.discussionId %>/moderate" method="post" class="d-inline">
                   <input type="hidden" name="action" value="<%= discussion.isArchived ? 'unarchive' : 'archive' %>">
                   <button type="submit" class="btn btn-sm btn-outline-danger"><i class="fa-solid fa-box-archive"></i> <%= discussion.isArchived ? 'Unarchive' : 'Archive' %></button>
