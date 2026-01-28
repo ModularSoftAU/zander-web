@@ -10,7 +10,8 @@ async function toAvatarUrl(row) {
   const pictureType = row.profilePicture_type;
 
   if (pictureType === "CRAFTATAR" && row.uuid) {
-    return `https://crafthead.net/helm/${row.uuid}`;
+    // Use /avatar/ to include skin overlay (hat layer)
+    return `https://crafthead.net/avatar/${row.uuid}`;
   }
 
   if (pictureType === "GRAVATAR" && row.profilePicture_email) {
@@ -19,8 +20,9 @@ async function toAvatarUrl(row) {
   }
 
   // Default fallback to crafthead using UUID or mc-heads using username
+  // Both include overlay layer
   if (row.uuid) {
-    return `https://crafthead.net/helm/${row.uuid}`;
+    return `https://crafthead.net/avatar/${row.uuid}`;
   }
 
   return `https://mc-heads.net/avatar/${row.username}/128`;
