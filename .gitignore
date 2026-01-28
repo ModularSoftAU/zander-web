@@ -6,3 +6,4 @@ sslPrivate.key
 config.json
 google.json
 features.json
+*.log

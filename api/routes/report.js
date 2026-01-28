@@ -1,4 +1,5 @@
 import { MessageBuilder, Webhook } from "discord-webhook-node";
+import { sendWebhookMessage } from "../../lib/discord/webhooks.mjs";
 import {
   isFeatureEnabled,
   required,
@@ -89,7 +90,7 @@ export default function reportApiRoute(app, config, db, features, lang) {
           reportReasonEvidence,
           reportPlatform,
         ],
-        function (error, results, fields) {
+        async function (error, results, fields) {
           console.log(req.body);
           
           if (error) {
@@ -103,28 +104,33 @@ export default function reportApiRoute(app, config, db, features, lang) {
           } else {
             setBannerCookie("success", "Report has been sent.", res);
 
-            try {
-              const staffChannelHook = new Webhook(
-                config.discord.webhooks.staffChannel
-              );
+            const staffChannelHook = new Webhook(
+              config.discord.webhooks.staffChannel
+            );
 
-              const embed = new MessageBuilder()
-                .setTitle(`New Report: ${reportedUser}`)
-                .addField("Report Platform", reportPlatform, true)
-                .addField("Report By", reporterUser, true)
-                .addField("Report Reason", reportReason)
-                .setColor(Colors.Red)
-                .setTimestamp();
+            const embed = new MessageBuilder()
+              .setTitle(`New Report: ${reportedUser}`)
+              .addField("Report Platform", reportPlatform, true)
+              .addField("Report By", reporterUser, true)
+              .addField("Report Reason", reportReason)
+              .setColor(Colors.Red)
+              .setTimestamp();
 
-              if (reportReasonEvidence) {
-                embed.addField("Report Evidence", reportReasonEvidence);
-              }
+            if (reportReasonEvidence) {
+              embed.addField("Report Evidence", reportReasonEvidence);
+            }
 
-              staffChannelHook.send(embed);
-            } catch (error) {
+            const webhookSent = await sendWebhookMessage(
+              staffChannelHook,
+              embed,
+              { context: "api/report#create" }
+            );
+
+            if (!webhookSent) {
               return res.send({
                 success: false,
-                message: `${error}`,
+                message:
+                  "Report saved, but we couldn't notify staff. Please try again soon.",
               });
             }
 

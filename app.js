@@ -16,6 +16,7 @@ const features = require("./features.json");
 const lang = require("./lang.json");
 import db from "./controllers/databaseController.js";
 import { getWebAnnouncement } from "./controllers/announcementController.js";
+import { getNotificationSummary } from "./controllers/notificationController.js";
 
 // Paths
 import path from "path";
@@ -28,6 +29,7 @@ import("./cron/userCodeExpiryCron.js");
 import("./cron/bridgeCleanupCron.js");
 import("./cron/cakeDayUserCheck.js");
 import("./cron/staffAuditReportCron.js");
+import("./cron/schedulerCron.js");
 
 //
 // Website Related
@@ -111,6 +113,7 @@ const buildApp = async () => {
   });
 
   await app.register(await import("@fastify/formbody"));
+  await app.register(await import("@fastify/multipart"));
 
   await app.register((instance, options, next) => {
     // API routes (Token authenticated)
@@ -144,9 +147,17 @@ const buildApp = async () => {
     next();
   });
 
-  app.addHook("preHandler", (req, res, next) => {
+  app.addHook("preHandler", async (req, res) => {
     req.session.authenticated = false;
-    next();
+    req.notifications = { unreadCount: 0, items: [] };
+
+    if (req.session?.user?.userId) {
+      try {
+        req.notifications = await getNotificationSummary(req.session.user.userId, 5);
+      } catch (error) {
+        app.log.error(error);
+      }
+    }
   });
 
   try {

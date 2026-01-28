@@ -1,6 +1,6 @@
-<div class="sidebar">
-    <nav class="sidebar-nav">
-        <ul class="nav">
+<nav id="sidebarMenu" class="col-md-3 col-lg-2 d-md-block bg-light sidebar collapse sidebar-nav">
+    <div class="position-sticky pt-3">
+        <ul class="nav flex-column">
             <li class="nav-item">
                 <a class="nav-link" href="/dashboard"><i class="fas fa-home"></i> Dashboard</a>
             </li>
@@ -16,6 +16,20 @@
             <li class="nav-item">
                 <a class="nav-link" href="/dashboard/applications"><i class="fas fa-copy"></i> Applications</a>
             </li>
+            <li class="nav-item nav-dropdown">
+                <a class="nav-link nav-dropdown-toggle" href="javascript:void(0)" role="button"><i class="fas fa-ticket-alt"></i> Support</a>
+                <ul class="nav-dropdown-items">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/dashboard/support">Manage Tickets</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/dashboard/support/explorer">Ticket Explorer</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/dashboard/support/categories">Manage Categories</a>
+                    </li>
+                </ul>
+            </li>
             <li class="nav-item">
                 <a class="nav-link" href="/dashboard/vault"><i class="fa-solid fa-vault"></i> Vault</a>
             </li>
@@ -23,7 +37,7 @@
                 <a class="nav-link" href="/dashboard/logs"><i class="fa-solid fa-terminal"></i> Logs</a>
             </li>
             <li class="nav-item nav-dropdown">
-                <a class="nav-link nav-dropdown-toggle" href="#"><i class="fa-solid fa-wrench"></i> Development</a>
+                <a class="nav-link nav-dropdown-toggle" href="javascript:void(0)" role="button"><i class="fa-solid fa-wrench"></i> Development</a>
                 <ul class="nav-dropdown-items">
                     <li class="nav-item">
                         <a class="nav-link" href="/dashboard/bridge">Bridge</a>
@@ -31,9 +45,12 @@
                     <li class="nav-item">
                         <a class="nav-link" href="/dashboard/ranks">Ranks</a>
                     </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/dashboard/scheduler">Scheduler</a>
+                    </li>
                 </ul>
             </li>
         </ul>
-    </nav>
-</div>
+    </div>
+</nav>
 <script src="/js/dashboard-sidebar.js"></script>

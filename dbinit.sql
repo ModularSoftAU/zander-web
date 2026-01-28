@@ -144,38 +144,46 @@ VALUES ('f78a4d8d-d51b-4b39-98a3-230f2de0c670','CONSOLE',0);
 CREATE VIEW zanderdev.luckPermsPlayers AS
 SELECT * FROM cfcdev_luckperms.luckperms_players;
 
-CREATE VIEW zanderdev.ranks AS 
+CREATE VIEW zanderdev.ranks AS
 SELECT
 	lpGroups.name AS rankSlug,
     COALESCE(SUBSTRING_INDEX(lpGroupDisplayName.permission ,'.', -1), lpGroups.name) AS displayName,
     SUBSTRING_INDEX(lpGroupWeight.permission, '.', -1) AS priority,
-    -- Color codes puled from: https://minecraft.fandom.com/wiki/Formatting_codes
-    CASE LEFT(SUBSTRING_INDEX(lpGroupPrefix.permission, '[&', -1), 1)
-		WHEN '0' THEN '#000000'
-        WHEN '1' THEN '#0000AA'
-        WHEN '2' THEN '#00AA00'
-        WHEN '3' THEN '#00AAAA'
-        WHEN '4' THEN '#AA0000'
-        WHEN '5' THEN '#AA00AA'
-        WHEN '6' THEN '#FFAA00'
-        WHEN '7' THEN '#AAAAAA'
-        WHEN '8' THEN '#555555'
-        WHEN '9' THEN '#5555FF'
-        WHEN 'a' THEN '#55FF55'
-        WHEN 'b' THEN '#55FFFF'
-        WHEN 'c' THEN '#FF5555'
-        WHEN 'd' THEN '#FF55FF'
-        WHEN 'e' THEN '#FFFF55'
-        WHEN 'g' THEN '#DDD605'
-        ELSE '#FFFFFF'
-	END AS rankBadgeColour,
-        CASE WHEN 
-			LEFT(SUBSTRING_INDEX(lpGroupPrefix.permission, '[&', -1), 1) IN ('0','1','2','3','4','5','8','9') THEN '#FFFFFF'
-        ELSE '#000000'
-	END AS rankTextColour,
+    -- Use meta.rankbadgecolour if set, otherwise fall back to prefix color codes
+    COALESCE(
+        CONCAT('#', SUBSTRING_INDEX(lpMetaBadgeColour.permission, '.', -1)),
+        CASE LEFT(SUBSTRING_INDEX(lpGroupPrefix.permission, '[&', -1), 1)
+            WHEN '0' THEN '#000000'
+            WHEN '1' THEN '#0000AA'
+            WHEN '2' THEN '#00AA00'
+            WHEN '3' THEN '#00AAAA'
+            WHEN '4' THEN '#AA0000'
+            WHEN '5' THEN '#AA00AA'
+            WHEN '6' THEN '#FFAA00'
+            WHEN '7' THEN '#AAAAAA'
+            WHEN '8' THEN '#555555'
+            WHEN '9' THEN '#5555FF'
+            WHEN 'a' THEN '#55FF55'
+            WHEN 'b' THEN '#55FFFF'
+            WHEN 'c' THEN '#FF5555'
+            WHEN 'd' THEN '#FF55FF'
+            WHEN 'e' THEN '#FFFF55'
+            WHEN 'g' THEN '#DDD605'
+            ELSE '#FFFFFF'
+        END
+    ) AS rankBadgeColour,
+    -- Use meta.ranktextcolour if set, otherwise fall back to contrast color based on prefix
+    COALESCE(
+        CONCAT('#', SUBSTRING_INDEX(lpMetaTextColour.permission, '.', -1)),
+        CASE WHEN
+            LEFT(SUBSTRING_INDEX(lpGroupPrefix.permission, '[&', -1), 1) IN ('0','1','2','3','4','5','8','9') THEN '#FFFFFF'
+            ELSE '#000000'
+        END
+    ) AS rankTextColour,
     COALESCE(SUBSTRING_INDEX(lpDiscordId.permission, '.', -1),null) AS discordRoleId,
     COALESCE(RIGHT(lpGroupStaff.permission, 1),'0') AS isStaff,
-    COALESCE(RIGHT(lpGroupDonator.permission, 1),'0') AS isDonator
+    COALESCE(RIGHT(lpGroupDonator.permission, 1),'0') AS isDonator,
+    REPLACE(COALESCE(SUBSTRING_INDEX(lpGroupDescription.permission, 'meta.rank_description.', -1), ''), '\\', '') AS rankDescription
 FROM cfcdev_luckperms.luckperms_groups lpGroups
 	LEFT JOIN cfcdev_luckperms.luckperms_group_permissions lpGroupDisplayName ON lpGroups.name = lpGroupDisplayName.name
 		AND lpGroupDisplayName.permission LIKE 'displayname.%'
@@ -194,7 +202,16 @@ FROM cfcdev_luckperms.luckperms_groups lpGroups
         AND lpGroupDonator.value = 1
 	LEFT JOIN cfcdev_luckperms.luckperms_group_permissions lpDiscordId ON lpGroups.name = lpDiscordId.name
 		AND lpDiscordId.permission LIKE 'meta.discordid.%'
-        AND lpDiscordId.value = 1;
+        AND lpDiscordId.value = 1
+	LEFT JOIN cfcdev_luckperms.luckperms_group_permissions lpGroupDescription ON lpGroups.name = lpGroupDescription.name
+		AND lpGroupDescription.permission LIKE 'meta.rank\_description.%'
+        AND lpGroupDescription.value = 1
+	LEFT JOIN cfcdev_luckperms.luckperms_group_permissions lpMetaBadgeColour ON lpGroups.name = lpMetaBadgeColour.name
+		AND lpMetaBadgeColour.permission LIKE 'meta.rankbadgecolour.%'
+        AND lpMetaBadgeColour.value = 1
+	LEFT JOIN cfcdev_luckperms.luckperms_group_permissions lpMetaTextColour ON lpGroups.name = lpMetaTextColour.name
+		AND lpMetaTextColour.permission LIKE 'meta.ranktextcolour.%'
+        AND lpMetaTextColour.value = 1;
 
 CREATE VIEW zanderdev.userRanks AS
 SELECT
@@ -284,10 +301,14 @@ CREATE TABLE gameSessions (
 CREATE TABLE announcements (
 	announcementId INT NOT NULL AUTO_INCREMENT,
     enabled BOOLEAN DEFAULT 1,
-    announcementType ENUM('motd', 'tip', 'web'),
+    announcementType ENUM('motd', 'tip', 'web', 'popup'),
     body TEXT,
     colourMessageFormat TEXT,
     link TEXT,
+    popupButtonText VARCHAR(60),
+    popupImageUrl TEXT,
+    startDate DATETIME,
+    endDate DATETIME,
     updatedDate DATETIME,
     PRIMARY KEY (announcementId)
 );
@@ -297,6 +318,23 @@ CREATE TRIGGER announcements_updatedDateBeforeUpdate
 BEFORE UPDATE ON announcements FOR EACH ROW
 	SET NEW.updatedDate = NOW()
 ;
+
+CREATE TABLE scheduledDiscordMessages (
+    scheduleId INT NOT NULL AUTO_INCREMENT,
+    channelId VARCHAR(50) NOT NULL,
+    embedTitle VARCHAR(255),
+    embedDescription TEXT,
+    embedColor VARCHAR(20),
+    scheduledFor DATETIME NOT NULL,
+    createdBy INT NOT NULL,
+    createdAt DATETIME NOT NULL DEFAULT NOW(),
+    sentAt DATETIME,
+    status ENUM('scheduled', 'sent', 'failed') DEFAULT 'scheduled',
+    lastError TEXT,
+    PRIMARY KEY (scheduleId),
+    INDEX scheduledDiscordMessages_scheduledFor (scheduledFor),
+    INDEX scheduledDiscordMessages_status (status)
+);
 
 CREATE TABLE applications (
 	applicationId INT NOT NULL AUTO_INCREMENT,

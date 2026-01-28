@@ -1,0 +1,14 @@
+<input 
+    type="datetime-local" 
+    class="form-control input-default"
+    name="<%= elementName %>"
+    <% if (elementValue) { %>
+        value="<%= elementValue %>"
+    <% } %>
+    <% if (typeof elementAttributes !== "undefined" && elementAttributes) { %>
+        <%- elementAttributes %>
+    <% } %>
+    <% if (required) { %>
+        required
+    <% } %>
+>

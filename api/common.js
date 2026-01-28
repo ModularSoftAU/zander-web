@@ -2,7 +2,8 @@ import dotenv from "dotenv";
 dotenv.config();
 import { createRequire } from "module";
 const require = createRequire(import.meta.url);
-const config = require("../config.json");
+import path from "path";
+const config = require(path.join(process.cwd(), "config.json"));
 import fetch from "node-fetch";
 import { readdirSync } from "fs";
 import crypto from "crypto";
@@ -218,7 +219,15 @@ export async function postAPIRequest(
     },
   });
 
-  const data = await response.json();
+  let data = null;
+  try {
+    data = await response.json();
+  } catch (error) {
+    const fallbackMessage =
+      "Unexpected response from the server. Please try again.";
+    setBannerCookie("danger", fallbackMessage, res);
+    return res.redirect(failureRedirectURL);
+  }
 
   console.log(data);
 

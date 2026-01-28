@@ -3,7 +3,7 @@ import { Colors, EmbedBuilder } from "discord.js";
 import moment from "moment";
 import fetch from "node-fetch";
 import { getProfilePicture } from "../controllers/userController.js";
-import { resolveDiscordUserId } from "./lib/resolveDiscordMember.mjs";
+import { resolveDiscordUserId } from "../lib/discord/resolveDiscordMember.mjs";
 
 export class ProfileCommand extends Command {
   constructor(context, options) {
