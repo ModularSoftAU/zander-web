@@ -7,6 +7,7 @@ import {
 } from "../controllers/announcementController.js";
 import { isFeatureWebRouteEnabled, getGlobalImage, hasPermission } from "../api/common.js";
 import { getTicketsAccessibleByUser } from "../controllers/supportTicketController.js";
+import { getStaffPageData } from "../controllers/staffController.js";
 
 import dashboardSiteRoutes from "./dashboard/index.js";
 import sessionRoutes from "./sessionRoutes.js";
@@ -131,6 +132,37 @@ export default function applicationSiteRoutes(
       globalImage: await getGlobalImage(),
       announcementWeb: await getWebAnnouncement(),
     });
+  });
+
+  //
+  // Staff
+  //
+  app.get("/staff", async function (req, res) {
+    try {
+      const staffData = await getStaffPageData();
+
+      return res.view("staff", {
+        pageTitle: `Staff`,
+        config: config,
+        req: req,
+        staffData: staffData,
+        features: features,
+        globalImage: await getGlobalImage(),
+        announcementWeb: await getWebAnnouncement(),
+      });
+    } catch (err) {
+      console.error("Error loading staff page:", err);
+      return res.view("session/error", {
+        pageTitle: "Error",
+        pageDescription: "Error loading staff page",
+        config: config,
+        req: req,
+        error: err,
+        features: features,
+        globalImage: await getGlobalImage(),
+        announcementWeb: await getWebAnnouncement(),
+      });
+    }
   });
 
   //
