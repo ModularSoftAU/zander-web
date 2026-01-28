@@ -8,7 +8,7 @@ import {
   ChannelType,
   EmbedBuilder,
 } from "discord.js";
-import config from "../config.json" assert { type: "json" };
+import config from "../config.json" with { type: "json" };
 import { startTicketFlow } from "../lib/discord/ticketFlow.mjs";
 import {
   addTicketGroupParticipant,

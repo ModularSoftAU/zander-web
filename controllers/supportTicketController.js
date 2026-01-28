@@ -1,4 +1,4 @@
-import config from "../config.json" assert { type: "json" };
+import config from "../config.json" with { type: "json" };
 import db from "./databaseController.js";
 import { ChannelType, PermissionFlagsBits } from "discord.js";
 import { hashEmail } from "../api/common.js";
