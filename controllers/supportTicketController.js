@@ -1,4 +1,6 @@
-import config from "../config.json" with { type: "json" };
+import { createRequire } from "module";
+const require = createRequire(import.meta.url);
+const config = require("../config.json");
 import db from "./databaseController.js";
 import { ChannelType, PermissionFlagsBits } from "discord.js";
 import { hashEmail } from "../api/common.js";
