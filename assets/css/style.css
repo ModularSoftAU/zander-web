@@ -2203,6 +2203,19 @@ a:focus {
   min-width: 140px;
 }
 
+.forums-avatar-mobile {
+  width: 40px;
+  height: 40px;
+  object-fit: cover;
+}
+
+@media (max-width: 767.98px) {
+  .forums-post-layout {
+    flex-direction: column;
+    gap: 0 !important;
+  }
+}
+
 .forums-post-body {
   font-size: 0.96rem;
   line-height: 1.7;

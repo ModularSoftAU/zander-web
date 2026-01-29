@@ -84,8 +84,9 @@
         <% posts.forEach(function(post) { %>
           <article id="post-<%= post.postId %>" class="forums-post card shadow-sm mb-4 <%= post.isOriginal ? 'original-post' : '' %>">
             <div class="card-body">
-              <div class="d-flex gap-4">
-                <div class="forums-post-sidebar text-center">
+              <div class="d-flex gap-4 forums-post-layout">
+                <!-- Desktop sidebar -->
+                <div class="forums-post-sidebar text-center d-none d-md-block">
                   <% if (post.user) { %>
                     <img src="<%= post.user.avatarUrl %>" alt="<%= post.user.username %> avatar" class="forums-avatar mb-2" loading="lazy">
                     <div class="fw-semibold"><a href="/profile/<%= post.user.username %>"><%= post.user.username %></a></div>
@@ -96,6 +97,26 @@
                         <% }); %>
                       </div>
                     <% } %>
+                  <% } else { %>
+                    <div class="fw-semibold">Unknown</div>
+                  <% } %>
+                </div>
+                <!-- Mobile header -->
+                <div class="d-md-none w-100 mb-2">
+                  <% if (post.user) { %>
+                    <div class="d-flex align-items-center gap-2 mb-1">
+                      <img src="<%= post.user.avatarUrl %>" alt="<%= post.user.username %> avatar" class="forums-avatar-mobile rounded-circle" loading="lazy">
+                      <div>
+                        <div class="fw-semibold"><a href="/profile/<%= post.user.username %>"><%= post.user.username %></a></div>
+                        <% if (post.user.ranks && post.user.ranks.length) { %>
+                          <div class="d-flex flex-wrap gap-1 mt-1">
+                            <% post.user.ranks.forEach(function(rank) { %>
+                              <span class="badge rounded-pill" style="background-color: <%= rank.badgeColour || '#1f2937' %>; color: <%= rank.textColour || '#ffffff' %>; font-size: 0.7rem;"><%= rank.displayName %></span>
+                            <% }); %>
+                          </div>
+                        <% } %>
+                      </div>
+                    </div>
                   <% } else { %>
                     <div class="fw-semibold">Unknown</div>
                   <% } %>
