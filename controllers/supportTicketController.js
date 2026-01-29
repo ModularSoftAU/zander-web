@@ -550,6 +550,13 @@ export async function createSupportTicket(
         parentCategoryId && parentCategoryId !== "undefined" && parentCategoryId !== ""
             ? parentCategoryId
             : config.discord?.supportTicketCategoryId ?? process.env.SUPPORT_CATEGORY_ID ?? null;
+
+    console.log("createSupportTicket parent resolution", {
+        passedParentCategoryId: parentCategoryId,
+        configSupportTicketCategoryId: config.discord?.supportTicketCategoryId,
+        envSupportCategoryId: process.env.SUPPORT_CATEGORY_ID,
+        resolvedTargetParentId: targetParentId,
+    });
     const permissionOverwrites = [
         {
             id: guild.roles.everyone.id,
