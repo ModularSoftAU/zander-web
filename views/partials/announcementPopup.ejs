@@ -17,12 +17,12 @@
     .announcement-popup-overlay {
         position: fixed;
         inset: 0;
-        background: rgba(0, 0, 0, 0.5);
+        background: rgba(0, 0, 0, 0.6);
         display: flex;
         align-items: center;
         justify-content: center;
         z-index: 2000;
-        padding: 16px;
+        padding: 12px;
     }
 
     .announcement-popup {
@@ -31,8 +31,10 @@
         border-radius: 12px;
         max-width: 520px;
         width: 100%;
-        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
         overflow: hidden;
+        max-height: 90vh;
+        overflow-y: auto;
     }
 
     .announcement-popup-image img {
@@ -42,12 +44,14 @@
 
     .announcement-popup-body {
         padding: 20px;
+        padding-top: 16px;
     }
 
     .announcement-popup-text {
         margin: 0;
         font-size: 1rem;
         color: #222;
+        line-height: 1.5;
     }
 
     .announcement-popup-actions {
@@ -59,12 +63,61 @@
     .announcement-popup-close {
         position: absolute;
         top: 8px;
-        right: 10px;
+        right: 8px;
         border: none;
-        background: transparent;
-        font-size: 24px;
+        background: rgba(0, 0, 0, 0.6);
+        font-size: 20px;
+        font-weight: bold;
         cursor: pointer;
-        color: #555;
+        color: #fff;
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        line-height: 1;
+        z-index: 10;
+        transition: background 0.2s ease;
+    }
+
+    .announcement-popup-close:hover {
+        background: rgba(0, 0, 0, 0.8);
+    }
+
+    /* Mobile styles */
+    @media (max-width: 576px) {
+        .announcement-popup-overlay {
+            padding: 8px;
+            align-items: flex-start;
+            padding-top: 40px;
+        }
+
+        .announcement-popup {
+            max-width: 100%;
+            border-radius: 10px;
+        }
+
+        .announcement-popup-body {
+            padding: 16px;
+            padding-top: 12px;
+        }
+
+        .announcement-popup-text {
+            font-size: 0.95rem;
+        }
+
+        .announcement-popup-actions {
+            padding: 0 16px 16px;
+        }
+
+        .announcement-popup-close {
+            top: 6px;
+            right: 6px;
+            width: 36px;
+            height: 36px;
+            font-size: 22px;
+        }
     }
 </style>
 

@@ -36,7 +36,7 @@
                                 <% } %>
                             </div>
                             <div class="text-muted"><%= notification.message %></div>
-                            <small class="text-muted"><%= new Date(notification.createdAt).toLocaleString() %></small>
+                            <small class="text-muted"><span data-relative-time="<%= new Date(notification.createdAt).toISOString() %>"></span></small>
                         </a>
                         <form action="/notifications/<%= notification.notificationId %>/dismiss" method="POST">
                             <button type="submit" class="btn btn-sm btn-outline-secondary" aria-label="Dismiss notification">×</button>

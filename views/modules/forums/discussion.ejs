@@ -92,7 +92,7 @@
                     <% if (post.user.ranks && post.user.ranks.length) { %>
                       <div class="d-flex flex-column gap-1 mt-2">
                         <% post.user.ranks.forEach(function(rank) { %>
-                          <span class="rank-pill" style="background-color: <%= rank.badgeColour || '#f1f5f9' %>; color: <%= rank.textColour || '#111827' %>"><%= rank.displayName %></span>
+                          <span class="rank-pill" style="--rank-pill-bg: <%= rank.badgeColour || '#1f2937' %>; --rank-pill-text: <%= rank.textColour || '#ffffff' %>;"><%= rank.displayName %></span>
                         <% }); %>
                       </div>
                     <% } %>

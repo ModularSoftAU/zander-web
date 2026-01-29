@@ -43,7 +43,7 @@
                                 <td>
                                     <span class="badge rounded-pill <%= statusClass %>"><%= ticket.status %></span>
                                 </td>
-                                <td><span class="local-datetime" data-timestamp="<%= new Date(ticket.createdAt).toISOString() %>"></span></td>
+                                <td><span data-relative-time="<%= new Date(ticket.createdAt).toISOString() %>" data-relative-format="both"></span></td>
                                 <td>
                                     <a href="/support/ticket/<%= ticket.ticketId %>" class="btn btn-primary">View</a>
                                 </td>
@@ -55,16 +55,5 @@
         </div>
     </div>
 </div>
-
-<script>
-    document.addEventListener("DOMContentLoaded", () => {
-        document.querySelectorAll(".local-datetime").forEach((element) => {
-            const timestamp = element.getAttribute("data-timestamp");
-            if (!timestamp) return;
-            const date = new Date(timestamp);
-            element.textContent = date.toLocaleString();
-        });
-    });
-</script>
 
 <%- include('../../modules/footer.ejs') %>
