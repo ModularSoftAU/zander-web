@@ -545,27 +545,11 @@ export async function createSupportTicket(
         throw new Error("Discord guild is unavailable for ticket creation");
     }
 
-    let targetParentId = null;
-
-    if (parentCategoryId !== false) {
-        targetParentId =
-            parentCategoryId && parentCategoryId !== "undefined" && parentCategoryId !== ""
-                ? parentCategoryId
-                : null;
-
-        if (!targetParentId) {
-            try {
-                targetParentId = await getCategoryDiscordParentId(categoryId);
-            } catch (categoryError) {
-                console.error("Failed to resolve category Discord parent", categoryError);
-            }
-        }
-
-        if (!targetParentId) {
-            targetParentId =
-                config.discord?.supportTicketCategoryId ?? process.env.SUPPORT_CATEGORY_ID ?? null;
-        }
-    }
+    // Use explicitly passed parentCategoryId, otherwise use global config
+    let targetParentId =
+        parentCategoryId && parentCategoryId !== "undefined" && parentCategoryId !== ""
+            ? parentCategoryId
+            : config.discord?.supportTicketCategoryId ?? process.env.SUPPORT_CATEGORY_ID ?? null;
     const permissionOverwrites = [
         {
             id: guild.roles.everyone.id,
@@ -605,26 +589,9 @@ export async function createSupportTicket(
         reason: `Support ticket for ${discordUserId ?? `user ${userId}`}`,
     };
 
+    // Set parent category if configured
     if (targetParentId) {
         channelCreationOptions.parent = targetParentId;
-        try {
-            const parentChannel = await guild.channels.fetch(targetParentId);
-            if (parentChannel?.type === ChannelType.GuildCategory) {
-                channelCreationOptions.parent = parentChannel.id;
-            } else {
-                console.warn("Configured ticket parent is not a category; attempting fallback");
-                const fallbackParentId =
-                    config.discord?.supportTicketCategoryId ?? process.env.SUPPORT_CATEGORY_ID ?? null;
-                if (fallbackParentId && fallbackParentId !== targetParentId) {
-                    const fallbackChannel = await guild.channels.fetch(fallbackParentId);
-                    if (fallbackChannel?.type === ChannelType.GuildCategory) {
-                        channelCreationOptions.parent = fallbackChannel.id;
-                    }
-                }
-            }
-        } catch (parentError) {
-            console.error("Failed to fetch configured ticket parent category", parentError);
-        }
     }
 
     const channel = await guild.channels.create(channelCreationOptions);
@@ -718,23 +685,11 @@ export async function recreateTicketChannel(
 
     const staffRoleIds = await getCategoryPermissions(ticket.categoryId);
 
-    let resolvedParentId =
+    // Use explicitly passed parentCategoryId, otherwise use global config
+    const resolvedParentId =
         parentCategoryId && parentCategoryId !== "undefined" && parentCategoryId !== ""
             ? parentCategoryId
-            : null;
-
-    if (!resolvedParentId) {
-        try {
-            resolvedParentId = await getCategoryDiscordParentId(ticket.categoryId);
-        } catch (categoryError) {
-            console.error("recreateTicketChannel: failed to resolve category Discord parent", categoryError);
-        }
-    }
-
-    if (!resolvedParentId) {
-        resolvedParentId =
-            config.discord?.supportTicketCategoryId ?? process.env.SUPPORT_CATEGORY_ID ?? null;
-    }
+            : config.discord?.supportTicketCategoryId ?? process.env.SUPPORT_CATEGORY_ID ?? null;
 
     const permissionOverwrites = [
         {
@@ -775,26 +730,9 @@ export async function recreateTicketChannel(
         reason: `Ticket #${ticket.ticketId} reopened`,
     };
 
+    // Set parent category if configured
     if (resolvedParentId) {
         channelOptions.parent = resolvedParentId;
-        try {
-            const parentChannel = await guild.channels.fetch(resolvedParentId);
-            if (parentChannel?.type === ChannelType.GuildCategory) {
-                channelOptions.parent = parentChannel.id;
-            } else {
-                console.warn("Configured ticket parent is not a category during reopen; attempting fallback");
-                const fallbackParentId =
-                    config.discord?.supportTicketCategoryId ?? process.env.SUPPORT_CATEGORY_ID ?? null;
-                if (fallbackParentId && fallbackParentId !== resolvedParentId) {
-                    const fallbackChannel = await guild.channels.fetch(fallbackParentId);
-                    if (fallbackChannel?.type === ChannelType.GuildCategory) {
-                        channelOptions.parent = fallbackChannel.id;
-                    }
-                }
-            }
-        } catch (parentError) {
-            console.error("Failed to fetch configured ticket parent category during reopen", parentError);
-        }
     }
 
     const channel = await guild.channels.create(channelOptions);
