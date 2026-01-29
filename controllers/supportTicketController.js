@@ -466,16 +466,29 @@ export async function removeCategoryPermission(categoryId, roleId) {
     });
 }
 
-export async function createSupportCategory(name, description) {
+export async function createSupportCategory(name, description, discordCategoryId = null) {
+  const hasColumn = await ensureTicketCategoryDiscordColumn();
+
   return new Promise((resolve, reject) => {
-    db.query(
-      "INSERT INTO supportTicketCategories (name, description) VALUES (?, ?)",
-      [name, description],
-      (err, results) => {
-        if (err) reject(err);
-        resolve(results);
-      }
-    );
+    if (hasColumn && discordCategoryId) {
+      db.query(
+        "INSERT INTO supportTicketCategories (name, description, discordCategoryId) VALUES (?, ?, ?)",
+        [name, description, discordCategoryId],
+        (err, results) => {
+          if (err) reject(err);
+          else resolve(results);
+        }
+      );
+    } else {
+      db.query(
+        "INSERT INTO supportTicketCategories (name, description) VALUES (?, ?)",
+        [name, description],
+        (err, results) => {
+          if (err) reject(err);
+          else resolve(results);
+        }
+      );
+    }
   });
 }
 
@@ -1584,15 +1597,29 @@ export async function findUserByIdentifier(identifier) {
     });
 }
 
-export async function updateSupportCategory(id, name, description) {
+export async function updateSupportCategory(id, name, description, discordCategoryId = null) {
+    const hasColumn = await ensureTicketCategoryDiscordColumn();
+
     return new Promise((resolve, reject) => {
-        db.query("UPDATE supportTicketCategories SET name = ?, description = ? WHERE categoryId = ?", [name, description, id], (err, results) => {
-            if (err) {
-                reject(err);
-            } else {
-                resolve(results);
-            }
-        });
+        if (hasColumn) {
+            db.query(
+                "UPDATE supportTicketCategories SET name = ?, description = ?, discordCategoryId = ? WHERE categoryId = ?",
+                [name, description, discordCategoryId || null, id],
+                (err, results) => {
+                    if (err) reject(err);
+                    else resolve(results);
+                }
+            );
+        } else {
+            db.query(
+                "UPDATE supportTicketCategories SET name = ?, description = ? WHERE categoryId = ?",
+                [name, description, id],
+                (err, results) => {
+                    if (err) reject(err);
+                    else resolve(results);
+                }
+            );
+        }
     });
 }
 

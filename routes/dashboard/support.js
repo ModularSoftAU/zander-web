@@ -338,8 +338,8 @@ export default function supportDashboardRoutes(
       const hasTicketsAccess = await requireTicketPermission(req, res);
       if (hasTicketsAccess !== true) return hasTicketsAccess;
 
-      const { name, description } = req.body;
-      await createSupportCategory(name, description);
+      const { name, description, discordCategoryId } = req.body;
+      await createSupportCategory(name, description, discordCategoryId);
 
       await updateSupportMessage(client);
 
@@ -424,8 +424,8 @@ export default function supportDashboardRoutes(
       if (hasTicketsAccess !== true) return hasTicketsAccess;
 
       const { id } = req.params;
-      const { name, description } = req.body;
-      await updateSupportCategory(id, name, description);
+      const { name, description, discordCategoryId } = req.body;
+      await updateSupportCategory(id, name, description, discordCategoryId);
 
       await updateSupportMessage(client);
 
