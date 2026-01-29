@@ -167,9 +167,9 @@
                                         <tbody>
                                             <tr>
                                                 <th scope="row" class="w-50">Last Minecraft Session</th>
-                                                <td data-bs-toggle="tooltip" data-placement="top" title="<%= moment(profileApiData.audit_lastMinecraftLogin).fromNow() %>">
-                                                    <% if (moment(profileApiData.audit_lastMinecraftLogin).isValid()) { %>
-                                                        <%= moment(profileApiData.audit_lastMinecraftLogin).format('LLLL') %>
+                                                <td>
+                                                    <% if (profileApiData.audit_lastMinecraftLogin && new Date(profileApiData.audit_lastMinecraftLogin).getTime() > 0) { %>
+                                                        <span data-relative-time="<%= new Date(profileApiData.audit_lastMinecraftLogin).toISOString() %>" data-relative-format="both"></span>
                                                     <% } else { %>
                                                         <i>No data!</i>
                                                     <% } %>
@@ -177,9 +177,9 @@
                                             </tr>
                                             <tr>
                                                 <th scope="row">Last Minecraft Message</th>
-                                                <td data-bs-toggle="tooltip" data-placement="top" title="<%= moment(profileApiData.audit_lastMinecraftMessage).fromNow() %>">
-                                                    <% if (moment(profileApiData.audit_lastMinecraftMessage).isValid()) { %>
-                                                        <%= moment(profileApiData.audit_lastMinecraftMessage).format('LLLL') %>
+                                                <td>
+                                                    <% if (profileApiData.audit_lastMinecraftMessage && new Date(profileApiData.audit_lastMinecraftMessage).getTime() > 0) { %>
+                                                        <span data-relative-time="<%= new Date(profileApiData.audit_lastMinecraftMessage).toISOString() %>" data-relative-format="both"></span>
                                                     <% } else { %>
                                                         <i>No data!</i>
                                                     <% } %>
@@ -203,9 +203,9 @@
                                         <tbody>
                                             <tr>
                                                 <th scope="row" class="w-50">Last Discord Message</th>
-                                                <td data-bs-toggle="tooltip" data-placement="top" title="<%= moment(profileApiData.audit_lastDiscordMessage).fromNow() %>">
-                                                    <% if (moment(profileApiData.audit_lastDiscordMessage).isValid()) { %>
-                                                        <%= moment(profileApiData.audit_lastDiscordMessage).format('LLLL') %>
+                                                <td>
+                                                    <% if (profileApiData.audit_lastDiscordMessage && new Date(profileApiData.audit_lastDiscordMessage).getTime() > 0) { %>
+                                                        <span data-relative-time="<%= new Date(profileApiData.audit_lastDiscordMessage).toISOString() %>" data-relative-format="both"></span>
                                                     <% } else { %>
                                                         <i>No data!</i>
                                                     <% } %>
@@ -213,9 +213,9 @@
                                             </tr>
                                             <tr>
                                                 <th scope="row">Last Discord Voice Session</th>
-                                                <td data-bs-toggle="tooltip" data-placement="top" title="<%= moment(profileApiData.audit_lastDiscordVoice).fromNow() %>">
-                                                    <% if (moment(profileApiData.audit_lastDiscordVoice).isValid()) { %>
-                                                        <%= moment(profileApiData.audit_lastDiscordVoice).format('LLLL') %>
+                                                <td>
+                                                    <% if (profileApiData.audit_lastDiscordVoice && new Date(profileApiData.audit_lastDiscordVoice).getTime() > 0) { %>
+                                                        <span data-relative-time="<%= new Date(profileApiData.audit_lastDiscordVoice).toISOString() %>" data-relative-format="both"></span>
                                                     <% } else { %>
                                                         <i>No data!</i>
                                                     <% } %>
@@ -239,9 +239,9 @@
                                         <tbody>
                                             <tr>
                                                 <th scope="row" class="w-50">Last Website Login</th>
-                                                <td data-bs-toggle="tooltip" data-placement="top" title="<%= moment(profileApiData.audit_lastWebsiteLogin).fromNow() %>">
-                                                    <% if (moment(profileApiData.audit_lastWebsiteLogin).isValid()) { %>
-                                                        <%= moment(profileApiData.audit_lastWebsiteLogin).format('LLLL') %>
+                                                <td>
+                                                    <% if (profileApiData.audit_lastWebsiteLogin && new Date(profileApiData.audit_lastWebsiteLogin).getTime() > 0) { %>
+                                                        <span data-relative-time="<%= new Date(profileApiData.audit_lastWebsiteLogin).toISOString() %>" data-relative-format="both"></span>
                                                     <% } else { %>
                                                         <i>No data!</i>
                                                     <% } %>
@@ -273,7 +273,7 @@
                                                     <td><%= report.reportedUser %></td>
                                                     <td><%= report.reportReason %></td>
                                                     <td><span class="badge text-bg-primary"><%= report.reportPlatform %></span></td>
-                                                    <td><%= moment(report.reportDateTime).format('Do MMMM YYYY, h:mm a') %></td>
+                                                    <td><span data-relative-time="<%= new Date(report.reportDateTime).toISOString() %>" data-relative-format="datetime"></span></td>
                                                 </tr>
                                             <% }) %>
                                         </tbody>
@@ -290,10 +290,10 @@
             <div class="card shadow-sm border-0 mb-4">
                 <div class="card-body p-4">
                     <h5 class="card-title text-uppercase text-muted mb-3">Member Since</h5>
-                    <p class="mb-1 fw-semibold" data-bs-toggle="tooltip" data-placement="top" title="<%= moment(profileApiData.joined).fromNow() %>">
-                        <%= moment(profileApiData.joined).format('LLLL') %>
+                    <p class="mb-1 fw-semibold">
+                        <span data-relative-time="<%= new Date(profileApiData.joined).toISOString() %>" data-relative-format="full"></span>
                     </p>
-                    <p class="text-muted small mb-0">Joined <%= moment(profileApiData.joined).fromNow() %></p>
+                    <p class="text-muted small mb-0">Joined <span data-relative-time="<%= new Date(profileApiData.joined).toISOString() %>"></span></p>
                 </div>
             </div>
 

@@ -48,7 +48,7 @@
                   <div class="card-header d-flex justify-content-between align-items-center">
                     <div>
                       <strong>Revision <%= revisions.length - index %></strong>
-                      · <%= moment(revision.createdAt).format('MMM D, YYYY [at] h:mm A') %>
+                      · <span data-relative-time="<%= new Date(revision.createdAt).toISOString() %>"></span>
                       <% if (revision.editorUsername) { %>
                         · by <a href="/profile/<%= revision.editorUsername %>"><%= revision.editorUsername %></a>
                       <% } %>

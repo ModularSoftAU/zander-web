@@ -77,7 +77,7 @@
                           <% if (discussion.author) { %>
                             started by <a href="/profile/<%= discussion.author.username %>"><%= discussion.author.username %></a>
                           <% } %>
-                          · <%= moment(discussion.createdAt).fromNow() %>
+                          · <span data-relative-time="<%= new Date(discussion.createdAt).toISOString() %>"></span>
                         </div>
                       </td>
                       <td class="text-center"><strong><%= discussion.replyCount %></strong></td>
@@ -87,7 +87,7 @@
                             <img src="<%= discussion.latestPost.user.avatarUrl %>" alt="<%= discussion.latestPost.user.username %> avatar" class="forums-avatar me-3" loading="lazy">
                             <div>
                               <div class="fw-semibold"><a href="/profile/<%= discussion.latestPost.user.username %>"><%= discussion.latestPost.user.username %></a></div>
-                              <div class="text-muted small"><%= moment(discussion.latestPost.createdAt).fromNow() %></div>
+                              <div class="text-muted small"><span data-relative-time="<%= new Date(discussion.latestPost.createdAt).toISOString() %>"></span></div>
                             </div>
                           </div>
                         <% } else { %>
