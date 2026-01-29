@@ -35,9 +35,17 @@ const PERMISSIONS = {
 };
 
 function getUserPermissions(req) {
-  return Array.isArray(req.session?.user?.permissions)
-    ? req.session.user.permissions
+  const permissions = Array.isArray(req.session?.user?.permissions)
+    ? [...req.session.user.permissions]
     : [];
+
+  // Add @authenticated pseudo-permission for logged-in users
+  // This allows categories to require login by setting viewPermission to "@authenticated"
+  if (isLoggedIn(req)) {
+    permissions.push("@authenticated");
+  }
+
+  return permissions;
 }
 
 function getCurrentUserId(req) {
@@ -58,6 +66,10 @@ function isContentEmpty(rawValue) {
 }
 
 function userCanViewCategory(category, req) {
+  // Special permission: @authenticated means user must be logged in
+  if (category.viewPermission === "@authenticated") {
+    return isLoggedIn(req);
+  }
   const permissions = getUserPermissions(req);
   return permissionMatch(permissions, category.viewPermission);
 }
@@ -68,6 +80,11 @@ function userCanPostInCategory(category, req) {
   }
 
   if (!category.postPermission) {
+    return true;
+  }
+
+  // Special permission: @authenticated means any logged-in user can post
+  if (category.postPermission === "@authenticated") {
     return true;
   }
 

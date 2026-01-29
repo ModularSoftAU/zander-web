@@ -175,6 +175,18 @@
             </form>
           </div>
         </div>
+      <% } else if (!currentUser && !discussion.isArchived && !discussion.isLocked) { %>
+        <div class="forums-card card shadow-sm mt-4">
+          <div class="card-body text-center py-4">
+            <i class="fa-solid fa-comments fa-2x text-muted mb-3"></i>
+            <h5 class="mb-2">Want to join the conversation?</h5>
+            <p class="text-muted mb-3">Sign up or log in to share your thoughts and connect with the community.</p>
+            <div class="d-flex justify-content-center gap-2">
+              <a href="/login?returnTo=<%= encodeURIComponent(req.url) %>" class="btn btn-main">Log In</a>
+              <a href="/register" class="btn btn-outline-secondary">Sign Up</a>
+            </div>
+          </div>
+        </div>
       <% } %>
     </div>
   </div>
