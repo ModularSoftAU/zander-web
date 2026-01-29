@@ -24,6 +24,8 @@ import {
 } from "../api/common.js";
 import { UserGetter } from "../controllers/userController.js";
 import { getWebAnnouncement } from "../controllers/announcementController.js";
+import { MessageBuilder, Webhook } from "discord-webhook-node";
+import { sendWebhookMessage } from "../lib/discord/webhooks.mjs";
 
 const PERMISSIONS = {
   MODERATE: "zander.forums.moderate",
@@ -184,6 +186,46 @@ function buildPostPermalink(req, discussion, postId) {
 
   const slug = discussion.slug ? `/${discussion.slug}` : "";
   return `${baseUrl}/forums/discussion/${discussion.discussionId}${slug}#post-${postId}`;
+}
+
+const FORUM_LOG_COLORS = {
+  create: 0x22c55e,   // green
+  reply: 0x3b82f6,    // blue
+  edit: 0xf59e0b,     // amber
+  delete: 0xef4444,   // red
+  lock: 0xf97316,     // orange
+  unlock: 0x22c55e,   // green
+  sticky: 0xa855f7,   // purple
+  unsticky: 0x6b7280, // gray
+  archive: 0x64748b,  // slate
+  unarchive: 0x22c55e,// green
+  report: 0xdc2626,   // red
+};
+
+function sendForumLog(config, { action, title, description, url, avatarUrl, fields }) {
+  const webhookUrl = config.discord?.webhooks?.forumLog;
+  if (!webhookUrl) return;
+
+  try {
+    const hook = new Webhook(webhookUrl);
+    const embed = new MessageBuilder()
+      .setTitle(title)
+      .setColor(FORUM_LOG_COLORS[action] || 0x6b7280)
+      .setTimestamp();
+
+    if (description) embed.setDescription(description);
+    if (url) embed.setURL(url);
+    if (avatarUrl) embed.setThumbnail(avatarUrl);
+    if (fields) {
+      fields.forEach(([name, value, inline]) => {
+        if (value) embed.addField(name, value, inline ?? true);
+      });
+    }
+
+    sendWebhookMessage(hook, embed, { context: `forums#${action}` });
+  } catch (err) {
+    console.error("Failed to send forum log webhook", err);
+  }
 }
 
 async function renderForumsView(res, req, viewPath, data, config, features) {
@@ -444,6 +486,21 @@ export default function forumRoutes(
         content,
       });
 
+      const baseUrl = getSiteBaseUrl(req);
+      const username = req.session?.user?.username || "Unknown";
+      const uuid = req.session?.user?.uuid;
+      sendForumLog(config, {
+        action: "create",
+        title: "New Discussion Created",
+        description: `**${title}**`,
+        url: baseUrl ? `${baseUrl}/forums/discussion/${discussion.discussionId}/${discussion.slug}` : undefined,
+        avatarUrl: uuid ? `https://crafthead.net/helm/${uuid}` : undefined,
+        fields: [
+          ["Author", username],
+          ["Category", category.name],
+        ],
+      });
+
       await setBannerCookie(
         "success",
         "Discussion created successfully.",
@@ -622,6 +679,22 @@ export default function forumRoutes(
         userId,
         content,
       });
+
+      const baseUrl = getSiteBaseUrl(req);
+      const username = req.session?.user?.username || "Unknown";
+      const uuid = req.session?.user?.uuid;
+      sendForumLog(config, {
+        action: "reply",
+        title: "New Reply Posted",
+        description: `Reply to **${discussion.title || `Discussion #${discussionId}`}**`,
+        url: baseUrl ? `${baseUrl}/forums/discussion/${discussion.discussionId}/${discussion.slug}` : undefined,
+        avatarUrl: uuid ? `https://crafthead.net/helm/${uuid}` : undefined,
+        fields: [
+          ["Author", username],
+          ["Category", category?.name || "Unknown"],
+        ],
+      });
+
       await setBannerCookie("success", "Reply posted.", res);
     } catch (error) {
       console.error("[FORUMS] Failed to create reply", error);
@@ -768,6 +841,21 @@ export default function forumRoutes(
         editorUserId: getCurrentUserId(req),
       });
 
+      const baseUrl = getSiteBaseUrl(req);
+      const username = req.session?.user?.username || "Unknown";
+      const uuid = req.session?.user?.uuid;
+      sendForumLog(config, {
+        action: "edit",
+        title: "Discussion Edited",
+        description: `**${title}**`,
+        url: baseUrl ? `${baseUrl}/forums/discussion/${discussion.discussionId}/${discussion.slug}` : undefined,
+        avatarUrl: uuid ? `https://crafthead.net/helm/${uuid}` : undefined,
+        fields: [
+          ["Edited By", username],
+          ["Category", category?.name || "Unknown"],
+        ],
+      });
+
       await setBannerCookie("success", "Discussion updated.", res);
     } catch (error) {
       console.error("[FORUMS] Failed to update discussion", error);
@@ -814,6 +902,20 @@ export default function forumRoutes(
 
     try {
       await deleteDiscussion(discussionId);
+
+      const username = req.session?.user?.username || "Unknown";
+      const uuid = req.session?.user?.uuid;
+      sendForumLog(config, {
+        action: "delete",
+        title: "Discussion Deleted",
+        description: `**${discussion.title || `Discussion #${discussionId}`}**`,
+        avatarUrl: uuid ? `https://crafthead.net/helm/${uuid}` : undefined,
+        fields: [
+          ["Deleted By", username],
+          ["Category", category?.name || "Unknown"],
+        ],
+      });
+
       await setBannerCookie("success", "Discussion deleted.", res);
       return res.redirect(`/forums/category/${category.slug}`);
     } catch (error) {
@@ -962,6 +1064,21 @@ export default function forumRoutes(
         content,
         editorUserId: getCurrentUserId(req),
       });
+
+      const baseUrl = getSiteBaseUrl(req);
+      const username = req.session?.user?.username || "Unknown";
+      const uuid = req.session?.user?.uuid;
+      sendForumLog(config, {
+        action: "edit",
+        title: "Reply Edited",
+        description: `Reply in **${result.discussion.title || `Discussion #${result.discussion.discussionId}`}**`,
+        url: baseUrl ? `${baseUrl}/forums/discussion/${result.discussion.discussionId}/${result.discussion.slug}#post-${postId}` : undefined,
+        avatarUrl: uuid ? `https://crafthead.net/helm/${uuid}` : undefined,
+        fields: [
+          ["Edited By", username],
+        ],
+      });
+
       await setBannerCookie("success", "Post updated.", res);
     } catch (error) {
       console.error("[FORUMS] Failed to update post", error);
@@ -1028,6 +1145,19 @@ export default function forumRoutes(
 
     try {
       await deletePost(postId);
+
+      const username = req.session?.user?.username || "Unknown";
+      const uuid = req.session?.user?.uuid;
+      sendForumLog(config, {
+        action: "delete",
+        title: "Reply Deleted",
+        description: `Reply removed from **${result.discussion.title || `Discussion #${result.discussion.discussionId}`}**`,
+        avatarUrl: uuid ? `https://crafthead.net/helm/${uuid}` : undefined,
+        fields: [
+          ["Deleted By", username],
+        ],
+      });
+
       await setBannerCookie("success", "Post deleted.", res);
     } catch (error) {
       console.error("[FORUMS] Failed to delete post", error);
@@ -1182,6 +1312,18 @@ export default function forumRoutes(
         });
       }
 
+      const uuid = req.session?.user?.uuid;
+      sendForumLog(config, {
+        action: "report",
+        title: "Post Reported",
+        description: `A post by **${author?.username || "Unknown"}** was reported`,
+        avatarUrl: uuid ? `https://crafthead.net/helm/${uuid}` : undefined,
+        fields: [
+          ["Reported By", reporterUsername],
+          ["Reason", truncatedReason, false],
+        ],
+      });
+
       return res.send({
         success: true,
         message:
@@ -1257,6 +1399,30 @@ export default function forumRoutes(
 
       try {
         await setDiscussionFlags(discussionId, updates);
+
+        const actionLabels = {
+          lock: "Discussion Locked",
+          unlock: "Discussion Unlocked",
+          sticky: "Discussion Pinned",
+          unsticky: "Discussion Unpinned",
+          archive: "Discussion Archived",
+          unarchive: "Discussion Unarchived",
+        };
+
+        const baseUrl = getSiteBaseUrl(req);
+        const username = req.session?.user?.username || "Unknown";
+        const uuid = req.session?.user?.uuid;
+        sendForumLog(config, {
+          action,
+          title: actionLabels[action] || `Discussion ${action}`,
+          description: `**${result.discussion.title || `Discussion #${discussionId}`}**`,
+          url: baseUrl ? `${baseUrl}/forums/discussion/${result.discussion.discussionId}/${result.discussion.slug}` : undefined,
+          avatarUrl: uuid ? `https://crafthead.net/helm/${uuid}` : undefined,
+          fields: [
+            ["Action By", username],
+          ],
+        });
+
         await setBannerCookie("success", "Discussion updated.", res);
       } catch (error) {
         console.error("[FORUMS] Failed to update discussion flags", error);
