@@ -202,6 +202,17 @@ const FORUM_LOG_COLORS = {
   report: 0xdc2626,   // red
 };
 
+function stripHtmlAndTruncate(html, maxLength = 200) {
+  if (!html) return "";
+  const text = String(html)
+    .replace(/<[^>]*>/g, " ")
+    .replace(/&nbsp;/gi, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+  if (text.length <= maxLength) return text;
+  return text.slice(0, maxLength) + "…";
+}
+
 function sendForumLog(config, { action, title, description, url, avatarUrl, fields }) {
   const webhookUrl = config.discord?.webhooks?.forumLog;
   if (!webhookUrl) return;
@@ -229,13 +240,18 @@ function sendForumLog(config, { action, title, description, url, avatarUrl, fiel
 }
 
 async function renderForumsView(res, req, viewPath, data, config, features) {
+  const [globalImage, announcementWeb] = await Promise.all([
+    getGlobalImage(),
+    getWebAnnouncement(),
+  ]);
+
   return res.view(viewPath, {
     ...data,
     config,
     features,
     req,
-    globalImage: await getGlobalImage(),
-    announcementWeb: await getWebAnnouncement(),
+    globalImage,
+    announcementWeb,
   });
 }
 
@@ -489,6 +505,7 @@ export default function forumRoutes(
       const baseUrl = getSiteBaseUrl(req);
       const username = req.session?.user?.username || "Unknown";
       const uuid = req.session?.user?.uuid;
+      const contentSnippet = stripHtmlAndTruncate(content);
       sendForumLog(config, {
         action: "create",
         title: "New Discussion Created",
@@ -498,6 +515,7 @@ export default function forumRoutes(
         fields: [
           ["Author", username],
           ["Category", category.name],
+          ["Content", contentSnippet || "—", false],
         ],
       });
 
@@ -564,8 +582,10 @@ export default function forumRoutes(
     }
 
     const permissions = getUserPermissions(req);
-    const categoryTree = await getCategoriesForUser(permissions);
-    const posts = await getDiscussionPosts(discussionId);
+    const [categoryTree, posts] = await Promise.all([
+      getCategoriesForUser(permissions),
+      getDiscussionPosts(discussionId),
+    ]);
 
     const canModerate = userCanModerate(req);
     const canReply =
@@ -683,6 +703,7 @@ export default function forumRoutes(
       const baseUrl = getSiteBaseUrl(req);
       const username = req.session?.user?.username || "Unknown";
       const uuid = req.session?.user?.uuid;
+      const contentSnippet = stripHtmlAndTruncate(content);
       sendForumLog(config, {
         action: "reply",
         title: "New Reply Posted",
@@ -692,6 +713,7 @@ export default function forumRoutes(
         fields: [
           ["Author", username],
           ["Category", category?.name || "Unknown"],
+          ["Content", contentSnippet || "—", false],
         ],
       });
 
@@ -768,11 +790,12 @@ export default function forumRoutes(
       );
     }
 
-    const posts = await getDiscussionPosts(discussionId);
-    const originalPost = posts.find((post) => post.isOriginal);
-
     const permissions = getUserPermissions(req);
-    const categoryTree = await getCategoriesForUser(permissions);
+    const [posts, categoryTree] = await Promise.all([
+      getDiscussionPosts(discussionId),
+      getCategoriesForUser(permissions),
+    ]);
+    const originalPost = posts.find((post) => post.isOriginal);
 
     return renderForumsView(
       res,
@@ -844,6 +867,7 @@ export default function forumRoutes(
       const baseUrl = getSiteBaseUrl(req);
       const username = req.session?.user?.username || "Unknown";
       const uuid = req.session?.user?.uuid;
+      const contentSnippet = stripHtmlAndTruncate(content);
       sendForumLog(config, {
         action: "edit",
         title: "Discussion Edited",
@@ -853,6 +877,7 @@ export default function forumRoutes(
         fields: [
           ["Edited By", username],
           ["Category", category?.name || "Unknown"],
+          ["Content", contentSnippet || "—", false],
         ],
       });
 
@@ -1068,6 +1093,7 @@ export default function forumRoutes(
       const baseUrl = getSiteBaseUrl(req);
       const username = req.session?.user?.username || "Unknown";
       const uuid = req.session?.user?.uuid;
+      const contentSnippet = stripHtmlAndTruncate(content);
       sendForumLog(config, {
         action: "edit",
         title: "Reply Edited",
@@ -1076,6 +1102,7 @@ export default function forumRoutes(
         avatarUrl: uuid ? `https://crafthead.net/helm/${uuid}` : undefined,
         fields: [
           ["Edited By", username],
+          ["Content", contentSnippet || "—", false],
         ],
       });
 

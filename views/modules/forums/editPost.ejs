@@ -46,4 +46,20 @@
   </div>
 </div>
 
+<script>
+  (() => {
+    document.querySelectorAll('form[method="post"]').forEach(form => {
+      form.addEventListener('submit', () => {
+        const btn = form.querySelector('button[type="submit"]');
+        if (!btn) return;
+        setTimeout(() => {
+          btn.disabled = true;
+          btn.dataset.originalText = btn.textContent;
+          btn.textContent = 'Submitting…';
+        }, 0);
+      });
+    });
+  })();
+</script>
+
 <%- include("../../modules/footer.ejs") %>
