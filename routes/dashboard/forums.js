@@ -31,9 +31,14 @@ export default function dashboardForumsRoutes(
     );
     if (!hasAccess) return;
 
-    const categoryTree = await getAllCategoriesForAdmin();
     const editId = Number.parseInt(req.query.edit, 10) || null;
-    const categoryToEdit = editId ? await getCategoryById(editId) : null;
+
+    const [categoryTree, categoryToEdit, globalImage, announcementWeb] = await Promise.all([
+      getAllCategoriesForAdmin(),
+      editId ? getCategoryById(editId) : Promise.resolve(null),
+      getGlobalImage(),
+      getWebAnnouncement(),
+    ]);
 
     return res.view("dashboard/forums/categories", {
       pageTitle: `Dashboard - Forum Categories`,
@@ -43,8 +48,8 @@ export default function dashboardForumsRoutes(
       categories: categoryTree.tree,
       flatCategories: categoryTree.flat,
       categoryToEdit,
-      globalImage: await getGlobalImage(),
-      announcementWeb: await getWebAnnouncement(),
+      globalImage,
+      announcementWeb,
     });
   });
 

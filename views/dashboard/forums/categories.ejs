@@ -94,50 +94,6 @@
       }) %>
     <% } %>
 
-    <div class="card shadow-sm mb-4">
-      <div class="card-header bg-light">
-        <strong>Create Category</strong>
-      </div>
-      <div class="card-body">
-        <form action="/dashboard/forums/categories/new" method="post" class="row g-3">
-          <div class="col-md-6">
-            <label class="form-label" for="categoryName">Name</label>
-            <input type="text" class="form-control" id="categoryName" name="name" maxlength="120" required>
-          </div>
-          <div class="col-md-6">
-            <label class="form-label" for="categorySlug">Slug (optional)</label>
-            <input type="text" class="form-control" id="categorySlug" name="slug" placeholder="auto-generated if empty">
-          </div>
-          <div class="col-md-6">
-            <label class="form-label" for="categoryParent">Parent Category</label>
-            <select class="form-select" id="categoryParent" name="parentCategoryId">
-              <option value="">No parent (top level)</option>
-              <% renderParentOptions(categories, 0, null, null); %>
-            </select>
-          </div>
-          <div class="col-md-3">
-            <label class="form-label" for="categoryPosition">Position</label>
-            <input type="number" class="form-control" id="categoryPosition" name="position" value="0">
-          </div>
-          <div class="col-md-6">
-            <label class="form-label" for="categoryViewPermission">View Permission (optional)</label>
-            <input type="text" class="form-control" id="categoryViewPermission" name="viewPermission" placeholder="Permission node required to view">
-          </div>
-          <div class="col-md-6">
-            <label class="form-label" for="categoryPostPermission">Post Permission (optional)</label>
-            <input type="text" class="form-control" id="categoryPostPermission" name="postPermission" placeholder="Permission node required to post">
-          </div>
-          <div class="col-12">
-            <label class="form-label" for="categoryDescription">Description</label>
-            <textarea class="form-control" id="categoryDescription" name="description" rows="2" placeholder="Shown beneath the category title"></textarea>
-          </div>
-          <div class="col-12 text-end">
-            <button type="submit" class="btn btn-main">Create Category</button>
-          </div>
-        </form>
-      </div>
-    </div>
-
     <% if (categoryToEdit) { %>
       <div class="card shadow-sm mb-4">
         <div class="card-header bg-info text-white">
@@ -183,6 +139,50 @@
               <div>
                 <button type="submit" class="btn btn-warning">Update Category</button>
               </div>
+            </div>
+          </form>
+        </div>
+      </div>
+    <% } else { %>
+      <div class="card shadow-sm mb-4">
+        <div class="card-header bg-light">
+          <strong>Create Category</strong>
+        </div>
+        <div class="card-body">
+          <form action="/dashboard/forums/categories/new" method="post" class="row g-3">
+            <div class="col-md-6">
+              <label class="form-label" for="categoryName">Name</label>
+              <input type="text" class="form-control" id="categoryName" name="name" maxlength="120" required>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label" for="categorySlug">Slug (optional)</label>
+              <input type="text" class="form-control" id="categorySlug" name="slug" placeholder="auto-generated if empty">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label" for="categoryParent">Parent Category</label>
+              <select class="form-select" id="categoryParent" name="parentCategoryId">
+                <option value="">No parent (top level)</option>
+                <% renderParentOptions(categories, 0, null, null); %>
+              </select>
+            </div>
+            <div class="col-md-3">
+              <label class="form-label" for="categoryPosition">Position</label>
+              <input type="number" class="form-control" id="categoryPosition" name="position" value="0">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label" for="categoryViewPermission">View Permission (optional)</label>
+              <input type="text" class="form-control" id="categoryViewPermission" name="viewPermission" placeholder="Permission node required to view">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label" for="categoryPostPermission">Post Permission (optional)</label>
+              <input type="text" class="form-control" id="categoryPostPermission" name="postPermission" placeholder="Permission node required to post">
+            </div>
+            <div class="col-12">
+              <label class="form-label" for="categoryDescription">Description</label>
+              <textarea class="form-control" id="categoryDescription" name="description" rows="2" placeholder="Shown beneath the category title"></textarea>
+            </div>
+            <div class="col-12 text-end">
+              <button type="submit" class="btn btn-main">Create Category</button>
             </div>
           </form>
         </div>

@@ -2190,6 +2190,12 @@ a:focus {
   box-shadow: 0 6px 18px rgba(15, 23, 42, 0.15);
 }
 
+.forums-avatar-inline {
+  width: 44px;
+  height: 44px;
+  object-fit: cover;
+}
+
 .forums-thread .forums-post {
   border: none;
   border-radius: 14px;
@@ -2197,23 +2203,6 @@ a:focus {
 
 .forums-thread .forums-post.original-post {
   border-left: 4px solid #2f508c;
-}
-
-.forums-post-sidebar {
-  min-width: 140px;
-}
-
-.forums-avatar-mobile {
-  width: 40px;
-  height: 40px;
-  object-fit: cover;
-}
-
-@media (max-width: 767.98px) {
-  .forums-post-layout {
-    flex-direction: column;
-    gap: 0 !important;
-  }
 }
 
 .forums-post-body {

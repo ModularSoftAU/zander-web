@@ -1502,6 +1502,19 @@ export default function forumRoutes(
       );
     }
 
+    if (!userCanModerate(req)) {
+      return renderForumsView(
+        res,
+        req,
+        "session/noPermission",
+        {
+          pageTitle: `Access Restricted`,
+        },
+        config,
+        features
+      );
+    }
+
     const revisions = await getPostRevisions(postId);
 
     const permissions = getUserPermissions(req);

@@ -84,28 +84,11 @@
         <% posts.forEach(function(post) { %>
           <article id="post-<%= post.postId %>" class="forums-post card shadow-sm mb-4 <%= post.isOriginal ? 'original-post' : '' %>">
             <div class="card-body">
-              <div class="d-flex gap-4 forums-post-layout">
-                <!-- Desktop sidebar -->
-                <div class="forums-post-sidebar text-center d-none d-md-block">
+              <div class="forums-post-layout">
+                <div class="forums-post-author mb-2">
                   <% if (post.user) { %>
-                    <img src="<%= post.user.avatarUrl %>" alt="<%= post.user.username %> avatar" class="forums-avatar mb-2" loading="lazy">
-                    <div class="fw-semibold"><a href="/profile/<%= post.user.username %>"><%= post.user.username %></a></div>
-                    <% if (post.user.ranks && post.user.ranks.length) { %>
-                      <div class="d-flex flex-column gap-1 mt-2">
-                        <% post.user.ranks.forEach(function(rank) { %>
-                          <span class="rank-pill" style="--rank-pill-bg: <%= rank.badgeColour || '#1f2937' %>; --rank-pill-text: <%= rank.textColour || '#ffffff' %>;"><%= rank.displayName %></span>
-                        <% }); %>
-                      </div>
-                    <% } %>
-                  <% } else { %>
-                    <div class="fw-semibold">Unknown</div>
-                  <% } %>
-                </div>
-                <!-- Mobile header -->
-                <div class="d-md-none w-100 mb-2">
-                  <% if (post.user) { %>
-                    <div class="d-flex align-items-center gap-2 mb-1">
-                      <img src="<%= post.user.avatarUrl %>" alt="<%= post.user.username %> avatar" class="forums-avatar-mobile rounded-circle" loading="lazy">
+                    <div class="d-flex align-items-center gap-2">
+                      <img src="<%= post.user.avatarUrl %>" alt="<%= post.user.username %> avatar" class="forums-avatar-inline rounded-circle" loading="lazy">
                       <div>
                         <div class="fw-semibold"><a href="/profile/<%= post.user.username %>"><%= post.user.username %></a></div>
                         <% if (post.user.ranks && post.user.ranks.length) { %>
@@ -121,7 +104,7 @@
                     <div class="fw-semibold">Unknown</div>
                   <% } %>
                 </div>
-                <div class="forums-post-content flex-grow-1">
+                <div class="forums-post-content">
                   <div class="forums-post-meta d-flex justify-content-between align-items-start flex-wrap gap-2">
                     <div class="text-muted small">
                       Posted <span data-relative-time="<%= new Date(post.createdAt).toISOString() %>"></span>
@@ -131,7 +114,7 @@
                     </div>
                     <div class="d-flex gap-2">
                       <% const isAuthor = currentUserId && post.user && currentUserId === post.user.userId; %>
-                      <% if (post.revisions && post.revisions.length) { %>
+                      <% if (canModerate && post.revisions && post.revisions.length) { %>
                         <a class="btn btn-sm btn-outline-secondary" href="/forums/post/<%= post.postId %>/revisions"><i class="fa-solid fa-clock-rotate-left"></i> History (<%= post.revisions.length %>)</a>
                       <% } %>
                       <% if (post.isOriginal) { %>
