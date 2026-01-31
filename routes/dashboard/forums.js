@@ -32,6 +32,7 @@ export default function dashboardForumsRoutes(
     if (!hasAccess) return;
 
     const editId = Number.parseInt(req.query.edit, 10) || null;
+    const createUnderId = Number.parseInt(req.query.create_under, 10) || null;
 
     const [categoryTree, categoryToEdit, globalImage, announcementWeb] = await Promise.all([
       getAllCategoriesForAdmin(),
@@ -48,6 +49,7 @@ export default function dashboardForumsRoutes(
       categories: categoryTree.tree,
       flatCategories: categoryTree.flat,
       categoryToEdit,
+      createUnderId,
       globalImage,
       announcementWeb,
     });

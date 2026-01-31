@@ -60,8 +60,9 @@
     <td class="text-center"><%= row.position %></td>
     <td class="text-end">
       <div class="btn-group btn-group-sm" role="group">
+        <a class="btn btn-outline-primary" href="/dashboard/forums/categories?create_under=<%= row.categoryId %>" title="Add subcategory"><i class="fa-solid fa-plus"></i></a>
         <a class="btn btn-outline-secondary" href="/dashboard/forums/categories?edit=<%= row.categoryId %>">Edit</a>
-        <form action="/dashboard/forums/categories/<%= row.categoryId %>/delete" method="post" onsubmit="return confirm('Delete this category? Discussions within will also be removed.');">
+        <form action="/dashboard/forums/categories/<%= row.categoryId %>/delete" method="post" class="d-inline" onsubmit="return confirm('Delete this category? Discussions within will also be removed.');">
           <button type="submit" class="btn btn-outline-danger">Delete</button>
         </form>
       </div>
@@ -146,7 +147,7 @@
     <% } else { %>
       <div class="card shadow-sm mb-4">
         <div class="card-header bg-light">
-          <strong>Create Category</strong>
+          <strong><%= createUnderId ? 'Create Subcategory' : 'Create Category' %></strong>
         </div>
         <div class="card-body">
           <form action="/dashboard/forums/categories/new" method="post" class="row g-3">
@@ -162,7 +163,7 @@
               <label class="form-label" for="categoryParent">Parent Category</label>
               <select class="form-select" id="categoryParent" name="parentCategoryId">
                 <option value="">No parent (top level)</option>
-                <% renderParentOptions(categories, 0, null, null); %>
+                <% renderParentOptions(categories, 0, createUnderId || null, null); %>
               </select>
             </div>
             <div class="col-md-3">
@@ -181,8 +182,15 @@
               <label class="form-label" for="categoryDescription">Description</label>
               <textarea class="form-control" id="categoryDescription" name="description" rows="2" placeholder="Shown beneath the category title"></textarea>
             </div>
-            <div class="col-12 text-end">
-              <button type="submit" class="btn btn-main">Create Category</button>
+            <div class="col-12 d-flex justify-content-between">
+              <div>
+                <% if (createUnderId) { %>
+                  <a class="btn btn-link" href="/dashboard/forums/categories">Cancel</a>
+                <% } %>
+              </div>
+              <div>
+                <button type="submit" class="btn btn-main"><%= createUnderId ? 'Create Subcategory' : 'Create Category' %></button>
+              </div>
             </div>
           </form>
         </div>

@@ -12,6 +12,7 @@ var pool = mysql.createPool({
   multipleStatements: true,
   connectTimeout: 30000, // 30 seconds
   acquireTimeout: 30000, // Time to wait for acquiring a connection
+  timezone: "Z", // Treat all database datetimes as UTC
 });
 
 pool.getConnection(function (err, connection) {
