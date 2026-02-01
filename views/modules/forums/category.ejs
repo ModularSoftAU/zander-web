@@ -48,7 +48,8 @@
               <p class="mb-0">There are no discussions here yet.</p>
             </div>
           <% } else { %>
-            <div class="table-responsive forums-table-wrapper">
+            <!-- Desktop table -->
+            <div class="forums-table-wrapper d-none d-md-block">
               <table class="table align-middle forums-table">
                 <thead>
                   <tr>
@@ -98,6 +99,43 @@
                   <% }); %>
                 </tbody>
               </table>
+            </div>
+            <!-- Mobile card list -->
+            <div class="d-md-none">
+              <% discussions.forEach(function(discussion) { %>
+                <div class="forums-mobile-card <%= discussion.isSticky ? 'is-sticky' : '' %> <%= discussion.isArchived ? 'is-archived' : '' %>">
+                  <div class="d-flex justify-content-between align-items-start mb-1">
+                    <div class="forums-discussion-title">
+                      <% if (discussion.isSticky) { %>
+                        <span class="forums-badge sticky">Sticky</span>
+                      <% } %>
+                      <% if (discussion.isLocked) { %>
+                        <span class="forums-badge locked"><i class="fa-solid fa-lock"></i></span>
+                      <% } %>
+                      <% if (discussion.isArchived) { %>
+                        <span class="forums-badge archived">Archived</span>
+                      <% } %>
+                      <a href="/forums/discussion/<%= discussion.discussionId %>/<%= discussion.slug %>"><%= discussion.title %></a>
+                    </div>
+                    <span class="badge bg-secondary rounded-pill ms-2 flex-shrink-0"><%= discussion.replyCount %></span>
+                  </div>
+                  <div class="forums-discussion-meta text-muted mb-2">
+                    <% if (discussion.author) { %>
+                      started by <a href="/profile/<%= discussion.author.username %>"><%= discussion.author.username %></a>
+                    <% } %>
+                    · <span data-relative-time="<%= new Date(discussion.createdAt).toISOString() %>"></span>
+                  </div>
+                  <% if (discussion.latestPost && discussion.latestPost.user) { %>
+                    <div class="d-flex align-items-center">
+                      <img src="<%= discussion.latestPost.user.avatarUrl %>" alt="" class="rounded-circle me-2" width="24" height="24" style="object-fit: cover;" loading="lazy">
+                      <small class="text-muted">
+                        <a href="/profile/<%= discussion.latestPost.user.username %>" class="text-muted"><%= discussion.latestPost.user.username %></a>
+                        replied <span data-relative-time="<%= new Date(discussion.latestPost.createdAt).toISOString() %>"></span>
+                      </small>
+                    </div>
+                  <% } %>
+                </div>
+              <% }); %>
             </div>
           <% } %>
 

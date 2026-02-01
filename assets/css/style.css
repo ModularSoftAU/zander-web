@@ -2248,3 +2248,79 @@ a:focus {
 .forums-revision-current h6 {
   font-weight: 600;
 }
+
+.forums-mobile-card {
+  padding: 0.85rem 0;
+  border-bottom: 1px solid rgba(15, 23, 42, 0.08);
+}
+
+.forums-mobile-card:last-child {
+  border-bottom: none;
+}
+
+.forums-mobile-card.is-sticky {
+  border-left: 3px solid #2f508c;
+  padding-left: 0.75rem;
+}
+
+.forums-mobile-card.is-archived {
+  opacity: 0.85;
+}
+
+/* ====== DASHBOARD ====== */
+
+.dashboard-sidebar-desktop {
+  position: sticky;
+  top: 1rem;
+}
+
+.dashboard-sidebar-nav ul {
+  margin: 0;
+  padding: 0;
+}
+
+.dashboard-nav-link {
+  display: block;
+  padding: 0.55rem 0.85rem;
+  color: #475569;
+  text-decoration: none;
+  font-size: 0.9rem;
+  border-radius: 6px;
+  transition: background 0.15s, color 0.15s;
+}
+
+.dashboard-nav-link:hover {
+  background: rgba(47, 80, 140, 0.08);
+  color: #2f508c;
+}
+
+.dashboard-nav-link.active {
+  background: rgba(47, 80, 140, 0.12);
+  color: #2f508c;
+  font-weight: 600;
+}
+
+.dashboard-nav-heading {
+  padding: 0.75rem 0.85rem 0.35rem;
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #94a3b8;
+}
+
+.dashboard-stat-card {
+  border-radius: 10px;
+}
+
+.dashboard-stat-icon {
+  width: 48px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 10px;
+  font-size: 1.2rem;
+  background: rgba(0, 0, 0, 0.04);
+  flex-shrink: 0;
+}

@@ -10,17 +10,20 @@
   backgroundImage: globalImage
 }) %>
 
+<%- include("../modules/dashboard/dashboard-header.ejs") %>
+
 <%
   const pendingList = pendingTasks && pendingTasks.success ? pendingTasks.data : [];
   const processingList = processingTasks && processingTasks.success ? processingTasks.data : [];
   const routinesList = routines && routines.success ? routines.data : [];
 %>
 
-<div class="row g-0 dashboardview">
-  <div class="col-12 col-lg-2 border-bottom border-lg-0 mb-4 mb-lg-0">
-    <%- include("../modules/dashboard/dashboard-sidebar.ejs") %>
-  </div>
-  <div class="col-12 col-lg-10 bridge-layout">
+<div class="container my-4">
+  <div class="row g-4">
+    <div class="col-lg-3">
+      <%- include("../modules/dashboard/dashboard-sidebar.ejs") %>
+    </div>
+    <main class="col-lg-9 bridge-layout">
     <div class="mb-4">
       <%- include("../partials/documentationLink.ejs", {
           doclink: "https://modularsoft.org/docs/products/zander/features/bridge/"
@@ -365,7 +368,7 @@
           </div>
         </div>
       </div>
-    </div>
+    </main>
   </div>
 </div>
 

@@ -1,56 +1,63 @@
-<nav id="sidebarMenu" class="col-md-3 col-lg-2 d-md-block bg-light sidebar collapse sidebar-nav">
-    <div class="position-sticky pt-3">
-        <ul class="nav flex-column">
-            <li class="nav-item">
-                <a class="nav-link" href="/dashboard"><i class="fas fa-home"></i> Dashboard</a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link" href="/dashboard/announcements"><i class="fas fa-exclamation-circle"></i> Announcements</a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link" href="/dashboard/forums/categories"><i class="fa-solid fa-comments"></i> Forums</a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link" href="/dashboard/servers"><i class="fas fa-server"></i> Servers</a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link" href="/dashboard/applications"><i class="fas fa-copy"></i> Applications</a>
-            </li>
-            <li class="nav-item nav-dropdown">
-                <a class="nav-link nav-dropdown-toggle" href="javascript:void(0)" role="button"><i class="fas fa-ticket-alt"></i> Support</a>
-                <ul class="nav-dropdown-items">
-                    <li class="nav-item">
-                        <a class="nav-link" href="/dashboard/support">Manage Tickets</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="/dashboard/support/explorer">Ticket Explorer</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="/dashboard/support/categories">Manage Categories</a>
-                    </li>
-                </ul>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link" href="/dashboard/vault"><i class="fa-solid fa-vault"></i> Vault</a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link" href="/dashboard/logs"><i class="fa-solid fa-terminal"></i> Logs</a>
-            </li>
-            <li class="nav-item nav-dropdown">
-                <a class="nav-link nav-dropdown-toggle" href="javascript:void(0)" role="button"><i class="fa-solid fa-wrench"></i> Development</a>
-                <ul class="nav-dropdown-items">
-                    <li class="nav-item">
-                        <a class="nav-link" href="/dashboard/bridge">Bridge</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="/dashboard/ranks">Ranks</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="/dashboard/scheduler">Scheduler</a>
-                    </li>
-                </ul>
-            </li>
-        </ul>
-    </div>
-</nav>
-<script src="/js/dashboard-sidebar.js"></script>
+<%
+  const currentPath = req.url.split('?')[0];
+  function isActive(path) {
+    if (path === '/dashboard') return currentPath === '/dashboard';
+    return currentPath.startsWith(path);
+  }
+%>
+
+<!-- Desktop sidebar (visible lg+) -->
+<div class="d-none d-lg-block dashboard-sidebar-desktop">
+  <nav class="dashboard-sidebar-nav">
+    <ul class="list-unstyled mb-0">
+      <li><a href="/dashboard" class="dashboard-nav-link <%= isActive('/dashboard') ? 'active' : '' %>"><i class="fas fa-home fa-fw me-2"></i>Overview</a></li>
+      <li><a href="/dashboard/announcements" class="dashboard-nav-link <%= isActive('/dashboard/announcements') ? 'active' : '' %>"><i class="fas fa-bullhorn fa-fw me-2"></i>Announcements</a></li>
+      <li><a href="/dashboard/forums/categories" class="dashboard-nav-link <%= isActive('/dashboard/forums') ? 'active' : '' %>"><i class="fa-solid fa-comments fa-fw me-2"></i>Forums</a></li>
+      <li><a href="/dashboard/servers" class="dashboard-nav-link <%= isActive('/dashboard/servers') ? 'active' : '' %>"><i class="fas fa-server fa-fw me-2"></i>Servers</a></li>
+      <li><a href="/dashboard/applications" class="dashboard-nav-link <%= isActive('/dashboard/applications') ? 'active' : '' %>"><i class="fas fa-file-alt fa-fw me-2"></i>Applications</a></li>
+
+      <li class="dashboard-nav-heading">Support</li>
+      <li><a href="/dashboard/support" class="dashboard-nav-link <%= isActive('/dashboard/support') && !currentPath.includes('explorer') && !currentPath.includes('categories') ? 'active' : '' %>"><i class="fas fa-ticket-alt fa-fw me-2"></i>Manage Tickets</a></li>
+      <li><a href="/dashboard/support/explorer" class="dashboard-nav-link <%= currentPath.includes('/support/explorer') ? 'active' : '' %>"><i class="fas fa-search fa-fw me-2"></i>Ticket Explorer</a></li>
+      <li><a href="/dashboard/support/categories" class="dashboard-nav-link <%= currentPath.includes('/support/categories') ? 'active' : '' %>"><i class="fas fa-folder fa-fw me-2"></i>Categories</a></li>
+
+      <li class="dashboard-nav-heading">System</li>
+      <li><a href="/dashboard/vault" class="dashboard-nav-link <%= isActive('/dashboard/vault') ? 'active' : '' %>"><i class="fa-solid fa-vault fa-fw me-2"></i>Vault</a></li>
+      <li><a href="/dashboard/logs" class="dashboard-nav-link <%= isActive('/dashboard/logs') ? 'active' : '' %>"><i class="fa-solid fa-terminal fa-fw me-2"></i>Logs</a></li>
+      <li><a href="/dashboard/bridge" class="dashboard-nav-link <%= isActive('/dashboard/bridge') ? 'active' : '' %>"><i class="fa-solid fa-bridge fa-fw me-2"></i>Bridge</a></li>
+      <li><a href="/dashboard/ranks" class="dashboard-nav-link <%= isActive('/dashboard/ranks') ? 'active' : '' %>"><i class="fa-solid fa-medal fa-fw me-2"></i>Ranks</a></li>
+      <li><a href="/dashboard/scheduler" class="dashboard-nav-link <%= isActive('/dashboard/scheduler') ? 'active' : '' %>"><i class="fa-solid fa-clock fa-fw me-2"></i>Scheduler</a></li>
+    </ul>
+  </nav>
+</div>
+
+<!-- Mobile offcanvas sidebar -->
+<div class="offcanvas offcanvas-start" tabindex="-1" id="dashboardSidebar" aria-labelledby="dashboardSidebarLabel">
+  <div class="offcanvas-header border-bottom">
+    <h5 class="offcanvas-title" id="dashboardSidebarLabel">Dashboard</h5>
+    <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+  </div>
+  <div class="offcanvas-body p-0">
+    <nav class="dashboard-sidebar-nav">
+      <ul class="list-unstyled mb-0">
+        <li><a href="/dashboard" class="dashboard-nav-link <%= isActive('/dashboard') ? 'active' : '' %>"><i class="fas fa-home fa-fw me-2"></i>Overview</a></li>
+        <li><a href="/dashboard/announcements" class="dashboard-nav-link <%= isActive('/dashboard/announcements') ? 'active' : '' %>"><i class="fas fa-bullhorn fa-fw me-2"></i>Announcements</a></li>
+        <li><a href="/dashboard/forums/categories" class="dashboard-nav-link <%= isActive('/dashboard/forums') ? 'active' : '' %>"><i class="fa-solid fa-comments fa-fw me-2"></i>Forums</a></li>
+        <li><a href="/dashboard/servers" class="dashboard-nav-link <%= isActive('/dashboard/servers') ? 'active' : '' %>"><i class="fas fa-server fa-fw me-2"></i>Servers</a></li>
+        <li><a href="/dashboard/applications" class="dashboard-nav-link <%= isActive('/dashboard/applications') ? 'active' : '' %>"><i class="fas fa-file-alt fa-fw me-2"></i>Applications</a></li>
+
+        <li class="dashboard-nav-heading">Support</li>
+        <li><a href="/dashboard/support" class="dashboard-nav-link <%= isActive('/dashboard/support') && !currentPath.includes('explorer') && !currentPath.includes('categories') ? 'active' : '' %>"><i class="fas fa-ticket-alt fa-fw me-2"></i>Manage Tickets</a></li>
+        <li><a href="/dashboard/support/explorer" class="dashboard-nav-link <%= currentPath.includes('/support/explorer') ? 'active' : '' %>"><i class="fas fa-search fa-fw me-2"></i>Ticket Explorer</a></li>
+        <li><a href="/dashboard/support/categories" class="dashboard-nav-link <%= currentPath.includes('/support/categories') ? 'active' : '' %>"><i class="fas fa-folder fa-fw me-2"></i>Categories</a></li>
+
+        <li class="dashboard-nav-heading">System</li>
+        <li><a href="/dashboard/vault" class="dashboard-nav-link <%= isActive('/dashboard/vault') ? 'active' : '' %>"><i class="fa-solid fa-vault fa-fw me-2"></i>Vault</a></li>
+        <li><a href="/dashboard/logs" class="dashboard-nav-link <%= isActive('/dashboard/logs') ? 'active' : '' %>"><i class="fa-solid fa-terminal fa-fw me-2"></i>Logs</a></li>
+        <li><a href="/dashboard/bridge" class="dashboard-nav-link <%= isActive('/dashboard/bridge') ? 'active' : '' %>"><i class="fa-solid fa-bridge fa-fw me-2"></i>Bridge</a></li>
+        <li><a href="/dashboard/ranks" class="dashboard-nav-link <%= isActive('/dashboard/ranks') ? 'active' : '' %>"><i class="fa-solid fa-medal fa-fw me-2"></i>Ranks</a></li>
+        <li><a href="/dashboard/scheduler" class="dashboard-nav-link <%= isActive('/dashboard/scheduler') ? 'active' : '' %>"><i class="fa-solid fa-clock fa-fw me-2"></i>Scheduler</a></li>
+      </ul>
+    </nav>
+  </div>
+</div>

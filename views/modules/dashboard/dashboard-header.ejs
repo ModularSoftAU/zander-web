@@ -1,17 +1,6 @@
-<nav class="navbar navbar-dark sticky-top bg-dark flex-md-nowrap p-0 shadow d-md-none">
-    <a class="navbar-brand col-md-3 col-lg-2 mr-0 px-3" href="/dashboard">Dashboard</a>
-    <button class="navbar-toggler position-absolute d-md-none collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#sidebarMenu" aria-controls="sidebarMenu" aria-expanded="false" aria-label="Toggle navigation">
-        <span class="navbar-toggler-icon"></span>
-    </button>
-</nav>
-
-<style>
-  #sidebarMenu {
-    display: none;
-  }
-
-  #sidebarMenu + main {
-    flex: 0 0 100%;
-    max-width: 100%;
-  }
-</style>
+<!-- Dashboard mobile toggle bar -->
+<div class="d-lg-none bg-white border-bottom px-3 py-2">
+  <button class="btn btn-outline-secondary btn-sm" type="button" data-bs-toggle="offcanvas" data-bs-target="#dashboardSidebar" aria-controls="dashboardSidebar">
+    <i class="fas fa-bars me-1"></i> Menu
+  </button>
+</div>

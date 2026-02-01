@@ -12,51 +12,49 @@
 
 <%- include("../modules/dashboard/dashboard-header.ejs") %>
 
-<div class="container-fluid">
-    <div class="row">
-        <%- include("../modules/dashboard/dashboard-sidebar.ejs") %>
+<div class="container my-4">
+    <div class="row g-4">
+        <div class="col-lg-3">
+            <%- include("../modules/dashboard/dashboard-sidebar.ejs") %>
+        </div>
+        <main class="col-lg-9">
+            <% if (req.cookies.alertType) { %>
+                <%- include("../partials/alert.ejs", {
+                  alertType: req.cookies.alertType,
+                  content: req.cookies.alertContent
+                }) %>
+            <% } %>
 
-        <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
-            <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
-                <h1 class="h2">Dashboard</h1>
-            </div>
-
-            <div class="row">
-                <div class="col-md-4">
-                    <div class="card">
-                        <div class="card-body">
-                            <div class="stat-widget-one">
-                                <div class="stat-icon dib"><i class="fas fa-exclamation-circle text-success border-success"></i></div>
-                                <div class="stat-content dib">
-                                    <div class="stat-text">Announcements</div>
-                                    <div class="stat-digit"><%= announcementsCount %></div>
-                                </div>
+            <div class="row g-3 mb-4">
+                <div class="col-sm-6 col-md-4">
+                    <div class="card shadow-sm border-0 dashboard-stat-card">
+                        <div class="card-body d-flex align-items-center gap-3 p-3">
+                            <div class="dashboard-stat-icon text-success"><i class="fas fa-bullhorn"></i></div>
+                            <div>
+                                <div class="text-muted small">Announcements</div>
+                                <div class="fw-bold fs-4"><%= announcementsCount %></div>
                             </div>
                         </div>
                     </div>
                 </div>
-                <div class="col-md-4">
-                    <div class="card">
-                        <div class="card-body">
-                            <div class="stat-widget-one">
-                                <div class="stat-icon dib"><i class="fas fa-copy text-primary border-primary"></i></div>
-                                <div class="stat-content dib">
-                                    <div class="stat-text">Applications</div>
-                                    <div class="stat-digit"><%= applicationsCount %></div>
-                                </div>
+                <div class="col-sm-6 col-md-4">
+                    <div class="card shadow-sm border-0 dashboard-stat-card">
+                        <div class="card-body d-flex align-items-center gap-3 p-3">
+                            <div class="dashboard-stat-icon text-primary"><i class="fas fa-file-alt"></i></div>
+                            <div>
+                                <div class="text-muted small">Applications</div>
+                                <div class="fw-bold fs-4"><%= applicationsCount %></div>
                             </div>
                         </div>
                     </div>
                 </div>
-                <div class="col-md-4">
-                    <div class="card">
-                        <div class="card-body">
-                            <div class="stat-widget-one">
-                                <div class="stat-icon dib"><i class="fas fa-server text-warning border-warning"></i></div>
-                                <div class="stat-content dib">
-                                    <div class="stat-text">Servers</div>
-                                    <div class="stat-digit"><%= serversCount %></div>
-                                </div>
+                <div class="col-sm-6 col-md-4">
+                    <div class="card shadow-sm border-0 dashboard-stat-card">
+                        <div class="card-body d-flex align-items-center gap-3 p-3">
+                            <div class="dashboard-stat-icon text-warning"><i class="fas fa-server"></i></div>
+                            <div>
+                                <div class="text-muted small">Servers</div>
+                                <div class="fw-bold fs-4"><%= serversCount %></div>
                             </div>
                         </div>
                     </div>

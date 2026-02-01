@@ -6,7 +6,7 @@ CREATE TABLE users (
         userId INT NOT NULL AUTO_INCREMENT,
         uuid VARCHAR(36) NOT NULL UNIQUE,
         username VARCHAR(16) NOT NULL,
-    discordId VARCHAR(18),
+    discordId VARCHAR(24),
     email VARCHAR(254) UNIQUE,
     password_hash VARCHAR(255),
     email_verified BOOLEAN DEFAULT 0,
