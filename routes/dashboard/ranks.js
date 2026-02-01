@@ -36,7 +36,9 @@ export default function dashboardRanksRoute(
       config: config,
       features: features,
       req: req,
-      ranks: Array.isArray(rankData.data) ? rankData.data : [],
+      ranks: Array.isArray(rankData.data)
+        ? rankData.data.filter((r) => !r.name?.startsWith("griefdefender_"))
+        : [],
       globalImage: await getGlobalImage(),
       announcementWeb: await getWebAnnouncement(),
     });

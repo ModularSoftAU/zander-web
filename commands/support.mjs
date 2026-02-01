@@ -1,3 +1,6 @@
+import { createRequire } from "module";
+const require = createRequire(import.meta.url);
+const config = require("../config.json");
 import { Command } from "@sapphire/framework";
 import {
   SlashCommandBuilder,
@@ -8,7 +11,6 @@ import {
   ChannelType,
   EmbedBuilder,
 } from "discord.js";
-import config from "../config.json" assert { type: "json" };
 import { startTicketFlow } from "../lib/discord/ticketFlow.mjs";
 import {
   addTicketGroupParticipant,

@@ -3,7 +3,7 @@ import dotenv from "dotenv";
 dotenv.config();
 
 var pool = mysql.createPool({
-  connectionLimit: 10,
+  connectionLimit: 25,
   host: process.env.databaseHost,
   port: process.env.databasePort,
   user: process.env.databaseUser,
@@ -12,6 +12,7 @@ var pool = mysql.createPool({
   multipleStatements: true,
   connectTimeout: 30000, // 30 seconds
   acquireTimeout: 30000, // Time to wait for acquiring a connection
+  timezone: "Z", // Treat all database datetimes as UTC
 });
 
 pool.getConnection(function (err, connection) {

@@ -14,6 +14,7 @@ import sessionRoutes from "./sessionRoutes.js";
 import policySiteRoutes from "./policyRoutes.js";
 import redirectSiteRoutes from "./redirectRoutes.js";
 import profileSiteRoutes from "./profileRoutes.js";
+import forumSiteRoutes from "./forumRoutes.js";
 import supportRoutes from "./support.js";
 import notificationRoutes from "./notificationRoutes.js";
 
@@ -32,6 +33,7 @@ export default function applicationSiteRoutes(
   dashboardSiteRoutes(app, client, fetch, moment, config, db, features, lang);
   sessionRoutes(app, client, fetch, moment, config, db, features, lang);
   profileSiteRoutes(app, client, fetch, moment, config, db, features, lang);
+  forumSiteRoutes(app, client, fetch, moment, config, db, features, lang);
   policySiteRoutes(app, config, features);
   redirectSiteRoutes(app, config, features);
   supportRoutes(app, client, fetch, moment, config, db, features, lang);

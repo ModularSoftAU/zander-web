@@ -1,0 +1,1 @@
+ALTER TABLE users MODIFY COLUMN discordId VARCHAR(24);

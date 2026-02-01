@@ -60,30 +60,44 @@
                                         <% punishments.forEach(function (punishment, index) { %>
                                             <% const typeLabel = punishment.type || "Unknown"; %>
                                             <% const punishedBy = punishment.bannedByUsername || punishment.bannedByUuid || "System"; %>
-                                            <% const dateLabel = moment(punishment.dateStart).isValid() ? moment(punishment.dateStart).format("LLL") : "Unknown date"; %>
+                                            <% const hasValidDate = punishment.dateStart && new Date(punishment.dateStart).getTime() > 0; %>
                                             <% const punishmentId = punishment.id || punishment.punishmentId || punishment.punishment_id || "-"; %>
-                                            <% const fallbackKey = moment(punishment.dateStart).isValid() ? `${typeLabel}-${moment(punishment.dateStart).valueOf()}` : String(index); %>
+                                            <% const fallbackKey = hasValidDate ? `${typeLabel}-${new Date(punishment.dateStart).getTime()}` : String(index); %>
                                             <% const punishmentKey = String(punishment.id || punishment.punishmentId || punishment.punishment_id || fallbackKey); %>
                                             <% let typeBadge = "bg-secondary"; %>
                                             <% if (typeLabel === "ban") typeBadge = "bg-danger"; %>
                                             <% if (typeLabel === "mute") typeBadge = "bg-warning text-dark"; %>
                                             <% if (typeLabel === "kick") typeBadge = "bg-secondary"; %>
                                             <% if (typeLabel === "warning") typeBadge = "bg-info text-dark"; %>
-                                            <% let expiryLabel = "—"; %>
-                                            <% if (punishment.type === "ban") { %>
-                                                <% if (moment(punishment.dateEnd).isValid()) { %>
-                                                    <% expiryLabel = moment(punishment.dateEnd).isAfter(moment()) ? moment(punishment.dateEnd).fromNow(true) : "Expired"; %>
-                                                <% } else { %>
-                                                    <% expiryLabel = "Permanent"; %>
-                                                <% } %>
-                                            <% } %>
+                                            <% const hasValidEndDate = punishment.dateEnd && new Date(punishment.dateEnd).getTime() > 0; %>
+                                            <% const isExpired = hasValidEndDate && new Date(punishment.dateEnd) < new Date(); %>
                                             <tr>
                                                 <th scope="row"><%= punishmentId %></th>
                                                 <td><span class="badge <%= typeBadge %> text-uppercase"><%= typeLabel %></span></td>
                                                 <td><%= punishment.reason || "No reason provided." %></td>
-                                                <td><%= dateLabel %></td>
+                                                <td>
+                                                    <% if (hasValidDate) { %>
+                                                        <span data-relative-time="<%= new Date(punishment.dateStart).toISOString() %>" data-relative-format="datetime"></span>
+                                                    <% } else { %>
+                                                        Unknown date
+                                                    <% } %>
+                                                </td>
                                                 <td><%= punishedBy %></td>
-                                                <td><%= expiryLabel %></td>
+                                                <td>
+                                                    <% if (punishment.type === "ban") { %>
+                                                        <% if (hasValidEndDate) { %>
+                                                            <% if (isExpired) { %>
+                                                                Expired
+                                                            <% } else { %>
+                                                                <span data-relative-time="<%= new Date(punishment.dateEnd).toISOString() %>"></span>
+                                                            <% } %>
+                                                        <% } else { %>
+                                                            Permanent
+                                                        <% } %>
+                                                    <% } else { %>
+                                                        —
+                                                    <% } %>
+                                                </td>
                                                 <td class="text-end">
                                                     <% if (appealTicketsByKey && appealTicketsByKey[punishmentKey]) { %>
                                                         <a href="/support/ticket/<%= appealTicketsByKey[punishmentKey] %>" class="btn btn-sm btn-outline-primary">Open ticket</a>

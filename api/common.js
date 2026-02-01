@@ -115,47 +115,81 @@ export function isLoggedIn(req) {
     @param res Passing through res
     @param features Passing through features
 */
-export async function hasPermission(permissionNode, req, res, features) {
-  if (!isLoggedIn(req) || !req.session.user || !req.session.user.permissions) {
-    return res.view("session/noPermission", {
-      pageTitle: `Access Restricted`,
-      config: config,
-      req: req,
-      res: res,
-      features: features,
-      globalImage: await getGlobalImage(),
-      announcementWeb: await getWebAnnouncement(),
-    });
-  } else {
-    const userPermissions = req.session.user.permissions;
+function normalisePermissionNode(value) {
+  if (value === undefined || value === null) {
+    return "";
+  }
 
-    const hasSpecificPerm = (node, permissionArray) => {
-      return permissionArray.some((permission) => {
-        if (!permission) return false;
-        if (permission === "*") return true;
-        if (permission === node) return true;
-        if (permission.endsWith(".*")) {
-          const base = permission.slice(0, -2);
-          return node === base || node.startsWith(`${base}.`);
-        }
+  return String(value).trim().toLowerCase();
+}
 
-        return false;
-      });
-    };
-
-    if (!hasSpecificPerm(permissionNode, userPermissions)) {
-      return res.view("session/noPermission", {
-        pageTitle: `Access Restricted`,
-        config: config,
-        req: req,
-        res: res,
-        features: features,
-        globalImage: await getGlobalImage(),
-        announcementWeb: await getWebAnnouncement(),
-      });
-    }
+function hasSpecificPermission(permissionArray, node) {
+  if (!node) {
     return true;
   }
+
+  if (!Array.isArray(permissionArray) || permissionArray.length === 0) {
+    return false;
+  }
+
+  const target = normalisePermissionNode(node);
+  if (!target) {
+    return true;
+  }
+
+  return permissionArray.some((permission) => {
+    if (!permission) {
+      return false;
+    }
+
+    const candidate = normalisePermissionNode(permission);
+    if (!candidate) {
+      return false;
+    }
+
+    if (candidate === "*") {
+      return true;
+    }
+
+    if (candidate === target) {
+      return true;
+    }
+
+    if (candidate.endsWith(".*")) {
+      const base = candidate.slice(0, -1);
+      return target.startsWith(base);
+    }
+
+    return false;
+  });
+}
+
+async function renderNoPermission(req, res, features) {
+  await res.view("session/noPermission", {
+    pageTitle: `Access Restricted`,
+    config: config,
+    req: req,
+    res: res,
+    features: features,
+    globalImage: await getGlobalImage(),
+    announcementWeb: await getWebAnnouncement(),
+  });
+}
+
+export async function hasPermission(permissionNode, req, res, features) {
+  const userPermissions = req.session?.user?.permissions;
+
+  if (!isLoggedIn(req) || !Array.isArray(userPermissions)) {
+    await renderNoPermission(req, res, features);
+    return false;
+  }
+
+  if (!hasSpecificPermission(userPermissions, permissionNode)) {
+    await renderNoPermission(req, res, features);
+    return false;
+  }
+
+  return true;
 }
 
 /*

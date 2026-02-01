@@ -4,6 +4,7 @@ import dashboardApplicationsSiteRoute from "./applications.js";
 import dashboardAnnouncementSiteRoute from "./announcement.js";
 import dashboardVaultSiteRoute from "./vault.js";
 import dashboardRanksSiteRoute from "./ranks.js";
+import dashboardForumsSiteRoute from "./forums.js";
 import supportDashboardRoutes from "./support.js";
 import dashboardSchedulerSiteRoute from "./scheduler.js";
 
@@ -24,5 +25,6 @@ export default function dashboardSiteRoutes(
   dashboardApplicationsSiteRoute(app, fetch, config, db, features, lang);
   dashboardVaultSiteRoute(app, fetch, config, db, features, lang);
   dashboardRanksSiteRoute(app, fetch, config, db, features, lang);
+  dashboardForumsSiteRoute(app, fetch, config, db, features, lang);
   dashboardSchedulerSiteRoute(app, client, fetch, config, features, lang);
 }

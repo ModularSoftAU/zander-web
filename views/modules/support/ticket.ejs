@@ -32,18 +32,18 @@
             </div>
         </div>
         <div class="card-body">
-            <p><strong>Created At:</strong> <span class="local-datetime" data-timestamp="<%= new Date(ticket.createdAt).toISOString() %>"></span></p>
+            <p><strong>Created At:</strong> <span data-relative-time="<%= new Date(ticket.createdAt).toISOString() %>"></span></p>
             <% const currentCategory = (categories || []).find((category) => category.categoryId === ticket.categoryId); %>
             <p class="mb-0"><strong>Category:</strong> <%= currentCategory?.name || 'Uncategorized' %></p>
             <div class="mt-3">
                 <h4>Participants</h4>
                 <div class="d-flex flex-wrap gap-2">
-                    <span class="badge bg-primary">Owner: <%= ownerUser?.username || ticket.userId %></span>
+                    <span class="rank-pill" style="--rank-pill-bg: #3b82f6; --rank-pill-text: #ffffff;">Owner: <%= ownerUser?.username || ticket.userId %></span>
                     <% participants.users.forEach((participant) => { %>
-                        <span class="badge bg-info text-dark">User: <%= participant.username || participant.userId %></span>
+                        <span class="rank-pill" style="--rank-pill-bg: #06b6d4; --rank-pill-text: #ffffff;">User: <%= participant.username || participant.userId %></span>
                     <% }); %>
                     <% participants.groups.forEach((group) => { %>
-                        <span class="badge" style="background-color: <%= group.badgeColor || '#6c757d' %>; color: <%= group.textColor || '#fff' %>">Group: <%= group.roleName || group.rankSlug || group.roleId %></span>
+                        <span class="rank-pill" style="--rank-pill-bg: <%= group.badgeColor || '#6c757d' %>; --rank-pill-text: <%= group.textColor || '#fff' %>;">Group: <%= group.roleName || group.rankSlug || group.roleId %></span>
                     <% }); %>
                 </div>
             </div>
@@ -90,9 +90,9 @@
                                     <span class="text-muted small local-datetime" data-timestamp="<%= new Date(message.createdAt).toISOString() %>"></span>
                                 </div>
                                 <% if (message.ranks && message.ranks.length) { %>
-                                    <div class="d-flex flex-wrap gap-1 mt-1">
+                                    <div class="d-flex flex-wrap gap-2 mt-1">
                                         <% message.ranks.forEach((rank) => { %>
-                                            <span class="badge" style="background-color: <%= rank.badgeColor || '#1f2937' %>; color: <%= rank.textColor || '#ffffff' %>;"><%= rank.displayName %></span>
+                                            <span class="rank-pill" style="--rank-pill-bg: <%= rank.badgeColor || '#1f2937' %>; --rank-pill-text: <%= rank.textColor || '#ffffff' %>;"><%= rank.displayName %></span>
                                         <% }); %>
                                     </div>
                                 <% } %>
@@ -377,13 +377,6 @@
 
 <script>
     document.addEventListener("DOMContentLoaded", () => {
-        document.querySelectorAll(".local-datetime").forEach((element) => {
-            const timestamp = element.getAttribute("data-timestamp");
-            if (!timestamp) return;
-            const date = new Date(timestamp);
-            element.textContent = date.toLocaleString();
-        });
-
         const userIdentifierInput = document.getElementById("userIdentifier");
         const userIdInput = document.getElementById("userIdInput");
         const userSuggestions = document.getElementById("userSuggestions");

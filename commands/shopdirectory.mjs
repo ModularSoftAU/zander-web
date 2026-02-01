@@ -4,6 +4,7 @@ import fetch from "node-fetch";
 import { createRequire } from "module";
 const require = createRequire(import.meta.url);
 const features = require("../features.json");
+const config = require("../config.json");
 
 export class ShopDirectoryCommand extends Command {
   constructor(context, options) {
@@ -35,6 +36,9 @@ export class ShopDirectoryCommand extends Command {
   }
 
   async chatInputRun(interaction) {
+    // Defer the reply immediately to prevent interaction expiration
+    await interaction.deferReply();
+
     if (!features.shopdirectory) {
       const errorEmbed = new EmbedBuilder()
         .setTitle("Feature Disabled")
@@ -43,14 +47,24 @@ export class ShopDirectoryCommand extends Command {
         )
         .setColor(Colors.Red);
 
-      return interaction.reply({
+      return interaction.editReply({
         embeds: [errorEmbed],
-        ephemeral: true,
       });
     }
 
-    // Defer the reply to prevent interaction expiration
-    await interaction.deferReply();
+    const allowedChannelId = config.discord.botChannelId;
+    if (allowedChannelId && interaction.channelId !== allowedChannelId) {
+      const channelEmbed = new EmbedBuilder()
+        .setTitle("Wrong Channel")
+        .setDescription(
+          `This command can only be used in <#${allowedChannelId}>.`
+        )
+        .setColor(Colors.Red);
+
+      return interaction.editReply({
+        embeds: [channelEmbed],
+      });
+    }
 
     const material = interaction.options.getString("material") || "";
     const type = interaction.options.getString("type");

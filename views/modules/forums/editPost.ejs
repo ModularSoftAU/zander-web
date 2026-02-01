@@ -1,0 +1,65 @@
+<%- include("../../modules/header.ejs", {
+    pageTitle: `Edit Reply :: ${discussion.title}`,
+    pageDescription: "Update your forum reply"
+}) %>
+
+<%- include("../../modules/navigationBar.ejs") %>
+
+<%- include("../../partials/miniHeader.ejs", {
+  headerTitle: `Edit Reply`,
+  backgroundImage: globalImage
+}) %>
+
+<div class="container my-5 forums-container">
+  <div class="row g-4">
+    <div class="col-lg-3">
+      <%- include("./partials/sidebar.ejs", {
+        categories: categories,
+        activeCategory: category
+      }) %>
+    </div>
+    <div class="col-lg-9">
+      <% if (req.cookies.alertType) { %>
+        <%- include("../../partials/alert.ejs", {
+          alertType: req.cookies.alertType,
+          content: req.cookies.alertContent
+        }) %>
+      <% } %>
+
+      <div class="forums-card card shadow-sm">
+        <div class="card-body">
+          <h4 class="mb-3">Edit reply</h4>
+          <form action="/forums/post/<%= post.postId %>/edit" method="post" class="forums-form">
+            <%- include("../../partials/summerNoteEditor.ejs", {
+              editorElementName: "replyContent",
+              editorPOSTElementName: "content",
+              editorElementText: post ? post.content : ""
+            }) %>
+            <div class="text-end mt-3">
+              <a class="btn btn-link" href="/forums/discussion/<%= discussion.discussionId %>/<%= discussion.slug %>">Cancel</a>
+              <button type="submit" class="btn btn-main">Save Changes</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  (() => {
+    document.querySelectorAll('form[method="post"]').forEach(form => {
+      form.addEventListener('submit', () => {
+        const btn = form.querySelector('button[type="submit"]');
+        if (!btn) return;
+        setTimeout(() => {
+          btn.disabled = true;
+          btn.dataset.originalText = btn.textContent;
+          btn.textContent = 'Submitting…';
+        }, 0);
+      });
+    });
+  })();
+</script>
+
+<%- include("../../modules/footer.ejs") %>

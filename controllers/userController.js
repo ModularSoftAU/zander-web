@@ -166,6 +166,42 @@ export function UserGetter() {
     return luckPermsMatch.length > 0;
   };
 
+  this.getBedrockUuid = async function (username) {
+    const trimmedUsername = username ? username.trim() : null;
+    if (!trimmedUsername) return null;
+
+    const runQuery = (sql, params) =>
+      new Promise((resolve, reject) => {
+        db.query(sql, params, (error, results) => {
+          if (error) return reject(error);
+          resolve(results || []);
+        });
+      });
+
+    // Check users table first
+    const userRows = await runQuery(
+      `SELECT uuid FROM users WHERE LOWER(username) = LOWER(?) AND uuid IS NOT NULL LIMIT 1`,
+      [trimmedUsername]
+    );
+    if (userRows.length && userRows[0].uuid) {
+      return userRows[0].uuid;
+    }
+
+    // Check luckPermsPlayers table
+    const luckPermsRows = await runQuery(
+      `SELECT HEX(uuid) AS hexUuid FROM luckPermsPlayers WHERE LOWER(username) = LOWER(?) LIMIT 1`,
+      [trimmedUsername]
+    );
+    if (luckPermsRows.length && luckPermsRows[0].hexUuid) {
+      const hex = luckPermsRows[0].hexUuid;
+      if (hex.length === 32) {
+        return `${hex.substring(0, 8)}-${hex.substring(8, 12)}-${hex.substring(12, 16)}-${hex.substring(16, 20)}-${hex.substring(20)}`.toLowerCase();
+      }
+    }
+
+    return null;
+  };
+
   this.isRegistered = function (discordId) {
     return new Promise((resolve, reject) => {
       // Execute a SQL query to check if the user exists in the database

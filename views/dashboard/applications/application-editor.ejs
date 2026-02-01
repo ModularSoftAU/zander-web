@@ -3,13 +3,21 @@
     pageDescription: "Editor for Network Applications"
 }) %>
 
+<%- include("../../modules/navigationBar.ejs") %>
+
+<%- include("../../partials/miniHeader.ejs", {
+  headerTitle: type === 'create' ? 'Create Application' : 'Edit Application',
+  backgroundImage: globalImage
+}) %>
+
 <%- include("../../modules/dashboard/dashboard-header.ejs") %>
 
-<div class="container-fluid">
-    <div class="row">
-        <%- include("../../modules/dashboard/dashboard-sidebar.ejs") %>
-
-        <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
+<div class="container my-4">
+    <div class="row g-4">
+        <div class="col-lg-3">
+            <%- include("../../modules/dashboard/dashboard-sidebar.ejs") %>
+        </div>
+        <main class="col-lg-9">
             <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
                 <h1 class="h2"><%= type === 'create' ? 'Create' : 'Edit' %> Application</h1>
                 <div class="btn-toolbar mb-2 mb-md-0">

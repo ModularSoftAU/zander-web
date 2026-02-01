@@ -34,6 +34,9 @@
                     <% if (features.ranks) { %>
                         <li class="nav-item"><a class="nav-link" href="/ranks">Ranks</a></li>
                     <% } %>
+                    <% if (features.forums) { %>
+                        <li class="nav-item"><a class="nav-link" href="/forums">Forums</a></li>
+                    <% } %>
                     <li class="nav-item"><a class="nav-link" href="/webstore">Webstore</a></li>
                     <% if (req.session?.user?.permissions?.includes('zander.web.dashboard') || req.session?.user?.permissions?.includes('zander.web.*') || req.session?.user?.permissions?.includes('*')) { %>
                         <li class="nav-item dropdown">
@@ -72,7 +75,7 @@
                                         <a class="dropdown-item small py-2" href="/notifications/visit/<%= notification.notificationId %>">
                                             <div class="fw-semibold <%= notification.isRead ? '' : 'text-primary' %>"><%= notification.title %></div>
                                             <div class="text-muted text-truncate" style="max-width: 240px;"><%= notification.message %></div>
-                                            <div class="text-muted" style="font-size: 0.75rem;"><%= new Date(notification.createdAt).toLocaleString() %></div>
+                                            <div class="text-muted" style="font-size: 0.75rem;"><span data-relative-time="<%= new Date(notification.createdAt).toISOString() %>"></span></div>
                                         </a>
                                     <% }) %>
                                 <% } else { %>
@@ -90,9 +93,6 @@
                                 <i class="icofont-thin-down"></i>
                             </a>
                             <div class="dropdown-menu" aria-labelledby="dropdown02">
-                                <% if (req.session.user.permissions.includes('zander.web.dashboard') || req.session.user.permissions.includes('zander.web.*') || req.session.user.permissions.includes('*')) { %>
-                                    <a class="dropdown-item" href="/dashboard">Dashboard</a>
-                                <% } %>
                                 <a class="dropdown-item" href="/profile/<%= req.session.user.username %>">Profile</a>
                                 <a class="dropdown-item" href="/support">My Tickets</a>
                                 <a class="dropdown-item" href="/profile/<%= req.session.user.username %>/edit">Edit Profile</a>
