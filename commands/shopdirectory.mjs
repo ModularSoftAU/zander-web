@@ -4,6 +4,7 @@ import fetch from "node-fetch";
 import { createRequire } from "module";
 const require = createRequire(import.meta.url);
 const features = require("../features.json");
+const config = require("../config.json");
 
 export class ShopDirectoryCommand extends Command {
   constructor(context, options) {
@@ -49,7 +50,7 @@ export class ShopDirectoryCommand extends Command {
       });
     }
 
-    const allowedChannelId = process.env.shopDirectoryChannelId;
+    const allowedChannelId = config.discord.shopDirectoryChannelId;
     if (allowedChannelId && interaction.channelId !== allowedChannelId) {
       const channelEmbed = new EmbedBuilder()
         .setTitle("Wrong Channel")

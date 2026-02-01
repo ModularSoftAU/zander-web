@@ -33,6 +33,7 @@
     "onlinePlayerChannel": "CHANNELID",
     "supportPanelChannelId": "CHANNELID",
     "supportTicketCategoryId": "CATEGORYID",
+    "shopDirectoryChannelId": "CHANNELID",
     "webhooks": {
       "welcome": "WEBHOOKURL",
       "networkChatLog": "WEBHOOKURL",
