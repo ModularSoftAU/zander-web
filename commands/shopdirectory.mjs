@@ -52,7 +52,7 @@ export class ShopDirectoryCommand extends Command {
       });
     }
 
-    const allowedChannelId = config.discord.shopDirectoryChannelId;
+    const allowedChannelId = config.discord.botChannelId;
     if (allowedChannelId && interaction.channelId !== allowedChannelId) {
       const channelEmbed = new EmbedBuilder()
         .setTitle("Wrong Channel")
