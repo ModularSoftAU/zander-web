@@ -36,6 +36,9 @@ export class ShopDirectoryCommand extends Command {
   }
 
   async chatInputRun(interaction) {
+    // Defer the reply immediately to prevent interaction expiration
+    await interaction.deferReply();
+
     if (!features.shopdirectory) {
       const errorEmbed = new EmbedBuilder()
         .setTitle("Feature Disabled")
@@ -44,9 +47,8 @@ export class ShopDirectoryCommand extends Command {
         )
         .setColor(Colors.Red);
 
-      return interaction.reply({
+      return interaction.editReply({
         embeds: [errorEmbed],
-        ephemeral: true,
       });
     }
 
@@ -59,14 +61,10 @@ export class ShopDirectoryCommand extends Command {
         )
         .setColor(Colors.Red);
 
-      return interaction.reply({
+      return interaction.editReply({
         embeds: [channelEmbed],
-        ephemeral: true,
       });
     }
-
-    // Defer the reply to prevent interaction expiration
-    await interaction.deferReply();
 
     const material = interaction.options.getString("material") || "";
     const type = interaction.options.getString("type");
