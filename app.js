@@ -112,7 +112,7 @@ const buildApp = async () => {
     prefix: "/",
   });
 
-  await app.register(await import("@fastify/formbody"));
+  await app.register(await import("@fastify/formbody"), { bodyLimit: 1048576 });
   await app.register(await import("@fastify/multipart"));
 
   await app.register((instance, options, next) => {

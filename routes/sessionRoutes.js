@@ -669,21 +669,39 @@ export default function sessionSiteRoute(
       const userGetter = new UserGetter();
       const existingUsername = await userGetter.byUsername(username);
 
-      const profileResponse = await fetch(
-        `https://api.mojang.com/users/profiles/minecraft/${encodeURIComponent(username)}`
-      );
+      let formattedUuid;
+      const isBedrock = username.startsWith(".");
 
-      if (profileResponse.status === 204 || profileResponse.status === 404) {
-        setBannerCookie("danger", "We could not find that Minecraft username.", res);
-        return res.redirect(`/register`);
+      if (isBedrock) {
+        // Bedrock players (Floodgate prefix) are not in the Mojang API.
+        // Look up their UUID from the server database instead.
+        formattedUuid = await userGetter.getBedrockUuid(username);
+
+        if (!formattedUuid) {
+          setBannerCookie(
+            "danger",
+            "We could not find that Bedrock username. Make sure you have joined the server at least once.",
+            res
+          );
+          return res.redirect(`/register`);
+        }
+      } else {
+        const profileResponse = await fetch(
+          `https://api.mojang.com/users/profiles/minecraft/${encodeURIComponent(username)}`
+        );
+
+        if (profileResponse.status === 204 || profileResponse.status === 404) {
+          setBannerCookie("danger", "We could not find that Minecraft username.", res);
+          return res.redirect(`/register`);
+        }
+
+        if (!profileResponse.ok) {
+          throw new Error("Failed to validate Minecraft username");
+        }
+
+        const profileData = await profileResponse.json();
+        formattedUuid = formatMojangUuid(profileData.id);
       }
-
-      if (!profileResponse.ok) {
-        throw new Error("Failed to validate Minecraft username");
-      }
-
-      const profileData = await profileResponse.json();
-      const formattedUuid = formatMojangUuid(profileData.id);
 
       if (!formattedUuid) {
         setBannerCookie("danger", "Invalid Minecraft UUID returned.", res);
