@@ -24,6 +24,7 @@ export class GuildMessageListener extends Listener {
         const bodyJSON = {
           content: message.content,
           discordId: message.author.id,
+          discordUsername: message.author.username,
         };
 
         const response = await fetch(filterURL, {

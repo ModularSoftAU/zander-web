@@ -15,6 +15,8 @@ import {
   setDiscussionFlags,
   permissionMatch,
   getPostRevisions,
+  moveDiscussion,
+  getAllCategoriesForAdmin,
 } from "../controllers/forumController.js";
 import {
   getGlobalImage,
@@ -582,12 +584,14 @@ export default function forumRoutes(
     }
 
     const permissions = getUserPermissions(req);
-    const [categoryTree, posts] = await Promise.all([
+    const canModerate = userCanModerate(req);
+
+    const [categoryTree, posts, allCategories] = await Promise.all([
       getCategoriesForUser(permissions),
       getDiscussionPosts(discussionId),
+      canModerate ? getAllCategoriesForAdmin() : Promise.resolve({ flat: [] }),
     ]);
 
-    const canModerate = userCanModerate(req);
     const canReply =
       !discussion.isLocked &&
       !discussion.isArchived &&
@@ -612,6 +616,7 @@ export default function forumRoutes(
         canArchive: userCanArchive(req),
         currentUserId: req.session?.user?.userId || null,
         canDeleteAnyPost: userCanDeleteAnyPost(req),
+        moveCategories: allCategories.flat,
       },
       config,
       features
@@ -1465,6 +1470,52 @@ export default function forumRoutes(
       );
     }
   );
+
+  app.post("/forums/discussion/:discussionId/move", async function (req, res) {
+    if (!(await ensureFeature(req, res))) {
+      return;
+    }
+
+    const discussionId = Number.parseInt(req.params.discussionId, 10);
+    const result = await getDiscussionWithCategory(discussionId);
+
+    if (!result) {
+      return renderForumsView(res, req, "session/notFound", { pageTitle: `404 Not Found` }, config, features);
+    }
+
+    if (!userCanModerate(req)) {
+      return renderForumsView(res, req, "session/noPermission", { pageTitle: `Access Restricted` }, config, features);
+    }
+
+    const newCategoryId = Number.parseInt(req.body.categoryId, 10);
+    if (!newCategoryId || newCategoryId === result.discussion.categoryId) {
+      await setBannerCookie("warning", "Please select a different category.", res);
+      return res.redirect(`/forums/discussion/${result.discussion.discussionId}/${result.discussion.slug}`);
+    }
+
+    try {
+      await moveDiscussion(discussionId, newCategoryId);
+
+      const baseUrl = getSiteBaseUrl(req);
+      const username = req.session?.user?.username || "Unknown";
+      const uuid = req.session?.user?.uuid;
+      sendForumLog(config, {
+        action: "move",
+        title: "Discussion Moved",
+        description: `**${result.discussion.title}** moved to a new category`,
+        url: baseUrl ? `${baseUrl}/forums/discussion/${result.discussion.discussionId}/${result.discussion.slug}` : undefined,
+        avatarUrl: uuid ? `https://crafthead.net/helm/${uuid}` : undefined,
+        fields: [["Moved By", username]],
+      });
+
+      await setBannerCookie("success", "Discussion moved to the new category.", res);
+    } catch (error) {
+      console.error("[FORUMS] Failed to move discussion", error);
+      await setBannerCookie("danger", "Unable to move the discussion.", res);
+    }
+
+    return res.redirect(`/forums/discussion/${result.discussion.discussionId}/${result.discussion.slug}`);
+  });
 
   app.get("/forums/post/:postId/revisions", async function (req, res) {
     if (!(await ensureFeature(req, res))) {

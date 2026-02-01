@@ -540,6 +540,13 @@ export async function deleteDiscussion(discussionId) {
   await query(`DELETE FROM forumDiscussions WHERE discussionId = ?`, [discussionId]);
 }
 
+export async function moveDiscussion(discussionId, newCategoryId) {
+  await query(
+    `UPDATE forumDiscussions SET categoryId = ?, updatedAt = NOW() WHERE discussionId = ?`,
+    [newCategoryId, discussionId]
+  );
+}
+
 export async function createReply({ discussionId, userId, content }) {
   const result = await query(
     `INSERT INTO forumPosts (discussionId, userId, content, isOriginal)

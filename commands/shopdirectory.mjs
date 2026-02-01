@@ -49,6 +49,21 @@ export class ShopDirectoryCommand extends Command {
       });
     }
 
+    const allowedChannelId = process.env.shopDirectoryChannelId;
+    if (allowedChannelId && interaction.channelId !== allowedChannelId) {
+      const channelEmbed = new EmbedBuilder()
+        .setTitle("Wrong Channel")
+        .setDescription(
+          `This command can only be used in <#${allowedChannelId}>.`
+        )
+        .setColor(Colors.Red);
+
+      return interaction.reply({
+        embeds: [channelEmbed],
+        ephemeral: true,
+      });
+    }
+
     // Defer the reply to prevent interaction expiration
     await interaction.deferReply();
 

@@ -3,8 +3,6 @@
     pageDescription: "Browse and manage support tickets by category",
 }) %>
 
-<%- include('../../dashboard/dashboard-header.ejs') %>
-
 <%- include('../../../modules/navigationBar.ejs') %>
 
 <%- include('../../../partials/miniHeader.ejs', {
@@ -12,11 +10,14 @@
     globalImage,
 }) %>
 
-<div class="container-fluid">
-    <div class="row">
-        <%- include('../dashboard-sidebar.ejs') %>
+<%- include('../dashboard-header.ejs') %>
 
-        <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
+<div class="container my-4">
+    <div class="row g-4">
+        <div class="col-lg-3">
+            <%- include('../dashboard-sidebar.ejs') %>
+        </div>
+        <main class="col-lg-9">
             <div class="d-flex flex-column flex-md-row align-items-md-center justify-content-between pt-3 pb-2 mb-4 border-bottom">
                 <div>
                     <h1 class="h2 mb-1">Support Ticket Explorer</h1>

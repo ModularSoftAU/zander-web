@@ -24,6 +24,7 @@ export default function filterApiRoute(
     const content = required(req.body, "content", res);
     const username = optional(req.body, "username", res);
     const discordId = optional(req.body, "discordId", res);
+    const discordUsername = optional(req.body, "discordUsername", res);
 
     try {
       let userData = null;
@@ -97,11 +98,20 @@ export default function filterApiRoute(
           const staffChannelHook = new Webhook(
             config.discord.webhooks.staffChannel
           );
+          let detectedUser = "Unknown";
+          if (userData?.username) {
+            detectedUser = `${userData.username} (Verified)`;
+          } else if (discordUsername) {
+            detectedUser = `${discordUsername} (Unverified)`;
+          } else if (discordId) {
+            detectedUser = `<@${discordId}> (Unverified)`;
+          }
+
           const embed = new MessageBuilder()
             .setTitle(`🔵 Filter Flagged`)
             .addField(
               "Detected User",
-              `${userData?.username || "Unknown"}`,
+              detectedUser,
               true
             )
             .addField("Flagged Issues", flaggedFor.join(", "), true)

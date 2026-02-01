@@ -13,8 +13,8 @@ export default function vaultApiRoute(app, config, db, features, lang) {
     const vaultId = optional(req.query, "id");
 
     try {
-      function getVault(dbQuery) {
-        db.query(dbQuery, function (error, results, fields) {
+      function getVault(dbQuery, params) {
+        db.query(dbQuery, params || [], function (error, results, fields) {
           
           if (error) {
             res.send({
@@ -39,13 +39,13 @@ export default function vaultApiRoute(app, config, db, features, lang) {
 
       // Get Vault by ID
       if (vaultId) {
-        let dbQuery = `SELECT * FROM vault WHERE vaultId=${vaultId};`;
+        let dbQuery = `SELECT * FROM vault WHERE vaultId=?;`;
+        getVault(dbQuery, [vaultId]);
+      } else {
+        // Return all Vault by default
+        let dbQuery = `SELECT * FROM vault ORDER BY position ASC;`;
         getVault(dbQuery);
       }
-
-      // Return all Vault by default
-      let dbQuery = `SELECT * FROM vault ORDER BY position ASC;`;
-      getVault(dbQuery);
     } catch (error) {
       res.send({
         success: false,
