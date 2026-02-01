@@ -11,6 +11,67 @@ export default function shopApiRoute(app, config, db, features, lang) {
     const material = optional(req.query, "material");
     const limit = pLimit(10);
 
+    // Per-request caches to deduplicate external API calls
+    const itemCache = new Map();
+    const userCache = new Map();
+    const profilePicCache = new Map();
+
+    async function fetchItemData(itemName) {
+      if (itemCache.has(itemName)) return itemCache.get(itemName);
+      const promise = (async () => {
+        try {
+          const itemResponse = await fetch(`https://craftdex.onrender.com/search/${itemName}`);
+          if (itemResponse.ok) {
+            const data = await itemResponse.json();
+            return data.data || {};
+          }
+          console.error(`Failed to fetch item data: ${itemResponse.status}`);
+        } catch (err) {
+          console.error("Error fetching item data:", err);
+        }
+        return {};
+      })();
+      itemCache.set(itemName, promise);
+      return promise;
+    }
+
+    async function fetchUserData(userId) {
+      if (userCache.has(userId)) return userCache.get(userId);
+      const promise = (async () => {
+        try {
+          const userResponse = await fetch(
+            `${process.env.siteAddress}/api/user/get?userId=${userId}`,
+            { headers: { "x-access-token": process.env.apiKey } }
+          );
+          if (userResponse.ok) {
+            const data = await userResponse.json();
+            return data.data?.[0] || {};
+          }
+          console.error(`Failed to fetch user data: ${userResponse.status}`);
+        } catch (err) {
+          console.error("Error fetching user data:", err);
+        }
+        return {};
+      })();
+      userCache.set(userId, promise);
+      return promise;
+    }
+
+    async function fetchProfilePicture(username) {
+      if (!username) return "";
+      if (profilePicCache.has(username)) return profilePicCache.get(username);
+      const promise = (async () => {
+        try {
+          return await getProfilePicture(username) || "";
+        } catch (err) {
+          console.error("Error fetching profile picture:", err);
+          return "";
+        }
+      })();
+      profilePicCache.set(username, promise);
+      return promise;
+    }
+
     try {
       async function getShops(dbQuery) {
         return new Promise((resolve, reject) => {
@@ -36,61 +97,20 @@ export default function shopApiRoute(app, config, db, features, lang) {
                   limit(async () => {
                     const itemName = shop.item.trim();
 
-                    // Fetch item data from Craftdex
-                    const itemFetchURL = `https://craftdex.onrender.com/search/${itemName}`;
-                    let itemApiData = {};
-                    try {
-                      const itemResponse = await fetch(itemFetchURL);
-                      if (itemResponse.ok) {
-                        itemApiData = await itemResponse.json();
-                      } else {
-                        console.error(
-                          `Failed to fetch item data: ${itemResponse.status}`
-                        );
-                      }
-                    } catch (itemError) {
-                      console.error("Error fetching item data:", itemError);
-                    }
+                    const [itemData, userData] = await Promise.all([
+                      fetchItemData(itemName),
+                      fetchUserData(shop.userId),
+                    ]);
 
-                    // Fetch user data from internal API
-                    const userFetchURL = `${process.env.siteAddress}/api/user/get?userId=${shop.userId}`;
-                    let userApiData = {};
-                    try {
-                      const userResponse = await fetch(userFetchURL, {
-                        headers: { "x-access-token": process.env.apiKey },
-                      });
-                      if (userResponse.ok) {
-                        userApiData = await userResponse.json();
-                      } else {
-                        console.error(
-                          `Failed to fetch user data: ${userResponse.status}`
-                        );
-                      }
-                    } catch (userError) {
-                      console.error("Error fetching user data:", userError);
-                    }
+                    const profilePicture = await fetchProfilePicture(userData.username);
 
-                    // Get user profile picture
-                    let profilePicture = "";
-                    try {
-                      profilePicture = await getProfilePicture(
-                        userApiData.data[0]?.username
-                      );
-                    } catch (profileError) {
-                      console.error(
-                        "Error fetching profile picture:",
-                        profileError
-                      );
-                    }
-
-                    // Return the enriched shop data
                     return {
                       ...shop,
-                      itemData: itemApiData.data || {},
+                      itemData,
                       userData: {
-                        username: userApiData.data[0]?.username || "",
-                        discordId: userApiData.data[0]?.discordId || "",
-                        profilePicture: profilePicture || "",
+                        username: userData.username || "",
+                        discordId: userData.discordId || "",
+                        profilePicture,
                       },
                     };
                   })
