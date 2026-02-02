@@ -2,31 +2,113 @@ import cron from "node-cron";
 import { Colors, EmbedBuilder, WebhookClient } from "discord.js";
 import { createRequire } from "module";
 import db from "../controllers/databaseController.js";
+import { client } from "../controllers/discordController.js";
 
 const require = createRequire(import.meta.url);
 const config = require("../config.json");
+const features = require("../features.json");
 
-const REPORT_SCHEDULE = "0 12 * * 1"; // Every Monday at 12:00 server time
+const DAY_MAP = {
+  sunday: 0,
+  monday: 1,
+  tuesday: 2,
+  wednesday: 3,
+  thursday: 4,
+  friday: 5,
+  saturday: 6,
+};
 
-function formatAuditValue(value) {
-  if (!value) {
-    return "No record";
+function buildCronExpression() {
+  const auditConfig = config.staffAuditReport;
+  if (!auditConfig) return null;
+
+  const day = DAY_MAP[(auditConfig.dayOfWeek || "monday").toLowerCase()];
+  if (day === undefined) {
+    console.error(
+      `Staff audit report: invalid dayOfWeek "${auditConfig.dayOfWeek}". Use Monday-Sunday.`
+    );
+    return null;
   }
+
+  const timeParts = (auditConfig.time || "12:00").split(":");
+  const hour = parseInt(timeParts[0], 10);
+  const minute = parseInt(timeParts[1], 10);
+
+  if (
+    isNaN(hour) || isNaN(minute) ||
+    hour < 0 || hour > 23 ||
+    minute < 0 || minute > 59
+  ) {
+    console.error(
+      `Staff audit report: invalid time "${auditConfig.time}". Use HH:MM format.`
+    );
+    return null;
+  }
+
+  return `${minute} ${hour} * * ${day}`;
+}
+
+function formatAuditTimestamp(value) {
+  if (!value) return "No record";
 
   const timestamp = Math.floor(new Date(value).getTime() / 1000);
-  if (!Number.isFinite(timestamp)) {
-    return "No record";
-  }
+  if (!Number.isFinite(timestamp)) return "No record";
 
   return `<t:${timestamp}:F> (<t:${timestamp}:R>)`;
 }
 
-async function fetchStaffAuditRows() {
+function buildMemberSection(member) {
+  const lines = [];
+
+  // Header: username + Discord mention (no ranks shown per spec)
+  const headerParts = [`**${member.username}**`];
+  if (member.discordId) {
+    headerParts.push(`<@${member.discordId}>`);
+  }
+  lines.push(headerParts.join(" "));
+
+  // Account linkage status
+  const mcLinked = member.uuid ? "✅ Linked" : "❌ Not linked";
+  const discordLinked = member.discordId ? "✅ Linked" : "❌ Not linked";
+  lines.push(`__Account Linkage:__ Minecraft: ${mcLinked} · Discord: ${discordLinked}`);
+
+  // Minecraft activity
+  lines.push("");
+  lines.push("**Minecraft**");
+  if (member.uuid) {
+    lines.push(`• Last Login: ${formatAuditTimestamp(member.audit_lastMinecraftLogin)}`);
+    lines.push(`• Last Message: ${formatAuditTimestamp(member.audit_lastMinecraftMessage)}`);
+    lines.push(`• Punishments: _Feature coming soon_`);
+  } else {
+    lines.push(`• _Account not linked — activity cannot be tracked_`);
+  }
+
+  // Discord activity
+  lines.push("");
+  lines.push("**Discord**");
+  if (member.discordId) {
+    lines.push(`• Last Message: ${formatAuditTimestamp(member.audit_lastDiscordMessage)}`);
+    lines.push(`• Last Voice: ${formatAuditTimestamp(member.audit_lastDiscordVoice)}`);
+    lines.push(`• Punishments: _Feature coming soon_`);
+  } else {
+    lines.push(`• _Account not linked — activity cannot be tracked_`);
+  }
+
+  // Website activity
+  lines.push("");
+  lines.push("**Website**");
+  lines.push(`• Last Login: ${formatAuditTimestamp(member.audit_lastWebsiteLogin)}`);
+
+  return lines.join("\n");
+}
+
+async function fetchActiveStaff() {
   return new Promise((resolve, reject) => {
     db.query(
       `SELECT
         u.userId,
         u.username,
+        u.uuid,
         u.discordId,
         u.audit_lastDiscordMessage,
         u.audit_lastDiscordVoice,
@@ -34,153 +116,207 @@ async function fetchStaffAuditRows() {
         u.audit_lastMinecraftMessage,
         u.audit_lastMinecraftPunishment,
         u.audit_lastDiscordPunishment,
-        u.audit_lastWebsiteLogin,
-        GROUP_CONCAT(DISTINCT r.displayName ORDER BY CAST(r.priority AS UNSIGNED) DESC SEPARATOR ', ') AS staffRanks
+        u.audit_lastWebsiteLogin
       FROM users u
       JOIN userRanks ur ON ur.userId = u.userId
       JOIN ranks r ON r.rankSlug = ur.rankSlug
-      WHERE r.isStaff = '1' AND u.account_disabled = 0
+      WHERE r.isStaff = '1'
+        AND ur.rankSlug != 'retired'
+        AND u.account_disabled = 0
       GROUP BY u.userId
       ORDER BY u.username;`,
       (error, results) => {
-        if (error) {
-          return reject(error);
-        }
-
+        if (error) return reject(error);
         resolve(results || []);
       }
     );
   });
 }
 
-const staffAuditReportTask = cron.schedule(REPORT_SCHEDULE, async () => {
+function packIntoFields(sections) {
+  const MAX_FIELD_LENGTH = 1024;
+  const fields = [];
+  let buffer = "";
+
+  for (const section of sections) {
+    const candidate = buffer ? `${buffer}\n\n${section}` : section;
+
+    if (candidate.length > MAX_FIELD_LENGTH) {
+      if (buffer) fields.push(buffer);
+
+      if (section.length > MAX_FIELD_LENGTH) {
+        // Split oversized section by lines
+        let chunk = "";
+        for (const line of section.split("\n")) {
+          const lineCandidate = chunk ? `${chunk}\n${line}` : line;
+          if (lineCandidate.length > MAX_FIELD_LENGTH) {
+            if (chunk) fields.push(chunk);
+            chunk = line.length > MAX_FIELD_LENGTH ? line.slice(0, MAX_FIELD_LENGTH) : line;
+          } else {
+            chunk = lineCandidate;
+          }
+        }
+        if (chunk) fields.push(chunk);
+        buffer = "";
+      } else {
+        buffer = section;
+      }
+    } else {
+      buffer = candidate;
+    }
+  }
+
+  if (buffer) fields.push(buffer);
+  return fields;
+}
+
+async function sendViaWebhook(embeds, webhookUrl) {
+  const webhookClient = new WebhookClient({ url: webhookUrl });
   try {
-    const webhookUrl = config?.discord?.webhooks?.staffAuditLog;
-    if (!webhookUrl) {
+    for (const embed of embeds) {
+      await webhookClient.send({ embeds: [embed] });
+    }
+  } finally {
+    webhookClient.destroy?.();
+  }
+}
+
+async function sendViaChannel(embeds, channelId) {
+  const channel = await client.channels.fetch(channelId);
+  if (!channel) {
+    throw new Error(`Channel ${channelId} not found`);
+  }
+  for (const embed of embeds) {
+    await channel.send({ embeds: [embed] });
+  }
+}
+
+async function runStaffAuditReport() {
+  // Check feature flag
+  if (!features.staffAuditReport) {
+    return;
+  }
+
+  const auditConfig = config.staffAuditReport;
+  if (!auditConfig?.enabled) {
+    return;
+  }
+
+  // Determine delivery target
+  const delivery = auditConfig.delivery || {};
+  const method = delivery.method || "webhook";
+
+  let webhookUrl = null;
+  let channelId = null;
+
+  if (method === "webhook") {
+    webhookUrl = delivery.webhookUrl || config?.discord?.webhooks?.staffAuditLog;
+    if (!webhookUrl || webhookUrl === "WEBHOOKURL") {
       console.warn(
-        "Staff audit report skipped: config.discord.webhooks.staffAuditLog is not configured."
+        "Staff audit report skipped: no valid webhook URL configured."
       );
       return;
     }
-
-    const staffAuditRows = await fetchStaffAuditRows();
-
-    if (!staffAuditRows.length) {
-      console.warn("Staff audit report skipped: no staff members found.");
+  } else if (method === "channel") {
+    channelId = delivery.channelId;
+    if (!channelId) {
+      console.warn(
+        "Staff audit report skipped: no channelId configured for channel delivery."
+      );
       return;
     }
-
-    const sections = staffAuditRows.map((member) => {
-      const headerParts = [`**${member.username}**`];
-
-      if (member.staffRanks) {
-        headerParts.push(`_${member.staffRanks}_`);
-      }
-
-      if (member.discordId) {
-        headerParts.push(`<@${member.discordId}>`);
-      }
-
-      const details = [
-        `• Discord Message: ${formatAuditValue(member.audit_lastDiscordMessage)}`,
-        `• Discord Voice: ${formatAuditValue(member.audit_lastDiscordVoice)}`,
-        `• Minecraft Login: ${formatAuditValue(member.audit_lastMinecraftLogin)}`,
-        `• Minecraft Message: ${formatAuditValue(member.audit_lastMinecraftMessage)}`,
-        `• Minecraft Punishment: ${formatAuditValue(member.audit_lastMinecraftPunishment)}`,
-        `• Discord Punishment: ${formatAuditValue(member.audit_lastDiscordPunishment)}`,
-        `• Website Login: ${formatAuditValue(member.audit_lastWebsiteLogin)}`,
-      ];
-
-      return [headerParts.join(" "), ...details].join("\n");
-    });
-
-    const MAX_FIELD_LENGTH = 1024;
-    const fieldValues = [];
-    let buffer = "";
-
-    sections.forEach((section) => {
-      const candidate = buffer ? `${buffer}\n\n${section}` : section;
-
-      if (candidate.length > MAX_FIELD_LENGTH) {
-        if (buffer) {
-          fieldValues.push(buffer);
-        }
-
-        if (section.length > MAX_FIELD_LENGTH) {
-          const lines = section.split("\n");
-          let chunk = "";
-
-          lines.forEach((line) => {
-            const chunkCandidate = chunk ? `${chunk}\n${line}` : line;
-
-            if (chunkCandidate.length > MAX_FIELD_LENGTH) {
-              if (chunk) {
-                fieldValues.push(chunk);
-              }
-
-              if (line.length > MAX_FIELD_LENGTH) {
-                const forcedChunks = line.match(/.{1,900}/g) || [line];
-                forcedChunks.forEach((forcedChunk) => fieldValues.push(forcedChunk));
-                chunk = "";
-              } else {
-                chunk = line;
-              }
-            } else {
-              chunk = chunkCandidate;
-            }
-          });
-
-          if (chunk) {
-            fieldValues.push(chunk);
-          }
-
-          buffer = "";
-        } else {
-          fieldValues.push(section);
-          buffer = "";
-        }
-      } else {
-        buffer = candidate;
-      }
-    });
-
-    if (buffer) {
-      fieldValues.push(buffer);
-    }
-
-    if (!fieldValues.length) {
-      fieldValues.push("No audit data was available for staff members.");
-    }
-
-    const embed = new EmbedBuilder()
-      .setTitle("Weekly Staff Activity Audit")
-      .setColor(Colors.Blurple)
-      .setTimestamp(new Date());
-
-    fieldValues.slice(0, 25).forEach((value, index) => {
-      embed.addFields({
-        name: `Staff Activity ${index + 1}`,
-        value,
-        inline: false,
-      });
-    });
-
-    let footerText = `Total staff members reported: ${staffAuditRows.length}`;
-    if (fieldValues.length > 25) {
-      footerText = `Showing 25 of ${fieldValues.length} sections (total staff: ${staffAuditRows.length}).`;
-    }
-
-    embed.setFooter({ text: footerText });
-
-    const webhookClient = new WebhookClient({ url: webhookUrl });
-    await webhookClient.send({ embeds: [embed] });
-    webhookClient.destroy?.();
-    console.log(
-      `Posted weekly staff audit report (${staffAuditRows.length} staff members, ${fieldValues.length} sections).`
+  } else {
+    console.warn(
+      `Staff audit report skipped: unknown delivery method "${method}".`
     );
-  } catch (error) {
-    console.error("Failed to generate staff audit report:", error);
+    return;
   }
-});
 
-staffAuditReportTask.start();
+  // Fetch staff data
+  const staffMembers = await fetchActiveStaff();
+
+  if (!staffMembers.length) {
+    console.warn("Staff audit report skipped: no active staff members found.");
+    return;
+  }
+
+  // Build per-member sections
+  const sections = staffMembers.map(buildMemberSection);
+  const fieldValues = packIntoFields(sections);
+
+  if (!fieldValues.length) {
+    fieldValues.push("No audit data was available for staff members.");
+  }
+
+  // Discord embeds have a max of 25 fields and 6000 chars total
+  // Split into multiple embeds if needed
+  const embeds = [];
+  let currentEmbed = new EmbedBuilder()
+    .setTitle("Weekly Staff Activity Audit")
+    .setColor(Colors.Blurple)
+    .setTimestamp(new Date());
+
+  let fieldCount = 0;
+  let embedIndex = 1;
+
+  for (let i = 0; i < fieldValues.length; i++) {
+    if (fieldCount >= 25) {
+      embeds.push(currentEmbed);
+      embedIndex++;
+      currentEmbed = new EmbedBuilder()
+        .setTitle(`Weekly Staff Activity Audit (cont. ${embedIndex})`)
+        .setColor(Colors.Blurple)
+        .setTimestamp(new Date());
+      fieldCount = 0;
+    }
+
+    currentEmbed.addFields({
+      name: fieldCount === 0 && embedIndex === 1 ? "Staff Activity" : "\u200b",
+      value: fieldValues[i],
+      inline: false,
+    });
+    fieldCount++;
+  }
+
+  const timezone = auditConfig.timezone || "UTC";
+  currentEmbed.setFooter({
+    text: `Total active staff: ${staffMembers.length} · Schedule: ${auditConfig.dayOfWeek || "Monday"} ${auditConfig.time || "12:00"} ${timezone}`,
+  });
+  embeds.push(currentEmbed);
+
+  // Send
+  if (method === "webhook") {
+    await sendViaWebhook(embeds, webhookUrl);
+  } else {
+    await sendViaChannel(embeds, channelId);
+  }
+
+  console.log(
+    `Posted weekly staff audit report (${staffMembers.length} staff members, ${embeds.length} embed(s)).`
+  );
+}
+
+// Build schedule from config
+const cronExpression = buildCronExpression();
+
+if (cronExpression) {
+  const timezone = config.staffAuditReport?.timezone || "UTC";
+
+  const staffAuditReportTask = cron.schedule(
+    cronExpression,
+    async () => {
+      try {
+        await runStaffAuditReport();
+      } catch (error) {
+        console.error("Failed to generate staff audit report:", error);
+      }
+    },
+    { timezone }
+  );
+
+  staffAuditReportTask.start();
+} else if (config.staffAuditReport?.enabled && features.staffAuditReport) {
+  console.warn(
+    "Staff audit report is enabled but could not build a valid cron schedule. Check config.staffAuditReport settings."
+  );
+}

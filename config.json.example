@@ -44,5 +44,16 @@
     "roles": {
       "verified": "ROLEID"
     }
+  },
+  "staffAuditReport": {
+    "enabled": true,
+    "dayOfWeek": "Monday",
+    "time": "12:00",
+    "timezone": "UTC",
+    "delivery": {
+      "method": "webhook",
+      "webhookUrl": "WEBHOOKURL",
+      "channelId": ""
+    }
   }
 }
