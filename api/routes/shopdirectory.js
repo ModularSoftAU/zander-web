@@ -2,6 +2,15 @@ import { getProfilePicture } from "../../controllers/userController.js";
 import { isFeatureEnabled, optional } from "../common.js";
 import pLimit from "p-limit";
 
+// Convert a raw minecraft item ID to a human-readable display name
+// e.g. "netherite_upgrade_smithing_template" → "Netherite Upgrade Smithing Template"
+function formatItemName(rawName) {
+  if (!rawName) return "Unknown Item";
+  return rawName
+    .replace(/_/g, " ")
+    .replace(/\b\w/g, (c) => c.toUpperCase());
+}
+
 export default function shopApiRoute(app, config, db, features, lang) {
   const baseEndpoint = "/api/shop";
 
@@ -80,9 +89,9 @@ export default function shopApiRoute(app, config, db, features, lang) {
     }
 
     try {
-      async function getShops(dbQuery) {
+      async function getShops(dbQuery, dbParams) {
         return new Promise((resolve, reject) => {
-          db.query(dbQuery, async (error, results) => {
+          db.query(dbQuery, dbParams, async (error, results) => {
             if (error) {
               console.error("Database error:", error);
               reject(error);
@@ -111,9 +120,11 @@ export default function shopApiRoute(app, config, db, features, lang) {
 
                     const profilePicture = await fetchProfilePicture(userData.username);
 
-                    // Use the DB display_name for enchanted books (includes enchantment details)
-                    // Fall back to Craftdex displayName, then raw item ID
-                    let displayName = itemData.displayName || itemName;
+                    // Build the display name with priority:
+                    // 1. DB display_name for enchanted books (shows enchantment details)
+                    // 2. Craftdex displayName (official human-readable name)
+                    // 3. Formatted raw item ID as fallback (underscores → spaces, title case)
+                    let displayName = itemData.displayName || formatItemName(itemName);
                     if (shop.display_name) {
                       displayName = `Enchanted Book (${shop.display_name})`;
                     }
@@ -152,14 +163,29 @@ export default function shopApiRoute(app, config, db, features, lang) {
       }
 
       // Construct the database query
-      const dbQuery = material
-        ? `SELECT * FROM shoppingDirectory WHERE item LIKE '%${material}%' OR item LIKE '%${material
-            .toUpperCase()
-            .replace(/ /g, "_")}%';`
-        : `SELECT * FROM shoppingDirectory;`;
+      // When filtering by material, match against:
+      // - The raw item ID (with underscores)
+      // - The raw item ID with spaces converted to underscores (user types "grass block" → matches "grass_block")
+      // - The display_name column (for enchanted book enchantment names)
+      // - Individual words (user types "grass" → matches "grass_block")
+      let dbQuery;
+      let dbParams = [];
+      if (material) {
+        const underscored = material.toUpperCase().replace(/ /g, "_");
+        const likeTerm = `%${material}%`;
+        const likeTermUnderscored = `%${underscored}%`;
+
+        dbQuery = `SELECT * FROM shoppingDirectory
+          WHERE item LIKE ?
+            OR item LIKE ?
+            OR display_name LIKE ?;`;
+        dbParams = [likeTerm, likeTermUnderscored, likeTerm];
+      } else {
+        dbQuery = `SELECT * FROM shoppingDirectory;`;
+      }
 
       // Execute the query and process the shops
-      await getShops(dbQuery);
+      await getShops(dbQuery, dbParams);
     } catch (error) {
       console.error("Unhandled error:", error);
       res.send({
