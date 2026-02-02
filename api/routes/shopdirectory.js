@@ -9,7 +9,7 @@ export default function shopApiRoute(app, config, db, features, lang) {
     isFeatureEnabled(features.shopdirectory, res, lang);
 
     const material = optional(req.query, "material");
-    const limit = pLimit(10);
+    const limit = pLimit(20);
 
     // Per-request caches to deduplicate external API calls
     const itemCache = new Map();
@@ -20,14 +20,21 @@ export default function shopApiRoute(app, config, db, features, lang) {
       if (itemCache.has(itemName)) return itemCache.get(itemName);
       const promise = (async () => {
         try {
-          const itemResponse = await fetch(`https://craftdex.onrender.com/search/${itemName}`);
+          const controller = new AbortController();
+          const timeout = setTimeout(() => controller.abort(), 5000);
+          const itemResponse = await fetch(
+            `https://craftdex.onrender.com/search/${itemName}`,
+            { signal: controller.signal }
+          );
+          clearTimeout(timeout);
           if (itemResponse.ok) {
             const data = await itemResponse.json();
             return data.data || {};
           }
-          console.error(`Failed to fetch item data: ${itemResponse.status}`);
         } catch (err) {
-          console.error("Error fetching item data:", err);
+          if (err.name !== "AbortError") {
+            console.error("Error fetching item data:", err);
+          }
         }
         return {};
       })();
@@ -104,9 +111,19 @@ export default function shopApiRoute(app, config, db, features, lang) {
 
                     const profilePicture = await fetchProfilePicture(userData.username);
 
+                    // Use the DB display_name for enchanted books (includes enchantment details)
+                    // Fall back to Craftdex displayName, then raw item ID
+                    let displayName = itemData.displayName || itemName;
+                    if (shop.display_name) {
+                      displayName = `Enchanted Book (${shop.display_name})`;
+                    }
+
                     return {
                       ...shop,
-                      itemData,
+                      itemData: {
+                        ...itemData,
+                        displayName,
+                      },
                       userData: {
                         username: userData.username || "",
                         discordId: userData.discordId || "",
