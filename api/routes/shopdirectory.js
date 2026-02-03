@@ -11,6 +11,26 @@ function formatItemName(rawName) {
     .replace(/\b\w/g, (c) => c.toUpperCase());
 }
 
+// Clean and format the DB display_name (strip leftover quotes, title-case each word)
+// e.g. "'mending 1'" → "Mending 1", "slow_falling" → "Slow Falling"
+function cleanDisplayName(raw) {
+  if (!raw) return null;
+  return raw
+    .replace(/['"]/g, "")
+    .trim()
+    .replace(/_/g, " ")
+    .replace(/\b\w/g, (c) => c.toUpperCase());
+}
+
+// Map of item IDs that use display_name for a parenthetical label
+const ITEM_DISPLAY_LABEL = {
+  enchanted_book: "Enchanted Book",
+  potion: "Potion",
+  splash_potion: "Splash Potion",
+  lingering_potion: "Lingering Potion",
+  tipped_arrow: "Tipped Arrow",
+};
+
 export default function shopApiRoute(app, config, db, features, lang) {
   const baseEndpoint = "/api/shop";
 
@@ -121,12 +141,14 @@ export default function shopApiRoute(app, config, db, features, lang) {
                     const profilePicture = await fetchProfilePicture(userData.username);
 
                     // Build the display name with priority:
-                    // 1. DB display_name for enchanted books (shows enchantment details)
+                    // 1. DB display_name for items with extra data (enchanted books, potions)
                     // 2. Craftdex displayName (official human-readable name)
                     // 3. Formatted raw item ID as fallback (underscores → spaces, title case)
                     let displayName = itemData.displayName || formatItemName(itemName);
-                    if (shop.display_name) {
-                      displayName = `Enchanted Book (${shop.display_name})`;
+                    const cleanedDetail = cleanDisplayName(shop.display_name);
+                    const parentLabel = ITEM_DISPLAY_LABEL[itemName];
+                    if (cleanedDetail && parentLabel) {
+                      displayName = `${parentLabel} (${cleanedDetail})`;
                     }
 
                     return {
