@@ -6,7 +6,7 @@ CREATE TABLE users (
         userId INT NOT NULL AUTO_INCREMENT,
         uuid VARCHAR(36) NOT NULL UNIQUE,
         username VARCHAR(16) NOT NULL,
-    discordId VARCHAR(24),
+    discordId VARCHAR(32),
     email VARCHAR(254) UNIQUE,
     password_hash VARCHAR(255),
     email_verified BOOLEAN DEFAULT 0,
@@ -507,6 +507,20 @@ SELECT
                         '\'', ''
                     ),
                     '}', ''
+                )
+            WHEN LOCATE('minecraft:enchantments:', `data`.`item`) > 0
+            THEN REPLACE(
+                    REPLACE(
+                        TRIM(SUBSTRING_INDEX(
+                            SUBSTR(`data`.`item`,
+                                   LOCATE('minecraft:enchantments:', `data`.`item`)
+                                     + OCTET_LENGTH('minecraft:enchantments:')),
+                            '\n',
+                            1
+                        )),
+                        '\'', ''
+                    ),
+                    ' ', ''
                 )
             ELSE NULL
         END AS `display_name`

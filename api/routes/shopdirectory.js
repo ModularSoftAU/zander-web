@@ -22,6 +22,25 @@ function cleanDisplayName(raw) {
     .replace(/\b\w/g, (c) => c.toUpperCase());
 }
 
+// Parse a JSON-like enchantment string from the DB into a readable list
+// e.g. '{"minecraft:fire_aspect":1,"minecraft:sharpness":2}' → "Fire Aspect 1, Sharpness 2"
+function parseEnchantmentJson(raw) {
+  if (!raw) return null;
+  try {
+    const cleaned = raw.replace(/['"]/g, '"').trim();
+    const obj = JSON.parse(cleaned);
+    return Object.entries(obj)
+      .map(([key, level]) => {
+        const name = key.replace("minecraft:", "").replace(/_/g, " ")
+          .replace(/\b\w/g, (c) => c.toUpperCase());
+        return `${name} ${level}`;
+      })
+      .join(", ");
+  } catch {
+    return cleanDisplayName(raw);
+  }
+}
+
 // Map of item IDs that use display_name for a parenthetical label
 const ITEM_DISPLAY_LABEL = {
   enchanted_book: "Enchanted Book",
@@ -141,14 +160,24 @@ export default function shopApiRoute(app, config, db, features, lang) {
                     const profilePicture = await fetchProfilePicture(userData.username);
 
                     // Build the display name with priority:
-                    // 1. DB display_name for items with extra data (enchanted books, potions)
+                    // 1. DB display_name for items with extra data (enchanted books, potions, enchanted tools)
                     // 2. Craftdex displayName (official human-readable name)
                     // 3. Formatted raw item ID as fallback (underscores → spaces, title case)
                     let displayName = itemData.displayName || formatItemName(itemName);
-                    const cleanedDetail = cleanDisplayName(shop.display_name);
                     const parentLabel = ITEM_DISPLAY_LABEL[itemName];
-                    if (cleanedDetail && parentLabel) {
-                      displayName = `${parentLabel} (${cleanedDetail})`;
+
+                    if (shop.display_name && parentLabel) {
+                      // Items with a known parent label (enchanted books, potions)
+                      const cleanedDetail = cleanDisplayName(shop.display_name);
+                      if (cleanedDetail) {
+                        displayName = `${parentLabel} (${cleanedDetail})`;
+                      }
+                    } else if (shop.display_name && shop.display_name.includes("{")) {
+                      // Tool enchantments: raw JSON like {"minecraft:sharpness":2,"minecraft:unbreaking":3}
+                      const enchantList = parseEnchantmentJson(shop.display_name);
+                      if (enchantList) {
+                        displayName = `${displayName} (${enchantList})`;
+                      }
                     }
 
                     return {
