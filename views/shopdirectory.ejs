@@ -285,7 +285,7 @@
   async function fetchShops(query, page) {
     renderLoading();
     try {
-      const url = `/api/shop/get?material=${encodeURIComponent(query)}&page=${page}`;
+      const url = `/shopdirectory/search?material=${encodeURIComponent(query)}&page=${page}`;
       const response = await fetch(url);
       const result = await response.json();
 

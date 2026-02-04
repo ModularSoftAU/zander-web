@@ -349,6 +349,20 @@ export default function applicationSiteRoutes(
       announcementWeb: await getWebAnnouncement(),
     });
   })
+
+  // Proxy endpoint for client-side shop search (avoids exposing API key)
+  app.get("/shopdirectory/search", async function (req, res) {
+    isFeatureWebRouteEnabled(features.shopdirectory, req, res, features);
+
+    const material = req.query.material || "";
+    const page = req.query.page || "1";
+    const shopFetchURL = `${process.env.siteAddress}/api/shop/get?material=${encodeURIComponent(material)}&page=${encodeURIComponent(page)}`;
+    const shopResponse = await fetch(shopFetchURL, {
+      headers: { "x-access-token": process.env.apiKey },
+    });
+    const shopApiData = await shopResponse.json();
+    return res.send(shopApiData);
+  })
   
   //
   // Vault
