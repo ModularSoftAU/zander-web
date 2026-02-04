@@ -300,7 +300,17 @@ async function runStaffAuditReport() {
 const cronExpression = buildCronExpression();
 
 if (cronExpression) {
-  const timezone = config.staffAuditReport?.timezone || "UTC";
+  let timezone = config.staffAuditReport?.timezone || "UTC";
+
+  // Validate the timezone is a valid IANA identifier
+  try {
+    Intl.DateTimeFormat(undefined, { timeZone: timezone });
+  } catch {
+    console.warn(
+      `Invalid timezone "${timezone}" in staffAuditReport config. Falling back to UTC. Use IANA timezone names like "Australia/Sydney" instead of abbreviations like "AEDT".`
+    );
+    timezone = "UTC";
+  }
 
   const staffAuditReportTask = cron.schedule(
     cronExpression,
