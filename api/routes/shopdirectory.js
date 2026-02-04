@@ -50,6 +50,8 @@ const ITEM_DISPLAY_LABEL = {
   tipped_arrow: "Tipped Arrow",
 };
 
+const MAX_RESULTS = 50;
+
 export default function shopApiRoute(app, config, db, features, lang) {
   const baseEndpoint = "/api/shop";
 
@@ -57,7 +59,16 @@ export default function shopApiRoute(app, config, db, features, lang) {
     isFeatureEnabled(features.shopdirectory, res, lang);
 
     const material = optional(req.query, "material");
-    const limit = pLimit(20);
+    const page = Math.max(1, parseInt(req.query.page) || 1);
+    const concurrencyLimit = pLimit(20);
+
+    // Require a search term for web requests (Discord bot always provides one)
+    if (!material || material.trim().length < 2) {
+      return res.send({
+        success: false,
+        message: "Please enter a search term (at least 2 characters).",
+      });
+    }
 
     // Per-request caches to deduplicate external API calls
     const itemCache = new Map();
@@ -128,115 +139,106 @@ export default function shopApiRoute(app, config, db, features, lang) {
     }
 
     try {
-      async function getShops(dbQuery, dbParams) {
-        return new Promise((resolve, reject) => {
-          db.query(dbQuery, dbParams, async (error, results) => {
-            if (error) {
-              console.error("Database error:", error);
-              reject(error);
-              return;
-            }
+      const underscored = material.toUpperCase().replace(/ /g, "_");
+      const likeTerm = `%${material}%`;
+      const likeTermUnderscored = `%${underscored}%`;
 
-            if (!results.length) {
-              res.send({
-                success: false,
-                message: "There are no shops available.",
-              });
-              resolve();
-              return;
-            }
+      // First get total count for pagination
+      const totalCount = await new Promise((resolve, reject) => {
+        db.query(
+          `SELECT COUNT(*) AS total FROM shoppingDirectory
+            WHERE item LIKE ?
+              OR item LIKE ?
+              OR display_name LIKE ?`,
+          [likeTerm, likeTermUnderscored, likeTerm],
+          (error, results) => {
+            if (error) return reject(error);
+            resolve(results[0]?.total || 0);
+          }
+        );
+      });
 
-            try {
-              const modifiedShops = await Promise.all(
-                results.map((shop) =>
-                  limit(async () => {
-                    const itemName = shop.item.trim();
-
-                    const [itemData, userData] = await Promise.all([
-                      fetchItemData(itemName),
-                      fetchUserData(shop.userId),
-                    ]);
-
-                    const profilePicture = await fetchProfilePicture(userData.username);
-
-                    // Build the display name with priority:
-                    // 1. DB display_name for items with extra data (enchanted books, potions, enchanted tools)
-                    // 2. Craftdex displayName (official human-readable name)
-                    // 3. Formatted raw item ID as fallback (underscores → spaces, title case)
-                    let displayName = itemData.displayName || formatItemName(itemName);
-                    const parentLabel = ITEM_DISPLAY_LABEL[itemName];
-
-                    if (shop.display_name && parentLabel) {
-                      // Items with a known parent label (enchanted books, potions)
-                      const cleanedDetail = cleanDisplayName(shop.display_name);
-                      if (cleanedDetail) {
-                        displayName = `${parentLabel} (${cleanedDetail})`;
-                      }
-                    } else if (shop.display_name && shop.display_name.includes("{")) {
-                      // Tool enchantments: raw JSON like {"minecraft:sharpness":2,"minecraft:unbreaking":3}
-                      const enchantList = parseEnchantmentJson(shop.display_name);
-                      if (enchantList) {
-                        displayName = `${displayName} (${enchantList})`;
-                      }
-                    }
-
-                    return {
-                      ...shop,
-                      itemData: {
-                        ...itemData,
-                        displayName,
-                      },
-                      userData: {
-                        username: userData.username || "",
-                        discordId: userData.discordId || "",
-                        profilePicture,
-                      },
-                    };
-                  })
-                )
-              );
-
-              res.send({
-                success: true,
-                data: modifiedShops,
-              });
-            } catch (fetchError) {
-              console.error("Error processing shop data:", fetchError);
-              res.send({
-                success: false,
-                message: "Error processing shop data.",
-              });
-            }
-
-            resolve();
-          });
+      if (totalCount === 0) {
+        return res.send({
+          success: false,
+          message: "No shops found matching your search.",
         });
       }
 
-      // Construct the database query
-      // When filtering by material, match against:
-      // - The raw item ID (with underscores)
-      // - The raw item ID with spaces converted to underscores (user types "grass block" → matches "grass_block")
-      // - The display_name column (for enchanted book enchantment names)
-      // - Individual words (user types "grass" → matches "grass_block")
-      let dbQuery;
-      let dbParams = [];
-      if (material) {
-        const underscored = material.toUpperCase().replace(/ /g, "_");
-        const likeTerm = `%${material}%`;
-        const likeTermUnderscored = `%${underscored}%`;
+      const totalPages = Math.ceil(totalCount / MAX_RESULTS);
+      const safePage = Math.min(page, totalPages);
+      const offset = (safePage - 1) * MAX_RESULTS;
 
-        dbQuery = `SELECT * FROM shoppingDirectory
-          WHERE item LIKE ?
-            OR item LIKE ?
-            OR display_name LIKE ?;`;
-        dbParams = [likeTerm, likeTermUnderscored, likeTerm];
-      } else {
-        dbQuery = `SELECT * FROM shoppingDirectory;`;
-      }
+      // Fetch the page of results with LIMIT/OFFSET
+      const results = await new Promise((resolve, reject) => {
+        db.query(
+          `SELECT * FROM shoppingDirectory
+            WHERE item LIKE ?
+              OR item LIKE ?
+              OR display_name LIKE ?
+            LIMIT ? OFFSET ?`,
+          [likeTerm, likeTermUnderscored, likeTerm, MAX_RESULTS, offset],
+          (error, results) => {
+            if (error) return reject(error);
+            resolve(results || []);
+          }
+        );
+      });
 
-      // Execute the query and process the shops
-      await getShops(dbQuery, dbParams);
+      // Enrich results with item data, user data, and profile pictures
+      const modifiedShops = await Promise.all(
+        results.map((shop) =>
+          concurrencyLimit(async () => {
+            const itemName = shop.item.trim();
+
+            const [itemData, userData] = await Promise.all([
+              fetchItemData(itemName),
+              fetchUserData(shop.userId),
+            ]);
+
+            const profilePicture = await fetchProfilePicture(userData.username);
+
+            let displayName = itemData.displayName || formatItemName(itemName);
+            const parentLabel = ITEM_DISPLAY_LABEL[itemName];
+
+            if (shop.display_name && parentLabel) {
+              const cleanedDetail = cleanDisplayName(shop.display_name);
+              if (cleanedDetail) {
+                displayName = `${parentLabel} (${cleanedDetail})`;
+              }
+            } else if (shop.display_name && shop.display_name.includes("{")) {
+              const enchantList = parseEnchantmentJson(shop.display_name);
+              if (enchantList) {
+                displayName = `${displayName} (${enchantList})`;
+              }
+            }
+
+            return {
+              ...shop,
+              itemData: {
+                ...itemData,
+                displayName,
+              },
+              userData: {
+                username: userData.username || "",
+                discordId: userData.discordId || "",
+                profilePicture,
+              },
+            };
+          })
+        )
+      );
+
+      res.send({
+        success: true,
+        data: modifiedShops,
+        pagination: {
+          page: safePage,
+          totalPages,
+          totalResults: totalCount,
+          perPage: MAX_RESULTS,
+        },
+      });
     } catch (error) {
       console.error("Unhandled error:", error);
       res.send({
