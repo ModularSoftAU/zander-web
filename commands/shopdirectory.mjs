@@ -1,6 +1,6 @@
 import { Command } from "@sapphire/framework";
 import { ActionRowBuilder, ButtonBuilder, ButtonStyle, Colors, EmbedBuilder } from "discord.js";
-import fetch from "node-fetch";
+import { searchShops } from "../services/shopService.js";
 import { createRequire } from "module";
 const require = createRequire(import.meta.url);
 const features = require("../features.json");
@@ -68,14 +68,10 @@ export class ShopDirectoryCommand extends Command {
 
     const material = interaction.options.getString("material") || "";
     const type = interaction.options.getString("type");
-    const shopApiURL = `${process.env.siteAddress}/api/shop/get?material=${encodeURIComponent(material)}`;    
 
     try {
-      // Fetch shop data from the API
-      const response = await fetch(shopApiURL, {
-        headers: { "x-access-token": process.env.apiKey },
-      });
-      const apiData = await response.json();
+      // Fetch shop data directly (no HTTP self-call)
+      const apiData = await searchShops(material, 1, { includeProfilePictures: false });
 
       if (!apiData.success || !apiData.data.length) {
         const noItemsEmbed = new EmbedBuilder()
