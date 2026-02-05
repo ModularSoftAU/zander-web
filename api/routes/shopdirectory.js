@@ -103,22 +103,19 @@ export default function shopApiRoute(app, config, db, features, lang) {
 
     async function fetchUserData(userId) {
       if (userCache.has(userId)) return userCache.get(userId);
-      const promise = (async () => {
-        try {
-          const userResponse = await fetch(
-            `${process.env.siteAddress}/api/user/get?userId=${userId}`,
-            { headers: { "x-access-token": process.env.apiKey } }
-          );
-          if (userResponse.ok) {
-            const data = await userResponse.json();
-            return data.data?.[0] || {};
+      const promise = new Promise((resolve) => {
+        db.query(
+          `SELECT userId, username, discordId FROM users WHERE userId = ?`,
+          [userId],
+          (error, results) => {
+            if (error) {
+              console.error("Error fetching user data:", error);
+              return resolve({});
+            }
+            resolve(results?.[0] || {});
           }
-          console.error(`Failed to fetch user data: ${userResponse.status}`);
-        } catch (err) {
-          console.error("Error fetching user data:", err);
-        }
-        return {};
-      })();
+        );
+      });
       userCache.set(userId, promise);
       return promise;
     }

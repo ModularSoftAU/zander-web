@@ -357,11 +357,20 @@ export default function applicationSiteRoutes(
     const material = req.query.material || "";
     const page = req.query.page || "1";
     const shopFetchURL = `${process.env.siteAddress}/api/shop/get?material=${encodeURIComponent(material)}&page=${encodeURIComponent(page)}`;
-    const shopResponse = await fetch(shopFetchURL, {
-      headers: { "x-access-token": process.env.apiKey },
-    });
-    const shopApiData = await shopResponse.json();
-    return res.send(shopApiData);
+
+    try {
+      const shopResponse = await fetch(shopFetchURL, {
+        headers: { "x-access-token": process.env.apiKey },
+      });
+      const shopApiData = await shopResponse.json();
+      return res.send(shopApiData);
+    } catch (err) {
+      console.error("Shop search proxy error:", err);
+      return res.send({
+        success: false,
+        message: "Failed to fetch shop data. Please try again.",
+      });
+    }
   })
   
   //
