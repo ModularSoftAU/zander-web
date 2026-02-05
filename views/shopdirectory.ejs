@@ -240,13 +240,17 @@
       const stockClass = shop.stock <= 0 ? 'shop-stock-out' : 'shop-stock-in';
       const stockText = shop.stock < 0 ? 'Buying' : (shop.stock === 0 ? 'Out of Stock' : shop.stock);
 
+      const shulkerLine = shop.shulkerContents
+        ? `<br><small class="text-muted">${escapeHtml(shop.shulkerContents)}</small>`
+        : '';
+
       html += `<tr>
         <td>${itemImg}${displayName}</td>
         <td>${profileImg}${username}</td>
         <td><code>${escapeHtml(String(shop.amount))}</code></td>
         <td class="shop-price"><code>${escapeHtml(String(shop.price))}</code></td>
         <td class="${stockClass}">${escapeHtml(String(stockText))}</td>
-        <td class="shop-location"><code>${escapeHtml(String(shop.x))}, ${escapeHtml(String(shop.y))}, ${escapeHtml(String(shop.z))}</code></td>
+        <td class="shop-location"><code>${escapeHtml(String(shop.x))}, ${escapeHtml(String(shop.y))}, ${escapeHtml(String(shop.z))}</code>${shulkerLine}</td>
       </tr>`;
     });
 

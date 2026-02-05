@@ -260,6 +260,7 @@ export async function searchShops(material, page = 1, options = {}) {
 
           let displayName = itemData.displayName || formatItemName(itemName);
           const parentLabel = ITEM_DISPLAY_LABEL[itemName];
+          let shulkerContents = null;
 
           if (shop.display_name && parentLabel) {
             const cleanedDetail = cleanDisplayName(shop.display_name);
@@ -272,10 +273,7 @@ export async function searchShops(material, page = 1, options = {}) {
               displayName = `${displayName} (${enchantList})`;
             }
           } else if (SHULKER_BOX_ITEMS.has(itemName)) {
-            const contents = await fetchShulkerContents(shop.id);
-            if (contents) {
-              displayName = `${displayName} (${contents})`;
-            }
+            shulkerContents = await fetchShulkerContents(shop.id);
           }
 
           return {
@@ -289,6 +287,7 @@ export async function searchShops(material, page = 1, options = {}) {
               discordId: userData.discordId || "",
               profilePicture,
             },
+            shulkerContents,
           };
         })
       )
