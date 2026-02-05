@@ -56,19 +56,26 @@ const SHULKER_BOX_ITEMS = new Set([
 
 const MAX_RESULTS = 50;
 
-// Parse shulker box contents from raw QuickShop item YAML
+// Parse shulker box contents from raw QuickShop item data
+// Format: minecraft:container: '[{item:{count:64,id:"minecraft:sand"},slot:0},...]'
 function parseShulkerContents(rawItemYaml) {
   if (!rawItemYaml) return null;
-  const containerMatch = rawItemYaml.match(/minecraft:container:\s*\n([\s\S]*?)(?=\nminecraft:|$)/);
+
+  // Match the container data - it's a single-line JSON-like array after minecraft:container:
+  const containerMatch = rawItemYaml.match(/minecraft:container:\s*'(\[[\s\S]*?\])'/);
   if (!containerMatch) return null;
 
-  const containerSection = containerMatch[1];
-  const itemMatches = containerSection.matchAll(/id:\s*(?:minecraft:)?([a-z_]+)/gi);
+  const containerJson = containerMatch[1];
   const items = {};
 
+  // Parse item entries: {item:{count:64,id:"minecraft:sand"},slot:0}
+  // Extract id and count from each item
+  const itemMatches = containerJson.matchAll(/\{item:\{count:(\d+),id:"(?:minecraft:)?([a-z_]+)"\},slot:\d+\}/gi);
+
   for (const match of itemMatches) {
-    const itemId = match[1].toLowerCase();
-    items[itemId] = (items[itemId] || 0) + 1;
+    const count = parseInt(match[1]) || 1;
+    const itemId = match[2].toLowerCase();
+    items[itemId] = (items[itemId] || 0) + count;
   }
 
   if (Object.keys(items).length === 0) return null;
@@ -76,9 +83,9 @@ function parseShulkerContents(rawItemYaml) {
   const formatted = Object.entries(items)
     .sort((a, b) => b[1] - a[1])
     .slice(0, 3)
-    .map(([id, count]) => {
+    .map(([id, totalCount]) => {
       const name = formatItemName(id);
-      return count > 1 ? `${name} x${count}` : name;
+      return totalCount > 1 ? `${name} x${totalCount}` : name;
     })
     .join(", ");
 
