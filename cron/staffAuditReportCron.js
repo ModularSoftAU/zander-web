@@ -2,7 +2,6 @@ import cron from "node-cron";
 import { Colors, EmbedBuilder, WebhookClient } from "discord.js";
 import { createRequire } from "module";
 import db from "../controllers/databaseController.js";
-import { client } from "../controllers/discordController.js";
 
 const require = createRequire(import.meta.url);
 const config = require("../config.json");
@@ -60,7 +59,7 @@ function formatAuditTimestamp(value) {
 function buildMemberSection(member) {
   const lines = [];
 
-  // Header: username + Discord mention (no ranks shown per spec)
+  // Header: username + Discord mention
   const headerParts = [`**${member.username}**`];
   if (member.discordId) {
     headerParts.push(`<@${member.discordId}>`);
@@ -170,27 +169,6 @@ function packIntoFields(sections) {
   return fields;
 }
 
-async function sendViaWebhook(embeds, webhookUrl) {
-  const webhookClient = new WebhookClient({ url: webhookUrl });
-  try {
-    for (const embed of embeds) {
-      await webhookClient.send({ embeds: [embed] });
-    }
-  } finally {
-    webhookClient.destroy?.();
-  }
-}
-
-async function sendViaChannel(embeds, channelId) {
-  const channel = await client.channels.fetch(channelId);
-  if (!channel) {
-    throw new Error(`Channel ${channelId} not found`);
-  }
-  for (const embed of embeds) {
-    await channel.send({ embeds: [embed] });
-  }
-}
-
 async function runStaffAuditReport() {
   // Check feature flag
   if (!features.staffAuditReport) {
@@ -202,32 +180,11 @@ async function runStaffAuditReport() {
     return;
   }
 
-  // Determine delivery target
-  const delivery = auditConfig.delivery || {};
-  const method = delivery.method || "webhook";
-
-  let webhookUrl = null;
-  let channelId = null;
-
-  if (method === "webhook") {
-    webhookUrl = delivery.webhookUrl || config?.discord?.webhooks?.staffAuditLog;
-    if (!webhookUrl || webhookUrl === "WEBHOOKURL") {
-      console.warn(
-        "Staff audit report skipped: no valid webhook URL configured."
-      );
-      return;
-    }
-  } else if (method === "channel") {
-    channelId = delivery.channelId;
-    if (!channelId) {
-      console.warn(
-        "Staff audit report skipped: no channelId configured for channel delivery."
-      );
-      return;
-    }
-  } else {
+  // Get webhook URL from staffAuditReport config or discord.webhooks fallback
+  const webhookUrl = auditConfig.webhookUrl || config?.discord?.webhooks?.staffAuditLog;
+  if (!webhookUrl || webhookUrl === "WEBHOOKURL") {
     console.warn(
-      `Staff audit report skipped: unknown delivery method "${method}".`
+      "Staff audit report skipped: no valid webhook URL configured."
     );
     return;
   }
@@ -284,11 +241,14 @@ async function runStaffAuditReport() {
   });
   embeds.push(currentEmbed);
 
-  // Send
-  if (method === "webhook") {
-    await sendViaWebhook(embeds, webhookUrl);
-  } else {
-    await sendViaChannel(embeds, channelId);
+  // Send via webhook
+  const webhookClient = new WebhookClient({ url: webhookUrl });
+  try {
+    for (const embed of embeds) {
+      await webhookClient.send({ embeds: [embed] });
+    }
+  } finally {
+    webhookClient.destroy?.();
   }
 
   console.log(
@@ -325,6 +285,10 @@ if (cronExpression) {
   );
 
   staffAuditReportTask.start();
+
+  console.log(
+    `Staff audit report scheduled: "${cronExpression}" (${config.staffAuditReport?.dayOfWeek} ${config.staffAuditReport?.time} ${timezone})`
+  );
 } else if (config.staffAuditReport?.enabled && features.staffAuditReport) {
   console.warn(
     "Staff audit report is enabled but could not build a valid cron schedule. Check config.staffAuditReport settings."

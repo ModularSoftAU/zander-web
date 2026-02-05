@@ -50,10 +50,6 @@
     "dayOfWeek": "Monday",
     "time": "12:00",
     "timezone": "Australia/Sydney",
-    "delivery": {
-      "method": "webhook",
-      "webhookUrl": "WEBHOOKURL",
-      "channelId": ""
-    }
+    "webhookUrl": "WEBHOOKURL"
   }
 }
