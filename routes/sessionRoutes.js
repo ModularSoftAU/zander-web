@@ -245,6 +245,12 @@ export default function sessionSiteRoute(
 
       await hydrateUserSession(req, user);
       delete req.session.passwordReset;
+
+      // Extend session to 30 days if "Remember Me" is checked
+      if (req.body.rememberMe) {
+        req.session.cookie.maxAge = 86400000 * 30; // 30 days
+      }
+
       setBannerCookie("success", "Logged in successfully.", res);
       const returnTo =
         typeof req.session.returnTo === "string" &&
