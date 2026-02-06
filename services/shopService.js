@@ -54,6 +54,17 @@ const SHULKER_BOX_ITEMS = new Set([
   "black_shulker_box",
 ]);
 
+// Parse firework flight duration from item data
+// Format: minecraft:fireworks: '{flight_duration:3b}'
+function parseFireworkDuration(rawItemYaml) {
+  if (!rawItemYaml) return null;
+  const match = rawItemYaml.match(/flight_duration:(\d+)b?/i);
+  if (match) {
+    return parseInt(match[1], 10);
+  }
+  return null;
+}
+
 const MAX_RESULTS = 50;
 
 // Parse shulker box contents from raw QuickShop item data
@@ -201,6 +212,29 @@ export async function searchShops(material, page = 1, options = {}) {
     return promise;
   }
 
+  // Cache for raw item data (reused for firework duration)
+  const rawItemCache = new Map();
+
+  async function fetchRawItemData(shopId) {
+    if (rawItemCache.has(shopId)) return rawItemCache.get(shopId);
+    const promise = new Promise((resolve) => {
+      db.query(
+        `SELECT d.item FROM cfc_prod_quickshop.qs_shops s
+         JOIN cfc_prod_quickshop.qs_data d ON s.data = d.id
+         WHERE s.id = ?`,
+        [shopId],
+        (error, results) => {
+          if (error || !results?.[0]?.item) {
+            return resolve(null);
+          }
+          resolve(results[0].item);
+        }
+      );
+    });
+    rawItemCache.set(shopId, promise);
+    return promise;
+  }
+
   try {
     const safePage = Math.max(1, parseInt(page) || 1);
     const underscored = material.toUpperCase().replace(/ /g, "_");
@@ -274,6 +308,13 @@ export async function searchShops(material, page = 1, options = {}) {
             }
           } else if (SHULKER_BOX_ITEMS.has(itemName)) {
             shulkerContents = await fetchShulkerContents(shop.id);
+          } else if (itemName === "firework_rocket") {
+            // Fetch raw item data to get flight duration
+            const rawItem = await fetchRawItemData(shop.id);
+            const duration = parseFireworkDuration(rawItem);
+            if (duration !== null) {
+              displayName = `${displayName} (Duration ${duration})`;
+            }
           }
 
           return {
