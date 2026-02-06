@@ -168,11 +168,12 @@ export class ShopDirectoryCommand extends Command {
         page.forEach((shop) => {
           const transactionType = shop.stock === -1 ? "💰 Buying" : "📦 Selling";
           const stockInfo = shop.stock !== -1 ? `**Stock:** ${shop.stock}\n` : "";
+          const contentsInfo = shop.shulkerContents ? `**Contents:** ${shop.shulkerContents}\n` : "";
 
           embed.addFields([
             {
               name: `Item: ${shop.itemData.displayName}`,
-              value: `**Seller:** \`${shop.userData.username}\`\n**Amount:** ${shop.amount}\n**Price:** $${shop.price}\n${stockInfo}**Type:** ${transactionType}\n**Location:** ${shop.x}, ${shop.y}, ${shop.z}`,
+              value: `**Seller:** \`${shop.userData.username}\`\n**Amount:** ${shop.amount}\n**Price:** $${shop.price}\n${stockInfo}**Type:** ${transactionType}\n**Location:** ${shop.x}, ${shop.y}, ${shop.z}${contentsInfo ? `\n${contentsInfo.trim()}` : ""}`,
             },
           ]);
         });
