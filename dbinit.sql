@@ -6,7 +6,7 @@ CREATE TABLE users (
         userId INT NOT NULL AUTO_INCREMENT,
         uuid VARCHAR(36) NOT NULL UNIQUE,
         username VARCHAR(16) NOT NULL,
-    discordId VARCHAR(24),
+    discordId VARCHAR(32),
     email VARCHAR(254) UNIQUE,
     password_hash VARCHAR(255),
     email_verified BOOLEAN DEFAULT 0,
@@ -397,23 +397,27 @@ SELECT
                     UPPER(LEFT(
                         REPLACE(
                             REPLACE(
-                                TRIM(SUBSTRING_INDEX(
-                                    REPLACE(
+                                REPLACE(
+                                    TRIM(SUBSTRING_INDEX(
                                         REPLACE(
-                                            TRIM(SUBSTRING_INDEX(
-                                                SUBSTR(`data`.`item`,
-                                                       LOCATE('minecraft:stored_enchantments:', `data`.`item`) 
-                                                         + OCTET_LENGTH('minecraft:stored_enchantments:')),
-                                                '\n',
-                                                1
-                                            )),
-                                            '{"minecraft:', ''
+                                            REPLACE(
+                                                TRIM(SUBSTRING_INDEX(
+                                                    SUBSTR(`data`.`item`,
+                                                           LOCATE('minecraft:stored_enchantments:', `data`.`item`)
+                                                             + OCTET_LENGTH('minecraft:stored_enchantments:')),
+                                                    '\n',
+                                                    1
+                                                )),
+                                                '{"minecraft:', ''
+                                            ),
+                                            '}', ''
                                         ),
-                                        '}', ''
-                                    ),
-                                    '":',
-                                    1
-                                )),
+                                        '":',
+                                        1
+                                    )),
+                                    '\'',
+                                    ''
+                                ),
                                 '"',
                                 ''
                             ),
@@ -425,23 +429,27 @@ SELECT
                     LOWER(SUBSTRING(
                         REPLACE(
                             REPLACE(
-                                TRIM(SUBSTRING_INDEX(
-                                    REPLACE(
+                                REPLACE(
+                                    TRIM(SUBSTRING_INDEX(
                                         REPLACE(
-                                            TRIM(SUBSTRING_INDEX(
-                                                SUBSTR(`data`.`item`,
-                                                       LOCATE('minecraft:stored_enchantments:', `data`.`item`) 
-                                                         + OCTET_LENGTH('minecraft:stored_enchantments:')),
-                                                '\n',
-                                                1
-                                            )),
-                                            '{"minecraft:', ''
+                                            REPLACE(
+                                                TRIM(SUBSTRING_INDEX(
+                                                    SUBSTR(`data`.`item`,
+                                                           LOCATE('minecraft:stored_enchantments:', `data`.`item`)
+                                                             + OCTET_LENGTH('minecraft:stored_enchantments:')),
+                                                    '\n',
+                                                    1
+                                                )),
+                                                '{"minecraft:', ''
+                                            ),
+                                            '}', ''
                                         ),
-                                        '}', ''
-                                    ),
-                                    '":',
-                                    1
-                                )),
+                                        '":',
+                                        1
+                                    )),
+                                    '\'',
+                                    ''
+                                ),
                                 '"',
                                 ''
                             ),
@@ -454,28 +462,66 @@ SELECT
                 ' ',
                 -- enchant level
                 REPLACE(
-                    TRIM(SUBSTRING_INDEX(
+                    REPLACE(
+                        TRIM(SUBSTRING_INDEX(
+                            REPLACE(
+                                REPLACE(
+                                    TRIM(SUBSTRING_INDEX(
+                                        SUBSTR(`data`.`item`,
+                                               LOCATE('minecraft:stored_enchantments:', `data`.`item`)
+                                                 + OCTET_LENGTH('minecraft:stored_enchantments:')),
+                                        '\n',
+                                        1
+                                    )),
+                                    '{"minecraft:', ''
+                                ),
+                                '}',
+                                ''
+                            ),
+                            '":',
+                            -1
+                        )),
+                        '"',
+                        ''
+                    ),
+                    '\'',
+                    ''
+                )
+            )
+            WHEN LOCATE('minecraft:potion_contents:', `data`.`item`) > 0
+            THEN REPLACE(
+                    REPLACE(
                         REPLACE(
                             REPLACE(
                                 TRIM(SUBSTRING_INDEX(
                                     SUBSTR(`data`.`item`,
-                                           LOCATE('minecraft:stored_enchantments:', `data`.`item`) 
-                                             + OCTET_LENGTH('minecraft:stored_enchantments:')),
+                                           LOCATE('minecraft:potion_contents:', `data`.`item`)
+                                             + OCTET_LENGTH('minecraft:potion_contents:')),
                                     '\n',
                                     1
                                 )),
-                                '{"minecraft:', ''
+                                '{potion:"minecraft:', ''
                             ),
-                            '}',
-                            ''
+                            '"}', ''
                         ),
-                        '":',
-                        -1
-                    )),
-                    '"',
-                    ''
+                        '\'', ''
+                    ),
+                    '}', ''
                 )
-            )
+            WHEN LOCATE('minecraft:enchantments:', `data`.`item`) > 0
+            THEN REPLACE(
+                    REPLACE(
+                        TRIM(SUBSTRING_INDEX(
+                            SUBSTR(`data`.`item`,
+                                   LOCATE('minecraft:enchantments:', `data`.`item`)
+                                     + OCTET_LENGTH('minecraft:enchantments:')),
+                            '\n',
+                            1
+                        )),
+                        '\'', ''
+                    ),
+                    ' ', ''
+                )
             ELSE NULL
         END AS `display_name`
     FROM

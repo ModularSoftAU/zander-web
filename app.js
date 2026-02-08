@@ -10,6 +10,7 @@ dotenv.config();
 import fastify from "fastify";
 import fastifySession from "@fastify/session";
 import fastifyCookie from "@fastify/cookie";
+import expressMySQLSession from "express-mysql-session";
 
 const config = require("./config.json");
 const features = require("./features.json");
@@ -129,7 +130,20 @@ const buildApp = async () => {
     next();
   });
 
-  // Sessions
+  // Sessions — persisted to MySQL so logins survive app restarts
+  const MySQLStore = expressMySQLSession(fastifySession);
+  const sessionStore = new MySQLStore({
+    host: process.env.databaseHost,
+    port: process.env.databasePort,
+    user: process.env.databaseUser,
+    password: process.env.databasePassword,
+    database: process.env.databaseName,
+    createDatabaseTable: true,
+    clearExpired: true,
+    checkExpirationInterval: 900000, // 15 minutes
+    expiration: 86400000 * 7, // 7 days default
+  });
+
   await app.register(fastifyCookie, {
     secret: process.env.sessionCookieSecret, // for cookies signature
   });
@@ -137,8 +151,14 @@ const buildApp = async () => {
   await app.register(fastifySession, {
     cookieName: "sessionId",
     secret: process.env.sessionCookieSecret,
-    cookie: { secure: false },
-    expires: 1800000,
+    store: sessionStore,
+    cookie: {
+      secure: false,
+      maxAge: 86400000 * 7, // 7 days default
+      httpOnly: true,
+      sameSite: "lax",
+    },
+    saveUninitialized: false,
   });
 
   await app.register((instance, options, next) => {

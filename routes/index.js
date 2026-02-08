@@ -340,24 +340,37 @@ export default function applicationSiteRoutes(
   app.get("/shopdirectory", async function (req, res) {
     isFeatureWebRouteEnabled(features.shopdirectory, req, res, features);
 
-    //
-    // Get all Shops
-    //
-    const shopFetchURL = `${process.env.siteAddress}/api/shop/get`;
-    const shopResponse = await fetch(shopFetchURL, {
-      headers: { "x-access-token": process.env.apiKey },
-    });
-    const shopApiData = await shopResponse.json();
-
     return res.view("shopdirectory", {
       pageTitle: `Shop Directory`,
       config: config,
       req: req,
       features: features,
-      shopApiData: shopApiData,
       globalImage: await getGlobalImage(),
       announcementWeb: await getWebAnnouncement(),
     });
+  })
+
+  // Proxy endpoint for client-side shop search (avoids exposing API key)
+  app.get("/shopdirectory/search", async function (req, res) {
+    isFeatureWebRouteEnabled(features.shopdirectory, req, res, features);
+
+    const material = req.query.material || "";
+    const page = req.query.page || "1";
+    const shopFetchURL = `${process.env.siteAddress}/api/shop/get?material=${encodeURIComponent(material)}&page=${encodeURIComponent(page)}`;
+
+    try {
+      const shopResponse = await fetch(shopFetchURL, {
+        headers: { "x-access-token": process.env.apiKey },
+      });
+      const shopApiData = await shopResponse.json();
+      return res.send(shopApiData);
+    } catch (err) {
+      console.error("Shop search proxy error:", err);
+      return res.send({
+        success: false,
+        message: "Failed to fetch shop data. Please try again.",
+      });
+    }
   })
   
   //

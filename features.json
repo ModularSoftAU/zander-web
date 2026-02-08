@@ -24,6 +24,8 @@
     "register": true
   },
 
+  "staffAuditReport": true,
+
   "smDiscord": true,
   "smFacebook": true,
   "smTwitter": true,

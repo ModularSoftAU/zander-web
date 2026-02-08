@@ -12,6 +12,12 @@ import {
   unlinkDiscordAccount,
 } from "../controllers/userController.js";
 import { getTicketsAccessibleByUser } from "../controllers/supportTicketController.js";
+import {
+  getUserByUsername,
+  getUserRanks,
+  getReportsByReporterId,
+  getUserPunishments,
+} from "../services/profileService.js";
 
 export default function profileSiteRoutes(
   app,
@@ -59,33 +65,6 @@ export default function profileSiteRoutes(
     return baseName.substring(0, 32);
   };
 
-  const fetchUserRanks = async (username) => {
-    if (!username) {
-      return [];
-    }
-
-    try {
-      const response = await fetch(
-        `${process.env.siteAddress}/api/rank/get?username=${encodeURIComponent(
-          username
-        )}`,
-        {
-          headers: { "x-access-token": process.env.apiKey },
-        }
-      );
-
-      if (!response.ok) {
-        return [];
-      }
-
-      const data = await response.json();
-      return Array.isArray(data.data) ? data.data : [];
-    } catch (error) {
-      console.error("[PROFILE] Failed to fetch ranks for", username, error);
-      return [];
-    }
-  };
-
   //
   // View User Profile
   //
@@ -108,22 +87,25 @@ export default function profileSiteRoutes(
         });
       } else {
         //
-        // Grab user profile data
+        // Grab user profile data (direct DB query, no HTTP self-call)
         //
-        const fetchURL = `${process.env.siteAddress}/api/user/get?username=${username}`;
-        const response = await fetch(fetchURL, {
-          headers: { "x-access-token": process.env.apiKey },
-        });
-        const profileApiData = await response.json();
+        const profileData = await getUserByUsername(username);
+        if (!profileData) {
+          return res.view("session/notFound", {
+            pageTitle: `404: Player Not Found`,
+            config: config,
+            req: req,
+            res: res,
+            features: features,
+            globalImage: await getGlobalImage(),
+            announcementWeb: await getWebAnnouncement(),
+          });
+        }
 
         //
-        // Grab user reports
+        // Grab user reports (direct DB query, no HTTP self-call)
         //
-        const fetchReportsURL = `${process.env.siteAddress}/api/report/get?reporterId=${profileApiData.data[0].userId}`;
-        const reportsResponse = await fetch(fetchReportsURL, {
-          headers: { "x-access-token": process.env.apiKey },
-        });
-        const profileReportsApiData = await reportsResponse.json();
+        const profileReportsApiData = await getReportsByReporterId(profileData.userId);
 
         //
         // Get user context for display permissions
@@ -141,7 +123,7 @@ export default function profileSiteRoutes(
         }
 
         //
-        // Grab user punishments
+        // Grab user punishments (direct DB query, no HTTP self-call)
         //
         let profilePunishmentsApiData = { success: true, data: [] };
         const isViewingOwnProfile =
@@ -151,13 +133,7 @@ export default function profileSiteRoutes(
           (contextPermissions &&
             contextPermissions.includes("zander.web.punishments"))
         ) {
-          const fetchPunishmentsURL = `${process.env.siteAddress}/api/user/punishments?username=${encodeURIComponent(
-            username
-          )}`;
-          const punishmentsResponse = await fetch(fetchPunishmentsURL, {
-            headers: { "x-access-token": process.env.apiKey },
-          });
-          profilePunishmentsApiData = await punishmentsResponse.json();
+          profilePunishmentsApiData = await getUserPunishments(username);
         }
 
         const canAppeal = isViewingOwnProfile;
@@ -185,25 +161,21 @@ export default function profileSiteRoutes(
         // Render the profile page
         //
         return res.view("modules/profile/profile", {
-          pageTitle: `${profileApiData.data[0].username}`,
+          pageTitle: `${profileData.username}`,
           config: config,
           req: req,
           features: features,
           globalImage: await getGlobalImage(),
           announcementWeb: await getWebAnnouncement(),
-          profilePicture: await getProfilePicture(
-            profileApiData.data[0].username
-          ),
-          profileApiData: profileApiData.data[0],
-          profileRanks: await fetchUserRanks(profileApiData.data[0].username),
+          profilePicture: await getProfilePicture(profileData.username),
+          profileApiData: profileData,
+          profileRanks: await getUserRanks(profileData.username),
           profileReportsApiData: profileReportsApiData,
           profilePunishmentsApiData: profilePunishmentsApiData,
           appealTicketsByKey: appealTicketsByKey,
           canAppeal: canAppeal,
-          profileStats: await getUserStats(profileApiData.data[0].userId),
-          profileSession: await getUserLastSession(
-            profileApiData.data[0].userId
-          ),
+          profileStats: await getUserStats(profileData.userId),
+          profileSession: await getUserLastSession(profileData.userId),
           moment: moment,
           contextPermissions: contextPermissions,
         });
@@ -248,30 +220,36 @@ export default function profileSiteRoutes(
         });
       } else {
         //
-        // Grab user profile data
+        // Grab user profile data (direct DB query, no HTTP self-call)
         //
-        const fetchURL = `${process.env.siteAddress}/api/user/get?username=${req.session.user.username}`;
-        const response = await fetch(fetchURL, {
-          headers: { "x-access-token": process.env.apiKey },
-        });
-
-        const profileApiData = await response.json();
+        const profileData = await getUserByUsername(req.session.user.username);
+        if (!profileData) {
+          return res.view("session/notFound", {
+            pageTitle: `404: Player Not Found`,
+            config: config,
+            req: req,
+            res: res,
+            features: features,
+            globalImage: await getGlobalImage(),
+            announcementWeb: await getWebAnnouncement(),
+          });
+        }
 
         //
         // Render the profile page
         //
         return res.view("modules/profile/profileEditor", {
-          pageTitle: `${profileApiData.data[0].username} - Profile Editor`,
+          pageTitle: `${profileData.username} - Profile Editor`,
           config: config,
           req: req,
           features: features,
           globalImage: await getGlobalImage(),
           announcementWeb: await getWebAnnouncement(),
-          profilePicture: await getProfilePicture(profileApiData.data[0].username),
-          profileApiData: profileApiData.data[0],
-          profileRanks: await fetchUserRanks(profileApiData.data[0].username),
-          profileStats: await getUserStats(profileApiData.data[0].userId),
-          profileSession: await getUserLastSession(profileApiData.data[0].userId),
+          profilePicture: await getProfilePicture(profileData.username),
+          profileApiData: profileData,
+          profileRanks: await getUserRanks(profileData.username),
+          profileStats: await getUserStats(profileData.userId),
+          profileSession: await getUserLastSession(profileData.userId),
           moment: moment,
         });
       }
