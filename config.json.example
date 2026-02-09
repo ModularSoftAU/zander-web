@@ -41,6 +41,7 @@
       "staffChannel": "WEBHOOKURL",
       "staffAuditLog": "WEBHOOKURL"
     },
+    "nicknameReportChannelId": "786042085937643540",
     "roles": {
       "verified": "ROLEID"
     }

@@ -6,7 +6,8 @@
     "events": {
       "generalKenobi": true,
       "guildMemberBoost": true,
-      "guildMemberVerify": true
+      "guildMemberVerify": true,
+      "nicknameCheck": true
     }
   },
   "server": true,
