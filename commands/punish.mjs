@@ -81,7 +81,7 @@ function formatDurationLabel(durationMs) {
  * Send a LiteBans-style webhook notification for a punishment.
  * Matches the format: title line, bullet points for details.
  */
-async function sendPunishmentWebhook({
+export async function sendPunishmentWebhook({
   type,
   targetTag,
   actorTag,
@@ -101,6 +101,10 @@ async function sendPunishmentWebhook({
       PERM_BAN: "Banned",
       TEMP_MUTE: "Muted",
       PERM_MUTE: "Muted",
+      UNBAN: "Unbanned",
+      UNMUTE: "Unmuted",
+      NATIVE_BAN: "Banned",
+      NATIVE_KICK: "Kicked",
     };
     const verb = titleVerbs[type] || "Punished";
 
@@ -112,14 +116,21 @@ async function sendPunishmentWebhook({
       PERM_BAN: "Banned by",
       TEMP_MUTE: "Muted by",
       PERM_MUTE: "Muted by",
+      UNBAN: "Unbanned by",
+      UNMUTE: "Unmuted by",
+      NATIVE_BAN: "Banned by",
+      NATIVE_KICK: "Kicked by",
     };
     const byLabel = byLabels[type] || "Punished by";
 
+    // Duration line is not shown for actions without a meaningful duration
+    const noDurationTypes = ["DISCORD_KICK", "UNBAN", "UNMUTE", "NATIVE_BAN", "NATIVE_KICK"];
+    const showDuration = !noDurationTypes.includes(type);
     const durationLabel = (type === "PERM_BAN" || type === "PERM_MUTE")
       ? "forever"
       : formatDurationLabel(durationMs);
 
-    // Colour: red for bans, orange for mutes, yellow for warns, grey for kicks
+    // Colour: red for bans, orange for mutes, yellow for warns, grey for kicks, green for lifts
     const colorMap = {
       WARN: "#FFC107",
       DISCORD_KICK: "#6C757D",
@@ -127,16 +138,24 @@ async function sendPunishmentWebhook({
       PERM_BAN: "#DC3545",
       TEMP_MUTE: "#FD7E14",
       PERM_MUTE: "#FD7E14",
+      UNBAN: "#28A745",
+      UNMUTE: "#28A745",
+      NATIVE_BAN: "#DC3545",
+      NATIVE_KICK: "#6C757D",
     };
+
+    const descLines = [
+      `**${targetTag}** has been ${verb.toLowerCase()}!`,
+      `\u2022 ${byLabel}: ${actorTag}`,
+    ];
+    if (showDuration) {
+      descLines.push(`\u2022 Duration: ${durationLabel}`);
+    }
+    descLines.push(`\u2022 Reason: ${reason}`);
 
     const embed = new MessageBuilder()
       .setTitle(`${verb}`)
-      .setDescription(
-        `**${targetTag}** has been ${verb.toLowerCase()}!\n` +
-        `\u2022 ${byLabel}: ${actorTag}\n` +
-        `\u2022 Duration: ${durationLabel}\n` +
-        `\u2022 Reason: ${reason}`
-      )
+      .setDescription(descLines.join("\n"))
       .setColor(colorMap[type] || "#DC3545")
       .setTimestamp();
 
@@ -173,7 +192,7 @@ function parseDuration(input) {
 /**
  * Get a snapshot of a Discord user's display info.
  */
-function getTargetTag(user) {
+export function getTargetTag(user) {
   if (!user) return null;
   return user.globalName || user.username || user.tag || `${user.id}`;
 }
@@ -1059,6 +1078,14 @@ export class PunishCommand extends Command {
       }
     }
 
+    await sendPunishmentWebhook({
+      type: "UNBAN",
+      targetTag: getTargetTag(targetUser),
+      actorTag: getTargetTag(interaction.user),
+      reason,
+      durationMs: null,
+    });
+
     return interaction.editReply({
       embeds: [
         new EmbedBuilder()
@@ -1112,6 +1139,14 @@ export class PunishCommand extends Command {
         console.error("Failed to send unmute log:", err);
       }
     }
+
+    await sendPunishmentWebhook({
+      type: "UNMUTE",
+      targetTag: getTargetTag(targetUser),
+      actorTag: getTargetTag(interaction.user),
+      reason,
+      durationMs: null,
+    });
 
     return interaction.editReply({
       embeds: [
