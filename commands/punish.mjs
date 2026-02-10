@@ -6,6 +6,8 @@ import {
   SlashCommandBuilder,
 } from "discord.js";
 import { createRequire } from "module";
+import { MessageBuilder, Webhook } from "discord-webhook-node";
+import { sendWebhookMessage } from "../lib/discord/webhooks.mjs";
 import { hasPermission } from "../lib/discord/permissions.mjs";
 import { formatDiscordTimestamp } from "../lib/discord/discordFormatting.mjs";
 import {
@@ -56,6 +58,95 @@ const APPEAL_URL = `${process.env.siteAddress}${config.discord?.punishments?.app
 const LOG_CHANNEL_ID = config.discord?.punishments?.logChannelId;
 const MUTED_ROLE_ID = config.discord?.roles?.muted;
 const GUILD_ID = config.discord?.guildId;
+const ADMIN_LOG_WEBHOOK_URL = config.discord?.webhooks?.adminLog;
+
+/**
+ * Format a duration in milliseconds to a human-readable string.
+ */
+function formatDurationLabel(durationMs) {
+  if (!durationMs) return "forever";
+  const totalSeconds = Math.floor(durationMs / 1000);
+  const days = Math.floor(totalSeconds / 86400);
+  const hours = Math.floor((totalSeconds % 86400) / 3600);
+  const minutes = Math.floor((totalSeconds % 3600) / 60);
+
+  const parts = [];
+  if (days > 0) parts.push(`${days} day${days !== 1 ? "s" : ""}`);
+  if (hours > 0) parts.push(`${hours} hour${hours !== 1 ? "s" : ""}`);
+  if (minutes > 0 && days === 0) parts.push(`${minutes} minute${minutes !== 1 ? "s" : ""}`);
+  return parts.length ? parts.join(", ") : "forever";
+}
+
+/**
+ * Send a LiteBans-style webhook notification for a punishment.
+ * Matches the format: title line, bullet points for details.
+ */
+async function sendPunishmentWebhook({
+  type,
+  targetTag,
+  actorTag,
+  reason,
+  durationMs,
+}) {
+  if (!ADMIN_LOG_WEBHOOK_URL) return;
+
+  try {
+    const webhook = new Webhook(ADMIN_LOG_WEBHOOK_URL);
+
+    // Map type to a title verb (matching LiteBans style)
+    const titleVerbs = {
+      WARN: "Warned",
+      DISCORD_KICK: "Kicked",
+      TEMP_BAN: "Banned",
+      PERM_BAN: "Banned",
+      TEMP_MUTE: "Muted",
+      PERM_MUTE: "Muted",
+    };
+    const verb = titleVerbs[type] || "Punished";
+
+    // Map type to a "by" label
+    const byLabels = {
+      WARN: "Warned by",
+      DISCORD_KICK: "Kicked by",
+      TEMP_BAN: "Banned by",
+      PERM_BAN: "Banned by",
+      TEMP_MUTE: "Muted by",
+      PERM_MUTE: "Muted by",
+    };
+    const byLabel = byLabels[type] || "Punished by";
+
+    const durationLabel = (type === "PERM_BAN" || type === "PERM_MUTE")
+      ? "forever"
+      : formatDurationLabel(durationMs);
+
+    // Colour: red for bans, orange for mutes, yellow for warns, grey for kicks
+    const colorMap = {
+      WARN: "#FFC107",
+      DISCORD_KICK: "#6C757D",
+      TEMP_BAN: "#DC3545",
+      PERM_BAN: "#DC3545",
+      TEMP_MUTE: "#FD7E14",
+      PERM_MUTE: "#FD7E14",
+    };
+
+    const embed = new MessageBuilder()
+      .setTitle(`${verb}`)
+      .setDescription(
+        `**${targetTag}** has been ${verb.toLowerCase()}!\n` +
+        `\u2022 ${byLabel}: ${actorTag}\n` +
+        `\u2022 Duration: ${durationLabel}\n` +
+        `\u2022 Reason: ${reason}`
+      )
+      .setColor(colorMap[type] || "#DC3545")
+      .setTimestamp();
+
+    await sendWebhookMessage(webhook, embed, {
+      context: "commands/punish#webhook",
+    });
+  } catch (error) {
+    console.error("Failed to send punishment webhook notification:", error);
+  }
+}
 
 /**
  * Parse a duration string like "1h", "7d", "30m", "2w" into milliseconds.
@@ -460,6 +551,14 @@ export class PunishCommand extends Command {
       });
     }
 
+    await sendPunishmentWebhook({
+      type: "WARN",
+      targetTag: getTargetTag(targetUser),
+      actorTag: getTargetTag(interaction.user),
+      reason,
+      durationMs: null,
+    });
+
     return interaction.editReply({
       embeds: [
         new EmbedBuilder()
@@ -534,6 +633,14 @@ export class PunishCommand extends Command {
         silent,
       });
     }
+
+    await sendPunishmentWebhook({
+      type: "DISCORD_KICK",
+      targetTag: getTargetTag(targetUser),
+      actorTag: getTargetTag(interaction.user),
+      reason,
+      durationMs: null,
+    });
 
     return interaction.editReply({
       embeds: [
@@ -617,6 +724,14 @@ export class PunishCommand extends Command {
       });
     }
 
+    await sendPunishmentWebhook({
+      type: "TEMP_BAN",
+      targetTag: getTargetTag(targetUser),
+      actorTag: getTargetTag(interaction.user),
+      reason,
+      durationMs: durationMs,
+    });
+
     const unixTs = Math.floor(expiresAt.getTime() / 1000);
 
     return interaction.editReply({
@@ -691,6 +806,14 @@ export class PunishCommand extends Command {
         silent,
       });
     }
+
+    await sendPunishmentWebhook({
+      type: "PERM_BAN",
+      targetTag: getTargetTag(targetUser),
+      actorTag: getTargetTag(interaction.user),
+      reason,
+      durationMs: null,
+    });
 
     return interaction.editReply({
       embeds: [
@@ -783,6 +906,14 @@ export class PunishCommand extends Command {
       });
     }
 
+    await sendPunishmentWebhook({
+      type: "TEMP_MUTE",
+      targetTag: getTargetTag(targetUser),
+      actorTag: getTargetTag(interaction.user),
+      reason,
+      durationMs: durationMs,
+    });
+
     const unixTs = Math.floor(expiresAt.getTime() / 1000);
 
     return interaction.editReply({
@@ -866,6 +997,14 @@ export class PunishCommand extends Command {
         silent,
       });
     }
+
+    await sendPunishmentWebhook({
+      type: "PERM_MUTE",
+      targetTag: getTargetTag(targetUser),
+      actorTag: getTargetTag(interaction.user),
+      reason,
+      durationMs: null,
+    });
 
     return interaction.editReply({
       embeds: [
