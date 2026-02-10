@@ -8,6 +8,10 @@ import {
 import { isFeatureWebRouteEnabled, getGlobalImage, hasPermission } from "../api/common.js";
 import { getTicketsAccessibleByUser } from "../controllers/supportTicketController.js";
 import { getStaffPageData } from "../controllers/staffController.js";
+import {
+  getDiscordPunishmentsForProfile,
+} from "../controllers/discordPunishmentController.js";
+import { UserGetter } from "../controllers/userController.js";
 
 import dashboardSiteRoutes from "./dashboard/index.js";
 import sessionRoutes from "./sessionRoutes.js";
@@ -205,6 +209,8 @@ export default function applicationSiteRoutes(
       let appealPunishmentsApiData = { success: true, data: [] };
       let appealTicketsByKey = {};
 
+      let discordPunishmentsData = [];
+
       if (isLoggedIn) {
         const fetchPunishmentsURL = `${process.env.siteAddress}/api/user/punishments?username=${encodeURIComponent(
           req.session.user.username
@@ -213,6 +219,20 @@ export default function applicationSiteRoutes(
           headers: { "x-access-token": process.env.apiKey },
         });
         appealPunishmentsApiData = await punishmentsResponse.json();
+
+        // Also fetch Discord punishments
+        try {
+          const userGetter = new UserGetter();
+          const userRecord = await userGetter.byUsername(req.session.user.username);
+          if (userRecord) {
+            discordPunishmentsData = await getDiscordPunishmentsForProfile({
+              discordUserId: userRecord.discordId || null,
+              playerId: userRecord.userId || null,
+            });
+          }
+        } catch (err) {
+          console.error("[APPEAL] Failed to fetch Discord punishments:", err);
+        }
 
         const userRankSlugs =
           req.session.user.ranks?.map((rank) => rank.rankSlug) || [];
@@ -238,6 +258,7 @@ export default function applicationSiteRoutes(
         req: req,
         features: features,
         appealPunishmentsApiData: appealPunishmentsApiData,
+        discordPunishmentsData: discordPunishmentsData,
         appealTicketsByKey: appealTicketsByKey,
         moment: moment,
         isLoggedIn: isLoggedIn,

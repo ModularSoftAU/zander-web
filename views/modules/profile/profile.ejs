@@ -156,6 +156,56 @@
                                         </table>
                                     </div>
                                 <% } %>
+
+                                <% const dPunishments = (typeof discordPunishmentsData !== 'undefined' && Array.isArray(discordPunishmentsData)) ? discordPunishmentsData : []; %>
+                                <% if (dPunishments.length) { %>
+                                    <h5 class="text-uppercase text-muted mt-4 mb-3"><i class="fa-brands fa-discord me-2"></i>Discord Punishments</h5>
+                                    <div class="table-responsive">
+                                        <table class="table table-hover align-middle mb-0">
+                                            <thead class="table-light">
+                                                <tr>
+                                                    <th scope="col">ID</th>
+                                                    <th scope="col">Staff</th>
+                                                    <th scope="col">Type</th>
+                                                    <th scope="col">Reason</th>
+                                                    <th scope="col">Status</th>
+                                                    <th scope="col">Expires</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <% dPunishments.forEach(function (dp) { %>
+                                                    <% let dpBadge = "bg-secondary"; %>
+                                                    <% if (dp.type === "PERM_BAN" || dp.type === "TEMP_BAN") dpBadge = "bg-danger"; %>
+                                                    <% if (dp.type === "PERM_MUTE" || dp.type === "TEMP_MUTE") dpBadge = "bg-warning text-dark"; %>
+                                                    <% if (dp.type === "DISCORD_KICK") dpBadge = "bg-secondary"; %>
+                                                    <% if (dp.type === "WARN") dpBadge = "bg-info text-dark"; %>
+                                                    <% const dpHasExpiry = dp.expires_at && new Date(dp.expires_at).getTime() > 0; %>
+                                                    <% const dpExpired = dpHasExpiry && new Date(dp.expires_at) < new Date(); %>
+                                                    <tr>
+                                                        <th scope="row"><%= dp.id %></th>
+                                                        <td><%= dp.actor_name_snapshot || "System" %></td>
+                                                        <td><span class="badge <%= dpBadge %> text-uppercase"><%= dp.type.replace(/_/g, ' ') %></span></td>
+                                                        <td><%= dp.reason || "No reason provided." %></td>
+                                                        <td><span class="badge bg-<%= dp.status === 'ACTIVE' ? 'danger' : dp.status === 'EXPIRED' || dp.status === 'LIFTED' || dp.status === 'APPEALED' ? 'success' : 'secondary' %>"><%= dp.status %></span></td>
+                                                        <td>
+                                                            <% if (dpHasExpiry) { %>
+                                                                <% if (dpExpired) { %>
+                                                                    Expired
+                                                                <% } else { %>
+                                                                    <%= moment(dp.expires_at).fromNow(true) %> remaining
+                                                                <% } %>
+                                                            <% } else if (dp.type.includes("PERM")) { %>
+                                                                Permanent
+                                                            <% } else { %>
+                                                                —
+                                                            <% } %>
+                                                        </td>
+                                                    </tr>
+                                                <% }) %>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                <% } %>
                             </div>
                         <% } %>
 
