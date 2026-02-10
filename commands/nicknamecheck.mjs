@@ -30,8 +30,10 @@ export class NicknameCheckCommand extends Command {
   }
 
   async chatInputRun(interaction) {
-    // Defer immediately to avoid the 3-second interaction timeout
-    await interaction.deferReply({ flags: MessageFlags.Ephemeral });
+    // Defer if not already deferred by the framework
+    if (!interaction.deferred && !interaction.replied) {
+      await interaction.deferReply({ flags: MessageFlags.Ephemeral });
+    }
 
     try {
       if (!features.discord.events.nicknameCheck) {
