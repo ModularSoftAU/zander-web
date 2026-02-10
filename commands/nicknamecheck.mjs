@@ -1,5 +1,5 @@
 import { Command } from "@sapphire/framework";
-import { Colors, EmbedBuilder } from "discord.js";
+import { Colors, EmbedBuilder, MessageFlags } from "discord.js";
 import {
   getUserPermissions,
   UserGetter,
@@ -30,60 +30,59 @@ export class NicknameCheckCommand extends Command {
   }
 
   async chatInputRun(interaction) {
-    if (!features.discord.events.nicknameCheck) {
-      const disabledEmbed = new EmbedBuilder()
-        .setTitle("Feature Disabled")
-        .setDescription(
-          "The nickname check feature has been disabled by your System Administrator."
-        )
-        .setColor(Colors.Red);
-
-      return interaction.reply({ embeds: [disabledEmbed], ephemeral: true });
-    }
-
-    const userGetter = new UserGetter();
-    const linkedAccount = await userGetter.byDiscordId(interaction.user.id);
-
-    if (!linkedAccount) {
-      const notLinkedEmbed = new EmbedBuilder()
-        .setTitle("No Linked Account")
-        .setDescription(
-          "We couldn't find a linked site account for you. Please link your account before using this command."
-        )
-        .setColor(Colors.Red);
-
-      return interaction.reply({ embeds: [notLinkedEmbed], ephemeral: true });
-    }
-
-    const userPermissions = await getUserPermissions(linkedAccount);
-    if (!hasPermission(userPermissions, NICKNAME_CHECK_PERMISSION)) {
-      const noPermEmbed = new EmbedBuilder()
-        .setTitle("No Permission")
-        .setDescription("You do not have access to use this command.")
-        .setColor(Colors.Red);
-
-      return interaction.reply({ embeds: [noPermEmbed], ephemeral: true });
-    }
-
-    const reportChannelId = config.discord.nicknameReportChannelId;
-    if (!reportChannelId) {
-      return interaction.reply({
-        content: "No nickname report channel has been configured.",
-        ephemeral: true,
-      });
-    }
-
-    const guildId = config.discord.guildId;
-    if (!guildId) {
-      return interaction.reply({
-        content: "No guild ID has been configured.",
-        ephemeral: true,
-      });
-    }
-
-    await interaction.deferReply({ ephemeral: true });
+    // Defer immediately to avoid the 3-second interaction timeout
+    await interaction.deferReply({ flags: MessageFlags.Ephemeral });
 
     try {
+      if (!features.discord.events.nicknameCheck) {
+        const disabledEmbed = new EmbedBuilder()
+          .setTitle("Feature Disabled")
+          .setDescription(
+            "The nickname check feature has been disabled by your System Administrator."
+          )
+          .setColor(Colors.Red);
+
+        return interaction.editReply({ embeds: [disabledEmbed] });
+      }
+
+      const userGetter = new UserGetter();
+      const linkedAccount = await userGetter.byDiscordId(interaction.user.id);
+
+      if (!linkedAccount) {
+        const notLinkedEmbed = new EmbedBuilder()
+          .setTitle("No Linked Account")
+          .setDescription(
+            "We couldn't find a linked site account for you. Please link your account before using this command."
+          )
+          .setColor(Colors.Red);
+
+        return interaction.editReply({ embeds: [notLinkedEmbed] });
+      }
+
+      const userPermissions = await getUserPermissions(linkedAccount);
+      if (!hasPermission(userPermissions, NICKNAME_CHECK_PERMISSION)) {
+        const noPermEmbed = new EmbedBuilder()
+          .setTitle("No Permission")
+          .setDescription("You do not have access to use this command.")
+          .setColor(Colors.Red);
+
+        return interaction.editReply({ embeds: [noPermEmbed] });
+      }
+
+      const reportChannelId = config.discord.nicknameReportChannelId;
+      if (!reportChannelId) {
+        return interaction.editReply({
+          content: "No nickname report channel has been configured.",
+        });
+      }
+
+      const guildId = config.discord.guildId;
+      if (!guildId) {
+        return interaction.editReply({
+          content: "No guild ID has been configured.",
+        });
+      }
+
       const mismatches = await runBulkNicknameCheck(
         interaction.client,
         guildId,
