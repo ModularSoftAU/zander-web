@@ -1,14 +1,20 @@
 import { Command } from "@sapphire/framework";
 import {
+  ActionRowBuilder,
+  ButtonBuilder,
+  ButtonStyle,
   Colors,
+  ComponentType,
   EmbedBuilder,
   PermissionFlagsBits,
   SlashCommandBuilder,
 } from "discord.js";
 import { createRequire } from "module";
+import fetch from "node-fetch";
 import { MessageBuilder, Webhook } from "discord-webhook-node";
 import { sendWebhookMessage } from "../lib/discord/webhooks.mjs";
 import { hasPermission } from "../lib/discord/permissions.mjs";
+import { resolveDiscordUserId } from "../lib/discord/resolveDiscordMember.mjs";
 import { formatDiscordTimestamp } from "../lib/discord/discordFormatting.mjs";
 import {
   getUserPermissions,
@@ -59,6 +65,179 @@ const LOG_CHANNEL_ID = config.discord?.punishments?.logChannelId;
 const MUTED_ROLE_ID = config.discord?.roles?.muted;
 const GUILD_ID = config.discord?.guildId;
 const ADMIN_LOG_WEBHOOK_URL = config.discord?.webhooks?.adminLog;
+
+const MAX_HISTORY_PUNISHMENTS = 50;
+const HISTORY_PER_PAGE = 5;
+const HISTORY_PAGINATION_TIMEOUT_MS = 2 * 60 * 1000;
+const HISTORY_CUSTOM_IDS = {
+  previous: "punish_history:previous",
+  next: "punish_history:next",
+};
+
+// --- Minecraft punishment formatting helpers (ported from punishments.mjs) ---
+
+function sanitizeText(value) {
+  if (value === null || value === undefined) return null;
+  const collapsed = String(value).replace(/\s+/g, " ").trim();
+  return collapsed || null;
+}
+
+function truncateText(value, maxLength = 256) {
+  if (!value) return null;
+  if (value.length <= maxLength) return value;
+  return `${value.slice(0, maxLength - 1)}…`;
+}
+
+function formatActor(username, userId) {
+  const cleaned = sanitizeText(username);
+  if (cleaned) return cleaned;
+  if (userId) return `User ID ${userId}`;
+  return null;
+}
+
+function parseFlag(value) {
+  if (value === null || value === undefined) return false;
+  if (typeof value === "boolean") return value;
+  if (typeof value === "number") return value !== 0;
+  const normalized = String(value).trim().toLowerCase();
+  if (!normalized || normalized === "0" || normalized === "false" || normalized === "no") return false;
+  return true;
+}
+
+function hasTimestamp(value) {
+  if (value === null || value === undefined) return false;
+  if (value instanceof Date) return Number.isFinite(value.getTime());
+  if (typeof value === "number") return Number.isFinite(value);
+  return Number.isFinite(Date.parse(value));
+}
+
+function formatMcPunishmentStatus(punishment) {
+  const type = String(punishment.type ?? "").toLowerCase();
+  if (type === "kick") return "Completed";
+  if (type === "warning") return "Logged";
+  if (hasTimestamp(punishment.dateRemoved)) return "Removed";
+  const active = Number(punishment.active);
+  if (Number.isFinite(active) && active === 1) return "Active";
+  if (Number.isFinite(active) && active === 0) return "Inactive";
+  return null;
+}
+
+function shouldIncludeMcExpiry(punishment) {
+  const type = String(punishment.type ?? "").toLowerCase();
+  if (!hasTimestamp(punishment.dateEnd)) return false;
+  return type !== "kick" && type !== "warning";
+}
+
+function toTitleCase(value) {
+  if (!value) return "Unknown";
+  const lowercase = String(value).toLowerCase();
+  return lowercase.charAt(0).toUpperCase() + lowercase.slice(1);
+}
+
+function formatMcPunishmentDetails(punishment) {
+  const lines = [];
+  lines.push(`**Issued:** ${formatDiscordTimestamp(punishment.dateStart, { fallback: "Unknown" })}`);
+  const reason = truncateText(sanitizeText(punishment.reason), 512);
+  if (reason) lines.push(`**Reason:** ${reason}`);
+  const server = sanitizeText(punishment.server);
+  if (server) lines.push(`**Server:** ${server}`);
+  const status = formatMcPunishmentStatus(punishment);
+  if (status) lines.push(`**Status:** ${status}`);
+  if (shouldIncludeMcExpiry(punishment)) {
+    lines.push(`**Expires:** ${formatDiscordTimestamp(punishment.dateEnd, { fallback: "No expiry" })}`);
+  }
+  if (hasTimestamp(punishment.dateRemoved)) {
+    lines.push(`**Removed:** ${formatDiscordTimestamp(punishment.dateRemoved, { fallback: "Unknown" })}`);
+  }
+  const removalReason = truncateText(sanitizeText(punishment.reasonRemoved), 512);
+  if (removalReason) lines.push(`**Removal Reason:** ${removalReason}`);
+  const actor = formatActor(punishment.bannedByUsername, punishment.bannedByUserId);
+  if (actor) lines.push(`**Issued By:** ${actor}`);
+  if (hasTimestamp(punishment.dateRemoved)) {
+    const removedBy = formatActor(punishment.removedByUsername, punishment.removedByUserId);
+    if (removedBy) lines.push(`**Removed By:** ${removedBy}`);
+  }
+  if (parseFlag(punishment.silent)) lines.push("**Silent:** Yes");
+  if (!lines.length) return "No additional details available.";
+  const value = lines.join("\n");
+  return value.length > 1024 ? `${value.slice(0, 1021)}...` : value;
+}
+
+function formatDiscordPunishmentDetails(punishment) {
+  const lines = [];
+  lines.push(`**Issued:** ${formatDiscordTimestamp(punishment.created_at, { fallback: "Unknown" })}`);
+  if (punishment.reason) lines.push(`**Reason:** ${punishment.reason.slice(0, 512)}`);
+  lines.push(`**Status:** ${punishment.status}`);
+  if (punishment.expires_at) {
+    lines.push(`**Expires:** ${formatDiscordTimestamp(punishment.expires_at, { fallback: "N/A" })}`);
+  }
+  if (punishment.lifted_at) {
+    lines.push(`**Lifted:** ${formatDiscordTimestamp(punishment.lifted_at, { fallback: "Unknown" })}`);
+  }
+  if (punishment.actor_name_snapshot) {
+    lines.push(`**Issued By:** ${punishment.actor_name_snapshot}`);
+  }
+  if (!lines.length) return "No additional details available.";
+  const value = lines.join("\n");
+  return value.length > 1024 ? `${value.slice(0, 1021)}...` : value;
+}
+
+function buildHistoryEmbed({ displayName, profileData, punishments, totalCount, truncated, page }) {
+  const totalPages = Math.max(1, Math.ceil(punishments.length / HISTORY_PER_PAGE));
+  const embed = new EmbedBuilder()
+    .setTitle(`Punishments for ${displayName}`)
+    .setColor(Colors.DarkRed)
+    .setTimestamp(new Date())
+    .setFooter({ text: `Page ${page + 1} of ${totalPages}` });
+
+  const descParts = [];
+  if (profileData?.discordId) descParts.push(`Linked Discord: <@${profileData.discordId}>`);
+  let totalLine = `Total punishments: ${totalCount}`;
+  if (truncated) totalLine += ` (showing first ${punishments.length})`;
+  totalLine += ".";
+  descParts.push(totalLine);
+
+  const start = page * HISTORY_PER_PAGE;
+  const pagePunishments = punishments.slice(start, start + HISTORY_PER_PAGE);
+  const end = Math.min(start + pagePunishments.length, punishments.length);
+  if (totalPages > 1) descParts.push(`Viewing ${start + 1}-${end} of ${punishments.length}.`);
+  if (descParts.length) embed.setDescription(descParts.join("\n"));
+
+  const fields = pagePunishments.map((p, index) => {
+    const platformTag = p._platform === "Minecraft" ? "MC" : "Discord";
+    const typeName = p._platform === "Minecraft" ? toTitleCase(p.type) : formatType(p.type);
+    const details = p._platform === "Minecraft"
+      ? formatMcPunishmentDetails(p)
+      : formatDiscordPunishmentDetails(p);
+    return {
+      name: `${start + index + 1}. [${platformTag}] ${typeName}`,
+      value: details,
+    };
+  }).filter((f) => f.value);
+
+  if (fields.length) embed.addFields(fields);
+  return embed;
+}
+
+function buildHistoryPaginationComponents(page, totalPages) {
+  if (totalPages <= 1) return [];
+  return [
+    new ActionRowBuilder().addComponents(
+      new ButtonBuilder()
+        .setCustomId(HISTORY_CUSTOM_IDS.previous)
+        .setLabel("Previous")
+        .setStyle(ButtonStyle.Secondary)
+        .setEmoji("◀️")
+        .setDisabled(page === 0),
+      new ButtonBuilder()
+        .setCustomId(HISTORY_CUSTOM_IDS.next)
+        .setLabel("Next")
+        .setStyle(ButtonStyle.Secondary)
+        .setEmoji("▶️")
+        .setDisabled(page >= totalPages - 1),
+    ),
+  ];
+}
 
 /**
  * Format a duration in milliseconds to a human-readable string.
@@ -455,9 +634,18 @@ export class PunishCommand extends Command {
       .addSubcommand((sub) =>
         sub
           .setName("history")
-          .setDescription("View a user's Discord punishment history.")
+          .setDescription("View a user's punishment history (Minecraft & Discord).")
           .addUserOption((opt) =>
-            opt.setName("user").setDescription("The user to look up.").setRequired(true)
+            opt.setName("user").setDescription("Discord user to look up.").setRequired(false)
+          )
+          .addStringOption((opt) =>
+            opt.setName("username").setDescription("Minecraft username to look up.").setRequired(false)
+          )
+          .addStringOption((opt) =>
+            opt
+              .setName("discord_tag")
+              .setDescription("Discord tag, ID, or @username to look up.")
+              .setRequired(false)
           )
       );
 
@@ -1163,58 +1351,193 @@ export class PunishCommand extends Command {
 
   async handleHistory(interaction) {
     const targetUser = interaction.options.getUser("user");
+    const username = interaction.options.getString("username");
+    const discordTag = interaction.options.getString("discord_tag");
 
-    const history = await getPunishmentHistory(targetUser.id, 25);
-
-    if (!history.length) {
+    if (!targetUser && !username && !discordTag) {
       return interaction.editReply({
-        content: `<@${targetUser.id}> has no Discord punishment records.`,
+        content: "Please provide a Discord user, Minecraft username, or Discord tag to look up.",
       });
     }
 
-    const embed = new EmbedBuilder()
-      .setTitle(`Discord Punishments for ${getTargetTag(targetUser)}`)
-      .setColor(Colors.DarkRed)
-      .setTimestamp(new Date())
-      .setDescription(`Total records: ${history.length}`)
-      .setFooter({ text: `Showing up to 25 most recent` });
+    // Resolve target Discord ID
+    let targetDiscordId = targetUser?.id;
+    if (!targetDiscordId && discordTag) {
+      targetDiscordId = await resolveDiscordUserId(interaction, {
+        discordTag,
+      });
+      if (!targetDiscordId) {
+        return interaction.editReply({
+          content: "Unable to resolve the provided Discord information to a user.",
+        });
+      }
+    }
 
-    const fields = history.slice(0, 25).map((p, i) => {
-      const lines = [];
-      lines.push(`**Type:** ${formatType(p.type)}`);
-      lines.push(`**Reason:** ${(p.reason || "N/A").slice(0, 200)}`);
-      lines.push(`**Status:** ${p.status}`);
-      lines.push(`**Date:** ${formatDiscordTimestamp(p.created_at, { fallback: "Unknown" })}`);
+    // Look up linked profile (for MC punishments + display name)
+    let profileData = null;
+    const profileUrl = new URL(`${process.env.siteAddress}/api/user/profile/get`);
 
-      if (p.expires_at) {
-        lines.push(`**Expires:** ${formatDiscordTimestamp(p.expires_at, { fallback: "N/A" })}`);
+    if (username) {
+      profileUrl.searchParams.set("username", username);
+    } else if (targetDiscordId) {
+      profileUrl.searchParams.set("discordId", targetDiscordId);
+    }
+
+    try {
+      const profileResponse = await fetch(profileUrl, {
+        headers: { "x-access-token": process.env.apiKey },
+      });
+      const profileJson = await profileResponse.json();
+      if (profileJson?.success && profileJson.data?.profileData) {
+        profileData = profileJson.data.profileData;
+        // If we only had a username, pick up linked Discord ID
+        if (!targetDiscordId && profileData.discordId) {
+          targetDiscordId = profileData.discordId;
+        }
+      }
+    } catch (err) {
+      console.error("Failed to fetch profile for punishment history:", err);
+    }
+
+    // Fetch Discord punishments
+    let discordPunishments = [];
+    if (targetDiscordId) {
+      try {
+        discordPunishments = await getPunishmentHistory(targetDiscordId, MAX_HISTORY_PUNISHMENTS);
+      } catch (err) {
+        console.error("Failed to fetch Discord punishments for history:", err);
+      }
+    }
+
+    // Fetch Minecraft punishments (via internal API)
+    let mcPunishments = [];
+    if (profileData) {
+      const punishmentsUrl = new URL(`${process.env.siteAddress}/api/user/punishments`);
+      if (profileData.uuid) {
+        punishmentsUrl.searchParams.set("uuid", profileData.uuid);
+      } else if (profileData.username) {
+        punishmentsUrl.searchParams.set("username", profileData.username);
       }
 
-      if (p.actor_name_snapshot) {
-        lines.push(`**Staff:** ${p.actor_name_snapshot}`);
+      try {
+        const punishmentsResponse = await fetch(punishmentsUrl, {
+          headers: { "x-access-token": process.env.apiKey },
+        });
+        const punishmentsJson = await punishmentsResponse.json();
+        if (punishmentsJson?.success && Array.isArray(punishmentsJson.data)) {
+          mcPunishments = punishmentsJson.data;
+        }
+      } catch (err) {
+        console.error("Failed to fetch MC punishments for history:", err);
       }
+    }
 
-      return {
-        name: `${i + 1}. ${formatType(p.type)} (ID: ${p.id})`,
-        value: lines.join("\n").slice(0, 1024),
-      };
+    if (!discordPunishments.length && !mcPunishments.length) {
+      const displayName = targetUser
+        ? getTargetTag(targetUser)
+        : profileData?.username || username || discordTag || "the specified user";
+      return interaction.editReply({
+        content: `${displayName} has no punishment records.`,
+      });
+    }
+
+    // Combine punishments from both platforms, sorted by date (newest first)
+    const combined = [
+      ...mcPunishments.map((p) => ({
+        ...p,
+        _platform: "Minecraft",
+        _sortDate: p.dateStart ? new Date(p.dateStart) : new Date(0),
+      })),
+      ...discordPunishments.map((p) => ({
+        ...p,
+        _platform: "Discord",
+        _sortDate: p.created_at ? new Date(p.created_at) : new Date(0),
+      })),
+    ].sort((a, b) => b._sortDate - a._sortDate);
+
+    const limited = combined.slice(0, MAX_HISTORY_PUNISHMENTS);
+    const truncated = limited.length < combined.length;
+    const totalCount = combined.length;
+    const totalPages = Math.max(1, Math.ceil(limited.length / HISTORY_PER_PAGE));
+
+    const displayName = targetUser
+      ? getTargetTag(targetUser)
+      : profileData?.username || username || discordTag || "the specified user";
+
+    let currentPage = 0;
+
+    const initialEmbed = buildHistoryEmbed({
+      displayName,
+      profileData,
+      punishments: limited,
+      totalCount,
+      truncated,
+      page: currentPage,
     });
 
-    // Discord embeds max 25 fields, max total 6000 chars
-    let totalChars = embed.data.title.length + (embed.data.description?.length || 0);
-    const safeFields = [];
-    for (const field of fields) {
-      const fieldChars = field.name.length + field.value.length;
-      if (totalChars + fieldChars > 5800) break;
-      totalChars += fieldChars;
-      safeFields.push(field);
+    const initialComponents = buildHistoryPaginationComponents(currentPage, totalPages);
+
+    await interaction.editReply({
+      embeds: [initialEmbed],
+      components: initialComponents,
+    });
+
+    if (totalPages <= 1) return;
+
+    let replyMessage;
+    try {
+      replyMessage = await interaction.fetchReply();
+    } catch (error) {
+      console.error("Failed to fetch history reply message:", error);
+      return;
     }
 
-    if (safeFields.length) {
-      embed.addFields(safeFields);
-    }
+    if (!replyMessage || typeof replyMessage.createMessageComponentCollector !== "function") return;
 
-    return interaction.editReply({ embeds: [embed] });
+    const collector = replyMessage.createMessageComponentCollector({
+      componentType: ComponentType.Button,
+      time: HISTORY_PAGINATION_TIMEOUT_MS,
+      filter: (ci) => {
+        if (ci.user.id !== interaction.user.id) return false;
+        if (ci.customId !== HISTORY_CUSTOM_IDS.previous && ci.customId !== HISTORY_CUSTOM_IDS.next) return false;
+        return ci.message?.interaction?.id === interaction.id;
+      },
+    });
+
+    collector.on("collect", async (ci) => {
+      try {
+        if (ci.customId === HISTORY_CUSTOM_IDS.previous && currentPage > 0) {
+          currentPage -= 1;
+        } else if (ci.customId === HISTORY_CUSTOM_IDS.next && currentPage < totalPages - 1) {
+          currentPage += 1;
+        } else {
+          await ci.deferUpdate();
+          return;
+        }
+
+        const updatedEmbed = buildHistoryEmbed({
+          displayName,
+          profileData,
+          punishments: limited,
+          totalCount,
+          truncated,
+          page: currentPage,
+        });
+        const updatedComponents = buildHistoryPaginationComponents(currentPage, totalPages);
+        await ci.update({ embeds: [updatedEmbed], components: updatedComponents });
+      } catch (error) {
+        console.error("Failed to update history pagination:", error);
+        try { await ci.deferUpdate(); } catch (e) { /* ignore */ }
+      }
+    });
+
+    collector.on("end", async () => {
+      try {
+        await interaction.editReply({ components: [] });
+      } catch (error) {
+        console.error("Failed to clear history pagination components:", error);
+      }
+    });
   }
 
   async fetchGuildMember(interaction, userId) {
