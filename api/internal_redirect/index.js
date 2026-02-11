@@ -7,6 +7,7 @@ import vaultRedirectRoute from "./vault.js";
 import bridgeRedirectRoute from "./bridge.js";
 import rankRedirectRoute from "./rank.js";
 import schedulerRedirectRoute from "./scheduler.js";
+import formRedirectRoute from "./form.js";
 
 export default (app, config, lang) => {
   applicationRedirectRoute(app, config, lang);
@@ -18,4 +19,5 @@ export default (app, config, lang) => {
   bridgeRedirectRoute(app, config, lang);
   rankRedirectRoute(app, config, lang);
   schedulerRedirectRoute(app, config, lang);
+  formRedirectRoute(app, config, lang);
 };

@@ -13,6 +13,7 @@ import vaultApiRoute from "./vault.js";
 import bridgeApiRoute from "./bridge.js";
 import punishmentsApiRoute from "./punishments.js";
 import schedulerApiRoute from "./scheduler.js";
+import formApiRoute from "./form.js";
 
 export default (app, client, moment, config, db, features, lang) => {
   announcementApiRoute(app, config, db, features, lang);
@@ -30,6 +31,7 @@ export default (app, client, moment, config, db, features, lang) => {
   bridgeApiRoute(app, config, db, features, lang);
   punishmentsApiRoute(app, config, db, features, lang);
   schedulerApiRoute(app, client, config, db, features, lang);
+  formApiRoute(app, client, config, db, features, lang);
 
   app.get("/api/heartbeat", async function (req, res) {
     return res.send({

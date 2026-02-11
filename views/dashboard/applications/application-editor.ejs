@@ -101,6 +101,31 @@
                       <% } %>
                   </div>
 
+                  <!-- Application Type -->
+                  <div class="mb-3">
+                      <label for="applicationType">Application Type</label>
+                      <%- include("../../partials/form/inputSelect.ejs", {
+                          elementName: "applicationType",
+                          elementValue: type === 'edit' ? (applicationApiData.applicationType || 'external') : 'external',
+                          required: true,
+                          optionElements: [
+                              {
+                                  optionName: "External URL",
+                                  optionValue: "external",
+                                  selected: false,
+                                  disabled: false
+                              },
+                              {
+                                  optionName: "Linked Form",
+                                  optionValue: "linked_form",
+                                  selected: false,
+                                  disabled: false
+                              }
+                          ]
+                      }) %>
+                      <small class="form-text text-muted">External: redirects to a URL. Linked Form: opens a built-in form.</small>
+                  </div>
+
                   <div class="row">
                       <!-- Application Requirements Markdown Link -->
                       <div class="mb-3 col">
@@ -122,24 +147,45 @@
                           <% } %>
                       </div>
 
-                      <!-- Application URL Redirect -->
-                      <div class="mb-3 col">
+                      <!-- Application URL Redirect (for external type) -->
+                      <div class="mb-3 col" id="redirectUrlField">
                           <label for="redirectUrl">Application URL Redirect</label>
 
                           <% if (type === 'create') { %>
                               <%- include("../../partials/form/inputText.ejs", {
                                   elementName: "redirectUrl",
                                   elementValue: null,
-                                  required: true
+                                  required: false
                               }) %>
                           <% } %>
                           <% if (type === 'edit') { %>
                               <%- include("../../partials/form/inputText.ejs", {
                                   elementName: "redirectUrl",
                                   elementValue: applicationApiData.redirectUrl,
-                                  required: true
+                                  required: false
                               }) %>
                           <% } %>
+                      </div>
+
+                      <!-- Linked Form ID (for linked_form type) -->
+                      <div class="mb-3 col" id="linkedFormField">
+                          <label for="linkedFormId">Linked Form ID</label>
+
+                          <% if (type === 'create') { %>
+                              <%- include("../../partials/form/inputText.ejs", {
+                                  elementName: "linkedFormId",
+                                  elementValue: null,
+                                  required: false
+                              }) %>
+                          <% } %>
+                          <% if (type === 'edit') { %>
+                              <%- include("../../partials/form/inputText.ejs", {
+                                  elementName: "linkedFormId",
+                                  elementValue: applicationApiData.linkedFormId,
+                                  required: false
+                              }) %>
+                          <% } %>
+                          <small class="form-text text-muted">Enter the Form ID from Dashboard > Forms.</small>
                       </div>
                   </div>
 
@@ -237,5 +283,29 @@
         </main>
     </div>
 </div>
+
+<script>
+(function() {
+    var typeSelect = document.getElementById('applicationTypeSel');
+    var redirectField = document.getElementById('redirectUrlField');
+    var linkedFormField = document.getElementById('linkedFormField');
+
+    function toggleFields() {
+        if (!typeSelect || !redirectField || !linkedFormField) return;
+        if (typeSelect.value === 'linked_form') {
+            redirectField.style.display = 'none';
+            linkedFormField.style.display = 'block';
+        } else {
+            redirectField.style.display = 'block';
+            linkedFormField.style.display = 'none';
+        }
+    }
+
+    if (typeSelect) {
+        typeSelect.addEventListener('change', toggleFields);
+        toggleFields();
+    }
+})();
+</script>
 
 <%- include("../../modules/footer.ejs") %>

@@ -1,0 +1,155 @@
+<%- include("../../modules/header.ejs", {
+    pageTitle: pageTitle,
+    pageDescription: "Form responses inbox"
+}) %>
+
+<%- include("../../modules/navigationBar.ejs") %>
+
+<%- include("../../partials/miniHeader.ejs", {
+  headerTitle: form.name + " — Responses",
+  backgroundImage: globalImage
+}) %>
+
+<%- include("../../modules/dashboard/dashboard-header.ejs") %>
+
+<div class="container my-4">
+    <div class="row g-4">
+        <div class="col-lg-3">
+            <%- include("../../modules/dashboard/dashboard-sidebar.ejs") %>
+        </div>
+        <main class="col-lg-9">
+            <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                <div>
+                    <h1 class="h2"><%= form.name %></h1>
+                    <small class="text-muted">
+                        Total: <strong><%= counts.total %></strong> |
+                        New: <strong><%= counts.newCount %></strong> |
+                        Converted: <strong><%= counts.convertedCount %></strong>
+                    </small>
+                </div>
+                <div class="btn-toolbar mb-2 mb-md-0">
+                    <a href="/dashboard/forms" class="btn btn-sm btn-outline-secondary me-2">
+                        <i class="fas fa-arrow-left me-1"></i> Back to Forms
+                    </a>
+                    <a href="/dashboard/forms/edit?formId=<%= form.formId %>" class="btn btn-sm btn-warning">Edit Form</a>
+                </div>
+            </div>
+
+            <% if (req.cookies.alertType) { %>
+                <%- include("../../partials/alert.ejs", {
+                  alertType: req.cookies.alertType,
+                  content: req.cookies.alertContent
+                }) %>
+            <% } %>
+
+            <!-- Filters -->
+            <div class="mb-3">
+                <div class="btn-group btn-group-sm" role="group">
+                    <a href="/dashboard/forms/<%= form.formId %>/responses" class="btn btn-outline-primary <%= !statusFilter ? 'active' : '' %>">All</a>
+                    <a href="/dashboard/forms/<%= form.formId %>/responses?status=new" class="btn btn-outline-primary <%= statusFilter === 'new' ? 'active' : '' %>">New</a>
+                    <a href="/dashboard/forms/<%= form.formId %>/responses?status=reviewed" class="btn btn-outline-primary <%= statusFilter === 'reviewed' ? 'active' : '' %>">Reviewed</a>
+                    <a href="/dashboard/forms/<%= form.formId %>/responses?status=converted" class="btn btn-outline-primary <%= statusFilter === 'converted' ? 'active' : '' %>">Converted</a>
+                    <a href="/dashboard/forms/<%= form.formId %>/responses?status=archived" class="btn btn-outline-primary <%= statusFilter === 'archived' ? 'active' : '' %>">Archived</a>
+                </div>
+            </div>
+
+            <% if (!responses || responses.length === 0) { %>
+                <div class="text-center py-5">
+                    <i class="fas fa-inbox text-muted" style="font-size: 3rem;"></i>
+                    <p class="text-muted mt-3">No responses found<%= statusFilter ? ' with status "' + statusFilter + '"' : '' %>.</p>
+                </div>
+            <% } else { %>
+                <div class="table-responsive">
+                    <table class="table align-middle response-table">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>Submitter</th>
+                                <th>Submitted</th>
+                                <th>Status</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <% responses.forEach(function(response) { %>
+                                <tr>
+                                    <td data-label="ID"><%= response.responseId %></td>
+                                    <td data-label="Submitter"><%= response.submitterUsername || 'Anonymous' %></td>
+                                    <td data-label="Submitted"><%= moment(response.submittedAt).fromNow() %></td>
+                                    <td data-label="Status">
+                                        <span class="badge bg-<%= response.status === 'new' ? 'primary' : response.status === 'reviewed' ? 'info' : response.status === 'converted' ? 'success' : 'secondary' %>">
+                                            <%= response.status %>
+                                        </span>
+                                        <% if (response.discordWebhookFailed) { %>
+                                            <span class="badge bg-warning text-dark" title="Discord webhook failed"><i class="fas fa-exclamation-triangle"></i></span>
+                                        <% } %>
+                                        <% if (response.discordForumPostFailed) { %>
+                                            <span class="badge bg-warning text-dark" title="Discord forum post failed"><i class="fas fa-exclamation-triangle"></i></span>
+                                        <% } %>
+                                    </td>
+                                    <td data-label="Action">
+                                        <div class="d-flex flex-wrap gap-1">
+                                            <a href="/dashboard/forms/<%= form.formId %>/responses/<%= response.responseId %>" class="btn btn-sm btn-outline-primary">View</a>
+                                            <% if (response.status === 'new') { %>
+                                                <form action="<%= process.env.siteAddress %>/redirect/forms/response/status" method="post" style="display:inline;">
+                                                    <input type="hidden" name="responseId" value="<%= response.responseId %>">
+                                                    <input type="hidden" name="formId" value="<%= form.formId %>">
+                                                    <input type="hidden" name="status" value="reviewed">
+                                                    <button class="btn btn-sm btn-outline-info" type="submit">Mark Reviewed</button>
+                                                </form>
+                                            <% } %>
+                                        </div>
+                                    </td>
+                                </tr>
+                            <% }) %>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Pagination -->
+                <% if (counts.total > limit) { %>
+                    <nav>
+                        <ul class="pagination pagination-sm justify-content-center">
+                            <% var totalPages = Math.ceil(counts.total / limit); %>
+                            <% for (var p = 1; p <= totalPages; p++) { %>
+                                <li class="page-item <%= page === p ? 'active' : '' %>">
+                                    <a class="page-link" href="/dashboard/forms/<%= form.formId %>/responses?page=<%= p %><%= statusFilter ? '&status=' + statusFilter : '' %>"><%= p %></a>
+                                </li>
+                            <% } %>
+                        </ul>
+                    </nav>
+                <% } %>
+            <% } %>
+        </main>
+    </div>
+</div>
+
+<%- include("../../modules/footer.ejs") %>
+
+<style>
+    @media (max-width: 768px) {
+        .response-table thead { display: none; }
+        .response-table tr {
+            display: block;
+            border: 1px solid #e6e6e6;
+            border-radius: 12px;
+            padding: 12px;
+            margin-bottom: 12px;
+        }
+        .response-table td {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 12px;
+            border: none;
+            padding: 6px 0;
+            font-size: 0.9rem;
+        }
+        .response-table td::before {
+            content: attr(data-label);
+            font-weight: 600;
+            color: #5f6b7a;
+            min-width: 100px;
+        }
+    }
+</style>

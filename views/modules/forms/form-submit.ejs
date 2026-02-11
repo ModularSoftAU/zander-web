@@ -1,0 +1,230 @@
+<%- include("../../modules/header.ejs", {
+    pageTitle: pageTitle,
+    pageDescription: form.name
+}) %>
+
+<%- include("../../modules/navigationBar.ejs") %>
+
+<%- include("../../partials/miniHeader.ejs", {
+  headerTitle: form.name,
+  backgroundImage: globalImage
+}) %>
+
+<section class="section">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-lg-8">
+
+                <% if (req.cookies.alertType) { %>
+                    <%- include("../../partials/alert.ejs", {
+                        alertType: req.cookies.alertType,
+                        content: req.cookies.alertContent
+                    }) %>
+                <% } %>
+
+                <form method="post" action="/forms/<%= form.slug %>/submit" id="formSubmission">
+                    <%
+                        let currentSection = 0;
+                        let totalSections = blocks.filter(b => b.type === 'section_break').length + 1;
+                        let sectionOpen = true;
+                    %>
+
+                    <% blocks.forEach(function(block, index) { %>
+                        <% if (block.type === 'title_description') { %>
+                            <div class="mb-4">
+                                <% if (block.label) { %>
+                                    <h4><%= block.label %></h4>
+                                <% } %>
+                                <% if (block.description) { %>
+                                    <p class="text-muted"><%= block.description %></p>
+                                <% } %>
+                            </div>
+
+                        <% } else if (block.type === 'section_break') { %>
+                            <hr class="my-4">
+                            <% if (block.config && block.config.sectionTitle) { %>
+                                <h4 class="mb-2"><%= block.config.sectionTitle %></h4>
+                            <% } %>
+                            <% if (block.config && block.config.sectionDescription) { %>
+                                <p class="text-muted"><%= block.config.sectionDescription %></p>
+                            <% } %>
+
+                        <% } else if (block.type === 'short_answer') { %>
+                            <div class="mb-3">
+                                <label for="block_<%= block.blockId %>" class="form-label">
+                                    <%= block.label %><% if (block.required) { %> <span class="text-danger">*</span><% } %>
+                                </label>
+                                <% if (block.description) { %>
+                                    <small class="form-text text-muted d-block mb-1"><%= block.description %></small>
+                                <% } %>
+                                <input
+                                    type="<%= (block.config && block.config.validation === 'email') ? 'email' : (block.config && block.config.validation === 'url') ? 'url' : 'text' %>"
+                                    class="form-control"
+                                    id="block_<%= block.blockId %>"
+                                    name="block_<%= block.blockId %>"
+                                    <% if (block.config && block.config.placeholder) { %>placeholder="<%= block.config.placeholder %>"<% } %>
+                                    <% if (block.config && block.config.minLength) { %>minlength="<%= block.config.minLength %>"<% } %>
+                                    <% if (block.config && block.config.maxLength) { %>maxlength="<%= block.config.maxLength %>"<% } %>
+                                    <% if (block.required) { %>required<% } %>
+                                >
+                            </div>
+
+                        <% } else if (block.type === 'paragraph') { %>
+                            <div class="mb-3">
+                                <label for="block_<%= block.blockId %>" class="form-label">
+                                    <%= block.label %><% if (block.required) { %> <span class="text-danger">*</span><% } %>
+                                </label>
+                                <% if (block.description) { %>
+                                    <small class="form-text text-muted d-block mb-1"><%= block.description %></small>
+                                <% } %>
+                                <textarea
+                                    class="form-control"
+                                    id="block_<%= block.blockId %>"
+                                    name="block_<%= block.blockId %>"
+                                    rows="4"
+                                    <% if (block.config && block.config.placeholder) { %>placeholder="<%= block.config.placeholder %>"<% } %>
+                                    <% if (block.config && block.config.minLength) { %>minlength="<%= block.config.minLength %>"<% } %>
+                                    <% if (block.config && block.config.maxLength) { %>maxlength="<%= block.config.maxLength %>"<% } %>
+                                    <% if (block.required) { %>required<% } %>
+                                ></textarea>
+                            </div>
+
+                        <% } else if (block.type === 'multiple_choice') { %>
+                            <div class="mb-3">
+                                <label class="form-label">
+                                    <%= block.label %><% if (block.required) { %> <span class="text-danger">*</span><% } %>
+                                </label>
+                                <% if (block.description) { %>
+                                    <small class="form-text text-muted d-block mb-1"><%= block.description %></small>
+                                <% } %>
+                                <% if (block.config && block.config.options) { %>
+                                    <% block.config.options.forEach(function(option, optIndex) { %>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="radio"
+                                                name="block_<%= block.blockId %>"
+                                                id="block_<%= block.blockId %>_<%= optIndex %>"
+                                                value="<%= option %>"
+                                                <% if (block.required && optIndex === 0) { %>required<% } %>
+                                            >
+                                            <label class="form-check-label" for="block_<%= block.blockId %>_<%= optIndex %>">
+                                                <%= option %>
+                                            </label>
+                                        </div>
+                                    <% }) %>
+                                    <% if (block.config.allowOther) { %>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="radio"
+                                                name="block_<%= block.blockId %>"
+                                                id="block_<%= block.blockId %>_other"
+                                                value="__other__"
+                                            >
+                                            <label class="form-check-label" for="block_<%= block.blockId %>_other">
+                                                Other
+                                            </label>
+                                        </div>
+                                    <% } %>
+                                <% } %>
+                            </div>
+
+                        <% } else if (block.type === 'checkboxes') { %>
+                            <div class="mb-3">
+                                <label class="form-label">
+                                    <%= block.label %><% if (block.required) { %> <span class="text-danger">*</span><% } %>
+                                </label>
+                                <% if (block.description) { %>
+                                    <small class="form-text text-muted d-block mb-1"><%= block.description %></small>
+                                <% } %>
+                                <% if (block.config && block.config.options) { %>
+                                    <% block.config.options.forEach(function(option, optIndex) { %>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox"
+                                                name="block_<%= block.blockId %>"
+                                                id="block_<%= block.blockId %>_<%= optIndex %>"
+                                                value="<%= option %>"
+                                            >
+                                            <label class="form-check-label" for="block_<%= block.blockId %>_<%= optIndex %>">
+                                                <%= option %>
+                                            </label>
+                                        </div>
+                                    <% }) %>
+                                <% } %>
+                            </div>
+
+                        <% } else if (block.type === 'dropdown') { %>
+                            <div class="mb-3">
+                                <label for="block_<%= block.blockId %>" class="form-label">
+                                    <%= block.label %><% if (block.required) { %> <span class="text-danger">*</span><% } %>
+                                </label>
+                                <% if (block.description) { %>
+                                    <small class="form-text text-muted d-block mb-1"><%= block.description %></small>
+                                <% } %>
+                                <select class="form-select" id="block_<%= block.blockId %>" name="block_<%= block.blockId %>"
+                                    <% if (block.required) { %>required<% } %>
+                                >
+                                    <option value="" selected disabled>Select an option</option>
+                                    <% if (block.config && block.config.options) { %>
+                                        <% block.config.options.forEach(function(option) { %>
+                                            <option value="<%= option %>"><%= option %></option>
+                                        <% }) %>
+                                    <% } %>
+                                </select>
+                            </div>
+
+                        <% } else if (block.type === 'linear_scale') { %>
+                            <div class="mb-3">
+                                <label class="form-label">
+                                    <%= block.label %><% if (block.required) { %> <span class="text-danger">*</span><% } %>
+                                </label>
+                                <% if (block.description) { %>
+                                    <small class="form-text text-muted d-block mb-1"><%= block.description %></small>
+                                <% } %>
+                                <%
+                                    var scaleMin = (block.config && block.config.min !== undefined) ? block.config.min : 1;
+                                    var scaleMax = (block.config && block.config.max !== undefined) ? block.config.max : 5;
+                                    var minLabel = (block.config && block.config.minLabel) || '';
+                                    var maxLabel = (block.config && block.config.maxLabel) || '';
+                                %>
+                                <div class="d-flex align-items-center gap-2 flex-wrap">
+                                    <% if (minLabel) { %><small class="text-muted"><%= minLabel %></small><% } %>
+                                    <% for (var i = scaleMin; i <= scaleMax; i++) { %>
+                                        <div class="form-check form-check-inline">
+                                            <input class="form-check-input" type="radio"
+                                                name="block_<%= block.blockId %>"
+                                                id="block_<%= block.blockId %>_<%= i %>"
+                                                value="<%= i %>"
+                                                <% if (block.required && i === scaleMin) { %>required<% } %>
+                                            >
+                                            <label class="form-check-label" for="block_<%= block.blockId %>_<%= i %>">
+                                                <%= i %>
+                                            </label>
+                                        </div>
+                                    <% } %>
+                                    <% if (maxLabel) { %><small class="text-muted"><%= maxLabel %></small><% } %>
+                                </div>
+                            </div>
+
+                        <% } %>
+                    <% }) %>
+
+                    <div class="mt-4">
+                        <button type="submit" class="btn btn-primary" id="submitBtn">
+                            <i class="fas fa-paper-plane me-1"></i> Submit
+                        </button>
+                    </div>
+                </form>
+
+            </div>
+        </div>
+    </div>
+</section>
+
+<script>
+    // Prevent double submission
+    document.getElementById('formSubmission').addEventListener('submit', function() {
+        var btn = document.getElementById('submitBtn');
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i> Submitting...';
+    });
+</script>
+
+<%- include("../../modules/footer.ejs") %>

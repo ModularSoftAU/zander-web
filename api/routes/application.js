@@ -13,9 +13,9 @@ export default function applicationApiRoute(app, config, db, features, lang) {
     const applicationId = optional(req.query, "id");
 
     try {
-      function getApplications(dbQuery) {
-        db.query(dbQuery, function (error, results, fields) {
-          
+      function getApplications(dbQuery, params) {
+        db.query(dbQuery, params || [], function (error, results, fields) {
+
           if (error) {
             return res.send({
               success: false,
@@ -39,13 +39,13 @@ export default function applicationApiRoute(app, config, db, features, lang) {
 
       // Get Application by ID
       if (applicationId) {
-        let dbQuery = `SELECT * FROM applications WHERE applicationId=${applicationId};`;
-        getApplications(dbQuery);
-        return; // Add return statement here
+        let dbQuery = `SELECT a.*, f.name as linkedFormName, f.slug as linkedFormSlug, f.status as linkedFormStatus FROM applications a LEFT JOIN forms f ON a.linkedFormId = f.formId WHERE a.applicationId=?;`;
+        getApplications(dbQuery, [applicationId]);
+        return;
       }
 
-      // Return all Servers by default
-      let dbQuery = `SELECT * FROM applications ORDER BY position ASC;`;
+      // Return all applications by default
+      let dbQuery = `SELECT a.*, f.name as linkedFormName, f.slug as linkedFormSlug, f.status as linkedFormStatus FROM applications a LEFT JOIN forms f ON a.linkedFormId = f.formId ORDER BY a.position ASC;`;
       getApplications(dbQuery);
     } catch (error) {
       res.send({
@@ -69,17 +69,20 @@ export default function applicationApiRoute(app, config, db, features, lang) {
       "requirementsMarkdown",
       res
     );
-    const redirectUrl = required(req.body, "redirectUrl", res);
     const position = required(req.body, "position", res);
     const applicationStatus = required(req.body, "applicationStatus", res);
+
+    const applicationType = optional(req.body, "applicationType") || "external";
+    const redirectUrl = optional(req.body, "redirectUrl");
+    const linkedFormId = optional(req.body, "linkedFormId");
 
     let applicationCreatedLang = lang.applications.applicationCreated;
 
     try {
       db.query(
-        `INSERT INTO applications 
-            (displayName, description, displayIcon, requirementsMarkdown, redirectUrl, position, applicationStatus) 
-        VALUES (?, ?, ?, ?, ?, ?, ?)`,
+        `INSERT INTO applications
+            (displayName, description, displayIcon, requirementsMarkdown, redirectUrl, position, applicationStatus, applicationType, linkedFormId)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [
           displayName,
           description,
@@ -88,6 +91,8 @@ export default function applicationApiRoute(app, config, db, features, lang) {
           redirectUrl,
           position,
           applicationStatus,
+          applicationType,
+          linkedFormId,
         ],
         function (error, results, fields) {
           if (error) {
@@ -137,25 +142,30 @@ export default function applicationApiRoute(app, config, db, features, lang) {
       "requirementsMarkdown",
       res
     );
-    const redirectUrl = required(req.body, "redirectUrl", res);
     const position = required(req.body, "position", res);
     const applicationStatus = required(req.body, "applicationStatus", res);
+
+    const applicationType = optional(req.body, "applicationType") || "external";
+    const redirectUrl = optional(req.body, "redirectUrl");
+    const linkedFormId = optional(req.body, "linkedFormId");
 
     let applicationEditedLang = lang.applications.applicationEdited;
 
     try {
       db.query(
         `
-                UPDATE 
-                    applications 
-                SET 
-                    displayName=?, 
-                    displayIcon=?, 
-                    description=?, 
-                    requirementsMarkdown=?, 
-                    redirectUrl=?, 
+                UPDATE
+                    applications
+                SET
+                    displayName=?,
+                    displayIcon=?,
+                    description=?,
+                    requirementsMarkdown=?,
+                    redirectUrl=?,
                     position=?,
-                    applicationStatus=?
+                    applicationStatus=?,
+                    applicationType=?,
+                    linkedFormId=?
                 WHERE applicationId=?;`,
         [
           displayName,
@@ -165,6 +175,8 @@ export default function applicationApiRoute(app, config, db, features, lang) {
           redirectUrl,
           position,
           applicationStatus,
+          applicationType,
+          linkedFormId,
           applicationId,
         ],
         function (error, results, fields) {
