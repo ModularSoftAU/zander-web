@@ -257,8 +257,9 @@ function formatDurationLabel(durationMs) {
 }
 
 /**
- * Send a LiteBans-style webhook notification for a punishment.
+ * Send a webhook notification for a punishment.
  * Matches the format: title line, bullet points for details.
+ * @param {string} platform - 'Discord' or 'Web'
  */
 export async function sendPunishmentWebhook({
   type,
@@ -266,6 +267,7 @@ export async function sendPunishmentWebhook({
   actorTag,
   reason,
   durationMs,
+  platform = "Discord",
 }) {
   if (!PUNISHMENT_WEBHOOK_URL) return;
 
@@ -325,6 +327,7 @@ export async function sendPunishmentWebhook({
 
     const descLines = [
       `**${targetTag}** has been ${verb.toLowerCase()}!`,
+      `\u2022 Platform: ${platform}`,
       `\u2022 ${byLabel}: ${actorTag}`,
     ];
     if (showDuration) {

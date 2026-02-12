@@ -9,15 +9,17 @@ const executeQuery = (query, params = []) =>
   });
 
 /**
- * Create a new Discord punishment record.
+ * Create a new punishment record (Discord or Web).
  * @returns {Promise<number>} The inserted punishment ID.
  */
 export async function createPunishment({
   type,
+  platform = "DISCORD",
   targetDiscordUserId,
   targetDiscordTag,
   targetPlayerId,
   actorDiscordUserId,
+  actorPlayerId,
   actorNameSnapshot,
   reason,
   expiresAt,
@@ -26,16 +28,18 @@ export async function createPunishment({
 }) {
   const result = await executeQuery(
     `INSERT INTO discord_punishments
-      (type, target_discord_user_id, target_discord_tag, target_player_id,
-       actor_discord_user_id, actor_name_snapshot, reason, expires_at,
+      (type, platform, target_discord_user_id, target_discord_tag, target_player_id,
+       actor_discord_user_id, actor_player_id, actor_name_snapshot, reason, expires_at,
        context, dm_status, status)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'ACTIVE')`,
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'ACTIVE')`,
     [
       type,
-      targetDiscordUserId,
+      platform,
+      targetDiscordUserId || null,
       targetDiscordTag || null,
       targetPlayerId || null,
-      actorDiscordUserId,
+      actorDiscordUserId || null,
+      actorPlayerId || null,
       actorNameSnapshot || null,
       reason,
       expiresAt || null,
@@ -274,5 +278,64 @@ export async function getDiscordPunishmentsForProfile({ discordUserId, playerId 
      WHERE ${conditions.join(" OR ")}
      ORDER BY created_at DESC
      LIMIT 50`
+  );
+}
+
+/**
+ * Check if a player has an active web ban (TEMP_BAN or PERM_BAN on WEB platform).
+ */
+export async function hasActiveWebBan(playerId) {
+  if (!playerId) return false;
+  const rows = await executeQuery(
+    `SELECT id FROM discord_punishments
+     WHERE target_player_id = ? AND platform = 'WEB'
+       AND type IN ('TEMP_BAN', 'PERM_BAN')
+       AND status = 'ACTIVE'
+     LIMIT 1`,
+    [playerId]
+  );
+  return rows.length > 0;
+}
+
+/**
+ * Get all web punishments (paginated, for dashboard).
+ */
+export async function getWebPunishments({ page = 1, limit = 25 } = {}) {
+  const offset = (page - 1) * limit;
+
+  const [rows, countRows] = await Promise.all([
+    executeQuery(
+      `SELECT dp.*, u.username AS target_username, actor.username AS actor_username
+       FROM discord_punishments dp
+       LEFT JOIN users u ON dp.target_player_id = u.userId
+       LEFT JOIN users actor ON dp.actor_player_id = actor.userId
+       WHERE dp.platform = 'WEB'
+       ORDER BY dp.created_at DESC
+       LIMIT ? OFFSET ?`,
+      [limit, offset]
+    ),
+    executeQuery(
+      `SELECT COUNT(*) AS total FROM discord_punishments WHERE platform = 'WEB'`
+    ),
+  ]);
+
+  return {
+    punishments: rows,
+    total: countRows[0]?.total || 0,
+    page,
+    limit,
+  };
+}
+
+/**
+ * Get active web punishments for a player (for enforcement display).
+ */
+export async function getActiveWebPunishments(playerId) {
+  if (!playerId) return [];
+  return executeQuery(
+    `SELECT * FROM discord_punishments
+     WHERE target_player_id = ? AND platform = 'WEB' AND status = 'ACTIVE'
+     ORDER BY created_at DESC`,
+    [playerId]
   );
 }

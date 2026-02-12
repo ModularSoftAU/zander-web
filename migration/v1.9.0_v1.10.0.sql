@@ -1,14 +1,15 @@
--- Discord Punishments System
+-- Punishments System (Discord + Web)
 -- Migration: v1.9.0 -> v1.10.0
 
 CREATE TABLE IF NOT EXISTS discord_punishments (
     id INT NOT NULL AUTO_INCREMENT,
     type ENUM('WARN', 'DISCORD_KICK', 'TEMP_BAN', 'PERM_BAN', 'TEMP_MUTE', 'PERM_MUTE') NOT NULL,
     platform VARCHAR(16) NOT NULL DEFAULT 'DISCORD',
-    target_discord_user_id VARCHAR(24) NOT NULL,
+    target_discord_user_id VARCHAR(24) DEFAULT NULL,
     target_discord_tag VARCHAR(100),
     target_player_id INT DEFAULT NULL,
-    actor_discord_user_id VARCHAR(24) NOT NULL,
+    actor_discord_user_id VARCHAR(24) DEFAULT NULL,
+    actor_player_id INT DEFAULT NULL,
     actor_name_snapshot VARCHAR(100),
     reason TEXT NOT NULL,
     created_at DATETIME NOT NULL DEFAULT NOW(),
@@ -23,7 +24,8 @@ CREATE TABLE IF NOT EXISTS discord_punishments (
     INDEX idx_discord_punishments_status (status),
     INDEX idx_discord_punishments_type (type),
     INDEX idx_discord_punishments_expires (status, expires_at),
-    INDEX idx_discord_punishments_player (target_player_id)
+    INDEX idx_discord_punishments_player (target_player_id),
+    INDEX idx_discord_punishments_platform (platform)
 );
 
 CREATE TABLE IF NOT EXISTS discord_punishment_appeals (

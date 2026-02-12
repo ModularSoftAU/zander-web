@@ -20,6 +20,7 @@ import {
 } from "../services/profileService.js";
 import {
   getDiscordPunishmentsForProfile,
+  hasActiveWebBan,
 } from "../controllers/discordPunishmentController.js";
 
 export default function profileSiteRoutes(
@@ -222,6 +223,13 @@ export default function profileSiteRoutes(
       const userHasJoined = await userData.hasJoined(username);
 
       if (!isLoggedIn(req)) return res.redirect(`/`);
+
+      // Check if user is web-banned
+      const sessionUserId = req.session?.user?.userId;
+      if (sessionUserId && await hasActiveWebBan(sessionUserId)) {
+        await setBannerCookie("danger", "You are currently banned from editing your profile.", res);
+        return res.redirect(`/profile/${username}`);
+      }
 
       if (!userHasJoined) {
         return res.view("session/notFound", {
