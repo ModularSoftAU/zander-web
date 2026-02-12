@@ -120,6 +120,7 @@ export default function dashboardWebPunishmentsRoute(
         reason,
         durationMs: type === "TEMP_BAN" ? parseDurationString(duration) : null,
         platform: "Web",
+        punishmentLink: `${process.env.siteAddress}/dashboard/web-punishments`,
       });
 
       // Try to DM the user via Discord if they have a linked Discord account

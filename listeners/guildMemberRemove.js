@@ -71,6 +71,9 @@ export class GuildMemberRemoveListener extends Listener {
         actorTag: executorTag,
         reason,
         durationMs: null,
+        punishmentLink: targetLinked?.username
+          ? `${process.env.siteAddress}/profile/${targetLinked.username}`
+          : undefined,
       });
     } catch (error) {
       console.error("[Punishments] Failed to process native guildMemberRemove:", error);

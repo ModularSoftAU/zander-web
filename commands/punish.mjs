@@ -8,6 +8,7 @@ import {
   EmbedBuilder,
   PermissionFlagsBits,
   SlashCommandBuilder,
+  WebhookClient,
 } from "discord.js";
 import { createRequire } from "module";
 import fetch from "node-fetch";
@@ -268,11 +269,12 @@ export async function sendPunishmentWebhook({
   reason,
   durationMs,
   platform = "Discord",
+  punishmentLink,
 }) {
   if (!PUNISHMENT_WEBHOOK_URL) return;
 
   try {
-    const webhook = new Webhook(PUNISHMENT_WEBHOOK_URL);
+    const webhookClient = new WebhookClient({ url: PUNISHMENT_WEBHOOK_URL });
 
     // Map type to a title verb (matching LiteBans style)
     const titleVerbs = {
@@ -335,15 +337,26 @@ export async function sendPunishmentWebhook({
     }
     descLines.push(`\u2022 Reason: ${reason}`);
 
-    const embed = new MessageBuilder()
-      .setTitle(`${verb}`)
+    const embed = new EmbedBuilder()
+      .setTitle(verb)
       .setDescription(descLines.join("\n"))
-      .setColor(colorMap[type] || "#DC3545")
+      .setColor(parseInt((colorMap[type] || "#DC3545").replace("#", ""), 16))
       .setTimestamp();
 
-    await sendWebhookMessage(webhook, embed, {
-      context: "commands/punish#webhook",
-    });
+    const payload = { embeds: [embed] };
+
+    if (punishmentLink) {
+      const row = new ActionRowBuilder().addComponents(
+        new ButtonBuilder()
+          .setLabel("View Punishment")
+          .setStyle(ButtonStyle.Link)
+          .setURL(punishmentLink)
+      );
+      payload.components = [row];
+    }
+
+    await webhookClient.send(payload);
+    webhookClient.destroy();
   } catch (error) {
     console.error("Failed to send punishment webhook notification:", error);
   }
@@ -774,6 +787,9 @@ export class PunishCommand extends Command {
       actorTag: getTargetTag(interaction.user),
       reason,
       durationMs: null,
+      punishmentLink: targetLinked?.username
+        ? `${process.env.siteAddress}/profile/${targetLinked.username}`
+        : undefined,
     });
 
     return interaction.editReply({
@@ -857,6 +873,9 @@ export class PunishCommand extends Command {
       actorTag: getTargetTag(interaction.user),
       reason,
       durationMs: null,
+      punishmentLink: targetLinked?.username
+        ? `${process.env.siteAddress}/profile/${targetLinked.username}`
+        : undefined,
     });
 
     return interaction.editReply({
@@ -947,6 +966,9 @@ export class PunishCommand extends Command {
       actorTag: getTargetTag(interaction.user),
       reason,
       durationMs: durationMs,
+      punishmentLink: targetLinked?.username
+        ? `${process.env.siteAddress}/profile/${targetLinked.username}`
+        : undefined,
     });
 
     const unixTs = Math.floor(expiresAt.getTime() / 1000);
@@ -1030,6 +1052,9 @@ export class PunishCommand extends Command {
       actorTag: getTargetTag(interaction.user),
       reason,
       durationMs: null,
+      punishmentLink: targetLinked?.username
+        ? `${process.env.siteAddress}/profile/${targetLinked.username}`
+        : undefined,
     });
 
     return interaction.editReply({
@@ -1129,6 +1154,9 @@ export class PunishCommand extends Command {
       actorTag: getTargetTag(interaction.user),
       reason,
       durationMs: durationMs,
+      punishmentLink: targetLinked?.username
+        ? `${process.env.siteAddress}/profile/${targetLinked.username}`
+        : undefined,
     });
 
     const unixTs = Math.floor(expiresAt.getTime() / 1000);
@@ -1221,6 +1249,9 @@ export class PunishCommand extends Command {
       actorTag: getTargetTag(interaction.user),
       reason,
       durationMs: null,
+      punishmentLink: targetLinked?.username
+        ? `${process.env.siteAddress}/profile/${targetLinked.username}`
+        : undefined,
     });
 
     return interaction.editReply({
@@ -1239,6 +1270,7 @@ export class PunishCommand extends Command {
   async handleUnban(interaction, actorLinked) {
     const targetUser = interaction.options.getUser("user");
     const reason = interaction.options.getString("reason");
+    const targetLinked = await new UserGetter().byDiscordId(targetUser.id);
 
     // Find active ban punishments for this user
     const activeBans = await getActivePunishments(targetUser.id);
@@ -1282,6 +1314,9 @@ export class PunishCommand extends Command {
       actorTag: getTargetTag(interaction.user),
       reason,
       durationMs: null,
+      punishmentLink: targetLinked?.username
+        ? `${process.env.siteAddress}/profile/${targetLinked.username}`
+        : undefined,
     });
 
     return interaction.editReply({
@@ -1300,6 +1335,7 @@ export class PunishCommand extends Command {
   async handleUnmute(interaction, actorLinked) {
     const targetUser = interaction.options.getUser("user");
     const reason = interaction.options.getString("reason");
+    const targetLinked = await new UserGetter().byDiscordId(targetUser.id);
 
     const targetMember = await this.fetchGuildMember(interaction, targetUser.id);
 
@@ -1344,6 +1380,9 @@ export class PunishCommand extends Command {
       actorTag: getTargetTag(interaction.user),
       reason,
       durationMs: null,
+      punishmentLink: targetLinked?.username
+        ? `${process.env.siteAddress}/profile/${targetLinked.username}`
+        : undefined,
     });
 
     return interaction.editReply({
