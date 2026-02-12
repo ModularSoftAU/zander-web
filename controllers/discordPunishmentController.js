@@ -10,11 +10,13 @@ const executeQuery = (query, params = []) =>
 
 /**
  * Create a new punishment record (Discord or Web).
+ * Dynamically builds the INSERT to remain compatible with databases
+ * that have not yet applied the v1.10.0 migration (platform / actor_player_id columns).
  * @returns {Promise<number>} The inserted punishment ID.
  */
 export async function createPunishment({
   type,
-  platform = "DISCORD",
+  platform,
   targetDiscordUserId,
   targetDiscordTag,
   targetPlayerId,
@@ -26,26 +28,48 @@ export async function createPunishment({
   context,
   dmStatus,
 }) {
+  const columns = [
+    "type",
+    "target_discord_user_id",
+    "target_discord_tag",
+    "target_player_id",
+    "actor_discord_user_id",
+    "actor_name_snapshot",
+    "reason",
+    "expires_at",
+    "context",
+    "dm_status",
+    "status",
+  ];
+  const values = [
+    type,
+    targetDiscordUserId || null,
+    targetDiscordTag || null,
+    targetPlayerId || null,
+    actorDiscordUserId || null,
+    actorNameSnapshot || null,
+    reason,
+    expiresAt || null,
+    context ? JSON.stringify(context) : null,
+    dmStatus || "NOT_APPLICABLE",
+    "ACTIVE",
+  ];
+
+  // Only include new columns when explicitly provided so the query
+  // works even if the migration hasn't been applied yet.
+  if (platform !== undefined) {
+    columns.push("platform");
+    values.push(platform);
+  }
+  if (actorPlayerId !== undefined) {
+    columns.push("actor_player_id");
+    values.push(actorPlayerId);
+  }
+
+  const placeholders = columns.map(() => "?").join(", ");
   const result = await executeQuery(
-    `INSERT INTO discord_punishments
-      (type, platform, target_discord_user_id, target_discord_tag, target_player_id,
-       actor_discord_user_id, actor_player_id, actor_name_snapshot, reason, expires_at,
-       context, dm_status, status)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'ACTIVE')`,
-    [
-      type,
-      platform,
-      targetDiscordUserId || null,
-      targetDiscordTag || null,
-      targetPlayerId || null,
-      actorDiscordUserId || null,
-      actorPlayerId || null,
-      actorNameSnapshot || null,
-      reason,
-      expiresAt || null,
-      context ? JSON.stringify(context) : null,
-      dmStatus || "NOT_APPLICABLE",
-    ]
+    `INSERT INTO discord_punishments (${columns.join(", ")}) VALUES (${placeholders})`,
+    values
   );
   return result.insertId;
 }
