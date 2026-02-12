@@ -64,7 +64,7 @@ const APPEAL_URL = `${process.env.siteAddress}${config.discord?.punishments?.app
 const LOG_CHANNEL_ID = config.discord?.punishments?.logChannelId;
 const MUTED_ROLE_ID = config.discord?.roles?.muted;
 const GUILD_ID = config.discord?.guildId;
-const ADMIN_LOG_WEBHOOK_URL = config.discord?.webhooks?.adminLog;
+const PUNISHMENT_WEBHOOK_URL = config.discord?.webhooks?.staffPunishmentNotifications;
 
 const MAX_HISTORY_PUNISHMENTS = 50;
 const HISTORY_PER_PAGE = 5;
@@ -267,10 +267,10 @@ export async function sendPunishmentWebhook({
   reason,
   durationMs,
 }) {
-  if (!ADMIN_LOG_WEBHOOK_URL) return;
+  if (!PUNISHMENT_WEBHOOK_URL) return;
 
   try {
-    const webhook = new Webhook(ADMIN_LOG_WEBHOOK_URL);
+    const webhook = new Webhook(PUNISHMENT_WEBHOOK_URL);
 
     // Map type to a title verb (matching LiteBans style)
     const titleVerbs = {
@@ -732,6 +732,13 @@ export class PunishCommand extends Command {
 
     const targetLinked = await new UserGetter().byDiscordId(targetUser.id);
 
+    const dmStatus = await sendPunishmentDm(targetUser, {
+      type: "WARN",
+      reason,
+      guildName: interaction.guild.name,
+      expiresAt: null,
+    });
+
     const punishmentId = await createPunishment({
       type: "WARN",
       targetDiscordUserId: targetUser.id,
@@ -742,7 +749,7 @@ export class PunishCommand extends Command {
       reason,
       expiresAt: null,
       context: this.buildContext(interaction, evidence),
-      dmStatus: "NOT_APPLICABLE",
+      dmStatus,
     });
 
     if (!silent) {
@@ -753,7 +760,7 @@ export class PunishCommand extends Command {
         reason,
         expiresAt: null,
         punishmentId,
-        dmStatus: "NOT_APPLICABLE",
+        dmStatus,
         silent,
       });
     }
@@ -771,7 +778,7 @@ export class PunishCommand extends Command {
         new EmbedBuilder()
           .setTitle("Warning Issued")
           .setDescription(
-            `<@${targetUser.id}> has been warned.\n**Reason:** ${reason}\n**Punishment ID:** ${punishmentId}`
+            `<@${targetUser.id}> has been warned.\n**Reason:** ${reason}\n**DM Status:** ${dmStatus}\n**Punishment ID:** ${punishmentId}`
           )
           .setColor(Colors.Yellow)
           .setTimestamp(new Date()),
