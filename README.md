@@ -56,3 +56,9 @@ All permission nodes follow dot-notation and are managed via LuckPerms. Wildcard
 | `zander.discord.punish.ban` | Ban/unban users from the Discord server |
 | `zander.discord.punish.mute` | Mute/unmute users in Discord |
 | `zander.discord.punish.history` | View punishment history for users |
+
+### Web Punishments
+
+| Permission Node | Description |
+|---|---|
+| `zander.web.punishment.manage` | Manage web punishments (warn, temp ban, perm ban) via the dashboard |
