@@ -20,6 +20,7 @@ import {
   createSupportTicketMessage,
   ensureUncategorisedCategory,
 } from "../../controllers/supportTicketController.js";
+import { hasPermission as hasPermissionNode } from "../../lib/discord/permissions.mjs";
 
 export default function dashboardFormsSiteRoute(
   app,
@@ -43,13 +44,51 @@ export default function dashboardFormsSiteRoute(
     }
   };
 
+  // ─── Per-form permission helpers ───
+  // Permission node: zander.web.forms.<slug>
+  // Wildcard node:   zander.web.forms.*
+
+  const userHasFormPermission = (slug, permissions = []) => {
+    if (!slug) return false;
+    const formNode = `zander.web.forms.${slug}`;
+    return (
+      hasPermissionNode(permissions, formNode) ||
+      hasPermissionNode(permissions, "zander.web.forms.*")
+    );
+  };
+
+  const requireFormPermission = async (form, req, res) => {
+    if (!userHasFormPermission(form.slug, req.session.user?.permissions)) {
+      return res.view("session/noPermission", {
+        pageTitle: "Access Restricted",
+        config,
+        req,
+        res,
+        features,
+        globalImage: await getGlobalImage(),
+        announcementWeb: await getWebAnnouncement(),
+      });
+    }
+    return true;
+  };
+
+  const filterFormsByPermission = (forms, permissions) => {
+    return forms.filter((form) =>
+      userHasFormPermission(form.slug, permissions)
+    );
+  };
+
   // ─── Forms list ───
   app.get("/dashboard/forms", async function (req, res) {
     if (!isFeatureWebRouteEnabled(features.forms, req, res, features)) return;
     if (!(await hasPermission("zander.web.forms", req, res, features))) return;
 
     try {
-      const forms = await getAllForms();
+      const allForms = await getAllForms();
+      const forms = filterFormsByPermission(
+        allForms,
+        req.session.user.permissions
+      );
 
       // Get response counts for each form
       const formsWithCounts = await Promise.all(
@@ -119,6 +158,9 @@ export default function dashboardFormsSiteRoute(
         return res.redirect("/dashboard/forms");
       }
 
+      const hasFormAccess = await requireFormPermission(form, req, res);
+      if (hasFormAccess !== true) return hasFormAccess;
+
       const blocks = await getFormBlocks(formId);
 
       return res.view("dashboard/forms/form-editor", {
@@ -152,6 +194,9 @@ export default function dashboardFormsSiteRoute(
         setBannerCookie("danger", "Form not found.", res);
         return res.redirect("/dashboard/forms");
       }
+
+      const hasFormAccess = await requireFormPermission(form, req, res);
+      if (hasFormAccess !== true) return hasFormAccess;
 
       const statusFilter = req.query.status || null;
       const page = Math.max(parseInt(req.query.page, 10) || 1, 1);
@@ -206,6 +251,9 @@ export default function dashboardFormsSiteRoute(
         return res.redirect("/dashboard/forms");
       }
 
+      const hasFormAccess = await requireFormPermission(form, req, res);
+      if (hasFormAccess !== true) return hasFormAccess;
+
       const response = await getFormResponseById(req.params.responseId);
       if (!response || response.formId !== parseInt(form.formId)) {
         setBannerCookie("danger", "Response not found.", res);
@@ -254,6 +302,9 @@ export default function dashboardFormsSiteRoute(
         setBannerCookie("danger", "Form not found.", res);
         return res.redirect("/dashboard/forms");
       }
+
+      const hasFormAccess = await requireFormPermission(form, req, res);
+      if (hasFormAccess !== true) return hasFormAccess;
 
       const response = await getFormResponseById(req.params.responseId);
       if (!response || response.formId !== parseInt(form.formId)) {
