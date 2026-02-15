@@ -383,7 +383,24 @@ export default function applicationSiteRoutes(
       const shopResponse = await fetch(shopFetchURL, {
         headers: { "x-access-token": process.env.apiKey },
       });
-      const shopApiData = await shopResponse.json();
+
+      if (!shopResponse.ok) {
+        console.error("Shop search proxy: API returned status", shopResponse.status);
+        return res.send({
+          success: false,
+          message: "Shop service is temporarily unavailable. Please try again.",
+        });
+      }
+
+      const responseText = await shopResponse.text();
+      if (!responseText) {
+        return res.send({
+          success: false,
+          message: "Shop service returned an empty response. Please try again.",
+        });
+      }
+
+      const shopApiData = JSON.parse(responseText);
       return res.send(shopApiData);
     } catch (err) {
       console.error("Shop search proxy error:", err);

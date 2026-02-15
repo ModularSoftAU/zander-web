@@ -164,6 +164,23 @@ export class SupportCommand extends Command {
   }
 
   async chatInputRun(interaction) {
+    try {
+      return await this._handleSubcommand(interaction);
+    } catch (error) {
+      console.error("ticket command: unhandled error", error);
+      try {
+        if (interaction.deferred || interaction.replied) {
+          await interaction.editReply({ content: "Something went wrong while processing that command." });
+        } else {
+          await interaction.reply({ content: "Something went wrong while processing that command.", ephemeral: true });
+        }
+      } catch (replyError) {
+        console.error("ticket command: failed to send error reply", replyError);
+      }
+    }
+  }
+
+  async _handleSubcommand(interaction) {
     const subcommand = interaction.options.getSubcommand();
 
     if (subcommand === "create" || subcommand === "submit") {
