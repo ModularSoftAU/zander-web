@@ -301,7 +301,8 @@ export async function getDiscordPunishmentsForProfile({ discordUserId, playerId 
     `SELECT * FROM discord_punishments
      WHERE ${conditions.join(" OR ")}
      ORDER BY created_at DESC
-     LIMIT 50`
+     LIMIT 50`,
+    params
   );
 }
 
