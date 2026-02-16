@@ -250,6 +250,18 @@ export class SupportCommand extends Command {
                 { messageType: "status" }
               );
             }
+            // Directly grant channel access using the Discord user ID from the slash command
+            try {
+              await interaction.channel.permissionOverwrites.edit(userOption.id, {
+                ViewChannel: true,
+                SendMessages: true,
+                AttachFiles: true,
+                ReadMessageHistory: true,
+              });
+            } catch (permError) {
+              console.error("ticket add: failed to set channel permissions for user", permError);
+              additions.push(`Warning: could not grant ${userOption.tag} channel access.`);
+            }
             await interaction.channel.send(`✅ ${interaction.user.tag} added ${userOption.tag} to this ticket.`);
           } catch (userAddError) {
             console.error("ticket add: failed to add user participant", userAddError);
@@ -279,6 +291,18 @@ export class SupportCommand extends Command {
               "discord",
               { messageType: "status" }
             );
+          }
+          // Directly grant channel access using the Discord role ID from the slash command
+          try {
+            await interaction.channel.permissionOverwrites.edit(roleOption.id, {
+              ViewChannel: true,
+              SendMessages: true,
+              AttachFiles: true,
+              ReadMessageHistory: true,
+            });
+          } catch (permError) {
+            console.error("ticket add: failed to set channel permissions for role", permError);
+            additions.push(`Warning: could not grant ${roleOption.name} channel access.`);
           }
           await interaction.channel.send(`✅ ${interaction.user.tag} added ${roleOption.name} to this ticket.`);
         } catch (roleAddError) {
