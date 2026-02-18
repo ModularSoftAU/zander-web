@@ -16,6 +16,7 @@ import {
   generateVerifyCode,
   setBannerCookie,
 } from "../common.js";
+import { hasActiveWebBan } from "../../controllers/discordPunishmentController.js";
 
 export default function userApiRoute(app, config, db, features, lang) {
   const baseEndpoint = "/api/user";
@@ -472,6 +473,10 @@ export default function userApiRoute(app, config, db, features, lang) {
     const profilePicture_type = required(req.body, "profilePicture_type");
     const profilePicture_email = optional(req.body, "profilePicture_email");
 
+    if (await hasActiveWebBan(req.session?.user?.userId)) {
+      return res.send({ success: false, message: "You are currently banned from editing your profile." });
+    }
+
     try {
       setProfileDisplayPreferences(
         userId,
@@ -491,6 +496,10 @@ export default function userApiRoute(app, config, db, features, lang) {
   app.post(baseEndpoint + "/profile/interests", async function (req, res) {
     const userId = required(req.body, "userId");
     const social_interests = required(req.body, "social_interests");
+
+    if (await hasActiveWebBan(req.session?.user?.userId)) {
+      return res.send({ success: false, message: "You are currently banned from editing your profile." });
+    }
 
     try {
       const filterURL = `${process.env.siteAddress}/api/filter`;
@@ -537,6 +546,10 @@ export default function userApiRoute(app, config, db, features, lang) {
     const userId = required(req.body, "userId");
     const social_aboutMe = required(req.body, "social_aboutMe");
 
+    if (await hasActiveWebBan(req.session?.user?.userId)) {
+      return res.send({ success: false, message: "You are currently banned from editing your profile." });
+    }
+
     try {
       const filterURL = `${process.env.siteAddress}/api/filter`;
       const bodyJSON = { content: social_aboutMe };
@@ -581,6 +594,10 @@ export default function userApiRoute(app, config, db, features, lang) {
     const social_instagram = optional(req.body, "social_instagram");
     const social_reddit = optional(req.body, "social_reddit");
     const social_spotify = optional(req.body, "social_spotify");
+
+    if (await hasActiveWebBan(req.session?.user?.userId)) {
+      return res.send({ success: false, message: "You are currently banned from editing your profile." });
+    }
 
     try {
       setProfileSocialConnections(

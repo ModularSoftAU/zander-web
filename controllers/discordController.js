@@ -10,6 +10,7 @@ export const client = new SapphireClient({
     GatewayIntentBits.GuildMessages,
     GatewayIntentBits.GuildMembers,
     GatewayIntentBits.GuildVoiceStates,
+    GatewayIntentBits.GuildModeration,
     GatewayIntentBits.MessageContent,
   ],
   presence: {

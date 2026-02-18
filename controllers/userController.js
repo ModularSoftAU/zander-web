@@ -616,93 +616,136 @@ export async function getUserPermissions(userData = {}) {
   };
 
   if (uuidHex) {
-    const directPermissions = await runQuery(
-      `SELECT permission
-         FROM ${LUCKPERMS_USER_PERMISSIONS_TABLE}
-        WHERE uuid = UNHEX(?)
-          AND permission NOT LIKE 'group.%'
-          AND value = 1
-          AND (expiry = 0 OR expiry > UNIX_TIMESTAMP())`,
-      [uuidHex]
-    );
+    try {
+      const directPermissions = await runQuery(
+        `SELECT permission
+           FROM ${LUCKPERMS_USER_PERMISSIONS_TABLE}
+          WHERE uuid = UNHEX(?)
+            AND permission NOT LIKE 'group.%'
+            AND value = 1
+            AND (expiry IS NULL OR expiry = 0 OR expiry > UNIX_TIMESTAMP())`,
+        [uuidHex]
+      );
 
-    directPermissions.forEach(({ permission }) => pushPermission(permission));
+      directPermissions.forEach(({ permission }) => pushPermission(permission));
+    } catch (error) {
+      console.error("[PERMISSIONS] Failed to fetch direct user permissions:", error);
+    }
 
-    const rankRows = await runQuery(
-      `SELECT SUBSTRING_INDEX(permission, '.', -1) AS rankSlug
-         FROM ${LUCKPERMS_USER_PERMISSIONS_TABLE}
-        WHERE uuid = UNHEX(?)
-          AND permission LIKE 'group.%'
-          AND value = 1
-          AND (expiry = 0 OR expiry > UNIX_TIMESTAMP())
-        ORDER BY permission`,
-      [uuidHex]
-    );
+    try {
+      const rankRows = await runQuery(
+        `SELECT SUBSTRING_INDEX(permission, '.', -1) AS rankSlug
+           FROM ${LUCKPERMS_USER_PERMISSIONS_TABLE}
+          WHERE uuid = UNHEX(?)
+            AND permission LIKE 'group.%'
+            AND value = 1
+            AND (expiry IS NULL OR expiry = 0 OR expiry > UNIX_TIMESTAMP())
+          ORDER BY permission`,
+        [uuidHex]
+      );
 
-    rankRows.forEach(({ rankSlug }) => queueRank(rankSlug, { direct: true }));
+      rankRows.forEach(({ rankSlug }) => queueRank(rankSlug, { direct: true }));
+    } catch (error) {
+      console.error("[PERMISSIONS] Failed to fetch user group assignments:", error);
+    }
   }
 
   if (!directRankOrder.length && userId) {
-    const fallbackRanks = await runQuery(
-      `SELECT rankSlug
-         FROM userRanks
-        WHERE userId = ?`,
-      [userId]
-    );
+    try {
+      const fallbackRanks = await runQuery(
+        `SELECT rankSlug
+           FROM userRanks
+          WHERE userId = ?`,
+        [userId]
+      );
 
-    fallbackRanks.forEach(({ rankSlug }) => queueRank(rankSlug, { direct: true }));
+      fallbackRanks.forEach(({ rankSlug }) => queueRank(rankSlug, { direct: true }));
+    } catch (error) {
+      console.error("[PERMISSIONS] Failed to fetch fallback ranks from userRanks:", error);
+    }
   }
 
   if (!queuedRanks.length && uuidHex) {
-    const primaryGroupRows = await runQuery(
-      `SELECT primary_group AS rankSlug
-         FROM luckPermsPlayers
-        WHERE uuid = UNHEX(?)
-        LIMIT 1`,
-      [uuidHex]
-    );
+    try {
+      const primaryGroupRows = await runQuery(
+        `SELECT primary_group AS rankSlug
+           FROM luckPermsPlayers
+          WHERE uuid = UNHEX(?)
+          LIMIT 1`,
+        [uuidHex]
+      );
 
-    primaryGroupRows.forEach(({ rankSlug }) => queueRank(rankSlug, { direct: true }));
+      primaryGroupRows.forEach(({ rankSlug }) => queueRank(rankSlug, { direct: true }));
+    } catch (error) {
+      console.error("[PERMISSIONS] Failed to fetch primary group:", error);
+    }
   }
 
   while (queuedRanks.length) {
     const currentRank = queuedRanks.shift();
 
-    const groupPermissions = await runQuery(
-      `SELECT permission
-         FROM ${LUCKPERMS_GROUP_PERMISSIONS_TABLE}
-        WHERE name = ?
-          AND value = 1
-          AND (expiry = 0 OR expiry > UNIX_TIMESTAMP())`,
-      [currentRank]
-    );
+    try {
+      const groupPermissions = await runQuery(
+        `SELECT permission
+           FROM ${LUCKPERMS_GROUP_PERMISSIONS_TABLE}
+          WHERE name = ?
+            AND value = 1
+            AND (expiry IS NULL OR expiry = 0 OR expiry > UNIX_TIMESTAMP())`,
+        [currentRank]
+      );
 
-    groupPermissions.forEach(({ permission }) => {
-      if (!permission) {
-        return;
-      }
-
-      if (permission.startsWith("group.")) {
-        const inherited = permission.substring("group.".length).trim();
-        if (inherited && inherited !== currentRank) {
-          queueRank(inherited);
+      groupPermissions.forEach(({ permission }) => {
+        if (!permission) {
+          return;
         }
-        return;
-      }
 
-      pushPermission(permission);
-    });
+        if (permission.startsWith("group.")) {
+          const inherited = permission.substring("group.".length).trim();
+          if (inherited && inherited !== currentRank) {
+            queueRank(inherited);
+          }
+          return;
+        }
+
+        pushPermission(permission);
+      });
+    } catch (error) {
+      console.error(`[PERMISSIONS] Failed to fetch permissions for group '${currentRank}':`, error);
+    }
   }
 
   if (userId) {
-    const fallbackPermissions = await runQuery(
-      `SELECT DISTINCT permission
-         FROM userPermissions
-        WHERE userId = ?`,
-      [userId]
-    );
+    try {
+      const fallbackPermissions = await runQuery(
+        `SELECT DISTINCT permission
+           FROM userPermissions
+          WHERE userId = ?`,
+        [userId]
+      );
 
-    fallbackPermissions.forEach(({ permission }) => pushPermission(permission));
+      fallbackPermissions.forEach(({ permission }) => pushPermission(permission));
+    } catch (error) {
+      console.error("[PERMISSIONS] Failed to fetch fallback user permissions:", error);
+    }
+  }
+
+  // Fallback: also resolve group permissions via the rankPermissions view
+  // for all known groups, in case the direct group_permissions query missed any
+  if (queuedRankSet.size > 0) {
+    try {
+      const groupSlugs = Array.from(queuedRankSet);
+      const placeholders = groupSlugs.map(() => "?").join(", ");
+      const fallbackGroupPerms = await runQuery(
+        `SELECT DISTINCT permission
+           FROM rankPermissions
+          WHERE rankSlug IN (${placeholders})`,
+        groupSlugs
+      );
+
+      fallbackGroupPerms.forEach(({ permission }) => pushPermission(permission));
+    } catch (error) {
+      console.error("[PERMISSIONS] Failed to fetch fallback rank permissions:", error);
+    }
   }
 
   const permissions = Array.from(permissionSet);
