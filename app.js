@@ -125,6 +125,14 @@ const buildApp = async () => {
     next();
   });
 
+  // Heartbeat — public, no token required so monitoring tools can reach it
+  app.get("/api/heartbeat", async function (req, res) {
+    return res.send({
+      success: true,
+      message: `OK`,
+    });
+  });
+
   await app.register((instance, options, next) => {
     // Don't authenticate the Redirect routes. These are
     // protected by
