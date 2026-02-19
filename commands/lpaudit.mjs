@@ -24,16 +24,19 @@ function truncateList(items, limit) {
 
 function formatUnlinked(users) {
   return users
-    .map((u) => `\`${u.username}\` — groups: ${u.lpGroups.join(", ")}`)
+    .map((u) => {
+      const roles = u.expectedRoleIds.map((id) => `<@&${id}>`).join(", ") || "none";
+      return `\`${u.username}\` — groups: ${u.lpGroups.join(", ")} | would lose: ${roles}`;
+    })
     .join("\n");
 }
 
 function formatNotInGuild(users) {
   return users
-    .map(
-      (u) =>
-        `\`${u.username}\` (<@${u.discordId}>) — groups: ${u.lpGroups.join(", ")}`
-    )
+    .map((u) => {
+      const roles = u.expectedRoleIds.map((id) => `<@&${id}>`).join(", ") || "none";
+      return `\`${u.username}\` (<@${u.discordId}>) — groups: ${u.lpGroups.join(", ")} | would lose: ${roles}`;
+    })
     .join("\n");
 }
 
@@ -74,13 +77,14 @@ function buildReportText({ unlinked, notInGuild, missingRoles, summary }) {
     "",
     `=== UNLINKED — no Discord ID in system (${unlinked.length}) ===`,
     ...unlinked.map(
-      (u) => `  ${u.username} [${u.uuid}]  groups: ${u.lpGroups.join(", ")}`
+      (u) =>
+        `  ${u.username} [${u.uuid}]  groups: ${u.lpGroups.join(", ")}  would-lose-role-ids: ${u.expectedRoleIds.join(", ") || "none"}`
     ),
     "",
     `=== NOT IN GUILD — Discord ID recorded but user not a guild member (${notInGuild.length}) ===`,
     ...notInGuild.map(
       (u) =>
-        `  ${u.username} [${u.uuid}]  discordId: ${u.discordId}  groups: ${u.lpGroups.join(", ")}`
+        `  ${u.username} [${u.uuid}]  discordId: ${u.discordId}  groups: ${u.lpGroups.join(", ")}  would-lose-role-ids: ${u.expectedRoleIds.join(", ") || "none"}`
     ),
     "",
     `=== MISSING DISCORD ROLES — in guild but role(s) absent (${missingRoles.length}) ===`,
