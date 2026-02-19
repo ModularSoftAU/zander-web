@@ -40,6 +40,15 @@ function formatNotInGuild(users) {
     .join("\n");
 }
 
+function formatDiscordNotLinked(users) {
+  return users
+    .map((u) => {
+      const roles = u.heldRoles.join(", ") || "none";
+      return `<@${u.discordId}> (\`${u.discordTag}\`) — has roles: ${roles}`;
+    })
+    .join("\n");
+}
+
 function formatMissingRoles(users) {
   return users
     .map(
@@ -68,7 +77,7 @@ function buildSectionField(embed, title, count, items, formatFn, scope, scopeKey
   });
 }
 
-function buildReportText({ unlinked, notInGuild, missingRoles, summary }) {
+function buildReportText({ unlinked, notInGuild, missingRoles, discordNotLinked, summary }) {
   const ts = new Date().toISOString();
   const lines = [
     `LP ↔ Discord Audit Report`,
@@ -91,6 +100,12 @@ function buildReportText({ unlinked, notInGuild, missingRoles, summary }) {
     ...missingRoles.map(
       (u) =>
         `  ${u.username} [${u.uuid}]  discordId: ${u.discordId}  missing: ${u.missingRoles.join(", ")}`
+    ),
+    "",
+    `=== IN DISCORD WITH ROLES BUT NOT LINKED (${discordNotLinked.length}) ===`,
+    ...discordNotLinked.map(
+      (u) =>
+        `  ${u.discordTag}  discordId: ${u.discordId}  has-role-ids: ${u.heldRoleIds.join(", ")}  roles: ${u.heldRoles.join(", ")}`
     ),
     "",
     `Note: this report is read-only. No roles were changed.`,
@@ -118,7 +133,8 @@ export class LpAuditCommand extends Command {
             { name: "All sections", value: "all" },
             { name: "Unlinked — no Discord ID", value: "unlinked" },
             { name: "Not in guild — Discord ID exists but user left", value: "not_in_guild" },
-            { name: "Missing Discord roles", value: "missing_roles" }
+            { name: "Missing Discord roles", value: "missing_roles" },
+            { name: "In Discord with roles but not linked", value: "discord_not_linked" }
           )
       )
       .addBooleanOption((opt) =>
@@ -185,7 +201,7 @@ export class LpAuditCommand extends Command {
       });
     }
 
-    const { unlinked, notInGuild, missingRoles, summary } = auditResult;
+    const { unlinked, notInGuild, missingRoles, discordNotLinked, summary } = auditResult;
 
     if (summary.trackedRankCount === 0) {
       return interaction.editReply({
@@ -209,9 +225,10 @@ export class LpAuditCommand extends Command {
           `**Tracked LP users:** ${summary.total}`,
           `**Tracked rank mappings:** ${summary.trackedRankCount}`,
           "",
-          `**Unlinked:** ${unlinked.length}`,
+          `**Unlinked (LP ranked, no Discord ID):** ${unlinked.length}`,
           `**Not in guild:** ${notInGuild.length}`,
           `**Missing Discord roles:** ${missingRoles.length}`,
+          `**In Discord with roles but not linked:** ${discordNotLinked.length}`,
         ].join("\n")
       )
       .setFooter({ text: "Audit only — no roles were changed." });
@@ -244,6 +261,16 @@ export class LpAuditCommand extends Command {
       formatMissingRoles,
       scope,
       "missing_roles"
+    );
+
+    buildSectionField(
+      embed,
+      "In Discord with roles but not linked",
+      discordNotLinked.length,
+      discordNotLinked,
+      formatDiscordNotLinked,
+      scope,
+      "discord_not_linked"
     );
 
     const files = [];
