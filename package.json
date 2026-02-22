@@ -5,7 +5,7 @@
   "main": "app.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "build": "yarn install",
+    "build": "npm install",
     "prod": "node --experimental-modules --experimental-json-modules --experimental-specifier-resolution=node --max-old-space-size=512 app.js",
     "dev": "nodemon  --experimental-modules --experimental-json-modules --experimental-specifier-resolution=node"
   },
@@ -14,7 +14,7 @@
     "url": "git+https://github.com/ModularSoftAU/zander-web.git"
   },
   "engines": {
-    "yarn": ">=1.22.0",
+    "npm": ">=8.5.0",
     "node": ">=20"
   },
   "keywords": [],
@@ -52,6 +52,7 @@
     "p-limit": "^6.1.0",
     "path": "^0.12.7",
     "querystring": "^0.2.1",
+    "web-push": "^3.6.7",
     "zero-md": "^2.3.1"
   }
 }

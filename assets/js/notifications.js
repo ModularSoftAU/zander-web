@@ -24,7 +24,10 @@
 
     localStorage.setItem("notificationsPermissionPrompted", "true");
     try {
-      await Notification.requestPermission();
+      const permission = await Notification.requestPermission();
+      if (permission === "granted") {
+        await subscribeToPush();
+      }
     } catch (error) {
       console.warn("Notification permission request failed", error);
     }
@@ -69,6 +72,9 @@
           localStorage.setItem("notificationsPermissionPrompted", "true");
           if (permission !== "default") {
             banner.remove();
+          }
+          if (permission === "granted") {
+            await subscribeToPush();
           }
         } catch (error) {
           console.warn("Notification permission request failed", error);
@@ -123,6 +129,44 @@
     });
 
     document.body.prepend(banner);
+  };
+
+  const urlBase64ToUint8Array = (base64String) => {
+    const padding = "=".repeat((4 - (base64String.length % 4)) % 4);
+    const base64 = (base64String + padding).replace(/-/g, "+").replace(/_/g, "/");
+    const rawData = window.atob(base64);
+    return Uint8Array.from([...rawData].map((char) => char.charCodeAt(0)));
+  };
+
+  const subscribeToPush = async () => {
+    if (!("serviceWorker" in navigator) || !("PushManager" in window)) return;
+    if (Notification.permission !== "granted") return;
+
+    try {
+      const keyRes = await fetch("/notifications/vapid-public-key", {
+        headers: { Accept: "application/json" },
+      });
+      if (!keyRes.ok) return;
+      const { publicKey } = await keyRes.json();
+      if (!publicKey) return;
+
+      const registration = await navigator.serviceWorker.ready;
+      const existingSub = await registration.pushManager.getSubscription();
+      if (existingSub) return;
+
+      const subscription = await registration.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: urlBase64ToUint8Array(publicKey),
+      });
+
+      await fetch("/notifications/push-subscribe", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ subscription }),
+      });
+    } catch (error) {
+      console.warn("Push subscription failed", error);
+    }
   };
 
   const getLastSeenId = () => Number(localStorage.getItem("lastNotificationId") || 0);
@@ -186,6 +230,7 @@
     await requestPermissionIfNeeded();
     maybeShowPermissionBanner();
     showInstallBanner();
+    await subscribeToPush();
     await handleUpdates();
     setInterval(handleUpdates, pollIntervalMs);
   };

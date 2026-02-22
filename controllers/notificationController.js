@@ -1,4 +1,127 @@
 import db from "./databaseController.js";
+import webPush from "web-push";
+
+const VAPID_READY = !!(process.env.VAPID_PUBLIC_KEY && process.env.VAPID_PRIVATE_KEY);
+if (VAPID_READY) {
+  webPush.setVapidDetails(
+    process.env.VAPID_SUBJECT || "mailto:admin@example.com",
+    process.env.VAPID_PUBLIC_KEY,
+    process.env.VAPID_PRIVATE_KEY
+  );
+}
+
+let pushSubscriptionTableCheck;
+
+async function ensurePushSubscriptionTable() {
+  if (!pushSubscriptionTableCheck) {
+    pushSubscriptionTableCheck = new Promise((resolve) => {
+      db.query(
+        "CREATE TABLE IF NOT EXISTS pushSubscriptions (" +
+          "  subscriptionId INT AUTO_INCREMENT PRIMARY KEY," +
+          "  userId INT NOT NULL," +
+          "  endpoint VARCHAR(2048) NOT NULL," +
+          "  p256dh VARCHAR(512) NOT NULL," +
+          "  auth VARCHAR(128) NOT NULL," +
+          "  createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP," +
+          "  updatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP," +
+          "  UNIQUE INDEX idx_push_endpoint (endpoint(255))," +
+          "  INDEX idx_push_user (userId)" +
+          ")",
+        (err) => {
+          if (err) {
+            console.error("Failed to ensure pushSubscriptions table", err);
+            resolve(false);
+            return;
+          }
+          resolve(true);
+        }
+      );
+    });
+  }
+  return pushSubscriptionTableCheck;
+}
+
+export async function savePushSubscription(userId, subscription) {
+  const hasTable = await ensurePushSubscriptionTable();
+  if (!hasTable) return false;
+
+  return new Promise((resolve, reject) => {
+    db.query(
+      "INSERT INTO pushSubscriptions (userId, endpoint, p256dh, auth) VALUES (?, ?, ?, ?)" +
+        " ON DUPLICATE KEY UPDATE userId = VALUES(userId), p256dh = VALUES(p256dh), auth = VALUES(auth), updatedAt = NOW()",
+      [userId, subscription.endpoint, subscription.keys.p256dh, subscription.keys.auth],
+      (err) => {
+        if (err) {
+          console.error("Failed to save push subscription", err);
+          reject(err);
+          return;
+        }
+        resolve(true);
+      }
+    );
+  });
+}
+
+async function getPushSubscriptionsForUsers(userIds) {
+  if (!userIds.length) return [];
+  const hasTable = await ensurePushSubscriptionTable();
+  if (!hasTable) return [];
+
+  const placeholders = userIds.map(() => "?").join(",");
+  return new Promise((resolve) => {
+    db.query(
+      `SELECT endpoint, p256dh, auth FROM pushSubscriptions WHERE userId IN (${placeholders})`,
+      userIds,
+      (err, results) => {
+        if (err) {
+          console.error("Failed to get push subscriptions", err);
+          resolve([]);
+          return;
+        }
+        resolve(results || []);
+      }
+    );
+  });
+}
+
+async function deletePushSubscription(endpoint) {
+  return new Promise((resolve) => {
+    db.query(
+      "DELETE FROM pushSubscriptions WHERE endpoint = ?",
+      [endpoint],
+      (err) => {
+        if (err) {
+          console.error("Failed to delete push subscription", err);
+        }
+        resolve();
+      }
+    );
+  });
+}
+
+async function sendWebPushToUsers(userIds, payload) {
+  if (!VAPID_READY) return;
+  const subscriptions = await getPushSubscriptionsForUsers(userIds);
+  if (!subscriptions.length) return;
+
+  const message = JSON.stringify(payload);
+  await Promise.allSettled(
+    subscriptions.map(async (sub) => {
+      try {
+        await webPush.sendNotification(
+          { endpoint: sub.endpoint, keys: { p256dh: sub.p256dh, auth: sub.auth } },
+          message
+        );
+      } catch (error) {
+        if (error.statusCode === 410 || error.statusCode === 404) {
+          await deletePushSubscription(sub.endpoint);
+        } else {
+          console.error("Failed to send web push notification", error.message);
+        }
+      }
+    })
+  );
+}
 
 let notificationTableCheck;
 
@@ -58,7 +181,7 @@ export async function createNotificationsForUsers(userIds, payload) {
     payload.url,
   ]);
 
-  return new Promise((resolve, reject) => {
+  const affectedRows = await new Promise((resolve, reject) => {
     db.query(
       "INSERT INTO userNotifications (userId, ticketId, notificationType, title, message, url) VALUES ?",
       [values],
@@ -73,6 +196,17 @@ export async function createNotificationsForUsers(userIds, payload) {
       },
     );
   });
+
+  // Fire-and-forget background push to subscribed devices
+  sendWebPushToUsers(uniqueUserIds, {
+    title: payload.title,
+    body: payload.message,
+    url: payload.url,
+  }).catch((err) => {
+    console.error("Failed to send web push notifications", err);
+  });
+
+  return affectedRows;
 }
 
 export async function getNotificationSummary(userId, limit = 5) {
