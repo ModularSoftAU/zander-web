@@ -41,6 +41,58 @@
         console.warn('Unable to load custom emoji list.');
       });
 
+    // ── Custom toolbar buttons ─────────────────────────────────────────────
+    // The built-in 'style' dropdown is broken in Summernote 0.8.x + BS5
+    // (dropdown items don't fire). Replace with explicit format buttons.
+    // The quote button wraps the current block in <blockquote>.
+    $.extend($.summernote.plugins, {
+      formatNormal: function (ctx) {
+        ctx.memo('button.formatNormal', function () {
+          return $.summernote.ui.button({
+            contents: 'Normal',
+            tooltip: 'Normal text',
+            click: function () { ctx.invoke('editor.formatBlock', 'p'); }
+          }).render();
+        });
+      },
+      formatH1: function (ctx) {
+        ctx.memo('button.formatH1', function () {
+          return $.summernote.ui.button({
+            contents: '<b>H1</b>',
+            tooltip: 'Heading 1',
+            click: function () { ctx.invoke('editor.formatBlock', 'h1'); }
+          }).render();
+        });
+      },
+      formatH2: function (ctx) {
+        ctx.memo('button.formatH2', function () {
+          return $.summernote.ui.button({
+            contents: '<b>H2</b>',
+            tooltip: 'Heading 2',
+            click: function () { ctx.invoke('editor.formatBlock', 'h2'); }
+          }).render();
+        });
+      },
+      formatH3: function (ctx) {
+        ctx.memo('button.formatH3', function () {
+          return $.summernote.ui.button({
+            contents: '<b>H3</b>',
+            tooltip: 'Heading 3',
+            click: function () { ctx.invoke('editor.formatBlock', 'h3'); }
+          }).render();
+        });
+      },
+      quoteBlock: function (ctx) {
+        ctx.memo('button.quoteBlock', function () {
+          return $.summernote.ui.button({
+            contents: '<i class="fa-solid fa-quote-left fa-fw"></i>',
+            tooltip: 'Quote',
+            click: function () { ctx.invoke('editor.formatBlock', 'blockquote'); }
+          }).render();
+        });
+      }
+    });
+
     $('#<%= editorElementName %>').summernote({
         height: 250,
         minHeight: null,
@@ -48,15 +100,14 @@
         focus: false,
         emoji: true,
         toolbar: [
-          ['style', ['style']],
+          ['format', ['formatNormal', 'formatH1', 'formatH2', 'formatH3']],
           ['font', ['bold', 'italic', 'underline', 'strikethrough', 'clear']],
           ['color', ['color']],
-          ['para', ['ul', 'ol', 'paragraph']],
+          ['para', ['ul', 'ol', 'paragraph', 'quoteBlock']],
           ['table', ['table']],
           ['insert', ['link', 'picture', 'video']],
           ['view', ['fullscreen', 'help']]
         ],
-        styleTags: ['p', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6'],
         hint: {
             match: /:([\-+\w]+)$/,
             search: function (keyword, callback) {
