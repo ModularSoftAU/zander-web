@@ -70,7 +70,7 @@
                             <span class="forums-badge locked"><i class="fa-solid fa-lock"></i></span>
                           <% } %>
                           <% if (discussion.isArchived) { %>
-                            <span class="forums-badge archived">Archived</span>
+                            <i class="fa-solid fa-box-archive text-muted" title="Archived" style="font-size:0.85em;"></i>
                           <% } %>
                           <a href="/forums/discussion/<%= discussion.discussionId %>/<%= discussion.slug %>"><%= discussion.title %></a>
                         </div>
