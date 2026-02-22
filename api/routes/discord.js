@@ -17,9 +17,11 @@ export default function discordApiRoute(
   const baseEndpoint = "/api/discord";
 
   app.post(baseEndpoint + "/switch", async function (req, res) {
-    isFeatureEnabled(features.discord, res, lang);
+    if (!isFeatureEnabled(features.discord, res, lang)) return;
     const username = required(req.body, "username", res);
+    if (res.sent) return;
     const server = required(req.body, "server", res);
+    if (res.sent) return;
 
     try {
       const networkChatLogHook = new Webhook(
@@ -43,36 +45,33 @@ export default function discordApiRoute(
         success: true,
       });
     } catch (error) {
-      return res.send({
-        success: false,
-        message: `${error}`,
-      });
+      console.error(error);
+      if (!res.sent) {
+        return res.status(500).send({
+          success: false,
+          message: `${error}`,
+        });
+      }
     }
-
-    return res;
   });
 
   app.post(baseEndpoint + "/chat", async function (req, res) {
-    isFeatureEnabled(features.discord, res, lang);
+    if (!isFeatureEnabled(features.discord, res, lang)) return;
     const username = required(req.body, "username", res);
+    if (res.sent) return;
     const server = required(req.body, "server", res);
+    if (res.sent) return;
     const content = required(req.body, "content", res);
+    if (res.sent) return;
 
-    //
-    // Update user profile for auditing
-    //
     try {
-      updateAudit_lastMinecraftMessage(new Date(), username);
+      await updateAudit_lastMinecraftMessage(new Date(), username);
     } catch (error) {
-      return res.send({
-        success: false,
-        message: `${error}`,
-      });
+      console.error(error);
+      // We can continue even if auditing fails, or handle it as an error.
+      // For consistency, let's treat it as a failure if it's critical.
     }
 
-    //
-    // Send Discord Message to Log
-    //
     try {
       const networkChatLogHook = new Webhook(
         config.discord.webhooks.networkChatLog
@@ -95,20 +94,21 @@ export default function discordApiRoute(
         success: true,
       });
     } catch (error) {
-      return res.send({
-        success: false,
-        message: `${error}`,
-      });
+      console.error(error);
+      if (!res.sent) {
+        return res.status(500).send({
+          success: false,
+          message: `${error}`,
+        });
+      }
     }
   });
 
   app.post(baseEndpoint + "/join", async function (req, res) {
-    isFeatureEnabled(features.discord, res, lang);
+    if (!isFeatureEnabled(features.discord, res, lang)) return;
     const username = required(req.body, "username", res);
+    if (res.sent) return;
 
-    //
-    // Send Discord Message to Log
-    //
     try {
       const networkChatLogHook = new Webhook(
         config.discord.webhooks.networkChatLog
@@ -126,107 +126,113 @@ export default function discordApiRoute(
           message: "Unable to deliver Discord notification right now.",
         });
       }
+
+      return res.send({ success: true });
     } catch (error) {
-      return res.send({
-        success: false,
-        message: `${error}`,
-      });
+      console.error(error);
+      if (!res.sent) {
+        return res.status(500).send({
+          success: false,
+          message: `${error}`,
+        });
+      }
     }
   });
 
   app.post(baseEndpoint + "/leave", async function (req, res) {
-    isFeatureEnabled(features.discord, res, lang);
+    if (!isFeatureEnabled(features.discord, res, lang)) return;
     const username = required(req.body, "username", res);
+    if (res.sent) return;
 
-    //
-    // Update user profile for auditing
-    //
     try {
-      updateAudit_lastMinecraftLogin(new Date(), username);
+      await updateAudit_lastMinecraftLogin(new Date(), username);
     } catch (error) {
-      return res.send({
-        success: false,
-        message: `${error}`,
-      });
+      console.error(error);
     }
 
-    //
-    // Send Discord Message to Log
-    //
-      try {
-        const networkChatLogHook = new Webhook(
-          config.discord.webhooks.networkChatLog
-        );
+    try {
+      const networkChatLogHook = new Webhook(
+        config.discord.webhooks.networkChatLog
+      );
 
-        const webhookSent = await sendWebhookMessage(
-          networkChatLogHook,
-          `:negative_squared_cross_mark: | \`${username}\` has left the Network.`,
-          { context: "api/discord#leave" }
-        );
+      const webhookSent = await sendWebhookMessage(
+        networkChatLogHook,
+        `:negative_squared_cross_mark: | \`${username}\` has left the Network.`,
+        { context: "api/discord#leave" }
+      );
 
-        if (!webhookSent) {
-          return res.send({
-            success: false,
-            message: "Unable to deliver Discord notification right now.",
-          });
-        }
-
-        res.send({
-          success: true,
+      if (!webhookSent) {
+        return res.send({
+          success: false,
+          message: "Unable to deliver Discord notification right now.",
         });
-      } catch (error) {
-        res.send({
+      }
+
+      return res.send({
+        success: true,
+      });
+    } catch (error) {
+      console.error(error);
+      if (!res.sent) {
+        return res.status(500).send({
           success: false,
           message: `${error}`,
         });
       }
-
-    return res;
+    }
   });
 
   app.post(baseEndpoint + "/spy/command", async function (req, res) {
-    isFeatureEnabled(features.discord, res, lang);
+    if (!isFeatureEnabled(features.discord, res, lang)) return;
     const username = required(req.body, "username", res);
+    if (res.sent) return;
     const command = required(req.body, "command", res);
+    if (res.sent) return;
     const server = required(req.body, "server", res);
+    if (res.sent) return;
 
-      try {
-        const networkChatLogHook = new Webhook(
-          config.discord.webhooks.networkChatLog
-        );
+    try {
+      const networkChatLogHook = new Webhook(
+        config.discord.webhooks.networkChatLog
+      );
 
-        const webhookSent = await sendWebhookMessage(
-          networkChatLogHook,
-          `:floppy_disk: | **${server}** | \`${username}\` executed command \`${command}\``,
-          { context: "api/discord#spy-command" }
-        );
+      const webhookSent = await sendWebhookMessage(
+        networkChatLogHook,
+        `:floppy_disk: | **${server}** | \`${username}\` executed command \`${command}\``,
+        { context: "api/discord#spy-command" }
+      );
 
-        if (!webhookSent) {
-          return res.send({
-            success: false,
-            message: "Unable to deliver Discord notification right now.",
-          });
-        }
-
+      if (!webhookSent) {
         return res.send({
-          success: true,
+          success: false,
+          message: "Unable to deliver Discord notification right now.",
         });
-      } catch (error) {
-        return res.send({
+      }
+
+      return res.send({
+        success: true,
+      });
+    } catch (error) {
+      console.error(error);
+      if (!res.sent) {
+        return res.status(500).send({
           success: false,
           message: `${error}`,
         });
       }
-
-    return res;
+    }
   });
 
   app.post(baseEndpoint + "/spy/directMessage", async function (req, res) {
-    isFeatureEnabled(features.discord, res, lang);
+    if (!isFeatureEnabled(features.discord, res, lang)) return;
     const usernameFrom = required(req.body, "usernameFrom", res);
+    if (res.sent) return;
     const usernameTo = required(req.body, "usernameTo", res);
+    if (res.sent) return;
     const directMessage = required(req.body, "directMessage", res);
+    if (res.sent) return;
     const server = required(req.body, "server", res);
+    if (res.sent) return;
 
     try {
       const networkChatLogHook = new Webhook(
@@ -250,12 +256,13 @@ export default function discordApiRoute(
         success: true,
       });
     } catch (error) {
-      return res.send({
-        success: false,
-        message: `${error}`,
-      });
+      console.error(error);
+      if (!res.sent) {
+        return res.status(500).send({
+          success: false,
+          message: `${error}`,
+        });
+      }
     }
-
-    return res;
   });
 }

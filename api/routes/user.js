@@ -23,7 +23,9 @@ export default function userApiRoute(app, config, db, features, lang) {
 
   app.post(baseEndpoint + "/create", async function (req, res) {
     const uuid = required(req.body, "uuid", res);
+    if (res.sent) return;
     const username = required(req.body, "username", res);
+    if (res.sent) return;
 
     const userCreatedLang = lang.api.userCreated;
     const userAlreadyExistsLang = lang.api.userAlreadyExists;
@@ -34,10 +36,8 @@ export default function userApiRoute(app, config, db, features, lang) {
         db.query(
           `SELECT * FROM users WHERE uuid=?`,
           [uuid],
-          function (error, results, fields) {
-            if (error) {
-              reject(error);
-            }
+          function (error, results) {
+            if (error) return reject(error);
             resolve(results[0]);
           }
         );
@@ -49,10 +49,8 @@ export default function userApiRoute(app, config, db, features, lang) {
           db.query(
             `UPDATE users SET username=? WHERE uuid=?;`,
             [username, uuid],
-            function (error, results, fields) {
-              if (error) {
-                reject(error);
-              }
+            function (error, results) {
+              if (error) return reject(error);
               resolve();
             }
           );
@@ -68,10 +66,8 @@ export default function userApiRoute(app, config, db, features, lang) {
           db.query(
             `INSERT INTO users (uuid, username) VALUES (?, ?)`,
             [uuid, username],
-            function (error, results, fields) {
-              if (error) {
-                reject(error);
-              }
+            function (error, results) {
+              if (error) return reject(error);
               resolve();
             }
           );
@@ -85,11 +81,13 @@ export default function userApiRoute(app, config, db, features, lang) {
         });
       }
     } catch (error) {
-      console.log(error);
-      return res.send({
-        success: false,
-        message: `${error}`,
-      });
+      console.error(error);
+      if (!res.sent) {
+        return res.status(500).send({
+          success: false,
+          message: `${error}`,
+        });
+      }
     }
   });
 
@@ -100,111 +98,49 @@ export default function userApiRoute(app, config, db, features, lang) {
     const userId = optional(req.query, "userId");
 
     try {
+      let dbQuery;
+      let params = [];
+
       if (username) {
-        db.query(
-          `SELECT * FROM users WHERE username=?;`,
-          [username],
-          function (error, results, fields) {
-            if (error) {
-              return res.send({
-                success: false,
-                message: error,
-              });
-            }
-
-            if (!results || !results.length) {
-              return res.send({
-                success: false,
-                message: lang.api.userDoesNotExist,
-              });
-            }
-
-            return res.send({
-              success: true,
-              data: results,
-            });
-          }
-        );
+        dbQuery = "SELECT * FROM users WHERE username=?";
+        params = [username];
       } else if (discordId) {
-        db.query(
-          `SELECT * FROM users WHERE discordId=?;`,
-          [discordId],
-          function (error, results, fields) {
-            if (error) {
-              return res.send({
-                success: false,
-                message: error,
-              });
-            }
-
-            if (!results || !results.length) {
-              return res.send({
-                success: false,
-                message: lang.api.userDoesNotExist,
-              });
-            }
-
-            return res.send({
-              success: true,
-              data: results,
-            });
-          }
-        );
+        dbQuery = "SELECT * FROM users WHERE discordId=?";
+        params = [discordId];
       } else if (userId) {
-        db.query(
-          `SELECT * FROM users WHERE userId=?;`,
-          [userId],
-          function (error, results, fields) {
-            if (error) {
-              return res.send({
-                success: false,
-                message: error,
-              });
-            }
-
-            if (!results || !results.length) {
-              return res.send({
-                success: false,
-                message: lang.api.userDoesNotExist,
-              });
-            }
-
-            return res.send({
-              success: true,
-              data: results,
-            });
-          }
-        );
+        dbQuery = "SELECT * FROM users WHERE userId=?";
+        params = [userId];
       } else {
-        db.query(`SELECT * FROM users;`, function (error, results, fields) {
-          if (error) {
-            return res.send({
-              success: false,
-              message: error,
-            });
-          }
+        dbQuery = "SELECT * FROM users";
+      }
 
-          if (!results || !results.length) {
-            return res.send({
-              success: false,
-              message: `No Users found`,
-            });
-          }
+      const results = await new Promise((resolve, reject) => {
+        db.query(dbQuery, params, (error, results) => {
+          if (error) return reject(error);
+          resolve(results);
+        });
+      });
 
-          return res.send({
-            success: true,
-            data: results,
-          });
+      if (!results || !results.length) {
+        return res.send({
+          success: false,
+          message: lang.api.userDoesNotExist || "No Users found",
         });
       }
-    } catch (error) {
-      return res.send({
-        success: false,
-        message: `${error}`,
-      });
-    }
 
-    return res;
+      return res.send({
+        success: true,
+        data: results,
+      });
+    } catch (error) {
+      console.error(error);
+      if (!res.sent) {
+        return res.status(500).send({
+          success: false,
+          message: `${error}`,
+        });
+      }
+    }
   });
 
   // TODO: Update docs
@@ -237,10 +173,7 @@ export default function userApiRoute(app, config, db, features, lang) {
       };
 
       if (username) {
-        //
-        // Grab user data
-        //
-        const fetchURL = `${process.env.siteAddress}/api/user/get?username=${username}`;
+        const fetchURL = `${process.env.siteAddress}/api/user/get?username=${encodeURIComponent(username)}`;
         const response = await fetch(fetchURL, {
           headers: { "x-access-token": process.env.apiKey },
         });
@@ -256,7 +189,7 @@ export default function userApiRoute(app, config, db, features, lang) {
 
         return await buildProfileResponse(apiData.data[0]);
       } else if (discordId) {
-        const fetchURL = `${process.env.siteAddress}/api/user/get?discordId=${discordId}`;
+        const fetchURL = `${process.env.siteAddress}/api/user/get?discordId=${encodeURIComponent(discordId)}`;
         const response = await fetch(fetchURL, {
           headers: { "x-access-token": process.env.apiKey },
         });
@@ -278,13 +211,14 @@ export default function userApiRoute(app, config, db, features, lang) {
         });
       }
     } catch (error) {
-      return res.send({
-        success: false,
-        message: `${error}`,
-      });
+      console.error(error);
+      if (!res.sent) {
+        return res.status(500).send({
+          success: false,
+          message: `${error}`,
+        });
+      }
     }
-
-    return res;
   });
 
   app.get(baseEndpoint + "/punishments", async function (req, res) {
@@ -327,10 +261,7 @@ export default function userApiRoute(app, config, db, features, lang) {
            LIMIT 50`,
           [resolvedUuid],
           (error, results) => {
-            if (error) {
-              return reject(error);
-            }
-
+            if (error) return reject(error);
             resolve(results || []);
           }
         );
@@ -347,26 +278,32 @@ export default function userApiRoute(app, config, db, features, lang) {
       });
     } catch (error) {
       console.error("Failed to fetch punishments", error);
-      return res.send({
-        success: false,
-        message: `${error}`,
-      });
+      if (!res.sent) {
+        return res.status(500).send({
+          success: false,
+          message: `${error}`,
+        });
+      }
     }
   });
 
   app.post(baseEndpoint + "/verify", async function (req, res) {
-    const username = required(req.body, "username");
-    const uuid = required(req.body, "uuid");
+    const username = required(req.body, "username", res);
+    if (res.sent) return;
+    const uuid = required(req.body, "uuid", res);
+    if (res.sent) return;
 
-    const userData = new UserGetter();
-    const user = await userData.byUUID(uuid);
+    try {
+      const userData = new UserGetter();
+      const user = await userData.byUUID(uuid);
 
-    if (!user) {
-      return res.send({
-        success: false,
-        message: `User ${username} does not exist in player base, please join the Network and try again.`,
-      });
-    } else {
+      if (!user) {
+        return res.send({
+          success: false,
+          message: `User ${username} does not exist in player base, please join the Network and try again.`,
+        });
+      }
+
       if (user.discordId) {
         return res.send({
           success: false,
@@ -374,57 +311,57 @@ export default function userApiRoute(app, config, db, features, lang) {
         });
       }
 
-      try {
-        const linkCode = await generateVerifyCode();
-        const now = new Date();
-        const codeExpiry = new Date(now.getTime() + 5 * 60000);
+      const linkCode = await generateVerifyCode();
+      const now = new Date();
+      const codeExpiry = new Date(now.getTime() + 5 * 60000);
 
+      await new Promise((resolve, reject) => {
         db.query(
           `INSERT INTO userVerifyLink (uuid, username, linkCode, codeExpiry) VALUES (?, ?, ?, ?)`,
           [uuid, username, linkCode, codeExpiry],
-          function (error, results, fields) {
-            if (error) {
-              return res.send({
-                success: false,
-                message: `There was an error in setting your code, try again in 5 minutes.`,
-              });
-            }
-
-            return res.send({
-              success: true,
-              message: `Here is your code: ${linkCode}\nGo back to the registration form and put this in.\nThis code will expire in 5 minutes.`,
-            });
+          function (error, results) {
+            if (error) return reject(error);
+            resolve(results);
           }
         );
-      } catch (error) {
-        return res.send({
+      });
+
+      return res.send({
+        success: true,
+        message: `Here is your code: ${linkCode}\nGo back to the registration form and put this in.\nThis code will expire in 5 minutes.`,
+      });
+    } catch (error) {
+      console.error(error);
+      if (!res.sent) {
+        return res.status(500).send({
           success: false,
-          message: `${error}`,
+          message: `There was an error in setting your code, try again in 5 minutes.`,
         });
       }
     }
-
-    return res;
   });
 
   app.post(baseEndpoint + "/link", async function (req, res) {
-    const discordId = required(req.body, "discordId");
-    const first = required(req.body, "first");
-    const second = required(req.body, "second");
-    const third = required(req.body, "third");
-    const fourth = required(req.body, "fourth");
-    const fifth = required(req.body, "fifth");
-    const sixth = required(req.body, "sixth");
+    const discordId = required(req.body, "discordId", res);
+    if (res.sent) return;
+    const first = required(req.body, "first", res);
+    if (res.sent) return;
+    const second = required(req.body, "second", res);
+    if (res.sent) return;
+    const third = required(req.body, "third", res);
+    if (res.sent) return;
+    const fourth = required(req.body, "fourth", res);
+    if (res.sent) return;
+    const fifth = required(req.body, "fifth", res);
+    if (res.sent) return;
+    const sixth = required(req.body, "sixth", res);
+    if (res.sent) return;
 
     const verifyCode = first + second + third + fourth + fifth + sixth;
 
     try {
-      //
-      // Grab link code and find player.
-      //
       const userLinkData = new UserLinkGetter();
       const linkUser = await userLinkData.getUserByCode(verifyCode);
-      let linkUserUUID = linkUser.uuid;
 
       if (!linkUser) {
         setBannerCookie(
@@ -435,42 +372,41 @@ export default function userApiRoute(app, config, db, features, lang) {
         return res.redirect(`/unregistered`);
       }
 
-      //
-      // Bind Discord Account to User ID
-      //
-      userLinkData
-        .link(linkUserUUID, discordId)
-        .then((success) => {
-          if (success) {
-            console.error("Linking success");
-            setBannerCookie("success", `Link success`, res);
-          } else {
-            // Handle error or do something else
-            setBannerCookie("warning", `Link failed`, res);
-          }
-        })
-        .catch((error) => {
-          // Handle error
-          console.error("Error linking");
-          setBannerCookie(
-            "warning",
-            `Issue with linking, try again soon.`,
-            res
-          );
-        });
-    } catch (error) {
-      return res.send({
-        success: false,
-        message: `${error}`,
-      });
-    }
+      let linkUserUUID = linkUser.uuid;
 
-    return res;
+      try {
+        const success = await userLinkData.link(linkUserUUID, discordId);
+        if (success) {
+          setBannerCookie("success", `Link success`, res);
+        } else {
+          setBannerCookie("warning", `Link failed`, res);
+        }
+      } catch (error) {
+        console.error("Error linking:", error);
+        setBannerCookie(
+          "warning",
+          `Issue with linking, try again soon.`,
+          res
+        );
+      }
+
+      return res.redirect("/profile"); // Assuming redirect after link
+    } catch (error) {
+      console.error(error);
+      if (!res.sent) {
+        return res.status(500).send({
+          success: false,
+          message: `${error}`,
+        });
+      }
+    }
   });
 
   app.post(baseEndpoint + "/profile/display", async function (req, res) {
-    const userId = required(req.body, "userId");
-    const profilePicture_type = required(req.body, "profilePicture_type");
+    const userId = required(req.body, "userId", res);
+    if (res.sent) return;
+    const profilePicture_type = required(req.body, "profilePicture_type", res);
+    if (res.sent) return;
     const profilePicture_email = optional(req.body, "profilePicture_email");
 
     if (await hasActiveWebBan(req.session?.user?.userId)) {
@@ -478,24 +414,28 @@ export default function userApiRoute(app, config, db, features, lang) {
     }
 
     try {
-      setProfileDisplayPreferences(
+      await setProfileDisplayPreferences(
         userId,
         profilePicture_type,
         profilePicture_email
       );
+      return res.send({ success: true, message: "Display preferences updated." });
     } catch (error) {
-      return res.send({
-        success: false,
-        message: `${error}`,
-      });
+      console.error(error);
+      if (!res.sent) {
+        return res.status(500).send({
+          success: false,
+          message: `${error}`,
+        });
+      }
     }
-
-    return res;
   });
 
   app.post(baseEndpoint + "/profile/interests", async function (req, res) {
-    const userId = required(req.body, "userId");
-    const social_interests = required(req.body, "social_interests");
+    const userId = required(req.body, "userId", res);
+    if (res.sent) return;
+    const social_interests = required(req.body, "social_interests", res);
+    if (res.sent) return;
 
     if (await hasActiveWebBan(req.session?.user?.userId)) {
       return res.send({ success: false, message: "You are currently banned from editing your profile." });
@@ -515,13 +455,14 @@ export default function userApiRoute(app, config, db, features, lang) {
       });
 
       const dataResponse = await response.json();
-      console.log(dataResponse);
 
-      if (dataResponse.success == true) {
+      if (dataResponse.success === true) {
         try {
-          setProfileUserInterests(userId, social_interests);
+          await setProfileUserInterests(userId, social_interests);
+          return res.send({ success: true, message: "Interests updated." });
         } catch (error) {
-          return res.send({
+          console.error(error);
+          return res.status(500).send({
             success: false,
             message: `${error}`,
           });
@@ -533,18 +474,24 @@ export default function userApiRoute(app, config, db, features, lang) {
           `Illegal words detected, changes not applied.`,
           res
         );
+        return res.send({ success: false, message: "Illegal words detected." });
       }
     } catch (error) {
-      console.log(error);
-      return;
+      console.error(error);
+      if (!res.sent) {
+        return res.status(500).send({
+          success: false,
+          message: `${error}`,
+        });
+      }
     }
-
-    return res;
   });
 
   app.post(baseEndpoint + "/profile/about", async function (req, res) {
-    const userId = required(req.body, "userId");
-    const social_aboutMe = required(req.body, "social_aboutMe");
+    const userId = required(req.body, "userId", res);
+    if (res.sent) return;
+    const social_aboutMe = required(req.body, "social_aboutMe", res);
+    if (res.sent) return;
 
     if (await hasActiveWebBan(req.session?.user?.userId)) {
       return res.send({ success: false, message: "You are currently banned from editing your profile." });
@@ -564,28 +511,35 @@ export default function userApiRoute(app, config, db, features, lang) {
       });
 
       const dataResponse = await response.json();
-      console.log(dataResponse);
 
-      if (dataResponse.success == true) {
+      if (dataResponse.success === true) {
         try {
-          setProfileUserAboutMe(userId, social_aboutMe);
+          await setProfileUserAboutMe(userId, social_aboutMe);
+          return res.send({ success: true, message: "About me updated." });
         } catch (error) {
-          return res.send({
+          console.error(error);
+          return res.status(500).send({
             success: false,
             message: `${error}`,
           });
         }
+      } else {
+        return res.send({ success: false, message: "Illegal words detected." });
       }
     } catch (error) {
-      console.log(error);
-      return;
+      console.error(error);
+      if (!res.sent) {
+        return res.status(500).send({
+          success: false,
+          message: `${error}`,
+        });
+      }
     }
-
-    return res;
   });
 
   app.post(baseEndpoint + "/profile/social", async function (req, res) {
-    const userId = required(req.body, "userId");
+    const userId = required(req.body, "userId", res);
+    if (res.sent) return;
     const social_discord = optional(req.body, "social_discord");
     const social_steam = optional(req.body, "social_steam");
     const social_twitch = optional(req.body, "social_twitch");
@@ -600,7 +554,7 @@ export default function userApiRoute(app, config, db, features, lang) {
     }
 
     try {
-      setProfileSocialConnections(
+      await setProfileSocialConnections(
         userId,
         social_discord,
         social_steam,
@@ -611,13 +565,15 @@ export default function userApiRoute(app, config, db, features, lang) {
         social_reddit,
         social_spotify
       );
+      return res.send({ success: true, message: "Social connections updated." });
     } catch (error) {
-      return res.send({
-        success: false,
-        message: `${error}`,
-      });
+      console.error(error);
+      if (!res.sent) {
+        return res.status(500).send({
+          success: false,
+          message: `${error}`,
+        });
+      }
     }
-
-    return res;
   });
 }

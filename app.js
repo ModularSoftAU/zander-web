@@ -33,6 +33,7 @@ import("./cron/staffAuditReportCron.js");
 import("./cron/schedulerCron.js");
 import("./cron/nicknameCheckCron.js");
 import("./cron/punishmentExpiryCron.js");
+import("./cron/discordStatsUpdateCron.js");
 
 //
 // Website Related
@@ -47,18 +48,6 @@ import apiRedirectRoutes from "./api/internal_redirect/index.js";
 import verifyToken from "./api/routes/verifyToken.js";
 import { getGlobalImage } from "./api/common.js";
 import { client } from "./controllers/discordController.js";
-
-import("./controllers/discordController.js");
-import("./cron/userCodeExpiryCron.js");
-import("./cron/bridgeCleanupCron.js");
-import("./cron/discordStatsUpdateCron.js");
-import("./cron/staffAuditReportCron.js");
-
-import("./controllers/discordController.js");
-import("./cron/userCodeExpiryCron.js");
-import("./cron/bridgeCleanupCron.js");
-import("./cron/discordStatsUpdateCron.js");
-import("./cron/staffAuditReportCron.js");
 
 //
 // Application Boot

@@ -24,4 +24,15 @@ pool.getConnection(function (err, connection) {
   connection.release(); // Release the connection back to the pool
 });
 
+pool.on("error", (err) => {
+  console.error(`[ERROR] [DB] Pool Error: ${err.message}`);
+  if (err.code === "PROTOCOL_CONNECTION_LOST") {
+    console.error("[ERROR] [DB] Database connection was closed.");
+  } else if (err.code === "ER_CON_COUNT_ERROR") {
+    console.error("[ERROR] [DB] Database has too many connections.");
+  } else if (err.code === "ECONNREFUSED") {
+    console.error("[ERROR] [DB] Database connection was refused.");
+  }
+});
+
 export default pool;
