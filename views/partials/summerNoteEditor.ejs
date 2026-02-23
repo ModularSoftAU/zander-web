@@ -1,5 +1,6 @@
 <textarea id="<%= editorElementName %>" name="<%= editorPOSTElementName %>"><%= editorElementText %></textarea>
 
+<script src="https://cdn.jsdelivr.net/npm/marked@13/marked.min.js"></script>
 <script>
   $(document).ready(function() {
     window.emojis = window.emojis || [];
@@ -108,6 +109,24 @@
           ['insert', ['link', 'picture', 'video']],
           ['view', ['fullscreen', 'help']]
         ],
+        callbacks: {
+          onPaste: function (e) {
+            var clipboardData = (e.originalEvent || e).clipboardData || window.clipboardData;
+            if (!clipboardData) return;
+
+            var htmlData  = clipboardData.getData('text/html');
+            var plainText = clipboardData.getData('text/plain');
+
+            // Only convert when the clipboard has no HTML (i.e. plain-text paste)
+            // and the content contains common markdown patterns.
+            var markdownPattern = /^#{1,6} |^\*{1,2}|^[-*] |^> |^\d+\. |\*{2}.+\*{2}/m;
+            if (!htmlData && plainText && markdownPattern.test(plainText) && typeof marked !== 'undefined') {
+              e.preventDefault();
+              var html = marked.parse(plainText);
+              $('#<%= editorElementName %>').summernote('pasteHTML', html);
+            }
+          }
+        },
         hint: {
             match: /:([\-+\w]+)$/,
             search: function (keyword, callback) {
