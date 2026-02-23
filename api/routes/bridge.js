@@ -115,7 +115,7 @@ export default function bridgeApiRoute(app, config, db, features, lang) {
   }
 
   app.get(`${BASE_ENDPOINT}/processor/get`, async function (req, res) {
-    isFeatureEnabled(features.bridge, res, lang);
+    if (!isFeatureEnabled(features.bridge, res, lang)) return;
 
     const slug = optional(req.query, "slug");
     const status = (optional(req.query, "status") || "pending").toLowerCase();
@@ -175,15 +175,18 @@ export default function bridgeApiRoute(app, config, db, features, lang) {
         },
       });
     } catch (error) {
-      return res.send({
-        success: false,
-        message: `${error}`,
-      });
+      console.error(error);
+      if (!res.sent) {
+        return res.status(500).send({
+          success: false,
+          message: `${error}`,
+        });
+      }
     }
   });
 
   app.post(`${BASE_ENDPOINT}/processor/command/add`, async function (req, res) {
-    isFeatureEnabled(features.bridge, res, lang);
+    if (!isFeatureEnabled(features.bridge, res, lang)) return;
 
     const inlineCommand = optional(req.body, "command");
     const inlineSlug = optional(req.body, "slug") || optional(req.body, "target");
@@ -357,17 +360,20 @@ export default function bridgeApiRoute(app, config, db, features, lang) {
         data: hydrateTasks(insertedTasks),
       });
     } catch (error) {
-      return res.send({
-        success: false,
-        message: `${error}`,
-      });
+      console.error(error);
+      if (!res.sent) {
+        return res.status(500).send({
+          success: false,
+          message: `${error}`,
+        });
+      }
     }
   });
 
   app.post(
     `${BASE_ENDPOINT}/processor/task/:taskId/report`,
     async function (req, res) {
-      isFeatureEnabled(features.bridge, res, lang);
+      if (!isFeatureEnabled(features.bridge, res, lang)) return;
 
       const taskId = Number(req.params.taskId);
       if (!taskId || Number.isNaN(taskId)) {
@@ -425,16 +431,19 @@ export default function bridgeApiRoute(app, config, db, features, lang) {
           data: hydrateTasks(updatedTasks)[0] || null,
         });
       } catch (error) {
-        return res.send({
-          success: false,
-          message: `${error}`,
-        });
+        console.error(error);
+        if (!res.sent) {
+          return res.status(500).send({
+            success: false,
+            message: `${error}`,
+          });
+        }
       }
     }
   );
 
   app.post(`${BASE_ENDPOINT}/processor/task/:taskId/reset`, async function (req, res) {
-    isFeatureEnabled(features.bridge, res, lang);
+    if (!isFeatureEnabled(features.bridge, res, lang)) return;
 
     const taskId = Number(req.params.taskId);
     if (!taskId || Number.isNaN(taskId)) {
@@ -461,15 +470,18 @@ export default function bridgeApiRoute(app, config, db, features, lang) {
         data: hydrateTasks(updatedTasks)[0] || null,
       });
     } catch (error) {
-      return res.send({
-        success: false,
-        message: `${error}`,
-      });
+      console.error(error);
+      if (!res.sent) {
+        return res.status(500).send({
+          success: false,
+          message: `${error}`,
+        });
+      }
     }
   });
 
   app.post(`${BASE_ENDPOINT}/processor/clear`, async function (req, res) {
-    isFeatureEnabled(features.bridge, res, lang);
+    if (!isFeatureEnabled(features.bridge, res, lang)) return;
 
     const statusRaw = optional(req.body, "status");
     const slug = optional(req.body, "slug") || optional(req.body, "target");
@@ -516,15 +528,18 @@ export default function bridgeApiRoute(app, config, db, features, lang) {
         }`,
       });
     } catch (error) {
-      return res.send({
-        success: false,
-        message: `${error}`,
-      });
+      console.error(error);
+      if (!res.sent) {
+        return res.status(500).send({
+          success: false,
+          message: `${error}`,
+        });
+      }
     }
   });
 
   app.post(`${BASE_ENDPOINT}/routine/save`, async function (req, res) {
-    isFeatureEnabled(features.bridge, res, lang);
+    if (!isFeatureEnabled(features.bridge, res, lang)) return;
 
     const routineSlugRaw = optional(req.body, "routineSlug");
     const routineSlug = (routineSlugRaw || "").toString().trim().toLowerCase();
@@ -639,15 +654,18 @@ export default function bridgeApiRoute(app, config, db, features, lang) {
         },
       });
     } catch (error) {
-      return res.send({
-        success: false,
-        message: `${error}`,
-      });
+      console.error(error);
+      if (!res.sent) {
+        return res.status(500).send({
+          success: false,
+          message: `${error}`,
+        });
+      }
     }
   });
 
   app.get(`${BASE_ENDPOINT}/routine/get`, async function (req, res) {
-    isFeatureEnabled(features.bridge, res, lang);
+    if (!isFeatureEnabled(features.bridge, res, lang)) return;
 
     const routineSlug = optional(req.query, "routineSlug") || optional(req.query, "slug");
 
@@ -707,15 +725,18 @@ export default function bridgeApiRoute(app, config, db, features, lang) {
         },
       });
     } catch (error) {
-      return res.send({
-        success: false,
-        message: `${error}`,
-      });
+      console.error(error);
+      if (!res.sent) {
+        return res.status(500).send({
+          success: false,
+          message: `${error}`,
+        });
+      }
     }
   });
 
   app.get(`${BASE_ENDPOINT}/server/get`, async function (req, res) {
-    isFeatureEnabled(features.bridge, res, lang);
+    if (!isFeatureEnabled(features.bridge, res, lang)) return;
 
     try {
       const results = await query(`SELECT * FROM serverStatus;`);
@@ -725,15 +746,18 @@ export default function bridgeApiRoute(app, config, db, features, lang) {
         data: results,
       });
     } catch (error) {
-      return res.send({
-        success: false,
-        message: `${error}`,
-      });
+      console.error(error);
+      if (!res.sent) {
+        return res.status(500).send({
+          success: false,
+          message: `${error}`,
+        });
+      }
     }
   });
 
   app.post(`${BASE_ENDPOINT}/server/update`, async function (req, res) {
-    isFeatureEnabled(features.bridge, res, lang);
+    if (!isFeatureEnabled(features.bridge, res, lang)) return;
 
     const serverInfoPayload = optional(req.body, "serverInfo");
     const lastUpdated = optional(req.body, "lastUpdated") || new Date();
@@ -769,10 +793,13 @@ export default function bridgeApiRoute(app, config, db, features, lang) {
         message: `Server status updated successfully.`,
       });
     } catch (error) {
-      return res.send({
-        success: false,
-        message: `${error}`,
-      });
+      console.error(error);
+      if (!res.sent) {
+        return res.status(500).send({
+          success: false,
+          message: `${error}`,
+        });
+      }
     }
   });
 }
