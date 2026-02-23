@@ -113,7 +113,23 @@
 		}
 
 		$form.data('submitting', true);
-		$form.find('button[type="submit"], input[type="submit"]').prop('disabled', true);
+		// Delay disabling so the browser has already committed to navigation.
+		// Disabling synchronously can cause some browsers to abort the redirect.
+		setTimeout(function () {
+			$form.find('button[type="submit"], input[type="submit"]').prop('disabled', true);
+		}, 0);
+	});
+
+	// When the page is restored from the back/forward cache the jQuery data
+	// still holds submitting=true, which would block the next submission.
+	// Reset it so the form works normally again.
+	$(window).on('pageshow', function (event) {
+		if (event.originalEvent && event.originalEvent.persisted) {
+			$('form').each(function () {
+				$(this).data('submitting', false);
+			});
+			$('button[type="submit"], input[type="submit"]').prop('disabled', false);
+		}
 	});
 
 	$('.testimonial-wrap-2').slick({
