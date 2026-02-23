@@ -78,6 +78,11 @@
               <% if (canModerate && typeof moveCategories !== 'undefined' && moveCategories && moveCategories.length) { %>
                 <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#moveDiscussionModal"><i class="fa-solid fa-arrows-up-down-left-right"></i> Move</button>
               <% } %>
+              <% if (canEditDiscussion) { %>
+                <form action="/forums/discussion/<%= discussion.discussionId %>/delete" method="post" class="d-inline" onsubmit="return confirm('Permanently delete this discussion and all its replies?');">
+                  <button type="submit" class="btn btn-sm btn-outline-danger"><i class="fa-solid fa-trash"></i> Delete</button>
+                </form>
+              <% } %>
             </div>
           </div>
         </div>
