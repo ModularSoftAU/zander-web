@@ -41,7 +41,7 @@ export default function applicationApiRoute(app, config, db, features, lang) {
       if (applicationId) {
         let dbQuery = `SELECT * FROM applications WHERE applicationId=${applicationId};`;
         getApplications(dbQuery);
-        return; // Add return statement here
+        return res;
       }
 
       // Return all Servers by default
