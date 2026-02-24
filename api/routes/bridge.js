@@ -760,7 +760,15 @@ export default function bridgeApiRoute(app, config, db, features, lang) {
     if (!isFeatureEnabled(features.bridge, res, lang)) return;
 
     const serverInfoPayload = optional(req.body, "serverInfo");
-    const lastUpdated = optional(req.body, "lastUpdated") || new Date();
+    const lastUpdatedRaw = optional(req.body, "lastUpdated");
+    let lastUpdated = new Date();
+
+    if (lastUpdatedRaw) {
+      const parsedDate = new Date(lastUpdatedRaw);
+      if (!isNaN(parsedDate.getTime())) {
+        lastUpdated = parsedDate;
+      }
+    }
 
     if (!serverInfoPayload) {
       return res.send({
