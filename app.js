@@ -80,6 +80,14 @@ const buildApp = async () => {
 
     res.status(statusCode);
 
+    // If the request is for the API, return JSON instead of a view
+    if (req.url.startsWith("/api/")) {
+      return res.send({
+        success: false,
+        message: error.message || "Internal Server Error",
+      });
+    }
+
     return res.view("session/error", {
       pageTitle: `Server Error`,
       config: config,
@@ -167,7 +175,9 @@ const buildApp = async () => {
   });
 
   app.addHook("preHandler", async (req, res) => {
-    req.session.authenticated = false;
+    if (req.session) {
+      req.session.authenticated = false;
+    }
     req.notifications = { unreadCount: 0, items: [] };
 
     if (req.session?.user?.userId) {
