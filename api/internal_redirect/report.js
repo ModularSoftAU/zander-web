@@ -16,6 +16,6 @@ export default function reportRedirectRoute(app, config, lang, features) {
     if (!res.sent) {
       { res.redirect(`${process.env.siteAddress}/`); return; };
     }
-    return res;
+    return;
   });
 }

@@ -14,7 +14,7 @@ export default function webRedirectRoute(app, config, lang, features) {
     if (!res.sent) {
       { res.redirect(`${process.env.siteAddress}/`); return; };
     }
-    return res;
+    return;
   });
 
   app.post(baseEndpoint + "/user/profile/display", async function (req, res) {    
@@ -32,7 +32,7 @@ export default function webRedirectRoute(app, config, lang, features) {
     if (!res.sent) {
       { res.redirect(`${process.env.siteAddress}/profile/${req.session.user.username}`); return; };
     }
-    return res;
+    return;
   });
 
   app.post(baseEndpoint + "/user/profile/interests", async function (req, res) {
@@ -49,7 +49,7 @@ export default function webRedirectRoute(app, config, lang, features) {
     if (!res.sent) {
       { res.redirect(`${process.env.siteAddress}/profile/${req.session.user.username}`); return; };
     }
-    return res;
+    return;
   });
 
   app.post(baseEndpoint + "/user/profile/about", async function (req, res) {
@@ -66,7 +66,7 @@ export default function webRedirectRoute(app, config, lang, features) {
     if (!res.sent) {
       { res.redirect(`${process.env.siteAddress}/profile/${req.session.user.username}`); return; };
     }
-    return res;
+    return;
   });
 
   app.post(baseEndpoint + "/user/profile/social", async function (req, res) {
@@ -83,6 +83,6 @@ export default function webRedirectRoute(app, config, lang, features) {
     if (!res.sent) {
       { res.redirect(`${process.env.siteAddress}/profile/${req.session.user.username}`); return; };
     }
-    return res;
+    return;
   });
 }

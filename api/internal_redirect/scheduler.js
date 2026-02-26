@@ -18,7 +18,7 @@ export default function schedulerRedirectRoute(app, config, lang, features) {
     if (!res.sent) {
       { res.redirect(`${process.env.siteAddress}/dashboard/scheduler`); return; };
     }
-    return res;
+    return;
   });
 
   app.post(baseEndpoint + "/discord/delete", async function (req, res) {
@@ -36,6 +36,6 @@ export default function schedulerRedirectRoute(app, config, lang, features) {
     if (!res.sent) {
       { res.redirect(`${process.env.siteAddress}/dashboard/scheduler`); return; };
     }
-    return res;
+    return;
   });
 }

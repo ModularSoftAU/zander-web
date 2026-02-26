@@ -19,7 +19,7 @@ export default function announcementRedirectRoute(app, config, lang, features) {
     if (!res.sent) {
       { res.redirect(`${process.env.siteAddress}/dashboard/announcements`); return; };
     }
-    return res;
+    return;
   });
 
   app.post(baseEndpoint + "/edit", async function (req, res) {
@@ -38,7 +38,7 @@ export default function announcementRedirectRoute(app, config, lang, features) {
     if (!res.sent) {
       { res.redirect(`${process.env.siteAddress}/dashboard/announcements`); return; };
     }
-    return res;
+    return;
   });
 
   app.post(baseEndpoint + "/delete", async function (req, res) {
@@ -57,6 +57,6 @@ export default function announcementRedirectRoute(app, config, lang, features) {
     if (!res.sent) {
       { res.redirect(`${process.env.siteAddress}/dashboard/announcements`); return; };
     }
-    return res;
+    return;
   });
 }

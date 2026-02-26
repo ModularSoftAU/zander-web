@@ -289,7 +289,7 @@ export async function setBannerCookie(alertType, alertContent, res) {
     });
 
     // Make sure to send the res
-    return res;
+    return;
   } catch (error) {
     console.log(error);
   }
