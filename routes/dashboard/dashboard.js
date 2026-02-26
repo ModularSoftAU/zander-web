@@ -38,7 +38,7 @@ export default function dashboardSiteRoute(app, config, features, lang) {
       }
     ).then((res) => res.json());
 
-    return res.view("dashboard/dashboard-index", {
+    await res.view("dashboard/dashboard-index", {
       pageTitle: `Dashboard`,
       config: config,
       features: features,
@@ -55,7 +55,7 @@ export default function dashboardSiteRoute(app, config, features, lang) {
   // Logs
   //
   app.get("/dashboard/logs", async function (req, res) {
-    if (!hasPermission("zander.web.logs", req, res, features)) return;
+    if (!(await hasPermission("zander.web.logs", req, res, features))) return;
 
     const queryParams = new URLSearchParams();
     if (req.query?.user) {
@@ -72,7 +72,7 @@ export default function dashboardSiteRoute(app, config, features, lang) {
     });
     const apiData = await response.json();
 
-    res.view("dashboard/logs", {
+    await res.view("dashboard/logs", {
       pageTitle: `Dashboard - Logs`,
       config: config,
       apiData: apiData,
@@ -82,15 +82,13 @@ export default function dashboardSiteRoute(app, config, features, lang) {
       moment: moment,
       announcementWeb: await getWebAnnouncement(),
     });
-
-    return res;
   });
 
   //
   // Bridge
   //
   app.get("/dashboard/bridge", async function (req, res) {
-    if (!hasPermission("zander.web.bridge", req, res, features)) return;
+    if (!(await hasPermission("zander.web.bridge", req, res, features))) return;
 
     const [pendingResponse, processingResponse, routineResponse] = await Promise.all([
       fetch(`${process.env.siteAddress}/api/bridge/processor/get?status=pending&limit=100`, {
@@ -110,7 +108,7 @@ export default function dashboardSiteRoute(app, config, features, lang) {
       routineResponse.json(),
     ]);
 
-    res.view("dashboard/bridge", {
+    await res.view("dashboard/bridge", {
       pageTitle: `Dashboard - Bridge`,
       config: config,
       pendingTasks: pendingTasks,
@@ -122,7 +120,5 @@ export default function dashboardSiteRoute(app, config, features, lang) {
       moment: moment,
       announcementWeb: await getWebAnnouncement(),
     });
-
-    return res;
   });
 }

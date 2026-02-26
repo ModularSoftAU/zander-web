@@ -50,7 +50,7 @@ export default function applicationSiteRoutes(
     });
     const statApiData = await response.json();
 
-    return res.view("modules/index/index", {
+    await res.view("modules/index/index", {
       pageTitle: `${config.siteConfiguration.siteName}`,
       config: config,
       req: req,
@@ -63,25 +63,25 @@ export default function applicationSiteRoutes(
 
   app.get("/announcement/popup", async function (req, res) {
     if (!features.announcements) {
-      return res.send({
+      res.send({
         success: false,
         message: "Announcements disabled.",
-      });
+      }); return;
     }
 
     const popupAnnouncements = await getPopupAnnouncements();
 
-    return res.send({
+    res.send({
       success: popupAnnouncements.length > 0,
       data: popupAnnouncements,
-    });
+    }); return;
   });
 
   //
   // Play
   //
   app.get("/play", async function (req, res) {
-    isFeatureWebRouteEnabled(features.server, req, res, features);
+    if (!(await isFeatureWebRouteEnabled(features.server, req, res, features))) return;
 
     const fetchURL = `${process.env.siteAddress}/api/server/get?type=EXTERNAL`;
     const response = await fetch(fetchURL, {
@@ -89,7 +89,7 @@ export default function applicationSiteRoutes(
     });
     const apiData = await response.json();
 
-    return res.view("modules/play/play", {
+    await res.view("modules/play/play", {
       pageTitle: `Play`,
       config: config,
       req: req,
@@ -104,7 +104,7 @@ export default function applicationSiteRoutes(
   // Apply
   //
   app.get("/apply", async function (req, res) {
-    isFeatureWebRouteEnabled(features.applications, req, res, features);
+    if (!(await isFeatureWebRouteEnabled(features.applications, req, res, features))) return;
 
     const fetchURL = `${process.env.siteAddress}/api/application/get`;
     const response = await fetch(fetchURL, {
@@ -112,7 +112,7 @@ export default function applicationSiteRoutes(
     });
     const apiData = await response.json();
 
-    return res.view("apply", {
+    await res.view("apply", {
       pageTitle: `Apply`,
       config: config,
       req: req,
@@ -127,9 +127,9 @@ export default function applicationSiteRoutes(
   // Ranks
   //
   app.get("/ranks", async function (req, res) {
-    isFeatureWebRouteEnabled(features.ranks, req, res, features);
+    if (!(await isFeatureWebRouteEnabled(features.ranks, req, res, features))) return;
 
-    return res.view("ranks", {
+    await res.view("ranks", {
       pageTitle: `Ranks`,
       config: config,
       req: req,
@@ -147,7 +147,7 @@ export default function applicationSiteRoutes(
     try {
       const staffData = await getStaffPageData();
 
-      return res.view("staff", {
+      await res.view("staff", {
         pageTitle: `Staff`,
         config: config,
         req: req,
@@ -158,7 +158,7 @@ export default function applicationSiteRoutes(
       });
     } catch (err) {
       console.error("Error loading staff page:", err);
-      return res.view("session/error", {
+      await res.view("session/error", {
         pageTitle: "Error",
         pageDescription: "Error loading staff page",
         config: config,
@@ -175,12 +175,12 @@ export default function applicationSiteRoutes(
   // Report
   //
   app.get("/report", async function (req, res) {
-    if (!isFeatureWebRouteEnabled(features.report, req, res, features)) {
+    if (!(await isFeatureWebRouteEnabled(features.report, req, res, features))) {
       return;
     }
 
     if (!req.session.user) {
-      return res.view("session/notLoggedIn", {
+      await res.view("session/notLoggedIn", {
         pageTitle: `Access Restricted`,
         config: config,
         req: req,
@@ -190,7 +190,7 @@ export default function applicationSiteRoutes(
       });
     }
 
-    return res.view("report", {
+    await res.view("report", {
       pageTitle: `Report`,
       config: config,
       req: req,
@@ -252,7 +252,7 @@ export default function applicationSiteRoutes(
         }, {});
       }
 
-      return res.view("modules/appeal/appeal", {
+      await res.view("modules/appeal/appeal", {
         pageTitle: "Punishment Appeal",
         config: config,
         req: req,
@@ -267,7 +267,7 @@ export default function applicationSiteRoutes(
       });
     } catch (error) {
       console.error(error);
-      return res.view("session/error", {
+      await res.view("session/error", {
         pageTitle: "Error",
         pageDescription: "Error",
         config: config,
@@ -284,12 +284,12 @@ export default function applicationSiteRoutes(
     try {
       if (!req.session.user) {
         const returnTo = encodeURIComponent(req.url);
-        return res.redirect(`/login?returnTo=${returnTo}`);
+        { res.redirect(`/login?returnTo=${returnTo}`); return; };
       }
 
       const punishmentIndex = Number.parseInt(req.query.punishmentIndex, 10);
       if (!Number.isInteger(punishmentIndex) || punishmentIndex < 0) {
-        return res.redirect("/appeal");
+        { res.redirect("/appeal"); return; };
       }
 
       const fetchPunishmentsURL = `${process.env.siteAddress}/api/user/punishments?username=${encodeURIComponent(
@@ -305,7 +305,7 @@ export default function applicationSiteRoutes(
       const punishment = punishments[punishmentIndex];
 
       if (!punishment) {
-        return res.redirect("/appeal");
+        { res.redirect("/appeal"); return; };
       }
 
       const fallbackKey = moment(punishment.dateStart).isValid()
@@ -325,10 +325,10 @@ export default function applicationSiteRoutes(
         return String(ticket.title || "").includes(`Appeal #${punishmentKey}`);
       });
       if (existingTicket) {
-        return res.redirect(`/support/ticket/${existingTicket.ticketId}`);
+        { res.redirect(`/support/ticket/${existingTicket.ticketId}`); return; };
       }
 
-      return res.view("modules/appeal/appeal-form", {
+      await res.view("modules/appeal/appeal-form", {
         pageTitle: "Punishment Appeal",
         config: config,
         req: req,
@@ -342,7 +342,7 @@ export default function applicationSiteRoutes(
       });
     } catch (error) {
       console.error(error);
-      return res.view("session/error", {
+      await res.view("session/error", {
         pageTitle: "Error",
         pageDescription: "Error",
         config: config,
@@ -359,9 +359,9 @@ export default function applicationSiteRoutes(
   // Shop Directory
   // 
   app.get("/shopdirectory", async function (req, res) {
-    isFeatureWebRouteEnabled(features.shopdirectory, req, res, features);
+    if (!(await isFeatureWebRouteEnabled(features.shopdirectory, req, res, features))) return;
 
-    return res.view("shopdirectory", {
+    await res.view("shopdirectory", {
       pageTitle: `Shop Directory`,
       config: config,
       req: req,
@@ -373,7 +373,7 @@ export default function applicationSiteRoutes(
 
   // Proxy endpoint for client-side shop search (avoids exposing API key)
   app.get("/shopdirectory/search", async function (req, res) {
-    isFeatureWebRouteEnabled(features.shopdirectory, req, res, features);
+    if (!(await isFeatureWebRouteEnabled(features.shopdirectory, req, res, features))) return;
 
     const material = req.query.material || "";
     const page = req.query.page || "1";
@@ -386,28 +386,28 @@ export default function applicationSiteRoutes(
 
       if (!shopResponse.ok) {
         console.error("Shop search proxy: API returned status", shopResponse.status);
-        return res.send({
+        res.send({
           success: false,
           message: "Shop service is temporarily unavailable. Please try again.",
-        });
+        }); return;
       }
 
       const responseText = await shopResponse.text();
       if (!responseText) {
-        return res.send({
+        res.send({
           success: false,
           message: "Shop service returned an empty response. Please try again.",
-        });
+        }); return;
       }
 
       const shopApiData = JSON.parse(responseText);
-      return res.send(shopApiData);
+      res.send(shopApiData); return;
     } catch (err) {
       console.error("Shop search proxy error:", err);
-      return res.send({
+      res.send({
         success: false,
         message: "Failed to fetch shop data. Please try again.",
-      });
+      }); return;
     }
   })
   
@@ -415,7 +415,7 @@ export default function applicationSiteRoutes(
   // Vault
   //
   app.get("/vault", async function (req, res) {
-    isFeatureWebRouteEnabled(features.vault, req, res, features);
+    if (!(await isFeatureWebRouteEnabled(features.vault, req, res, features))) return;
 
     const fetchURL = `${process.env.siteAddress}/api/vault/get`;
     const response = await fetch(fetchURL, {
@@ -423,7 +423,7 @@ export default function applicationSiteRoutes(
     });
     const apiData = await response.json();
 
-    return res.view("vault", {
+    await res.view("vault", {
       pageTitle: `Vault`,
       config: config,
       req: req,
@@ -456,7 +456,7 @@ export default function applicationSiteRoutes(
     });
     const apiData = await response.json();
 
-    return res.view("modules/punishments/punishments", {
+    await res.view("modules/punishments/punishments", {
       pageTitle: `Punishments`,
       config: config,
       req: req,

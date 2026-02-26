@@ -32,19 +32,19 @@ export default function punishmentsApiRoute(app, config, db, features, lang) {
         );
       });
 
-      return res.send({
+      res.send({
         success: true,
         data: punishments,
         page: page,
         limit: limit,
-      });
+      }); return;
     } catch (error) {
       console.error("Failed to fetch punishments", error);
       if (!res.sent) {
-        return res.status(500).send({
+        res.status(500).send({
           success: false,
           message: `${error}`,
-        });
+        }); return;
       }
     }
   });

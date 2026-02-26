@@ -68,7 +68,7 @@ export default function supportDashboardRoutes(
     const slug = getCategorySlug(category);
 
     if (!userHasCategoryPermission(slug, req.session.user?.permissions)) {
-      return res.view("session/noPermission", {
+      await res.view("session/noPermission", {
         pageTitle: "Access Restricted",
         config,
         req,
@@ -107,7 +107,7 @@ export default function supportDashboardRoutes(
         permittedCategoryIds.includes(ticket.categoryId)
       );
 
-      return res.view("modules/dashboard/support/index", {
+      await res.view("modules/dashboard/support/index", {
         pageTitle: "Support Tickets",
         pageDescription: "Manage Support Tickets",
         config,
@@ -119,7 +119,7 @@ export default function supportDashboardRoutes(
       });
     } catch (error) {
       console.error(error);
-      return res.view("session/error", {
+      await res.view("session/error", {
         pageTitle: "Error",
         pageDescription: "Error",
         config,
@@ -150,7 +150,7 @@ export default function supportDashboardRoutes(
       );
 
       if (category && !selectedCategory) {
-        return res.view("session/noPermission", {
+        await res.view("session/noPermission", {
           pageTitle: "Access Restricted",
           config,
           req,
@@ -172,7 +172,7 @@ export default function supportDashboardRoutes(
         );
       }
 
-      return res.view("modules/dashboard/support/explorer", {
+      await res.view("modules/dashboard/support/explorer", {
         pageTitle: "Support Ticket Explorer",
         pageDescription: "Support Ticket Explorer",
         config,
@@ -186,7 +186,7 @@ export default function supportDashboardRoutes(
       });
     } catch (error) {
       console.error(error);
-      return res.view("session/error", {
+      await res.view("session/error", {
         pageTitle: "Error",
         pageDescription: "Error",
         config,
@@ -246,7 +246,7 @@ export default function supportDashboardRoutes(
         roles?.length ?? 0
       );
 
-      return res.view("modules/dashboard/support/categories", {
+      await res.view("modules/dashboard/support/categories", {
         pageTitle: "Support Ticket Categories",
         pageDescription: "Support Ticket Categories",
         config,
@@ -259,7 +259,7 @@ export default function supportDashboardRoutes(
       });
     } catch (error) {
       console.error("Failed to render support categories dashboard", error);
-      return res.view("session/error", {
+      await res.view("session/error", {
         pageTitle: "Error",
         pageDescription: "Error",
         config,
@@ -284,12 +284,12 @@ export default function supportDashboardRoutes(
 
         await addCategoryPermission(id, roleId);
 
-        return res.redirect(
+        { res.redirect(
           req.body?.redirect || "/dashboard/support/categories"
-        );
+        ); return; };
       } catch (error) {
         console.error(error);
-        return res.view("session/error", {
+        await res.view("session/error", {
           pageTitle: "Error",
           pageDescription: "Error",
           config,
@@ -314,12 +314,12 @@ export default function supportDashboardRoutes(
 
         await removeCategoryPermission(id, roleId);
 
-        return res.redirect(
+        { res.redirect(
           req.body?.redirect || "/dashboard/support/categories"
-        );
+        ); return; };
       } catch (error) {
         console.error(error);
-        return res.view("session/error", {
+        await res.view("session/error", {
           pageTitle: "Error",
           pageDescription: "Error",
           config,
@@ -343,10 +343,10 @@ export default function supportDashboardRoutes(
 
       await updateSupportMessage(client);
 
-      return res.redirect("/dashboard/support/categories");
+      { res.redirect("/dashboard/support/categories"); return; };
     } catch (error) {
       console.error(error);
-      return res.view("session/error", {
+      await res.view("session/error", {
         pageTitle: "Error",
         pageDescription: "Error",
         config,
@@ -392,7 +392,7 @@ export default function supportDashboardRoutes(
         ),
       };
 
-      return res.view("modules/dashboard/support/edit-category", {
+      await res.view("modules/dashboard/support/edit-category", {
         pageTitle: "Edit Support Category",
         pageDescription: "Edit Support Category",
         config,
@@ -405,7 +405,7 @@ export default function supportDashboardRoutes(
       });
     } catch (error) {
       console.error(error);
-      return res.view("session/error", {
+      await res.view("session/error", {
         pageTitle: "Error",
         pageDescription: "Error",
         config,
@@ -429,10 +429,10 @@ export default function supportDashboardRoutes(
 
       await updateSupportMessage(client);
 
-      return res.redirect("/dashboard/support/categories");
+      { res.redirect("/dashboard/support/categories"); return; };
     } catch (error) {
       console.error(error);
-      return res.view("session/error", {
+      await res.view("session/error", {
         pageTitle: "Error",
         pageDescription: "Error",
         config,
@@ -457,10 +457,10 @@ export default function supportDashboardRoutes(
 
         await updateSupportMessage(client);
 
-        return res.redirect("/dashboard/support/categories");
+        { res.redirect("/dashboard/support/categories"); return; };
       } catch (error) {
         console.error(error);
-        return res.view("session/error", {
+        await res.view("session/error", {
           pageTitle: "Error",
           pageDescription: "Error",
           config,
@@ -521,10 +521,10 @@ export default function supportDashboardRoutes(
         }
       }
 
-      return res.redirect(`/support/ticket/${req.params.id}`);
+      { res.redirect(`/support/ticket/${req.params.id}`); return; };
     } catch (error) {
       console.error(error);
-      return res.view("session/error", {
+      await res.view("session/error", {
         pageTitle: "Error",
         pageDescription: "Error",
         config,
@@ -544,10 +544,10 @@ export default function supportDashboardRoutes(
 
       await postSupportMessage(client);
 
-      return res.redirect("/dashboard/support/categories");
+      { res.redirect("/dashboard/support/categories"); return; };
     } catch (error) {
       console.error(error);
-      return res.view("session/error", {
+      await res.view("session/error", {
         pageTitle: "Error",
         pageDescription: "Error",
         config,

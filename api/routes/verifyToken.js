@@ -7,10 +7,10 @@ export default function verifyToken(req, res, done) {
 
   if (!token) {
     // Token not included
-    return res.send({
+    res.send({
       success: false,
       message: lang.api.noToken,
-    });
+    }); return;
   }
 
   if (token === process.env.apiKey) {
@@ -18,9 +18,9 @@ export default function verifyToken(req, res, done) {
     done();
   } else {
     // Token was incorrect.
-    return res.send({
+    res.send({
       success: false,
       message: lang.api.invalidToken,
-    });
+    }); return;
   }
 }

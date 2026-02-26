@@ -35,22 +35,22 @@ export default function discordApiRoute(
       );
 
       if (!webhookSent) {
-        return res.send({
+        res.send({
           success: false,
           message: "Unable to deliver Discord notification right now.",
-        });
+        }); return;
       }
 
-      return res.send({
+      res.send({
         success: true,
-      });
+      }); return;
     } catch (error) {
       console.error(error);
       if (!res.sent) {
-        return res.status(500).send({
+        res.status(500).send({
           success: false,
           message: `${error}`,
-        });
+        }); return;
       }
     }
   });
@@ -84,22 +84,22 @@ export default function discordApiRoute(
       );
 
       if (!webhookSent) {
-        return res.send({
+        res.send({
           success: false,
           message: "Unable to deliver Discord notification right now.",
-        });
+        }); return;
       }
 
-      return res.send({
+      res.send({
         success: true,
-      });
+      }); return;
     } catch (error) {
       console.error(error);
       if (!res.sent) {
-        return res.status(500).send({
+        res.status(500).send({
           success: false,
           message: `${error}`,
-        });
+        }); return;
       }
     }
   });
@@ -121,20 +121,20 @@ export default function discordApiRoute(
       );
 
       if (!webhookSent) {
-        return res.send({
+        res.send({
           success: false,
           message: "Unable to deliver Discord notification right now.",
-        });
+        }); return;
       }
 
-      return res.send({ success: true });
+      res.send({ success: true }); return;
     } catch (error) {
       console.error(error);
       if (!res.sent) {
-        return res.status(500).send({
+        res.status(500).send({
           success: false,
           message: `${error}`,
-        });
+        }); return;
       }
     }
   });
@@ -162,22 +162,22 @@ export default function discordApiRoute(
       );
 
       if (!webhookSent) {
-        return res.send({
+        res.send({
           success: false,
           message: "Unable to deliver Discord notification right now.",
-        });
+        }); return;
       }
 
-      return res.send({
+      res.send({
         success: true,
-      });
+      }); return;
     } catch (error) {
       console.error(error);
       if (!res.sent) {
-        return res.status(500).send({
+        res.status(500).send({
           success: false,
           message: `${error}`,
-        });
+        }); return;
       }
     }
   });
@@ -203,22 +203,22 @@ export default function discordApiRoute(
       );
 
       if (!webhookSent) {
-        return res.send({
+        res.send({
           success: false,
           message: "Unable to deliver Discord notification right now.",
-        });
+        }); return;
       }
 
-      return res.send({
+      res.send({
         success: true,
-      });
+      }); return;
     } catch (error) {
       console.error(error);
       if (!res.sent) {
-        return res.status(500).send({
+        res.status(500).send({
           success: false,
           message: `${error}`,
-        });
+        }); return;
       }
     }
   });
@@ -246,22 +246,22 @@ export default function discordApiRoute(
       );
 
       if (!webhookSent) {
-        return res.send({
+        res.send({
           success: false,
           message: "Unable to deliver Discord notification right now.",
-        });
+        }); return;
       }
 
-      return res.send({
+      res.send({
         success: true,
-      });
+      }); return;
     } catch (error) {
       console.error(error);
       if (!res.sent) {
-        return res.status(500).send({
+        res.status(500).send({
           success: false,
           message: `${error}`,
-        });
+        }); return;
       }
     }
   });

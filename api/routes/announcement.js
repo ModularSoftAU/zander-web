@@ -48,23 +48,23 @@ export default function announcementApiRoute(app, config, db, features, lang) {
       });
 
       if (!results || !results.length) {
-        return res.send({
+        res.send({
           success: false,
           message: lang.announcement.noAnnouncements,
-        });
+        }); return;
       }
 
-      return res.send({
+      res.send({
         success: true,
         data: results,
-      });
+      }); return;
     } catch (error) {
       console.error(error);
       if (!res.sent) {
-        return res.status(500).send({
+        res.status(500).send({
           success: false,
           message: `${error}`,
-        });
+        }); return;
       }
     }
   });
@@ -98,24 +98,24 @@ export default function announcementApiRoute(app, config, db, features, lang) {
     const now = new Date();
 
     if (startDate && startDate.getTime() < now.getTime()) {
-      return res.send({
+      res.send({
         success: false,
         message: "Start date cannot be in the past.",
-      });
+      }); return;
     }
 
     if (endDate && endDate.getTime() < now.getTime()) {
-      return res.send({
+      res.send({
         success: false,
         message: "End date cannot be in the past.",
-      });
+      }); return;
     }
 
     if (startDate && endDate && endDate.getTime() < startDate.getTime()) {
-      return res.send({
+      res.send({
         success: false,
         message: "End date must be after the start date.",
-      });
+      }); return;
     }
 
     try {
@@ -147,18 +147,18 @@ export default function announcementApiRoute(app, config, db, features, lang) {
         `Created ${announcementType}`
       );
 
-      return res.send({
+      res.send({
         success: true,
         alertType: "success",
         content: lang.announcement.announcementCreated,
-      });
+      }); return;
     } catch (error) {
       console.error(error);
       if (!res.sent) {
-        return res.status(500).send({
+        res.status(500).send({
           success: false,
           message: `${error}`,
-        });
+        }); return;
       }
     }
   });
@@ -194,24 +194,24 @@ export default function announcementApiRoute(app, config, db, features, lang) {
     const now = new Date();
 
     if (startDate && startDate.getTime() < now.getTime()) {
-      return res.send({
+      res.send({
         success: false,
         message: "Start date cannot be in the past.",
-      });
+      }); return;
     }
 
     if (endDate && endDate.getTime() < now.getTime()) {
-      return res.send({
+      res.send({
         success: false,
         message: "End date cannot be in the past.",
-      });
+      }); return;
     }
 
     if (startDate && endDate && endDate.getTime() < startDate.getTime()) {
-      return res.send({
+      res.send({
         success: false,
         message: "End date must be after the start date.",
-      });
+      }); return;
     }
 
     try {
@@ -256,17 +256,17 @@ export default function announcementApiRoute(app, config, db, features, lang) {
         `Edited ${announcementId}`
       );
 
-      return res.send({
+      res.send({
         success: true,
         message: lang.announcement.announcementEdited,
-      });
+      }); return;
     } catch (error) {
       console.error(error);
       if (!res.sent) {
-        return res.status(500).send({
+        res.status(500).send({
           success: false,
           message: `${error}`,
-        });
+        }); return;
       }
     }
   });
@@ -298,17 +298,17 @@ export default function announcementApiRoute(app, config, db, features, lang) {
         `Deleted ${announcementId}`
       );
 
-      return res.send({
+      res.send({
         success: true,
         message: lang.announcement.announcementDeleted,
-      });
+      }); return;
     } catch (error) {
       console.error(error);
       if (!res.sent) {
-        return res.status(500).send({
+        res.status(500).send({
           success: false,
           message: `${error}`,
-        });
+        }); return;
       }
     }
   });

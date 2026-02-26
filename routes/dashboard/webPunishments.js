@@ -39,7 +39,7 @@ export default function dashboardWebPunishmentsRoute(
       getWebAnnouncement(),
     ]);
 
-    return res.view("dashboard/web-punishments", {
+    await res.view("dashboard/web-punishments", {
       pageTitle: `Dashboard - Web Punishments`,
       config,
       features,
@@ -67,20 +67,20 @@ export default function dashboardWebPunishmentsRoute(
 
     if (!username || !type || !reason) {
       await setBannerCookie("danger", "Username, type, and reason are required.", res);
-      return res.redirect("/dashboard/web-punishments");
+      { res.redirect("/dashboard/web-punishments"); return; };
     }
 
     const validTypes = ["WARN", "TEMP_BAN", "PERM_BAN"];
     if (!validTypes.includes(type)) {
       await setBannerCookie("danger", "Invalid punishment type.", res);
-      return res.redirect("/dashboard/web-punishments");
+      { res.redirect("/dashboard/web-punishments"); return; };
     }
 
     // Look up the target user
     const targetUser = await getUserByUsername(username);
     if (!targetUser) {
       await setBannerCookie("danger", `User "${username}" not found.`, res);
-      return res.redirect("/dashboard/web-punishments");
+      { res.redirect("/dashboard/web-punishments"); return; };
     }
 
     // Parse duration for TEMP_BAN
@@ -88,12 +88,12 @@ export default function dashboardWebPunishmentsRoute(
     if (type === "TEMP_BAN") {
       if (!duration) {
         await setBannerCookie("danger", "Duration is required for temporary bans (e.g. 1h, 7d, 2w).", res);
-        return res.redirect("/dashboard/web-punishments");
+        { res.redirect("/dashboard/web-punishments"); return; };
       }
       const ms = parseDurationString(duration);
       if (!ms) {
         await setBannerCookie("danger", "Invalid duration format. Use e.g. 30m, 1h, 7d, 2w.", res);
-        return res.redirect("/dashboard/web-punishments");
+        { res.redirect("/dashboard/web-punishments"); return; };
       }
       expiresAt = new Date(Date.now() + ms);
     }
@@ -156,7 +156,7 @@ export default function dashboardWebPunishmentsRoute(
       await setBannerCookie("danger", "Failed to create punishment. Please try again.", res);
     }
 
-    return res.redirect("/dashboard/web-punishments");
+    { res.redirect("/dashboard/web-punishments"); return; };
   });
 
   // Lift a web punishment
@@ -169,12 +169,12 @@ export default function dashboardWebPunishmentsRoute(
 
     if (!punishment || punishment.platform !== "WEB") {
       await setBannerCookie("danger", "Punishment not found.", res);
-      return res.redirect("/dashboard/web-punishments");
+      { res.redirect("/dashboard/web-punishments"); return; };
     }
 
     if (punishment.status !== "ACTIVE") {
       await setBannerCookie("danger", "This punishment is not currently active.", res);
-      return res.redirect("/dashboard/web-punishments");
+      { res.redirect("/dashboard/web-punishments"); return; };
     }
 
     try {
@@ -185,7 +185,7 @@ export default function dashboardWebPunishmentsRoute(
       await setBannerCookie("danger", "Failed to lift punishment.", res);
     }
 
-    return res.redirect("/dashboard/web-punishments");
+    { res.redirect("/dashboard/web-punishments"); return; };
   });
 }
 

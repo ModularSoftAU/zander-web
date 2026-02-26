@@ -17,7 +17,7 @@ export default function announcementRedirectRoute(app, config, lang, features) {
     );
 
     if (!res.sent) {
-      return res.redirect(`${process.env.siteAddress}/dashboard/announcements`);
+      { res.redirect(`${process.env.siteAddress}/dashboard/announcements`); return; };
     }
     return res;
   });
@@ -36,7 +36,7 @@ export default function announcementRedirectRoute(app, config, lang, features) {
     );
 
     if (!res.sent) {
-      return res.redirect(`${process.env.siteAddress}/dashboard/announcements`);
+      { res.redirect(`${process.env.siteAddress}/dashboard/announcements`); return; };
     }
     return res;
   });
@@ -55,7 +55,7 @@ export default function announcementRedirectRoute(app, config, lang, features) {
     );
 
     if (!res.sent) {
-      return res.redirect(`${process.env.siteAddress}/dashboard/announcements`);
+      { res.redirect(`${process.env.siteAddress}/dashboard/announcements`); return; };
     }
     return res;
   });

@@ -13,7 +13,7 @@ export default function reportApiRoute(app, config, db, features, lang) {
 
   // TODO: Update docs
   app.get(baseEndpoint + "/get", async function (req, res) {
-    isFeatureEnabled(features.report, res, lang);
+    if (!isFeatureEnabled(features.report, res, lang)) return;
     const reportedId = optional(req.query, "reportedId");
 
     try {
@@ -35,37 +35,42 @@ export default function reportApiRoute(app, config, db, features, lang) {
       });
 
       if (!results || !results.length) {
-        return res.send({
+        res.send({
           success: false,
           message: `There are no reports available.`,
-        });
+        }); return;
       }
 
-      return res.send({
+      res.send({
         success: true,
         data: results,
-      });
+      }); return;
     } catch (error) {
       console.error(error);
-      return res.status(500).send({
-        success: false,
-        message: `${error}`,
-      });
+      if (!res.sent) {
+        res.status(500).send({
+          success: false,
+          message: `${error}`,
+        }); return;
+      }
     }
   });
 
   app.post(baseEndpoint + "/create", async function (req, res) {
-    isFeatureEnabled(features.report, res, lang);
+    if (!isFeatureEnabled(features.report, res, lang)) return;
 
     const reporterUser = required(req.body, "reporterUser", res);
+    if (res.sent) return;
     const reportedUser = required(req.body, "reportedUser", res);
+    if (res.sent) return;
     const reportReason = required(req.body, "reportReason", res);
+    if (res.sent) return;
     const reportReasonEvidence = optional(
       req.body,
-      "reportReasonEvidence",
-      res
+      "reportReasonEvidence"
     );
     const reportPlatform = required(req.body, "reportPlatform", res);
+    if (res.sent) return;
 
     try {
       await new Promise((resolve, reject) => {
@@ -94,7 +99,7 @@ export default function reportApiRoute(app, config, db, features, lang) {
         );
       });
 
-      setBannerCookie("success", "Report has been sent.", res);
+      await setBannerCookie("success", "Report has been sent.", res);
 
       const staffChannelHook = new Webhook(
         config.discord.webhooks.staffChannel
@@ -119,23 +124,25 @@ export default function reportApiRoute(app, config, db, features, lang) {
       );
 
       if (!webhookSent) {
-        return res.send({
+        res.send({
           success: false,
           message:
             "Report saved, but we couldn't notify staff. Please try again soon.",
-        });
+        }); return;
       }
 
-      return res.send({
+      res.send({
         success: true,
         message: `Thanks for your submission: ${reportedUser} for ${reportReason}.`,
-      });
+      }); return;
     } catch (error) {
       console.error(error);
-      return res.status(500).send({
-        success: false,
-        message: `Report has failed, please try again later.`,
-      });
+      if (!res.sent) {
+        res.status(500).send({
+          success: false,
+          message: `Report has failed, please try again later.`,
+        }); return;
+      }
     }
   });
 }

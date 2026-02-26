@@ -248,7 +248,7 @@ async function renderForumsView(res, req, viewPath, data, config, features) {
     getWebAnnouncement(),
   ]);
 
-  return res.view(viewPath, {
+  await res.view(viewPath, {
     ...data,
     config,
     features,
@@ -284,7 +284,7 @@ export default function forumRoutes(
       return;
     }
 
-    return res.redirect(301, "/forums");
+    { res.redirect(301, "/forums"); return; };
   });
 
   app.get("/forums", async function (req, res) {
@@ -411,7 +411,7 @@ export default function forumRoutes(
           "You need to be signed in to start a discussion.",
           res
         );
-        return res.redirect(`/login`);
+        { res.redirect(`/login`); return; };
       }
 
       return renderForumsView(
@@ -451,7 +451,7 @@ export default function forumRoutes(
 
     if (await hasActiveWebBan(getCurrentUserId(req))) {
       await setBannerCookie("danger", "You are currently banned and cannot create discussions.", res);
-      return res.redirect("/forums");
+      { res.redirect("/forums"); return; };
     }
 
     const slug = req.params.slug;
@@ -476,7 +476,7 @@ export default function forumRoutes(
         "You do not have permission to start a discussion in this category.",
         res
       );
-      return res.redirect(`/forums/category/${category.slug}`);
+      { res.redirect(`/forums/category/${category.slug}`); return; };
     }
 
     const title = (req.body.title || "").trim();
@@ -490,7 +490,7 @@ export default function forumRoutes(
         "You need to be signed in to start a discussion.",
         res
       );
-      return res.redirect(`/login`);
+      { res.redirect(`/login`); return; };
     }
 
     if (!title || isContentEmpty(content)) {
@@ -499,7 +499,7 @@ export default function forumRoutes(
         "Both a title and content are required to create a discussion.",
         res
       );
-      return res.redirect(`/forums/category/${category.slug}/new`);
+      { res.redirect(`/forums/category/${category.slug}/new`); return; };
     }
 
     try {
@@ -533,9 +533,9 @@ export default function forumRoutes(
         res
       );
 
-      return res.redirect(
+      { res.redirect(
         `/forums/discussion/${discussion.discussionId}/${discussion.slug}`
-      );
+      ); return; };
     } catch (error) {
       console.error("[FORUMS] Failed to create discussion", error);
       await setBannerCookie(
@@ -543,7 +543,7 @@ export default function forumRoutes(
         "We were unable to create your discussion. Please try again.",
         res
       );
-      return res.redirect(`/forums/category/${category.slug}`);
+      { res.redirect(`/forums/category/${category.slug}`); return; };
     }
   });
 
@@ -584,9 +584,9 @@ export default function forumRoutes(
     }
 
     if (req.params.slug && req.params.slug !== discussion.slug) {
-      return res.redirect(
+      { res.redirect(
         `/forums/discussion/${discussion.discussionId}/${discussion.slug}`
-      );
+      ); return; };
     }
 
     const permissions = getUserPermissions(req);
@@ -639,7 +639,7 @@ export default function forumRoutes(
 
     if (await hasActiveWebBan(getCurrentUserId(req))) {
       await setBannerCookie("danger", "You are currently banned and cannot post replies.", res);
-      return res.redirect("/forums");
+      { res.redirect("/forums"); return; };
     }
 
     const discussionId = Number.parseInt(req.params.discussionId, 10);
@@ -647,21 +647,21 @@ export default function forumRoutes(
 
     if (!result) {
       await setBannerCookie("danger", "Discussion not found.", res);
-      return res.redirect("/forums");
+      { res.redirect("/forums"); return; };
     }
 
     const { discussion, category } = result;
 
     if (!userCanViewCategory(category, req)) {
       await setBannerCookie("danger", "You cannot reply to this discussion.", res);
-      return res.redirect("/forums");
+      { res.redirect("/forums"); return; };
     }
 
     if (discussion.isLocked && !userCanModerate(req)) {
       await setBannerCookie("warning", "This discussion is locked.", res);
-      return res.redirect(
+      { res.redirect(
         `/forums/discussion/${discussion.discussionId}/${discussion.slug}`
-      );
+      ); return; };
     }
 
     if (discussion.isArchived && !userCanModerate(req)) {
@@ -670,9 +670,9 @@ export default function forumRoutes(
         "This discussion has been archived.",
         res
       );
-      return res.redirect(
+      { res.redirect(
         `/forums/discussion/${discussion.discussionId}/${discussion.slug}`
-      );
+      ); return; };
     }
 
     const userId = getCurrentUserId(req);
@@ -683,7 +683,7 @@ export default function forumRoutes(
         "You need to be signed in to reply.",
         res
       );
-      return res.redirect(`/login`);
+      { res.redirect(`/login`); return; };
     }
 
     if (!userCanPostInCategory(category, req) && !userCanModerate(req)) {
@@ -692,9 +692,9 @@ export default function forumRoutes(
         "You do not have permission to reply in this category.",
         res
       );
-      return res.redirect(
+      { res.redirect(
         `/forums/discussion/${discussion.discussionId}/${discussion.slug}`
-      );
+      ); return; };
     }
 
     const content = req.body.content || "";
@@ -704,9 +704,9 @@ export default function forumRoutes(
         "Reply content cannot be empty.",
         res
       );
-      return res.redirect(
+      { res.redirect(
         `/forums/discussion/${discussion.discussionId}/${discussion.slug}`
-      );
+      ); return; };
     }
 
     try {
@@ -743,9 +743,9 @@ export default function forumRoutes(
       );
     }
 
-    return res.redirect(
+    { res.redirect(
       `/forums/discussion/${discussion.discussionId}/${discussion.slug}`
-    );
+    ); return; };
   };
 
   app.post("/forums/discussion/:discussionId/reply", discussionReplyHandler);
@@ -837,7 +837,7 @@ export default function forumRoutes(
 
     if (await hasActiveWebBan(getCurrentUserId(req))) {
       await setBannerCookie("danger", "You are currently banned and cannot edit discussions.", res);
-      return res.redirect("/forums");
+      { res.redirect("/forums"); return; };
     }
 
     const discussionId = Number.parseInt(req.params.discussionId, 10);
@@ -845,7 +845,7 @@ export default function forumRoutes(
 
     if (!result) {
       await setBannerCookie("danger", "Discussion not found.", res);
-      return res.redirect("/forums");
+      { res.redirect("/forums"); return; };
     }
 
     const { discussion, category } = result;
@@ -859,9 +859,9 @@ export default function forumRoutes(
         "You do not have permission to edit this discussion.",
         res
       );
-      return res.redirect(
+      { res.redirect(
         `/forums/discussion/${discussion.discussionId}/${discussion.slug}`
-      );
+      ); return; };
     }
 
     const title = (req.body.title || "").trim();
@@ -873,9 +873,9 @@ export default function forumRoutes(
         "A title and body are required.",
         res
       );
-      return res.redirect(
+      { res.redirect(
         `/forums/discussion/${discussion.discussionId}/${discussion.slug}`
-      );
+      ); return; };
     }
 
     try {
@@ -912,9 +912,9 @@ export default function forumRoutes(
       );
     }
 
-    return res.redirect(
+    { res.redirect(
       `/forums/discussion/${discussion.discussionId}/${discussion.slug}`
-    );
+    ); return; };
   });
 
   app.post("/forums/discussion/:discussionId/delete", async function (req, res) {
@@ -924,7 +924,7 @@ export default function forumRoutes(
 
     if (await hasActiveWebBan(getCurrentUserId(req))) {
       await setBannerCookie("danger", "You are currently banned and cannot delete discussions.", res);
-      return res.redirect("/forums");
+      { res.redirect("/forums"); return; };
     }
 
     const discussionId = Number.parseInt(req.params.discussionId, 10);
@@ -932,7 +932,7 @@ export default function forumRoutes(
 
     if (!result) {
       await setBannerCookie("danger", "Discussion not found.", res);
-      return res.redirect("/forums");
+      { res.redirect("/forums"); return; };
     }
 
     const { discussion, category } = result;
@@ -946,9 +946,9 @@ export default function forumRoutes(
         "You do not have permission to delete this discussion.",
         res
       );
-      return res.redirect(
+      { res.redirect(
         `/forums/discussion/${discussion.discussionId}/${discussion.slug}`
-      );
+      ); return; };
     }
 
     try {
@@ -968,7 +968,7 @@ export default function forumRoutes(
       });
 
       await setBannerCookie("success", "Discussion deleted.", res);
-      return res.redirect(`/forums/category/${category.slug}`);
+      { res.redirect(`/forums/category/${category.slug}`); return; };
     } catch (error) {
       console.error("[FORUMS] Failed to delete discussion", error);
       await setBannerCookie(
@@ -976,9 +976,9 @@ export default function forumRoutes(
         "We were unable to delete the discussion.",
         res
       );
-      return res.redirect(
+      { res.redirect(
         `/forums/discussion/${discussion.discussionId}/${discussion.slug}`
-      );
+      ); return; };
     }
   });
 
@@ -1019,9 +1019,9 @@ export default function forumRoutes(
     }
 
     if (post.isOriginal) {
-      return res.redirect(
+      { res.redirect(
         `/forums/discussion/${post.discussionId}/edit`
-      );
+      ); return; };
     }
 
     const canModerate = userCanModerate(req);
@@ -1067,7 +1067,7 @@ export default function forumRoutes(
 
     if (await hasActiveWebBan(getCurrentUserId(req))) {
       await setBannerCookie("danger", "You are currently banned and cannot edit posts.", res);
-      return res.redirect("/forums");
+      { res.redirect("/forums"); return; };
     }
 
     const postId = Number.parseInt(req.params.postId, 10);
@@ -1075,11 +1075,11 @@ export default function forumRoutes(
 
     if (!post) {
       await setBannerCookie("danger", "Post not found.", res);
-      return res.redirect("/forums");
+      { res.redirect("/forums"); return; };
     }
 
     if (post.isOriginal) {
-      return res.redirect(`/forums/discussion/${post.discussionId}/edit`);
+      { res.redirect(`/forums/discussion/${post.discussionId}/edit`); return; };
     }
 
     const result = await getDiscussionWithCategory(post.discussionId);
@@ -1090,7 +1090,7 @@ export default function forumRoutes(
         "You do not have permission to edit this post.",
         res
       );
-      return res.redirect("/forums");
+      { res.redirect("/forums"); return; };
     }
 
     const canModerate = userCanModerate(req);
@@ -1102,17 +1102,17 @@ export default function forumRoutes(
         "You do not have permission to edit this post.",
         res
       );
-      return res.redirect(
+      { res.redirect(
         `/forums/discussion/${result.discussion.discussionId}/${result.discussion.slug}`
-      );
+      ); return; };
     }
 
     const content = req.body.content || "";
     if (isContentEmpty(content)) {
       await setBannerCookie("danger", "Post content cannot be empty.", res);
-      return res.redirect(
+      { res.redirect(
         `/forums/discussion/${result.discussion.discussionId}/${result.discussion.slug}`
-      );
+      ); return; };
     }
 
     try {
@@ -1147,9 +1147,9 @@ export default function forumRoutes(
       );
     }
 
-    return res.redirect(
+    { res.redirect(
       `/forums/discussion/${result.discussion.discussionId}/${result.discussion.slug}`
-    );
+    ); return; };
   });
 
   app.post("/forums/post/:postId/delete", async function (req, res) {
@@ -1159,7 +1159,7 @@ export default function forumRoutes(
 
     if (await hasActiveWebBan(getCurrentUserId(req))) {
       await setBannerCookie("danger", "You are currently banned and cannot delete posts.", res);
-      return res.redirect("/forums");
+      { res.redirect("/forums"); return; };
     }
 
     const postId = Number.parseInt(req.params.postId, 10);
@@ -1167,7 +1167,7 @@ export default function forumRoutes(
 
     if (!post) {
       await setBannerCookie("danger", "Post not found.", res);
-      return res.redirect("/forums");
+      { res.redirect("/forums"); return; };
     }
 
     const result = await getDiscussionWithCategory(post.discussionId);
@@ -1178,7 +1178,7 @@ export default function forumRoutes(
         "You do not have permission to delete this post.",
         res
       );
-      return res.redirect("/forums");
+      { res.redirect("/forums"); return; };
     }
 
     if (post.isOriginal) {
@@ -1187,9 +1187,9 @@ export default function forumRoutes(
         "The first post in a discussion cannot be deleted individually.",
         res
       );
-      return res.redirect(
+      { res.redirect(
         `/forums/discussion/${result.discussion.discussionId}/${result.discussion.slug}`
-      );
+      ); return; };
     }
 
     const canModerate = userCanModerate(req);
@@ -1201,9 +1201,9 @@ export default function forumRoutes(
         "You do not have permission to delete this post.",
         res
       );
-      return res.redirect(
+      { res.redirect(
         `/forums/discussion/${result.discussion.discussionId}/${result.discussion.slug}`
-      );
+      ); return; };
     }
 
     try {
@@ -1231,9 +1231,9 @@ export default function forumRoutes(
       );
     }
 
-    return res.redirect(
+    { res.redirect(
       `/forums/discussion/${result.discussion.discussionId}/${result.discussion.slug}`
-    );
+    ); return; };
   });
 
   app.post("/forums/post/:postId/report", async function (req, res) {
@@ -1243,27 +1243,27 @@ export default function forumRoutes(
 
     if (!features.report) {
       res.status(404);
-      return res.send({
+      res.send({
         success: false,
         message: "Reporting is currently disabled.",
-      });
+      }); return;
     }
 
     if (!isLoggedIn(req)) {
       res.status(401);
-      return res.send({
+      res.send({
         success: false,
         message: "You must be logged in to report forum posts.",
-      });
+      }); return;
     }
 
     const postId = Number.parseInt(req.params.postId, 10);
     if (!Number.isFinite(postId) || postId <= 0) {
       res.status(400);
-      return res.send({
+      res.send({
         success: false,
         message: "Invalid post identifier.",
-      });
+      }); return;
     }
 
     const rawReason =
@@ -1272,10 +1272,10 @@ export default function forumRoutes(
 
     if (!reason) {
       res.status(400);
-      return res.send({
+      res.send({
         success: false,
         message: "Please provide a reason for your report.",
-      });
+      }); return;
     }
 
     const rawDetails =
@@ -1288,36 +1288,36 @@ export default function forumRoutes(
       const post = await getPostById(postId);
       if (!post) {
         res.status(404);
-        return res.send({
+        res.send({
           success: false,
           message: "Post not found.",
-        });
+        }); return;
       }
 
       const info = await getDiscussionWithCategory(post.discussionId);
       if (!info || !info.discussion || !info.category) {
         res.status(404);
-        return res.send({
+        res.send({
           success: false,
           message: "Discussion not found.",
-        });
+        }); return;
       }
 
       if (!userCanViewCategory(info.category, req)) {
         res.status(403);
-        return res.send({
+        res.send({
           success: false,
           message: "You do not have permission to report this post.",
-        });
+        }); return;
       }
 
       const author = post.userId ? await userGetter.byUserId(post.userId) : null;
       if (!author || !author.username) {
         res.status(404);
-        return res.send({
+        res.send({
           success: false,
           message: "Unable to resolve the post author.",
-        });
+        }); return;
       }
 
       const truncatedReason = reason.length > 100 ? reason.slice(0, 100) : reason;
@@ -1335,10 +1335,10 @@ export default function forumRoutes(
       const reporterUsername = req.session?.user?.username;
       if (!reporterUsername) {
         res.status(401);
-        return res.send({
+        res.send({
           success: false,
           message: "You must be logged in to report forum posts.",
-        });
+        }); return;
       }
 
       const reportBody = {
@@ -1369,10 +1369,10 @@ export default function forumRoutes(
           "Unable to submit your report right now. Please try again later.";
 
         res.status(apiResponse.status >= 400 ? apiResponse.status : 500);
-        return res.send({
+        res.send({
           success: false,
           message,
-        });
+        }); return;
       }
 
       const uuid = req.session?.user?.uuid;
@@ -1387,18 +1387,18 @@ export default function forumRoutes(
         ],
       });
 
-      return res.send({
+      res.send({
         success: true,
         message:
           data.message || "Thanks for letting us know. Your report has been received.",
-      });
+      }); return;
     } catch (error) {
       console.error("Failed to submit forum report:", error);
       res.status(500);
-      return res.send({
+      res.send({
         success: false,
         message: "An unexpected error occurred while submitting your report.",
-      });
+      }); return;
     }
   });
 
@@ -1414,7 +1414,7 @@ export default function forumRoutes(
 
       if (!result) {
         await setBannerCookie("danger", "Discussion not found.", res);
-        return res.redirect("/forums");
+        { res.redirect("/forums"); return; };
       }
 
       const action = (req.body.action || "").toLowerCase();
@@ -1436,9 +1436,9 @@ export default function forumRoutes(
 
       if (!hasPermission) {
         await setBannerCookie("danger", permissionMessage, res);
-        return res.redirect(
+        { res.redirect(
           `/forums/discussion/${result.discussion.discussionId}/${result.discussion.slug}`
-        );
+        ); return; };
       }
 
       const updates = {};
@@ -1455,9 +1455,9 @@ export default function forumRoutes(
           "Unknown moderation action.",
           res
         );
-        return res.redirect(
+        { res.redirect(
           `/forums/discussion/${result.discussion.discussionId}/${result.discussion.slug}`
-        );
+        ); return; };
       }
 
       try {
@@ -1496,9 +1496,9 @@ export default function forumRoutes(
         );
       }
 
-      return res.redirect(
+      { res.redirect(
         `/forums/discussion/${result.discussion.discussionId}/${result.discussion.slug}`
-      );
+      ); return; };
     }
   );
 
@@ -1521,7 +1521,7 @@ export default function forumRoutes(
     const newCategoryId = Number.parseInt(req.body.categoryId, 10);
     if (!newCategoryId || newCategoryId === result.discussion.categoryId) {
       await setBannerCookie("warning", "Please select a different category.", res);
-      return res.redirect(`/forums/discussion/${result.discussion.discussionId}/${result.discussion.slug}`);
+      { res.redirect(`/forums/discussion/${result.discussion.discussionId}/${result.discussion.slug}`); return; };
     }
 
     try {
@@ -1545,7 +1545,7 @@ export default function forumRoutes(
       await setBannerCookie("danger", "Unable to move the discussion.", res);
     }
 
-    return res.redirect(`/forums/discussion/${result.discussion.discussionId}/${result.discussion.slug}`);
+    { res.redirect(`/forums/discussion/${result.discussion.discussionId}/${result.discussion.slug}`); return; };
   });
 
   app.get("/forums/post/:postId/revisions", async function (req, res) {

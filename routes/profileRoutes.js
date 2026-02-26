@@ -80,7 +80,7 @@ export default function profileSiteRoutes(
       const userHasJoined = await userData.hasJoined(username);
 
       if (!userHasJoined) {
-        return res.view("session/notFound", {
+        await res.view("session/notFound", {
           pageTitle: `404: Player Not Found`,
           config: config,
           req: req,
@@ -95,7 +95,7 @@ export default function profileSiteRoutes(
         //
         const profileData = await getUserByUsername(username);
         if (!profileData) {
-          return res.view("session/notFound", {
+          await res.view("session/notFound", {
             pageTitle: `404: Player Not Found`,
             config: config,
             req: req,
@@ -175,7 +175,7 @@ export default function profileSiteRoutes(
         //
         // Render the profile page
         //
-        return res.view("modules/profile/profile", {
+        await res.view("modules/profile/profile", {
           pageTitle: `${profileData.username}`,
           config: config,
           req: req,
@@ -199,7 +199,7 @@ export default function profileSiteRoutes(
     } catch (error) {
       console.error("[PROFILE] Failed to load profile", error);
 
-      return res.status(500).view("session/error", {
+      { await res.status(500).view("session/error", {
         pageTitle: `Server Error`,
         config: config,
         error: error,
@@ -207,7 +207,7 @@ export default function profileSiteRoutes(
         features: features,
         globalImage: await getGlobalImage(),
         announcementWeb: await getWebAnnouncement(),
-      });
+      }); return; };
     }
   });
 
@@ -222,17 +222,17 @@ export default function profileSiteRoutes(
       const userData = new UserGetter();
       const userHasJoined = await userData.hasJoined(username);
 
-      if (!isLoggedIn(req)) return res.redirect(`/`);
+      if (!isLoggedIn(req)) { res.redirect(`/`); return; };
 
       // Check if user is web-banned
       const sessionUserId = req.session?.user?.userId;
       if (sessionUserId && await hasActiveWebBan(sessionUserId)) {
         await setBannerCookie("danger", "You are currently banned from editing your profile.", res);
-        return res.redirect(`/profile/${username}`);
+        { res.redirect(`/profile/${username}`); return; };
       }
 
       if (!userHasJoined) {
-        return res.view("session/notFound", {
+        await res.view("session/notFound", {
           pageTitle: `404: Player Not Found`,
           config: config,
           req: req,
@@ -247,7 +247,7 @@ export default function profileSiteRoutes(
         //
         const profileData = await getUserByUsername(req.session.user.username);
         if (!profileData) {
-          return res.view("session/notFound", {
+          await res.view("session/notFound", {
             pageTitle: `404: Player Not Found`,
             config: config,
             req: req,
@@ -261,7 +261,7 @@ export default function profileSiteRoutes(
         //
         // Render the profile page
         //
-        return res.view("modules/profile/profileEditor", {
+        await res.view("modules/profile/profileEditor", {
           pageTitle: `${profileData.username} - Profile Editor`,
           config: config,
           req: req,
@@ -279,7 +279,7 @@ export default function profileSiteRoutes(
     } catch (error) {
       console.error("[PROFILE] Failed to load profile editor", error);
 
-      return res.status(500).view("session/error", {
+      { await res.status(500).view("session/error", {
         pageTitle: `Server Error`,
         config: config,
         error: error,
@@ -287,18 +287,18 @@ export default function profileSiteRoutes(
         features: features,
         globalImage: await getGlobalImage(),
         announcementWeb: await getWebAnnouncement(),
-      });
+      }); return; };
     }
   });
 
   app.get("/profile/social/discord/connect", async function (req, res) {
     if (!isLoggedIn(req)) {
-      setBannerCookie(
+      await setBannerCookie(
         "warning",
         "You need to sign in to connect a Discord account.",
         res
       );
-      return res.redirect(`/login`);
+      { res.redirect(`/login`); return; };
     }
 
     const state = crypto.randomBytes(16).toString("hex");
@@ -312,7 +312,7 @@ export default function profileSiteRoutes(
       redirect: requestedRedirect,
     };
 
-    return res.redirect(buildDiscordLinkAuthorizeUrl(state));
+    { res.redirect(buildDiscordLinkAuthorizeUrl(state)); return; };
   });
 
   app.get("/profile/social/discord/callback", async function (req, res) {
@@ -322,30 +322,30 @@ export default function profileSiteRoutes(
     const redirectPath = linkSession.redirect || getProfileEditorRedirect(req);
 
     if (!isLoggedIn(req)) {
-      setBannerCookie(
+      await setBannerCookie(
         "warning",
         "Please sign in again to complete Discord linking.",
         res
       );
-      return res.redirect(`/login`);
+      { res.redirect(`/login`); return; };
     }
 
     if (!req.query.code) {
-      setBannerCookie(
+      await setBannerCookie(
         "danger",
         "Discord did not send an authorisation code.",
         res
       );
-      return res.redirect(redirectPath);
+      { res.redirect(redirectPath); return; };
     }
 
     if (!linkSession.state || linkSession.state !== req.query.state) {
-      setBannerCookie(
+      await setBannerCookie(
         "danger",
         "Discord connection expired, please try again.",
         res
       );
-      return res.redirect(redirectPath);
+      { res.redirect(redirectPath); return; };
     }
 
     try {
@@ -390,12 +390,12 @@ export default function profileSiteRoutes(
       const existingLink = await userData.byDiscordId(discordUser.id);
 
       if (existingLink && existingLink.userId !== req.session.user.userId) {
-        setBannerCookie(
+        await setBannerCookie(
           "danger",
           "That Discord account is already linked to another profile.",
           res
         );
-        return res.redirect(redirectPath);
+        { res.redirect(redirectPath); return; };
       }
 
       await linkDiscordAccount(
@@ -406,42 +406,42 @@ export default function profileSiteRoutes(
 
       req.session.user.discordID = discordUser.id;
 
-      setBannerCookie("success", "Discord account connected!", res);
+      await setBannerCookie("success", "Discord account connected!", res);
     } catch (error) {
       console.error("[PROFILE] Discord link failed", error);
-      setBannerCookie(
+      await setBannerCookie(
         "danger",
         "We couldn't connect your Discord account. Please try again soon.",
         res
       );
     }
 
-    return res.redirect(redirectPath);
+    { res.redirect(redirectPath); return; };
   });
 
   app.post("/profile/social/discord/disconnect", async function (req, res) {
     if (!isLoggedIn(req)) {
-      setBannerCookie(
+      await setBannerCookie(
         "warning",
         "You need to sign in to disconnect Discord.",
         res
       );
-      return res.redirect(`/login`);
+      { res.redirect(`/login`); return; };
     }
 
     try {
       await unlinkDiscordAccount(req.session.user.userId);
       req.session.user.discordID = null;
-      setBannerCookie("success", "Discord account disconnected.", res);
+      await setBannerCookie("success", "Discord account disconnected.", res);
     } catch (error) {
       console.error("[PROFILE] Discord unlink failed", error);
-      setBannerCookie(
+      await setBannerCookie(
         "danger",
         "We couldn't disconnect your Discord account. Please try again soon.",
         res
       );
     }
 
-    return res.redirect(getProfileEditorRedirect(req));
+    { res.redirect(getProfileEditorRedirect(req)); return; };
   });
 }

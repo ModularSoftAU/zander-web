@@ -4,13 +4,13 @@ export default async function webApiRoute(app, config, db, features, lang) {
   app.get(baseEndpoint + "/configuration", async function (req, res) {
     // There is no isFeatureEnabled() due to being a critical endpoint.
 
-    return res.send({
+    res.send({
       success: true,
       data: {
         siteName: config.siteConfiguration.siteName,
         siteAddress: process.env.siteAddress,
       },
-    });
+    }); return;
   });
 
   app.get(baseEndpoint + "/statistics", async function (req, res) {
@@ -55,7 +55,7 @@ export default async function webApiRoute(app, config, db, features, lang) {
       const timePlayed = results[1][0].timePlayed || 0;
       const staffMembers = results[2][0].totalStaff || 0;
 
-      return res.send({
+      res.send({
         success: true,
         data: {
           general: {
@@ -64,13 +64,13 @@ export default async function webApiRoute(app, config, db, features, lang) {
             staffMembers: staffMembers,
           },
         },
-      });
+      }); return;
     } catch (err) {
       console.error(err);
-      return res.status(500).send({
+      res.status(500).send({
         success: false,
         message: "Internal Server Error",
-      });
+      }); return;
     }
   });
 
@@ -110,22 +110,22 @@ export default async function webApiRoute(app, config, db, features, lang) {
       });
 
       if (!results || !results.length) {
-        return res.send({
+        res.send({
           success: false,
           message: `There are no logs`,
-        });
+        }); return;
       }
 
-      return res.send({
+      res.send({
         success: true,
         data: results,
-      });
+      }); return;
     } catch (error) {
       console.error(error);
-      return res.status(500).send({
+      res.status(500).send({
         success: false,
         message: `${error}`,
-      });
+      }); return;
     }
   });
 }

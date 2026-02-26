@@ -17,7 +17,7 @@ export default function vaultRedirectRoute(app, config, lang, features) {
     );
 
     if (!res.sent) {
-      return res.redirect(`${process.env.siteAddress}/dashboard/vault`);
+      { res.redirect(`${process.env.siteAddress}/dashboard/vault`); return; };
     }
     return res;
   });
@@ -36,7 +36,7 @@ export default function vaultRedirectRoute(app, config, lang, features) {
     );
 
     if (!res.sent) {
-      return res.redirect(`${process.env.siteAddress}/dashboard/vault`);
+      { res.redirect(`${process.env.siteAddress}/dashboard/vault`); return; };
     }
     return res;
   });
@@ -55,7 +55,7 @@ export default function vaultRedirectRoute(app, config, lang, features) {
     );
 
     if (!res.sent) {
-      return res.redirect(`${process.env.siteAddress}/dashboard/vault`);
+      { res.redirect(`${process.env.siteAddress}/dashboard/vault`); return; };
     }
     return res;
   });

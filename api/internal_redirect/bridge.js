@@ -3,7 +3,7 @@ import { hasPermission, postAPIRequest, setBannerCookie } from "../common.js";
 export default function bridgeRedirectRoute(app, config, lang, features) {
   const baseEndpoint = "/redirect/bridge";
 
-  function parseJsonPayload(source, fieldName, res) {
+  async function parseJsonPayload(source, fieldName, res) {
     if (!source[fieldName]) return null;
 
     try {
@@ -11,7 +11,7 @@ export default function bridgeRedirectRoute(app, config, lang, features) {
       delete source[fieldName];
       return parsed;
     } catch (error) {
-      setBannerCookie(
+      await setBannerCookie(
         "warning",
         `We could not parse the ${fieldName.replace("JSON", "").trim()} JSON payload.`,
         res
@@ -29,7 +29,7 @@ export default function bridgeRedirectRoute(app, config, lang, features) {
     );
 
     if (!res.sent) {
-      return res.redirect(`${process.env.siteAddress}/dashboard/bridge`);
+      { res.redirect(`${process.env.siteAddress}/dashboard/bridge`); return; };
     }
   }
 
@@ -38,8 +38,8 @@ export default function bridgeRedirectRoute(app, config, lang, features) {
 
     req.body.actioningUser = req.session.user.userId;
 
-    const tasksPayload = parseJsonPayload(req.body, "tasksJSON", res);
-    const metadataPayload = parseJsonPayload(req.body, "metadataJSON", res);
+    const tasksPayload = await parseJsonPayload(req.body, "tasksJSON", res);
+    const metadataPayload = await parseJsonPayload(req.body, "metadataJSON", res);
 
     if (tasksPayload) {
       req.body.tasks = tasksPayload;
@@ -61,7 +61,7 @@ export default function bridgeRedirectRoute(app, config, lang, features) {
 
     req.body.actioningUser = req.session.user.userId;
 
-    const metadataPayload = parseJsonPayload(req.body, "metadataJSON", res);
+    const metadataPayload = await parseJsonPayload(req.body, "metadataJSON", res);
     if (metadataPayload) {
       req.body.metadata = metadataPayload;
     }
@@ -78,7 +78,7 @@ export default function bridgeRedirectRoute(app, config, lang, features) {
 
     req.body.actioningUser = req.session.user.userId;
 
-    const stepsPayload = parseJsonPayload(req.body, "stepsJSON", res);
+    const stepsPayload = await parseJsonPayload(req.body, "stepsJSON", res);
     if (stepsPayload) {
       req.body.steps = stepsPayload;
     }
@@ -103,7 +103,7 @@ export default function bridgeRedirectRoute(app, config, lang, features) {
 
     req.body.actioningUser = req.session.user.userId;
 
-    const metadataPayload = parseJsonPayload(req.body, "metadataJSON", res);
+    const metadataPayload = await parseJsonPayload(req.body, "metadataJSON", res);
     const taskId = req.body.taskId;
 
     delete req.body.taskId;

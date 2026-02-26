@@ -123,10 +123,10 @@ export default function bridgeApiRoute(app, config, db, features, lang) {
     const claim = toBoolean(optional(req.query, "claim"));
 
     if (!VALID_STATUSES.includes(status)) {
-      return res.send({
+      res.send({
         success: false,
         message: `Invalid status '${status}'. Allowed values: ${VALID_STATUSES.join(", ")}`,
-      });
+      }); return;
     }
 
     let limit = 50;
@@ -165,7 +165,7 @@ export default function bridgeApiRoute(app, config, db, features, lang) {
         });
       }
 
-      return res.send({
+      res.send({
         success: true,
         data: tasks,
         meta: {
@@ -173,14 +173,14 @@ export default function bridgeApiRoute(app, config, db, features, lang) {
           claimed: claim,
           count: tasks.length,
         },
-      });
+      }); return;
     } catch (error) {
       console.error(error);
       if (!res.sent) {
-        return res.status(500).send({
+        res.status(500).send({
           success: false,
           message: `${error}`,
-        });
+        }); return;
       }
     }
   });
@@ -196,10 +196,10 @@ export default function bridgeApiRoute(app, config, db, features, lang) {
     const priority = Number(optional(req.body, "priority")) || 0;
 
     if (!inlineCommand && !routineSlug && !Array.isArray(tasksPayload)) {
-      return res.send({
+      res.send({
         success: false,
         message: `A command, routineSlug, or tasks array is required to add to the processor`,
-      });
+      }); return;
     }
 
     try {
@@ -209,10 +209,10 @@ export default function bridgeApiRoute(app, config, db, features, lang) {
 
       if (inlineCommand) {
         if (!inlineSlug) {
-          return res.send({
+          res.send({
             success: false,
             message: `When providing a single command you must include a slug or target`,
-          });
+          }); return;
         }
 
         const resolvedCommand = normalizeCommand(
@@ -220,10 +220,10 @@ export default function bridgeApiRoute(app, config, db, features, lang) {
         );
 
         if (!resolvedCommand) {
-          return res.send({
+          res.send({
             success: false,
             message: `Command must contain text after removing leading slashes`,
-          });
+          }); return;
         }
 
         tasksToInsert.push({
@@ -279,10 +279,10 @@ export default function bridgeApiRoute(app, config, db, features, lang) {
         );
 
         if (!routines.length) {
-          return res.send({
+          res.send({
             success: false,
             message: `Routine '${routineSlug}' could not be found`,
-          });
+          }); return;
         }
 
         const routineId = routines[0].executorRoutineId;
@@ -292,10 +292,10 @@ export default function bridgeApiRoute(app, config, db, features, lang) {
         );
 
         if (!routineSteps.length) {
-          return res.send({
+          res.send({
             success: false,
             message: `Routine '${routineSlug}' does not have any steps configured`,
-          });
+          }); return;
         }
 
         routineSteps.forEach((step) => {
@@ -320,10 +320,10 @@ export default function bridgeApiRoute(app, config, db, features, lang) {
       }
 
       if (!tasksToInsert.length) {
-        return res.send({
+        res.send({
           success: false,
           message: `Unable to resolve any tasks to insert`,
-        });
+        }); return;
       }
 
       const insertedTaskIds = [];
@@ -352,20 +352,20 @@ export default function bridgeApiRoute(app, config, db, features, lang) {
         insertedTaskIds
       );
 
-      return res.send({
+      res.send({
         success: true,
         message: `Queued ${insertedTaskIds.length} executor task${
           insertedTaskIds.length === 1 ? "" : "s"
         }`,
         data: hydrateTasks(insertedTasks),
-      });
+      }); return;
     } catch (error) {
       console.error(error);
       if (!res.sent) {
-        return res.status(500).send({
+        res.status(500).send({
           success: false,
           message: `${error}`,
-        });
+        }); return;
       }
     }
   });
@@ -377,10 +377,10 @@ export default function bridgeApiRoute(app, config, db, features, lang) {
 
       const taskId = Number(req.params.taskId);
       if (!taskId || Number.isNaN(taskId)) {
-        return res.send({
+        res.send({
           success: false,
           message: `Task ID is required to submit a report`,
-        });
+        }); return;
       }
 
       const statusRaw = optional(req.body, "status");
@@ -390,17 +390,17 @@ export default function bridgeApiRoute(app, config, db, features, lang) {
       const metadata = optional(req.body, "metadata");
 
       if (!status) {
-        return res.send({
+        res.send({
           success: false,
           message: `status is required to report task progress`,
-        });
+        }); return;
       }
 
       if (!VALID_STATUSES.includes(status)) {
-        return res.send({
+        res.send({
           success: false,
           message: `Invalid status '${status}'. Allowed values: ${VALID_STATUSES.join(", ")}`,
-        });
+        }); return;
       }
 
       try {
@@ -425,18 +425,18 @@ export default function bridgeApiRoute(app, config, db, features, lang) {
           [taskId]
         );
 
-        return res.send({
+        res.send({
           success: true,
           message: `Task ${taskId} marked as ${status}`,
           data: hydrateTasks(updatedTasks)[0] || null,
-        });
+        }); return;
       } catch (error) {
         console.error(error);
         if (!res.sent) {
-          return res.status(500).send({
+          res.status(500).send({
             success: false,
             message: `${error}`,
-          });
+          }); return;
         }
       }
     }
@@ -447,10 +447,10 @@ export default function bridgeApiRoute(app, config, db, features, lang) {
 
     const taskId = Number(req.params.taskId);
     if (!taskId || Number.isNaN(taskId)) {
-      return res.send({
+      res.send({
         success: false,
         message: `Task ID is required to reset a task`,
-      });
+      }); return;
     }
 
     try {
@@ -464,18 +464,18 @@ export default function bridgeApiRoute(app, config, db, features, lang) {
         [taskId]
       );
 
-      return res.send({
+      res.send({
         success: true,
         message: `Task ${taskId} has been reset to pending`,
         data: hydrateTasks(updatedTasks)[0] || null,
-      });
+      }); return;
     } catch (error) {
       console.error(error);
       if (!res.sent) {
-        return res.status(500).send({
+        res.status(500).send({
           success: false,
           message: `${error}`,
-        });
+        }); return;
       }
     }
   });
@@ -493,10 +493,10 @@ export default function bridgeApiRoute(app, config, db, features, lang) {
     if (statusRaw) {
       const normalizedStatus = statusRaw.toString().toLowerCase();
       if (!VALID_STATUSES.includes(normalizedStatus)) {
-        return res.send({
+        res.send({
           success: false,
           message: `Invalid status '${normalizedStatus}'. Allowed values: ${VALID_STATUSES.join(", ")}`,
-        });
+        }); return;
       }
 
       filters.push("status = ?");
@@ -521,19 +521,19 @@ export default function bridgeApiRoute(app, config, db, features, lang) {
         params
       );
 
-      return res.send({
+      res.send({
         success: true,
         message: `Removed ${result.affectedRows} executor task${
           result.affectedRows === 1 ? "" : "s"
         }`,
-      });
+      }); return;
     } catch (error) {
       console.error(error);
       if (!res.sent) {
-        return res.status(500).send({
+        res.status(500).send({
           success: false,
           message: `${error}`,
-        });
+        }); return;
       }
     }
   });
@@ -548,17 +548,17 @@ export default function bridgeApiRoute(app, config, db, features, lang) {
     const steps = optional(req.body, "steps");
 
     if (!routineSlug) {
-      return res.send({
+      res.send({
         success: false,
         message: `routineSlug is required`,
-      });
+      }); return;
     }
 
     if (!Array.isArray(steps) || !steps.length) {
-      return res.send({
+      res.send({
         success: false,
         message: `Routine '${routineSlug}' requires at least one step`,
-      });
+      }); return;
     }
 
     try {
@@ -636,7 +636,7 @@ export default function bridgeApiRoute(app, config, db, features, lang) {
         [routineId]
       );
 
-      return res.send({
+      { res.send({
         success: true,
         message: `Routine '${routineSlug}' saved with ${routineSteps.length} step${
           routineSteps.length === 1 ? "" : "s"
@@ -652,14 +652,14 @@ export default function bridgeApiRoute(app, config, db, features, lang) {
             metadata: safeJsonParse(step.metadata),
           })),
         },
-      });
+      }); return; };
     } catch (error) {
       console.error(error);
       if (!res.sent) {
-        return res.status(500).send({
+        res.status(500).send({
           success: false,
           message: `${error}`,
-        });
+        }); return;
       }
     }
   });
@@ -680,10 +680,10 @@ export default function bridgeApiRoute(app, config, db, features, lang) {
 
       const routines = await query(routineSql, routineFilterParams);
       if (!routines.length) {
-        return res.send({
+        res.send({
           success: true,
           data: [],
-        });
+        }); return;
       }
 
       const routineIds = routines.map((routine) => routine.executorRoutineId);
@@ -717,20 +717,20 @@ export default function bridgeApiRoute(app, config, db, features, lang) {
         steps: stepsByRoutine[routine.executorRoutineId] || [],
       }));
 
-      return res.send({
+      res.send({
         success: true,
         data: payload,
         meta: {
           count: payload.length,
         },
-      });
+      }); return;
     } catch (error) {
       console.error(error);
       if (!res.sent) {
-        return res.status(500).send({
+        res.status(500).send({
           success: false,
           message: `${error}`,
-        });
+        }); return;
       }
     }
   });
@@ -741,17 +741,17 @@ export default function bridgeApiRoute(app, config, db, features, lang) {
     try {
       const results = await query(`SELECT * FROM serverStatus;`);
 
-      return res.send({
+      res.send({
         success: true,
         data: results,
-      });
+      }); return;
     } catch (error) {
       console.error(error);
       if (!res.sent) {
-        return res.status(500).send({
+        res.status(500).send({
           success: false,
           message: `${error}`,
-        });
+        }); return;
       }
     }
   });
@@ -771,10 +771,10 @@ export default function bridgeApiRoute(app, config, db, features, lang) {
     }
 
     if (!serverInfoPayload) {
-      return res.send({
+      res.send({
         success: false,
         message: `serverInfo is required`,
-      });
+      }); return;
     }
 
     let serverInfoString = serverInfoPayload;
@@ -784,10 +784,10 @@ export default function bridgeApiRoute(app, config, db, features, lang) {
     }
 
     if (typeof serverInfoString !== "string") {
-      return res.send({
+      res.send({
         success: false,
         message: `serverInfo must be an object or JSON string`,
-      });
+      }); return;
     }
 
     try {
@@ -796,17 +796,17 @@ export default function bridgeApiRoute(app, config, db, features, lang) {
         [serverInfoString, lastUpdated]
       );
 
-      return res.send({
+      res.send({
         success: true,
         message: `Server status updated successfully.`,
-      });
+      }); return;
     } catch (error) {
       console.error(error);
       if (!res.sent) {
-        return res.status(500).send({
+        res.status(500).send({
           success: false,
           message: `${error}`,
-        });
+        }); return;
       }
     }
   });

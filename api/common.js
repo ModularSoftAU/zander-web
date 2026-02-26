@@ -13,12 +13,12 @@ import { getWebAnnouncement } from "../controllers/announcementController.js";
 /*
     Check if a specific feature is enabled.
 
-    @param isFeatureEnabled The feature to check if enabled.
+    @param enabled The feature to check if enabled.
     @param res Passing through res.
     @param lang Passing through lang.
 */
-export function isFeatureEnabled(isFeatureEnabled, res, lang) {
-  if (isFeatureEnabled) return true;
+export function isFeatureEnabled(enabled, res, lang) {
+  if (enabled) return true;
 
   res.send({
     success: false,
@@ -40,16 +40,16 @@ export function required(body, field, res) {
   // defined or null. If the body is not defined then we error as well.
   // This can happen when no parameters exist.
   if (!body || !(field in body))
-    return res.send({
+    { res.send({
       success: false,
       message: `Body requires field '${field}'`,
-    });
+    }); return; }
 
   if (body[field] === null)
-    return res.send({
+    { res.send({
       success: false,
       message: `Field ${field} cannot be null`,
-    });
+    }); return; }
 
   return body[field];
 }
@@ -73,18 +73,18 @@ export function optional(body, field) {
 /*
     Check if a specific web feature is enabled.
 
-    @param isFeatureEnabled The feature to check if enabled.
+    @param enabled The feature to check if enabled.
     @param req Passing through req
     @param res Passing through res
     @param features Passing through features
 */
 export async function isFeatureWebRouteEnabled(
-  isFeatureEnabled,
+  enabled,
   req,
   res,
   features
 ) {
-  if (!isFeatureEnabled) {
+  if (!enabled) {
     res.view("session/featureDisabled", {
       pageTitle: `Feature Disabled`,
       config: config,
@@ -94,6 +94,7 @@ export async function isFeatureWebRouteEnabled(
       globalImage: await getGlobalImage(),
       announcementWeb: await getWebAnnouncement(),
     });
+    return false;
   }
   return true;
 }
@@ -227,7 +228,7 @@ export async function postAPIRequest(
     const fallbackMessage =
       "Unexpected response from the server. Please try again.";
     setBannerCookie("danger", fallbackMessage, res);
-    return res.redirect(failureRedirectURL);
+    { res.redirect(failureRedirectURL); return; }
   }
 
   console.log(data);
@@ -237,10 +238,11 @@ export async function postAPIRequest(
   }
 
   if (!data.success) {
-    return res.redirect(failureRedirectURL);
+    res.redirect(failureRedirectURL);
+    return;
   }
 
-  return console.log(data);
+  console.log(data);
 }
 
 /*

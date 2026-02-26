@@ -17,10 +17,10 @@ export default function dashboardAnnouncementSiteRoute(
   // Announcements
   //
   app.get("/dashboard/announcements", async function (req, res) {
-    if (!isFeatureWebRouteEnabled(features.announcements, req, res, features))
+    if (!(await isFeatureWebRouteEnabled(features.announcements, req, res, features)))
       return;
 
-    if (!hasPermission("zander.web.announcements", req, res, features)) return;
+    if (!(await hasPermission("zander.web.announcements", req, res, features))) return;
 
     const fetchURL = `${process.env.siteAddress}/api/announcement/get`;
     const response = await fetch(fetchURL, {
@@ -28,7 +28,7 @@ export default function dashboardAnnouncementSiteRoute(
     });
     const apiData = await response.json();
 
-    res.view("dashboard/announcements/announcements-list", {
+    await res.view("dashboard/announcements/announcements-list", {
       pageTitle: `Dashboard - Announcements`,
       config: config,
       apiData: apiData,
@@ -37,17 +37,15 @@ export default function dashboardAnnouncementSiteRoute(
       globalImage: await getGlobalImage(),
       announcementWeb: await getWebAnnouncement(),
     });
-
-    return res;
   });
 
   app.get("/dashboard/announcements/create", async function (req, res) {
-    if (!isFeatureWebRouteEnabled(features.announcements, req, res, features))
+    if (!(await isFeatureWebRouteEnabled(features.announcements, req, res, features)))
       return;
 
-    if (!hasPermission("zander.web.announcements", req, res, features)) return;
+    if (!(await hasPermission("zander.web.announcements", req, res, features))) return;
 
-    res.view("dashboard/announcements/announcements-editor", {
+    await res.view("dashboard/announcements/announcements-editor", {
       pageTitle: `Dashboard - Announcement Creator`,
       config: config,
       type: "create",
@@ -56,15 +54,13 @@ export default function dashboardAnnouncementSiteRoute(
       globalImage: await getGlobalImage(),
       announcementWeb: await getWebAnnouncement(),
     });
-
-    return res;
   });
 
   app.get("/dashboard/announcements/edit", async function (req, res) {
-    if (!isFeatureWebRouteEnabled(features.announcements, req, res, features))
+    if (!(await isFeatureWebRouteEnabled(features.announcements, req, res, features)))
       return;
 
-    if (!hasPermission("zander.web.announcements", req, res, features)) return;
+    if (!(await hasPermission("zander.web.announcements", req, res, features))) return;
 
     const announcementId = req.query.announcementId;
     const fetchURL = `${process.env.siteAddress}/api/announcement/get?announcementId=${announcementId}`;
@@ -73,7 +69,7 @@ export default function dashboardAnnouncementSiteRoute(
     });
     const announcementApiData = await response.json();
 
-    res.view("dashboard/announcements/announcements-editor", {
+    await res.view("dashboard/announcements/announcements-editor", {
       pageTitle: `Dashboard - Announcement Editor`,
       config: config,
       announcementApiData: announcementApiData.data[0],
@@ -83,7 +79,5 @@ export default function dashboardAnnouncementSiteRoute(
       globalImage: await getGlobalImage(),
       announcementWeb: await getWebAnnouncement(),
     });
-
-    return res;
   });
 }

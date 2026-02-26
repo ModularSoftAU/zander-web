@@ -59,7 +59,7 @@ const buildApp = async () => {
   app.setNotFoundHandler(async function (req, res) {
     res.status(404);
 
-    return res.view("session/notFound", {
+    await res.view("session/notFound", {
       pageTitle: `404 Not Found`,
       config: config,
       req: req,
@@ -82,13 +82,14 @@ const buildApp = async () => {
 
     // If the request is for the API, return JSON instead of a view
     if (req.url.startsWith("/api/")) {
-      return res.send({
+      res.send({
         success: false,
         message: error.message || "Internal Server Error",
       });
+      return;
     }
 
-    return res.view("session/error", {
+    await res.view("session/error", {
       pageTitle: `Server Error`,
       config: config,
       error: error,
@@ -124,10 +125,10 @@ const buildApp = async () => {
 
   // Heartbeat — public, no token required so monitoring tools can reach it
   app.get("/api/heartbeat", async function (req, res) {
-    return res.send({
+    res.send({
       success: true,
       message: `OK`,
-    });
+    }); return;
   });
 
   await app.register((instance, options, next) => {
@@ -175,7 +176,7 @@ const buildApp = async () => {
   });
 
   app.addHook("preHandler", async (req, res) => {
-    if (req.session) {
+    if (req.session && req.session.authenticated === undefined) {
       req.session.authenticated = false;
     }
     req.notifications = { unreadCount: 0, items: [] };

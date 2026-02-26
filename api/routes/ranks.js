@@ -203,10 +203,10 @@ export default function rankApiRoute(app, config, db, features, lang) {
         const player = await resolvePlayer(username);
 
         if (!player || !player.uuid) {
-          return res.send({
+          res.send({
             success: false,
             message: "Player not found.",
-          });
+          }); return;
         }
 
         const rows = await queryDb(
@@ -232,11 +232,11 @@ export default function rankApiRoute(app, config, db, features, lang) {
           title: row.title || null,
         }));
 
-        return res.send({
+        res.send({
           success: true,
           data: mapped,
           user: player,
-        });
+        }); return;
       }
 
       if (rankSlug) {
@@ -258,15 +258,15 @@ export default function rankApiRoute(app, config, db, features, lang) {
           [rankSlug]
         );
 
-        return res.send({ success: true, data: rows });
+        res.send({ success: true, data: rows }); return;
       }
 
       const directory = await getRankDirectory();
-      return res.send({ success: true, data: directory });
+      res.send({ success: true, data: directory }); return;
     } catch (error) {
       console.error(error);
       if (!res.sent) {
-        return res.status(500).send({ success: false, message: `${error}` });
+        res.status(500).send({ success: false, message: `${error}` }); return;
       }
     }
   });
@@ -276,20 +276,20 @@ export default function rankApiRoute(app, config, db, features, lang) {
     const username = optional(req.query, "username");
 
     if (!username) {
-      return res.send({
+      res.send({
         success: false,
         message: "Username is required.",
-      });
+      }); return;
     }
 
     try {
       const player = await resolvePlayer(username);
 
       if (!player || !player.uuid) {
-        return res.send({
+        res.send({
           success: false,
           message: "Player not found.",
-        });
+        }); return;
       }
 
       const ranks = await queryDb(
@@ -315,17 +315,17 @@ export default function rankApiRoute(app, config, db, features, lang) {
         title: row.title || null,
       }));
 
-      return res.send({
+      res.send({
         success: true,
         data: {
           user: player,
           ranks: mappedRanks,
         },
-      });
+      }); return;
     } catch (error) {
       console.error(error);
       if (!res.sent) {
-        return res.status(500).send({ success: false, message: `${error}` });
+        res.status(500).send({ success: false, message: `${error}` }); return;
       }
     }
   });
@@ -345,7 +345,7 @@ export default function rankApiRoute(app, config, db, features, lang) {
     } = req.body || {};
 
     if (!rankSlug) {
-      return res.send({ success: false, message: "Rank slug is required." });
+      res.send({ success: false, message: "Rank slug is required." }); return;
     }
 
     try {
@@ -356,10 +356,10 @@ export default function rankApiRoute(app, config, db, features, lang) {
       if (priority !== undefined && priority !== null && priority !== "") {
         const parsed = Number(priority);
         if (Number.isNaN(parsed)) {
-          return res.send({
+          res.send({
             success: false,
             message: "Priority must be a number.",
-          });
+          }); return;
         }
         sanitizedPriority = Math.floor(parsed);
       }
@@ -407,21 +407,21 @@ export default function rankApiRoute(app, config, db, features, lang) {
       );
 
       if (!updatedRank) {
-        return res.send({
+        res.send({
           success: false,
           message: "Unable to load the updated rank from LuckPerms.",
-        });
+        }); return;
       }
 
-      return res.send({
+      res.send({
         success: true,
         message: "Rank configuration updated.",
         data: mapRankRow(updatedRank),
-      });
+      }); return;
     } catch (error) {
       console.error(error);
       if (!res.sent) {
-        return res.status(500).send({ success: false, message: `${error}` });
+        res.status(500).send({ success: false, message: `${error}` }); return;
       }
     }
   });
@@ -432,17 +432,17 @@ export default function rankApiRoute(app, config, db, features, lang) {
     const { username, rankSlug, title } = req.body || {};
 
     if (!username || !rankSlug) {
-      return res.send({
+      res.send({
         success: false,
         message: "Username and rankSlug are required.",
-      });
+      }); return;
     }
 
     try {
       const player = await resolvePlayer(username);
 
       if (!player || !player.uuid) {
-        return res.send({ success: false, message: "Player not found." });
+        res.send({ success: false, message: "Player not found." }); return;
       }
 
       const [existing] = await queryDb(
@@ -452,10 +452,10 @@ export default function rankApiRoute(app, config, db, features, lang) {
       );
 
       if (existing) {
-        return res.send({
+        res.send({
           success: false,
           message: "Player already has this rank.",
-        });
+        }); return;
       }
 
       await queryDb(
@@ -481,14 +481,14 @@ export default function rankApiRoute(app, config, db, features, lang) {
         );
       }
 
-      return res.send({
+      res.send({
         success: true,
         message: "Rank assigned successfully.",
-      });
+      }); return;
     } catch (error) {
       console.error(error);
       if (!res.sent) {
-        return res.status(500).send({ success: false, message: `${error}` });
+        res.status(500).send({ success: false, message: `${error}` }); return;
       }
     }
   });
@@ -499,17 +499,17 @@ export default function rankApiRoute(app, config, db, features, lang) {
     const { username, rankSlug } = req.body || {};
 
     if (!username || !rankSlug) {
-      return res.send({
+      res.send({
         success: false,
         message: "Username and rankSlug are required.",
-      });
+      }); return;
     }
 
     try {
       const player = await resolvePlayer(username);
 
       if (!player || !player.uuid) {
-        return res.send({ success: false, message: "Player not found." });
+        res.send({ success: false, message: "Player not found." }); return;
       }
 
       const result = await queryDb(
@@ -525,17 +525,17 @@ export default function rankApiRoute(app, config, db, features, lang) {
         [player.uuid, rankSlug]
       );
 
-      return res.send({
+      res.send({
         success: true,
         message:
           result?.affectedRows > 0
             ? "Rank removed successfully."
             : "Rank was not assigned to the player.",
-      });
+      }); return;
     } catch (error) {
       console.error(error);
       if (!res.sent) {
-        return res.status(500).send({ success: false, message: `${error}` });
+        res.status(500).send({ success: false, message: `${error}` }); return;
       }
     }
   });
@@ -548,35 +548,35 @@ export default function rankApiRoute(app, config, db, features, lang) {
       const { username, permission } = req.body || {};
 
       if (!username || !permission) {
-        return res.send({
+        res.send({
           success: false,
           message: "Username and permission are required.",
-        });
+        }); return;
       }
 
       try {
         const player = await resolvePlayer(username);
 
         if (!player || !player.userId) {
-          return res.send({
+          res.send({
             success: false,
             message: "Player must have an active web account to check permissions.",
-          });
+          }); return;
         }
 
         const userData = await new UserGetter().byUserId(player.userId);
 
         if (!userData) {
-          return res.send({
+          res.send({
             success: false,
             message: "Unable to load player profile.",
-          });
+          }); return;
         }
 
         const permissions = await getUserPermissions(userData);
         const hasPermission = permissionMatch(permissions, permission);
 
-        return res.send({
+        res.send({
           success: true,
           data: {
             hasPermission,
@@ -584,11 +584,11 @@ export default function rankApiRoute(app, config, db, features, lang) {
             username: player.username,
             ranks: permissions.userRanks || [],
           },
-        });
+        }); return;
       } catch (error) {
         console.error(error);
         if (!res.sent) {
-          return res.status(500).send({ success: false, message: `${error}` });
+          res.status(500).send({ success: false, message: `${error}` }); return;
         }
       }
     }

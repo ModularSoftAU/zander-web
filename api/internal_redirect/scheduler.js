@@ -16,7 +16,7 @@ export default function schedulerRedirectRoute(app, config, lang, features) {
     );
 
     if (!res.sent) {
-      return res.redirect(`${process.env.siteAddress}/dashboard/scheduler`);
+      { res.redirect(`${process.env.siteAddress}/dashboard/scheduler`); return; };
     }
     return res;
   });
@@ -34,7 +34,7 @@ export default function schedulerRedirectRoute(app, config, lang, features) {
     );
 
     if (!res.sent) {
-      return res.redirect(`${process.env.siteAddress}/dashboard/scheduler`);
+      { res.redirect(`${process.env.siteAddress}/dashboard/scheduler`); return; };
     }
     return res;
   });

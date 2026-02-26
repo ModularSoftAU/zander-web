@@ -13,7 +13,7 @@ import {
 export default function notificationRoutes(app, config, features) {
   app.get("/notifications", async function (req, res) {
     if (!req.session.user) {
-      return res.view("session/notLoggedIn", {
+      await res.view("session/notLoggedIn", {
         pageTitle: "Not Logged In",
         config,
         req,
@@ -26,7 +26,7 @@ export default function notificationRoutes(app, config, features) {
     const notifications = await getUserNotifications(req.session.user.userId, 50);
     const summary = await getNotificationSummary(req.session.user.userId, 50);
 
-    return res.view("modules/notifications/index", {
+    await res.view("modules/notifications/index", {
       pageTitle: "Notifications",
       pageDescription: "Notifications",
       config,
@@ -40,36 +40,36 @@ export default function notificationRoutes(app, config, features) {
   });
 
   app.get("/notifications/vapid-public-key", async function (req, res) {
-    return res.send({ publicKey: process.env.VAPID_PUBLIC_KEY || null });
+    res.send({ publicKey: process.env.VAPID_PUBLIC_KEY || null }); return;
   });
 
   app.post("/notifications/push-subscribe", async function (req, res) {
     if (!req.session.user) {
-      return res.status(401).send({ error: "Not authenticated" });
+      res.status(401).send({ error: "Not authenticated" }); return;
     }
 
     const { subscription } = req.body || {};
     if (!subscription || !subscription.endpoint || !subscription.keys) {
-      return res.status(400).send({ error: "Invalid subscription" });
+      res.status(400).send({ error: "Invalid subscription" }); return;
     }
 
     try {
       await savePushSubscription(req.session.user.userId, subscription);
-      return res.status(201).send({ success: true });
+      res.status(201).send({ success: true }); return;
     } catch (error) {
       console.error("[NOTIFICATION] Failed to save push subscription", error);
-      return res.status(500).send({ error: "Failed to save subscription" });
+      res.status(500).send({ error: "Failed to save subscription" }); return;
     }
   });
 
   app.get("/notifications/summary", async function (req, res) {
     if (!req.session.user) {
-      return res.status(401).send({ error: "Not authenticated" });
+      res.status(401).send({ error: "Not authenticated" }); return;
     }
 
     const summary = await getNotificationSummary(req.session.user.userId, 10);
 
-    return res.send({
+    { res.send({
       unreadCount: summary.unreadCount,
       items: summary.items.map((item) => ({
         notificationId: item.notificationId,
@@ -79,12 +79,12 @@ export default function notificationRoutes(app, config, features) {
         isRead: item.isRead,
         createdAt: item.createdAt,
       })),
-    });
+    }); return; };
   });
 
   app.get("/notifications/visit/:id", async function (req, res) {
     if (!req.session.user) {
-      return res.view("session/notLoggedIn", {
+      await res.view("session/notLoggedIn", {
         pageTitle: "Not Logged In",
         config,
         req,
@@ -96,8 +96,8 @@ export default function notificationRoutes(app, config, features) {
 
     const notificationId = Number(req.params.id);
     if (!notificationId) {
-      setBannerCookie("warning", "Notification not found.", res);
-      return res.redirect("/notifications");
+      await setBannerCookie("warning", "Notification not found.", res);
+      { res.redirect("/notifications"); return; };
     }
 
     const notification = await getNotificationById(
@@ -106,18 +106,18 @@ export default function notificationRoutes(app, config, features) {
     );
 
     if (!notification) {
-      setBannerCookie("warning", "Notification not found.", res);
-      return res.redirect("/notifications");
+      await setBannerCookie("warning", "Notification not found.", res);
+      { res.redirect("/notifications"); return; };
     }
 
     await markNotificationRead(notificationId, req.session.user.userId);
 
-    return res.redirect(notification.url || "/notifications");
+    { res.redirect(notification.url || "/notifications"); return; };
   });
 
   app.post("/notifications/mark-all", async function (req, res) {
     if (!req.session.user) {
-      return res.view("session/notLoggedIn", {
+      await res.view("session/notLoggedIn", {
         pageTitle: "Not Logged In",
         config,
         req,
@@ -128,13 +128,13 @@ export default function notificationRoutes(app, config, features) {
     }
 
     await markAllNotificationsRead(req.session.user.userId);
-    setBannerCookie("success", "All notifications marked as read.", res);
-    return res.redirect("/notifications");
+    await setBannerCookie("success", "All notifications marked as read.", res);
+    { res.redirect("/notifications"); return; };
   });
 
   app.post("/notifications/:id/dismiss", async function (req, res) {
     if (!req.session.user) {
-      return res.view("session/notLoggedIn", {
+      await res.view("session/notLoggedIn", {
         pageTitle: "Not Logged In",
         config,
         req,
@@ -146,17 +146,17 @@ export default function notificationRoutes(app, config, features) {
 
     const notificationId = Number(req.params.id);
     if (!notificationId) {
-      setBannerCookie("warning", "Notification not found.", res);
-      return res.redirect("/notifications");
+      await setBannerCookie("warning", "Notification not found.", res);
+      { res.redirect("/notifications"); return; };
     }
 
     const deleted = await deleteNotification(notificationId, req.session.user.userId);
     if (!deleted) {
-      setBannerCookie("warning", "Notification not found.", res);
-      return res.redirect("/notifications");
+      await setBannerCookie("warning", "Notification not found.", res);
+      { res.redirect("/notifications"); return; };
     }
 
-    setBannerCookie("success", "Notification dismissed.", res);
-    return res.redirect("/notifications");
+    await setBannerCookie("success", "Notification dismissed.", res);
+    { res.redirect("/notifications"); return; };
   });
 }
