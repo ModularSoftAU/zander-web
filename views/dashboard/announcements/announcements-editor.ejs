@@ -388,7 +388,7 @@
             }
 
             if (field === "link") {
-                visible = type === "web" || type === "popup";
+                visible = type === "web" || type === "popup" || type === "tip";
             }
 
             group.classList.toggle("d-none", !visible);
