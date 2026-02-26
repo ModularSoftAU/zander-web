@@ -56,10 +56,10 @@ export default function userApiRoute(app, config, db, features, lang) {
           );
         });
 
-        res.send({
+        { res.send({
           success: null,
           message: userAlreadyExistsLang,
-        }); return;
+        }); return; }
       } else {
         // User does not exist, create them
         await new Promise((resolve, reject) => {
@@ -73,20 +73,20 @@ export default function userApiRoute(app, config, db, features, lang) {
           );
         });
 
-        res.send({
+        { res.send({
           success: true,
           message: userCreatedLang
             .replace("%USERNAME%", username)
             .replace("%UUID%", uuid),
-        }); return;
+        }); return; }
       }
     } catch (error) {
       console.error(error);
       if (!res.sent) {
-        res.status(500).send({
+        { res.status(500).send({
           success: false,
           message: `${error}`,
-        }); return;
+        }); return; }
       }
     }
   });
@@ -122,23 +122,23 @@ export default function userApiRoute(app, config, db, features, lang) {
       });
 
       if (!results || !results.length) {
-        res.send({
+        { res.send({
           success: false,
           message: lang.api.userDoesNotExist || "No Users found",
-        }); return;
+        }); return; }
       }
 
-      res.send({
+      { res.send({
         success: true,
         data: results,
-      }); return;
+      }); return; }
     } catch (error) {
       console.error(error);
       if (!res.sent) {
-        res.status(500).send({
+        { res.status(500).send({
           success: false,
           message: `${error}`,
-        }); return;
+        }); return; }
       }
     }
   });
@@ -151,17 +151,17 @@ export default function userApiRoute(app, config, db, features, lang) {
     try {
       const buildProfileResponse = async (userRecord) => {
         if (!userRecord) {
-          res.send({
+          { res.send({
             success: false,
             message: lang.api.userDoesNotExist,
-          }); return;
+          }); return; }
         }
 
         const profilePicture = await getProfilePicture(userRecord.username);
         const profileStats = await getUserStats(userRecord.userId);
         const profileSession = await getUserLastSession(userRecord.userId);
 
-        res.send({
+        { res.send({
           success: true,
           data: {
             profileData: userRecord,
@@ -169,7 +169,7 @@ export default function userApiRoute(app, config, db, features, lang) {
             profileStats: profileStats,
             profileSession: profileSession,
           },
-        }); return;
+        }); return; }
       };
 
       if (username) {
@@ -181,10 +181,10 @@ export default function userApiRoute(app, config, db, features, lang) {
         const apiData = await response.json();
 
         if (!apiData.success || !apiData.data || !apiData.data.length) {
-          res.send({
+          { res.send({
             success: false,
             message: lang.api.userDoesNotExist,
-          }); return;
+          }); return; }
         }
 
         return await buildProfileResponse(apiData.data[0]);
@@ -197,26 +197,26 @@ export default function userApiRoute(app, config, db, features, lang) {
         const apiData = await response.json();
 
         if (!apiData.success || !apiData.data || !apiData.data.length) {
-          res.send({
+          { res.send({
             success: false,
             message: lang.api.userDoesNotExist,
-          }); return;
+          }); return; }
         }
 
         return await buildProfileResponse(apiData.data[0]);
       } else {
-        res.send({
+        { res.send({
           success: false,
           message: `No Users found`,
-        }); return;
+        }); return; }
       }
     } catch (error) {
       console.error(error);
       if (!res.sent) {
-        res.status(500).send({
+        { res.status(500).send({
           success: false,
           message: `${error}`,
-        }); return;
+        }); return; }
       }
     }
   });
@@ -244,10 +244,10 @@ export default function userApiRoute(app, config, db, features, lang) {
       }
 
       if (!resolvedUuid) {
-        res.send({
+        { res.send({
           success: false,
           message: lang.api.userDoesNotExist,
-        }); return;
+        }); return; }
       }
 
       const punishments = await new Promise((resolve, reject) => {
@@ -267,7 +267,7 @@ export default function userApiRoute(app, config, db, features, lang) {
         );
       });
 
-      res.send({
+      { res.send({
         success: true,
         data: punishments,
         target: {
@@ -275,14 +275,14 @@ export default function userApiRoute(app, config, db, features, lang) {
           uuid: resolvedUuid,
           userId: userRecord?.userId ?? null,
         },
-      }); return;
+      }); return; }
     } catch (error) {
       console.error("Failed to fetch punishments", error);
       if (!res.sent) {
-        res.status(500).send({
+        { res.status(500).send({
           success: false,
           message: `${error}`,
-        }); return;
+        }); return; }
       }
     }
   });
@@ -298,17 +298,17 @@ export default function userApiRoute(app, config, db, features, lang) {
       const user = await userData.byUUID(uuid);
 
       if (!user) {
-        res.send({
+        { res.send({
           success: false,
           message: `User ${username} does not exist in player base, please join the Network and try again.`,
-        }); return;
+        }); return; }
       }
 
       if (user.discordId) {
-        res.send({
+        { res.send({
           success: false,
           message: `You are already registered and linked, you cannot do this again.`,
-        }); return;
+        }); return; }
       }
 
       const linkCode = await generateVerifyCode();
@@ -326,17 +326,17 @@ export default function userApiRoute(app, config, db, features, lang) {
         );
       });
 
-      res.send({
+      { res.send({
         success: true,
         message: `Here is your code: ${linkCode}\nGo back to the registration form and put this in.\nThis code will expire in 5 minutes.`,
-      }); return;
+      }); return; }
     } catch (error) {
       console.error(error);
       if (!res.sent) {
-        res.status(500).send({
+        { res.status(500).send({
           success: false,
           message: `There was an error in setting your code, try again in 5 minutes.`,
-        }); return;
+        }); return; }
       }
     }
   });
@@ -364,12 +364,12 @@ export default function userApiRoute(app, config, db, features, lang) {
       const linkUser = await userLinkData.getUserByCode(verifyCode);
 
       if (!linkUser) {
-        await setBannerCookie(
+        setBannerCookie(
           "warning",
           `No verification code matches, please try again.`,
           res
         );
-        { res.redirect(`/unregistered`); return; };
+        { res.redirect(`/unregistered`); return; }
       }
 
       let linkUserUUID = linkUser.uuid;
@@ -377,27 +377,27 @@ export default function userApiRoute(app, config, db, features, lang) {
       try {
         const success = await userLinkData.link(linkUserUUID, discordId);
         if (success) {
-          await setBannerCookie("success", `Link success`, res);
+          setBannerCookie("success", `Link success`, res);
         } else {
-          await setBannerCookie("warning", `Link failed`, res);
+          setBannerCookie("warning", `Link failed`, res);
         }
       } catch (error) {
         console.error("Error linking:", error);
-        await setBannerCookie(
+        setBannerCookie(
           "warning",
           `Issue with linking, try again soon.`,
           res
         );
       }
 
-      { res.redirect("/profile"); return; }; // Assuming redirect after link
+      { res.redirect("/profile"); return; } // Assuming redirect after link
     } catch (error) {
       console.error(error);
       if (!res.sent) {
-        res.status(500).send({
+        { res.status(500).send({
           success: false,
           message: `${error}`,
-        }); return;
+        }); return; }
       }
     }
   });
@@ -410,7 +410,7 @@ export default function userApiRoute(app, config, db, features, lang) {
     const profilePicture_email = optional(req.body, "profilePicture_email");
 
     if (await hasActiveWebBan(req.session?.user?.userId)) {
-      res.send({ success: false, message: "You are currently banned from editing your profile." }); return;
+      { res.send({ success: false, message: "You are currently banned from editing your profile." }); return; }
     }
 
     try {
@@ -419,14 +419,14 @@ export default function userApiRoute(app, config, db, features, lang) {
         profilePicture_type,
         profilePicture_email
       );
-      res.send({ success: true, message: "Display preferences updated." }); return;
+      { res.send({ success: true, message: "Display preferences updated." }); return; }
     } catch (error) {
       console.error(error);
       if (!res.sent) {
-        res.status(500).send({
+        { res.status(500).send({
           success: false,
           message: `${error}`,
-        }); return;
+        }); return; }
       }
     }
   });
@@ -438,7 +438,7 @@ export default function userApiRoute(app, config, db, features, lang) {
     if (res.sent) return;
 
     if (await hasActiveWebBan(req.session?.user?.userId)) {
-      res.send({ success: false, message: "You are currently banned from editing your profile." }); return;
+      { res.send({ success: false, message: "You are currently banned from editing your profile." }); return; }
     }
 
     try {
@@ -459,30 +459,30 @@ export default function userApiRoute(app, config, db, features, lang) {
       if (dataResponse.success === true) {
         try {
           await setProfileUserInterests(userId, social_interests);
-          res.send({ success: true, message: "Interests updated." }); return;
+          { res.send({ success: true, message: "Interests updated." }); return; }
         } catch (error) {
           console.error(error);
-          res.status(500).send({
+          { res.status(500).send({
             success: false,
             message: `${error}`,
-          }); return;
+          }); return; }
         }
       } else {
         console.log(`Illegal words detected.`);
-        await setBannerCookie(
+        setBannerCookie(
           "danger",
           `Illegal words detected, changes not applied.`,
           res
         );
-        res.send({ success: false, message: "Illegal words detected." }); return;
+        { res.send({ success: false, message: "Illegal words detected." }); return; }
       }
     } catch (error) {
       console.error(error);
       if (!res.sent) {
-        res.status(500).send({
+        { res.status(500).send({
           success: false,
           message: `${error}`,
-        }); return;
+        }); return; }
       }
     }
   });
@@ -494,7 +494,7 @@ export default function userApiRoute(app, config, db, features, lang) {
     if (res.sent) return;
 
     if (await hasActiveWebBan(req.session?.user?.userId)) {
-      res.send({ success: false, message: "You are currently banned from editing your profile." }); return;
+      { res.send({ success: false, message: "You are currently banned from editing your profile." }); return; }
     }
 
     try {
@@ -515,29 +515,24 @@ export default function userApiRoute(app, config, db, features, lang) {
       if (dataResponse.success === true) {
         try {
           await setProfileUserAboutMe(userId, social_aboutMe);
-          res.send({ success: true, message: "About me updated." }); return;
+          { res.send({ success: true, message: "About me updated." }); return; }
         } catch (error) {
           console.error(error);
-          res.status(500).send({
+          { res.status(500).send({
             success: false,
             message: `${error}`,
-          }); return;
+          }); return; }
         }
       } else {
-        await setBannerCookie(
-          "danger",
-          `Illegal words detected, changes not applied.`,
-          res
-        );
-        res.send({ success: false, message: "Illegal words detected." }); return;
+        { res.send({ success: false, message: "Illegal words detected." }); return; }
       }
     } catch (error) {
       console.error(error);
       if (!res.sent) {
-        res.status(500).send({
+        { res.status(500).send({
           success: false,
           message: `${error}`,
-        }); return;
+        }); return; }
       }
     }
   });
@@ -555,7 +550,7 @@ export default function userApiRoute(app, config, db, features, lang) {
     const social_spotify = optional(req.body, "social_spotify");
 
     if (await hasActiveWebBan(req.session?.user?.userId)) {
-      res.send({ success: false, message: "You are currently banned from editing your profile." }); return;
+      { res.send({ success: false, message: "You are currently banned from editing your profile." }); return; }
     }
 
     try {
@@ -570,14 +565,14 @@ export default function userApiRoute(app, config, db, features, lang) {
         social_reddit,
         social_spotify
       );
-      res.send({ success: true, message: "Social connections updated." }); return;
+      { res.send({ success: true, message: "Social connections updated." }); return; }
     } catch (error) {
       console.error(error);
       if (!res.sent) {
-        res.status(500).send({
+        { res.status(500).send({
           success: false,
           message: `${error}`,
-        }); return;
+        }); return; }
       }
     }
   });

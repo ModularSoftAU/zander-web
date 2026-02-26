@@ -41,10 +41,10 @@ export default function schedulerApiRoute(
       });
 
       if (!results || !results.length) {
-        res.send({
+        { res.send({
           success: false,
           message: "No scheduled Discord messages found.",
-        }); return;
+        }); return; }
       }
 
       const enhancedResults = await Promise.all(
@@ -70,17 +70,17 @@ export default function schedulerApiRoute(
         })
       );
 
-      res.send({
+      { res.send({
         success: true,
         data: enhancedResults,
-      }); return;
+      }); return; }
     } catch (error) {
       console.error(error);
       if (!res.sent) {
-        res.status(500).send({
+        { res.status(500).send({
           success: false,
           message: `${error}`,
-        }); return;
+        }); return; }
       }
     }
   });
@@ -104,17 +104,17 @@ export default function schedulerApiRoute(
       timezoneOffset
     );
     if (Number.isNaN(scheduledDate.getTime())) {
-      res.send({
+      { res.send({
         success: false,
         message: "Invalid scheduled date/time.",
-      }); return;
+      }); return; }
     }
 
     if (scheduledDate.getTime() < Date.now()) {
-      res.send({
+      { res.send({
         success: false,
         message: "Scheduled time cannot be in the past.",
-      }); return;
+      }); return; }
     }
 
     try {
@@ -143,17 +143,17 @@ export default function schedulerApiRoute(
         `Scheduled Discord message for channel ${channelId}`
       );
 
-      res.send({
+      { res.send({
         success: true,
         message: "Scheduled Discord message.",
-      }); return;
+      }); return; }
     } catch (error) {
       console.error(error);
       if (!res.sent) {
-        res.status(500).send({
+        { res.status(500).send({
           success: false,
           message: `${error}`,
-        }); return;
+        }); return; }
       }
     }
   });
@@ -185,17 +185,17 @@ export default function schedulerApiRoute(
         `Deleted scheduled Discord message ${scheduleId}`
       );
 
-      res.send({
+      { res.send({
         success: true,
         message: "Scheduled message deleted.",
-      }); return;
+      }); return; }
     } catch (error) {
       console.error(error);
       if (!res.sent) {
-        res.status(500).send({
+        { res.status(500).send({
           success: false,
           message: `${error}`,
-        }); return;
+        }); return; }
       }
     }
   });

@@ -12,11 +12,11 @@ export default function shopApiRoute(app, config, db, features, lang) {
 
     try {
       const result = await searchShops(material, page, { includeProfilePictures: true });
-      res.send(result); return;
+      { res.send(result); return; }
     } catch (err) {
       console.error("Shop API error:", err);
       if (!res.sent) {
-        res.status(500).send({ success: false, message: "An error occurred while searching shops." }); return;
+        { res.status(500).send({ success: false, message: "An error occurred while searching shops." }); return; }
       }
     }
   });

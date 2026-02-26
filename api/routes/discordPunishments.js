@@ -33,10 +33,10 @@ export default function discordPunishmentsApiRoute(app, config, db, features, la
       }
 
       if (!resolvedDiscordId && !resolvedPlayerId) {
-        res.send({
+        { res.send({
           success: false,
           message: "No valid identifier provided.",
-        }); return;
+        }); return; }
       }
 
       const punishments = await getDiscordPunishmentsForProfile({
@@ -44,17 +44,17 @@ export default function discordPunishmentsApiRoute(app, config, db, features, la
         playerId: resolvedPlayerId,
       });
 
-      res.send({
+      { res.send({
         success: true,
         data: punishments,
-      }); return;
+      }); return; }
     } catch (error) {
       console.error("Failed to fetch discord punishments:", error);
       if (!res.sent) {
-        res.status(500).send({
+        { res.status(500).send({
           success: false,
           message: `${error}`,
-        }); return;
+        }); return; }
       }
     }
   });
@@ -68,23 +68,23 @@ export default function discordPunishmentsApiRoute(app, config, db, features, la
       const punishment = await getPunishmentById(parseInt(id, 10));
 
       if (!punishment) {
-        res.send({
+        { res.send({
           success: false,
           message: "Punishment not found.",
-        }); return;
+        }); return; }
       }
 
-      res.send({
+      { res.send({
         success: true,
         data: punishment,
-      }); return;
+      }); return; }
     } catch (error) {
       console.error("Failed to fetch punishment:", error);
       if (!res.sent) {
-        res.status(500).send({
+        { res.status(500).send({
           success: false,
           message: `${error}`,
-        }); return;
+        }); return; }
       }
     }
   });
@@ -101,36 +101,36 @@ export default function discordPunishmentsApiRoute(app, config, db, features, la
     try {
       const punishment = await getPunishmentById(parseInt(punishmentId, 10));
       if (!punishment) {
-        res.send({
+        { res.send({
           success: false,
           message: "Punishment not found.",
-        }); return;
+        }); return; }
       }
 
       // Only the target can appeal
       if (punishment.target_discord_user_id !== discordUserId) {
-        res.send({
+        { res.send({
           success: false,
           message: "You can only appeal your own punishments.",
-        }); return;
+        }); return; }
       }
 
       // Check if there's already an active appeal
       const existingAppeals = await getAppealsByPunishment(parseInt(punishmentId, 10));
       const pendingAppeal = existingAppeals.find((a) => a.status === "PENDING");
       if (pendingAppeal) {
-        res.send({
+        { res.send({
           success: false,
           message: "There is already a pending appeal for this punishment.",
-        }); return;
+        }); return; }
       }
 
       // Cannot appeal if already appealed/lifted/expired
       if (["APPEALED", "EXPIRED", "LIFTED"].includes(punishment.status)) {
-        res.send({
+        { res.send({
           success: false,
           message: "This punishment is no longer active and cannot be appealed.",
-        }); return;
+        }); return; }
       }
 
       const appealId = await createAppeal({
@@ -139,18 +139,18 @@ export default function discordPunishmentsApiRoute(app, config, db, features, la
         appealReason,
       });
 
-      res.send({
+      { res.send({
         success: true,
         data: { appealId },
         message: "Appeal submitted successfully.",
-      }); return;
+      }); return; }
     } catch (error) {
       console.error("Failed to create appeal:", error);
       if (!res.sent) {
-        res.status(500).send({
+        { res.status(500).send({
           success: false,
           message: `${error}`,
-        }); return;
+        }); return; }
       }
     }
   });
@@ -159,17 +159,17 @@ export default function discordPunishmentsApiRoute(app, config, db, features, la
   app.get(baseEndpoint + "/appeals/pending", async function (req, res) {
     try {
       const appeals = await getPendingAppeals();
-      res.send({
+      { res.send({
         success: true,
         data: appeals,
-      }); return;
+      }); return; }
     } catch (error) {
       console.error("Failed to fetch pending appeals:", error);
       if (!res.sent) {
-        res.status(500).send({
+        { res.status(500).send({
           success: false,
           message: `${error}`,
-        }); return;
+        }); return; }
       }
     }
   });
@@ -184,10 +184,10 @@ export default function discordPunishmentsApiRoute(app, config, db, features, la
     if (res.sent) return;
 
     if (!["APPROVED", "REJECTED"].includes(status)) {
-      res.send({
+      { res.send({
         success: false,
         message: "Status must be APPROVED or REJECTED.",
-      }); return;
+      }); return; }
     }
 
     const reviewerNotes = optional(req.body, "reviewerNotes");
@@ -200,17 +200,17 @@ export default function discordPunishmentsApiRoute(app, config, db, features, la
         reviewerNotes,
       });
 
-      res.send({
+      { res.send({
         success: true,
         message: `Appeal ${status.toLowerCase()} successfully.`,
-      }); return;
+      }); return; }
     } catch (error) {
       console.error("Failed to review appeal:", error);
       if (!res.sent) {
-        res.status(500).send({
+        { res.status(500).send({
           success: false,
           message: `${error}`,
-        }); return;
+        }); return; }
       }
     }
   });

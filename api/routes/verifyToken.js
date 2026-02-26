@@ -10,7 +10,8 @@ export default async function verifyToken(req, res) {
     res.send({
       success: false,
       message: lang.api.noToken,
-    }); return;
+    });
+    return;
   }
 
   if (token !== process.env.apiKey) {
@@ -18,6 +19,7 @@ export default async function verifyToken(req, res) {
     res.send({
       success: false,
       message: lang.api.invalidToken,
-    }); return;
+    });
+    return;
   }
 }

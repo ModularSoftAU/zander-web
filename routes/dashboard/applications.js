@@ -41,7 +41,7 @@ export default function dashboardApplicationsSiteRoute(
     });
     const apiData = await parseApiResponse(response);
 
-    await res.view("dashboard/applications/application-list", {
+    { await res.view("dashboard/applications/application-list", {
       pageTitle: `Dashboard - Applications`,
       config: config,
       apiData: apiData,
@@ -49,7 +49,7 @@ export default function dashboardApplicationsSiteRoute(
       req: req,
       globalImage: await getGlobalImage(),
       announcementWeb: await getWebAnnouncement(),
-    });
+    }); return; }
   });
 
   app.get("/dashboard/applications/create", async function (req, res) {
@@ -58,7 +58,7 @@ export default function dashboardApplicationsSiteRoute(
 
     if (!(await hasPermission("zander.web.application", req, res, features))) return;
 
-    await res.view("dashboard/applications/application-editor", {
+    { await res.view("dashboard/applications/application-editor", {
       pageTitle: `Dashboard - Application Creator`,
       config: config,
       type: "create",
@@ -66,7 +66,7 @@ export default function dashboardApplicationsSiteRoute(
       req: req,
       globalImage: await getGlobalImage(),
       announcementWeb: await getWebAnnouncement(),
-    });
+    }); return; }
   });
 
   app.get("/dashboard/applications/edit", async function (req, res) {
@@ -83,11 +83,11 @@ export default function dashboardApplicationsSiteRoute(
     const applicationApiData = await parseApiResponse(response);
 
     if (!applicationApiData.success || !applicationApiData.data?.length) {
-      await setBannerCookie("danger", "Application not found.", res);
-      { res.redirect("/dashboard/applications"); return; };
+      setBannerCookie("danger", "Application not found.", res);
+      { res.redirect("/dashboard/applications"); return; }
     }
 
-    await res.view("dashboard/applications/application-editor", {
+    { await res.view("dashboard/applications/application-editor", {
       pageTitle: `Dashboard - Application Editor`,
       config: config,
       applicationApiData: applicationApiData.data[0],
@@ -96,6 +96,6 @@ export default function dashboardApplicationsSiteRoute(
       req: req,
       globalImage: await getGlobalImage(),
       announcementWeb: await getWebAnnouncement(),
-    });
+    }); return; }
   });
 }

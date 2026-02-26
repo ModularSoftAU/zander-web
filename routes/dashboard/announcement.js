@@ -37,6 +37,8 @@ export default function dashboardAnnouncementSiteRoute(
       globalImage: await getGlobalImage(),
       announcementWeb: await getWebAnnouncement(),
     });
+
+    return;
   });
 
   app.get("/dashboard/announcements/create", async function (req, res) {
@@ -54,6 +56,8 @@ export default function dashboardAnnouncementSiteRoute(
       globalImage: await getGlobalImage(),
       announcementWeb: await getWebAnnouncement(),
     });
+
+    return;
   });
 
   app.get("/dashboard/announcements/edit", async function (req, res) {
@@ -79,5 +83,7 @@ export default function dashboardAnnouncementSiteRoute(
       globalImage: await getGlobalImage(),
       announcementWeb: await getWebAnnouncement(),
     });
+
+    return;
   });
 }

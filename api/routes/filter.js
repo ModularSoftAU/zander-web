@@ -51,10 +51,10 @@ export default function filterApiRoute(
       );
 
       if (isWhitelisted)
-        res.send({
+        { res.send({
           success: true,
           message: "Content is clean. No flags detected.",
-        }); return;
+        }); return; }
 
       let urlDetected = false;
       let flaggedFor = [];
@@ -128,39 +128,39 @@ export default function filterApiRoute(
           );
 
           if (!webhookSent) {
-            res.send({
+            { res.send({
               success: false,
               message: "Content flagged, but staff could not be notified.",
-            }); return;
+            }); return; }
           }
 
-          res.send({
+          { res.send({
             success: false,
             message: lang.filter.phraseCaught || "Content flagged.",
-          }); return;
+          }); return; }
         } catch (error) {
           console.error("Error sending to webhook:", error);
           if (!res.sent) {
-            res.send({
+            { res.send({
               success: false,
               message: `${error}`,
-            }); return;
+            }); return; }
           }
         }
       }
 
       // If no flags, content is clean
-      res.send({
+      { res.send({
         success: true,
         message: "Content is clean. No flags detected.",
-      }); return;
+      }); return; }
     } catch (error) {
       console.error("Error processing request:", error);
       if (!res.sent) {
-        res.status(500).send({
+        { res.status(500).send({
           success: false,
           message: error.message || "Internal Server Error",
-        }); return;
+        }); return; }
       }
     }
   });

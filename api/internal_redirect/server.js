@@ -17,7 +17,7 @@ export default function serverRedirectRoute(app, config, lang, features) {
     );
 
     if (!res.sent) {
-      { res.redirect(`${process.env.siteAddress}/dashboard/servers`); return; };
+      { res.redirect(`${process.env.siteAddress}/dashboard/servers`); return; }
     }
     return;
   });
@@ -36,7 +36,7 @@ export default function serverRedirectRoute(app, config, lang, features) {
     );
 
     if (!res.sent) {
-      { res.redirect(`${process.env.siteAddress}/dashboard/servers`); return; };
+      { res.redirect(`${process.env.siteAddress}/dashboard/servers`); return; }
     }
     return;
   });
@@ -55,7 +55,7 @@ export default function serverRedirectRoute(app, config, lang, features) {
     );
 
     if (!res.sent) {
-      { res.redirect(`${process.env.siteAddress}/dashboard/servers`); return; };
+      { res.redirect(`${process.env.siteAddress}/dashboard/servers`); return; }
     }
     return;
   });

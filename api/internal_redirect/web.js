@@ -12,7 +12,7 @@ export default function webRedirectRoute(app, config, lang, features) {
     );
 
     if (!res.sent) {
-      { res.redirect(`${process.env.siteAddress}/`); return; };
+      { res.redirect(`${process.env.siteAddress}/`); return; }
     }
     return;
   });
@@ -30,7 +30,7 @@ export default function webRedirectRoute(app, config, lang, features) {
     );
 
     if (!res.sent) {
-      { res.redirect(`${process.env.siteAddress}/profile/${req.session.user.username}`); return; };
+      { res.redirect(`${process.env.siteAddress}/profile/${req.session.user.username}`); return; }
     }
     return;
   });
@@ -47,7 +47,7 @@ export default function webRedirectRoute(app, config, lang, features) {
     );
 
     if (!res.sent) {
-      { res.redirect(`${process.env.siteAddress}/profile/${req.session.user.username}`); return; };
+      { res.redirect(`${process.env.siteAddress}/profile/${req.session.user.username}`); return; }
     }
     return;
   });
@@ -64,7 +64,7 @@ export default function webRedirectRoute(app, config, lang, features) {
     );
 
     if (!res.sent) {
-      { res.redirect(`${process.env.siteAddress}/profile/${req.session.user.username}`); return; };
+      { res.redirect(`${process.env.siteAddress}/profile/${req.session.user.username}`); return; }
     }
     return;
   });
@@ -81,7 +81,7 @@ export default function webRedirectRoute(app, config, lang, features) {
     );
 
     if (!res.sent) {
-      { res.redirect(`${process.env.siteAddress}/profile/${req.session.user.username}`); return; };
+      { res.redirect(`${process.env.siteAddress}/profile/${req.session.user.username}`); return; }
     }
     return;
   });

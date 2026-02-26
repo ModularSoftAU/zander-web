@@ -48,23 +48,23 @@ export default function announcementApiRoute(app, config, db, features, lang) {
       });
 
       if (!results || !results.length) {
-        res.send({
+        { res.send({
           success: false,
           message: lang.announcement.noAnnouncements,
-        }); return;
+        }); return; }
       }
 
-      res.send({
+      { res.send({
         success: true,
         data: results,
-      }); return;
+      }); return; }
     } catch (error) {
       console.error(error);
       if (!res.sent) {
-        res.status(500).send({
+        { res.status(500).send({
           success: false,
           message: `${error}`,
-        }); return;
+        }); return; }
       }
     }
   });
@@ -98,24 +98,24 @@ export default function announcementApiRoute(app, config, db, features, lang) {
     const now = new Date();
 
     if (startDate && startDate.getTime() < now.getTime()) {
-      res.send({
+      { res.send({
         success: false,
         message: "Start date cannot be in the past.",
-      }); return;
+      }); return; }
     }
 
     if (endDate && endDate.getTime() < now.getTime()) {
-      res.send({
+      { res.send({
         success: false,
         message: "End date cannot be in the past.",
-      }); return;
+      }); return; }
     }
 
     if (startDate && endDate && endDate.getTime() < startDate.getTime()) {
-      res.send({
+      { res.send({
         success: false,
         message: "End date must be after the start date.",
-      }); return;
+      }); return; }
     }
 
     try {
@@ -147,18 +147,18 @@ export default function announcementApiRoute(app, config, db, features, lang) {
         `Created ${announcementType}`
       );
 
-      res.send({
+      { res.send({
         success: true,
         alertType: "success",
         content: lang.announcement.announcementCreated,
-      }); return;
+      }); return; }
     } catch (error) {
       console.error(error);
       if (!res.sent) {
-        res.status(500).send({
+        { res.status(500).send({
           success: false,
           message: `${error}`,
-        }); return;
+        }); return; }
       }
     }
   });
@@ -194,24 +194,24 @@ export default function announcementApiRoute(app, config, db, features, lang) {
     const now = new Date();
 
     if (startDate && startDate.getTime() < now.getTime()) {
-      res.send({
+      { res.send({
         success: false,
         message: "Start date cannot be in the past.",
-      }); return;
+      }); return; }
     }
 
     if (endDate && endDate.getTime() < now.getTime()) {
-      res.send({
+      { res.send({
         success: false,
         message: "End date cannot be in the past.",
-      }); return;
+      }); return; }
     }
 
     if (startDate && endDate && endDate.getTime() < startDate.getTime()) {
-      res.send({
+      { res.send({
         success: false,
         message: "End date must be after the start date.",
-      }); return;
+      }); return; }
     }
 
     try {
@@ -256,17 +256,17 @@ export default function announcementApiRoute(app, config, db, features, lang) {
         `Edited ${announcementId}`
       );
 
-      res.send({
+      { res.send({
         success: true,
         message: lang.announcement.announcementEdited,
-      }); return;
+      }); return; }
     } catch (error) {
       console.error(error);
       if (!res.sent) {
-        res.status(500).send({
+        { res.status(500).send({
           success: false,
           message: `${error}`,
-        }); return;
+        }); return; }
       }
     }
   });
@@ -298,17 +298,17 @@ export default function announcementApiRoute(app, config, db, features, lang) {
         `Deleted ${announcementId}`
       );
 
-      res.send({
+      { res.send({
         success: true,
         message: lang.announcement.announcementDeleted,
-      }); return;
+      }); return; }
     } catch (error) {
       console.error(error);
       if (!res.sent) {
-        res.status(500).send({
+        { res.status(500).send({
           success: false,
           message: `${error}`,
-        }); return;
+        }); return; }
       }
     }
   });

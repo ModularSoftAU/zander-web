@@ -13,7 +13,7 @@ import { getWebAnnouncement } from "../controllers/announcementController.js";
 /*
     Check if a specific feature is enabled.
 
-    @param enabled The feature to check if enabled.
+    @param isFeatureEnabled The feature to check if enabled.
     @param res Passing through res.
     @param lang Passing through lang.
 */
@@ -73,7 +73,7 @@ export function optional(body, field) {
 /*
     Check if a specific web feature is enabled.
 
-    @param enabled The feature to check if enabled.
+    @param isFeatureEnabled The feature to check if enabled.
     @param req Passing through req
     @param res Passing through res
     @param features Passing through features
@@ -85,7 +85,7 @@ export async function isFeatureWebRouteEnabled(
   features
 ) {
   if (!enabled) {
-    res.view("session/featureDisabled", {
+    await res.view("session/featureDisabled", {
       pageTitle: `Feature Disabled`,
       config: config,
       req: req,
@@ -167,6 +167,7 @@ function hasSpecificPermission(permissionArray, node) {
 }
 
 async function renderNoPermission(req, res, features) {
+  if (res.sent) return;
   await res.view("session/noPermission", {
     pageTitle: `Access Restricted`,
     config: config,
@@ -238,11 +239,10 @@ export async function postAPIRequest(
   }
 
   if (!data.success) {
-    res.redirect(failureRedirectURL);
-    return;
+    { res.redirect(failureRedirectURL); return; }
   }
 
-  console.log(data);
+  return console.log(data);
 }
 
 /*

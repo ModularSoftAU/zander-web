@@ -31,7 +31,7 @@ export default function dashboardRanksRoute(
 
     const rankData = await response.json();
 
-    await res.view("dashboard/ranks/index", {
+    { await res.view("dashboard/ranks/index", {
       pageTitle: `Dashboard - Ranks`,
       config: config,
       features: features,
@@ -41,6 +41,6 @@ export default function dashboardRanksRoute(
         : [],
       globalImage: await getGlobalImage(),
       announcementWeb: await getWebAnnouncement(),
-    });
+    }); return; }
   });
 }

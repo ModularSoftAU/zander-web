@@ -40,23 +40,23 @@ export default function serverApiRoute(app, config, db, features, lang) {
       const results = await getServersFromDB(dbQuery, params);
 
       if (!results || !results.length) {
-        res.send({
+        { res.send({
           success: false,
           message: `There are no servers available.`,
-        }); return;
+        }); return; }
       }
 
-      res.send({
+      { res.send({
         success: true,
         data: results,
-      }); return;
+      }); return; }
     } catch (error) {
       console.error(error);
       if (!res.sent) {
-        res.status(500).send({
+        { res.status(500).send({
           success: false,
           message: `${error}`,
-        }); return;
+        }); return; }
       }
     }
   });
@@ -104,17 +104,17 @@ export default function serverApiRoute(app, config, db, features, lang) {
         `Created ${displayName} (${serverConnectionAddress})`
       );
 
-      res.send({
+      { res.send({
         success: true,
         message: serverCreatedLang.replace("%NAME%", displayName),
-      }); return;
+      }); return; }
     } catch (error) {
       console.error(error);
       if (!res.sent) {
-        res.status(500).send({
+        { res.status(500).send({
           success: false,
           message: `${error}`,
-        }); return;
+        }); return; }
       }
     }
   });
@@ -167,17 +167,17 @@ export default function serverApiRoute(app, config, db, features, lang) {
         `Edited ${displayName} (${serverConnectionAddress})`
       );
 
-      res.send({
+      { res.send({
         success: true,
         message: lang.server.serverEdited,
-      }); return;
+      }); return; }
     } catch (error) {
       console.error(error);
       if (!res.sent) {
-        res.status(500).send({
+        { res.status(500).send({
           success: false,
           message: `${error}`,
-        }); return;
+        }); return; }
       }
     }
   });
@@ -209,17 +209,17 @@ export default function serverApiRoute(app, config, db, features, lang) {
         `Deleted ${serverId}`
       );
 
-      res.send({
+      { res.send({
         success: true,
         message: lang.server.serverDeleted,
-      }); return;
+      }); return; }
     } catch (error) {
       console.error(error);
       if (!res.sent) {
-        res.status(500).send({
+        { res.status(500).send({
           success: false,
           message: `${error}`,
-        }); return;
+        }); return; }
       }
     }
   });

@@ -70,5 +70,7 @@ export default function dashboardSchedulerSiteRoute(
       scheduledMessages: scheduledMessages,
       discordChannels: discordChannels,
     });
+
+    return;
   });
 }

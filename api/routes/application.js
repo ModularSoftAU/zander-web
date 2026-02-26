@@ -30,23 +30,23 @@ export default function applicationApiRoute(app, config, db, features, lang) {
       });
 
       if (!results || !results.length) {
-        res.send({
+        { res.send({
           success: false,
           message: lang.applications.noApplicationsFound,
-        }); return;
+        }); return; }
       }
 
-      res.send({
+      { res.send({
         success: true,
         data: results,
-      }); return;
+      }); return; }
     } catch (error) {
       console.error(error);
       if (!res.sent) {
-        res.status(500).send({
+        { res.status(500).send({
           success: false,
           message: `${error}`,
-        }); return;
+        }); return; }
       }
     }
   });
@@ -106,20 +106,20 @@ export default function applicationApiRoute(app, config, db, features, lang) {
         `Created ${displayName}`
       );
 
-      res.send({
+      { res.send({
         success: true,
         message: applicationCreatedLang.replace(
           "%DISPLAYNAME%",
           displayName
         ),
-      }); return;
+      }); return; }
     } catch (error) {
       console.error(error);
       if (!res.sent) {
-        res.status(500).send({
+        { res.status(500).send({
           success: false,
           message: `${error}`,
-        }); return;
+        }); return; }
       }
     }
   });
@@ -191,20 +191,20 @@ export default function applicationApiRoute(app, config, db, features, lang) {
         `Edited ${displayName}`
       );
 
-      res.send({
+      { res.send({
         success: true,
         message: applicationEditedLang.replace(
           "%DISPLAYNAME%",
           displayName
         ),
-      }); return;
+      }); return; }
     } catch (error) {
       console.error(error);
       if (!res.sent) {
-        res.status(500).send({
+        { res.status(500).send({
           success: false,
           message: `${error}`,
-        }); return;
+        }); return; }
       }
     }
   });
@@ -236,17 +236,17 @@ export default function applicationApiRoute(app, config, db, features, lang) {
         `Deleted ${applicationId}`
       );
 
-      res.send({
+      { res.send({
         success: true,
         message: `Deletion of application with the id ${applicationId} has been successful`,
-      }); return;
+      }); return; }
     } catch (error) {
       console.error(error);
       if (!res.sent) {
-        res.status(500).send({
+        { res.status(500).send({
           success: false,
           message: `${error}`,
-        }); return;
+        }); return; }
       }
     }
   });

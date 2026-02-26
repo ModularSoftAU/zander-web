@@ -130,10 +130,10 @@ const buildApp = async () => {
 
   // Heartbeat — public, no token required so monitoring tools can reach it
   app.get("/api/heartbeat", async function (req, res) {
-    res.send({
+    { res.send({
       success: true,
       message: `OK`,
-    }); return;
+    }); return; }
   });
 
   await app.register((instance, options, next) => {

@@ -41,7 +41,7 @@ export default function dashboardForumsRoutes(
       getWebAnnouncement(),
     ]);
 
-    await res.view("dashboard/forums/categories", {
+    { await res.view("dashboard/forums/categories", {
       pageTitle: `Dashboard - Forum Categories`,
       config,
       features,
@@ -52,7 +52,7 @@ export default function dashboardForumsRoutes(
       createUnderId,
       globalImage,
       announcementWeb,
-    });
+    }); return; }
   });
 
   app.post("/dashboard/forums/categories/new", async function (req, res) {
@@ -76,7 +76,7 @@ export default function dashboardForumsRoutes(
 
     if (!name) {
       await setBannerCookie("danger", "A category name is required.", res);
-      { res.redirect("/dashboard/forums/categories"); return; };
+      { res.redirect("/dashboard/forums/categories"); return; }
     }
 
     try {
@@ -100,7 +100,7 @@ export default function dashboardForumsRoutes(
       );
     }
 
-    { res.redirect("/dashboard/forums/categories"); return; };
+    { res.redirect("/dashboard/forums/categories"); return; }
   });
 
   app.post(
@@ -119,7 +119,7 @@ export default function dashboardForumsRoutes(
 
       if (!existing) {
         await setBannerCookie("danger", "Category not found.", res);
-        { res.redirect("/dashboard/forums/categories"); return; };
+        { res.redirect("/dashboard/forums/categories"); return; }
       }
 
       const name = (req.body.name || "").trim();
@@ -154,7 +154,7 @@ export default function dashboardForumsRoutes(
         );
       }
 
-      { res.redirect(`/dashboard/forums/categories?edit=${categoryId}`); return; };
+      { res.redirect(`/dashboard/forums/categories?edit=${categoryId}`); return; }
     }
   );
 
@@ -174,7 +174,7 @@ export default function dashboardForumsRoutes(
 
       if (!existing) {
         await setBannerCookie("danger", "Category not found.", res);
-        { res.redirect("/dashboard/forums/categories"); return; };
+        { res.redirect("/dashboard/forums/categories"); return; }
       }
 
       try {
@@ -189,7 +189,7 @@ export default function dashboardForumsRoutes(
         );
       }
 
-      { res.redirect("/dashboard/forums/categories"); return; };
+      { res.redirect("/dashboard/forums/categories"); return; }
     }
   );
 }

@@ -30,23 +30,23 @@ export default function vaultApiRoute(app, config, db, features, lang) {
       });
 
       if (!results || !results.length) {
-        res.send({
+        { res.send({
           success: false,
           message: `No vault items found.`,
-        }); return;
+        }); return; }
       }
 
-      res.send({
+      { res.send({
         success: true,
         data: results,
-      }); return;
+      }); return; }
     } catch (error) {
       console.error(error);
       if (!res.sent) {
-        res.status(500).send({
+        { res.status(500).send({
           success: false,
           message: `${error}`,
-        }); return;
+        }); return; }
       }
     }
   });
@@ -91,17 +91,17 @@ export default function vaultApiRoute(app, config, db, features, lang) {
         `Created ${displayName}`
       );
 
-      res.send({
+      { res.send({
         success: true,
         message: `Created ${displayName} vault.`,
-      }); return;
+      }); return; }
     } catch (error) {
       console.error(error);
       if (!res.sent) {
-        res.status(500).send({
+        { res.status(500).send({
           success: false,
           message: `${error}`,
-        }); return;
+        }); return; }
       }
     }
   });
@@ -155,17 +155,17 @@ export default function vaultApiRoute(app, config, db, features, lang) {
         `Edited ${displayName}`
       );
 
-      res.send({
+      { res.send({
         success: true,
         message: `${displayName} has been edited.`,
-      }); return;
+      }); return; }
     } catch (error) {
       console.error(error);
       if (!res.sent) {
-        res.status(500).send({
+        { res.status(500).send({
           success: false,
           message: `${error}`,
-        }); return;
+        }); return; }
       }
     }
   });
@@ -197,17 +197,17 @@ export default function vaultApiRoute(app, config, db, features, lang) {
         `Deleted ${vaultId}`
       );
 
-      res.send({
+      { res.send({
         success: true,
         message: `Deletion of vault with the id ${vaultId} has been successful.`,
-      }); return;
+      }); return; }
     } catch (error) {
       console.error(error);
       if (!res.sent) {
-        res.status(500).send({
+        { res.status(500).send({
           success: false,
           message: `${error}`,
-        }); return;
+        }); return; }
       }
     }
   });

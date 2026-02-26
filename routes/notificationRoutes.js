@@ -13,20 +13,20 @@ import {
 export default function notificationRoutes(app, config, features) {
   app.get("/notifications", async function (req, res) {
     if (!req.session.user) {
-      await res.view("session/notLoggedIn", {
+      { await res.view("session/notLoggedIn", {
         pageTitle: "Not Logged In",
         config,
         req,
         features,
         globalImage: await getGlobalImage(),
         announcementWeb: await getWebAnnouncement(),
-      });
+      }); return; }
     }
 
     const notifications = await getUserNotifications(req.session.user.userId, 50);
     const summary = await getNotificationSummary(req.session.user.userId, 50);
 
-    await res.view("modules/notifications/index", {
+    { await res.view("modules/notifications/index", {
       pageTitle: "Notifications",
       pageDescription: "Notifications",
       config,
@@ -36,35 +36,35 @@ export default function notificationRoutes(app, config, features) {
       unreadCount: summary.unreadCount,
       globalImage: await getGlobalImage(),
       announcementWeb: await getWebAnnouncement(),
-    });
+    }); return; }
   });
 
   app.get("/notifications/vapid-public-key", async function (req, res) {
-    res.send({ publicKey: process.env.VAPID_PUBLIC_KEY || null }); return;
+    { res.send({ publicKey: process.env.VAPID_PUBLIC_KEY || null }); return; }
   });
 
   app.post("/notifications/push-subscribe", async function (req, res) {
     if (!req.session.user) {
-      res.status(401).send({ error: "Not authenticated" }); return;
+      { res.status(401).send({ error: "Not authenticated" }); return; }
     }
 
     const { subscription } = req.body || {};
     if (!subscription || !subscription.endpoint || !subscription.keys) {
-      res.status(400).send({ error: "Invalid subscription" }); return;
+      { res.status(400).send({ error: "Invalid subscription" }); return; }
     }
 
     try {
       await savePushSubscription(req.session.user.userId, subscription);
-      res.status(201).send({ success: true }); return;
+      { res.status(201).send({ success: true }); return; }
     } catch (error) {
       console.error("[NOTIFICATION] Failed to save push subscription", error);
-      res.status(500).send({ error: "Failed to save subscription" }); return;
+      { res.status(500).send({ error: "Failed to save subscription" }); return; }
     }
   });
 
   app.get("/notifications/summary", async function (req, res) {
     if (!req.session.user) {
-      res.status(401).send({ error: "Not authenticated" }); return;
+      { res.status(401).send({ error: "Not authenticated" }); return; }
     }
 
     const summary = await getNotificationSummary(req.session.user.userId, 10);
@@ -79,25 +79,25 @@ export default function notificationRoutes(app, config, features) {
         isRead: item.isRead,
         createdAt: item.createdAt,
       })),
-    }); return; };
+    }); return; }
   });
 
   app.get("/notifications/visit/:id", async function (req, res) {
     if (!req.session.user) {
-      await res.view("session/notLoggedIn", {
+      { await res.view("session/notLoggedIn", {
         pageTitle: "Not Logged In",
         config,
         req,
         features,
         globalImage: await getGlobalImage(),
         announcementWeb: await getWebAnnouncement(),
-      });
+      }); return; }
     }
 
     const notificationId = Number(req.params.id);
     if (!notificationId) {
-      await setBannerCookie("warning", "Notification not found.", res);
-      { res.redirect("/notifications"); return; };
+      setBannerCookie("warning", "Notification not found.", res);
+      { res.redirect("/notifications"); return; }
     }
 
     const notification = await getNotificationById(
@@ -106,57 +106,57 @@ export default function notificationRoutes(app, config, features) {
     );
 
     if (!notification) {
-      await setBannerCookie("warning", "Notification not found.", res);
-      { res.redirect("/notifications"); return; };
+      setBannerCookie("warning", "Notification not found.", res);
+      { res.redirect("/notifications"); return; }
     }
 
     await markNotificationRead(notificationId, req.session.user.userId);
 
-    { res.redirect(notification.url || "/notifications"); return; };
+    { res.redirect(notification.url || "/notifications"); return; }
   });
 
   app.post("/notifications/mark-all", async function (req, res) {
     if (!req.session.user) {
-      await res.view("session/notLoggedIn", {
+      { await res.view("session/notLoggedIn", {
         pageTitle: "Not Logged In",
         config,
         req,
         features,
         globalImage: await getGlobalImage(),
         announcementWeb: await getWebAnnouncement(),
-      });
+      }); return; }
     }
 
     await markAllNotificationsRead(req.session.user.userId);
-    await setBannerCookie("success", "All notifications marked as read.", res);
-    { res.redirect("/notifications"); return; };
+    setBannerCookie("success", "All notifications marked as read.", res);
+    { res.redirect("/notifications"); return; }
   });
 
   app.post("/notifications/:id/dismiss", async function (req, res) {
     if (!req.session.user) {
-      await res.view("session/notLoggedIn", {
+      { await res.view("session/notLoggedIn", {
         pageTitle: "Not Logged In",
         config,
         req,
         features,
         globalImage: await getGlobalImage(),
         announcementWeb: await getWebAnnouncement(),
-      });
+      }); return; }
     }
 
     const notificationId = Number(req.params.id);
     if (!notificationId) {
-      await setBannerCookie("warning", "Notification not found.", res);
-      { res.redirect("/notifications"); return; };
+      setBannerCookie("warning", "Notification not found.", res);
+      { res.redirect("/notifications"); return; }
     }
 
     const deleted = await deleteNotification(notificationId, req.session.user.userId);
     if (!deleted) {
-      await setBannerCookie("warning", "Notification not found.", res);
-      { res.redirect("/notifications"); return; };
+      setBannerCookie("warning", "Notification not found.", res);
+      { res.redirect("/notifications"); return; }
     }
 
-    await setBannerCookie("success", "Notification dismissed.", res);
-    { res.redirect("/notifications"); return; };
+    setBannerCookie("success", "Notification dismissed.", res);
+    { res.redirect("/notifications"); return; }
   });
 }

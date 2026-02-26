@@ -36,6 +36,8 @@ export default function dashboardServersSiteRoute(
       globalImage: await getGlobalImage(),
       announcementWeb: await getWebAnnouncement(),
     });
+
+    return;
   });
 
   app.get("/dashboard/servers/create", async function (req, res) {
@@ -52,6 +54,8 @@ export default function dashboardServersSiteRoute(
       req: req,
       announcementWeb: await getWebAnnouncement(),
     });
+
+    return;
   });
 
   app.get("/dashboard/servers/edit", async function (req, res) {
@@ -76,5 +80,7 @@ export default function dashboardServersSiteRoute(
       req: req,
       announcementWeb: await getWebAnnouncement(),
     });
+
+    return;
   });
 }

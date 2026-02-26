@@ -59,7 +59,7 @@ export default function supportRoutes(
   app.get("/support", async function (req, res) {
     try {
       if (!req.session.user) {
-          await res.view("modules/support/login", {
+          { await res.view("modules/support/login", {
               pageTitle: "Support Tickets",
               pageDescription: "Support Tickets",
               config,
@@ -67,13 +67,13 @@ export default function supportRoutes(
               features,
               globalImage: await getGlobalImage(),
               announcementWeb: await getWebAnnouncement(),
-          });
+          }); return; }
       }
 
       const userRankSlugs = req.session.user.ranks?.map((rank) => rank.rankSlug) || [];
       const tickets = await getTicketsAccessibleByUser(req.session.user.userId, userRankSlugs);
 
-      await res.view("modules/support/index", {
+      { await res.view("modules/support/index", {
         pageTitle: "Support Tickets",
         pageDescription: "Support Tickets",
         config,
@@ -82,10 +82,10 @@ export default function supportRoutes(
         tickets,
         globalImage: await getGlobalImage(),
         announcementWeb: await getWebAnnouncement(),
-      });
+      }); return; }
     } catch (error) {
       console.error(error);
-      await res.view("session/error", {
+      { await res.view("session/error", {
         pageTitle: "Error",
         pageDescription: "Error",
         config,
@@ -94,7 +94,7 @@ export default function supportRoutes(
         features,
         globalImage: await getGlobalImage(),
         announcementWeb: await getWebAnnouncement(),
-      });
+      }); return; }
     }
   });
 
@@ -102,7 +102,7 @@ export default function supportRoutes(
     try {
       if (!req.session.user) {
         const returnTo = encodeURIComponent(req.url);
-        { res.redirect(`/login?returnTo=${returnTo}`); return; };
+        { res.redirect(`/login?returnTo=${returnTo}`); return; }
       }
 
       const { punishmentIndex, appealReason, appealDetails } = req.body;
@@ -111,13 +111,13 @@ export default function supportRoutes(
       const details = (appealDetails || "").trim();
 
       if (!Number.isInteger(index) || index < 0) {
-        await setBannerCookie("warning", "Please select a punishment to appeal.", res);
-        { res.redirect("/appeal"); return; };
+        setBannerCookie("warning", "Please select a punishment to appeal.", res);
+        { res.redirect("/appeal"); return; }
       }
 
       if (!reason) {
-        await setBannerCookie("warning", "Please provide a reason for your appeal.", res);
-        { res.redirect("/appeal"); return; };
+        setBannerCookie("warning", "Please provide a reason for your appeal.", res);
+        { res.redirect("/appeal"); return; }
       }
 
       const fetchPunishmentsURL = `${process.env.siteAddress}/api/user/punishments?username=${encodeURIComponent(
@@ -133,8 +133,8 @@ export default function supportRoutes(
       const punishment = punishments[index];
 
       if (!punishment) {
-        await setBannerCookie("warning", "We couldn't find that punishment to appeal.", res);
-        { res.redirect("/appeal"); return; };
+        setBannerCookie("warning", "We couldn't find that punishment to appeal.", res);
+        { res.redirect("/appeal"); return; }
       }
 
       const fallbackKey = moment(punishment.dateStart).isValid()
@@ -154,12 +154,12 @@ export default function supportRoutes(
         return String(ticket.title || "").includes(`Appeal #${punishmentKey}`);
       });
       if (existingTicket) {
-        await setBannerCookie(
+        setBannerCookie(
           "warning",
           "You already have an appeal in progress for this punishment.",
           res
         );
-        { res.redirect(`/support/ticket/${existingTicket.ticketId}`); return; };
+        { res.redirect(`/support/ticket/${existingTicket.ticketId}`); return; }
       }
 
       const punishedBy = punishment.bannedByUsername || punishment.bannedByUuid || "System";
@@ -283,12 +283,12 @@ export default function supportRoutes(
         }
       }
 
-      await setBannerCookie("success", "Your appeal has been submitted.", res);
-      { res.redirect(`/support/ticket/${ticketRecord.ticketId}`); return; };
+      setBannerCookie("success", "Your appeal has been submitted.", res);
+      { res.redirect(`/support/ticket/${ticketRecord.ticketId}`); return; }
     } catch (error) {
       console.error(error);
-      await setBannerCookie("danger", "We couldn't submit your appeal. Please try again.", res);
-      { res.redirect("/appeal"); return; };
+      setBannerCookie("danger", "We couldn't submit your appeal. Please try again.", res);
+      { res.redirect("/appeal"); return; }
     }
   });
 
@@ -296,15 +296,15 @@ export default function supportRoutes(
     try {
       if (!req.session.user) {
         const returnTo = encodeURIComponent(req.url);
-        { res.redirect(`/login?returnTo=${returnTo}`); return; };
+        { res.redirect(`/login?returnTo=${returnTo}`); return; }
       }
 
       const isMinecraftLinked = Boolean(req.session.user.uuid);
 
       const ticket = await getTicketById(req.params.id);
       if (!ticket) {
-        await setBannerCookie("danger", "Ticket not found.", res);
-        { res.redirect("/support"); return; };
+        setBannerCookie("danger", "Ticket not found.", res);
+        { res.redirect("/support"); return; }
       }
       const participants = await getTicketParticipants(req.params.id);
       const rankOptions = await getLuckPermRankRoles();
@@ -328,13 +328,13 @@ export default function supportRoutes(
       const canManageTicket = isOwner || isStaff || isParticipantUser || isParticipantRank;
 
       if (!canManageTicket) {
-        { res.redirect("/support"); return; };
+        { res.redirect("/support"); return; }
       }
 
       const messages = await getTicketMessages(req.params.id, isStaff);
       const categories = await getSupportCategories();
 
-      await res.view("modules/support/ticket", {
+      { await res.view("modules/support/ticket", {
         pageTitle: `Ticket #${ticket.ticketId}`,
         pageDescription: `Ticket #${ticket.ticketId}`,
         config,
@@ -357,10 +357,10 @@ export default function supportRoutes(
         categories,
         globalImage: await getGlobalImage(),
         announcementWeb: await getWebAnnouncement(),
-      });
+      }); return; }
     } catch (error) {
       console.error(error);
-      await res.view("session/error", {
+      { await res.view("session/error", {
         pageTitle: "Error",
         pageDescription: "Error",
         config,
@@ -369,7 +369,7 @@ export default function supportRoutes(
         features,
         globalImage: await getGlobalImage(),
         announcementWeb: await getWebAnnouncement(),
-      });
+      }); return; }
     }
   });
 
@@ -377,16 +377,16 @@ export default function supportRoutes(
     try {
       if (!req.session.user) {
         const returnTo = encodeURIComponent(req.url);
-        { res.redirect(`/login?returnTo=${returnTo}`); return; };
+        { res.redirect(`/login?returnTo=${returnTo}`); return; }
       }
 
       if (!req.session.user.uuid) {
-        await setBannerCookie(
+        setBannerCookie(
           "warning",
           "Please link your Minecraft account before replying to tickets.",
           res
         );
-        { res.redirect(`/support/ticket/${req.params.id}`); return; };
+        { res.redirect(`/support/ticket/${req.params.id}`); return; }
       }
 
       const ticket = await getTicketById(req.params.id);
@@ -404,12 +404,12 @@ export default function supportRoutes(
       );
 
       if (!isOwner && !isStaff && !isParticipantUser && !isParticipantRank) {
-        { res.redirect("/support"); return; };
+        { res.redirect("/support"); return; }
       }
 
       if (ticket.isEscalated && !isOwner && !canEscalate) {
-        await setBannerCookie("warning", "This ticket is escalated. Only the opener and escalation staff may reply.", res);
-        { res.redirect(`/support/ticket/${req.params.id}`); return; };
+        setBannerCookie("warning", "This ticket is escalated. Only the opener and escalation staff may reply.", res);
+        { res.redirect(`/support/ticket/${req.params.id}`); return; }
       }
 
       const body = req.body || {};
@@ -417,15 +417,15 @@ export default function supportRoutes(
       const visibility = (body.visibility || "public").toLowerCase();
       const isInternal = visibility === "internal" && isStaff;
       if (visibility === "internal" && !isStaff) {
-        await setBannerCookie(
+        setBannerCookie(
           "warning",
           "Only staff can add internal notes; your reply was sent as a public message.",
           res
         );
       }
       if (!message) {
-        await setBannerCookie("warning", "Please enter a message before replying.", res);
-        { res.redirect(`/support/ticket/${req.params.id}`); return; };
+        setBannerCookie("warning", "Please enter a message before replying.", res);
+        { res.redirect(`/support/ticket/${req.params.id}`); return; }
       }
 
       console.info("Submitting web ticket reply", {
@@ -449,8 +449,8 @@ export default function supportRoutes(
           ticketId: req.params.id,
           userId: req.session.user.userId,
         }, createError);
-        await setBannerCookie("danger", "Unable to submit your reply right now. Please try again.", res);
-        { res.redirect(`/support/ticket/${req.params.id}`); return; };
+        setBannerCookie("danger", "Unable to submit your reply right now. Please try again.", res);
+        { res.redirect(`/support/ticket/${req.params.id}`); return; }
       }
 
       console.info("Web ticket reply persisted", {
@@ -470,10 +470,10 @@ export default function supportRoutes(
         userId: req.session.user.userId,
       });
 
-      { res.redirect(`/support/ticket/${req.params.id}`); return; };
+      { res.redirect(`/support/ticket/${req.params.id}`); return; }
     } catch (error) {
       console.error(error);
-      await res.view("session/error", {
+      { await res.view("session/error", {
         pageTitle: "Error",
         pageDescription: "Error",
         config,
@@ -482,7 +482,7 @@ export default function supportRoutes(
         features,
         globalImage: await getGlobalImage(),
         announcementWeb: await getWebAnnouncement(),
-      });
+      }); return; }
     }
   });
 
@@ -490,42 +490,42 @@ export default function supportRoutes(
     try {
       if (!req.session.user) {
         const returnTo = encodeURIComponent(req.url);
-        { res.redirect(`/login?returnTo=${returnTo}`); return; };
+        { res.redirect(`/login?returnTo=${returnTo}`); return; }
       }
 
       const ticket = await getTicketById(req.params.id);
       if (!ticket) {
-        await setBannerCookie("danger", "Ticket not found.", res);
-        { res.redirect("/support"); return; };
+        setBannerCookie("danger", "Ticket not found.", res);
+        { res.redirect("/support"); return; }
       }
       const isOwner = Number(ticket.userId) === Number(req.session.user.userId);
       const isStaff = req.session.user.isStaff;
       const username = req.session.user.username || `User ${req.session.user.userId}`;
 
       if (!isOwner && !isStaff) {
-        await setBannerCookie("danger", "You do not have access to this ticket.", res);
-        { res.redirect("/support"); return; };
+        setBannerCookie("danger", "You do not have access to this ticket.", res);
+        { res.redirect("/support"); return; }
       }
 
       const nextStatus = (req.body.status || "").toLowerCase();
       if (!["open", "closed", "pending"].includes(nextStatus)) {
-        await setBannerCookie("warning", "Invalid ticket status provided.", res);
-        { res.redirect(`/support/ticket/${req.params.id}`); return; };
+        setBannerCookie("warning", "Invalid ticket status provided.", res);
+        { res.redirect(`/support/ticket/${req.params.id}`); return; }
       }
 
       // Non-staff owners can only close or reopen, not set to pending
       if (!isStaff && nextStatus === "pending") {
-        await setBannerCookie("warning", "Only staff can set a ticket to pending.", res);
-        { res.redirect(`/support/ticket/${req.params.id}`); return; };
+        setBannerCookie("warning", "Only staff can set a ticket to pending.", res);
+        { res.redirect(`/support/ticket/${req.params.id}`); return; }
       }
 
       if (ticket.isLocked && nextStatus === "open" && !isStaff) {
-        await setBannerCookie(
+        setBannerCookie(
           "warning",
           "This ticket is locked and can only be reopened by staff.",
           res
         );
-        { res.redirect(`/support/ticket/${req.params.id}`); return; };
+        { res.redirect(`/support/ticket/${req.params.id}`); return; }
       }
 
       await updateTicketStatus(ticket.ticketId, nextStatus);
@@ -545,7 +545,7 @@ export default function supportRoutes(
 
       if (nextStatus === "closed") {
         await deleteTicketChannel(client, ticket.ticketId, "Ticket closed from web view");
-        await setBannerCookie("success", "Ticket closed and channel cleanup scheduled.", res);
+        setBannerCookie("success", "Ticket closed and channel cleanup scheduled.", res);
       } else if (nextStatus === "open") {
         let needsChannel = !ticket.discordChannelId;
 
@@ -563,24 +563,24 @@ export default function supportRoutes(
             await recreateTicketChannel(client, ticket.ticketId);
           } catch (recreateError) {
             console.error("Failed to recreate ticket channel on reopen", recreateError);
-            await setBannerCookie(
+            setBannerCookie(
               "danger",
               "Ticket reopened, but we couldn't recreate the Discord channel.",
               res
             );
-            { res.redirect(`/support/ticket/${req.params.id}`); return; };
+            { res.redirect(`/support/ticket/${req.params.id}`); return; }
           }
         }
 
-        await setBannerCookie("success", "Ticket reopened.", res);
+        setBannerCookie("success", "Ticket reopened.", res);
       } else if (nextStatus === "pending") {
-        await setBannerCookie("success", "Ticket marked as pending.", res);
+        setBannerCookie("success", "Ticket marked as pending.", res);
       }
 
-      { res.redirect(`/support/ticket/${req.params.id}`); return; };
+      { res.redirect(`/support/ticket/${req.params.id}`); return; }
     } catch (error) {
       console.error(error);
-      await res.view("session/error", {
+      { await res.view("session/error", {
         pageTitle: "Error",
         pageDescription: "Error",
         config,
@@ -589,7 +589,7 @@ export default function supportRoutes(
         features,
         globalImage: await getGlobalImage(),
         announcementWeb: await getWebAnnouncement(),
-      });
+      }); return; }
     }
   });
 
@@ -597,24 +597,24 @@ export default function supportRoutes(
     try {
       if (!req.session.user) {
         const returnTo = encodeURIComponent("/appeal");
-        { res.redirect(`/login?returnTo=${returnTo}`); return; };
+        { res.redirect(`/login?returnTo=${returnTo}`); return; }
       }
 
       const ticket = await getTicketById(req.params.id);
       if (!ticket) {
-        await setBannerCookie("danger", "Ticket not found.", res);
-        { res.redirect("/support"); return; };
+        setBannerCookie("danger", "Ticket not found.", res);
+        { res.redirect("/support"); return; }
       }
 
       if (!req.session.user.isStaff) {
-        await setBannerCookie("danger", "Only staff can reassign tickets.", res);
-        { res.redirect(`/support/ticket/${req.params.id}`); return; };
+        setBannerCookie("danger", "Only staff can reassign tickets.", res);
+        { res.redirect(`/support/ticket/${req.params.id}`); return; }
       }
 
       const nextCategoryId = parseInt(req.body?.categoryId, 10);
       if (!nextCategoryId || Number.isNaN(nextCategoryId)) {
-        await setBannerCookie("warning", "Select a valid category to reassign.", res);
-        { res.redirect(`/support/ticket/${req.params.id}`); return; };
+        setBannerCookie("warning", "Select a valid category to reassign.", res);
+        { res.redirect(`/support/ticket/${req.params.id}`); return; }
       }
 
       const [nextCategory, previousCategory] = await Promise.all([
@@ -623,13 +623,13 @@ export default function supportRoutes(
       ]);
 
       if (!nextCategory || nextCategory.enabled === 0) {
-        await setBannerCookie("warning", "That category is not available.", res);
-        { res.redirect(`/support/ticket/${req.params.id}`); return; };
+        setBannerCookie("warning", "That category is not available.", res);
+        { res.redirect(`/support/ticket/${req.params.id}`); return; }
       }
 
       if (ticket.categoryId === nextCategoryId) {
-        await setBannerCookie("info", "Ticket is already in that category.", res);
-        { res.redirect(`/support/ticket/${req.params.id}`); return; };
+        setBannerCookie("info", "Ticket is already in that category.", res);
+        { res.redirect(`/support/ticket/${req.params.id}`); return; }
       }
 
       await updateTicketCategory(client, ticket.ticketId, nextCategoryId);
@@ -649,11 +649,11 @@ export default function supportRoutes(
         console.error("Failed to log category change", categoryLogError);
       }
 
-      await setBannerCookie("success", "Ticket category updated.", res);
-      { res.redirect(`/support/ticket/${ticket.ticketId}`); return; };
+      setBannerCookie("success", "Ticket category updated.", res);
+      { res.redirect(`/support/ticket/${ticket.ticketId}`); return; }
     } catch (error) {
       console.error(error);
-      await res.view("session/error", {
+      { await res.view("session/error", {
         pageTitle: "Error",
         pageDescription: "Error",
         config,
@@ -662,14 +662,14 @@ export default function supportRoutes(
         features,
         globalImage: await getGlobalImage(),
         announcementWeb: await getWebAnnouncement(),
-      });
+      }); return; }
     }
   });
 
   app.post("/support/ticket/:id/escalation", async function (req, res) {
     try {
       if (!req.session.user) {
-        { res.redirect("/login"); return; };
+        { res.redirect("/login"); return; }
       }
 
       const ticket = await getTicketById(req.params.id);
@@ -677,14 +677,14 @@ export default function supportRoutes(
       const permissions = req.session.user.permissions || [];
 
       if (!isStaff || !userHasPermissionNode(permissions, "zander.web.ticket.escalate")) {
-        await setBannerCookie("danger", "You do not have permission to escalate this ticket.", res);
-        { res.redirect(`/support/ticket/${req.params.id}`); return; };
+        setBannerCookie("danger", "You do not have permission to escalate this ticket.", res);
+        { res.redirect(`/support/ticket/${req.params.id}`); return; }
       }
 
       const action = (req.body?.action || "").toLowerCase();
       if (!["escalate", "deescalate"].includes(action)) {
-        await setBannerCookie("warning", "Invalid escalation request.", res);
-        { res.redirect(`/support/ticket/${req.params.id}`); return; };
+        setBannerCookie("warning", "Invalid escalation request.", res);
+        { res.redirect(`/support/ticket/${req.params.id}`); return; }
       }
 
       const shouldEscalate = action === "escalate";
@@ -705,15 +705,15 @@ export default function supportRoutes(
         console.error("Failed to log escalation event", escalationLogError);
       }
 
-      await setBannerCookie(
+      setBannerCookie(
         "success",
         shouldEscalate ? "Ticket escalated." : "Ticket deescalated.",
         res
       );
-      { res.redirect(`/support/ticket/${ticket.ticketId}`); return; };
+      { res.redirect(`/support/ticket/${ticket.ticketId}`); return; }
     } catch (error) {
       console.error(error);
-      await res.view("session/error", {
+      { await res.view("session/error", {
         pageTitle: "Error",
         pageDescription: "Error",
         config,
@@ -722,27 +722,27 @@ export default function supportRoutes(
         features,
         globalImage: await getGlobalImage(),
         announcementWeb: await getWebAnnouncement(),
-      });
+      }); return; }
     }
   });
 
   app.post("/support/ticket/:id/lock", async function (req, res) {
     try {
       if (!req.session.user) {
-        { res.redirect("/login"); return; };
+        { res.redirect("/login"); return; }
       }
 
       const ticket = await getTicketById(req.params.id);
       const isStaff = req.session.user.isStaff;
       if (!isStaff) {
-        await setBannerCookie("danger", "You do not have permission to lock this ticket.", res);
-        { res.redirect(`/support/ticket/${req.params.id}`); return; };
+        setBannerCookie("danger", "You do not have permission to lock this ticket.", res);
+        { res.redirect(`/support/ticket/${req.params.id}`); return; }
       }
 
       const action = (req.body?.action || "").toLowerCase();
       if (!["lock", "unlock"].includes(action)) {
-        await setBannerCookie("warning", "Invalid lock request.", res);
-        { res.redirect(`/support/ticket/${req.params.id}`); return; };
+        setBannerCookie("warning", "Invalid lock request.", res);
+        { res.redirect(`/support/ticket/${req.params.id}`); return; }
       }
 
       const shouldLock = action === "lock";
@@ -763,15 +763,15 @@ export default function supportRoutes(
         console.error("Failed to log lock event", lockLogError);
       }
 
-      await setBannerCookie(
+      setBannerCookie(
         "success",
         shouldLock ? "Ticket locked." : "Ticket unlocked.",
         res
       );
-      { res.redirect(`/support/ticket/${ticket.ticketId}`); return; };
+      { res.redirect(`/support/ticket/${ticket.ticketId}`); return; }
     } catch (error) {
       console.error(error);
-      await res.view("session/error", {
+      { await res.view("session/error", {
         pageTitle: "Error",
         pageDescription: "Error",
         config,
@@ -780,14 +780,14 @@ export default function supportRoutes(
         features,
         globalImage: await getGlobalImage(),
         announcementWeb: await getWebAnnouncement(),
-      });
+      }); return; }
     }
   });
 
   app.post("/support/ticket/:id/add-user", async function (req, res) {
     try {
       if (!req.session.user) {
-        { res.redirect("/login"); return; };
+        { res.redirect("/login"); return; }
       }
 
       const ticket = await getTicketById(req.params.id);
@@ -803,21 +803,21 @@ export default function supportRoutes(
       );
 
       if (!isOwner && !isStaff && !isParticipantUser && !isParticipantRank) {
-        { res.redirect("/support"); return; };
+        { res.redirect("/support"); return; }
       }
 
       const userIdentifier = (req.body?.userIdentifier || "").trim();
       const userIdFromForm = parseInt(req.body?.userId, 10);
 
       if (!userIdentifier && !userIdFromForm) {
-        await setBannerCookie("warning", "Provide a username or user ID to add.", res);
-        { res.redirect(`/support/ticket/${req.params.id}`); return; };
+        setBannerCookie("warning", "Provide a username or user ID to add.", res);
+        { res.redirect(`/support/ticket/${req.params.id}`); return; }
       }
 
       const user = userIdFromForm ? await getUserById(userIdFromForm) : await findUserByIdentifier(userIdentifier);
       if (!user) {
-        await setBannerCookie("danger", "User not found.", res);
-        { res.redirect(`/support/ticket/${req.params.id}`); return; };
+        setBannerCookie("danger", "User not found.", res);
+        { res.redirect(`/support/ticket/${req.params.id}`); return; }
       }
 
       await addTicketUserParticipant(ticket.ticketId, user);
@@ -835,11 +835,11 @@ export default function supportRoutes(
         console.error("Failed to log add user event", messageError);
       }
 
-      await setBannerCookie("success", "User added to ticket.", res);
-      { res.redirect(`/support/ticket/${ticket.ticketId}`); return; };
+      setBannerCookie("success", "User added to ticket.", res);
+      { res.redirect(`/support/ticket/${ticket.ticketId}`); return; }
     } catch (error) {
       console.error(error);
-      await res.view("session/error", {
+      { await res.view("session/error", {
         pageTitle: "Error",
         pageDescription: "Error",
         config,
@@ -848,14 +848,14 @@ export default function supportRoutes(
         features,
         globalImage: await getGlobalImage(),
         announcementWeb: await getWebAnnouncement(),
-      });
+      }); return; }
     }
   });
 
   app.post("/support/ticket/:id/add-group", async function (req, res) {
     try {
       if (!req.session.user) {
-        { res.redirect("/login"); return; };
+        { res.redirect("/login"); return; }
       }
 
       const ticket = await getTicketById(req.params.id);
@@ -871,7 +871,7 @@ export default function supportRoutes(
       );
 
       if (!isOwner && !isStaff && !isParticipantUser && !isParticipantRank) {
-        { res.redirect("/support"); return; };
+        { res.redirect("/support"); return; }
       }
 
       const rankOptions = await getLuckPermRankRoles();
@@ -879,8 +879,8 @@ export default function supportRoutes(
       const selectedRank = rankOptions.find((rank) => rank.id === selectedRoleId && /^\d{5,}$/.test(rank.id));
 
       if (!selectedRank) {
-        await setBannerCookie("warning", "Select a valid group to add.", res);
-        { res.redirect(`/support/ticket/${req.params.id}`); return; };
+        setBannerCookie("warning", "Select a valid group to add.", res);
+        { res.redirect(`/support/ticket/${req.params.id}`); return; }
       }
 
       await addTicketGroupParticipant(ticket.ticketId, selectedRank);
@@ -898,11 +898,11 @@ export default function supportRoutes(
         console.error("Failed to log add group event", messageError);
       }
 
-      await setBannerCookie("success", "Group added to ticket.", res);
-      { res.redirect(`/support/ticket/${ticket.ticketId}`); return; };
+      setBannerCookie("success", "Group added to ticket.", res);
+      { res.redirect(`/support/ticket/${ticket.ticketId}`); return; }
     } catch (error) {
       console.error(error);
-      await res.view("session/error", {
+      { await res.view("session/error", {
         pageTitle: "Error",
         pageDescription: "Error",
         config,
@@ -911,14 +911,14 @@ export default function supportRoutes(
         features,
         globalImage: await getGlobalImage(),
         announcementWeb: await getWebAnnouncement(),
-      });
+      }); return; }
     }
   });
 
   app.post("/support/ticket/:id/remove-user", async function (req, res) {
     try {
       if (!req.session.user) {
-        { res.redirect("/login"); return; };
+        { res.redirect("/login"); return; }
       }
 
       const ticket = await getTicketById(req.params.id);
@@ -934,24 +934,24 @@ export default function supportRoutes(
       );
 
       if (!isOwner && !isStaff && !isParticipantUser && !isParticipantRank) {
-        { res.redirect("/support"); return; };
+        { res.redirect("/support"); return; }
       }
 
       const userIdFromForm = parseInt(req.body?.removeUserId, 10);
       if (!userIdFromForm) {
-        await setBannerCookie("warning", "Select a user to remove.", res);
-        { res.redirect(`/support/ticket/${req.params.id}`); return; };
+        setBannerCookie("warning", "Select a user to remove.", res);
+        { res.redirect(`/support/ticket/${req.params.id}`); return; }
       }
 
       const user = await getUserById(userIdFromForm);
       if (!user) {
-        await setBannerCookie("danger", "User not found.", res);
-        { res.redirect(`/support/ticket/${req.params.id}`); return; };
+        setBannerCookie("danger", "User not found.", res);
+        { res.redirect(`/support/ticket/${req.params.id}`); return; }
       }
 
       if (user.userId === ticket.userId) {
-        await setBannerCookie("warning", "Ticket creators cannot remove themselves.", res);
-        { res.redirect(`/support/ticket/${req.params.id}`); return; };
+        setBannerCookie("warning", "Ticket creators cannot remove themselves.", res);
+        { res.redirect(`/support/ticket/${req.params.id}`); return; }
       }
 
       await removeTicketUserParticipant(ticket.ticketId, user.userId);
@@ -974,11 +974,11 @@ export default function supportRoutes(
         console.error("Failed to log remove user event", messageError);
       }
 
-      await setBannerCookie("success", "User removed from ticket.", res);
-      { res.redirect(`/support/ticket/${ticket.ticketId}`); return; };
+      setBannerCookie("success", "User removed from ticket.", res);
+      { res.redirect(`/support/ticket/${ticket.ticketId}`); return; }
     } catch (error) {
       console.error(error);
-      await res.view("session/error", {
+      { await res.view("session/error", {
         pageTitle: "Error",
         pageDescription: "Error",
         config,
@@ -987,14 +987,14 @@ export default function supportRoutes(
         features,
         globalImage: await getGlobalImage(),
         announcementWeb: await getWebAnnouncement(),
-      });
+      }); return; }
     }
   });
 
   app.post("/support/ticket/:id/remove-group", async function (req, res) {
     try {
       if (!req.session.user) {
-        { res.redirect("/login"); return; };
+        { res.redirect("/login"); return; }
       }
 
       const ticket = await getTicketById(req.params.id);
@@ -1010,14 +1010,14 @@ export default function supportRoutes(
       );
 
       if (!isOwner && !isStaff && !isParticipantUser && !isParticipantRank) {
-        { res.redirect("/support"); return; };
+        { res.redirect("/support"); return; }
       }
 
       const roleId = (req.body?.removeGroupRoleId || "").trim();
       const group = participants.groups.find((participant) => participant.roleId === roleId);
       if (!group) {
-        await setBannerCookie("warning", "Select a valid group to remove.", res);
-        { res.redirect(`/support/ticket/${req.params.id}`); return; };
+        setBannerCookie("warning", "Select a valid group to remove.", res);
+        { res.redirect(`/support/ticket/${req.params.id}`); return; }
       }
 
       await removeTicketGroupParticipant(ticket.ticketId, group.roleId);
@@ -1038,11 +1038,11 @@ export default function supportRoutes(
         console.error("Failed to log remove group event", messageError);
       }
 
-      await setBannerCookie("success", "Group removed from ticket.", res);
-      { res.redirect(`/support/ticket/${ticket.ticketId}`); return; };
+      setBannerCookie("success", "Group removed from ticket.", res);
+      { res.redirect(`/support/ticket/${ticket.ticketId}`); return; }
     } catch (error) {
       console.error(error);
-      await res.view("session/error", {
+      { await res.view("session/error", {
         pageTitle: "Error",
         pageDescription: "Error",
         config,
@@ -1051,14 +1051,14 @@ export default function supportRoutes(
         features,
         globalImage: await getGlobalImage(),
         announcementWeb: await getWebAnnouncement(),
-      });
+      }); return; }
     }
   });
 
   app.get("/support/users/search", async function (req, res) {
     try {
       if (!req.session.user) {
-        res.status(401).send({ results: [] }); return;
+        { res.status(401).send({ results: [] }); return; }
       }
 
       const query = req.query?.q || "";
@@ -1069,23 +1069,23 @@ export default function supportRoutes(
           username: user.username,
           avatarUrl: user.avatarUrl,
         })),
-      }); return; };
+      }); return; }
     } catch (error) {
       console.error("support user search failed", error);
-      res.status(500).send({ results: [] }); return;
+      { res.status(500).send({ results: [] }); return; }
     }
   });
 
   app.get("/support/create", async function (req, res) {
     try {
       if (!req.session.user) {
-        { res.redirect("/login"); return; };
+        { res.redirect("/login"); return; }
       }
 
       const categories = await getSupportCategories();
       const isStaff = req.session.user.isStaff;
 
-      await res.view("modules/support/create", {
+      { await res.view("modules/support/create", {
         pageTitle: "Create Support Ticket",
         pageDescription: "Create Support Ticket",
         config,
@@ -1095,10 +1095,10 @@ export default function supportRoutes(
         isStaff,
         globalImage: await getGlobalImage(),
         announcementWeb: await getWebAnnouncement(),
-      });
+      }); return; }
     } catch (error) {
       console.error(error);
-      await res.view("session/error", {
+      { await res.view("session/error", {
         pageTitle: "Error",
         pageDescription: "Error",
         config,
@@ -1107,14 +1107,14 @@ export default function supportRoutes(
         features,
         globalImage: await getGlobalImage(),
         announcementWeb: await getWebAnnouncement(),
-      });
+      }); return; }
     }
   });
 
   app.post("/support/create", async function (req, res) {
     try {
       if (!req.session.user) {
-        { res.redirect("/login"); return; };
+        { res.redirect("/login"); return; }
       }
 
       const { title, category, message, manualUserId } = req.body;
@@ -1130,8 +1130,8 @@ export default function supportRoutes(
       if (isManual) {
         manualUser = await getUserById(manualUserId);
         if (!manualUser) {
-          await setBannerCookie("danger", "We couldn't find that user for a manual ticket.", res);
-          { res.redirect("/support/create"); return; };
+          setBannerCookie("danger", "We couldn't find that user for a manual ticket.", res);
+          { res.redirect("/support/create"); return; }
         }
 
         selectedCategoryId = await ensureUncategorisedCategory();
@@ -1232,10 +1232,10 @@ export default function supportRoutes(
         }
       }
 
-      { res.redirect("/support"); return; };
+      { res.redirect("/support"); return; }
     } catch (error) {
       console.error(error);
-      await res.view("session/error", {
+      { await res.view("session/error", {
         pageTitle: "Error",
         pageDescription: "Error",
         config,
@@ -1244,7 +1244,7 @@ export default function supportRoutes(
         features,
         globalImage: await getGlobalImage(),
         announcementWeb: await getWebAnnouncement(),
-      });
+      }); return; }
     }
   });
 }

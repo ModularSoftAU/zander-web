@@ -28,10 +28,10 @@ export default function sessionApiRoute(app, config, db, features, lang) {
       });
 
       if (userIdResult.length === 0) {
-        res.send({
+        { res.send({
           success: false,
           message: "User not found with the provided UUID.",
-        }); return;
+        }); return; }
       }
 
       const userId = userIdResult[0].userId;
@@ -59,17 +59,17 @@ export default function sessionApiRoute(app, config, db, features, lang) {
         );
       });
 
-      res.send({
+      { res.send({
         success: true,
         message: newSessionCreatedLang.replace("%UUID%", uuid),
-      }); return;
+      }); return; }
     } catch (error) {
       console.error(error);
       if (!res.sent) {
-        res.status(500).send({
+        { res.status(500).send({
           success: false,
           message: `${error}`,
-        }); return;
+        }); return; }
       }
     }
   });
@@ -104,17 +104,17 @@ export default function sessionApiRoute(app, config, db, features, lang) {
         );
       });
 
-      res.send({
+      { res.send({
         success: true,
         message: sessionClosedLang.replace("%UUID%", uuid),
-      }); return;
+      }); return; }
     } catch (error) {
       console.error(error);
       if (!res.sent) {
-        res.status(500).send({
+        { res.status(500).send({
           success: false,
           message: `${error}`,
-        }); return;
+        }); return; }
       }
     }
   });
@@ -150,19 +150,19 @@ export default function sessionApiRoute(app, config, db, features, lang) {
         );
       });
 
-      res.send({
+      { res.send({
         success: true,
         message: sessionSwitchLang
           .replace("%UUID%", uuid)
           .replace("%SERVER%", server),
-      }); return;
+      }); return; }
     } catch (error) {
       console.error(error);
       if (!res.sent) {
-        res.status(500).send({
+        { res.status(500).send({
           success: false,
           message: `${error}`,
-        }); return;
+        }); return; }
       }
     }
   });

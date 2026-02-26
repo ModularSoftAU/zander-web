@@ -151,9 +151,9 @@ export default function sessionSiteRoute(
           : null;
       if (returnTo) {
         delete req.session.returnTo;
-        { res.redirect(returnTo); return; };
+        { res.redirect(returnTo); return; }
       }
-      { res.redirect("/dashboard"); return; };
+      { res.redirect("/dashboard"); return; }
     }
 
     if (!(await isFeatureWebRouteEnabled(features.web.login, req, res, features)))
@@ -162,10 +162,10 @@ export default function sessionSiteRoute(
     const discordAuthorizeUrl = buildDiscordAuthorizeUrl();
 
     if (req.query.provider === "discord") {
-      { res.redirect(discordAuthorizeUrl); return; };
+      { res.redirect(discordAuthorizeUrl); return; }
     }
 
-    await res.view("session/login", {
+    { await res.view("session/login", {
       pageTitle: `Login`,
       config: config,
       req: req,
@@ -173,12 +173,12 @@ export default function sessionSiteRoute(
       globalImage: await getGlobalImage(),
       announcementWeb: await getWebAnnouncement(),
       discordAuthorizeUrl,
-    });
+    }); return; }
   });
 
   app.post("/login", async function (req, res) {
     if (req.session.user) {
-      { res.redirect("/dashboard"); return; };
+      { res.redirect("/dashboard"); return; }
     }
 
     if (!(await isFeatureWebRouteEnabled(features.web.login, req, res, features)))
@@ -188,8 +188,8 @@ export default function sessionSiteRoute(
     const password = req.body.password || "";
 
     if (!identifier || !password) {
-      await setBannerCookie("warning", "Username/email and password are required.", res);
-      { res.redirect(`/login`); return; };
+      setBannerCookie("warning", "Username/email and password are required.", res);
+      { res.redirect(`/login`); return; }
     }
 
     try {
@@ -197,24 +197,24 @@ export default function sessionSiteRoute(
       const user = await userGetter.byUsernameOrEmail(identifier);
 
       if (!user || !user.password_hash) {
-        await setBannerCookie("danger", "Invalid credentials.", res);
-        { res.redirect(`/login`); return; };
+        setBannerCookie("danger", "Invalid credentials.", res);
+        { res.redirect(`/login`); return; }
       }
 
       if (user.account_disabled) {
-        await setBannerCookie(
+        setBannerCookie(
           "danger",
           "Your account is disabled. Please contact the team for assistance.",
           res
         );
-        { res.redirect(`/login`); return; };
+        { res.redirect(`/login`); return; }
       }
 
       const passwordMatch = await bcrypt.compare(password, user.password_hash);
 
       if (!passwordMatch) {
-        await setBannerCookie("danger", "Invalid credentials.", res);
-        { res.redirect(`/login`); return; };
+        setBannerCookie("danger", "Invalid credentials.", res);
+        { res.redirect(`/login`); return; }
       }
 
       if (!user.email_verified) {
@@ -224,8 +224,8 @@ export default function sessionSiteRoute(
           email: user.email,
           stage: "EMAIL",
         };
-        await setBannerCookie("warning", "Please verify your email to continue.", res);
-        { res.redirect(`/register/verify-email`); return; };
+        setBannerCookie("warning", "Please verify your email to continue.", res);
+        { res.redirect(`/register/verify-email`); return; }
       }
 
       if (!user.account_registered) {
@@ -235,12 +235,12 @@ export default function sessionSiteRoute(
           email: user.email,
           stage: "MINECRAFT",
         };
-        await setBannerCookie(
+        setBannerCookie(
           "warning",
           "Please finish verifying your Minecraft account to continue.",
           res
         );
-        { res.redirect(`/register/minecraft`); return; };
+        { res.redirect(`/register/minecraft`); return; }
       }
 
       await hydrateUserSession(req, user);
@@ -251,7 +251,7 @@ export default function sessionSiteRoute(
         req.session.cookie.maxAge = 86400000 * 30; // 30 days
       }
 
-      await setBannerCookie("success", "Logged in successfully.", res);
+      setBannerCookie("success", "Logged in successfully.", res);
       const returnTo =
         typeof req.session.returnTo === "string" &&
         req.session.returnTo.startsWith("/")
@@ -259,13 +259,13 @@ export default function sessionSiteRoute(
           : null;
       if (returnTo) {
         delete req.session.returnTo;
-        { res.redirect(returnTo); return; };
+        { res.redirect(returnTo); return; }
       }
-      { res.redirect(`${process.env.siteAddress}/`); return; };
+      { res.redirect(`${process.env.siteAddress}/`); return; }
     } catch (error) {
       logRouteError("local login attempt", error);
-      await setBannerCookie("danger", "Unable to log in, please try again soon.", res);
-      { res.redirect(`/login`); return; };
+      setBannerCookie("danger", "Unable to log in, please try again soon.", res);
+      { res.redirect(`/login`); return; }
     }
   });
 
@@ -282,7 +282,7 @@ export default function sessionSiteRoute(
       }
     }
 
-    { res.redirect(buildDiscordAuthorizeUrl()); return; };
+    { res.redirect(buildDiscordAuthorizeUrl()); return; }
   });
 
   app.get("/login/callback", async (req, res) => {
@@ -340,7 +340,7 @@ export default function sessionSiteRoute(
           maxAge: 10 * 60 * 1000,
         });
 
-        { res.redirect(`/unregistered`); return; };
+        { res.redirect(`/unregistered`); return; }
       }
 
       const userLoginData = await userGetData.byDiscordId(userData.id);
@@ -354,13 +354,13 @@ export default function sessionSiteRoute(
           : null;
       if (returnTo) {
         delete req.session.returnTo;
-        { res.redirect(returnTo); return; };
+        { res.redirect(returnTo); return; }
       }
-      { res.redirect(`${process.env.siteAddress}/`); return; };
+      { res.redirect(`${process.env.siteAddress}/`); return; }
     } catch (error) {
       logRouteError("discord OAuth callback", error);
-      await setBannerCookie("danger", "Discord authentication failed.", res);
-      { res.redirect(`/login`); return; };
+      setBannerCookie("danger", "Discord authentication failed.", res);
+      { res.redirect(`/login`); return; }
     }
   });
 
@@ -369,17 +369,17 @@ export default function sessionSiteRoute(
       return;
 
     if (req.session.user) {
-      { res.redirect(`/`); return; };
+      { res.redirect(`/`); return; }
     }
 
-    await res.view("session/forgotPassword", {
+    { await res.view("session/forgotPassword", {
       pageTitle: `Forgot Password`,
       config: config,
       req: req,
       features: features,
       globalImage: await getGlobalImage(),
       announcementWeb: await getWebAnnouncement(),
-    });
+    }); return; }
   });
 
   app.post("/forgot-password", async function (req, res) {
@@ -387,18 +387,18 @@ export default function sessionSiteRoute(
       return;
 
     if (req.session.user) {
-      { res.redirect(`/`); return; };
+      { res.redirect(`/`); return; }
     }
 
     const identifier = req.body.identifier ? req.body.identifier.trim() : "";
 
     if (!identifier) {
-      await setBannerCookie(
+      setBannerCookie(
         "warning",
         "Please provide a username or email address.",
         res
       );
-      { res.redirect(`/forgot-password`); return; };
+      { res.redirect(`/forgot-password`); return; }
     }
 
     try {
@@ -438,21 +438,21 @@ export default function sessionSiteRoute(
         };
       }
 
-      await setBannerCookie(
+      setBannerCookie(
         "success",
         "If an account exists with those details, we've emailed a verification code.",
         res
       );
 
-      { res.redirect(`/forgot-password/verify`); return; };
+      { res.redirect(`/forgot-password/verify`); return; }
     } catch (error) {
       logRouteError("start password reset", error);
-      await setBannerCookie(
+      setBannerCookie(
         "danger",
         "We couldn't start a password reset right now. Please try again soon.",
         res
       );
-      { res.redirect(`/forgot-password`); return; };
+      { res.redirect(`/forgot-password`); return; }
     }
   });
 
@@ -463,10 +463,10 @@ export default function sessionSiteRoute(
     const passwordReset = req.session.passwordReset;
 
     if (!passwordReset || passwordReset.stage !== "CODE") {
-      { res.redirect(`/forgot-password`); return; };
+      { res.redirect(`/forgot-password`); return; }
     }
 
-    await res.view("session/forgotPasswordVerify", {
+    { await res.view("session/forgotPasswordVerify", {
       pageTitle: `Verify Reset Code`,
       config: config,
       req: req,
@@ -475,7 +475,7 @@ export default function sessionSiteRoute(
       announcementWeb: await getWebAnnouncement(),
       username: passwordReset.username,
       expiryMinutes: passwordResetExpiryMinutes,
-    });
+    }); return; }
   });
 
   app.post("/forgot-password/verify", async function (req, res) {
@@ -485,24 +485,24 @@ export default function sessionSiteRoute(
     const passwordReset = req.session.passwordReset;
 
     if (!passwordReset || passwordReset.stage !== "CODE") {
-      await setBannerCookie(
+      setBannerCookie(
         "danger",
         "Your reset request could not be found. Please start again.",
         res
       );
-      { res.redirect(`/forgot-password`); return; };
+      { res.redirect(`/forgot-password`); return; }
     }
 
     const code = req.body.code ? req.body.code.trim() : "";
 
     if (!code) {
-      await setBannerCookie("warning", "Please enter the verification code.", res);
-      { res.redirect(`/forgot-password/verify`); return; };
+      setBannerCookie("warning", "Please enter the verification code.", res);
+      { res.redirect(`/forgot-password/verify`); return; }
     }
 
     if (!passwordReset.userId) {
-      await setBannerCookie("danger", "We couldn't verify that code.", res);
-      { res.redirect(`/forgot-password/verify`); return; };
+      setBannerCookie("danger", "We couldn't verify that code.", res);
+      { res.redirect(`/forgot-password/verify`); return; }
     }
 
     try {
@@ -520,26 +520,26 @@ export default function sessionSiteRoute(
           message = "That code has already been used. Please request a new password reset.";
         }
 
-        await setBannerCookie("danger", message, res);
-        { res.redirect(`/forgot-password/verify`); return; };
+        setBannerCookie("danger", message, res);
+        { res.redirect(`/forgot-password/verify`); return; }
       }
 
       req.session.passwordReset.stage = "RESET";
 
-      await setBannerCookie(
+      setBannerCookie(
         "success",
         "Code verified! You can now choose a new password.",
         res
       );
-      { res.redirect(`/forgot-password/reset`); return; };
+      { res.redirect(`/forgot-password/reset`); return; }
     } catch (error) {
       logRouteError("verify password reset code", error);
-      await setBannerCookie(
+      setBannerCookie(
         "danger",
         "We couldn't verify that code right now. Please try again soon.",
         res
       );
-      { res.redirect(`/forgot-password/verify`); return; };
+      { res.redirect(`/forgot-password/verify`); return; }
     }
   });
 
@@ -554,17 +554,17 @@ export default function sessionSiteRoute(
       passwordReset.stage !== "RESET" ||
       !passwordReset.userId
     ) {
-      { res.redirect(`/forgot-password`); return; };
+      { res.redirect(`/forgot-password`); return; }
     }
 
-    await res.view("session/resetPassword", {
+    { await res.view("session/resetPassword", {
       pageTitle: `Choose a New Password`,
       config: config,
       req: req,
       features: features,
       globalImage: await getGlobalImage(),
       announcementWeb: await getWebAnnouncement(),
-    });
+    }); return; }
   });
 
   app.post("/forgot-password/reset", async function (req, res) {
@@ -578,34 +578,34 @@ export default function sessionSiteRoute(
       passwordReset.stage !== "RESET" ||
       !passwordReset.userId
     ) {
-      await setBannerCookie(
+      setBannerCookie(
         "danger",
         "Your reset request could not be found. Please start again.",
         res
       );
-      { res.redirect(`/forgot-password`); return; };
+      { res.redirect(`/forgot-password`); return; }
     }
 
     const password = req.body.password || "";
     const confirmPassword = req.body.confirmPassword || "";
 
     if (!password || !confirmPassword) {
-      await setBannerCookie("warning", "Please complete all password fields.", res);
-      { res.redirect(`/forgot-password/reset`); return; };
+      setBannerCookie("warning", "Please complete all password fields.", res);
+      { res.redirect(`/forgot-password/reset`); return; }
     }
 
     if (password !== confirmPassword) {
-      await setBannerCookie("danger", "Passwords do not match.", res);
-      { res.redirect(`/forgot-password/reset`); return; };
+      setBannerCookie("danger", "Passwords do not match.", res);
+      { res.redirect(`/forgot-password/reset`); return; }
     }
 
     if (!passwordRequirements.test(password)) {
-      await setBannerCookie(
+      setBannerCookie(
         "warning",
         "Password must be at least 8 characters and include uppercase, lowercase and a number.",
         res
       );
-      { res.redirect(`/forgot-password/reset`); return; };
+      { res.redirect(`/forgot-password/reset`); return; }
     }
 
     try {
@@ -614,20 +614,20 @@ export default function sessionSiteRoute(
 
       delete req.session.passwordReset;
 
-      await setBannerCookie(
+      setBannerCookie(
         "success",
         "Your password has been reset. You can now sign in.",
         res
       );
-      { res.redirect(`/login`); return; };
+      { res.redirect(`/login`); return; }
     } catch (error) {
       logRouteError("complete password reset", error);
-      await setBannerCookie(
+      setBannerCookie(
         "danger",
         "We couldn't reset your password right now. Please try again soon.",
         res
       );
-      { res.redirect(`/forgot-password/reset`); return; };
+      { res.redirect(`/forgot-password/reset`); return; }
     }
   });
 
@@ -636,17 +636,17 @@ export default function sessionSiteRoute(
       return;
 
     if (req.session.user) {
-      { res.redirect(`/`); return; };
+      { res.redirect(`/`); return; }
     }
 
-    await res.view("session/register", {
+    { await res.view("session/register", {
       pageTitle: `Register`,
       config: config,
       req: req,
       features: features,
       globalImage: await getGlobalImage(),
       announcementWeb: await getWebAnnouncement(),
-    });
+    }); return; }
   });
 
   app.post("/register", async function (req, res) {
@@ -658,17 +658,17 @@ export default function sessionSiteRoute(
     const password = req.body.password || "";
 
     if (!username || !email || !password) {
-      await setBannerCookie("warning", "All fields are required.", res);
-      { res.redirect(`/register`); return; };
+      setBannerCookie("warning", "All fields are required.", res);
+      { res.redirect(`/register`); return; }
     }
 
     if (!passwordRequirements.test(password)) {
-      await setBannerCookie(
+      setBannerCookie(
         "warning",
         "Password must be at least 8 characters and include uppercase, lowercase and a number.",
         res
       );
-      { res.redirect(`/register`); return; };
+      { res.redirect(`/register`); return; }
     }
 
     try {
@@ -684,12 +684,12 @@ export default function sessionSiteRoute(
         formattedUuid = await userGetter.getBedrockUuid(username);
 
         if (!formattedUuid) {
-          await setBannerCookie(
+          setBannerCookie(
             "danger",
             "We could not find that Bedrock username. Make sure you have joined the server at least once.",
             res
           );
-          { res.redirect(`/register`); return; };
+          { res.redirect(`/register`); return; }
         }
       } else {
         const profileResponse = await fetch(
@@ -697,8 +697,8 @@ export default function sessionSiteRoute(
         );
 
         if (profileResponse.status === 204 || profileResponse.status === 404) {
-          await setBannerCookie("danger", "We could not find that Minecraft username.", res);
-          { res.redirect(`/register`); return; };
+          setBannerCookie("danger", "We could not find that Minecraft username.", res);
+          { res.redirect(`/register`); return; }
         }
 
         if (!profileResponse.ok) {
@@ -710,8 +710,8 @@ export default function sessionSiteRoute(
       }
 
       if (!formattedUuid) {
-        await setBannerCookie("danger", "Invalid Minecraft UUID returned.", res);
-        { res.redirect(`/register`); return; };
+        setBannerCookie("danger", "Invalid Minecraft UUID returned.", res);
+        { res.redirect(`/register`); return; }
       }
 
       const existingUuidUser = await userGetter.byUUID(formattedUuid);
@@ -720,13 +720,13 @@ export default function sessionSiteRoute(
         existingUsername &&
         (!existingUuidUser || existingUsername.userId !== existingUuidUser.userId)
       ) {
-        await setBannerCookie("danger", "That username is already registered.", res);
-        { res.redirect(`/register`); return; };
+        setBannerCookie("danger", "That username is already registered.", res);
+        { res.redirect(`/register`); return; }
       }
 
       if (existingUuidUser && existingUuidUser.account_registered) {
-        await setBannerCookie("danger", "An account already exists for this Minecraft player.", res);
-        { res.redirect(`/register`); return; };
+        setBannerCookie("danger", "An account already exists for this Minecraft player.", res);
+        { res.redirect(`/register`); return; }
       }
 
       if (!existingUuidUser) {
@@ -736,12 +736,12 @@ export default function sessionSiteRoute(
         );
 
         if (!hasJoinedServer) {
-          await setBannerCookie(
+          setBannerCookie(
             "danger",
             "You need to join the Minecraft server before creating a website account.",
             res
           );
-          { res.redirect(`/register`); return; };
+          { res.redirect(`/register`); return; }
         }
       }
 
@@ -752,8 +752,8 @@ export default function sessionSiteRoute(
         existingEmail.account_registered &&
         (!existingUuidUser || existingEmail.userId !== existingUuidUser.userId)
       ) {
-        await setBannerCookie("danger", "That email address is already in use.", res);
-        { res.redirect(`/register`); return; };
+        setBannerCookie("danger", "That email address is already in use.", res);
+        { res.redirect(`/register`); return; }
       }
 
       const passwordHash = await bcrypt.hash(password, 12);
@@ -800,12 +800,12 @@ export default function sessionSiteRoute(
         stage: "EMAIL",
       };
 
-      await setBannerCookie("success", "We sent a verification code to your email.", res);
-      { res.redirect(`/register/verify-email`); return; };
+      setBannerCookie("success", "We sent a verification code to your email.", res);
+      { res.redirect(`/register/verify-email`); return; }
     } catch (error) {
       logRouteError("start registration", error);
-      await setBannerCookie("danger", "We were unable to create your account.", res);
-      { res.redirect(`/register`); return; };
+      setBannerCookie("danger", "We were unable to create your account.", res);
+      { res.redirect(`/register`); return; }
     }
   });
 
@@ -816,11 +816,11 @@ export default function sessionSiteRoute(
     const pendingRegistration = req.session.pendingRegistration;
 
     if (!pendingRegistration || !pendingRegistration.userId) {
-      await setBannerCookie("warning", "Start by creating an account first.", res);
-      { res.redirect(`/register`); return; };
+      setBannerCookie("warning", "Start by creating an account first.", res);
+      { res.redirect(`/register`); return; }
     }
 
-    await res.view("session/registerVerifyEmail", {
+    { await res.view("session/registerVerifyEmail", {
       pageTitle: `Verify Email`,
       config: config,
       req: req,
@@ -829,7 +829,7 @@ export default function sessionSiteRoute(
       announcementWeb: await getWebAnnouncement(),
       email: pendingRegistration.email,
       expiryMinutes: emailVerificationExpiryMinutes,
-    });
+    }); return; }
   });
 
   app.post("/register/verify-email", async function (req, res) {
@@ -838,8 +838,8 @@ export default function sessionSiteRoute(
 
     const pendingRegistration = req.session.pendingRegistration;
     if (!pendingRegistration || !pendingRegistration.userId) {
-      await setBannerCookie("warning", "Start by creating an account first.", res);
-      { res.redirect(`/register`); return; };
+      setBannerCookie("warning", "Start by creating an account first.", res);
+      { res.redirect(`/register`); return; }
     }
 
     const code = [
@@ -854,31 +854,31 @@ export default function sessionSiteRoute(
       .trim();
 
     if (code.length !== 6) {
-      await setBannerCookie("danger", "Please enter the 6 digit code from your email.", res);
-      { res.redirect(`/register/verify-email`); return; };
+      setBannerCookie("danger", "Please enter the 6 digit code from your email.", res);
+      { res.redirect(`/register/verify-email`); return; }
     }
 
     try {
       const verificationResult = await verifyEmailCode(pendingRegistration.userId, code);
 
       if (!verificationResult.valid) {
-        await setBannerCookie("danger", "That verification code is invalid or expired.", res);
-        { res.redirect(`/register/verify-email`); return; };
+        setBannerCookie("danger", "That verification code is invalid or expired.", res);
+        { res.redirect(`/register/verify-email`); return; }
       }
 
       await markEmailVerified(pendingRegistration.userId);
       req.session.pendingRegistration.stage = "MINECRAFT";
 
-      await setBannerCookie(
+      setBannerCookie(
         "success",
         "Email verified! Now verify your Minecraft account.",
         res
       );
-      { res.redirect(`/register/minecraft`); return; };
+      { res.redirect(`/register/minecraft`); return; }
     } catch (error) {
       logRouteError("verify registration email", error);
-      await setBannerCookie("danger", "We were unable to verify that code.", res);
-      { res.redirect(`/register/verify-email`); return; };
+      setBannerCookie("danger", "We were unable to verify that code.", res);
+      { res.redirect(`/register/verify-email`); return; }
     }
   });
 
@@ -889,13 +889,13 @@ export default function sessionSiteRoute(
     const pendingRegistration = req.session.pendingRegistration;
 
     if (!pendingRegistration || !pendingRegistration.userId) {
-      await setBannerCookie("warning", "Start by creating an account first.", res);
-      { res.redirect(`/register`); return; };
+      setBannerCookie("warning", "Start by creating an account first.", res);
+      { res.redirect(`/register`); return; }
     }
 
     if (pendingRegistration.stage !== "MINECRAFT") {
-      await setBannerCookie("warning", "Please verify your email before continuing.", res);
-      { res.redirect(`/register/verify-email`); return; };
+      setBannerCookie("warning", "Please verify your email before continuing.", res);
+      { res.redirect(`/register/verify-email`); return; }
     }
 
     const fetchURL = `${process.env.siteAddress}/api/server/get?type=VERIFICATION`;
@@ -904,7 +904,7 @@ export default function sessionSiteRoute(
     });
     const apiData = await response.json();
 
-    await res.view("session/registerMinecraft", {
+    { await res.view("session/registerMinecraft", {
       pageTitle: `Verify Minecraft`,
       config: config,
       req: req,
@@ -913,7 +913,7 @@ export default function sessionSiteRoute(
       globalImage: await getGlobalImage(),
       announcementWeb: await getWebAnnouncement(),
       pendingUserId: pendingRegistration.userId,
-    });
+    }); return; }
   });
 
   app.post("/register/minecraft", async function (req, res) {
@@ -923,8 +923,8 @@ export default function sessionSiteRoute(
     const pendingRegistration = req.session.pendingRegistration;
 
     if (!pendingRegistration || !pendingRegistration.userId) {
-      await setBannerCookie("warning", "Start by creating an account first.", res);
-      { res.redirect(`/register`); return; };
+      setBannerCookie("warning", "Start by creating an account first.", res);
+      { res.redirect(`/register`); return; }
     }
 
     const code = [
@@ -939,8 +939,8 @@ export default function sessionSiteRoute(
       .trim();
 
     if (code.length !== 6) {
-      await setBannerCookie("danger", "Please enter the 6 digit code from the Minecraft server.", res);
-      { res.redirect(`/register/minecraft`); return; };
+      setBannerCookie("danger", "Please enter the 6 digit code from the Minecraft server.", res);
+      { res.redirect(`/register/minecraft`); return; }
     }
 
     try {
@@ -948,12 +948,12 @@ export default function sessionSiteRoute(
       const linkUser = await userLinkData.getUserByCode(code);
 
       if (!linkUser || linkUser.userId !== pendingRegistration.userId) {
-        await setBannerCookie(
+        setBannerCookie(
           "danger",
           "That verification code does not match your account.",
           res
         );
-        { res.redirect(`/register/minecraft`); return; };
+        { res.redirect(`/register/minecraft`); return; }
       }
 
       await userLinkData.markWebsiteRegistrationComplete(linkUser.uuid);
@@ -962,12 +962,12 @@ export default function sessionSiteRoute(
       await hydrateUserSession(req, linkUser);
       delete req.session.pendingRegistration;
 
-      await setBannerCookie("success", "Your account has been verified!", res);
-      { res.redirect(`${process.env.siteAddress}/`); return; };
+      setBannerCookie("success", "Your account has been verified!", res);
+      { res.redirect(`${process.env.siteAddress}/`); return; }
     } catch (error) {
       logRouteError("verify Minecraft registration", error);
-      await setBannerCookie("danger", "Unable to verify that code right now.", res);
-      { res.redirect(`/register/minecraft`); return; };
+      setBannerCookie("danger", "Unable to verify that code right now.", res);
+      { res.redirect(`/register/minecraft`); return; }
     }
   });
 
@@ -976,7 +976,7 @@ export default function sessionSiteRoute(
       return;
 
     const discordId = req.cookies.discordId;
-    if (!discordId) { res.redirect(`/`); return; };
+    if (!discordId) { res.redirect(`/`); return; }
 
     const fetchURL = `${process.env.siteAddress}/api/server/get?type=VERIFICATION`;
     const response = await fetch(fetchURL, {
@@ -994,13 +994,15 @@ export default function sessionSiteRoute(
       announcementWeb: await getWebAnnouncement(),
       discordId: discordId,
     });
+
+    return;
   });
 
   app.get("/logout", async function (req, res) {
     try {
       await req.session.destroy();
-      await setBannerCookie("success", lang.session.userLogout, res);
-      { res.redirect(`${process.env.siteAddress}/`); return; };
+      setBannerCookie("success", lang.session.userLogout, res);
+      res.redirect(`${process.env.siteAddress}/`);
     } catch (err) {
       logRouteError("destroy session during logout", err);
       throw err;

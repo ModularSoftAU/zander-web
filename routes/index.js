@@ -50,7 +50,7 @@ export default function applicationSiteRoutes(
     });
     const statApiData = await response.json();
 
-    await res.view("modules/index/index", {
+    { await res.view("modules/index/index", {
       pageTitle: `${config.siteConfiguration.siteName}`,
       config: config,
       req: req,
@@ -58,23 +58,23 @@ export default function applicationSiteRoutes(
       globalImage: await getGlobalImage(),
       statApiData: statApiData,
       announcementWeb: await getWebAnnouncement(),
-    });
+    }); return; }
   });
 
   app.get("/announcement/popup", async function (req, res) {
     if (!features.announcements) {
-      res.send({
+      { res.send({
         success: false,
         message: "Announcements disabled.",
-      }); return;
+      }); return; }
     }
 
     const popupAnnouncements = await getPopupAnnouncements();
 
-    res.send({
+    { res.send({
       success: popupAnnouncements.length > 0,
       data: popupAnnouncements,
-    }); return;
+    }); return; }
   });
 
   //
@@ -89,7 +89,7 @@ export default function applicationSiteRoutes(
     });
     const apiData = await response.json();
 
-    await res.view("modules/play/play", {
+    { await res.view("modules/play/play", {
       pageTitle: `Play`,
       config: config,
       req: req,
@@ -97,7 +97,7 @@ export default function applicationSiteRoutes(
       features: features,
       globalImage: await getGlobalImage(),
       announcementWeb: await getWebAnnouncement(),
-    });
+    }); return; }
   });
 
   //
@@ -112,7 +112,7 @@ export default function applicationSiteRoutes(
     });
     const apiData = await response.json();
 
-    await res.view("apply", {
+    { await res.view("apply", {
       pageTitle: `Apply`,
       config: config,
       req: req,
@@ -120,7 +120,7 @@ export default function applicationSiteRoutes(
       features: features,
       globalImage: await getGlobalImage(),
       announcementWeb: await getWebAnnouncement(),
-    });
+    }); return; }
   });
 
   //
@@ -129,7 +129,7 @@ export default function applicationSiteRoutes(
   app.get("/ranks", async function (req, res) {
     if (!(await isFeatureWebRouteEnabled(features.ranks, req, res, features))) return;
 
-    await res.view("ranks", {
+    { await res.view("ranks", {
       pageTitle: `Ranks`,
       config: config,
       req: req,
@@ -137,7 +137,7 @@ export default function applicationSiteRoutes(
       features: features,
       globalImage: await getGlobalImage(),
       announcementWeb: await getWebAnnouncement(),
-    });
+    }); return; }
   });
 
   //
@@ -147,7 +147,7 @@ export default function applicationSiteRoutes(
     try {
       const staffData = await getStaffPageData();
 
-      await res.view("staff", {
+      { await res.view("staff", {
         pageTitle: `Staff`,
         config: config,
         req: req,
@@ -155,10 +155,10 @@ export default function applicationSiteRoutes(
         features: features,
         globalImage: await getGlobalImage(),
         announcementWeb: await getWebAnnouncement(),
-      });
+      }); return; }
     } catch (err) {
       console.error("Error loading staff page:", err);
-      await res.view("session/error", {
+      { await res.view("session/error", {
         pageTitle: "Error",
         pageDescription: "Error loading staff page",
         config: config,
@@ -167,7 +167,7 @@ export default function applicationSiteRoutes(
         features: features,
         globalImage: await getGlobalImage(),
         announcementWeb: await getWebAnnouncement(),
-      });
+      }); return; }
     }
   });
 
@@ -180,24 +180,24 @@ export default function applicationSiteRoutes(
     }
 
     if (!req.session.user) {
-      await res.view("session/notLoggedIn", {
+      { await res.view("session/notLoggedIn", {
         pageTitle: `Access Restricted`,
         config: config,
         req: req,
         features: features,
         globalImage: await getGlobalImage(),
         announcementWeb: await getWebAnnouncement(),
-      });
+      }); return; }
     }
 
-    await res.view("report", {
+    { await res.view("report", {
       pageTitle: `Report`,
       config: config,
       req: req,
       features: features,
       globalImage: await getGlobalImage(),
       announcementWeb: await getWebAnnouncement(),
-    });
+    }); return; }
   });
 
   //
@@ -252,7 +252,7 @@ export default function applicationSiteRoutes(
         }, {});
       }
 
-      await res.view("modules/appeal/appeal", {
+      { await res.view("modules/appeal/appeal", {
         pageTitle: "Punishment Appeal",
         config: config,
         req: req,
@@ -264,10 +264,10 @@ export default function applicationSiteRoutes(
         isLoggedIn: isLoggedIn,
         globalImage: await getGlobalImage(),
         announcementWeb: await getWebAnnouncement(),
-      });
+      }); return; }
     } catch (error) {
       console.error(error);
-      await res.view("session/error", {
+      { await res.view("session/error", {
         pageTitle: "Error",
         pageDescription: "Error",
         config: config,
@@ -276,7 +276,7 @@ export default function applicationSiteRoutes(
         features: features,
         globalImage: await getGlobalImage(),
         announcementWeb: await getWebAnnouncement(),
-      });
+      }); return; }
     }
   });
 
@@ -284,12 +284,12 @@ export default function applicationSiteRoutes(
     try {
       if (!req.session.user) {
         const returnTo = encodeURIComponent(req.url);
-        { res.redirect(`/login?returnTo=${returnTo}`); return; };
+        { res.redirect(`/login?returnTo=${returnTo}`); return; }
       }
 
       const punishmentIndex = Number.parseInt(req.query.punishmentIndex, 10);
       if (!Number.isInteger(punishmentIndex) || punishmentIndex < 0) {
-        { res.redirect("/appeal"); return; };
+        { res.redirect("/appeal"); return; }
       }
 
       const fetchPunishmentsURL = `${process.env.siteAddress}/api/user/punishments?username=${encodeURIComponent(
@@ -305,7 +305,7 @@ export default function applicationSiteRoutes(
       const punishment = punishments[punishmentIndex];
 
       if (!punishment) {
-        { res.redirect("/appeal"); return; };
+        { res.redirect("/appeal"); return; }
       }
 
       const fallbackKey = moment(punishment.dateStart).isValid()
@@ -325,10 +325,10 @@ export default function applicationSiteRoutes(
         return String(ticket.title || "").includes(`Appeal #${punishmentKey}`);
       });
       if (existingTicket) {
-        { res.redirect(`/support/ticket/${existingTicket.ticketId}`); return; };
+        { res.redirect(`/support/ticket/${existingTicket.ticketId}`); return; }
       }
 
-      await res.view("modules/appeal/appeal-form", {
+      { await res.view("modules/appeal/appeal-form", {
         pageTitle: "Punishment Appeal",
         config: config,
         req: req,
@@ -339,10 +339,10 @@ export default function applicationSiteRoutes(
         moment: moment,
         globalImage: await getGlobalImage(),
         announcementWeb: await getWebAnnouncement(),
-      });
+      }); return; }
     } catch (error) {
       console.error(error);
-      await res.view("session/error", {
+      { await res.view("session/error", {
         pageTitle: "Error",
         pageDescription: "Error",
         config: config,
@@ -351,7 +351,7 @@ export default function applicationSiteRoutes(
         features: features,
         globalImage: await getGlobalImage(),
         announcementWeb: await getWebAnnouncement(),
-      });
+      }); return; }
     }
   });
 
@@ -361,14 +361,14 @@ export default function applicationSiteRoutes(
   app.get("/shopdirectory", async function (req, res) {
     if (!(await isFeatureWebRouteEnabled(features.shopdirectory, req, res, features))) return;
 
-    await res.view("shopdirectory", {
+    { await res.view("shopdirectory", {
       pageTitle: `Shop Directory`,
       config: config,
       req: req,
       features: features,
       globalImage: await getGlobalImage(),
       announcementWeb: await getWebAnnouncement(),
-    });
+    }); return; }
   })
 
   // Proxy endpoint for client-side shop search (avoids exposing API key)
@@ -386,28 +386,28 @@ export default function applicationSiteRoutes(
 
       if (!shopResponse.ok) {
         console.error("Shop search proxy: API returned status", shopResponse.status);
-        res.send({
+        { res.send({
           success: false,
           message: "Shop service is temporarily unavailable. Please try again.",
-        }); return;
+        }); return; }
       }
 
       const responseText = await shopResponse.text();
       if (!responseText) {
-        res.send({
+        { res.send({
           success: false,
           message: "Shop service returned an empty response. Please try again.",
-        }); return;
+        }); return; }
       }
 
       const shopApiData = JSON.parse(responseText);
-      res.send(shopApiData); return;
+      { res.send(shopApiData); return; }
     } catch (err) {
       console.error("Shop search proxy error:", err);
-      res.send({
+      { res.send({
         success: false,
         message: "Failed to fetch shop data. Please try again.",
-      }); return;
+      }); return; }
     }
   })
   
@@ -423,7 +423,7 @@ export default function applicationSiteRoutes(
     });
     const apiData = await response.json();
 
-    await res.view("vault", {
+    { await res.view("vault", {
       pageTitle: `Vault`,
       config: config,
       req: req,
@@ -431,7 +431,7 @@ export default function applicationSiteRoutes(
       features: features,
       globalImage: await getGlobalImage(),
       announcementWeb: await getWebAnnouncement(),
-    });
+    }); return; }
   });
 
   //
@@ -456,7 +456,7 @@ export default function applicationSiteRoutes(
     });
     const apiData = await response.json();
 
-    await res.view("modules/punishments/punishments", {
+    { await res.view("modules/punishments/punishments", {
       pageTitle: `Punishments`,
       config: config,
       req: req,
@@ -465,6 +465,6 @@ export default function applicationSiteRoutes(
       announcementWeb: await getWebAnnouncement(),
       apiData: apiData,
       moment: moment,
-    });
+    }); return; }
   });
 }
