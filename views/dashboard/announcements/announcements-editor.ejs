@@ -369,37 +369,39 @@
         }
     });
 
-    const announcementTypeSelect = document.querySelector("select[name='announcementType']");
-    const fieldGroups = document.querySelectorAll("[data-announcement-field]");
+    window.addEventListener("load", function() {
+        const announcementTypeSelect = document.querySelector("select[name='announcementType']");
+        const fieldGroups = document.querySelectorAll("[data-announcement-field]");
 
-    const updateAnnouncementFields = () => {
-        const type = announcementTypeSelect?.value || "";
+        const updateAnnouncementFields = () => {
+            const type = announcementTypeSelect?.value || "";
 
-        fieldGroups.forEach((group) => {
-            const field = group.dataset.announcementField;
-            let visible = true;
+            fieldGroups.forEach((group) => {
+                const field = group.dataset.announcementField;
+                let visible = true;
 
-            if (field === "popupButtonText" || field === "popupImageUrl") {
-                visible = type === "popup";
-            }
+                if (field === "popupButtonText" || field === "popupImageUrl") {
+                    visible = type === "popup";
+                }
 
-            if (field === "colourMessageFormat") {
-                visible = type === "motd" || type === "tip";
-            }
+                if (field === "colourMessageFormat") {
+                    visible = type === "motd" || type === "tip";
+                }
 
-            if (field === "link") {
-                visible = type === "web" || type === "popup" || type === "tip";
-            }
+                if (field === "link") {
+                    visible = type === "web" || type === "popup" || type === "tip";
+                }
 
-            group.classList.toggle("d-none", !visible);
-        });
-    };
+                group.classList.toggle("d-none", !visible);
+            });
+        };
 
-    if (announcementTypeSelect) {
-        announcementTypeSelect.addEventListener("change", updateAnnouncementFields);
-        announcementTypeSelect.addEventListener("input", updateAnnouncementFields);
-        updateAnnouncementFields();
-    }
+        if (announcementTypeSelect) {
+            announcementTypeSelect.addEventListener("change", updateAnnouncementFields);
+            announcementTypeSelect.addEventListener("input", updateAnnouncementFields);
+            updateAnnouncementFields();
+        }
+    }, false);
 
     const setDateInputMinimums = () => {
         const now = new Date();
