@@ -39,10 +39,25 @@
       "networkChatLog": "WEBHOOKURL",
       "adminLog": "WEBHOOKURL",
       "staffChannel": "WEBHOOKURL",
-      "staffAuditLog": "WEBHOOKURL"
+      "staffAuditLog": "WEBHOOKURL",
+      "staffPunishmentNotifications": "WEBHOOKURL"
     },
+    "nicknameReportChannelId": "786042085937643540",
     "roles": {
-      "verified": "ROLEID"
+      "verified": "ROLEID",
+      "muted": "ROLEID"
+    },
+    "punishments": {
+      "logChannelId": "CHANNELID",
+      "appealBaseUrl": "/appeal",
+      "permissions": {
+        "can_warn": "zander.discord.punish.warn",
+        "can_kick": "zander.discord.punish.kick",
+        "can_ban": "zander.discord.punish.ban",
+        "can_mute": "zander.discord.punish.mute",
+        "can_view_history": "zander.discord.punish.history"
+      },
+      "requireDmSuccess": false
     }
   },
   "staffAuditReport": {

@@ -13,6 +13,7 @@ import vaultApiRoute from "./vault.js";
 import bridgeApiRoute from "./bridge.js";
 import punishmentsApiRoute from "./punishments.js";
 import configApiRoute from "./config.js";
+import discordPunishmentsApiRoute from "./discordPunishments.js";
 import schedulerApiRoute from "./scheduler.js";
 
 export default (app, client, moment, config, db, features, lang) => {
@@ -31,6 +32,7 @@ export default (app, client, moment, config, db, features, lang) => {
   bridgeApiRoute(app, config, db, features, lang);
   punishmentsApiRoute(app, config, db, features, lang);
   configApiRoute(app, config, db, features, lang);
+  discordPunishmentsApiRoute(app, config, db, features, lang);
   schedulerApiRoute(app, client, config, db, features, lang);
 
   app.get("/api/heartbeat", async function (req, res) {

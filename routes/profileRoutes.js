@@ -18,6 +18,10 @@ import {
   getReportsByReporterId,
   getUserPunishments,
 } from "../services/profileService.js";
+import {
+  getDiscordPunishmentsForProfile,
+  hasActiveWebBan,
+} from "../controllers/discordPunishmentController.js";
 
 export default function profileSiteRoutes(
   app,
@@ -126,6 +130,7 @@ export default function profileSiteRoutes(
         // Grab user punishments (direct DB query, no HTTP self-call)
         //
         let profilePunishmentsApiData = { success: true, data: [] };
+        let discordPunishmentsData = [];
         const isViewingOwnProfile =
           req.session.user && req.session.user.username === username;
         if (
@@ -134,6 +139,16 @@ export default function profileSiteRoutes(
             contextPermissions.includes("zander.web.punishments"))
         ) {
           profilePunishmentsApiData = await getUserPunishments(username);
+
+          // Also fetch Discord punishments for this user
+          try {
+            discordPunishmentsData = await getDiscordPunishmentsForProfile({
+              discordUserId: profileData.discordId || null,
+              playerId: profileData.userId || null,
+            });
+          } catch (err) {
+            console.error("[PROFILE] Failed to fetch Discord punishments:", err);
+          }
         }
 
         const canAppeal = isViewingOwnProfile;
@@ -172,6 +187,7 @@ export default function profileSiteRoutes(
           profileRanks: await getUserRanks(profileData.username),
           profileReportsApiData: profileReportsApiData,
           profilePunishmentsApiData: profilePunishmentsApiData,
+          discordPunishmentsData: discordPunishmentsData,
           appealTicketsByKey: appealTicketsByKey,
           canAppeal: canAppeal,
           profileStats: await getUserStats(profileData.userId),
@@ -207,6 +223,13 @@ export default function profileSiteRoutes(
       const userHasJoined = await userData.hasJoined(username);
 
       if (!isLoggedIn(req)) return res.redirect(`/`);
+
+      // Check if user is web-banned
+      const sessionUserId = req.session?.user?.userId;
+      if (sessionUserId && await hasActiveWebBan(sessionUserId)) {
+        await setBannerCookie("danger", "You are currently banned from editing your profile.", res);
+        return res.redirect(`/profile/${username}`);
+      }
 
       if (!userHasJoined) {
         return res.view("session/notFound", {

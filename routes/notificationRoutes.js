@@ -7,6 +7,7 @@ import {
   markNotificationRead,
   markAllNotificationsRead,
   deleteNotification,
+  savePushSubscription,
 } from "../controllers/notificationController.js";
 
 export default function notificationRoutes(app, config, features) {
@@ -36,6 +37,29 @@ export default function notificationRoutes(app, config, features) {
       globalImage: await getGlobalImage(),
       announcementWeb: await getWebAnnouncement(),
     });
+  });
+
+  app.get("/notifications/vapid-public-key", async function (req, res) {
+    return res.send({ publicKey: process.env.VAPID_PUBLIC_KEY || null });
+  });
+
+  app.post("/notifications/push-subscribe", async function (req, res) {
+    if (!req.session.user) {
+      return res.status(401).send({ error: "Not authenticated" });
+    }
+
+    const { subscription } = req.body || {};
+    if (!subscription || !subscription.endpoint || !subscription.keys) {
+      return res.status(400).send({ error: "Invalid subscription" });
+    }
+
+    try {
+      await savePushSubscription(req.session.user.userId, subscription);
+      return res.status(201).send({ success: true });
+    } catch (error) {
+      console.error("[NOTIFICATION] Failed to save push subscription", error);
+      return res.status(500).send({ error: "Failed to save subscription" });
+    }
   });
 
   app.get("/notifications/summary", async function (req, res) {

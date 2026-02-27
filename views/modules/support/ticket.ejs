@@ -110,10 +110,11 @@
             <h2 class="mb-0">Reply</h2>
             <% if (canManageTicket) { %>
                 <div class="d-flex align-items-center gap-2 flex-wrap">
-                    <form action="/support/ticket/<%= ticket.ticketId %>/status" method="POST" class="d-flex">
-                        <% if (ticket.status === 'open') { %>
+                    <form action="/support/ticket/<%= ticket.ticketId %>/status" method="POST" class="d-flex gap-2">
+                        <% if (ticket.status === 'open' || ticket.status === 'pending') { %>
                             <button type="submit" name="status" value="closed" class="btn btn-outline-danger">Close ticket</button>
-                        <% } else { %>
+                        <% } %>
+                        <% if (ticket.status === 'closed' || ticket.status === 'pending') { %>
                             <button type="submit" name="status" value="open" class="btn btn-outline-success">Reopen ticket</button>
                         <% } %>
                     </form>

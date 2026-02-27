@@ -2222,6 +2222,27 @@ a:focus {
   font-style: italic;
 }
 
+/* Summernote wraps <li> content in <p> tags; Bootstrap's p margin-bottom
+   makes bullet lists look double-spaced. Collapse it. */
+.forums-post-body ul li p,
+.forums-post-body ol li p {
+  margin-bottom: 0;
+}
+
+/* Mirror fixes into the editor so writing matches reading */
+.note-editable ul li p,
+.note-editable ol li p {
+  margin-bottom: 0;
+}
+
+.note-editable blockquote {
+  border-left: 3px solid rgba(47, 80, 140, 0.3);
+  padding-left: 1rem;
+  color: #475569;
+  font-style: italic;
+  margin: 0.5rem 0;
+}
+
 .forums-pagination .page-link {
   color: #2f508c;
   border-radius: 999px;

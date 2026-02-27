@@ -40,10 +40,12 @@ export default function punishmentsApiRoute(app, config, db, features, lang) {
       });
     } catch (error) {
       console.error("Failed to fetch punishments", error);
-      return res.send({
-        success: false,
-        message: `${error}`,
-      });
+      if (!res.sent) {
+        return res.status(500).send({
+          success: false,
+          message: `${error}`,
+        });
+      }
     }
   });
 }
