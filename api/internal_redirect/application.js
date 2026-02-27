@@ -1,10 +1,10 @@
 import { hasPermission, postAPIRequest } from "../common.js";
 
-export default function applicationRedirectRoute(app, config, lang) {
+export default function applicationRedirectRoute(app, config, lang, features) {
   const baseEndpoint = "/redirect/applications";
 
   app.post(baseEndpoint + "/create", async function (req, res) {
-    if (!hasPermission("zander.web.application", req, res)) return;
+    if (!(await hasPermission("zander.web.application", req, res, features))) return;
 
     // Add userId to req.body
     req.body.actioningUser = req.session.user.userId;
@@ -23,7 +23,7 @@ export default function applicationRedirectRoute(app, config, lang) {
   });
 
   app.post(baseEndpoint + "/edit", async function (req, res) {
-    if (!hasPermission("zander.web.application", req, res)) return;
+    if (!(await hasPermission("zander.web.application", req, res, features))) return;
 
     // Add userId to req.body
     req.body.actioningUser = req.session.user.userId;
@@ -42,7 +42,7 @@ export default function applicationRedirectRoute(app, config, lang) {
   });
 
   app.post(baseEndpoint + "/delete", async function (req, res) {
-    if (!hasPermission("zander.web.application", req, res)) return;
+    if (!(await hasPermission("zander.web.application", req, res, features))) return;
 
     // Add userId to req.body
     req.body.actioningUser = req.session.user.userId;

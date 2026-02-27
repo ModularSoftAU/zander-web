@@ -8,14 +8,14 @@ import bridgeRedirectRoute from "./bridge.js";
 import rankRedirectRoute from "./rank.js";
 import schedulerRedirectRoute from "./scheduler.js";
 
-export default (app, config, lang) => {
-  applicationRedirectRoute(app, config, lang);
-  serverRedirectRoute(app, config, lang);
-  reportRedirectRoute(app, config, lang);
-  webRedirectRoute(app, config, lang);
-  announcementsRedirectRoute(app, config, lang);
-  vaultRedirectRoute(app, config, lang);
-  bridgeRedirectRoute(app, config, lang);
-  rankRedirectRoute(app, config, lang);
-  schedulerRedirectRoute(app, config, lang);
+export default (app, config, lang, features) => {
+  applicationRedirectRoute(app, config, lang, features);
+  serverRedirectRoute(app, config, lang, features);
+  reportRedirectRoute(app, config, lang, features);
+  webRedirectRoute(app, config, lang, features);
+  announcementsRedirectRoute(app, config, lang, features);
+  vaultRedirectRoute(app, config, lang, features);
+  bridgeRedirectRoute(app, config, lang, features);
+  rankRedirectRoute(app, config, lang, features);
+  schedulerRedirectRoute(app, config, lang, features);
 };

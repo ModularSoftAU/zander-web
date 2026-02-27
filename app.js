@@ -33,6 +33,7 @@ import("./cron/staffAuditReportCron.js");
 import("./cron/schedulerCron.js");
 import("./cron/nicknameCheckCron.js");
 import("./cron/punishmentExpiryCron.js");
+import("./cron/discordStatsUpdateCron.js");
 
 //
 // Website Related
@@ -47,18 +48,6 @@ import apiRedirectRoutes from "./api/internal_redirect/index.js";
 import verifyToken from "./api/routes/verifyToken.js";
 import { getGlobalImage } from "./api/common.js";
 import { client } from "./controllers/discordController.js";
-
-import("./controllers/discordController.js");
-import("./cron/userCodeExpiryCron.js");
-import("./cron/bridgeCleanupCron.js");
-import("./cron/discordStatsUpdateCron.js");
-import("./cron/staffAuditReportCron.js");
-
-import("./controllers/discordController.js");
-import("./cron/userCodeExpiryCron.js");
-import("./cron/bridgeCleanupCron.js");
-import("./cron/discordStatsUpdateCron.js");
-import("./cron/staffAuditReportCron.js");
 
 //
 // Application Boot
@@ -90,6 +79,14 @@ const buildApp = async () => {
         : 500;
 
     res.status(statusCode);
+
+    // If the request is for the API, return JSON instead of a view
+    if (req.url.startsWith("/api/")) {
+      return res.send({
+        success: false,
+        message: error.message || "Internal Server Error",
+      });
+    }
 
     return res.view("session/error", {
       pageTitle: `Server Error`,
@@ -136,7 +133,7 @@ const buildApp = async () => {
   await app.register((instance, options, next) => {
     // Don't authenticate the Redirect routes. These are
     // protected by
-    apiRedirectRoutes(instance, config, lang);
+    apiRedirectRoutes(instance, config, lang, features);
     next();
   });
 
@@ -178,7 +175,9 @@ const buildApp = async () => {
   });
 
   app.addHook("preHandler", async (req, res) => {
-    req.session.authenticated = false;
+    if (req.session) {
+      req.session.authenticated = false;
+    }
     req.notifications = { unreadCount: 0, items: [] };
 
     if (req.session?.user?.userId) {
