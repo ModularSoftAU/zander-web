@@ -9,10 +9,17 @@ var pool = mysql.createPool({
   user: process.env.databaseUser,
   password: process.env.databasePassword,
   database: process.env.databaseName,
+  charset: "utf8mb4",
   multipleStatements: true,
   connectTimeout: 30000, // 30 seconds
   acquireTimeout: 30000, // Time to wait for acquiring a connection
   timezone: "Z", // Treat all database datetimes as UTC
+});
+
+// Ensure every connection in the pool uses utf8mb4 so that 4-byte Unicode
+// characters (emoji, etc.) are stored and retrieved correctly.
+pool.on("connection", function (connection) {
+  connection.query("SET NAMES 'utf8mb4' COLLATE 'utf8mb4_unicode_ci'");
 });
 
 pool.getConnection(function (err, connection) {
@@ -22,6 +29,17 @@ pool.getConnection(function (err, connection) {
   }
   console.info(`[DB] Database pool connection is successful.`);
   connection.release(); // Release the connection back to the pool
+});
+
+pool.on("error", (err) => {
+  console.error(`[ERROR] [DB] Pool Error: ${err.message}`);
+  if (err.code === "PROTOCOL_CONNECTION_LOST") {
+    console.error("[ERROR] [DB] Database connection was closed.");
+  } else if (err.code === "ER_CON_COUNT_ERROR") {
+    console.error("[ERROR] [DB] Database has too many connections.");
+  } else if (err.code === "ECONNREFUSED") {
+    console.error("[ERROR] [DB] Database connection was refused.");
+  }
 });
 
 export default pool;

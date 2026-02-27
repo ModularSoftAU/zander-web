@@ -1,18 +1,19 @@
 import { postAPIRequest } from "../common.js";
 
-export default function webRedirectRoute(app, config, lang) {
+export default function webRedirectRoute(app, config, lang, features) {
   const baseEndpoint = "/redirect/web";
 
   app.post(baseEndpoint + "/user/link", async function (req, res) {
-    postAPIRequest(
+    await postAPIRequest(
       `${process.env.siteAddress}/api/user/link`,
       req.body,
       `${process.env.siteAddress}/unregistered`,
       res
     );
 
-    res.redirect(`${process.env.siteAddress}/`);
-
+    if (!res.sent) {
+      return res.redirect(`${process.env.siteAddress}/`);
+    }
     return res;
   });
 
@@ -21,15 +22,16 @@ export default function webRedirectRoute(app, config, lang) {
     req.body.userId = req.session.user.userId;
 
     // Make the API request
-    postAPIRequest(
+    await postAPIRequest(
       `${process.env.siteAddress}/api/user/profile/display`,
       req.body,
       `${process.env.siteAddress}/`,
       res
     );
 
-    res.redirect(`${process.env.siteAddress}/profile/${req.session.user.username}`);
-
+    if (!res.sent) {
+      return res.redirect(`${process.env.siteAddress}/profile/${req.session.user.username}`);
+    }
     return res;
   });
 
@@ -37,15 +39,16 @@ export default function webRedirectRoute(app, config, lang) {
     // Add userId to req.body
     req.body.userId = req.session.user.userId;
 
-    postAPIRequest(
+    await postAPIRequest(
       `${process.env.siteAddress}/api/user/profile/interests`,
       req.body,
       `${process.env.siteAddress}/`,
       res
     );
 
-    res.redirect(`${process.env.siteAddress}/profile/${req.session.user.username}`);
-
+    if (!res.sent) {
+      return res.redirect(`${process.env.siteAddress}/profile/${req.session.user.username}`);
+    }
     return res;
   });
 
@@ -53,15 +56,16 @@ export default function webRedirectRoute(app, config, lang) {
     // Add userId to req.body
     req.body.userId = req.session.user.userId;
 
-    postAPIRequest(
+    await postAPIRequest(
       `${process.env.siteAddress}/api/user/profile/about`,
       req.body,
       `${process.env.siteAddress}/`,
       res
     );
 
-    res.redirect(`${process.env.siteAddress}/profile/${req.session.user.username}`);
-
+    if (!res.sent) {
+      return res.redirect(`${process.env.siteAddress}/profile/${req.session.user.username}`);
+    }
     return res;
   });
 
@@ -69,15 +73,16 @@ export default function webRedirectRoute(app, config, lang) {
     // Add userId to req.body
     req.body.userId = req.session.user.userId;
     
-    postAPIRequest(
+    await postAPIRequest(
       `${process.env.siteAddress}/api/user/profile/social`,
       req.body,
       `${process.env.siteAddress}/`,
       res
     );
 
-    res.redirect(`${process.env.siteAddress}/profile/${req.session.user.username}`);
-
+    if (!res.sent) {
+      return res.redirect(`${process.env.siteAddress}/profile/${req.session.user.username}`);
+    }
     return res;
   });
 }

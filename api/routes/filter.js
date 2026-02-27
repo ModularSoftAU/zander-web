@@ -18,13 +18,15 @@ export default function filterApiRoute(
   const baseEndpoint = "/api/filter";
 
   app.post(baseEndpoint, async function (req, res) {
-    if (!features.filter.phrase && !features.filter.link)
-      return isFeatureEnabled(false, res, lang);
+    if (!features.filter.phrase && !features.filter.link) {
+      if (!isFeatureEnabled(false, res, lang)) return;
+    }
 
     const content = required(req.body, "content", res);
-    const username = optional(req.body, "username", res);
-    const discordId = optional(req.body, "discordId", res);
-    const discordUsername = optional(req.body, "discordUsername", res);
+    if (res.sent) return;
+    const username = optional(req.body, "username");
+    const discordId = optional(req.body, "discordId");
+    const discordUsername = optional(req.body, "discordUsername");
 
     try {
       let userData = null;
@@ -138,10 +140,12 @@ export default function filterApiRoute(
           });
         } catch (error) {
           console.error("Error sending to webhook:", error);
-          return res.send({
-            success: false,
-            message: `${error}`,
-          });
+          if (!res.sent) {
+            return res.send({
+              success: false,
+              message: `${error}`,
+            });
+          }
         }
       }
 
@@ -152,10 +156,12 @@ export default function filterApiRoute(
       });
     } catch (error) {
       console.error("Error processing request:", error);
-      return res.status(500).send({
-        success: false,
-        message: error.message || "Internal Server Error",
-      });
+      if (!res.sent) {
+        return res.status(500).send({
+          success: false,
+          message: error.message || "Internal Server Error",
+        });
+      }
     }
   });
 }

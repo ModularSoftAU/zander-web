@@ -7,6 +7,7 @@ import { EmbedBuilder } from "discord.js";
 const features = require("../features.json");
 import { MessageBuilder, Webhook } from "discord-webhook-node";
 import { sendWebhookMessage } from "../lib/discord/webhooks.mjs";
+import { checkAndReportNickname } from "../lib/discord/nicknameCheck.mjs";
 
 export class GuildMemberUpdateListener extends Listener {
   constructor(context, options) {
@@ -18,10 +19,10 @@ export class GuildMemberUpdateListener extends Listener {
   }
 
   async run(oldMember, newMember) {
-    if (features.discord.events.guildMemberVerify) {
-      if (!newMember.guild) return;
-      if (newMember.user.bot) return;
+    if (!newMember.guild) return;
+    if (newMember.user.bot) return;
 
+    if (features.discord.events.guildMemberVerify) {
       const oldRole = oldMember.roles.cache.has(config.discord.roles.verified);
       const newRole = newMember.roles.cache.has(config.discord.roles.verified);
 
@@ -43,8 +44,12 @@ export class GuildMemberUpdateListener extends Listener {
         await sendWebhookMessage(welcomeHook, embed, {
           context: "listeners/guildMemberUpdate",
         });
+
+        // Check nickname when a member gets verified
+        if (features.discord.events.nicknameCheck && config.discord.nicknameReportChannelId) {
+          await checkAndReportNickname(newMember, config.discord.nicknameReportChannelId, "Account Linked");
+        }
       }
-      return;
     }
   }
 }

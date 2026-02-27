@@ -310,7 +310,7 @@ export default function supportRoutes(
       const rankOptions = await getLuckPermRankRoles();
       const ownerUser = await getUserById(ticket.userId);
 
-      const isOwner = ticket.userId === req.session.user.userId;
+      const isOwner = Number(ticket.userId) === Number(req.session.user.userId);
       const isStaff = req.session.user.isStaff;
       const permissions = req.session.user.permissions || [];
       const canEscalate = userHasPermissionNode(permissions, "zander.web.ticket.escalate");
@@ -392,7 +392,7 @@ export default function supportRoutes(
       const ticket = await getTicketById(req.params.id);
       const participants = await getTicketParticipants(req.params.id);
       const userRankSlugs = req.session.user.ranks?.map((rank) => rank.rankSlug) || [];
-      const isOwner = ticket.userId === req.session.user.userId;
+      const isOwner = Number(ticket.userId) === Number(req.session.user.userId);
       const isStaff = req.session.user.isStaff;
       const permissions = req.session.user.permissions || [];
       const canEscalate = userHasPermissionNode(permissions, "zander.web.ticket.escalate");
@@ -494,7 +494,11 @@ export default function supportRoutes(
       }
 
       const ticket = await getTicketById(req.params.id);
-      const isOwner = ticket.userId === req.session.user.userId;
+      if (!ticket) {
+        setBannerCookie("danger", "Ticket not found.", res);
+        return res.redirect("/support");
+      }
+      const isOwner = Number(ticket.userId) === Number(req.session.user.userId);
       const isStaff = req.session.user.isStaff;
       const username = req.session.user.username || `User ${req.session.user.userId}`;
 
@@ -506,6 +510,12 @@ export default function supportRoutes(
       const nextStatus = (req.body.status || "").toLowerCase();
       if (!["open", "closed", "pending"].includes(nextStatus)) {
         setBannerCookie("warning", "Invalid ticket status provided.", res);
+        return res.redirect(`/support/ticket/${req.params.id}`);
+      }
+
+      // Non-staff owners can only close or reopen, not set to pending
+      if (!isStaff && nextStatus === "pending") {
+        setBannerCookie("warning", "Only staff can set a ticket to pending.", res);
         return res.redirect(`/support/ticket/${req.params.id}`);
       }
 
@@ -783,7 +793,7 @@ export default function supportRoutes(
       const ticket = await getTicketById(req.params.id);
       const participants = await getTicketParticipants(req.params.id);
       const userRankSlugs = req.session.user.ranks?.map((rank) => rank.rankSlug) || [];
-      const isOwner = ticket.userId === req.session.user.userId;
+      const isOwner = Number(ticket.userId) === Number(req.session.user.userId);
       const isStaff = req.session.user.isStaff;
       const isParticipantUser = participants.users.some(
         (participant) => participant.userId === req.session.user.userId
@@ -851,7 +861,7 @@ export default function supportRoutes(
       const ticket = await getTicketById(req.params.id);
       const participants = await getTicketParticipants(req.params.id);
       const userRankSlugs = req.session.user.ranks?.map((rank) => rank.rankSlug) || [];
-      const isOwner = ticket.userId === req.session.user.userId;
+      const isOwner = Number(ticket.userId) === Number(req.session.user.userId);
       const isStaff = req.session.user.isStaff;
       const isParticipantUser = participants.users.some(
         (participant) => participant.userId === req.session.user.userId
@@ -914,7 +924,7 @@ export default function supportRoutes(
       const ticket = await getTicketById(req.params.id);
       const participants = await getTicketParticipants(req.params.id);
       const userRankSlugs = req.session.user.ranks?.map((rank) => rank.rankSlug) || [];
-      const isOwner = ticket.userId === req.session.user.userId;
+      const isOwner = Number(ticket.userId) === Number(req.session.user.userId);
       const isStaff = req.session.user.isStaff;
       const isParticipantUser = participants.users.some(
         (participant) => participant.userId === req.session.user.userId
@@ -990,7 +1000,7 @@ export default function supportRoutes(
       const ticket = await getTicketById(req.params.id);
       const participants = await getTicketParticipants(req.params.id);
       const userRankSlugs = req.session.user.ranks?.map((rank) => rank.rankSlug) || [];
-      const isOwner = ticket.userId === req.session.user.userId;
+      const isOwner = Number(ticket.userId) === Number(req.session.user.userId);
       const isStaff = req.session.user.isStaff;
       const isParticipantUser = participants.users.some(
         (participant) => participant.userId === req.session.user.userId

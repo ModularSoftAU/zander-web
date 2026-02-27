@@ -28,6 +28,7 @@ import { UserGetter } from "../controllers/userController.js";
 import { getWebAnnouncement } from "../controllers/announcementController.js";
 import { MessageBuilder, Webhook } from "discord-webhook-node";
 import { sendWebhookMessage } from "../lib/discord/webhooks.mjs";
+import { hasActiveWebBan } from "../controllers/discordPunishmentController.js";
 
 const PERMISSIONS = {
   MODERATE: "zander.forums.moderate",
@@ -448,6 +449,11 @@ export default function forumRoutes(
       return;
     }
 
+    if (await hasActiveWebBan(getCurrentUserId(req))) {
+      await setBannerCookie("danger", "You are currently banned and cannot create discussions.", res);
+      return res.redirect("/forums");
+    }
+
     const slug = req.params.slug;
     const category = await getCategoryBySlug(slug);
 
@@ -629,6 +635,11 @@ export default function forumRoutes(
   const discussionReplyHandler = async function (req, res) {
     if (!(await ensureFeature(req, res))) {
       return;
+    }
+
+    if (await hasActiveWebBan(getCurrentUserId(req))) {
+      await setBannerCookie("danger", "You are currently banned and cannot post replies.", res);
+      return res.redirect("/forums");
     }
 
     const discussionId = Number.parseInt(req.params.discussionId, 10);
@@ -824,6 +835,11 @@ export default function forumRoutes(
       return;
     }
 
+    if (await hasActiveWebBan(getCurrentUserId(req))) {
+      await setBannerCookie("danger", "You are currently banned and cannot edit discussions.", res);
+      return res.redirect("/forums");
+    }
+
     const discussionId = Number.parseInt(req.params.discussionId, 10);
     const result = await getDiscussionWithCategory(discussionId);
 
@@ -904,6 +920,11 @@ export default function forumRoutes(
   app.post("/forums/discussion/:discussionId/delete", async function (req, res) {
     if (!(await ensureFeature(req, res))) {
       return;
+    }
+
+    if (await hasActiveWebBan(getCurrentUserId(req))) {
+      await setBannerCookie("danger", "You are currently banned and cannot delete discussions.", res);
+      return res.redirect("/forums");
     }
 
     const discussionId = Number.parseInt(req.params.discussionId, 10);
@@ -1044,6 +1065,11 @@ export default function forumRoutes(
       return;
     }
 
+    if (await hasActiveWebBan(getCurrentUserId(req))) {
+      await setBannerCookie("danger", "You are currently banned and cannot edit posts.", res);
+      return res.redirect("/forums");
+    }
+
     const postId = Number.parseInt(req.params.postId, 10);
     const post = await getPostById(postId);
 
@@ -1129,6 +1155,11 @@ export default function forumRoutes(
   app.post("/forums/post/:postId/delete", async function (req, res) {
     if (!(await ensureFeature(req, res))) {
       return;
+    }
+
+    if (await hasActiveWebBan(getCurrentUserId(req))) {
+      await setBannerCookie("danger", "You are currently banned and cannot delete posts.", res);
+      return res.redirect("/forums");
     }
 
     const postId = Number.parseInt(req.params.postId, 10);

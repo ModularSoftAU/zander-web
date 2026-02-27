@@ -10,6 +10,7 @@ export const client = new SapphireClient({
     GatewayIntentBits.GuildMessages,
     GatewayIntentBits.GuildMembers,
     GatewayIntentBits.GuildVoiceStates,
+    GatewayIntentBits.GuildModeration,
     GatewayIntentBits.MessageContent,
   ],
   presence: {
@@ -21,6 +22,14 @@ export const client = new SapphireClient({
       },
     ],
   },
+});
+
+client.on("error", (error) => {
+  console.error("Discord client error:", error);
+});
+
+client.on("shardError", (error) => {
+  console.error("A websocket connection encountered an error:", error);
 });
 
 client.login(process.env.discordAPIKey);

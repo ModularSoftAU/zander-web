@@ -1,6 +1,6 @@
 import { hasPermission, postAPIRequest, setBannerCookie } from "../common.js";
 
-export default function bridgeRedirectRoute(app, config, lang) {
+export default function bridgeRedirectRoute(app, config, lang, features) {
   const baseEndpoint = "/redirect/bridge";
 
   function parseJsonPayload(source, fieldName, res) {
@@ -28,11 +28,13 @@ export default function bridgeRedirectRoute(app, config, lang) {
       res
     );
 
-    res.redirect(`${process.env.siteAddress}/dashboard/bridge`);
+    if (!res.sent) {
+      return res.redirect(`${process.env.siteAddress}/dashboard/bridge`);
+    }
   }
 
   app.post(`${baseEndpoint}/command/add`, async function (req, res) {
-    if (!hasPermission("zander.web.bridge", req, res)) return;
+    if (!(await hasPermission("zander.web.bridge", req, res, features))) return;
 
     req.body.actioningUser = req.session.user.userId;
 
@@ -55,7 +57,7 @@ export default function bridgeRedirectRoute(app, config, lang) {
   });
 
   app.post(`${baseEndpoint}/routine/run`, async function (req, res) {
-    if (!hasPermission("zander.web.bridge", req, res)) return;
+    if (!(await hasPermission("zander.web.bridge", req, res, features))) return;
 
     req.body.actioningUser = req.session.user.userId;
 
@@ -72,7 +74,7 @@ export default function bridgeRedirectRoute(app, config, lang) {
   });
 
   app.post(`${baseEndpoint}/routine/save`, async function (req, res) {
-    if (!hasPermission("zander.web.bridge", req, res)) return;
+    if (!(await hasPermission("zander.web.bridge", req, res, features))) return;
 
     req.body.actioningUser = req.session.user.userId;
 
@@ -85,7 +87,7 @@ export default function bridgeRedirectRoute(app, config, lang) {
   });
 
   app.post(`${baseEndpoint}/task/reset`, async function (req, res) {
-    if (!hasPermission("zander.web.bridge", req, res)) return;
+    if (!(await hasPermission("zander.web.bridge", req, res, features))) return;
 
     req.body.actioningUser = req.session.user.userId;
 
@@ -97,7 +99,7 @@ export default function bridgeRedirectRoute(app, config, lang) {
   });
 
   app.post(`${baseEndpoint}/task/report`, async function (req, res) {
-    if (!hasPermission("zander.web.bridge", req, res)) return;
+    if (!(await hasPermission("zander.web.bridge", req, res, features))) return;
 
     req.body.actioningUser = req.session.user.userId;
 
@@ -118,7 +120,7 @@ export default function bridgeRedirectRoute(app, config, lang) {
   });
 
   app.post(`${baseEndpoint}/queue/clear`, async function (req, res) {
-    if (!hasPermission("zander.web.bridge", req, res)) return;
+    if (!(await hasPermission("zander.web.bridge", req, res, features))) return;
 
     req.body.actioningUser = req.session.user.userId;
 
