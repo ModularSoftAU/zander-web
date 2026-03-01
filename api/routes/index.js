@@ -34,10 +34,4 @@ export default (app, client, moment, config, db, features, lang) => {
   schedulerApiRoute(app, client, config, db, features, lang);
   discordPunishmentsApiRoute(app, config, db, features, lang);
 
-  app.get("/api/heartbeat", async function (req, res) {
-    return res.send({
-      success: true,
-      message: `OK`,
-    });
-  });
 };
