@@ -43,6 +43,7 @@ import("./cron/discordStatsUpdateCron.js");
 import siteRoutes from "./routes/index.js";
 import apiRoutes from "./api/routes/index.js";
 import apiRedirectRoutes from "./api/internal_redirect/index.js";
+import configApiRoute from "./api/routes/config.js";
 
 // API token authentication
 import verifyToken from "./api/routes/verifyToken.js";
@@ -134,6 +135,12 @@ const buildApp = async () => {
     // Don't authenticate the Redirect routes. These are
     // protected by
     apiRedirectRoutes(instance, config, lang, features);
+    next();
+  });
+
+  await app.register((instance, options, next) => {
+    // Config API routes (No token authentication)
+    configApiRoute(instance, config, db, features, lang);
     next();
   });
 
