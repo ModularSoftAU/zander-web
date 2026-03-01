@@ -138,11 +138,13 @@ const buildApp = async () => {
     next();
   });
 
-  await app.register((instance, options, next) => {
-    // Config API routes (No token authentication)
-    configApiRoute(instance, config, db, features, lang);
-    next();
-  });
+  await app.register(
+    async (instance) => {
+      // Config API routes (No token authentication)
+      configApiRoute(instance, config, db, features, lang);
+    },
+    { prefix: "/api/config" }
+  );
 
   // Sessions — persisted to MySQL so logins survive app restarts
   const MySQLStore = expressMySQLSession(fastifySession);
