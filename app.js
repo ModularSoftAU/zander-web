@@ -42,6 +42,7 @@ import("./cron/punishmentExpiryCron.js");
 import siteRoutes from "./routes/index.js";
 import apiRoutes from "./api/routes/index.js";
 import apiRedirectRoutes from "./api/internal_redirect/index.js";
+import configApiRoute from "./api/routes/config.js";
 
 // API token authentication
 import verifyToken from "./api/routes/verifyToken.js";
@@ -135,6 +136,14 @@ const buildApp = async () => {
     apiRedirectRoutes(instance, config, lang, features);
     next();
   });
+
+  await app.register(
+    async (instance) => {
+      // Config API routes (No token authentication)
+      configApiRoute(instance, config, db, features, lang);
+    },
+    { prefix: "/api/config" }
+  );
 
   // Sessions — persisted to MySQL so logins survive app restarts
   const MySQLStore = expressMySQLSession(fastifySession);
