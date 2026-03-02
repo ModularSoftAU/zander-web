@@ -17,30 +17,30 @@ export default function schedulerApiRoute(
   const baseEndpoint = "/api/scheduler";
 
   app.get(baseEndpoint + "/discord/get", async function (req, res) {
-    isFeatureEnabled(features.discord, res, lang);
+    if (!isFeatureEnabled(features.discord, res, lang)) return;
     const status = optional(req.query, "status");
 
-    const baseQuery =
-      "SELECT s.*, u.username, u.profilePicture_type, u.profilePicture_email, u.uuid FROM scheduledDiscordMessages s LEFT JOIN users u ON s.createdBy = u.userId";
-    const queryParams = [];
-    let dbQuery = baseQuery;
+    try {
+      const baseQuery =
+        "SELECT s.*, u.username, u.profilePicture_type, u.profilePicture_email, u.uuid FROM scheduledDiscordMessages s LEFT JOIN users u ON s.createdBy = u.userId";
+      const queryParams = [];
+      let dbQuery = baseQuery;
 
-    if (status) {
-      dbQuery += " WHERE s.status = ?";
-      queryParams.push(status);
-    }
-
-    dbQuery += " ORDER BY s.scheduledFor ASC";
-
-    db.query(dbQuery, queryParams, async function (error, results) {
-      if (error) {
-        return res.send({
-          success: false,
-          message: `${error}`,
-        });
+      if (status) {
+        dbQuery += " WHERE s.status = ?";
+        queryParams.push(status);
       }
 
-      if (!results.length) {
+      dbQuery += " ORDER BY s.scheduledFor ASC";
+
+      const results = await new Promise((resolve, reject) => {
+        db.query(dbQuery, queryParams, (error, results) => {
+          if (error) return reject(error);
+          resolve(results);
+        });
+      });
+
+      if (!results || !results.length) {
         return res.send({
           success: false,
           message: "No scheduled Discord messages found.",
@@ -74,17 +74,26 @@ export default function schedulerApiRoute(
         success: true,
         data: enhancedResults,
       });
-    });
-
-    return res;
+    } catch (error) {
+      console.error(error);
+      if (!res.sent) {
+        return res.status(500).send({
+          success: false,
+          message: `${error}`,
+        });
+      }
+    }
   });
 
   app.post(baseEndpoint + "/discord/create", async function (req, res) {
-    isFeatureEnabled(features.discord, res, lang);
+    if (!isFeatureEnabled(features.discord, res, lang)) return;
 
     const actioningUser = required(req.body, "actioningUser", res);
+    if (res.sent) return;
     const channelId = required(req.body, "channelId", res);
+    if (res.sent) return;
     const scheduledFor = required(req.body, "scheduledFor", res);
+    if (res.sent) return;
     const timezoneOffset = optional(req.body, "timezoneOffset", res);
     const embedTitle = optional(req.body, "embedTitle", res);
     const embedDescription = optional(req.body, "embedDescription", res);
@@ -108,75 +117,87 @@ export default function schedulerApiRoute(
       });
     }
 
-    db.query(
-      `INSERT INTO scheduledDiscordMessages (channelId, embedTitle, embedDescription, embedColor, scheduledFor, createdBy) VALUES (?, ?, ?, ?, ?, ?)`,
-      [
-        channelId,
-        embedTitle,
-        embedDescription,
-        embedColor,
-        formatDateTimeForDb(scheduledDate),
-        actioningUser,
-      ],
-      function (error) {
-        if (error) {
-          return res.send({
-            success: false,
-            message: `${error}`,
-          });
-        }
-
-        generateLog(
-          actioningUser,
-          "SUCCESS",
-          "SCHEDULER",
-          `Scheduled Discord message for channel ${channelId}`,
-          res
+    try {
+      await new Promise((resolve, reject) => {
+        db.query(
+          `INSERT INTO scheduledDiscordMessages (channelId, embedTitle, embedDescription, embedColor, scheduledFor, createdBy) VALUES (?, ?, ?, ?, ?, ?)`,
+          [
+            channelId,
+            embedTitle,
+            embedDescription,
+            embedColor,
+            formatDateTimeForDb(scheduledDate),
+            actioningUser,
+          ],
+          (error) => {
+            if (error) return reject(error);
+            resolve();
+          }
         );
+      });
 
-        return res.send({
-          success: true,
-          message: "Scheduled Discord message.",
+      await generateLog(
+        actioningUser,
+        "SUCCESS",
+        "SCHEDULER",
+        `Scheduled Discord message for channel ${channelId}`
+      );
+
+      return res.send({
+        success: true,
+        message: "Scheduled Discord message.",
+      });
+    } catch (error) {
+      console.error(error);
+      if (!res.sent) {
+        return res.status(500).send({
+          success: false,
+          message: `${error}`,
         });
       }
-    );
-
-    return res;
+    }
   });
 
   app.post(baseEndpoint + "/discord/delete", async function (req, res) {
-    isFeatureEnabled(features.discord, res, lang);
+    if (!isFeatureEnabled(features.discord, res, lang)) return;
 
     const actioningUser = required(req.body, "actioningUser", res);
+    if (res.sent) return;
     const scheduleId = required(req.body, "scheduleId", res);
+    if (res.sent) return;
 
-    db.query(
-      `DELETE FROM scheduledDiscordMessages WHERE scheduleId = ?`,
-      [scheduleId],
-      function (error) {
-        if (error) {
-          return res.send({
-            success: false,
-            message: `${error}`,
-          });
-        }
-
-        generateLog(
-          actioningUser,
-          "WARNING",
-          "SCHEDULER",
-          `Deleted scheduled Discord message ${scheduleId}`,
-          res
+    try {
+      await new Promise((resolve, reject) => {
+        db.query(
+          `DELETE FROM scheduledDiscordMessages WHERE scheduleId = ?`,
+          [scheduleId],
+          (error) => {
+            if (error) return reject(error);
+            resolve();
+          }
         );
+      });
 
-        return res.send({
-          success: true,
-          message: "Scheduled message deleted.",
+      await generateLog(
+        actioningUser,
+        "WARNING",
+        "SCHEDULER",
+        `Deleted scheduled Discord message ${scheduleId}`
+      );
+
+      return res.send({
+        success: true,
+        message: "Scheduled message deleted.",
+      });
+    } catch (error) {
+      console.error(error);
+      if (!res.sent) {
+        return res.status(500).send({
+          success: false,
+          message: `${error}`,
         });
       }
-    );
-
-    return res;
+    }
   });
 }
 

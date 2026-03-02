@@ -18,12 +18,13 @@ import { getWebAnnouncement } from "../controllers/announcementController.js";
     @param lang Passing through lang.
 */
 export function isFeatureEnabled(isFeatureEnabled, res, lang) {
-  if (isFeatureEnabled) return;
+  if (isFeatureEnabled) return true;
 
   res.send({
     success: false,
     message: `${lang.api.featureDisabled}`,
   });
+  return false;
 }
 
 /*
@@ -322,26 +323,21 @@ export async function generateLog(
   userId,
   logType,
   logFeature,
-  description,
-  res
+  description
 ) {
-  db.query(
-    `INSERT INTO logs (creatorId, logType, logFeature, description) VALUES (?, ?, ?, ?)`,
-    [userId, logType, logFeature, description],
-    function (error, results, fields) {
-      if (error) {
-        return res.send({
-          success: false,
-          message: `${error}`,
-        });
+  return new Promise((resolve, reject) => {
+    db.query(
+      `INSERT INTO logs (creatorId, logType, logFeature, description) VALUES (?, ?, ?, ?)`,
+      [userId, logType, logFeature, description],
+      function (error, results) {
+        if (error) {
+          console.error("Failed to generate log:", error);
+          return reject(error);
+        }
+        resolve(results);
       }
-
-      return res.send({
-        success: true,
-        message: `Log created.`,
-      });
-    }
-  );
+    );
+  });
 }
 
 /*

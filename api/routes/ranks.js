@@ -194,7 +194,7 @@ export default function rankApiRoute(app, config, db, features, lang) {
   }
 
   app.get(`${baseEndpoint}/get`, async function (req, res) {
-    isFeatureEnabled(features.ranks, res, lang);
+    if (!isFeatureEnabled(features.ranks, res, lang)) return;
     const username = optional(req.query, "username");
     const rankSlug = optional(req.query, "rank");
 
@@ -264,12 +264,15 @@ export default function rankApiRoute(app, config, db, features, lang) {
       const directory = await getRankDirectory();
       return res.send({ success: true, data: directory });
     } catch (error) {
-      return res.send({ success: false, message: `${error}` });
+      console.error(error);
+      if (!res.sent) {
+        return res.status(500).send({ success: false, message: `${error}` });
+      }
     }
   });
 
   app.get(`${baseEndpoint}/user`, async function (req, res) {
-    isFeatureEnabled(features.ranks, res, lang);
+    if (!isFeatureEnabled(features.ranks, res, lang)) return;
     const username = optional(req.query, "username");
 
     if (!username) {
@@ -320,12 +323,15 @@ export default function rankApiRoute(app, config, db, features, lang) {
         },
       });
     } catch (error) {
-      return res.send({ success: false, message: `${error}` });
+      console.error(error);
+      if (!res.sent) {
+        return res.status(500).send({ success: false, message: `${error}` });
+      }
     }
   });
 
   app.post(`${baseEndpoint}/config/:rankSlug`, async function (req, res) {
-    isFeatureEnabled(features.ranks, res, lang);
+    if (!isFeatureEnabled(features.ranks, res, lang)) return;
 
     const rankSlug = req.params.rankSlug;
     const {
@@ -413,12 +419,15 @@ export default function rankApiRoute(app, config, db, features, lang) {
         data: mapRankRow(updatedRank),
       });
     } catch (error) {
-      return res.send({ success: false, message: `${error}` });
+      console.error(error);
+      if (!res.sent) {
+        return res.status(500).send({ success: false, message: `${error}` });
+      }
     }
   });
 
   app.post(`${baseEndpoint}/user/assign`, async function (req, res) {
-    isFeatureEnabled(features.ranks, res, lang);
+    if (!isFeatureEnabled(features.ranks, res, lang)) return;
 
     const { username, rankSlug, title } = req.body || {};
 
@@ -477,12 +486,15 @@ export default function rankApiRoute(app, config, db, features, lang) {
         message: "Rank assigned successfully.",
       });
     } catch (error) {
-      return res.send({ success: false, message: `${error}` });
+      console.error(error);
+      if (!res.sent) {
+        return res.status(500).send({ success: false, message: `${error}` });
+      }
     }
   });
 
   app.post(`${baseEndpoint}/user/remove`, async function (req, res) {
-    isFeatureEnabled(features.ranks, res, lang);
+    if (!isFeatureEnabled(features.ranks, res, lang)) return;
 
     const { username, rankSlug } = req.body || {};
 
@@ -521,14 +533,17 @@ export default function rankApiRoute(app, config, db, features, lang) {
             : "Rank was not assigned to the player.",
       });
     } catch (error) {
-      return res.send({ success: false, message: `${error}` });
+      console.error(error);
+      if (!res.sent) {
+        return res.status(500).send({ success: false, message: `${error}` });
+      }
     }
   });
 
   app.post(
     `${baseEndpoint}/user/permission/check`,
     async function (req, res) {
-      isFeatureEnabled(features.ranks, res, lang);
+      if (!isFeatureEnabled(features.ranks, res, lang)) return;
 
       const { username, permission } = req.body || {};
 
@@ -571,7 +586,10 @@ export default function rankApiRoute(app, config, db, features, lang) {
           },
         });
       } catch (error) {
-        return res.send({ success: false, message: `${error}` });
+        console.error(error);
+        if (!res.sent) {
+          return res.status(500).send({ success: false, message: `${error}` });
+        }
       }
     }
   );

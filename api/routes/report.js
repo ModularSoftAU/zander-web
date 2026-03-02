@@ -17,41 +17,37 @@ export default function reportApiRoute(app, config, db, features, lang) {
     const reportedId = optional(req.query, "reportedId");
 
     try {
-      function getReports(dbQuery) {
-        return new Promise((resolve, reject) => {
-          db.query(dbQuery, function (error, results, fields) {
-            if (error) {
-              console.error(error);
-              reject(error);
-            } else {
-              if (!results.length) {
-                res.send({
-                  success: false,
-                  message: `There are no reports available.`,
-                });
-              } else {
-                res.send({
-                  success: true,
-                  data: results,
-                });
-              }
-              resolve();
-            }
-          });
-        });
-      }
-      
-      // Get Reports by user
+      let dbQuery;
+      let params = [];
+
       if (reportedId) {
-        let dbQuery = `SELECT * FROM reports WHERE reportedId=${reportedId};`;
-        await getReports(dbQuery);
+        dbQuery = "SELECT * FROM reports WHERE reportedId = ?";
+        params = [reportedId];
+      } else {
+        dbQuery = "SELECT * FROM reports";
       }
 
-      // Return all reports by default
-      let dbQuery = `SELECT * FROM reports;`;
-      await getReports(dbQuery);
+      const results = await new Promise((resolve, reject) => {
+        db.query(dbQuery, params, (error, results) => {
+          if (error) return reject(error);
+          resolve(results);
+        });
+      });
+
+      if (!results || !results.length) {
+        return res.send({
+          success: false,
+          message: `There are no reports available.`,
+        });
+      }
+
+      return res.send({
+        success: true,
+        data: results,
+      });
     } catch (error) {
-      res.send({
+      console.error(error);
+      return res.status(500).send({
         success: false,
         message: `${error}`,
       });
@@ -72,82 +68,74 @@ export default function reportApiRoute(app, config, db, features, lang) {
     const reportPlatform = required(req.body, "reportPlatform", res);
 
     try {
-      db.query(
-        `
-        INSERT INTO 
-            reports
-        (
-            reporterId,
+      await new Promise((resolve, reject) => {
+        db.query(
+          `
+          INSERT INTO
+              reports
+          (
+              reporterId,
+              reportedUser,
+              reportReason,
+              reportReasonEvidence,
+              reportPlatform
+          ) VALUES ((SELECT userId FROM users WHERE username=?), ?, ?, ?, ?)`,
+          [
+            reporterUser,
             reportedUser,
             reportReason,
             reportReasonEvidence,
-            reportPlatform
-        ) VALUES ((SELECT userId FROM users WHERE username=?), ?, ?, ?, ?)`,
-        [
-          reporterUser,
-          reportedUser,
-          reportReason,
-          reportReasonEvidence,
-          reportPlatform,
-        ],
-        async function (error, results, fields) {
-          console.log(req.body);
-          
-          if (error) {
-            console.log(error);
-            console.log(results);
-            
-            return res.send({
-              success: false,
-              message: `Report has failed, please try again later.`,
-            });
-          } else {
-            setBannerCookie("success", "Report has been sent.", res);
-
-            const staffChannelHook = new Webhook(
-              config.discord.webhooks.staffChannel
-            );
-
-            const embed = new MessageBuilder()
-              .setTitle(`New Report: ${reportedUser}`)
-              .addField("Report Platform", reportPlatform, true)
-              .addField("Report By", reporterUser, true)
-              .addField("Report Reason", reportReason)
-              .setColor(Colors.Red)
-              .setTimestamp();
-
-            if (reportReasonEvidence) {
-              embed.addField("Report Evidence", reportReasonEvidence);
-            }
-
-            const webhookSent = await sendWebhookMessage(
-              staffChannelHook,
-              embed,
-              { context: "api/report#create" }
-            );
-
-            if (!webhookSent) {
-              return res.send({
-                success: false,
-                message:
-                  "Report saved, but we couldn't notify staff. Please try again soon.",
-              });
-            }
-
-            return res.send({
-              success: true,
-              message: `Thanks for your submission: ${reportedUser} for ${reportReason}.`,
-            });
+            reportPlatform,
+          ],
+          (error, results) => {
+            if (error) return reject(error);
+            resolve(results);
           }
-        }
+        );
+      });
+
+      setBannerCookie("success", "Report has been sent.", res);
+
+      const staffChannelHook = new Webhook(
+        config.discord.webhooks.staffChannel
       );
-    } catch (error) {
+
+      const embed = new MessageBuilder()
+        .setTitle(`New Report: ${reportedUser}`)
+        .addField("Report Platform", reportPlatform, true)
+        .addField("Report By", reporterUser, true)
+        .addField("Report Reason", reportReason)
+        .setColor(Colors.Red)
+        .setTimestamp();
+
+      if (reportReasonEvidence) {
+        embed.addField("Report Evidence", reportReasonEvidence);
+      }
+
+      const webhookSent = await sendWebhookMessage(
+        staffChannelHook,
+        embed,
+        { context: "api/report#create" }
+      );
+
+      if (!webhookSent) {
+        return res.send({
+          success: false,
+          message:
+            "Report saved, but we couldn't notify staff. Please try again soon.",
+        });
+      }
+
       return res.send({
+        success: true,
+        message: `Thanks for your submission: ${reportedUser} for ${reportReason}.`,
+      });
+    } catch (error) {
+      console.error(error);
+      return res.status(500).send({
         success: false,
-        message: `${error}`,
+        message: `Report has failed, please try again later.`,
       });
     }
-
-    return res;
   });
 }

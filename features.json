@@ -9,7 +9,8 @@
       "guildMemberBoost": true,
       "guildMemberVerify": true,
       "nicknameCheck": true
-    }
+    },
+    "punishments": true
   },
   "server": true,
   "ranks": true,

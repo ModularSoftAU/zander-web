@@ -68,7 +68,7 @@
                                 <td data-label="Action">
                                     <div class="d-flex flex-wrap gap-2">
                                         <a href="/dashboard/applications/edit?applicationId=<%= application.applicationId %>" class="btn btn-sm btn-warning">Edit</a>
-                                        <form action="<%= process.env.siteAddress %>/redirect/application/delete" method="post">
+                                        <form action="<%= process.env.siteAddress %>/redirect/applications/delete" method="post">
                                             <input type="hidden" name="applicationId" value="<%= application.applicationId %>">
                                             <button class="btn btn-sm btn-danger" type="submit">Delete</button>
                                         </form>

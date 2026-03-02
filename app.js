@@ -32,6 +32,7 @@ import("./cron/cakeDayUserCheck.js");
 import("./cron/staffAuditReportCron.js");
 import("./cron/schedulerCron.js");
 import("./cron/nicknameCheckCron.js");
+import("./cron/punishmentExpiryCron.js");
 
 //
 // Website Related
@@ -41,23 +42,12 @@ import("./cron/nicknameCheckCron.js");
 import siteRoutes from "./routes/index.js";
 import apiRoutes from "./api/routes/index.js";
 import apiRedirectRoutes from "./api/internal_redirect/index.js";
+import configApiRoute from "./api/routes/config.js";
 
 // API token authentication
 import verifyToken from "./api/routes/verifyToken.js";
 import { getGlobalImage } from "./api/common.js";
 import { client } from "./controllers/discordController.js";
-
-import("./controllers/discordController.js");
-import("./cron/userCodeExpiryCron.js");
-import("./cron/bridgeCleanupCron.js");
-import("./cron/discordStatsUpdateCron.js");
-import("./cron/staffAuditReportCron.js");
-
-import("./controllers/discordController.js");
-import("./cron/userCodeExpiryCron.js");
-import("./cron/bridgeCleanupCron.js");
-import("./cron/discordStatsUpdateCron.js");
-import("./cron/staffAuditReportCron.js");
 
 //
 // Application Boot
@@ -90,6 +80,14 @@ const buildApp = async () => {
 
     res.status(statusCode);
 
+    // If the request is for the API, return JSON instead of a view
+    if (req.url.startsWith("/api/")) {
+      return res.send({
+        success: false,
+        message: error.message || "Internal Server Error",
+      });
+    }
+
     return res.view("session/error", {
       pageTitle: `Server Error`,
       config: config,
@@ -114,7 +112,7 @@ const buildApp = async () => {
     prefix: "/",
   });
 
-  await app.register(await import("@fastify/formbody"), { bodyLimit: 1048576 });
+  await app.register(await import("@fastify/formbody"), { bodyLimit: 10485760 }); // 10 MB
   await app.register(await import("@fastify/multipart"));
 
   await app.register((instance, options, next) => {
@@ -124,12 +122,28 @@ const buildApp = async () => {
     next();
   });
 
+  // Heartbeat — public, no token required so monitoring tools can reach it
+  app.get("/api/heartbeat", async function (req, res) {
+    return res.send({
+      success: true,
+      message: `OK`,
+    });
+  });
+
   await app.register((instance, options, next) => {
     // Don't authenticate the Redirect routes. These are
     // protected by
-    apiRedirectRoutes(instance, config, lang);
+    apiRedirectRoutes(instance, config, lang, features);
     next();
   });
+
+  await app.register(
+    async (instance) => {
+      // Config API routes (No token authentication)
+      configApiRoute(instance, config, db, features, lang);
+    },
+    { prefix: "/api/config" }
+  );
 
   // Sessions — persisted to MySQL so logins survive app restarts
   const MySQLStore = expressMySQLSession(fastifySession);
@@ -169,7 +183,9 @@ const buildApp = async () => {
   });
 
   app.addHook("preHandler", async (req, res) => {
-    req.session.authenticated = false;
+    if (req.session) {
+      req.session.authenticated = false;
+    }
     req.notifications = { unreadCount: 0, items: [] };
 
     if (req.session?.user?.userId) {
