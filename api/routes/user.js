@@ -14,7 +14,6 @@ import {
   required,
   optional,
   generateVerifyCode,
-  setBannerCookie,
 } from "../common.js";
 import { hasActiveWebBan } from "../../controllers/discordPunishmentController.js";
 
@@ -364,12 +363,11 @@ export default function userApiRoute(app, config, db, features, lang) {
       const linkUser = await userLinkData.getUserByCode(verifyCode);
 
       if (!linkUser) {
-        setBannerCookie(
-          "warning",
-          `No verification code matches, please try again.`,
-          res
-        );
-        return res.redirect(`/unregistered`);
+        return res.send({
+          success: false,
+          alertType: "warning",
+          alertContent: `No verification code matches, please try again.`,
+        });
       }
 
       let linkUserUUID = linkUser.uuid;
@@ -377,20 +375,26 @@ export default function userApiRoute(app, config, db, features, lang) {
       try {
         const success = await userLinkData.link(linkUserUUID, discordId);
         if (success) {
-          setBannerCookie("success", `Link success`, res);
+          return res.send({
+            success: true,
+            alertType: "success",
+            alertContent: `Link success`,
+          });
         } else {
-          setBannerCookie("warning", `Link failed`, res);
+          return res.send({
+            success: false,
+            alertType: "warning",
+            alertContent: `Link failed`,
+          });
         }
       } catch (error) {
         console.error("Error linking:", error);
-        setBannerCookie(
-          "warning",
-          `Issue with linking, try again soon.`,
-          res
-        );
+        return res.send({
+          success: false,
+          alertType: "warning",
+          alertContent: `Issue with linking, try again soon.`,
+        });
       }
-
-      return res.redirect("/profile"); // Assuming redirect after link
     } catch (error) {
       console.error(error);
       if (!res.sent) {
