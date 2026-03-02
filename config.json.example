@@ -30,8 +30,7 @@
   },
   "discord": {
     "guildId": "GUILDID",
-    "onlinePlayerChannel": "CHANNELID",
-    "supportPanelChannelId": "CHANNELID",
+"supportPanelChannelId": "CHANNELID",
     "supportTicketCategoryId": "CATEGORYID",
     "botChannelId": "CHANNELID",
     "webhooks": {
