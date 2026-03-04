@@ -40,7 +40,7 @@ export default function supportRoutes(
   config,
   db,
   features,
-  lang
+  lang,
 ) {
   const userHasPermissionNode = (permissions = [], node) => {
     const normalized = permissions || [];

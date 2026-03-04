@@ -73,7 +73,7 @@ export async function getUserRanks(username) {
         (error, results) => {
           if (error) return reject(error);
           resolve(results || []);
-        }
+        },
       );
     });
 
@@ -84,7 +84,7 @@ export async function getUserRanks(username) {
         (error, results) => {
           if (error) return reject(error);
           resolve(results || []);
-        }
+        },
       );
     });
 
@@ -114,7 +114,7 @@ export async function getUserRanks(username) {
         (error, results) => {
           if (error) return reject(error);
           resolve(results || []);
-        }
+        },
       );
     });
 

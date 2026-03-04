@@ -14,7 +14,7 @@ export default function bridgeRedirectRoute(app, config, lang, features) {
       setBannerCookie(
         "warning",
         `We could not parse the ${fieldName.replace("JSON", "").trim()} JSON payload.`,
-        res
+        res,
       );
       return null;
     }
@@ -25,7 +25,7 @@ export default function bridgeRedirectRoute(app, config, lang, features) {
       `${process.env.siteAddress}${apiPath}`,
       req.body,
       `${process.env.siteAddress}/dashboard/bridge`,
-      res
+      res,
     );
 
     if (!res.sent) {

@@ -318,7 +318,7 @@ export class BridgeCommand extends Command {
             }
 
             return { status, tasks: data.data || [], meta: data.meta };
-          })
+          }),
         );
 
         const totalTasks = fetchResults.reduce(
@@ -477,7 +477,7 @@ export class BridgeCommand extends Command {
 
         const response = await postBridge(
           "/api/bridge/processor/command/add",
-          payload
+          payload,
         );
 
         const apiData = await response.json();
@@ -538,7 +538,7 @@ export class BridgeCommand extends Command {
 
         const response = await postBridge(
           "/api/bridge/processor/command/add",
-          payload
+          payload,
         );
         const apiData = await response.json();
 
@@ -602,7 +602,7 @@ export class BridgeCommand extends Command {
 
         const response = await postBridge(
           `/api/bridge/processor/task/${taskId}/report`,
-          payload
+          payload,
         );
         const apiData = await response.json();
 
@@ -653,7 +653,7 @@ export class BridgeCommand extends Command {
 
         const response = await postBridge(
           `/api/bridge/processor/task/${taskId}/reset`,
-          payload
+          payload,
         );
         const apiData = await response.json();
 
@@ -768,7 +768,7 @@ export class BridgeCommand extends Command {
 
             const response = await postBridge(
               "/api/bridge/processor/clear",
-              payload
+              payload,
             );
             const apiData = await response.json();
 

@@ -128,7 +128,7 @@ export function UserGetter() {
     if (trimmedUsername) {
       const usernameMatch = await runQuery(
         `SELECT 1 FROM users WHERE LOWER(username) = LOWER(?) LIMIT 1`,
-        [trimmedUsername]
+        [trimmedUsername],
       );
 
       if (usernameMatch.length) {
@@ -139,7 +139,7 @@ export function UserGetter() {
     if (trimmedUuid) {
       const uuidMatch = await runQuery(
         `SELECT 1 FROM users WHERE uuid = ? LIMIT 1`,
-        [trimmedUuid]
+        [trimmedUuid],
       );
 
       if (uuidMatch.length) {
@@ -181,7 +181,7 @@ export function UserGetter() {
     // Check users table first
     const userRows = await runQuery(
       `SELECT uuid FROM users WHERE LOWER(username) = LOWER(?) AND uuid IS NOT NULL LIMIT 1`,
-      [trimmedUsername]
+      [trimmedUsername],
     );
     if (userRows.length && userRows[0].uuid) {
       return userRows[0].uuid;
@@ -190,7 +190,7 @@ export function UserGetter() {
     // Check luckPermsPlayers table
     const luckPermsRows = await runQuery(
       `SELECT HEX(uuid) AS hexUuid FROM luckPermsPlayers WHERE LOWER(username) = LOWER(?) LIMIT 1`,
-      [trimmedUsername]
+      [trimmedUsername],
     );
     if (luckPermsRows.length && luckPermsRows[0].hexUuid) {
       const hex = luckPermsRows[0].hexUuid;
@@ -560,7 +560,7 @@ export async function getUserPermissions(userData = {}) {
     if (userId) {
       const rows = await runQuery(
         `SELECT uuid FROM users WHERE userId = ? LIMIT 1`,
-        [userId]
+        [userId],
       );
 
       if (rows.length && rows[0].uuid) {
@@ -572,7 +572,7 @@ export async function getUserPermissions(userData = {}) {
     if (username) {
       const rows = await runQuery(
         `SELECT uuid FROM luckPermsPlayers WHERE LOWER(username) = LOWER(?) LIMIT 1`,
-        [username]
+        [username],
       );
 
       if (rows.length) {
@@ -624,7 +624,7 @@ export async function getUserPermissions(userData = {}) {
             AND permission NOT LIKE 'group.%'
             AND value = 1
             AND (expiry IS NULL OR expiry = 0 OR expiry > UNIX_TIMESTAMP())`,
-        [uuidHex]
+        [uuidHex],
       );
 
       directPermissions.forEach(({ permission }) => pushPermission(permission));
@@ -641,7 +641,7 @@ export async function getUserPermissions(userData = {}) {
             AND value = 1
             AND (expiry IS NULL OR expiry = 0 OR expiry > UNIX_TIMESTAMP())
           ORDER BY permission`,
-        [uuidHex]
+        [uuidHex],
       );
 
       rankRows.forEach(({ rankSlug }) => queueRank(rankSlug, { direct: true }));
@@ -656,7 +656,7 @@ export async function getUserPermissions(userData = {}) {
         `SELECT rankSlug
            FROM userRanks
           WHERE userId = ?`,
-        [userId]
+        [userId],
       );
 
       fallbackRanks.forEach(({ rankSlug }) => queueRank(rankSlug, { direct: true }));
@@ -672,7 +672,7 @@ export async function getUserPermissions(userData = {}) {
            FROM luckPermsPlayers
           WHERE uuid = UNHEX(?)
           LIMIT 1`,
-        [uuidHex]
+        [uuidHex],
       );
 
       primaryGroupRows.forEach(({ rankSlug }) => queueRank(rankSlug, { direct: true }));
@@ -691,7 +691,7 @@ export async function getUserPermissions(userData = {}) {
           WHERE name = ?
             AND value = 1
             AND (expiry IS NULL OR expiry = 0 OR expiry > UNIX_TIMESTAMP())`,
-        [currentRank]
+        [currentRank],
       );
 
       groupPermissions.forEach(({ permission }) => {
@@ -720,7 +720,7 @@ export async function getUserPermissions(userData = {}) {
         `SELECT DISTINCT permission
            FROM userPermissions
           WHERE userId = ?`,
-        [userId]
+        [userId],
       );
 
       fallbackPermissions.forEach(({ permission }) => pushPermission(permission));
@@ -739,7 +739,7 @@ export async function getUserPermissions(userData = {}) {
         `SELECT DISTINCT permission
            FROM rankPermissions
           WHERE rankSlug IN (${placeholders})`,
-        groupSlugs
+        groupSlugs,
       );
 
       fallbackGroupPerms.forEach(({ permission }) => pushPermission(permission));
