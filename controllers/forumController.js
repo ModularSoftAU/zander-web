@@ -753,7 +753,7 @@ export async function getDiscussionPosts(discussionId) {
          LEFT JOIN users u ON u.userId = r.editorId
         WHERE r.postId IN (${placeholders})
         ORDER BY r.createdAt DESC, r.revisionId DESC`,
-      postIds
+      postIds,
     );
   }
 
@@ -839,7 +839,7 @@ export async function getRecentDiscussions({
          FROM forumPosts
         WHERE discussionId IN (${discussionPlaceholders})
         GROUP BY discussionId`,
-      discussionIds
+      discussionIds,
     );
 
     countRows.forEach((row) => {
@@ -852,7 +852,7 @@ export async function getRecentDiscussions({
          FROM forumPosts p
         WHERE p.discussionId IN (${discussionPlaceholders})
         ORDER BY p.discussionId ASC, p.createdAt DESC, p.postId DESC`,
-      discussionIds
+      discussionIds,
     );
 
     const latestPostMap = new Map();
@@ -945,7 +945,7 @@ export async function setDiscussionFlags(discussionId, flags = {}) {
         SET ${updates.join(",")},
             updatedAt = NOW()
       WHERE discussionId = ?`,
-    params
+    params,
   );
 
   return getDiscussionRow(discussionId);
