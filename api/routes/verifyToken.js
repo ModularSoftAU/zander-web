@@ -10,7 +10,7 @@ const failedTokenRateLimit = createRateLimiter({
   message: lang.api.invalidToken,
 });
 
-export default async function verifyToken(req, res, done) {
+export default async function verifyToken(req, res) {
   var token = req.headers["x-access-token"];
 
   if (!token) {
@@ -23,7 +23,7 @@ export default async function verifyToken(req, res, done) {
 
   if (token === process.env.apiKey) {
     // Passed
-    done();
+    return;
   } else {
     // Token was incorrect — apply rate limiting to prevent brute-force
     await failedTokenRateLimit(req, res);
