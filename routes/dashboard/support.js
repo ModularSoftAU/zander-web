@@ -33,8 +33,18 @@ export default function supportDashboardRoutes(
   config,
   db,
   features,
-  lang
+  lang,
 ) {
+  function getSafeRedirectTarget(req) {
+    const redirect =
+      req.body && typeof req.body.redirect === "string"
+        ? req.body.redirect
+        : null;
+    if (redirect && redirect.startsWith("/") && !redirect.startsWith("//")) {
+      return redirect;
+    }
+    return "/dashboard/support/categories";
+  }
   const slugifyCategory = (name, fallback = "") => {
     const source = name || fallback;
     return String(source)
@@ -284,9 +294,7 @@ export default function supportDashboardRoutes(
 
         await addCategoryPermission(id, roleId);
 
-        return res.redirect(
-          req.body?.redirect || "/dashboard/support/categories"
-        );
+        return res.redirect(getSafeRedirectTarget(req));
       } catch (error) {
         console.error(error);
         return res.view("session/error", {
@@ -314,9 +322,7 @@ export default function supportDashboardRoutes(
 
         await removeCategoryPermission(id, roleId);
 
-        return res.redirect(
-          req.body?.redirect || "/dashboard/support/categories"
-        );
+        return res.redirect(getSafeRedirectTarget(req));
       } catch (error) {
         console.error(error);
         return res.view("session/error", {

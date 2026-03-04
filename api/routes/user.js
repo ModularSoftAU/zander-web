@@ -282,7 +282,17 @@ export default function userApiRoute(app, config, db, features, lang) {
     }
   });
 
-  app.post(baseEndpoint + "/verify", async function (req, res) {
+  app.post(
+    baseEndpoint + "/verify",
+    {
+      config: {
+        rateLimit: {
+          max: 5,
+          timeWindow: "15 minutes",
+        },
+      },
+    },
+    async function (req, res) {
     const username = required(req.body, "username", res);
     if (res.sent) return;
     const uuid = required(req.body, "uuid", res);

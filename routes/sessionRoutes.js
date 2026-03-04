@@ -37,8 +37,27 @@ export default function sessionSiteRoute(
   config,
   db,
   features,
-  lang
+  lang,
 ) {
+  function isSafeReturnPath(path) {
+    if (typeof path !== "string" || !path.startsWith("/")) {
+      return false;
+    }
+
+    const siteAddress = process.env.siteAddress;
+    if (siteAddress) {
+      try {
+        const baseUrl = new URL(siteAddress);
+        const targetUrl = new URL(path, baseUrl);
+        return targetUrl.origin === baseUrl.origin;
+      } catch (e) {
+        // If siteAddress or path cannot be parsed, fall through to a conservative check below.
+      }
+    }
+
+    // Fallback: disallow absolute URLs and protocol-relative URLs.
+    return !path.startsWith("//");
+  }
   //
   // Session
   //
@@ -117,7 +136,7 @@ export default function sessionSiteRoute(
 
   app.get("/login", async function (req, res) {
     if (req.query.returnTo && typeof req.query.returnTo === "string") {
-      const sanitizedReturnTo = req.query.returnTo.startsWith("/")
+      const sanitizedReturnTo = isSafeReturnPath(req.query.returnTo)
         ? req.query.returnTo
         : null;
       if (sanitizedReturnTo) {
@@ -134,7 +153,11 @@ export default function sessionSiteRoute(
           (req.headers.host && refererUrl.host === req.headers.host);
         if (isSameHost) {
           const refererPath = `${refererUrl.pathname}${refererUrl.search}`;
-          if (!refererPath.startsWith("/login") && !refererPath.startsWith("/logout")) {
+          if (
+            !refererPath.startsWith("/login") &&
+            !refererPath.startsWith("/logout") &&
+            isSafeReturnPath(refererPath)
+          ) {
             req.session.returnTo = refererPath;
           }
         }
@@ -144,11 +167,9 @@ export default function sessionSiteRoute(
     }
 
     if (req.session.user) {
-      const returnTo =
-        typeof req.session.returnTo === "string" &&
-        req.session.returnTo.startsWith("/")
-          ? req.session.returnTo
-          : null;
+      const returnTo = isSafeReturnPath(req.session.returnTo)
+        ? req.session.returnTo
+        : null;
       if (returnTo) {
         delete req.session.returnTo;
         return res.redirect(returnTo);

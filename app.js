@@ -11,6 +11,7 @@ import fastify from "fastify";
 import fastifySession from "@fastify/session";
 import fastifyCookie from "@fastify/cookie";
 import expressMySQLSession from "express-mysql-session";
+import fastifyRateLimit from "@fastify/rate-limit";
 
 const config = require("./config.json");
 const features = require("./features.json");
@@ -54,6 +55,11 @@ import { client } from "./controllers/discordController.js";
 //
 const buildApp = async () => {
   const app = fastify({ logger: config.debug });
+
+  await app.register(fastifyRateLimit, {
+    max: 100,
+    timeWindow: "1 minute",
+  });
 
   // When app errors, render the error on a page, do not provide JSON
   app.setNotFoundHandler(async function (req, res) {

@@ -139,7 +139,17 @@ export default function discordApiRoute(
     }
   });
 
-  app.post(baseEndpoint + "/leave", async function (req, res) {
+  app.post(
+    baseEndpoint + "/leave",
+    {
+      config: {
+        rateLimit: {
+          max: 60,
+          timeWindow: "1 minute",
+        },
+      },
+    },
+    async function (req, res) {
     if (!isFeatureEnabled(features.discord, res, lang)) return;
     const username = required(req.body, "username", res);
     if (res.sent) return;
