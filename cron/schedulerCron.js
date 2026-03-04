@@ -35,7 +35,7 @@ const schedulerTask = cron.schedule("*/1 * * * *", async () => {
 
   try {
     const pendingMessages = await executeQuery(
-      `SELECT * FROM scheduledDiscordMessages WHERE status='scheduled' AND sentAt IS NULL AND scheduledFor <= UTC_TIMESTAMP() ORDER BY scheduledFor ASC LIMIT 20`
+      `SELECT * FROM scheduledDiscordMessages WHERE status='scheduled' AND sentAt IS NULL AND scheduledFor <= UTC_TIMESTAMP() ORDER BY scheduledFor ASC LIMIT 20`,
     );
 
     for (const message of pendingMessages) {
@@ -67,7 +67,7 @@ const schedulerTask = cron.schedule("*/1 * * * *", async () => {
         if (message.embedColor) {
           const colorValue = parseInt(
             String(message.embedColor).replace("#", ""),
-            16
+            16,
           );
           if (!Number.isNaN(colorValue)) {
             embed.setColor(colorValue);

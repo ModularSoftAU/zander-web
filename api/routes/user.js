@@ -10,11 +10,7 @@ import {
   setProfileUserAboutMe,
   setProfileUserInterests,
 } from "../../controllers/userController.js";
-import {
-  required,
-  optional,
-  generateVerifyCode,
-} from "../common.js";
+import { required, optional, generateVerifyCode } from "../common.js";
 import { hasActiveWebBan } from "../../controllers/discordPunishmentController.js";
 
 export default function userApiRoute(app, config, db, features, lang) {
@@ -421,7 +417,7 @@ export default function userApiRoute(app, config, db, features, lang) {
       await setProfileDisplayPreferences(
         userId,
         profilePicture_type,
-        profilePicture_email
+        profilePicture_email,
       );
       return res.send({ success: true, message: "Display preferences updated." });
     } catch (error) {
@@ -567,7 +563,7 @@ export default function userApiRoute(app, config, db, features, lang) {
         social_twitter_x,
         social_instagram,
         social_reddit,
-        social_spotify
+        social_spotify,
       );
       return res.send({ success: true, message: "Social connections updated." });
     } catch (error) {

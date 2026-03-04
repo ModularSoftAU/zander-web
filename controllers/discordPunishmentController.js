@@ -174,7 +174,7 @@ export async function getAllActivePunishments() {
 export async function updateDmStatus(id, dmStatus) {
   await executeQuery(
     `UPDATE discord_punishments SET dm_status = ? WHERE id = ?`,
-    [dmStatus, id]
+    [dmStatus, id],
   );
 }
 

@@ -180,7 +180,11 @@ export default function discordPunishmentsApiRoute(app, config, db, features, la
     if (res.sent) return;
     const status = required(req.body, "status", res);
     if (res.sent) return;
-    const reviewerDiscordUserId = required(req.body, "reviewerDiscordUserId", res);
+    const reviewerDiscordUserId = required(
+      req.body,
+      "reviewerDiscordUserId",
+      res,
+    );
     if (res.sent) return;
 
     if (!["APPROVED", "REJECTED"].includes(status)) {

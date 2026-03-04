@@ -101,7 +101,7 @@ export default function serverApiRoute(app, config, db, features, lang) {
         actioningUser,
         "SUCCESS",
         "SERVER",
-        `Created ${displayName} (${serverConnectionAddress})`
+        `Created ${displayName} (${serverConnectionAddress})`,
       );
 
       return res.send({
@@ -152,7 +152,13 @@ export default function serverApiRoute(app, config, db, features, lang) {
                   position=?
               WHERE
                   serverId=?`,
-          [displayName, serverType, serverConnectionAddress, position, serverId],
+          [
+            displayName,
+            serverType,
+            serverConnectionAddress,
+            position,
+            serverId,
+          ],
           (error, results) => {
             if (error) return reject(error);
             resolve(results);
@@ -206,7 +212,7 @@ export default function serverApiRoute(app, config, db, features, lang) {
         actioningUser,
         "SUCCESS",
         "SERVER",
-        `Deleted ${serverId}`
+        `Deleted ${serverId}`,
       );
 
       return res.send({

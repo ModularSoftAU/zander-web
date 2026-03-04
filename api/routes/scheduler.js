@@ -12,7 +12,7 @@ export default function schedulerApiRoute(
   config,
   db,
   features,
-  lang
+  lang,
 ) {
   const baseEndpoint = "/api/scheduler";
 
@@ -67,7 +67,7 @@ export default function schedulerApiRoute(
             ...row,
             profilePictureUrl,
           };
-        })
+        }),
       );
 
       return res.send({
@@ -99,10 +99,7 @@ export default function schedulerApiRoute(
     const embedDescription = optional(req.body, "embedDescription", res);
     const embedColor = optional(req.body, "embedColor", res);
 
-    const scheduledDate = normalizeDateTimeInput(
-      scheduledFor,
-      timezoneOffset
-    );
+    const scheduledDate = normalizeDateTimeInput(scheduledFor, timezoneOffset);
     if (Number.isNaN(scheduledDate.getTime())) {
       return res.send({
         success: false,
@@ -140,7 +137,7 @@ export default function schedulerApiRoute(
         actioningUser,
         "SUCCESS",
         "SCHEDULER",
-        `Scheduled Discord message for channel ${channelId}`
+        `Scheduled Discord message for channel ${channelId}`,
       );
 
       return res.send({
@@ -182,7 +179,7 @@ export default function schedulerApiRoute(
         actioningUser,
         "WARNING",
         "SCHEDULER",
-        `Deleted scheduled Discord message ${scheduleId}`
+        `Deleted scheduled Discord message ${scheduleId}`,
       );
 
       return res.send({
@@ -219,7 +216,7 @@ function normalizeDateTimeInput(value, timezoneOffset) {
           Number(month) - 1,
           Number(day),
           Number(hour),
-          Number(minute)
+          Number(minute),
         ) +
         offsetMinutes * 60000;
       return new Date(utcMillis);

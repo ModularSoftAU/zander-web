@@ -667,7 +667,8 @@ export default function bridgeApiRoute(app, config, db, features, lang) {
   app.get(`${BASE_ENDPOINT}/routine/get`, async function (req, res) {
     if (!isFeatureEnabled(features.bridge, res, lang)) return;
 
-    const routineSlug = optional(req.query, "routineSlug") || optional(req.query, "slug");
+    const routineSlug =
+      optional(req.query, "routineSlug") || optional(req.query, "slug");
 
     try {
       const routineFilterParams = [];
@@ -690,7 +691,7 @@ export default function bridgeApiRoute(app, config, db, features, lang) {
       const placeholders = routineIds.map(() => "?").join(",");
       const routineSteps = await query(
         `SELECT * FROM ${ROUTINE_STEPS_TABLE} WHERE executorRoutineId IN (${placeholders}) ORDER BY executorRoutineId ASC, stepOrder ASC`,
-        routineIds
+        routineIds,
       );
 
       const stepsByRoutine = routineSteps.reduce((acc, step) => {

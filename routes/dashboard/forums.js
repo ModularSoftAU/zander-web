@@ -34,12 +34,13 @@ export default function dashboardForumsRoutes(
     const editId = Number.parseInt(req.query.edit, 10) || null;
     const createUnderId = Number.parseInt(req.query.create_under, 10) || null;
 
-    const [categoryTree, categoryToEdit, globalImage, announcementWeb] = await Promise.all([
-      getAllCategoriesForAdmin(),
-      editId ? getCategoryById(editId) : Promise.resolve(null),
-      getGlobalImage(),
-      getWebAnnouncement(),
-    ]);
+    const [categoryTree, categoryToEdit, globalImage, announcementWeb] =
+      await Promise.all([
+        getAllCategoriesForAdmin(),
+        editId ? getCategoryById(editId) : Promise.resolve(null),
+        getGlobalImage(),
+        getWebAnnouncement(),
+      ]);
 
     return res.view("dashboard/forums/categories", {
       pageTitle: `Dashboard - Forum Categories`,
@@ -147,11 +148,7 @@ export default function dashboardForumsRoutes(
         await setBannerCookie("success", "Category updated.", res);
       } catch (error) {
         console.error("[DASHBOARD] Failed to update forum category", error);
-        await setBannerCookie(
-          "danger",
-          "Unable to update the category.",
-          res
-        );
+        await setBannerCookie("danger", "Unable to update the category.", res);
       }
 
       return res.redirect(`/dashboard/forums/categories?edit=${categoryId}`);

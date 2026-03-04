@@ -188,7 +188,11 @@ export default function sessionSiteRoute(
     const password = req.body.password || "";
 
     if (!identifier || !password) {
-      setBannerCookie("warning", "Username/email and password are required.", res);
+      setBannerCookie(
+        "warning",
+        "Username/email and password are required.",
+        res,
+      );
       return res.redirect(`/login`);
     }
 
@@ -264,7 +268,11 @@ export default function sessionSiteRoute(
       return res.redirect(`${process.env.siteAddress}/`);
     } catch (error) {
       logRouteError("local login attempt", error);
-      setBannerCookie("danger", "Unable to log in, please try again soon.", res);
+      setBannerCookie(
+        "danger",
+        "Unable to log in, please try again soon.",
+        res,
+      );
       return res.redirect(`/login`);
     }
   });
@@ -778,7 +786,9 @@ export default function sessionSiteRoute(
       }
 
       const verificationCode = await generateVerificationCode();
-      const expiresAt = new Date(Date.now() + emailVerificationExpiryMinutes * 60000);
+      const expiresAt = new Date(
+        Date.now() + emailVerificationExpiryMinutes * 60000,
+      );
       await createEmailVerification(userId, verificationCode, expiresAt);
 
       await sendMail(
@@ -854,7 +864,11 @@ export default function sessionSiteRoute(
       .trim();
 
     if (code.length !== 6) {
-      setBannerCookie("danger", "Please enter the 6 digit code from your email.", res);
+      setBannerCookie(
+        "danger",
+        "Please enter the 6 digit code from your email.",
+        res,
+      );
       return res.redirect(`/register/verify-email`);
     }
 

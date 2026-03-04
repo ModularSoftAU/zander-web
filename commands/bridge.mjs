@@ -57,8 +57,8 @@ export class BridgeCommand extends Command {
               option
                 .setName("claim")
                 .setDescription(
-                  "Claim pending tasks while retrieving the queue (pending status only)."
-                )
+                  "Claim pending tasks while retrieving the queue (pending status only).",
+                ),
             )
         )
         .addSubcommand((subcommand) =>
@@ -483,7 +483,9 @@ export class BridgeCommand extends Command {
         const apiData = await response.json();
 
         if (!apiData.success) {
-          throw new Error(apiData.message || "The API responded with an error.");
+          throw new Error(
+            apiData.message || "The API responded with an error.",
+          );
         }
 
         const queuedTasks = Array.isArray(apiData.data) ? apiData.data.length : 1;
@@ -602,7 +604,7 @@ export class BridgeCommand extends Command {
 
         const response = await postBridge(
           `/api/bridge/processor/task/${taskId}/report`,
-          payload
+          payload,
         );
         const apiData = await response.json();
 
@@ -630,7 +632,9 @@ export class BridgeCommand extends Command {
       } catch (error) {
         const errorEmbed = new EmbedBuilder()
           .setTitle("Report Error")
-          .setDescription(error.message || "There was an error reporting the task.")
+          .setDescription(
+            error.message || "There was an error reporting the task.",
+          )
           .setColor(Colors.Red);
 
         if (interaction.deferred || interaction.replied) {
@@ -670,7 +674,9 @@ export class BridgeCommand extends Command {
       } catch (error) {
         const errorEmbed = new EmbedBuilder()
           .setTitle("Reset Error")
-          .setDescription(error.message || "There was an error resetting the task.")
+          .setDescription(
+            error.message || "There was an error resetting the task.",
+          )
           .setColor(Colors.Red);
 
         if (interaction.deferred || interaction.replied) {
@@ -768,7 +774,7 @@ export class BridgeCommand extends Command {
 
             const response = await postBridge(
               "/api/bridge/processor/clear",
-              payload
+              payload,
             );
             const apiData = await response.json();
 
@@ -778,7 +784,9 @@ export class BridgeCommand extends Command {
 
             const successEmbed = new EmbedBuilder()
               .setTitle("Bridge Cleared")
-              .setDescription(apiData.message || "The executor queue has been cleared.")
+              .setDescription(
+                apiData.message || "The executor queue has been cleared.",
+              )
               .setColor(Colors.Green);
 
             collector.stop("completed");
@@ -786,7 +794,9 @@ export class BridgeCommand extends Command {
           } catch (error) {
             const errorEmbed = new EmbedBuilder()
               .setTitle("Bridge Clear Error")
-              .setDescription(error.message || "There was an error clearing the bridge.")
+              .setDescription(
+                error.message || "There was an error clearing the bridge.",
+              )
               .setColor(Colors.Red);
 
             collector.stop("failed");

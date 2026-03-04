@@ -39,9 +39,14 @@ async function liftInDiscord(punishment) {
 
     if (punishment.type === "TEMP_MUTE" && MUTED_ROLE_ID) {
       try {
-        const member = await guild.members.fetch(punishment.target_discord_user_id);
+        const member = await guild.members.fetch(
+          punishment.target_discord_user_id,
+        );
         if (member) {
-          await member.roles.remove(MUTED_ROLE_ID, "[Auto] Temporary mute expired");
+          await member.roles.remove(
+            MUTED_ROLE_ID,
+            "[Auto] Temporary mute expired",
+          );
         }
       } catch (error) {
         // Member may have left the guild
@@ -116,7 +121,7 @@ export async function reconcileActivePunishments() {
     }
 
     console.log(
-      `[Punishments] Reconciliation complete: ${activePunishments.length} active punishments checked.`
+      `[Punishments] Reconciliation complete: ${activePunishments.length} active punishments checked.`,
     );
   } catch (error) {
     console.error("[Punishments] Reconciliation failed:", error);

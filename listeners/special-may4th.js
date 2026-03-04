@@ -44,21 +44,21 @@ const responses = [
 ];
 
 export class GuildMessageListener extends Listener {
-    constructor(context, options) {
-        super(context, {
-            ...options,
-            once: false,
-            event: "messageCreate",
-        });
-    }
+  constructor(context, options) {
+    super(context, {
+      ...options,
+      once: false,
+      event: "messageCreate",
+    });
+  }
 
-    run(message) {
-        if (message.author.bot) return;
+  run(message) {
+    if (message.author.bot) return;
 
-        const now = new Date();
-        const isMayFourth = now.getMonth() === 4 && now.getDate() === 4;
+    const now = new Date();
+    const isMayFourth = now.getMonth() === 4 && now.getDate() === 4;
 
-        if (!isMayFourth) return;
+    if (!isMayFourth) return;
 
         const content = message.content.toLowerCase();
 

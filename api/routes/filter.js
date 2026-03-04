@@ -98,7 +98,7 @@ export default function filterApiRoute(
       ) {
         try {
           const staffChannelHook = new Webhook(
-            config.discord.webhooks.staffChannel
+            config.discord.webhooks.staffChannel,
           );
           let detectedUser = "Unknown";
           if (userData?.username) {

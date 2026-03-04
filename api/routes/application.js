@@ -103,7 +103,7 @@ export default function applicationApiRoute(app, config, db, features, lang) {
         actioningUser,
         "SUCCESS",
         "APPLICATION",
-        `Created ${displayName}`
+        `Created ${displayName}`,
       );
 
       return res.send({
@@ -188,7 +188,7 @@ export default function applicationApiRoute(app, config, db, features, lang) {
         actioningUser,
         "SUCCESS",
         "APPLICATION",
-        `Edited ${displayName}`
+        `Edited ${displayName}`,
       );
 
       return res.send({
@@ -233,7 +233,7 @@ export default function applicationApiRoute(app, config, db, features, lang) {
         actioningUser,
         "WARNING",
         "APPLICATION",
-        `Deleted ${applicationId}`
+        `Deleted ${applicationId}`,
       );
 
       return res.send({

@@ -171,7 +171,7 @@ export default function rankApiRoute(app, config, db, features, lang) {
       `INSERT INTO ${LUCKPERMS_GROUP_PERMISSIONS_TABLE}
         (name, permission, value, server, world, expiry, contexts)
       VALUES (?, ?, 1, 'global', 'global', 0, '{}')`,
-      [rankSlug, `${key}.${effectiveValue}`]
+      [rankSlug, `${key}.${effectiveValue}`],
     );
   }
 
@@ -403,7 +403,7 @@ export default function rankApiRoute(app, config, db, features, lang) {
           FROM ${RANK_VIEW}
           WHERE rankSlug = ?
           LIMIT 1`,
-        [rankSlug]
+        [rankSlug],
       );
 
       if (!updatedRank) {

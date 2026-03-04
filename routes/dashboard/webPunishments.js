@@ -23,7 +23,7 @@ export default function dashboardWebPunishmentsRoute(
   config,
   db,
   features,
-  lang
+  lang,
 ) {
   // List all web punishments
   app.get("/dashboard/web-punishments", async function (req, res) {
@@ -138,7 +138,9 @@ export default function dashboardWebPunishmentsRoute(
               `**Reason:** ${reason}`,
             ];
             if (type === "TEMP_BAN" && expiresAt) {
-              lines.push(`**Expires:** ${moment(expiresAt).format("MMMM Do YYYY, h:mm A")} UTC`);
+              lines.push(
+                `**Expires:** ${moment(expiresAt).format("MMMM Do YYYY, h:mm A")} UTC`,
+              );
             }
             if (type === "PERM_BAN") {
               lines.push(`**Duration:** Permanent`);
@@ -150,7 +152,11 @@ export default function dashboardWebPunishmentsRoute(
         }
       }
 
-      await setBannerCookie("success", `${type.replace("_", " ")} issued to ${targetUser.username}.`, res);
+      await setBannerCookie(
+        "success",
+        `${type.replace("_", " ")} issued to ${targetUser.username}.`,
+        res,
+      );
     } catch (error) {
       console.error("[WEB PUNISHMENTS] Failed to create punishment:", error);
       await setBannerCookie("danger", "Failed to create punishment. Please try again.", res);

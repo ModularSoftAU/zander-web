@@ -142,7 +142,7 @@ const buildApp = async () => {
       // Config API routes (No token authentication)
       configApiRoute(instance, config, db, features, lang);
     },
-    { prefix: "/api/config" }
+    { prefix: "/api/config" },
   );
 
   // Sessions — persisted to MySQL so logins survive app restarts
@@ -155,8 +155,8 @@ const buildApp = async () => {
     database: process.env.databaseName,
     createDatabaseTable: true,
     clearExpired: true,
-    checkExpirationInterval: 900000, // 15 minutes
-    expiration: 86400000 * 7, // 7 days default
+    checkExpirationInterval: 15 * 60 * 1000, // 15 minutes
+    expiration: 7 * 24 * 60 * 60 * 1000, // 7 days default
   });
 
   await app.register(fastifyCookie, {
@@ -169,7 +169,7 @@ const buildApp = async () => {
     store: sessionStore,
     cookie: {
       secure: false,
-      maxAge: 86400000 * 7, // 7 days default
+      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days default
       httpOnly: true,
       sameSite: "lax",
     },

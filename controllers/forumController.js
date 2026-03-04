@@ -214,7 +214,11 @@ async function ensureUniqueCategorySlug(baseName, excludeCategoryId = null) {
   }
 }
 
-async function ensureUniqueDiscussionSlug(categoryId, baseName, excludeDiscussionId = null) {
+async function ensureUniqueDiscussionSlug(
+  categoryId,
+  baseName,
+  excludeDiscussionId = null,
+) {
   const baseSlug = slugify(baseName);
   let candidate = baseSlug;
   let counter = 1;
@@ -666,7 +670,7 @@ async function fetchUserSummaries(userIds) {
     if (!summaries.has(userId)) {
       summaries.set(userId, {
         userId,
-        username: "Unknown", 
+        username: "Unknown",
         uuid: null,
         avatarUrl: "https://crafthead.net/helm/steve",
         profilePictureType: null,
@@ -712,7 +716,9 @@ async function fetchUserSummaries(userIds) {
         summary.profilePictureType === "GRAVATAR" &&
         summary.profilePictureEmail
       ) {
-        const hash = await hashEmail(summary.profilePictureEmail.trim().toLowerCase());
+        const hash = await hashEmail(
+          summary.profilePictureEmail.trim().toLowerCase(),
+        );
         summary.avatarUrl = `https://gravatar.com/avatar/${hash}?size=300`;
       } else if (summary.uuid) {
         summary.avatarUrl = `https://crafthead.net/helm/${summary.uuid}`;
@@ -825,7 +831,7 @@ export async function getRecentDiscussions({
         ${includeArchived ? "" : "AND d.isArchived = 0"}
       ORDER BY d.isSticky DESC, d.lastPostAt DESC, d.discussionId DESC
       LIMIT ? OFFSET ?`,
-    [...categoryIds, perPage, offset]
+    [...categoryIds, perPage, offset],
   );
 
   const discussionIds = rows.map((row) => row.discussionId);
@@ -839,7 +845,7 @@ export async function getRecentDiscussions({
          FROM forumPosts
         WHERE discussionId IN (${discussionPlaceholders})
         GROUP BY discussionId`,
-      discussionIds
+      discussionIds,
     );
 
     countRows.forEach((row) => {
@@ -852,7 +858,7 @@ export async function getRecentDiscussions({
          FROM forumPosts p
         WHERE p.discussionId IN (${discussionPlaceholders})
         ORDER BY p.discussionId ASC, p.createdAt DESC, p.postId DESC`,
-      discussionIds
+      discussionIds,
     );
 
     const latestPostMap = new Map();
@@ -876,7 +882,9 @@ export async function getRecentDiscussions({
   const discussions = rows.map((row) => {
     const author = userSummaries.get(row.createdBy) || null;
     const lastPostUserId = row.latestPost?.userId || row.lastPostBy;
-    const lastPoster = lastPostUserId ? userSummaries.get(lastPostUserId) : null;
+    const lastPoster = lastPostUserId
+      ? userSummaries.get(lastPostUserId)
+      : null;
 
     return {
       ...mapDiscussionRow(row),

@@ -75,7 +75,7 @@ export class SupportCommand extends Command {
           .addUserOption((option) =>
             option
               .setName("user")
-              .setDescription("Discord user to add to the ticket")
+              .setDescription("Discord user to add to the ticket"),
           )
           .addRoleOption((option) =>
             option
@@ -612,7 +612,8 @@ export class SupportCommand extends Command {
 
       if (!ownerUserId) {
         return interaction.reply({
-          content: "Unable to link your account to a ticket record. Please try again.",
+          content:
+            "Unable to link your account to a ticket record. Please try again.",
           ephemeral: true,
         });
       }
@@ -631,7 +632,8 @@ export class SupportCommand extends Command {
 
       if (!targetUserId) {
         return interaction.editReply({
-          content: "Unable to link that user to a ticket record. Please try again.",
+          content:
+            "Unable to link that user to a ticket record. Please try again.",
         });
       }
 
@@ -803,7 +805,8 @@ export class SupportCommand extends Command {
         }
       }
 
-      const parentCategoryId = ticketCategory?.id ?? configuredTicketCategoryId ?? "";
+      const parentCategoryId =
+        ticketCategory?.id ?? configuredTicketCategoryId ?? "";
 
       const createButton = new ButtonBuilder()
         .setCustomId(

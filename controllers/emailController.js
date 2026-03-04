@@ -33,12 +33,7 @@ export async function sendMail(
   template,
   templateData = {}
 ) {
-  const templatePath = path.resolve(
-    "views",
-    "partials",
-    "email",
-    template
-  );
+  const templatePath = path.resolve("views", "partials", "email", template);
 
   const templateContent = fs.readFileSync(templatePath, "utf-8");
   const renderedTemplate = ejs.render(templateContent, templateData);
@@ -59,7 +54,7 @@ export async function sendMail(
 
     const messageId = info?.messageId ? ` (messageId: ${info.messageId})` : "";
     console.info(
-      `[EMAIL] Successfully sent template "${template}" to ${recipient}${messageId}`
+      `[EMAIL] Successfully sent template "${template}" to ${recipient}${messageId}`,
     );
 
     if (info?.rejected?.length) {

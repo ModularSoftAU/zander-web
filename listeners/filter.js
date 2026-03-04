@@ -43,7 +43,7 @@ export class GuildMessageListener extends Listener {
           const embed = new EmbedBuilder()
             .setTitle(`Prohibited content detected!`)
             .setDescription(
-              `\`${message.author.username}\`, please refrain from using prohibited content/phrases. Continued violations may result in penalties.`
+              `\`${message.author.username}\`, please refrain from using prohibited content/phrases. Continued violations may result in penalties.`,
             )
             .setColor(`#ff3333`);
 

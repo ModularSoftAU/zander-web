@@ -128,7 +128,7 @@ export function UserGetter() {
     if (trimmedUsername) {
       const usernameMatch = await runQuery(
         `SELECT 1 FROM users WHERE LOWER(username) = LOWER(?) LIMIT 1`,
-        [trimmedUsername]
+        [trimmedUsername],
       );
 
       if (usernameMatch.length) {
@@ -320,7 +320,7 @@ export function createLocalUser({ uuid, username, email, passwordHash }) {
 
 export function updateLocalUserCredentials(
   userId,
-  { email, passwordHash, username }
+  { email, passwordHash, username },
 ) {
   return new Promise((resolve, reject) => {
     const updates = [];
@@ -624,7 +624,7 @@ export async function getUserPermissions(userData = {}) {
             AND permission NOT LIKE 'group.%'
             AND value = 1
             AND (expiry IS NULL OR expiry = 0 OR expiry > UNIX_TIMESTAMP())`,
-        [uuidHex]
+        [uuidHex],
       );
 
       directPermissions.forEach(({ permission }) => pushPermission(permission));
@@ -641,7 +641,7 @@ export async function getUserPermissions(userData = {}) {
             AND value = 1
             AND (expiry IS NULL OR expiry = 0 OR expiry > UNIX_TIMESTAMP())
           ORDER BY permission`,
-        [uuidHex]
+        [uuidHex],
       );
 
       rankRows.forEach(({ rankSlug }) => queueRank(rankSlug, { direct: true }));
@@ -656,7 +656,7 @@ export async function getUserPermissions(userData = {}) {
         `SELECT rankSlug
            FROM userRanks
           WHERE userId = ?`,
-        [userId]
+        [userId],
       );
 
       fallbackRanks.forEach(({ rankSlug }) => queueRank(rankSlug, { direct: true }));
@@ -672,7 +672,7 @@ export async function getUserPermissions(userData = {}) {
            FROM luckPermsPlayers
           WHERE uuid = UNHEX(?)
           LIMIT 1`,
-        [uuidHex]
+        [uuidHex],
       );
 
       primaryGroupRows.forEach(({ rankSlug }) => queueRank(rankSlug, { direct: true }));
@@ -691,7 +691,7 @@ export async function getUserPermissions(userData = {}) {
           WHERE name = ?
             AND value = 1
             AND (expiry IS NULL OR expiry = 0 OR expiry > UNIX_TIMESTAMP())`,
-        [currentRank]
+        [currentRank],
       );
 
       groupPermissions.forEach(({ permission }) => {
@@ -739,7 +739,7 @@ export async function getUserPermissions(userData = {}) {
         `SELECT DISTINCT permission
            FROM rankPermissions
           WHERE rankSlug IN (${placeholders})`,
-        groupSlugs
+        groupSlugs,
       );
 
       fallbackGroupPerms.forEach(({ permission }) => pushPermission(permission));
@@ -911,12 +911,12 @@ export async function getUserLastSession(userId) {
         const lastActivityDate = sessionRecord.sessionEnd
           ? new Date(sessionRecord.sessionEnd)
           : sessionRecord.sessionStart
-          ? new Date(sessionRecord.sessionStart)
-          : null;
+            ? new Date(sessionRecord.sessionStart)
+            : null;
 
         const sessionDiff = lastActivityDate
           ? convertSecondsToDuration(
-              Math.max(0, Math.floor((now - lastActivityDate) / 1000))
+              Math.max(0, Math.floor((now - lastActivityDate) / 1000)),
             )
           : null;
 

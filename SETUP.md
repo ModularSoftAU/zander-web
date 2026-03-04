@@ -12,7 +12,8 @@ This document explains how to set up a local environment for this project.
 
 1. Create a new MySQL database.
 2. Run the `dbinit.sql` script to create the initial database schema.
-3. Run the migration scripts in the `migration` directory in order to get the database up to date.
+3. Run the migration scripts in the `migration` directory in order to get the
+   database up to date.
 
 ## Environment Variables
 
@@ -30,9 +31,12 @@ This document explains how to set up a local environment for this project.
     - `IMGUR_CLIENT_ID`: Your Imgur client ID.
     - `IMGUR_CLIENT_SECRET`: Your Imgur client secret.
     - `IMGUR_REFRESH_TOKEN`: Your Imgur refresh token.
-    - `SUPPORT_CHANNEL_ID`: The ID of the Discord channel where the support message will be posted.
-    - `SUPPORT_NOTIFICATION_CHANNEL_ID`: The ID of the Discord channel where new ticket notifications will be sent.
-    - `SUPPORT_CATEGORY_ID`: The ID of the Discord category where new ticket channels will be created.
+    - `SUPPORT_CHANNEL_ID`: The ID of the Discord channel where the support
+      message will be posted.
+    - `SUPPORT_NOTIFICATION_CHANNEL_ID`: The ID of the Discord channel where new
+      ticket notifications will be sent.
+    - `SUPPORT_CATEGORY_ID`: The ID of the Discord category where new ticket
+      channels will be created.
     - `DISCORD_GUILD_ID`: The ID of your Discord server.
 
 ## Running the Application

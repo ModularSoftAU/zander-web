@@ -104,7 +104,7 @@ export default function supportDashboardRoutes(
       );
 
       const tickets = (await getAllTickets()).filter((ticket) =>
-        permittedCategoryIds.includes(ticket.categoryId)
+        permittedCategoryIds.includes(ticket.categoryId),
       );
 
       return res.view("modules/dashboard/support/index", {
@@ -625,7 +625,7 @@ export default function supportDashboardRoutes(
       new ButtonBuilder()
         .setCustomId(`support_category_${category.categoryId}`)
         .setLabel(category.name)
-        .setStyle(ButtonStyle.Primary)
+        .setStyle(ButtonStyle.Primary),
     );
 
     const row = new ActionRowBuilder().addComponents(buttons);
@@ -676,7 +676,7 @@ export default function supportDashboardRoutes(
         new ButtonBuilder()
           .setCustomId(`support_category_${category.categoryId}`)
           .setLabel(category.name)
-          .setStyle(ButtonStyle.Primary)
+          .setStyle(ButtonStyle.Primary),
       );
 
       const row = new ActionRowBuilder().addComponents(buttons);

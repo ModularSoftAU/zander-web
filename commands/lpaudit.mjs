@@ -122,7 +122,7 @@ export class LpAuditCommand extends Command {
     const builder = new SlashCommandBuilder()
       .setName("lp-audit")
       .setDescription(
-        "Audit LuckPerms ↔ Discord role sync. Read-only — no changes are made."
+        "Audit LuckPerms ↔ Discord role sync. Read-only — no changes are made.",
       )
       .addStringOption((opt) =>
         opt
@@ -229,7 +229,7 @@ export class LpAuditCommand extends Command {
           `**Not in guild:** ${notInGuild.length}`,
           `**Missing Discord roles:** ${missingRoles.length}`,
           `**In Discord with roles but not linked:** ${discordNotLinked.length}`,
-        ].join("\n")
+        ].join("\n"),
       )
       .setFooter({ text: "Audit only — no roles were changed." });
 

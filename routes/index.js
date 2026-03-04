@@ -213,7 +213,7 @@ export default function applicationSiteRoutes(
 
       if (isLoggedIn) {
         const fetchPunishmentsURL = `${process.env.siteAddress}/api/user/punishments?username=${encodeURIComponent(
-          req.session.user.username
+          req.session.user.username,
         )}`;
         const punishmentsResponse = await fetch(fetchPunishmentsURL, {
           headers: { "x-access-token": process.env.apiKey },
@@ -238,7 +238,7 @@ export default function applicationSiteRoutes(
           req.session.user.ranks?.map((rank) => rank.rankSlug) || [];
         const tickets = await getTicketsAccessibleByUser(
           req.session.user.userId,
-          userRankSlugs
+          userRankSlugs,
         );
         appealTicketsByKey = (tickets || []).reduce((acc, ticket) => {
           if (ticket.status === "closed") {
@@ -357,7 +357,7 @@ export default function applicationSiteRoutes(
 
   //
   // Shop Directory
-  // 
+  //
   app.get("/shopdirectory", async function (req, res) {
     isFeatureWebRouteEnabled(features.shopdirectory, req, res, features);
 
@@ -409,8 +409,8 @@ export default function applicationSiteRoutes(
         message: "Failed to fetch shop data. Please try again.",
       });
     }
-  })
-  
+  });
+
   //
   // Vault
   //

@@ -76,7 +76,10 @@ export class GuildMemberRemoveListener extends Listener {
           : undefined,
       });
     } catch (error) {
-      console.error("[Punishments] Failed to process native guildMemberRemove:", error);
+      console.error(
+        "[Punishments] Failed to process native guildMemberRemove:",
+        error,
+      );
     }
   }
 }

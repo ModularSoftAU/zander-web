@@ -31,12 +31,9 @@ export default function dashboardSiteRoute(app, config, features, lang) {
       }
     ).then((res) => res.json());
 
-    const servers = await fetch(
-      `${process.env.siteAddress}/api/server/get`,
-      {
-        headers: { "x-access-token": process.env.apiKey },
-      }
-    ).then((res) => res.json());
+    const servers = await fetch(`${process.env.siteAddress}/api/server/get`, {
+      headers: { "x-access-token": process.env.apiKey },
+    }).then((res) => res.json());
 
     return res.view("dashboard/dashboard-index", {
       pageTitle: `Dashboard`,

@@ -192,17 +192,17 @@ function buildPostPermalink(req, discussion, postId) {
 }
 
 const FORUM_LOG_COLORS = {
-  create: 0x22c55e,   // green
-  reply: 0x3b82f6,    // blue
-  edit: 0xf59e0b,     // amber
-  delete: 0xef4444,   // red
-  lock: 0xf97316,     // orange
-  unlock: 0x22c55e,   // green
-  sticky: 0xa855f7,   // purple
-  unsticky: 0x6b7280, // gray
-  archive: 0x64748b,  // slate
-  unarchive: 0x22c55e,// green
-  report: 0xdc2626,   // red
+  create: 2278750,    // 0x22c55e - green
+  reply: 3900150,     // 0x3b82f6 - blue
+  edit: 16096779,     // 0xf59e0b - amber
+  delete: 15680580,    // 0xef4444 - red
+  lock: 16347926,     // 0xf97316 - orange
+  unlock: 2278750,    // 0x22c55e - green
+  sticky: 11032055,   // 0xa855f7 - purple
+  unsticky: 7041664,  // 0x6b7280 - gray
+  archive: 6583435,   // 0x64748b - slate
+  unarchive: 2278750, // 0x22c55e - green
+  report: 14427686,   // 0xdc2626 - red
 };
 
 function stripHtmlAndTruncate(html, maxLength = 200) {

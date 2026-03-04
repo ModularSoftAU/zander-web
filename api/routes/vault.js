@@ -71,12 +71,7 @@ export default function vaultApiRoute(app, config, db, features, lang) {
           `INSERT INTO vault
               (displayName, description, redirectUrl, position)
           VALUES (?, ?, ?, ?)`,
-          [
-            displayName,
-            description,
-            redirectUrl,
-            position
-          ],
+          [displayName, description, redirectUrl, position],
           (error, results) => {
             if (error) return reject(error);
             resolve(results);
@@ -88,7 +83,7 @@ export default function vaultApiRoute(app, config, db, features, lang) {
         actioningUser,
         "SUCCESS",
         "VAULT",
-        `Created ${displayName}`
+        `Created ${displayName}`,
       );
 
       return res.send({
@@ -148,12 +143,7 @@ export default function vaultApiRoute(app, config, db, features, lang) {
         );
       });
 
-      await generateLog(
-        actioningUser,
-        "SUCCESS",
-        "VAULT",
-        `Edited ${displayName}`
-      );
+      await generateLog(actioningUser, "SUCCESS", "VAULT", `Edited ${displayName}`);
 
       return res.send({
         success: true,
@@ -194,7 +184,7 @@ export default function vaultApiRoute(app, config, db, features, lang) {
         actioningUser,
         "WARNING",
         "VAULT",
-        `Deleted ${vaultId}`
+        `Deleted ${vaultId}`,
       );
 
       return res.send({

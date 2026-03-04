@@ -12,7 +12,7 @@ export default function discordApiRoute(
   config,
   db,
   features,
-  lang
+  lang,
 ) {
   const baseEndpoint = "/api/discord";
 
@@ -25,13 +25,13 @@ export default function discordApiRoute(
 
     try {
       const networkChatLogHook = new Webhook(
-        config.discord.webhooks.networkChatLog
+        config.discord.webhooks.networkChatLog,
       );
 
       const webhookSent = await sendWebhookMessage(
         networkChatLogHook,
         `:twisted_rightwards_arrows: | \`${username}\` switched to \`${server}\``,
-        { context: "api/discord#switch" }
+        { context: "api/discord#switch" },
       );
 
       if (!webhookSent) {
@@ -80,7 +80,7 @@ export default function discordApiRoute(
       const webhookSent = await sendWebhookMessage(
         networkChatLogHook,
         `**${server}** | \`${username}\` :: ${content}`,
-        { context: "api/discord#chat" }
+        { context: "api/discord#chat" },
       );
 
       if (!webhookSent) {
@@ -117,7 +117,7 @@ export default function discordApiRoute(
       const webhookSent = await sendWebhookMessage(
         networkChatLogHook,
         `:ballot_box_with_check: | \`${username}\` has joined the Network.`,
-        { context: "api/discord#join" }
+        { context: "api/discord#join" },
       );
 
       if (!webhookSent) {
@@ -158,7 +158,7 @@ export default function discordApiRoute(
       const webhookSent = await sendWebhookMessage(
         networkChatLogHook,
         `:negative_squared_cross_mark: | \`${username}\` has left the Network.`,
-        { context: "api/discord#leave" }
+        { context: "api/discord#leave" },
       );
 
       if (!webhookSent) {
@@ -199,7 +199,7 @@ export default function discordApiRoute(
       const webhookSent = await sendWebhookMessage(
         networkChatLogHook,
         `:floppy_disk: | **${server}** | \`${username}\` executed command \`${command}\``,
-        { context: "api/discord#spy-command" }
+        { context: "api/discord#spy-command" },
       );
 
       if (!webhookSent) {
@@ -242,7 +242,7 @@ export default function discordApiRoute(
       const webhookSent = await sendWebhookMessage(
         networkChatLogHook,
         `:speaking_head: | **${server}** | \`${usernameFrom}\` => \`${usernameTo}\`: \`${directMessage}\``,
-        { context: "api/discord#spy-directMessage" }
+        { context: "api/discord#spy-directMessage" },
       );
 
       if (!webhookSent) {

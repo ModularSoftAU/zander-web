@@ -1,5 +1,9 @@
 import { getWebAnnouncement } from "../controllers/announcementController.js";
-import { isFeatureWebRouteEnabled, getGlobalImage, setBannerCookie } from "../api/common.js";
+import {
+  isFeatureWebRouteEnabled,
+  getGlobalImage,
+  setBannerCookie,
+} from "../api/common.js";
 import {
   getSupportCategories,
   createSupportTicket,
@@ -503,7 +507,11 @@ export default function supportRoutes(
       const username = req.session.user.username || `User ${req.session.user.userId}`;
 
       if (!isOwner && !isStaff) {
-        setBannerCookie("danger", "You do not have access to this ticket.", res);
+        setBannerCookie(
+          "danger",
+          "You do not have access to this ticket.",
+          res,
+        );
         return res.redirect("/support");
       }
 
@@ -536,9 +544,16 @@ export default function supportRoutes(
         ? `Ticket set to pending by ${username}`
         : `Ticket reopened by ${username}`;
       try {
-        await createSupportTicketMessage(client, ticket.ticketId, req.session.user.userId, statusMessage, "web", {
-          messageType: "status",
-        });
+        await createSupportTicketMessage(
+          client,
+          ticket.ticketId,
+          req.session.user.userId,
+          statusMessage,
+          "web",
+          {
+            messageType: "status",
+          },
+        );
       } catch (statusLogError) {
         console.error("Failed to persist status change message", statusLogError);
       }

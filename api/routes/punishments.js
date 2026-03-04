@@ -28,7 +28,7 @@ export default function punishmentsApiRoute(app, config, db, features, lang) {
             }
 
             resolve(results || []);
-          }
+          },
         );
       });
 

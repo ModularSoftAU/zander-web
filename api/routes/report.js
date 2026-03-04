@@ -112,11 +112,9 @@ export default function reportApiRoute(app, config, db, features, lang) {
         embed.addField("Report Evidence", reportReasonEvidence);
       }
 
-      const webhookSent = await sendWebhookMessage(
-        staffChannelHook,
-        embed,
-        { context: "api/report#create" }
-      );
+      const webhookSent = await sendWebhookMessage(staffChannelHook, embed, {
+        context: "api/report#create",
+      });
 
       if (!webhookSent) {
         return res.send({

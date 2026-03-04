@@ -39,17 +39,19 @@ export function required(body, field, res) {
   // Prematurely exits an API request if a required field has not been
   // defined or null. If the body is not defined then we error as well.
   // This can happen when no parameters exist.
-  if (!body || !(field in body))
+  if (!body || !(field in body)) {
     return res.send({
       success: false,
       message: `Body requires field '${field}'`,
     });
+  }
 
-  if (body[field] === null)
+  if (body[field] === null) {
     return res.send({
       success: false,
       message: `Field ${field} cannot be null`,
     });
+  }
 
   return body[field];
 }
@@ -292,7 +294,6 @@ export async function setBannerCookie(alertType, alertContent, res) {
     console.log(error);
   }
 }
-
 
 /*
     Sets two cookies (alertType and alertContent) with specified values and an expiration time of one second.

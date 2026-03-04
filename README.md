@@ -5,7 +5,9 @@ Documentation: [https://modularsoft.org/docs/products/zander](https://modularsof
 
 ## Permissions
 
-All permission nodes follow dot-notation and are managed via LuckPerms. Wildcard support is available (e.g. `zander.web.*` grants all `zander.web.X` nodes). The special `*` node grants full access.
+All permission nodes follow dot-notation and are managed via LuckPerms. Wildcard
+support is available (e.g. `zander.web.*` grants all `zander.web.X` nodes). The
+special `*` node grants full access.
 
 ### Web Dashboard
 
@@ -31,7 +33,7 @@ All permission nodes follow dot-notation and are managed via LuckPerms. Wildcard
 | Permission Node | Description |
 |---|---|
 | `zander.web.tickets` | Access the support ticket dashboard |
-| `zander.web.tickets.{slug}` | Access a specific ticket category (dynamic, based on category slug) |
+| `zander.web.tickets.{slug}` | Access a ticket category (dynamic, based on category slug) |
 | `zander.web.tickets.*` | Access all ticket categories |
 | `zander.web.ticket.escalate` | Escalate support tickets |
 
@@ -61,4 +63,4 @@ All permission nodes follow dot-notation and are managed via LuckPerms. Wildcard
 
 | Permission Node | Description |
 |---|---|
-| `zander.web.punishment.manage` | Manage web punishments (warn, temp ban, perm ban) via the dashboard |
+| `zander.web.punishment.manage` | Manage web punishments (warn, temp ban, perm ban) |

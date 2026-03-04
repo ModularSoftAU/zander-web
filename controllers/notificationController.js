@@ -6,7 +6,7 @@ if (VAPID_READY) {
   webPush.setVapidDetails(
     process.env.VAPID_SUBJECT || "mailto:admin@example.com",
     process.env.VAPID_PUBLIC_KEY,
-    process.env.VAPID_PRIVATE_KEY
+    process.env.VAPID_PRIVATE_KEY,
   );
 }
 
@@ -34,7 +34,7 @@ async function ensurePushSubscriptionTable() {
             return;
           }
           resolve(true);
-        }
+        },
       );
     });
   }
@@ -109,8 +109,11 @@ async function sendWebPushToUsers(userIds, payload) {
     subscriptions.map(async (sub) => {
       try {
         await webPush.sendNotification(
-          { endpoint: sub.endpoint, keys: { p256dh: sub.p256dh, auth: sub.auth } },
-          message
+          {
+            endpoint: sub.endpoint,
+            keys: { p256dh: sub.p256dh, auth: sub.auth },
+          },
+          message,
         );
       } catch (error) {
         if (error.statusCode === 410 || error.statusCode === 404) {
@@ -119,7 +122,7 @@ async function sendWebPushToUsers(userIds, payload) {
           console.error("Failed to send web push notification", error.message);
         }
       }
-    })
+    }),
   );
 }
 

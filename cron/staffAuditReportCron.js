@@ -24,7 +24,7 @@ function buildCronExpression() {
   const day = DAY_MAP[(auditConfig.dayOfWeek || "monday").toLowerCase()];
   if (day === undefined) {
     console.error(
-      `Staff audit report: invalid dayOfWeek "${auditConfig.dayOfWeek}". Use Monday-Sunday.`
+      `Staff audit report: invalid dayOfWeek "${auditConfig.dayOfWeek}". Use Monday-Sunday.`,
     );
     return null;
   }
@@ -34,12 +34,15 @@ function buildCronExpression() {
   const minute = parseInt(timeParts[1], 10);
 
   if (
-    isNaN(hour) || isNaN(minute) ||
-    hour < 0 || hour > 23 ||
-    minute < 0 || minute > 59
+    isNaN(hour) ||
+    isNaN(minute) ||
+    hour < 0 ||
+    hour > 23 ||
+    minute < 0 ||
+    minute > 59
   ) {
     console.error(
-      `Staff audit report: invalid time "${auditConfig.time}". Use HH:MM format.`
+      `Staff audit report: invalid time "${auditConfig.time}". Use HH:MM format.`,
     );
     return null;
   }
@@ -127,7 +130,7 @@ async function fetchActiveStaff() {
       (error, results) => {
         if (error) return reject(error);
         resolve(results || []);
-      }
+      },
     );
   });
 }
@@ -184,7 +187,7 @@ async function runStaffAuditReport() {
   const webhookUrl = auditConfig.webhookUrl || config?.discord?.webhooks?.staffAuditLog;
   if (!webhookUrl || webhookUrl === "WEBHOOKURL") {
     console.warn(
-      "Staff audit report skipped: no valid webhook URL configured."
+      "Staff audit report skipped: no valid webhook URL configured.",
     );
     return;
   }
@@ -281,16 +284,16 @@ if (cronExpression) {
         console.error("Failed to generate staff audit report:", error);
       }
     },
-    { timezone }
+    { timezone },
   );
 
   staffAuditReportTask.start();
 
   console.log(
-    `Staff audit report scheduled: "${cronExpression}" (${config.staffAuditReport?.dayOfWeek} ${config.staffAuditReport?.time} ${timezone})`
+    `Staff audit report scheduled: "${cronExpression}" (${config.staffAuditReport?.dayOfWeek} ${config.staffAuditReport?.time} ${timezone})`,
   );
 } else if (config.staffAuditReport?.enabled && features.staffAuditReport) {
   console.warn(
-    "Staff audit report is enabled but could not build a valid cron schedule. Check config.staffAuditReport settings."
+    "Staff audit report is enabled but could not build a valid cron schedule. Check config.staffAuditReport settings.",
   );
 }
