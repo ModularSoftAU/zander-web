@@ -52,7 +52,7 @@ export default function bridgeRedirectRoute(app, config, lang, features) {
     return forwardRequest(
       "/api/bridge/processor/command/add",
       req,
-      res
+      res,
     );
   });
 
@@ -69,7 +69,7 @@ export default function bridgeRedirectRoute(app, config, lang, features) {
     return forwardRequest(
       "/api/bridge/processor/command/add",
       req,
-      res
+      res,
     );
   });
 
@@ -94,7 +94,7 @@ export default function bridgeRedirectRoute(app, config, lang, features) {
     return forwardRequest(
       `/api/bridge/processor/task/${req.body.taskId}/reset`,
       req,
-      res
+      res,
     );
   });
 
@@ -115,7 +115,7 @@ export default function bridgeRedirectRoute(app, config, lang, features) {
     return forwardRequest(
       `/api/bridge/processor/task/${taskId}/report`,
       req,
-      res
+      res,
     );
   });
 
@@ -127,7 +127,7 @@ export default function bridgeRedirectRoute(app, config, lang, features) {
     return forwardRequest(
       "/api/bridge/processor/clear",
       req,
-      res
+      res,
     );
   });
 }

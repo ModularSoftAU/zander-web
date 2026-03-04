@@ -250,7 +250,7 @@ export async function searchShops(material, page = 1, options = {}) {
         (error, results) => {
           if (error) return reject(error);
           resolve(results[0]?.total || 0);
-        }
+        },
       );
     });
 
@@ -275,7 +275,7 @@ export async function searchShops(material, page = 1, options = {}) {
         (error, results) => {
           if (error) return reject(error);
           resolve(results || []);
-        }
+        },
       );
     });
 

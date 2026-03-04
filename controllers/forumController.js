@@ -171,7 +171,7 @@ export async function getCategoryBySlug(slug) {
        FROM forumCategories
       WHERE slug = ?
       LIMIT 1`,
-    [slug]
+    [slug],
   );
 
   return row ? mapCategoryRow(row) : null;
@@ -183,7 +183,7 @@ export async function getCategoryById(categoryId) {
        FROM forumCategories
       WHERE categoryId = ?
       LIMIT 1`,
-    [categoryId]
+    [categoryId],
   );
 
   return row ? mapCategoryRow(row) : null;
@@ -349,7 +349,7 @@ async function getDiscussionRow(discussionId) {
        FROM forumDiscussions
       WHERE discussionId = ?
       LIMIT 1`,
-    [discussionId]
+    [discussionId],
   );
 
   return mapDiscussionRow(row);
@@ -380,7 +380,7 @@ export async function getDiscussionWithCategory(discussionId) {
        JOIN forumCategories c ON c.categoryId = d.categoryId
       WHERE d.discussionId = ?
       LIMIT 1`,
-    [discussionId]
+    [discussionId],
   );
 
   if (!row) {
@@ -409,7 +409,7 @@ async function getDiscussionBySlug(categoryId, slug) {
       WHERE categoryId = ?
         AND slug = ?
       LIMIT 1`,
-    [categoryId, slug]
+    [categoryId, slug],
   );
 
   return row ? row.discussionId : null;
@@ -422,7 +422,7 @@ async function getOriginalPost(discussionId) {
       WHERE discussionId = ?
         AND isOriginal = 1
       LIMIT 1`,
-    [discussionId]
+    [discussionId],
   );
 
   return row || null;
@@ -436,7 +436,7 @@ async function recordPostRevision(postId, editorId, previousContent) {
   await query(
     `INSERT INTO forumPostRevisions (postId, editorId, previousContent)
      VALUES (?, ?, ?)`,
-    [postId, editorId || null, previousContent]
+    [postId, editorId || null, previousContent],
   );
 }
 
@@ -447,7 +447,7 @@ async function recalculateDiscussionMeta(discussionId) {
       WHERE discussionId = ?
       ORDER BY createdAt DESC, postId DESC
       LIMIT 1`,
-    [discussionId]
+    [discussionId],
   );
 
   if (lastPost) {
@@ -457,7 +457,7 @@ async function recalculateDiscussionMeta(discussionId) {
               lastPostBy = ?,
               updatedAt = NOW()
         WHERE discussionId = ?`,
-      [lastPost.createdAt, lastPost.userId, discussionId]
+      [lastPost.createdAt, lastPost.userId, discussionId],
     );
   } else {
     await query(
@@ -466,7 +466,7 @@ async function recalculateDiscussionMeta(discussionId) {
               lastPostBy = createdBy,
               updatedAt = NOW()
         WHERE discussionId = ?`,
-      [discussionId]
+      [discussionId],
     );
   }
 }
@@ -478,7 +478,7 @@ export async function createDiscussion({ categoryId, userId, title, content }) {
     `INSERT INTO forumDiscussions
       (categoryId, title, slug, createdBy, lastPostBy)
     VALUES (?, ?, ?, ?, ?)`,
-    [categoryId, title, slug, userId, userId]
+    [categoryId, title, slug, userId, userId],
   );
 
   const discussionId = result.insertId || result?.[0]?.insertId;
@@ -487,7 +487,7 @@ export async function createDiscussion({ categoryId, userId, title, content }) {
     `INSERT INTO forumPosts
       (discussionId, userId, content, isOriginal)
     VALUES (?, ?, ?, 1)`,
-    [discussionId, userId, content]
+    [discussionId, userId, content],
   );
 
   await recalculateDiscussionMeta(discussionId);
@@ -507,7 +507,7 @@ export async function updateDiscussion(discussionId, { title, content, editorUse
           SET title = ?,
               updatedAt = NOW()
         WHERE discussionId = ?`,
-      [title, discussionId]
+      [title, discussionId],
     );
   }
 
@@ -521,7 +521,7 @@ export async function updateDiscussion(discussionId, { title, content, editorUse
             SET content = ?,
                 updatedAt = NOW()
           WHERE postId = ?`,
-        [content, originalPost.postId]
+        [content, originalPost.postId],
       );
     }
   }
@@ -530,7 +530,7 @@ export async function updateDiscussion(discussionId, { title, content, editorUse
     `UPDATE forumDiscussions
         SET updatedAt = NOW()
       WHERE discussionId = ?`,
-    [discussionId]
+    [discussionId],
   );
 
   return getDiscussionRow(discussionId);
@@ -543,7 +543,7 @@ export async function deleteDiscussion(discussionId) {
 export async function moveDiscussion(discussionId, newCategoryId) {
   await query(
     `UPDATE forumDiscussions SET categoryId = ?, updatedAt = NOW() WHERE discussionId = ?`,
-    [newCategoryId, discussionId]
+    [newCategoryId, discussionId],
   );
 }
 
@@ -551,7 +551,7 @@ export async function createReply({ discussionId, userId, content }) {
   const result = await query(
     `INSERT INTO forumPosts (discussionId, userId, content, isOriginal)
      VALUES (?, ?, ?, 0)`,
-    [discussionId, userId, content]
+    [discussionId, userId, content],
   );
 
   const postId = result.insertId || result?.[0]?.insertId;
@@ -562,7 +562,7 @@ export async function createReply({ discussionId, userId, content }) {
             lastPostBy = ?,
             updatedAt = NOW()
       WHERE discussionId = ?`,
-    [userId, discussionId]
+    [userId, discussionId],
   );
 
   return postId;
@@ -574,7 +574,7 @@ export async function getPostById(postId) {
        FROM forumPosts
       WHERE postId = ?
       LIMIT 1`,
-    [postId]
+    [postId],
   );
 
   return row || null;
@@ -597,14 +597,14 @@ export async function updatePost(postId, { content, editorUserId }) {
         SET content = ?,
             updatedAt = NOW()
       WHERE postId = ?`,
-    [content, postId]
+    [content, postId],
   );
 
   await query(
     `UPDATE forumDiscussions
         SET updatedAt = NOW()
       WHERE discussionId = ?`,
-    [post.discussionId]
+    [post.discussionId],
   );
 
   if (!post.isOriginal) {
@@ -637,7 +637,7 @@ async function fetchUserSummaries(userIds) {
     `SELECT userId, username, uuid, profilePicture_type, profilePicture_email
        FROM users
       WHERE userId IN (${placeholders})`,
-    uniqueIds
+    uniqueIds,
   );
 
   const summaries = new Map();
@@ -688,7 +688,7 @@ async function fetchUserSummaries(userIds) {
        LEFT JOIN ranks r ON r.rankSlug = ur.rankSlug
       WHERE ur.userId IN (${placeholders})
       ORDER BY CAST(COALESCE(r.priority, 0) AS UNSIGNED) DESC, r.rankSlug ASC`,
-    uniqueIds
+    uniqueIds,
   );
 
   rankRows.forEach((row) => {
@@ -731,7 +731,7 @@ export async function getDiscussionPosts(discussionId) {
        FROM forumPosts
       WHERE discussionId = ?
       ORDER BY createdAt ASC, postId ASC`,
-    [discussionId]
+    [discussionId],
   );
 
   const postIds = rows.map((row) => row.postId);
@@ -799,7 +799,7 @@ export async function getRecentDiscussions({
        FROM forumDiscussions
       WHERE categoryId IN (${placeholders})
         ${includeArchived ? "" : "AND isArchived = 0"}`,
-    categoryIds
+    categoryIds,
   );
 
   const total = totalRows?.[0]?.total ? Number(totalRows[0].total) : 0;
@@ -825,7 +825,7 @@ export async function getRecentDiscussions({
         ${includeArchived ? "" : "AND d.isArchived = 0"}
       ORDER BY d.isSticky DESC, d.lastPostAt DESC, d.discussionId DESC
       LIMIT ? OFFSET ?`,
-    [...categoryIds, perPage, offset]
+    [...categoryIds, perPage, offset],
   );
 
   const discussionIds = rows.map((row) => row.discussionId);
@@ -963,6 +963,6 @@ export async function getPostRevisions(postId) {
        LEFT JOIN users u ON u.userId = r.editorId
       WHERE r.postId = ?
       ORDER BY r.createdAt DESC, r.revisionId DESC`,
-    [postId]
+    [postId],
   );
 }
