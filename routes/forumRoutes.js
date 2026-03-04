@@ -243,10 +243,8 @@ function sendForumLog(config, { action, title, description, url, avatarUrl, fiel
 }
 
 async function renderForumsView(res, req, viewPath, data, config, features) {
-  const [globalImage, announcementWeb] = await Promise.all([
-    getGlobalImage(),
-    getWebAnnouncement(),
-  ]);
+  const globalImage = await getGlobalImage();
+  const announcementWeb = await getWebAnnouncement();
 
   return res.view(viewPath, {
     ...data,
@@ -592,11 +590,11 @@ export default function forumRoutes(
     const permissions = getUserPermissions(req);
     const canModerate = userCanModerate(req);
 
-    const [categoryTree, posts, allCategories] = await Promise.all([
-      getCategoriesForUser(permissions),
-      getDiscussionPosts(discussionId),
-      canModerate ? getAllCategoriesForAdmin() : Promise.resolve({ flat: [] }),
-    ]);
+    const categoryTree = await getCategoriesForUser(permissions);
+    const posts = await getDiscussionPosts(discussionId);
+    const allCategories = canModerate
+      ? await getAllCategoriesForAdmin()
+      : { flat: [] };
 
     const canReply =
       !discussion.isLocked &&
@@ -807,10 +805,8 @@ export default function forumRoutes(
     }
 
     const permissions = getUserPermissions(req);
-    const [posts, categoryTree] = await Promise.all([
-      getDiscussionPosts(discussionId),
-      getCategoriesForUser(permissions),
-    ]);
+    const posts = await getDiscussionPosts(discussionId);
+    const categoryTree = await getCategoriesForUser(permissions);
     const originalPost = posts.find((post) => post.isOriginal);
 
     return renderForumsView(

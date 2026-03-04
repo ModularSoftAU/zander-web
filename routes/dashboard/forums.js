@@ -34,13 +34,10 @@ export default function dashboardForumsRoutes(
     const editId = Number.parseInt(req.query.edit, 10) || null;
     const createUnderId = Number.parseInt(req.query.create_under, 10) || null;
 
-    const [categoryTree, categoryToEdit, globalImage, announcementWeb] =
-      await Promise.all([
-        getAllCategoriesForAdmin(),
-        editId ? getCategoryById(editId) : Promise.resolve(null),
-        getGlobalImage(),
-        getWebAnnouncement(),
-      ]);
+    const categoryTree = await getAllCategoriesForAdmin();
+    const categoryToEdit = editId ? await getCategoryById(editId) : null;
+    const globalImage = await getGlobalImage();
+    const announcementWeb = await getWebAnnouncement();
 
     return res.view("dashboard/forums/categories", {
       pageTitle: `Dashboard - Forum Categories`,
