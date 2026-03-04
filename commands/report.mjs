@@ -53,12 +53,12 @@ export class ReportCommand extends Command {
     // Resolve the reporter user to a User ID in database.
     const reporterUserData = new UserGetter();
     const userData = await reporterUserData.byDiscordId(reporterUser);
-    
+
     if (!userData.discordId) {
       const errorEmbed = new EmbedBuilder()
         .setTitle("User not Linked")
         .setDescription(
-          `There was an error submitting your report as your account isn't linked. Please link your account by going to ${process.env.siteAddress} and login.`
+          `There was an error submitting your report as your account isn't linked. Please link your account by going to ${process.env.siteAddress} and login.`,
         )
         .setColor(Colors.Red);
 
@@ -84,14 +84,14 @@ export class ReportCommand extends Command {
         reportReason: reportReason,
         reportPlatform: "DISCORD",
       }),
-    });   
+    });
 
     const apiData = await response.json();
     if (!apiData.success) {
       const errorEmbed = new EmbedBuilder()
         .setTitle("Failed to Submit Report")
         .setDescription(
-          "There was an error submitting your report. Please try again later."
+          "There was an error submitting your report. Please try again later.",
         )
         .setColor(Colors.Red);
 
@@ -103,7 +103,7 @@ export class ReportCommand extends Command {
       const successEmbed = new EmbedBuilder()
         .setTitle("Report Submitted")
         .setDescription(
-          `You have reported \`${reportedUser}\` for: "${reportReason}".`
+          `You have reported \`${reportedUser}\` for: "${reportReason}".`,
         )
         .setColor(Colors.Green);
 

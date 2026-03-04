@@ -65,7 +65,7 @@ export class AuditCommand extends Command {
       const notLinkedEmbed = new EmbedBuilder()
         .setTitle("No Linked Account")
         .setDescription(
-          "We couldn't find a linked site account for you. Please link your account before using audit commands."
+          "We couldn't find a linked site account for you. Please link your account before using audit commands.",
         )
         .setColor(Colors.Red);
 
@@ -94,7 +94,7 @@ export class AuditCommand extends Command {
     }
 
     const fetchURL = new URL(
-      `${process.env.siteAddress}/api/user/profile/get`
+      `${process.env.siteAddress}/api/user/profile/get`,
     );
 
     if (username) {

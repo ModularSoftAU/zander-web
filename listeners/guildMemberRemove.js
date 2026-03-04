@@ -33,7 +33,7 @@ export class GuildMemberRemoveListener extends Listener {
       const entry = auditLogs.entries.find(
         (e) =>
           e.target?.id === member.user.id &&
-          Date.now() - e.createdTimestamp < 10000
+          Date.now() - e.createdTimestamp < 10000,
       );
 
       // No recent kick entry means the user left voluntarily — do nothing

@@ -1,10 +1,10 @@
 import { Listener } from "@sapphire/framework";
 import {
-    createSupportTicketMessage,
-    getTicketByChannelId,
-    getUserIdByDiscordId,
-    createUnlinkedUser,
-    syncParticipantsForMessage,
+  createSupportTicketMessage,
+  getTicketByChannelId,
+  getUserIdByDiscordId,
+  createUnlinkedUser,
+  syncParticipantsForMessage,
 } from "../controllers/supportTicketController.js";
 export class SupportTicketMessageListener extends Listener {
   constructor(context, options) {

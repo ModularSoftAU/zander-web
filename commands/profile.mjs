@@ -31,7 +31,7 @@ export class ProfileCommand extends Command {
           option
             .setName("discord_tag")
             .setDescription(
-              "Discord tag, ID, or @username of the profile to fetch."
+              "Discord tag, ID, or @username of the profile to fetch.",
             )
             .setRequired(false)
         )
@@ -52,7 +52,7 @@ export class ProfileCommand extends Command {
     }
 
     const fetchURL = new URL(
-      `${process.env.siteAddress}/api/user/profile/get`
+      `${process.env.siteAddress}/api/user/profile/get`,
     );
 
     if (username) {

@@ -82,7 +82,7 @@ export async function isFeatureWebRouteEnabled(
   isFeatureEnabled,
   req,
   res,
-  features
+  features,
 ) {
   if (!isFeatureEnabled) {
     res.view("session/featureDisabled", {
@@ -209,7 +209,7 @@ export async function postAPIRequest(
   postURL,
   apiPostBody,
   failureRedirectURL,
-  res
+  res,
 ) {
   const response = await fetch(postURL, {
     method: "POST",
@@ -323,7 +323,7 @@ export async function generateLog(
   userId,
   logType,
   logFeature,
-  description
+  description,
 ) {
   return new Promise((resolve, reject) => {
     db.query(

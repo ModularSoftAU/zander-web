@@ -41,7 +41,7 @@ export class StaffHelpCommand extends Command {
       .setColor(Colors.Green);
 
     const staffChannelHook = new Webhook(
-      config.discord.webhooks.staffChannel
+      config.discord.webhooks.staffChannel,
     );
 
     const webhookSent = await sendWebhookMessage(
