@@ -24,7 +24,7 @@ const transporter = nodemailer.createTransport({
 });
 
 console.info(
-  `[EMAIL] Transport configured for ${process.env.smtpHost}:${smtpPort} secure=${smtpSecure} requireTLS=${!smtpSecure && smtpRequireTLS}`
+  `[EMAIL] Transport configured for ${process.env.smtpHost}:${smtpPort} secure=${smtpSecure} requireTLS=${!smtpSecure && smtpRequireTLS}`,
 );
 
 export async function sendMail(
@@ -52,19 +52,19 @@ export async function sendMail(
 
   try {
     console.info(
-      `[EMAIL] Sending template "${template}" to ${recipient} via ${process.env.smtpHost}:${process.env.smtpPort}`
+      `[EMAIL] Sending template "${template}" to ${recipient} via ${process.env.smtpHost}:${process.env.smtpPort}`,
     );
 
     const info = await transporter.sendMail(mailOptions);
 
     const messageId = info?.messageId ? ` (messageId: ${info.messageId})` : "";
     console.info(
-      `[EMAIL] Successfully sent template "${template}" to ${recipient}${messageId}`
+      `[EMAIL] Successfully sent template "${template}" to ${recipient}${messageId}`,
     );
 
     if (info?.rejected?.length) {
       console.warn(
-        `[EMAIL] SMTP rejected the following recipients: ${info.rejected.join(", ")}`
+        `[EMAIL] SMTP rejected the following recipients: ${info.rejected.join(", ")}`,
       );
     }
 
@@ -72,7 +72,7 @@ export async function sendMail(
   } catch (error) {
     const message = error?.message || error;
     console.error(
-      `[EMAIL] Failed to send template "${template}" to ${recipient}: ${message}`
+      `[EMAIL] Failed to send template "${template}" to ${recipient}: ${message}`,
     );
 
     if (error?.response) {

@@ -17,7 +17,7 @@ export function UserGetter() {
           } else {
             resolve(results[0]); // Resolve with user data
           }
-        }
+        },
       );
     });
   };
@@ -37,7 +37,7 @@ export function UserGetter() {
           } else {
             resolve(results[0]);
           }
-        }
+        },
       );
     });
   };
@@ -57,7 +57,7 @@ export function UserGetter() {
           } else {
             resolve(results[0]);
           }
-        }
+        },
       );
     });
   };
@@ -85,7 +85,7 @@ export function UserGetter() {
           } else {
             resolve(results[0]); // Resolve with user data
           }
-        }
+        },
       );
     });
   };
@@ -105,7 +105,7 @@ export function UserGetter() {
           } else {
             resolve(results[0]); // Resolve with user data
           }
-        }
+        },
       );
     });
   };
@@ -222,7 +222,7 @@ export function UserGetter() {
             // If results were found, resolve with true (user is registered)
             resolve(true);
           }
-        }
+        },
       );
     });
   };
@@ -244,7 +244,7 @@ export function UserLinkGetter() {
           } else {
             resolve(results[0]); // Resolve with user data
           }
-        }
+        },
       );
     });
   };
@@ -268,9 +268,9 @@ export function UserLinkGetter() {
               }
 
               resolve(true);
-            }
+            },
           );
-        }
+        },
       );
     });
   };
@@ -294,9 +294,9 @@ export function UserLinkGetter() {
               }
 
               resolve(true);
-            }
+            },
           );
-        }
+        },
       );
     });
   };
@@ -313,7 +313,7 @@ export function createLocalUser({ uuid, username, email, passwordHash }) {
         }
 
         resolve({ userId: results.insertId });
-      }
+      },
     );
   });
 }
@@ -355,7 +355,7 @@ export function updateLocalUserCredentials(
         }
 
         resolve(true);
-      }
+      },
     );
   });
 }
@@ -371,7 +371,7 @@ export function markEmailVerified(userId) {
         }
 
         resolve(true);
-      }
+      },
     );
   });
 }
@@ -387,7 +387,7 @@ export function markAccountRegistered(userId) {
         }
 
         resolve(true);
-      }
+      },
     );
   });
 }
@@ -414,7 +414,7 @@ export async function getProfilePicture(username) {
           let emailHash = await hashEmail(email); // Await here
           return resolve(`https://gravatar.com/avatar/${emailHash}?size=300`);
         }
-      }
+      },
     );
   });
 }
@@ -431,7 +431,7 @@ export async function setProfileDisplayPreferences(
       if (error) {
         console.error("Failed to update profile display preferences", error);
       }
-    }
+    },
   );
 }
 
@@ -446,7 +446,7 @@ export async function setProfileUserInterests(
       if (error) {
         console.error("Failed to update profile interests", error);
       }
-    }
+    },
   );
 }
 
@@ -478,7 +478,7 @@ export async function setProfileSocialConnections(
       if (error) {
         console.error("Failed to update social connections", error);
       }
-    }
+    },
   );
 }
 
@@ -493,7 +493,7 @@ export async function setProfileUserAboutMe(
       if (error) {
         console.error("Failed to update profile bio", error);
       }
-    }
+    },
   );
 }
 
@@ -508,7 +508,7 @@ export function updateUserPassword(userId, passwordHash) {
         }
 
         resolve(true);
-      }
+      },
     );
   });
 }
@@ -773,7 +773,7 @@ export async function getUserStats(userId) {
         };
 
         resolve(userStats);
-      }
+      },
     );
   });
 }
@@ -809,7 +809,7 @@ export async function getRankPermissions(allRanks) {
 
         let rankPermissions = results.map((a) => a.permission);
         resolve(rankPermissions);
-      }
+      },
     );
   });
 }
@@ -831,7 +831,7 @@ export async function getUserRanks(userData, userRanks = null) {
             ["title"]: a.title,
           }));
           resolve(userRanks);
-        }
+        },
       );
       // Ranks were passed in meaning we are looking for nested ranks
     } else {
@@ -854,7 +854,7 @@ export async function getUserRanks(userData, userRanks = null) {
           } else {
             resolve(getUserRanks(userData, removeDuplicates));
           }
-        }
+        },
       );
     }
   });
@@ -929,7 +929,7 @@ export async function getUserLastSession(userId) {
         };
 
         resolve(sessionData);
-      }
+      },
     );
   });
 }
@@ -945,7 +945,7 @@ export async function linkDiscordAccount(userId, discordId, discordHandle = null
         }
 
         resolve(true);
-      }
+      },
     );
   });
 }
