@@ -1,9 +1,5 @@
 import { getWebAnnouncement } from "../controllers/announcementController.js";
-import {
-  isFeatureWebRouteEnabled,
-  getGlobalImage,
-  setBannerCookie,
-} from "../api/common.js";
+import { getGlobalImage, setBannerCookie } from "../api/common.js";
 import {
   getSupportCategories,
   createSupportTicket,

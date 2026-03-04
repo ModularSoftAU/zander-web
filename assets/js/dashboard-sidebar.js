@@ -1,5 +1,4 @@
-document.addEventListener("DOMContentLoaded", function (event) {
-  const sidebar = document.querySelector(".sidebar");
+document.addEventListener("DOMContentLoaded", function () {
   const navDropdownToggles = document.querySelectorAll(".nav-dropdown-toggle");
 
   navDropdownToggles.forEach((toggle) => {

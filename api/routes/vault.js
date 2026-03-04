@@ -143,7 +143,12 @@ export default function vaultApiRoute(app, config, db, features, lang) {
         );
       });
 
-      await generateLog(actioningUser, "SUCCESS", "VAULT", `Edited ${displayName}`);
+      await generateLog(
+        actioningUser,
+        "SUCCESS",
+        "VAULT",
+        `Edited ${displayName}`,
+      );
 
       return res.send({
         success: true,

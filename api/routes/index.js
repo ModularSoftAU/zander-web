@@ -12,7 +12,6 @@ import shopApiRoute from "./shopdirectory.js";
 import vaultApiRoute from "./vault.js";
 import bridgeApiRoute from "./bridge.js";
 import punishmentsApiRoute from "./punishments.js";
-import configApiRoute from "./config.js";
 import discordPunishmentsApiRoute from "./discordPunishments.js";
 import schedulerApiRoute from "./scheduler.js";
 

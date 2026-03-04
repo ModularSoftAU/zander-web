@@ -199,7 +199,7 @@ const FORUM_LOG_COLORS = {
   lock: 16347926,     // 0xf97316 - orange
   unlock: 2278750,    // 0x22c55e - green
   sticky: 11032055,   // 0xa855f7 - purple
-  unsticky: 7041664,  // 0x6b7280 - gray
+  unsticky: 7041664, // 0x6b7280 - gray
   archive: 6583435,   // 0x64748b - slate
   unarchive: 2278750, // 0x22c55e - green
   report: 14427686,   // 0xdc2626 - red

@@ -33,7 +33,7 @@ special `*` node grants full access.
 | Permission Node | Description |
 |---|---|
 | `zander.web.tickets` | Access the support ticket dashboard |
-| `zander.web.tickets.{slug}` | Access a ticket category (dynamic, based on category slug) |
+| `zander.web.tickets.{slug}` | Access a ticket category (dynamic) |
 | `zander.web.tickets.*` | Access all ticket categories |
 | `zander.web.ticket.escalate` | Escalate support tickets |
 
@@ -63,4 +63,4 @@ special `*` node grants full access.
 
 | Permission Node | Description |
 |---|---|
-| `zander.web.punishment.manage` | Manage web punishments (warn, temp ban, perm ban) |
+| `zander.web.punishment.manage` | Manage web punishments (warn, ban) |
