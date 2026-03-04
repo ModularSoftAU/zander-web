@@ -29,7 +29,7 @@ export class ShopDirectoryCommand extends Command {
             .setRequired(false)
             .addChoices(
               { name: "Buying", value: "buying" },
-              { name: "Selling", value: "selling" }
+              { name: "Selling", value: "selling" },
             )
         )
     );
@@ -247,7 +247,7 @@ export class ShopDirectoryCommand extends Command {
       } else {
         // If there's only one page, just send the embed without any components
         await interaction.editReply({
-          embeds: [createEmbed(currentPageIndex)]
+          embeds: [createEmbed(currentPageIndex)],
         });
       }
     } catch (error) {

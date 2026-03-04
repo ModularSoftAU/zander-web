@@ -281,16 +281,16 @@ if (cronExpression) {
         console.error("Failed to generate staff audit report:", error);
       }
     },
-    { timezone }
+    { timezone },
   );
 
   staffAuditReportTask.start();
 
   console.log(
-    `Staff audit report scheduled: "${cronExpression}" (${config.staffAuditReport?.dayOfWeek} ${config.staffAuditReport?.time} ${timezone})`
+    `Staff audit report scheduled: "${cronExpression}" (${config.staffAuditReport?.dayOfWeek} ${config.staffAuditReport?.time} ${timezone})`,
   );
 } else if (config.staffAuditReport?.enabled && features.staffAuditReport) {
   console.warn(
-    "Staff audit report is enabled but could not build a valid cron schedule. Check config.staffAuditReport settings."
+    "Staff audit report is enabled but could not build a valid cron schedule. Check config.staffAuditReport settings.",
   );
 }
