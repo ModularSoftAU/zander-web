@@ -38,7 +38,7 @@ export class BridgeCommand extends Command {
                   { name: "Processing", value: "processing" },
                   { name: "Completed", value: "completed" },
                   { name: "Failed", value: "failed" },
-                  { name: "All statuses", value: "all" }
+                  { name: "All statuses", value: "all" },
                 )
             )
             .addStringOption((option) =>
@@ -129,7 +129,7 @@ export class BridgeCommand extends Command {
                   { name: "Pending", value: "pending" },
                   { name: "Processing", value: "processing" },
                   { name: "Completed", value: "completed" },
-                  { name: "Failed", value: "failed" }
+                  { name: "Failed", value: "failed" },
                 )
             )
             .addStringOption((option) =>
@@ -173,7 +173,7 @@ export class BridgeCommand extends Command {
                   { name: "Pending", value: "pending" },
                   { name: "Processing", value: "processing" },
                   { name: "Completed", value: "completed" },
-                  { name: "Failed", value: "failed" }
+                  { name: "Failed", value: "failed" },
                 )
             )
             .addStringOption((option) =>
@@ -298,7 +298,7 @@ export class BridgeCommand extends Command {
         const fetchResults = await Promise.all(
           statusesToFetch.map(async (status) => {
             const url = new URL(
-              `${process.env.siteAddress}/api/bridge/processor/get`
+              `${process.env.siteAddress}/api/bridge/processor/get`,
             );
             url.searchParams.set("status", status);
             url.searchParams.set("limit", String(limit));
@@ -323,7 +323,7 @@ export class BridgeCommand extends Command {
 
         const totalTasks = fetchResults.reduce(
           (acc, item) => acc + (item.tasks?.length || 0),
-          0
+          0,
         );
 
         if (totalTasks === 0) {
