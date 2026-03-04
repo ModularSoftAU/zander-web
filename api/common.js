@@ -335,7 +335,7 @@ export async function generateLog(
           return reject(error);
         }
         resolve(results);
-      }
+      },
     );
   });
 }

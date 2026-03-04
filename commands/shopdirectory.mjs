@@ -90,14 +90,14 @@ export class ShopDirectoryCommand extends Command {
 
       // Filter out shops with no stock (stock is 0)
       const originalShopCount = apiData.data.length;
-      let inStockShops = apiData.data.filter(shop => shop.stock !== 0);
+      let inStockShops = apiData.data.filter((shop) => shop.stock !== 0);
       const outOfStockCount = originalShopCount - inStockShops.length;
       
       if (type) {
         if (type === "buying") {
-          inStockShops = inStockShops.filter(shop => shop.stock === -1);
+          inStockShops = inStockShops.filter((shop) => shop.stock === -1);
         } else if (type === "selling") {
-          inStockShops = inStockShops.filter(shop => shop.stock > 0);
+          inStockShops = inStockShops.filter((shop) => shop.stock > 0);
         }
       }
 
@@ -122,7 +122,7 @@ export class ShopDirectoryCommand extends Command {
 
       // Find the most frequent item for the thumbnail
       const itemCounts = new Map();
-      inStockShops.forEach(shop => {
+      inStockShops.forEach((shop) => {
         const itemName = shop.itemData.name;
         if (itemName) {
           itemCounts.set(itemName, (itemCounts.get(itemName) || 0) + 1);
@@ -138,7 +138,7 @@ export class ShopDirectoryCommand extends Command {
         }
       }
 
-      const mostFrequentItem = inStockShops.find(shop => shop.itemData.name === mostFrequentItemName);
+      const mostFrequentItem = inStockShops.find((shop) => shop.itemData.name === mostFrequentItemName);
       const thumbnailUrl = mostFrequentItem?.itemData?.image;
 
       // Create pages of shops
@@ -193,54 +193,54 @@ export class ShopDirectoryCommand extends Command {
           return new ActionRowBuilder()
             .addComponents(
               new ButtonBuilder()
-                .setCustomId('prev_page')
-                .setLabel('Previous')
+                .setCustomId("prev_page")
+                .setLabel("Previous")
                 .setStyle(ButtonStyle.Primary)
                 .setDisabled(pageIndex === 0),
               new ButtonBuilder()
-                .setCustomId('next_page')
-                .setLabel('Next')
+                .setCustomId("next_page")
+                .setLabel("Next")
                 .setStyle(ButtonStyle.Primary)
-                .setDisabled(pageIndex === shopPages.length - 1)
+                .setDisabled(pageIndex === shopPages.length - 1),
             );
         };
 
         const reply = await interaction.editReply({
           embeds: [createEmbed(currentPageIndex)],
-          components: [getRow(currentPageIndex)]
+          components: [getRow(currentPageIndex)],
         });
 
         const collector = reply.createMessageComponentCollector({
           filter: (i) => i.user.id === interaction.user.id,
-          time: 60000 // 1 minute
+          time: 60000, // 1 minute
         });
 
-        collector.on('collect', async (i) => {
-          if (i.customId === 'prev_page') {
+        collector.on("collect", async (i) => {
+          if (i.customId === "prev_page") {
             currentPageIndex--;
-          } else if (i.customId === 'next_page') {
+          } else if (i.customId === "next_page") {
             currentPageIndex++;
           }
 
           await i.update({
             embeds: [createEmbed(currentPageIndex)],
-            components: [getRow(currentPageIndex)]
+            components: [getRow(currentPageIndex)],
           });
         });
 
-        collector.on('end', async () => {
+        collector.on("end", async () => {
           const disabledRow = new ActionRowBuilder()
             .addComponents(
               new ButtonBuilder()
-                .setCustomId('prev_page')
-                .setLabel('Previous')
+                .setCustomId("prev_page")
+                .setLabel("Previous")
                 .setStyle(ButtonStyle.Primary)
                 .setDisabled(true),
               new ButtonBuilder()
-                .setCustomId('next_page')
-                .setLabel('Next')
+                .setCustomId("next_page")
+                .setLabel("Next")
                 .setStyle(ButtonStyle.Primary)
-                .setDisabled(true)
+                .setDisabled(true),
             );
           await reply.edit({ components: [disabledRow] }).catch(() => {});
         });

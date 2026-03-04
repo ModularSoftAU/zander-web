@@ -75,7 +75,7 @@ export default function vaultApiRoute(app, config, db, features, lang) {
             displayName,
             description,
             redirectUrl,
-            position
+            position,
           ],
           (error, results) => {
             if (error) return reject(error);
@@ -88,7 +88,7 @@ export default function vaultApiRoute(app, config, db, features, lang) {
         actioningUser,
         "SUCCESS",
         "VAULT",
-        `Created ${displayName}`
+        `Created ${displayName}`,
       );
 
       return res.send({
@@ -152,7 +152,7 @@ export default function vaultApiRoute(app, config, db, features, lang) {
         actioningUser,
         "SUCCESS",
         "VAULT",
-        `Edited ${displayName}`
+        `Edited ${displayName}`,
       );
 
       return res.send({
@@ -194,7 +194,7 @@ export default function vaultApiRoute(app, config, db, features, lang) {
         actioningUser,
         "WARNING",
         "VAULT",
-        `Deleted ${vaultId}`
+        `Deleted ${vaultId}`,
       );
 
       return res.send({

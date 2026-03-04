@@ -62,8 +62,9 @@ function isContentEmpty(rawValue) {
     return true;
   }
 
-  const stripped = String(rawValue)
-    .replace(/<[^>]*>/g, " ")
+  const input = String(rawValue).slice(0, 100000);
+  const stripped = input
+    .replace(/<[^>]{0,2000}>/g, " ")
     .replace(/&nbsp;/gi, " ")
     .trim();
 
@@ -207,8 +208,9 @@ const FORUM_LOG_COLORS = {
 
 function stripHtmlAndTruncate(html, maxLength = 200) {
   if (!html) return "";
-  const text = String(html)
-    .replace(/<[^>]*>/g, " ")
+  const input = String(html).slice(0, 100000);
+  const text = input
+    .replace(/<[^>]{0,2000}>/g, " ")
     .replace(/&nbsp;/gi, " ")
     .replace(/\s+/g, " ")
     .trim();

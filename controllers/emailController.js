@@ -37,7 +37,7 @@ export async function sendMail(
     "views",
     "partials",
     "email",
-    template
+    template,
   );
 
   const templateContent = fs.readFileSync(templatePath, "utf-8");

@@ -238,7 +238,7 @@ export default function applicationSiteRoutes(
           req.session.user.ranks?.map((rank) => rank.rankSlug) || [];
         const tickets = await getTicketsAccessibleByUser(
           req.session.user.userId,
-          userRankSlugs
+          userRankSlugs,
         );
         appealTicketsByKey = (tickets || []).reduce((acc, ticket) => {
           if (ticket.status === "closed") {
@@ -357,7 +357,7 @@ export default function applicationSiteRoutes(
 
   //
   // Shop Directory
-  // 
+  //
   app.get("/shopdirectory", async function (req, res) {
     isFeatureWebRouteEnabled(features.shopdirectory, req, res, features);
 
@@ -369,7 +369,7 @@ export default function applicationSiteRoutes(
       globalImage: await getGlobalImage(),
       announcementWeb: await getWebAnnouncement(),
     });
-  })
+  });
 
   // Proxy endpoint for client-side shop search (avoids exposing API key)
   app.get("/shopdirectory/search", async function (req, res) {
@@ -442,7 +442,7 @@ export default function applicationSiteRoutes(
       "zander.web.punishment.view",
       req,
       res,
-      features
+      features,
     );
 
     if (!permissionBoolean) return;

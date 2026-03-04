@@ -35,7 +35,7 @@ const schedulerTask = cron.schedule("*/1 * * * *", async () => {
 
   try {
     const pendingMessages = await executeQuery(
-      `SELECT * FROM scheduledDiscordMessages WHERE status='scheduled' AND sentAt IS NULL AND scheduledFor <= UTC_TIMESTAMP() ORDER BY scheduledFor ASC LIMIT 20`
+      `SELECT * FROM scheduledDiscordMessages WHERE status='scheduled' AND sentAt IS NULL AND scheduledFor <= UTC_TIMESTAMP() ORDER BY scheduledFor ASC LIMIT 20`,
     );
 
     for (const message of pendingMessages) {
@@ -47,7 +47,7 @@ const schedulerTask = cron.schedule("*/1 * * * *", async () => {
 
         const [userProfile] = await executeQuery(
           "SELECT username, profilePicture_type, profilePicture_email, uuid FROM users WHERE userId = ? LIMIT 1",
-          [message.createdBy]
+          [message.createdBy],
         );
         const avatarUrl = await buildAvatarUrl(userProfile);
         const footerText = `Message authorised by ${
@@ -67,7 +67,7 @@ const schedulerTask = cron.schedule("*/1 * * * *", async () => {
         if (message.embedColor) {
           const colorValue = parseInt(
             String(message.embedColor).replace("#", ""),
-            16
+            16,
           );
           if (!Number.isNaN(colorValue)) {
             embed.setColor(colorValue);
@@ -83,14 +83,14 @@ const schedulerTask = cron.schedule("*/1 * * * *", async () => {
 
         await executeQuery(
           "UPDATE scheduledDiscordMessages SET status='sent', sentAt=UTC_TIMESTAMP(), lastError=NULL WHERE scheduleId=?",
-          [message.scheduleId]
+          [message.scheduleId],
         );
       } catch (error) {
         const errorMessage =
           error instanceof Error ? error.message : `${error}`;
         await executeQuery(
           "UPDATE scheduledDiscordMessages SET status='failed', lastError=? WHERE scheduleId=?",
-          [errorMessage, message.scheduleId]
+          [errorMessage, message.scheduleId],
         );
       }
     }

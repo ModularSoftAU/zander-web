@@ -12,7 +12,7 @@ export default function discordApiRoute(
   config,
   db,
   features,
-  lang
+  lang,
 ) {
   const baseEndpoint = "/api/discord";
 

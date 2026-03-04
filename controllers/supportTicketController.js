@@ -1408,7 +1408,7 @@ export async function getCategoryPermissions(categoryId) {
                 } else {
                     resolve(results.map((row) => row.roleId));
                 }
-            }
+            },
         );
     });
 }
@@ -1839,7 +1839,7 @@ export async function getTicketDetailsByChannel(channelId) {
                 } else {
                     resolve(results[0]);
                 }
-            }
+            },
         );
     });
 }

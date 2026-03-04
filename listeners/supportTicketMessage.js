@@ -30,7 +30,7 @@ export class SupportTicketMessageListener extends Listener {
         ticket.ticketId,
         userId,
         message.content,
-        "discord"
+        "discord",
       );
 
       const memberRoleIds = Array.from(message.member?.roles.cache.keys() || []);

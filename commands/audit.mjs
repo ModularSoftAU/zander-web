@@ -177,7 +177,7 @@ export class AuditCommand extends Command {
           name: "Website Login",
           value: formatAuditTimestamp(profileData.audit_lastWebsiteLogin),
           inline: false,
-        }
+        },
       );
 
     if (profileData.discordId) {

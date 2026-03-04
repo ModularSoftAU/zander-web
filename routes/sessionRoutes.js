@@ -2,6 +2,7 @@ import dotenv from "dotenv";
 dotenv.config();
 import qs from "querystring";
 import bcrypt from "bcrypt";
+import { createRateLimiter } from "../lib/rateLimiter.js";
 import {
   isFeatureWebRouteEnabled,
   setBannerCookie,
@@ -146,7 +147,8 @@ export default function sessionSiteRoute(
     if (req.session.user) {
       const returnTo =
         typeof req.session.returnTo === "string" &&
-        req.session.returnTo.startsWith("/")
+        req.session.returnTo.startsWith("/") &&
+        !req.session.returnTo.startsWith("//")
           ? req.session.returnTo
           : null;
       if (returnTo) {
@@ -176,7 +178,8 @@ export default function sessionSiteRoute(
     });
   });
 
-  app.post("/login", async function (req, res) {
+  const loginRateLimit = createRateLimiter({ windowMs: 15 * 60 * 1000, max: 10, message: "Too many login attempts, please try again later." });
+  app.post("/login", { preHandler: loginRateLimit }, async function (req, res) {
     if (req.session.user) {
       return res.redirect("/dashboard");
     }
@@ -567,7 +570,8 @@ export default function sessionSiteRoute(
     });
   });
 
-  app.post("/forgot-password/reset", async function (req, res) {
+  const forgotPasswordRateLimit = createRateLimiter({ windowMs: 15 * 60 * 1000, max: 5, message: "Too many password reset attempts, please try again later." });
+  app.post("/forgot-password/reset", { preHandler: forgotPasswordRateLimit }, async function (req, res) {
     if (!isFeatureWebRouteEnabled(features.web.login, req, res, features))
       return;
 
@@ -916,7 +920,8 @@ export default function sessionSiteRoute(
     });
   });
 
-  app.post("/register/minecraft", async function (req, res) {
+  const registerMinecraftRateLimit = createRateLimiter({ windowMs: 15 * 60 * 1000, max: 10, message: "Too many attempts, please try again later." });
+  app.post("/register/minecraft", { preHandler: registerMinecraftRateLimit }, async function (req, res) {
     if (!isFeatureWebRouteEnabled(features.web.register, req, res, features))
       return;
 

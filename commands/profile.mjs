@@ -137,7 +137,7 @@ export class ProfileCommand extends Command {
             name: "Total Playtime",
             value: `${apiData.data.profileStats.totalPlaytime}`,
             inline: true,
-          }
+          },
         );
 
       interaction.reply({

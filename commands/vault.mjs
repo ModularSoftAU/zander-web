@@ -13,7 +13,7 @@ export class RanksCommand extends Command {
     registry.registerChatInputCommand((builder) =>
       builder
         .setName("vault")
-        .setDescription("Display link to view link to the map vault.")
+        .setDescription("Display link to view link to the map vault."),
     );
   }
 
@@ -22,20 +22,20 @@ export class RanksCommand extends Command {
       const errorEmbed = new EmbedBuilder()
         .setTitle("Feature Disabled")
         .setDescription(
-          `This feature has been disabled by your System Administrator.`
+          `This feature has been disabled by your System Administrator.`,
         )
         .setColor(Colors.Red);
 
       return interaction.reply({
         embeds: [errorEmbed],
         ephemeral: true,
-      });      
+      });
     }
 
     const embed = new EmbedBuilder()
       .setTitle(`Vault`)
       .setDescription(
-        `Explore the Vault to discover and download our previous maps and explore the worlds and builds of our community: ${process.env.siteAddress}/vault`
+        `Explore the Vault to discover and download our previous maps and explore the worlds and builds of our community: ${process.env.siteAddress}/vault`,
       )
       .setColor(Colors.DarkGold);
 
