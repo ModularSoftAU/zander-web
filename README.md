@@ -96,7 +96,8 @@ twitchClientSecret=YOUR_CLIENT_SECRET
 3. Create an **OAuth 2.0 Client ID** (*APIs & Services → Credentials → Create Credentials*):
    - Application type: **Web application**
    - Authorised redirect URI: `https://<your-domain>/profile/social/youtube/callback`
-4. Create an **API Key** (*Create Credentials → API Key*) and restrict it to the YouTube Data API v3.
+   - When the OAuth consent screen asks for scopes, add **`https://www.googleapis.com/auth/youtube.readonly`** — this grants read-only access to the user's YouTube channel identity and is the only scope requested during the account-linking flow.
+4. Create an **API Key** (*Create Credentials → API Key*) and restrict it to the YouTube Data API v3. This key is used server-side by the sync cron job to read public channel content without requiring a user token.
 5. Add the following to your `.env`:
 
 ```env
@@ -104,6 +105,8 @@ googleClientId=YOUR_OAUTH_CLIENT_ID
 googleClientSecret=YOUR_OAUTH_CLIENT_SECRET
 youtubeApiKey=YOUR_API_KEY
 ```
+
+> **Scope note:** The OAuth flow requests `https://www.googleapis.com/auth/youtube.readonly` with `access_type=offline` so that a refresh token is issued. The server only uses this token to identify the user's channel (channel ID, display name, avatar). All subsequent content syncing is done using the server-side API key against public channel data, so no ongoing access to the user's account is required after the initial link.
 
 ### Configuring CFC content filters
 
