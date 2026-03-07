@@ -1,6 +1,7 @@
 import crypto from "crypto";
 import qs from "querystring";
 import { getGlobalImage, isLoggedIn, setBannerCookie } from "../api/common.js";
+import { checkRateLimit } from "../lib/rateLimiter.mjs";
 import { getWebAnnouncement } from "../controllers/announcementController.js";
 import {
   UserGetter,
@@ -292,6 +293,7 @@ export default function profileSiteRoutes(
   });
 
   app.get("/profile/social/discord/connect", async function (req, res) {
+    if (!checkRateLimit(req, res, { windowMs: 60_000, max: 20 })) return;
     if (!isLoggedIn(req)) {
       setBannerCookie(
         "warning",

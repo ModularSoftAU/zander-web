@@ -16,6 +16,7 @@ import {
   generateVerifyCode,
 } from "../common.js";
 import { hasActiveWebBan } from "../../controllers/discordPunishmentController.js";
+import { checkRateLimit } from "../../lib/rateLimiter.mjs";
 
 export default function userApiRoute(app, config, db, features, lang) {
   const baseEndpoint = "/api/user";
@@ -287,6 +288,7 @@ export default function userApiRoute(app, config, db, features, lang) {
   });
 
   app.post(baseEndpoint + "/verify", async function (req, res) {
+    if (!checkRateLimit(req, res, { windowMs: 15 * 60_000, max: 10 })) return;
     const username = required(req.body, "username", res);
     if (res.sent) return;
     const uuid = required(req.body, "uuid", res);

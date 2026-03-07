@@ -28,6 +28,7 @@ import {
   verifyPasswordResetCode,
 } from "../controllers/sessionController.js";
 import { sendMail } from "../controllers/emailController.js";
+import { checkRateLimit } from "../lib/rateLimiter.mjs";
 
 export default function sessionSiteRoute(
   app,
@@ -116,10 +117,13 @@ export default function sessionSiteRoute(
   }
 
   app.get("/login", async function (req, res) {
+    if (!checkRateLimit(req, res, { windowMs: 60_000, max: 30 })) return;
+
     if (req.query.returnTo && typeof req.query.returnTo === "string") {
-      const sanitizedReturnTo = req.query.returnTo.startsWith("/")
-        ? req.query.returnTo
-        : null;
+      const sanitizedReturnTo =
+        req.query.returnTo.startsWith("/") && !req.query.returnTo.startsWith("//")
+          ? req.query.returnTo
+          : null;
       if (sanitizedReturnTo) {
         req.session.returnTo = sanitizedReturnTo;
       }
@@ -146,7 +150,8 @@ export default function sessionSiteRoute(
     if (req.session.user) {
       const returnTo =
         typeof req.session.returnTo === "string" &&
-        req.session.returnTo.startsWith("/")
+        req.session.returnTo.startsWith("/") &&
+        !req.session.returnTo.startsWith("//")
           ? req.session.returnTo
           : null;
       if (returnTo) {
@@ -177,6 +182,8 @@ export default function sessionSiteRoute(
   });
 
   app.post("/login", async function (req, res) {
+    if (!checkRateLimit(req, res, { windowMs: 15 * 60_000, max: 10 })) return;
+
     if (req.session.user) {
       return res.redirect("/dashboard");
     }
@@ -270,13 +277,16 @@ export default function sessionSiteRoute(
   });
 
   app.get("/login/discord", async function (req, res) {
+    if (!checkRateLimit(req, res, { windowMs: 60_000, max: 20 })) return;
+
     if (!isFeatureWebRouteEnabled(features.web.login, req, res, features))
       return;
 
     if (req.query.returnTo && typeof req.query.returnTo === "string") {
-      const sanitizedReturnTo = req.query.returnTo.startsWith("/")
-        ? req.query.returnTo
-        : null;
+      const sanitizedReturnTo =
+        req.query.returnTo.startsWith("/") && !req.query.returnTo.startsWith("//")
+          ? req.query.returnTo
+          : null;
       if (sanitizedReturnTo) {
         req.session.returnTo = sanitizedReturnTo;
       }
@@ -479,6 +489,8 @@ export default function sessionSiteRoute(
   });
 
   app.post("/forgot-password/verify", async function (req, res) {
+    if (!checkRateLimit(req, res, { windowMs: 15 * 60_000, max: 10 })) return;
+
     if (!isFeatureWebRouteEnabled(features.web.login, req, res, features))
       return;
 
@@ -833,6 +845,8 @@ export default function sessionSiteRoute(
   });
 
   app.post("/register/verify-email", async function (req, res) {
+    if (!checkRateLimit(req, res, { windowMs: 15 * 60_000, max: 10 })) return;
+
     if (!isFeatureWebRouteEnabled(features.web.register, req, res, features))
       return;
 
