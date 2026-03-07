@@ -2,7 +2,7 @@ import db from "./databaseController.js";
 import { getUserPermissions } from "./userController.js";
 import { hasPermission } from "../lib/discord/permissions.mjs";
 
-const CREATOR_PERMISSION_NODE = "cfc.watch.creator";
+const CREATOR_PERMISSION_NODE = "zander.watch.creator";
 
 function runQuery(sql, params = []) {
   return new Promise((resolve, reject) => {
