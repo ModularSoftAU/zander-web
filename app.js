@@ -33,6 +33,8 @@ import("./cron/staffAuditReportCron.js");
 import("./cron/schedulerCron.js");
 import("./cron/nicknameCheckCron.js");
 import("./cron/punishmentExpiryCron.js");
+import("./cron/watchTwitchCron.js");
+import("./cron/watchYoutubeCron.js");
 
 //
 // Website Related

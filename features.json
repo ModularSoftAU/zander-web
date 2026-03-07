@@ -27,6 +27,7 @@
   },
 
   "staffAuditReport": true,
+  "watch": true,
 
   "smDiscord": true,
   "smFacebook": true,

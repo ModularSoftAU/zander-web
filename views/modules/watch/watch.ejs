@@ -1,0 +1,131 @@
+<%- include("../../modules/header.ejs", {
+    pageTitle: pageTitle,
+    pageDescription: "Watch CFC creator streams and videos"
+}) %>
+
+<%- include("../../modules/navigationBar.ejs") %>
+
+<div class="container py-5">
+    <% if (req.cookies.alertType) { %>
+        <div class="mb-4">
+            <%- include("../../partials/alert.ejs", {
+                alertType: req.cookies.alertType,
+                content: req.cookies.alertContent
+            }) %>
+        </div>
+    <% } %>
+
+    <div class="mb-4">
+        <h1 class="h2 fw-bold mb-1"><i class="fa-solid fa-circle-play me-2 text-danger"></i>Watch</h1>
+        <p class="text-muted mb-0">CFC creator streams and videos. Content must include <code>#cfc</code> or <code>[CFC]</code> to appear here.</p>
+    </div>
+
+    <%-- Live Now --%>
+    <section class="mb-5">
+        <h2 class="h5 fw-semibold mb-3">
+            <% if (liveContent && liveContent.length > 0) { %>
+                <span class="badge bg-danger me-2" style="font-size:0.65em;vertical-align:middle;">LIVE</span>
+            <% } %>
+            Live Now
+        </h2>
+
+        <% if (!liveContent || liveContent.length === 0) { %>
+            <div class="card border-0 bg-light text-center py-5">
+                <div class="card-body">
+                    <i class="fa-solid fa-satellite-dish fa-2x text-muted mb-3"></i>
+                    <p class="text-muted mb-0">No creators are live right now. Check back soon!</p>
+                </div>
+            </div>
+        <% } else { %>
+            <div class="row g-3">
+                <% for (const item of liveContent) { %>
+                <div class="col-sm-6 col-lg-4">
+                    <a href="<%= item.watch_url %>" target="_blank" rel="noopener noreferrer" class="text-decoration-none">
+                        <div class="card border-0 shadow-sm h-100 watch-card">
+                            <div class="position-relative">
+                                <% if (item.thumbnail_url) { %>
+                                    <img src="<%= item.thumbnail_url %>" alt="<%= item.title %>" class="card-img-top" style="aspect-ratio:16/9;object-fit:cover;">
+                                <% } else { %>
+                                    <div class="card-img-top bg-dark d-flex align-items-center justify-content-center" style="aspect-ratio:16/9;">
+                                        <i class="fa-solid fa-video fa-2x text-muted"></i>
+                                    </div>
+                                <% } %>
+                                <span class="badge bg-danger position-absolute top-0 start-0 m-2">LIVE</span>
+                                <% if (item.platform === 'twitch') { %>
+                                    <span class="badge position-absolute top-0 end-0 m-2" style="background:#9146FF;"><i class="fab fa-twitch me-1"></i>Twitch</span>
+                                <% } else { %>
+                                    <span class="badge bg-danger position-absolute top-0 end-0 m-2"><i class="fab fa-youtube me-1"></i>YouTube</span>
+                                <% } %>
+                            </div>
+                            <div class="card-body p-3">
+                                <h6 class="card-title mb-1 fw-semibold text-truncate" title="<%= item.title %>"><%= item.title || 'Untitled Stream' %></h6>
+                                <p class="card-text text-muted small mb-0">
+                                    <i class="fa-solid fa-user me-1"></i><%= item.username %>
+                                    <% if (item.started_at) { %>
+                                        &nbsp;&bull;&nbsp;<i class="fa-solid fa-clock me-1"></i>Started <%= moment(item.started_at).fromNow() %>
+                                    <% } %>
+                                </p>
+                            </div>
+                        </div>
+                    </a>
+                </div>
+                <% } %>
+            </div>
+        <% } %>
+    </section>
+
+    <%-- Latest Videos --%>
+    <section>
+        <h2 class="h5 fw-semibold mb-3">Latest Videos</h2>
+
+        <% if (!videoContent || videoContent.length === 0) { %>
+            <div class="card border-0 bg-light text-center py-5">
+                <div class="card-body">
+                    <i class="fa-solid fa-film fa-2x text-muted mb-3"></i>
+                    <p class="text-muted mb-0">No recent CFC creator videos yet.</p>
+                </div>
+            </div>
+        <% } else { %>
+            <div class="row g-3">
+                <% for (const item of videoContent) { %>
+                <div class="col-sm-6 col-lg-4">
+                    <a href="<%= item.watch_url %>" target="_blank" rel="noopener noreferrer" class="text-decoration-none">
+                        <div class="card border-0 shadow-sm h-100 watch-card">
+                            <div class="position-relative">
+                                <% if (item.thumbnail_url) { %>
+                                    <img src="<%= item.thumbnail_url %>" alt="<%= item.title %>" class="card-img-top" style="aspect-ratio:16/9;object-fit:cover;">
+                                <% } else { %>
+                                    <div class="card-img-top bg-dark d-flex align-items-center justify-content-center" style="aspect-ratio:16/9;">
+                                        <i class="fa-solid fa-video fa-2x text-muted"></i>
+                                    </div>
+                                <% } %>
+                                <% if (item.platform === 'twitch') { %>
+                                    <span class="badge position-absolute top-0 end-0 m-2" style="background:#9146FF;"><i class="fab fa-twitch me-1"></i>Twitch</span>
+                                <% } else { %>
+                                    <span class="badge bg-danger position-absolute top-0 end-0 m-2"><i class="fab fa-youtube me-1"></i>YouTube</span>
+                                <% } %>
+                            </div>
+                            <div class="card-body p-3">
+                                <h6 class="card-title mb-1 fw-semibold" style="display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;" title="<%= item.title %>"><%= item.title || 'Untitled Video' %></h6>
+                                <p class="card-text text-muted small mb-0">
+                                    <i class="fa-solid fa-user me-1"></i><%= item.username %>
+                                    <% if (item.published_at) { %>
+                                        &nbsp;&bull;&nbsp;<%= moment(item.published_at).fromNow() %>
+                                    <% } %>
+                                </p>
+                            </div>
+                        </div>
+                    </a>
+                </div>
+                <% } %>
+            </div>
+        <% } %>
+    </section>
+</div>
+
+<style>
+.watch-card { transition: transform 0.15s ease, box-shadow 0.15s ease; }
+.watch-card:hover { transform: translateY(-3px); box-shadow: 0 0.5rem 1.5rem rgba(0,0,0,.15) !important; }
+</style>
+
+<%- include("../../modules/footer.ejs") %>

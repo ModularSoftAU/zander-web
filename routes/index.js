@@ -21,6 +21,7 @@ import profileSiteRoutes from "./profileRoutes.js";
 import forumSiteRoutes from "./forumRoutes.js";
 import supportRoutes from "./support.js";
 import notificationRoutes from "./notificationRoutes.js";
+import watchSiteRoutes from "./watchRoutes.js";
 
 const rankData = require("../ranks.json");
 
@@ -42,6 +43,7 @@ export default function applicationSiteRoutes(
   redirectSiteRoutes(app, config, features);
   supportRoutes(app, client, fetch, moment, config, db, features, lang);
   notificationRoutes(app, config, features);
+  watchSiteRoutes(app, client, fetch, moment, config, db, features, lang);
 
   app.get("/", async function (req, res) {
     const fetchURL = `${process.env.siteAddress}/api/web/statistics`;
