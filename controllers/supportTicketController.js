@@ -393,9 +393,9 @@ export async function ensureUncategorisedCategory() {
           (insertErr, insertResults) => {
             if (insertErr) return reject(insertErr);
             resolve(insertResults.insertId);
-          },
+          }
         );
-      },
+      }
     );
   });
 }
@@ -407,7 +407,7 @@ export async function getSupportCategoriesWithPermissions() {
       (err, results) => {
         if (err) reject(err);
         resolve(results);
-      },
+      }
     );
   });
 }
@@ -420,7 +420,7 @@ export async function getCategoryName(categoryId) {
       (err, results) => {
         if (err) reject(err);
         resolve(results[0] ? results[0].name : "");
-      },
+      }
     );
   });
 }
@@ -443,9 +443,9 @@ export async function addCategoryPermission(categoryId, roleId) {
           (err, results) => {
             if (err) reject(err);
             resolve(results);
-          },
+          }
         );
-      },
+      }
     );
   });
 }
@@ -477,7 +477,7 @@ export async function createSupportCategory(name, description, discordCategoryId
         (err, results) => {
           if (err) reject(err);
           else resolve(results);
-        },
+        }
       );
     } else {
       db.query(
@@ -486,7 +486,7 @@ export async function createSupportCategory(name, description, discordCategoryId
         (err, results) => {
           if (err) reject(err);
           else resolve(results);
-        },
+        }
       );
     }
   });
@@ -1408,7 +1408,7 @@ export async function getCategoryPermissions(categoryId) {
                 } else {
                     resolve(results.map((row) => row.roleId));
                 }
-            },
+            }
         );
     });
 }
@@ -1547,7 +1547,7 @@ export async function updateSupportCategory(id, name, description, discordCatego
                 (err, results) => {
                     if (err) reject(err);
                     else resolve(results);
-                },
+                }
             );
         } else {
             db.query(
@@ -1556,7 +1556,7 @@ export async function updateSupportCategory(id, name, description, discordCatego
                 (err, results) => {
                     if (err) reject(err);
                     else resolve(results);
-                },
+                }
             );
         }
     });
@@ -1839,7 +1839,7 @@ export async function getTicketDetailsByChannel(channelId) {
                 } else {
                     resolve(results[0]);
                 }
-            },
+            }
         );
     });
 }

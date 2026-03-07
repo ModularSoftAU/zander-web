@@ -63,7 +63,7 @@ export default function reportApiRoute(app, config, db, features, lang) {
     const reportReasonEvidence = optional(
       req.body,
       "reportReasonEvidence",
-      res,
+      res
     );
     const reportPlatform = required(req.body, "reportPlatform", res);
 
@@ -115,7 +115,7 @@ export default function reportApiRoute(app, config, db, features, lang) {
       const webhookSent = await sendWebhookMessage(
         staffChannelHook,
         embed,
-        { context: "api/report#create" },
+        { context: "api/report#create" }
       );
 
       if (!webhookSent) {

@@ -26,18 +26,18 @@ var cakeDayUserCheckTask = cron.schedule("0 7 * * *", () => {
           let embed = new MessageBuilder()
             .setTitle(`🎂 Happy cake day to ${user.username}! :tada:`)
             .setDescription(
-              `Celebrating ${years} year(s) with ${config.siteConfiguration.siteName}`,
+              `Celebrating ${years} year(s) with ${config.siteConfiguration.siteName}`
             )
             .setColor(Colors.Blurple)
             .setFooter(
-              `To get your cake day mention, make sure you are a member on our website.`,
+              `To get your cake day mention, make sure you are a member on our website.`
             );
 
           await sendWebhookMessage(welcomeHook, embed, {
             context: "cron/cakeDayUserCheck",
           });
         }
-      },
+      }
     );
   } catch (error) {
     console.log(`Error: ${error}`);

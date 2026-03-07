@@ -12,9 +12,9 @@ var bridgeCleanupTask = cron.schedule("5 0 * * *", () => {
         }
 
         console.log(
-          `Bridge cleanup removed ${results.affectedRows} completed tasks.`,
+          `Bridge cleanup removed ${results.affectedRows} completed tasks.`
         );
-      },
+      }
     );
 
     db.query(
@@ -26,10 +26,10 @@ var bridgeCleanupTask = cron.schedule("5 0 * * *", () => {
 
         if (results.affectedRows > 0) {
           console.log(
-            `Bridge reset ${results.affectedRows} stale processing task(s).`,
+            `Bridge reset ${results.affectedRows} stale processing task(s).`
           );
         }
-      },
+      }
     );
   } catch (error) {
     console.log(`Error: ${error}`);

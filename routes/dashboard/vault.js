@@ -11,7 +11,7 @@ export default function dashboardVaultSiteRoute(
   config,
   db,
   features,
-  lang,
+  lang
 ) {
   //
   // Vault

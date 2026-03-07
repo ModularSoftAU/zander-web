@@ -12,7 +12,7 @@ export default function dashboardSchedulerSiteRoute(
   fetch,
   config,
   features,
-  lang,
+  lang
 ) {
   app.get("/dashboard/scheduler", async function (req, res) {
     if (!isFeatureWebRouteEnabled(features.discord, req, res, features)) return;

@@ -58,7 +58,7 @@ export default function rankRedirectRoute(app) {
     try {
       const { data } = await forwardJson(
         `/api/rank/config/${encodeURIComponent(rankSlug)}`,
-        { method: "POST", body: payload },
+        { method: "POST", body: payload }
       );
 
       res.code(data.success ? 200 : 400).send(data);
@@ -82,7 +82,7 @@ export default function rankRedirectRoute(app) {
     try {
       const { data } = await forwardJson(
         `/api/rank/user?username=${encodeURIComponent(username)}`,
-        { method: "GET" },
+        { method: "GET" }
       );
 
       res.code(data.success ? 200 : 400).send(data);
@@ -156,7 +156,7 @@ export default function rankRedirectRoute(app) {
     try {
       const { data } = await forwardJson(
         `/api/rank/user/permission/check`,
-        { method: "POST", body: payload },
+        { method: "POST", body: payload }
       );
 
       res.code(data.success ? 200 : 400).send(data);

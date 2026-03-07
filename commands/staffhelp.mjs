@@ -30,7 +30,7 @@ export class StaffHelpCommand extends Command {
 
     const staffAssistanceEmbed = new MessageBuilder ()
       .setTitle(
-        `Staff Assistance Requested by \`${interaction.user.username}\``,
+        `Staff Assistance Requested by \`${interaction.user.username}\``
       )
       .setDescription(`**Request:** ${userQuery}`)
       .setColor(Colors.Gold);
@@ -41,7 +41,7 @@ export class StaffHelpCommand extends Command {
       .setColor(Colors.Green);
 
     const staffChannelHook = new Webhook(
-      config.discord.webhooks.staffChannel,
+      config.discord.webhooks.staffChannel
     );
 
     const webhookSent = await sendWebhookMessage(

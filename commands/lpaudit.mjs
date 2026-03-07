@@ -122,7 +122,7 @@ export class LpAuditCommand extends Command {
     const builder = new SlashCommandBuilder()
       .setName("lp-audit")
       .setDescription(
-        "Audit LuckPerms ↔ Discord role sync. Read-only — no changes are made.",
+        "Audit LuckPerms ↔ Discord role sync. Read-only — no changes are made."
       )
       .addStringOption((opt) =>
         opt
@@ -141,7 +141,7 @@ export class LpAuditCommand extends Command {
         opt
           .setName("export")
           .setDescription(
-            "Attach a full plain-text report file (default: true).",
+            "Attach a full plain-text report file (default: true)."
           )
           .setRequired(false)
       );
@@ -167,7 +167,7 @@ export class LpAuditCommand extends Command {
           new EmbedBuilder()
             .setTitle("No Linked Account")
             .setDescription(
-              "Link your Minecraft account on the website before using this command.",
+              "Link your Minecraft account on the website before using this command."
             )
             .setColor(Colors.Red),
         ],
@@ -209,7 +209,7 @@ export class LpAuditCommand extends Command {
           new EmbedBuilder()
             .setTitle("No Tracked Ranks")
             .setDescription(
-              "No ranks have a Discord role ID configured. Add `meta.discordid` to LuckPerms groups to enable sync auditing.",
+              "No ranks have a Discord role ID configured. Add `meta.discordid` to LuckPerms groups to enable sync auditing."
             )
             .setColor(Colors.Orange),
         ],
@@ -229,7 +229,7 @@ export class LpAuditCommand extends Command {
           `**Not in guild:** ${notInGuild.length}`,
           `**Missing Discord roles:** ${missingRoles.length}`,
           `**In Discord with roles but not linked:** ${discordNotLinked.length}`,
-        ].join("\n"),
+        ].join("\n")
       )
       .setFooter({ text: "Audit only — no roles were changed." });
 
@@ -279,7 +279,7 @@ export class LpAuditCommand extends Command {
       files.push(
         new AttachmentBuilder(Buffer.from(reportText, "utf-8"), {
           name: `lp-audit-${Date.now()}.txt`,
-        }),
+        })
       );
     }
 

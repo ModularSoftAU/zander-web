@@ -80,7 +80,7 @@ export async function createPunishment({
 export async function getPunishmentById(id) {
   const rows = await executeQuery(
     `SELECT * FROM discord_punishments WHERE id = ? LIMIT 1`,
-    [id],
+    [id]
   );
   return rows[0] || null;
 }
@@ -110,7 +110,7 @@ export async function getPunishmentHistory(targetDiscordUserId, limit = 50) {
      WHERE target_discord_user_id = ?
      ORDER BY created_at DESC
      LIMIT ?`,
-    [targetDiscordUserId, limit],
+    [targetDiscordUserId, limit]
   );
 }
 
@@ -123,7 +123,7 @@ export async function getPunishmentsByPlayerId(playerId, limit = 50) {
      WHERE target_player_id = ?
      ORDER BY created_at DESC
      LIMIT ?`,
-    [playerId, limit],
+    [playerId, limit]
   );
 }
 
@@ -133,7 +133,7 @@ export async function getPunishmentsByPlayerId(playerId, limit = 50) {
 export async function liftPunishment(id) {
   await executeQuery(
     `UPDATE discord_punishments SET status = 'LIFTED', lifted_at = NOW() WHERE id = ?`,
-    [id],
+    [id]
   );
 }
 
@@ -143,7 +143,7 @@ export async function liftPunishment(id) {
 export async function expirePunishment(id) {
   await executeQuery(
     `UPDATE discord_punishments SET status = 'EXPIRED', lifted_at = NOW() WHERE id = ?`,
-    [id],
+    [id]
   );
 }
 
@@ -174,7 +174,7 @@ export async function getAllActivePunishments() {
 export async function updateDmStatus(id, dmStatus) {
   await executeQuery(
     `UPDATE discord_punishments SET dm_status = ? WHERE id = ?`,
-    [dmStatus, id],
+    [dmStatus, id]
   );
 }
 
@@ -186,12 +186,12 @@ export async function createAppeal({ punishmentId, discordUserId, appealReason }
   const result = await executeQuery(
     `INSERT INTO discord_punishment_appeals (punishment_id, discord_user_id, appeal_reason)
      VALUES (?, ?, ?)`,
-    [punishmentId, discordUserId, appealReason],
+    [punishmentId, discordUserId, appealReason]
   );
 
   await executeQuery(
     `UPDATE discord_punishments SET status = 'APPEAL_PENDING', appeal_id = ? WHERE id = ?`,
-    [result.insertId, punishmentId],
+    [result.insertId, punishmentId]
   );
 
   return result.insertId;
@@ -208,7 +208,7 @@ export async function getAppealById(id) {
      FROM discord_punishment_appeals a
      JOIN discord_punishments p ON a.punishment_id = p.id
      WHERE a.id = ? LIMIT 1`,
-    [id],
+    [id]
   );
   return rows[0] || null;
 }
@@ -219,7 +219,7 @@ export async function getAppealById(id) {
 export async function getAppealsByPunishment(punishmentId) {
   return executeQuery(
     `SELECT * FROM discord_punishment_appeals WHERE punishment_id = ? ORDER BY created_at DESC`,
-    [punishmentId],
+    [punishmentId]
   );
 }
 
@@ -245,7 +245,7 @@ export async function reviewAppeal({ appealId, status, reviewerDiscordUserId, re
     `UPDATE discord_punishment_appeals
      SET status = ?, reviewer_discord_user_id = ?, reviewer_notes = ?, reviewed_at = NOW()
      WHERE id = ?`,
-    [status, reviewerDiscordUserId, reviewerNotes || null, appealId],
+    [status, reviewerDiscordUserId, reviewerNotes || null, appealId]
   );
 
   const appeal = await getAppealById(appealId);
@@ -254,12 +254,12 @@ export async function reviewAppeal({ appealId, status, reviewerDiscordUserId, re
   if (status === "APPROVED") {
     await executeQuery(
       `UPDATE discord_punishments SET status = 'APPEALED', lifted_at = NOW() WHERE id = ?`,
-      [appeal.punishment_id],
+      [appeal.punishment_id]
     );
   } else if (status === "REJECTED") {
     await executeQuery(
       `UPDATE discord_punishments SET status = 'APPEAL_REJECTED' WHERE id = ?`,
-      [appeal.punishment_id],
+      [appeal.punishment_id]
     );
   }
 }
@@ -272,7 +272,7 @@ export async function hasActivePunishment(targetDiscordUserId, type) {
     `SELECT id FROM discord_punishments
      WHERE target_discord_user_id = ? AND type = ? AND status = 'ACTIVE'
      LIMIT 1`,
-    [targetDiscordUserId, type],
+    [targetDiscordUserId, type]
   );
   return rows.length > 0;
 }
@@ -302,7 +302,7 @@ export async function getDiscordPunishmentsForProfile({ discordUserId, playerId 
      WHERE ${conditions.join(" OR ")}
      ORDER BY created_at DESC
      LIMIT 50`,
-    params,
+    params
   );
 }
 
@@ -317,7 +317,7 @@ export async function hasActiveWebBan(playerId) {
        AND type IN ('TEMP_BAN', 'PERM_BAN')
        AND status = 'ACTIVE'
      LIMIT 1`,
-    [playerId],
+    [playerId]
   );
   return rows.length > 0;
 }
@@ -337,7 +337,7 @@ export async function getWebPunishments({ page = 1, limit = 25 } = {}) {
        WHERE dp.platform = 'WEB'
        ORDER BY dp.created_at DESC
        LIMIT ? OFFSET ?`,
-      [limit, offset],
+      [limit, offset]
     ),
     executeQuery(
       `SELECT COUNT(*) AS total FROM discord_punishments WHERE platform = 'WEB'`
@@ -361,6 +361,6 @@ export async function getActiveWebPunishments(playerId) {
     `SELECT * FROM discord_punishments
      WHERE target_player_id = ? AND platform = 'WEB' AND status = 'ACTIVE'
      ORDER BY created_at DESC`,
-    [playerId],
+    [playerId]
   );
 }

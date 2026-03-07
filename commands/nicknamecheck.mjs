@@ -91,7 +91,7 @@ export class NicknameCheckCommand extends Command {
         {
           reportChannelId,
           title: "Manual Nickname Check",
-        },
+        }
       );
 
       if (mismatches.length === 0) {

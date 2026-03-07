@@ -205,15 +205,15 @@ function buildHistoryEmbed({ displayName, profileData, punishments, totalCount, 
   if (descParts.length) embed.setDescription(descParts.join("\n"));
 
   const fields = pagePunishments.map((p, index) => {
-      const platformTag = p._platform === "Minecraft" ? "MC" : "Discord";
-      const typeName = p._platform === "Minecraft" ? toTitleCase(p.type) : formatType(p.type);
-      const details = p._platform === "Minecraft"
-          ? formatMcPunishmentDetails(p)
-          : formatDiscordPunishmentDetails(p);
-      return {
-        name: `${start + index + 1}. [${platformTag}] ${typeName}`,
-        value: details,
-      };
+    const platformTag = p._platform === "Minecraft" ? "MC" : "Discord";
+    const typeName = p._platform === "Minecraft" ? toTitleCase(p.type) : formatType(p.type);
+    const details = p._platform === "Minecraft"
+      ? formatMcPunishmentDetails(p)
+      : formatDiscordPunishmentDetails(p);
+    return {
+      name: `${start + index + 1}. [${platformTag}] ${typeName}`,
+      value: details,
+    };
   }).filter((f) => f.value);
 
   if (fields.length) embed.addFields(fields);
@@ -310,8 +310,8 @@ export async function sendPunishmentWebhook({
     const noDurationTypes = ["DISCORD_KICK", "UNBAN", "UNMUTE", "NATIVE_BAN", "NATIVE_KICK"];
     const showDuration = !noDurationTypes.includes(type);
     const durationLabel = (type === "PERM_BAN" || type === "PERM_MUTE")
-        ? "forever"
-        : formatDurationLabel(durationMs);
+      ? "forever"
+      : formatDurationLabel(durationMs);
 
     // Colour: red for bans, orange for mutes, yellow for warns, grey for kicks, green for lifts
     const colorMap = {
@@ -350,7 +350,7 @@ export async function sendPunishmentWebhook({
         new ButtonBuilder()
           .setLabel("View Punishment")
           .setStyle(ButtonStyle.Link)
-          .setURL(punishmentLink),
+          .setURL(punishmentLink)
       );
       payload.components = [row];
     }
@@ -449,14 +449,14 @@ function formatType(type) {
  * Send a log embed to the staff logging channel.
  */
 async function sendLogEmbed(client, {
-    type,
-    targetUser,
-    actorUser,
-    reason,
-    expiresAt,
-    punishmentId,
-    dmStatus,
-    silent,
+  type,
+  targetUser,
+  actorUser,
+  reason,
+  expiresAt,
+  punishmentId,
+  dmStatus,
+  silent,
 }) {
   if (!LOG_CHANNEL_ID) return;
 

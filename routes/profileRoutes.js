@@ -1,7 +1,6 @@
 import crypto from "crypto";
 import qs from "querystring";
 import { getGlobalImage, isLoggedIn, setBannerCookie } from "../api/common.js";
-import { createRateLimiter } from "../lib/rateLimiter.js";
 import { getWebAnnouncement } from "../controllers/announcementController.js";
 import {
   UserGetter,
@@ -316,8 +315,7 @@ export default function profileSiteRoutes(
     return res.redirect(buildDiscordLinkAuthorizeUrl(state));
   });
 
-  const discordCallbackRateLimit = createRateLimiter({ windowMs: 15 * 60 * 1000, max: 10, message: "Too many requests, please try again later." });
-  app.get("/profile/social/discord/callback", { preHandler: discordCallbackRateLimit }, async function (req, res) {
+  app.get("/profile/social/discord/callback", async function (req, res) {
     const linkSession = req.session.discordLink || {};
     delete req.session.discordLink;
 

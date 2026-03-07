@@ -12,7 +12,7 @@ export default function schedulerApiRoute(
   config,
   db,
   features,
-  lang,
+  lang
 ) {
   const baseEndpoint = "/api/scheduler";
 
@@ -101,7 +101,7 @@ export default function schedulerApiRoute(
 
     const scheduledDate = normalizeDateTimeInput(
       scheduledFor,
-      timezoneOffset,
+      timezoneOffset
     );
     if (Number.isNaN(scheduledDate.getTime())) {
       return res.send({

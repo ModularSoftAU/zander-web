@@ -20,7 +20,7 @@ export default function dashboardForumsRoutes(
   config,
   db,
   features,
-  lang,
+  lang
 ) {
   app.get("/dashboard/forums/categories", async function (req, res) {
     const hasAccess = await hasPermission(
@@ -35,11 +35,11 @@ export default function dashboardForumsRoutes(
     const createUnderId = Number.parseInt(req.query.create_under, 10) || null;
 
     const [categoryTree, categoryToEdit, globalImage, announcementWeb] = await Promise.all([
-        getAllCategoriesForAdmin(),
-        editId ? getCategoryById(editId) : Promise.resolve(null),
-        getGlobalImage(),
-        getWebAnnouncement(),
-      ]);
+      getAllCategoriesForAdmin(),
+      editId ? getCategoryById(editId) : Promise.resolve(null),
+      getGlobalImage(),
+      getWebAnnouncement(),
+    ]);
 
     return res.view("dashboard/forums/categories", {
       pageTitle: `Dashboard - Forum Categories`,
@@ -104,7 +104,7 @@ export default function dashboardForumsRoutes(
   });
 
   app.post(
-    "/dashboard/forums/categories/:categoryId/edit",
+      "/dashboard/forums/categories/:categoryId/edit",
     async function (req, res) {
       const hasAccess = await hasPermission(
         MANAGE_PERMISSION,
@@ -155,11 +155,11 @@ export default function dashboardForumsRoutes(
       }
 
       return res.redirect(`/dashboard/forums/categories?edit=${categoryId}`);
-    },
+    }
   );
 
   app.post(
-    "/dashboard/forums/categories/:categoryId/delete",
+      "/dashboard/forums/categories/:categoryId/delete",
     async function (req, res) {
       const hasAccess = await hasPermission(
         MANAGE_PERMISSION,

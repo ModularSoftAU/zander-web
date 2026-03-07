@@ -14,7 +14,7 @@ export default function bridgeRedirectRoute(app, config, lang, features) {
       setBannerCookie(
         "warning",
         `We could not parse the ${fieldName.replace("JSON", "").trim()} JSON payload.`,
-        res,
+        res
       );
       return null;
     }
@@ -25,7 +25,7 @@ export default function bridgeRedirectRoute(app, config, lang, features) {
       `${process.env.siteAddress}${apiPath}`,
       req.body,
       `${process.env.siteAddress}/dashboard/bridge`,
-      res,
+      res
     );
 
     if (!res.sent) {
@@ -52,7 +52,7 @@ export default function bridgeRedirectRoute(app, config, lang, features) {
     return forwardRequest(
       "/api/bridge/processor/command/add",
       req,
-      res,
+      res
     );
   });
 
@@ -69,7 +69,7 @@ export default function bridgeRedirectRoute(app, config, lang, features) {
     return forwardRequest(
       "/api/bridge/processor/command/add",
       req,
-      res,
+      res
     );
   });
 
@@ -94,7 +94,7 @@ export default function bridgeRedirectRoute(app, config, lang, features) {
     return forwardRequest(
       `/api/bridge/processor/task/${req.body.taskId}/reset`,
       req,
-      res,
+      res
     );
   });
 
@@ -115,7 +115,7 @@ export default function bridgeRedirectRoute(app, config, lang, features) {
     return forwardRequest(
       `/api/bridge/processor/task/${taskId}/report`,
       req,
-      res,
+      res
     );
   });
 
@@ -127,7 +127,7 @@ export default function bridgeRedirectRoute(app, config, lang, features) {
     return forwardRequest(
       "/api/bridge/processor/clear",
       req,
-      res,
+      res
     );
   });
 }

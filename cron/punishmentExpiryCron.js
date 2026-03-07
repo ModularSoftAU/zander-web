@@ -27,7 +27,7 @@ async function liftInDiscord(punishment) {
       try {
         await guild.members.unban(
           punishment.target_discord_user_id,
-          "[Auto] Temporary ban expired",
+          "[Auto] Temporary ban expired"
         );
       } catch (error) {
         // User may already be unbanned
@@ -69,7 +69,7 @@ const punishmentExpiryTask = cron.schedule("*/1 * * * *", async () => {
       } catch (error) {
         console.error(
           `punishmentExpiryCron: failed to expire punishment ${punishment.id}:`,
-          error,
+          error
         );
       }
     }
@@ -116,7 +116,7 @@ export async function reconcileActivePunishments() {
     }
 
     console.log(
-      `[Punishments] Reconciliation complete: ${activePunishments.length} active punishments checked.`,
+      `[Punishments] Reconciliation complete: ${activePunishments.length} active punishments checked.`
     );
   } catch (error) {
     console.error("[Punishments] Reconciliation failed:", error);

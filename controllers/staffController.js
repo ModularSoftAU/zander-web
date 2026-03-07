@@ -57,7 +57,7 @@ export async function getStaffPageData() {
           return reject(error);
         }
         resolve(results || []);
-      },
+      }
     );
   });
 
@@ -90,7 +90,7 @@ export async function getStaffPageData() {
           return reject(error);
         }
         resolve(results || []);
-      },
+      }
     );
   });
 
@@ -124,7 +124,7 @@ export async function getStaffPageData() {
           return reject(error);
         }
         resolve(results || []);
-      },
+      }
     );
   });
 

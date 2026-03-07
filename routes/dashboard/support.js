@@ -284,8 +284,9 @@ export default function supportDashboardRoutes(
 
         await addCategoryPermission(id, roleId);
 
-        const addRedirectTarget = typeof req.body?.redirect === "string" && req.body.redirect.startsWith("/") && !req.body.redirect.startsWith("//") ? req.body.redirect : "/dashboard/support/categories";
-        return res.redirect(addRedirectTarget);
+        return res.redirect(
+          req.body?.redirect || "/dashboard/support/categories"
+        );
       } catch (error) {
         console.error(error);
         return res.view("session/error", {
@@ -313,8 +314,9 @@ export default function supportDashboardRoutes(
 
         await removeCategoryPermission(id, roleId);
 
-        const removeRedirectTarget = typeof req.body?.redirect === "string" && req.body.redirect.startsWith("/") && !req.body.redirect.startsWith("//") ? req.body.redirect : "/dashboard/support/categories";
-        return res.redirect(removeRedirectTarget);
+        return res.redirect(
+          req.body?.redirect || "/dashboard/support/categories"
+        );
       } catch (error) {
         console.error(error);
         return res.view("session/error", {

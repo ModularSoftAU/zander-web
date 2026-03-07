@@ -13,7 +13,7 @@ export default function filterApiRoute(
   config,
   db,
   features,
-  lang,
+  lang
 ) {
   const baseEndpoint = "/api/filter";
 
@@ -124,7 +124,7 @@ export default function filterApiRoute(
           const webhookSent = await sendWebhookMessage(
             staffChannelHook,
             embed,
-            { context: "api/filter" },
+            { context: "api/filter" }
           );
 
           if (!webhookSent) {

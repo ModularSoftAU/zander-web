@@ -34,7 +34,7 @@ export class GuildBanAddListener extends Listener {
       const entry = auditLogs.entries.find(
         (e) =>
           e.target?.id === ban.user.id &&
-          Date.now() - e.createdTimestamp < 10000,
+          Date.now() - e.createdTimestamp < 10000
       );
 
       // If the executor is the bot itself, the /punish command already handled it

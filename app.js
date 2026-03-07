@@ -142,7 +142,7 @@ const buildApp = async () => {
       // Config API routes (No token authentication)
       configApiRoute(instance, config, db, features, lang);
     },
-    { prefix: "/api/config" },
+    { prefix: "/api/config" }
   );
 
   // Sessions — persisted to MySQL so logins survive app restarts

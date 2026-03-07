@@ -23,7 +23,7 @@ export default function dashboardWebPunishmentsRoute(
   config,
   db,
   features,
-  lang,
+  lang
 ) {
   // List all web punishments
   app.get("/dashboard/web-punishments", async function (req, res) {

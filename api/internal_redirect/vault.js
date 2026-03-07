@@ -13,7 +13,7 @@ export default function vaultRedirectRoute(app, config, lang, features) {
       `${process.env.siteAddress}/api/vault/create`,
       req.body,
       `${process.env.siteAddress}/dashboard/vault`,
-      res,
+      res
     );
 
     if (!res.sent) {
@@ -32,7 +32,7 @@ export default function vaultRedirectRoute(app, config, lang, features) {
       `${process.env.siteAddress}/api/vault/edit`,
       req.body,
       `${process.env.siteAddress}/dashboard/vault`,
-      res,
+      res
     );
 
     if (!res.sent) {
@@ -51,7 +51,7 @@ export default function vaultRedirectRoute(app, config, lang, features) {
       `${process.env.siteAddress}/api/vault/delete`,
       req.body,
       `${process.env.siteAddress}/dashboard/vault`,
-      res,
+      res
     );
 
     if (!res.sent) {

@@ -40,7 +40,7 @@ export default function supportRoutes(
   config,
   db,
   features,
-  lang,
+  lang
 ) {
   const userHasPermissionNode = (permissions = [], node) => {
     const normalized = permissions || [];
@@ -59,15 +59,15 @@ export default function supportRoutes(
   app.get("/support", async function (req, res) {
     try {
       if (!req.session.user) {
-        return res.view("modules/support/login", {
-          pageTitle: "Support Tickets",
-          pageDescription: "Support Tickets",
-          config,
-          req,
-          features,
-          globalImage: await getGlobalImage(),
-          announcementWeb: await getWebAnnouncement(),
-        });
+          return res.view("modules/support/login", {
+              pageTitle: "Support Tickets",
+              pageDescription: "Support Tickets",
+              config,
+              req,
+              features,
+              globalImage: await getGlobalImage(),
+              announcementWeb: await getWebAnnouncement(),
+          });
       }
 
       const userRankSlugs = req.session.user.ranks?.map((rank) => rank.rankSlug) || [];

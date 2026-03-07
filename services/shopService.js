@@ -170,7 +170,7 @@ export async function searchShops(material, page = 1, options = {}) {
             return resolve({});
           }
           resolve(results?.[0] || {});
-        },
+        }
       );
     });
     userCache.set(userId, promise);
@@ -205,7 +205,7 @@ export async function searchShops(material, page = 1, options = {}) {
             return resolve(null);
           }
           resolve(parseShulkerContents(results[0].item));
-        },
+        }
       );
     });
     shulkerCache.set(shopId, promise);
@@ -228,7 +228,7 @@ export async function searchShops(material, page = 1, options = {}) {
             return resolve(null);
           }
           resolve(results[0].item);
-        },
+        }
       );
     });
     rawItemCache.set(shopId, promise);
@@ -250,7 +250,7 @@ export async function searchShops(material, page = 1, options = {}) {
         (error, results) => {
           if (error) return reject(error);
           resolve(results[0]?.total || 0);
-        },
+        }
       );
     });
 
@@ -275,7 +275,7 @@ export async function searchShops(material, page = 1, options = {}) {
         (error, results) => {
           if (error) return reject(error);
           resolve(results || []);
-        },
+        }
       );
     });
 
