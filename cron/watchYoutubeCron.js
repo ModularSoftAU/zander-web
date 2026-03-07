@@ -82,13 +82,44 @@ async function fetchYoutubeVideoDetails(videoIds, apiKey, fetchFn) {
   return data?.items || [];
 }
 
+async function resolveChannelId(rawId, apiKey, fetchFn) {
+  // Already a proper channel ID
+  if (rawId && rawId.startsWith("UC")) return rawId;
+
+  // Try resolving via handle (@username) or legacy username
+  const isHandle = rawId && rawId.startsWith("@");
+  const param = isHandle
+    ? `forHandle=${encodeURIComponent(rawId)}`
+    : `forUsername=${encodeURIComponent(rawId)}`;
+
+  const url = `${YT_BASE}/channels?part=id&${param}&key=${encodeURIComponent(apiKey)}`;
+  try {
+    const res = await fetchFn(url);
+    if (!res.ok) {
+      const body = await res.text();
+      console.error(`[WatchYouTube] channels.list resolve error (${res.status}):`, body);
+      return rawId;
+    }
+    const data = await res.json();
+    const resolved = data?.items?.[0]?.id;
+    if (resolved) {
+      console.log(`[WatchYouTube] Resolved channel "${rawId}" -> "${resolved}"`);
+      return resolved;
+    }
+  } catch (err) {
+    console.error("[WatchYouTube] Channel ID resolution failed:", err);
+  }
+  return rawId;
+}
+
 async function fetchRecentChannelItems(channelId, apiKey, fetchFn) {
   // Fetch recent uploads (videos + live)
   const url = `${YT_BASE}/search?part=snippet&channelId=${encodeURIComponent(channelId)}&type=video&order=date&maxResults=15&key=${encodeURIComponent(apiKey)}`;
 
   const res = await fetchFn(url);
   if (!res.ok) {
-    console.error("[WatchYouTube] search.list API error:", res.status);
+    const body = await res.text();
+    console.error(`[WatchYouTube] search.list API error (${res.status}):`, body);
     return [];
   }
 
@@ -101,7 +132,8 @@ async function fetchRecentChannelItems(channelId, apiKey, fetchFn) {
 // ---------------------------------------------------------------------------
 
 async function syncYoutubeCreator(creator, apiKey, fetchFn) {
-  const channelId = creator.platform_channel_id || creator.platform_account_id;
+  const rawChannelId = creator.platform_channel_id || creator.platform_account_id;
+  const channelId = await resolveChannelId(rawChannelId, apiKey, fetchFn);
 
   try {
     const searchItems = await fetchRecentChannelItems(channelId, apiKey, fetchFn);
