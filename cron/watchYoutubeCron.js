@@ -70,7 +70,7 @@ async function fetchYoutubeVideoDetails(videoIds, apiKey, fetchFn) {
   if (!videoIds || videoIds.length === 0) return [];
 
   const ids = videoIds.slice(0, 50).join(",");
-  const url = `${YT_BASE}/videos?part=snippet,liveStreamingDetails&id=${encodeURIComponent(ids)}&key=${encodeURIComponent(apiKey)}`;
+  const url = `${YT_BASE}/videos?part=snippet,liveStreamingDetails,statistics&id=${encodeURIComponent(ids)}&key=${encodeURIComponent(apiKey)}`;
 
   const res = await fetchFn(url);
   if (!res.ok) {
@@ -116,6 +116,7 @@ async function syncYoutubeCreator(creator, apiKey, fetchFn) {
     for (const video of videoDetails) {
       const snippet = video.snippet || {};
       const liveDetails = video.liveStreamingDetails || null;
+      const statistics = video.statistics || null;
 
       const tags = Array.isArray(snippet.tags) ? snippet.tags : [];
       const description = snippet.description || "";
@@ -165,6 +166,9 @@ async function syncYoutubeCreator(creator, apiKey, fetchFn) {
         description: description.substring(0, 500),
         thumbnail_url: thumbnailUrl,
         watch_url: watchUrl,
+        viewer_count: isCurrentlyLive
+          ? (liveDetails?.concurrentViewers != null ? parseInt(liveDetails.concurrentViewers, 10) : null)
+          : (statistics?.viewCount != null ? parseInt(statistics.viewCount, 10) : null),
         tags_json: JSON.stringify(tags),
         is_live: isCurrentlyLive ? 1 : 0,
         published_at: publishedAt,

@@ -20,6 +20,16 @@
         <p class="text-muted mb-0">Creator streams and videos.</p>
     </div>
 
+    <%
+      function fmtCount(n) {
+        if (n == null) return null;
+        n = Number(n);
+        if (n >= 1000000) return (n / 1000000).toFixed(1).replace(/\.0$/, '') + 'M';
+        if (n >= 1000) return (n / 1000).toFixed(1).replace(/\.0$/, '') + 'K';
+        return String(n);
+      }
+    %>
+
     <%# Live Now %>
     <section class="mb-5">
         <h2 class="h5 fw-semibold mb-3">
@@ -63,6 +73,9 @@
                                     <i class="fa-solid fa-user me-1"></i><%= item.username %>
                                     <% if (item.started_at) { %>
                                         &nbsp;&bull;&nbsp;<i class="fa-solid fa-clock me-1"></i>Started <%= moment(item.started_at).fromNow() %>
+                                    <% } %>
+                                    <% const liveViewers = fmtCount(item.viewer_count); if (liveViewers) { %>
+                                        &nbsp;&bull;&nbsp;<i class="fa-solid fa-eye me-1"></i><%= liveViewers %> viewers
                                     <% } %>
                                 </p>
                             </div>
@@ -110,7 +123,10 @@
                                 <p class="card-text text-muted small mb-0">
                                     <i class="fa-solid fa-user me-1"></i><%= item.username %>
                                     <% if (item.published_at) { %>
-                                        &nbsp;&bull;&nbsp;<%= moment(item.published_at).fromNow() %>
+                                        &nbsp;&bull;&nbsp;<i class="fa-solid fa-clock me-1"></i><%= moment(item.published_at).fromNow() %>
+                                    <% } %>
+                                    <% const vidViews = fmtCount(item.viewer_count); if (vidViews) { %>
+                                        &nbsp;&bull;&nbsp;<i class="fa-solid fa-eye me-1"></i><%= vidViews %> views
                                     <% } %>
                                 </p>
                             </div>

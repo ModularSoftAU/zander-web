@@ -149,6 +149,7 @@ async function syncTwitchCreator(creator, appToken, fetchFn) {
       description: null,
       thumbnail_url: thumbnailUrl,
       watch_url: `https://www.twitch.tv/${creator.platform_username}`,
+      viewer_count: typeof stream.viewer_count === "number" ? stream.viewer_count : null,
       tags_json: JSON.stringify(tags),
       is_live: 1,
       published_at: null,

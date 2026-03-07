@@ -133,6 +133,7 @@ export function upsertContentItem(data) {
     description = null,
     thumbnail_url = null,
     watch_url = null,
+    viewer_count = null,
     tags_json = null,
     is_live = 0,
     published_at = null,
@@ -147,10 +148,10 @@ export function upsertContentItem(data) {
     db.query(
       `INSERT INTO creator_content_items
          (user_id, platform, external_content_id, external_channel_id, content_type,
-          title, description, thumbnail_url, watch_url, tags_json, is_live,
+          title, description, thumbnail_url, watch_url, viewer_count, tags_json, is_live,
           published_at, started_at, ended_at, matched_rule, is_cfc_related,
           is_publicly_visible, last_seen_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
        ON DUPLICATE KEY UPDATE
          user_id=VALUES(user_id),
          external_channel_id=VALUES(external_channel_id),
@@ -159,6 +160,7 @@ export function upsertContentItem(data) {
          description=VALUES(description),
          thumbnail_url=VALUES(thumbnail_url),
          watch_url=VALUES(watch_url),
+         viewer_count=VALUES(viewer_count),
          tags_json=VALUES(tags_json),
          is_live=VALUES(is_live),
          published_at=VALUES(published_at),
@@ -171,7 +173,7 @@ export function upsertContentItem(data) {
          updated_at=CURRENT_TIMESTAMP`,
       [
         user_id, platform, external_content_id, external_channel_id, content_type,
-        title, description, thumbnail_url, watch_url, tags_json, is_live,
+        title, description, thumbnail_url, watch_url, viewer_count, tags_json, is_live,
         published_at, started_at, ended_at, matched_rule, is_cfc_related, is_publicly_visible,
       ],
       (error) => {
