@@ -207,6 +207,19 @@ export default function profileSiteRoutes(
         }
 
         //
+        // Load platform connections for social links
+        //
+        let profilePlatformConnections = {};
+        try {
+          const connRows = await getPlatformConnectionsByUserId(profileData.userId);
+          for (const row of connRows) {
+            if (row.is_active) profilePlatformConnections[row.platform] = row;
+          }
+        } catch (err) {
+          console.error("[PROFILE] Failed to load platform connections for profile", err);
+        }
+
+        //
         // Render the profile page
         //
         return res.view("modules/profile/profile", {
@@ -228,6 +241,7 @@ export default function profileSiteRoutes(
           profileSession: await getUserLastSession(profileData.userId),
           moment: moment,
           contextPermissions: contextPermissions,
+          platformConnections: profilePlatformConnections,
         });
       }
     } catch (error) {
