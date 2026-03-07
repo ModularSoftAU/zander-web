@@ -121,7 +121,8 @@ export default function sessionSiteRoute(
 
     if (req.query.returnTo && typeof req.query.returnTo === "string") {
       const sanitizedReturnTo =
-        req.query.returnTo.startsWith("/") && !req.query.returnTo.startsWith("//")
+        req.query.returnTo.startsWith("/") &&
+        !req.query.returnTo.startsWith("//")
           ? req.query.returnTo
           : null;
       if (sanitizedReturnTo) {
