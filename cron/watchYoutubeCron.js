@@ -28,12 +28,9 @@ import {
 // Discord notification helpers
 // ---------------------------------------------------------------------------
 
-async function sendDiscordNotification(notifType, item, settings) {
+async function sendDiscordNotification(notifType, item) {
   const webhookUrl = config?.watch?.contentChannelWebhook;
   if (!webhookUrl || !webhookUrl.startsWith("http")) return null;
-
-  if (notifType === "live" && !settings?.notify_discord_on_live) return null;
-  if (notifType === "upload" && !settings?.notify_discord_on_upload) return null;
 
   try {
     const webhook = new WebhookClient({ url: webhookUrl });
@@ -191,8 +188,7 @@ async function syncYoutubeCreator(creator, apiKey, fetchFn) {
           {
             ...contentItem,
             creatorDisplayName: creator.platform_display_name || creator.username,
-          },
-          creator
+          }
         );
         await recordNotification("youtube", video.id, notifType, messageId);
       }

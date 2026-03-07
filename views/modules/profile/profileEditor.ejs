@@ -263,59 +263,6 @@
                             <small class="text-muted d-block mt-2">We'll take you to Google to authorise the connection. Required for video and live stream detection on /watch.</small>
                         <% } %>
                     </div>
-
-                    <%# Creator watch settings %>
-                    <% if (twitchConn || youtubeConn) { %>
-                    <div>
-                        <h6 class="fw-semibold mb-3"><i class="fa-solid fa-sliders me-2"></i>Creator Watch Settings</h6>
-                        <p class="text-muted small mb-3">Control how your content appears on the public <a href="/watch">/watch</a> page. The <code>zander.watch.creator</code> permission node is also required.</p>
-                        <form action="/profile/watch-settings" method="post">
-                            <div class="row g-3">
-                                <div class="col-sm-6 col-lg-4">
-                                    <div class="form-check form-switch">
-                                        <input class="form-check-input" type="checkbox" role="switch" id="watch_enabled" name="watch_enabled" value="1" <%= (!watchSettings || watchSettings.watch_enabled) ? 'checked' : '' %>>
-                                        <label class="form-check-label" for="watch_enabled">Enable watch listing</label>
-                                    </div>
-                                </div>
-                                <div class="col-sm-6 col-lg-4">
-                                    <div class="form-check form-switch">
-                                        <input class="form-check-input" type="checkbox" role="switch" id="public_listing_enabled" name="public_listing_enabled" value="1" <%= (!watchSettings || watchSettings.public_listing_enabled) ? 'checked' : '' %>>
-                                        <label class="form-check-label" for="public_listing_enabled">Show publicly on /watch</label>
-                                    </div>
-                                </div>
-                                <% if (twitchConn) { %>
-                                <div class="col-sm-6 col-lg-4">
-                                    <div class="form-check form-switch">
-                                        <input class="form-check-input" type="checkbox" role="switch" id="twitch_enabled" name="twitch_enabled" value="1" <%= (!watchSettings || watchSettings.twitch_enabled) ? 'checked' : '' %>>
-                                        <label class="form-check-label" for="twitch_enabled">Include Twitch streams</label>
-                                    </div>
-                                </div>
-                                <div class="col-sm-6 col-lg-4">
-                                    <div class="form-check form-switch">
-                                        <input class="form-check-input" type="checkbox" role="switch" id="notify_discord_on_live" name="notify_discord_on_live" value="1" <%= (!watchSettings || watchSettings.notify_discord_on_live) ? 'checked' : '' %>>
-                                        <label class="form-check-label" for="notify_discord_on_live">Discord alert when going live</label>
-                                    </div>
-                                </div>
-                                <% } %>
-                                <% if (youtubeConn) { %>
-                                <div class="col-sm-6 col-lg-4">
-                                    <div class="form-check form-switch">
-                                        <input class="form-check-input" type="checkbox" role="switch" id="youtube_enabled" name="youtube_enabled" value="1" <%= (!watchSettings || watchSettings.youtube_enabled) ? 'checked' : '' %>>
-                                        <label class="form-check-label" for="youtube_enabled">Include YouTube videos</label>
-                                    </div>
-                                </div>
-                                <div class="col-sm-6 col-lg-4">
-                                    <div class="form-check form-switch">
-                                        <input class="form-check-input" type="checkbox" role="switch" id="notify_discord_on_upload" name="notify_discord_on_upload" value="1" <%= (!watchSettings || watchSettings.notify_discord_on_upload) ? 'checked' : '' %>>
-                                        <label class="form-check-label" for="notify_discord_on_upload">Discord alert on new video</label>
-                                    </div>
-                                </div>
-                                <% } %>
-                            </div>
-                            <button type="submit" class="btn btn-main mt-3">Save Creator Settings</button>
-                        </form>
-                    </div>
-                    <% } %>
                 </div>
             </div>
         </div>

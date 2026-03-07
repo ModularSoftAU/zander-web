@@ -67,11 +67,9 @@ async function getTwitchAppToken(fetchFn) {
 // Discord notification helper
 // ---------------------------------------------------------------------------
 
-async function sendLiveNotification(item, watchSettings) {
+async function sendLiveNotification(item) {
   const webhookUrl = config?.watch?.contentChannelWebhook;
   if (!webhookUrl || !webhookUrl.startsWith("http")) return null;
-
-  if (!watchSettings?.notify_discord_on_live) return null;
 
   try {
     const webhook = new WebhookClient({ url: webhookUrl });
@@ -168,8 +166,7 @@ async function syncTwitchCreator(creator, appToken, fetchFn) {
       const alreadySent = await hasNotificationBeenSent("twitch", stream.id, "live");
       if (!alreadySent) {
         const messageId = await sendLiveNotification(
-          { ...contentItem, platform_display_name: creator.platform_display_name, username: creator.username },
-          creator
+          { ...contentItem, platform_display_name: creator.platform_display_name, username: creator.username }
         );
         await recordNotification("twitch", stream.id, "live", messageId);
       }

@@ -27,8 +27,6 @@ import {
   getPlatformConnectionsByUserId,
   upsertPlatformConnection,
   deactivatePlatformConnection,
-  getCreatorWatchSettings,
-  upsertCreatorWatchSettings,
 } from "../controllers/watchController.js";
 
 export default function profileSiteRoutes(
@@ -295,16 +293,14 @@ export default function profileSiteRoutes(
         }
 
         //
-        // Load platform connections and watch settings for the editor
+        // Load platform connections for the editor
         //
         let platformConnections = {};
-        let watchSettings = null;
         try {
           const connRows = await getPlatformConnectionsByUserId(profileData.userId);
           for (const row of connRows) {
             platformConnections[row.platform] = row;
           }
-          watchSettings = await getCreatorWatchSettings(profileData.userId);
         } catch (err) {
           console.error("[PROFILE] Failed to load platform connections", err);
         }
@@ -326,7 +322,6 @@ export default function profileSiteRoutes(
           profileSession: await getUserLastSession(profileData.userId),
           moment: moment,
           platformConnections: platformConnections,
-          watchSettings: watchSettings,
         });
       }
     } catch (error) {
@@ -750,31 +745,4 @@ export default function profileSiteRoutes(
     return res.redirect(getProfileEditorRedirect(req));
   });
 
-  // ---------------------------------------------------------------------------
-  // Creator watch settings (PATCH)
-  // ---------------------------------------------------------------------------
-
-  app.post("/profile/watch-settings", async function (req, res) {
-    if (!isLoggedIn(req)) {
-      return res.status(403).send({ success: false, message: "Not authenticated." });
-    }
-
-    try {
-      const body = req.body || {};
-      await upsertCreatorWatchSettings(req.session.user.userId, {
-        watch_enabled: body.watch_enabled === "1" || body.watch_enabled === true ? 1 : 0,
-        twitch_enabled: body.twitch_enabled === "1" || body.twitch_enabled === true ? 1 : 0,
-        youtube_enabled: body.youtube_enabled === "1" || body.youtube_enabled === true ? 1 : 0,
-        public_listing_enabled: body.public_listing_enabled === "1" || body.public_listing_enabled === true ? 1 : 0,
-        notify_discord_on_live: body.notify_discord_on_live === "1" || body.notify_discord_on_live === true ? 1 : 0,
-        notify_discord_on_upload: body.notify_discord_on_upload === "1" || body.notify_discord_on_upload === true ? 1 : 0,
-      });
-      setBannerCookie("success", "Creator settings updated.", res);
-    } catch (error) {
-      console.error("[PROFILE] Watch settings update failed", error);
-      setBannerCookie("danger", "Failed to update creator settings.", res);
-    }
-
-    return res.redirect(getProfileEditorRedirect(req));
-  });
 }

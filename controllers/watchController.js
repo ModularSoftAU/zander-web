@@ -119,56 +119,6 @@ export function updateSyncStatus(userId, platform, { success, error = null } = {
 }
 
 // ---------------------------------------------------------------------------
-// Creator watch settings
-// ---------------------------------------------------------------------------
-
-export function getCreatorWatchSettings(userId) {
-  return new Promise((resolve, reject) => {
-    db.query(
-      `SELECT * FROM creator_watch_settings WHERE user_id=? LIMIT 1`,
-      [userId],
-      (error, results) => {
-        if (error) return reject(error);
-        resolve(results?.[0] || null);
-      }
-    );
-  });
-}
-
-export function upsertCreatorWatchSettings(userId, settings = {}) {
-  const {
-    watch_enabled = 1,
-    twitch_enabled = 1,
-    youtube_enabled = 1,
-    public_listing_enabled = 1,
-    notify_discord_on_live = 1,
-    notify_discord_on_upload = 1,
-  } = settings;
-
-  return new Promise((resolve, reject) => {
-    db.query(
-      `INSERT INTO creator_watch_settings
-         (user_id, watch_enabled, twitch_enabled, youtube_enabled, public_listing_enabled,
-          notify_discord_on_live, notify_discord_on_upload)
-       VALUES (?, ?, ?, ?, ?, ?, ?)
-       ON DUPLICATE KEY UPDATE
-         watch_enabled=VALUES(watch_enabled),
-         twitch_enabled=VALUES(twitch_enabled),
-         youtube_enabled=VALUES(youtube_enabled),
-         public_listing_enabled=VALUES(public_listing_enabled),
-         notify_discord_on_live=VALUES(notify_discord_on_live),
-         notify_discord_on_upload=VALUES(notify_discord_on_upload),
-         updated_at=CURRENT_TIMESTAMP`,
-      [userId, watch_enabled, twitch_enabled, youtube_enabled, public_listing_enabled, notify_discord_on_live, notify_discord_on_upload],
-      (error) => {
-        if (error) return reject(error);
-        resolve(true);
-      }
-    );
-  });
-}
-
-// ---------------------------------------------------------------------------
 // Content items
 // ---------------------------------------------------------------------------
 
@@ -320,33 +270,19 @@ export function recordNotification(platform, externalContentId, notificationType
 
 /**
  * Returns all users with an active platform connection who also hold the
- * cfc.watch.creator permission node and have watch listing enabled.
- *
- * Because permission lookups are per-user, this returns raw connection rows
- * plus the user record so callers can filter by permission.
+ * zander.watch.creator permission node.
  */
 export async function getEligibleCreators(platform) {
   const rows = await runQuery(
-    `SELECT upc.*, u.userId, u.username, u.uuid,
-            cws.watch_enabled, cws.public_listing_enabled,
-            cws.twitch_enabled, cws.youtube_enabled,
-            cws.notify_discord_on_live, cws.notify_discord_on_upload
+    `SELECT upc.*, u.userId, u.username, u.uuid
      FROM user_platform_connections upc
      JOIN users u ON u.userId = upc.user_id
-     LEFT JOIN creator_watch_settings cws ON cws.user_id = upc.user_id
      WHERE upc.platform=? AND upc.is_active=1 AND u.account_disabled IS NOT TRUE`,
     [platform]
   );
 
   const eligible = [];
   for (const row of rows) {
-    // Default watch settings to enabled when row doesn't exist yet
-    const watchEnabled = row.watch_enabled !== 0;
-    const listingEnabled = row.public_listing_enabled !== 0;
-    const platformEnabled = platform === "twitch" ? row.twitch_enabled !== 0 : row.youtube_enabled !== 0;
-
-    if (!watchEnabled || !listingEnabled || !platformEnabled) continue;
-
     try {
       const perms = await getUserPermissions({ userId: row.userId, uuid: row.uuid, username: row.username });
       if (hasPermission(perms, CREATOR_PERMISSION_NODE)) {
