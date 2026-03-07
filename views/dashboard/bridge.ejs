@@ -556,7 +556,7 @@
                 <p class="form-text">Provide a slug and command for each step. Metadata pairs are optional and map to placeholders in your commands.</p>
                 <div class="text-danger small d-none" data-routine-error>Please add at least one step with a slug and command.</div>
                 <input type="hidden" name="stepsJSON" data-routine-output>
-                <script type="application/json" data-routines-json><%- JSON.stringify(routinesList || []).replace(/</g, '\u003c') %></script>
+                <script type="application/json" data-routines-json><%- JSON.stringify(routinesList || []).replace(/</g, '\\u003c') %></script>
               </div>
             </div>
           </div>

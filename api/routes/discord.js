@@ -5,6 +5,7 @@ import {
 import { Webhook } from "discord-webhook-node";
 import { sendWebhookMessage } from "../../lib/discord/webhooks.mjs";
 import { isFeatureEnabled, required } from "../common.js";
+import { checkRateLimit } from "../../lib/rateLimiter.mjs";
 
 export default function discordApiRoute(
   app,
@@ -140,6 +141,7 @@ export default function discordApiRoute(
   });
 
   app.post(baseEndpoint + "/leave", async function (req, res) {
+    if (!checkRateLimit(req, res, { windowMs: 60_000, max: 60 })) return;
     if (!isFeatureEnabled(features.discord, res, lang)) return;
     const username = required(req.body, "username", res);
     if (res.sent) return;
@@ -183,6 +185,7 @@ export default function discordApiRoute(
   });
 
   app.post(baseEndpoint + "/spy/command", async function (req, res) {
+    if (!checkRateLimit(req, res, { windowMs: 60_000, max: 120 })) return;
     if (!isFeatureEnabled(features.discord, res, lang)) return;
     const username = required(req.body, "username", res);
     if (res.sent) return;
