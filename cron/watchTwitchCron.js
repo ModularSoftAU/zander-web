@@ -119,8 +119,7 @@ async function syncTwitchCreator(creator, appToken, fetchFn) {
     const stream = streamData?.data?.[0]; // null when offline
 
     if (!stream) {
-      // Creator is offline — mark any tracked live entry as ended
-      await markStreamsOffline("twitch", []);
+      // Creator is offline — the outer cron loop handles markStreamsOffline
       await updateSyncStatus(creator.user_id, "twitch", { success: true });
       return;
     }
