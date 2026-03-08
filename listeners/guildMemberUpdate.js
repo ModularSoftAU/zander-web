@@ -1,9 +1,13 @@
 import { Listener } from "@sapphire/framework";
-import joinMessages from "../joinMessages.json" assert { type: "json" };
-import config from "../config.json" assert { type: "json" };
+import { createRequire } from "module";
+const require = createRequire(import.meta.url);
+const joinMessages = require("../joinMessages.json");
+const config = require("../config.json");
 import { EmbedBuilder } from "discord.js";
-import features from "../features.json" assert { type: "json" };
+const features = require("../features.json");
 import { MessageBuilder, Webhook } from "discord-webhook-node";
+import { sendWebhookMessage } from "../lib/discord/webhooks.mjs";
+import { checkAndReportNickname } from "../lib/discord/nicknameCheck.mjs";
 
 export class GuildMemberUpdateListener extends Listener {
   constructor(context, options) {
@@ -14,11 +18,11 @@ export class GuildMemberUpdateListener extends Listener {
     });
   }
 
-  run(oldMember, newMember) {
-    if (features.discord.events.guildMemberVerify) {
-      if (!newMember.guild) return;
-      if (newMember.user.bot) return;
+  async run(oldMember, newMember) {
+    if (!newMember.guild) return;
+    if (newMember.user.bot) return;
 
+    if (features.discord.events.guildMemberVerify) {
       const oldRole = oldMember.roles.cache.has(config.discord.roles.verified);
       const newRole = newMember.roles.cache.has(config.discord.roles.verified);
 
@@ -37,9 +41,15 @@ export class GuildMemberUpdateListener extends Listener {
             randomJoinMessage.replace("%USERNAME%", newMember.user.username)
           )
           .setColor(`#${randomColor}`);
-        welcomeHook.send(embed);
+        await sendWebhookMessage(welcomeHook, embed, {
+          context: "listeners/guildMemberUpdate",
+        });
+
+        // Check nickname when a member gets verified
+        if (features.discord.events.nicknameCheck && config.discord.nicknameReportChannelId) {
+          await checkAndReportNickname(newMember, config.discord.nicknameReportChannelId, "Account Linked");
+        }
       }
-      return;
     }
   }
 }

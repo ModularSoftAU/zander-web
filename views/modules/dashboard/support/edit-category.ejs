@@ -1,0 +1,93 @@
+<%- include('../../../modules/header.ejs', {
+    pageTitle: "Edit Support Category",
+    pageDescription: "Edit an existing support ticket category"
+}) %>
+
+<%- include('../../../modules/navigationBar.ejs') %>
+
+<%- include('../../../partials/miniHeader.ejs', {
+    headerTitle: "Edit Support Category",
+    globalImage,
+}) %>
+
+<%- include('../dashboard-header.ejs') %>
+
+<div class="container my-4">
+    <div class="row g-4">
+        <div class="col-lg-3">
+            <%- include('../dashboard-sidebar.ejs') %>
+        </div>
+        <main class="col-lg-9">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h1 class="h3 mb-0">Edit Support Category</h1>
+                    <a href="/dashboard/support/categories" class="btn btn-outline-secondary">Back to categories</a>
+                </div>
+
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h2 class="h5 mb-0">Category Details</h2>
+                    </div>
+                    <div class="card-body">
+                        <form action="/dashboard/support/categories/<%= category.categoryId %>/edit" method="POST">
+                            <div class="form-group mb-3">
+                                <label for="name">Category Name</label>
+                                <input type="text" name="name" id="name" class="form-control" value="<%= category.name %>" required>
+                            </div>
+                            <div class="form-group mb-3">
+                                <label for="description">Description</label>
+                                <textarea name="description" id="description" rows="3" class="form-control" required><%= category.description %></textarea>
+                            </div>
+                            <button type="submit" class="btn btn-primary">Save Changes</button>
+                        </form>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <h2 class="h5 mb-0">Category Permissions</h2>
+                    </div>
+                    <div class="card-body">
+                        <% if (category.permissions && category.permissions.length > 0) { %>
+                            <div class="d-flex flex-column gap-2 mb-3">
+                                <% category.permissions.forEach(permission => { %>
+                                    <% const badgeStyle = [];
+                                       if (permission.badgeColor) badgeStyle.push(`background-color: ${permission.badgeColor}`);
+                                       if (permission.textColor) badgeStyle.push(`color: ${permission.textColor}`);
+                                    %>
+                                    <div class="d-flex align-items-center gap-2">
+                                        <span class="badge <%= permission.badgeColor ? '' : 'bg-secondary' %>" style="<%= badgeStyle.join('; ') %>"><%= permission.roleName %></span>
+                                        <form action="/dashboard/support/categories/<%= category.categoryId %>/permissions/<%= permission.roleId %>/delete" method="POST" class="d-inline">
+                                            <input type="hidden" name="redirect" value="/dashboard/support/categories/<%= category.categoryId %>/edit">
+                                            <button type="submit" class="btn btn-sm btn-outline-danger">Remove</button>
+                                        </form>
+                                    </div>
+                                <% }) %>
+                            </div>
+                        <% } else { %>
+                            <p class="text-muted">No permissions configured for this category.</p>
+                        <% } %>
+
+                        <form action="/dashboard/support/categories/<%= category.categoryId %>/permissions" method="POST" class="mt-2">
+                            <div class="input-group input-group-sm">
+                                <% const availableRoles = category.availableRoles && category.availableRoles.length > 0 ? category.availableRoles : []; %>
+                                <% if (availableRoles.length > 0) { %>
+                                    <select name="roleId" class="form-select">
+                                        <% availableRoles.forEach(role => { %>
+                                            <option value="<%= role.id %>"><%= role.name %></option>
+                                        <% }) %>
+                                    </select>
+                                    <input type="hidden" name="redirect" value="/dashboard/support/categories/<%= category.categoryId %>/edit">
+                                    <button type="submit" class="btn btn-success">Add Role</button>
+                                <% } else { %>
+                                    <span class="form-control text-muted">All eligible roles added</span>
+                                    <button class="btn btn-success" type="button" disabled>All Added</button>
+                                <% } %>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+        </main>
+    </div>
+</div>
+
+<%- include('../../../modules/footer.ejs') %>

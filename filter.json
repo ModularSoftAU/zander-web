@@ -1,6 +1,6 @@
 {
-  "phrases": ["shit", "fuck", "fish"],
-  "links": ["discord.gg", "pornhub.com"],
+  "phrasesWhitelist": ["hoe"],
+  "links": ["discord.gg", "discord.com", "pornhub.com"],
   "__alias_comment": "Below is derived from https://raw.githubusercontent.com/codebox/homoglyph/master/raw_data/chars.txt",
   "alias": {
     "a": "4@＠AΑАᎪᗅᴀꓮꭺＡ𐊠aɑαа⍺ａ𝐚𝑎𝒂𝒶𝓪𝔞𝕒𝖆𝖺𝗮𝘢𝙖𝚊𝛂𝛼𝜶𝝰𝞪",

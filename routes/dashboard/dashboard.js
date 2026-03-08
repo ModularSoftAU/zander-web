@@ -1,7 +1,7 @@
-import moment from "moment/moment";
+import moment from "moment";
 import fetch from "node-fetch";
-import { getGlobalImage, hasPermission } from "../../api/common";
-import { getWebAnnouncement } from "../../controllers/announcementController";
+import { getGlobalImage, hasPermission } from "../../api/common.js";
+import { getWebAnnouncement } from "../../controllers/announcementController.js";
 
 export default function dashboardSiteRoute(app, config, features, lang) {
   //
@@ -14,9 +14,30 @@ export default function dashboardSiteRoute(app, config, features, lang) {
       res,
       features
     );
-    
+
     if (!permissionBoolean) return;
-    
+
+    const announcements = await fetch(
+      `${process.env.siteAddress}/api/announcement/get`,
+      {
+        headers: { "x-access-token": process.env.apiKey },
+      }
+    ).then((res) => res.json());
+
+    const applications = await fetch(
+      `${process.env.siteAddress}/api/application/get`,
+      {
+        headers: { "x-access-token": process.env.apiKey },
+      }
+    ).then((res) => res.json());
+
+    const servers = await fetch(
+      `${process.env.siteAddress}/api/server/get`,
+      {
+        headers: { "x-access-token": process.env.apiKey },
+      }
+    ).then((res) => res.json());
+
     return res.view("dashboard/dashboard-index", {
       pageTitle: `Dashboard`,
       config: config,
@@ -24,6 +45,9 @@ export default function dashboardSiteRoute(app, config, features, lang) {
       req: req,
       globalImage: await getGlobalImage(),
       announcementWeb: await getWebAnnouncement(),
+      announcementsCount: announcements.data ? announcements.data.length : 0,
+      applicationsCount: applications.data ? applications.data.length : 0,
+      serversCount: servers.data ? servers.data.length : 0,
     });
   });
 
@@ -33,7 +57,16 @@ export default function dashboardSiteRoute(app, config, features, lang) {
   app.get("/dashboard/logs", async function (req, res) {
     if (!hasPermission("zander.web.logs", req, res, features)) return;
 
-    const fetchURL = `${process.env.siteAddress}/api/web/logs/get`;
+    const queryParams = new URLSearchParams();
+    if (req.query?.user) {
+      queryParams.set("user", req.query.user);
+    }
+    if (req.query?.feature) {
+      queryParams.set("feature", req.query.feature);
+    }
+    const fetchURL = `${process.env.siteAddress}/api/web/logs/get${
+      queryParams.toString() ? `?${queryParams.toString()}` : ""
+    }`;
     const response = await fetch(fetchURL, {
       headers: { "x-access-token": process.env.apiKey },
     });
@@ -45,7 +78,47 @@ export default function dashboardSiteRoute(app, config, features, lang) {
       apiData: apiData,
       features: features,
       req: req,
-      globalImage: getGlobalImage(),
+      globalImage: await getGlobalImage(),
+      moment: moment,
+      announcementWeb: await getWebAnnouncement(),
+    });
+
+    return res;
+  });
+
+  //
+  // Bridge
+  //
+  app.get("/dashboard/bridge", async function (req, res) {
+    if (!hasPermission("zander.web.bridge", req, res, features)) return;
+
+    const [pendingResponse, processingResponse, routineResponse] = await Promise.all([
+      fetch(`${process.env.siteAddress}/api/bridge/processor/get?status=pending&limit=100`, {
+        headers: { "x-access-token": process.env.apiKey },
+      }),
+      fetch(`${process.env.siteAddress}/api/bridge/processor/get?status=processing&limit=100`, {
+        headers: { "x-access-token": process.env.apiKey },
+      }),
+      fetch(`${process.env.siteAddress}/api/bridge/routine/get`, {
+        headers: { "x-access-token": process.env.apiKey },
+      }),
+    ]);
+
+    const [pendingTasks, processingTasks, routines] = await Promise.all([
+      pendingResponse.json(),
+      processingResponse.json(),
+      routineResponse.json(),
+    ]);
+
+    res.view("dashboard/bridge", {
+      pageTitle: `Dashboard - Bridge`,
+      config: config,
+      pendingTasks: pendingTasks,
+      processingTasks: processingTasks,
+      routines: routines,
+      features: features,
+      req: req,
+      globalImage: await getGlobalImage(),
       moment: moment,
       announcementWeb: await getWebAnnouncement(),
     });

@@ -1,7 +1,10 @@
 import { Listener } from "@sapphire/framework";
-import config from "../config.json" assert { type: "json" };
+import { createRequire } from "module";
+const require = createRequire(import.meta.url);
+const config = require("../config.json");
 import { Colors, EmbedBuilder } from "discord.js";
 import { MessageBuilder, Webhook } from "discord-webhook-node";
+import { sendWebhookMessage } from "../lib/discord/webhooks.mjs";
 
 export class GuildMessageDeleteListener extends Listener {
   constructor(context, options) {
@@ -32,6 +35,8 @@ export class GuildMessageDeleteListener extends Listener {
         false,
       );
 
-    adminLogHook.send(embed);
+    await sendWebhookMessage(adminLogHook, embed, {
+      context: "listeners/messageDelete",
+    });
   }
 }

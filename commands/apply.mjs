@@ -1,5 +1,8 @@
 import { Command, RegisterBehavior } from "@sapphire/framework";
 import pkg, { Colors } from "discord.js";
+import { createRequire } from "module";
+const require = createRequire(import.meta.url);
+const features = require("../features.json");
 const { EmbedBuilder } = pkg;
 
 export class PolicyCommand extends Command {
@@ -18,6 +21,20 @@ export class PolicyCommand extends Command {
   }
 
   async chatInputRun(interaction) {
+    if (!features.applications) {
+      const errorEmbed = new EmbedBuilder()
+        .setTitle("Feature Disabled")
+        .setDescription(
+          `This feature has been disabled by your System Administrator.`
+        )
+        .setColor(Colors.Red);
+
+      return interaction.reply({
+        embeds: [errorEmbed],
+        ephemeral: true,
+      });
+    }
+
     const embed = new EmbedBuilder()
       .setTitle("Network Applications")
       .setColor(Colors.Gold)

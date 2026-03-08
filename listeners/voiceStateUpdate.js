@@ -1,5 +1,8 @@
 import { Listener } from "@sapphire/framework";
-import { updateAudit_lastDiscordMessage, updateAudit_lastDiscordVoice } from "../controllers/auditController";
+import {
+  updateAudit_lastDiscordMessage,
+  updateAudit_lastDiscordVoice,
+} from "../controllers/auditController.js";
 
 export class GuildMessageListener extends Listener {
   constructor(context, options) {
@@ -22,7 +25,7 @@ export class GuildMessageListener extends Listener {
       try {
         updateAudit_lastDiscordVoice(new Date(), user.id);
       } catch (error) {
-        return console.log(error);
+        console.error("voiceStateUpdate: failed to update audit log", error);
       }
     }
   }

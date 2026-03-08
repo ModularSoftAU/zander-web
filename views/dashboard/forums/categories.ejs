@@ -1,0 +1,236 @@
+<%- include("../../modules/header.ejs", {
+    pageTitle: pageTitle,
+    pageDescription: "Manage forum categories"
+}) %>
+
+<%- include("../../modules/navigationBar.ejs") %>
+
+<%- include("../../partials/miniHeader.ejs", {
+  headerTitle: "Forum Categories",
+  backgroundImage: globalImage
+}) %>
+
+<%
+  function renderParentOptions(categories, depth, selectedId, excludeId) {
+    categories.forEach(function (category) {
+      if (excludeId && category.categoryId === excludeId) {
+        if (category.children && category.children.length) {
+          renderParentOptions(category.children, depth + 1, selectedId, excludeId);
+        }
+      } else {
+%>
+  <option value="<%= category.categoryId %>" <%= selectedId === category.categoryId ? 'selected' : '' %>>
+    <%= Array(depth).fill('— ').join('') %><%= category.name %>
+  </option>
+<%
+        if (category.children && category.children.length) {
+          renderParentOptions(category.children, depth + 1, selectedId, excludeId);
+        }
+      }
+    });
+  }
+
+  function renderCategoryRows(rows, depth) {
+    rows.forEach(function (row) {
+%>
+  <tr>
+    <td>
+      <div class="forums-admin-category-name" style="padding-left: <%= depth * 20 %>px;">
+        <strong><%= row.name %></strong>
+        <% if (row.description) { %>
+          <div class="text-muted small"><%= row.description %></div>
+        <% } %>
+      </div>
+    </td>
+    <td><code><%= row.slug %></code></td>
+    <td>
+      <% if (row.viewPermission) { %>
+        <code><%= row.viewPermission %></code>
+      <% } else { %>
+        <span class="badge bg-success">Public</span>
+      <% } %>
+    </td>
+    <td>
+      <% if (row.postPermission) { %>
+        <code><%= row.postPermission %></code>
+      <% } else { %>
+        <span class="badge bg-primary">Open</span>
+      <% } %>
+    </td>
+    <td class="text-center"><%= row.position %></td>
+    <td class="text-end">
+      <div class="btn-group btn-group-sm" role="group">
+        <a class="btn btn-outline-primary" href="/dashboard/forums/categories?create_under=<%= row.categoryId %>" title="Add subcategory"><i class="fa-solid fa-plus"></i></a>
+        <a class="btn btn-outline-secondary" href="/dashboard/forums/categories?edit=<%= row.categoryId %>">Edit</a>
+        <form action="/dashboard/forums/categories/<%= row.categoryId %>/delete" method="post" class="d-inline" onsubmit="return confirm('Delete this category? Discussions within will also be removed.');">
+          <button type="submit" class="btn btn-outline-danger">Delete</button>
+        </form>
+      </div>
+    </td>
+  </tr>
+<%
+      if (row.children && row.children.length) {
+        renderCategoryRows(row.children, depth + 1);
+      }
+    });
+  }
+%>
+
+<%- include("../../modules/dashboard/dashboard-header.ejs") %>
+
+<div class="container my-4">
+  <div class="row g-4">
+    <div class="col-lg-3">
+      <%- include("../../modules/dashboard/dashboard-sidebar.ejs") %>
+    </div>
+    <main class="col-lg-9">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+      <div>
+        <h3 class="mb-0">Forum Categories</h3>
+        <p class="text-muted mb-0">Organise the forum navigation, visibility, and posting permissions.</p>
+      </div>
+    </div>
+
+    <% if (req.cookies.alertType) { %>
+      <%- include("../../partials/alert.ejs", {
+        alertType: req.cookies.alertType,
+        content: req.cookies.alertContent
+      }) %>
+    <% } %>
+
+    <% if (categoryToEdit) { %>
+      <div class="card shadow-sm mb-4">
+        <div class="card-header bg-info text-white">
+          <strong>Edit Category: <%= categoryToEdit.name %></strong>
+        </div>
+        <div class="card-body">
+          <form action="/dashboard/forums/categories/<%= categoryToEdit.categoryId %>/edit" method="post" class="row g-3">
+            <div class="col-md-6">
+              <label class="form-label" for="editCategoryName">Name</label>
+              <input type="text" class="form-control" id="editCategoryName" name="name" value="<%= categoryToEdit.name %>" maxlength="120" required>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label" for="editCategorySlug">Slug</label>
+              <input type="text" class="form-control" id="editCategorySlug" name="slug" value="<%= categoryToEdit.slug %>">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label" for="editCategoryParent">Parent Category</label>
+              <select class="form-select" id="editCategoryParent" name="parentCategoryId">
+                <option value="">No parent (top level)</option>
+                <% renderParentOptions(categories, 0, categoryToEdit.parentCategoryId, categoryToEdit.categoryId); %>
+              </select>
+            </div>
+            <div class="col-md-3">
+              <label class="form-label" for="editCategoryPosition">Position</label>
+              <input type="number" class="form-control" id="editCategoryPosition" name="position" value="<%= categoryToEdit.position %>">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label" for="editCategoryViewPermission">View Permission</label>
+              <input type="text" class="form-control" id="editCategoryViewPermission" name="viewPermission" value="<%= categoryToEdit.viewPermission || '' %>">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label" for="editCategoryPostPermission">Post Permission</label>
+              <input type="text" class="form-control" id="editCategoryPostPermission" name="postPermission" value="<%= categoryToEdit.postPermission || '' %>">
+            </div>
+            <div class="col-12">
+              <label class="form-label" for="editCategoryDescription">Description</label>
+              <textarea class="form-control" id="editCategoryDescription" name="description" rows="2"><%= categoryToEdit.description || '' %></textarea>
+            </div>
+            <div class="col-12 d-flex justify-content-between">
+              <div>
+                <a class="btn btn-link" href="/dashboard/forums/categories">Cancel</a>
+              </div>
+              <div>
+                <button type="submit" class="btn btn-warning">Update Category</button>
+              </div>
+            </div>
+          </form>
+        </div>
+      </div>
+    <% } else { %>
+      <div class="card shadow-sm mb-4">
+        <div class="card-header bg-light">
+          <strong><%= createUnderId ? 'Create Subcategory' : 'Create Category' %></strong>
+        </div>
+        <div class="card-body">
+          <form action="/dashboard/forums/categories/new" method="post" class="row g-3">
+            <div class="col-md-6">
+              <label class="form-label" for="categoryName">Name</label>
+              <input type="text" class="form-control" id="categoryName" name="name" maxlength="120" required>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label" for="categorySlug">Slug (optional)</label>
+              <input type="text" class="form-control" id="categorySlug" name="slug" placeholder="auto-generated if empty">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label" for="categoryParent">Parent Category</label>
+              <select class="form-select" id="categoryParent" name="parentCategoryId">
+                <option value="">No parent (top level)</option>
+                <% renderParentOptions(categories, 0, createUnderId || null, null); %>
+              </select>
+            </div>
+            <div class="col-md-3">
+              <label class="form-label" for="categoryPosition">Position</label>
+              <input type="number" class="form-control" id="categoryPosition" name="position" value="0">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label" for="categoryViewPermission">View Permission (optional)</label>
+              <input type="text" class="form-control" id="categoryViewPermission" name="viewPermission" placeholder="Permission node required to view">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label" for="categoryPostPermission">Post Permission (optional)</label>
+              <input type="text" class="form-control" id="categoryPostPermission" name="postPermission" placeholder="Permission node required to post">
+            </div>
+            <div class="col-12">
+              <label class="form-label" for="categoryDescription">Description</label>
+              <textarea class="form-control" id="categoryDescription" name="description" rows="2" placeholder="Shown beneath the category title"></textarea>
+            </div>
+            <div class="col-12 d-flex justify-content-between">
+              <div>
+                <% if (createUnderId) { %>
+                  <a class="btn btn-link" href="/dashboard/forums/categories">Cancel</a>
+                <% } %>
+              </div>
+              <div>
+                <button type="submit" class="btn btn-main"><%= createUnderId ? 'Create Subcategory' : 'Create Category' %></button>
+              </div>
+            </div>
+          </form>
+        </div>
+      </div>
+    <% } %>
+
+    <div class="card shadow-sm">
+      <div class="card-header bg-light">
+        <strong>Category Structure</strong>
+      </div>
+      <div class="card-body p-0">
+        <div class="table-responsive">
+          <table class="table table-striped mb-0">
+            <thead class="table-light">
+              <tr>
+                <th>Category</th>
+                <th>Slug</th>
+                <th>View Permission</th>
+                <th>Post Permission</th>
+                <th class="text-center">Position</th>
+                <th class="text-end">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <% if (!categories.length) { %>
+                <tr>
+                  <td colspan="6" class="text-center py-4 text-muted">No categories have been created yet.</td>
+                </tr>
+              <% } %>
+              <% renderCategoryRows(categories, 0); %>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+    </main>
+  </div>
+</div>
+
+<%- include("../../modules/footer.ejs") %>

@@ -1,11 +1,14 @@
 import dotenv from "dotenv";
 dotenv.config();
-import config from "../config.json" assert { type: "json" };
+import { createRequire } from "module";
+const require = createRequire(import.meta.url);
+import path from "path";
+const config = require(path.join(process.cwd(), "config.json"));
 import fetch from "node-fetch";
 import { readdirSync } from "fs";
 import crypto from "crypto";
-import db from "../controllers/databaseController";
-import { getWebAnnouncement } from "../controllers/announcementController";
+import db from "../controllers/databaseController.js";
+import { getWebAnnouncement } from "../controllers/announcementController.js";
 
 /*
     Check if a specific feature is enabled.
@@ -15,16 +18,17 @@ import { getWebAnnouncement } from "../controllers/announcementController";
     @param lang Passing through lang.
 */
 export function isFeatureEnabled(isFeatureEnabled, res, lang) {
-  if (isFeatureEnabled) return;
+  if (isFeatureEnabled) return true;
 
   res.send({
     success: false,
     message: `${lang.api.featureDisabled}`,
   });
+  return false;
 }
 
 /*
-    Ensure that a required field is present and has a non-null value, 
+    Ensure that a required field is present and has a non-null value,
     and to return an error message if this is not the case.
 
     @param body Passing through the req.body
@@ -112,44 +116,88 @@ export function isLoggedIn(req) {
     @param res Passing through res
     @param features Passing through features
 */
-export async function hasPermission(permissionNode, req, res, features) {
-  if (!isLoggedIn(req) || !req.session.user || !req.session.user.permissions) {
-    return res.view("session/noPermission", {
-      pageTitle: `Access Restricted`,
-      config: config,
-      req: req,
-      res: res,
-      features: features,
-      globalImage: await getGlobalImage(),
-      announcementWeb: await getWebAnnouncement(),
-    });
-  } else {
-    const userPermissions = req.session.user.permissions;
+function normalisePermissionNode(value) {
+  if (value === undefined || value === null) {
+    return "";
+  }
 
-    function hasSpecificPerm(node, permissionArray) {
-      return permissionArray.some((permission) => permission === node);
-    }
+  return String(value).trim().toLowerCase();
+}
 
-    if (!hasSpecificPerm(permissionNode, userPermissions)) {
-      return res.view("session/noPermission", {
-        pageTitle: `Access Restricted`,
-        config: config,
-        req: req,
-        res: res,
-        features: features,
-        globalImage: await getGlobalImage(),
-        announcementWeb: await getWebAnnouncement(),
-      });
-    }
+function hasSpecificPermission(permissionArray, node) {
+  if (!node) {
     return true;
   }
+
+  if (!Array.isArray(permissionArray) || permissionArray.length === 0) {
+    return false;
+  }
+
+  const target = normalisePermissionNode(node);
+  if (!target) {
+    return true;
+  }
+
+  return permissionArray.some((permission) => {
+    if (!permission) {
+      return false;
+    }
+
+    const candidate = normalisePermissionNode(permission);
+    if (!candidate) {
+      return false;
+    }
+
+    if (candidate === "*") {
+      return true;
+    }
+
+    if (candidate === target) {
+      return true;
+    }
+
+    if (candidate.endsWith(".*")) {
+      const base = candidate.slice(0, -1);
+      return target.startsWith(base);
+    }
+
+    return false;
+  });
+}
+
+async function renderNoPermission(req, res, features) {
+  await res.view("session/noPermission", {
+    pageTitle: `Access Restricted`,
+    config: config,
+    req: req,
+    res: res,
+    features: features,
+    globalImage: await getGlobalImage(),
+    announcementWeb: await getWebAnnouncement(),
+  });
+}
+
+export async function hasPermission(permissionNode, req, res, features) {
+  const userPermissions = req.session?.user?.permissions;
+
+  if (!isLoggedIn(req) || !Array.isArray(userPermissions)) {
+    await renderNoPermission(req, res, features);
+    return false;
+  }
+
+  if (!hasSpecificPermission(userPermissions, permissionNode)) {
+    await renderNoPermission(req, res, features);
+    return false;
+  }
+
+  return true;
 }
 
 /*
     Makes a POST API request to the specified postURL with the provided apiPostBody.
     It includes a header with the x-access-token value taken from an environment variable named apiKey.
     If the request is successful, it logs the response data.
-    If the request fails, it sets a cookie with a "danger" alert type and an error message, 
+    If the request fails, it sets a cookie with a "danger" alert type and an error message,
     then redirects the user to the specified failureRedirectURL.
 
     @param postURL The POST url that the apiPostBody will go to in the API.
@@ -172,7 +220,15 @@ export async function postAPIRequest(
     },
   });
 
-  const data = await response.json();
+  let data = null;
+  try {
+    data = await response.json();
+  } catch (error) {
+    const fallbackMessage =
+      "Unexpected response from the server. Please try again.";
+    setBannerCookie("danger", fallbackMessage, res);
+    return res.redirect(failureRedirectURL);
+  }
 
   console.log(data);
 
@@ -188,9 +244,9 @@ export async function postAPIRequest(
 }
 
 /*
-    Returns the path of a randomly chosen image file from a specified directory. 
-    The function first reads the names of the files in the directory using the readdirSync function and 
-    then selects a random file from the list using the Math.random() function. 
+    Returns the path of a randomly chosen image file from a specified directory.
+    The function first reads the names of the files in the directory using the readdirSync function and
+    then selects a random file from the list using the Math.random() function.
     Finally, the function returns the path of the chosen file by concatenating the file name with the relative path to the directory.
 */
 export async function getGlobalImage() {
@@ -204,7 +260,7 @@ export async function getGlobalImage() {
 }
 
 /*
-    Sets two cookies (alertType and alertContent) with specified values and an expiration time of one second. 
+    Sets two cookies (alertType and alertContent) with specified values and an expiration time of one second.
     These cookies are set on the root path and are returned by the function.
 
     @param alertType The alert content type and colour according to https://getbootstrap.com/docs/4.0/components/alerts/#examples
@@ -220,22 +276,26 @@ export async function setBannerCookie(alertType, alertContent, res) {
     res.setCookie("alertType", alertType, {
       path: "/",
       expires: expiryTime,
+      httpOnly: true,
     });
 
     // Set Content Type
     res.setCookie("alertContent", alertContent, {
       path: "/",
       expires: expiryTime,
+      httpOnly: true,
     });
 
-    return true;
+    // Make sure to send the res
+    return res;
   } catch (error) {
     console.log(error);
   }
 }
 
+
 /*
-    Sets two cookies (alertType and alertContent) with specified values and an expiration time of one second. 
+    Sets two cookies (alertType and alertContent) with specified values and an expiration time of one second.
     These cookies are set on the root path and are returned by the function.
 
     @param email The email address to hash.
@@ -252,7 +312,7 @@ export async function hashEmail(email) {
 }
 
 /*
-    Sets two cookies (alertType and alertContent) with specified values and an expiration time of one second. 
+    Sets two cookies (alertType and alertContent) with specified values and an expiration time of one second.
     These cookies are set on the root path and are returned by the function.
 
     @param userId The ID of the user that actioned the log.
@@ -263,26 +323,21 @@ export async function generateLog(
   userId,
   logType,
   logFeature,
-  description,
-  res
+  description
 ) {
-  db.query(
-    `INSERT INTO logs (creatorId, logType, logFeature, description) VALUES (?, ?, ?, ?)`,
-    [userId, logType, logFeature, description],
-    function (error, results, fields) {
-      if (error) {
-        return res.send({
-          success: false,
-          message: `${error}`,
-        });
+  return new Promise((resolve, reject) => {
+    db.query(
+      `INSERT INTO logs (creatorId, logType, logFeature, description) VALUES (?, ?, ?, ?)`,
+      [userId, logType, logFeature, description],
+      function (error, results) {
+        if (error) {
+          console.error("Failed to generate log:", error);
+          return reject(error);
+        }
+        resolve(results);
       }
-
-      return res.send({
-        success: true,
-        message: `Log created.`,
-      });
-    }
-  );
+    );
+  });
 }
 
 /*

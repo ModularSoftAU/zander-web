@@ -2,8 +2,8 @@ import {
   getGlobalImage,
   hasPermission,
   isFeatureWebRouteEnabled,
-} from "../../api/common";
-import { getWebAnnouncement } from "../../controllers/announcementController";
+} from "../../api/common.js";
+import { getWebAnnouncement } from "../../controllers/announcementController.js";
 
 export default function dashboardServersSiteRoute(
   app,
@@ -33,7 +33,7 @@ export default function dashboardServersSiteRoute(
       apiData: apiData,
       features: features,
       req: req,
-      globalImage: getGlobalImage(),
+      globalImage: await getGlobalImage(),
       announcementWeb: await getWebAnnouncement(),
     });
 
@@ -50,7 +50,7 @@ export default function dashboardServersSiteRoute(
       config: config,
       type: "create",
       features: features,
-      globalImage: getGlobalImage(),
+      globalImage: await getGlobalImage(),
       req: req,
       announcementWeb: await getWebAnnouncement(),
     });
@@ -76,7 +76,7 @@ export default function dashboardServersSiteRoute(
       serverApiData: serverApiData.data[0],
       type: "edit",
       features: features,
-      globalImage: getGlobalImage(),
+      globalImage: await getGlobalImage(),
       req: req,
       announcementWeb: await getWebAnnouncement(),
     });

@@ -1,0 +1,464 @@
+<%- include("../../modules/header.ejs", {
+    pageTitle: `${discussion.title} :: ${category ? category.name : 'Forums'}`,
+    pageDescription: category && category.description ? category.description : "Forum discussion"
+}) %>
+
+<%- include("../../modules/navigationBar.ejs") %>
+
+<%- include("../../partials/miniHeader.ejs", {
+  headerTitle: discussion.title,
+  backgroundImage: globalImage
+}) %>
+
+<% const currentUser = req.session?.user || null; %>
+<% const canReportContent = features.report && currentUser; %>
+<% const discussionBasePath = `/forums/discussion/${discussion.discussionId}${discussion.slug ? '/' + discussion.slug : ''}`; %>
+
+<div class="container my-5 forums-container">
+  <div class="row g-4">
+    <div class="col-lg-3">
+      <%- include("./partials/sidebar.ejs", {
+        categories: categories,
+        activeCategory: category
+      }) %>
+    </div>
+    <div class="col-lg-9">
+      <% if (req.cookies.alertType) { %>
+        <%- include("../../partials/alert.ejs", {
+          alertType: req.cookies.alertType,
+          content: req.cookies.alertContent
+        }) %>
+      <% } %>
+
+      <div class="forums-card card shadow-sm mb-4">
+        <div class="card-body">
+          <div class="d-flex justify-content-between align-items-start flex-wrap gap-3">
+            <div>
+              <div class="d-flex align-items-center gap-2 mb-2">
+                <% if (discussion.isSticky) { %>
+                  <span class="forums-badge sticky">Sticky</span>
+                <% } %>
+                <% if (discussion.isLocked) { %>
+                  <span class="forums-badge locked"><i class="fa-solid fa-lock"></i> Locked</span>
+                <% } %>
+                <% if (discussion.isArchived) { %>
+                  <span class="forums-badge archived">Archived</span>
+                <% } %>
+              </div>
+              <div class="text-muted">
+                Posted in <a href="/forums/category/<%= category.slug %>"><%= category.name %></a>
+                <% if (discussion.createdBy && posts.length) { %>
+                  · <span data-relative-time="<%= new Date(discussion.createdAt).toISOString() %>" data-relative-format="datetime"></span>
+                <% } %>
+              </div>
+            </div>
+            <div class="d-flex flex-wrap gap-2">
+              <% const canEditDiscussion = canModerate || (currentUserId && currentUserId === discussion.createdBy); %>
+              <% if (canEditDiscussion) { %>
+                <a class="btn btn-sm btn-outline-secondary" href="/forums/discussion/<%= discussion.discussionId %>/edit"><i class="fa-solid fa-pen"></i> Edit</a>
+              <% } %>
+              <% if (canLock) { %>
+                <form action="/forums/discussion/<%= discussion.discussionId %>/moderate" method="post" class="d-inline">
+                  <input type="hidden" name="action" value="<%= discussion.isLocked ? 'unlock' : 'lock' %>">
+                  <button type="submit" class="btn btn-sm btn-outline-warning"><i class="fa-solid fa-lock"></i> <%= discussion.isLocked ? 'Unlock' : 'Lock' %></button>
+                </form>
+              <% } %>
+              <% if (canSticky) { %>
+                <form action="/forums/discussion/<%= discussion.discussionId %>/moderate" method="post" class="d-inline">
+                  <input type="hidden" name="action" value="<%= discussion.isSticky ? 'unsticky' : 'sticky' %>">
+                  <button type="submit" class="btn btn-sm btn-outline-info"><i class="fa-solid fa-thumbtack"></i> <%= discussion.isSticky ? 'Unpin' : 'Pin' %></button>
+                </form>
+              <% } %>
+              <% if (canArchive) { %>
+                <form action="/forums/discussion/<%= discussion.discussionId %>/moderate" method="post" class="d-inline">
+                  <input type="hidden" name="action" value="<%= discussion.isArchived ? 'unarchive' : 'archive' %>">
+                  <button type="submit" class="btn btn-sm btn-outline-danger"><i class="fa-solid fa-box-archive"></i> <%= discussion.isArchived ? 'Unarchive' : 'Archive' %></button>
+                </form>
+              <% } %>
+              <% if (canModerate && typeof moveCategories !== 'undefined' && moveCategories && moveCategories.length) { %>
+                <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#moveDiscussionModal"><i class="fa-solid fa-arrows-up-down-left-right"></i> Move</button>
+              <% } %>
+              <% if (canEditDiscussion) { %>
+                <form action="/forums/discussion/<%= discussion.discussionId %>/delete" method="post" class="d-inline" onsubmit="return confirm('Permanently delete this discussion and all its replies?');">
+                  <button type="submit" class="btn btn-sm btn-outline-danger"><i class="fa-solid fa-trash"></i> Delete</button>
+                </form>
+              <% } %>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="forums-thread">
+        <% posts.forEach(function(post) { %>
+          <article id="post-<%= post.postId %>" class="forums-post card shadow-sm mb-4 <%= post.isOriginal ? 'original-post' : '' %>">
+            <div class="card-body">
+              <div class="forums-post-layout">
+                <div class="forums-post-author mb-2">
+                  <% if (post.user) { %>
+                    <div class="d-flex align-items-center gap-2">
+                      <img src="<%= post.user.avatarUrl %>" alt="<%= post.user.username %> avatar" class="forums-avatar-inline rounded-circle" loading="lazy">
+                      <div>
+                        <div class="fw-semibold"><a href="/profile/<%= post.user.username %>"><%= post.user.username %></a></div>
+                        <% if (post.user.ranks && post.user.ranks.length) { %>
+                          <div class="d-flex flex-wrap gap-1 mt-1">
+                            <% post.user.ranks.forEach(function(rank) { %>
+                              <span class="badge rounded-pill" style="background-color: <%= rank.badgeColour || '#1f2937' %>; color: <%= rank.textColour || '#ffffff' %>; font-size: 0.7rem;"><%= rank.displayName %></span>
+                            <% }); %>
+                          </div>
+                        <% } %>
+                      </div>
+                    </div>
+                  <% } else { %>
+                    <div class="fw-semibold">Unknown</div>
+                  <% } %>
+                </div>
+                <div class="forums-post-content">
+                  <div class="forums-post-meta d-flex justify-content-between align-items-start flex-wrap gap-2">
+                    <div class="text-muted small">
+                      Posted <span data-relative-time="<%= new Date(post.createdAt).toISOString() %>"></span>
+                      <% if (post.updatedAt && new Date(post.updatedAt).getTime() !== new Date(post.createdAt).getTime()) { %>
+                        · <span class="edited-indicator" data-edited-time="<%= new Date(post.updatedAt).toISOString() %>">edited</span>
+                      <% } %>
+                    </div>
+                    <div class="d-flex gap-2">
+                      <% const isAuthor = currentUserId && post.user && currentUserId === post.user.userId; %>
+                      <% if (canModerate && post.revisions && post.revisions.length) { %>
+                        <a class="btn btn-sm btn-outline-secondary" href="/forums/post/<%= post.postId %>/revisions"><i class="fa-solid fa-clock-rotate-left"></i> History (<%= post.revisions.length %>)</a>
+                      <% } %>
+                      <% if (post.isOriginal) { %>
+                        <% if (canModerate || (currentUserId && currentUserId === discussion.createdBy)) { %>
+                          <a class="btn btn-sm btn-outline-secondary" href="/forums/discussion/<%= discussion.discussionId %>/edit"><i class="fa-solid fa-pen"></i> Edit</a>
+                        <% } %>
+                      <% } else { %>
+                        <% if (canModerate || isAuthor) { %>
+                          <a class="btn btn-sm btn-outline-secondary" href="/forums/post/<%= post.postId %>/edit"><i class="fa-solid fa-pen"></i> Edit</a>
+                        <% } %>
+                        <% if (canModerate || isAuthor || canDeleteAnyPost) { %>
+                          <form action="/forums/post/<%= post.postId %>/delete" method="post" class="d-inline" onsubmit="return confirm('Delete this reply?');">
+                            <button type="submit" class="btn btn-sm btn-outline-danger"><i class="fa-solid fa-trash"></i> Delete</button>
+                          </form>
+                        <% } %>
+                      <% } %>
+                      <% if (canReportContent && post.user) { %>
+                        <button
+                          type="button"
+                          class="btn btn-sm btn-outline-danger forums-report-button"
+                          data-bs-toggle="modal"
+                          data-bs-target="#reportPostModal"
+                          data-post-id="<%= post.postId %>"
+                          data-post-type="<%= post.isOriginal ? 'discussion' : 'reply' %>"
+                          data-username="<%= post.user.username %>"
+                          data-post-url="<%= discussionBasePath %>#post-<%= post.postId %>"
+                        >
+                          <i class="fa-solid fa-flag"></i> Report
+                        </button>
+                      <% } %>
+                    </div>
+                  </div>
+                  <div class="forums-post-body mt-3">
+                    <%- post.content %>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </article>
+        <% }); %>
+      </div>
+
+      <% if (discussion.isArchived) { %>
+        <div class="alert alert-warning"><i class="fa-solid fa-box-archive me-2"></i>This discussion has been archived and can no longer receive new replies.</div>
+      <% } else if (discussion.isLocked) { %>
+        <div class="alert alert-info"><i class="fa-solid fa-lock me-2"></i>This discussion is locked. New replies are disabled.</div>
+      <% } %>
+
+      <% if (canReply) { %>
+        <div class="forums-card card shadow-sm mt-4">
+          <div class="card-body">
+            <h5 class="mb-3">Post a reply</h5>
+            <form action="/forums/discussion/<%= discussion.discussionId %>/<%= discussion.slug %>/reply" method="post">
+              <%- include("../../partials/summerNoteEditor.ejs", {
+                editorElementName: "discussionReply",
+                editorPOSTElementName: "content",
+                editorElementText: ""
+              }) %>
+              <div class="text-end mt-3">
+                <button type="submit" class="btn btn-main">Submit Reply</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      <% } else if (!currentUser && !discussion.isArchived && !discussion.isLocked) { %>
+        <div class="forums-card card shadow-sm mt-4">
+          <div class="card-body text-center py-4">
+            <i class="fa-solid fa-comments fa-2x text-muted mb-3"></i>
+            <h5 class="mb-2">Want to join the conversation?</h5>
+            <p class="text-muted mb-3">Sign up or log in to share your thoughts and connect with the community.</p>
+            <div class="d-flex justify-content-center gap-2">
+              <a href="/login?returnTo=<%= encodeURIComponent(req.url) %>" class="btn btn-main">Log In</a>
+              <a href="/register" class="btn btn-outline-secondary">Sign Up</a>
+            </div>
+          </div>
+        </div>
+      <% } %>
+    </div>
+  </div>
+</div>
+
+<% if (canReportContent) { %>
+  <div class="modal fade" id="reportPostModal" tabindex="-1" aria-labelledby="reportPostModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <form id="reportPostForm" novalidate>
+          <div class="modal-header">
+            <h5 class="modal-title" id="reportPostModalLabel">Report forum content</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            <div class="alert d-none" data-report-feedback role="alert"></div>
+            <p class="text-muted small mb-2" data-report-target></p>
+            <a class="small text-break d-none" data-report-link target="_blank" rel="noopener"></a>
+            <div class="mb-3">
+              <label for="reportReasonInput" class="form-label">Reason</label>
+              <input
+                type="text"
+                class="form-control"
+                id="reportReasonInput"
+                name="reportReason"
+                maxlength="100"
+                required
+              >
+              <div class="form-text">Provide a short summary (max 100 characters).</div>
+            </div>
+            <div class="mb-3">
+              <label for="reportEvidenceInput" class="form-label">Additional details (optional)</label>
+              <textarea
+                class="form-control"
+                id="reportEvidenceInput"
+                name="reportReasonEvidence"
+                rows="4"
+                placeholder="Include any supporting details or links."
+              ></textarea>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+            <button type="submit" class="btn btn-danger">Submit report</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    (() => {
+      const reportModal = document.getElementById('reportPostModal');
+      if (!reportModal) {
+        return;
+      }
+
+      const reportForm = document.getElementById('reportPostForm');
+      const reasonInput = reportForm.querySelector('#reportReasonInput');
+      const evidenceInput = reportForm.querySelector('#reportEvidenceInput');
+      const feedbackEl = reportForm.querySelector('[data-report-feedback]');
+      const targetEl = reportForm.querySelector('[data-report-target]');
+      const linkEl = reportForm.querySelector('[data-report-link]');
+      const submitButton = reportForm.querySelector('button[type="submit"]');
+      const defaultSubmitText = submitButton.textContent;
+
+      const hideFeedback = () => {
+        feedbackEl.classList.add('d-none');
+        feedbackEl.classList.remove('alert-success', 'alert-danger');
+        feedbackEl.textContent = '';
+      };
+
+      const showFeedback = (type, message) => {
+        feedbackEl.classList.remove('d-none');
+        feedbackEl.classList.toggle('alert-success', type === 'success');
+        feedbackEl.classList.toggle('alert-danger', type !== 'success');
+        feedbackEl.textContent = message;
+      };
+
+      reportModal.addEventListener('show.bs.modal', (event) => {
+        const trigger = event.relatedTarget;
+        hideFeedback();
+        reportForm.reset();
+
+        if (!trigger) {
+          reportForm.removeAttribute('action');
+          targetEl.textContent = '';
+          linkEl.classList.add('d-none');
+          linkEl.textContent = '';
+          linkEl.removeAttribute('href');
+          submitButton.disabled = false;
+          submitButton.textContent = defaultSubmitText;
+          return;
+        }
+
+        const postId = trigger.getAttribute('data-post-id');
+        const username = trigger.getAttribute('data-username') || 'this user';
+        const postType = trigger.getAttribute('data-post-type') || 'post';
+        const postUrl = trigger.getAttribute('data-post-url') || '';
+
+        if (!postId) {
+          reportForm.removeAttribute('action');
+          targetEl.textContent = 'Unable to determine which post to report.';
+          linkEl.classList.add('d-none');
+          linkEl.textContent = '';
+          linkEl.removeAttribute('href');
+          submitButton.disabled = true;
+          submitButton.textContent = defaultSubmitText;
+          return;
+        }
+
+        reportForm.setAttribute('action', `/forums/post/${postId}/report`);
+        targetEl.textContent = `Reporting ${username}'s ${postType}.`;
+
+        if (postUrl) {
+          let absoluteUrl = postUrl;
+          try {
+            absoluteUrl = new URL(postUrl, window.location.origin).toString();
+          } catch (error) {
+            console.warn('Unable to resolve post URL', error);
+          }
+
+          linkEl.textContent = absoluteUrl;
+          linkEl.setAttribute('href', absoluteUrl);
+          linkEl.classList.remove('d-none');
+        } else {
+          linkEl.textContent = '';
+          linkEl.removeAttribute('href');
+          linkEl.classList.add('d-none');
+        }
+
+        submitButton.disabled = false;
+        submitButton.textContent = defaultSubmitText;
+      });
+
+      reportModal.addEventListener('hidden.bs.modal', () => {
+        hideFeedback();
+        reportForm.reset();
+        reportForm.removeAttribute('action');
+        linkEl.textContent = '';
+        linkEl.removeAttribute('href');
+        linkEl.classList.add('d-none');
+        submitButton.disabled = false;
+        submitButton.textContent = defaultSubmitText;
+      });
+
+      reportForm.addEventListener('submit', async (event) => {
+        event.preventDefault();
+        hideFeedback();
+
+        const action = reportForm.getAttribute('action');
+        if (!action) {
+          showFeedback('danger', 'Unable to determine which post to report.');
+          return;
+        }
+
+        const reason = reasonInput.value.trim();
+        const details = evidenceInput.value.trim();
+
+        if (!reason) {
+          showFeedback('danger', 'Please provide a reason for your report.');
+          reasonInput.focus();
+          return;
+        }
+
+        submitButton.disabled = true;
+        submitButton.textContent = 'Submitting...';
+
+        try {
+          const response = await fetch(action, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              reportReason: reason,
+              reportReasonEvidence: details,
+            }),
+          });
+
+          const data = await response.json().catch(() => null);
+
+          if (response.ok && data?.success) {
+            showFeedback('success', data.message || 'Thanks, your report has been submitted.');
+            reportForm.reset();
+
+            setTimeout(() => {
+              const modalConstructor = window.bootstrap && window.bootstrap.Modal;
+              if (modalConstructor) {
+                const modalInstance = modalConstructor.getInstance(reportModal);
+                if (modalInstance) {
+                  modalInstance.hide();
+                }
+              }
+            }, 1200);
+          } else {
+            const message =
+              data?.message ||
+              (response.status === 401
+                ? 'You must be logged in to report posts.'
+                : 'Unable to submit your report right now. Please try again later.');
+            showFeedback('danger', message);
+          }
+        } catch (error) {
+          console.error('Failed to submit forum report', error);
+          showFeedback('danger', 'An unexpected error occurred. Please try again later.');
+        } finally {
+          submitButton.disabled = false;
+          submitButton.textContent = defaultSubmitText;
+        }
+      });
+    })();
+  </script>
+<% } %>
+
+<% if (canModerate && typeof moveCategories !== 'undefined' && moveCategories && moveCategories.length) { %>
+<div class="modal fade" id="moveDiscussionModal" tabindex="-1" aria-labelledby="moveDiscussionModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <form action="/forums/discussion/<%= discussion.discussionId %>/move" method="post">
+        <div class="modal-header">
+          <h5 class="modal-title" id="moveDiscussionModalLabel">Move Discussion</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <p class="text-muted small">Move "<strong><%= discussion.title %></strong>" to a different category.</p>
+          <div class="mb-3">
+            <label for="newCategoryId" class="form-label">Destination Category</label>
+            <select class="form-select" name="newCategoryId" id="newCategoryId" required>
+              <option value="" disabled selected>Select a category...</option>
+              <% moveCategories.forEach(function(cat) { %>
+                <% if (cat.categoryId !== discussion.categoryId) { %>
+                  <option value="<%= cat.categoryId %>"><%= cat.parentName ? cat.parentName + ' → ' : '' %><%= cat.name %></option>
+                <% } %>
+              <% }); %>
+            </select>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button type="submit" class="btn btn-main">Move Discussion</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+<% } %>
+
+<script>
+  (() => {
+    document.querySelectorAll('form[method="post"]:not([data-async])').forEach(form => {
+      form.addEventListener('submit', () => {
+        const btn = form.querySelector('button[type="submit"]');
+        if (!btn) return;
+        setTimeout(() => {
+          btn.disabled = true;
+          btn.dataset.originalText = btn.textContent;
+          btn.textContent = 'Submitting…';
+        }, 0);
+      });
+    });
+  })();
+</script>
+
+<%- include("../../modules/footer.ejs") %>

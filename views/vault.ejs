@@ -1,0 +1,49 @@
+<%- include("modules/header.ejs", {
+    pageTitle: pageTitle,
+    pageDescription: "Explore the Vault to discover and download our previous maps and explore the worlds and builds of our community."
+}) %>
+
+<%- include("modules/navigationBar.ejs") %>
+
+<%- include("partials/miniHeader.ejs", {
+  headerTitle: "Vault",
+  backgroundImage: globalImage
+}) %>
+
+
+<section class="section">
+    <div class="container">
+      <div>
+        <div class="row">
+
+          <% if (apiData.success == false) { %>
+            <%- include("partials/alert.ejs", {
+              alertType: "danger",
+              content: apiData.message
+            }) %>
+          <% } else { %>
+            <% apiData.data.forEach(function (vault) { %>
+              <!-- <%= vault.displayName %> Vault Item -->
+               <div class="col-lg-4">
+                <div class="service-item mb-4">
+                  <div class="feature-item mb-5 mb-lg-0">
+                    <h4 class="mb-3"><%= vault.displayName %></h4>
+                    <%- vault.description %>
+                    <br>
+                    
+                    <a href="<%= vault.redirectUrl %>">
+                      <button type="button" class="btn btn-primary"><i class="fa-solid fa-download"></i> Download <%= vault.displayName %></button>
+                    </a>
+                  </div>
+                </div>
+              </div>
+            <% }) %>
+        <% } %>
+
+        </div>
+      </div>
+    </div>
+</section>
+
+
+<%- include("modules/footer.ejs") %>  

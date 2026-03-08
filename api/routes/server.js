@@ -1,216 +1,226 @@
-import { isFeatureEnabled, required, optional, generateLog } from "../common";
+import {
+  isFeatureEnabled,
+  required,
+  optional,
+  generateLog,
+} from "../common.js";
 
 export default function serverApiRoute(app, config, db, features, lang) {
   const baseEndpoint = "/api/server";
 
   // TODO: Update docs
   app.get(baseEndpoint + "/get", async function (req, res) {
-    isFeatureEnabled(features.server, res, lang);
+    if (!isFeatureEnabled(features.server, res, lang)) return;
     const id = optional(req.query, "id");
     const type = optional(req.query, "type");
 
     try {
-      function getServers(dbQuery) {
+      const getServersFromDB = (dbQuery, params = []) => {
         return new Promise((resolve, reject) => {
-          db.query(dbQuery, function (error, results, fields) {
-            if (error) {
-              console.error(error);
-              reject(error);
-            } else {
-              if (!results.length) {
-                res.send({
-                  success: false,
-                  message: `There are no servers available.`,
-                });
-              } else {
-                res.send({
-                  success: true,
-                  data: results,
-                });
-              }
-              resolve();
-            }
+          db.query(dbQuery, params, (error, results) => {
+            if (error) return reject(error);
+            resolve(results);
           });
+        });
+      };
+
+      let dbQuery;
+      let params = [];
+
+      if (id) {
+        dbQuery = "SELECT * FROM servers WHERE serverId = ?";
+        params = [id];
+      } else if (type) {
+        dbQuery = "SELECT * FROM servers WHERE serverType = ?";
+        params = [type];
+      } else {
+        dbQuery = "SELECT * FROM servers ORDER BY position ASC";
+      }
+
+      const results = await getServersFromDB(dbQuery, params);
+
+      if (!results || !results.length) {
+        return res.send({
+          success: false,
+          message: `There are no servers available.`,
         });
       }
 
-      // Get Server by ID
-      if (id) {
-        let dbQuery = `SELECT * FROM servers WHERE serverId=${id};`;
-        await getServers(dbQuery);
-      }
-
-      // Get Server by Type
-      if (type) {
-        let dbQuery = `SELECT * FROM servers WHERE serverType='${type}';`;
-        await getServers(dbQuery);
-      }
-
-      // Return all Servers by default
-      let dbQuery = `SELECT * FROM servers ORDER BY position ASC;`;
-      await getServers(dbQuery);
+      return res.send({
+        success: true,
+        data: results,
+      });
     } catch (error) {
       console.error(error);
-      res.send({
-        success: false,
-        message: `${error}`,
-      });
+      if (!res.sent) {
+        return res.status(500).send({
+          success: false,
+          message: `${error}`,
+        });
+      }
     }
   });
 
   app.post(baseEndpoint + "/create", async function (req, res) {
-    isFeatureEnabled(features.server, res, lang);
+    if (!isFeatureEnabled(features.server, res, lang)) return;
 
     const actioningUser = required(req.body, "actioningUser", res);
+    if (res.sent) return;
     const displayName = required(req.body, "displayName", res);
+    if (res.sent) return;
     const serverType = required(req.body, "serverType", res);
+    if (res.sent) return;
     const serverConnectionAddress = required(req.body, "serverConnectionAddress", res);
+    if (res.sent) return;
     const position = required(req.body, "position", res);
+    if (res.sent) return;
 
     const serverCreatedLang = lang.server.serverCreated;
 
     try {
-      db.query(
-        `
-        INSERT INTO 
-            servers
-        (
-            displayName,
-            serverType,
-            serverConnectionAddress,
-            position
-        ) VALUES (?, ?, ?, ?)`,
-        [displayName, serverType, serverConnectionAddress, position],
-        function (error, results, fields) {
-          if (error) {
-            return res.send({
-              success: false,
-              message: `${error}`,
-            });
+      await new Promise((resolve, reject) => {
+        db.query(
+          `
+          INSERT INTO
+              servers
+          (
+              displayName,
+              serverType,
+              serverConnectionAddress,
+              position
+          ) VALUES (?, ?, ?, ?)`,
+          [displayName, serverType, serverConnectionAddress, position],
+          (error, results) => {
+            if (error) return reject(error);
+            resolve(results);
           }
-
-          generateLog(
-            actioningUser,
-            "SUCCESS",
-            "SERVER",
-            `Created ${displayName} (${serverConnectionAddress})`,
-            res
-          );
-
-          return res.send({
-            success: true,
-            message: serverCreatedLang.replace("%NAME%", displayName),
-          });
-        }
-      );
-    } catch (error) {
-      return res.send({
-        success: false,
-        message: `${error}`,
+        );
       });
-    }
 
-    return res;
+      await generateLog(
+        actioningUser,
+        "SUCCESS",
+        "SERVER",
+        `Created ${displayName} (${serverConnectionAddress})`
+      );
+
+      return res.send({
+        success: true,
+        message: serverCreatedLang.replace("%NAME%", displayName),
+      });
+    } catch (error) {
+      console.error(error);
+      if (!res.sent) {
+        return res.status(500).send({
+          success: false,
+          message: `${error}`,
+        });
+      }
+    }
   });
 
   app.post(baseEndpoint + "/edit", async function (req, res) {
-    isFeatureEnabled(features.server, res, lang);
+    if (!isFeatureEnabled(features.server, res, lang)) return;
 
     const actioningUser = required(req.body, "actioningUser", res);
+    if (res.sent) return;
     const serverId = required(req.body, "serverId", res);
+    if (res.sent) return;
     const displayName = required(req.body, "displayName", res);
+    if (res.sent) return;
     const serverType = required(req.body, "serverType", res);
+    if (res.sent) return;
     const serverConnectionAddress = required(
       req.body,
       "serverConnectionAddress",
       res
     );
+    if (res.sent) return;
     const position = required(req.body, "position", res);
+    if (res.sent) return;
 
     try {
-      db.query(
-        `
-            UPDATE 
-                servers 
-            SET 
-                displayName=?,
-                serverType=?,
-                serverConnectionAddress=?, 
-                position=? 
-            WHERE 
-                serverId=?`,
-        [displayName, serverType, serverConnectionAddress, position, serverId],
-        function (error, results, fields) {
-          if (error) {
-            return res.send({
-              success: false,
-              message: `${error}`,
-            });
+      await new Promise((resolve, reject) => {
+        db.query(
+          `
+              UPDATE
+                  servers
+              SET
+                  displayName=?,
+                  serverType=?,
+                  serverConnectionAddress=?,
+                  position=?
+              WHERE
+                  serverId=?`,
+          [displayName, serverType, serverConnectionAddress, position, serverId],
+          (error, results) => {
+            if (error) return reject(error);
+            resolve(results);
           }
-
-          generateLog(
-            actioningUser,
-            "SUCCESS",
-            "SERVER",
-            `Edited ${displayName} (${serverConnectionAddress})`,
-            res
-          );
-
-          return res.send({
-            success: true,
-            message: lang.server.serverEdited,
-          });
-        }
-      );
-    } catch (error) {
-      return res.send({
-        success: false,
-        message: `${error}`,
+        );
       });
-    }
 
-    return res;
+      await generateLog(
+        actioningUser,
+        "SUCCESS",
+        "SERVER",
+        `Edited ${displayName} (${serverConnectionAddress})`
+      );
+
+      return res.send({
+        success: true,
+        message: lang.server.serverEdited,
+      });
+    } catch (error) {
+      console.error(error);
+      if (!res.sent) {
+        return res.status(500).send({
+          success: false,
+          message: `${error}`,
+        });
+      }
+    }
   });
 
   app.post(baseEndpoint + "/delete", async function (req, res) {
-    isFeatureEnabled(features.server, res, lang);
+    if (!isFeatureEnabled(features.server, res, lang)) return;
 
     const actioningUser = required(req.body, "actioningUser", res);
+    if (res.sent) return;
     const serverId = required(req.body, "serverId", res);
+    if (res.sent) return;
 
     try {
-      db.query(
-        `DELETE FROM servers WHERE serverId=?;`,
-        [serverId],
-        function (error, results, fields) {
-          if (error) {
-            return res.send({
-              success: false,
-              message: `${error}`,
-            });
+      await new Promise((resolve, reject) => {
+        db.query(
+          `DELETE FROM servers WHERE serverId=?;`,
+          [serverId],
+          (error, results) => {
+            if (error) return reject(error);
+            resolve(results);
           }
-
-          generateLog(
-            actioningUser,
-            "SUCCESS",
-            "SERVER",
-            `Deleted ${serverId}`,
-            res
-          );
-
-          return res.send({
-            success: true,
-            message: lang.server.serverDeleted,
-          });
-        }
-      );
-    } catch (error) {
-      return res.send({
-        success: false,
-        message: `${error}`,
+        );
       });
-    }
 
-    return res;
+      await generateLog(
+        actioningUser,
+        "SUCCESS",
+        "SERVER",
+        `Deleted ${serverId}`
+      );
+
+      return res.send({
+        success: true,
+        message: lang.server.serverDeleted,
+      });
+    } catch (error) {
+      console.error(error);
+      if (!res.sent) {
+        return res.status(500).send({
+          success: false,
+          message: `${error}`,
+        });
+      }
+    }
   });
 }

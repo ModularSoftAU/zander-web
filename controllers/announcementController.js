@@ -1,33 +1,42 @@
-import fetch from "node-fetch";
+import db from "./databaseController.js";
 
-/*
-    
-*/
-export async function getWebAnnouncement() {
-  const fetchURL = `${process.env.siteAddress}/api/announcement/get?announcementType=web`;
-  try {
-    const response = await fetch(fetchURL, {
-      headers: { "x-access-token": process.env.apiKey },
+function queryDb(sql, params = []) {
+  return new Promise((resolve, reject) => {
+    db.query(sql, params, (error, results) => {
+      if (error) return reject(error);
+      resolve(results || []);
     });
+  });
+}
 
-    if (!response.ok) {
-      // Handle the case where the API request is not successful, e.g., non-2xx status code.
-      throw new Error(
-        `Failed to fetch announcement data. Status: ${response.status}`
-      );
-    }
-
-    const apiData = await response.json();
-
-    if (apiData.data && apiData.data.length > 0) {
-      return apiData.data[0];
-    } else {
-      // Handle the case where there are no announcements.
-      return null; // or return a default value as needed
-    }
+export async function getWebAnnouncement() {
+  try {
+    const rows = await queryDb(
+      `SELECT * FROM announcements
+        WHERE announcementType = 'web' AND enabled = 1
+          AND (startDate IS NULL OR startDate <= NOW())
+          AND (endDate IS NULL OR endDate >= NOW())
+        ORDER BY RAND() LIMIT 1`
+    );
+    return rows.length > 0 ? rows[0] : null;
   } catch (error) {
-    // Handle other potential errors such as network issues or JSON parsing errors.
-    console.error("Error fetching announcement:", error);
-    return null; // or throw an error, or handle it differently as needed
+    console.error("Error fetching web announcement:", error);
+    return null;
+  }
+}
+
+export async function getPopupAnnouncements() {
+  try {
+    const rows = await queryDb(
+      `SELECT * FROM announcements
+        WHERE announcementType = 'popup' AND enabled = 1
+          AND (startDate IS NULL OR startDate <= NOW())
+          AND (endDate IS NULL OR endDate >= NOW())
+        ORDER BY COALESCE(startDate, updatedDate, NOW()) ASC`
+    );
+    return rows;
+  } catch (error) {
+    console.error("Error fetching popup announcements:", error);
+    return [];
   }
 }

@@ -1,5 +1,5 @@
 import { Command, RegisterBehavior } from "@sapphire/framework";
-import { EmbedBuilder } from "discord.js";
+import { Colors, EmbedBuilder } from "discord.js";
 
 export class RulesCommand extends Command {
   constructor(context, options) {

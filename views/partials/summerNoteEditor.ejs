@@ -1,21 +1,97 @@
 <textarea id="<%= editorElementName %>" name="<%= editorPOSTElementName %>"><%= editorElementText %></textarea>
 
+<script src="https://cdn.jsdelivr.net/npm/marked@13/marked.min.js"></script>
 <script>
   $(document).ready(function() {
-    $.ajax({
-        url: 'https://api.github.com/emojis',
-        async: false
-    }).then(function(data) {
-        window.emojis = Object.keys(data);
-        window.emojiUrls = data; 
-    });
+    window.emojis = window.emojis || [];
+    window.emojiUrls = window.emojiUrls || {};
 
-    $.ajax({
-        url: '<%= process.env.siteAddress %>/emojis',
-        async: false
-    }).then(function(data) {
-        window.emojis = Object.keys(data);
-        window.emojiUrls = data; 
+    function updateEmojiData(data) {
+      if (!data) return;
+
+      window.emojis = Object.keys(data);
+      window.emojiUrls = data;
+    }
+
+    function fetchEmojiData(url) {
+      return $.ajax({
+        url: url,
+        dataType: 'json',
+        timeout: 5000,
+      });
+    }
+
+    var hasCustomEmojiData = false;
+
+    fetchEmojiData('https://api.github.com/emojis')
+      .done(function(data) {
+        if (!hasCustomEmojiData) {
+          updateEmojiData(data);
+        }
+      })
+      .fail(function() {
+        console.warn('Unable to load GitHub emoji list.');
+      });
+
+    fetchEmojiData('<%= process.env.siteAddress %>/emojis')
+      .done(function(data) {
+        hasCustomEmojiData = true;
+        updateEmojiData(data);
+      })
+      .fail(function() {
+        console.warn('Unable to load custom emoji list.');
+      });
+
+    // ── Custom toolbar buttons ─────────────────────────────────────────────
+    // The built-in 'style' dropdown is broken in Summernote 0.8.x + BS5
+    // (dropdown items don't fire). Replace with explicit format buttons.
+    // The quote button wraps the current block in <blockquote>.
+    $.extend($.summernote.plugins, {
+      formatNormal: function (ctx) {
+        ctx.memo('button.formatNormal', function () {
+          return $.summernote.ui.button({
+            contents: 'Normal',
+            tooltip: 'Normal text',
+            click: function () { ctx.invoke('editor.formatBlock', 'p'); }
+          }).render();
+        });
+      },
+      formatH1: function (ctx) {
+        ctx.memo('button.formatH1', function () {
+          return $.summernote.ui.button({
+            contents: '<b>H1</b>',
+            tooltip: 'Heading 1',
+            click: function () { ctx.invoke('editor.formatBlock', 'h1'); }
+          }).render();
+        });
+      },
+      formatH2: function (ctx) {
+        ctx.memo('button.formatH2', function () {
+          return $.summernote.ui.button({
+            contents: '<b>H2</b>',
+            tooltip: 'Heading 2',
+            click: function () { ctx.invoke('editor.formatBlock', 'h2'); }
+          }).render();
+        });
+      },
+      formatH3: function (ctx) {
+        ctx.memo('button.formatH3', function () {
+          return $.summernote.ui.button({
+            contents: '<b>H3</b>',
+            tooltip: 'Heading 3',
+            click: function () { ctx.invoke('editor.formatBlock', 'h3'); }
+          }).render();
+        });
+      },
+      quoteBlock: function (ctx) {
+        ctx.memo('button.quoteBlock', function () {
+          return $.summernote.ui.button({
+            contents: '<i class="fa-solid fa-quote-left fa-fw"></i>',
+            tooltip: 'Quote',
+            click: function () { ctx.invoke('editor.formatBlock', 'blockquote'); }
+          }).render();
+        });
+      }
     });
 
     $('#<%= editorElementName %>').summernote({
@@ -25,14 +101,32 @@
         focus: false,
         emoji: true,
         toolbar: [
-          ['style', ['style']],
-          ['font', ['bold', 'underline', 'clear']],
+          ['format', ['formatNormal', 'formatH1', 'formatH2', 'formatH3']],
+          ['font', ['bold', 'italic', 'underline', 'strikethrough', 'clear']],
           ['color', ['color']],
-          ['para', ['ul', 'ol', 'paragraph']],
+          ['para', ['ul', 'ol', 'paragraph', 'quoteBlock']],
           ['table', ['table']],
           ['insert', ['link', 'picture', 'video']],
           ['view', ['fullscreen', 'help']]
         ],
+        callbacks: {
+          onPaste: function (e) {
+            var clipboardData = (e.originalEvent || e).clipboardData || window.clipboardData;
+            if (!clipboardData) return;
+
+            var htmlData  = clipboardData.getData('text/html');
+            var plainText = clipboardData.getData('text/plain');
+
+            // Only convert when the clipboard has no HTML (i.e. plain-text paste)
+            // and the content contains common markdown patterns.
+            var markdownPattern = /^#{1,6} |^\*{1,2}|^[-*] |^> |^\d+\. |\*{2}.+\*{2}/m;
+            if (!htmlData && plainText && markdownPattern.test(plainText) && typeof marked !== 'undefined') {
+              e.preventDefault();
+              var html = marked.parse(plainText);
+              $('#<%= editorElementName %>').summernote('pasteHTML', html);
+            }
+          }
+        },
         hint: {
             match: /:([\-+\w]+)$/,
             search: function (keyword, callback) {
@@ -55,6 +149,14 @@
     });
 
     $('div.note-group-select-from-files').remove();
+
+    // Force-sync the backing textarea right before the form submits.
+    // Summernote updates the textarea on change events but may not flush on
+    // a rapid submit; doing this guarantees content is never lost.
+    $('#<%= editorElementName %>').closest('form').on('submit', function () {
+      document.getElementById('<%= editorElementName %>').value =
+        $('#<%= editorElementName %>').summernote('code');
+    });
 
   });
 </script>

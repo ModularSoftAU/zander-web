@@ -1,0 +1,96 @@
+<%- include("../modules/header.ejs", {
+    pageTitle: pageTitle,
+    pageDescription: "Verify your Minecraft account to finish registration."
+}) %>
+
+<%- include("../modules/navigationBar.ejs") %>
+
+<%- include("../partials/miniHeader.ejs", {
+  headerTitle: "Minecraft Verification",
+  backgroundImage: globalImage
+}) %>
+
+<section class="section">
+  <div class="container">
+    <div class="row justify-content-center">
+      <div class="col-12 col-md-6" style="margin-top: 10px;">
+        <% if (req.cookies.alertType) { %>
+          <%- include("../partials/alert.ejs", {
+            alertType: req.cookies.alertType,
+            content: req.cookies.alertContent
+          }) %>
+        <% } %>
+
+        <p>Join one of the verification servers below using the Minecraft account you registered with. The server will give you a secret 6 digit code. Enter it here to finish verifying your account.</p>
+
+        <% if (apiData.success == false) { %>
+          <%- include("../partials/alert.ejs", {
+            alertType: "danger",
+            content: apiData.message
+          }) %>
+        <% } else { %>
+          <% apiData.data.forEach(function (verifyServer) { %>
+            <div class="feature-item mb-4">
+              <h4 class="mb-2"><%= verifyServer.displayName %></h4>
+              <input type="text" class="form-control input-default text-center" value="<%= verifyServer.serverConnectionAddress %>" disabled>
+            </div>
+          <% }) %>
+        <% } %>
+
+        <form id="verificationForm" method="post" action="<%= process.env.siteAddress %>/register/minecraft">
+          <div id="otp" class="inputs d-flex flex-row justify-content-center mt-4">
+            <input class="m-2 text-center form-control rounded" type="text" name="first" maxlength="1" autocomplete="off" required />
+            <input class="m-2 text-center form-control rounded" type="text" name="second" maxlength="1" autocomplete="off" required />
+            <input class="m-2 text-center form-control rounded" type="text" name="third" maxlength="1" autocomplete="off" required />
+            <input class="m-2 text-center form-control rounded" type="text" name="fourth" maxlength="1" autocomplete="off" required />
+            <input class="m-2 text-center form-control rounded" type="text" name="fifth" maxlength="1" autocomplete="off" required />
+            <input class="m-2 text-center form-control rounded" type="text" name="sixth" maxlength="1" autocomplete="off" required />
+          </div>
+          <div class="text-center mt-3">
+            <button id="submitButton" type="submit" class="btn btn-primary" disabled>Verify Minecraft Account</button>
+          </div>
+        </form>
+
+        <script>
+          function moveToNextInput(currentInput) {
+            var maxLength = parseInt(currentInput.getAttribute('maxlength'));
+            if (currentInput.value.length >= maxLength) {
+              var nextInput = currentInput.nextElementSibling;
+              if (nextInput !== null) {
+                nextInput.focus();
+              }
+            }
+            validateInputs();
+          }
+
+          function validateInputs() {
+            var inputs = document.querySelectorAll('#otp input');
+            var isFilled = true;
+            inputs.forEach(function(input) {
+              if (input.value === '') {
+                isFilled = false;
+              }
+            });
+            document.getElementById('submitButton').disabled = !isFilled;
+          }
+
+          document.addEventListener('DOMContentLoaded', function() {
+            var inputs = document.querySelectorAll('#otp input');
+            inputs.forEach(function(input) {
+              input.addEventListener('input', function() {
+                moveToNextInput(this);
+              });
+            });
+          });
+        </script>
+      </div>
+      <div class="col-12 col-md-6" style="min-height:500px; display: flex; align-items: center;">
+        <div class="text-center">
+          <img class="floating" style="max-width: 100%; height: auto; margin-top:10px;" src="/images/session/registerImage.png" draggable="false" alt="Minecraft verification illustration">
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<%- include("../modules/footer.ejs") %>

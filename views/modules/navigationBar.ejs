@@ -3,7 +3,7 @@
         <div class="container">
             <div class="row align-items-center">
                 <div class="col">
-                    <ul class="top-bar-info list-inline mb-0 pl-0">
+                    <ul class="top-bar-info list-inline mb-0 ps-0">
                         <li class="list-inline-item"><a href="mailto:<%= config.siteConfiguration.email %>"><i class="fas fa-info" style="margin-right: 5px;"></i> <%= config.siteConfiguration.email %></a></li>
                         <li class="list-inline-item"><a href="<%= config.siteConfiguration.platforms.discord %>"><i class="fab fa-discord" style="margin-right: 5px;"></i> Community Discord</a></li>
                         <li class="list-inline-item"><a href="#"><i class="fas fa-laptop" style="margin-right: 5px;"></i> play.craftingforchrist.net</a></li>
@@ -16,14 +16,17 @@
     <nav class="navbar navbar-expand-md navigation" id="navbar">
         <div class="container">
             <a class="navbar-brand" href="/"><img src="/images/siteLogo.png" alt="<%= config.siteConfiguration.siteName %> Logo" class="img-fluid"></a>
-            <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarmain">
-                <span class="navbar-toggler-icon"><i class="fa-solid fa-bars"></i></span>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarmain">
+                <span class="navbar-toggler-icon"></span>
             </button>
             <div class="collapse navbar-collapse" id="navbarmain">
-                <ul class="navbar-nav ml-auto">
+                <ul class="navbar-nav ms-auto">
                     <li class="nav-item"><a class="nav-link" href="/">Home</a></li>
                     <% if (features.server) { %>
                         <li class="nav-item"><a class="nav-link" href="/play">Play</a></li>
+                    <% } %>
+                    <% if (features.report) { %>
+                        <li class="nav-item"><a class="nav-link" href="/report">Report</a></li>
                     <% } %>
                     <% if (features.applications) { %>
                         <li class="nav-item"><a class="nav-link" href="/apply">Apply</a></li>
@@ -31,19 +34,67 @@
                     <% if (features.ranks) { %>
                         <li class="nav-item"><a class="nav-link" href="/ranks">Ranks</a></li>
                     <% } %>
+                    <% if (features.forums) { %>
+                        <li class="nav-item"><a class="nav-link" href="/forums">Forums</a></li>
+                    <% } %>
                     <li class="nav-item"><a class="nav-link" href="/webstore">Webstore</a></li>
+                    <% if (req.session?.user?.permissions?.includes('zander.web.dashboard') || req.session?.user?.permissions?.includes('zander.web.*') || req.session?.user?.permissions?.includes('*')) { %>
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" id="dashboardDropdown" role="button" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                Dashboard
+                            </a>
+                            <div class="dropdown-menu" aria-labelledby="dashboardDropdown">
+                                <a class="dropdown-item" href="/dashboard">Overview</a>
+                                <a class="dropdown-item" href="/dashboard/announcements">Announcements</a>
+                                <a class="dropdown-item" href="/dashboard/servers">Servers</a>
+                                <a class="dropdown-item" href="/dashboard/applications">Applications</a>
+                                <a class="dropdown-item" href="/dashboard/support">Support</a>
+                                <a class="dropdown-item" href="/dashboard/vault">Vault</a>
+                                <a class="dropdown-item" href="/dashboard/logs">Logs</a>
+                                <a class="dropdown-item" href="/dashboard/bridge">Bridge</a>
+                                <a class="dropdown-item" href="/dashboard/ranks">Ranks</a>
+                                <a class="dropdown-item" href="/dashboard/scheduler">Scheduler</a>
+                            </div>
+                        </li>
+                    <% } %>
                     <% if (req.session?.user) { %>
                         <li class="nav-item dropdown">
-                            <a class="nav-link dropdown-toggle" href="#" id="dropdown02" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                                <img style="padding-right: 5px;" src="<%= req.session.user.profilePicture %>" height="20px" draggable="false">
+                            <a class="nav-link dropdown-toggle position-relative" href="#" id="notificationDropdown" role="button" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                <i class="fas fa-bell"></i>
+                                <% if (req.notifications?.unreadCount) { %>
+                                    <span class="badge bg-danger position-absolute top-0 start-100 translate-middle"><%= req.notifications.unreadCount %></span>
+                                <% } %>
+                            </a>
+                            <div class="dropdown-menu dropdown-menu-end p-0" aria-labelledby="notificationDropdown" style="min-width: 280px;">
+                                <div class="px-3 py-2 border-bottom">
+                                    <div class="fw-semibold">Notifications</div>
+                                    <div class="text-muted small"><%= req.notifications?.unreadCount || 0 %> unread</div>
+                                </div>
+                                <% if (req.notifications?.items?.length) { %>
+                                    <% req.notifications.items.forEach((notification) => { %>
+                                        <a class="dropdown-item small py-2" href="/notifications/visit/<%= notification.notificationId %>">
+                                            <div class="fw-semibold <%= notification.isRead ? '' : 'text-primary' %>"><%= notification.title %></div>
+                                            <div class="text-muted text-truncate" style="max-width: 240px;"><%= notification.message %></div>
+                                            <div class="text-muted" style="font-size: 0.75rem;"><span data-relative-time="<%= new Date(notification.createdAt).toISOString() %>"></span></div>
+                                        </a>
+                                    <% }) %>
+                                <% } else { %>
+                                    <div class="px-3 py-3 text-muted small">No notifications yet.</div>
+                                <% } %>
+                                <div class="border-top">
+                                    <a class="dropdown-item text-center" href="/notifications">View all notifications</a>
+                                </div>
+                            </div>
+                        </li>
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" id="dropdown02" role="button" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                <img style="padding-inline-end: 5px;" src="<%= req.session.user.profilePicture %>" height="20px" draggable="false">
                                 <%= req.session.user.username %>
                                 <i class="icofont-thin-down"></i>
                             </a>
                             <div class="dropdown-menu" aria-labelledby="dropdown02">
-                                <% if (req.session.user.permissions.includes('zander.web.dashboard')) { %>
-                                    <a class="dropdown-item" href="/dashboard">Dashboard</a>
-                                <% } %>
                                 <a class="dropdown-item" href="/profile/<%= req.session.user.username %>">Profile</a>
+                                <a class="dropdown-item" href="/support">My Tickets</a>
                                 <a class="dropdown-item" href="/profile/<%= req.session.user.username %>/edit">Edit Profile</a>
                                 <a class="dropdown-item" href="/logout">Logout</a>
                             </div>
@@ -60,3 +111,5 @@
 <%- include("../partials/announcementWeb.ejs", {
     announcementData: announcementWeb
 }) %>
+
+<%- include("../partials/announcementPopup.ejs") %>

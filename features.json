@@ -1,18 +1,22 @@
 {
   "announcements": true,
   "applications": true,
+  "forums": true,
   "discord": {
-    "commands": {
-      "legoFlip": true
-    },
     "events": {
       "generalKenobi": true,
       "guildMemberBoost": true,
-      "guildMemberVerify": true
-    }
+      "guildMemberVerify": true,
+      "nicknameCheck": true
+    },
+    "punishments": true
   },
   "server": true,
   "ranks": true,
+  "report": true,
+  "shopdirectory": true,
+  "vault": true,
+  "bridge": true,
   "filter": {
     "link": true,
     "phrase": true
@@ -21,6 +25,8 @@
     "login": true,
     "register": true
   },
+
+  "staffAuditReport": true,
 
   "smDiscord": true,
   "smFacebook": true,

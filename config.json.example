@@ -1,6 +1,7 @@
 {
   "debug": false,
   "siteConfiguration": {
+    "siteUrl": "https://craftingforchrist.net",
     "siteName": "Crafting For Christ",
     "tagline": "Crafting A Christ Centred Gaming Community",
     "keywords": "Christian, Minecraft, Faith, Gaming, Ministry, Community, Believers, Experience, Crafting, Creativity, Worship, Scripture, Fellowship, Gameplay, Builds, Christian Minecraft Server, Faith-based Gaming Community, Minecraft for Christians, Christ-Centered Gameplay, Bible-inspired Builds, Virtual Fellowship, Gaming Ministry, Christian Gaming Experience, Building Faith in Minecraft, Community of Faithful Gamers, Gaming and Worship, Scripture-based Creativity, Christian Fellowship in Minecraft",
@@ -16,7 +17,7 @@
       "webstore": "https://crafting-for-christ.tebex.io",
       "discord": "https://discord.com/",
       "issueTracker": "https://github.com/craftingforchrist/Issues/issues",
-      "knowledgebase": "https://guides.craftingforchrist.net/",
+      "knowledgebase": "https://kb.craftingforchrist.net/",
       "facebook": "https://www.facebook.com/craft4christ/",
       "twitter": "https://twitter.com/craft4christmc",
       "instagram": "https://instagram.com/craftingforchrist",
@@ -28,15 +29,41 @@
     }
   },
   "discord": {
-    "guildId": "IDTAG",
-    "channels": {
-      "welcome": "IDTAG",
-      "networkChatLog": "IDTAG",
-      "adminLog": "IDTAG",
-      "staffChannel": "IDTAG"
+    "guildId": "GUILDID",
+"supportPanelChannelId": "CHANNELID",
+    "supportTicketCategoryId": "CATEGORYID",
+    "botChannelId": "CHANNELID",
+    "webhooks": {
+      "welcome": "WEBHOOKURL",
+      "networkChatLog": "WEBHOOKURL",
+      "adminLog": "WEBHOOKURL",
+      "staffChannel": "WEBHOOKURL",
+      "staffAuditLog": "WEBHOOKURL",
+      "staffPunishmentNotifications": "WEBHOOKURL"
     },
+    "nicknameReportChannelId": "786042085937643540",
     "roles": {
-      "verified": "IDTAG"
+      "verified": "ROLEID",
+      "muted": "ROLEID"
+    },
+    "punishments": {
+      "logChannelId": "CHANNELID",
+      "appealBaseUrl": "/appeal",
+      "permissions": {
+        "can_warn": "zander.discord.punish.warn",
+        "can_kick": "zander.discord.punish.kick",
+        "can_ban": "zander.discord.punish.ban",
+        "can_mute": "zander.discord.punish.mute",
+        "can_view_history": "zander.discord.punish.history"
+      },
+      "requireDmSuccess": false
     }
+  },
+  "staffAuditReport": {
+    "enabled": true,
+    "dayOfWeek": "Monday",
+    "time": "12:00",
+    "timezone": "Australia/Sydney",
+    "webhookUrl": "WEBHOOKURL"
   }
 }

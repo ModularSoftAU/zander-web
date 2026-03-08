@@ -1,5 +1,5 @@
-import db from "./databaseController";
-import { UserGetter } from "./userController";
+import db from "./databaseController.js";
+import { UserGetter } from "./userController.js";
 
 export async function updateAudit_lastMinecraftLogin(auditDateTime, username) {
   const userData = new UserGetter();
@@ -64,7 +64,7 @@ export async function updateAudit_lastDiscordMessage(auditDateTime, discordId) {
       }
     );
 
-    console.log(`Discord account for this user is not linked, chat audit ignored.`);
+    console.warn(`Discord account for this user is not linked, chat audit ignored.`);
   }
 }
 
@@ -83,6 +83,6 @@ export async function updateAudit_lastDiscordVoice(auditDateTime, discordId) {
       }
     );
 
-    console.log(`Discord account for this user is not linked, chat audit ignored.`);    
+    console.warn(`Discord account for this user is not linked, chat audit ignored.`);
   }
 }

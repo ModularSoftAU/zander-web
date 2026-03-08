@@ -1,0 +1,26 @@
+<%- include('../../modules/header.ejs', {
+    pageTitle: 'Support Tickets',
+    pageDescription: 'Support Tickets'
+}) %>
+
+<%- include('../../modules/navigationBar.ejs') %>
+
+<%- include('../../partials/miniHeader.ejs', {
+    headerTitle: 'Support Tickets',
+    globalImage,
+}) %>
+
+<div class="container my-4">
+    <div class="card">
+        <div class="card-header">
+            <h2>Login Required</h2>
+        </div>
+        <div class="card-body">
+            <p>You must be logged in to view your support tickets.</p>
+            <a href="/login" class="btn btn-primary">Login</a>
+            <a href="/register" class="btn btn-secondary">Sign Up</a>
+        </div>
+    </div>
+</div>
+
+<%- include('../../modules/footer.ejs') %>

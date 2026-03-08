@@ -1,7 +1,10 @@
 import { Command, RegisterBehavior } from "@sapphire/framework";
 import { Colors, EmbedBuilder } from "discord.js";
-import config from "../config.json" assert { type: "json" };
+import { createRequire } from "module";
+const require = createRequire(import.meta.url);
+const config = require("../config.json");
 import { MessageBuilder, Webhook } from "discord-webhook-node";
+import { sendWebhookMessage } from "../lib/discord/webhooks.mjs";
 
 export class StaffHelpCommand extends Command {
   constructor(context, options) {
@@ -14,9 +17,9 @@ export class StaffHelpCommand extends Command {
         .setName("staffhelp")
         .setDescription("Sends a message to our Staff for help or assistance.")
         .addStringOption((option) =>
-          option //
-            .setName("help")
-            .setDescription("What you need help with.")
+          option
+            .setName("query")
+            .setDescription("What you need help with?")
             .setRequired(true)
         )
     );
@@ -40,7 +43,20 @@ export class StaffHelpCommand extends Command {
     const staffChannelHook = new Webhook(
       config.discord.webhooks.staffChannel
     );
-    staffChannelHook.send(staffAssistanceEmbed);
+
+    const webhookSent = await sendWebhookMessage(
+      staffChannelHook,
+      staffAssistanceEmbed,
+      { context: "commands/staffhelp" }
+    );
+
+    if (!webhookSent) {
+      return interaction.reply({
+        content:
+          "We were unable to send your assistance request. Please try again later.",
+        ephemeral: true,
+      });
+    }
 
     interaction.reply({
       embeds: [staffAssistanceConfirmed],

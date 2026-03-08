@@ -1,8 +1,11 @@
 import { Listener } from "@sapphire/framework";
-import config from "../config.json" assert { type: "json" };
+import { createRequire } from "module";
+const require = createRequire(import.meta.url);
+const config = require("../config.json");
 import { Colors, EmbedBuilder } from "discord.js";
-import features from "../features.json" assert { type: "json" };
+const features = require("../features.json");
 import { MessageBuilder, Webhook } from "discord-webhook-node";
+import { sendWebhookMessage } from "../lib/discord/webhooks.mjs";
 
 export class GuildMemberBoostUpdateListener extends Listener {
   constructor(context, options) {
@@ -13,7 +16,7 @@ export class GuildMemberBoostUpdateListener extends Listener {
     });
   }
 
-  run(oldMember, newMember) {
+  async run(oldMember, newMember) {
     if (features.discord.events.guildMemberBoost) {
       if (!newMember.guild) return;
       if (newMember.user.bot) return;
@@ -29,7 +32,9 @@ export class GuildMemberBoostUpdateListener extends Listener {
             `\`${newMember.user.username}\` has boosted the Server! :tada:`
           )
           .setColor(Colors.DarkVividPink);
-        welcomeHook.send(embed);
+        await sendWebhookMessage(welcomeHook, embed, {
+          context: "listeners/guildMemberBoostUpdate",
+        });
       }
       return;
     }

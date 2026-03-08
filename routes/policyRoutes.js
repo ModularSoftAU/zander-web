@@ -1,5 +1,5 @@
-import { getGlobalImage } from "../api/common";
-import { getWebAnnouncement } from "../controllers/announcementController";
+import { getGlobalImage } from "../api/common.js";
+import { getWebAnnouncement } from "../controllers/announcementController.js";
 
 export default function policySiteRoute(app, config, features) {
   app.get("/terms", async function (req, res) {

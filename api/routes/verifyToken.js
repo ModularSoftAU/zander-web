@@ -1,4 +1,6 @@
-import lang from "../../lang.json" assert { type: "json" };
+import { createRequire } from "module";
+const require = createRequire(import.meta.url);
+const lang = require("../../lang.json");
 
 export default function verifyToken(req, res, done) {
   var token = req.headers["x-access-token"];
@@ -13,12 +15,12 @@ export default function verifyToken(req, res, done) {
 
   if (token === process.env.apiKey) {
     // Passed
-    done();
-  } else {
-    // Token was incorrect.
-    return res.send({
-      success: false,
-      message: lang.api.invalidToken,
-    });
+    return done();
   }
+
+  // Token was incorrect.
+  return res.send({
+    success: false,
+    message: lang.api.invalidToken,
+  });
 }

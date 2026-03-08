@@ -2,10 +2,10 @@
 <footer class="footer section gray-bg">
 	<div class="container">
 		<div class="row">
-			<div class="col-lg-3 mr-auto col-sm-6">
+			<div class="col-lg-3 me-auto col-sm-6">
 				<div class="widget mb-5 mb-lg-0">
 					<div class="logo mb-4">
-						<img src="images/siteLogo.png" alt="" class="img-fluid">
+						<img src="/images/siteLogo.png" alt="" class="img-fluid">
 					</div>
 
 					<ul class="list-inline footer-socials mt-4">
@@ -51,8 +51,17 @@
 							<li><a href="/apply">Apply</a></li>
 						<% } %>
 						<li><a href="/knowledgebase">Knowledgebase</a></li>
+						<% if (features.report) { %>
+							<li><a href="/report">Report a Player</a></li>
+						<% } %>
 						<% if (features.ranks) { %>
 							<li><a href="/ranks">Ranks</a></li>
+						<% } %>
+						<% if (features.vault) { %>
+							<li><a href="/vault">Vault</a></li>
+						<% } %>
+						<% if (features.shopdirectory) { %>
+							<li><a href="/shopdirectory">Shop Directory</a></li>
 						<% } %>
 					</ul>
 				</div>
@@ -115,32 +124,17 @@
 
     <script src="/js/script.js"></script>
     <script src="/js/contact.js"></script>
+    <script src="/js/relativeTime.js"></script>
 
 	<!-- Tabbing in profiles -->
 	<script>
-		$(document).ready(function(){
-			$('#myTab a').on('click', function (e) {
-				e.preventDefault()
-				$(this).tab('show')
-			})
-		});
-	</script>
+		const triggerTabList = document.querySelectorAll('#myTab a')
+		triggerTabList.forEach(triggerEl => {
+			const tabTrigger = new bootstrap.Tab(triggerEl)
 
-	<script>
-		var tabTriggerList = document.querySelectorAll('#myTab a')
-		var tabContentList = document.querySelectorAll('.tab-content .tab-pane')
-		tabTriggerList.forEach(function (tabTrigger) {
-			tabTrigger.addEventListener('click', function (event) {
+			triggerEl.addEventListener('click', event => {
 				event.preventDefault()
-				var tabTriggerTarget = document.querySelector(tabTrigger.getAttribute('href'))
-				tabContentList.forEach(function (tabContent) {
-					tabContent.classList.remove('active', 'show')
-				})
-				tabTriggerList.forEach(function (tabTrigger) {
-					tabTrigger.classList.remove('active')
-				})
-				tabTrigger.classList.add('active')
-				tabTriggerTarget.classList.add('active', 'show')
+				tabTrigger.show()
 			})
 		})
 	</script>
@@ -148,7 +142,7 @@
 	<!-- Tooltips -->
 	<script>
 		$(document).ready(function(){
-			$('[data-toggle="tooltip"]').tooltip();
+			$('[data-bs-toggle="tooltip"]').tooltip();
 		});
 	</script>
   </body>

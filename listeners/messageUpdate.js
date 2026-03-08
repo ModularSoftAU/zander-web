@@ -1,7 +1,10 @@
 import { Listener } from "@sapphire/framework";
-import config from "../config.json" assert { type: "json" };
+import { createRequire } from "module";
+const require = createRequire(import.meta.url);
+const config = require("../config.json");
 import { Colors, EmbedBuilder } from "discord.js";
 import { MessageBuilder, Webhook } from "discord-webhook-node";
+import { sendWebhookMessage } from "../lib/discord/webhooks.mjs";
 
 export class GuildMessageUpdateListener extends Listener {
   constructor(context, options) {
@@ -12,7 +15,7 @@ export class GuildMessageUpdateListener extends Listener {
     });
   }
 
-  run(oldMessage, newMessage) {
+  async run(oldMessage, newMessage) {
     // Check if the author is a bot and stop if true.
     if (newMessage.author.bot) return;
 
@@ -37,6 +40,8 @@ export class GuildMessageUpdateListener extends Listener {
         false,
       );
 
-    adminLogHook.send(embed);
+    await sendWebhookMessage(adminLogHook, embed, {
+      context: "listeners/messageUpdate",
+    });
   }
 }

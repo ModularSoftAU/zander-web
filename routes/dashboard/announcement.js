@@ -2,8 +2,8 @@ import {
   getGlobalImage,
   hasPermission,
   isFeatureWebRouteEnabled,
-} from "../../api/common";
-import { getWebAnnouncement } from "../../controllers/announcementController";
+} from "../../api/common.js";
+import { getWebAnnouncement } from "../../controllers/announcementController.js";
 
 export default function dashboardAnnouncementSiteRoute(
   app,
@@ -14,7 +14,7 @@ export default function dashboardAnnouncementSiteRoute(
   lang
 ) {
   //
-  // Servers
+  // Announcements
   //
   app.get("/dashboard/announcements", async function (req, res) {
     if (!isFeatureWebRouteEnabled(features.announcements, req, res, features))
@@ -34,7 +34,7 @@ export default function dashboardAnnouncementSiteRoute(
       apiData: apiData,
       features: features,
       req: req,
-      globalImage: getGlobalImage(),
+      globalImage: await getGlobalImage(),
       announcementWeb: await getWebAnnouncement(),
     });
 
@@ -53,7 +53,7 @@ export default function dashboardAnnouncementSiteRoute(
       type: "create",
       features: features,
       req: req,
-      globalImage: getGlobalImage(),
+      globalImage: await getGlobalImage(),
       announcementWeb: await getWebAnnouncement(),
     });
 
@@ -66,8 +66,8 @@ export default function dashboardAnnouncementSiteRoute(
 
     if (!hasPermission("zander.web.announcements", req, res, features)) return;
 
-    const announcementSlug = req.query.announcementSlug;
-    const fetchURL = `${process.env.siteAddress}/api/announcement/get?announcementSlug=${announcementSlug}`;
+    const announcementId = req.query.announcementId;
+    const fetchURL = `${process.env.siteAddress}/api/announcement/get?announcementId=${announcementId}`;
     const response = await fetch(fetchURL, {
       headers: { "x-access-token": process.env.apiKey },
     });
@@ -80,7 +80,7 @@ export default function dashboardAnnouncementSiteRoute(
       type: "edit",
       features: features,
       req: req,
-      globalImage: getGlobalImage(),
+      globalImage: await getGlobalImage(),
       announcementWeb: await getWebAnnouncement(),
     });
 
