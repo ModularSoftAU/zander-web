@@ -5,6 +5,11 @@
 
 <%- include("../../modules/navigationBar.ejs") %>
 
+<%- include("../../partials/miniHeader.ejs", {
+    headerTitle: "Watch",
+    globalImage,
+}) %>
+
 <div class="container py-5">
     <% if (req.cookies.alertType) { %>
         <div class="mb-4">
