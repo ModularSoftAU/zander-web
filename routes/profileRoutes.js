@@ -28,6 +28,7 @@ import {
   upsertPlatformConnection,
   deactivatePlatformConnection,
 } from "../controllers/watchController.js";
+import { checkAndReportNickname } from "../lib/discord/nicknameCheck.mjs";
 
 export default function profileSiteRoutes(
   app,
@@ -468,6 +469,19 @@ export default function profileSiteRoutes(
       );
 
       req.session.user.discordID = discordUser.id;
+
+      // Trigger nickname enforcement now that the account is linked
+      if (features.discord?.events?.nicknameCheck && config.discord?.nicknameReportChannelId && config.discord?.guildId) {
+        try {
+          const guild = await client.guilds.fetch(config.discord.guildId);
+          const member = await guild.members.fetch(discordUser.id).catch(() => null);
+          if (member) {
+            await checkAndReportNickname(member, config.discord.nicknameReportChannelId, "Discord Account Linked");
+          }
+        } catch (err) {
+          console.error("[PROFILE] Nickname check after Discord link failed:", err.message);
+        }
+      }
 
       setBannerCookie("success", "Discord account connected!", res);
     } catch (error) {
