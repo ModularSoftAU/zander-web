@@ -132,7 +132,7 @@ async function syncTwitchCreator(creator, appToken, fetchFn) {
     );
 
     const isCfc = Boolean(matchedRule);
-    const isPublic = isCfc;
+    const isPublic = true; // all eligible creators (permission-gated) are publicly visible when live
 
     const thumbnailUrl = stream.thumbnail_url
       ? stream.thumbnail_url.replace("{width}", "640").replace("{height}", "360")

@@ -167,8 +167,8 @@ async function syncYoutubeCreator(creator, apiKey, fetchFn) {
       const isCurrentlyLive = liveBroadcastContent === "live";
       const contentType = isCurrentlyLive || liveBroadcastContent === "upcoming" ? "live_stream" : "video";
 
-      // Only expose to public if CFC-related and actually published/live
-      const isPublic = isCfc && liveBroadcastContent !== "upcoming";
+      // All eligible creators (permission-gated) are publicly visible when live or uploaded; upcoming streams are excluded
+      const isPublic = liveBroadcastContent !== "upcoming";
 
       const publishedAt = snippet.publishedAt ? new Date(snippet.publishedAt) : null;
       const startedAt = liveDetails?.actualStartTime ? new Date(liveDetails.actualStartTime) : null;

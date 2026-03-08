@@ -105,8 +105,8 @@
                                 <% } %>
                             </p>
                             <div class="mt-auto d-flex gap-2">
-                                <a href="/profile/<%= item.username %>" class="btn btn-sm btn-outline-secondary flex-grow-1">
-                                    <i class="fa-solid fa-user me-1"></i>Profile
+                                <a href="<%= item.watch_url %>" target="_blank" rel="noopener noreferrer" class="btn btn-sm btn-outline-secondary flex-grow-1">
+                                    <i class="fa-solid fa-play me-1"></i>Watch
                                 </a>
                                 <% if (item.platform === 'twitch') { %>
                                     <a href="<%= item.watch_url %>" target="_blank" rel="noopener noreferrer" class="btn btn-sm flex-grow-1" style="background:#9146FF;color:#fff;">
@@ -175,8 +175,8 @@
                                 <% } %>
                             </p>
                             <div class="mt-auto d-flex gap-2">
-                                <a href="/profile/<%= item.username %>" class="btn btn-sm btn-outline-secondary flex-grow-1">
-                                    <i class="fa-solid fa-user me-1"></i>Profile
+                                <a href="<%= item.watch_url %>" target="_blank" rel="noopener noreferrer" class="btn btn-sm btn-outline-secondary flex-grow-1">
+                                    <i class="fa-solid fa-play me-1"></i>Watch
                                 </a>
                                 <% if (item.platform === 'twitch') { %>
                                     <a href="<%= item.watch_url %>" target="_blank" rel="noopener noreferrer" class="btn btn-sm flex-grow-1" style="background:#9146FF;color:#fff;">
