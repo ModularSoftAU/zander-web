@@ -3,6 +3,7 @@ import { getWebAnnouncement } from "../controllers/announcementController.js";
 import {
   getPublicLiveContent,
   getPublicVideoContent,
+  getPublicVideoCount,
 } from "../controllers/watchController.js";
 
 export default function watchSiteRoutes(app, client, fetch, moment, config, db, features, lang) {
@@ -22,10 +23,23 @@ export default function watchSiteRoutes(app, client, fetch, moment, config, db, 
     }
 
     try {
-      const [liveContent, videoContent] = await Promise.all([
+      const PAGE_SIZE = 12;
+      const page = Math.max(1, parseInt(req.query.page) || 1);
+      const offset = (page - 1) * PAGE_SIZE;
+
+      const [liveContent, videoContent, totalVideos] = await Promise.all([
         getPublicLiveContent(),
-        getPublicVideoContent(20),
+        getPublicVideoContent(PAGE_SIZE, offset),
+        getPublicVideoCount(),
       ]);
+
+      const totalPages = Math.ceil(totalVideos / PAGE_SIZE);
+      const pagination = {
+        currentPage: page,
+        totalPages,
+        hasPrev: page > 1,
+        hasNext: page < totalPages,
+      };
 
       return res.view("modules/watch/watch", {
         pageTitle: "Watch",
@@ -36,6 +50,7 @@ export default function watchSiteRoutes(app, client, fetch, moment, config, db, 
         announcementWeb: await getWebAnnouncement(),
         liveContent,
         videoContent,
+        pagination,
         moment,
       });
     } catch (error) {

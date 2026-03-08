@@ -199,6 +199,12 @@
                 <% } %>
             </div>
         <% } %>
+
+        <%- include("../../modules/forums/partials/pagination.ejs", {
+            pagination,
+            query: req.query,
+            basePath: "/watch",
+        }) %>
     </section>
 </div>
 

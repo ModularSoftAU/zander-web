@@ -222,18 +222,32 @@ export function getPublicLiveContent() {
   });
 }
 
-export function getPublicVideoContent(limit = 20) {
+export function getPublicVideoContent(limit = 20, offset = 0) {
   return new Promise((resolve, reject) => {
     db.query(
       `SELECT cci.*, u.username FROM creator_content_items cci
        JOIN users u ON u.userId = cci.user_id
        WHERE cci.is_publicly_visible=1 AND cci.content_type='video' AND cci.is_live=0
        ORDER BY cci.published_at DESC
-       LIMIT ?`,
-      [limit],
+       LIMIT ? OFFSET ?`,
+      [limit, offset],
       (error, results) => {
         if (error) return reject(error);
         resolve(results || []);
+      }
+    );
+  });
+}
+
+export function getPublicVideoCount() {
+  return new Promise((resolve, reject) => {
+    db.query(
+      `SELECT COUNT(*) AS total FROM creator_content_items
+       WHERE is_publicly_visible=1 AND content_type='video' AND is_live=0`,
+      [],
+      (error, results) => {
+        if (error) return reject(error);
+        resolve(results?.[0]?.total || 0);
       }
     );
   });
