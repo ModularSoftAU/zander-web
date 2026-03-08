@@ -3,6 +3,7 @@ name: zander-hub
 version: ${project.version}
 author: ModularSoft
 api-version: 1.19
+depend: [PremiumVanish, ProtocolLib]
 
 commands:
   fly:

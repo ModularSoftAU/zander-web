@@ -15,6 +15,7 @@ import org.bukkit.event.weather.WeatherChangeEvent;
 public class HubProtection implements Listener {
 
     ZanderHubMain plugin;
+
     public HubProtection(ZanderHubMain plugin) {
         this.plugin = plugin;
     }
@@ -146,18 +147,6 @@ public class HubProtection implements Listener {
     @EventHandler(priority = EventPriority.HIGH)
     public void death(final PlayerDeathEvent event) {
         event.getDrops().clear();
-    }
-
-    // Hide the normal join message
-    @EventHandler(priority = EventPriority.HIGH)
-    public void HideJoinMessage(PlayerJoinEvent event) {
-        event.joinMessage(null);
-    }
-
-    // Hide the normal leave message
-    @EventHandler(priority = EventPriority.HIGH)
-    public void HideLeaveMessage(PlayerQuitEvent event) {
-        event.quitMessage(null);
     }
 
     // Hide all death messages

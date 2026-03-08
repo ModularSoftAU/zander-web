@@ -1,6 +1,6 @@
 welcome:
   - "&e Welcome to My Server!"
-newplayerwelcome:
+welcome_newplayer:
   - "&e&l ========== My Server ========== &r"
   - "&9&l Website:&r http://myserver.net"
   - "&9&l Discord:&r http://myserver.net/discord"
