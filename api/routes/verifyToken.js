@@ -15,12 +15,12 @@ export default function verifyToken(req, res, done) {
 
   if (token === process.env.apiKey) {
     // Passed
-    done();
-  } else {
-    // Token was incorrect.
-    return res.send({
-      success: false,
-      message: lang.api.invalidToken,
-    });
+    return done();
   }
+
+  // Token was incorrect.
+  return res.send({
+    success: false,
+    message: lang.api.invalidToken,
+  });
 }

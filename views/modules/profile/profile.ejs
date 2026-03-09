@@ -356,7 +356,11 @@
                 </div>
             <% } %>
 
-            <% const hasSocialConnections = profileApiData.social_discord || profileApiData.social_steam || profileApiData.social_twitch || profileApiData.social_youtube || profileApiData.social_twitter_x || profileApiData.social_instagram || profileApiData.social_reddit || profileApiData.social_spotify; %>
+            <%
+                const twitchPlatConn = platformConnections && platformConnections.twitch;
+                const youtubePlatConn = platformConnections && platformConnections.youtube;
+                const hasSocialConnections = profileApiData.social_discord || profileApiData.social_steam || twitchPlatConn || youtubePlatConn || profileApiData.social_twitter_x || profileApiData.social_instagram || profileApiData.social_reddit || profileApiData.social_spotify;
+            %>
             <% if (hasSocialConnections || profileApiData.discordId) { %>
                 <div class="card shadow-sm border-0">
                     <div class="card-body p-4">
@@ -379,11 +383,11 @@
                                 <% if (profileApiData.social_steam) { %>
                                     <li class="profile-social-item"><i class="fa-brands fa-steam"></i> <a href="https://steamcommunity.com/id/<%= profileApiData.social_steam %>" target="_blank" rel="noopener">Steam</a></li>
                                 <% } %>
-                                <% if (profileApiData.social_twitch) { %>
-                                    <li class="profile-social-item"><i class="fa-brands fa-twitch"></i> <a href="https://twitch.tv/<%= profileApiData.social_twitch %>" target="_blank" rel="noopener">Twitch</a></li>
+                                <% if (twitchPlatConn) { %>
+                                    <li class="profile-social-item"><i class="fa-brands fa-twitch"></i> <a href="https://twitch.tv/<%= twitchPlatConn.platform_username %>" target="_blank" rel="noopener">Twitch</a></li>
                                 <% } %>
-                                <% if (profileApiData.social_youtube) { %>
-                                    <li class="profile-social-item"><i class="fa-brands fa-youtube"></i> <a href="https://youtube.com/<%= profileApiData.social_youtube %>" target="_blank" rel="noopener">YouTube</a></li>
+                                <% if (youtubePlatConn) { %>
+                                    <li class="profile-social-item"><i class="fa-brands fa-youtube"></i> <a href="https://youtube.com/<%= youtubePlatConn.platform_username %>" target="_blank" rel="noopener">YouTube</a></li>
                                 <% } %>
                                 <% if (profileApiData.social_twitter_x) { %>
                                     <li class="profile-social-item"><i class="fa-brands fa-twitter"></i> <a href="https://twitter.com/<%= profileApiData.social_twitter_x %>" target="_blank" rel="noopener">Twitter / X</a></li>

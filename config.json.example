@@ -59,6 +59,20 @@
       "requireDmSuccess": false
     }
   },
+  "watch": {
+    "contentChannelWebhook": "WEBHOOKURL",
+    "contentPingRoleId": null,
+    "filters": {
+      "twitch": {
+        "titleMarkers": ["#cfc", "[cfc]"],
+        "tags": ["cfc"]
+      },
+      "youtube": {
+        "tags": ["cfc"],
+        "descriptionMarkers": ["#cfc"]
+      }
+    }
+  },
   "staffAuditReport": {
     "enabled": true,
     "dayOfWeek": "Monday",

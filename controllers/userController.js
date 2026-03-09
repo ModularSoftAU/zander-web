@@ -454,20 +454,16 @@ export async function setProfileSocialConnections(
   userId,
   social_discord,
   social_steam,
-  social_twitch,
-  social_youtube,
   social_twitter_x,
   social_instagram,
   social_reddit,
   social_spotify
 ) {
   db.query(
-    `UPDATE users SET social_discord=?, social_steam=?, social_twitch=?, social_youtube=?, social_twitter_x=?, social_instagram=?, social_reddit=?, social_spotify=? WHERE userId=?;`,
+    `UPDATE users SET social_discord=?, social_steam=?, social_twitter_x=?, social_instagram=?, social_reddit=?, social_spotify=? WHERE userId=?;`,
     [
       social_discord,
       social_steam,
-      social_twitch,
-      social_youtube,
       social_twitter_x,
       social_instagram,
       social_reddit,
