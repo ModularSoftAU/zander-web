@@ -128,19 +128,54 @@ async function resolveChannelId(rawId, apiKey, fetchFn) {
   return rawId;
 }
 
-async function fetchRecentChannelItems(channelId, apiKey, fetchFn) {
-  // Fetch recent uploads (videos + live)
-  const url = `${YT_BASE}/search?part=snippet&channelId=${encodeURIComponent(channelId)}&type=video&order=date&maxResults=15&key=${encodeURIComponent(apiKey)}`;
+// Cache uploads playlist IDs — these never change for a channel so we only
+// need to fetch them once per process lifetime (or per cold start).
+const uploadsPlaylistCache = new Map();
 
+/**
+ * Returns the uploads playlist ID for a channel.
+ * Costs 1 quota unit on first call; free thereafter (in-memory cache).
+ */
+async function getUploadsPlaylistId(channelId, apiKey, fetchFn) {
+  if (uploadsPlaylistCache.has(channelId)) {
+    return uploadsPlaylistCache.get(channelId);
+  }
+
+  const url = `${YT_BASE}/channels?part=contentDetails&id=${encodeURIComponent(channelId)}&key=${encodeURIComponent(apiKey)}`;
   const res = await fetchFn(url);
   if (!res.ok) {
     const body = await res.text();
-    console.error(`[WatchYouTube] search.list API error (${res.status}):`, body);
+    console.error(`[WatchYouTube] channels.list (contentDetails) error (${res.status}):`, body);
+    return null;
+  }
+
+  const data = await res.json();
+  const playlistId = data?.items?.[0]?.contentDetails?.relatedPlaylists?.uploads;
+  if (playlistId) {
+    uploadsPlaylistCache.set(channelId, playlistId);
+  }
+  return playlistId || null;
+}
+
+/**
+ * Fetches recent video IDs from the channel's uploads playlist.
+ * Costs 1 quota unit (playlistItems.list) — replaces search.list (100 units).
+ */
+async function fetchRecentChannelItems(channelId, apiKey, fetchFn) {
+  const playlistId = await getUploadsPlaylistId(channelId, apiKey, fetchFn);
+  if (!playlistId) return [];
+
+  const url = `${YT_BASE}/playlistItems?part=contentDetails&playlistId=${encodeURIComponent(playlistId)}&maxResults=15&key=${encodeURIComponent(apiKey)}`;
+  const res = await fetchFn(url);
+  if (!res.ok) {
+    const body = await res.text();
+    console.error(`[WatchYouTube] playlistItems.list error (${res.status}):`, body);
     return [];
   }
 
   const data = await res.json();
-  return data?.items || [];
+  // Return in the same shape the rest of the code expects: [{id:{videoId}}]
+  return (data?.items || []).map((i) => ({ id: { videoId: i.contentDetails?.videoId } }));
 }
 
 // ---------------------------------------------------------------------------
