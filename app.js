@@ -61,14 +61,19 @@ const buildApp = async () => {
   app.setNotFoundHandler(async function (req, res) {
     res.status(404);
 
-    return res.view("session/notFound", {
-      pageTitle: `404 Not Found`,
-      config: config,
-      req: req,
-      features: features,
-      globalImage: await getGlobalImage(),
-      announcementWeb: await getWebAnnouncement(),
-    });
+    try {
+      return res.view("session/notFound", {
+        pageTitle: `404 Not Found`,
+        config: config,
+        req: req,
+        features: features,
+        globalImage: await getGlobalImage(),
+        announcementWeb: await getWebAnnouncement(),
+      });
+    } catch (viewError) {
+      app.log.error(viewError);
+      return res.send("404 Not Found");
+    }
   });
 
   // When app errors, render the error on a page, do not provide JSON
@@ -90,15 +95,20 @@ const buildApp = async () => {
       });
     }
 
-    return res.view("session/error", {
-      pageTitle: `Server Error`,
-      config: config,
-      error: error,
-      req: req,
-      features: features,
-      globalImage: await getGlobalImage(),
-      announcementWeb: await getWebAnnouncement(),
-    });
+    try {
+      return res.view("session/error", {
+        pageTitle: `Server Error`,
+        config: config,
+        error: error,
+        req: req,
+        features: features,
+        globalImage: await getGlobalImage(),
+        announcementWeb: await getWebAnnouncement(),
+      });
+    } catch (viewError) {
+      app.log.error(viewError);
+      return res.send("Internal Server Error");
+    }
   });
 
   // EJS Rendering Engine
