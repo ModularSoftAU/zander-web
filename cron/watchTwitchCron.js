@@ -85,13 +85,13 @@ async function sendLiveNotification(item) {
 
     const buttons = new ActionRowBuilder().addComponents(
       new ButtonBuilder()
-        .setLabel("Watch on Twitch")
+        .setLabel("Watch")
         .setStyle(ButtonStyle.Link)
         .setURL(item.watch_url)
         .setEmoji({ name: "▶️" }),
       ...(siteWatchUrl ? [
         new ButtonBuilder()
-          .setLabel("View on Watch Page")
+          .setLabel("Watch More")
           .setStyle(ButtonStyle.Link)
           .setURL(siteWatchUrl)
           .setEmoji({ name: "📺" }),
