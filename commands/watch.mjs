@@ -29,7 +29,7 @@ export class WatchCommand extends Command {
       .setTimestamp();
 
     if (!watchUrl) {
-      return interaction.reply({ embeds: [embed], ephemeral: true });
+      return interaction.reply({ embeds: [embed] });
     }
 
     const row = new ActionRowBuilder().addComponents(
@@ -40,6 +40,6 @@ export class WatchCommand extends Command {
         .setEmoji({ name: "📺" })
     );
 
-    return interaction.reply({ embeds: [embed], components: [row], ephemeral: true });
+    return interaction.reply({ embeds: [embed], components: [row] });
   }
 }
