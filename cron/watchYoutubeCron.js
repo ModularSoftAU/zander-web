@@ -55,7 +55,7 @@ async function sendDiscordNotification(notifType, item) {
         .setLabel("Watch")
         .setStyle(ButtonStyle.Link)
         .setURL(item.watch_url)
-        .setEmoji({ name: "▶️" }),
+        .setEmoji("▶️"),
       ...(siteWatchUrl ? [
         new ButtonBuilder()
           .setLabel("Watch More")
