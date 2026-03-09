@@ -548,8 +548,6 @@ export default function userApiRoute(app, config, db, features, lang) {
     if (res.sent) return;
     const social_discord = optional(req.body, "social_discord");
     const social_steam = optional(req.body, "social_steam");
-    const social_twitch = optional(req.body, "social_twitch");
-    const social_youtube = optional(req.body, "social_youtube");
     const social_twitter_x = optional(req.body, "social_twitter_x");
     const social_instagram = optional(req.body, "social_instagram");
     const social_reddit = optional(req.body, "social_reddit");
@@ -564,8 +562,6 @@ export default function userApiRoute(app, config, db, features, lang) {
         userId,
         social_discord,
         social_steam,
-        social_twitch,
-        social_youtube,
         social_twitter_x,
         social_instagram,
         social_reddit,
