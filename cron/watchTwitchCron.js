@@ -14,7 +14,7 @@ import { createRequire } from "module";
 const require = createRequire(import.meta.url);
 const config = require("../config.json");
 
-import { EmbedBuilder, WebhookClient } from "discord.js";
+import { ActionRowBuilder, ButtonBuilder, ButtonStyle, EmbedBuilder, WebhookClient } from "discord.js";
 import {
   getEligibleCreators,
   matchesCfcFilter,
@@ -77,15 +77,31 @@ async function sendLiveNotification(item) {
       .setColor(0x9146FF)
       .setTitle(`${item.platform_display_name || item.username} is live on Twitch!`)
       .setDescription(item.title || "")
-      .setURL(item.watch_url)
       .setTimestamp();
 
     if (item.thumbnail_url) embed.setImage(item.thumbnail_url);
 
+    const siteWatchUrl = process.env.siteAddress ? `${process.env.siteAddress}/watch` : null;
+
+    const buttons = new ActionRowBuilder().addComponents(
+      new ButtonBuilder()
+        .setLabel("Watch on Twitch")
+        .setStyle(ButtonStyle.Link)
+        .setURL(item.watch_url)
+        .setEmoji({ name: "▶️" }),
+      ...(siteWatchUrl ? [
+        new ButtonBuilder()
+          .setLabel("View on Watch Page")
+          .setStyle(ButtonStyle.Link)
+          .setURL(siteWatchUrl)
+          .setEmoji({ name: "📺" }),
+      ] : [])
+    );
+
     const pingRole = config?.watch?.contentPingRoleId;
     const content = pingRole ? `<@&${pingRole}>` : undefined;
 
-    const msg = await webhook.send({ content, embeds: [embed] });
+    const msg = await webhook.send({ content, embeds: [embed], components: [buttons] });
     return msg?.id || "sent";
   } catch (err) {
     console.error("[WatchTwitch] Discord notification failed:", err);
