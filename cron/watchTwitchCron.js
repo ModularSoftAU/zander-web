@@ -14,7 +14,8 @@ import { createRequire } from "module";
 const require = createRequire(import.meta.url);
 const config = require("../config.json");
 
-import { ActionRowBuilder, ButtonBuilder, ButtonStyle, EmbedBuilder, WebhookClient } from "discord.js";
+import { ActionRowBuilder, ButtonBuilder, ButtonStyle, EmbedBuilder } from "discord.js";
+import { client } from "../controllers/discordController.js";
 import {
   getEligibleCreators,
   matchesCfcFilter,
@@ -68,11 +69,13 @@ async function getTwitchAppToken(fetchFn) {
 // ---------------------------------------------------------------------------
 
 async function sendLiveNotification(item) {
-  const webhookUrl = config?.watch?.contentChannelWebhook;
-  if (!webhookUrl || !webhookUrl.startsWith("http")) return null;
+  const channelId = config?.watch?.contentChannelId;
+  if (!channelId) return null;
 
   try {
-    const webhook = new WebhookClient({ url: webhookUrl });
+    const channel = await client.channels.fetch(channelId);
+    if (!channel) return null;
+
     const embed = new EmbedBuilder()
       .setColor(0x9146FF)
       .setTitle(`${item.platform_display_name || item.username} is live on Twitch!`)
@@ -94,14 +97,14 @@ async function sendLiveNotification(item) {
           .setLabel("Watch More")
           .setStyle(ButtonStyle.Link)
           .setURL(siteWatchUrl)
-          .setEmoji({ name: "📺" }),
+          .setEmoji("📺"),
       ] : [])
     );
 
     const pingRole = config?.watch?.contentPingRoleId;
     const content = pingRole ? `<@&${pingRole}>` : undefined;
 
-    const msg = await webhook.send({ content, embeds: [embed], components: [buttons] });
+    const msg = await channel.send({ content, embeds: [embed], components: [buttons] });
     return msg?.id || "sent";
   } catch (err) {
     console.error("[WatchTwitch] Discord notification failed:", err);
