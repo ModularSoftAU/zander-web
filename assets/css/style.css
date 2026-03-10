@@ -897,6 +897,64 @@ a:focus {
   }
 }
 
+/* ── Homepage hero additions ─────────────────────────────────────────── */
+
+.banner-scripture {
+  border-left: 3px solid rgba(255, 255, 255, 0.45);
+  padding: 0.5rem 0 0.5rem 1rem;
+  margin: 0;
+  font-style: italic;
+}
+
+.banner-scripture p {
+  font-size: 0.95rem;
+  line-height: 1.7;
+  margin-bottom: 0.25rem;
+  text-shadow: 0 1px 6px rgba(0, 0, 0, 0.6);
+}
+
+.banner-scripture cite {
+  font-style: normal;
+  font-size: 0.8rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  color: rgba(255, 255, 255, 0.75);
+  text-shadow: none;
+}
+
+.btn-hero-secondary {
+  border: 2px solid rgba(255, 255, 255, 0.75);
+  color: #ffffff;
+  background: transparent;
+  padding: 12px 28px;
+  transition: background 0.2s, border-color 0.2s;
+}
+
+.btn-hero-secondary:hover {
+  background: rgba(255, 255, 255, 0.15);
+  border-color: #ffffff;
+  color: #ffffff;
+}
+
+.youtube-embed-wrapper {
+  border-radius: 14px;
+  overflow: hidden;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.5);
+}
+
+.youtube-home-player {
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 16 / 9;
+}
+
+.section-spacer {
+  height: 3rem;
+}
+
+/* ─────────────────────────────────────────────────────────────────────── */
+
 .about-img img {
   border-radius: 5px;
   box-shadow: 0px 0px 30px 0px rgba(0, 42, 106, 0.1);
