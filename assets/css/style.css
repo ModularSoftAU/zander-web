@@ -561,7 +561,7 @@ input[type="email"]:focus, input[type="password"]:focus, input[type="text"]:focu
   right: 0;
   bottom: 0;
   background-color: #2f508c;
-  opacity: 0.9;
+  opacity: 0.65;
   z-index: -1;
   pointer-events: none;
 }
@@ -816,19 +816,22 @@ a:focus {
 .banner {
   position: relative;
   overflow: hidden;
-  background: #fff;
-  background-size: cover;
+  background: #1c2f53;
   min-height: 550px;
 }
 
-.banner:before{
-  content: '';
+.banner-video-bg {
   position: absolute;
-  top: 0;
-  right: 0;
-  left: 0;
-  bottom: 0;
-  background: rgba(255, 255, 255, 0.8);
+  top: 50%;
+  left: 50%;
+  min-width: 100%;
+  min-height: 100%;
+  width: auto;
+  height: auto;
+  transform: translate(-50%, -50%);
+  object-fit: cover;
+  z-index: -2;
+  pointer-events: none;
 }
 
 .banner .block {
@@ -839,7 +842,8 @@ a:focus {
   font-size: 60px;
   line-height: 1.2;
   letter-spacing: -1.2px;
-  color: #2f508c;
+  color: #ffffff;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
 }
 
 .letter-spacing {

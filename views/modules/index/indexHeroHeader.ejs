@@ -1,5 +1,11 @@
 <!-- Slider Start -->
-<section class="banner hero-overlay" style="background: url(<%= globalImage %>) no-repeat 50% 50%; background-size:cover">
+<section class="banner hero-overlay">
+	<% if (typeof jumboVideo !== 'undefined' && jumboVideo) { %>
+		<video class="banner-video-bg" autoplay muted loop playsinline>
+			<source src="<%= jumboVideo %>" type="video/mp4">
+		</video>
+	<% } %>
+
 	<div class="container">
 		<% if (req.cookies.alertType) { %>
 			<br>

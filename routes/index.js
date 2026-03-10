@@ -5,7 +5,7 @@ import {
   getPopupAnnouncements,
   getWebAnnouncement,
 } from "../controllers/announcementController.js";
-import { isFeatureWebRouteEnabled, getGlobalImage, hasPermission } from "../api/common.js";
+import { isFeatureWebRouteEnabled, getGlobalImage, getJumboVideo, hasPermission } from "../api/common.js";
 import { getTicketsAccessibleByUser } from "../controllers/supportTicketController.js";
 import { getStaffPageData } from "../controllers/staffController.js";
 import {
@@ -58,6 +58,7 @@ export default function applicationSiteRoutes(
       req: req,
       features: features,
       globalImage: await getGlobalImage(),
+      jumboVideo: getJumboVideo(),
       statApiData: statApiData,
       announcementWeb: await getWebAnnouncement(),
     });
