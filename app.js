@@ -1,6 +1,17 @@
 import { createRequire } from "module";
 const require = createRequire(import.meta.url);
 
+// Prevent unhandled promise rejections (e.g. Discord API / webhook errors) from
+// crashing the process. Fastify handles errors within request handlers, but
+// bot listeners and cron jobs run outside that lifecycle.
+process.on("unhandledRejection", (reason, promise) => {
+  console.error("[UNHANDLED REJECTION]", promise, "Reason:", reason);
+});
+
+process.on("uncaughtException", (error) => {
+  console.error("[UNCAUGHT EXCEPTION]", error);
+});
+
 const packageData = require("./package.json");
 import moment from "moment";
 import fetch from "node-fetch";
