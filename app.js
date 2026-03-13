@@ -122,14 +122,12 @@ const buildApp = async () => {
     }
   });
 
-  // Static asset path prefixes — never intercepted by the maintenance check
-  const STATIC_PREFIXES = ["/css/", "/js/", "/images/", "/fonts/", "/vendors/", "/videos/"];
-
   // Show a maintenance page instead of hanging when the database is unreachable.
   // Runs before session handling so no DB access is attempted.
+  // The maintenance view is self-contained (CDN-only CSS) so the browser
+  // will not make further requests to this server for stylesheets or scripts.
   app.addHook("onRequest", async (req, res) => {
     if (isDbHealthy() !== false) return; // up or not-yet-known: let through
-    if (STATIC_PREFIXES.some((p) => req.url.startsWith(p))) return; // allow CSS/images to load
     if (req.url === "/api/heartbeat") return; // allow monitoring to detect the outage
 
     res.status(503);
@@ -143,10 +141,6 @@ const buildApp = async () => {
       return res.view("session/maintenance", {
         pageTitle: "Down for Maintenance",
         config,
-        features,
-        req,
-        announcementWeb: null,
-        globalImage: null,
       });
     } catch {
       return res.send("<h1>Down for Maintenance</h1><p>We'll be back shortly.</p>");

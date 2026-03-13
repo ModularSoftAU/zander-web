@@ -36,6 +36,10 @@ export class GuildMessageListener extends Listener {
           },
         });
 
+        // If the API is unavailable (e.g. DB down), skip filtering rather than
+        // treating the error response as a filter match.
+        if (!response.ok) return;
+
         const dataResponse = await response.json();
 
         if (dataResponse.success === false) {
