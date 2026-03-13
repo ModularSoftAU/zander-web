@@ -11,7 +11,7 @@
 ALTER TABLE discord_punishments
   MODIFY COLUMN target_discord_tag  VARCHAR(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
   MODIFY COLUMN actor_name_snapshot VARCHAR(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
-  MODIFY COLUMN reason              TEXT         NOT NULL CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+  MODIFY COLUMN reason              TEXT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL;
 
 ALTER TABLE discord_punishment_appeals
-  MODIFY COLUMN appeal_reason TEXT NOT NULL CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+  MODIFY COLUMN appeal_reason TEXT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL;
