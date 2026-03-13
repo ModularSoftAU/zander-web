@@ -26,7 +26,7 @@ import expressMySQLSession from "express-mysql-session";
 const config = require("./config.json");
 const features = require("./features.json");
 const lang = require("./lang.json");
-import db from "./controllers/databaseController.js";
+import db, { isDbHealthy } from "./controllers/databaseController.js";
 import { getWebAnnouncement } from "./controllers/announcementController.js";
 import { getNotificationSummary } from "./controllers/notificationController.js";
 
@@ -119,6 +119,37 @@ const buildApp = async () => {
     } catch (viewError) {
       app.log.error(viewError);
       return res.send("Internal Server Error");
+    }
+  });
+
+  // Static asset path prefixes — never intercepted by the maintenance check
+  const STATIC_PREFIXES = ["/css/", "/js/", "/images/", "/fonts/", "/vendors/", "/videos/"];
+
+  // Show a maintenance page instead of hanging when the database is unreachable.
+  // Runs before session handling so no DB access is attempted.
+  app.addHook("onRequest", async (req, res) => {
+    if (isDbHealthy() !== false) return; // up or not-yet-known: let through
+    if (STATIC_PREFIXES.some((p) => req.url.startsWith(p))) return; // allow CSS/images to load
+    if (req.url === "/api/heartbeat") return; // allow monitoring to detect the outage
+
+    res.status(503);
+
+    // API callers get JSON; browsers get the maintenance page
+    if (req.url.startsWith("/api/")) {
+      return res.send({ success: false, message: "Service temporarily unavailable. The database is unreachable." });
+    }
+
+    try {
+      return res.view("session/maintenance", {
+        pageTitle: "Down for Maintenance",
+        config,
+        features,
+        req,
+        announcementWeb: null,
+        globalImage: null,
+      });
+    } catch {
+      return res.send("<h1>Down for Maintenance</h1><p>We'll be back shortly.</p>");
     }
   });
 
