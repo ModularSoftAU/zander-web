@@ -4,6 +4,7 @@ import fetch from "node-fetch";
 import { createRequire } from "module";
 const require = createRequire(import.meta.url);
 const features = require("../features.json");
+import { isDbHealthy } from "../controllers/databaseController.js";
 
 export class GuildMessageListener extends Listener {
   constructor(context, options) {
@@ -17,6 +18,10 @@ export class GuildMessageListener extends Listener {
   async run(message) {
     // Check if the author is a bot
     if (message.author.bot) return;
+
+    // Skip filtering entirely when the database is unreachable — the filter API
+    // relies on DB-backed user lookups and the health of the overall service.
+    if (isDbHealthy() === false) return;
 
     if (features.filter.link || features.filter.phrase) {
       try {

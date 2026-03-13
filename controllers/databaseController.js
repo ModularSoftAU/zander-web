@@ -60,4 +60,24 @@ pool.on("error", (err) => {
   }
 });
 
+// Pool events only fire for new connections, not for individual query failures.
+// This periodic probe keeps dbHealthy accurate after the DB drops mid-operation.
+const HEALTH_CHECK_INTERVAL_MS = 10_000;
+setInterval(() => {
+  pool.getConnection((err, connection) => {
+    if (err) {
+      if (dbHealthy !== false) {
+        dbHealthy = false;
+        console.error("[DB] Health check failed — database is unreachable:", err.message);
+      }
+      return;
+    }
+    if (dbHealthy !== true) {
+      dbHealthy = true;
+      console.info("[DB] Health check passed — database is reachable.");
+    }
+    connection.release();
+  });
+}, HEALTH_CHECK_INTERVAL_MS);
+
 export default pool;
