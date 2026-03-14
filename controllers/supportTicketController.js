@@ -1655,6 +1655,24 @@ export async function getTicketsAccessibleByUser(userId, rankSlugs = []) {
     });
 }
 
+export async function getOpenTicketsWithChannelForUser(userId) {
+    return new Promise((resolve, reject) => {
+        db.query(
+            `SELECT DISTINCT st.*
+             FROM supportTickets st
+             LEFT JOIN supportTicketParticipants p ON p.ticketId = st.ticketId AND p.userId = ?
+             WHERE (st.userId = ? OR p.userId IS NOT NULL)
+               AND st.discordChannelId IS NOT NULL
+               AND st.status NOT IN ('closed', 'locked')`,
+            [userId, userId],
+            (err, results) => {
+                if (err) reject(err);
+                else resolve(results);
+            },
+        );
+    });
+}
+
 export async function getTicketById(ticketId) {
     return new Promise((resolve, reject) => {
         db.query("SELECT * FROM supportTickets WHERE ticketId = ?", [ticketId], (err, results) => {

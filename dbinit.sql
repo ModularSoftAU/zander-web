@@ -700,12 +700,12 @@ CREATE TABLE IF NOT EXISTS discord_punishments (
     type ENUM('WARN', 'DISCORD_KICK', 'TEMP_BAN', 'PERM_BAN', 'TEMP_MUTE', 'PERM_MUTE') NOT NULL,
     platform VARCHAR(16) NOT NULL DEFAULT 'DISCORD',
     target_discord_user_id VARCHAR(24) DEFAULT NULL,
-    target_discord_tag VARCHAR(100),
+    target_discord_tag  VARCHAR(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
     target_player_id INT DEFAULT NULL,
     actor_discord_user_id VARCHAR(24) DEFAULT NULL,
     actor_player_id INT DEFAULT NULL,
-    actor_name_snapshot VARCHAR(100),
-    reason TEXT NOT NULL,
+    actor_name_snapshot VARCHAR(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
+    reason TEXT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
     created_at DATETIME NOT NULL DEFAULT NOW(),
     expires_at DATETIME DEFAULT NULL,
     lifted_at DATETIME DEFAULT NULL,
@@ -726,7 +726,7 @@ CREATE TABLE IF NOT EXISTS discord_punishment_appeals (
     id INT NOT NULL AUTO_INCREMENT,
     punishment_id INT NOT NULL,
     discord_user_id VARCHAR(24) NOT NULL,
-    appeal_reason TEXT NOT NULL,
+    appeal_reason TEXT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
     status ENUM('PENDING', 'APPROVED', 'REJECTED') NOT NULL DEFAULT 'PENDING',
     reviewer_discord_user_id VARCHAR(24) DEFAULT NULL,
     reviewer_notes TEXT DEFAULT NULL,
@@ -738,3 +738,68 @@ CREATE TABLE IF NOT EXISTS discord_punishment_appeals (
     INDEX idx_appeals_status (status),
     CONSTRAINT fk_appeals_punishment FOREIGN KEY (punishment_id) REFERENCES discord_punishments(id) ON DELETE CASCADE
 );
+
+-- Watch feature tables (v1.15.0 -> v1.16.0)
+
+CREATE TABLE IF NOT EXISTS user_platform_connections (
+  id                      INT UNSIGNED  NOT NULL AUTO_INCREMENT,
+  user_id                 INT           NOT NULL,
+  platform                VARCHAR(32)   NOT NULL,
+  platform_account_id     VARCHAR(128)  NOT NULL,
+  platform_channel_id     VARCHAR(128)  DEFAULT NULL,
+  platform_username       VARCHAR(128)  DEFAULT NULL,
+  platform_display_name   VARCHAR(128)  DEFAULT NULL,
+  avatar_url              VARCHAR(512)  DEFAULT NULL,
+  access_token            TEXT          DEFAULT NULL,
+  refresh_token           TEXT          DEFAULT NULL,
+  token_expires_at        DATETIME      DEFAULT NULL,
+  is_active               TINYINT(1)    NOT NULL DEFAULT 1,
+  last_successful_sync_at DATETIME      DEFAULT NULL,
+  last_sync_error         VARCHAR(255)  DEFAULT NULL,
+  created_at              TIMESTAMP     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at              TIMESTAMP     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (id),
+  UNIQUE KEY uq_user_platform (user_id, platform),
+  KEY idx_platform_active (platform, is_active)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS creator_content_items (
+  id                  INT UNSIGNED  NOT NULL AUTO_INCREMENT,
+  user_id             INT           NOT NULL,
+  platform            VARCHAR(32)   NOT NULL,
+  external_content_id VARCHAR(128)  NOT NULL,
+  external_channel_id VARCHAR(128)  DEFAULT NULL,
+  content_type        VARCHAR(32)   NOT NULL,
+  title               VARCHAR(512)  DEFAULT NULL,
+  description         TEXT          DEFAULT NULL,
+  thumbnail_url       VARCHAR(512)  DEFAULT NULL,
+  watch_url           VARCHAR(512)  DEFAULT NULL,
+  viewer_count        INT UNSIGNED  DEFAULT NULL,
+  tags_json           TEXT          DEFAULT NULL,
+  is_live             TINYINT(1)    NOT NULL DEFAULT 0,
+  published_at        DATETIME      DEFAULT NULL,
+  started_at          DATETIME      DEFAULT NULL,
+  ended_at            DATETIME      DEFAULT NULL,
+  matched_rule        VARCHAR(128)  DEFAULT NULL,
+  is_cfc_related      TINYINT(1)    NOT NULL DEFAULT 0,
+  is_publicly_visible TINYINT(1)    NOT NULL DEFAULT 0,
+  last_seen_at        DATETIME      NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  created_at          TIMESTAMP     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at          TIMESTAMP     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (id),
+  UNIQUE KEY uq_platform_content (platform, external_content_id),
+  KEY idx_public_live  (is_publicly_visible, is_live),
+  KEY idx_public_video (is_publicly_visible, content_type, is_live),
+  KEY idx_user_platform (user_id, platform)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS creator_content_notifications (
+  id                  INT UNSIGNED  NOT NULL AUTO_INCREMENT,
+  platform            VARCHAR(32)   NOT NULL,
+  external_content_id VARCHAR(128)  NOT NULL,
+  notification_type   VARCHAR(64)   NOT NULL,
+  discord_message_id  VARCHAR(32)   DEFAULT NULL,
+  created_at          TIMESTAMP     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (id),
+  UNIQUE KEY uq_notification (platform, external_content_id, notification_type)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

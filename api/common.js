@@ -259,6 +259,18 @@ export async function getGlobalImage() {
   return "../../../images/globalImages/" + chosenFile;
 }
 
+export function getJumboVideo() {
+  try {
+    const files = readdirSync("./assets/videos/").filter((f) =>
+      /\.(mp4|webm|ogg)$/i.test(f)
+    );
+    if (files.length === 0) return null;
+    return "/videos/" + files[Math.floor(Math.random() * files.length)];
+  } catch {
+    return null;
+  }
+}
+
 /*
     Sets two cookies (alertType and alertContent) with specified values and an expiration time of one second.
     These cookies are set on the root path and are returned by the function.

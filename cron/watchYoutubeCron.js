@@ -14,7 +14,8 @@ import { createRequire } from "module";
 const require = createRequire(import.meta.url);
 const config = require("../config.json");
 
-import { ActionRowBuilder, ButtonBuilder, ButtonStyle, EmbedBuilder, WebhookClient } from "discord.js";
+import { ActionRowBuilder, ButtonBuilder, ButtonStyle, EmbedBuilder } from "discord.js";
+import { client } from "../controllers/discordController.js";
 import {
   getEligibleCreators,
   matchesCfcFilter,
@@ -29,11 +30,12 @@ import {
 // ---------------------------------------------------------------------------
 
 async function sendDiscordNotification(notifType, item) {
-  const webhookUrl = config?.watch?.contentChannelWebhook;
-  if (!webhookUrl || !webhookUrl.startsWith("http")) return null;
+  const channelId = config?.watch?.contentChannelId;
+  if (!channelId) return null;
 
   try {
-    const webhook = new WebhookClient({ url: webhookUrl });
+    const channel = await client.channels.fetch(channelId);
+    if (!channel) return null;
 
     const isLive = notifType === "live";
     const embed = new EmbedBuilder()
@@ -61,14 +63,14 @@ async function sendDiscordNotification(notifType, item) {
           .setLabel("Watch More")
           .setStyle(ButtonStyle.Link)
           .setURL(siteWatchUrl)
-          .setEmoji({ name: "📺" }),
+          .setEmoji("📺"),
       ] : [])
     );
 
     const pingRole = config?.watch?.contentPingRoleId;
     const content = pingRole ? `<@&${pingRole}>` : undefined;
 
-    const msg = await webhook.send({ content, embeds: [embed], components: [buttons] });
+    const msg = await channel.send({ content, embeds: [embed], components: [buttons] });
     return msg?.id || "sent";
   } catch (err) {
     console.error("[WatchYouTube] Discord notification failed:", err);

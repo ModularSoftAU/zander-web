@@ -43,6 +43,7 @@ export default function watchSiteRoutes(app, client, fetch, moment, config, db, 
 
       return res.view("modules/watch/watch", {
         pageTitle: "Watch",
+        pageDescription: `Watch live streams and videos from ${config.siteConfiguration.siteName} community creators.`,
         config,
         req,
         features,

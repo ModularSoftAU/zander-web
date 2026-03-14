@@ -12,7 +12,7 @@ import {
   linkDiscordAccount,
   unlinkDiscordAccount,
 } from "../controllers/userController.js";
-import { getTicketsAccessibleByUser } from "../controllers/supportTicketController.js";
+import { getTicketsAccessibleByUser, getOpenTicketsWithChannelForUser } from "../controllers/supportTicketController.js";
 import {
   getUserByUsername,
   getUserRanks,
@@ -481,6 +481,26 @@ export default function profileSiteRoutes(
         } catch (err) {
           console.error("[PROFILE] Nickname check after Discord link failed:", err.message);
         }
+      }
+
+      // Restore access to any open support ticket channels this user belongs to
+      try {
+        const openTickets = await getOpenTicketsWithChannelForUser(req.session.user.userId);
+        for (const ticket of openTickets) {
+          try {
+            const channel = await client.channels.fetch(ticket.discordChannelId);
+            await channel.permissionOverwrites.edit(discordUser.id, {
+              ViewChannel: true,
+              SendMessages: true,
+              AttachFiles: true,
+              ReadMessageHistory: true,
+            });
+          } catch (channelErr) {
+            console.error(`[PROFILE] Failed to restore ticket channel access for ticket ${ticket.ticketId}:`, channelErr.message);
+          }
+        }
+      } catch (ticketErr) {
+        console.error("[PROFILE] Failed to fetch open tickets after Discord link:", ticketErr.message);
       }
 
       setBannerCookie("success", "Discord account connected!", res);

@@ -1,6 +1,17 @@
 import { createRequire } from "module";
 const require = createRequire(import.meta.url);
 
+// Prevent unhandled promise rejections (e.g. Discord API / webhook errors) from
+// crashing the process. Fastify handles errors within request handlers, but
+// bot listeners and cron jobs run outside that lifecycle.
+process.on("unhandledRejection", (reason, promise) => {
+  console.error("[UNHANDLED REJECTION]", promise, "Reason:", reason);
+});
+
+process.on("uncaughtException", (error) => {
+  console.error("[UNCAUGHT EXCEPTION]", error);
+});
+
 const packageData = require("./package.json");
 import moment from "moment";
 import fetch from "node-fetch";
@@ -15,7 +26,7 @@ import expressMySQLSession from "express-mysql-session";
 const config = require("./config.json");
 const features = require("./features.json");
 const lang = require("./lang.json");
-import db from "./controllers/databaseController.js";
+import db, { isDbHealthy } from "./controllers/databaseController.js";
 import { getWebAnnouncement } from "./controllers/announcementController.js";
 import { getNotificationSummary } from "./controllers/notificationController.js";
 
@@ -61,14 +72,19 @@ const buildApp = async () => {
   app.setNotFoundHandler(async function (req, res) {
     res.status(404);
 
-    return res.view("session/notFound", {
-      pageTitle: `404 Not Found`,
-      config: config,
-      req: req,
-      features: features,
-      globalImage: await getGlobalImage(),
-      announcementWeb: await getWebAnnouncement(),
-    });
+    try {
+      return res.view("session/notFound", {
+        pageTitle: `404 Not Found`,
+        config: config,
+        req: req,
+        features: features,
+        globalImage: await getGlobalImage(),
+        announcementWeb: await getWebAnnouncement(),
+      });
+    } catch (viewError) {
+      app.log.error(viewError);
+      return res.send("404 Not Found");
+    }
   });
 
   // When app errors, render the error on a page, do not provide JSON
@@ -90,15 +106,45 @@ const buildApp = async () => {
       });
     }
 
-    return res.view("session/error", {
-      pageTitle: `Server Error`,
-      config: config,
-      error: error,
-      req: req,
-      features: features,
-      globalImage: await getGlobalImage(),
-      announcementWeb: await getWebAnnouncement(),
-    });
+    try {
+      return res.view("session/error", {
+        pageTitle: `Server Error`,
+        config: config,
+        error: error,
+        req: req,
+        features: features,
+        globalImage: await getGlobalImage(),
+        announcementWeb: await getWebAnnouncement(),
+      });
+    } catch (viewError) {
+      app.log.error(viewError);
+      return res.send("Internal Server Error");
+    }
+  });
+
+  // Show a maintenance page instead of hanging when the database is unreachable.
+  // Runs before session handling so no DB access is attempted.
+  // The maintenance view is self-contained (CDN-only CSS) so the browser
+  // will not make further requests to this server for stylesheets or scripts.
+  app.addHook("onRequest", async (req, res) => {
+    if (isDbHealthy() !== false) return; // up or not-yet-known: let through
+    if (req.url === "/api/heartbeat") return; // allow monitoring to detect the outage
+
+    res.status(503);
+
+    // API callers get JSON; browsers get the maintenance page
+    if (req.url.startsWith("/api/")) {
+      return res.send({ success: false, message: "Service temporarily unavailable. The database is unreachable." });
+    }
+
+    try {
+      return res.view("session/maintenance", {
+        pageTitle: "Down for Maintenance",
+        config,
+      });
+    } catch {
+      return res.send("<h1>Down for Maintenance</h1><p>We'll be back shortly.</p>");
+    }
   });
 
   // EJS Rendering Engine

@@ -5,7 +5,7 @@ import {
   getPopupAnnouncements,
   getWebAnnouncement,
 } from "../controllers/announcementController.js";
-import { isFeatureWebRouteEnabled, getGlobalImage, hasPermission } from "../api/common.js";
+import { isFeatureWebRouteEnabled, getGlobalImage, getJumboVideo, hasPermission } from "../api/common.js";
 import { getTicketsAccessibleByUser } from "../controllers/supportTicketController.js";
 import { getStaffPageData } from "../controllers/staffController.js";
 import {
@@ -22,6 +22,7 @@ import forumSiteRoutes from "./forumRoutes.js";
 import supportRoutes from "./support.js";
 import notificationRoutes from "./notificationRoutes.js";
 import watchSiteRoutes from "./watchRoutes.js";
+import sitemapRoutes from "./sitemapRoute.js";
 
 const rankData = require("../ranks.json");
 
@@ -44,6 +45,7 @@ export default function applicationSiteRoutes(
   supportRoutes(app, client, fetch, moment, config, db, features, lang);
   notificationRoutes(app, config, features);
   watchSiteRoutes(app, client, fetch, moment, config, db, features, lang);
+  sitemapRoutes(app, config, features);
 
   app.get("/", async function (req, res) {
     const fetchURL = `${process.env.siteAddress}/api/web/statistics`;
@@ -52,12 +54,27 @@ export default function applicationSiteRoutes(
     });
     const statApiData = await response.json();
 
+    const pageJsonLd = JSON.stringify({
+      "@context": "https://schema.org",
+      "@type": "Organization",
+      name: config.siteConfiguration.siteName,
+      url: config.siteConfiguration.siteUrl,
+      logo: `${config.siteConfiguration.siteUrl}/images/siteLogo.png`,
+      description: config.siteConfiguration.tagline,
+      sameAs: Object.values(config.siteConfiguration.platforms || {}).filter(
+        (v) => typeof v === "string" && v.startsWith("http")
+      ),
+    });
+
     return res.view("modules/index/index", {
       pageTitle: `${config.siteConfiguration.siteName}`,
+      pageDescription: `Welcome to ${config.siteConfiguration.siteName} — ${config.siteConfiguration.tagline}`,
+      pageJsonLd,
       config: config,
       req: req,
       features: features,
       globalImage: await getGlobalImage(),
+      jumboVideo: getJumboVideo(),
       statApiData: statApiData,
       announcementWeb: await getWebAnnouncement(),
     });
@@ -93,6 +110,7 @@ export default function applicationSiteRoutes(
 
     return res.view("modules/play/play", {
       pageTitle: `Play`,
+      pageDescription: `Connect and play on ${config.siteConfiguration.siteName}. Get the server address and join our community today.`,
       config: config,
       req: req,
       apiData: apiData,
@@ -116,6 +134,7 @@ export default function applicationSiteRoutes(
 
     return res.view("apply", {
       pageTitle: `Apply`,
+      pageDescription: `Apply to join the ${config.siteConfiguration.siteName} team. View open positions and submit your application.`,
       config: config,
       req: req,
       apiData: apiData,
@@ -133,6 +152,7 @@ export default function applicationSiteRoutes(
 
     return res.view("ranks", {
       pageTitle: `Ranks`,
+      pageDescription: `Explore the ranks available on ${config.siteConfiguration.siteName} and find out what perks and privileges each one offers.`,
       config: config,
       req: req,
       rankData: rankData.categories,
@@ -151,6 +171,7 @@ export default function applicationSiteRoutes(
 
       return res.view("staff", {
         pageTitle: `Staff`,
+        pageDescription: `Meet the ${config.siteConfiguration.siteName} staff team — the dedicated volunteers who keep our community safe and welcoming.`,
         config: config,
         req: req,
         staffData: staffData,
@@ -194,6 +215,7 @@ export default function applicationSiteRoutes(
 
     return res.view("report", {
       pageTitle: `Report`,
+      pageDescription: `Report a player or incident on ${config.siteConfiguration.siteName}. Our staff team will review your report promptly.`,
       config: config,
       req: req,
       features: features,
@@ -256,6 +278,7 @@ export default function applicationSiteRoutes(
 
       return res.view("modules/appeal/appeal", {
         pageTitle: "Punishment Appeal",
+        pageDescription: `Appeal a punishment on ${config.siteConfiguration.siteName}. Submit your case for staff review.`,
         config: config,
         req: req,
         features: features,
@@ -365,6 +388,7 @@ export default function applicationSiteRoutes(
 
     return res.view("shopdirectory", {
       pageTitle: `Shop Directory`,
+      pageDescription: `Browse the ${config.siteConfiguration.siteName} player shop directory. Find items, prices, and in-game stores.`,
       config: config,
       req: req,
       features: features,
@@ -427,6 +451,7 @@ export default function applicationSiteRoutes(
 
     return res.view("vault", {
       pageTitle: `Vault`,
+      pageDescription: `Access the ${config.siteConfiguration.siteName} vault to manage your stored in-game items.`,
       config: config,
       req: req,
       apiData: apiData,
@@ -460,6 +485,7 @@ export default function applicationSiteRoutes(
 
     return res.view("modules/punishments/punishments", {
       pageTitle: `Punishments`,
+      pageDescription: `View the public punishment log for ${config.siteConfiguration.siteName}.`,
       config: config,
       req: req,
       features: features,
