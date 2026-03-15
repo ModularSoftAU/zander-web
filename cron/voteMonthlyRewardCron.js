@@ -49,7 +49,7 @@ export async function processMonthlyVoteRewards(monthKey) {
 
   const allCommands = [];
   for (const winner of winners) {
-    const cmds = buildMonthlyRewardCommands({
+    const cmds = await buildMonthlyRewardCommands({
       playerUuid: winner.player_uuid,
       playerName: winner.player_name,
       monthKey,

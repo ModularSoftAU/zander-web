@@ -4,6 +4,7 @@
  * Admin dashboard routes for the Voting & Reward system.
  *
  *   GET  /dashboard/voting             — Vote sites management
+ *   GET  /dashboard/voting/rewards     — Reward template management
  *   GET  /dashboard/voting/queue       — Reward command queue
  *   GET  /dashboard/voting/leaderboard — Monthly leaderboard admin view
  */
@@ -52,6 +53,43 @@ export default function dashboardVotingSiteRoute(app, fetch, config, db, feature
       return res.view("session/error", {
         pageTitle: "Error",
         pageDescription: "Error loading voting dashboard",
+        config,
+        req,
+        error,
+        features,
+        globalImage: await getGlobalImage(),
+        announcementWeb: await getWebAnnouncement(),
+      });
+    }
+  });
+
+  // =========================================================================
+  // GET /dashboard/voting/rewards — Reward template management
+  // =========================================================================
+  app.get("/dashboard/voting/rewards", async function (req, res) {
+    if (!isFeatureWebRouteEnabled(features.voting, req, res, features)) return;
+    if (!await hasPermission("zander.web.voting", req, res, features)) return;
+
+    try {
+      const templatesRes = await fetch(`${process.env.siteAddress}/admin/vote/reward-templates`, {
+        headers: { "x-access-token": process.env.apiKey },
+      });
+      const templatesData = await templatesRes.json();
+
+      return res.view("dashboard/voting/rewards", {
+        pageTitle: "Dashboard - Reward Templates",
+        config,
+        req,
+        features,
+        templatesData,
+        globalImage: await getGlobalImage(),
+        announcementWeb: await getWebAnnouncement(),
+      });
+    } catch (error) {
+      console.error("[dashboard/voting] GET /dashboard/voting/rewards:", error);
+      return res.view("session/error", {
+        pageTitle: "Error",
+        pageDescription: "Error loading reward templates",
         config,
         req,
         error,

@@ -1,57 +1,21 @@
 /**
  * voteRewardService.js
  *
- * Defines the reward command templates for instant vote rewards and
- * monthly winner rewards.  Edit the arrays below to customise what
- * commands are queued — no other files need to change.
+ * Builds reward queue entries by loading active templates from the
+ * vote_reward_templates database table at runtime.
  *
- * Placeholders supported in command_text:
- *   {player}     — player's current username
- *   {uuid}       — player's UUID
- *   {month}      — YYYY-MM of the relevant month
- *   {voteCount}  — player's vote total for that month (monthly only)
+ * Reward types:
+ *   'vote'         – fired for every accepted vote
+ *   'monthly_top'  – fired for monthly top-voter winner(s)
+ *
+ * Supported placeholders in command_template:
+ *   {player}     — player username
+ *   {uuid}       — player UUID
+ *   {month}      — YYYY-MM of the relevant month (monthly_top only)
+ *   {voteCount}  — player's vote total for that month (monthly_top only)
  */
 
-import { buildQueueDedupeKey } from "../controllers/voteController.js";
-
-// ---------------------------------------------------------------------------
-// Instant vote reward templates
-// Executed when a vote is received (one entry per command template).
-// ---------------------------------------------------------------------------
-const VOTE_REWARD_TEMPLATES = [
-  {
-    commandTemplate: "crate key give {player} vote 1",
-    executeAs: "console",
-    serverScope: "any",
-  },
-  {
-    commandTemplate: "eco give {player} 250",
-    executeAs: "console",
-    serverScope: "any",
-  },
-];
-
-// ---------------------------------------------------------------------------
-// Monthly top-voter reward templates
-// Executed once per winner when monthly processing runs.
-// ---------------------------------------------------------------------------
-const MONTHLY_REWARD_TEMPLATES = [
-  {
-    commandTemplate: "lp user {player} parent addtemp topvoter 30d",
-    executeAs: "console",
-    serverScope: "any",
-  },
-  {
-    commandTemplate: "broadcast &6[Vote] &e{player} &awon top voter for &6{month}&a! Congratulations!",
-    executeAs: "console",
-    serverScope: "any",
-  },
-  {
-    commandTemplate: "crate key give {player} vote 10",
-    executeAs: "console",
-    serverScope: "any",
-  },
-];
+import { getRewardTemplates, buildQueueDedupeKey } from "../controllers/voteController.js";
 
 // ---------------------------------------------------------------------------
 // Internal helpers
@@ -66,31 +30,32 @@ function resolvePlaceholders(template, vars) {
 }
 
 // ---------------------------------------------------------------------------
-// Exported builders
+// Exported builders (async — load templates from DB)
 // ---------------------------------------------------------------------------
 
 /**
  * Build reward queue entries for a single accepted vote.
+ * Loads all active 'vote' templates from the database.
  *
  * @param {{ playerUuid, playerName, siteName, serviceName, voteId, receivedAt }} opts
- * @returns {Array} Entries ready to pass to enqueueCommands()
+ * @returns {Promise<Array>} Entries ready to pass to enqueueCommands()
  */
-export function buildVoteRewardCommands({ playerUuid, playerName, siteName, serviceName, voteId, receivedAt }) {
+export async function buildVoteRewardCommands({ playerUuid, playerName, siteName, serviceName, voteId, receivedAt }) {
   const source = "vote_reward";
-  const dateStr = (receivedAt instanceof Date ? receivedAt : new Date(receivedAt)).toISOString().slice(0, 10);
+  const templates = await getRewardTemplates({ rewardType: "vote", activeOnly: true });
 
-  return VOTE_REWARD_TEMPLATES.map((tpl, index) => {
-    const commandText = resolvePlaceholders(tpl.commandTemplate, { playerName, playerUuid });
-    // Dedupe key includes voteId + template index so each vote generates its own unique entries.
-    const dedupeKey = buildQueueDedupeKey(playerUuid, `${source}:${voteId}:${index}`, commandText);
+  return templates.map((tpl, index) => {
+    const commandText = resolvePlaceholders(tpl.command_template, { playerName, playerUuid });
+    // dedupe key includes voteId + template id so each vote generates its own unique entries.
+    const dedupeKey = buildQueueDedupeKey(playerUuid, `${source}:${voteId}:${tpl.id}`, commandText);
 
     return {
       playerUuid,
       playerName,
       source,
       commandText,
-      executeAs: tpl.executeAs,
-      serverScope: tpl.serverScope,
+      executeAs: tpl.execute_as,
+      serverScope: tpl.server_scope,
       dedupeKey,
       availableAt: receivedAt,
     };
@@ -99,25 +64,27 @@ export function buildVoteRewardCommands({ playerUuid, playerName, siteName, serv
 
 /**
  * Build monthly winner reward queue entries.
+ * Loads all active 'monthly_top' templates from the database.
  *
  * @param {{ playerUuid, playerName, monthKey, voteCount }} opts
- * @returns {Array} Entries ready to pass to enqueueCommands()
+ * @returns {Promise<Array>} Entries ready to pass to enqueueCommands()
  */
-export function buildMonthlyRewardCommands({ playerUuid, playerName, monthKey, voteCount }) {
+export async function buildMonthlyRewardCommands({ playerUuid, playerName, monthKey, voteCount }) {
   const source = "monthly_reward";
+  const templates = await getRewardTemplates({ rewardType: "monthly_top", activeOnly: true });
 
-  return MONTHLY_REWARD_TEMPLATES.map((tpl, index) => {
-    const commandText = resolvePlaceholders(tpl.commandTemplate, { playerName, playerUuid, monthKey, voteCount });
-    // Dedupe key includes monthKey so re-running the job for the same month is idempotent.
-    const dedupeKey = buildQueueDedupeKey(playerUuid, `${source}:${monthKey}:${index}`, commandText);
+  return templates.map((tpl) => {
+    const commandText = resolvePlaceholders(tpl.command_template, { playerName, playerUuid, monthKey, voteCount });
+    // dedupe key includes monthKey + template id so re-running the job for the same month is idempotent.
+    const dedupeKey = buildQueueDedupeKey(playerUuid, `${source}:${monthKey}:${tpl.id}`, commandText);
 
     return {
       playerUuid,
       playerName,
       source,
       commandText,
-      executeAs: tpl.executeAs,
-      serverScope: tpl.serverScope,
+      executeAs: tpl.execute_as,
+      serverScope: tpl.server_scope,
       dedupeKey,
       availableAt: new Date(),
     };

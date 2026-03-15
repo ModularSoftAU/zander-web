@@ -17,6 +17,10 @@
  *   GET    /admin/vote/queue?status=...&playerUuid=...
  *   GET    /admin/vote/monthly/results?month=YYYY-MM
  *   POST   /admin/vote/monthly/process
+ *   GET    /admin/vote/reward-templates?type=vote|monthly_top
+ *   POST   /admin/vote/reward-templates
+ *   PUT    /admin/vote/reward-templates/:id
+ *   DELETE /admin/vote/reward-templates/:id
  */
 
 import { createRequire } from "module";
@@ -45,6 +49,11 @@ import {
   buildVoteDedupeKey,
   buildQueueDedupeKey,
   monthKeyFromDate,
+  getRewardTemplates,
+  getRewardTemplateById,
+  createRewardTemplate,
+  updateRewardTemplate,
+  deleteRewardTemplate,
 } from "../../controllers/voteController.js";
 import {
   buildVoteRewardCommands,
@@ -180,7 +189,7 @@ export default function voteApiRoute(app, config, db, features, lang) {
       await upsertMonthlyTotal({ playerUuid, playerName, monthKey, voteAt: receivedAt });
 
       // 4. Generate reward commands
-      const voteRewardCmds = buildVoteRewardCommands({
+      const voteRewardCmds = await buildVoteRewardCommands({
         playerUuid,
         playerName,
         siteName: site.site_name,
@@ -407,7 +416,7 @@ export default function voteApiRoute(app, config, db, features, lang) {
       // Build and enqueue monthly reward commands for each winner.
       const allCommands = [];
       for (const winner of winners) {
-        const cmds = buildMonthlyRewardCommands({
+        const cmds = await buildMonthlyRewardCommands({
           playerUuid: winner.player_uuid,
           playerName: winner.player_name,
           monthKey,
@@ -427,6 +436,123 @@ export default function voteApiRoute(app, config, db, features, lang) {
       });
     } catch (error) {
       console.error("[vote] POST /admin/vote/monthly/process:", error);
+      if (!res.sent) return res.status(500).send({ success: false, message: `${error}` });
+    }
+  });
+
+  // =========================================================================
+  // Admin: GET /admin/vote/reward-templates?type=vote|monthly_top
+  // =========================================================================
+  app.get("/admin/vote/reward-templates", async function (req, res) {
+    if (!isFeatureEnabled(features.voting, res, lang)) return;
+
+    const rewardType = optional(req.query, "type");
+    const validTypes = ["vote", "monthly_top"];
+    if (rewardType && !validTypes.includes(rewardType)) {
+      return res.send({ success: false, message: `Invalid type. Allowed: ${validTypes.join(", ")}` });
+    }
+
+    try {
+      const templates = await getRewardTemplates({ rewardType: rewardType || undefined });
+      return res.send({ success: true, data: templates });
+    } catch (error) {
+      console.error("[vote] GET /admin/vote/reward-templates:", error);
+      if (!res.sent) return res.status(500).send({ success: false, message: `${error}` });
+    }
+  });
+
+  // =========================================================================
+  // Admin: POST /admin/vote/reward-templates
+  // =========================================================================
+  app.post("/admin/vote/reward-templates", async function (req, res) {
+    if (!isFeatureEnabled(features.voting, res, lang)) return;
+
+    const body = req.body || {};
+    const { rewardType, commandTemplate, executeAs, serverScope, isActive, displayOrder } = body;
+
+    if (!rewardType || !commandTemplate) {
+      return res.send({ success: false, message: "rewardType and commandTemplate are required." });
+    }
+
+    const validTypes = ["vote", "monthly_top"];
+    if (!validTypes.includes(rewardType)) {
+      return res.send({ success: false, message: `Invalid rewardType. Allowed: ${validTypes.join(", ")}` });
+    }
+
+    const validExecuteAs = ["console", "player"];
+    if (executeAs && !validExecuteAs.includes(executeAs)) {
+      return res.send({ success: false, message: `Invalid executeAs. Allowed: ${validExecuteAs.join(", ")}` });
+    }
+
+    try {
+      const id = await createRewardTemplate({
+        rewardType,
+        commandTemplate: commandTemplate.trim(),
+        executeAs: executeAs || "console",
+        serverScope: serverScope || "any",
+        isActive: isActive !== undefined ? Boolean(isActive) : true,
+        displayOrder: parseInt(displayOrder, 10) || 0,
+      });
+      const created = await getRewardTemplateById(id);
+      return res.send({ success: true, message: "Reward template created.", data: created });
+    } catch (error) {
+      console.error("[vote] POST /admin/vote/reward-templates:", error);
+      if (!res.sent) return res.status(500).send({ success: false, message: `${error}` });
+    }
+  });
+
+  // =========================================================================
+  // Admin: PUT /admin/vote/reward-templates/:id
+  // =========================================================================
+  app.put("/admin/vote/reward-templates/:id", async function (req, res) {
+    if (!isFeatureEnabled(features.voting, res, lang)) return;
+
+    const id = parseInt(req.params.id, 10);
+    if (!id) return res.send({ success: false, message: "Invalid template id." });
+
+    const body = req.body || {};
+    const updates = {};
+
+    if (body.rewardType !== undefined) updates.rewardType = body.rewardType;
+    if (body.commandTemplate !== undefined) updates.commandTemplate = body.commandTemplate.trim();
+    if (body.executeAs !== undefined) updates.executeAs = body.executeAs;
+    if (body.serverScope !== undefined) updates.serverScope = body.serverScope;
+    if (body.isActive !== undefined) updates.isActive = Boolean(body.isActive);
+    if (body.displayOrder !== undefined) updates.displayOrder = parseInt(body.displayOrder, 10) || 0;
+
+    const validExecuteAs = ["console", "player"];
+    if (updates.executeAs && !validExecuteAs.includes(updates.executeAs)) {
+      return res.send({ success: false, message: `Invalid executeAs. Allowed: ${validExecuteAs.join(", ")}` });
+    }
+
+    try {
+      const existing = await getRewardTemplateById(id);
+      if (!existing) return res.send({ success: false, message: "Reward template not found." });
+
+      await updateRewardTemplate(id, updates);
+      const updated = await getRewardTemplateById(id);
+      return res.send({ success: true, message: "Reward template updated.", data: updated });
+    } catch (error) {
+      console.error("[vote] PUT /admin/vote/reward-templates/:id:", error);
+      if (!res.sent) return res.status(500).send({ success: false, message: `${error}` });
+    }
+  });
+
+  // =========================================================================
+  // Admin: DELETE /admin/vote/reward-templates/:id
+  // =========================================================================
+  app.delete("/admin/vote/reward-templates/:id", async function (req, res) {
+    if (!isFeatureEnabled(features.voting, res, lang)) return;
+
+    const id = parseInt(req.params.id, 10);
+    if (!id) return res.send({ success: false, message: "Invalid template id." });
+
+    try {
+      const deleted = await deleteRewardTemplate(id);
+      if (!deleted) return res.send({ success: false, message: "Reward template not found." });
+      return res.send({ success: true, message: "Reward template deleted." });
+    } catch (error) {
+      console.error("[vote] DELETE /admin/vote/reward-templates/:id:", error);
       if (!res.sent) return res.status(500).send({ success: false, message: `${error}` });
     }
   });

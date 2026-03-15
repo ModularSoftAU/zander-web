@@ -60,6 +60,64 @@ export function buildQueueDedupeKey(playerUuid, source, commandText) {
 }
 
 // ---------------------------------------------------------------------------
+// Reward Templates
+// ---------------------------------------------------------------------------
+
+const VALID_REWARD_TYPES = ["vote", "monthly_top"];
+
+export async function getRewardTemplates({ rewardType, activeOnly = false } = {}) {
+  const filters = [];
+  const params = [];
+  if (rewardType) { filters.push("reward_type = ?"); params.push(rewardType); }
+  if (activeOnly) { filters.push("is_active = 1"); }
+  const where = filters.length ? `WHERE ${filters.join(" AND ")}` : "";
+  return query(
+    `SELECT * FROM vote_reward_templates ${where} ORDER BY reward_type ASC, display_order ASC, id ASC`,
+    params
+  );
+}
+
+export async function getRewardTemplateById(id) {
+  const rows = await query("SELECT * FROM vote_reward_templates WHERE id = ?", [id]);
+  return rows[0] || null;
+}
+
+export async function createRewardTemplate({ rewardType, commandTemplate, executeAs = "console", serverScope = "any", isActive = true, displayOrder = 0 }) {
+  if (!VALID_REWARD_TYPES.includes(rewardType)) {
+    throw new Error(`Invalid reward_type '${rewardType}'. Allowed: ${VALID_REWARD_TYPES.join(", ")}`);
+  }
+  const result = await query(
+    `INSERT INTO vote_reward_templates (reward_type, command_template, execute_as, server_scope, is_active, display_order)
+     VALUES (?, ?, ?, ?, ?, ?)`,
+    [rewardType, commandTemplate, executeAs, serverScope, isActive ? 1 : 0, displayOrder]
+  );
+  return result.insertId;
+}
+
+export async function updateRewardTemplate(id, { rewardType, commandTemplate, executeAs, serverScope, isActive, displayOrder }) {
+  const fields = [];
+  const params = [];
+  if (rewardType !== undefined) {
+    if (!VALID_REWARD_TYPES.includes(rewardType)) throw new Error(`Invalid reward_type '${rewardType}'.`);
+    fields.push("reward_type = ?"); params.push(rewardType);
+  }
+  if (commandTemplate !== undefined) { fields.push("command_template = ?"); params.push(commandTemplate); }
+  if (executeAs !== undefined) { fields.push("execute_as = ?"); params.push(executeAs); }
+  if (serverScope !== undefined) { fields.push("server_scope = ?"); params.push(serverScope); }
+  if (isActive !== undefined) { fields.push("is_active = ?"); params.push(isActive ? 1 : 0); }
+  if (displayOrder !== undefined) { fields.push("display_order = ?"); params.push(displayOrder); }
+  if (!fields.length) return false;
+  params.push(id);
+  await query(`UPDATE vote_reward_templates SET ${fields.join(", ")} WHERE id = ?`, params);
+  return true;
+}
+
+export async function deleteRewardTemplate(id) {
+  const result = await query("DELETE FROM vote_reward_templates WHERE id = ?", [id]);
+  return result.affectedRows > 0;
+}
+
+// ---------------------------------------------------------------------------
 // Vote Sites
 // ---------------------------------------------------------------------------
 
