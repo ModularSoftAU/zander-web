@@ -67,7 +67,12 @@ import { client } from "./controllers/discordController.js";
 // Application Boot
 //
 const buildApp = async () => {
-  const app = fastify({ logger: config.debug });
+  // pluginTimeout raised to 120 s (default is 10 s).
+  // The Sapphire Framework's ApplicationCommandRegistries initialisation can
+  // take 60+ seconds while registering Discord slash commands, which can delay
+  // event-loop ticks long enough for avvio to fire the default 10-second
+  // timeout before route-registration plugins have a chance to complete.
+  const app = fastify({ logger: config.debug, pluginTimeout: 120000 });
 
   // When app errors, render the error on a page, do not provide JSON
   app.setNotFoundHandler(async function (req, res) {
@@ -166,8 +171,12 @@ const buildApp = async () => {
 
   await app.register((instance, options, next) => {
     // API routes (Token authenticated)
-    instance.addHook("preValidation", verifyToken);
-    apiRoutes(instance, client, moment, config, db, features, lang);
+    try {
+      instance.addHook("preValidation", verifyToken);
+      apiRoutes(instance, client, moment, config, db, features, lang);
+    } catch (err) {
+      return next(err);
+    }
     next();
   });
 
@@ -182,7 +191,11 @@ const buildApp = async () => {
   await app.register((instance, options, next) => {
     // Don't authenticate the Redirect routes. These are
     // protected by
-    apiRedirectRoutes(instance, config, lang, features);
+    try {
+      apiRedirectRoutes(instance, config, lang, features);
+    } catch (err) {
+      return next(err);
+    }
     next();
   });
 
@@ -227,7 +240,11 @@ const buildApp = async () => {
 
   await app.register((instance, options, next) => {
     // Routes
-    siteRoutes(instance, client, fetch, moment, config, db, features, lang);
+    try {
+      siteRoutes(instance, client, fetch, moment, config, db, features, lang);
+    } catch (err) {
+      return next(err);
+    }
     next();
   });
 
