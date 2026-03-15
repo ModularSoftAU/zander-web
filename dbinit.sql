@@ -87,7 +87,7 @@ CREATE TABLE forumCategories (
     UNIQUE KEY forumCategories_slug_unique (slug),
     INDEX forumCategories_parent_idx (parentCategoryId),
     CONSTRAINT fk_forumCategories_parent FOREIGN KEY (parentCategoryId) REFERENCES forumCategories(categoryId) ON DELETE SET NULL
-);
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE forumDiscussions (
     discussionId INT NOT NULL AUTO_INCREMENT,
@@ -109,7 +109,7 @@ CREATE TABLE forumDiscussions (
     CONSTRAINT fk_forumDiscussions_category FOREIGN KEY (categoryId) REFERENCES forumCategories(categoryId) ON DELETE CASCADE,
     CONSTRAINT fk_forumDiscussions_creator FOREIGN KEY (createdBy) REFERENCES users(userId) ON DELETE CASCADE,
     CONSTRAINT fk_forumDiscussions_lastPostUser FOREIGN KEY (lastPostBy) REFERENCES users(userId) ON DELETE SET NULL
-);
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE forumPosts (
     postId INT NOT NULL AUTO_INCREMENT,
@@ -124,7 +124,7 @@ CREATE TABLE forumPosts (
     INDEX forumPosts_user_idx (userId),
     CONSTRAINT fk_forumPosts_discussion FOREIGN KEY (discussionId) REFERENCES forumDiscussions(discussionId) ON DELETE CASCADE,
     CONSTRAINT fk_forumPosts_user FOREIGN KEY (userId) REFERENCES users(userId) ON DELETE CASCADE
-);
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE forumPostRevisions (
     revisionId INT NOT NULL AUTO_INCREMENT,
@@ -136,7 +136,7 @@ CREATE TABLE forumPostRevisions (
     INDEX forumPostRevisions_post_idx (postId),
     CONSTRAINT fk_forumPostRevisions_post FOREIGN KEY (postId) REFERENCES forumPosts(postId) ON DELETE CASCADE,
     CONSTRAINT fk_forumPostRevisions_editor FOREIGN KEY (editorId) REFERENCES users(userId) ON DELETE SET NULL
-);
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 INSERT INTO users (uuid, username, account_disabled)
 VALUES ('f78a4d8d-d51b-4b39-98a3-230f2de0c670','CONSOLE',0);
