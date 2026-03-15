@@ -21,12 +21,12 @@ dotenv.config();
 import fastify from "fastify";
 import fastifySession from "@fastify/session";
 import fastifyCookie from "@fastify/cookie";
-import expressMySQLSession from "express-mysql-session";
+import { PrismaSessionStore } from "@quixo3/prisma-session-store";
 
 const config = require("./config.json");
 const features = require("./features.json");
 const lang = require("./lang.json");
-import db, { isDbHealthy } from "./controllers/databaseController.js";
+import db, { isDbHealthy, prisma } from "./controllers/databaseController.js";
 import { getWebAnnouncement } from "./controllers/announcementController.js";
 import { getNotificationSummary } from "./controllers/notificationController.js";
 
@@ -207,38 +207,12 @@ const buildApp = async () => {
     { prefix: "/api/config" }
   );
 
-  // Sessions — persisted to MySQL so logins survive app restarts.
-  //
-  // IMPORTANT: createDatabaseTable is set to FALSE here.  The sessions table
-  // is created by the migration script (v1.17.0_v1.18.0.sql) which runs
-  // before the app boots.  Letting express-mysql-session create the table
-  // on startup fires an immediate async query; if that query gets an
-  // ECONNRESET (common on cloud DBs during cold-start) the error propagates
-  // as an unhandled rejection that stops buildApp() from calling app.listen().
-  const MySQLStore = expressMySQLSession(fastifySession);
-  const sessionStore = new MySQLStore({
-    host: process.env.databaseHost,
-    port: process.env.databasePort,
-    user: process.env.databaseUser,
-    password: process.env.databasePassword,
-    database: process.env.databaseName,
-    createDatabaseTable: false,  // table guaranteed by migration
-    clearExpired: true,
-    checkExpirationInterval: 900000, // 15 minutes
-    expiration: 86400000 * 7, // 7 days default
-    // mysql2 pool settings — keep connections alive between requests so
-    // the pool doesn't hand out stale sockets that immediately ECONNRESET.
-    waitForConnections: true,
-    connectionLimit: 10,
-    enableKeepAlive: true,
-    keepAliveInitialDelay: 0,
-  });
-
-  // Suppress unhandled rejections from background session-store queries
-  // (clearExpired cron, etc.) — transient ECONNRESET errors are non-fatal
-  // because mysql2 will reconnect on the next query automatically.
-  sessionStore.on("error", (err) => {
-    console.error("[sessionStore] Non-fatal MySQL session store error:", err.code || err.message);
+  // Sessions — persisted via Prisma so logins survive app restarts.
+  // The sessions table is created by the baseline migration.
+  const sessionStore = new PrismaSessionStore(prisma, {
+    checkPeriod: 2 * 60 * 1000, // prune expired sessions every 2 minutes
+    dbRecordIdIsSessionId: true,
+    dbRecordIdFunction: undefined,
   });
 
   await app.register(fastifyCookie, {
