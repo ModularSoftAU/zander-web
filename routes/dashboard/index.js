@@ -8,6 +8,7 @@ import dashboardForumsSiteRoute from "./forums.js";
 import supportDashboardRoutes from "./support.js";
 import dashboardSchedulerSiteRoute from "./scheduler.js";
 import dashboardWebPunishmentsRoute from "./webPunishments.js";
+import dashboardVotingRoute from "./voting.js";
 
 export default function dashboardSiteRoutes(
   app,
@@ -29,4 +30,5 @@ export default function dashboardSiteRoutes(
   dashboardForumsSiteRoute(app, fetch, config, db, features, lang);
   dashboardSchedulerSiteRoute(app, client, fetch, config, features, lang);
   dashboardWebPunishmentsRoute(app, client, fetch, config, db, features, lang);
+  dashboardVotingRoute(app, fetch, config, db, features, lang);
 }

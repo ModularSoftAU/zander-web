@@ -46,6 +46,7 @@ import("./cron/nicknameCheckCron.js");
 import("./cron/punishmentExpiryCron.js");
 import("./cron/watchTwitchCron.js");
 import("./cron/watchYoutubeCron.js");
+import("./cron/voteMonthlyRewardCron.js");
 
 //
 // Website Related

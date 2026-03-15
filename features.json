@@ -28,6 +28,7 @@
 
   "staffAuditReport": true,
   "watch": true,
+  "voting": true,
 
   "smDiscord": true,
   "smFacebook": true,

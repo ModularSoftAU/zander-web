@@ -24,6 +24,11 @@
       <li><a href="/dashboard/support/explorer" class="dashboard-nav-link <%= currentPath.includes('/support/explorer') ? 'active' : '' %>"><i class="fas fa-search fa-fw me-2"></i>Ticket Explorer</a></li>
       <li><a href="/dashboard/support/categories" class="dashboard-nav-link <%= currentPath.includes('/support/categories') ? 'active' : '' %>"><i class="fas fa-folder fa-fw me-2"></i>Categories</a></li>
 
+      <li class="dashboard-nav-heading">Voting</li>
+      <li><a href="/dashboard/voting" class="dashboard-nav-link <%= isActive('/dashboard/voting') && !currentPath.includes('/queue') && !currentPath.includes('/leaderboard') ? 'active' : '' %>"><i class="fa-solid fa-check-to-slot fa-fw me-2"></i>Vote Sites</a></li>
+      <li><a href="/dashboard/voting/leaderboard" class="dashboard-nav-link <%= currentPath.includes('/voting/leaderboard') ? 'active' : '' %>"><i class="fa-solid fa-trophy fa-fw me-2"></i>Leaderboard</a></li>
+      <li><a href="/dashboard/voting/queue" class="dashboard-nav-link <%= currentPath.includes('/voting/queue') ? 'active' : '' %>"><i class="fa-solid fa-list-check fa-fw me-2"></i>Reward Queue</a></li>
+
       <li class="dashboard-nav-heading">System</li>
       <li><a href="/dashboard/vault" class="dashboard-nav-link <%= isActive('/dashboard/vault') ? 'active' : '' %>"><i class="fa-solid fa-vault fa-fw me-2"></i>Vault</a></li>
       <li><a href="/dashboard/logs" class="dashboard-nav-link <%= isActive('/dashboard/logs') ? 'active' : '' %>"><i class="fa-solid fa-terminal fa-fw me-2"></i>Logs</a></li>
@@ -56,6 +61,11 @@
         <li><a href="/dashboard/support" class="dashboard-nav-link <%= isActive('/dashboard/support') && !currentPath.includes('explorer') && !currentPath.includes('categories') ? 'active' : '' %>"><i class="fas fa-ticket-alt fa-fw me-2"></i>Manage Tickets</a></li>
         <li><a href="/dashboard/support/explorer" class="dashboard-nav-link <%= currentPath.includes('/support/explorer') ? 'active' : '' %>"><i class="fas fa-search fa-fw me-2"></i>Ticket Explorer</a></li>
         <li><a href="/dashboard/support/categories" class="dashboard-nav-link <%= currentPath.includes('/support/categories') ? 'active' : '' %>"><i class="fas fa-folder fa-fw me-2"></i>Categories</a></li>
+
+        <li class="dashboard-nav-heading">Voting</li>
+        <li><a href="/dashboard/voting" class="dashboard-nav-link <%= isActive('/dashboard/voting') && !currentPath.includes('/queue') && !currentPath.includes('/leaderboard') ? 'active' : '' %>"><i class="fa-solid fa-check-to-slot fa-fw me-2"></i>Vote Sites</a></li>
+        <li><a href="/dashboard/voting/leaderboard" class="dashboard-nav-link <%= currentPath.includes('/voting/leaderboard') ? 'active' : '' %>"><i class="fa-solid fa-trophy fa-fw me-2"></i>Leaderboard</a></li>
+        <li><a href="/dashboard/voting/queue" class="dashboard-nav-link <%= currentPath.includes('/voting/queue') ? 'active' : '' %>"><i class="fa-solid fa-list-check fa-fw me-2"></i>Reward Queue</a></li>
 
         <li class="dashboard-nav-heading">System</li>
         <li><a href="/dashboard/vault" class="dashboard-nav-link <%= isActive('/dashboard/vault') ? 'active' : '' %>"><i class="fa-solid fa-vault fa-fw me-2"></i>Vault</a></li>

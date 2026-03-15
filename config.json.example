@@ -79,5 +79,9 @@
     "time": "12:00",
     "timezone": "Australia/Sydney",
     "webhookUrl": "WEBHOOKURL"
+  },
+  "voting": {
+    "monthlyProcessingNote": "Monthly rewards run automatically at 00:05 UTC on the 1st of each month. Use POST /admin/vote/monthly/process to trigger manually.",
+    "tieRule": "All players sharing the highest vote count in a month are rewarded. Within a tie group, earliest last_vote_at wins positional priority."
   }
 }
