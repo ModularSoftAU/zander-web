@@ -13,14 +13,10 @@ var cakeDayUserCheckTask = cron.schedule("0 7 * * *", async () => {
   try {
     const results = await new Promise((resolve, reject) => {
       db.query(
-        // Use account_registered for the anniversary — this is the date the
-        // user actually registered on the website.  joined is set when the
-        // record is created (e.g. from a Minecraft import) and may pre-date
-        // the user's awareness of the website entirely.
         `SELECT * FROM users
          WHERE account_registered IS NOT NULL
-           AND DATE_FORMAT(account_registered, '%m-%d') = DATE_FORMAT(CURDATE(), '%m-%d')
-           AND YEAR(account_registered) != YEAR(CURDATE())
+           AND DATE_FORMAT(joined, '%m-%d') = DATE_FORMAT(CURDATE(), '%m-%d')
+           AND YEAR(joined) != YEAR(CURDATE())
            AND account_disabled = 0`,
         (error, rows) => {
           if (error) return reject(error);
@@ -35,7 +31,7 @@ var cakeDayUserCheckTask = cron.schedule("0 7 * * *", async () => {
 
     for (const user of results) {
       try {
-        const years = moment().diff(moment(user.account_registered), "years");
+        const years = moment().diff(moment(user.joined), "years");
 
         const embed = new MessageBuilder()
           .setTitle(`🎂 Happy cake day to ${user.username}! 🎉`)
