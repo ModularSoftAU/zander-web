@@ -25,12 +25,14 @@ dotenv.config();
 // Prisma client (primary interface for new code)
 // ---------------------------------------------------------------------------
 
+const baseUrl = process.env.DATABASE_URL ||
+  `mysql://${encodeURIComponent(process.env.databaseUser)}:${encodeURIComponent(process.env.databasePassword)}@${process.env.databaseHost}:${process.env.databasePort || 3306}/${process.env.databaseName}`;
+
 export const prisma = new PrismaClient({
   log: process.env.DEBUG === "true" ? ["query", "info", "warn", "error"] : ["warn", "error"],
   datasources: {
     db: {
-      url: process.env.DATABASE_URL ||
-        `mysql://${encodeURIComponent(process.env.databaseUser)}:${encodeURIComponent(process.env.databasePassword)}@${process.env.databaseHost}:${process.env.databasePort || 3306}/${process.env.databaseName}`,
+      url: baseUrl + (baseUrl.includes("?") ? "&" : "?") + "connection_limit=5&pool_timeout=10&connect_timeout=10",
     },
   },
 });
@@ -50,7 +52,7 @@ export function isDbHealthy() {
 // ---------------------------------------------------------------------------
 
 const pool = mysql2.createPool({
-  connectionLimit: 25,
+  connectionLimit: 10,
   host: process.env.databaseHost,
   port: parseInt(process.env.databasePort) || 3306,
   user: process.env.databaseUser,
@@ -58,9 +60,11 @@ const pool = mysql2.createPool({
   database: process.env.databaseName,
   charset: "utf8mb4",
   multipleStatements: true,
-  connectTimeout: 5000,
+  connectTimeout: 10000,
   waitForConnections: true,
   timezone: "Z",
+  enableKeepAlive: true,
+  keepAliveInitialDelay: 10000,
 });
 
 // Ensure utf8mb4 on every connection and update health status.
@@ -74,7 +78,7 @@ pool.on("connection", function (connection) {
 
 pool.on("error", (err) => {
   console.error(`[ERROR] [DB] Pool Error: ${err.message}`);
-  if (["PROTOCOL_CONNECTION_LOST", "ECONNREFUSED", "EHOSTUNREACH", "ETIMEDOUT", "ENOTFOUND"].includes(err.code)) {
+  if (["PROTOCOL_CONNECTION_LOST", "ECONNREFUSED", "EHOSTUNREACH", "ETIMEDOUT", "ENOTFOUND", "ECONNRESET"].includes(err.code)) {
     dbHealthy = false;
   }
 });
