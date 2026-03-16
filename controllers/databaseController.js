@@ -37,27 +37,7 @@ const prismaBase = new PrismaClient({
   },
 });
 
-// Wrap session.create with an atomic INSERT ... ON DUPLICATE KEY UPDATE so
-// concurrent requests sharing the same new session ID don't race each other.
-// The library (@quixo3/prisma-session-store) does findUnique→create which has
-// a TOCTOU window; this extension collapses it to a single SQL statement.
-export const prisma = prismaBase.$extends({
-  query: {
-    session: {
-      async create({ args, query }) {
-        const { id, sid, data, expiresAt } = args.data;
-        await prismaBase.$executeRaw`
-          INSERT INTO sessions (id, sid, \`data\`, expiresAt)
-          VALUES (${id}, ${sid}, ${data}, ${expiresAt})
-          ON DUPLICATE KEY UPDATE
-            \`data\` = VALUES(\`data\`),
-            expiresAt = VALUES(expiresAt)
-        `;
-        return { id, sid, data, expiresAt };
-      },
-    },
-  },
-});
+export const prisma = prismaBase;
 
 // ---------------------------------------------------------------------------
 // Health tracking

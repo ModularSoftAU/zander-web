@@ -21,12 +21,12 @@ dotenv.config();
 import fastify from "fastify";
 import fastifySession from "@fastify/session";
 import fastifyCookie from "@fastify/cookie";
-import { PrismaSessionStore } from "@quixo3/prisma-session-store";
+import { FastifyPrismaSessionStore } from "./lib/fastifyPrismaSessionStore.js";
 
 const config = require("./config.json");
 const features = require("./features.json");
 const lang = require("./lang.json");
-import db, { isDbHealthy, prisma } from "./controllers/databaseController.js";
+import db, { isDbHealthy } from "./controllers/databaseController.js";
 import { getWebAnnouncement } from "./controllers/announcementController.js";
 import { getNotificationSummary } from "./controllers/notificationController.js";
 
@@ -210,11 +210,7 @@ const buildApp = async () => {
 
   // Sessions — persisted via Prisma so logins survive app restarts.
   // The sessions table is created by the baseline migration.
-  const sessionStore = new PrismaSessionStore(prisma, {
-    checkPeriod: 2 * 60 * 1000, // prune expired sessions every 2 minutes
-    dbRecordIdIsSessionId: true,
-    dbRecordIdFunction: undefined,
-  });
+  const sessionStore = new FastifyPrismaSessionStore();
 
   await app.register(fastifyCookie, {
     secret: process.env.sessionCookieSecret, // for cookies signature
