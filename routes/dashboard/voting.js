@@ -16,6 +16,13 @@ import {
 } from "../../api/common.js";
 import { getWebAnnouncement } from "../../controllers/announcementController.js";
 
+/** Parse an internal API response, surfacing HTTP errors as thrown exceptions. */
+async function apiJson(response, label) {
+  const text = await response.text();
+  if (!text) throw new Error(`Empty response from ${label} (HTTP ${response.status})`);
+  return JSON.parse(text);
+}
+
 export default function dashboardVotingSiteRoute(app, fetch, config, db, features, lang) {
 
   // =========================================================================
@@ -35,8 +42,8 @@ export default function dashboardVotingSiteRoute(app, fetch, config, db, feature
         }),
       ]);
 
-      const sitesData = await sitesRes.json();
-      const leaderboardData = await leaderboardRes.json();
+      const sitesData = await apiJson(sitesRes, "/admin/vote/sites");
+      const leaderboardData = await apiJson(leaderboardRes, "/vote/leaderboard");
 
       return res.view("dashboard/voting/sites", {
         pageTitle: "Dashboard - Voting Sites",
@@ -74,7 +81,7 @@ export default function dashboardVotingSiteRoute(app, fetch, config, db, feature
       const templatesRes = await fetch(`${process.env.siteAddress}/admin/vote/reward-templates`, {
         headers: { "x-access-token": process.env.apiKey },
       });
-      const templatesData = await templatesRes.json();
+      const templatesData = await apiJson(templatesRes, "/admin/vote/reward-templates");
 
       return res.view("dashboard/voting/rewards", {
         pageTitle: "Dashboard - Reward Templates",
@@ -125,7 +132,7 @@ export default function dashboardVotingSiteRoute(app, fetch, config, db, feature
         `${process.env.siteAddress}/admin/vote/queue?${params.toString()}`,
         { headers: { "x-access-token": process.env.apiKey } }
       );
-      const queueData = await queueRes.json();
+      const queueData = await apiJson(queueRes, "/admin/vote/queue");
 
       return res.view("dashboard/voting/queue", {
         pageTitle: "Dashboard - Reward Queue",
@@ -174,8 +181,8 @@ export default function dashboardVotingSiteRoute(app, fetch, config, db, feature
         }),
       ]);
 
-      const boardData = await boardRes.json();
-      const resultsData = await resultsRes.json();
+      const boardData = await apiJson(boardRes, "/vote/leaderboard");
+      const resultsData = await apiJson(resultsRes, "/admin/vote/monthly/results");
 
       return res.view("dashboard/voting/leaderboard", {
         pageTitle: "Dashboard - Vote Leaderboard",
