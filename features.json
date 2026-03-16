@@ -7,7 +7,8 @@
       "generalKenobi": true,
       "guildMemberBoost": true,
       "guildMemberVerify": true,
-      "nicknameCheck": true
+      "nicknameCheck": true,
+      "unverifiedReminder": true
     },
     "punishments": true
   },

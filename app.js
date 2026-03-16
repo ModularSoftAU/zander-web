@@ -47,6 +47,7 @@ import("./cron/punishmentExpiryCron.js");
 import("./cron/watchTwitchCron.js");
 import("./cron/watchYoutubeCron.js");
 import("./cron/voteMonthlyRewardCron.js");
+import("./cron/unverifiedReminderCron.js");
 
 //
 // Website Related
