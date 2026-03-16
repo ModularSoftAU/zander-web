@@ -5,7 +5,7 @@
   "main": "app.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "build": "npm install && npx prisma migrate resolve --applied 0001_baseline && npx prisma migrate deploy",
+    "build": "npm install && npx prisma migrate deploy",
     "prod": "node --experimental-modules --experimental-json-modules --experimental-specifier-resolution=node --max-old-space-size=512 app.js",
     "dev": "nodemon  --experimental-modules --experimental-json-modules --experimental-specifier-resolution=node"
   },
