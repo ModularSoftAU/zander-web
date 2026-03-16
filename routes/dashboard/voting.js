@@ -46,28 +46,34 @@ export default function dashboardVotingSiteRoute(app, fetch, config, db, feature
       const sitesData = await apiJson(sitesRes, "/admin/vote/sites");
       const leaderboardData = await apiJson(leaderboardRes, "/vote/leaderboard");
 
-      return res.view("dashboard/voting/sites", {
-        pageTitle: "Dashboard - Voting Sites",
-        config,
-        req,
-        features,
-        sitesData,
-        leaderboardData,
-        globalImage: await getGlobalImage(),
-        announcementWeb: await getWebAnnouncement(),
-      });
+      const [globalImage, announcementWeb] = await Promise.all([getGlobalImage(), getWebAnnouncement()]);
+      res.header("content-type", "text/html; charset=utf-8").send(
+        await app.view("dashboard/voting/sites", {
+          pageTitle: "Dashboard - Voting Sites",
+          config,
+          req,
+          features,
+          sitesData,
+          leaderboardData,
+          globalImage,
+          announcementWeb,
+        })
+      );
     } catch (error) {
       console.error("[dashboard/voting] GET /dashboard/voting:", error);
-      return res.view("session/error", {
-        pageTitle: "Error",
-        pageDescription: "Error loading voting dashboard",
-        config,
-        req,
-        error,
-        features,
-        globalImage: await getGlobalImage(),
-        announcementWeb: await getWebAnnouncement(),
-      });
+      const [globalImage, announcementWeb] = await Promise.all([getGlobalImage(), getWebAnnouncement()]);
+      res.header("content-type", "text/html; charset=utf-8").send(
+        await app.view("session/error", {
+          pageTitle: "Error",
+          pageDescription: "Error loading voting dashboard",
+          config,
+          req,
+          error,
+          features,
+          globalImage,
+          announcementWeb,
+        })
+      );
     }
   });
 
@@ -85,27 +91,33 @@ export default function dashboardVotingSiteRoute(app, fetch, config, db, feature
       });
       const templatesData = await apiJson(templatesRes, "/admin/vote/reward-templates");
 
-      return res.view("dashboard/voting/rewards", {
-        pageTitle: "Dashboard - Reward Templates",
-        config,
-        req,
-        features,
-        templatesData,
-        globalImage: await getGlobalImage(),
-        announcementWeb: await getWebAnnouncement(),
-      });
+      const [globalImage, announcementWeb] = await Promise.all([getGlobalImage(), getWebAnnouncement()]);
+      res.header("content-type", "text/html; charset=utf-8").send(
+        await app.view("dashboard/voting/rewards", {
+          pageTitle: "Dashboard - Reward Templates",
+          config,
+          req,
+          features,
+          templatesData,
+          globalImage,
+          announcementWeb,
+        })
+      );
     } catch (error) {
       console.error("[dashboard/voting] GET /dashboard/voting/rewards:", error);
-      return res.view("session/error", {
-        pageTitle: "Error",
-        pageDescription: "Error loading reward templates",
-        config,
-        req,
-        error,
-        features,
-        globalImage: await getGlobalImage(),
-        announcementWeb: await getWebAnnouncement(),
-      });
+      const [globalImage, announcementWeb] = await Promise.all([getGlobalImage(), getWebAnnouncement()]);
+      res.header("content-type", "text/html; charset=utf-8").send(
+        await app.view("session/error", {
+          pageTitle: "Error",
+          pageDescription: "Error loading reward templates",
+          config,
+          req,
+          error,
+          features,
+          globalImage,
+          announcementWeb,
+        })
+      );
     }
   });
 
@@ -137,29 +149,35 @@ export default function dashboardVotingSiteRoute(app, fetch, config, db, feature
       );
       const queueData = await apiJson(queueRes, "/admin/vote/queue");
 
-      return res.view("dashboard/voting/queue", {
-        pageTitle: "Dashboard - Reward Queue",
-        config,
-        req,
-        features,
-        queueData,
-        activeStatus: status,
-        activePlayerUuid: playerUuid,
-        globalImage: await getGlobalImage(),
-        announcementWeb: await getWebAnnouncement(),
-      });
+      const [globalImage, announcementWeb] = await Promise.all([getGlobalImage(), getWebAnnouncement()]);
+      res.header("content-type", "text/html; charset=utf-8").send(
+        await app.view("dashboard/voting/queue", {
+          pageTitle: "Dashboard - Reward Queue",
+          config,
+          req,
+          features,
+          queueData,
+          activeStatus: status,
+          activePlayerUuid: playerUuid,
+          globalImage,
+          announcementWeb,
+        })
+      );
     } catch (error) {
       console.error("[dashboard/voting] GET /dashboard/voting/queue:", error);
-      return res.view("session/error", {
-        pageTitle: "Error",
-        pageDescription: "Error loading queue",
-        config,
-        req,
-        error,
-        features,
-        globalImage: await getGlobalImage(),
-        announcementWeb: await getWebAnnouncement(),
-      });
+      const [globalImage, announcementWeb] = await Promise.all([getGlobalImage(), getWebAnnouncement()]);
+      res.header("content-type", "text/html; charset=utf-8").send(
+        await app.view("session/error", {
+          pageTitle: "Error",
+          pageDescription: "Error loading queue",
+          config,
+          req,
+          error,
+          features,
+          globalImage,
+          announcementWeb,
+        })
+      );
     }
   });
 
@@ -188,29 +206,35 @@ export default function dashboardVotingSiteRoute(app, fetch, config, db, feature
       const boardData = await apiJson(boardRes, "/vote/leaderboard");
       const resultsData = await apiJson(resultsRes, "/admin/vote/monthly/results");
 
-      return res.view("dashboard/voting/leaderboard", {
-        pageTitle: "Dashboard - Vote Leaderboard",
-        config,
-        req,
-        features,
-        boardData,
-        resultsData,
-        activeMonth: month,
-        globalImage: await getGlobalImage(),
-        announcementWeb: await getWebAnnouncement(),
-      });
+      const [globalImage, announcementWeb] = await Promise.all([getGlobalImage(), getWebAnnouncement()]);
+      res.header("content-type", "text/html; charset=utf-8").send(
+        await app.view("dashboard/voting/leaderboard", {
+          pageTitle: "Dashboard - Vote Leaderboard",
+          config,
+          req,
+          features,
+          boardData,
+          resultsData,
+          activeMonth: month,
+          globalImage,
+          announcementWeb,
+        })
+      );
     } catch (error) {
       console.error("[dashboard/voting] GET /dashboard/voting/leaderboard:", error);
-      return res.view("session/error", {
-        pageTitle: "Error",
-        pageDescription: "Error loading leaderboard",
-        config,
-        req,
-        error,
-        features,
-        globalImage: await getGlobalImage(),
-        announcementWeb: await getWebAnnouncement(),
-      });
+      const [globalImage, announcementWeb] = await Promise.all([getGlobalImage(), getWebAnnouncement()]);
+      res.header("content-type", "text/html; charset=utf-8").send(
+        await app.view("session/error", {
+          pageTitle: "Error",
+          pageDescription: "Error loading leaderboard",
+          config,
+          req,
+          error,
+          features,
+          globalImage,
+          announcementWeb,
+        })
+      );
     }
   });
 }
