@@ -479,7 +479,7 @@ model creator_content_notifications {
 }
 
 /// Session store table used by @quixo3/prisma-session-store
-model sessions {
+model session {
   id        String   @id @db.VarChar(128)
   sid       String   @unique @db.VarChar(128)
   data      String   @db.MediumText
