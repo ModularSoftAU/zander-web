@@ -41,6 +41,7 @@
     "discord.js": "^14.13.0",
     "dotenv": "^16.0.1",
     "ejs": "^3.1.7",
+    "express-session": "^1.19.0",
     "fastify": "^4.25.2",
     "imgur": "^2.2.0",
     "mailtrap": "^3.2.0",
