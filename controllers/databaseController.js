@@ -28,11 +28,33 @@ dotenv.config();
 const baseUrl = process.env.DATABASE_URL ||
   `mysql://${encodeURIComponent(process.env.databaseUser)}:${encodeURIComponent(process.env.databasePassword)}@${process.env.databaseHost}:${process.env.databasePort || 3306}/${process.env.databaseName}`;
 
-export const prisma = new PrismaClient({
+const prismaBase = new PrismaClient({
   log: process.env.DEBUG === "true" ? ["query", "info", "warn", "error"] : ["warn", "error"],
   datasources: {
     db: {
       url: baseUrl + (baseUrl.includes("?") ? "&" : "?") + "connection_limit=5&pool_timeout=10&connect_timeout=10",
+    },
+  },
+});
+
+// Wrap session.create with an atomic INSERT ... ON DUPLICATE KEY UPDATE so
+// concurrent requests sharing the same new session ID don't race each other.
+// The library (@quixo3/prisma-session-store) does findUnique→create which has
+// a TOCTOU window; this extension collapses it to a single SQL statement.
+export const prisma = prismaBase.$extends({
+  query: {
+    session: {
+      async create({ args, query }) {
+        const { id, sid, data, expiresAt } = args.data;
+        await prismaBase.$executeRaw`
+          INSERT INTO sessions (id, sid, \`data\`, expiresAt)
+          VALUES (${id}, ${sid}, ${data}, ${expiresAt})
+          ON DUPLICATE KEY UPDATE
+            \`data\` = VALUES(\`data\`),
+            expiresAt = VALUES(expiresAt)
+        `;
+        return { id, sid, data, expiresAt };
+      },
     },
   },
 });
