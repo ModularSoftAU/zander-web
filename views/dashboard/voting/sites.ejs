@@ -238,7 +238,7 @@
 <%- include("../../modules/footer.ejs") %>
 
 <script>
-const API_KEY = "<%= process.env.apiKey %>";
+const API_KEY = <%- JSON.stringify(process.env.apiKey || '') %>;
 
 // Populate edit modal
 document.querySelectorAll('[data-bs-target="#editSiteModal"]').forEach(btn => {

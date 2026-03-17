@@ -86,7 +86,7 @@
 <%- include("../../modules/footer.ejs") %>
 
 <script>
-const API_KEY = "<%= process.env.apiKey %>";
+const API_KEY = <%- JSON.stringify(process.env.apiKey || '') %>;
 const activeMonth = "<%= activeMonth %>";
 
 document.getElementById('processMonthBtn').addEventListener('click', async () => {
