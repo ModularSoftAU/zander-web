@@ -11,3 +11,7 @@ commands:
   social:
     description: View our social media platforms.
     usage: /social
+  freeze:
+    description: Freeze a player.
+    usage: /freeze <player>
+    permission: zander.command.freeze

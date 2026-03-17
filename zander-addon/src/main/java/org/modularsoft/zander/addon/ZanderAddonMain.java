@@ -3,11 +3,14 @@ package org.modularsoft.zander.addon;
 import lombok.Getter;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.modularsoft.zander.addon.api.PolicyApiServer;
+import org.modularsoft.zander.addon.commands.FreezeCommand;
 import org.modularsoft.zander.addon.commands.PolicyCommand;
 import org.modularsoft.zander.addon.commands.SocialCommand;
+import org.modularsoft.zander.addon.events.FreezeEvents;
 import org.modularsoft.zander.addon.events.PlayerEvents;
 import org.modularsoft.zander.addon.gui.PolicyGUI;
 import org.modularsoft.zander.addon.gui.SocialGUI;
+import org.modularsoft.zander.addon.service.FreezeService;
 import org.modularsoft.zander.addon.service.PolicyService;
 
 public class ZanderAddonMain extends JavaPlugin {
@@ -15,6 +18,8 @@ public class ZanderAddonMain extends JavaPlugin {
     private static ZanderAddonMain instance;
     @Getter
     private PolicyService policyService;
+    @Getter
+    private FreezeService freezeService;
     private PolicyApiServer apiServer;
 
     @Override
@@ -24,6 +29,7 @@ public class ZanderAddonMain extends JavaPlugin {
         saveDefaultConfig();
 
         this.policyService = new PolicyService(this);
+        this.freezeService = new FreezeService();
 
         if (getConfig().getBoolean("api-server.enabled", true)) {
             this.apiServer = new PolicyApiServer(this);
@@ -35,9 +41,11 @@ public class ZanderAddonMain extends JavaPlugin {
         getServer().getPluginManager().registerEvents(policyGUI, this);
         getServer().getPluginManager().registerEvents(socialGUI, this);
         getServer().getPluginManager().registerEvents(new PlayerEvents(this, policyGUI, socialGUI), this);
+        getServer().getPluginManager().registerEvents(new FreezeEvents(freezeService), this);
 
         getCommand("policy").setExecutor(new PolicyCommand(this, policyService));
         getCommand("social").setExecutor(new SocialCommand(this, socialGUI));
+        getCommand("freeze").setExecutor(new FreezeCommand(freezeService));
 
         getLogger().info("Zander Addon has been enabled.");
     }

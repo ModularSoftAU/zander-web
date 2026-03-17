@@ -13,10 +13,10 @@ api-url: "https://craftingforchrist.net/api"
 
 # Settings for the in-game policy book
 policy-book:
-  enabled: true
+  enabled: false
   slot: 8
 
 # Settings for the social media paper
 social-paper:
-  enabled: true
+  enabled: false
   slot: 7
