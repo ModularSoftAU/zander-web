@@ -161,6 +161,15 @@
         e.preventDefault();
         $validation.show();
         $editor.summernote('focus');
+        // The native button-disable handler schedules a setTimeout(0) to disable the
+        // submit button. Re-enable it slightly after so the user can retry.
+        var $form = $(this);
+        setTimeout(function() {
+          var $btn = $form.find('button[type="submit"]');
+          var orig = $btn[0] && $btn[0].dataset.originalText;
+          if (orig) { $btn.text(orig); }
+          $btn.prop('disabled', false);
+        }, 50);
         return false;
       }
 
