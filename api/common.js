@@ -78,26 +78,20 @@ export function optional(body, field) {
     @param res Passing through res
     @param features Passing through features
 */
-export function isFeatureWebRouteEnabled(isFeatureEnabled, req, res, features) {
+export async function isFeatureWebRouteEnabled(app, isFeatureEnabled, req, res, features) {
   if (!isFeatureEnabled) {
-    // Render the disabled page async (fire-and-forget).
-    // Returning false synchronously lets every call site gate with a plain
-    // `if (!isFeatureWebRouteEnabled(...)) return;` without needing await.
-    Promise.all([getGlobalImage(), getWebAnnouncement()])
-      .then(([globalImage, announcementWeb]) =>
-        res.view("session/featureDisabled", {
-          pageTitle: "Feature Disabled",
-          config,
-          req,
-          res,
-          features,
-          globalImage,
-          announcementWeb,
-        })
-      )
-      .catch((err) =>
-        console.error("[Feature] Failed to render feature-disabled view:", err)
-      );
+    const [globalImage, announcementWeb] = await Promise.all([getGlobalImage(), getWebAnnouncement()]);
+    res.header("content-type", "text/html; charset=utf-8").send(
+      await app.view("session/featureDisabled", {
+        pageTitle: "Feature Disabled",
+        config,
+        req,
+        res,
+        features,
+        globalImage,
+        announcementWeb,
+      })
+    );
     return false;
   }
   return true;

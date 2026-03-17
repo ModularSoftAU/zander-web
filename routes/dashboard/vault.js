@@ -17,7 +17,7 @@ export default function dashboardVaultSiteRoute(
   // Vault
   //
   app.get("/dashboard/vault", async function (req, res) {
-    if (!isFeatureWebRouteEnabled(features.vault, req, res, features))
+    if (!await isFeatureWebRouteEnabled(app, features.vault, req, res, features))
       return;
 
     if (!hasPermission("zander.web.vault", req, res, features)) return;
@@ -42,7 +42,7 @@ export default function dashboardVaultSiteRoute(
   });
 
   app.get("/dashboard/vault/create", async function (req, res) {
-    if (!isFeatureWebRouteEnabled(features.vault, req, res, features)) return;
+    if (!await isFeatureWebRouteEnabled(app, features.vault, req, res, features)) return;
 
     if (!hasPermission("zander.web.vault", req, res, features)) return;
 
@@ -60,7 +60,7 @@ export default function dashboardVaultSiteRoute(
   });
 
   app.get("/dashboard/vault/edit", async function (req, res) {
-    if (!isFeatureWebRouteEnabled(features.vault, req, res, features)) return;
+    if (!await isFeatureWebRouteEnabled(app, features.vault, req, res, features)) return;
 
     if (!hasPermission("zander.web.vault", req, res, features)) return;
 

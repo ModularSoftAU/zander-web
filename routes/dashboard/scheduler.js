@@ -15,7 +15,7 @@ export default function dashboardSchedulerSiteRoute(
   lang
 ) {
   app.get("/dashboard/scheduler", async function (req, res) {
-    if (!isFeatureWebRouteEnabled(features.discord, req, res, features)) return;
+    if (!await isFeatureWebRouteEnabled(app, features.discord, req, res, features)) return;
 
     if (!hasPermission("zander.web.scheduler", req, res, features)) return;
 

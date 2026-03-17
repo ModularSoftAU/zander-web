@@ -162,7 +162,7 @@ export default function sessionSiteRoute(
       return res.redirect("/dashboard");
     }
 
-    if (!isFeatureWebRouteEnabled(features.web.login, req, res, features))
+    if (!await isFeatureWebRouteEnabled(app, features.web.login, req, res, features))
       return;
 
     const discordAuthorizeUrl = buildDiscordAuthorizeUrl();
@@ -191,7 +191,7 @@ export default function sessionSiteRoute(
       return res.redirect("/dashboard");
     }
 
-    if (!isFeatureWebRouteEnabled(features.web.login, req, res, features))
+    if (!await isFeatureWebRouteEnabled(app, features.web.login, req, res, features))
       return;
 
     const identifier = req.body.identifier ? req.body.identifier.trim() : "";
@@ -282,7 +282,7 @@ export default function sessionSiteRoute(
   app.get("/login/discord", async function (req, res) {
     if (!checkRateLimit(req, res, { windowMs: 60_000, max: 20 })) return;
 
-    if (!isFeatureWebRouteEnabled(features.web.login, req, res, features))
+    if (!await isFeatureWebRouteEnabled(app, features.web.login, req, res, features))
       return;
 
     if (req.query.returnTo && typeof req.query.returnTo === "string") {
@@ -378,7 +378,7 @@ export default function sessionSiteRoute(
   });
 
   app.get("/forgot-password", async function (req, res) {
-    if (!isFeatureWebRouteEnabled(features.web.login, req, res, features))
+    if (!await isFeatureWebRouteEnabled(app, features.web.login, req, res, features))
       return;
 
     if (req.session.user) {
@@ -398,7 +398,7 @@ export default function sessionSiteRoute(
   });
 
   app.post("/forgot-password", async function (req, res) {
-    if (!isFeatureWebRouteEnabled(features.web.login, req, res, features))
+    if (!await isFeatureWebRouteEnabled(app, features.web.login, req, res, features))
       return;
 
     if (req.session.user) {
@@ -472,7 +472,7 @@ export default function sessionSiteRoute(
   });
 
   app.get("/forgot-password/verify", async function (req, res) {
-    if (!isFeatureWebRouteEnabled(features.web.login, req, res, features))
+    if (!await isFeatureWebRouteEnabled(app, features.web.login, req, res, features))
       return;
 
     const passwordReset = req.session.passwordReset;
@@ -498,7 +498,7 @@ export default function sessionSiteRoute(
   app.post("/forgot-password/verify", async function (req, res) {
     if (!checkRateLimit(req, res, { windowMs: 15 * 60_000, max: 10 })) return;
 
-    if (!isFeatureWebRouteEnabled(features.web.login, req, res, features))
+    if (!await isFeatureWebRouteEnabled(app, features.web.login, req, res, features))
       return;
 
     const passwordReset = req.session.passwordReset;
@@ -563,7 +563,7 @@ export default function sessionSiteRoute(
   });
 
   app.get("/forgot-password/reset", async function (req, res) {
-    if (!isFeatureWebRouteEnabled(features.web.login, req, res, features))
+    if (!await isFeatureWebRouteEnabled(app, features.web.login, req, res, features))
       return;
 
     const passwordReset = req.session.passwordReset;
@@ -589,7 +589,7 @@ export default function sessionSiteRoute(
   });
 
   app.post("/forgot-password/reset", async function (req, res) {
-    if (!isFeatureWebRouteEnabled(features.web.login, req, res, features))
+    if (!await isFeatureWebRouteEnabled(app, features.web.login, req, res, features))
       return;
 
     const passwordReset = req.session.passwordReset;
@@ -653,7 +653,7 @@ export default function sessionSiteRoute(
   });
 
   app.get("/register", async function (req, res) {
-    if (!isFeatureWebRouteEnabled(features.web.register, req, res, features))
+    if (!await isFeatureWebRouteEnabled(app, features.web.register, req, res, features))
       return;
 
     if (req.session.user) {
@@ -673,7 +673,7 @@ export default function sessionSiteRoute(
   });
 
   app.post("/register", async function (req, res) {
-    if (!isFeatureWebRouteEnabled(features.web.register, req, res, features))
+    if (!await isFeatureWebRouteEnabled(app, features.web.register, req, res, features))
       return;
 
     const username = req.body.username ? req.body.username.trim() : "";
@@ -833,7 +833,7 @@ export default function sessionSiteRoute(
   });
 
   app.get("/register/verify-email", async function (req, res) {
-    if (!isFeatureWebRouteEnabled(features.web.register, req, res, features))
+    if (!await isFeatureWebRouteEnabled(app, features.web.register, req, res, features))
       return;
 
     const pendingRegistration = req.session.pendingRegistration;
@@ -860,7 +860,7 @@ export default function sessionSiteRoute(
   app.post("/register/verify-email", async function (req, res) {
     if (!checkRateLimit(req, res, { windowMs: 15 * 60_000, max: 10 })) return;
 
-    if (!isFeatureWebRouteEnabled(features.web.register, req, res, features))
+    if (!await isFeatureWebRouteEnabled(app, features.web.register, req, res, features))
       return;
 
     const pendingRegistration = req.session.pendingRegistration;
@@ -910,7 +910,7 @@ export default function sessionSiteRoute(
   });
 
   app.get("/register/minecraft", async function (req, res) {
-    if (!isFeatureWebRouteEnabled(features.web.register, req, res, features))
+    if (!await isFeatureWebRouteEnabled(app, features.web.register, req, res, features))
       return;
 
     const pendingRegistration = req.session.pendingRegistration;
@@ -946,7 +946,7 @@ export default function sessionSiteRoute(
   });
 
   app.post("/register/minecraft", async function (req, res) {
-    if (!isFeatureWebRouteEnabled(features.web.register, req, res, features))
+    if (!await isFeatureWebRouteEnabled(app, features.web.register, req, res, features))
       return;
 
     const pendingRegistration = req.session.pendingRegistration;
@@ -1001,7 +1001,7 @@ export default function sessionSiteRoute(
   });
 
   app.get("/unregistered", async function (req, res) {
-    if (!isFeatureWebRouteEnabled(features.web.register, req, res, features))
+    if (!await isFeatureWebRouteEnabled(app, features.web.register, req, res, features))
       return;
 
     const discordId = req.cookies.discordId;

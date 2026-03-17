@@ -17,7 +17,7 @@ export default function dashboardAnnouncementSiteRoute(
   // Announcements
   //
   app.get("/dashboard/announcements", async function (req, res) {
-    if (!isFeatureWebRouteEnabled(features.announcements, req, res, features))
+    if (!await isFeatureWebRouteEnabled(app, features.announcements, req, res, features))
       return;
 
     if (!hasPermission("zander.web.announcements", req, res, features)) return;
@@ -42,7 +42,7 @@ export default function dashboardAnnouncementSiteRoute(
   });
 
   app.get("/dashboard/announcements/create", async function (req, res) {
-    if (!isFeatureWebRouteEnabled(features.announcements, req, res, features))
+    if (!await isFeatureWebRouteEnabled(app, features.announcements, req, res, features))
       return;
 
     if (!hasPermission("zander.web.announcements", req, res, features)) return;
@@ -61,7 +61,7 @@ export default function dashboardAnnouncementSiteRoute(
   });
 
   app.get("/dashboard/announcements/edit", async function (req, res) {
-    if (!isFeatureWebRouteEnabled(features.announcements, req, res, features))
+    if (!await isFeatureWebRouteEnabled(app, features.announcements, req, res, features))
       return;
 
     if (!hasPermission("zander.web.announcements", req, res, features)) return;

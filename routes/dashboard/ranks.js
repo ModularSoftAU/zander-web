@@ -14,7 +14,7 @@ export default function dashboardRanksRoute(
   lang
 ) {
   app.get("/dashboard/ranks", async function (req, res) {
-    if (!isFeatureWebRouteEnabled(features.ranks, req, res, features)) return;
+    if (!await isFeatureWebRouteEnabled(app, features.ranks, req, res, features)) return;
 
     const hasRankPermission = await hasPermission(
       "zander.web.rank",

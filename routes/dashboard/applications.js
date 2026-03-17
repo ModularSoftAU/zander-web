@@ -30,7 +30,7 @@ export default function dashboardApplicationsSiteRoute(
   // Applications
   //
   app.get("/dashboard/applications", async function (req, res) {
-    if (!isFeatureWebRouteEnabled(features.applications, req, res, features))
+    if (!await isFeatureWebRouteEnabled(app, features.applications, req, res, features))
       return;
 
     if (!hasPermission("zander.web.application", req, res, features)) return;
@@ -55,7 +55,7 @@ export default function dashboardApplicationsSiteRoute(
   });
 
   app.get("/dashboard/applications/create", async function (req, res) {
-    if (!isFeatureWebRouteEnabled(features.applications, req, res, features))
+    if (!await isFeatureWebRouteEnabled(app, features.applications, req, res, features))
       return;
 
     if (!hasPermission("zander.web.application", req, res, features)) return;
@@ -74,7 +74,7 @@ export default function dashboardApplicationsSiteRoute(
   });
 
   app.get("/dashboard/applications/edit", async function (req, res) {
-    if (!isFeatureWebRouteEnabled(features.applications, req, res, features))
+    if (!await isFeatureWebRouteEnabled(app, features.applications, req, res, features))
       return;
 
     if (!hasPermission("zander.web.application", req, res, features)) return;
