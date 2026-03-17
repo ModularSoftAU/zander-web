@@ -298,27 +298,27 @@ export async function searchShops(material, page = 1, options = {}) {
                  UPPER(LEFT(REPLACE(REPLACE(REPLACE(TRIM(SUBSTRING_INDEX(
                    REPLACE(REPLACE(TRIM(SUBSTRING_INDEX(
                      SUBSTR(data.item, LOCATE('minecraft:stored_enchantments:', data.item) + 30),
-                     '\n', 1)), '{"minecraft:', ''), '}', ''), '\':"', 1)),
-                   '\'', ''), '"', ''), '_', ' '), 1)),
+                     '\n', 1)), '{"minecraft:', ''), '}', ''), ''':"', 1)),
+                   '''', ''), '"', ''), '_', ' '), 1)),
                  LOWER(SUBSTRING(REPLACE(REPLACE(REPLACE(TRIM(SUBSTRING_INDEX(
                    REPLACE(REPLACE(TRIM(SUBSTRING_INDEX(
                      SUBSTR(data.item, LOCATE('minecraft:stored_enchantments:', data.item) + 30),
-                     '\n', 1)), '{"minecraft:', ''), '}', ''), '\':"', 1)),
-                   '\'', ''), '"', ''), '_', ' '), 2))
+                     '\n', 1)), '{"minecraft:', ''), '}', ''), ''':"', 1)),
+                   '''', ''), '"', ''), '_', ' '), 2))
                ),
                ' ',
                REPLACE(REPLACE(TRIM(SUBSTRING_INDEX(REPLACE(REPLACE(TRIM(SUBSTRING_INDEX(
                  SUBSTR(data.item, LOCATE('minecraft:stored_enchantments:', data.item) + 30),
-                 '\n', 1)), '{"minecraft:', ''), '}', ''), '\':"', -1)), '"', ''), '\'', '')
+                 '\n', 1)), '{"minecraft:', ''), '}', ''), ''':"', -1)), '"', ''), '''', '')
              )
              WHEN LOCATE('minecraft:potion_contents:', data.item) > 0
              THEN REPLACE(REPLACE(REPLACE(REPLACE(TRIM(SUBSTRING_INDEX(
                SUBSTR(data.item, LOCATE('minecraft:potion_contents:', data.item) + 26),
-               '\n', 1)), '{potion:"minecraft:', ''), '"}', ''), '\'', ''), '}', '')
+               '\n', 1)), '{potion:"minecraft:', ''), '"}', ''), '''', ''), '}', '')
              WHEN LOCATE('minecraft:enchantments:', data.item) > 0
              THEN REPLACE(REPLACE(TRIM(SUBSTRING_INDEX(
                SUBSTR(data.item, LOCATE('minecraft:enchantments:', data.item) + 23),
-               '\n', 1)), '\'', ''), ' ', '')
+               '\n', 1)), '''', ''), ' ', '')
              ELSE NULL
            END AS display_name
          FROM qs_shops shops
