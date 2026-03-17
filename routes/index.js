@@ -50,11 +50,17 @@ export default function applicationSiteRoutes(
   voteSiteRoutes(app, fetch, config, db, features, lang);
 
   app.get("/", async function (req, res) {
-    const fetchURL = `${process.env.siteAddress}/api/web/statistics`;
-    const response = await fetch(fetchURL, {
-      headers: { "x-access-token": process.env.apiKey },
-    });
-    const statApiData = await response.json();
+    let statApiData = null;
+    try {
+      const fetchURL = `${process.env.siteAddress}/api/web/statistics`;
+      const response = await fetch(fetchURL, {
+        headers: { "x-access-token": process.env.apiKey },
+      });
+      const json = await response.json();
+      if (json?.data) statApiData = json;
+    } catch (_) {
+      // stats unavailable — page still renders without counters
+    }
 
     const pageJsonLd = JSON.stringify({
       "@context": "https://schema.org",
