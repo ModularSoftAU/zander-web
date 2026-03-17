@@ -29,7 +29,7 @@
 
   "staffAuditReport": true,
   "watch": true,
-  "voting": true,
+  "vote": true,
 
   "smDiscord": true,
   "smFacebook": true,

@@ -18,7 +18,7 @@ export default function voteSiteRoutes(app, fetch, config, db, features, lang) {
   // GET /vote — Public voting landing page
   // =========================================================================
   app.get("/vote", async function (req, res) {
-    if (!await isFeatureWebRouteEnabled(app, features.voting, req, res, features)) return;
+    if (!await isFeatureWebRouteEnabled(app, features.vote, req, res, features)) return;
 
     const now = new Date();
     const monthKey = `${now.getUTCFullYear()}-${String(now.getUTCMonth() + 1).padStart(2, "0")}`;

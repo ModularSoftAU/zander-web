@@ -66,7 +66,7 @@ export default function voteApiRoute(app, config, db, features, lang) {
   // Public: GET /vote/sites
   // =========================================================================
   app.get("/vote/sites", async function (req, res) {
-    if (!isFeatureEnabled(features.voting, res, lang)) return;
+    if (!isFeatureEnabled(features.vote, res, lang)) return;
 
     try {
       const sites = await getAllVoteSites({ activeOnly: true });
@@ -81,7 +81,7 @@ export default function voteApiRoute(app, config, db, features, lang) {
   // Public: GET /vote/leaderboard?month=YYYY-MM
   // =========================================================================
   app.get("/vote/leaderboard", async function (req, res) {
-    if (!isFeatureEnabled(features.voting, res, lang)) return;
+    if (!isFeatureEnabled(features.vote, res, lang)) return;
 
     const monthKey = optional(req.query, "month") || monthKeyFromDate(new Date());
     const limit = Math.min(Math.max(parseInt(req.query.limit, 10) || 25, 1), 100);
@@ -103,7 +103,7 @@ export default function voteApiRoute(app, config, db, features, lang) {
   // Public: GET /vote/player/:uuid?month=YYYY-MM
   // =========================================================================
   app.get("/vote/player/:uuid", async function (req, res) {
-    if (!isFeatureEnabled(features.voting, res, lang)) return;
+    if (!isFeatureEnabled(features.vote, res, lang)) return;
 
     const playerUuid = req.params.uuid;
     const monthKey = optional(req.query, "month") || monthKeyFromDate(new Date());
@@ -131,7 +131,7 @@ export default function voteApiRoute(app, config, db, features, lang) {
   // Ingest: POST /vote/ingest  (token-authenticated)
   // =========================================================================
   app.post("/vote/ingest", async function (req, res) {
-    if (!isFeatureEnabled(features.voting, res, lang)) return;
+    if (!isFeatureEnabled(features.vote, res, lang)) return;
 
     const body = req.body || {};
     const playerName = body.playerName;
@@ -218,7 +218,7 @@ export default function voteApiRoute(app, config, db, features, lang) {
   // Admin: POST /admin/vote/sites
   // =========================================================================
   app.post("/admin/vote/sites", async function (req, res) {
-    if (!isFeatureEnabled(features.voting, res, lang)) return;
+    if (!isFeatureEnabled(features.vote, res, lang)) return;
 
     const body = req.body || {};
     const siteName = body.siteName;
@@ -252,7 +252,7 @@ export default function voteApiRoute(app, config, db, features, lang) {
   // Admin: PUT /admin/vote/sites/:id
   // =========================================================================
   app.put("/admin/vote/sites/:id", async function (req, res) {
-    if (!isFeatureEnabled(features.voting, res, lang)) return;
+    if (!isFeatureEnabled(features.vote, res, lang)) return;
 
     const id = parseInt(req.params.id, 10);
     if (!id) return res.send({ success: false, message: "Invalid site id." });
@@ -286,7 +286,7 @@ export default function voteApiRoute(app, config, db, features, lang) {
   // Admin: DELETE /admin/vote/sites/:id
   // =========================================================================
   app.delete("/admin/vote/sites/:id", async function (req, res) {
-    if (!isFeatureEnabled(features.voting, res, lang)) return;
+    if (!isFeatureEnabled(features.vote, res, lang)) return;
 
     const id = parseInt(req.params.id, 10);
     if (!id) return res.send({ success: false, message: "Invalid site id." });
@@ -305,7 +305,7 @@ export default function voteApiRoute(app, config, db, features, lang) {
   // Admin: GET /admin/vote/sites  (all, including inactive)
   // =========================================================================
   app.get("/admin/vote/sites", async function (req, res) {
-    if (!isFeatureEnabled(features.voting, res, lang)) return;
+    if (!isFeatureEnabled(features.vote, res, lang)) return;
 
     try {
       const sites = await getAllVoteSites({ activeOnly: false });
@@ -320,7 +320,7 @@ export default function voteApiRoute(app, config, db, features, lang) {
   // Admin: GET /admin/votes?month=YYYY-MM&playerUuid=...
   // =========================================================================
   app.get("/admin/votes", async function (req, res) {
-    if (!isFeatureEnabled(features.voting, res, lang)) return;
+    if (!isFeatureEnabled(features.vote, res, lang)) return;
 
     const monthKey = optional(req.query, "month");
     const playerUuid = optional(req.query, "playerUuid");
@@ -343,7 +343,7 @@ export default function voteApiRoute(app, config, db, features, lang) {
   // Admin: GET /admin/vote/queue?status=...&playerUuid=...
   // =========================================================================
   app.get("/admin/vote/queue", async function (req, res) {
-    if (!isFeatureEnabled(features.voting, res, lang)) return;
+    if (!isFeatureEnabled(features.vote, res, lang)) return;
 
     const status = optional(req.query, "status");
     const playerUuid = optional(req.query, "playerUuid");
@@ -368,7 +368,7 @@ export default function voteApiRoute(app, config, db, features, lang) {
   // Admin: GET /admin/vote/monthly/results?month=YYYY-MM
   // =========================================================================
   app.get("/admin/vote/monthly/results", async function (req, res) {
-    if (!isFeatureEnabled(features.voting, res, lang)) return;
+    if (!isFeatureEnabled(features.vote, res, lang)) return;
 
     const monthKey = optional(req.query, "month");
     if (monthKey && !/^\d{4}-\d{2}$/.test(monthKey)) {
@@ -389,7 +389,7 @@ export default function voteApiRoute(app, config, db, features, lang) {
   // Manually trigger monthly reward generation for a given month.
   // =========================================================================
   app.post("/admin/vote/monthly/process", async function (req, res) {
-    if (!isFeatureEnabled(features.voting, res, lang)) return;
+    if (!isFeatureEnabled(features.vote, res, lang)) return;
 
     const body = req.body || {};
     const monthKey = body.month;
@@ -444,7 +444,7 @@ export default function voteApiRoute(app, config, db, features, lang) {
   // Admin: GET /admin/vote/reward-templates?type=vote|monthly_top
   // =========================================================================
   app.get("/admin/vote/reward-templates", async function (req, res) {
-    if (!isFeatureEnabled(features.voting, res, lang)) return;
+    if (!isFeatureEnabled(features.vote, res, lang)) return;
 
     const rewardType = optional(req.query, "type");
     const validTypes = ["vote", "monthly_top"];
@@ -465,7 +465,7 @@ export default function voteApiRoute(app, config, db, features, lang) {
   // Admin: POST /admin/vote/reward-templates
   // =========================================================================
   app.post("/admin/vote/reward-templates", async function (req, res) {
-    if (!isFeatureEnabled(features.voting, res, lang)) return;
+    if (!isFeatureEnabled(features.vote, res, lang)) return;
 
     const body = req.body || {};
     const { rewardType, commandTemplate, executeAs, serverScope, isActive, displayOrder } = body;
@@ -505,7 +505,7 @@ export default function voteApiRoute(app, config, db, features, lang) {
   // Admin: PUT /admin/vote/reward-templates/:id
   // =========================================================================
   app.put("/admin/vote/reward-templates/:id", async function (req, res) {
-    if (!isFeatureEnabled(features.voting, res, lang)) return;
+    if (!isFeatureEnabled(features.vote, res, lang)) return;
 
     const id = parseInt(req.params.id, 10);
     if (!id) return res.send({ success: false, message: "Invalid template id." });
@@ -542,7 +542,7 @@ export default function voteApiRoute(app, config, db, features, lang) {
   // Admin: DELETE /admin/vote/reward-templates/:id
   // =========================================================================
   app.delete("/admin/vote/reward-templates/:id", async function (req, res) {
-    if (!isFeatureEnabled(features.voting, res, lang)) return;
+    if (!isFeatureEnabled(features.vote, res, lang)) return;
 
     const id = parseInt(req.params.id, 10);
     if (!id) return res.send({ success: false, message: "Invalid template id." });

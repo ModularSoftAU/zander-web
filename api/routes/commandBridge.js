@@ -25,7 +25,7 @@ export default function commandBridgeApiRoute(app, config, db, features, lang) {
   // marking them as claimed.
   // =========================================================================
   app.post("/command-bridge/claim", async function (req, res) {
-    if (!isFeatureEnabled(features.voting, res, lang)) return;
+    if (!isFeatureEnabled(features.vote, res, lang)) return;
 
     const body = req.body || {};
     const playerUuid = body.playerUuid;
@@ -62,7 +62,7 @@ export default function commandBridgeApiRoute(app, config, db, features, lang) {
   // Marks the specified commands completed.  Only affects rows owned by playerUuid.
   // =========================================================================
   app.post("/command-bridge/complete", async function (req, res) {
-    if (!isFeatureEnabled(features.voting, res, lang)) return;
+    if (!isFeatureEnabled(features.vote, res, lang)) return;
 
     const body = req.body || {};
     const playerUuid = body.playerUuid;
@@ -101,7 +101,7 @@ export default function commandBridgeApiRoute(app, config, db, features, lang) {
   // Marks the specified commands failed.  Only affects rows owned by playerUuid.
   // =========================================================================
   app.post("/command-bridge/fail", async function (req, res) {
-    if (!isFeatureEnabled(features.voting, res, lang)) return;
+    if (!isFeatureEnabled(features.vote, res, lang)) return;
 
     const body = req.body || {};
     const playerUuid = body.playerUuid;

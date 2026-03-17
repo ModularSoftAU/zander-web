@@ -29,7 +29,7 @@ export default function dashboardVotingSiteRoute(app, fetch, config, db, feature
   // GET /dashboard/voting — Vote sites list & management
   // =========================================================================
   app.get("/dashboard/voting", async function (req, res) {
-    if (!await isFeatureWebRouteEnabled(app, features.voting, req, res, features)) return;
+    if (!await isFeatureWebRouteEnabled(app, features.vote, req, res, features)) return;
 
     try {
       if (!await hasPermission("zander.web.voting", req, res, features)) return;
@@ -81,7 +81,7 @@ export default function dashboardVotingSiteRoute(app, fetch, config, db, feature
   // GET /dashboard/voting/rewards — Reward template management
   // =========================================================================
   app.get("/dashboard/voting/rewards", async function (req, res) {
-    if (!await isFeatureWebRouteEnabled(app, features.voting, req, res, features)) return;
+    if (!await isFeatureWebRouteEnabled(app, features.vote, req, res, features)) return;
 
     try {
       if (!await hasPermission("zander.web.voting", req, res, features)) return;
@@ -125,7 +125,7 @@ export default function dashboardVotingSiteRoute(app, fetch, config, db, feature
   // GET /dashboard/voting/queue — Reward command queue viewer
   // =========================================================================
   app.get("/dashboard/voting/queue", async function (req, res) {
-    if (!await isFeatureWebRouteEnabled(app, features.voting, req, res, features)) return;
+    if (!await isFeatureWebRouteEnabled(app, features.vote, req, res, features)) return;
 
     const status = req.query.status || "";
     const playerUuid = req.query.playerUuid || "";
@@ -185,7 +185,7 @@ export default function dashboardVotingSiteRoute(app, fetch, config, db, feature
   // GET /dashboard/voting/leaderboard — Monthly leaderboard admin view
   // =========================================================================
   app.get("/dashboard/voting/leaderboard", async function (req, res) {
-    if (!await isFeatureWebRouteEnabled(app, features.voting, req, res, features)) return;
+    if (!await isFeatureWebRouteEnabled(app, features.vote, req, res, features)) return;
 
     const now = new Date();
     const defaultMonth = `${now.getUTCFullYear()}-${String(now.getUTCMonth() + 1).padStart(2, "0")}`;
