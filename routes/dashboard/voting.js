@@ -43,10 +43,9 @@ export default function dashboardVotingSiteRoute(app, fetch, config, db, feature
   // =========================================================================
   app.get("/dashboard/voting", async function (req, res) {
     if (!await isFeatureWebRouteEnabled(app, features.vote, req, res, features)) return;
+    if (!await hasPermission("zander.web.voting", req, res, features)) return;
 
     try {
-      if (!await hasPermission("zander.web.voting", req, res, features)) return;
-
       const [sitesRes, leaderboardRes] = await Promise.all([
         fetch(`${process.env.siteAddress}/admin/vote/sites`, {
           headers: { "x-access-token": process.env.apiKey },
@@ -95,10 +94,9 @@ export default function dashboardVotingSiteRoute(app, fetch, config, db, feature
   // =========================================================================
   app.get("/dashboard/voting/rewards", async function (req, res) {
     if (!await isFeatureWebRouteEnabled(app, features.vote, req, res, features)) return;
+    if (!await hasPermission("zander.web.voting", req, res, features)) return;
 
     try {
-      if (!await hasPermission("zander.web.voting", req, res, features)) return;
-
       const templatesRes = await fetch(`${process.env.siteAddress}/admin/vote/reward-templates`, {
         headers: { "x-access-token": process.env.apiKey },
       });
@@ -139,6 +137,7 @@ export default function dashboardVotingSiteRoute(app, fetch, config, db, feature
   // =========================================================================
   app.get("/dashboard/voting/queue", async function (req, res) {
     if (!await isFeatureWebRouteEnabled(app, features.vote, req, res, features)) return;
+    if (!await hasPermission("zander.web.voting", req, res, features)) return;
 
     const status = req.query.status || "";
     const playerUuid = req.query.playerUuid || "";
@@ -149,7 +148,6 @@ export default function dashboardVotingSiteRoute(app, fetch, config, db, feature
     }
 
     try {
-      if (!await hasPermission("zander.web.voting", req, res, features)) return;
 
       const params = new URLSearchParams();
       if (status) params.set("status", status);
@@ -248,13 +246,13 @@ export default function dashboardVotingSiteRoute(app, fetch, config, db, feature
   // =========================================================================
   app.get("/dashboard/voting/leaderboard", async function (req, res) {
     if (!await isFeatureWebRouteEnabled(app, features.vote, req, res, features)) return;
+    if (!await hasPermission("zander.web.voting", req, res, features)) return;
 
     const now = new Date();
     const defaultMonth = `${now.getUTCFullYear()}-${String(now.getUTCMonth() + 1).padStart(2, "0")}`;
     const month = req.query.month || defaultMonth;
 
     try {
-      if (!await hasPermission("zander.web.voting", req, res, features)) return;
 
       const [boardRes, resultsRes] = await Promise.all([
         fetch(`${process.env.siteAddress}/vote/leaderboard?month=${encodeURIComponent(month)}&limit=50`, {
