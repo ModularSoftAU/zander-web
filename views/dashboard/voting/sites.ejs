@@ -238,8 +238,6 @@
 <%- include("../../modules/footer.ejs") %>
 
 <script>
-const API_KEY = <%- JSON.stringify(process.env.apiKey || '') %>;
-
 // Populate edit modal
 document.querySelectorAll('[data-bs-target="#editSiteModal"]').forEach(btn => {
     btn.addEventListener('click', () => {
@@ -265,7 +263,7 @@ document.querySelectorAll('[data-bs-target="#deleteSiteModal"]').forEach(btn => 
 async function apiRequest(method, url, body) {
     const res = await fetch(url, {
         method,
-        headers: { 'Content-Type': 'application/json', 'x-access-token': API_KEY },
+        headers: { 'Content-Type': 'application/json' },
         body: body ? JSON.stringify(body) : undefined,
     });
     return res.json();
@@ -282,7 +280,7 @@ document.getElementById('createSiteSubmit').addEventListener('click', async () =
         displayOrder: parseInt(form.displayOrder.value, 10) || 0,
         isActive: form.isActive.value === 'true',
     };
-    const result = await apiRequest('POST', '/admin/vote/sites', data);
+    const result = await apiRequest('POST', '/dashboard/voting/sites', data);
     if (result.success) { location.reload(); }
     else { errEl.textContent = result.message; errEl.classList.remove('d-none'); }
 });
@@ -299,7 +297,7 @@ document.getElementById('editSiteSubmit').addEventListener('click', async () => 
         displayOrder: parseInt(form.displayOrder.value, 10) || 0,
         isActive: form.isActive.value === 'true',
     };
-    const result = await apiRequest('PUT', `/admin/vote/sites/${id}`, data);
+    const result = await apiRequest('PUT', `/dashboard/voting/sites/${id}`, data);
     if (result.success) { location.reload(); }
     else { errEl.textContent = result.message; errEl.classList.remove('d-none'); }
 });
@@ -308,7 +306,7 @@ document.getElementById('deleteSiteSubmit').addEventListener('click', async () =
     const errEl = document.getElementById('deleteSiteError');
     errEl.classList.add('d-none');
     const id = document.getElementById('deleteSiteId').value;
-    const result = await apiRequest('DELETE', `/admin/vote/sites/${id}`);
+    const result = await apiRequest('DELETE', `/dashboard/voting/sites/${id}`);
     if (result.success) { location.reload(); }
     else { errEl.textContent = result.message; errEl.classList.remove('d-none'); }
 });

@@ -23,6 +23,19 @@ async function apiJson(response, label) {
   return JSON.parse(text);
 }
 
+/** Proxy a JSON request from the browser to the internal API using the server-side key. */
+async function proxyToApi(fetch, method, path, body) {
+  const res = await fetch(`${process.env.siteAddress}${path}`, {
+    method,
+    headers: {
+      "Content-Type": "application/json",
+      "x-access-token": process.env.apiKey,
+    },
+    body: body ? JSON.stringify(body) : undefined,
+  });
+  return res.json();
+}
+
 export default function dashboardVotingSiteRoute(app, fetch, config, db, features, lang) {
 
   // =========================================================================
@@ -179,6 +192,55 @@ export default function dashboardVotingSiteRoute(app, fetch, config, db, feature
         })
       );
     }
+  });
+
+  // =========================================================================
+  // Session-authenticated proxy routes — browser never sees the API key
+  // =========================================================================
+
+  // Vote sites
+  app.post("/dashboard/voting/sites", async (req, res) => {
+    if (!await isFeatureWebRouteEnabled(app, features.vote, req, res, features)) return;
+    if (!await hasPermission("zander.web.voting", req, res, features)) return;
+    return res.send(await proxyToApi(fetch, "POST", "/admin/vote/sites", req.body));
+  });
+
+  app.put("/dashboard/voting/sites/:id", async (req, res) => {
+    if (!await isFeatureWebRouteEnabled(app, features.vote, req, res, features)) return;
+    if (!await hasPermission("zander.web.voting", req, res, features)) return;
+    return res.send(await proxyToApi(fetch, "PUT", `/admin/vote/sites/${req.params.id}`, req.body));
+  });
+
+  app.delete("/dashboard/voting/sites/:id", async (req, res) => {
+    if (!await isFeatureWebRouteEnabled(app, features.vote, req, res, features)) return;
+    if (!await hasPermission("zander.web.voting", req, res, features)) return;
+    return res.send(await proxyToApi(fetch, "DELETE", `/admin/vote/sites/${req.params.id}`));
+  });
+
+  // Reward templates
+  app.post("/dashboard/voting/reward-templates", async (req, res) => {
+    if (!await isFeatureWebRouteEnabled(app, features.vote, req, res, features)) return;
+    if (!await hasPermission("zander.web.voting", req, res, features)) return;
+    return res.send(await proxyToApi(fetch, "POST", "/admin/vote/reward-templates", req.body));
+  });
+
+  app.put("/dashboard/voting/reward-templates/:id", async (req, res) => {
+    if (!await isFeatureWebRouteEnabled(app, features.vote, req, res, features)) return;
+    if (!await hasPermission("zander.web.voting", req, res, features)) return;
+    return res.send(await proxyToApi(fetch, "PUT", `/admin/vote/reward-templates/${req.params.id}`, req.body));
+  });
+
+  app.delete("/dashboard/voting/reward-templates/:id", async (req, res) => {
+    if (!await isFeatureWebRouteEnabled(app, features.vote, req, res, features)) return;
+    if (!await hasPermission("zander.web.voting", req, res, features)) return;
+    return res.send(await proxyToApi(fetch, "DELETE", `/admin/vote/reward-templates/${req.params.id}`));
+  });
+
+  // Process monthly rewards
+  app.post("/dashboard/voting/leaderboard/process", async (req, res) => {
+    if (!await isFeatureWebRouteEnabled(app, features.vote, req, res, features)) return;
+    if (!await hasPermission("zander.web.voting", req, res, features)) return;
+    return res.send(await proxyToApi(fetch, "POST", "/admin/vote/monthly/process", req.body));
   });
 
   // =========================================================================

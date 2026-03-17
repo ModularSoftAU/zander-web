@@ -86,7 +86,6 @@
 <%- include("../../modules/footer.ejs") %>
 
 <script>
-const API_KEY = <%- JSON.stringify(process.env.apiKey || '') %>;
 const activeMonth = "<%= activeMonth %>";
 
 document.getElementById('processMonthBtn').addEventListener('click', async () => {
@@ -97,9 +96,9 @@ document.getElementById('processMonthBtn').addEventListener('click', async () =>
     resultEl.classList.add('d-none');
 
     try {
-        const res = await fetch('/admin/vote/monthly/process', {
+        const res = await fetch('/dashboard/voting/leaderboard/process', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'x-access-token': API_KEY },
+            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ month: activeMonth }),
         });
         const data = await res.json();

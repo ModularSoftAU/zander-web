@@ -207,12 +207,10 @@
 <%- include("../../modules/footer.ejs") %>
 
 <script>
-const API_KEY = <%- JSON.stringify(process.env.apiKey || '') %>;
-
 async function apiRequest(method, url, body) {
     const res = await fetch(url, {
         method,
-        headers: { 'Content-Type': 'application/json', 'x-access-token': API_KEY },
+        headers: { 'Content-Type': 'application/json' },
         body: body ? JSON.stringify(body) : undefined,
     });
     return res.json();
@@ -260,7 +258,7 @@ document.getElementById('createTemplateSubmit').addEventListener('click', async 
         displayOrder: parseInt(form.displayOrder.value, 10) || 0,
         isActive: form.isActive.value === 'true',
     };
-    const result = await apiRequest('POST', '/admin/vote/reward-templates', data);
+    const result = await apiRequest('POST', '/dashboard/voting/reward-templates', data);
     if (result.success) {
         bootstrap.Modal.getInstance(document.getElementById('createTemplateModal')).hide();
         showGlobal('success', 'Template created.');
@@ -284,7 +282,7 @@ document.getElementById('editTemplateSubmit').addEventListener('click', async ()
         displayOrder: parseInt(form.displayOrder.value, 10) || 0,
         isActive: form.isActive.value === 'true',
     };
-    const result = await apiRequest('PUT', `/admin/vote/reward-templates/${id}`, data);
+    const result = await apiRequest('PUT', `/dashboard/voting/reward-templates/${id}`, data);
     if (result.success) {
         bootstrap.Modal.getInstance(document.getElementById('editTemplateModal')).hide();
         showGlobal('success', 'Template updated.');
@@ -299,7 +297,7 @@ document.getElementById('deleteTemplateSubmit').addEventListener('click', async 
     const errEl = document.getElementById('deleteTemplateError');
     errEl.classList.add('d-none');
     const id = document.getElementById('deleteTemplateId').value;
-    const result = await apiRequest('DELETE', `/admin/vote/reward-templates/${id}`);
+    const result = await apiRequest('DELETE', `/dashboard/voting/reward-templates/${id}`);
     if (result.success) {
         bootstrap.Modal.getInstance(document.getElementById('deleteTemplateModal')).hide();
         showGlobal('success', 'Template deleted.');
