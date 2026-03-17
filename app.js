@@ -99,7 +99,13 @@ const buildApp = async () => {
   // When app errors, render the error on a page, do not provide JSON
   app.setErrorHandler(async function (error, req, res) {
     if (res.sent) {
-      app.log.error(error);
+      // ERR_HTTP_HEADERS_SENT is an expected side-effect of HEAD requests:
+      // @fastify/session's async Prisma save resolves after headRouteOnSendHandler
+      // already committed the response, so the Set-Cookie write races the finalize.
+      // Nothing to do — the response was delivered correctly.
+      if (error.code !== "ERR_HTTP_HEADERS_SENT") {
+        app.log.warn({ err: error }, "error after reply already sent");
+      }
       return;
     }
 
