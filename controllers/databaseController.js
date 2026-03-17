@@ -27,6 +27,7 @@ dotenv.config();
 
 const dbUrl = new URL(process.env.DATABASE_URL);
 const lpUrl = new URL(process.env.LUCKPERMS_URL);
+const qsUrl = new URL(process.env.QUICKSHOP_URL);
 
 // ---------------------------------------------------------------------------
 // Prisma client (primary interface for new code)
@@ -158,6 +159,45 @@ luckpermsPool.getConnection(function (err, connection) {
 });
 
 export const luckpermsDb = luckpermsPool;
+
+// ---------------------------------------------------------------------------
+// QuickShop pool — separate MySQL instance (shop directory database)
+// ---------------------------------------------------------------------------
+
+const quickshopPool = mysql2.createPool({
+  connectionLimit: 5,
+  host: qsUrl.hostname,
+  port: parseInt(qsUrl.port) || 3306,
+  user: decodeURIComponent(qsUrl.username),
+  password: decodeURIComponent(qsUrl.password),
+  database: qsUrl.pathname.slice(1),
+  charset: "utf8mb4",
+  connectTimeout: 10000,
+  waitForConnections: true,
+  timezone: "Z",
+  enableKeepAlive: true,
+  keepAliveInitialDelay: 10000,
+});
+
+quickshopPool.on("connection", function (connection) {
+  console.info("[DB] QuickShop pool connection established.");
+  connection.query("SET NAMES 'utf8mb4' COLLATE 'utf8mb4_unicode_ci'");
+});
+
+quickshopPool.on("error", (err) => {
+  console.error(`[ERROR] [DB] QuickShop Pool Error: ${err.message}`);
+});
+
+quickshopPool.getConnection(function (err, connection) {
+  if (err) {
+    console.error(`[ERROR] [DB] QuickShop connection failed:\n ${err.stack}`);
+    return;
+  }
+  console.info("[DB] QuickShop pool connection is successful.");
+  connection.release();
+});
+
+export const quickshopDb = quickshopPool;
 
 // ---------------------------------------------------------------------------
 // Default export: mysql2 pool (drop-in replacement for the old `mysql` pool)

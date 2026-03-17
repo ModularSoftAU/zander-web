@@ -1,5 +1,5 @@
 import { getProfilePicture } from "../controllers/userController.js";
-import db from "../controllers/databaseController.js";
+import db, { quickshopDb } from "../controllers/databaseController.js";
 import pLimit from "p-limit";
 
 // Convert a raw minecraft item ID to a human-readable display name
@@ -158,12 +158,12 @@ export async function searchShops(material, page = 1, options = {}) {
     return promise;
   }
 
-  async function fetchUserData(userId) {
-    if (userCache.has(userId)) return userCache.get(userId);
+  async function fetchUserData(uuid) {
+    if (userCache.has(uuid)) return userCache.get(uuid);
     const promise = new Promise((resolve) => {
       db.query(
-        `SELECT userId, username, discordId FROM users WHERE userId = ?`,
-        [userId],
+        `SELECT userId, username, discordId FROM users WHERE uuid = ?`,
+        [uuid],
         (error, results) => {
           if (error) {
             console.error("Error fetching user data:", error);
@@ -173,7 +173,7 @@ export async function searchShops(material, page = 1, options = {}) {
         }
       );
     });
-    userCache.set(userId, promise);
+    userCache.set(uuid, promise);
     return promise;
   }
 
@@ -195,9 +195,9 @@ export async function searchShops(material, page = 1, options = {}) {
   async function fetchShulkerContents(shopId) {
     if (shulkerCache.has(shopId)) return shulkerCache.get(shopId);
     const promise = new Promise((resolve) => {
-      db.query(
-        `SELECT d.item FROM cfc_prod_quickshop.qs_shops s
-         JOIN cfc_prod_quickshop.qs_data d ON s.data = d.id
+      quickshopDb.query(
+        `SELECT d.item FROM qs_shops s
+         JOIN qs_data d ON s.data = d.id
          WHERE s.id = ?`,
         [shopId],
         (error, results) => {
@@ -218,9 +218,9 @@ export async function searchShops(material, page = 1, options = {}) {
   async function fetchRawItemData(shopId) {
     if (rawItemCache.has(shopId)) return rawItemCache.get(shopId);
     const promise = new Promise((resolve) => {
-      db.query(
-        `SELECT d.item FROM cfc_prod_quickshop.qs_shops s
-         JOIN cfc_prod_quickshop.qs_data d ON s.data = d.id
+      quickshopDb.query(
+        `SELECT d.item FROM qs_shops s
+         JOIN qs_data d ON s.data = d.id
          WHERE s.id = ?`,
         [shopId],
         (error, results) => {
@@ -243,10 +243,15 @@ export async function searchShops(material, page = 1, options = {}) {
 
     // Get total count for pagination
     const totalCount = await new Promise((resolve, reject) => {
-      db.query(
-        `SELECT COUNT(*) AS total FROM shoppingDirectory
-          WHERE item LIKE ? OR item LIKE ? OR display_name LIKE ?`,
-        [likeTerm, likeTermUnderscored, likeTerm],
+      quickshopDb.query(
+        `SELECT COUNT(*) AS total
+         FROM qs_shops shops
+         JOIN qs_shop_map map ON shops.id = map.shop
+         JOIN qs_data data ON shops.data = data.id
+         JOIN qs_external_cache stock ON shops.id = stock.shop
+         WHERE data.unlimited = 0
+           AND (data.item LIKE ? OR data.item LIKE ?)`,
+        [likeTerm, likeTermUnderscored],
         (error, results) => {
           if (error) return reject(error);
           resolve(results[0]?.total || 0);
@@ -265,13 +270,66 @@ export async function searchShops(material, page = 1, options = {}) {
     const currentPage = Math.min(safePage, totalPages);
     const offset = (currentPage - 1) * MAX_RESULTS;
 
-    // Fetch the page of results
+    // Fetch the page of results — replicate the shoppingDirectory VIEW logic
+    // directly against the QuickShop pool (cross-server JOINs are not possible).
     const results = await new Promise((resolve, reject) => {
-      db.query(
-        `SELECT * FROM shoppingDirectory
-          WHERE item LIKE ? OR item LIKE ? OR display_name LIKE ?
-          LIMIT ? OFFSET ?`,
-        [likeTerm, likeTermUnderscored, likeTerm, MAX_RESULTS, offset],
+      quickshopDb.query(
+        `SELECT
+           shops.id,
+           data.owner AS uuid,
+           REPLACE(TRIM(SUBSTRING_INDEX(
+             SUBSTR(data.item, LOCATE('id:', data.item) + 3), '\n', 1
+           )), 'minecraft:', '') AS item,
+           CASE WHEN LOCATE('count:', data.item) = 0 THEN NULL
+                ELSE TRIM(SUBSTRING_INDEX(
+                  SUBSTR(data.item, LOCATE('count:', data.item) + 6), '\n', 1
+                ))
+           END AS amount,
+           data.price,
+           stock.stock,
+           map.world,
+           map.x,
+           map.y,
+           map.z,
+           CASE
+             WHEN LOCATE('minecraft:stored_enchantments:', data.item) > 0
+             THEN CONCAT(
+               CONCAT(
+                 UPPER(LEFT(REPLACE(REPLACE(REPLACE(TRIM(SUBSTRING_INDEX(
+                   REPLACE(REPLACE(TRIM(SUBSTRING_INDEX(
+                     SUBSTR(data.item, LOCATE('minecraft:stored_enchantments:', data.item) + 30),
+                     '\n', 1)), '{"minecraft:', ''), '}', ''), '\':"', 1)),
+                   '\'', ''), '"', ''), '_', ' '), 1)),
+                 LOWER(SUBSTRING(REPLACE(REPLACE(REPLACE(TRIM(SUBSTRING_INDEX(
+                   REPLACE(REPLACE(TRIM(SUBSTRING_INDEX(
+                     SUBSTR(data.item, LOCATE('minecraft:stored_enchantments:', data.item) + 30),
+                     '\n', 1)), '{"minecraft:', ''), '}', ''), '\':"', 1)),
+                   '\'', ''), '"', ''), '_', ' '), 2))
+               ),
+               ' ',
+               REPLACE(REPLACE(TRIM(SUBSTRING_INDEX(REPLACE(REPLACE(TRIM(SUBSTRING_INDEX(
+                 SUBSTR(data.item, LOCATE('minecraft:stored_enchantments:', data.item) + 30),
+                 '\n', 1)), '{"minecraft:', ''), '}', ''), '\':"', -1)), '"', ''), '\'', '')
+             )
+             WHEN LOCATE('minecraft:potion_contents:', data.item) > 0
+             THEN REPLACE(REPLACE(REPLACE(REPLACE(TRIM(SUBSTRING_INDEX(
+               SUBSTR(data.item, LOCATE('minecraft:potion_contents:', data.item) + 26),
+               '\n', 1)), '{potion:"minecraft:', ''), '"}', ''), '\'', ''), '}', '')
+             WHEN LOCATE('minecraft:enchantments:', data.item) > 0
+             THEN REPLACE(REPLACE(TRIM(SUBSTRING_INDEX(
+               SUBSTR(data.item, LOCATE('minecraft:enchantments:', data.item) + 23),
+               '\n', 1)), '\'', ''), ' ', '')
+             ELSE NULL
+           END AS display_name
+         FROM qs_shops shops
+         JOIN qs_shop_map map ON shops.id = map.shop
+         JOIN qs_data data ON shops.data = data.id
+         JOIN qs_external_cache stock ON shops.id = stock.shop
+         WHERE data.unlimited = 0
+           AND (data.item LIKE ? OR data.item LIKE ?)
+         ORDER BY shops.id
+         LIMIT ? OFFSET ?`,
+        [likeTerm, likeTermUnderscored, MAX_RESULTS, offset],
         (error, results) => {
           if (error) return reject(error);
           resolve(results || []);
@@ -287,7 +345,7 @@ export async function searchShops(material, page = 1, options = {}) {
 
           const [itemData, userData] = await Promise.all([
             fetchItemData(itemName),
-            fetchUserData(shop.userId),
+            fetchUserData(shop.uuid),
           ]);
 
           const profilePicture = await fetchProfilePicture(userData.username);
