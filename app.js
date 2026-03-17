@@ -80,17 +80,19 @@ const buildApp = async () => {
     res.status(404);
 
     try {
-      return res.view("session/notFound", {
-        pageTitle: `404 Not Found`,
-        config: config,
-        req: req,
-        features: features,
-        globalImage: await getGlobalImage(),
-        announcementWeb: await getWebAnnouncement(),
-      });
+      res.header("content-type", "text/html; charset=utf-8").send(
+        await app.view("session/notFound", {
+          pageTitle: `404 Not Found`,
+          config: config,
+          req: req,
+          features: features,
+          globalImage: await getGlobalImage(),
+          announcementWeb: await getWebAnnouncement(),
+        })
+      );
     } catch (viewError) {
       app.log.error(viewError);
-      return res.send("404 Not Found");
+      res.send("404 Not Found");
     }
   });
 
@@ -114,18 +116,20 @@ const buildApp = async () => {
     }
 
     try {
-      return res.view("session/error", {
-        pageTitle: `Server Error`,
-        config: config,
-        error: error,
-        req: req,
-        features: features,
-        globalImage: await getGlobalImage(),
-        announcementWeb: await getWebAnnouncement(),
-      });
+      res.header("content-type", "text/html; charset=utf-8").send(
+        await app.view("session/error", {
+          pageTitle: `Server Error`,
+          config: config,
+          error: error,
+          req: req,
+          features: features,
+          globalImage: await getGlobalImage(),
+          announcementWeb: await getWebAnnouncement(),
+        })
+      );
     } catch (viewError) {
       app.log.error(viewError);
-      return res.send("Internal Server Error");
+      res.send("Internal Server Error");
     }
   });
 
@@ -145,12 +149,14 @@ const buildApp = async () => {
     }
 
     try {
-      return res.view("session/maintenance", {
-        pageTitle: "Down for Maintenance",
-        config,
-      });
+      res.header("content-type", "text/html; charset=utf-8").send(
+        await app.view("session/maintenance", {
+          pageTitle: "Down for Maintenance",
+          config,
+        })
+      );
     } catch {
-      return res.send("<h1>Down for Maintenance</h1><p>We'll be back shortly.</p>");
+      res.send("<h1>Down for Maintenance</h1><p>We'll be back shortly.</p>");
     }
   });
 

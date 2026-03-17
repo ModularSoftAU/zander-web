@@ -41,7 +41,8 @@ export default function dashboardForumsRoutes(
       getWebAnnouncement(),
     ]);
 
-    return res.view("dashboard/forums/categories", {
+    res.header("content-type", "text/html; charset=utf-8").send(
+      await app.view("dashboard/forums/categories", {
       pageTitle: `Dashboard - Forum Categories`,
       config,
       features,
@@ -52,7 +53,8 @@ export default function dashboardForumsRoutes(
       createUnderId,
       globalImage,
       announcementWeb,
-    });
+    }));
+    return;
   });
 
   app.post("/dashboard/forums/categories/new", async function (req, res) {

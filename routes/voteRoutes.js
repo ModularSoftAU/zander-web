@@ -36,7 +36,8 @@ export default function voteSiteRoutes(app, fetch, config, db, features, lang) {
       const sitesData = await sitesRes.json();
       const leaderboardData = await leaderboardRes.json();
 
-      return res.view("modules/vote/index", {
+      res.header("content-type", "text/html; charset=utf-8").send(
+        await app.view("modules/vote/index", {
         pageTitle: `Vote`,
         pageDescription: `Vote for ${config.siteConfiguration.siteName} on your favourite server listing sites and earn rewards!`,
         config,
@@ -47,10 +48,12 @@ export default function voteSiteRoutes(app, fetch, config, db, features, lang) {
         currentMonth: monthKey,
         globalImage: await getGlobalImage(),
         announcementWeb: await getWebAnnouncement(),
-      });
+      }));
+      return;
     } catch (error) {
       console.error("[vote] GET /vote:", error);
-      return res.view("session/error", {
+      res.header("content-type", "text/html; charset=utf-8").send(
+        await app.view("session/error", {
         pageTitle: "Error",
         pageDescription: "Error loading voting page",
         config,
@@ -59,7 +62,8 @@ export default function voteSiteRoutes(app, fetch, config, db, features, lang) {
         features,
         globalImage: await getGlobalImage(),
         announcementWeb: await getWebAnnouncement(),
-      });
+      }));
+      return;
     }
   });
 }

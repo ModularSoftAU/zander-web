@@ -171,7 +171,8 @@ export default function sessionSiteRoute(
       return res.redirect(discordAuthorizeUrl);
     }
 
-    return res.view("session/login", {
+    res.header("content-type", "text/html; charset=utf-8").send(
+      await app.view("session/login", {
       pageTitle: `Login`,
       config: config,
       req: req,
@@ -179,7 +180,8 @@ export default function sessionSiteRoute(
       globalImage: await getGlobalImage(),
       announcementWeb: await getWebAnnouncement(),
       discordAuthorizeUrl,
-    });
+    }));
+    return;
   });
 
   app.post("/login", async function (req, res) {
@@ -383,14 +385,16 @@ export default function sessionSiteRoute(
       return res.redirect(`/`);
     }
 
-    return res.view("session/forgotPassword", {
+    res.header("content-type", "text/html; charset=utf-8").send(
+      await app.view("session/forgotPassword", {
       pageTitle: `Forgot Password`,
       config: config,
       req: req,
       features: features,
       globalImage: await getGlobalImage(),
       announcementWeb: await getWebAnnouncement(),
-    });
+    }));
+    return;
   });
 
   app.post("/forgot-password", async function (req, res) {
@@ -477,7 +481,8 @@ export default function sessionSiteRoute(
       return res.redirect(`/forgot-password`);
     }
 
-    return res.view("session/forgotPasswordVerify", {
+    res.header("content-type", "text/html; charset=utf-8").send(
+      await app.view("session/forgotPasswordVerify", {
       pageTitle: `Verify Reset Code`,
       config: config,
       req: req,
@@ -486,7 +491,8 @@ export default function sessionSiteRoute(
       announcementWeb: await getWebAnnouncement(),
       username: passwordReset.username,
       expiryMinutes: passwordResetExpiryMinutes,
-    });
+    }));
+    return;
   });
 
   app.post("/forgot-password/verify", async function (req, res) {
@@ -570,14 +576,16 @@ export default function sessionSiteRoute(
       return res.redirect(`/forgot-password`);
     }
 
-    return res.view("session/resetPassword", {
+    res.header("content-type", "text/html; charset=utf-8").send(
+      await app.view("session/resetPassword", {
       pageTitle: `Choose a New Password`,
       config: config,
       req: req,
       features: features,
       globalImage: await getGlobalImage(),
       announcementWeb: await getWebAnnouncement(),
-    });
+    }));
+    return;
   });
 
   app.post("/forgot-password/reset", async function (req, res) {
@@ -652,14 +660,16 @@ export default function sessionSiteRoute(
       return res.redirect(`/`);
     }
 
-    return res.view("session/register", {
+    res.header("content-type", "text/html; charset=utf-8").send(
+      await app.view("session/register", {
       pageTitle: `Register`,
       config: config,
       req: req,
       features: features,
       globalImage: await getGlobalImage(),
       announcementWeb: await getWebAnnouncement(),
-    });
+    }));
+    return;
   });
 
   app.post("/register", async function (req, res) {
@@ -833,7 +843,8 @@ export default function sessionSiteRoute(
       return res.redirect(`/register`);
     }
 
-    return res.view("session/registerVerifyEmail", {
+    res.header("content-type", "text/html; charset=utf-8").send(
+      await app.view("session/registerVerifyEmail", {
       pageTitle: `Verify Email`,
       config: config,
       req: req,
@@ -842,7 +853,8 @@ export default function sessionSiteRoute(
       announcementWeb: await getWebAnnouncement(),
       email: pendingRegistration.email,
       expiryMinutes: emailVerificationExpiryMinutes,
-    });
+    }));
+    return;
   });
 
   app.post("/register/verify-email", async function (req, res) {
@@ -919,7 +931,8 @@ export default function sessionSiteRoute(
     });
     const apiData = await response.json();
 
-    return res.view("session/registerMinecraft", {
+    res.header("content-type", "text/html; charset=utf-8").send(
+      await app.view("session/registerMinecraft", {
       pageTitle: `Verify Minecraft`,
       config: config,
       req: req,
@@ -928,7 +941,8 @@ export default function sessionSiteRoute(
       globalImage: await getGlobalImage(),
       announcementWeb: await getWebAnnouncement(),
       pendingUserId: pendingRegistration.userId,
-    });
+    }));
+    return;
   });
 
   app.post("/register/minecraft", async function (req, res) {

@@ -115,7 +115,8 @@ export default function profileSiteRoutes(
       const userHasJoined = await userData.hasJoined(username);
 
       if (!userHasJoined) {
-        return res.view("session/notFound", {
+        res.header("content-type", "text/html; charset=utf-8").send(
+          await app.view("session/notFound", {
           pageTitle: `404: Player Not Found`,
           config: config,
           req: req,
@@ -123,14 +124,16 @@ export default function profileSiteRoutes(
           features: features,
           globalImage: await getGlobalImage(),
           announcementWeb: await getWebAnnouncement(),
-        });
+        }));
+        return;
       } else {
         //
         // Grab user profile data (direct DB query, no HTTP self-call)
         //
         const profileData = await getUserByUsername(username);
         if (!profileData) {
-          return res.view("session/notFound", {
+          res.header("content-type", "text/html; charset=utf-8").send(
+            await app.view("session/notFound", {
             pageTitle: `404: Player Not Found`,
             config: config,
             req: req,
@@ -138,7 +141,8 @@ export default function profileSiteRoutes(
             features: features,
             globalImage: await getGlobalImage(),
             announcementWeb: await getWebAnnouncement(),
-          });
+          }));
+          return;
         }
 
         //
@@ -223,7 +227,8 @@ export default function profileSiteRoutes(
         //
         // Render the profile page
         //
-        return res.view("modules/profile/profile", {
+        res.header("content-type", "text/html; charset=utf-8").send(
+          await app.view("modules/profile/profile", {
           pageTitle: `${profileData.username}`,
           config: config,
           req: req,
@@ -243,7 +248,8 @@ export default function profileSiteRoutes(
           moment: moment,
           contextPermissions: contextPermissions,
           platformConnections: profilePlatformConnections,
-        });
+        }));
+        return;
       }
     } catch (error) {
       console.error("[PROFILE] Failed to load profile", error);
@@ -281,7 +287,8 @@ export default function profileSiteRoutes(
       }
 
       if (!userHasJoined) {
-        return res.view("session/notFound", {
+        res.header("content-type", "text/html; charset=utf-8").send(
+          await app.view("session/notFound", {
           pageTitle: `404: Player Not Found`,
           config: config,
           req: req,
@@ -289,14 +296,16 @@ export default function profileSiteRoutes(
           features: features,
           globalImage: await getGlobalImage(),
           announcementWeb: await getWebAnnouncement(),
-        });
+        }));
+        return;
       } else {
         //
         // Grab user profile data (direct DB query, no HTTP self-call)
         //
         const profileData = await getUserByUsername(req.session.user.username);
         if (!profileData) {
-          return res.view("session/notFound", {
+          res.header("content-type", "text/html; charset=utf-8").send(
+            await app.view("session/notFound", {
             pageTitle: `404: Player Not Found`,
             config: config,
             req: req,
@@ -304,7 +313,8 @@ export default function profileSiteRoutes(
             features: features,
             globalImage: await getGlobalImage(),
             announcementWeb: await getWebAnnouncement(),
-          });
+          }));
+          return;
         }
 
         //
@@ -323,7 +333,8 @@ export default function profileSiteRoutes(
         //
         // Render the profile page
         //
-        return res.view("modules/profile/profileEditor", {
+        res.header("content-type", "text/html; charset=utf-8").send(
+          await app.view("modules/profile/profileEditor", {
           pageTitle: `${profileData.username} - Profile Editor`,
           config: config,
           req: req,
@@ -337,7 +348,8 @@ export default function profileSiteRoutes(
           profileSession: await getUserLastSession(profileData.userId),
           moment: moment,
           platformConnections: platformConnections,
-        });
+        }));
+        return;
       }
     } catch (error) {
       console.error("[PROFILE] Failed to load profile editor", error);

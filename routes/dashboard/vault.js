@@ -28,7 +28,8 @@ export default function dashboardVaultSiteRoute(
     });
     const apiData = await response.json();
 
-    return res.view("dashboard/vault/vault-list", {
+    res.header("content-type", "text/html; charset=utf-8").send(
+      await app.view("dashboard/vault/vault-list", {
       pageTitle: `Dashboard - Vault`,
       config: config,
       apiData: apiData,
@@ -36,7 +37,8 @@ export default function dashboardVaultSiteRoute(
       req: req,
       globalImage: await getGlobalImage(),
       announcementWeb: await getWebAnnouncement(),
-    });
+    }));
+    return;
   });
 
   app.get("/dashboard/vault/create", async function (req, res) {
@@ -44,7 +46,8 @@ export default function dashboardVaultSiteRoute(
 
     if (!hasPermission("zander.web.vault", req, res, features)) return;
 
-    return res.view("dashboard/vault/vault-editor", {
+    res.header("content-type", "text/html; charset=utf-8").send(
+      await app.view("dashboard/vault/vault-editor", {
       pageTitle: `Dashboard - Vault Creator`,
       config: config,
       type: "create",
@@ -52,7 +55,8 @@ export default function dashboardVaultSiteRoute(
       req: req,
       globalImage: await getGlobalImage(),
       announcementWeb: await getWebAnnouncement(),
-    });
+    }));
+    return;
   });
 
   app.get("/dashboard/vault/edit", async function (req, res) {
@@ -67,7 +71,8 @@ export default function dashboardVaultSiteRoute(
     });
     const vaultApiData = await response.json();
 
-    return res.view("dashboard/vault/vault-editor", {
+    res.header("content-type", "text/html; charset=utf-8").send(
+      await app.view("dashboard/vault/vault-editor", {
       pageTitle: `Dashboard - Vault Editor`,
       config: config,
       vaultApiData: vaultApiData.data[0],
@@ -76,6 +81,7 @@ export default function dashboardVaultSiteRoute(
       req: req,
       globalImage: await getGlobalImage(),
       announcementWeb: await getWebAnnouncement(),
-    });
+    }));
+    return;
   });
 }

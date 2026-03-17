@@ -38,7 +38,8 @@ export default function dashboardSiteRoute(app, config, features, lang) {
       }
     ).then((res) => res.json());
 
-    return res.view("dashboard/dashboard-index", {
+    res.header("content-type", "text/html; charset=utf-8").send(
+      await app.view("dashboard/dashboard-index", {
       pageTitle: `Dashboard`,
       config: config,
       features: features,
@@ -48,7 +49,8 @@ export default function dashboardSiteRoute(app, config, features, lang) {
       announcementsCount: announcements.data ? announcements.data.length : 0,
       applicationsCount: applications.data ? applications.data.length : 0,
       serversCount: servers.data ? servers.data.length : 0,
-    });
+    }));
+    return;
   });
 
   //

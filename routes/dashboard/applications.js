@@ -41,7 +41,8 @@ export default function dashboardApplicationsSiteRoute(
     });
     const apiData = await parseApiResponse(response);
 
-    return res.view("dashboard/applications/application-list", {
+    res.header("content-type", "text/html; charset=utf-8").send(
+      await app.view("dashboard/applications/application-list", {
       pageTitle: `Dashboard - Applications`,
       config: config,
       apiData: apiData,
@@ -49,7 +50,8 @@ export default function dashboardApplicationsSiteRoute(
       req: req,
       globalImage: await getGlobalImage(),
       announcementWeb: await getWebAnnouncement(),
-    });
+    }));
+    return;
   });
 
   app.get("/dashboard/applications/create", async function (req, res) {
@@ -58,7 +60,8 @@ export default function dashboardApplicationsSiteRoute(
 
     if (!hasPermission("zander.web.application", req, res, features)) return;
 
-    return res.view("dashboard/applications/application-editor", {
+    res.header("content-type", "text/html; charset=utf-8").send(
+      await app.view("dashboard/applications/application-editor", {
       pageTitle: `Dashboard - Application Creator`,
       config: config,
       type: "create",
@@ -66,7 +69,8 @@ export default function dashboardApplicationsSiteRoute(
       req: req,
       globalImage: await getGlobalImage(),
       announcementWeb: await getWebAnnouncement(),
-    });
+    }));
+    return;
   });
 
   app.get("/dashboard/applications/edit", async function (req, res) {
@@ -87,7 +91,8 @@ export default function dashboardApplicationsSiteRoute(
       return res.redirect("/dashboard/applications");
     }
 
-    return res.view("dashboard/applications/application-editor", {
+    res.header("content-type", "text/html; charset=utf-8").send(
+      await app.view("dashboard/applications/application-editor", {
       pageTitle: `Dashboard - Application Editor`,
       config: config,
       applicationApiData: applicationApiData.data[0],
@@ -96,6 +101,7 @@ export default function dashboardApplicationsSiteRoute(
       req: req,
       globalImage: await getGlobalImage(),
       announcementWeb: await getWebAnnouncement(),
-    });
+    }));
+    return;
   });
 }
