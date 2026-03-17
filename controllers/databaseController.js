@@ -22,10 +22,11 @@ import dotenv from "dotenv";
 dotenv.config();
 
 // ---------------------------------------------------------------------------
-// Parse DATABASE_URL once — used by both Prisma and the mysql2 pool
+// Parse connection URLs
 // ---------------------------------------------------------------------------
 
 const dbUrl = new URL(process.env.DATABASE_URL);
+const lpUrl = new URL(process.env.LUCKPERMS_URL);
 
 // ---------------------------------------------------------------------------
 // Prisma client (primary interface for new code)
@@ -118,6 +119,45 @@ setInterval(() => {
     connection.release();
   });
 }, HEALTH_CHECK_INTERVAL_MS);
+
+// ---------------------------------------------------------------------------
+// LuckPerms pool — separate MySQL instance
+// ---------------------------------------------------------------------------
+
+const luckpermsPool = mysql2.createPool({
+  connectionLimit: 5,
+  host: lpUrl.hostname,
+  port: parseInt(lpUrl.port) || 3306,
+  user: decodeURIComponent(lpUrl.username),
+  password: decodeURIComponent(lpUrl.password),
+  database: lpUrl.pathname.slice(1),
+  charset: "utf8mb4",
+  connectTimeout: 10000,
+  waitForConnections: true,
+  timezone: "Z",
+  enableKeepAlive: true,
+  keepAliveInitialDelay: 10000,
+});
+
+luckpermsPool.on("connection", function (connection) {
+  console.info("[DB] LuckPerms pool connection established.");
+  connection.query("SET NAMES 'utf8mb4' COLLATE 'utf8mb4_unicode_ci'");
+});
+
+luckpermsPool.on("error", (err) => {
+  console.error(`[ERROR] [DB] LuckPerms Pool Error: ${err.message}`);
+});
+
+luckpermsPool.getConnection(function (err, connection) {
+  if (err) {
+    console.error(`[ERROR] [DB] LuckPerms connection failed:\n ${err.stack}`);
+    return;
+  }
+  console.info("[DB] LuckPerms pool connection is successful.");
+  connection.release();
+});
+
+export const luckpermsDb = luckpermsPool;
 
 // ---------------------------------------------------------------------------
 // Default export: mysql2 pool (drop-in replacement for the old `mysql` pool)
