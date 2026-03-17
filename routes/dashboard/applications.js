@@ -33,7 +33,7 @@ export default function dashboardApplicationsSiteRoute(
     if (!await isFeatureWebRouteEnabled(app, features.applications, req, res, features))
       return;
 
-    if (!hasPermission("zander.web.application", req, res, features)) return;
+    if (!await hasPermission("zander.web.application", req, res, features)) return;
 
     const fetchURL = `${process.env.siteAddress}/api/application/get`;
     const response = await fetch(fetchURL, {
@@ -58,7 +58,7 @@ export default function dashboardApplicationsSiteRoute(
     if (!await isFeatureWebRouteEnabled(app, features.applications, req, res, features))
       return;
 
-    if (!hasPermission("zander.web.application", req, res, features)) return;
+    if (!await hasPermission("zander.web.application", req, res, features)) return;
 
     res.header("content-type", "text/html; charset=utf-8").send(
       await app.view("dashboard/applications/application-editor", {
@@ -77,7 +77,7 @@ export default function dashboardApplicationsSiteRoute(
     if (!await isFeatureWebRouteEnabled(app, features.applications, req, res, features))
       return;
 
-    if (!hasPermission("zander.web.application", req, res, features)) return;
+    if (!await hasPermission("zander.web.application", req, res, features)) return;
 
     const applicationId = req.query.applicationId;
     const fetchURL = `${process.env.siteAddress}/api/application/get?id=${applicationId}`;

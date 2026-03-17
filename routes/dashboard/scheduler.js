@@ -17,7 +17,7 @@ export default function dashboardSchedulerSiteRoute(
   app.get("/dashboard/scheduler", async function (req, res) {
     if (!await isFeatureWebRouteEnabled(app, features.discord, req, res, features)) return;
 
-    if (!hasPermission("zander.web.scheduler", req, res, features)) return;
+    if (!await hasPermission("zander.web.scheduler", req, res, features)) return;
 
     const announcementsResponse = await fetch(
       `${process.env.siteAddress}/api/announcement/get`,
@@ -59,7 +59,8 @@ export default function dashboardSchedulerSiteRoute(
       }
     }
 
-    res.view("dashboard/scheduler/scheduler-index", {
+    res.header("content-type", "text/html; charset=utf-8").send(
+      await app.view("dashboard/scheduler/scheduler-index", {
       pageTitle: `Dashboard - Scheduler`,
       config: config,
       features: features,
@@ -69,8 +70,7 @@ export default function dashboardSchedulerSiteRoute(
       announcementsData: announcementsData,
       scheduledMessages: scheduledMessages,
       discordChannels: discordChannels,
-    });
-
-    return res;
+    }));
+    return;
   });
 }

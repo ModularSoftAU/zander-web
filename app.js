@@ -98,6 +98,11 @@ const buildApp = async () => {
 
   // When app errors, render the error on a page, do not provide JSON
   app.setErrorHandler(async function (error, req, res) {
+    if (res.sent) {
+      app.log.error(error);
+      return;
+    }
+
     app.log.error(error);
 
     const statusCode =

@@ -20,7 +20,7 @@ export default function dashboardVaultSiteRoute(
     if (!await isFeatureWebRouteEnabled(app, features.vault, req, res, features))
       return;
 
-    if (!hasPermission("zander.web.vault", req, res, features)) return;
+    if (!await hasPermission("zander.web.vault", req, res, features)) return;
 
     const fetchURL = `${process.env.siteAddress}/api/vault/get`;
     const response = await fetch(fetchURL, {
@@ -44,7 +44,7 @@ export default function dashboardVaultSiteRoute(
   app.get("/dashboard/vault/create", async function (req, res) {
     if (!await isFeatureWebRouteEnabled(app, features.vault, req, res, features)) return;
 
-    if (!hasPermission("zander.web.vault", req, res, features)) return;
+    if (!await hasPermission("zander.web.vault", req, res, features)) return;
 
     res.header("content-type", "text/html; charset=utf-8").send(
       await app.view("dashboard/vault/vault-editor", {
@@ -62,7 +62,7 @@ export default function dashboardVaultSiteRoute(
   app.get("/dashboard/vault/edit", async function (req, res) {
     if (!await isFeatureWebRouteEnabled(app, features.vault, req, res, features)) return;
 
-    if (!hasPermission("zander.web.vault", req, res, features)) return;
+    if (!await hasPermission("zander.web.vault", req, res, features)) return;
 
     const vaultId = req.query.vaultId;
     const fetchURL = `${process.env.siteAddress}/api/vault/get?id=${vaultId}`;

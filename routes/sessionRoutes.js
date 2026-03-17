@@ -1013,7 +1013,8 @@ export default function sessionSiteRoute(
     });
     const apiData = await response.json();
 
-    res.view("session/unregistered", {
+    res.header("content-type", "text/html; charset=utf-8").send(
+      await app.view("session/unregistered", {
       pageTitle: `Unregistered`,
       config: config,
       req: req,
@@ -1022,9 +1023,8 @@ export default function sessionSiteRoute(
       globalImage: await getGlobalImage(),
       announcementWeb: await getWebAnnouncement(),
       discordId: discordId,
-    });
-
-    return res;
+    }));
+    return;
   });
 
   app.get("/logout", async function (req, res) {
