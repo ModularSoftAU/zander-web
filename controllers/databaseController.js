@@ -22,17 +22,20 @@ import dotenv from "dotenv";
 dotenv.config();
 
 // ---------------------------------------------------------------------------
-// Prisma client (primary interface for new code)
+// Parse DATABASE_URL once — used by both Prisma and the mysql2 pool
 // ---------------------------------------------------------------------------
 
-const baseUrl = process.env.DATABASE_URL ||
-  `mysql://${encodeURIComponent(process.env.databaseUser)}:${encodeURIComponent(process.env.databasePassword)}@${process.env.databaseHost}:${process.env.databasePort || 3306}/${process.env.databaseName}`;
+const dbUrl = new URL(process.env.DATABASE_URL);
+
+// ---------------------------------------------------------------------------
+// Prisma client (primary interface for new code)
+// ---------------------------------------------------------------------------
 
 const prismaBase = new PrismaClient({
   log: process.env.DEBUG === "true" ? ["query", "info", "warn", "error"] : ["warn", "error"],
   datasources: {
     db: {
-      url: baseUrl + (baseUrl.includes("?") ? "&" : "?") + "connection_limit=5&pool_timeout=10&connect_timeout=10",
+      url: process.env.DATABASE_URL + (process.env.DATABASE_URL.includes("?") ? "&" : "?") + "connection_limit=5&pool_timeout=10&connect_timeout=10",
     },
   },
 });
@@ -55,11 +58,11 @@ export function isDbHealthy() {
 
 const pool = mysql2.createPool({
   connectionLimit: 10,
-  host: process.env.databaseHost,
-  port: parseInt(process.env.databasePort) || 3306,
-  user: process.env.databaseUser,
-  password: process.env.databasePassword,
-  database: process.env.databaseName,
+  host: dbUrl.hostname,
+  port: parseInt(dbUrl.port) || 3306,
+  user: decodeURIComponent(dbUrl.username),
+  password: decodeURIComponent(dbUrl.password),
+  database: dbUrl.pathname.slice(1),
   charset: "utf8mb4",
   multipleStatements: true,
   connectTimeout: 10000,

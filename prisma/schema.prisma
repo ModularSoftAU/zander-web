@@ -16,7 +16,7 @@
 //
 // These must be accessed via prisma.$queryRawUnsafe() at the application layer.
 //
-// NOTE: DATABASE_URL should be constructed from individual env vars:
+// NOTE: Set DATABASE_URL in .env as a full MySQL connection string:
 //   mysql://USER:PASSWORD@HOST:PORT/DATABASE
 // =============================================================================
 
