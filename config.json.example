@@ -60,7 +60,7 @@
     }
   },
   "watch": {
-    "contentChannelWebhook": "WEBHOOKURL",
+    "contentChannelId": "CHANNELID",
     "contentPingRoleId": null,
     "filters": {
       "twitch": {

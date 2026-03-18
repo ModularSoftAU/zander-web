@@ -70,7 +70,10 @@ async function getTwitchAppToken(fetchFn) {
 
 async function sendLiveNotification(item) {
   const channelId = config?.watch?.contentChannelId;
-  if (!channelId) return null;
+  if (!channelId) {
+    console.warn("[WatchTwitch] contentChannelId is not set in config.json — skipping Discord notification.");
+    return null;
+  }
 
   try {
     const channel = await client.channels.fetch(channelId);
