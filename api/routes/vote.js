@@ -158,9 +158,11 @@ export default function voteApiRoute(app, config, db, features, lang) {
       // 1. Validate against an active site
       const site = await getVoteSiteByServiceName(serviceName);
       if (!site) {
+        console.warn(`[vote/ingest] Rejected – unknown service '${serviceName}' (player: ${playerName}, from: ${receivedFrom || "?"}). Add this service via POST /admin/vote/sites.`);
         return res.send({ success: false, message: `Unknown voting service: '${serviceName}'.` });
       }
       if (!site.is_active) {
+        console.warn(`[vote/ingest] Rejected – service '${serviceName}' is inactive (player: ${playerName}).`);
         return res.send({ success: false, message: `Voting service '${serviceName}' is currently inactive.` });
       }
 
@@ -179,6 +181,7 @@ export default function voteApiRoute(app, config, db, features, lang) {
         });
       } catch (err) {
         if (err.code === "ER_DUP_ENTRY") {
+          console.warn(`[vote/ingest] Duplicate ignored – ${playerName} on ${serviceName} (${receivedAt.toISOString().slice(0, 10)}).`);
           return res.send({ success: false, message: "Duplicate vote delivery ignored." });
         }
         throw err;
