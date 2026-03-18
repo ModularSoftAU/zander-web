@@ -393,7 +393,7 @@ export default function supportRoutes(
       if (!req.session.user.uuid) {
         setBannerCookie(
           "warning",
-          "Please link your Minecraft account before replying to tickets.",
+          "Your Minecraft account is not linked. Visit /register/minecraft to link it before replying.",
           res
         );
         return res.redirect(`/support/ticket/${req.params.id}`);
