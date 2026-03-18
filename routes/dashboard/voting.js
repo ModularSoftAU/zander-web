@@ -45,31 +45,46 @@ export default function dashboardVotingSiteRoute(app, fetch, config, db, feature
     if (!await isFeatureWebRouteEnabled(app, features.vote, req, res, features)) return;
     if (!await hasPermission("zander.web.voting", req, res, features)) return;
 
-    const [sitesRes, leaderboardRes] = await Promise.all([
-      fetch(`${process.env.siteAddress}/admin/vote/sites`, {
-        headers: { "x-access-token": process.env.apiKey },
-      }),
-      fetch(`${process.env.siteAddress}/vote/leaderboard`, {
-        headers: { "x-access-token": process.env.apiKey },
-      }),
-    ]);
+    try {
+      const [sitesRes, leaderboardRes] = await Promise.all([
+        fetch(`${process.env.siteAddress}/admin/vote/sites`, {
+          headers: { "x-access-token": process.env.apiKey },
+        }),
+        fetch(`${process.env.siteAddress}/vote/leaderboard`, {
+          headers: { "x-access-token": process.env.apiKey },
+        }),
+      ]);
 
-    const sitesData = await apiJson(sitesRes, "/admin/vote/sites");
-    const leaderboardData = await apiJson(leaderboardRes, "/vote/leaderboard");
+      const sitesData = await apiJson(sitesRes, "/admin/vote/sites");
+      const leaderboardData = await apiJson(leaderboardRes, "/vote/leaderboard");
 
-    const [globalImage, announcementWeb] = await Promise.all([getGlobalImage(), getWebAnnouncement()]);
-    res.header("content-type", "text/html; charset=utf-8").send(
-      await app.view("dashboard/voting/sites", {
-        pageTitle: "Dashboard - Voting Sites",
-        config,
-        req,
-        features,
-        sitesData,
-        leaderboardData,
-        globalImage,
-        announcementWeb,
-      })
-    );
+      const [globalImage, announcementWeb] = await Promise.all([getGlobalImage(), getWebAnnouncement()]);
+      res.header("content-type", "text/html; charset=utf-8").send(
+        await app.view("dashboard/voting/sites", {
+          pageTitle: "Dashboard - Voting Sites",
+          config,
+          req,
+          features,
+          sitesData,
+          leaderboardData,
+          globalImage,
+          announcementWeb,
+        })
+      );
+    } catch (error) {
+      console.error("[dashboard/voting] Failed to load voting sites page:", error);
+      res.header("content-type", "text/html; charset=utf-8").send(
+        await app.view("session/error", {
+          pageTitle: "Server Error",
+          config,
+          req,
+          features,
+          error,
+          globalImage: await getGlobalImage(),
+          announcementWeb: await getWebAnnouncement(),
+        })
+      );
+    }
     return;
   });
 
@@ -80,23 +95,38 @@ export default function dashboardVotingSiteRoute(app, fetch, config, db, feature
     if (!await isFeatureWebRouteEnabled(app, features.vote, req, res, features)) return;
     if (!await hasPermission("zander.web.voting", req, res, features)) return;
 
-    const templatesRes = await fetch(`${process.env.siteAddress}/admin/vote/reward-templates`, {
-      headers: { "x-access-token": process.env.apiKey },
-    });
-    const templatesData = await apiJson(templatesRes, "/admin/vote/reward-templates");
+    try {
+      const templatesRes = await fetch(`${process.env.siteAddress}/admin/vote/reward-templates`, {
+        headers: { "x-access-token": process.env.apiKey },
+      });
+      const templatesData = await apiJson(templatesRes, "/admin/vote/reward-templates");
 
-    const [globalImage, announcementWeb] = await Promise.all([getGlobalImage(), getWebAnnouncement()]);
-    res.header("content-type", "text/html; charset=utf-8").send(
-      await app.view("dashboard/voting/rewards", {
-        pageTitle: "Dashboard - Reward Templates",
-        config,
-        req,
-        features,
-        templatesData,
-        globalImage,
-        announcementWeb,
-      })
-    );
+      const [globalImage, announcementWeb] = await Promise.all([getGlobalImage(), getWebAnnouncement()]);
+      res.header("content-type", "text/html; charset=utf-8").send(
+        await app.view("dashboard/voting/rewards", {
+          pageTitle: "Dashboard - Reward Templates",
+          config,
+          req,
+          features,
+          templatesData,
+          globalImage,
+          announcementWeb,
+        })
+      );
+    } catch (error) {
+      console.error("[dashboard/voting/rewards] Failed to load reward templates page:", error);
+      res.header("content-type", "text/html; charset=utf-8").send(
+        await app.view("session/error", {
+          pageTitle: "Server Error",
+          config,
+          req,
+          features,
+          error,
+          globalImage: await getGlobalImage(),
+          announcementWeb: await getWebAnnouncement(),
+        })
+      );
+    }
     return;
   });
 
@@ -115,31 +145,46 @@ export default function dashboardVotingSiteRoute(app, fetch, config, db, feature
       return res.redirect("/dashboard/voting/queue");
     }
 
-    const params = new URLSearchParams();
-    if (status) params.set("status", status);
-    if (playerUuid) params.set("playerUuid", playerUuid);
-    params.set("limit", "200");
+    try {
+      const params = new URLSearchParams();
+      if (status) params.set("status", status);
+      if (playerUuid) params.set("playerUuid", playerUuid);
+      params.set("limit", "200");
 
-    const queueRes = await fetch(
-      `${process.env.siteAddress}/admin/vote/queue?${params.toString()}`,
-      { headers: { "x-access-token": process.env.apiKey } }
-    );
-    const queueData = await apiJson(queueRes, "/admin/vote/queue");
+      const queueRes = await fetch(
+        `${process.env.siteAddress}/admin/vote/queue?${params.toString()}`,
+        { headers: { "x-access-token": process.env.apiKey } }
+      );
+      const queueData = await apiJson(queueRes, "/admin/vote/queue");
 
-    const [globalImage, announcementWeb] = await Promise.all([getGlobalImage(), getWebAnnouncement()]);
-    res.header("content-type", "text/html; charset=utf-8").send(
-      await app.view("dashboard/voting/queue", {
-        pageTitle: "Dashboard - Reward Queue",
-        config,
-        req,
-        features,
-        queueData,
-        activeStatus: status,
-        activePlayerUuid: playerUuid,
-        globalImage,
-        announcementWeb,
-      })
-    );
+      const [globalImage, announcementWeb] = await Promise.all([getGlobalImage(), getWebAnnouncement()]);
+      res.header("content-type", "text/html; charset=utf-8").send(
+        await app.view("dashboard/voting/queue", {
+          pageTitle: "Dashboard - Reward Queue",
+          config,
+          req,
+          features,
+          queueData,
+          activeStatus: status,
+          activePlayerUuid: playerUuid,
+          globalImage,
+          announcementWeb,
+        })
+      );
+    } catch (error) {
+      console.error("[dashboard/voting/queue] Failed to load queue page:", error);
+      res.header("content-type", "text/html; charset=utf-8").send(
+        await app.view("session/error", {
+          pageTitle: "Server Error",
+          config,
+          req,
+          features,
+          error,
+          globalImage: await getGlobalImage(),
+          announcementWeb: await getWebAnnouncement(),
+        })
+      );
+    }
     return;
   });
 
