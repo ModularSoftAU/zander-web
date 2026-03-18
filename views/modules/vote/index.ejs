@@ -10,53 +10,142 @@
   backgroundImage: globalImage
 }) %>
 
-<div class="container my-5">
-    <div class="row g-4">
+<style>
+  .vote-site-card {
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+    border-left: 4px solid var(--bs-primary) !important;
+  }
+  .vote-site-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(0,0,0,.12) !important;
+    text-decoration: none;
+  }
+  .vote-site-number {
+    width: 2rem;
+    height: 2rem;
+    border-radius: 50%;
+    background: var(--bs-primary);
+    color: #fff;
+    font-weight: 700;
+    font-size: .8rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+  .leaderboard-row {
+    border-left: 3px solid transparent;
+    transition: background 0.1s;
+  }
+  .leaderboard-row.rank-1 { border-left-color: #ffc107; }
+  .leaderboard-row.rank-2 { border-left-color: #adb5bd; }
+  .leaderboard-row.rank-3 { border-left-color: #cd7f32; }
+  .rank-icon { width: 1.6rem; text-align: center; }
+  .vote-count-pill {
+    font-size: .75rem;
+    font-weight: 600;
+    padding: .25em .65em;
+  }
+</style>
 
-        <!-- Voting Sites -->
-        <div class="col-lg-7">
-            <h2 class="h4 mb-3">Vote for Us</h2>
-            <p class="text-muted">Vote daily on the sites below to earn in-game rewards and help us grow!</p>
+<div class="container py-5">
+  <div class="row g-5">
 
-            <% if (!sitesData.success || !sitesData.data || !sitesData.data.length) { %>
-                <div class="alert alert-info">No voting sites are available right now. Check back soon!</div>
-            <% } else { %>
-                <div class="d-flex flex-column gap-3">
-                    <% sitesData.data.forEach(function(site) { %>
-                        <a href="<%= site.vote_url %>" target="_blank" rel="noopener" class="card card-body text-decoration-none d-flex flex-row align-items-center justify-content-between gap-3 shadow-sm border-start border-primary border-3">
-                            <div>
-                                <strong class="d-block"><%= site.site_name %></strong>
-                                <small class="text-muted"><code><%= site.service_name %></code></small>
-                            </div>
-                            <span class="btn btn-sm btn-primary">Vote &rarr;</span>
-                        </a>
-                    <% }) %>
-                </div>
-            <% } %>
+    <!-- ── Voting Sites ────────────────────────────────────────── -->
+    <div class="col-lg-7">
+      <div class="mb-4">
+        <h2 class="h4 fw-bold mb-1">Vote for Us</h2>
+        <p class="text-muted mb-0">Vote daily on the sites below to earn in-game rewards and help us grow.</p>
+      </div>
+
+      <% if (!sitesData.success || !sitesData.data || !sitesData.data.length) { %>
+        <div class="alert alert-info border-0 shadow-sm">
+          <i class="fas fa-info-circle me-2"></i>No voting sites are configured yet. Check back soon!
         </div>
-
-        <!-- Leaderboard -->
-        <div class="col-lg-5">
-            <h2 class="h4 mb-3">Top Voters — <%= currentMonth %></h2>
-
-            <% if (!leaderboardData.success || !leaderboardData.data || !leaderboardData.data.length) { %>
-                <p class="text-muted">No votes recorded yet this month. Be the first!</p>
-            <% } else { %>
-                <ol class="list-group list-group-numbered">
-                    <% leaderboardData.data.forEach(function(entry, index) { %>
-                        <li class="list-group-item d-flex justify-content-between align-items-center">
-                            <span>
-                                <% if (index === 0) { %><i class="fas fa-crown text-warning me-1"></i><% } %>
-                                <strong><%= entry.player_name %></strong>
-                            </span>
-                            <span class="badge bg-primary rounded-pill"><%= entry.vote_count %> votes</span>
-                        </li>
-                    <% }) %>
-                </ol>
-                <p class="text-muted small mt-2">The top voter each month earns a special monthly reward!</p>
-            <% } %>
+      <% } else { %>
+        <div class="d-flex flex-column gap-3">
+          <% sitesData.data.forEach(function(site, i) { %>
+            <a href="<%= site.vote_url %>"
+               target="_blank"
+               rel="noopener noreferrer"
+               class="vote-site-card card card-body text-decoration-none d-flex flex-row align-items-center gap-3 shadow-sm border-0 border-start border-primary border-3">
+              <span class="vote-site-number"><%= i + 1 %></span>
+              <div class="flex-grow-1 min-w-0">
+                <strong class="d-block text-body"><%= site.site_name %></strong>
+                <small class="text-muted"><%= site.service_name %></small>
+              </div>
+              <span class="btn btn-sm btn-primary px-3 flex-shrink-0">
+                Vote <i class="fas fa-external-link-alt ms-1 small"></i>
+              </span>
+            </a>
+          <% }) %>
         </div>
+        <p class="text-muted small mt-3 mb-0">
+          <i class="fas fa-sync-alt me-1"></i>Votes reset daily — come back each day to maximise your rewards!
+        </p>
+      <% } %>
     </div>
+
+    <!-- ── Leaderboard ────────────────────────────────────────── -->
+    <div class="col-lg-5">
+      <div class="mb-4">
+        <h2 class="h4 fw-bold mb-1">Top Voters</h2>
+        <% const [year, mon] = currentMonth.split('-'); %>
+        <% const monthName = new Date(parseInt(year), parseInt(mon) - 1, 1).toLocaleString('default', { month: 'long', year: 'numeric' }); %>
+        <p class="text-muted mb-0"><%= monthName %></p>
+      </div>
+
+      <% if (!leaderboardData.success || !leaderboardData.data || !leaderboardData.data.length) { %>
+        <div class="card border-0 shadow-sm">
+          <div class="card-body text-center py-5">
+            <i class="fas fa-trophy fa-2x text-muted mb-3 d-block"></i>
+            <p class="text-muted mb-0">No votes recorded yet this month.<br><strong>Be the first!</strong></p>
+          </div>
+        </div>
+      <% } else { %>
+        <div class="card border-0 shadow-sm">
+          <div class="card-body p-0">
+            <ul class="list-group list-group-flush rounded">
+              <% leaderboardData.data.forEach(function(entry, index) { %>
+                <%
+                  const rank = index + 1;
+                  let rankIcon, rankClass, badgeClass;
+                  if (rank === 1) {
+                    rankIcon = '<i class="fas fa-crown text-warning"></i>';
+                    rankClass = 'rank-1';
+                    badgeClass = 'bg-warning text-dark';
+                  } else if (rank === 2) {
+                    rankIcon = '<i class="fas fa-medal" style="color:#adb5bd"></i>';
+                    rankClass = 'rank-2';
+                    badgeClass = 'bg-secondary';
+                  } else if (rank === 3) {
+                    rankIcon = '<i class="fas fa-medal" style="color:#cd7f32"></i>';
+                    rankClass = 'rank-3';
+                    badgeClass = 'bg-secondary bg-opacity-75';
+                  } else {
+                    rankIcon = `<span class="text-muted small fw-semibold">#${rank}</span>`;
+                    rankClass = '';
+                    badgeClass = 'bg-light text-dark border';
+                  }
+                %>
+                <li class="list-group-item leaderboard-row <%= rankClass %> d-flex align-items-center gap-3 px-3 py-3">
+                  <span class="rank-icon"><%- rankIcon %></span>
+                  <span class="flex-grow-1 fw-semibold text-truncate"><%= entry.player_name %></span>
+                  <span class="badge vote-count-pill <%= badgeClass %>">
+                    <%= entry.vote_count %> <span class="fw-normal"><%= entry.vote_count === 1 ? 'vote' : 'votes' %></span>
+                  </span>
+                </li>
+              <% }) %>
+            </ul>
+          </div>
+        </div>
+        <p class="text-muted small mt-2 mb-0">
+          <i class="fas fa-star text-warning me-1"></i>The top voter each month earns a special monthly reward!
+        </p>
+      <% } %>
+    </div>
+
+  </div>
 </div>
 
 <%- include("../../modules/footer.ejs") %>
