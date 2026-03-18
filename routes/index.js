@@ -74,7 +74,7 @@ export default function applicationSiteRoutes(
       ),
     });
 
-    return res.header("content-type", "text/html; charset=utf-8").send(
+    res.header("content-type", "text/html; charset=utf-8").send(
       await app.view("modules/index/index", {
       pageTitle: `${config.siteConfiguration.siteName}`,
       pageDescription: `Welcome to ${config.siteConfiguration.siteName} — ${config.siteConfiguration.tagline}`,
@@ -87,6 +87,7 @@ export default function applicationSiteRoutes(
       statApiData: statApiData,
       announcementWeb: await getWebAnnouncement(),
     }));
+    return;
   });
 
   app.get("/announcement/popup", async function (req, res) {
@@ -117,7 +118,7 @@ export default function applicationSiteRoutes(
     });
     const apiData = await response.json();
 
-    return res.header("content-type", "text/html; charset=utf-8").send(
+    res.header("content-type", "text/html; charset=utf-8").send(
       await app.view("modules/play/play", {
       pageTitle: `Play`,
       pageDescription: `Connect and play on ${config.siteConfiguration.siteName}. Get the server address and join our community today.`,
@@ -128,6 +129,7 @@ export default function applicationSiteRoutes(
       globalImage: await getGlobalImage(),
       announcementWeb: await getWebAnnouncement(),
     }));
+    return;
   });
 
   //
@@ -142,7 +144,7 @@ export default function applicationSiteRoutes(
     });
     const apiData = await response.json();
 
-    return res.header("content-type", "text/html; charset=utf-8").send(
+    res.header("content-type", "text/html; charset=utf-8").send(
       await app.view("apply", {
       pageTitle: `Apply`,
       pageDescription: `Apply to join the ${config.siteConfiguration.siteName} team. View open positions and submit your application.`,
@@ -153,6 +155,7 @@ export default function applicationSiteRoutes(
       globalImage: await getGlobalImage(),
       announcementWeb: await getWebAnnouncement(),
     }));
+    return;
   });
 
   //
@@ -161,7 +164,7 @@ export default function applicationSiteRoutes(
   app.get("/ranks", async function (req, res) {
     await isFeatureWebRouteEnabled(app, features.ranks, req, res, features);
 
-    return res.header("content-type", "text/html; charset=utf-8").send(
+    res.header("content-type", "text/html; charset=utf-8").send(
       await app.view("ranks", {
       pageTitle: `Ranks`,
       pageDescription: `Explore the ranks available on ${config.siteConfiguration.siteName} and find out what perks and privileges each one offers.`,
@@ -172,6 +175,7 @@ export default function applicationSiteRoutes(
       globalImage: await getGlobalImage(),
       announcementWeb: await getWebAnnouncement(),
     }));
+    return;
   });
 
   //
@@ -181,7 +185,7 @@ export default function applicationSiteRoutes(
     try {
       const staffData = await getStaffPageData();
 
-      return res.header("content-type", "text/html; charset=utf-8").send(
+      res.header("content-type", "text/html; charset=utf-8").send(
         await app.view("staff", {
         pageTitle: `Staff`,
         pageDescription: `Meet the ${config.siteConfiguration.siteName} staff team — the dedicated volunteers who keep our community safe and welcoming.`,
@@ -192,9 +196,10 @@ export default function applicationSiteRoutes(
         globalImage: await getGlobalImage(),
         announcementWeb: await getWebAnnouncement(),
       }));
+      return;
     } catch (err) {
       console.error("Error loading staff page:", err);
-      return res.header("content-type", "text/html; charset=utf-8").send(
+      res.header("content-type", "text/html; charset=utf-8").send(
         await app.view("session/error", {
         pageTitle: "Error",
         pageDescription: "Error loading staff page",
@@ -205,6 +210,7 @@ export default function applicationSiteRoutes(
         globalImage: await getGlobalImage(),
         announcementWeb: await getWebAnnouncement(),
       }));
+      return;
     }
   });
 
@@ -217,7 +223,7 @@ export default function applicationSiteRoutes(
     }
 
     if (!req.session.user) {
-      return res.header("content-type", "text/html; charset=utf-8").send(
+      res.header("content-type", "text/html; charset=utf-8").send(
         await app.view("session/notLoggedIn", {
         pageTitle: `Access Restricted`,
         config: config,
@@ -226,9 +232,10 @@ export default function applicationSiteRoutes(
         globalImage: await getGlobalImage(),
         announcementWeb: await getWebAnnouncement(),
       }));
+      return;
     }
 
-    return res.header("content-type", "text/html; charset=utf-8").send(
+    res.header("content-type", "text/html; charset=utf-8").send(
       await app.view("report", {
       pageTitle: `Report`,
       pageDescription: `Report a player or incident on ${config.siteConfiguration.siteName}. Our staff team will review your report promptly.`,
@@ -238,6 +245,7 @@ export default function applicationSiteRoutes(
       globalImage: await getGlobalImage(),
       announcementWeb: await getWebAnnouncement(),
     }));
+    return;
   });
 
   //
@@ -292,7 +300,7 @@ export default function applicationSiteRoutes(
         }, {});
       }
 
-      return res.header("content-type", "text/html; charset=utf-8").send(
+      res.header("content-type", "text/html; charset=utf-8").send(
         await app.view("modules/appeal/appeal", {
         pageTitle: "Punishment Appeal",
         pageDescription: `Appeal a punishment on ${config.siteConfiguration.siteName}. Submit your case for staff review.`,
@@ -307,9 +315,10 @@ export default function applicationSiteRoutes(
         globalImage: await getGlobalImage(),
         announcementWeb: await getWebAnnouncement(),
       }));
+      return;
     } catch (error) {
       console.error(error);
-      return res.header("content-type", "text/html; charset=utf-8").send(
+      res.header("content-type", "text/html; charset=utf-8").send(
         await app.view("session/error", {
         pageTitle: "Error",
         pageDescription: "Error",
@@ -320,6 +329,7 @@ export default function applicationSiteRoutes(
         globalImage: await getGlobalImage(),
         announcementWeb: await getWebAnnouncement(),
       }));
+      return;
     }
   });
 
@@ -371,7 +381,7 @@ export default function applicationSiteRoutes(
         return res.redirect(`/support/ticket/${existingTicket.ticketId}`);
       }
 
-      return res.header("content-type", "text/html; charset=utf-8").send(
+      res.header("content-type", "text/html; charset=utf-8").send(
         await app.view("modules/appeal/appeal-form", {
         pageTitle: "Punishment Appeal",
         config: config,
@@ -384,9 +394,10 @@ export default function applicationSiteRoutes(
         globalImage: await getGlobalImage(),
         announcementWeb: await getWebAnnouncement(),
       }));
+      return;
     } catch (error) {
       console.error(error);
-      return res.header("content-type", "text/html; charset=utf-8").send(
+      res.header("content-type", "text/html; charset=utf-8").send(
         await app.view("session/error", {
         pageTitle: "Error",
         pageDescription: "Error",
@@ -397,6 +408,7 @@ export default function applicationSiteRoutes(
         globalImage: await getGlobalImage(),
         announcementWeb: await getWebAnnouncement(),
       }));
+      return;
     }
   });
 
@@ -406,7 +418,7 @@ export default function applicationSiteRoutes(
   app.get("/shopdirectory", async function (req, res) {
     await isFeatureWebRouteEnabled(app, features.shopdirectory, req, res, features);
 
-    return res.header("content-type", "text/html; charset=utf-8").send(
+    res.header("content-type", "text/html; charset=utf-8").send(
       await app.view("shopdirectory", {
       pageTitle: `Shop Directory`,
       pageDescription: `Browse the ${config.siteConfiguration.siteName} player shop directory. Find items, prices, and in-game stores.`,
@@ -416,6 +428,7 @@ export default function applicationSiteRoutes(
       globalImage: await getGlobalImage(),
       announcementWeb: await getWebAnnouncement(),
     }));
+    return;
   })
 
   // Proxy endpoint for client-side shop search (avoids exposing API key)
@@ -470,7 +483,7 @@ export default function applicationSiteRoutes(
     });
     const apiData = await response.json();
 
-    return res.header("content-type", "text/html; charset=utf-8").send(
+    res.header("content-type", "text/html; charset=utf-8").send(
       await app.view("vault", {
       pageTitle: `Vault`,
       pageDescription: `Access the ${config.siteConfiguration.siteName} vault to manage your stored in-game items.`,
@@ -481,6 +494,7 @@ export default function applicationSiteRoutes(
       globalImage: await getGlobalImage(),
       announcementWeb: await getWebAnnouncement(),
     }));
+    return;
   });
 
   //
@@ -505,7 +519,7 @@ export default function applicationSiteRoutes(
     });
     const apiData = await response.json();
 
-    return res.header("content-type", "text/html; charset=utf-8").send(
+    res.header("content-type", "text/html; charset=utf-8").send(
       await app.view("modules/punishments/punishments", {
       pageTitle: `Punishments`,
       pageDescription: `View the public punishment log for ${config.siteConfiguration.siteName}.`,
@@ -517,5 +531,6 @@ export default function applicationSiteRoutes(
       apiData: apiData,
       moment: moment,
     }));
+    return;
   });
 }
