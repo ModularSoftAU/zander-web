@@ -160,14 +160,14 @@ const buildApp = async () => {
     }
 
     try {
-      res.header("content-type", "text/html; charset=utf-8").send(
+      return res.header("content-type", "text/html; charset=utf-8").send(
         await app.view("session/maintenance", {
           pageTitle: "Down for Maintenance",
           config,
         })
       );
     } catch {
-      res.send("<h1>Down for Maintenance</h1><p>We'll be back shortly.</p>");
+      return res.send("<h1>Down for Maintenance</h1><p>We'll be back shortly.</p>");
     }
   });
 
