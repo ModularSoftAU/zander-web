@@ -234,10 +234,11 @@ export async function enqueueCommands(entries) {
 
   for (const e of entries) {
     try {
+      const availableAt = e.availableAt || new Date();
       await query(
         `INSERT IGNORE INTO player_command_queue
-           (player_uuid, player_name, source, command_text, execute_as, server_scope, dedupe_key, available_at)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+           (player_uuid, player_name, source, command_text, execute_as, server_scope, dedupe_key, available_at, expires_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, DATE_ADD(?, INTERVAL 3 DAY))`,
         [
           e.playerUuid,
           e.playerName,
@@ -246,7 +247,8 @@ export async function enqueueCommands(entries) {
           e.executeAs || "console",
           e.serverScope || "any",
           e.dedupeKey,
-          e.availableAt || new Date(),
+          availableAt,
+          availableAt,
         ]
       );
     } catch (err) {
@@ -272,6 +274,24 @@ export async function claimCommands({ playerUuid, serverName }) {
         if (txErr) { conn.release(); return reject(txErr); }
 
         try {
+          // Reset any of this player's commands that were claimed but never
+          // completed or failed (e.g. server crashed mid-execution).
+          // A 10-minute window is generous enough to cover normal command
+          // execution time while still recovering from crashes promptly.
+          await new Promise((res, rej) => {
+            conn.query(
+              `UPDATE player_command_queue
+               SET status = 'pending', claimed_at = NULL,
+                   retry_count = retry_count + 1, updated_at = NOW()
+               WHERE player_uuid = ?
+                 AND status = 'claimed'
+                 AND claimed_at < DATE_SUB(NOW(), INTERVAL 10 MINUTE)
+                 AND (expires_at IS NULL OR expires_at > NOW())`,
+              [playerUuid],
+              (e) => { if (e) return rej(e); res(); }
+            );
+          });
+
           // Find matching pending rows and lock them.
           const [rows] = await new Promise((res, rej) => {
             conn.query(
@@ -280,6 +300,7 @@ export async function claimCommands({ playerUuid, serverName }) {
                  AND status = 'pending'
                  AND (server_scope = 'any' OR server_scope = ?)
                  AND available_at <= NOW()
+                 AND (expires_at IS NULL OR expires_at > NOW())
                FOR UPDATE`,
               [playerUuid, serverName],
               (e, r) => { if (e) return rej(e); res([r]); }
@@ -343,8 +364,15 @@ export async function completeCommands(playerUuid, ids) {
 }
 
 /**
- * Mark commands as failed with a reason.
- * Only updates rows that belong to the given player.
+ * Handle a failed command delivery.
+ *
+ * If the command has not yet expired it is reset to 'pending' so it will
+ * be retried the next time the player logs in.  Only once expires_at has
+ * passed (or is NULL and the row was somehow marked as a definitive
+ * failure externally) is the status set to the terminal 'failed' state.
+ *
+ * retry_count is incremented regardless so admins can see how many
+ * attempts were made.
  *
  * @param {string} playerUuid
  * @param {Array<{id: number, reason: string}>} failed
@@ -354,7 +382,17 @@ export async function failCommands(playerUuid, failed) {
   for (const { id, reason } of failed) {
     await query(
       `UPDATE player_command_queue
-       SET status = 'failed', failure_reason = ?, updated_at = NOW()
+       SET status         = CASE
+                              WHEN expires_at IS NULL OR expires_at > NOW() THEN 'pending'
+                              ELSE 'failed'
+                            END,
+           claimed_at     = CASE
+                              WHEN expires_at IS NULL OR expires_at > NOW() THEN NULL
+                              ELSE claimed_at
+                            END,
+           failure_reason = ?,
+           retry_count    = retry_count + 1,
+           updated_at     = NOW()
        WHERE id = ? AND player_uuid = ?`,
       [reason || null, id, playerUuid]
     );
