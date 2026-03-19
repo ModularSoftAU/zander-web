@@ -49,6 +49,13 @@ export default function applicationSiteRoutes(
   sitemapRoutes(app, config, features);
   voteSiteRoutes(app, fetch, config, db, features, lang);
 
+  // Summernote editor fetches /emojis to populate its emoji picker.
+  // Return an empty map so it silently falls back to the GitHub emoji list
+  // rather than logging 404 errors in the server log.
+  app.get("/emojis", async function (_req, res) {
+    return res.send({});
+  });
+
   app.get("/", async function (req, res) {
     let statApiData = null;
     try {
