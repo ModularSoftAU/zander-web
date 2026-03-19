@@ -110,7 +110,7 @@ export default function applicationSiteRoutes(
   // Play
   //
   app.get("/play", async function (req, res) {
-    await isFeatureWebRouteEnabled(app, features.server, req, res, features);
+    if (!await isFeatureWebRouteEnabled(app, features.server, req, res, features)) return;
 
     const fetchURL = `${process.env.siteAddress}/api/server/get?type=EXTERNAL`;
     const response = await fetch(fetchURL, {
@@ -136,7 +136,7 @@ export default function applicationSiteRoutes(
   // Apply
   //
   app.get("/apply", async function (req, res) {
-    await isFeatureWebRouteEnabled(app, features.applications, req, res, features);
+    if (!await isFeatureWebRouteEnabled(app, features.applications, req, res, features)) return;
 
     const fetchURL = `${process.env.siteAddress}/api/application/get`;
     const response = await fetch(fetchURL, {
@@ -162,7 +162,7 @@ export default function applicationSiteRoutes(
   // Ranks
   //
   app.get("/ranks", async function (req, res) {
-    await isFeatureWebRouteEnabled(app, features.ranks, req, res, features);
+    if (!await isFeatureWebRouteEnabled(app, features.ranks, req, res, features)) return;
 
     res.header("content-type", "text/html; charset=utf-8").send(
       await app.view("ranks", {
@@ -416,7 +416,7 @@ export default function applicationSiteRoutes(
   // Shop Directory
   // 
   app.get("/shopdirectory", async function (req, res) {
-    await isFeatureWebRouteEnabled(app, features.shopdirectory, req, res, features);
+    if (!await isFeatureWebRouteEnabled(app, features.shopdirectory, req, res, features)) return;
 
     res.header("content-type", "text/html; charset=utf-8").send(
       await app.view("shopdirectory", {
@@ -433,7 +433,7 @@ export default function applicationSiteRoutes(
 
   // Proxy endpoint for client-side shop search (avoids exposing API key)
   app.get("/shopdirectory/search", async function (req, res) {
-    await isFeatureWebRouteEnabled(app, features.shopdirectory, req, res, features);
+    if (!await isFeatureWebRouteEnabled(app, features.shopdirectory, req, res, features)) return;
 
     const material = req.query.material || "";
     const page = req.query.page || "1";
@@ -475,7 +475,7 @@ export default function applicationSiteRoutes(
   // Vault
   //
   app.get("/vault", async function (req, res) {
-    await isFeatureWebRouteEnabled(app, features.vault, req, res, features);
+    if (!await isFeatureWebRouteEnabled(app, features.vault, req, res, features)) return;
 
     const fetchURL = `${process.env.siteAddress}/api/vault/get`;
     const response = await fetch(fetchURL, {

@@ -276,7 +276,7 @@ export default function forumRoutes(
 ) {
   const ensureFeature = async (req, res) => {
     if (!features.forums) {
-      await isFeatureWebRouteEnabled(app, features.forums, req, res, features);
+      if (!await isFeatureWebRouteEnabled(app, features.forums, req, res, features)) return;
       return false;
     }
 
