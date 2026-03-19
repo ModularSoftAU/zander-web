@@ -68,23 +68,27 @@ export async function getStaffPageData() {
   }));
 
   // 2) Get all users belonging to staff ranks with their per-rank title
-  // Users may appear multiple times if they hold multiple staff ranks
+  // Users may appear multiple times if they hold multiple staff ranks.
+  // LEFT JOIN users so staff who have a LuckPerms group but haven't
+  // registered on the web platform are still included; fall back to
+  // luckPermsPlayers for their username in that case.
   const rankUsersRaw = await new Promise((resolve, reject) => {
     db.query(
       `SELECT
         ur.rankSlug,
-        u.username,
+        COALESCE(u.username, lpp.username) AS username,
         ur.title,
-        u.uuid,
+        ur.uuid,
         u.profilePicture_type,
         u.profilePicture_email
        FROM userRanks ur
-       INNER JOIN users u ON u.userId = ur.userId
+       LEFT JOIN users u ON u.uuid = ur.uuid
+       LEFT JOIN luckPermsPlayers lpp ON lpp.uuid = ur.uuid
        INNER JOIN ranks r ON r.rankSlug = ur.rankSlug
        WHERE r.isStaff = 1
          AND r.isDonator = 0
          AND ur.rankSlug NOT IN ('default', 'retired')
-       ORDER BY r.priority DESC, u.username ASC`,
+       ORDER BY r.priority DESC, COALESCE(u.username, lpp.username) ASC`,
       function (error, results) {
         if (error) {
           return reject(error);
@@ -110,15 +114,16 @@ export async function getStaffPageData() {
     db.query(
       `SELECT
         ur.rankSlug,
-        u.username,
+        COALESCE(u.username, lpp.username) AS username,
         ur.title,
-        u.uuid,
+        ur.uuid,
         u.profilePicture_type,
         u.profilePicture_email
        FROM userRanks ur
-       INNER JOIN users u ON u.userId = ur.userId
+       LEFT JOIN users u ON u.uuid = ur.uuid
+       LEFT JOIN luckPermsPlayers lpp ON lpp.uuid = ur.uuid
        WHERE ur.rankSlug = 'retired'
-       ORDER BY u.username ASC`,
+       ORDER BY COALESCE(u.username, lpp.username) ASC`,
       function (error, results) {
         if (error) {
           return reject(error);
