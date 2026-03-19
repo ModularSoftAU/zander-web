@@ -567,6 +567,7 @@ model player_command_queue {
   claimed_at     DateTime?
   completed_at   DateTime?
   failure_reason String?                         @db.VarChar(512)
+  retry_count    Int                             @default(0) @db.UnsignedInt
   created_at     DateTime                        @default(now())
   updated_at     DateTime                        @updatedAt
 }
