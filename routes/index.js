@@ -54,22 +54,6 @@ export default function applicationSiteRoutes(
     });
     const statApiData = await response.json();
 
-    let topVoters = [];
-    if (features.votes) {
-      try {
-        const votersResponse = await fetch(
-          `${process.env.siteAddress}/api/votes/top?limit=10`,
-          { headers: { "x-access-token": process.env.apiKey } }
-        );
-        const votersData = await votersResponse.json();
-        if (votersData.success) {
-          topVoters = votersData.data;
-        }
-      } catch (err) {
-        console.error("[homepage] Failed to fetch top voters:", err);
-      }
-    }
-
     const pageJsonLd = JSON.stringify({
       "@context": "https://schema.org",
       "@type": "Organization",
@@ -92,7 +76,6 @@ export default function applicationSiteRoutes(
       globalImage: await getGlobalImage(),
       jumboVideo: getJumboVideo(),
       statApiData: statApiData,
-      topVoters: topVoters,
       announcementWeb: await getWebAnnouncement(),
     });
   });
@@ -110,6 +93,38 @@ export default function applicationSiteRoutes(
     return res.send({
       success: popupAnnouncements.length > 0,
       data: popupAnnouncements,
+    });
+  });
+
+  //
+  // Vote
+  //
+  app.get("/vote", async function (req, res) {
+    isFeatureWebRouteEnabled(features.votes, req, res, features);
+
+    let topVoters = [];
+    try {
+      const votersResponse = await fetch(
+        `${process.env.siteAddress}/api/votes/top?limit=10`,
+        { headers: { "x-access-token": process.env.apiKey } }
+      );
+      const votersData = await votersResponse.json();
+      if (votersData.success) {
+        topVoters = votersData.data;
+      }
+    } catch (err) {
+      console.error("[/vote] Failed to fetch top voters:", err);
+    }
+
+    return res.view("vote", {
+      pageTitle: `Vote`,
+      pageDescription: `Vote for ${config.siteConfiguration.siteName} and help our community grow. See this month's top voters.`,
+      config: config,
+      req: req,
+      features: features,
+      topVoters: topVoters,
+      globalImage: await getGlobalImage(),
+      announcementWeb: await getWebAnnouncement(),
     });
   });
 

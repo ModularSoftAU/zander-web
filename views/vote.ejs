@@ -1,0 +1,69 @@
+<%- include("modules/header.ejs", {
+    pageTitle: pageTitle,
+    pageDescription: pageDescription
+}) %>
+
+<%- include("modules/navigationBar.ejs") %>
+
+<%- include("partials/miniHeader.ejs", {
+  headerTitle: "Vote",
+  globalImage: globalImage
+}) %>
+
+<section class="section">
+  <div class="container">
+
+    <div class="row">
+      <div class="col-lg-8">
+        <h2 class="mb-3">Vote for Us</h2>
+        <p>Voting helps our server grow and get discovered by new players. Click the links below to vote — it only takes a few seconds!</p>
+
+        <% if (config.siteConfiguration.votingLinks && config.siteConfiguration.votingLinks.length > 0) { %>
+          <div class="row">
+            <% config.siteConfiguration.votingLinks.forEach(function(link) { %>
+            <div class="col-md-6 mb-3">
+              <a href="<%= link.url %>" target="_blank" rel="noopener noreferrer" class="btn btn-main btn-round-full w-100">
+                <i class="fas fa-external-link-alt me-2"></i><%= link.label %>
+              </a>
+            </div>
+            <% }) %>
+          </div>
+        <% } else { %>
+          <p class="text-muted">No voting links have been configured yet.</p>
+        <% } %>
+      </div>
+
+      <div class="col-lg-4">
+        <h2 class="mb-3">Top Voters This Month</h2>
+
+        <% if (topVoters && topVoters.length > 0) { %>
+          <ol class="list-group list-group-numbered">
+            <% topVoters.forEach(function(voter) { %>
+            <li class="list-group-item d-flex justify-content-between align-items-center">
+              <div class="d-flex align-items-center gap-2">
+                <img
+                  src="https://craftatar.com/avatars/<%= voter.uuid %>?size=24&overlay"
+                  alt="<%= voter.username %>"
+                  width="24"
+                  height="24"
+                  style="border-radius: 3px;"
+                  onerror="this.style.display='none'"
+                >
+                <span><%= voter.username %></span>
+              </div>
+              <span class="badge bg-primary rounded-pill">
+                <%= voter.voteCount %> vote<%= voter.voteCount !== 1 ? 's' : '' %>
+              </span>
+            </li>
+            <% }) %>
+          </ol>
+        <% } else { %>
+          <p class="text-muted">No votes recorded this month yet. Be the first!</p>
+        <% } %>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<%- include("modules/footer.ejs") %>

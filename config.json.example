@@ -26,7 +26,11 @@
       "youtube": "https://www.youtube.com/channel/UCeijz6MNnya85LprMjPmYag",
       "linkedin": "https://www.linkedin.com/company/68885022/",
       "tiktok": "https://www.tiktok.com/@craftingforchrist"
-    }
+    },
+    "votingLinks": [
+      { "label": "PlanetMinecraft", "url": "https://www.planetminecraft.com/server/your-server/vote/" },
+      { "label": "MinecraftServers.org", "url": "https://minecraftservers.org/vote/your-server-id" }
+    ]
   },
   "discord": {
     "guildId": "GUILDID",
