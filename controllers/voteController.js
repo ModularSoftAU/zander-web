@@ -210,11 +210,11 @@ export async function recordVote({ voteSiteId, playerUuid, playerName, serviceNa
 export async function upsertMonthlyTotal({ playerUuid, playerName, monthKey, voteAt }) {
   await query(
     `INSERT INTO vote_monthly_totals (player_uuid, player_name, month_key, vote_count, last_vote_at)
-     VALUES (?, ?, ?, 1, ?)
+     VALUES (?, ?, ?, 1, ?) AS new_row
      ON DUPLICATE KEY UPDATE
        vote_count   = vote_count + 1,
-       player_name  = VALUES(player_name),
-       last_vote_at = VALUES(last_vote_at)`,
+       player_name  = new_row.player_name,
+       last_vote_at = new_row.last_vote_at`,
     [playerUuid, playerName, monthKey, voteAt]
   );
 }
