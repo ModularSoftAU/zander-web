@@ -181,21 +181,25 @@ export async function createNotificationsForUsers(userIds, payload) {
     payload.url,
   ]);
 
-  const affectedRows = await new Promise((resolve, reject) => {
-    db.query(
-      "INSERT INTO userNotifications (userId, ticketId, notificationType, title, message, url) VALUES ?",
-      [values],
-      (err, results) => {
-        if (err) {
-          console.error("Failed to insert user notifications", err);
-          reject(err);
-          return;
-        }
-
-        resolve(results.affectedRows || 0);
-      },
-    );
-  });
+  // Insert each notification individually for mysql2 compatibility
+  let affectedRows = 0;
+  for (const row of values) {
+    await new Promise((resolve, reject) => {
+      db.query(
+        "INSERT INTO userNotifications (userId, ticketId, notificationType, title, message, url) VALUES (?, ?, ?, ?, ?, ?)",
+        row,
+        (err, results) => {
+          if (err) {
+            console.error("Failed to insert user notification", err);
+            reject(err);
+            return;
+          }
+          affectedRows += results.affectedRows || 0;
+          resolve();
+        },
+      );
+    });
+  }
 
   // Fire-and-forget background push to subscribed devices
   sendWebPushToUsers(uniqueUserIds, {

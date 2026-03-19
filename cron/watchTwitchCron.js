@@ -70,7 +70,10 @@ async function getTwitchAppToken(fetchFn) {
 
 async function sendLiveNotification(item) {
   const channelId = config?.watch?.contentChannelId;
-  if (!channelId) return null;
+  if (!channelId) {
+    console.warn("[WatchTwitch] contentChannelId is not set in config.json — skipping Discord notification.");
+    return null;
+  }
 
   try {
     const channel = await client.channels.fetch(channelId);
@@ -113,32 +116,17 @@ async function sendLiveNotification(item) {
 }
 
 // ---------------------------------------------------------------------------
-// Sync logic
+// Sync logic — accepts the already-fetched stream object to avoid a
+// redundant API call from the outer cron loop.
+// stream is null when the creator is currently offline.
 // ---------------------------------------------------------------------------
 
-async function syncTwitchCreator(creator, appToken, fetchFn) {
+async function syncTwitchCreator(creator, stream) {
   const broadcasterId = creator.platform_account_id;
 
   try {
-    const streamRes = await fetchFn(
-      `https://api.twitch.tv/helix/streams?user_id=${encodeURIComponent(broadcasterId)}`,
-      {
-        headers: {
-          Authorization: `Bearer ${appToken}`,
-          "Client-Id": process.env.twitchClientId,
-        },
-      }
-    );
-
-    if (!streamRes.ok) {
-      throw new Error(`Helix streams API returned ${streamRes.status}`);
-    }
-
-    const streamData = await streamRes.json();
-    const stream = streamData?.data?.[0]; // null when offline
-
     if (!stream) {
-      // Creator is offline — the outer cron loop handles markStreamsOffline
+      // Creator is offline — outer loop handles markStreamsOffline
       await updateSyncStatus(creator.user_id, "twitch", { success: true });
       return;
     }
@@ -180,13 +168,15 @@ async function syncTwitchCreator(creator, appToken, fetchFn) {
 
     await upsertContentItem(contentItem);
 
-    // Send Discord live notification if not already sent
-    if (isPublic) {
-      const alreadySent = await hasNotificationBeenSent("twitch", stream.id, "live");
-      if (!alreadySent) {
-        const messageId = await sendLiveNotification(
-          { ...contentItem, platform_display_name: creator.platform_display_name, username: creator.username }
-        );
+    // Send Discord live notification if not already sent.
+    // Only record the notification when the Discord send actually succeeds —
+    // if messageId is null the send failed and we want the next run to retry.
+    const alreadySent = await hasNotificationBeenSent("twitch", stream.id, "live");
+    if (!alreadySent) {
+      const messageId = await sendLiveNotification(
+        { ...contentItem, platform_display_name: creator.platform_display_name, username: creator.username }
+      );
+      if (messageId) {
         await recordNotification("twitch", stream.id, "live", messageId);
       }
     }
@@ -217,7 +207,8 @@ const twitchSyncTask = cron.schedule("*/5 * * * *", async () => {
     const creators = await getEligibleCreators("twitch");
     if (creators.length === 0) return;
 
-    // Sync each creator
+    // Fetch each creator's stream once, pass it directly to syncTwitchCreator
+    // so we avoid fetching the same endpoint twice per creator.
     const liveStreamIds = [];
     for (const creator of creators) {
       const broadcasterId = creator.platform_account_id;
@@ -234,10 +225,10 @@ const twitchSyncTask = cron.schedule("*/5 * * * *", async () => {
 
         if (!streamRes.ok) continue;
         const streamData = await streamRes.json();
-        const stream = streamData?.data?.[0];
+        const stream = streamData?.data?.[0] || null;
         if (stream) liveStreamIds.push(stream.id);
 
-        await syncTwitchCreator(creator, appToken, fetch);
+        await syncTwitchCreator(creator, stream);
       } catch (err) {
         console.error(`[WatchTwitch] Error during creator sync (${creator.user_id}):`, err);
       }

@@ -246,20 +246,22 @@ function sendForumLog(config, { action, title, description, url, avatarUrl, fiel
   }
 }
 
-async function renderForumsView(res, req, viewPath, data, config, features) {
+async function renderForumsView(app, res, req, viewPath, data, config, features) {
   const [globalImage, announcementWeb] = await Promise.all([
     getGlobalImage(),
     getWebAnnouncement(),
   ]);
 
-  return res.view(viewPath, {
-    ...data,
-    config,
-    features,
-    req,
-    globalImage,
-    announcementWeb,
-  });
+  res.header("content-type", "text/html; charset=utf-8").send(
+    await app.view(viewPath, {
+      ...data,
+      config,
+      features,
+      req,
+      globalImage,
+      announcementWeb,
+    })
+  );
 }
 
 export default function forumRoutes(
@@ -274,7 +276,7 @@ export default function forumRoutes(
 ) {
   const ensureFeature = async (req, res) => {
     if (!features.forums) {
-      await isFeatureWebRouteEnabled(features.forums, req, res, features);
+      await isFeatureWebRouteEnabled(app, features.forums, req, res, features);
       return false;
     }
 
@@ -313,7 +315,8 @@ export default function forumRoutes(
       includeArchived,
     });
 
-    return renderForumsView(
+    await renderForumsView(
+      app,
       res,
       req,
       "modules/forums/index",
@@ -329,6 +332,7 @@ export default function forumRoutes(
       config,
       features
     );
+    return;
   });
 
   app.get("/forums/category/:slug", async function (req, res) {
@@ -343,7 +347,8 @@ export default function forumRoutes(
     const categoryTree = await getCategoriesForUser(permissions);
 
     if (!category || !userCanViewCategory(category, req)) {
-      return renderForumsView(
+      await renderForumsView(
+        app,
         res,
         req,
         "session/notFound",
@@ -353,6 +358,7 @@ export default function forumRoutes(
         config,
         features
       );
+      return;
     }
 
     const includeArchived = includeArchivedDiscussions(req);
@@ -366,7 +372,8 @@ export default function forumRoutes(
       includeArchived,
     });
 
-    return renderForumsView(
+    await renderForumsView(
+      app,
       res,
       req,
       "modules/forums/category",
@@ -385,6 +392,7 @@ export default function forumRoutes(
       config,
       features
     );
+    return;
   });
 
   app.get("/forums/category/:slug/new", async function (req, res) {
@@ -396,7 +404,8 @@ export default function forumRoutes(
     const category = await getCategoryBySlug(slug);
 
     if (!category || !userCanViewCategory(category, req)) {
-      return renderForumsView(
+      await renderForumsView(
+        app,
         res,
         req,
         "session/notFound",
@@ -406,6 +415,7 @@ export default function forumRoutes(
         config,
         features
       );
+      return;
     }
 
     if (!userCanPostInCategory(category, req) && !userCanModerate(req)) {
@@ -418,7 +428,8 @@ export default function forumRoutes(
         return res.redirect(`/login`);
       }
 
-      return renderForumsView(
+      await renderForumsView(
+        app,
         res,
         req,
         "session/noPermission",
@@ -428,12 +439,14 @@ export default function forumRoutes(
         config,
         features
       );
+      return;
     }
 
     const permissions = getUserPermissions(req);
     const categoryTree = await getCategoriesForUser(permissions);
 
-    return renderForumsView(
+    await renderForumsView(
+      app,
       res,
       req,
       "modules/forums/newDiscussion",
@@ -446,6 +459,7 @@ export default function forumRoutes(
       config,
       features
     );
+    return;
   });
 
   app.post("/forums/category/:slug", async function (req, res) {
@@ -462,7 +476,8 @@ export default function forumRoutes(
     const category = await getCategoryBySlug(slug);
 
     if (!category || !userCanViewCategory(category, req)) {
-      return renderForumsView(
+      await renderForumsView(
+        app,
         res,
         req,
         "session/notFound",
@@ -472,6 +487,7 @@ export default function forumRoutes(
         config,
         features
       );
+      return;
     }
 
     if (!userCanPostInCategory(category, req) && !userCanModerate(req)) {
@@ -560,7 +576,8 @@ export default function forumRoutes(
     const result = await getDiscussionWithCategory(discussionId);
 
     if (!result) {
-      return renderForumsView(
+      await renderForumsView(
+        app,
         res,
         req,
         "session/notFound",
@@ -570,12 +587,14 @@ export default function forumRoutes(
         config,
         features
       );
+      return;
     }
 
     const { discussion, category } = result;
 
     if (!userCanViewCategory(category, req)) {
-      return renderForumsView(
+      await renderForumsView(
+        app,
         res,
         req,
         "session/notFound",
@@ -585,6 +604,7 @@ export default function forumRoutes(
         config,
         features
       );
+      return;
     }
 
     if (req.params.slug && req.params.slug !== discussion.slug) {
@@ -607,7 +627,8 @@ export default function forumRoutes(
       !discussion.isArchived &&
       (userCanPostInCategory(category, req) || canModerate);
 
-    return renderForumsView(
+    await renderForumsView(
+      app,
       res,
       req,
       "modules/forums/discussion",
@@ -631,6 +652,7 @@ export default function forumRoutes(
       config,
       features
     );
+    return;
   };
 
   app.get("/forums/discussion/:discussionId", discussionViewHandler);
@@ -767,7 +789,8 @@ export default function forumRoutes(
     const result = await getDiscussionWithCategory(discussionId);
 
     if (!result) {
-      return renderForumsView(
+      await renderForumsView(
+        app,
         res,
         req,
         "session/notFound",
@@ -777,12 +800,14 @@ export default function forumRoutes(
         config,
         features
       );
+      return;
     }
 
     const { discussion, category } = result;
 
     if (!userCanViewCategory(category, req)) {
-      return renderForumsView(
+      await renderForumsView(
+        app,
         res,
         req,
         "session/notFound",
@@ -792,13 +817,15 @@ export default function forumRoutes(
         config,
         features
       );
+      return;
     }
 
     const canModerate = userCanModerate(req);
     const isAuthor = getCurrentUserId(req) === discussion.createdBy;
 
     if (!canModerate && !isAuthor) {
-      return renderForumsView(
+      await renderForumsView(
+        app,
         res,
         req,
         "session/noPermission",
@@ -808,6 +835,7 @@ export default function forumRoutes(
         config,
         features
       );
+      return;
     }
 
     const permissions = getUserPermissions(req);
@@ -817,7 +845,8 @@ export default function forumRoutes(
     ]);
     const originalPost = posts.find((post) => post.isOriginal);
 
-    return renderForumsView(
+    await renderForumsView(
+      app,
       res,
       req,
       "modules/forums/editDiscussion",
@@ -832,6 +861,7 @@ export default function forumRoutes(
       config,
       features
     );
+    return;
   });
 
   app.post("/forums/discussion/:discussionId/edit", async function (req, res) {
@@ -995,7 +1025,8 @@ export default function forumRoutes(
     const post = await getPostById(postId);
 
     if (!post) {
-      return renderForumsView(
+      await renderForumsView(
+        app,
         res,
         req,
         "session/notFound",
@@ -1005,12 +1036,14 @@ export default function forumRoutes(
         config,
         features
       );
+      return;
     }
 
     const result = await getDiscussionWithCategory(post.discussionId);
 
     if (!result || !userCanViewCategory(result.category, req)) {
-      return renderForumsView(
+      await renderForumsView(
+        app,
         res,
         req,
         "session/notFound",
@@ -1020,6 +1053,7 @@ export default function forumRoutes(
         config,
         features
       );
+      return;
     }
 
     if (post.isOriginal) {
@@ -1032,7 +1066,8 @@ export default function forumRoutes(
     const isAuthor = getCurrentUserId(req) === post.userId;
 
     if (!canModerate && !isAuthor) {
-      return renderForumsView(
+      await renderForumsView(
+        app,
         res,
         req,
         "session/noPermission",
@@ -1042,12 +1077,14 @@ export default function forumRoutes(
         config,
         features
       );
+      return;
     }
 
     const permissions = getUserPermissions(req);
     const categoryTree = await getCategoriesForUser(permissions);
 
-    return renderForumsView(
+    await renderForumsView(
+      app,
       res,
       req,
       "modules/forums/editPost",
@@ -1062,6 +1099,7 @@ export default function forumRoutes(
       config,
       features
     );
+    return;
   });
 
   app.post("/forums/post/:postId/edit", async function (req, res) {
@@ -1515,11 +1553,13 @@ export default function forumRoutes(
     const result = await getDiscussionWithCategory(discussionId);
 
     if (!result) {
-      return renderForumsView(res, req, "session/notFound", { pageTitle: `404 Not Found` }, config, features);
+      await renderForumsView(app, res, req, "session/notFound", { pageTitle: `404 Not Found` }, config, features);
+      return;
     }
 
     if (!userCanModerate(req)) {
-      return renderForumsView(res, req, "session/noPermission", { pageTitle: `Access Restricted` }, config, features);
+      await renderForumsView(app, res, req, "session/noPermission", { pageTitle: `Access Restricted` }, config, features);
+      return;
     }
 
     const newCategoryId = Number.parseInt(req.body.categoryId, 10);
@@ -1561,7 +1601,8 @@ export default function forumRoutes(
     const post = await getPostById(postId);
 
     if (!post) {
-      return renderForumsView(
+      await renderForumsView(
+        app,
         res,
         req,
         "session/notFound",
@@ -1571,12 +1612,14 @@ export default function forumRoutes(
         config,
         features
       );
+      return;
     }
 
     const result = await getDiscussionWithCategory(post.discussionId);
 
     if (!result || !userCanViewCategory(result.category, req)) {
-      return renderForumsView(
+      await renderForumsView(
+        app,
         res,
         req,
         "session/notFound",
@@ -1586,10 +1629,12 @@ export default function forumRoutes(
         config,
         features
       );
+      return;
     }
 
     if (!userCanModerate(req)) {
-      return renderForumsView(
+      await renderForumsView(
+        app,
         res,
         req,
         "session/noPermission",
@@ -1599,6 +1644,7 @@ export default function forumRoutes(
         config,
         features
       );
+      return;
     }
 
     const revisions = await getPostRevisions(postId);
@@ -1606,7 +1652,8 @@ export default function forumRoutes(
     const permissions = getUserPermissions(req);
     const categoryTree = await getCategoriesForUser(permissions);
 
-    return renderForumsView(
+    await renderForumsView(
+      app,
       res,
       req,
       "modules/forums/revisions",
@@ -1623,5 +1670,6 @@ export default function forumRoutes(
       config,
       features
     );
+    return;
   });
 }

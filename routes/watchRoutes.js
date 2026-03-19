@@ -41,7 +41,8 @@ export default function watchSiteRoutes(app, client, fetch, moment, config, db, 
         hasNext: page < totalPages,
       };
 
-      return res.view("modules/watch/watch", {
+      res.header("content-type", "text/html; charset=utf-8").send(
+        await app.view("modules/watch/watch", {
         pageTitle: "Watch",
         pageDescription: `Watch live streams and videos from ${config.siteConfiguration.siteName} community creators.`,
         config,
@@ -53,7 +54,8 @@ export default function watchSiteRoutes(app, client, fetch, moment, config, db, 
         videoContent,
         pagination,
         moment,
-      });
+      }));
+      return;
     } catch (error) {
       console.error("[WATCH] Failed to load watch page", error);
       return res.status(500).view("session/error", {

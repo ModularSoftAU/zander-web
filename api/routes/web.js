@@ -34,15 +34,17 @@ export default async function webApiRoute(app, config, db, features, lang) {
 
           SELECT COUNT(*) AS totalStaff
           FROM (
-            SELECT u.uuid
+            SELECT u.userId
             FROM userRanks ur
             JOIN ranks r ON ur.rankSlug = r.rankSlug
-            JOIN users u ON u.uuid = ur.uuid
+            JOIN users u ON u.userId = ur.userId
             WHERE r.isStaff = 1
+              AND r.isDonator = 0
+              AND ur.rankSlug NOT IN ('default', 'retired')
               AND u.account_disabled = 0
-            GROUP BY u.uuid
+            GROUP BY u.userId
           ) staffRoster;
-          `,
+`,
           (err, results) => {
             if (err) return reject(err);
             resolve(results);

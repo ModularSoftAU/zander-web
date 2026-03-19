@@ -14,7 +14,7 @@ export default function dashboardRanksRoute(
   lang
 ) {
   app.get("/dashboard/ranks", async function (req, res) {
-    if (!isFeatureWebRouteEnabled(features.ranks, req, res, features)) return;
+    if (!await isFeatureWebRouteEnabled(app, features.ranks, req, res, features)) return;
 
     const hasRankPermission = await hasPermission(
       "zander.web.rank",
@@ -31,7 +31,8 @@ export default function dashboardRanksRoute(
 
     const rankData = await response.json();
 
-    return res.view("dashboard/ranks/index", {
+    res.header("content-type", "text/html; charset=utf-8").send(
+      await app.view("dashboard/ranks/index", {
       pageTitle: `Dashboard - Ranks`,
       config: config,
       features: features,
@@ -41,6 +42,7 @@ export default function dashboardRanksRoute(
         : [],
       globalImage: await getGlobalImage(),
       announcementWeb: await getWebAnnouncement(),
-    });
+    }));
+    return;
   });
 }

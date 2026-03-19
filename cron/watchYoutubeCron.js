@@ -31,7 +31,10 @@ import {
 
 async function sendDiscordNotification(notifType, item) {
   const channelId = config?.watch?.contentChannelId;
-  if (!channelId) return null;
+  if (!channelId) {
+    console.warn("[WatchYouTube] contentChannelId is not set in config.json — skipping Discord notification.");
+    return null;
+  }
 
   try {
     const channel = await client.channels.fetch(channelId);
@@ -279,7 +282,12 @@ async function syncYoutubeCreator(creator, apiKey, fetchFn) {
             creatorDisplayName: creator.platform_display_name || creator.username,
           }
         );
-        await recordNotification("youtube", video.id, notifType, messageId);
+        // Only record as sent if the Discord message actually went through.
+        // If messageId is null the send failed; leave the record absent so
+        // the next cron run can retry.
+        if (messageId) {
+          await recordNotification("youtube", video.id, notifType, messageId);
+        }
       }
     }
 

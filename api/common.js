@@ -78,22 +78,21 @@ export function optional(body, field) {
     @param res Passing through res
     @param features Passing through features
 */
-export async function isFeatureWebRouteEnabled(
-  isFeatureEnabled,
-  req,
-  res,
-  features
-) {
+export async function isFeatureWebRouteEnabled(app, isFeatureEnabled, req, res, features) {
   if (!isFeatureEnabled) {
-    res.view("session/featureDisabled", {
-      pageTitle: `Feature Disabled`,
-      config: config,
-      req: req,
-      res: res,
-      features: features,
-      globalImage: await getGlobalImage(),
-      announcementWeb: await getWebAnnouncement(),
-    });
+    const [globalImage, announcementWeb] = await Promise.all([getGlobalImage(), getWebAnnouncement()]);
+    res.header("content-type", "text/html; charset=utf-8").send(
+      await app.view("session/featureDisabled", {
+        pageTitle: "Feature Disabled",
+        config,
+        req,
+        res,
+        features,
+        globalImage,
+        announcementWeb,
+      })
+    );
+    return false;
   }
   return true;
 }

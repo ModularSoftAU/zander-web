@@ -21,7 +21,7 @@ dotenv.config();
 import fastify from "fastify";
 import fastifySession from "@fastify/session";
 import fastifyCookie from "@fastify/cookie";
-import expressMySQLSession from "express-mysql-session";
+import { FastifyPrismaSessionStore } from "./lib/fastifyPrismaSessionStore.js";
 
 const config = require("./config.json");
 const features = require("./features.json");
@@ -46,6 +46,8 @@ import("./cron/nicknameCheckCron.js");
 import("./cron/punishmentExpiryCron.js");
 import("./cron/watchTwitchCron.js");
 import("./cron/watchYoutubeCron.js");
+import("./cron/voteMonthlyRewardCron.js");
+import("./cron/unverifiedReminderCron.js");
 
 //
 // Website Related
@@ -66,29 +68,47 @@ import { client } from "./controllers/discordController.js";
 // Application Boot
 //
 const buildApp = async () => {
-  const app = fastify({ logger: config.debug });
+  // pluginTimeout raised to 120 s (default is 10 s).
+  // The Sapphire Framework's ApplicationCommandRegistries initialisation can
+  // take 60+ seconds while registering Discord slash commands, which can delay
+  // event-loop ticks long enough for avvio to fire the default 10-second
+  // timeout before route-registration plugins have a chance to complete.
+  const app = fastify({ logger: config.debug, pluginTimeout: 120000 });
 
   // When app errors, render the error on a page, do not provide JSON
   app.setNotFoundHandler(async function (req, res) {
     res.status(404);
 
     try {
-      return res.view("session/notFound", {
-        pageTitle: `404 Not Found`,
-        config: config,
-        req: req,
-        features: features,
-        globalImage: await getGlobalImage(),
-        announcementWeb: await getWebAnnouncement(),
-      });
+      res.header("content-type", "text/html; charset=utf-8").send(
+        await app.view("session/notFound", {
+          pageTitle: `404 Not Found`,
+          config: config,
+          req: req,
+          features: features,
+          globalImage: await getGlobalImage(),
+          announcementWeb: await getWebAnnouncement(),
+        })
+      );
     } catch (viewError) {
       app.log.error(viewError);
-      return res.send("404 Not Found");
+      res.send("404 Not Found");
     }
   });
 
   // When app errors, render the error on a page, do not provide JSON
   app.setErrorHandler(async function (error, req, res) {
+    if (res.sent) {
+      // ERR_HTTP_HEADERS_SENT is an expected side-effect of HEAD requests:
+      // @fastify/session's async Prisma save resolves after headRouteOnSendHandler
+      // already committed the response, so the Set-Cookie write races the finalize.
+      // Nothing to do — the response was delivered correctly.
+      if (error.code !== "ERR_HTTP_HEADERS_SENT") {
+        app.log.warn({ err: error }, "error after reply already sent");
+      }
+      return;
+    }
+
     app.log.error(error);
 
     const statusCode =
@@ -107,18 +127,20 @@ const buildApp = async () => {
     }
 
     try {
-      return res.view("session/error", {
-        pageTitle: `Server Error`,
-        config: config,
-        error: error,
-        req: req,
-        features: features,
-        globalImage: await getGlobalImage(),
-        announcementWeb: await getWebAnnouncement(),
-      });
+      res.header("content-type", "text/html; charset=utf-8").send(
+        await app.view("session/error", {
+          pageTitle: `Server Error`,
+          config: config,
+          error: error,
+          req: req,
+          features: features,
+          globalImage: await getGlobalImage(),
+          announcementWeb: await getWebAnnouncement(),
+        })
+      );
     } catch (viewError) {
       app.log.error(viewError);
-      return res.send("Internal Server Error");
+      res.send("Internal Server Error");
     }
   });
 
@@ -138,10 +160,12 @@ const buildApp = async () => {
     }
 
     try {
-      return res.view("session/maintenance", {
-        pageTitle: "Down for Maintenance",
-        config,
-      });
+      return res.header("content-type", "text/html; charset=utf-8").send(
+        await app.view("session/maintenance", {
+          pageTitle: "Down for Maintenance",
+          config,
+        })
+      );
     } catch {
       return res.send("<h1>Down for Maintenance</h1><p>We'll be back shortly.</p>");
     }
@@ -165,8 +189,12 @@ const buildApp = async () => {
 
   await app.register((instance, options, next) => {
     // API routes (Token authenticated)
-    instance.addHook("preValidation", verifyToken);
-    apiRoutes(instance, client, moment, config, db, features, lang);
+    try {
+      instance.addHook("preValidation", verifyToken);
+      apiRoutes(instance, client, moment, config, db, features, lang);
+    } catch (err) {
+      return next(err);
+    }
     next();
   });
 
@@ -181,7 +209,11 @@ const buildApp = async () => {
   await app.register((instance, options, next) => {
     // Don't authenticate the Redirect routes. These are
     // protected by
-    apiRedirectRoutes(instance, config, lang, features);
+    try {
+      apiRedirectRoutes(instance, config, lang, features);
+    } catch (err) {
+      return next(err);
+    }
     next();
   });
 
@@ -193,19 +225,9 @@ const buildApp = async () => {
     { prefix: "/api/config" }
   );
 
-  // Sessions — persisted to MySQL so logins survive app restarts
-  const MySQLStore = expressMySQLSession(fastifySession);
-  const sessionStore = new MySQLStore({
-    host: process.env.databaseHost,
-    port: process.env.databasePort,
-    user: process.env.databaseUser,
-    password: process.env.databasePassword,
-    database: process.env.databaseName,
-    createDatabaseTable: true,
-    clearExpired: true,
-    checkExpirationInterval: 900000, // 15 minutes
-    expiration: 86400000 * 7, // 7 days default
-  });
+  // Sessions — persisted via Prisma so logins survive app restarts.
+  // The sessions table is created by the baseline migration.
+  const sessionStore = new FastifyPrismaSessionStore();
 
   await app.register(fastifyCookie, {
     secret: process.env.sessionCookieSecret, // for cookies signature
@@ -226,7 +248,11 @@ const buildApp = async () => {
 
   await app.register((instance, options, next) => {
     // Routes
-    siteRoutes(instance, client, fetch, moment, config, db, features, lang);
+    try {
+      siteRoutes(instance, client, fetch, moment, config, db, features, lang);
+    } catch (err) {
+      return next(err);
+    }
     next();
   });
 
@@ -264,4 +290,10 @@ const buildApp = async () => {
   }
 };
 
-buildApp();
+// If buildApp() rejects (e.g. a plugin registration failure), log the full
+// error and exit so the process manager (Render) restarts the service
+// immediately rather than leaving it running silently with no open port.
+buildApp().catch((err) => {
+  console.error("[FATAL] buildApp() failed — exiting:", err);
+  process.exit(1);
+});

@@ -3,14 +3,13 @@ import {
   UserGetter,
   getUserPermissions,
 } from "../../controllers/userController.js";
+import { luckpermsDb } from "../../controllers/databaseController.js";
 
 const RANK_VIEW = "ranks";
 const USER_RANKS_VIEW = "userRanks";
-const LUCKPERMS_PLAYERS_VIEW = "luckPermsPlayers";
-const LUCKPERMS_GROUP_PERMISSIONS_TABLE =
-  "cfcdev_luckperms.luckperms_group_permissions";
-const LUCKPERMS_USER_PERMISSIONS_TABLE =
-  "cfcdev_luckperms.luckperms_user_permissions";
+const LUCKPERMS_PLAYERS_TABLE = "luckperms_players";
+const LUCKPERMS_GROUP_PERMISSIONS_TABLE = "luckperms_group_permissions";
+const LUCKPERMS_USER_PERMISSIONS_TABLE = "luckperms_user_permissions";
 
 function parseBoolean(value) {
   if (value === null || value === undefined) return null;
@@ -84,11 +83,17 @@ export default function rankApiRoute(app, config, db, features, lang) {
   const queryDb = (query, params = []) => {
     return new Promise((resolve, reject) => {
       db.query(query, params, (error, results) => {
-        if (error) {
-          reject(error);
-        } else {
-          resolve(results);
-        }
+        if (error) reject(error);
+        else resolve(results);
+      });
+    });
+  };
+
+  const queryLuckPermsDb = (query, params = []) => {
+    return new Promise((resolve, reject) => {
+      luckpermsDb.query(query, params, (error, results) => {
+        if (error) reject(error);
+        else resolve(results);
       });
     });
   };
@@ -108,8 +113,8 @@ export default function rankApiRoute(app, config, db, features, lang) {
       [trimmedUsername]
     );
 
-    const [luckPermsUser] = await queryDb(
-      `SELECT username, uuid FROM ${LUCKPERMS_PLAYERS_VIEW} WHERE LOWER(username) = LOWER(?) LIMIT 1`,
+    const [luckPermsUser] = await queryLuckPermsDb(
+      `SELECT username, LOWER(HEX(uuid)) AS uuid FROM ${LUCKPERMS_PLAYERS_TABLE} WHERE LOWER(username) = LOWER(?) LIMIT 1`,
       [trimmedUsername]
     );
 
@@ -154,7 +159,7 @@ export default function rankApiRoute(app, config, db, features, lang) {
 
     const effectiveValue = trimmedValue === "" ? null : trimmedValue;
 
-    await queryDb(
+    await queryLuckPermsDb(
       `DELETE FROM ${LUCKPERMS_GROUP_PERMISSIONS_TABLE}
         WHERE name = ?
           AND permission LIKE ?
@@ -167,7 +172,7 @@ export default function rankApiRoute(app, config, db, features, lang) {
       return;
     }
 
-    await queryDb(
+    await queryLuckPermsDb(
       `INSERT INTO ${LUCKPERMS_GROUP_PERMISSIONS_TABLE}
         (name, permission, value, server, world, expiry, contexts)
       VALUES (?, ?, 1, 'global', 'global', 0, '{}')`,
@@ -240,23 +245,45 @@ export default function rankApiRoute(app, config, db, features, lang) {
       }
 
       if (rankSlug) {
-        const rows = await queryDb(
-          `SELECT
-              u.userId,
-              lp.uuid,
-              COALESCE(u.username, lp.username) AS username,
-              r.displayName,
-              r.rankBadgeColour,
-              r.rankTextColour,
-              ur.title
+        // Step 1: get rank members from main DB without luckperms JOIN
+        const mainRows = await queryDb(
+          `SELECT ur.uuid, ur.title,
+              r.displayName, r.rankBadgeColour, r.rankTextColour,
+              u.userId, u.username AS webUsername
             FROM ${RANK_VIEW} r
               JOIN ${USER_RANKS_VIEW} ur ON ur.rankSlug = r.rankSlug
-              JOIN ${LUCKPERMS_PLAYERS_VIEW} lp ON ur.uuid = lp.uuid
-              LEFT JOIN users u ON lp.uuid = u.uuid
-            WHERE r.rankSlug = ?
-            ORDER BY COALESCE(u.username, lp.username)`,
+              LEFT JOIN users u ON ur.uuid = u.uuid
+            WHERE r.rankSlug = ?`,
           [rankSlug]
         );
+
+        // Step 2: enrich missing usernames from luckperms_players
+        const uuidsNeedingName = mainRows
+          .filter((r) => !r.webUsername && r.uuid)
+          .map((r) => r.uuid);
+        const lpNames = {};
+        if (uuidsNeedingName.length) {
+          const placeholders = uuidsNeedingName.map(() => "UNHEX(?)").join(", ");
+          const lpRows = await queryLuckPermsDb(
+            `SELECT LOWER(HEX(uuid)) AS uuid, username FROM ${LUCKPERMS_PLAYERS_TABLE} WHERE uuid IN (${placeholders})`,
+            uuidsNeedingName
+          );
+          for (const { uuid, username } of lpRows) {
+            lpNames[uuid] = username;
+          }
+        }
+
+        const rows = mainRows
+          .map((r) => ({
+            userId: r.userId || null,
+            uuid: r.uuid,
+            username: r.webUsername || lpNames[r.uuid] || null,
+            displayName: r.displayName,
+            rankBadgeColour: r.rankBadgeColour,
+            rankTextColour: r.rankTextColour,
+            title: r.title,
+          }))
+          .sort((a, b) => (a.username || "").localeCompare(b.username || ""));
 
         return res.send({ success: true, data: rows });
       }
@@ -445,7 +472,7 @@ export default function rankApiRoute(app, config, db, features, lang) {
         return res.send({ success: false, message: "Player not found." });
       }
 
-      const [existing] = await queryDb(
+      const [existing] = await queryLuckPermsDb(
         `SELECT uuid FROM ${LUCKPERMS_USER_PERMISSIONS_TABLE}
           WHERE uuid = ? AND permission = ? AND value = 1 LIMIT 1`,
         [player.uuid, `group.${rankSlug}`]
@@ -458,14 +485,14 @@ export default function rankApiRoute(app, config, db, features, lang) {
         });
       }
 
-      await queryDb(
+      await queryLuckPermsDb(
         `INSERT INTO ${LUCKPERMS_USER_PERMISSIONS_TABLE}
           (uuid, permission, value, server, world, expiry, contexts)
         VALUES (?, ?, 1, 'global', 'global', 0, '[]')`,
         [player.uuid, `group.${rankSlug}`]
       );
 
-      await queryDb(
+      await queryLuckPermsDb(
         `DELETE FROM ${LUCKPERMS_USER_PERMISSIONS_TABLE}
           WHERE uuid = ?
             AND permission LIKE CONCAT('meta.group.', ?, '.title.%')`,
@@ -473,7 +500,7 @@ export default function rankApiRoute(app, config, db, features, lang) {
       );
 
       if (title) {
-        await queryDb(
+        await queryLuckPermsDb(
           `INSERT INTO ${LUCKPERMS_USER_PERMISSIONS_TABLE}
             (uuid, permission, value, server, world, expiry, contexts)
           VALUES (?, ?, 1, 'global', 'global', 0, '[]')`,
@@ -512,13 +539,13 @@ export default function rankApiRoute(app, config, db, features, lang) {
         return res.send({ success: false, message: "Player not found." });
       }
 
-      const result = await queryDb(
+      const result = await queryLuckPermsDb(
         `DELETE FROM ${LUCKPERMS_USER_PERMISSIONS_TABLE}
           WHERE uuid = ? AND permission = ?`,
         [player.uuid, `group.${rankSlug}`]
       );
 
-      await queryDb(
+      await queryLuckPermsDb(
         `DELETE FROM ${LUCKPERMS_USER_PERMISSIONS_TABLE}
           WHERE uuid = ?
             AND permission LIKE CONCAT('meta.group.', ?, '.title.%')`,

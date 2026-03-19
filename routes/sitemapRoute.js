@@ -19,7 +19,12 @@ function escapeXml(str) {
 }
 
 export default function sitemapRoutes(app, config, features) {
-  const baseUrl = config.siteConfiguration.siteUrl.replace(/\/$/, "");
+  const rawUrl = config?.siteConfiguration?.siteUrl;
+  if (!rawUrl) {
+    console.warn("[sitemapRoutes] config.siteConfiguration.siteUrl is not set — sitemap and robots.txt routes will be skipped.");
+    return;
+  }
+  const baseUrl = rawUrl.replace(/\/$/, "");
 
   app.get("/robots.txt", function (req, res) {
     const lines = [

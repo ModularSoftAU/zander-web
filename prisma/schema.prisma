@@ -1,0 +1,638 @@
+// =============================================================================
+// Prisma Schema for Zander Web — Minecraft Community Website
+// Database: MySQL (utf8mb4)
+// =============================================================================
+//
+// NOTE: The following cross-database views are NOT modeled here because they
+// reference external databases and cannot be represented in Prisma models:
+//   - luckPermsPlayers
+//   - ranks
+//   - userRanks
+//   - userPermissions
+//   - rankRanks
+//   - rankPermissions
+//   - punishments
+//   - shoppingDirectory
+//
+// These must be accessed via prisma.$queryRawUnsafe() at the application layer.
+//
+// NOTE: Set DATABASE_URL in .env as a full MySQL connection string:
+//   mysql://USER:PASSWORD@HOST:PORT/DATABASE
+// =============================================================================
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+// =============================================================================
+// Enums
+// =============================================================================
+
+enum users_profilePicture_type {
+  CRAFTATAR
+  GRAVATAR
+}
+
+enum servers_serverType {
+  INTERNAL
+  EXTERNAL
+  VERIFICATION
+}
+
+enum announcements_type {
+  motd
+  tip
+  web
+  popup
+}
+
+enum scheduledDiscordMessages_status {
+  scheduled
+  sent
+  failed
+}
+
+enum discord_punishments_type {
+  WARN
+  DISCORD_KICK
+  TEMP_BAN
+  PERM_BAN
+  TEMP_MUTE
+  PERM_MUTE
+}
+
+enum discord_punishments_status {
+  ACTIVE
+  EXPIRED
+  LIFTED
+  APPEALED
+  APPEAL_PENDING
+  APPEAL_REJECTED
+}
+
+enum discord_punishments_dm_status {
+  SENT
+  FAILED_CLOSED_DMS
+  FAILED_UNKNOWN
+  NOT_APPLICABLE
+}
+
+enum discord_punishment_appeals_status {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum vote_reward_templates_type {
+  vote
+  monthly_top
+}
+
+enum vote_reward_templates_execute_as {
+  console
+  player
+}
+
+enum player_command_queue_execute_as {
+  console
+  player
+}
+
+enum player_command_queue_status {
+  pending
+  claimed
+  completed
+  failed
+}
+
+enum supportTickets_status {
+  open
+  closed
+  in_progress @map("in-progress")
+}
+
+// =============================================================================
+// Models
+// =============================================================================
+
+model users {
+  userId                       Int                        @id @default(autoincrement())
+  uuid                         String                     @unique @db.VarChar(36)
+  username                     String                     @db.VarChar(16)
+  discordId                    String?                    @db.VarChar(32)
+  email                        String?                    @unique @db.VarChar(254)
+  password_hash                String?                    @db.VarChar(255)
+  email_verified               Boolean                    @default(false)
+  email_verified_at            DateTime?
+  joined                       DateTime                   @default(now())
+  profilePicture_type          users_profilePicture_type? @default(CRAFTATAR)
+  profilePicture_email         String?                    @db.VarChar(70)
+  account_registered           DateTime?
+  account_disabled             Boolean                    @default(false)
+  social_aboutMe               String?                    @db.MediumText
+  social_interests             String?                    @db.VarChar(50)
+  social_discord               String?                    @db.VarChar(32)
+  social_steam                 String?                    @db.VarChar(100)
+  social_twitch                String?                    @db.VarChar(25)
+  social_youtube               String?                    @db.VarChar(100)
+  social_twitter_x             String?                    @db.VarChar(15)
+  social_instagram             String?                    @db.VarChar(30)
+  social_reddit                String?                    @db.VarChar(38)
+  social_spotify               String?                    @db.VarChar(100)
+  audit_lastDiscordMessage     DateTime?
+  audit_lastDiscordVoice       DateTime?
+  audit_lastMinecraftLogin     DateTime?
+  audit_lastMinecraftMessage   DateTime?
+  audit_lastMinecraftPunishment DateTime?
+  audit_lastDiscordPunishment  DateTime?
+  audit_lastWebsiteLogin       DateTime?
+
+  emailVerifications           userEmailVerifications[]
+  passwordResets               userPasswordResets[]
+}
+
+model userEmailVerifications {
+  verificationId Int      @id @default(autoincrement())
+  userId         Int
+  codeHash       String   @db.VarChar(255)
+  expiresAt      DateTime
+  consumed       Boolean  @default(false)
+  createdAt      DateTime @default(now())
+  consumedAt     DateTime?
+
+  user           users    @relation(fields: [userId], references: [userId], onDelete: Cascade)
+}
+
+model userPasswordResets {
+  resetId    Int      @id @default(autoincrement())
+  userId     Int
+  codeHash   String   @db.VarChar(255)
+  expiresAt  DateTime
+  consumed   Boolean  @default(false)
+  createdAt  DateTime @default(now())
+  consumedAt DateTime?
+
+  user       users    @relation(fields: [userId], references: [userId], onDelete: Cascade)
+}
+
+model userVerifyLink {
+  verifyId   Int       @id @default(autoincrement())
+  uuid       String    @unique @db.VarChar(36)
+  username   String    @db.Text
+  linkCode   String?   @db.VarChar(6)
+  codeExpiry DateTime
+}
+
+model forumCategories {
+  categoryId       Int               @id @default(autoincrement())
+  parentCategoryId Int?
+  name             String            @db.VarChar(120)
+  slug             String            @unique @db.VarChar(150)
+  description      String?           @db.Text
+  position         Int               @default(0)
+  viewPermission   String?           @db.VarChar(150)
+  postPermission   String?           @db.VarChar(150)
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+
+  parent           forumCategories?  @relation("CategoryChildren", fields: [parentCategoryId], references: [categoryId], onDelete: SetNull)
+  children         forumCategories[] @relation("CategoryChildren")
+  discussions      forumDiscussions[]
+}
+
+model forumDiscussions {
+  discussionId Int             @id @default(autoincrement())
+  categoryId   Int
+  title        String          @db.VarChar(200)
+  slug         String          @db.VarChar(200)
+  createdBy    Int
+  createdAt    DateTime        @default(now())
+  updatedAt    DateTime        @updatedAt
+  lastPostAt   DateTime        @default(now())
+  lastPostBy   Int?
+  isLocked     Int             @default(0) @db.TinyInt
+  isSticky     Int             @default(0) @db.TinyInt
+  isArchived   Int             @default(0) @db.TinyInt
+
+  category     forumCategories @relation(fields: [categoryId], references: [categoryId])
+  posts        forumPosts[]
+
+  @@unique([categoryId, slug])
+}
+
+model forumPosts {
+  postId       Int                  @id @default(autoincrement())
+  discussionId Int
+  userId       Int
+  content      String               @db.MediumText
+  isOriginal   Int                  @default(0) @db.TinyInt
+  createdAt    DateTime             @default(now())
+  updatedAt    DateTime             @updatedAt
+
+  discussion   forumDiscussions     @relation(fields: [discussionId], references: [discussionId])
+  revisions    forumPostRevisions[]
+}
+
+model forumPostRevisions {
+  revisionId      Int      @id @default(autoincrement())
+  postId          Int
+  editorId        Int?
+  previousContent String   @db.MediumText
+  createdAt       DateTime @default(now())
+
+  post            forumPosts @relation(fields: [postId], references: [postId])
+}
+
+model servers {
+  serverId              Int                 @id @default(autoincrement())
+  displayName           String?             @db.Text
+  serverConnectionAddress String?           @db.Text
+  serverType            servers_serverType?
+  position              Int?
+}
+
+model serverStatus {
+  serverStatusId Int       @id @default(autoincrement())
+  statusInfo     Json?
+  lastUpdated    DateTime?
+}
+
+model gameSessions {
+  sessionId    Int       @id @default(autoincrement())
+  userId       Int
+  sessionStart DateTime  @default(now())
+  sessionEnd   DateTime?
+  ipAddress    String?   @db.VarChar(45)
+  server       String?   @db.Text
+}
+
+model announcements {
+  announcementId     Int                  @id @default(autoincrement())
+  enabled            Boolean              @default(true)
+  announcementType   announcements_type?
+  body               String?              @db.Text
+  colourMessageFormat String?             @db.Text
+  link               String?              @db.Text
+  popupButtonText    String?              @db.VarChar(60)
+  popupImageUrl      String?              @db.Text
+  startDate          DateTime?
+  endDate            DateTime?
+  updatedDate        DateTime?
+}
+
+model scheduledDiscordMessages {
+  scheduleId        Int                             @id @default(autoincrement())
+  channelId         String                          @db.VarChar(50)
+  embedTitle        String?                         @db.VarChar(255)
+  embedDescription  String?                         @db.Text
+  embedColor        String?                         @db.VarChar(20)
+  scheduledFor      DateTime
+  createdBy         Int
+  createdAt         DateTime                        @default(now())
+  sentAt            DateTime?
+  status            scheduledDiscordMessages_status @default(scheduled)
+  lastError         String?                         @db.Text
+}
+
+model applications {
+  applicationId        Int     @id @default(autoincrement())
+  displayName          String? @db.VarChar(30)
+  description          String? @db.Text
+  displayIcon          String? @db.VarChar(40)
+  requirementsMarkdown String? @db.Text
+  redirectUrl          String? @db.Text
+  position             Int?
+  applicationStatus    Boolean @default(false)
+}
+
+model reports {
+  reportId              Int      @id @default(autoincrement())
+  reporterId            Int
+  reportedUser          String   @db.VarChar(30)
+  reportReason          String   @db.VarChar(100)
+  reportReasonEvidence  String?  @db.MediumText
+  reportPlatform        String   @db.VarChar(10)
+  reportDateTime        DateTime @default(now())
+}
+
+model vault {
+  vaultId     Int     @id @default(autoincrement())
+  displayName String? @db.VarChar(30)
+  description String? @db.MediumText
+  redirectUrl String? @db.Text
+  position    Int?
+}
+
+model bridge {
+  bridgeId       Int      @id @default(autoincrement())
+  command        String?  @db.Text
+  targetServer   String?  @db.VarChar(30)
+  processed      Boolean  @default(false)
+  bridgeDateTime DateTime @default(now())
+}
+
+model executorTasks {
+  executorTaskId Int       @id @default(autoincrement())
+  slug           String    @db.VarChar(64)
+  command        String    @db.Text
+  status         String    @default("pending") @db.VarChar(16)
+  routineSlug    String?   @db.VarChar(64)
+  metadata       String?   @db.Text
+  result         String?   @db.Text
+  priority       Int       @default(0)
+  executedBy     String?   @db.VarChar(64)
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+  processedAt    DateTime?
+}
+
+model executorRoutines {
+  executorRoutineId Int                    @id @default(autoincrement())
+  routineSlug       String                 @unique @db.VarChar(64)
+  displayName       String?                @db.VarChar(120)
+  description       String?                @db.Text
+  createdAt         DateTime               @default(now())
+  updatedAt         DateTime               @updatedAt
+
+  steps             executorRoutineSteps[]
+}
+
+model executorRoutineSteps {
+  executorRoutineStepId Int              @id @default(autoincrement())
+  executorRoutineId     Int
+  stepOrder             Int              @default(0)
+  slug                  String           @db.VarChar(64)
+  command               String           @db.Text
+  metadata              String?          @db.Text
+  createdAt             DateTime         @default(now())
+
+  routine               executorRoutines @relation(fields: [executorRoutineId], references: [executorRoutineId])
+}
+
+model logs {
+  logId           Int      @id @default(autoincrement())
+  creatorId       Int
+  logFeature      String?  @db.VarChar(30)
+  logType         String?  @db.VarChar(30)
+  description     String?  @db.Text
+  actionedDateTime DateTime @default(now())
+}
+
+model discord_punishments {
+  id                     Int                            @id @default(autoincrement())
+  type                   discord_punishments_type
+  platform               String                         @default("DISCORD") @db.VarChar(16)
+  target_discord_user_id String?                        @db.VarChar(24)
+  target_discord_tag     String?                        @db.VarChar(100)
+  target_player_id       Int?
+  actor_discord_user_id  String?                        @db.VarChar(24)
+  actor_player_id        Int?
+  actor_name_snapshot    String?                        @db.VarChar(100)
+  reason                 String                         @db.Text
+  created_at             DateTime                       @default(now())
+  expires_at             DateTime?
+  lifted_at              DateTime?
+  status                 discord_punishments_status     @default(ACTIVE)
+  appeal_id              Int?
+  context                Json?
+  dm_status              discord_punishments_dm_status  @default(NOT_APPLICABLE)
+
+  appeals                discord_punishment_appeals[]
+}
+
+model discord_punishment_appeals {
+  id                     Int                                @id @default(autoincrement())
+  punishment_id          Int
+  discord_user_id        String                             @db.VarChar(24)
+  appeal_reason          String                             @db.Text
+  status                 discord_punishment_appeals_status  @default(PENDING)
+  reviewer_discord_user_id String?                          @db.VarChar(24)
+  reviewer_notes         String?                            @db.Text
+  created_at             DateTime                           @default(now())
+  reviewed_at            DateTime?
+
+  punishment             discord_punishments                @relation(fields: [punishment_id], references: [id], onDelete: Cascade)
+}
+
+model user_platform_connections {
+  id                     Int       @id @default(autoincrement()) @db.UnsignedInt
+  user_id                Int
+  platform               String    @db.VarChar(32)
+  platform_account_id    String    @db.VarChar(128)
+  platform_channel_id    String?   @db.VarChar(128)
+  platform_username      String?   @db.VarChar(128)
+  platform_display_name  String?   @db.VarChar(128)
+  avatar_url             String?   @db.VarChar(512)
+  access_token           String?   @db.Text
+  refresh_token          String?   @db.Text
+  token_expires_at       DateTime?
+  is_active              Int       @default(1) @db.TinyInt
+  last_successful_sync_at DateTime?
+  last_sync_error        String?   @db.VarChar(255)
+  created_at             DateTime  @default(now())
+  updated_at             DateTime  @updatedAt
+
+  @@unique([user_id, platform])
+}
+
+model creator_content_items {
+  id                   Int      @id @default(autoincrement()) @db.UnsignedInt
+  user_id              Int
+  platform             String   @db.VarChar(32)
+  external_content_id  String   @db.VarChar(128)
+  external_channel_id  String?  @db.VarChar(128)
+  content_type         String   @db.VarChar(32)
+  title                String?  @db.VarChar(512)
+  description          String?  @db.Text
+  thumbnail_url        String?  @db.VarChar(512)
+  watch_url            String?  @db.VarChar(512)
+  viewer_count         Int?     @db.UnsignedInt
+  tags_json            String?  @db.Text
+  is_live              Int      @default(0) @db.TinyInt
+  published_at         DateTime?
+  started_at           DateTime?
+  ended_at             DateTime?
+  matched_rule         String?  @db.VarChar(128)
+  is_cfc_related       Int      @default(0) @db.TinyInt
+  is_publicly_visible  Int      @default(0) @db.TinyInt
+  last_seen_at         DateTime @default(now())
+  created_at           DateTime @default(now())
+  updated_at           DateTime @updatedAt
+
+  @@unique([platform, external_content_id])
+}
+
+model creator_content_notifications {
+  id                   Int      @id @default(autoincrement()) @db.UnsignedInt
+  platform             String   @db.VarChar(32)
+  external_content_id  String   @db.VarChar(128)
+  notification_type    String   @db.VarChar(64)
+  discord_message_id   String?  @db.VarChar(32)
+  created_at           DateTime @default(now())
+
+  @@unique([platform, external_content_id, notification_type])
+}
+
+/// Session store table used by @quixo3/prisma-session-store
+model session {
+  id        String   @id @db.VarChar(128)
+  sid       String   @unique @db.VarChar(128)
+  data      String   @db.MediumText
+  expiresAt DateTime
+
+  @@map("sessions")
+}
+
+model vote_reward_templates {
+  id               Int                               @id @default(autoincrement()) @db.UnsignedInt
+  reward_type      vote_reward_templates_type
+  command_template String                            @db.VarChar(512)
+  execute_as       vote_reward_templates_execute_as  @default(console)
+  server_scope     String                            @default("any") @db.VarChar(64)
+  is_active        Int                               @default(1) @db.TinyInt
+  display_order    Int                               @default(0)
+  created_at       DateTime                          @default(now())
+  updated_at       DateTime                          @updatedAt
+}
+
+model vote_sites {
+  id           Int      @id @default(autoincrement()) @db.UnsignedInt
+  site_name    String   @db.VarChar(128)
+  service_name String   @unique @db.VarChar(64)
+  vote_url     String   @db.VarChar(512)
+  is_active    Int      @default(1) @db.TinyInt
+  display_order Int     @default(0)
+  created_at   DateTime @default(now())
+  updated_at   DateTime @updatedAt
+
+  votes        votes[]
+}
+
+model votes {
+  id           Int        @id @default(autoincrement()) @db.UnsignedInt
+  vote_site_id Int        @db.UnsignedInt
+  player_uuid  String     @db.VarChar(36)
+  player_name  String     @db.VarChar(16)
+  service_name String     @db.VarChar(64)
+  received_from String?   @db.VarChar(64)
+  received_at  DateTime
+  month_key    String     @db.Char(7)
+  dedupe_key   String     @unique @db.VarChar(128)
+  created_at   DateTime   @default(now())
+
+  site         vote_sites @relation(fields: [vote_site_id], references: [id], onUpdate: Cascade)
+}
+
+model vote_monthly_totals {
+  id          Int       @id @default(autoincrement()) @db.UnsignedInt
+  player_uuid String    @db.VarChar(36)
+  player_name String    @db.VarChar(16)
+  month_key   String    @db.Char(7)
+  vote_count  Int       @default(0) @db.UnsignedInt
+  last_vote_at DateTime?
+  created_at  DateTime  @default(now())
+  updated_at  DateTime  @updatedAt
+
+  @@unique([player_uuid, month_key])
+}
+
+model vote_monthly_results {
+  id          Int      @id @default(autoincrement()) @db.UnsignedInt
+  month_key   String   @db.Char(7)
+  player_uuid String   @db.VarChar(36)
+  player_name String   @db.VarChar(16)
+  vote_count  Int      @db.UnsignedInt
+  tie_position Int     @default(1) @db.TinyInt
+  rewarded_at DateTime @default(now())
+
+  @@unique([month_key, player_uuid])
+}
+
+model player_command_queue {
+  id             Int                             @id @default(autoincrement()) @db.UnsignedInt
+  player_uuid    String                          @db.VarChar(36)
+  player_name    String                          @db.VarChar(16)
+  source         String                          @db.VarChar(64)
+  command_text   String                          @db.VarChar(512)
+  execute_as     player_command_queue_execute_as @default(console)
+  status         player_command_queue_status     @default(pending)
+  server_scope   String                          @default("any") @db.VarChar(64)
+  dedupe_key     String                          @unique @db.VarChar(128)
+  available_at   DateTime                        @default(now())
+  claimed_at     DateTime?
+  completed_at   DateTime?
+  failure_reason String?                         @db.VarChar(512)
+  created_at     DateTime                        @default(now())
+  updated_at     DateTime                        @updatedAt
+}
+
+model supportTicketCategories {
+  categoryId  Int                              @id @default(autoincrement())
+  name        String                           @db.VarChar(255)
+  description String?                          @db.Text
+  enabled     Boolean                          @default(true)
+
+  tickets     supportTickets[]
+  permissions supportTicketCategoryPermissions[]
+}
+
+model supportTickets {
+  ticketId         Int                     @id @default(autoincrement())
+  userId           Int
+  categoryId       Int
+  title            String                  @db.VarChar(255)
+  status           supportTickets_status   @default(open)
+  discordChannelId String?                 @db.VarChar(255)
+  createdAt        DateTime                @default(now())
+  updatedAt        DateTime                @updatedAt
+
+  category         supportTicketCategories @relation(fields: [categoryId], references: [categoryId], onDelete: Cascade)
+  messages         supportTicketMessages[]
+}
+
+model supportTicketMessages {
+  messageId   Int            @id @default(autoincrement())
+  ticketId    Int
+  userId      Int
+  message     String         @db.Text
+  attachments Json?
+  isInternal  Int            @default(0) @db.TinyInt
+  createdAt   DateTime       @default(now())
+
+  ticket      supportTickets @relation(fields: [ticketId], references: [ticketId], onDelete: Cascade)
+}
+
+model supportTicketCategoryPermissions {
+  permissionId Int                     @id @default(autoincrement())
+  categoryId   Int
+  roleId       String                  @db.VarChar(255)
+
+  category     supportTicketCategories @relation(fields: [categoryId], references: [categoryId], onDelete: Cascade)
+}
+
+model userNotifications {
+  notificationId   Int      @id @default(autoincrement())
+  userId           Int
+  ticketId         Int?
+  notificationType String   @db.VarChar(32)
+  title            String   @db.VarChar(255)
+  message          String   @db.Text
+  url              String   @db.VarChar(255)
+  isRead           Int      @default(0) @db.TinyInt
+  createdAt        DateTime @default(now())
+}
+
+model pushSubscriptions {
+  subscriptionId Int      @id @default(autoincrement())
+  userId         Int
+  endpoint       String   @unique @db.VarChar(2048)
+  p256dh         String   @db.VarChar(512)
+  auth           String   @db.VarChar(128)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+}

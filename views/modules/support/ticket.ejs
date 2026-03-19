@@ -167,7 +167,16 @@
         <div class="card-body">
             <% if (ticket.status === 'open' || ticket.status === 'pending') { %>
                 <% if (!isMinecraftLinked) { %>
-                    <p class="mb-0 text-muted">Link your Minecraft account to reply to this ticket.</p>
+                    <div class="alert alert-warning" role="alert">
+                        <h5 class="alert-heading">Minecraft account not linked</h5>
+                        <p class="mb-2">You need to link your Minecraft account before you can reply to tickets. To link your account:</p>
+                        <ol class="mb-2">
+                            <li>Log in to one of the verification servers listed on the <a href="/register/minecraft" class="alert-link">Minecraft verification page</a>.</li>
+                            <li>The server will give you a 6-digit code.</li>
+                            <li>Enter the code on that page to link your account.</li>
+                        </ol>
+                        <p class="mb-0">Once your account is linked, return here to reply. If you need help, please contact a staff member.</p>
+                    </div>
                 <% } else if (!canReplyDuringEscalation) { %>
                     <p class="mb-0 text-muted">This ticket is escalated. Only escalation staff or the ticket opener may reply.</p>
                 <% } else { %>

@@ -1,9 +1,9 @@
-import db from "../controllers/databaseController.js";
+import db, { luckpermsDb } from "../controllers/databaseController.js";
 import { UserGetter } from "../controllers/userController.js";
 
 const RANK_VIEW = "ranks";
 const USER_RANKS_VIEW = "userRanks";
-const LUCKPERMS_PLAYERS_VIEW = "luckPermsPlayers";
+const LUCKPERMS_PLAYERS_TABLE = "luckperms_players";
 
 function mapRankRow(row) {
   const priority =
@@ -78,8 +78,8 @@ export async function getUserRanks(username) {
     });
 
     const [luckPermsUser] = await new Promise((resolve, reject) => {
-      db.query(
-        `SELECT username, uuid FROM ${LUCKPERMS_PLAYERS_VIEW} WHERE LOWER(username) = LOWER(?) LIMIT 1`,
+      luckpermsDb.query(
+        `SELECT username, LOWER(HEX(uuid)) AS uuid FROM ${LUCKPERMS_PLAYERS_TABLE} WHERE LOWER(username) = LOWER(?) LIMIT 1`,
         [username.trim()],
         (error, results) => {
           if (error) return reject(error);

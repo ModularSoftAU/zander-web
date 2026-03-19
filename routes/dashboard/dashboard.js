@@ -38,7 +38,8 @@ export default function dashboardSiteRoute(app, config, features, lang) {
       }
     ).then((res) => res.json());
 
-    return res.view("dashboard/dashboard-index", {
+    res.header("content-type", "text/html; charset=utf-8").send(
+      await app.view("dashboard/dashboard-index", {
       pageTitle: `Dashboard`,
       config: config,
       features: features,
@@ -48,14 +49,15 @@ export default function dashboardSiteRoute(app, config, features, lang) {
       announcementsCount: announcements.data ? announcements.data.length : 0,
       applicationsCount: applications.data ? applications.data.length : 0,
       serversCount: servers.data ? servers.data.length : 0,
-    });
+    }));
+    return;
   });
 
   //
   // Logs
   //
   app.get("/dashboard/logs", async function (req, res) {
-    if (!hasPermission("zander.web.logs", req, res, features)) return;
+    if (!await hasPermission("zander.web.logs", req, res, features)) return;
 
     const queryParams = new URLSearchParams();
     if (req.query?.user) {
@@ -72,7 +74,8 @@ export default function dashboardSiteRoute(app, config, features, lang) {
     });
     const apiData = await response.json();
 
-    res.view("dashboard/logs", {
+    res.header("content-type", "text/html; charset=utf-8").send(
+      await app.view("dashboard/logs", {
       pageTitle: `Dashboard - Logs`,
       config: config,
       apiData: apiData,
@@ -81,16 +84,15 @@ export default function dashboardSiteRoute(app, config, features, lang) {
       globalImage: await getGlobalImage(),
       moment: moment,
       announcementWeb: await getWebAnnouncement(),
-    });
-
-    return res;
+    }));
+    return;
   });
 
   //
   // Bridge
   //
   app.get("/dashboard/bridge", async function (req, res) {
-    if (!hasPermission("zander.web.bridge", req, res, features)) return;
+    if (!await hasPermission("zander.web.bridge", req, res, features)) return;
 
     const [pendingResponse, processingResponse, routineResponse] = await Promise.all([
       fetch(`${process.env.siteAddress}/api/bridge/processor/get?status=pending&limit=100`, {
@@ -110,7 +112,8 @@ export default function dashboardSiteRoute(app, config, features, lang) {
       routineResponse.json(),
     ]);
 
-    res.view("dashboard/bridge", {
+    res.header("content-type", "text/html; charset=utf-8").send(
+      await app.view("dashboard/bridge", {
       pageTitle: `Dashboard - Bridge`,
       config: config,
       pendingTasks: pendingTasks,
@@ -121,8 +124,7 @@ export default function dashboardSiteRoute(app, config, features, lang) {
       globalImage: await getGlobalImage(),
       moment: moment,
       announcementWeb: await getWebAnnouncement(),
-    });
-
-    return res;
+    }));
+    return;
   });
 }
