@@ -30,7 +30,14 @@
     "votingLinks": [
       { "label": "PlanetMinecraft", "url": "https://www.planetminecraft.com/server/your-server/vote/" },
       { "label": "MinecraftServers.org", "url": "https://minecraftservers.org/vote/your-server-id" }
-    ]
+    ],
+    "voteRewards": {
+      "enabled": true,
+      "commands": [
+        { "slug": "survival", "command": "give {{username}} diamond 1" },
+        { "slug": "survival", "command": "say {{username}} voted and received a reward!" }
+      ]
+    }
   },
   "discord": {
     "guildId": "GUILDID",

@@ -94,6 +94,31 @@ export default async function votesApiRoute(app, config, db, features, lang) {
         );
       });
 
+      // Dispatch vote reward commands via the bridge
+      const rewards = config?.siteConfiguration?.voteRewards;
+      if (features.bridge && rewards?.enabled && Array.isArray(rewards.commands) && rewards.commands.length > 0) {
+        for (const entry of rewards.commands) {
+          if (!entry.slug || !entry.command) continue;
+          const resolvedCommand = entry.command
+            .replace(/\{\{\s*username\s*\}\}/gi, username)
+            .replace(/\{\{\s*uuid\s*\}\}/gi, uuid)
+            .replace(/\{\{\s*service\s*\}\}/gi, service)
+            .replace(/^\/+/, "")
+            .trim();
+          if (!resolvedCommand) continue;
+          await new Promise((resolve, reject) => {
+            db.query(
+              `INSERT INTO executorTasks (slug, command, status, metadata, priority) VALUES (?, ?, 'pending', ?, 0)`,
+              [entry.slug, resolvedCommand, JSON.stringify({ username, uuid, service, source: "vote" })],
+              (err) => {
+                if (err) return reject(err);
+                resolve();
+              }
+            );
+          });
+        }
+      }
+
       return res.send({ success: true, message: "Vote recorded." });
     } catch (err) {
       console.error("[votes/add] error:", err);
