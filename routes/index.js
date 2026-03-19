@@ -54,6 +54,22 @@ export default function applicationSiteRoutes(
     });
     const statApiData = await response.json();
 
+    let topVoters = [];
+    if (features.votes) {
+      try {
+        const votersResponse = await fetch(
+          `${process.env.siteAddress}/api/votes/top?limit=10`,
+          { headers: { "x-access-token": process.env.apiKey } }
+        );
+        const votersData = await votersResponse.json();
+        if (votersData.success) {
+          topVoters = votersData.data;
+        }
+      } catch (err) {
+        console.error("[homepage] Failed to fetch top voters:", err);
+      }
+    }
+
     const pageJsonLd = JSON.stringify({
       "@context": "https://schema.org",
       "@type": "Organization",
@@ -76,6 +92,7 @@ export default function applicationSiteRoutes(
       globalImage: await getGlobalImage(),
       jumboVideo: getJumboVideo(),
       statApiData: statApiData,
+      topVoters: topVoters,
       announcementWeb: await getWebAnnouncement(),
     });
   });
