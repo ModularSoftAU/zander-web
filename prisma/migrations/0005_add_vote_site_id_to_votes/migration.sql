@@ -9,6 +9,7 @@
 ALTER TABLE votes
   ADD COLUMN IF NOT EXISTS vote_site_id INT UNSIGNED NULL DEFAULT NULL AFTER id;
 
--- Add the composite index used by leaderboard queries
-ALTER TABLE votes
-  ADD INDEX IF NOT EXISTS idx_month_site (month_key, vote_site_id);
+-- Add the composite index used by leaderboard queries.
+-- CREATE INDEX IF NOT EXISTS is valid from MySQL 8.0 onward and is safe to
+-- re-run: it is a no-op when the index already exists.
+CREATE INDEX IF NOT EXISTS idx_month_site ON votes (month_key, vote_site_id);
