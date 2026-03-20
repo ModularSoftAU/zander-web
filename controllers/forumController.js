@@ -13,13 +13,25 @@ function query(sql, params = []) {
   });
 }
 
+const LUCKPERMS_QUERY_TIMEOUT_MS = 5000;
+
 function luckpermsQuery(sql, params = []) {
   return new Promise((resolve, reject) => {
-    luckpermsDb.query(sql, params, (error, results) => {
-      if (error) {
-        return reject(error);
-      }
+    let settled = false;
 
+    const timer = setTimeout(() => {
+      if (!settled) {
+        settled = true;
+        reject(new Error(`LuckPerms query timed out after ${LUCKPERMS_QUERY_TIMEOUT_MS}ms`));
+      }
+    }, LUCKPERMS_QUERY_TIMEOUT_MS);
+
+    luckpermsDb.query(sql, params, (error, results) => {
+      if (settled) return; // timeout already fired
+      clearTimeout(timer);
+      settled = true;
+
+      if (error) return reject(error);
       resolve(results || []);
     });
   });
@@ -706,21 +718,40 @@ async function fetchUserSummaries(userIds) {
     if (uuids.length > 0) {
       const uuidPlaceholders = uuids.map(() => "?").join(",");
 
+      // Two simple queries instead of a slow correlated self-join.
+      // Query 1: group memberships (uuid → rankSlug)
       const userRankRows = await luckpermsQuery(
-        `SELECT
-          lup.uuid,
-          SUBSTRING_INDEX(lup.permission, '.', -1) AS rankSlug,
-          SUBSTRING_INDEX(lpUserTitle.permission, 'title.', -1) AS title
-        FROM luckperms_user_permissions lup
-          LEFT JOIN luckperms_user_permissions lpUserTitle
-            ON lup.uuid = lpUserTitle.uuid
-            AND lpUserTitle.permission LIKE CONCAT('meta.group\\\\.', SUBSTRING_INDEX(lup.permission, '.', -1), '\\\\.title.%')
-            AND lpUserTitle.value = 1
-        WHERE lup.permission LIKE 'group.%'
-          AND lup.value = 1
-          AND lup.uuid IN (${uuidPlaceholders})`,
+        `SELECT uuid, SUBSTRING_INDEX(permission, '.', -1) AS rankSlug
+         FROM luckperms_user_permissions
+         WHERE uuid IN (${uuidPlaceholders})
+           AND permission LIKE 'group.%'
+           AND value = 1`,
         uuids
       );
+
+      // Query 2: per-rank title overrides (meta.group.<rankSlug>.title.<title>)
+      const titleRows = await luckpermsQuery(
+        `SELECT
+           uuid,
+           SUBSTRING_INDEX(SUBSTRING_INDEX(permission, '.', 3), '.', -1) AS rankSlug,
+           SUBSTRING_INDEX(permission, 'title.', -1) AS title
+         FROM luckperms_user_permissions
+         WHERE uuid IN (${uuidPlaceholders})
+           AND permission LIKE 'meta.group.%.title.%'
+           AND value = 1`,
+        uuids
+      );
+
+      // Build uuid:rankSlug → title map for O(1) correlation
+      const titleMap = new Map();
+      for (const row of titleRows) {
+        titleMap.set(`${row.uuid}:${row.rankSlug}`, row.title);
+      }
+
+      // Attach title to each rank row
+      for (const row of userRankRows) {
+        row.title = titleMap.get(`${row.uuid}:${row.rankSlug}`) || null;
+      }
 
       const rankSlugs = [...new Set(userRankRows.map((r) => r.rankSlug))];
       let rankInfoMap = new Map();
