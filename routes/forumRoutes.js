@@ -1592,7 +1592,7 @@ export default function forumRoutes(
       return;
     }
 
-    const newCategoryId = Number.parseInt(req.body.categoryId, 10);
+    const newCategoryId = Number.parseInt(req.body.newCategoryId, 10);
     if (!newCategoryId || newCategoryId === result.discussion.categoryId) {
       await setBannerCookie("warning", "Please select a different category.", res);
       return res.redirect(`/forums/discussion/${result.discussion.discussionId}/${result.discussion.slug}`);

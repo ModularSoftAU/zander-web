@@ -1,7 +1,7 @@
 <textarea id="<%= editorElementName %>" name="<%= editorPOSTElementName %>"><%= editorElementText %></textarea>
 <div id="<%= editorElementName %>-validation" class="text-danger small mt-1" style="display:none;">Post content cannot be empty.</div>
 
-<script src="https://cdn.jsdelivr.net/npm/marked@13/marked.min.js"></script>
+<script async src="https://cdn.jsdelivr.net/npm/marked@13/marked.min.js"></script>
 <script>
   $(document).ready(function() {
     window.emojis = window.emojis || [];
