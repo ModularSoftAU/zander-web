@@ -43,138 +43,164 @@
         console.warn('Unable to load custom emoji list.');
       });
 
-    // ── Custom toolbar buttons ─────────────────────────────────────────────
-    // The built-in 'style' dropdown is broken in Summernote 0.8.x + BS5
-    // (dropdown items don't fire). Replace with explicit format buttons.
-    // The quote button wraps the current block in <blockquote>.
-    $.extend($.summernote.plugins, {
-      formatNormal: function (ctx) {
-        ctx.memo('button.formatNormal', function () {
-          return $.summernote.ui.button({
-            contents: 'Normal',
-            tooltip: 'Normal text',
-            click: function () { ctx.invoke('editor.formatBlock', 'p'); }
-          }).render();
-        });
-      },
-      formatH1: function (ctx) {
-        ctx.memo('button.formatH1', function () {
-          return $.summernote.ui.button({
-            contents: '<b>H1</b>',
-            tooltip: 'Heading 1',
-            click: function () { ctx.invoke('editor.formatBlock', 'h1'); }
-          }).render();
-        });
-      },
-      formatH2: function (ctx) {
-        ctx.memo('button.formatH2', function () {
-          return $.summernote.ui.button({
-            contents: '<b>H2</b>',
-            tooltip: 'Heading 2',
-            click: function () { ctx.invoke('editor.formatBlock', 'h2'); }
-          }).render();
-        });
-      },
-      formatH3: function (ctx) {
-        ctx.memo('button.formatH3', function () {
-          return $.summernote.ui.button({
-            contents: '<b>H3</b>',
-            tooltip: 'Heading 3',
-            click: function () { ctx.invoke('editor.formatBlock', 'h3'); }
-          }).render();
-        });
-      },
-      quoteBlock: function (ctx) {
-        ctx.memo('button.quoteBlock', function () {
-          return $.summernote.ui.button({
-            contents: '<i class="fa-solid fa-quote-left fa-fw"></i>',
-            tooltip: 'Quote',
-            click: function () { ctx.invoke('editor.formatBlock', 'blockquote'); }
-          }).render();
-        });
-      }
-    });
+    var summernoteReady = false;
 
-    $('#<%= editorElementName %>').summernote({
-        height: 250,
-        minHeight: null,
-        maxHeight: null,
-        focus: false,
-        emoji: true,
-        toolbar: [
-          ['format', ['formatNormal', 'formatH1', 'formatH2', 'formatH3']],
-          ['font', ['bold', 'italic', 'underline', 'strikethrough', 'clear']],
-          ['color', ['color']],
-          ['para', ['ul', 'ol', 'paragraph', 'quoteBlock']],
-          ['table', ['table']],
-          ['insert', ['link', 'picture', 'video']],
-          ['view', ['fullscreen', 'help']]
-        ],
-        callbacks: {
-          onPaste: function (e) {
-            var clipboardData = (e.originalEvent || e).clipboardData || window.clipboardData;
-            if (!clipboardData) return;
-
-            var htmlData  = clipboardData.getData('text/html');
-            var plainText = clipboardData.getData('text/plain');
-
-            // Only convert when the clipboard has no HTML (i.e. plain-text paste)
-            // and the content contains common markdown patterns.
-            var markdownPattern = /^#{1,6} |^\*{1,2}|^[-*] |^> |^\d+\. |\*{2}.+\*{2}/m;
-            if (!htmlData && plainText && markdownPattern.test(plainText) && typeof marked !== 'undefined') {
-              e.preventDefault();
-              var html = marked.parse(plainText);
-              $('#<%= editorElementName %>').summernote('pasteHTML', html);
-            }
-          }
+    try {
+      // ── Custom toolbar buttons ─────────────────────────────────────────────
+      // The built-in 'style' dropdown is broken in Summernote 0.8.x + BS5
+      // (dropdown items don't fire). Replace with explicit format buttons.
+      // The quote button wraps the current block in <blockquote>.
+      $.extend($.summernote.plugins, {
+        formatNormal: function (ctx) {
+          ctx.memo('button.formatNormal', function () {
+            return $.summernote.ui.button({
+              contents: 'Normal',
+              tooltip: 'Normal text',
+              click: function () { ctx.invoke('editor.formatBlock', 'p'); }
+            }).render();
+          });
         },
-        hint: {
-            match: /:([\-+\w]+)$/,
-            search: function (keyword, callback) {
-            callback($.grep(emojis, function (item) {
-                return item.indexOf(keyword)  === 0;
-            }));
-            },
-            template: function (item) {
-            var content = emojiUrls[item];
-            return '<img src="' + content + '" width="20" /> :' + item + ':';
-            },
-            content: function (item) {
-            var url = emojiUrls[item];
-            if (url) {
-                return $('<img />').attr('src', url).css('width', 20)[0];
-            }
-            return '';
-            }
+        formatH1: function (ctx) {
+          ctx.memo('button.formatH1', function () {
+            return $.summernote.ui.button({
+              contents: '<b>H1</b>',
+              tooltip: 'Heading 1',
+              click: function () { ctx.invoke('editor.formatBlock', 'h1'); }
+            }).render();
+          });
+        },
+        formatH2: function (ctx) {
+          ctx.memo('button.formatH2', function () {
+            return $.summernote.ui.button({
+              contents: '<b>H2</b>',
+              tooltip: 'Heading 2',
+              click: function () { ctx.invoke('editor.formatBlock', 'h2'); }
+            }).render();
+          });
+        },
+        formatH3: function (ctx) {
+          ctx.memo('button.formatH3', function () {
+            return $.summernote.ui.button({
+              contents: '<b>H3</b>',
+              tooltip: 'Heading 3',
+              click: function () { ctx.invoke('editor.formatBlock', 'h3'); }
+            }).render();
+          });
+        },
+        quoteBlock: function (ctx) {
+          ctx.memo('button.quoteBlock', function () {
+            return $.summernote.ui.button({
+              contents: '<i class="fa-solid fa-quote-left fa-fw"></i>',
+              tooltip: 'Quote',
+              click: function () { ctx.invoke('editor.formatBlock', 'blockquote'); }
+            }).render();
+          });
         }
-    });
+      });
 
-    $('div.note-group-select-from-files').remove();
+      $('#<%= editorElementName %>').summernote({
+          height: 250,
+          minHeight: null,
+          maxHeight: null,
+          focus: false,
+          emoji: true,
+          toolbar: [
+            ['format', ['formatNormal', 'formatH1', 'formatH2', 'formatH3']],
+            ['font', ['bold', 'italic', 'underline', 'strikethrough', 'clear']],
+            ['color', ['color']],
+            ['para', ['ul', 'ol', 'paragraph', 'quoteBlock']],
+            ['table', ['table']],
+            ['insert', ['link', 'picture', 'video']],
+            ['view', ['fullscreen', 'help']]
+          ],
+          callbacks: {
+            onPaste: function (e) {
+              var clipboardData = (e.originalEvent || e).clipboardData || window.clipboardData;
+              if (!clipboardData) return;
+
+              var htmlData  = clipboardData.getData('text/html');
+              var plainText = clipboardData.getData('text/plain');
+
+              // Only convert when the clipboard has no HTML (i.e. plain-text paste)
+              // and the content contains common markdown patterns.
+              var markdownPattern = /^#{1,6} |^\*{1,2}|^[-*] |^> |^\d+\. |\*{2}.+\*{2}/m;
+              if (!htmlData && plainText && markdownPattern.test(plainText) && typeof marked !== 'undefined') {
+                e.preventDefault();
+                var html = marked.parse(plainText);
+                $('#<%= editorElementName %>').summernote('pasteHTML', html);
+              }
+            }
+          },
+          hint: {
+              match: /:([\\-+\\w]+)$/,
+              search: function (keyword, callback) {
+              callback($.grep(emojis, function (item) {
+                  return item.indexOf(keyword)  === 0;
+              }));
+              },
+              template: function (item) {
+              var content = emojiUrls[item];
+              return '<img src="' + content + '" width="20" /> :' + item + ':';
+              },
+              content: function (item) {
+              var url = emojiUrls[item];
+              if (url) {
+                  return $('<img />').attr('src', url).css('width', 20)[0];
+              }
+              return '';
+              }
+          }
+      });
+
+      $('div.note-group-select-from-files').remove();
+      summernoteReady = true;
+    } catch (err) {
+      console.error('Summernote failed to initialise:', err);
+    }
 
     // Force-sync the backing textarea right before the form submits.
     // Also block submission if the editor is empty.
+    // Attached unconditionally so it works even if Summernote failed to init.
     $('#<%= editorElementName %>').closest('form').on('submit', function (e) {
       const $editor = $('#<%= editorElementName %>');
       const $validation = $('#<%= editorElementName %>-validation');
 
-      if ($editor.summernote('isEmpty')) {
-        e.preventDefault();
-        $validation.show();
-        $editor.summernote('focus');
-        // The native button-disable handler schedules a setTimeout(0) to disable the
-        // submit button. Re-enable it slightly after so the user can retry.
-        var $form = $(this);
-        setTimeout(function() {
-          var $btn = $form.find('button[type="submit"]');
-          var orig = $btn[0] && $btn[0].dataset.originalText;
-          if (orig) { $btn.text(orig); }
-          $btn.prop('disabled', false);
-        }, 50);
-        return false;
-      }
+      if (summernoteReady) {
+        if ($editor.summernote('isEmpty')) {
+          e.preventDefault();
+          $validation.show();
+          $editor.summernote('focus');
+          // The native button-disable handler schedules a setTimeout(0) to disable the
+          // submit button. Re-enable it slightly after so the user can retry.
+          var $form = $(this);
+          setTimeout(function() {
+            var $btn = $form.find('button[type="submit"]');
+            var orig = $btn[0] && $btn[0].dataset.originalText;
+            if (orig) { $btn.text(orig); }
+            $btn.prop('disabled', false);
+          }, 50);
+          return false;
+        }
 
-      $validation.hide();
-      document.getElementById('<%= editorElementName %>').value = $editor.summernote('code');
+        $validation.hide();
+        document.getElementById('<%= editorElementName %>').value = $editor.summernote('code');
+      } else {
+        // Summernote did not init — textarea is still visible and holds the value directly.
+        var rawVal = ($editor.val() || '').trim();
+        if (!rawVal) {
+          e.preventDefault();
+          $validation.show();
+          var $form = $(this);
+          setTimeout(function() {
+            var $btn = $form.find('button[type="submit"]');
+            var orig = $btn[0] && $btn[0].dataset.originalText;
+            if (orig) { $btn.text(orig); }
+            $btn.prop('disabled', false);
+          }, 50);
+          return false;
+        }
+        $validation.hide();
+      }
     });
 
   });
