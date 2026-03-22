@@ -20,7 +20,7 @@ SET @_col_exists = (
 );
 SET @_add_col = IF(
   @_col_exists = 0,
-  'ALTER TABLE votes ADD COLUMN vote_site_id INT UNSIGNED NULL DEFAULT NULL AFTER id',
+  'ALTER TABLE votes ADD COLUMN vote_site_id INT UNSIGNED NULL DEFAULT NULL',
   'SELECT 1'
 );
 PREPARE _migration_stmt FROM @_add_col;
