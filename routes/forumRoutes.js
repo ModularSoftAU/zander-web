@@ -624,9 +624,10 @@ export default function forumRoutes(
       }
 
       if (req.params.slug && req.params.slug !== discussion.slug) {
-        return res.redirect(
+        res.redirect(
           `/forums/discussion/${discussion.discussionId}/${discussion.slug}`
         );
+        return;
       }
 
       const permissions = getUserPermissions(req);
