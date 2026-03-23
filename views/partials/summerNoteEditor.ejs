@@ -174,7 +174,7 @@
           }
         },
         hint: {
-            match: /:([\\-+\\w]+)$/,
+            match: /:([\-+\w]+)$/,
             search: function (keyword, callback) {
             callback($.grep(emojis, function (item) {
                 return item.indexOf(keyword)  === 0;
