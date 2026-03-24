@@ -212,7 +212,7 @@ export async function upsertMonthlyTotal({ playerUuid, playerName, monthKey, vot
     `INSERT INTO vote_monthly_totals (player_uuid, player_name, month_key, vote_count, last_vote_at)
      VALUES (?, ?, ?, 1, ?) AS new_row
      ON DUPLICATE KEY UPDATE
-       vote_count   = vote_count + 1,
+       vote_count   = vote_monthly_totals.vote_count + 1,
        player_name  = new_row.player_name,
        last_vote_at = new_row.last_vote_at`,
     [playerUuid, playerName, monthKey, voteAt]

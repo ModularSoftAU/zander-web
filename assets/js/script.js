@@ -107,6 +107,14 @@
 
 	$(document).on('submit', 'form', function (event) {
 		const $form = $(this);
+		// If the event's default action was already cancelled (e.g. by an
+		// onsubmit="return confirm(...)" where the user clicked Cancel, or by
+		// Summernote's empty-editor check), do NOT mark the form as submitting.
+		// Without this guard the form becomes permanently locked: the next real
+		// submission attempt is blocked by the submitting=true flag.
+		if (event.isDefaultPrevented()) {
+			return;
+		}
 		if ($form.data('submitting')) {
 			event.preventDefault();
 			return;

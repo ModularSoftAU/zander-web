@@ -248,14 +248,15 @@ export async function postAPIRequest(
     then selects a random file from the list using the Math.random() function.
     Finally, the function returns the path of the chosen file by concatenating the file name with the relative path to the directory.
 */
-export async function getGlobalImage() {
-  var path = "./assets/images/globalImages/";
-  var files = await readdirSync(path);
-
-  // Now files is an Array of the name of the files in the folder and you can pick a random name inside of that array.
-  let chosenFile = await files[Math.floor(Math.random() * files.length)];
-
-  return "../../../images/globalImages/" + chosenFile;
+export function getGlobalImage() {
+  try {
+    const files = readdirSync("./assets/images/globalImages/");
+    if (!files.length) return null;
+    const chosenFile = files[Math.floor(Math.random() * files.length)];
+    return "../../../images/globalImages/" + chosenFile;
+  } catch {
+    return null;
+  }
 }
 
 export function getJumboVideo() {

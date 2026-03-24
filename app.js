@@ -26,7 +26,7 @@ import { FastifyPrismaSessionStore } from "./lib/fastifyPrismaSessionStore.js";
 const config = require("./config.json");
 const features = require("./features.json");
 const lang = require("./lang.json");
-import db, { isDbHealthy } from "./controllers/databaseController.js";
+import db, { isDbHealthy, prisma } from "./controllers/databaseController.js";
 import { getWebAnnouncement } from "./controllers/announcementController.js";
 import { getNotificationSummary } from "./controllers/notificationController.js";
 
@@ -246,20 +246,13 @@ const buildApp = async () => {
     saveUninitialized: false,
   });
 
-  await app.register((instance, options, next) => {
-    // Routes
-    try {
-      siteRoutes(instance, client, fetch, moment, config, db, features, lang);
-    } catch (err) {
-      return next(err);
-    }
-    next();
-  });
-
+  // Must be registered before siteRoutes so it applies to all site route
+  // handlers. Setting req.session.authenticated (which was never read anywhere)
+  // has been removed — it caused @fastify/session to treat every request as a
+  // modified session and trigger a Prisma INSERT on every request, including
+  // unauthenticated ones. On Prisma cold-start this INSERT hangs, holding up
+  // the onSend pipeline and producing a blank page on first load.
   app.addHook("preHandler", async (req, res) => {
-    if (req.session) {
-      req.session.authenticated = false;
-    }
     req.notifications = { unreadCount: 0, items: [] };
 
     if (req.session?.user?.userId) {
@@ -270,6 +263,26 @@ const buildApp = async () => {
       }
     }
   });
+
+  await app.register((instance, options, next) => {
+    // Routes
+    try {
+      siteRoutes(instance, client, fetch, moment, config, db, features, lang);
+    } catch (err) {
+      return next(err);
+    }
+    next();
+  });
+
+  // Warm up the Prisma connection pool before accepting requests so the first
+  // visitor does not trigger a cold-start DB connection during the onSend
+  // session-save phase, which could delay or silently drop the response.
+  try {
+    await prisma.$queryRaw`SELECT 1`;
+    console.log("[DB] Prisma connection warmed up.");
+  } catch (err) {
+    console.warn("[DB] Prisma warm-up query failed (will retry on first request):", err.message);
+  }
 
   try {
     const port = process.env.PORT;

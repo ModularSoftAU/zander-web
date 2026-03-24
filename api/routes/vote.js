@@ -559,4 +559,42 @@ export default function voteApiRoute(app, config, db, features, lang) {
       if (!res.sent) return res.status(500).send({ success: false, message: `${error}` });
     }
   });
+
+  // =========================================================================
+  // Admin: POST /admin/vote/credit
+  // Manually credit a vote to a player's monthly total.
+  // Useful when a vote was delivered but rejected (e.g. unregistered service)
+  // or when the monthly total was not updated due to a transient error.
+  //
+  // Body: { playerUuid, playerName, monthKey }   monthKey defaults to current UTC month.
+  // =========================================================================
+  app.post("/admin/vote/credit", async function (req, res) {
+    if (!isFeatureEnabled(features.vote, res, lang)) return;
+
+    const body = req.body || {};
+    const playerUuid = body.playerUuid;
+    const playerName = body.playerName;
+    const monthKey = body.monthKey || monthKeyFromDate(new Date());
+
+    if (!playerUuid || !playerName) {
+      return res.send({ success: false, message: "playerUuid and playerName are required." });
+    }
+
+    if (!/^\d{4}-\d{2}$/.test(monthKey)) {
+      return res.send({ success: false, message: "Invalid monthKey format. Use YYYY-MM." });
+    }
+
+    try {
+      await upsertMonthlyTotal({ playerUuid, playerName, monthKey, voteAt: new Date() });
+      const stats = await getPlayerMonthlyStats({ playerUuid, monthKey });
+      return res.send({
+        success: true,
+        message: `Credited 1 vote to ${playerName} for ${monthKey}. Total: ${stats?.vote_count ?? 1}.`,
+        data: stats,
+      });
+    } catch (error) {
+      console.error("[vote] POST /admin/vote/credit:", error);
+      if (!res.sent) return res.status(500).send({ success: false, message: `${error}` });
+    }
+  });
 }
