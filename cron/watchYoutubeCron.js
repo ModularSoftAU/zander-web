@@ -20,6 +20,7 @@ import {
   getEligibleCreators,
   matchesCfcFilter,
   upsertContentItem,
+  markStreamsOffline,
   updateSyncStatus,
   hasNotificationBeenSent,
   recordNotification,
@@ -190,12 +191,13 @@ async function fetchRecentChannelItems(channelId, apiKey, fetchFn) {
 async function syncYoutubeCreator(creator, apiKey, fetchFn) {
   const rawChannelId = creator.platform_channel_id || creator.platform_account_id;
   const channelId = await resolveChannelId(rawChannelId, apiKey, fetchFn);
+  const liveIds = [];
 
   try {
     const searchItems = await fetchRecentChannelItems(channelId, apiKey, fetchFn);
     if (searchItems.length === 0) {
       await updateSyncStatus(creator.user_id, "youtube", { success: true });
-      return;
+      return liveIds;
     }
 
     const videoIds = searchItems.map((i) => i.id?.videoId).filter(Boolean);
@@ -269,6 +271,8 @@ async function syncYoutubeCreator(creator, apiKey, fetchFn) {
 
       await upsertContentItem(contentItem);
 
+      if (isCurrentlyLive) liveIds.push(video.id);
+
       if (!isPublic) continue;
 
       // Discord notifications
@@ -296,6 +300,8 @@ async function syncYoutubeCreator(creator, apiKey, fetchFn) {
     console.error(`[WatchYouTube] Sync failed for user ${creator.user_id}:`, err);
     await updateSyncStatus(creator.user_id, "youtube", { success: false, error: err.message });
   }
+
+  return liveIds;
 }
 
 // ---------------------------------------------------------------------------
@@ -316,9 +322,14 @@ const youtubeSyncTask = cron.schedule("*/15 * * * *", async () => {
     const creators = await getEligibleCreators("youtube");
     if (creators.length === 0) return;
 
+    const allLiveIds = [];
     for (const creator of creators) {
-      await syncYoutubeCreator(creator, apiKey, fetch);
+      const liveIds = await syncYoutubeCreator(creator, apiKey, fetch);
+      allLiveIds.push(...liveIds);
     }
+
+    // Mark any previously-live YouTube entries that are no longer live as ended
+    await markStreamsOffline("youtube", allLiveIds);
   } catch (err) {
     console.error("[WatchYouTube] Cron error:", err);
   } finally {
