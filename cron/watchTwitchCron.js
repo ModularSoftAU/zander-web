@@ -139,7 +139,7 @@ async function syncTwitchCreator(creator, stream) {
     );
 
     const isCfc = Boolean(matchedRule);
-    const isPublic = true; // all eligible creators (permission-gated) are publicly visible when live
+    const isPublic = isCfc; // only CFC-tagged streams are publicly visible
 
     const thumbnailUrl = stream.thumbnail_url
       ? stream.thumbnail_url.replace("{width}", "640").replace("{height}", "360")
@@ -169,15 +169,18 @@ async function syncTwitchCreator(creator, stream) {
     await upsertContentItem(contentItem);
 
     // Send Discord live notification if not already sent.
+    // Only notify for CFC-tagged streams that are publicly visible.
     // Only record the notification when the Discord send actually succeeds —
     // if messageId is null the send failed and we want the next run to retry.
-    const alreadySent = await hasNotificationBeenSent("twitch", stream.id, "live");
-    if (!alreadySent) {
-      const messageId = await sendLiveNotification(
-        { ...contentItem, platform_display_name: creator.platform_display_name, username: creator.username }
-      );
-      if (messageId) {
-        await recordNotification("twitch", stream.id, "live", messageId);
+    if (isPublic) {
+      const alreadySent = await hasNotificationBeenSent("twitch", stream.id, "live");
+      if (!alreadySent) {
+        const messageId = await sendLiveNotification(
+          { ...contentItem, platform_display_name: creator.platform_display_name, username: creator.username }
+        );
+        if (messageId) {
+          await recordNotification("twitch", stream.id, "live", messageId);
+        }
       }
     }
 
