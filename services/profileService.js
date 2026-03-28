@@ -208,7 +208,7 @@ export async function getUserRanks(username) {
       }
     }
 
-    return groups.map((rankSlug) => {
+    return groups.filter((rankSlug) => rankSlug !== "default").map((rankSlug) => {
       const m = rankMeta[rankSlug] || {};
       return mapRankRow({
         rankSlug,
