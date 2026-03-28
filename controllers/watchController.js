@@ -294,122 +294,109 @@ export function recordNotification(platform, externalContentId, notificationType
 // ---------------------------------------------------------------------------
 
 /**
- * Check whether a user holds CREATOR_PERMISSION_NODE using the cross-DB views
- * that are accessible via the main DB connection (userRanks, rankPermissions,
- * userPermissions).  luckpermsDb direct-table queries have been observed to
- * return 0 rows on this deployment; the views are the reliable path.
+ * Check whether a user holds CREATOR_PERMISSION_NODE by querying luckpermsDb
+ * directly.  This LP deployment stores UUIDs as VARCHAR(36) dashed strings
+ * (not BINARY(16)), so no UNHEX() is needed.
+ *
+ * Strategy:
+ *  1. Direct permission on the user in luckperms_user_permissions
+ *  2. Group membership from luckperms_user_permissions (group.* entries)
+ *  3. Permission on any of those groups in luckperms_group_permissions
+ *  4. One level of parent-group inheritance via luckperms_group_permissions
  */
-async function hasCreatorPermissionViaViews(userId, uuid) {
-  const uuidHex = uuid ? uuid.replace(/-/g, "").toLowerCase() : null;
+async function hasCreatorPermission(uuid) {
+  if (!uuid) return false;
+  // users.uuid is stored as dashed VARCHAR — LP uses the same format on this host.
+  const dashedUuid = uuid.toLowerCase();
 
-  // 1. Check for a direct user-permission grant via the userPermissions view.
-  //    The view joins zanderdev.users with cfcdev_luckperms.luckperms_user_permissions.
+  // 1. Direct user permission
   try {
-    const directRows = await runQuery(
-      `SELECT 1 FROM userPermissions WHERE userId=? AND permission=? AND value=1 LIMIT 1`,
-      [userId, CREATOR_PERMISSION_NODE]
+    const direct = await runLpQuery(
+      `SELECT 1 FROM luckperms_user_permissions WHERE uuid=? AND permission=? AND value=1 LIMIT 1`,
+      [dashedUuid, CREATOR_PERMISSION_NODE]
     );
-    if (directRows.length > 0) {
-      console.log(`[Watch] userId=${userId}: direct permission grant found via userPermissions view.`);
+    if (direct.length > 0) {
+      console.log(`[Watch] uuid=${dashedUuid}: direct permission grant found.`);
       return true;
     }
   } catch (err) {
-    console.warn(`[Watch] userId=${userId}: userPermissions view query failed —`, err.message);
+    console.warn(`[Watch] uuid=${dashedUuid}: direct-perm LP query failed —`, err.message);
   }
 
-  // 2. Collect the user's group memberships from the userRanks view.
-  //    Try by userId first (works when the view's LEFT JOIN resolves the uuid),
-  //    then fall back to uuid column directly.
+  // 2. Collect user's group memberships
   let groups = [];
   try {
-    const byUserId = await runQuery(
-      `SELECT rankSlug FROM userRanks WHERE userId=? LIMIT 100`,
-      [userId]
+    const groupRows = await runLpQuery(
+      `SELECT SUBSTRING_INDEX(permission, '.', -1) AS grp
+         FROM luckperms_user_permissions
+        WHERE uuid=? AND permission LIKE 'group.%' AND value=1`,
+      [dashedUuid]
     );
-    if (byUserId.length > 0) {
-      groups = byUserId.map((r) => r.rankSlug);
-      console.log(`[Watch] userId=${userId}: groups from userRanks by userId: [${groups.join(", ")}]`);
+    groups = groupRows.map((r) => r.grp);
+    console.log(`[Watch] uuid=${dashedUuid}: LP groups=[${groups.join(", ")}]`);
+  } catch (err) {
+    console.warn(`[Watch] uuid=${dashedUuid}: group-membership LP query failed —`, err.message);
+  }
+
+  // Also check primary_group from luckperms_players
+  try {
+    const playerRow = await runLpQuery(
+      `SELECT primary_group FROM luckperms_players WHERE uuid=? LIMIT 1`,
+      [dashedUuid]
+    );
+    if (playerRow.length > 0 && playerRow[0].primary_group) {
+      const pg = playerRow[0].primary_group;
+      if (!groups.includes(pg)) groups.push(pg);
+      console.log(`[Watch] uuid=${dashedUuid}: primary_group="${pg}"`);
     }
   } catch (err) {
-    console.warn(`[Watch] userId=${userId}: userRanks-by-userId query failed —`, err.message);
-  }
-
-  if (groups.length === 0 && uuidHex) {
-    // Try matching the uuid column with UNHEX() (LP stores BINARY(16))
-    try {
-      const byUuidBin = await runQuery(
-        `SELECT rankSlug FROM userRanks WHERE uuid=UNHEX(?) LIMIT 100`,
-        [uuidHex]
-      );
-      if (byUuidBin.length > 0) {
-        groups = byUuidBin.map((r) => r.rankSlug);
-        console.log(`[Watch] userId=${userId}: groups from userRanks by UNHEX(uuid): [${groups.join(", ")}]`);
-      }
-    } catch (err) {
-      console.warn(`[Watch] userId=${userId}: userRanks-by-UNHEX(uuid) query failed —`, err.message);
-    }
-  }
-
-  if (groups.length === 0 && uuidHex) {
-    // Try matching the uuid column as a plain hex string (some LP setups use VARCHAR)
-    try {
-      const byUuidHex = await runQuery(
-        `SELECT rankSlug FROM userRanks WHERE uuid=? LIMIT 100`,
-        [uuidHex]
-      );
-      if (byUuidHex.length > 0) {
-        groups = byUuidHex.map((r) => r.rankSlug);
-        console.log(`[Watch] userId=${userId}: groups from userRanks by hex uuid string: [${groups.join(", ")}]`);
-      }
-    } catch (err) {
-      console.warn(`[Watch] userId=${userId}: userRanks-by-hex-string query failed —`, err.message);
-    }
+    console.warn(`[Watch] uuid=${dashedUuid}: luckperms_players query failed —`, err.message);
   }
 
   if (groups.length === 0) {
-    console.warn(`[Watch] userId=${userId}: no groups found in userRanks view — cannot check group permissions.`);
+    console.warn(`[Watch] uuid=${dashedUuid}: no LP group memberships found.`);
     return false;
   }
 
-  // 3. Check whether any of the user's groups (or their parent groups via rankRanks)
-  //    carries the creator permission node.
-  //    First: direct group permission check.
+  // 3. Direct permission on any of the user's groups
   try {
-    const placeholders = groups.map(() => "?").join(", ");
-    const directGroupPerm = await runQuery(
-      `SELECT rankSlug FROM rankPermissions WHERE rankSlug IN (${placeholders}) AND permission=? AND value=1 LIMIT 1`,
+    const ph = groups.map(() => "?").join(", ");
+    const groupPerm = await runLpQuery(
+      `SELECT name FROM luckperms_group_permissions WHERE name IN (${ph}) AND permission=? AND value=1 LIMIT 1`,
       [...groups, CREATOR_PERMISSION_NODE]
     );
-    if (directGroupPerm.length > 0) {
-      console.log(`[Watch] userId=${userId}: permission found via group "${directGroupPerm[0].rankSlug}" in rankPermissions.`);
+    if (groupPerm.length > 0) {
+      console.log(`[Watch] uuid=${dashedUuid}: permission found on group "${groupPerm[0].name}".`);
       return true;
     }
   } catch (err) {
-    console.warn(`[Watch] userId=${userId}: rankPermissions query failed —`, err.message);
+    console.warn(`[Watch] uuid=${dashedUuid}: group-perm LP query failed —`, err.message);
   }
 
-  // 4. One level of group inheritance: find parent groups of the user's groups, then recheck.
+  // 4. One level of parent-group inheritance
   try {
-    const placeholders = groups.map(() => "?").join(", ");
-    const parentRows = await runQuery(
-      `SELECT DISTINCT rankSlug FROM rankRanks WHERE parentRankSlug IN (${placeholders})`,
+    const ph = groups.map(() => "?").join(", ");
+    const parentRows = await runLpQuery(
+      `SELECT SUBSTRING_INDEX(permission, '.', -1) AS parent
+         FROM luckperms_group_permissions
+        WHERE name IN (${ph}) AND permission LIKE 'group.%' AND value=1`,
       [...groups]
     );
-    const parentGroups = parentRows.map((r) => r.rankSlug);
+    const parentGroups = [...new Set(parentRows.map((r) => r.parent))];
     if (parentGroups.length > 0) {
-      console.log(`[Watch] userId=${userId}: inherited groups via rankRanks: [${parentGroups.join(", ")}]`);
+      console.log(`[Watch] uuid=${dashedUuid}: inherited parent groups=[${parentGroups.join(", ")}]`);
       const ph2 = parentGroups.map(() => "?").join(", ");
-      const inheritedPerm = await runQuery(
-        `SELECT rankSlug FROM rankPermissions WHERE rankSlug IN (${ph2}) AND permission=? AND value=1 LIMIT 1`,
+      const inheritedPerm = await runLpQuery(
+        `SELECT name FROM luckperms_group_permissions WHERE name IN (${ph2}) AND permission=? AND value=1 LIMIT 1`,
         [...parentGroups, CREATOR_PERMISSION_NODE]
       );
       if (inheritedPerm.length > 0) {
-        console.log(`[Watch] userId=${userId}: permission found via inherited group "${inheritedPerm[0].rankSlug}".`);
+        console.log(`[Watch] uuid=${dashedUuid}: permission found on inherited group "${inheritedPerm[0].name}".`);
         return true;
       }
     }
   } catch (err) {
-    console.warn(`[Watch] userId=${userId}: rankRanks inheritance query failed —`, err.message);
+    console.warn(`[Watch] uuid=${dashedUuid}: parent-group LP query failed —`, err.message);
   }
 
   return false;
@@ -420,15 +407,6 @@ async function hasCreatorPermissionViaViews(userId, uuid) {
  * zander.watch.creator permission node.
  */
 export async function getEligibleCreators(platform) {
-  // One-time diagnostic: confirm which DB luckpermsDb is connected to.
-  try {
-    const dbName = await runLpQuery(`SELECT DATABASE() AS db`);
-    const tableCount = await runLpQuery(`SELECT COUNT(*) AS cnt FROM luckperms_players`);
-    console.log(`[Watch] luckpermsDb connected to: "${dbName[0]?.db}", luckperms_players row count: ${tableCount[0]?.cnt}`);
-  } catch (err) {
-    console.warn(`[Watch] luckpermsDb diagnostic failed (table may not exist):`, err.message);
-  }
-
   const rows = await runQuery(
     `SELECT upc.*, u.userId, u.username, u.uuid
      FROM user_platform_connections upc
@@ -444,7 +422,7 @@ export async function getEligibleCreators(platform) {
     try {
       console.log(`[Watch] userId=${row.userId} (${row.username}): uuid=${row.uuid || "(none)"}`);
 
-      const hasCreatorPerm = await hasCreatorPermissionViaViews(row.userId, row.uuid);
+      const hasCreatorPerm = await hasCreatorPermission(row.uuid);
       console.log(`[Watch] userId=${row.userId} (${row.username}): ${hasCreatorPerm ? "ELIGIBLE" : "not eligible"} for ${CREATOR_PERMISSION_NODE}`);
       if (hasCreatorPerm) {
         eligible.push(row);
