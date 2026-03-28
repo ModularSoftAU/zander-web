@@ -302,9 +302,15 @@ export async function getEligibleCreators(platform) {
   const eligible = [];
   for (const row of rows) {
     try {
+      if (!row.uuid) {
+        console.warn(`[Watch] userId=${row.userId} (${row.username}): no Minecraft UUID in users table — LuckPerms lookup will fall back to username only.`);
+      } else {
+        console.log(`[Watch] userId=${row.userId} (${row.username}): uuid=${row.uuid}`);
+      }
+
       const perms = await getUserPermissions({ userId: row.userId, uuid: row.uuid, username: row.username });
       const hasCreatorPerm = hasPermission(perms, CREATOR_PERMISSION_NODE);
-      console.log(`[Watch] userId=${row.userId} (${row.username}): ${hasCreatorPerm ? "has" : "MISSING"} ${CREATOR_PERMISSION_NODE}`);
+      console.log(`[Watch] userId=${row.userId} (${row.username}): ${hasCreatorPerm ? "has" : "MISSING"} ${CREATOR_PERMISSION_NODE} — resolved ${perms.length} permission(s), groups=[${(perms.userRanks || []).join(", ")}]`);
       if (hasCreatorPerm) {
         eligible.push(row);
       }
