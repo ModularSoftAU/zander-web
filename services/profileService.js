@@ -88,10 +88,14 @@ export async function getUserRanks(username) {
       );
     });
 
-    const uuid = webUser?.uuid || luckPermsUser?.uuid;
-    if (!uuid) {
+    const rawUuid = webUser?.uuid || luckPermsUser?.uuid;
+    if (!rawUuid) {
       return [];
     }
+
+    // Normalise to 32-char lowercase hex (no dashes) — matches the format
+    // the userRanks view exposes from LuckPerms binary UUIDs.
+    const uuid = rawUuid.replace(/-/g, "").toLowerCase();
 
     // Get ranks for this UUID
     const rows = await new Promise((resolve, reject) => {
