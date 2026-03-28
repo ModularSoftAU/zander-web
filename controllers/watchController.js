@@ -289,6 +289,25 @@ export function recordNotification(platform, externalContentId, notificationType
   });
 }
 
+/**
+ * Creates a temporary in-game tip announcement for a creator event.
+ * The announcement expires after `durationMinutes` (default 2 hours).
+ */
+export function createInGameAnnouncement(body, durationMinutes = 120) {
+  const endDate = new Date(Date.now() + durationMinutes * 60 * 1000);
+  const endDateStr = endDate.toISOString().slice(0, 19).replace("T", " ");
+  return new Promise((resolve, reject) => {
+    db.query(
+      `INSERT INTO announcements (enabled, announcementType, body, link, endDate) VALUES (1, 'tip', ?, ?, ?)`,
+      [body, "https://craftingforchrist.net/watch", endDateStr],
+      (error, results) => {
+        if (error) return reject(error);
+        resolve(results?.insertId || true);
+      }
+    );
+  });
+}
+
 // ---------------------------------------------------------------------------
 // Eligibility helpers used by cron jobs
 // ---------------------------------------------------------------------------

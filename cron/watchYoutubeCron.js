@@ -24,6 +24,7 @@ import {
   updateSyncStatus,
   hasNotificationBeenSent,
   recordNotification,
+  createInGameAnnouncement,
 } from "../controllers/watchController.js";
 
 // ---------------------------------------------------------------------------
@@ -332,6 +333,25 @@ async function syncYoutubeCreator(creator, apiKey, fetchFn) {
           await recordNotification("youtube", video.id, notifType, messageId);
         } else {
           console.warn(`[WatchYouTube] userId=${creator.user_id}: notification failed for "${video.id}" — will retry on next run.`);
+        }
+      }
+
+      // In-game tip announcement (deduplicated independently of Discord)
+      const ingameNotifType = `ingame_${notifType}`;
+      const ingameAlreadySent = await hasNotificationBeenSent("youtube", video.id, ingameNotifType);
+      if (ingameAlreadySent) {
+        console.log(`[WatchYouTube] userId=${creator.user_id}: in-game announcement already created for "${video.id}" — skipping.`);
+      } else {
+        const creatorName = creator.platform_display_name || creator.username;
+        const announcementBody = isCurrentlyLive
+          ? `Creator ${creatorName} is now live — watch now at craftingforchrist.net/watch`
+          : `Creator ${creatorName} has released a new video — watch now at craftingforchrist.net/watch`;
+        try {
+          await createInGameAnnouncement(announcementBody);
+          await recordNotification("youtube", video.id, ingameNotifType, null);
+          console.log(`[WatchYouTube] userId=${creator.user_id}: in-game announcement created for "${video.id}".`);
+        } catch (err) {
+          console.error(`[WatchYouTube] userId=${creator.user_id}: failed to create in-game announcement for "${video.id}":`, err);
         }
       }
     }
