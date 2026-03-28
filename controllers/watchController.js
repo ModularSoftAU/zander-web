@@ -294,10 +294,141 @@ export function recordNotification(platform, externalContentId, notificationType
 // ---------------------------------------------------------------------------
 
 /**
+ * Check whether a user holds CREATOR_PERMISSION_NODE using the cross-DB views
+ * that are accessible via the main DB connection (userRanks, rankPermissions,
+ * userPermissions).  luckpermsDb direct-table queries have been observed to
+ * return 0 rows on this deployment; the views are the reliable path.
+ */
+async function hasCreatorPermissionViaViews(userId, uuid) {
+  const uuidHex = uuid ? uuid.replace(/-/g, "").toLowerCase() : null;
+
+  // 1. Check for a direct user-permission grant via the userPermissions view.
+  //    The view joins zanderdev.users with cfcdev_luckperms.luckperms_user_permissions.
+  try {
+    const directRows = await runQuery(
+      `SELECT 1 FROM userPermissions WHERE userId=? AND permission=? AND value=1 LIMIT 1`,
+      [userId, CREATOR_PERMISSION_NODE]
+    );
+    if (directRows.length > 0) {
+      console.log(`[Watch] userId=${userId}: direct permission grant found via userPermissions view.`);
+      return true;
+    }
+  } catch (err) {
+    console.warn(`[Watch] userId=${userId}: userPermissions view query failed —`, err.message);
+  }
+
+  // 2. Collect the user's group memberships from the userRanks view.
+  //    Try by userId first (works when the view's LEFT JOIN resolves the uuid),
+  //    then fall back to uuid column directly.
+  let groups = [];
+  try {
+    const byUserId = await runQuery(
+      `SELECT rankSlug FROM userRanks WHERE userId=? LIMIT 100`,
+      [userId]
+    );
+    if (byUserId.length > 0) {
+      groups = byUserId.map((r) => r.rankSlug);
+      console.log(`[Watch] userId=${userId}: groups from userRanks by userId: [${groups.join(", ")}]`);
+    }
+  } catch (err) {
+    console.warn(`[Watch] userId=${userId}: userRanks-by-userId query failed —`, err.message);
+  }
+
+  if (groups.length === 0 && uuidHex) {
+    // Try matching the uuid column with UNHEX() (LP stores BINARY(16))
+    try {
+      const byUuidBin = await runQuery(
+        `SELECT rankSlug FROM userRanks WHERE uuid=UNHEX(?) LIMIT 100`,
+        [uuidHex]
+      );
+      if (byUuidBin.length > 0) {
+        groups = byUuidBin.map((r) => r.rankSlug);
+        console.log(`[Watch] userId=${userId}: groups from userRanks by UNHEX(uuid): [${groups.join(", ")}]`);
+      }
+    } catch (err) {
+      console.warn(`[Watch] userId=${userId}: userRanks-by-UNHEX(uuid) query failed —`, err.message);
+    }
+  }
+
+  if (groups.length === 0 && uuidHex) {
+    // Try matching the uuid column as a plain hex string (some LP setups use VARCHAR)
+    try {
+      const byUuidHex = await runQuery(
+        `SELECT rankSlug FROM userRanks WHERE uuid=? LIMIT 100`,
+        [uuidHex]
+      );
+      if (byUuidHex.length > 0) {
+        groups = byUuidHex.map((r) => r.rankSlug);
+        console.log(`[Watch] userId=${userId}: groups from userRanks by hex uuid string: [${groups.join(", ")}]`);
+      }
+    } catch (err) {
+      console.warn(`[Watch] userId=${userId}: userRanks-by-hex-string query failed —`, err.message);
+    }
+  }
+
+  if (groups.length === 0) {
+    console.warn(`[Watch] userId=${userId}: no groups found in userRanks view — cannot check group permissions.`);
+    return false;
+  }
+
+  // 3. Check whether any of the user's groups (or their parent groups via rankRanks)
+  //    carries the creator permission node.
+  //    First: direct group permission check.
+  try {
+    const placeholders = groups.map(() => "?").join(", ");
+    const directGroupPerm = await runQuery(
+      `SELECT rankSlug FROM rankPermissions WHERE rankSlug IN (${placeholders}) AND permission=? AND value=1 LIMIT 1`,
+      [...groups, CREATOR_PERMISSION_NODE]
+    );
+    if (directGroupPerm.length > 0) {
+      console.log(`[Watch] userId=${userId}: permission found via group "${directGroupPerm[0].rankSlug}" in rankPermissions.`);
+      return true;
+    }
+  } catch (err) {
+    console.warn(`[Watch] userId=${userId}: rankPermissions query failed —`, err.message);
+  }
+
+  // 4. One level of group inheritance: find parent groups of the user's groups, then recheck.
+  try {
+    const placeholders = groups.map(() => "?").join(", ");
+    const parentRows = await runQuery(
+      `SELECT DISTINCT rankSlug FROM rankRanks WHERE parentRankSlug IN (${placeholders})`,
+      [...groups]
+    );
+    const parentGroups = parentRows.map((r) => r.rankSlug);
+    if (parentGroups.length > 0) {
+      console.log(`[Watch] userId=${userId}: inherited groups via rankRanks: [${parentGroups.join(", ")}]`);
+      const ph2 = parentGroups.map(() => "?").join(", ");
+      const inheritedPerm = await runQuery(
+        `SELECT rankSlug FROM rankPermissions WHERE rankSlug IN (${ph2}) AND permission=? AND value=1 LIMIT 1`,
+        [...parentGroups, CREATOR_PERMISSION_NODE]
+      );
+      if (inheritedPerm.length > 0) {
+        console.log(`[Watch] userId=${userId}: permission found via inherited group "${inheritedPerm[0].rankSlug}".`);
+        return true;
+      }
+    }
+  } catch (err) {
+    console.warn(`[Watch] userId=${userId}: rankRanks inheritance query failed —`, err.message);
+  }
+
+  return false;
+}
+
+/**
  * Returns all users with an active platform connection who also hold the
  * zander.watch.creator permission node.
  */
 export async function getEligibleCreators(platform) {
+  // One-time diagnostic: confirm which DB luckpermsDb is connected to.
+  try {
+    const dbName = await runLpQuery(`SELECT DATABASE() AS db`);
+    const tableCount = await runLpQuery(`SELECT COUNT(*) AS cnt FROM luckperms_players`);
+    console.log(`[Watch] luckpermsDb connected to: "${dbName[0]?.db}", luckperms_players row count: ${tableCount[0]?.cnt}`);
+  } catch (err) {
+    console.warn(`[Watch] luckpermsDb diagnostic failed (table may not exist):`, err.message);
+  }
+
   const rows = await runQuery(
     `SELECT upc.*, u.userId, u.username, u.uuid
      FROM user_platform_connections upc
@@ -311,53 +442,10 @@ export async function getEligibleCreators(platform) {
   const eligible = [];
   for (const row of rows) {
     try {
-      if (!row.uuid) {
-        console.warn(`[Watch] userId=${row.userId} (${row.username}): no Minecraft UUID in users table — LuckPerms lookup will fall back to username only.`);
-      } else {
-        console.log(`[Watch] userId=${row.userId} (${row.username}): uuid=${row.uuid}`);
-      }
+      console.log(`[Watch] userId=${row.userId} (${row.username}): uuid=${row.uuid || "(none)"}`);
 
-      // Direct LP diagnostic: show raw rows from luckperms_user_permissions
-      try {
-        const uuidHex = row.uuid ? row.uuid.replace(/-/g, "").toLowerCase() : null;
-        if (uuidHex) {
-          const lpRows = await runLpQuery(
-            `SELECT permission, value, server, world, expiry, contexts FROM luckperms_user_permissions WHERE uuid=UNHEX(?)`,
-            [uuidHex]
-          );
-          console.log(`[Watch] LP direct query for userId=${row.userId} (${row.username}) uuidHex=${uuidHex}: ${lpRows.length} permission row(s)`);
-          for (const r of lpRows) {
-            console.log(`[Watch]   permission="${r.permission}" value=${r.value} server="${r.server}" world="${r.world}" expiry=${r.expiry}`);
-          }
-
-          const lpPlayer = await runLpQuery(
-            `SELECT username, primary_group FROM luckperms_players WHERE uuid=UNHEX(?)`,
-            [uuidHex]
-          );
-          if (lpPlayer.length > 0) {
-            console.log(`[Watch] LP player record for userId=${row.userId}: username="${lpPlayer[0].username}" primary_group="${lpPlayer[0].primary_group}"`);
-          } else {
-            console.warn(`[Watch] LP player record NOT FOUND for userId=${row.userId} uuidHex=${uuidHex} — this user has never joined or UUID mismatch.`);
-          }
-        } else {
-          // Try lookup by username in luckperms_players
-          const lpPlayer = await runLpQuery(
-            `SELECT HEX(uuid) AS uuidHex, username, primary_group FROM luckperms_players WHERE LOWER(username)=LOWER(?) LIMIT 1`,
-            [row.username]
-          );
-          if (lpPlayer.length > 0) {
-            console.log(`[Watch] LP player found by username for userId=${row.userId}: uuidHex="${lpPlayer[0].uuidHex}" primary_group="${lpPlayer[0].primary_group}"`);
-          } else {
-            console.warn(`[Watch] LP player NOT FOUND by username for userId=${row.userId} (${row.username}).`);
-          }
-        }
-      } catch (lpErr) {
-        console.error(`[Watch] LP diagnostic query failed for userId=${row.userId}:`, lpErr);
-      }
-
-      const perms = await getUserPermissions({ userId: row.userId, uuid: row.uuid, username: row.username });
-      const hasCreatorPerm = hasPermission(perms, CREATOR_PERMISSION_NODE);
-      console.log(`[Watch] userId=${row.userId} (${row.username}): ${hasCreatorPerm ? "has" : "MISSING"} ${CREATOR_PERMISSION_NODE} — resolved ${perms.length} permission(s), groups=[${(perms.userRanks || []).join(", ")}]`);
+      const hasCreatorPerm = await hasCreatorPermissionViaViews(row.userId, row.uuid);
+      console.log(`[Watch] userId=${row.userId} (${row.username}): ${hasCreatorPerm ? "ELIGIBLE" : "not eligible"} for ${CREATOR_PERMISSION_NODE}`);
       if (hasCreatorPerm) {
         eligible.push(row);
       }
