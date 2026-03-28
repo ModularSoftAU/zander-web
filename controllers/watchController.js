@@ -297,11 +297,15 @@ export async function getEligibleCreators(platform) {
     [platform]
   );
 
+  console.log(`[Watch] getEligibleCreators(${platform}): ${rows.length} active connection(s) found.`);
+
   const eligible = [];
   for (const row of rows) {
     try {
       const perms = await getUserPermissions({ userId: row.userId, uuid: row.uuid, username: row.username });
-      if (hasPermission(perms, CREATOR_PERMISSION_NODE)) {
+      const hasCreatorPerm = hasPermission(perms, CREATOR_PERMISSION_NODE);
+      console.log(`[Watch] userId=${row.userId} (${row.username}): ${hasCreatorPerm ? "has" : "MISSING"} ${CREATOR_PERMISSION_NODE}`);
+      if (hasCreatorPerm) {
         eligible.push(row);
       }
     } catch (err) {
@@ -309,6 +313,7 @@ export async function getEligibleCreators(platform) {
     }
   }
 
+  console.log(`[Watch] getEligibleCreators(${platform}): ${eligible.length}/${rows.length} creator(s) eligible.`);
   return eligible;
 }
 
