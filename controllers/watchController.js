@@ -1,4 +1,4 @@
-import db from "./databaseController.js";
+import db, { luckpermsDb } from "./databaseController.js";
 import { getUserPermissions } from "./userController.js";
 import { hasPermission } from "../lib/discord/permissions.mjs";
 
@@ -7,6 +7,15 @@ const CREATOR_PERMISSION_NODE = "zander.watch.creator";
 function runQuery(sql, params = []) {
   return new Promise((resolve, reject) => {
     db.query(sql, params, (error, results) => {
+      if (error) return reject(error);
+      resolve(results);
+    });
+  });
+}
+
+function runLpQuery(sql, params = []) {
+  return new Promise((resolve, reject) => {
+    luckpermsDb.query(sql, params, (error, results) => {
       if (error) return reject(error);
       resolve(results);
     });
@@ -306,6 +315,44 @@ export async function getEligibleCreators(platform) {
         console.warn(`[Watch] userId=${row.userId} (${row.username}): no Minecraft UUID in users table — LuckPerms lookup will fall back to username only.`);
       } else {
         console.log(`[Watch] userId=${row.userId} (${row.username}): uuid=${row.uuid}`);
+      }
+
+      // Direct LP diagnostic: show raw rows from luckperms_user_permissions
+      try {
+        const uuidHex = row.uuid ? row.uuid.replace(/-/g, "").toLowerCase() : null;
+        if (uuidHex) {
+          const lpRows = await runLpQuery(
+            `SELECT permission, value, server, world, expiry, contexts FROM luckperms_user_permissions WHERE uuid=UNHEX(?)`,
+            [uuidHex]
+          );
+          console.log(`[Watch] LP direct query for userId=${row.userId} (${row.username}) uuidHex=${uuidHex}: ${lpRows.length} permission row(s)`);
+          for (const r of lpRows) {
+            console.log(`[Watch]   permission="${r.permission}" value=${r.value} server="${r.server}" world="${r.world}" expiry=${r.expiry}`);
+          }
+
+          const lpPlayer = await runLpQuery(
+            `SELECT username, primary_group FROM luckperms_players WHERE uuid=UNHEX(?)`,
+            [uuidHex]
+          );
+          if (lpPlayer.length > 0) {
+            console.log(`[Watch] LP player record for userId=${row.userId}: username="${lpPlayer[0].username}" primary_group="${lpPlayer[0].primary_group}"`);
+          } else {
+            console.warn(`[Watch] LP player record NOT FOUND for userId=${row.userId} uuidHex=${uuidHex} — this user has never joined or UUID mismatch.`);
+          }
+        } else {
+          // Try lookup by username in luckperms_players
+          const lpPlayer = await runLpQuery(
+            `SELECT HEX(uuid) AS uuidHex, username, primary_group FROM luckperms_players WHERE LOWER(username)=LOWER(?) LIMIT 1`,
+            [row.username]
+          );
+          if (lpPlayer.length > 0) {
+            console.log(`[Watch] LP player found by username for userId=${row.userId}: uuidHex="${lpPlayer[0].uuidHex}" primary_group="${lpPlayer[0].primary_group}"`);
+          } else {
+            console.warn(`[Watch] LP player NOT FOUND by username for userId=${row.userId} (${row.username}).`);
+          }
+        }
+      } catch (lpErr) {
+        console.error(`[Watch] LP diagnostic query failed for userId=${row.userId}:`, lpErr);
       }
 
       const perms = await getUserPermissions({ userId: row.userId, uuid: row.uuid, username: row.username });
