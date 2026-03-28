@@ -20,6 +20,7 @@ import {
   getEligibleCreators,
   matchesCfcFilter,
   upsertContentItem,
+  markStreamsOffline,
   updateSyncStatus,
   hasNotificationBeenSent,
   recordNotification,
@@ -38,7 +39,10 @@ async function sendDiscordNotification(notifType, item) {
 
   try {
     const channel = await client.channels.fetch(channelId);
-    if (!channel) return null;
+    if (!channel) {
+      console.warn(`[WatchYouTube] Discord channel "${channelId}" not found — skipping notification.`);
+      return null;
+    }
 
     const isLive = notifType === "live";
     const embed = new EmbedBuilder()
@@ -95,7 +99,8 @@ async function fetchYoutubeVideoDetails(videoIds, apiKey, fetchFn) {
 
   const res = await fetchFn(url);
   if (!res.ok) {
-    console.error("[WatchYouTube] videos.list API error:", res.status);
+    const body = await res.text();
+    console.error(`[WatchYouTube] videos.list API error (${res.status}):`, body);
     return [];
   }
 
@@ -106,6 +111,8 @@ async function fetchYoutubeVideoDetails(videoIds, apiKey, fetchFn) {
 async function resolveChannelId(rawId, apiKey, fetchFn) {
   // Already a proper channel ID
   if (rawId && rawId.startsWith("UC")) return rawId;
+
+  console.log(`[WatchYouTube] Channel ID "${rawId}" is not a UC... ID — attempting to resolve.`);
 
   // Try resolving via handle (@username) or legacy username
   const isHandle = rawId && rawId.startsWith("@");
@@ -127,6 +134,7 @@ async function resolveChannelId(rawId, apiKey, fetchFn) {
       console.log(`[WatchYouTube] Resolved channel "${rawId}" -> "${resolved}"`);
       return resolved;
     }
+    console.warn(`[WatchYouTube] Could not resolve channel "${rawId}" — no items returned. Using raw value.`);
   } catch (err) {
     console.error("[WatchYouTube] Channel ID resolution failed:", err);
   }
@@ -157,7 +165,10 @@ async function getUploadsPlaylistId(channelId, apiKey, fetchFn) {
   const data = await res.json();
   const playlistId = data?.items?.[0]?.contentDetails?.relatedPlaylists?.uploads;
   if (playlistId) {
+    console.log(`[WatchYouTube] Uploads playlist for channel "${channelId}": ${playlistId}`);
     uploadsPlaylistCache.set(channelId, playlistId);
+  } else {
+    console.warn(`[WatchYouTube] No uploads playlist found for channel "${channelId}" — channel may be private or API response was empty.`);
   }
   return playlistId || null;
 }
@@ -168,7 +179,10 @@ async function getUploadsPlaylistId(channelId, apiKey, fetchFn) {
  */
 async function fetchRecentChannelItems(channelId, apiKey, fetchFn) {
   const playlistId = await getUploadsPlaylistId(channelId, apiKey, fetchFn);
-  if (!playlistId) return [];
+  if (!playlistId) {
+    console.warn(`[WatchYouTube] Skipping uploads fetch for channel "${channelId}" — no playlist ID available.`);
+    return [];
+  }
 
   const url = `${YT_BASE}/playlistItems?part=contentDetails&playlistId=${encodeURIComponent(playlistId)}&maxResults=15&key=${encodeURIComponent(apiKey)}`;
   const res = await fetchFn(url);
@@ -189,17 +203,27 @@ async function fetchRecentChannelItems(channelId, apiKey, fetchFn) {
 
 async function syncYoutubeCreator(creator, apiKey, fetchFn) {
   const rawChannelId = creator.platform_channel_id || creator.platform_account_id;
+  if (!rawChannelId) {
+    console.warn(`[WatchYouTube] userId=${creator.user_id} (${creator.username}): no platform_channel_id or platform_account_id — skipping.`);
+    return [];
+  }
+
   const channelId = await resolveChannelId(rawChannelId, apiKey, fetchFn);
+  console.log(`[WatchYouTube] userId=${creator.user_id} (${creator.username}): using channel "${channelId}"`);
+  const liveIds = [];
 
   try {
     const searchItems = await fetchRecentChannelItems(channelId, apiKey, fetchFn);
     if (searchItems.length === 0) {
+      console.log(`[WatchYouTube] userId=${creator.user_id}: no recent uploads found.`);
       await updateSyncStatus(creator.user_id, "youtube", { success: true });
-      return;
+      return liveIds;
     }
+    console.log(`[WatchYouTube] userId=${creator.user_id}: ${searchItems.length} item(s) in uploads playlist.`);
 
     const videoIds = searchItems.map((i) => i.id?.videoId).filter(Boolean);
     const videoDetails = await fetchYoutubeVideoDetails(videoIds, apiKey, fetchFn);
+    console.log(`[WatchYouTube] userId=${creator.user_id}: fetched details for ${videoDetails.length}/${videoIds.length} video(s).`);
 
     for (const video of videoDetails) {
       const snippet = video.snippet || {};
@@ -210,6 +234,12 @@ async function syncYoutubeCreator(creator, apiKey, fetchFn) {
       const description = snippet.description || "";
       const title = snippet.title || "";
       const liveBroadcastContent = snippet.liveBroadcastContent; // "live", "upcoming", "none"
+
+      // Skip if it's still upcoming
+      if (liveBroadcastContent === "upcoming") {
+        console.log(`[WatchYouTube] userId=${creator.user_id}: video "${video.id}" is upcoming — skipping.`);
+        continue;
+      }
 
       const matchedRule = matchesCfcFilter(
         "youtube",
@@ -223,15 +253,19 @@ async function syncYoutubeCreator(creator, apiKey, fetchFn) {
       const isCurrentlyLive = liveBroadcastContent === "live";
       const contentType = isCurrentlyLive || liveBroadcastContent === "upcoming" ? "live_stream" : "video";
 
-      // All eligible creators are publicly visible when live; videos still require a CFC tag
-      const isPublic = isCurrentlyLive ? true : isCfc;
+      // Only CFC-tagged content is publicly visible
+      const isPublic = isCfc;
+
+      console.log(
+        `[WatchYouTube] userId=${creator.user_id}: video "${video.id}" | ` +
+        `title="${title.substring(0, 60)}" | ` +
+        `live=${isCurrentlyLive} | cfc=${isCfc} | public=${isPublic} | ` +
+        `matchedRule=${matchedRule || "none"} | tags=[${tags.join(", ")}]`
+      );
 
       const publishedAt = snippet.publishedAt ? new Date(snippet.publishedAt) : null;
       const startedAt = liveDetails?.actualStartTime ? new Date(liveDetails.actualStartTime) : null;
       const endedAt = liveDetails?.actualEndTime ? new Date(liveDetails.actualEndTime) : null;
-
-      // Skip if it's still upcoming
-      if (liveBroadcastContent === "upcoming") continue;
 
       const watchUrl = `https://www.youtube.com/watch?v=${video.id}`;
 
@@ -269,12 +303,20 @@ async function syncYoutubeCreator(creator, apiKey, fetchFn) {
 
       await upsertContentItem(contentItem);
 
-      if (!isPublic) continue;
+      if (isCurrentlyLive) liveIds.push(video.id);
+
+      if (!isPublic) {
+        console.log(`[WatchYouTube] userId=${creator.user_id}: video "${video.id}" is not CFC-tagged — stored but not publicly visible, no notification.`);
+        continue;
+      }
 
       // Discord notifications
       const notifType = isCurrentlyLive ? "live" : "upload";
       const alreadySent = await hasNotificationBeenSent("youtube", video.id, notifType);
-      if (!alreadySent) {
+      if (alreadySent) {
+        console.log(`[WatchYouTube] userId=${creator.user_id}: ${notifType} notification already sent for "${video.id}" — skipping.`);
+      } else {
+        console.log(`[WatchYouTube] userId=${creator.user_id}: sending ${notifType} notification for "${video.id}".`);
         const messageId = await sendDiscordNotification(
           notifType,
           {
@@ -286,16 +328,22 @@ async function syncYoutubeCreator(creator, apiKey, fetchFn) {
         // If messageId is null the send failed; leave the record absent so
         // the next cron run can retry.
         if (messageId) {
+          console.log(`[WatchYouTube] userId=${creator.user_id}: notification sent for "${video.id}" (msgId=${messageId}).`);
           await recordNotification("youtube", video.id, notifType, messageId);
+        } else {
+          console.warn(`[WatchYouTube] userId=${creator.user_id}: notification failed for "${video.id}" — will retry on next run.`);
         }
       }
     }
 
+    console.log(`[WatchYouTube] userId=${creator.user_id}: sync done. ${liveIds.length} live stream(s) currently active.`);
     await updateSyncStatus(creator.user_id, "youtube", { success: true });
   } catch (err) {
     console.error(`[WatchYouTube] Sync failed for user ${creator.user_id}:`, err);
     await updateSyncStatus(creator.user_id, "youtube", { success: false, error: err.message });
   }
+
+  return liveIds;
 }
 
 // ---------------------------------------------------------------------------
@@ -306,19 +354,37 @@ let isYoutubeSyncRunning = false;
 
 const youtubeSyncTask = cron.schedule("*/15 * * * *", async () => {
   const apiKey = process.env.youtubeApiKey;
-  if (!apiKey) return;
+  if (!apiKey) {
+    console.warn("[WatchYouTube] youtubeApiKey env var is not set — skipping sync.");
+    return;
+  }
 
-  if (isYoutubeSyncRunning) return;
+  if (isYoutubeSyncRunning) {
+    console.warn("[WatchYouTube] Previous sync is still running — skipping this tick.");
+    return;
+  }
+
   isYoutubeSyncRunning = true;
+  console.log("[WatchYouTube] Sync started.");
 
   try {
     const { default: fetch } = await import("node-fetch");
     const creators = await getEligibleCreators("youtube");
-    if (creators.length === 0) return;
-
-    for (const creator of creators) {
-      await syncYoutubeCreator(creator, apiKey, fetch);
+    if (creators.length === 0) {
+      console.log("[WatchYouTube] No eligible YouTube creators — nothing to sync.");
+      return;
     }
+    console.log(`[WatchYouTube] Syncing ${creators.length} eligible creator(s).`);
+
+    const allLiveIds = [];
+    for (const creator of creators) {
+      const liveIds = await syncYoutubeCreator(creator, apiKey, fetch);
+      allLiveIds.push(...liveIds);
+    }
+
+    console.log(`[WatchYouTube] Marking streams offline (excluding ${allLiveIds.length} currently live).`);
+    await markStreamsOffline("youtube", allLiveIds);
+    console.log("[WatchYouTube] Sync complete.");
   } catch (err) {
     console.error("[WatchYouTube] Cron error:", err);
   } finally {
