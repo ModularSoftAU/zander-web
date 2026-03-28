@@ -8,7 +8,8 @@
       "guildMemberBoost": true,
       "guildMemberVerify": true,
       "nicknameCheck": true,
-      "unverifiedReminder": true
+      "unverifiedReminder": true,
+      "ipAutoDetect": true
     },
     "punishments": true
   },
