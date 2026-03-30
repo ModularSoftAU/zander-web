@@ -169,7 +169,7 @@ function packIntoFields(sections) {
   return fields;
 }
 
-async function runStaffAuditReport() {
+export async function runStaffAuditReport() {
   // Check feature flag
   if (!features.staffAuditReport) {
     return;
