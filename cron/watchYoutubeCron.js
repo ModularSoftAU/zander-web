@@ -311,6 +311,15 @@ async function syncYoutubeCreator(creator, apiKey, fetchFn) {
         continue;
       }
 
+      // Skip notifications for content that was already published before the
+      // creator linked their account — prevents a flood of announcements on
+      // first connection.  Currently-live streams are always announced since
+      // they are actively happening right now.
+      if (!isCurrentlyLive && publishedAt && creator.created_at && publishedAt < new Date(creator.created_at)) {
+        console.log(`[WatchYouTube] userId=${creator.user_id}: video "${video.id}" published before account connection (${publishedAt.toISOString()} < ${new Date(creator.created_at).toISOString()}) — skipping announcement.`);
+        continue;
+      }
+
       // Discord notifications
       const notifType = isCurrentlyLive ? "live" : "upload";
       const alreadySent = await hasNotificationBeenSent("youtube", video.id, notifType);
