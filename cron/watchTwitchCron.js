@@ -24,6 +24,7 @@ import {
   updateSyncStatus,
   hasNotificationBeenSent,
   recordNotification,
+  createInGameAnnouncement,
 } from "../controllers/watchController.js";
 
 // ---------------------------------------------------------------------------
@@ -198,6 +199,22 @@ async function syncTwitchCreator(creator, stream) {
           await recordNotification("twitch", stream.id, "live", messageId);
         } else {
           console.warn(`[WatchTwitch] userId=${creator.user_id}: notification failed for stream "${stream.id}" — will retry on next run.`);
+        }
+      }
+
+      // In-game tip announcement (deduplicated independently of Discord)
+      const ingameAlreadySent = await hasNotificationBeenSent("twitch", stream.id, "ingame_live");
+      if (ingameAlreadySent) {
+        console.log(`[WatchTwitch] userId=${creator.user_id}: in-game announcement already created for stream "${stream.id}" — skipping.`);
+      } else {
+        const creatorName = creator.platform_display_name || creator.username;
+        const announcementBody = `Creator ${creatorName} is now live — watch now at craftingforchrist.net/watch`;
+        try {
+          await createInGameAnnouncement(announcementBody);
+          await recordNotification("twitch", stream.id, "ingame_live", null);
+          console.log(`[WatchTwitch] userId=${creator.user_id}: in-game announcement created for stream "${stream.id}".`);
+        } catch (err) {
+          console.error(`[WatchTwitch] userId=${creator.user_id}: failed to create in-game announcement for stream "${stream.id}":`, err);
         }
       }
     } else {
