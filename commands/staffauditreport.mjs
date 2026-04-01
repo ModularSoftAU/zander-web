@@ -1,5 +1,5 @@
 import { Command } from "@sapphire/framework";
-import { Colors, EmbedBuilder } from "discord.js";
+import { Colors, EmbedBuilder, MessageFlags } from "discord.js";
 import { hasPermission } from "../lib/discord/permissions.mjs";
 import {
   getUserPermissions,
@@ -8,6 +8,8 @@ import {
 import { runStaffAuditReport } from "../cron/staffAuditReportCron.js";
 
 const AUDIT_PERMISSION_NODE = "zander.web.audit";
+
+console.log("[StaffAuditReport] Command file loaded.");
 
 export class StaffAuditReportCommand extends Command {
   constructor(context, options) {
@@ -23,26 +25,17 @@ export class StaffAuditReportCommand extends Command {
   }
 
   async chatInputRun(interaction) {
-    let deferred = false;
-    try {
-      await interaction.deferReply({ ephemeral: true });
-      deferred = true;
-    } catch (error) {
-      console.error("[StaffAuditReport] Failed to defer reply:", error);
-    }
+    console.log(`[StaffAuditReport] Invoked by ${interaction.user.tag}`);
 
-    const respond = (payload) => {
-      if (deferred) return interaction.editReply(payload);
-      return interaction.reply({ ...payload, ephemeral: true }).catch((err) => {
-        console.error("[StaffAuditReport] Failed to send reply:", err);
-      });
-    };
+    if (!interaction.deferred && !interaction.replied) {
+      await interaction.deferReply({ flags: MessageFlags.Ephemeral });
+    }
 
     const userGetter = new UserGetter();
     const linkedAccount = await userGetter.byDiscordId(interaction.user.id);
 
     if (!linkedAccount) {
-      return respond({
+      return interaction.editReply({
         embeds: [
           new EmbedBuilder()
             .setTitle("No Linked Account")
@@ -56,7 +49,7 @@ export class StaffAuditReportCommand extends Command {
 
     const userPermissions = await getUserPermissions(linkedAccount);
     if (!hasPermission(userPermissions, AUDIT_PERMISSION_NODE)) {
-      return respond({
+      return interaction.editReply({
         embeds: [
           new EmbedBuilder()
             .setTitle("No Permission")
@@ -70,7 +63,7 @@ export class StaffAuditReportCommand extends Command {
       await runStaffAuditReport();
     } catch (error) {
       console.error("[StaffAuditReport] Failed to run report:", error);
-      return respond({
+      return interaction.editReply({
         embeds: [
           new EmbedBuilder()
             .setTitle("Report Failed")
@@ -82,7 +75,7 @@ export class StaffAuditReportCommand extends Command {
       });
     }
 
-    return respond({
+    return interaction.editReply({
       embeds: [
         new EmbedBuilder()
           .setTitle("Staff Audit Report Sent")
