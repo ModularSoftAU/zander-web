@@ -23,18 +23,26 @@ export class StaffAuditReportCommand extends Command {
   }
 
   async chatInputRun(interaction) {
+    let deferred = false;
     try {
       await interaction.deferReply({ ephemeral: true });
+      deferred = true;
     } catch (error) {
-      console.error("Failed to defer staff-audit-report reply", error);
-      return;
+      console.error("[StaffAuditReport] Failed to defer reply:", error);
     }
+
+    const respond = (payload) => {
+      if (deferred) return interaction.editReply(payload);
+      return interaction.reply({ ...payload, ephemeral: true }).catch((err) => {
+        console.error("[StaffAuditReport] Failed to send reply:", err);
+      });
+    };
 
     const userGetter = new UserGetter();
     const linkedAccount = await userGetter.byDiscordId(interaction.user.id);
 
     if (!linkedAccount) {
-      return interaction.editReply({
+      return respond({
         embeds: [
           new EmbedBuilder()
             .setTitle("No Linked Account")
@@ -48,7 +56,7 @@ export class StaffAuditReportCommand extends Command {
 
     const userPermissions = await getUserPermissions(linkedAccount);
     if (!hasPermission(userPermissions, AUDIT_PERMISSION_NODE)) {
-      return interaction.editReply({
+      return respond({
         embeds: [
           new EmbedBuilder()
             .setTitle("No Permission")
@@ -61,8 +69,8 @@ export class StaffAuditReportCommand extends Command {
     try {
       await runStaffAuditReport();
     } catch (error) {
-      console.error("Failed to run staff audit report manually", error);
-      return interaction.editReply({
+      console.error("[StaffAuditReport] Failed to run report:", error);
+      return respond({
         embeds: [
           new EmbedBuilder()
             .setTitle("Report Failed")
@@ -74,7 +82,7 @@ export class StaffAuditReportCommand extends Command {
       });
     }
 
-    return interaction.editReply({
+    return respond({
       embeds: [
         new EmbedBuilder()
           .setTitle("Staff Audit Report Sent")
