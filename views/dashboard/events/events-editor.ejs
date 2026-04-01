@@ -1,0 +1,616 @@
+<%- include("../../modules/header.ejs", {
+    pageTitle: pageTitle,
+    pageDescription: mode === 'create' ? 'Create New Event' : 'Edit Event'
+}) %>
+
+<%- include("../../modules/navigationBar.ejs") %>
+
+<%- include("../../partials/miniHeader.ejs", {
+  headerTitle: mode === 'create' ? 'Create Event' : 'Edit Event',
+  backgroundImage: globalImage
+}) %>
+
+<%- include("../../modules/dashboard/dashboard-header.ejs") %>
+
+<%
+  const ev = eventData || {};
+  const isPublished = ev.status === 'published';
+  const apiEndpoint = isPublished ? '/api/events/update-published' : (mode === 'create' ? '/api/events/create' : '/api/events/update');
+  const successRedirect = '/dashboard/events/view?eventId=';
+%>
+
+<div class="container my-4">
+    <div class="row g-4">
+        <div class="col-lg-3">
+            <%- include("../../modules/dashboard/dashboard-sidebar.ejs") %>
+        </div>
+        <main class="col-lg-9">
+            <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                <h1 class="h2"><%= mode === 'create' ? 'Create Event' : (isPublished ? 'Edit Live Event' : 'Edit Event') %></h1>
+                <div class="btn-toolbar mb-2 mb-md-0 gap-2">
+                    <% if (mode === 'edit') { %>
+                        <a href="/dashboard/events/view?eventId=<%= ev.eventId %>" class="btn btn-sm btn-outline-secondary">
+                            <i class="fas fa-arrow-left fa-fw me-1"></i>Back
+                        </a>
+                    <% } else { %>
+                        <a href="/dashboard/events/list" class="btn btn-sm btn-outline-secondary">
+                            <i class="fas fa-arrow-left fa-fw me-1"></i>Back
+                        </a>
+                    <% } %>
+                </div>
+            </div>
+
+            <% if (req.cookies.alertType) { %>
+                <%- include("../../partials/alert.ejs", {
+                  alertType: req.cookies.alertType,
+                  content: req.cookies.alertContent
+                }) %>
+            <% } %>
+
+            <% if (isPublished) { %>
+                <div class="alert alert-warning mb-3">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    <strong>Editing a live event.</strong> Saving will update the website and sync changes to Discord.
+                </div>
+            <% } %>
+
+            <!-- Tab navigation -->
+            <ul class="nav nav-tabs mb-3" id="editorTabs" role="tablist">
+                <li class="nav-item"><a class="nav-link active" data-bs-toggle="tab" href="#tab-details">Details</a></li>
+                <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#tab-branding">Branding</a></li>
+                <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#tab-hosts">Hosts</a></li>
+                <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#tab-actions">Actions</a></li>
+                <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#tab-announcements">Announcements</a></li>
+            </ul>
+
+            <form id="eventForm">
+                <% if (mode === 'edit') { %>
+                    <input type="hidden" name="eventId" value="<%= ev.eventId %>">
+                <% } %>
+
+                <!-- ============================================================ -->
+                <!-- TAB: Details -->
+                <!-- ============================================================ -->
+                <div class="tab-content">
+                <div class="tab-pane fade show active" id="tab-details">
+                    <div class="card mb-3">
+                        <div class="card-body">
+                            <div class="mb-3">
+                                <label class="form-label fw-semibold">Title <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" name="title" value="<%= ev.title || '' %>" required maxlength="255">
+                            </div>
+
+                            <div class="row g-3 mb-3">
+                                <div class="col-md-6">
+                                    <label class="form-label fw-semibold">Event Type</label>
+                                    <select class="form-select" name="eventType">
+                                        <option value="once" <%= (ev.eventType || 'once') === 'once' ? 'selected' : '' %>>One-off Event</option>
+                                        <option value="recurring" <%= ev.eventType === 'recurring' ? 'selected' : '' %>>Recurring Event</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-semibold">Visibility</label>
+                                    <select class="form-select" name="visibility">
+                                        <option value="public" <%= (ev.visibility || 'public') === 'public' ? 'selected' : '' %>>Public</option>
+                                        <option value="private" <%= ev.visibility === 'private' ? 'selected' : '' %>>Private</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="row g-3 mb-3">
+                                <div class="col-md-5">
+                                    <label class="form-label fw-semibold">Start Date/Time <span class="text-danger">*</span></label>
+                                    <input type="datetime-local" class="form-control" name="startAt" id="startAt"
+                                        value="<% if (ev.startAt) { %><%= new Date(ev.startAt).toISOString().slice(0,16) %><% } %>" required>
+                                </div>
+                                <div class="col-md-5">
+                                    <label class="form-label fw-semibold">End Date/Time <span class="text-danger">*</span></label>
+                                    <input type="datetime-local" class="form-control" name="endAt" id="endAt"
+                                        value="<% if (ev.endAt) { %><%= new Date(ev.endAt).toISOString().slice(0,16) %><% } %>" required>
+                                </div>
+                                <div class="col-md-2">
+                                    <label class="form-label fw-semibold">Timezone</label>
+                                    <input type="text" class="form-control" name="timezone" value="<%= ev.timezone || 'UTC' %>" placeholder="UTC">
+                                    <small class="text-muted">Stored in UTC. Use this as a display hint.</small>
+                                </div>
+                            </div>
+                            <small class="text-muted d-block mb-3">Times are entered and stored in UTC.</small>
+
+                            <div class="mb-3">
+                                <label class="form-label fw-semibold">Description</label>
+                                <textarea class="form-control summernote-editor" name="description" rows="6"><%= ev.description || '' %></textarea>
+                            </div>
+
+                            <div class="row g-3 mb-3">
+                                <div class="col-md-4">
+                                    <label class="form-label fw-semibold">Location Label</label>
+                                    <input type="text" class="form-control" name="locationLabel" value="<%= ev.locationLabel || '' %>" placeholder="e.g. Main Hall">
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label fw-semibold">Server Name</label>
+                                    <input type="text" class="form-control" name="serverName" value="<%= ev.serverName || '' %>" placeholder="e.g. Survival">
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label fw-semibold">Server IP</label>
+                                    <input type="text" class="form-control" name="serverIp" value="<%= ev.serverIp || '' %>" placeholder="e.g. play.example.com">
+                                </div>
+                            </div>
+
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label class="form-label fw-semibold">Tags</label>
+                                    <input type="text" class="form-control" id="tagsInput" placeholder="tag1, tag2, tag3"
+                                        value="<% try { const t = Array.isArray(ev.tags) ? ev.tags : (ev.tags ? JSON.parse(ev.tags) : []); %><%= t.join(', ') %><% } catch(e) { %><% } %>">
+                                    <input type="hidden" name="tagsJson" id="tagsJson">
+                                </div>
+                                <div class="col-md-3 d-flex align-items-end">
+                                    <div class="form-check form-switch mb-2">
+                                        <input class="form-check-input" type="checkbox" name="featured" id="featuredCheck" <%= ev.featured ? 'checked' : '' %> value="true">
+                                        <label class="form-check-label" for="featuredCheck">Featured event</label>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <% if (templatesData && templatesData.success && templatesData.data && templatesData.data.length > 0 && mode === 'create') { %>
+                            <div class="mt-3">
+                                <label class="form-label fw-semibold">From Template <small class="text-muted">(optional)</small></label>
+                                <select class="form-select" name="templateId" id="templateSelector">
+                                    <option value="">— No template —</option>
+                                    <% templatesData.data.forEach(t => { %>
+                                        <option value="<%= t.templateId %>"><%= t.title %></option>
+                                    <% }) %>
+                                </select>
+                            </div>
+                            <% } %>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ============================================================ -->
+                <!-- TAB: Branding -->
+                <!-- ============================================================ -->
+                <div class="tab-pane fade" id="tab-branding">
+                    <div class="card mb-3">
+                        <div class="card-body">
+                            <div class="mb-3">
+                                <label class="form-label fw-semibold">Banner Image URL</label>
+                                <input type="url" class="form-control" name="bannerUrl" value="<%= ev.bannerUrl || '' %>" placeholder="https://…" id="bannerUrlInput">
+                                <small class="text-muted">Displayed as the hero image on the event page and in Discord embeds.</small>
+                                <div id="bannerPreview" class="mt-2 <%= ev.bannerUrl ? '' : 'd-none' %>">
+                                    <img src="<%= ev.bannerUrl || '' %>" class="img-fluid rounded" style="max-height:200px" alt="Banner preview">
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label fw-semibold">Logo / Thumbnail URL</label>
+                                <input type="url" class="form-control" name="logoUrl" value="<%= ev.logoUrl || '' %>" placeholder="https://…" id="logoUrlInput">
+                                <small class="text-muted">Shown as thumbnail in Discord embeds and on the event page.</small>
+                                <div id="logoPreview" class="mt-2 <%= ev.logoUrl ? '' : 'd-none' %>">
+                                    <img src="<%= ev.logoUrl || '' %>" class="rounded" style="max-height:80px;max-width:80px;object-fit:contain" alt="Logo preview">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ============================================================ -->
+                <!-- TAB: Hosts -->
+                <!-- ============================================================ -->
+                <div class="tab-pane fade" id="tab-hosts">
+                    <div class="card mb-3">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <span>Event Hosts / Team</span>
+                            <button type="button" class="btn btn-sm btn-primary" id="addHostBtn">
+                                <i class="fas fa-plus me-1"></i>Add Host
+                            </button>
+                        </div>
+                        <div class="card-body">
+                            <div id="hostsContainer">
+                                <% const hosts = ev.hosts || []; %>
+                                <% hosts.forEach((h, i) => { %>
+                                    <%- include("../../partials/events/host-row.ejs", { host: h, index: i }) %>
+                                <% }) %>
+                            </div>
+                            <input type="hidden" name="hostsJson" id="hostsJson">
+                            <p class="text-muted small mt-2">Hosts are displayed on the public event page.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ============================================================ -->
+                <!-- TAB: Actions -->
+                <!-- ============================================================ -->
+                <div class="tab-pane fade" id="tab-actions">
+                    <div class="card mb-3">
+                        <div class="card-header">Publish & Update Actions</div>
+                        <div class="card-body">
+                            <p class="text-muted small mb-3">Configure what happens when this event is published or updated.</p>
+                            <div id="actionsContainer">
+                                <% const actions = ev.actions || []; %>
+                                <% const actionTypes = [
+                                    { type: 'discord_message', label: 'Post Discord Message', icon: 'fab fa-discord' },
+                                    { type: 'discord_guild_event', label: 'Create Discord Guild Event', icon: 'fab fa-discord' },
+                                    { type: 'website_page', label: 'Publish Website Page', icon: 'fas fa-globe' },
+                                ]; %>
+                                <% actionTypes.forEach(at => {
+                                    const existing = actions.find(a => a.actionType === at.type) || { actionType: at.type, trigger: 'on_publish', enabled: false, config: {} };
+                                %>
+                                <div class="card mb-2">
+                                    <div class="card-body p-3">
+                                        <div class="d-flex align-items-center gap-3">
+                                            <div class="form-check form-switch mb-0">
+                                                <input class="form-check-input action-toggle" type="checkbox"
+                                                    data-action-type="<%= at.type %>"
+                                                    id="action_<%= at.type %>"
+                                                    <%= existing.enabled ? 'checked' : '' %>>
+                                            </div>
+                                            <label for="action_<%= at.type %>" class="mb-0 flex-grow-1">
+                                                <i class="<%= at.icon %> me-2"></i><strong><%= at.label %></strong>
+                                            </label>
+                                        </div>
+                                        <% if (at.type === 'discord_message' || at.type === 'discord_guild_event') { %>
+                                        <div class="mt-2 action-config" data-action-type="<%= at.type %>">
+                                            <div class="row g-2">
+                                                <% if (at.type === 'discord_message') { %>
+                                                <div class="col-md-6">
+                                                    <label class="form-label small">Channel ID</label>
+                                                    <input type="text" class="form-control form-control-sm" data-config-key="channelId" data-action-type="<%= at.type %>"
+                                                        value="<%= (existing.config || {}).channelId || '' %>" placeholder="Discord Channel ID">
+                                                </div>
+                                                <% } %>
+                                                <% if (at.type === 'discord_guild_event') { %>
+                                                <div class="col-md-6">
+                                                    <label class="form-label small">Guild ID</label>
+                                                    <input type="text" class="form-control form-control-sm" data-config-key="guildId" data-action-type="<%= at.type %>"
+                                                        value="<%= (existing.config || {}).guildId || '' %>" placeholder="Discord Server ID">
+                                                </div>
+                                                <% } %>
+                                            </div>
+                                        </div>
+                                        <% } %>
+                                    </div>
+                                </div>
+                                <% }) %>
+                            </div>
+                            <input type="hidden" name="actionsJson" id="actionsJson">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ============================================================ -->
+                <!-- TAB: Announcements -->
+                <!-- ============================================================ -->
+                <div class="tab-pane fade" id="tab-announcements">
+                    <div class="card mb-3">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <span>Announcements</span>
+                            <button type="button" class="btn btn-sm btn-primary" id="addAnnouncementBtn">
+                                <i class="fas fa-plus me-1"></i>Add Announcement
+                            </button>
+                        </div>
+                        <div class="card-body">
+                            <p class="text-muted small mb-3">
+                                Configure automated Discord messages for different points in the event lifecycle.
+                                Times are relative to the event start time.
+                            </p>
+                            <div id="announcementsContainer">
+                                <% const announcements = ev.announcements || []; %>
+                                <% announcements.forEach((a, i) => { %>
+                                    <%- include("../../partials/events/announcement-row.ejs", { announcement: a, index: i }) %>
+                                <% }) %>
+                            </div>
+                            <input type="hidden" name="announcementsJson" id="announcementsJson">
+                        </div>
+                    </div>
+                </div>
+                </div><!-- end tab-content -->
+
+                <div class="d-flex gap-2 mt-3">
+                    <button type="submit" class="btn btn-primary" id="saveBtn">
+                        <i class="fas fa-save me-1"></i><%= isPublished ? 'Save & Sync' : (mode === 'create' ? 'Create Draft' : 'Save Draft') %>
+                    </button>
+                    <% if (!isPublished && mode === 'edit' && (ev.status === 'draft' || ev.status === 'rejected')) { %>
+                        <button type="button" class="btn btn-warning" id="submitReviewBtn" data-event-id="<%= ev.eventId %>">
+                            <i class="fas fa-paper-plane me-1"></i>Submit for Review
+                        </button>
+                    <% } %>
+                    <% if (mode === 'edit' && ev.status === 'approved') { %>
+                        <button type="button" class="btn btn-success" id="publishBtn" data-event-id="<%= ev.eventId %>">
+                            <i class="fas fa-globe me-1"></i>Publish
+                        </button>
+                    <% } %>
+                </div>
+            </form>
+        </main>
+    </div>
+</div>
+
+<!-- Host Row Template -->
+<template id="hostRowTemplate">
+    <div class="host-row border rounded p-3 mb-2 position-relative">
+        <button type="button" class="btn btn-xs btn-danger position-absolute top-0 end-0 m-2 remove-host">×</button>
+        <div class="row g-2">
+            <div class="col-md-4">
+                <label class="form-label small">Display Name</label>
+                <input type="text" class="form-control form-control-sm host-displayName" placeholder="Host Name">
+            </div>
+            <div class="col-md-3">
+                <label class="form-label small">Role</label>
+                <select class="form-select form-select-sm host-role">
+                    <option value="host">Host</option>
+                    <option value="co_host">Co-Host</option>
+                    <option value="coordinator">Coordinator</option>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label small">Discord ID</label>
+                <input type="text" class="form-control form-control-sm host-discordUserId" placeholder="Discord User ID">
+            </div>
+        </div>
+    </div>
+</template>
+
+<!-- Announcement Row Template -->
+<template id="announcementRowTemplate">
+    <div class="announcement-row border rounded p-3 mb-2 position-relative">
+        <button type="button" class="btn btn-xs btn-danger position-absolute top-0 end-0 m-2 remove-announcement">×</button>
+        <div class="row g-2">
+            <div class="col-md-3">
+                <label class="form-label small">Label</label>
+                <input type="text" class="form-control form-control-sm ann-label" placeholder="e.g. 24h Reminder">
+            </div>
+            <div class="col-md-2">
+                <label class="form-label small">Type</label>
+                <select class="form-select form-select-sm ann-type">
+                    <option value="on_publish">On Publish</option>
+                    <option value="reminder">Reminder</option>
+                    <option value="event_start">At Start</option>
+                    <option value="recap">Recap</option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label small">Trigger</label>
+                <select class="form-select form-select-sm ann-trigger">
+                    <option value="on_publish">On Publish</option>
+                    <option value="before_event">Before Event</option>
+                    <option value="event_start">Event Start</option>
+                </select>
+            </div>
+            <div class="col-md-2 ann-offset-group">
+                <label class="form-label small">Minutes Before</label>
+                <input type="number" class="form-control form-control-sm ann-offsetMinutes" placeholder="60" min="0">
+            </div>
+            <div class="col-md-3">
+                <label class="form-label small">Channel ID</label>
+                <input type="text" class="form-control form-control-sm ann-channelId" placeholder="Discord Channel ID">
+            </div>
+            <div class="col-12">
+                <label class="form-label small">Content Template <small class="text-muted">(leave blank for default)</small></label>
+                <textarea class="form-control form-control-sm ann-contentTemplate" rows="2" placeholder="Use {title}, {startAt}, {startRelative}, {location}…"></textarea>
+            </div>
+        </div>
+    </div>
+</template>
+
+<%- include("../../modules/footer.ejs") %>
+
+<style>
+.btn-xs { padding: 0.15rem 0.5rem; font-size: 0.75rem; }
+</style>
+
+<script>
+// ============================================================
+// Hosts management
+// ============================================================
+function collectHosts() {
+    const rows = document.querySelectorAll('#hostsContainer .host-row');
+    return Array.from(rows).map(row => ({
+        displayName: row.querySelector('.host-displayName')?.value || null,
+        role: row.querySelector('.host-role')?.value || 'host',
+        discordUserId: row.querySelector('.host-discordUserId')?.value || null,
+        userId: row.querySelector('.host-userId')?.value || null,
+    })).filter(h => h.displayName || h.discordUserId || h.userId);
+}
+
+function addHostRow(host = {}) {
+    const tmpl = document.getElementById('hostRowTemplate').content.cloneNode(true);
+    const row = tmpl.querySelector('.host-row');
+    if (host.displayName) row.querySelector('.host-displayName').value = host.displayName;
+    if (host.role) row.querySelector('.host-role').value = host.role;
+    if (host.discordUserId) row.querySelector('.host-discordUserId').value = host.discordUserId;
+    row.querySelector('.remove-host').addEventListener('click', () => row.remove());
+    document.getElementById('hostsContainer').appendChild(tmpl);
+}
+
+document.getElementById('addHostBtn').addEventListener('click', () => addHostRow());
+
+// ============================================================
+// Announcements management
+// ============================================================
+function collectAnnouncements() {
+    const rows = document.querySelectorAll('#announcementsContainer .announcement-row');
+    return Array.from(rows).map(row => ({
+        label: row.querySelector('.ann-label')?.value || null,
+        announcementType: row.querySelector('.ann-type')?.value || 'reminder',
+        platform: 'discord',
+        channelId: row.querySelector('.ann-channelId')?.value || null,
+        contentTemplate: row.querySelector('.ann-contentTemplate')?.value || null,
+        triggerType: row.querySelector('.ann-trigger')?.value || 'before_event',
+        offsetMinutes: parseInt(row.querySelector('.ann-offsetMinutes')?.value || '0') || null,
+        enabled: true,
+    }));
+}
+
+function addAnnouncementRow(ann = {}) {
+    const tmpl = document.getElementById('announcementRowTemplate').content.cloneNode(true);
+    const row = tmpl.querySelector('.announcement-row');
+    if (ann.label) row.querySelector('.ann-label').value = ann.label;
+    if (ann.announcementType) row.querySelector('.ann-type').value = ann.announcementType;
+    if (ann.triggerType) row.querySelector('.ann-trigger').value = ann.triggerType;
+    if (ann.offsetMinutes) row.querySelector('.ann-offsetMinutes').value = ann.offsetMinutes;
+    if (ann.channelId) row.querySelector('.ann-channelId').value = ann.channelId;
+    if (ann.contentTemplate) row.querySelector('.ann-contentTemplate').value = ann.contentTemplate;
+
+    const triggerSel = row.querySelector('.ann-trigger');
+    const offsetGroup = row.querySelector('.ann-offset-group');
+    const toggleOffset = () => {
+        offsetGroup.classList.toggle('d-none', triggerSel.value !== 'before_event');
+    };
+    triggerSel.addEventListener('change', toggleOffset);
+    toggleOffset();
+
+    row.querySelector('.remove-announcement').addEventListener('click', () => row.remove());
+    document.getElementById('announcementsContainer').appendChild(tmpl);
+}
+
+document.getElementById('addAnnouncementBtn').addEventListener('click', () => addAnnouncementRow());
+
+// Re-hydrate existing announcement rows
+document.querySelectorAll('#announcementsContainer .announcement-row').forEach(row => {
+    const trigger = row.querySelector('.ann-trigger');
+    const offsetGroup = row.querySelector('.ann-offset-group');
+    if (trigger && offsetGroup) {
+        const toggle = () => offsetGroup.classList.toggle('d-none', trigger.value !== 'before_event');
+        trigger.addEventListener('change', toggle);
+        toggle();
+    }
+    row.querySelector('.remove-announcement')?.addEventListener('click', () => row.remove());
+});
+
+// ============================================================
+// Actions
+// ============================================================
+function collectActions() {
+    const actionTypes = ['discord_message', 'discord_guild_event', 'website_page'];
+    return actionTypes.map(type => {
+        const toggle = document.querySelector(`.action-toggle[data-action-type="${type}"]`);
+        const cfgInputs = document.querySelectorAll(`[data-config-key][data-action-type="${type}"]`);
+        const config = {};
+        cfgInputs.forEach(inp => { if (inp.value) config[inp.dataset.configKey] = inp.value; });
+        return {
+            actionType: type,
+            trigger: 'on_publish',
+            enabled: toggle ? toggle.checked : false,
+            config,
+        };
+    });
+}
+
+// ============================================================
+// Image previews
+// ============================================================
+function setupPreview(inputId, previewId) {
+    const input = document.getElementById(inputId);
+    const preview = document.getElementById(previewId);
+    if (!input || !preview) return;
+    input.addEventListener('change', () => {
+        const url = input.value.trim();
+        const img = preview.querySelector('img');
+        if (url && img) {
+            img.src = url;
+            preview.classList.remove('d-none');
+        } else {
+            preview.classList.add('d-none');
+        }
+    });
+}
+setupPreview('bannerUrlInput', 'bannerPreview');
+setupPreview('logoUrlInput', 'logoPreview');
+
+// ============================================================
+// Form submission
+// ============================================================
+document.getElementById('eventForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    const form = e.target;
+    const formData = new FormData(form);
+    const body = Object.fromEntries(formData.entries());
+
+    // Tags
+    const tagsRaw = document.getElementById('tagsInput').value;
+    body.tags = tagsRaw.split(',').map(t => t.trim()).filter(Boolean);
+
+    // Hosts
+    body.hosts = collectHosts();
+
+    // Actions
+    body.actions = collectActions();
+
+    // Announcements
+    body.announcements = collectAnnouncements();
+
+    // Boolean
+    body.featured = document.getElementById('featuredCheck').checked;
+
+    const saveBtn = document.getElementById('saveBtn');
+    saveBtn.disabled = true;
+    saveBtn.textContent = 'Saving…';
+
+    try {
+        const apiEndpoint = '<%= apiEndpoint %>';
+        const res = await fetch(apiEndpoint, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'x-access-token': '<%= process.env.apiKey %>' },
+            body: JSON.stringify(body),
+        });
+        const data = await res.json();
+
+        if (data.success) {
+            // Also update actions and announcements separately
+            const eventId = data.data?.eventId || body.eventId;
+            await Promise.all([
+                fetch('/api/events/actions/update', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'x-access-token': '<%= process.env.apiKey %>' },
+                    body: JSON.stringify({ eventId, actions: body.actions }),
+                }),
+                fetch('/api/events/announcements/update', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'x-access-token': '<%= process.env.apiKey %>' },
+                    body: JSON.stringify({ eventId, announcements: body.announcements }),
+                }),
+            ]);
+            window.location.href = `/dashboard/events/view?eventId=${eventId}`;
+        } else {
+            alert('Error: ' + data.message);
+            saveBtn.disabled = false;
+            saveBtn.textContent = '<%= isPublished ? "Save & Sync" : (mode === "create" ? "Create Draft" : "Save Draft") %>';
+        }
+    } catch (err) {
+        alert('Network error: ' + err.message);
+        saveBtn.disabled = false;
+    }
+});
+
+// Submit for review
+const submitBtn = document.getElementById('submitReviewBtn');
+if (submitBtn) {
+    submitBtn.addEventListener('click', async () => {
+        if (!confirm('Submit this event for admin review?')) return;
+        const res = await fetch('/api/events/submit-review', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'x-access-token': '<%= process.env.apiKey %>' },
+            body: JSON.stringify({ eventId: submitBtn.dataset.eventId }),
+        });
+        const data = await res.json();
+        if (data.success) window.location.href = `/dashboard/events/view?eventId=${submitBtn.dataset.eventId}`;
+        else alert('Error: ' + data.message);
+    });
+}
+
+// Publish
+const publishBtn = document.getElementById('publishBtn');
+if (publishBtn) {
+    publishBtn.addEventListener('click', async () => {
+        if (!confirm('Publish this event? This will trigger Discord and website actions.')) return;
+        const res = await fetch('/api/events/publish', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'x-access-token': '<%= process.env.apiKey %>' },
+            body: JSON.stringify({ eventId: publishBtn.dataset.eventId }),
+        });
+        const data = await res.json();
+        if (data.success) window.location.href = `/dashboard/events/view?eventId=${publishBtn.dataset.eventId}`;
+        else alert('Error: ' + data.message);
+    });
+}
+</script>

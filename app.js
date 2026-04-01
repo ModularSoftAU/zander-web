@@ -48,6 +48,8 @@ import("./cron/watchTwitchCron.js");
 import("./cron/watchYoutubeCron.js");
 import("./cron/voteMonthlyRewardCron.js");
 import("./cron/unverifiedReminderCron.js");
+import("./cron/eventAnnouncementCron.js");
+import("./cron/eventTemplateCron.js");
 
 //
 // Website Related

@@ -1,0 +1,294 @@
+<%- include("../../modules/header.ejs", {
+    pageTitle: pageTitle,
+    pageDescription: mode === 'create' ? 'Create Template' : 'Edit Template'
+}) %>
+
+<%- include("../../modules/navigationBar.ejs") %>
+
+<%- include("../../partials/miniHeader.ejs", {
+  headerTitle: mode === 'create' ? 'Create Template' : 'Edit Template',
+  backgroundImage: globalImage
+}) %>
+
+<%- include("../../modules/dashboard/dashboard-header.ejs") %>
+
+<%
+const tmpl = templateData || {};
+const recDays = (() => {
+    try { return Array.isArray(tmpl.recurrenceDays) ? tmpl.recurrenceDays : JSON.parse(tmpl.recurrenceDays || '[]'); }
+    catch(e) { return []; }
+})();
+const dayNames = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+%>
+
+<div class="container my-4">
+    <div class="row g-4">
+        <div class="col-lg-3">
+            <%- include("../../modules/dashboard/dashboard-sidebar.ejs") %>
+        </div>
+        <main class="col-lg-9">
+            <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                <h1 class="h2"><%= mode === 'create' ? 'Create Template' : 'Edit Template' %></h1>
+                <a href="/dashboard/events/templates" class="btn btn-sm btn-outline-secondary">
+                    <i class="fas fa-arrow-left fa-fw me-1"></i>Back
+                </a>
+            </div>
+
+            <% if (req.cookies.alertType) { %>
+                <%- include("../../partials/alert.ejs", {
+                  alertType: req.cookies.alertType,
+                  content: req.cookies.alertContent
+                }) %>
+            <% } %>
+
+            <form id="templateForm">
+                <% if (mode === 'edit') { %>
+                    <input type="hidden" name="templateId" value="<%= tmpl.templateId %>">
+                <% } %>
+
+                <div class="card mb-3">
+                    <div class="card-header">Basic Info</div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Template Name <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" name="title" value="<%= tmpl.title || '' %>" required maxlength="255">
+                            <small class="text-muted">This becomes the default event title for generated drafts.</small>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Default Description</label>
+                            <textarea class="form-control" name="description" rows="4"><%= tmpl.description || '' %></textarea>
+                        </div>
+                        <div class="row g-3">
+                            <div class="col-md-3">
+                                <label class="form-label fw-semibold">Default Start Time (UTC)</label>
+                                <input type="time" class="form-control" name="defaultStartTime" value="<%= tmpl.defaultStartTime || '' %>">
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label fw-semibold">Default End Time (UTC)</label>
+                                <input type="time" class="form-control" name="defaultEndTime" value="<%= tmpl.defaultEndTime || '' %>">
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label fw-semibold">Duration (mins)</label>
+                                <input type="number" class="form-control" name="defaultDurationMins" min="1" value="<%= tmpl.defaultDurationMins || '' %>" placeholder="60">
+                                <small class="text-muted">Used if no end time set.</small>
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label fw-semibold">Timezone</label>
+                                <input type="text" class="form-control" name="timezone" value="<%= tmpl.timezone || 'UTC' %>">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card mb-3">
+                    <div class="card-header">Recurrence</div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Recurrence Type</label>
+                            <select class="form-select" name="recurrenceType" id="recurrenceType">
+                                <option value="weekly" <%= (tmpl.recurrenceType || 'weekly') === 'weekly' ? 'selected' : '' %>>Weekly (specific days)</option>
+                                <option value="daily" <%= tmpl.recurrenceType === 'daily' ? 'selected' : '' %>>Daily</option>
+                                <option value="custom" <%= tmpl.recurrenceType === 'custom' ? 'selected' : '' %>>Every N Days</option>
+                            </select>
+                        </div>
+
+                        <div id="weeklyOptions" class="mb-3 <%= (tmpl.recurrenceType || 'weekly') !== 'weekly' ? 'd-none' : '' %>">
+                            <label class="form-label fw-semibold">Days of Week</label>
+                            <div class="d-flex flex-wrap gap-2">
+                                <% dayNames.forEach((day, i) => { %>
+                                <div class="form-check form-check-inline">
+                                    <input class="form-check-input recurrence-day" type="checkbox" value="<%= i %>" id="day_<%= i %>" <%= recDays.includes(i) ? 'checked' : '' %>>
+                                    <label class="form-check-label" for="day_<%= i %>"><%= day %></label>
+                                </div>
+                                <% }) %>
+                            </div>
+                            <input type="hidden" name="recurrenceDaysJson" id="recurrenceDaysJson">
+                        </div>
+
+                        <div id="customOptions" class="mb-3 <%= tmpl.recurrenceType !== 'custom' ? 'd-none' : '' %>">
+                            <label class="form-label fw-semibold">Every N Days</label>
+                            <input type="number" class="form-control" name="recurrenceEveryDays" min="1" value="<%= tmpl.recurrenceEveryDays || '' %>" placeholder="7">
+                        </div>
+
+                        <div class="row g-3">
+                            <div class="col-md-4">
+                                <label class="form-label fw-semibold">Draft Lead Time (days)</label>
+                                <input type="number" class="form-control" name="draftAdvanceDays" min="0" value="<%= tmpl.draftAdvanceDays || 7 %>">
+                                <small class="text-muted">Generate the draft this many days before the event.</small>
+                            </div>
+                            <div class="col-md-4 d-flex align-items-end">
+                                <div class="form-check form-switch mb-2">
+                                    <input class="form-check-input" type="checkbox" name="autoGenerateDrafts" id="autoGenCheck" value="true" <%= (tmpl.autoGenerateDrafts !== false) ? 'checked' : '' %>>
+                                    <label class="form-check-label" for="autoGenCheck">Auto-generate drafts</label>
+                                </div>
+                            </div>
+                            <div class="col-md-4 d-flex align-items-end">
+                                <div class="form-check form-switch mb-2">
+                                    <input class="form-check-input" type="checkbox" name="isActive" id="isActiveCheck" value="true" <%= (tmpl.isActive !== false) ? 'checked' : '' %>>
+                                    <label class="form-check-label" for="isActiveCheck">Template active</label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card mb-3">
+                    <div class="card-header">Default Location</div>
+                    <div class="card-body">
+                        <div class="row g-3">
+                            <div class="col-md-4">
+                                <label class="form-label fw-semibold">Location Label</label>
+                                <input type="text" class="form-control" name="locationLabel" value="<%= tmpl.locationLabel || '' %>">
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label fw-semibold">Server Name</label>
+                                <input type="text" class="form-control" name="serverName" value="<%= tmpl.serverName || '' %>">
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label fw-semibold">Server IP</label>
+                                <input type="text" class="form-control" name="serverIp" value="<%= tmpl.serverIp || '' %>">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card mb-3">
+                    <div class="card-header">Default Branding</div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Banner URL</label>
+                            <input type="url" class="form-control" name="bannerUrl" value="<%= tmpl.bannerUrl || '' %>">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Logo URL</label>
+                            <input type="url" class="form-control" name="logoUrl" value="<%= tmpl.logoUrl || '' %>">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card mb-3">
+                    <div class="card-header d-flex justify-content-between">
+                        <span>Default Hosts</span>
+                        <button type="button" class="btn btn-sm btn-primary" id="addTemplateHostBtn">
+                            <i class="fas fa-plus me-1"></i>Add Host
+                        </button>
+                    </div>
+                    <div class="card-body">
+                        <div id="templateHostsContainer">
+                            <% const defaultHosts = tmpl.defaultHosts || []; %>
+                            <% defaultHosts.forEach((h, i) => { %>
+                            <div class="host-row border rounded p-3 mb-2 position-relative">
+                                <button type="button" class="btn btn-xs btn-danger position-absolute top-0 end-0 m-2 remove-host">×</button>
+                                <div class="row g-2">
+                                    <div class="col-md-4">
+                                        <label class="form-label small">Display Name</label>
+                                        <input type="text" class="form-control form-control-sm host-displayName" value="<%= h.displayName || '' %>">
+                                    </div>
+                                    <div class="col-md-3">
+                                        <label class="form-label small">Role</label>
+                                        <select class="form-select form-select-sm host-role">
+                                            <option value="host" <%= h.role === 'host' ? 'selected' : '' %>>Host</option>
+                                            <option value="co_host" <%= h.role === 'co_host' ? 'selected' : '' %>>Co-Host</option>
+                                            <option value="coordinator" <%= h.role === 'coordinator' ? 'selected' : '' %>>Coordinator</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <label class="form-label small">Discord ID</label>
+                                        <input type="text" class="form-control form-control-sm host-discordUserId" value="<%= h.discordUserId || '' %>">
+                                    </div>
+                                </div>
+                            </div>
+                            <% }) %>
+                        </div>
+                        <input type="hidden" name="defaultHostsJson" id="defaultHostsJson">
+                    </div>
+                </div>
+
+                <div class="d-flex gap-2">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save me-1"></i><%= mode === 'create' ? 'Create Template' : 'Save Template' %>
+                    </button>
+                </div>
+            </form>
+        </main>
+    </div>
+</div>
+
+<%- include("../../modules/footer.ejs") %>
+
+<style>.btn-xs { padding: 0.15rem 0.5rem; font-size: 0.75rem; }</style>
+
+<script>
+// Recurrence type toggle
+const recTypeSelect = document.getElementById('recurrenceType');
+const weeklyOpts = document.getElementById('weeklyOptions');
+const customOpts = document.getElementById('customOptions');
+
+function toggleRecurrenceOptions() {
+    const val = recTypeSelect.value;
+    weeklyOpts.classList.toggle('d-none', val !== 'weekly');
+    customOpts.classList.toggle('d-none', val !== 'custom');
+}
+recTypeSelect.addEventListener('change', toggleRecurrenceOptions);
+
+// Hosts
+function addTemplateHost(host = {}) {
+    const row = document.createElement('div');
+    row.className = 'host-row border rounded p-3 mb-2 position-relative';
+    row.innerHTML = `
+        <button type="button" class="btn btn-xs btn-danger position-absolute top-0 end-0 m-2 remove-host">×</button>
+        <div class="row g-2">
+            <div class="col-md-4"><label class="form-label small">Display Name</label>
+                <input type="text" class="form-control form-control-sm host-displayName" value="${host.displayName||''}"></div>
+            <div class="col-md-3"><label class="form-label small">Role</label>
+                <select class="form-select form-select-sm host-role">
+                    <option value="host" ${host.role==='host'?'selected':''}>Host</option>
+                    <option value="co_host" ${host.role==='co_host'?'selected':''}>Co-Host</option>
+                    <option value="coordinator" ${host.role==='coordinator'?'selected':''}>Coordinator</option>
+                </select></div>
+            <div class="col-md-3"><label class="form-label small">Discord ID</label>
+                <input type="text" class="form-control form-control-sm host-discordUserId" value="${host.discordUserId||''}"></div>
+        </div>`;
+    row.querySelector('.remove-host').addEventListener('click', () => row.remove());
+    document.getElementById('templateHostsContainer').appendChild(row);
+}
+
+document.getElementById('addTemplateHostBtn').addEventListener('click', () => addTemplateHost());
+document.querySelectorAll('#templateHostsContainer .remove-host').forEach(btn => {
+    btn.addEventListener('click', () => btn.closest('.host-row').remove());
+});
+
+// Form submission
+document.getElementById('templateForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const form = e.target;
+    const fd = new FormData(form);
+    const body = Object.fromEntries(fd.entries());
+
+    // Recurrence days
+    const days = Array.from(document.querySelectorAll('.recurrence-day:checked')).map(cb => parseInt(cb.value));
+    body.recurrenceDays = days;
+    body.autoGenerateDrafts = document.getElementById('autoGenCheck').checked;
+    body.isActive = document.getElementById('isActiveCheck').checked;
+    body.recurrenceEveryDays = body.recurrenceEveryDays ? parseInt(body.recurrenceEveryDays) : null;
+    body.defaultDurationMins = body.defaultDurationMins ? parseInt(body.defaultDurationMins) : null;
+    body.draftAdvanceDays = parseInt(body.draftAdvanceDays) || 7;
+
+    // Hosts
+    body.defaultHosts = Array.from(document.querySelectorAll('#templateHostsContainer .host-row')).map(row => ({
+        displayName: row.querySelector('.host-displayName')?.value || null,
+        role: row.querySelector('.host-role')?.value || 'host',
+        discordUserId: row.querySelector('.host-discordUserId')?.value || null,
+    })).filter(h => h.displayName || h.discordUserId);
+
+    const endpoint = '<%= mode === "create" ? "/api/events/templates/create" : "/api/events/templates/update" %>';
+    const res = await fetch(endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'x-access-token': '<%= process.env.apiKey %>' },
+        body: JSON.stringify(body),
+    });
+    const data = await res.json();
+    if (data.success) window.location.href = '/dashboard/events/templates';
+    else alert('Error: ' + data.message);
+});
+</script>

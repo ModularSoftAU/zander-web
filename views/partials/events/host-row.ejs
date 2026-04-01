@@ -1,0 +1,29 @@
+<div class="host-row border rounded p-3 mb-2 position-relative">
+    <button type="button" class="btn btn-xs btn-danger position-absolute top-0 end-0 m-2 remove-host">×</button>
+    <div class="row g-2">
+        <div class="col-md-4">
+            <label class="form-label small">Display Name</label>
+            <input type="text" class="form-control form-control-sm host-displayName" placeholder="Host Name" value="<%= host.displayName || '' %>">
+        </div>
+        <div class="col-md-3">
+            <label class="form-label small">Role</label>
+            <select class="form-select form-select-sm host-role">
+                <option value="host" <%= host.role === 'host' ? 'selected' : '' %>>Host</option>
+                <option value="co_host" <%= host.role === 'co_host' ? 'selected' : '' %>>Co-Host</option>
+                <option value="coordinator" <%= host.role === 'coordinator' ? 'selected' : '' %>>Coordinator</option>
+            </select>
+        </div>
+        <div class="col-md-3">
+            <label class="form-label small">Discord ID</label>
+            <input type="text" class="form-control form-control-sm host-discordUserId" placeholder="Discord User ID" value="<%= host.discordUserId || '' %>">
+        </div>
+    </div>
+</div>
+<script>
+(function() {
+    const row = document.querySelector('#hostsContainer .host-row:last-child');
+    if (row) {
+        row.querySelector('.remove-host').addEventListener('click', () => row.remove());
+    }
+})();
+</script>
