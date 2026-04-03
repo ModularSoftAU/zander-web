@@ -56,31 +56,21 @@ function buildMemberField(member) {
     return Number.isFinite(t) ? `<t:${t}:R>` : "_No record_";
   };
 
-  const lines = [];
-
-  // Account linkage — uuid is always present (sourced from LP),
-  // but audit data only exists if the member is on the website (userId set).
   const websiteLinked = !!member.userId;
   const discordLinked = !!member.discordId;
-  const discordStatus = discordLinked ? `✅ <@${member.discordId}>` : "❌ Discord not linked";
-  lines.push(`${discordStatus}`);
+  const lines = [];
 
-  // Minecraft — always in LP, but activity only tracked if website-registered
-  if (websiteLinked) {
-    lines.push(`**Minecraft** — Login: ${ts(member.audit_lastMinecraftLogin)} · Chat: ${ts(member.audit_lastMinecraftMessage)}`);
-  } else {
-    lines.push("**Minecraft** — _not registered on website_");
-  }
+  lines.push(discordLinked ? `<@${member.discordId}>` : "❌ No Discord linked");
 
-  // Discord
-  if (discordLinked) {
-    lines.push(`**Discord** — Chat: ${ts(member.audit_lastDiscordMessage)} · Voice: ${ts(member.audit_lastDiscordVoice)}`);
-  } else {
-    lines.push("**Discord** — _not linked_");
-  }
+  lines.push(websiteLinked
+    ? `⛏️ Login ${ts(member.audit_lastMinecraftLogin)} · Chat ${ts(member.audit_lastMinecraftMessage)}`
+    : "⛏️ _Not registered on website_");
 
-  // Website
-  lines.push(`**Website** — Login: ${websiteLinked ? ts(member.audit_lastWebsiteLogin) : "_not registered_"}`);
+  lines.push(discordLinked
+    ? `💬 Chat ${ts(member.audit_lastDiscordMessage)} · 🔊 Voice ${ts(member.audit_lastDiscordVoice)}`
+    : "💬 _No Discord linked_");
+
+  lines.push(`🌐 Login ${websiteLinked ? ts(member.audit_lastWebsiteLogin) : "_not registered_"}`);
 
   return lines.join("\n");
 }
@@ -212,10 +202,7 @@ export async function runStaffAuditReport() {
     fieldCount++;
   }
 
-  const timezone = auditConfig.timezone || "UTC";
-  currentEmbed.setFooter({
-    text: `Total active staff: ${staffMembers.length} · Schedule: ${auditConfig.dayOfWeek || "Monday"} ${auditConfig.time || "12:00"} ${timezone}`,
-  });
+  currentEmbed.setFooter({ text: `${staffMembers.length} active staff members` });
   embeds.push(currentEmbed);
 
   const channel = await client.channels.fetch(channelId);
