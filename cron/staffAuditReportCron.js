@@ -1,7 +1,8 @@
 import cron from "node-cron";
-import { Colors, EmbedBuilder, WebhookClient } from "discord.js";
+import { Colors, EmbedBuilder } from "discord.js";
 import { createRequire } from "module";
 import db from "../controllers/databaseController.js";
+import { client } from "../controllers/discordController.js";
 
 const require = createRequire(import.meta.url);
 const config = require("../config.json");
@@ -180,12 +181,9 @@ export async function runStaffAuditReport() {
     return;
   }
 
-  // Get webhook URL from staffAuditReport config or discord.webhooks fallback
-  const webhookUrl = auditConfig.webhookUrl || config?.discord?.webhooks?.staffAuditLog;
-  if (!webhookUrl || webhookUrl === "WEBHOOKURL") {
-    console.warn(
-      "Staff audit report skipped: no valid webhook URL configured."
-    );
+  const channelId = auditConfig.channelId;
+  if (!channelId) {
+    console.warn("Staff audit report skipped: no channelId configured.");
     return;
   }
 
@@ -241,14 +239,9 @@ export async function runStaffAuditReport() {
   });
   embeds.push(currentEmbed);
 
-  // Send via webhook
-  const webhookClient = new WebhookClient({ url: webhookUrl });
-  try {
-    for (const embed of embeds) {
-      await webhookClient.send({ embeds: [embed] });
-    }
-  } finally {
-    webhookClient.destroy?.();
+  const channel = await client.channels.fetch(channelId);
+  for (const embed of embeds) {
+    await channel.send({ embeds: [embed] });
   }
 
   console.log(
