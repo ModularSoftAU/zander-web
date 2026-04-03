@@ -1,7 +1,7 @@
 import cron from "node-cron";
 import { Colors, EmbedBuilder } from "discord.js";
 import { createRequire } from "module";
-import db from "../controllers/databaseController.js";
+import db, { luckpermsDb } from "../controllers/databaseController.js";
 import { client } from "../controllers/discordController.js";
 
 const require = createRequire(import.meta.url);
@@ -86,12 +86,15 @@ function buildMemberField(member) {
 }
 
 async function fetchActiveStaff() {
-  return new Promise((resolve, reject) => {
+  // Step 1: fetch staff from main DB using the LP-backed views.
+  // LEFT JOIN users so LP members who haven't registered on the website
+  // still appear (userId/username will be NULL for them).
+  const rows = await new Promise((resolve, reject) => {
     db.query(
       `SELECT
         ur.uuid,
-        COALESCE(u.username, lp.username) AS username,
         u.userId,
+        u.username,
         u.discordId,
         u.audit_lastDiscordMessage,
         u.audit_lastDiscordVoice,
@@ -101,18 +104,39 @@ async function fetchActiveStaff() {
       FROM userRanks ur
       JOIN ranks r ON r.rankSlug = ur.rankSlug
       LEFT JOIN users u ON u.userId = ur.userId
-      LEFT JOIN cfcdev_luckperms.luckperms_players lp ON lp.uuid = ur.uuid
       WHERE r.isStaff = '1'
         AND ur.rankSlug != 'retired'
         AND (u.account_disabled IS NULL OR u.account_disabled = 0)
       GROUP BY ur.uuid
-      ORDER BY COALESCE(u.username, lp.username);`,
+      ORDER BY u.username;`,
       (error, results) => {
         if (error) return reject(error);
         resolve(results || []);
       }
     );
   });
+
+  // Step 2: for members not registered on the website (username IS NULL),
+  // look up their username from the LP database (separate server).
+  const unnamedUuids = rows.filter((r) => !r.username).map((r) => r.uuid);
+  if (unnamedUuids.length > 0) {
+    const lpNames = await new Promise((resolve, reject) => {
+      luckpermsDb.query(
+        `SELECT uuid, username FROM luckperms_players WHERE uuid IN (?)`,
+        [unnamedUuids],
+        (error, results) => {
+          if (error) return reject(error);
+          resolve(results || []);
+        }
+      );
+    });
+    const nameMap = Object.fromEntries(lpNames.map((r) => [r.uuid, r.username]));
+    for (const row of rows) {
+      if (!row.username) row.username = nameMap[row.uuid] ?? row.uuid;
+    }
+  }
+
+  return rows.sort((a, b) => (a.username ?? "").localeCompare(b.username ?? ""));
 }
 
 
