@@ -85,30 +85,16 @@ function buildMemberField(member) {
   return lines.join("\n");
 }
 
-async function fetchActiveStaff() {
-  // Step 1: fetch staff from main DB using the LP-backed views.
-  // LEFT JOIN users so LP members who haven't registered on the website
-  // still appear (userId/username will be NULL for them).
-  const rows = await new Promise((resolve, reject) => {
-    db.query(
-      `SELECT
-        ur.uuid,
-        u.userId,
-        u.username,
-        u.discordId,
-        u.audit_lastDiscordMessage,
-        u.audit_lastDiscordVoice,
-        u.audit_lastMinecraftLogin,
-        u.audit_lastMinecraftMessage,
-        u.audit_lastWebsiteLogin
-      FROM userRanks ur
-      JOIN ranks r ON r.rankSlug = ur.rankSlug
-      LEFT JOIN users u ON u.userId = ur.userId
-      WHERE r.isStaff = '1'
-        AND ur.rankSlug != 'retired'
-        AND (u.account_disabled IS NULL OR u.account_disabled = 0)
-      GROUP BY ur.uuid
-      ORDER BY u.username;`,
+async function fetchActiveStaff(staffGroups) {
+  if (!staffGroups?.length) return [];
+
+  // Step 1: query LP directly for UUIDs of members in any configured staff group.
+  const groupPermissions = staffGroups.map((g) => `group.${g}`);
+  const lpRows = await new Promise((resolve, reject) => {
+    luckpermsDb.query(
+      `SELECT DISTINCT uuid FROM luckperms_user_permissions
+       WHERE permission IN (?) AND value = 1`,
+      [groupPermissions],
       (error, results) => {
         if (error) return reject(error);
         resolve(results || []);
@@ -116,27 +102,53 @@ async function fetchActiveStaff() {
     );
   });
 
-  // Step 2: for members not registered on the website (username IS NULL),
-  // look up their username from the LP database (separate server).
-  const unnamedUuids = rows.filter((r) => !r.username).map((r) => r.uuid);
-  if (unnamedUuids.length > 0) {
-    const lpNames = await new Promise((resolve, reject) => {
-      luckpermsDb.query(
-        `SELECT uuid, username FROM luckperms_players WHERE uuid IN (?)`,
-        [unnamedUuids],
-        (error, results) => {
-          if (error) return reject(error);
-          resolve(results || []);
-        }
-      );
-    });
-    const nameMap = Object.fromEntries(lpNames.map((r) => [r.uuid, r.username]));
-    for (const row of rows) {
-      if (!row.username) row.username = nameMap[row.uuid] ?? row.uuid;
-    }
-  }
+  if (!lpRows.length) return [];
+  const uuids = lpRows.map((r) => r.uuid);
 
-  return rows.sort((a, b) => (a.username ?? "").localeCompare(b.username ?? ""));
+  // Step 2: get usernames from LP for all found UUIDs.
+  const lpPlayers = await new Promise((resolve, reject) => {
+    luckpermsDb.query(
+      `SELECT uuid, username FROM luckperms_players WHERE uuid IN (?)`,
+      [uuids],
+      (error, results) => {
+        if (error) return reject(error);
+        resolve(results || []);
+      }
+    );
+  });
+  const nameMap = Object.fromEntries(lpPlayers.map((r) => [r.uuid, r.username]));
+
+  // Step 3: get website/audit data from main DB for any matched users.
+  const websiteRows = await new Promise((resolve, reject) => {
+    db.query(
+      `SELECT
+        userId,
+        uuid,
+        discordId,
+        audit_lastDiscordMessage,
+        audit_lastDiscordVoice,
+        audit_lastMinecraftLogin,
+        audit_lastMinecraftMessage,
+        audit_lastWebsiteLogin
+      FROM users
+      WHERE uuid IN (?) AND account_disabled = 0`,
+      [uuids],
+      (error, results) => {
+        if (error) return reject(error);
+        resolve(results || []);
+      }
+    );
+  });
+  const websiteMap = Object.fromEntries(websiteRows.map((r) => [r.uuid, r]));
+
+  // Merge: one entry per UUID, LP username + website audit data where available.
+  return uuids
+    .map((uuid) => ({
+      uuid,
+      username: nameMap[uuid] ?? uuid,
+      ...websiteMap[uuid],
+    }))
+    .sort((a, b) => a.username.localeCompare(b.username));
 }
 
 
@@ -158,8 +170,13 @@ export async function runStaffAuditReport() {
     return { sent: false, reason: "No `channelId` is configured for the staff audit report." };
   }
 
+  const staffGroups = auditConfig.staffGroups;
+  if (!staffGroups?.length) {
+    return { sent: false, reason: "No `staffGroups` are configured. Add a list of LP group names e.g. `\"staffGroups\": [\"mod\", \"admin\"]`." };
+  }
+
   // Fetch staff data
-  const staffMembers = await fetchActiveStaff();
+  const staffMembers = await fetchActiveStaff(staffGroups);
 
   if (!staffMembers.length) {
     console.warn("Staff audit report skipped: no active staff members found.");
