@@ -58,27 +58,29 @@ function buildMemberField(member) {
 
   const lines = [];
 
-  // Account linkage
-  const mcStatus = member.uuid ? "✅ MC linked" : "❌ MC not linked";
-  const discordStatus = member.discordId ? `✅ <@${member.discordId}>` : "❌ Discord not linked";
-  lines.push(`${mcStatus} · ${discordStatus}`);
+  // Account linkage — uuid is always present (sourced from LP),
+  // but audit data only exists if the member is on the website (userId set).
+  const websiteLinked = !!member.userId;
+  const discordLinked = !!member.discordId;
+  const discordStatus = discordLinked ? `✅ <@${member.discordId}>` : "❌ Discord not linked";
+  lines.push(`${discordStatus}`);
 
-  // Minecraft
-  if (member.uuid) {
+  // Minecraft — always in LP, but activity only tracked if website-registered
+  if (websiteLinked) {
     lines.push(`**Minecraft** — Login: ${ts(member.audit_lastMinecraftLogin)} · Chat: ${ts(member.audit_lastMinecraftMessage)}`);
   } else {
-    lines.push("**Minecraft** — _not linked_");
+    lines.push("**Minecraft** — _not registered on website_");
   }
 
   // Discord
-  if (member.discordId) {
+  if (discordLinked) {
     lines.push(`**Discord** — Chat: ${ts(member.audit_lastDiscordMessage)} · Voice: ${ts(member.audit_lastDiscordVoice)}`);
   } else {
     lines.push("**Discord** — _not linked_");
   }
 
   // Website
-  lines.push(`**Website** — Login: ${ts(member.audit_lastWebsiteLogin)}`);
+  lines.push(`**Website** — Login: ${websiteLinked ? ts(member.audit_lastWebsiteLogin) : "_not registered_"}`);
 
   return lines.join("\n");
 }
@@ -87,23 +89,24 @@ async function fetchActiveStaff() {
   return new Promise((resolve, reject) => {
     db.query(
       `SELECT
+        ur.uuid,
+        COALESCE(u.username, lp.username) AS username,
         u.userId,
-        u.username,
-        u.uuid,
         u.discordId,
         u.audit_lastDiscordMessage,
         u.audit_lastDiscordVoice,
         u.audit_lastMinecraftLogin,
         u.audit_lastMinecraftMessage,
         u.audit_lastWebsiteLogin
-      FROM users u
-      JOIN userRanks ur ON ur.userId = u.userId
+      FROM userRanks ur
       JOIN ranks r ON r.rankSlug = ur.rankSlug
+      LEFT JOIN users u ON u.userId = ur.userId
+      LEFT JOIN cfcdev_luckperms.luckperms_players lp ON lp.uuid = ur.uuid
       WHERE r.isStaff = '1'
         AND ur.rankSlug != 'retired'
-        AND u.account_disabled = 0
-      GROUP BY u.userId
-      ORDER BY u.username;`,
+        AND (u.account_disabled IS NULL OR u.account_disabled = 0)
+      GROUP BY ur.uuid
+      ORDER BY COALESCE(u.username, lp.username);`,
       (error, results) => {
         if (error) return reject(error);
         resolve(results || []);
