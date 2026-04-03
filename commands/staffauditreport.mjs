@@ -59,8 +59,9 @@ export class StaffAuditReportCommand extends Command {
       });
     }
 
+    let result;
     try {
-      await runStaffAuditReport();
+      result = await runStaffAuditReport();
     } catch (error) {
       console.error("[StaffAuditReport] Failed to run report:", error);
       return interaction.editReply({
@@ -75,12 +76,23 @@ export class StaffAuditReportCommand extends Command {
       });
     }
 
+    if (!result.sent) {
+      return interaction.editReply({
+        embeds: [
+          new EmbedBuilder()
+            .setTitle("Report Not Sent")
+            .setDescription(result.reason)
+            .setColor(Colors.Orange),
+        ],
+      });
+    }
+
     return interaction.editReply({
       embeds: [
         new EmbedBuilder()
           .setTitle("Staff Audit Report Sent")
           .setDescription(
-            "The staff activity audit report has been posted to the configured webhook."
+            `Posted audit for **${result.staffCount}** staff member(s) across **${result.embedCount}** message(s).`
           )
           .setColor(Colors.Green)
           .setTimestamp(new Date()),

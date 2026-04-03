@@ -173,18 +173,19 @@ function packIntoFields(sections) {
 export async function runStaffAuditReport() {
   // Check feature flag
   if (!features.staffAuditReport) {
-    return;
+    return { sent: false, reason: "Feature is disabled." };
   }
 
   const auditConfig = config.staffAuditReport;
   if (!auditConfig?.enabled) {
-    return;
+    return { sent: false, reason: "Staff audit report is not enabled in config." };
   }
 
-  const channelId = auditConfig.channelId;
+  // Support both flat channelId and legacy delivery.channelId
+  const channelId = auditConfig.channelId || auditConfig.delivery?.channelId;
   if (!channelId) {
     console.warn("Staff audit report skipped: no channelId configured.");
-    return;
+    return { sent: false, reason: "No `channelId` is configured for the staff audit report." };
   }
 
   // Fetch staff data
@@ -192,7 +193,7 @@ export async function runStaffAuditReport() {
 
   if (!staffMembers.length) {
     console.warn("Staff audit report skipped: no active staff members found.");
-    return;
+    return { sent: false, reason: "No active staff members were found." };
   }
 
   // Build per-member sections
@@ -247,6 +248,8 @@ export async function runStaffAuditReport() {
   console.log(
     `Posted weekly staff audit report (${staffMembers.length} staff members, ${embeds.length} embed(s)).`
   );
+
+  return { sent: true, staffCount: staffMembers.length, embedCount: embeds.length };
 }
 
 // Build schedule from config
