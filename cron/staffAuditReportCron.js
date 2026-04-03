@@ -48,56 +48,37 @@ function buildCronExpression() {
   return `${minute} ${hour} * * ${day}`;
 }
 
-function formatAuditTimestamp(value) {
-  if (!value) return "No record";
 
-  const timestamp = Math.floor(new Date(value).getTime() / 1000);
-  if (!Number.isFinite(timestamp)) return "No record";
+function buildMemberField(member) {
+  const ts = (val) => {
+    if (!val) return "_No record_";
+    const t = Math.floor(new Date(val).getTime() / 1000);
+    return Number.isFinite(t) ? `<t:${t}:R>` : "_No record_";
+  };
 
-  return `<t:${timestamp}:F> (<t:${timestamp}:R>)`;
-}
-
-function buildMemberSection(member) {
   const lines = [];
 
-  // Header: username + Discord mention
-  const headerParts = [`**${member.username}**`];
-  if (member.discordId) {
-    headerParts.push(`<@${member.discordId}>`);
-  }
-  lines.push(headerParts.join(" "));
+  // Account linkage
+  const mcStatus = member.uuid ? "✅ MC linked" : "❌ MC not linked";
+  const discordStatus = member.discordId ? `✅ <@${member.discordId}>` : "❌ Discord not linked";
+  lines.push(`${mcStatus} · ${discordStatus}`);
 
-  // Account linkage status
-  const mcLinked = member.uuid ? "✅ Linked" : "❌ Not linked";
-  const discordLinked = member.discordId ? "✅ Linked" : "❌ Not linked";
-  lines.push(`__Account Linkage:__ Minecraft: ${mcLinked} · Discord: ${discordLinked}`);
-
-  // Minecraft activity
-  lines.push("");
-  lines.push("**Minecraft**");
+  // Minecraft
   if (member.uuid) {
-    lines.push(`• Last Login: ${formatAuditTimestamp(member.audit_lastMinecraftLogin)}`);
-    lines.push(`• Last Message: ${formatAuditTimestamp(member.audit_lastMinecraftMessage)}`);
-    lines.push(`• Punishments: _Feature coming soon_`);
+    lines.push(`**Minecraft** — Login: ${ts(member.audit_lastMinecraftLogin)} · Chat: ${ts(member.audit_lastMinecraftMessage)}`);
   } else {
-    lines.push(`• _Account not linked — activity cannot be tracked_`);
+    lines.push("**Minecraft** — _not linked_");
   }
 
-  // Discord activity
-  lines.push("");
-  lines.push("**Discord**");
+  // Discord
   if (member.discordId) {
-    lines.push(`• Last Message: ${formatAuditTimestamp(member.audit_lastDiscordMessage)}`);
-    lines.push(`• Last Voice: ${formatAuditTimestamp(member.audit_lastDiscordVoice)}`);
-    lines.push(`• Punishments: _Feature coming soon_`);
+    lines.push(`**Discord** — Chat: ${ts(member.audit_lastDiscordMessage)} · Voice: ${ts(member.audit_lastDiscordVoice)}`);
   } else {
-    lines.push(`• _Account not linked — activity cannot be tracked_`);
+    lines.push("**Discord** — _not linked_");
   }
 
-  // Website activity
-  lines.push("");
-  lines.push("**Website**");
-  lines.push(`• Last Login: ${formatAuditTimestamp(member.audit_lastWebsiteLogin)}`);
+  // Website
+  lines.push(`**Website** — Login: ${ts(member.audit_lastWebsiteLogin)}`);
 
   return lines.join("\n");
 }
@@ -131,42 +112,6 @@ async function fetchActiveStaff() {
   });
 }
 
-function packIntoFields(sections) {
-  const MAX_FIELD_LENGTH = 1024;
-  const fields = [];
-  let buffer = "";
-
-  for (const section of sections) {
-    const candidate = buffer ? `${buffer}\n\n${section}` : section;
-
-    if (candidate.length > MAX_FIELD_LENGTH) {
-      if (buffer) fields.push(buffer);
-
-      if (section.length > MAX_FIELD_LENGTH) {
-        // Split oversized section by lines
-        let chunk = "";
-        for (const line of section.split("\n")) {
-          const lineCandidate = chunk ? `${chunk}\n${line}` : line;
-          if (lineCandidate.length > MAX_FIELD_LENGTH) {
-            if (chunk) fields.push(chunk);
-            chunk = line.length > MAX_FIELD_LENGTH ? line.slice(0, MAX_FIELD_LENGTH) : line;
-          } else {
-            chunk = lineCandidate;
-          }
-        }
-        if (chunk) fields.push(chunk);
-        buffer = "";
-      } else {
-        buffer = section;
-      }
-    } else {
-      buffer = candidate;
-    }
-  }
-
-  if (buffer) fields.push(buffer);
-  return fields;
-}
 
 export async function runStaffAuditReport() {
   // Check feature flag
@@ -194,26 +139,17 @@ export async function runStaffAuditReport() {
     return { sent: false, reason: "No active staff members were found." };
   }
 
-  // Build per-member sections
-  const sections = staffMembers.map(buildMemberSection);
-  const fieldValues = packIntoFields(sections);
-
-  if (!fieldValues.length) {
-    fieldValues.push("No audit data was available for staff members.");
-  }
-
-  // Discord embeds have a max of 25 fields and 6000 chars total
-  // Split into multiple embeds if needed
+  // Each member gets their own named field. Discord allows max 25 fields per
+  // embed, so split into multiple embeds if there are more than 25 staff.
   const embeds = [];
+  let embedIndex = 1;
   let currentEmbed = new EmbedBuilder()
     .setTitle("Weekly Staff Activity Audit")
     .setColor(Colors.Blurple)
     .setTimestamp(new Date());
-
   let fieldCount = 0;
-  let embedIndex = 1;
 
-  for (let i = 0; i < fieldValues.length; i++) {
+  for (const member of staffMembers) {
     if (fieldCount >= 25) {
       embeds.push(currentEmbed);
       embedIndex++;
@@ -225,8 +161,8 @@ export async function runStaffAuditReport() {
     }
 
     currentEmbed.addFields({
-      name: fieldCount === 0 && embedIndex === 1 ? "Staff Activity" : "\u200b",
-      value: fieldValues[i],
+      name: member.username,
+      value: buildMemberField(member),
       inline: false,
     });
     fieldCount++;
