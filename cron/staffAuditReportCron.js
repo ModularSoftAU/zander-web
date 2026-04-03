@@ -114,8 +114,6 @@ async function fetchActiveStaff() {
         u.audit_lastDiscordVoice,
         u.audit_lastMinecraftLogin,
         u.audit_lastMinecraftMessage,
-        u.audit_lastMinecraftPunishment,
-        u.audit_lastDiscordPunishment,
         u.audit_lastWebsiteLogin
       FROM users u
       JOIN userRanks ur ON ur.userId = u.userId
