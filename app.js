@@ -50,6 +50,7 @@ import("./cron/voteMonthlyRewardCron.js");
 import("./cron/unverifiedReminderCron.js");
 import("./cron/eventAnnouncementCron.js");
 import("./cron/eventTemplateCron.js");
+import("./cron/announcementExpiryCron.js");
 
 //
 // Website Related

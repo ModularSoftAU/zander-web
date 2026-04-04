@@ -15,6 +15,12 @@ let _webAnnouncementCache = undefined;
 let _webAnnouncementExpiry = 0;
 const WEB_ANNOUNCEMENT_TTL_MS = 30_000; // 30 seconds
 
+/** Force the next getWebAnnouncement() call to re-query the database. */
+export function invalidateWebAnnouncementCache() {
+  _webAnnouncementCache = undefined;
+  _webAnnouncementExpiry = 0;
+}
+
 export async function getWebAnnouncement() {
   const now = Date.now();
   if (_webAnnouncementCache !== undefined && now < _webAnnouncementExpiry) {
