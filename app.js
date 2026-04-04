@@ -50,6 +50,7 @@ import("./cron/voteMonthlyRewardCron.js");
 import("./cron/unverifiedReminderCron.js");
 import("./cron/eventAnnouncementCron.js");
 import("./cron/eventTemplateCron.js");
+import("./cron/announcementExpiryCron.js");
 
 //
 // Website Related
@@ -246,6 +247,13 @@ const buildApp = async () => {
       sameSite: "lax",
     },
     saveUninitialized: false,
+    // rolling: false — do not refresh the session cookie / extend TTL on every
+    // read-only request.  Without this, @fastify/session calls store.touch()
+    // on EVERY authenticated page load, blocking the onSend pipeline until
+    // Prisma completes a DB write — the primary cause of blank pages under
+    // any transient DB latency.  Sessions still expire 7 days after last
+    // write (login, perm change, etc.).
+    rolling: false,
   });
 
   // Must be registered before siteRoutes so it applies to all site route

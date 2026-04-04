@@ -19,21 +19,20 @@ export default function dashboardSchedulerSiteRoute(
 
     if (!await hasPermission("zander.web.scheduler", req, res, features)) return;
 
-    const announcementsResponse = await fetch(
-      `${process.env.siteAddress}/api/announcement/get`,
-      {
-        headers: { "x-access-token": process.env.apiKey },
-      }
-    );
-    const announcementsData = await announcementsResponse.json();
+    const headers = { "x-access-token": process.env.apiKey };
 
-    const scheduledResponse = await fetch(
-      `${process.env.siteAddress}/api/scheduler/discord/get`,
-      {
-        headers: { "x-access-token": process.env.apiKey },
-      }
-    );
-    const scheduledMessages = await scheduledResponse.json();
+    // Fetch announcements, scheduled messages, and page-chrome data concurrently.
+    const [announcementsData, scheduledMessages, globalImage, announcementWeb] =
+      await Promise.all([
+        fetch(`${process.env.siteAddress}/api/announcement/get`, { headers })
+          .then((r) => r.json())
+          .catch(() => ({ data: [] })),
+        fetch(`${process.env.siteAddress}/api/scheduler/discord/get`, { headers })
+          .then((r) => r.json())
+          .catch(() => ({ data: [] })),
+        getGlobalImage(),
+        getWebAnnouncement(),
+      ]);
 
     const guildId = config.discord?.guildId ?? process.env.DISCORD_GUILD_ID;
     const discordChannels = [];
@@ -61,16 +60,17 @@ export default function dashboardSchedulerSiteRoute(
 
     res.header("content-type", "text/html; charset=utf-8").send(
       await app.view("dashboard/scheduler/scheduler-index", {
-      pageTitle: `Dashboard - Scheduler`,
-      config: config,
-      features: features,
-      req: req,
-      globalImage: await getGlobalImage(),
-      announcementWeb: await getWebAnnouncement(),
-      announcementsData: announcementsData,
-      scheduledMessages: scheduledMessages,
-      discordChannels: discordChannels,
-    }));
+        pageTitle: `Dashboard - Scheduler`,
+        config: config,
+        features: features,
+        req: req,
+        globalImage,
+        announcementWeb,
+        announcementsData: announcementsData,
+        scheduledMessages: scheduledMessages,
+        discordChannels: discordChannels,
+      })
+    );
     return;
   });
 }

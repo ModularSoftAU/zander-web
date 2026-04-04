@@ -11,6 +11,19 @@ import {
 } from "../../api/common.js";
 import { getWebAnnouncement } from "../../controllers/announcementController.js";
 
+/** Fetch a URL with the internal API key and parse JSON, returning fallback on error. */
+async function fetchJson(fetchFn, url, fallback = null) {
+  try {
+    const res = await fetchFn(url, {
+      headers: { "x-access-token": process.env.apiKey },
+    });
+    return await res.json();
+  } catch (error) {
+    console.error(`[dashboard/events] fetchJson failed for ${url}:`, error.message);
+    return fallback;
+  }
+}
+
 export default function dashboardEventsSiteRoute(app, fetch, config, db, features, lang) {
   // ============================================================================
   // Calendar View
@@ -19,14 +32,19 @@ export default function dashboardEventsSiteRoute(app, fetch, config, db, feature
     if (!await isFeatureWebRouteEnabled(app, features.events, req, res, features)) return;
     if (!await hasPermission("zander.web.events", req, res, features)) return;
 
+    const [globalImage, announcementWeb] = await Promise.all([
+      getGlobalImage(),
+      getWebAnnouncement(),
+    ]);
+
     res.header("content-type", "text/html; charset=utf-8").send(
       await app.view("dashboard/events/events-calendar", {
         pageTitle: "Dashboard - Events Calendar",
         config,
         features,
         req,
-        globalImage: await getGlobalImage(),
-        announcementWeb: await getWebAnnouncement(),
+        globalImage,
+        announcementWeb,
       })
     );
   });
@@ -46,8 +64,12 @@ export default function dashboardEventsSiteRoute(app, fetch, config, db, feature
     if (search) qs += `&search=${encodeURIComponent(search)}`;
 
     const fetchURL = `${process.env.siteAddress}/api/events/get?limit=100${qs}`;
-    const response = await fetch(fetchURL, { headers: { "x-access-token": process.env.apiKey } });
-    const apiData = await response.json();
+
+    const [apiData, globalImage, announcementWeb] = await Promise.all([
+      fetchJson(fetch, fetchURL, { data: [] }),
+      getGlobalImage(),
+      getWebAnnouncement(),
+    ]);
 
     res.header("content-type", "text/html; charset=utf-8").send(
       await app.view("dashboard/events/events-list", {
@@ -58,8 +80,8 @@ export default function dashboardEventsSiteRoute(app, fetch, config, db, feature
         apiData,
         statusFilter,
         search,
-        globalImage: await getGlobalImage(),
-        announcementWeb: await getWebAnnouncement(),
+        globalImage,
+        announcementWeb,
       })
     );
   });
@@ -71,9 +93,11 @@ export default function dashboardEventsSiteRoute(app, fetch, config, db, feature
     if (!await isFeatureWebRouteEnabled(app, features.events, req, res, features)) return;
     if (!await hasPermission("zander.web.events.review", req, res, features)) return;
 
-    const fetchURL = `${process.env.siteAddress}/api/events/pending-review`;
-    const response = await fetch(fetchURL, { headers: { "x-access-token": process.env.apiKey } });
-    const apiData = await response.json();
+    const [apiData, globalImage, announcementWeb] = await Promise.all([
+      fetchJson(fetch, `${process.env.siteAddress}/api/events/pending-review`, { data: [] }),
+      getGlobalImage(),
+      getWebAnnouncement(),
+    ]);
 
     res.header("content-type", "text/html; charset=utf-8").send(
       await app.view("dashboard/events/events-review", {
@@ -82,8 +106,8 @@ export default function dashboardEventsSiteRoute(app, fetch, config, db, feature
         features,
         req,
         apiData,
-        globalImage: await getGlobalImage(),
-        announcementWeb: await getWebAnnouncement(),
+        globalImage,
+        announcementWeb,
       })
     );
   });
@@ -95,11 +119,11 @@ export default function dashboardEventsSiteRoute(app, fetch, config, db, feature
     if (!await isFeatureWebRouteEnabled(app, features.events, req, res, features)) return;
     if (!await hasPermission("zander.web.events", req, res, features)) return;
 
-    // Load templates for the template selector
-    const tmplResponse = await fetch(`${process.env.siteAddress}/api/events/templates/get`, {
-      headers: { "x-access-token": process.env.apiKey },
-    });
-    const templatesData = await tmplResponse.json();
+    const [templatesData, globalImage, announcementWeb] = await Promise.all([
+      fetchJson(fetch, `${process.env.siteAddress}/api/events/templates/get`, { data: [] }),
+      getGlobalImage(),
+      getWebAnnouncement(),
+    ]);
 
     res.header("content-type", "text/html; charset=utf-8").send(
       await app.view("dashboard/events/events-editor", {
@@ -110,8 +134,8 @@ export default function dashboardEventsSiteRoute(app, fetch, config, db, feature
         mode: "create",
         eventData: null,
         templatesData,
-        globalImage: await getGlobalImage(),
-        announcementWeb: await getWebAnnouncement(),
+        globalImage,
+        announcementWeb,
       })
     );
   });
@@ -126,19 +150,14 @@ export default function dashboardEventsSiteRoute(app, fetch, config, db, feature
     const eventId = req.query.eventId;
     if (!eventId) return res.redirect("/dashboard/events/list");
 
-    const [eventResponse, tmplResponse] = await Promise.all([
-      fetch(`${process.env.siteAddress}/api/events/single?eventId=${eventId}`, {
-        headers: { "x-access-token": process.env.apiKey },
-      }),
-      fetch(`${process.env.siteAddress}/api/events/templates/get`, {
-        headers: { "x-access-token": process.env.apiKey },
-      }),
+    const [apiData, templatesData, globalImage, announcementWeb] = await Promise.all([
+      fetchJson(fetch, `${process.env.siteAddress}/api/events/single?eventId=${eventId}`, null),
+      fetchJson(fetch, `${process.env.siteAddress}/api/events/templates/get`, { data: [] }),
+      getGlobalImage(),
+      getWebAnnouncement(),
     ]);
 
-    const apiData = await eventResponse.json();
-    const templatesData = await tmplResponse.json();
-
-    if (!apiData.success) {
+    if (!apiData || !apiData.success) {
       await setBannerCookie("danger", "Event not found", res);
       return res.redirect("/dashboard/events/list");
     }
@@ -152,8 +171,8 @@ export default function dashboardEventsSiteRoute(app, fetch, config, db, feature
         mode: "edit",
         eventData: apiData.data,
         templatesData,
-        globalImage: await getGlobalImage(),
-        announcementWeb: await getWebAnnouncement(),
+        globalImage,
+        announcementWeb,
       })
     );
   });
@@ -168,12 +187,13 @@ export default function dashboardEventsSiteRoute(app, fetch, config, db, feature
     const eventId = req.query.eventId;
     if (!eventId) return res.redirect("/dashboard/events/list");
 
-    const response = await fetch(`${process.env.siteAddress}/api/events/single?eventId=${eventId}`, {
-      headers: { "x-access-token": process.env.apiKey },
-    });
-    const apiData = await response.json();
+    const [apiData, globalImage, announcementWeb] = await Promise.all([
+      fetchJson(fetch, `${process.env.siteAddress}/api/events/single?eventId=${eventId}`, null),
+      getGlobalImage(),
+      getWebAnnouncement(),
+    ]);
 
-    if (!apiData.success) {
+    if (!apiData || !apiData.success) {
       await setBannerCookie("danger", "Event not found", res);
       return res.redirect("/dashboard/events/list");
     }
@@ -185,8 +205,8 @@ export default function dashboardEventsSiteRoute(app, fetch, config, db, feature
         features,
         req,
         eventData: apiData.data,
-        globalImage: await getGlobalImage(),
-        announcementWeb: await getWebAnnouncement(),
+        globalImage,
+        announcementWeb,
       })
     );
   });
@@ -198,10 +218,11 @@ export default function dashboardEventsSiteRoute(app, fetch, config, db, feature
     if (!await isFeatureWebRouteEnabled(app, features.events, req, res, features)) return;
     if (!await hasPermission("zander.web.events", req, res, features)) return;
 
-    const response = await fetch(`${process.env.siteAddress}/api/events/templates/get`, {
-      headers: { "x-access-token": process.env.apiKey },
-    });
-    const apiData = await response.json();
+    const [apiData, globalImage, announcementWeb] = await Promise.all([
+      fetchJson(fetch, `${process.env.siteAddress}/api/events/templates/get`, { data: [] }),
+      getGlobalImage(),
+      getWebAnnouncement(),
+    ]);
 
     res.header("content-type", "text/html; charset=utf-8").send(
       await app.view("dashboard/events/events-templates", {
@@ -210,8 +231,8 @@ export default function dashboardEventsSiteRoute(app, fetch, config, db, feature
         features,
         req,
         apiData,
-        globalImage: await getGlobalImage(),
-        announcementWeb: await getWebAnnouncement(),
+        globalImage,
+        announcementWeb,
       })
     );
   });
@@ -223,6 +244,11 @@ export default function dashboardEventsSiteRoute(app, fetch, config, db, feature
     if (!await isFeatureWebRouteEnabled(app, features.events, req, res, features)) return;
     if (!await hasPermission("zander.web.events", req, res, features)) return;
 
+    const [globalImage, announcementWeb] = await Promise.all([
+      getGlobalImage(),
+      getWebAnnouncement(),
+    ]);
+
     res.header("content-type", "text/html; charset=utf-8").send(
       await app.view("dashboard/events/events-template-editor", {
         pageTitle: "Dashboard - Create Event Template",
@@ -231,8 +257,8 @@ export default function dashboardEventsSiteRoute(app, fetch, config, db, feature
         req,
         mode: "create",
         templateData: null,
-        globalImage: await getGlobalImage(),
-        announcementWeb: await getWebAnnouncement(),
+        globalImage,
+        announcementWeb,
       })
     );
   });
@@ -247,12 +273,13 @@ export default function dashboardEventsSiteRoute(app, fetch, config, db, feature
     const templateId = req.query.templateId;
     if (!templateId) return res.redirect("/dashboard/events/templates");
 
-    const response = await fetch(`${process.env.siteAddress}/api/events/templates/single?templateId=${templateId}`, {
-      headers: { "x-access-token": process.env.apiKey },
-    });
-    const apiData = await response.json();
+    const [apiData, globalImage, announcementWeb] = await Promise.all([
+      fetchJson(fetch, `${process.env.siteAddress}/api/events/templates/single?templateId=${templateId}`, null),
+      getGlobalImage(),
+      getWebAnnouncement(),
+    ]);
 
-    if (!apiData.success) {
+    if (!apiData || !apiData.success) {
       await setBannerCookie("danger", "Template not found", res);
       return res.redirect("/dashboard/events/templates");
     }
@@ -265,8 +292,8 @@ export default function dashboardEventsSiteRoute(app, fetch, config, db, feature
         req,
         mode: "edit",
         templateData: apiData.data,
-        globalImage: await getGlobalImage(),
-        announcementWeb: await getWebAnnouncement(),
+        globalImage,
+        announcementWeb,
       })
     );
   });
