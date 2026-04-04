@@ -9,7 +9,17 @@ function queryDb(sql, params = []) {
   });
 }
 
+// Simple TTL cache — avoids a DB hit on every page render across the entire app.
+// Announcement content changes infrequently, so 30 seconds is a safe window.
+let _webAnnouncementCache = undefined;
+let _webAnnouncementExpiry = 0;
+const WEB_ANNOUNCEMENT_TTL_MS = 30_000; // 30 seconds
+
 export async function getWebAnnouncement() {
+  const now = Date.now();
+  if (_webAnnouncementCache !== undefined && now < _webAnnouncementExpiry) {
+    return _webAnnouncementCache;
+  }
   try {
     const rows = await queryDb(
       `SELECT * FROM announcements
@@ -18,7 +28,9 @@ export async function getWebAnnouncement() {
           AND (endDate IS NULL OR endDate >= NOW())
         ORDER BY RAND() LIMIT 1`
     );
-    return rows.length > 0 ? rows[0] : null;
+    _webAnnouncementCache = rows.length > 0 ? rows[0] : null;
+    _webAnnouncementExpiry = now + WEB_ANNOUNCEMENT_TTL_MS;
+    return _webAnnouncementCache;
   } catch (error) {
     console.error("Error fetching web announcement:", error);
     return null;

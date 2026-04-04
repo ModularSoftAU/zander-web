@@ -13,6 +13,18 @@ export default function dashboardServersSiteRoute(
   features,
   lang
 ) {
+  const headers = { "x-access-token": process.env.apiKey };
+
+  async function fetchJson(url, fallback = null) {
+    try {
+      const res = await fetch(url, { headers });
+      return await res.json();
+    } catch (error) {
+      console.error(`[dashboard/servers] fetchJson failed for ${url}:`, error.message);
+      return fallback;
+    }
+  }
+
   //
   // Servers
   //
@@ -21,22 +33,23 @@ export default function dashboardServersSiteRoute(
 
     if (!await hasPermission("zander.web.server", req, res, features)) return;
 
-    const fetchURL = `${process.env.siteAddress}/api/server/get`;
-    const response = await fetch(fetchURL, {
-      headers: { "x-access-token": process.env.apiKey },
-    });
-    const apiData = await response.json();
+    const [apiData, globalImage, announcementWeb] = await Promise.all([
+      fetchJson(`${process.env.siteAddress}/api/server/get`, { data: [] }),
+      getGlobalImage(),
+      getWebAnnouncement(),
+    ]);
 
     res.header("content-type", "text/html; charset=utf-8").send(
       await app.view("dashboard/servers/server-list", {
-      pageTitle: `Dashboard - Servers`,
-      config: config,
-      apiData: apiData,
-      features: features,
-      req: req,
-      globalImage: await getGlobalImage(),
-      announcementWeb: await getWebAnnouncement(),
-    }));
+        pageTitle: `Dashboard - Servers`,
+        config: config,
+        apiData: apiData,
+        features: features,
+        req: req,
+        globalImage,
+        announcementWeb,
+      })
+    );
     return;
   });
 
@@ -45,16 +58,22 @@ export default function dashboardServersSiteRoute(
 
     if (!await hasPermission("zander.web.server", req, res, features)) return;
 
+    const [globalImage, announcementWeb] = await Promise.all([
+      getGlobalImage(),
+      getWebAnnouncement(),
+    ]);
+
     res.header("content-type", "text/html; charset=utf-8").send(
       await app.view("dashboard/servers/server-editor", {
-      pageTitle: `Dashboard - Server Creator`,
-      config: config,
-      type: "create",
-      features: features,
-      globalImage: await getGlobalImage(),
-      req: req,
-      announcementWeb: await getWebAnnouncement(),
-    }));
+        pageTitle: `Dashboard - Server Creator`,
+        config: config,
+        type: "create",
+        features: features,
+        globalImage,
+        req: req,
+        announcementWeb,
+      })
+    );
     return;
   });
 
@@ -64,23 +83,25 @@ export default function dashboardServersSiteRoute(
     if (!await hasPermission("zander.web.server", req, res, features)) return;
 
     const id = req.query.id;
-    const fetchURL = `${process.env.siteAddress}/api/server/get?id=${id}`;
-    const response = await fetch(fetchURL, {
-      headers: { "x-access-token": process.env.apiKey },
-    });
-    const serverApiData = await response.json();
+
+    const [serverApiData, globalImage, announcementWeb] = await Promise.all([
+      fetchJson(`${process.env.siteAddress}/api/server/get?id=${id}`, { data: [{}] }),
+      getGlobalImage(),
+      getWebAnnouncement(),
+    ]);
 
     res.header("content-type", "text/html; charset=utf-8").send(
       await app.view("dashboard/servers/server-editor", {
-      pageTitle: `Dashboard - Server Editor`,
-      config: config,
-      serverApiData: serverApiData.data[0],
-      type: "edit",
-      features: features,
-      globalImage: await getGlobalImage(),
-      req: req,
-      announcementWeb: await getWebAnnouncement(),
-    }));
+        pageTitle: `Dashboard - Server Editor`,
+        config: config,
+        serverApiData: serverApiData.data[0],
+        type: "edit",
+        features: features,
+        globalImage,
+        req: req,
+        announcementWeb,
+      })
+    );
     return;
   });
 }

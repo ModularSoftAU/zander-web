@@ -13,6 +13,18 @@ export default function dashboardVaultSiteRoute(
   features,
   lang
 ) {
+  const headers = { "x-access-token": process.env.apiKey };
+
+  async function fetchJson(url, fallback = null) {
+    try {
+      const res = await fetch(url, { headers });
+      return await res.json();
+    } catch (error) {
+      console.error(`[dashboard/vault] fetchJson failed for ${url}:`, error.message);
+      return fallback;
+    }
+  }
+
   //
   // Vault
   //
@@ -22,22 +34,23 @@ export default function dashboardVaultSiteRoute(
 
     if (!await hasPermission("zander.web.vault", req, res, features)) return;
 
-    const fetchURL = `${process.env.siteAddress}/api/vault/get`;
-    const response = await fetch(fetchURL, {
-      headers: { "x-access-token": process.env.apiKey },
-    });
-    const apiData = await response.json();
+    const [apiData, globalImage, announcementWeb] = await Promise.all([
+      fetchJson(`${process.env.siteAddress}/api/vault/get`, { data: [] }),
+      getGlobalImage(),
+      getWebAnnouncement(),
+    ]);
 
     res.header("content-type", "text/html; charset=utf-8").send(
       await app.view("dashboard/vault/vault-list", {
-      pageTitle: `Dashboard - Vault`,
-      config: config,
-      apiData: apiData,
-      features: features,
-      req: req,
-      globalImage: await getGlobalImage(),
-      announcementWeb: await getWebAnnouncement(),
-    }));
+        pageTitle: `Dashboard - Vault`,
+        config: config,
+        apiData: apiData,
+        features: features,
+        req: req,
+        globalImage,
+        announcementWeb,
+      })
+    );
     return;
   });
 
@@ -46,16 +59,22 @@ export default function dashboardVaultSiteRoute(
 
     if (!await hasPermission("zander.web.vault", req, res, features)) return;
 
+    const [globalImage, announcementWeb] = await Promise.all([
+      getGlobalImage(),
+      getWebAnnouncement(),
+    ]);
+
     res.header("content-type", "text/html; charset=utf-8").send(
       await app.view("dashboard/vault/vault-editor", {
-      pageTitle: `Dashboard - Vault Creator`,
-      config: config,
-      type: "create",
-      features: features,
-      req: req,
-      globalImage: await getGlobalImage(),
-      announcementWeb: await getWebAnnouncement(),
-    }));
+        pageTitle: `Dashboard - Vault Creator`,
+        config: config,
+        type: "create",
+        features: features,
+        req: req,
+        globalImage,
+        announcementWeb,
+      })
+    );
     return;
   });
 
@@ -65,23 +84,25 @@ export default function dashboardVaultSiteRoute(
     if (!await hasPermission("zander.web.vault", req, res, features)) return;
 
     const vaultId = req.query.vaultId;
-    const fetchURL = `${process.env.siteAddress}/api/vault/get?id=${vaultId}`;
-    const response = await fetch(fetchURL, {
-      headers: { "x-access-token": process.env.apiKey },
-    });
-    const vaultApiData = await response.json();
+
+    const [vaultApiData, globalImage, announcementWeb] = await Promise.all([
+      fetchJson(`${process.env.siteAddress}/api/vault/get?id=${vaultId}`, { data: [{}] }),
+      getGlobalImage(),
+      getWebAnnouncement(),
+    ]);
 
     res.header("content-type", "text/html; charset=utf-8").send(
       await app.view("dashboard/vault/vault-editor", {
-      pageTitle: `Dashboard - Vault Editor`,
-      config: config,
-      vaultApiData: vaultApiData.data[0],
-      type: "edit",
-      features: features,
-      req: req,
-      globalImage: await getGlobalImage(),
-      announcementWeb: await getWebAnnouncement(),
-    }));
+        pageTitle: `Dashboard - Vault Editor`,
+        config: config,
+        vaultApiData: vaultApiData.data[0],
+        type: "edit",
+        features: features,
+        req: req,
+        globalImage,
+        announcementWeb,
+      })
+    );
     return;
   });
 }

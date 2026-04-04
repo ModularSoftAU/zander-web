@@ -25,24 +25,29 @@ export default function dashboardRanksRoute(
 
     if (!hasRankPermission) return;
 
-    const response = await fetch(`${process.env.siteAddress}/api/rank/get`, {
-      headers: { "x-access-token": process.env.apiKey },
-    });
-
-    const rankData = await response.json();
+    const [rankData, globalImage, announcementWeb] = await Promise.all([
+      fetch(`${process.env.siteAddress}/api/rank/get`, {
+        headers: { "x-access-token": process.env.apiKey },
+      })
+        .then((r) => r.json())
+        .catch(() => ({ data: [] })),
+      getGlobalImage(),
+      getWebAnnouncement(),
+    ]);
 
     res.header("content-type", "text/html; charset=utf-8").send(
       await app.view("dashboard/ranks/index", {
-      pageTitle: `Dashboard - Ranks`,
-      config: config,
-      features: features,
-      req: req,
-      ranks: Array.isArray(rankData.data)
-        ? rankData.data.filter((r) => !r.name?.startsWith("griefdefender_"))
-        : [],
-      globalImage: await getGlobalImage(),
-      announcementWeb: await getWebAnnouncement(),
-    }));
+        pageTitle: `Dashboard - Ranks`,
+        config: config,
+        features: features,
+        req: req,
+        ranks: Array.isArray(rankData.data)
+          ? rankData.data.filter((r) => !r.name?.startsWith("griefdefender_"))
+          : [],
+        globalImage,
+        announcementWeb,
+      })
+    );
     return;
   });
 }
