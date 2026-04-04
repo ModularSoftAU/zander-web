@@ -29,6 +29,9 @@
                     <a href="/dashboard/events/review" class="btn btn-sm btn-outline-warning" id="reviewQueueBtn">
                         <i class="fas fa-clock fa-fw me-1"></i>Review Queue
                     </a>
+                    <%- include("../../partials/documentationLink.ejs", {
+                        doclink: "https://modularsoft.org/docs/products/zander/features/events/"
+                    }) %>
                     <a href="/dashboard/events/templates" class="btn btn-sm btn-outline-info">
                         <i class="fas fa-copy fa-fw me-1"></i>Templates
                     </a>
@@ -44,6 +47,11 @@
                   content: req.cookies.alertContent
                 }) %>
             <% } %>
+
+            <%- include("../../partials/permissionsInfo.ejs", { permissions: [
+                { node: "zander.web.events",       description: "View calendar, create, edit and manage events" },
+                { node: "zander.web.events.review", description: "Approve or reject events in the review queue" },
+            ]}) %>
 
             <!-- Status Legend -->
             <div class="d-flex flex-wrap gap-2 mb-3">

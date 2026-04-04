@@ -23,7 +23,12 @@
                     <h1 class="h2 mb-1">Support Ticket Explorer</h1>
                     <p class="text-muted mb-0">Filter tickets by category and jump directly into the right thread.</p>
                 </div>
-                <a href="/dashboard/support" class="btn btn-outline-secondary">Back to manager</a>
+                <div class="d-flex gap-2">
+                    <a href="/dashboard/support" class="btn btn-outline-secondary">Back to manager</a>
+                    <%- include("../../../partials/documentationLink.ejs", {
+                        doclink: "https://modularsoft.org/docs/products/zander/features/support/"
+                    }) %>
+                </div>
             </div>
 
             <div class="card shadow-sm">
