@@ -559,9 +559,13 @@ export async function getUserPermissions(userData = {}) {
   const queuedRankSet = new Set();
 
   const userId = userData?.userId || null;
-  const rawUuid = userData?.uuid || null;
+  // rawUuid is the LP-native UUID string (VARCHAR with dashes, e.g. "550e8400-e29b-41d4-a716-446655440000").
+  // LuckPerms MySQL stores uuid as VARCHAR(36) with dashes, so LP queries must use this value
+  // directly rather than UNHEX(hex-without-dashes), which would produce binary that never matches.
+  let rawUuid = userData?.uuid || null;
   const username = userData?.username || null;
 
+  // uuidHex is kept only as a non-null sentinel for the "do we have a UUID?" guards below.
   let uuidHex = normaliseUuid(rawUuid);
 
   const ensureUuid = async () => {
@@ -576,19 +580,22 @@ export async function getUserPermissions(userData = {}) {
       );
 
       if (rows.length && rows[0].uuid) {
+        rawUuid = rows[0].uuid;
         uuidHex = normaliseUuid(rows[0].uuid);
         return;
       }
     }
 
     if (username) {
+      // LP stores uuid as VARCHAR(36) with dashes — select it as-is, no HEX() conversion.
       const rows = await runLuckPermsQuery(
-        `SELECT LOWER(HEX(uuid)) AS uuid FROM ${LUCKPERMS_PLAYERS_TABLE} WHERE LOWER(username) = LOWER(?) LIMIT 1`,
+        `SELECT uuid FROM ${LUCKPERMS_PLAYERS_TABLE} WHERE LOWER(username) = LOWER(?) LIMIT 1`,
         [username]
       );
 
       if (rows.length && rows[0].uuid) {
-        uuidHex = rows[0].uuid;
+        rawUuid = rows[0].uuid;
+        uuidHex = normaliseUuid(rows[0].uuid);
       }
     }
   };
@@ -627,11 +634,11 @@ export async function getUserPermissions(userData = {}) {
       const directPermissions = await runLuckPermsQuery(
         `SELECT permission
            FROM ${LUCKPERMS_USER_PERMISSIONS_TABLE}
-          WHERE uuid = UNHEX(?)
+          WHERE uuid = ?
             AND permission NOT LIKE 'group.%'
             AND value = 1
             AND (expiry IS NULL OR expiry = 0 OR expiry > UNIX_TIMESTAMP())`,
-        [uuidHex]
+        [rawUuid]
       );
 
       directPermissions.forEach(({ permission }) => pushPermission(permission));
@@ -643,12 +650,12 @@ export async function getUserPermissions(userData = {}) {
       const rankRows = await runLuckPermsQuery(
         `SELECT SUBSTRING_INDEX(permission, '.', -1) AS rankSlug
            FROM ${LUCKPERMS_USER_PERMISSIONS_TABLE}
-          WHERE uuid = UNHEX(?)
+          WHERE uuid = ?
             AND permission LIKE 'group.%'
             AND value = 1
             AND (expiry IS NULL OR expiry = 0 OR expiry > UNIX_TIMESTAMP())
           ORDER BY permission`,
-        [uuidHex]
+        [rawUuid]
       );
 
       rankRows.forEach(({ rankSlug }) => queueRank(rankSlug, { direct: true }));
@@ -677,9 +684,9 @@ export async function getUserPermissions(userData = {}) {
       const primaryGroupRows = await runLuckPermsQuery(
         `SELECT primary_group AS rankSlug
            FROM ${LUCKPERMS_PLAYERS_TABLE}
-          WHERE uuid = UNHEX(?)
+          WHERE uuid = ?
           LIMIT 1`,
-        [uuidHex]
+        [rawUuid]
       );
 
       primaryGroupRows.forEach(({ rankSlug }) => queueRank(rankSlug, { direct: true }));
