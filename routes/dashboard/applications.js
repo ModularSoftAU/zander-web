@@ -35,22 +35,27 @@ export default function dashboardApplicationsSiteRoute(
 
     if (!await hasPermission("zander.web.application", req, res, features)) return;
 
-    const fetchURL = `${process.env.siteAddress}/api/application/get`;
-    const response = await fetch(fetchURL, {
-      headers: { "x-access-token": process.env.apiKey },
-    });
-    const apiData = await parseApiResponse(response);
+    const [response, globalImage, announcementWeb] = await Promise.all([
+      fetch(`${process.env.siteAddress}/api/application/get`, {
+        headers: { "x-access-token": process.env.apiKey },
+      }).catch(() => null),
+      getGlobalImage(),
+      getWebAnnouncement(),
+    ]);
+
+    const apiData = response ? await parseApiResponse(response) : { data: [] };
 
     res.header("content-type", "text/html; charset=utf-8").send(
       await app.view("dashboard/applications/application-list", {
-      pageTitle: `Dashboard - Applications`,
-      config: config,
-      apiData: apiData,
-      features: features,
-      req: req,
-      globalImage: await getGlobalImage(),
-      announcementWeb: await getWebAnnouncement(),
-    }));
+        pageTitle: `Dashboard - Applications`,
+        config: config,
+        apiData: apiData,
+        features: features,
+        req: req,
+        globalImage,
+        announcementWeb,
+      })
+    );
     return;
   });
 
@@ -60,16 +65,22 @@ export default function dashboardApplicationsSiteRoute(
 
     if (!await hasPermission("zander.web.application", req, res, features)) return;
 
+    const [globalImage, announcementWeb] = await Promise.all([
+      getGlobalImage(),
+      getWebAnnouncement(),
+    ]);
+
     res.header("content-type", "text/html; charset=utf-8").send(
       await app.view("dashboard/applications/application-editor", {
-      pageTitle: `Dashboard - Application Creator`,
-      config: config,
-      type: "create",
-      features: features,
-      req: req,
-      globalImage: await getGlobalImage(),
-      announcementWeb: await getWebAnnouncement(),
-    }));
+        pageTitle: `Dashboard - Application Creator`,
+        config: config,
+        type: "create",
+        features: features,
+        req: req,
+        globalImage,
+        announcementWeb,
+      })
+    );
     return;
   });
 
@@ -81,10 +92,16 @@ export default function dashboardApplicationsSiteRoute(
 
     const applicationId = req.query.applicationId;
     const fetchURL = `${process.env.siteAddress}/api/application/get?id=${applicationId}`;
-    const response = await fetch(fetchURL, {
-      headers: { "x-access-token": process.env.apiKey },
-    });
-    const applicationApiData = await parseApiResponse(response);
+
+    const [response, globalImage, announcementWeb] = await Promise.all([
+      fetch(fetchURL, {
+        headers: { "x-access-token": process.env.apiKey },
+      }).catch(() => null),
+      getGlobalImage(),
+      getWebAnnouncement(),
+    ]);
+
+    const applicationApiData = response ? await parseApiResponse(response) : { success: false };
 
     if (!applicationApiData.success || !applicationApiData.data?.length) {
       setBannerCookie("danger", "Application not found.", res);
@@ -93,15 +110,16 @@ export default function dashboardApplicationsSiteRoute(
 
     res.header("content-type", "text/html; charset=utf-8").send(
       await app.view("dashboard/applications/application-editor", {
-      pageTitle: `Dashboard - Application Editor`,
-      config: config,
-      applicationApiData: applicationApiData.data[0],
-      type: "edit",
-      features: features,
-      req: req,
-      globalImage: await getGlobalImage(),
-      announcementWeb: await getWebAnnouncement(),
-    }));
+        pageTitle: `Dashboard - Application Editor`,
+        config: config,
+        applicationApiData: applicationApiData.data[0],
+        type: "edit",
+        features: features,
+        req: req,
+        globalImage,
+        announcementWeb,
+      })
+    );
     return;
   });
 }

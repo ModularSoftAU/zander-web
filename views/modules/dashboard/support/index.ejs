@@ -23,11 +23,21 @@
           <h1 class="h2 mb-1">Manage Support Tickets</h1>
           <p class="text-muted mb-0">Review every ticket in one place and jump directly into the conversation.</p>
         </div>
-        <div class="d-flex gap-2">
+        <div class="d-flex gap-2 flex-wrap">
           <a href="/dashboard/support/explorer" class="btn btn-outline-primary">Open explorer</a>
           <a href="/support" class="btn btn-primary">Customer view</a>
+          <%- include("../../../partials/documentationLink.ejs", {
+              doclink: "https://modularsoft.org/docs/products/zander/features/support/"
+          }) %>
         </div>
       </div>
+
+      <%- include("../../../partials/permissionsInfo.ejs", { permissions: [
+          { node: "zander.web.tickets",          description: "Access the support dashboard and view assigned ticket categories" },
+          { node: "zander.web.tickets.{slug}",   description: "Access a specific category — slug is derived from the category name (e.g. general-support)" },
+          { node: "zander.web.tickets.*",         description: "Access all ticket categories (wildcard)" },
+          { node: "zander.web.ticket.escalate",   description: "Escalate or deescalate tickets" },
+      ]}) %>
 
       <div class="card shadow-sm">
         <div class="card-header d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-2">

@@ -45,7 +45,7 @@
                         <th>Type</th>
                         <th>Format</th>
                         <th>Schedule</th>
-                        <th>Enabled</th>
+                        <th>Status</th>
                         <th>Action</th>
                     </tr>
                 </thead>
@@ -56,7 +56,13 @@
                           content: apiData.message
                         }) %>
                     <% } else { %>
-                        <% apiData.data.forEach(function (announcement) { %>
+                        <% apiData.data.forEach(function (announcement) {
+                            const _now = new Date();
+                            const _end = announcement.endDate ? new Date(announcement.endDate) : null;
+                            const _start = announcement.startDate ? new Date(announcement.startDate) : null;
+                            const _isExpired = _end && _end < _now;
+                            const _isScheduled = _start && _start > _now;
+                        %>
                             <tr>
                                 <td data-label="Type"><span class="badge text-bg-primary"><%= announcement.announcementType %></span></td>
                                 <td data-label="Format"><%= announcement.colourMessageFormat %></td>
@@ -71,8 +77,12 @@
                                         <small>Always active</small>
                                     <% } %>
                                 </td>
-                                <td data-label="Enabled">
-                                    <% if (announcement.enabled === 1) { %>
+                                <td data-label="Status">
+                                    <% if (_isExpired) { %>
+                                        <span class="badge text-bg-secondary">Expired</span>
+                                    <% } else if (_isScheduled) { %>
+                                        <span class="badge text-bg-info">Scheduled</span>
+                                    <% } else if (announcement.enabled === 1) { %>
                                         <i class="fas fa-check-circle" style="color:green"></i>
                                     <% } else { %>
                                         <i class="fas fa-times-circle" style="color: red;"></i>

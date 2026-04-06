@@ -30,8 +30,16 @@
                     <a href="/dashboard/events/create" class="btn btn-sm btn-primary">
                         <i class="fas fa-plus fa-fw me-1"></i>New Event
                     </a>
+                    <%- include("../../partials/documentationLink.ejs", {
+                        doclink: "https://modularsoft.org/docs/products/zander/features/events/"
+                    }) %>
                 </div>
             </div>
+
+            <%- include("../../partials/permissionsInfo.ejs", { permissions: [
+                { node: "zander.web.events",        description: "View, create, edit and manage all events" },
+                { node: "zander.web.events.review",  description: "Approve or reject events submitted for review" },
+            ]}) %>
 
             <% if (req.cookies.alertType) { %>
                 <%- include("../../partials/alert.ejs", {
