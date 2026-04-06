@@ -39,6 +39,7 @@ All permission nodes follow dot-notation and are managed via LuckPerms. Wildcard
 | `zander.web.tickets.{slug}` | Access a specific ticket category (dynamic, based on category slug) |
 | `zander.web.tickets.*` | Access all ticket categories |
 | `zander.web.ticket.escalate` | Escalate support tickets |
+| `zander.web.tickets.manageparticipants` | Add or remove users and groups from any support ticket |
 
 ### Forums
 
@@ -97,7 +98,7 @@ The Support Ticket system provides a unified interface for community assistance,
 Access to a ticket is granted to the **Ticket Owner** and any **Staff** with appropriate category permissions. Additional users or groups can be added to a ticket:
 * **Add User**: Grants an individual registered user access to the ticket on the web and the linked Discord channel.
 * **Add Group**: Grants all users with a specific LuckPerms rank access to the ticket.
-* **Permission logic**: The ability to add/remove participants is available to the Ticket Owner (for non-appeal tickets), Staff members, and existing ticket participants.
+* **Permission logic**: The ability to add/remove participants is available to the Ticket Owner (for non-appeal tickets), Staff members, existing ticket participants, or any user with the `zander.web.tickets.manageparticipants` permission node.
 
 Permissions are automatically synchronized to the linked Discord channel's overwrites whenever participants are modified.
 
