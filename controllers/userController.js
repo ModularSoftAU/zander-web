@@ -585,7 +585,6 @@ export async function getUserPermissions(userData = {}) {
         if (rows[0].uuid) {
           rawUuid = rows[0].uuid;
           uuidHex = normaliseUuid(rows[0].uuid);
-          return;
         }
       }
     }

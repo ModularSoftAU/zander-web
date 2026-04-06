@@ -10,6 +10,7 @@ import {
   ActionRowBuilder,
   ChannelType,
   EmbedBuilder,
+  MessageFlags,
 } from "discord.js";
 import { startTicketFlow } from "../lib/discord/ticketFlow.mjs";
 import { getUserPermissions } from "../controllers/userController.js";
@@ -190,22 +191,22 @@ export class SupportCommand extends Command {
     }
 
     if (subcommand === "add") {
+      await interaction.deferReply({ flags: [MessageFlags.Ephemeral] });
+
       const userOption = interaction.options.getUser("user");
       const roleOption = interaction.options.getRole("role");
 
       if (!userOption && !roleOption) {
-        return interaction.reply({
+        return interaction.editReply({
           content: "Provide a user or role to add to this ticket.",
-          ephemeral: true,
         });
       }
 
       const ticketDetails = await getTicketDetailsByChannel(interaction.channel.id);
 
       if (!ticketDetails) {
-        return interaction.reply({
+        return interaction.editReply({
           content: "This channel is not linked to a ticket.",
-          ephemeral: true,
         });
       }
 
@@ -219,13 +220,10 @@ export class SupportCommand extends Command {
         hasLuckPermsPermission(userLPPermissions, "zander.web.tickets.manageparticipants");
 
       if (!hasPermission) {
-        return interaction.reply({
+        return interaction.editReply({
           content: "You need support staff permissions to update ticket access.",
-          ephemeral: true,
         });
       }
-
-      await interaction.deferReply({ ephemeral: true });
 
       const additions = [];
       const staffUserId = await getUserIdByDiscordId(interaction.user.id);
@@ -329,22 +327,22 @@ export class SupportCommand extends Command {
     }
 
     if (subcommand === "remove") {
+      await interaction.deferReply({ flags: [MessageFlags.Ephemeral] });
+
       const userOption = interaction.options.getUser("user");
       const roleOption = interaction.options.getRole("role");
 
       if (!userOption && !roleOption) {
-        return interaction.reply({
+        return interaction.editReply({
           content: "Provide a user or role to remove from this ticket.",
-          ephemeral: true,
         });
       }
 
       const ticketDetails = await getTicketDetailsByChannel(interaction.channel.id);
 
       if (!ticketDetails) {
-        return interaction.reply({
+        return interaction.editReply({
           content: "This channel is not linked to a ticket.",
-          ephemeral: true,
         });
       }
 
@@ -358,13 +356,10 @@ export class SupportCommand extends Command {
         hasLuckPermsPermission(userLPPermissions, "zander.web.tickets.manageparticipants");
 
       if (!hasPermission) {
-        return interaction.reply({
+        return interaction.editReply({
           content: "You need support staff permissions to update ticket access.",
-          ephemeral: true,
         });
       }
-
-      await interaction.deferReply({ ephemeral: true });
 
       const removals = [];
       const staffUserId = await getUserIdByDiscordId(interaction.user.id);
@@ -442,14 +437,14 @@ export class SupportCommand extends Command {
     }
 
     if (subcommand === "status") {
+      await interaction.deferReply({ flags: [MessageFlags.Ephemeral] });
       const state = interaction.options.getString("state", true);
 
       const ticketDetails = await getTicketDetailsByChannel(interaction.channel.id);
 
       if (!ticketDetails) {
-        return interaction.reply({
+        return interaction.editReply({
           content: "This channel is not linked to a ticket.",
-          ephemeral: true,
         });
       }
 
@@ -464,13 +459,10 @@ export class SupportCommand extends Command {
         hasLuckPermsPermission(userLPPermissions, "zander.web.tickets");
 
       if (!hasPermission) {
-        return interaction.reply({
+        return interaction.editReply({
           content: "You need support staff permissions to update ticket status.",
-          ephemeral: true,
         });
       }
-
-      await interaction.deferReply({ ephemeral: true });
 
       const username = interaction.user.tag;
       const staffUserId = await getUserIdByDiscordId(interaction.user.id);
@@ -529,12 +521,13 @@ export class SupportCommand extends Command {
     }
 
     if (subcommand === "close") {
+      await interaction.deferReply({ flags: [MessageFlags.Ephemeral] });
+
       const ticketDetails = await getTicketDetailsByChannel(interaction.channel.id);
 
       if (!ticketDetails) {
-        return interaction.reply({
+        return interaction.editReply({
           content: "This channel is not linked to a ticket.",
-          ephemeral: true,
         });
       }
 
@@ -549,13 +542,10 @@ export class SupportCommand extends Command {
       const isOwner = ticketDetails.discordId && ticketDetails.discordId === interaction.user.id;
 
       if (!isStaff && !isOwner) {
-        return interaction.reply({
+        return interaction.editReply({
           content: "Only ticket staff or the ticket owner can close this ticket.",
-          ephemeral: true,
         });
       }
-
-      await interaction.deferReply({ ephemeral: true });
 
       const username = interaction.user.tag;
       const actorUserId = await getUserIdByDiscordId(interaction.user.id);
@@ -598,15 +588,16 @@ export class SupportCommand extends Command {
     }
 
     if (subcommand === "manual") {
+      await interaction.deferReply({ flags: [MessageFlags.Ephemeral] });
+
       const userLPPermissions = await getUserPermissions({ discordId: interaction.user.id });
       const hasManualPermission =
         interaction.memberPermissions.has(PermissionFlagsBits.ManageChannels) ||
         hasLuckPermsPermission(userLPPermissions, "zander.web.tickets");
 
       if (!hasManualPermission) {
-        return interaction.reply({
+        return interaction.editReply({
           content: "You need Manage Channels or support staff permissions to create a manual ticket.",
-          ephemeral: true,
         });
       }
 
@@ -631,13 +622,10 @@ export class SupportCommand extends Command {
       }
 
       if (!ownerUserId) {
-        return interaction.reply({
+        return interaction.editReply({
           content: "Unable to link your account to a ticket record. Please try again.",
-          ephemeral: true,
         });
       }
-
-      await interaction.deferReply({ ephemeral: true });
 
       let targetUserId = await getUserIdByDiscordId(targetUser.id);
 
@@ -855,7 +843,7 @@ export class SupportCommand extends Command {
         content: `Posted a Create Ticket panel in ${targetChannel} using the ${
           ticketCategory ? `\`${ticketCategory.name}\`` : "default"
         } ticket category.`,
-        ephemeral: true,
+        flags: [MessageFlags.Ephemeral],
       });
     }
   }
