@@ -335,7 +335,6 @@ async function hasCreatorPermission(uuid) {
       [dashedUuid, CREATOR_PERMISSION_NODE]
     );
     if (direct.length > 0) {
-      console.log(`[Watch] uuid=${dashedUuid}: direct permission grant found.`);
       return true;
     }
   } catch (err) {
@@ -352,7 +351,6 @@ async function hasCreatorPermission(uuid) {
       [dashedUuid]
     );
     groups = groupRows.map((r) => r.grp);
-    console.log(`[Watch] uuid=${dashedUuid}: LP groups=[${groups.join(", ")}]`);
   } catch (err) {
     console.warn(`[Watch] uuid=${dashedUuid}: group-membership LP query failed —`, err.message);
   }
@@ -366,7 +364,6 @@ async function hasCreatorPermission(uuid) {
     if (playerRow.length > 0 && playerRow[0].primary_group) {
       const pg = playerRow[0].primary_group;
       if (!groups.includes(pg)) groups.push(pg);
-      console.log(`[Watch] uuid=${dashedUuid}: primary_group="${pg}"`);
     }
   } catch (err) {
     console.warn(`[Watch] uuid=${dashedUuid}: luckperms_players query failed —`, err.message);
@@ -385,7 +382,6 @@ async function hasCreatorPermission(uuid) {
       [...groups, CREATOR_PERMISSION_NODE]
     );
     if (groupPerm.length > 0) {
-      console.log(`[Watch] uuid=${dashedUuid}: permission found on group "${groupPerm[0].name}".`);
       return true;
     }
   } catch (err) {
@@ -403,14 +399,12 @@ async function hasCreatorPermission(uuid) {
     );
     const parentGroups = [...new Set(parentRows.map((r) => r.parent))];
     if (parentGroups.length > 0) {
-      console.log(`[Watch] uuid=${dashedUuid}: inherited parent groups=[${parentGroups.join(", ")}]`);
       const ph2 = parentGroups.map(() => "?").join(", ");
       const inheritedPerm = await runLpQuery(
         `SELECT name FROM luckperms_group_permissions WHERE name IN (${ph2}) AND permission=? AND value=1 LIMIT 1`,
         [...parentGroups, CREATOR_PERMISSION_NODE]
       );
       if (inheritedPerm.length > 0) {
-        console.log(`[Watch] uuid=${dashedUuid}: permission found on inherited group "${inheritedPerm[0].name}".`);
         return true;
       }
     }
@@ -434,15 +428,10 @@ export async function getEligibleCreators(platform) {
     [platform]
   );
 
-  console.log(`[Watch] getEligibleCreators(${platform}): ${rows.length} active connection(s) found.`);
-
   const eligible = [];
   for (const row of rows) {
     try {
-      console.log(`[Watch] userId=${row.userId} (${row.username}): uuid=${row.uuid || "(none)"}`);
-
       const hasCreatorPerm = await hasCreatorPermission(row.uuid);
-      console.log(`[Watch] userId=${row.userId} (${row.username}): ${hasCreatorPerm ? "ELIGIBLE" : "not eligible"} for ${CREATOR_PERMISSION_NODE}`);
       if (hasCreatorPerm) {
         eligible.push(row);
       }
@@ -451,7 +440,6 @@ export async function getEligibleCreators(platform) {
     }
   }
 
-  console.log(`[Watch] getEligibleCreators(${platform}): ${eligible.length}/${rows.length} creator(s) eligible.`);
   return eligible;
 }
 
