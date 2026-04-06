@@ -21,8 +21,13 @@ All permission nodes follow dot-notation and are managed via LuckPerms. Wildcard
 | `zander.web.scheduler` | Schedule announcements/messages |
 | `zander.web.vault` | Access vault management |
 | `zander.web.bridge` | Manage bridge/integrations |
+| `zander.web.voting` | Manage voting sites and reward templates |
 | `zander.web.punishment.view` | View the global punishments list |
 | `zander.web.punishments` | View punishments on user profiles |
+| `zander.web.punishment.manage` | Issue and lift web-based punishments |
+| `zander.web.reports` | View player reports on user profiles |
+| `zander.web.events` | Access the events dashboard and management |
+| `zander.web.events.review` | Access the event approval queue |
 | `zander.web.audit` | Run audit commands in Discord |
 | `zander.web.nicknamecheck` | Run nickname check commands |
 
@@ -47,7 +52,7 @@ All permission nodes follow dot-notation and are managed via LuckPerms. Wildcard
 | `zander.forums.discussion.archive` | Archive forum discussions |
 | `zander.forums.category.manage` | Manage forum categories (admin dashboard) |
 
-### Discord Punishments
+### Discord
 
 | Permission Node | Description |
 |---|---|
@@ -56,12 +61,45 @@ All permission nodes follow dot-notation and are managed via LuckPerms. Wildcard
 | `zander.discord.punish.ban` | Ban/unban users from the Discord server |
 | `zander.discord.punish.mute` | Mute/unmute users in Discord |
 | `zander.discord.punish.history` | View punishment history for users |
+| `zander.discord.lpaudit` | Run LuckPerms audit commands in Discord |
 
 ### Watch / Creator Content
 
 | Permission Node | Description |
 |---|---|
 | `zander.watch.creator` | Marks the user as an eligible creator — their linked Twitch/YouTube content is synced to the `/watch` page |
+
+---
+
+## Events Calendar
+
+The Events Calendar is a centralized system for scheduling and managing community events across the network and Discord.
+
+### Event Lifecycle
+Events follow a strict state machine to ensure quality and visibility:
+1. **Draft**: The initial creation state. Only visible to staff.
+2. **Pending Review**: Submitted for approval. Visible in the Review Queue for administrators.
+3. **Approved**: Reviewed and ready for publication.
+4. **Published**: Visible to the community on the public calendar. Triggers downstream actions.
+
+### Features
+* **Templates**: Define recurring event structures (e.g., Weekly Survival Night) to quickly generate new drafts.
+* **Discord Integration**: Publishing an event can automatically create a Discord Guild Event and post a notification message to configured channels.
+* **Audit Logging**: Every transition and update is recorded for administrative oversight.
+
+---
+
+## Support Tickets
+
+The Support Ticket system provides a unified interface for community assistance, integrated with Discord.
+
+### Managing Participants
+Access to a ticket is granted to the **Ticket Owner** and any **Staff** with appropriate category permissions. Additional users or groups can be added to a ticket:
+* **Add User**: Grants an individual registered user access to the ticket on the web and the linked Discord channel.
+* **Add Group**: Grants all users with a specific LuckPerms rank access to the ticket.
+* **Permission logic**: The ability to add/remove participants is available to the Ticket Owner (for non-appeal tickets), Staff members, and existing ticket participants.
+
+Permissions are automatically synchronized to the linked Discord channel's overwrites whenever participants are modified.
 
 ---
 
@@ -158,4 +196,3 @@ Run `migration/v1.11.0_v1.12.0.sql` against your database to create the four tab
 | `creator_watch_settings` | Per-user toggles controlling listing visibility and Discord notification preferences |
 | `creator_content_items` | Cached CFC-eligible content items fetched by the cron jobs |
 | `creator_content_notifications` | Deduplication log preventing repeat Discord notifications for the same content |
-
