@@ -38,6 +38,7 @@ import {
 } from "../../services/eventDiscordService.js";
 
 import { required, optional } from "../common.js";
+import { searchLinkedUsers } from "../../controllers/supportTicketController.js";
 import { createRequire } from "module";
 import path from "path";
 const _require = createRequire(import.meta.url);
@@ -80,6 +81,23 @@ export default function eventsApiRoute(app, _config, _db, features, _lang) {
     } catch (err) {
       console.error("[Events API] published:", err);
       return res.send({ success: false, message: "Failed to fetch published events" });
+    }
+  });
+
+  // ============================================================================
+  // User search (linked users only — for host assignment)
+  // ============================================================================
+
+  /** GET /api/events/users/search - search linked players for host assignment */
+  app.get("/api/events/users/search", async (req, res) => {
+    if (!features.events) return res.send({ success: false, message: "Events feature disabled" });
+    if (!req.session?.user) return res.status(401).send({ results: [] });
+    try {
+      const results = await searchLinkedUsers(req.query.q || "");
+      return res.send({ results });
+    } catch (err) {
+      console.error("[Events API] users/search:", err);
+      return res.status(500).send({ results: [] });
     }
   });
 
