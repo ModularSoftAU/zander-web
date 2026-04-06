@@ -558,7 +558,8 @@ export async function getUserPermissions(userData = {}) {
   const queuedRanks = [];
   const queuedRankSet = new Set();
 
-  const userId = userData?.userId || null;
+  let userId = userData?.userId || null;
+  const discordId = userData?.discordId || null;
   // rawUuid is the LP-native UUID string (VARCHAR with dashes, e.g. "550e8400-e29b-41d4-a716-446655440000").
   // LuckPerms MySQL stores uuid as VARCHAR(36) with dashes, so LP queries must use this value
   // directly rather than UNHEX(hex-without-dashes), which would produce binary that never matches.
@@ -571,6 +572,22 @@ export async function getUserPermissions(userData = {}) {
   const ensureUuid = async () => {
     if (uuidHex) {
       return;
+    }
+
+    if (discordId) {
+      const rows = await runQuery(
+        `SELECT userId, uuid FROM users WHERE discordId = ? LIMIT 1`,
+        [discordId]
+      );
+
+      if (rows.length) {
+        userId = rows[0].userId;
+        if (rows[0].uuid) {
+          rawUuid = rows[0].uuid;
+          uuidHex = normaliseUuid(rows[0].uuid);
+          return;
+        }
+      }
     }
 
     if (userId) {

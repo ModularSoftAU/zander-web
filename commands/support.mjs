@@ -12,6 +12,8 @@ import {
   EmbedBuilder,
 } from "discord.js";
 import { startTicketFlow } from "../lib/discord/ticketFlow.mjs";
+import { getUserPermissions } from "../controllers/userController.js";
+import { hasPermission as hasLuckPermsPermission } from "../lib/discord/permissions.mjs";
 import {
   addTicketGroupParticipant,
   addTicketUserParticipant,
@@ -209,9 +211,12 @@ export class SupportCommand extends Command {
 
       const categoryStaffRoles = await getCategoryPermissions(ticketDetails.categoryId);
       const member = await interaction.guild.members.fetch(interaction.user.id);
+      const userLPPermissions = await getUserPermissions({ discordId: interaction.user.id });
+
       const hasPermission =
         member.permissions.has(PermissionFlagsBits.ManageChannels) ||
-        member.roles.cache.some((role) => categoryStaffRoles.includes(role.id));
+        member.roles.cache.some((role) => categoryStaffRoles.includes(role.id)) ||
+        hasLuckPermsPermission(userLPPermissions, "zander.web.tickets.manageparticipants");
 
       if (!hasPermission) {
         return interaction.reply({
@@ -345,9 +350,12 @@ export class SupportCommand extends Command {
 
       const categoryStaffRoles = await getCategoryPermissions(ticketDetails.categoryId);
       const member = await interaction.guild.members.fetch(interaction.user.id);
+      const userLPPermissions = await getUserPermissions({ discordId: interaction.user.id });
+
       const hasPermission =
         member.permissions.has(PermissionFlagsBits.ManageChannels) ||
-        member.roles.cache.some((role) => categoryStaffRoles.includes(role.id));
+        member.roles.cache.some((role) => categoryStaffRoles.includes(role.id)) ||
+        hasLuckPermsPermission(userLPPermissions, "zander.web.tickets.manageparticipants");
 
       if (!hasPermission) {
         return interaction.reply({
@@ -447,9 +455,13 @@ export class SupportCommand extends Command {
 
       const categoryStaffRoles = await getCategoryPermissions(ticketDetails.categoryId);
       const member = await interaction.guild.members.fetch(interaction.user.id);
+      const userLPPermissions = await getUserPermissions({ discordId: interaction.user.id });
+
       const hasPermission =
         member.permissions.has(PermissionFlagsBits.ManageChannels) ||
-        member.roles.cache.some((role) => categoryStaffRoles.includes(role.id));
+        member.roles.cache.some((role) => categoryStaffRoles.includes(role.id)) ||
+        hasLuckPermsPermission(userLPPermissions, "zander.web.tickets.manageparticipants") ||
+        hasLuckPermsPermission(userLPPermissions, "zander.web.tickets");
 
       if (!hasPermission) {
         return interaction.reply({
@@ -528,9 +540,12 @@ export class SupportCommand extends Command {
 
       const categoryStaffRoles = await getCategoryPermissions(ticketDetails.categoryId);
       const member = await interaction.guild.members.fetch(interaction.user.id);
+      const userLPPermissions = await getUserPermissions({ discordId: interaction.user.id });
       const isStaff =
         member.permissions.has(PermissionFlagsBits.ManageChannels) ||
-        member.roles.cache.some((role) => categoryStaffRoles.includes(role.id));
+        member.roles.cache.some((role) => categoryStaffRoles.includes(role.id)) ||
+        hasLuckPermsPermission(userLPPermissions, "zander.web.tickets.manageparticipants") ||
+        hasLuckPermsPermission(userLPPermissions, "zander.web.tickets");
       const isOwner = ticketDetails.discordId && ticketDetails.discordId === interaction.user.id;
 
       if (!isStaff && !isOwner) {
@@ -583,9 +598,14 @@ export class SupportCommand extends Command {
     }
 
     if (subcommand === "manual") {
-      if (!interaction.memberPermissions.has(PermissionFlagsBits.ManageChannels)) {
+      const userLPPermissions = await getUserPermissions({ discordId: interaction.user.id });
+      const hasManualPermission =
+        interaction.memberPermissions.has(PermissionFlagsBits.ManageChannels) ||
+        hasLuckPermsPermission(userLPPermissions, "zander.web.tickets");
+
+      if (!hasManualPermission) {
         return interaction.reply({
-          content: "You need Manage Channels permission to create a manual ticket.",
+          content: "You need Manage Channels or support staff permissions to create a manual ticket.",
           ephemeral: true,
         });
       }
