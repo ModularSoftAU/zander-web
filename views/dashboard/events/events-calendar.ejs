@@ -48,11 +48,6 @@
                 }) %>
             <% } %>
 
-            <%- include("../../partials/permissionsInfo.ejs", { permissions: [
-                { node: "zander.web.events",       description: "View calendar, create, edit and manage events" },
-                { node: "zander.web.events.review", description: "Approve or reject events in the review queue" },
-            ]}) %>
-
             <!-- Status Legend -->
             <div class="d-flex flex-wrap gap-2 mb-3">
                 <span class="badge" style="background:#6c757d">Draft</span>

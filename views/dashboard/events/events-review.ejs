@@ -33,11 +33,6 @@
                 </div>
             </div>
 
-            <%- include("../../partials/permissionsInfo.ejs", { permissions: [
-                { node: "zander.web.events.review", description: "Access this queue and approve or reject submitted events" },
-                { node: "zander.web.events",         description: "Also required — grants general event management access" },
-            ]}) %>
-
             <% if (req.cookies.alertType) { %>
                 <%- include("../../partials/alert.ejs", {
                   alertType: req.cookies.alertType,
