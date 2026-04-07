@@ -654,6 +654,8 @@ model events {
   status              String    @default("draft") @db.VarChar(32)
   visibility          String    @default("public") @db.VarChar(32)
   locationLabel       String?   @db.VarChar(255)
+  locationType        String?   @db.VarChar(32)
+  locationDiscordChannelId String? @db.VarChar(64)
   serverName          String?   @db.VarChar(255)
   serverIp            String?   @db.VarChar(255)
   externalLinks       Json?
@@ -702,6 +704,8 @@ model event_templates {
   lastGeneratedAt     DateTime?
   nextGenerateAt      DateTime?
   locationLabel       String?   @db.VarChar(255)
+  locationType        String?   @db.VarChar(32)
+  locationDiscordChannelId String? @db.VarChar(64)
   serverName          String?   @db.VarChar(255)
   serverIp            String?   @db.VarChar(255)
   bannerUrl           String?   @db.VarChar(512)

@@ -123,18 +123,59 @@
                                 <textarea class="form-control summernote-editor" name="description" rows="6"><%= ev.description || '' %></textarea>
                             </div>
 
-                            <div class="row g-3 mb-3">
-                                <div class="col-md-4">
-                                    <label class="form-label fw-semibold">Location Label</label>
-                                    <input type="text" class="form-control" name="locationLabel" value="<%= ev.locationLabel || '' %>" placeholder="e.g. Main Hall">
+                            <!-- Location picker -->
+                            <div class="mb-3">
+                                <label class="form-label fw-semibold">Location Type</label>
+                                <div class="d-flex gap-2 flex-wrap" id="locationTypeBtns">
+                                    <% const lt = ev.locationType || 'other'; %>
+                                    <button type="button" class="btn btn-sm loc-type-btn <%= lt === 'discord' ? 'btn-primary' : 'btn-outline-secondary' %>" data-type="discord">
+                                        <i class="fab fa-discord me-1"></i>Discord Voice
+                                    </button>
+                                    <button type="button" class="btn btn-sm loc-type-btn <%= lt === 'minecraft' ? 'btn-primary' : 'btn-outline-secondary' %>" data-type="minecraft">
+                                        <i class="fas fa-cubes me-1"></i>Minecraft Server
+                                    </button>
+                                    <button type="button" class="btn btn-sm loc-type-btn <%= lt === 'other' ? 'btn-primary' : 'btn-outline-secondary' %>" data-type="other">
+                                        <i class="fas fa-map-marker-alt me-1"></i>Other
+                                    </button>
+                                </div>
+                                <input type="hidden" name="locationType" id="locationType" value="<%= ev.locationType || 'other' %>">
+                            </div>
+
+                            <!-- Discord voice channel picker -->
+                            <div id="loc-discord" class="row g-3 mb-3 <%= (ev.locationType || 'other') !== 'discord' ? 'd-none' : '' %>">
+                                <div class="col-md-8">
+                                    <label class="form-label fw-semibold">Voice Channel</label>
+                                    <select class="form-select" id="locationDiscordChannelId">
+                                        <option value="">Loading channels…</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <!-- Minecraft server picker -->
+                            <div id="loc-minecraft" class="row g-3 mb-3 <%= (ev.locationType || 'other') !== 'minecraft' ? 'd-none' : '' %>">
+                                <div class="col-md-5">
+                                    <label class="form-label fw-semibold">Server</label>
+                                    <select class="form-select" id="minecraftServerSelect">
+                                        <option value="">Loading servers…</option>
+                                    </select>
                                 </div>
                                 <div class="col-md-4">
                                     <label class="form-label fw-semibold">Server Name</label>
-                                    <input type="text" class="form-control" name="serverName" value="<%= ev.serverName || '' %>" placeholder="e.g. Survival">
+                                    <input type="text" class="form-control" name="serverName" id="serverName" value="<%= ev.serverName || '' %>" placeholder="e.g. Survival">
                                 </div>
-                                <div class="col-md-4">
+                                <div class="col-md-3">
                                     <label class="form-label fw-semibold">Server IP</label>
-                                    <input type="text" class="form-control" name="serverIp" value="<%= ev.serverIp || '' %>" placeholder="e.g. play.example.com">
+                                    <input type="text" class="form-control" name="serverIp" id="serverIp" value="<%= ev.serverIp || '' %>" placeholder="e.g. play.example.com">
+                                </div>
+                            </div>
+
+                            <!-- Other / free-text location -->
+                            <div id="loc-other" class="row g-3 mb-3 <%= (ev.locationType || 'other') !== 'other' ? 'd-none' : '' %>">
+                                <div class="col-md-8">
+                                    <label class="form-label fw-semibold">Location</label>
+                                    <input type="text" class="form-control" id="locationLabelOther"
+                                        value="<%= (ev.locationType === 'other' || !ev.locationType) ? (ev.locationLabel || '') : '' %>"
+                                        placeholder="e.g. Main Hall, Event Arena…">
                                 </div>
                             </div>
 
@@ -670,6 +711,95 @@ function localInputToUtc(localStr, ianaTimezone) {
 })();
 
 // ============================================================
+// Location picker
+// ============================================================
+(function initLocationPicker() {
+    const typeInput  = document.getElementById('locationType');
+    const sections   = { discord: document.getElementById('loc-discord'), minecraft: document.getElementById('loc-minecraft'), other: document.getElementById('loc-other') };
+    const btns       = document.querySelectorAll('.loc-type-btn');
+
+    function setType(type) {
+        typeInput.value = type;
+        Object.keys(sections).forEach(k => sections[k].classList.toggle('d-none', k !== type));
+        btns.forEach(b => {
+            b.classList.toggle('btn-primary', b.dataset.type === type);
+            b.classList.toggle('btn-outline-secondary', b.dataset.type !== type);
+        });
+    }
+
+    btns.forEach(b => b.addEventListener('click', () => setType(b.dataset.type)));
+
+    // Discord voice channels
+    const voiceSelect = document.getElementById('locationDiscordChannelId');
+    const savedChannelId = '<%= ev.locationDiscordChannelId || "" %>';
+
+    async function loadVoiceChannels() {
+        try {
+            const res = await fetch('/api/events/discord/voice-channels', { credentials: 'include' });
+            const data = await res.json();
+            voiceSelect.innerHTML = '<option value="">— select a channel —</option>';
+            let lastCat = null;
+            let grp;
+            data.channels.forEach(ch => {
+                if (ch.category !== lastCat) {
+                    grp = document.createElement('optgroup');
+                    grp.label = ch.category || 'Uncategorised';
+                    voiceSelect.appendChild(grp);
+                    lastCat = ch.category;
+                }
+                const opt = document.createElement('option');
+                opt.value = ch.id;
+                opt.textContent = ch.name;
+                opt.dataset.name = ch.name;
+                if (ch.id === savedChannelId) opt.selected = true;
+                (grp || voiceSelect).appendChild(opt);
+            });
+            if (!data.channels.length) voiceSelect.innerHTML = '<option value="">No voice channels found</option>';
+        } catch { voiceSelect.innerHTML = '<option value="">Failed to load channels</option>'; }
+    }
+
+    // channel name is captured at submit time from the selected option
+
+    loadVoiceChannels();
+
+    // Minecraft servers
+    const mcSelect   = document.getElementById('minecraftServerSelect');
+    const mcName     = document.getElementById('serverName');
+    const mcIp       = document.getElementById('serverIp');
+
+    async function loadMinecraftServers() {
+        try {
+            const res = await fetch('/api/server/get', { credentials: 'include' });
+            const data = await res.json();
+            mcSelect.innerHTML = '<option value="">— select a server —</option>';
+            if (data.success && Array.isArray(data.data)) {
+                data.data.forEach(s => {
+                    const opt = document.createElement('option');
+                    opt.value = s.serverId;
+                    opt.textContent = s.serverName || s.name;
+                    opt.dataset.name = s.serverName || s.name;
+                    opt.dataset.ip   = s.serverIp || s.ip || '';
+                    // Pre-select if name matches stored value
+                    if (mcName && opt.dataset.name === mcName.value) opt.selected = true;
+                    mcSelect.appendChild(opt);
+                });
+            }
+            if (!mcSelect.options.length || mcSelect.options.length === 1) {
+                mcSelect.innerHTML = '<option value="">No servers found</option>';
+            }
+        } catch { mcSelect.innerHTML = '<option value="">Failed to load servers</option>'; }
+    }
+
+    mcSelect.addEventListener('change', () => {
+        const opt = mcSelect.options[mcSelect.selectedIndex];
+        if (mcName) mcName.value = opt?.dataset?.name || '';
+        if (mcIp)   mcIp.value   = opt?.dataset?.ip   || '';
+    });
+
+    loadMinecraftServers();
+})();
+
+// ============================================================
 // Form submission
 // ============================================================
 document.getElementById('eventForm').addEventListener('submit', async (e) => {
@@ -685,6 +815,26 @@ document.getElementById('eventForm').addEventListener('submit', async (e) => {
     body.timezone = tz;
     if (body.startAt) body.startAt = localInputToUtc(body.startAt, tz);
     if (body.endAt)   body.endAt   = localInputToUtc(body.endAt,   tz);
+
+    // Location — consolidate based on active type
+    const locType = document.getElementById('locationType').value;
+    body.locationType = locType;
+    if (locType === 'discord') {
+        const sel = document.getElementById('locationDiscordChannelId');
+        body.locationDiscordChannelId = sel.value || null;
+        body.locationLabel = sel.options[sel.selectedIndex]?.textContent?.trim() || null;
+        body.serverName = null;
+        body.serverIp   = null;
+    } else if (locType === 'minecraft') {
+        body.locationDiscordChannelId = null;
+        body.locationLabel = document.getElementById('serverName')?.value || null;
+        // serverName and serverIp come from FormData as-is
+    } else {
+        body.locationDiscordChannelId = null;
+        body.locationLabel = document.getElementById('locationLabelOther')?.value || null;
+        body.serverName = null;
+        body.serverIp   = null;
+    }
 
     // Tags
     const tagsRaw = document.getElementById('tagsInput').value;

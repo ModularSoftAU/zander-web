@@ -233,6 +233,8 @@ export async function createEvent(data, actorId, actorName) {
       status: "draft",
       visibility: data.visibility || "public",
       locationLabel: data.locationLabel || null,
+      locationType: data.locationType || null,
+      locationDiscordChannelId: data.locationDiscordChannelId || null,
       serverName: data.serverName || null,
       serverIp: data.serverIp || null,
       externalLinks: data.externalLinks || undefined,
@@ -293,6 +295,8 @@ export async function updateEvent(eventId, data, actorId, actorName) {
   if (data.timezone !== undefined) updateData.timezone = data.timezone;
   if (data.visibility !== undefined) updateData.visibility = data.visibility;
   if (data.locationLabel !== undefined) updateData.locationLabel = data.locationLabel;
+  if (data.locationType !== undefined) updateData.locationType = data.locationType || null;
+  if (data.locationDiscordChannelId !== undefined) updateData.locationDiscordChannelId = data.locationDiscordChannelId || null;
   if (data.serverName !== undefined) updateData.serverName = data.serverName;
   if (data.serverIp !== undefined) updateData.serverIp = data.serverIp;
   if (data.externalLinks !== undefined) updateData.externalLinks = data.externalLinks;

@@ -37,6 +37,8 @@ import {
   runDiscordActionsForEvent,
 } from "../../services/eventDiscordService.js";
 
+import { ChannelType } from "discord.js";
+import { client as discordClient } from "../../controllers/discordController.js";
 import { required, optional } from "../common.js";
 import { searchLinkedUsers } from "../../controllers/supportTicketController.js";
 import { createRequire } from "module";
@@ -98,6 +100,30 @@ export default function eventsApiRoute(app, _config, _db, features, _lang) {
     } catch (err) {
       console.error("[Events API] users/search:", err);
       return res.status(500).send({ results: [] });
+    }
+  });
+
+  /** GET /api/events/discord/voice-channels - list voice channels for location picker */
+  app.get("/api/events/discord/voice-channels", async (req, res) => {
+    if (!features.events) return res.send({ success: false, message: "Events feature disabled" });
+    if (!req.session?.user) return res.status(401).send({ channels: [] });
+    try {
+      const guildId = _config.discord?.guildId ?? process.env.DISCORD_GUILD_ID;
+      if (!guildId || !discordClient?.isReady?.()) return res.send({ channels: [] });
+
+      const guild = await discordClient.guilds.fetch(guildId);
+      const all = await guild.channels.fetch();
+      const channels = [];
+      all.forEach(ch => {
+        if (ch && ch.type === ChannelType.GuildVoice) {
+          channels.push({ id: ch.id, name: ch.name, category: ch.parent?.name || null });
+        }
+      });
+      channels.sort((a, b) => (a.category || '').localeCompare(b.category || '') || a.name.localeCompare(b.name));
+      return res.send({ channels });
+    } catch (err) {
+      console.error("[Events API] discord/voice-channels:", err);
+      return res.send({ channels: [] });
     }
   });
 
