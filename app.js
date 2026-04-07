@@ -48,7 +48,7 @@ import("./cron/watchTwitchCron.js");
 import("./cron/watchYoutubeCron.js");
 import("./cron/voteMonthlyRewardCron.js");
 import("./cron/unverifiedReminderCron.js");
-import("./cron/eventAnnouncementCron.js");
+// eventAnnouncementCron removed — event announcements now use scheduledDiscordMessages via schedulerCron
 import("./cron/eventTemplateCron.js");
 import("./cron/announcementExpiryCron.js");
 

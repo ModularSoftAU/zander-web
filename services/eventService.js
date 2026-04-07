@@ -435,8 +435,8 @@ export async function publishEvent(eventId, actorId, actorName) {
     data: { status: "published", publishedAt: new Date() },
   });
 
-  // Schedule enabled announcements
-  await scheduleAnnouncementsForEvent(event.eventId, event.startAt);
+  // Schedule enabled announcements through the central scheduler
+  await scheduleAnnouncementsForEvent(event.eventId, event.startAt, actorId);
 
   await logEventAudit(parseInt(eventId), actorId, actorName, "published", "Event published");
 
@@ -610,9 +610,10 @@ export async function upsertEventAnnouncements(eventId, announcements, actorId, 
 
 /**
  * Schedule announcements for a published event.
- * Sets scheduledFor based on trigger type and event start time.
+ * Creates scheduledDiscordMessages entries so the central schedulerCron handles delivery.
  */
-async function scheduleAnnouncementsForEvent(eventId, startAt) {
+async function scheduleAnnouncementsForEvent(eventId, startAt, actorId) {
+  const event = await prisma.events.findUnique({ where: { eventId } });
   const announcements = await prisma.event_announcements.findMany({
     where: { eventId, enabled: true, status: "pending" },
   });
@@ -628,12 +629,56 @@ async function scheduleAnnouncementsForEvent(eventId, startAt) {
       scheduledFor = new Date(startAt);
     }
 
-    if (scheduledFor) {
-      await prisma.event_announcements.update({
-        where: { id: ann.id },
-        data: { scheduledFor },
-      });
+    if (!scheduledFor || !ann.channelId) continue;
+
+    // Skip if the scheduled time is already in the past
+    if (scheduledFor < new Date()) {
+      scheduledFor = new Date(); // send immediately
     }
+
+    // Build embed description
+    let description = ann.contentTemplate || null;
+    if (!description && event) {
+      const ts = Math.floor(new Date(startAt).getTime() / 1000);
+      if (ann.triggerType === "on_publish") {
+        description = `A new event has been announced: **${event.title}**\n\n<t:${ts}:F> (<t:${ts}:R>)`;
+      } else if (ann.triggerType === "before_event") {
+        description = `**${event.title}** starts in ${ann.offsetMinutes} minutes! (<t:${ts}:R>)`;
+      } else if (ann.triggerType === "event_start") {
+        description = `**${event.title}** is starting now!`;
+      } else {
+        description = `Reminder: **${event.title}** — <t:${ts}:F>`;
+      }
+    }
+
+    // Replace template variables
+    if (description && event) {
+      const ts = Math.floor(new Date(startAt).getTime() / 1000);
+      description = description
+        .replace(/\{title\}/g, event.title)
+        .replace(/\{location\}/g, event.locationLabel || "TBA")
+        .replace(/\{startAt\}/g, `<t:${ts}:F>`)
+        .replace(/\{startRelative\}/g, `<t:${ts}:R>`);
+    }
+
+    // Create a scheduledDiscordMessages entry (processed by schedulerCron)
+    await prisma.scheduledDiscordMessages.create({
+      data: {
+        channelId: ann.channelId,
+        embedTitle: event?.title || ann.label || "Event Announcement",
+        embedDescription: description,
+        embedColor: "#2f508c",
+        scheduledFor,
+        createdBy: actorId || 0,
+        status: "scheduled",
+      },
+    });
+
+    // Mark the event_announcement as scheduled
+    await prisma.event_announcements.update({
+      where: { id: ann.id },
+      data: { scheduledFor, status: "sent" }, // mark sent — actual sending is via schedulerCron
+    });
   }
 }
 
