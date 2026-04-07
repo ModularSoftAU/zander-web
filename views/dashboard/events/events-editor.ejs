@@ -721,7 +721,10 @@ function localInputToUtc(localStr, ianaTimezone) {
 
     async function loadVoiceChannels() {
         try {
-            const res = await fetch('/api/events/discord/voice-channels', { credentials: 'include' });
+            const res = await fetch('/api/events/discord/voice-channels', {
+                credentials: 'include',
+                headers: { 'x-access-token': '<%= process.env.apiKey %>' },
+            });
             const data = await res.json();
             voiceSelect.innerHTML = '<option value="">— select a channel —</option>';
             let lastCat = null;
@@ -755,7 +758,10 @@ function localInputToUtc(localStr, ianaTimezone) {
 
     async function loadMinecraftServers() {
         try {
-            const res = await fetch('/api/server/get', { credentials: 'include' });
+            const res = await fetch('/api/server/get', {
+                credentials: 'include',
+                headers: { 'x-access-token': '<%= process.env.apiKey %>' },
+            });
             const data = await res.json();
             mcSelect.innerHTML = '<option value="">— select a server —</option>';
             if (data.success && Array.isArray(data.data)) {
