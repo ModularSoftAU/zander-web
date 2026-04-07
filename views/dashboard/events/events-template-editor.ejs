@@ -56,25 +56,23 @@ const dayNames = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','S
                         </div>
                         <div class="mb-3">
                             <label class="form-label fw-semibold">Default Description</label>
-                            <textarea class="form-control" name="description" rows="4"><%= tmpl.description || '' %></textarea>
+                            <textarea class="form-control" name="description" id="tmplDescriptionEditor" rows="4"><%= tmpl.description || '' %></textarea>
                         </div>
                         <div class="row g-3">
-                            <div class="col-md-3">
-                                <label class="form-label fw-semibold">Default Start Time (UTC)</label>
+                            <div class="col-md-4">
+                                <label class="form-label fw-semibold">Default Start Time</label>
                                 <input type="time" class="form-control" name="defaultStartTime" value="<%= tmpl.defaultStartTime || '' %>">
+                                <small class="text-muted">In UTC.</small>
                             </div>
-                            <div class="col-md-3">
-                                <label class="form-label fw-semibold">Default End Time (UTC)</label>
+                            <div class="col-md-4">
+                                <label class="form-label fw-semibold">Default End Time</label>
                                 <input type="time" class="form-control" name="defaultEndTime" value="<%= tmpl.defaultEndTime || '' %>">
+                                <small class="text-muted">In UTC.</small>
                             </div>
-                            <div class="col-md-3">
+                            <div class="col-md-4">
                                 <label class="form-label fw-semibold">Duration (mins)</label>
                                 <input type="number" class="form-control" name="defaultDurationMins" min="1" value="<%= tmpl.defaultDurationMins || '' %>" placeholder="60">
                                 <small class="text-muted">Used if no end time set.</small>
-                            </div>
-                            <div class="col-md-3">
-                                <label class="form-label fw-semibold">Timezone</label>
-                                <input type="text" class="form-control" name="timezone" value="<%= tmpl.timezone || 'UTC' %>">
                             </div>
                         </div>
                     </div>
@@ -135,20 +133,60 @@ const dayNames = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','S
                 <div class="card mb-3">
                     <div class="card-header">Default Location</div>
                     <div class="card-body">
-                        <div class="row g-3">
-                            <div class="col-md-4">
-                                <label class="form-label fw-semibold">Location Label</label>
-                                <input type="text" class="form-control" name="locationLabel" value="<%= tmpl.locationLabel || '' %>">
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Location Type</label>
+                            <div class="d-flex gap-2 flex-wrap" id="tmplLocationTypeBtns">
+                                <% const tlt = tmpl.locationType || 'other'; %>
+                                <button type="button" class="btn btn-sm tmpl-loc-type-btn <%= tlt === 'discord' ? 'btn-primary' : 'btn-outline-secondary' %>" data-type="discord">
+                                    <i class="fab fa-discord me-1"></i>Discord Voice
+                                </button>
+                                <button type="button" class="btn btn-sm tmpl-loc-type-btn <%= tlt === 'minecraft' ? 'btn-primary' : 'btn-outline-secondary' %>" data-type="minecraft">
+                                    <i class="fas fa-cubes me-1"></i>Minecraft Server
+                                </button>
+                                <button type="button" class="btn btn-sm tmpl-loc-type-btn <%= tlt === 'other' ? 'btn-primary' : 'btn-outline-secondary' %>" data-type="other">
+                                    <i class="fas fa-map-marker-alt me-1"></i>Other
+                                </button>
                             </div>
-                            <div class="col-md-4">
+                            <input type="hidden" name="locationType" id="tmplLocationType" value="<%= tmpl.locationType || 'other' %>">
+                        </div>
+
+                        <!-- Discord voice channel picker -->
+                        <div id="tmpl-loc-discord" class="row g-3 mb-3 <%= (tmpl.locationType || 'other') !== 'discord' ? 'd-none' : '' %>">
+                            <div class="col-md-8">
+                                <label class="form-label fw-semibold">Voice Channel</label>
+                                <select class="form-select" id="tmplLocationDiscordChannelId">
+                                    <option value="">Loading channels…</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- Minecraft server -->
+                        <div id="tmpl-loc-minecraft" class="row g-3 mb-3 <%= (tmpl.locationType || 'other') !== 'minecraft' ? 'd-none' : '' %>">
+                            <div class="col-md-5">
                                 <label class="form-label fw-semibold">Server Name</label>
-                                <input type="text" class="form-control" name="serverName" value="<%= tmpl.serverName || '' %>">
+                                <input type="text" class="form-control" id="tmplServerName" value="<%= tmpl.serverName || '' %>" placeholder="e.g. Survival">
                             </div>
                             <div class="col-md-4">
                                 <label class="form-label fw-semibold">Server IP</label>
-                                <input type="text" class="form-control" name="serverIp" value="<%= tmpl.serverIp || '' %>">
+                                <input type="text" class="form-control" id="tmplServerIp" value="<%= tmpl.serverIp || '' %>" placeholder="e.g. play.example.com">
                             </div>
                         </div>
+
+                        <!-- Other / free-text -->
+                        <div id="tmpl-loc-other" class="row g-3 mb-3 <%= (tmpl.locationType || 'other') !== 'other' ? 'd-none' : '' %>">
+                            <div class="col-md-8">
+                                <label class="form-label fw-semibold">Location</label>
+                                <input type="text" class="form-control" id="tmplLocationLabelOther"
+                                    value="<%= (tmpl.locationType === 'other' || !tmpl.locationType) ? (tmpl.locationLabel || '') : '' %>"
+                                    placeholder="e.g. Main Hall, Event Arena…">
+                            </div>
+                        </div>
+
+                        <!-- Hidden fields submitted with form -->
+                        <input type="hidden" name="locationLabel" id="tmplLocationLabel" value="<%= tmpl.locationLabel || '' %>">
+                        <input type="hidden" name="locationDiscordChannelId" id="tmplLocationDiscordChannelId" value="<%= tmpl.locationDiscordChannelId || '' %>">
+                        <input type="hidden" name="serverName" id="tmplServerNameHidden" value="<%= tmpl.serverName || '' %>">
+                        <input type="hidden" name="serverIp" id="tmplServerIpHidden" value="<%= tmpl.serverIp || '' %>">
                     </div>
                 </div>
 
@@ -287,7 +325,10 @@ function initTemplateHostSearch(row) {
     const doSearch = async (term) => {
         if (!term || term.length < 2) { clearSuggestions(); return; }
         try {
-            const res = await fetch(`/api/events/users/search?q=${encodeURIComponent(term)}`, { credentials: 'include' });
+            const res = await fetch(`/api/events/users/search?q=${encodeURIComponent(term)}`, {
+                credentials: 'include',
+                headers: { 'x-access-token': '<%= process.env.apiKey %>' },
+            });
             if (!res.ok) { clearSuggestions(); return; }
             const data = await res.json();
             renderSuggestions(data.results || []);
@@ -342,12 +383,65 @@ document.querySelectorAll('#templateHostsContainer .remove-host').forEach(btn =>
 });
 document.querySelectorAll('#templateHostsContainer .host-row').forEach(initTemplateHostSearch);
 
+// Location picker
+(function initTmplLocationPicker() {
+    const typeInput = document.getElementById('tmplLocationType');
+    const sections = {
+        discord:   document.getElementById('tmpl-loc-discord'),
+        minecraft: document.getElementById('tmpl-loc-minecraft'),
+        other:     document.getElementById('tmpl-loc-other'),
+    };
+    const btns = document.querySelectorAll('.tmpl-loc-type-btn');
+
+    function setType(type) {
+        typeInput.value = type;
+        Object.keys(sections).forEach(k => sections[k].classList.toggle('d-none', k !== type));
+        btns.forEach(b => {
+            b.classList.toggle('btn-primary', b.dataset.type === type);
+            b.classList.toggle('btn-outline-secondary', b.dataset.type !== type);
+        });
+    }
+    btns.forEach(b => b.addEventListener('click', () => setType(b.dataset.type)));
+
+    // Load voice channels
+    const voiceSelect = document.getElementById('tmplLocationDiscordChannelId');
+    const savedChannelId = '<%= tmpl.locationDiscordChannelId || "" %>';
+    async function loadVoiceChannels() {
+        try {
+            const res = await fetch('/api/events/discord/voice-channels', { credentials: 'include', headers: { 'x-access-token': '<%= process.env.apiKey %>' } });
+            const data = await res.json();
+            voiceSelect.innerHTML = '<option value="">— select a channel —</option>';
+            let lastCat = null, grp;
+            data.channels.forEach(ch => {
+                if (ch.category !== lastCat) {
+                    grp = document.createElement('optgroup');
+                    grp.label = ch.category || 'Uncategorised';
+                    voiceSelect.appendChild(grp);
+                    lastCat = ch.category;
+                }
+                const opt = document.createElement('option');
+                opt.value = ch.id;
+                opt.textContent = ch.name;
+                if (ch.id === savedChannelId) opt.selected = true;
+                (grp || voiceSelect).appendChild(opt);
+            });
+            if (!data.channels.length) voiceSelect.innerHTML = '<option value="">No voice channels found</option>';
+        } catch { voiceSelect.innerHTML = '<option value="">Failed to load channels</option>'; }
+    }
+    loadVoiceChannels();
+})();
+
 // Form submission
 document.getElementById('templateForm').addEventListener('submit', async (e) => {
     e.preventDefault();
     const form = e.target;
     const fd = new FormData(form);
     const body = Object.fromEntries(fd.entries());
+
+    // Sync Summernote description
+    if (typeof $.fn.summernote !== 'undefined') {
+        body.description = $('#tmplDescriptionEditor').summernote('code');
+    }
 
     // Recurrence days
     const days = Array.from(document.querySelectorAll('.recurrence-day:checked')).map(cb => parseInt(cb.value));
@@ -357,6 +451,27 @@ document.getElementById('templateForm').addEventListener('submit', async (e) => 
     body.recurrenceEveryDays = body.recurrenceEveryDays ? parseInt(body.recurrenceEveryDays) : null;
     body.defaultDurationMins = body.defaultDurationMins ? parseInt(body.defaultDurationMins) : null;
     body.draftAdvanceDays = parseInt(body.draftAdvanceDays) || 7;
+
+    // Location — consolidate based on active type
+    const locType = document.getElementById('tmplLocationType').value;
+    body.locationType = locType;
+    if (locType === 'discord') {
+        const sel = document.getElementById('tmplLocationDiscordChannelId');
+        body.locationDiscordChannelId = sel.value || null;
+        body.locationLabel = sel.options[sel.selectedIndex]?.textContent?.trim() || null;
+        body.serverName = null;
+        body.serverIp = null;
+    } else if (locType === 'minecraft') {
+        body.locationDiscordChannelId = null;
+        body.locationLabel = document.getElementById('tmplServerName')?.value || null;
+        body.serverName = document.getElementById('tmplServerName')?.value || null;
+        body.serverIp = document.getElementById('tmplServerIp')?.value || null;
+    } else {
+        body.locationDiscordChannelId = null;
+        body.locationLabel = document.getElementById('tmplLocationLabelOther')?.value || null;
+        body.serverName = null;
+        body.serverIp = null;
+    }
 
     // Hosts
     body.defaultHosts = Array.from(document.querySelectorAll('#templateHostsContainer .host-row')).map(row => ({
@@ -376,5 +491,20 @@ document.getElementById('templateForm').addEventListener('submit', async (e) => 
     const data = await res.json();
     if (data.success) window.location.href = '/dashboard/events/templates';
     else alert('Error: ' + data.message);
+});
+
+// Summernote description editor
+$(document).ready(function () {
+    $('#tmplDescriptionEditor').summernote({
+        height: 200,
+        toolbar: [
+            ['style', ['style']],
+            ['font', ['bold', 'italic', 'underline', 'strikethrough']],
+            ['para', ['ul', 'ol', 'paragraph']],
+            ['insert', ['link']],
+            ['view', ['fullscreen', 'codeview']],
+        ],
+        styleTags: ['p', 'h3', 'h4', 'blockquote'],
+    });
 });
 </script>

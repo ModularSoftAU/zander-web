@@ -97,30 +97,24 @@
                                 </div>
                             </div>
 
+                            <input type="hidden" name="timezone" id="timezoneInput">
                             <div class="row g-3 mb-3">
-                                <div class="col-md-5">
+                                <div class="col-md-6">
                                     <label class="form-label fw-semibold">Start Date/Time <span class="text-danger">*</span></label>
                                     <input type="datetime-local" class="form-control" name="startAt" id="startAt"
                                         data-utc="<% if (ev.startAt) { %><%= new Date(ev.startAt).toISOString() %><% } %>" required>
                                 </div>
-                                <div class="col-md-5">
+                                <div class="col-md-6">
                                     <label class="form-label fw-semibold">End Date/Time <span class="text-danger">*</span></label>
                                     <input type="datetime-local" class="form-control" name="endAt" id="endAt"
                                         data-utc="<% if (ev.endAt) { %><%= new Date(ev.endAt).toISOString() %><% } %>" required>
                                 </div>
-                                <div class="col-md-2">
-                                    <label class="form-label fw-semibold">Timezone</label>
-                                    <input type="text" class="form-control" name="timezone" id="timezoneInput"
-                                        value="<%= ev.timezone && ev.timezone !== 'UTC' ? ev.timezone : '' %>"
-                                        placeholder="Auto-detected">
-                                    <small class="text-muted">Times are shown in your local timezone.</small>
-                                </div>
                             </div>
-                            <small class="text-muted d-block mb-3">Times are entered and stored in UTC.</small>
+                            <small class="text-muted d-block mb-3">Times are shown in your local timezone.</small>
 
                             <div class="mb-3">
                                 <label class="form-label fw-semibold">Description</label>
-                                <textarea class="form-control summernote-editor" name="description" rows="6"><%= ev.description || '' %></textarea>
+                                <textarea class="form-control" name="description" id="descriptionEditor" rows="6"><%= ev.description || '' %></textarea>
                             </div>
 
                             <!-- Location picker -->
@@ -290,24 +284,25 @@
                                                 <i class="<%= at.icon %> me-2"></i><strong><%= at.label %></strong>
                                             </label>
                                         </div>
-                                        <% if (at.type === 'discord_message' || at.type === 'discord_guild_event') { %>
+                                        <% if (at.type === 'discord_message') { %>
                                         <div class="mt-2 action-config" data-action-type="<%= at.type %>">
                                             <div class="row g-2">
-                                                <% if (at.type === 'discord_message') { %>
                                                 <div class="col-md-6">
                                                     <label class="form-label small">Channel ID</label>
                                                     <input type="text" class="form-control form-control-sm" data-config-key="channelId" data-action-type="<%= at.type %>"
                                                         value="<%= (existing.config || {}).channelId || '' %>" placeholder="Discord Channel ID">
                                                 </div>
-                                                <% } %>
-                                                <% if (at.type === 'discord_guild_event') { %>
-                                                <div class="col-md-6">
-                                                    <label class="form-label small">Guild ID</label>
-                                                    <input type="text" class="form-control form-control-sm" data-config-key="guildId" data-action-type="<%= at.type %>"
-                                                        value="<%= (existing.config || {}).guildId || '' %>" placeholder="Discord Server ID">
-                                                </div>
-                                                <% } %>
                                             </div>
+                                        </div>
+                                        <% } %>
+                                        <% if (at.type === 'discord_guild_event') { %>
+                                        <div class="mt-2">
+                                            <small class="text-muted"><i class="fab fa-discord me-1"></i>Creates a scheduled event in the configured Discord server.</small>
+                                        </div>
+                                        <% } %>
+                                        <% if (at.type === 'website_page') { %>
+                                        <div class="mt-2">
+                                            <small class="text-muted"><i class="fas fa-link me-1"></i>The event will be listed at <strong>/events</strong>.</small>
                                         </div>
                                         <% } %>
                                     </div>
@@ -509,7 +504,10 @@ function initHostRowSearch(row) {
     const doSearch = async (term) => {
         if (!term || term.length < 2) { clearSuggestions(); return; }
         try {
-            const res = await fetch(`/api/events/users/search?q=${encodeURIComponent(term)}`, { credentials: 'include' });
+            const res = await fetch(`/api/events/users/search?q=${encodeURIComponent(term)}`, {
+                credentials: 'include',
+                headers: { 'x-access-token': '<%= process.env.apiKey %>' },
+            });
             if (!res.ok) { clearSuggestions(); return; }
             const data = await res.json();
             renderSuggestions(data.results || []);
@@ -605,6 +603,8 @@ document.querySelectorAll('#announcementsContainer .announcement-row').forEach(r
 // ============================================================
 // Actions
 // ============================================================
+const DISCORD_GUILD_ID = '<%= config.discord?.guildId || "" %>';
+
 function collectActions() {
     const actionTypes = ['discord_message', 'discord_guild_event', 'website_page'];
     return actionTypes.map(type => {
@@ -612,6 +612,9 @@ function collectActions() {
         const cfgInputs = document.querySelectorAll(`[data-config-key][data-action-type="${type}"]`);
         const config = {};
         cfgInputs.forEach(inp => { if (inp.value) config[inp.dataset.configKey] = inp.value; });
+        if (type === 'discord_guild_event' && DISCORD_GUILD_ID) {
+            config.guildId = DISCORD_GUILD_ID;
+        }
         return {
             actionType: type,
             trigger: 'on_publish',
@@ -681,10 +684,7 @@ function localInputToUtc(localStr, ianaTimezone) {
 // Initialise timezone field and datetime inputs from browser locale
 (function initTimezone() {
     const tzInput = document.getElementById('timezoneInput');
-    const detected = Intl.DateTimeFormat().resolvedOptions().timeZone;
-
-    // Use stored timezone for existing events, browser timezone otherwise
-    const tz = tzInput.value.trim() || detected;
+    const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
     tzInput.value = tz;
 
     // Convert stored UTC values to local display
@@ -693,22 +693,8 @@ function localInputToUtc(localStr, ianaTimezone) {
         const utc = input.dataset.utc;
         if (utc) input.value = utcToLocalInput(utc, tz);
     });
-
-    // When timezone changes, re-convert the displayed times
-    tzInput.addEventListener('change', () => {
-        const newTz = tzInput.value.trim() || detected;
-        ['startAt', 'endAt'].forEach(id => {
-            const input = document.getElementById(id);
-            if (input.value) {
-                // Convert current displayed local time through the new timezone
-                try {
-                    const utc = localInputToUtc(input.value, tz);
-                    input.value = utcToLocalInput(utc, newTz);
-                } catch (_) {}
-            }
-        });
-    });
 })();
+
 
 // ============================================================
 // Location picker
@@ -808,6 +794,11 @@ document.getElementById('eventForm').addEventListener('submit', async (e) => {
     const form = e.target;
     const formData = new FormData(form);
     const body = Object.fromEntries(formData.entries());
+
+    // Sync Summernote description content
+    if (typeof $.fn.summernote !== 'undefined') {
+        body.description = $('#descriptionEditor').summernote('code');
+    }
 
     // Convert local datetimes to UTC ISO strings using the selected timezone
     const tz = document.getElementById('timezoneInput').value.trim() ||
@@ -928,4 +919,19 @@ if (publishBtn) {
         else alert('Error: ' + data.message);
     });
 }
+
+// Summernote description editor
+$(document).ready(function () {
+    $('#descriptionEditor').summernote({
+        height: 250,
+        toolbar: [
+            ['style', ['style']],
+            ['font', ['bold', 'italic', 'underline', 'strikethrough']],
+            ['para', ['ul', 'ol', 'paragraph']],
+            ['insert', ['link', 'picture']],
+            ['view', ['fullscreen', 'codeview']],
+        ],
+        styleTags: ['p', 'h3', 'h4', 'blockquote'],
+    });
+});
 </script>

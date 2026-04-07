@@ -328,7 +328,7 @@ export default function eventsApiRoute(app, _config, _db, features, _lang) {
         try {
           const discordCfg = {
             channelId: config?.events?.discordChannelId || null,
-            guildId: config?.events?.discordGuildId || null,
+            guildId: config?.discord?.guildId || config?.events?.discordGuildId || null,
           };
           await runDiscordActionsForEvent(fullEvent, "on_publish", discordCfg);
         } catch (e) {
@@ -362,7 +362,7 @@ export default function eventsApiRoute(app, _config, _db, features, _lang) {
         try {
           const discordCfg = {
             channelId: config?.events?.discordChannelId || null,
-            guildId: config?.events?.discordGuildId || null,
+            guildId: config?.discord?.guildId || config?.events?.discordGuildId || null,
           };
           await runDiscordActionsForEvent(fullEvent, "on_update", discordCfg);
         } catch (e) {
@@ -395,7 +395,7 @@ export default function eventsApiRoute(app, _config, _db, features, _lang) {
       setImmediate(async () => {
         try {
           const discordCfg = {
-            guildId: config?.events?.discordGuildId || null,
+            guildId: config?.discord?.guildId || config?.events?.discordGuildId || null,
           };
           await runDiscordActionsForEvent(fullEvent, "on_cancel", discordCfg);
         } catch (e) {
