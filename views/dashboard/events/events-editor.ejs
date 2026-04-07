@@ -101,17 +101,19 @@
                                 <div class="col-md-5">
                                     <label class="form-label fw-semibold">Start Date/Time <span class="text-danger">*</span></label>
                                     <input type="datetime-local" class="form-control" name="startAt" id="startAt"
-                                        value="<% if (ev.startAt) { %><%= new Date(ev.startAt).toISOString().slice(0,16) %><% } %>" required>
+                                        data-utc="<% if (ev.startAt) { %><%= new Date(ev.startAt).toISOString() %><% } %>" required>
                                 </div>
                                 <div class="col-md-5">
                                     <label class="form-label fw-semibold">End Date/Time <span class="text-danger">*</span></label>
                                     <input type="datetime-local" class="form-control" name="endAt" id="endAt"
-                                        value="<% if (ev.endAt) { %><%= new Date(ev.endAt).toISOString().slice(0,16) %><% } %>" required>
+                                        data-utc="<% if (ev.endAt) { %><%= new Date(ev.endAt).toISOString() %><% } %>" required>
                                 </div>
                                 <div class="col-md-2">
                                     <label class="form-label fw-semibold">Timezone</label>
-                                    <input type="text" class="form-control" name="timezone" value="<%= ev.timezone || 'UTC' %>" placeholder="UTC">
-                                    <small class="text-muted">Stored in UTC. Use this as a display hint.</small>
+                                    <input type="text" class="form-control" name="timezone" id="timezoneInput"
+                                        value="<%= ev.timezone && ev.timezone !== 'UTC' ? ev.timezone : '' %>"
+                                        placeholder="Auto-detected">
+                                    <small class="text-muted">Times are shown in your local timezone.</small>
                                 </div>
                             </div>
                             <small class="text-muted d-block mb-3">Times are entered and stored in UTC.</small>
@@ -600,6 +602,74 @@ setupPreview('bannerUrlInput', 'bannerPreview');
 setupPreview('logoUrlInput', 'logoPreview');
 
 // ============================================================
+// Timezone-aware datetime helpers
+// ============================================================
+
+/** Convert a UTC ISO string to a datetime-local input value in the given IANA timezone. */
+function utcToLocalInput(utcIso, ianaTimezone) {
+    const date = new Date(utcIso);
+    const parts = new Intl.DateTimeFormat('en-CA', {
+        timeZone: ianaTimezone,
+        year: 'numeric', month: '2-digit', day: '2-digit',
+        hour: '2-digit', minute: '2-digit', hour12: false,
+    }).formatToParts(date);
+    const p = {};
+    parts.forEach(({ type, value }) => { p[type] = value; });
+    const h = p.hour === '24' ? '00' : p.hour; // midnight edge case
+    return `${p.year}-${p.month}-${p.day}T${h}:${p.minute}`;
+}
+
+/** Convert a datetime-local value ("YYYY-MM-DDTHH:mm") in the given IANA timezone to a UTC ISO string. */
+function localInputToUtc(localStr, ianaTimezone) {
+    // Treat localStr as UTC temporarily so we can use Intl to find the actual offset
+    const asUtc = new Date(localStr + ':00Z');
+    const parts = new Intl.DateTimeFormat('en-CA', {
+        timeZone: ianaTimezone,
+        year: 'numeric', month: '2-digit', day: '2-digit',
+        hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false,
+    }).formatToParts(asUtc);
+    const p = {};
+    parts.forEach(({ type, value }) => { p[type] = value; });
+    const h = p.hour === '24' ? '00' : p.hour;
+    const tzAsUtc = new Date(`${p.year}-${p.month}-${p.day}T${h}:${p.minute}:${p.second}Z`);
+    // offset = how much asUtc differs from what the timezone "thinks" it is
+    const offsetMs = asUtc.getTime() - tzAsUtc.getTime();
+    return new Date(asUtc.getTime() + offsetMs).toISOString();
+}
+
+// Initialise timezone field and datetime inputs from browser locale
+(function initTimezone() {
+    const tzInput = document.getElementById('timezoneInput');
+    const detected = Intl.DateTimeFormat().resolvedOptions().timeZone;
+
+    // Use stored timezone for existing events, browser timezone otherwise
+    const tz = tzInput.value.trim() || detected;
+    tzInput.value = tz;
+
+    // Convert stored UTC values to local display
+    ['startAt', 'endAt'].forEach(id => {
+        const input = document.getElementById(id);
+        const utc = input.dataset.utc;
+        if (utc) input.value = utcToLocalInput(utc, tz);
+    });
+
+    // When timezone changes, re-convert the displayed times
+    tzInput.addEventListener('change', () => {
+        const newTz = tzInput.value.trim() || detected;
+        ['startAt', 'endAt'].forEach(id => {
+            const input = document.getElementById(id);
+            if (input.value) {
+                // Convert current displayed local time through the new timezone
+                try {
+                    const utc = localInputToUtc(input.value, tz);
+                    input.value = utcToLocalInput(utc, newTz);
+                } catch (_) {}
+            }
+        });
+    });
+})();
+
+// ============================================================
 // Form submission
 // ============================================================
 document.getElementById('eventForm').addEventListener('submit', async (e) => {
@@ -608,6 +678,13 @@ document.getElementById('eventForm').addEventListener('submit', async (e) => {
     const form = e.target;
     const formData = new FormData(form);
     const body = Object.fromEntries(formData.entries());
+
+    // Convert local datetimes to UTC ISO strings using the selected timezone
+    const tz = document.getElementById('timezoneInput').value.trim() ||
+                Intl.DateTimeFormat().resolvedOptions().timeZone;
+    body.timezone = tz;
+    if (body.startAt) body.startAt = localInputToUtc(body.startAt, tz);
+    if (body.endAt)   body.endAt   = localInputToUtc(body.endAt,   tz);
 
     // Tags
     const tagsRaw = document.getElementById('tagsInput').value;
