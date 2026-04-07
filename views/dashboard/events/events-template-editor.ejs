@@ -287,7 +287,7 @@ function initTemplateHostSearch(row) {
     const doSearch = async (term) => {
         if (!term || term.length < 2) { clearSuggestions(); return; }
         try {
-            const res = await fetch(`/api/events/users/search?q=${encodeURIComponent(term)}`);
+            const res = await fetch(`/api/events/users/search?q=${encodeURIComponent(term)}`, { credentials: 'include' });
             if (!res.ok) { clearSuggestions(); return; }
             const data = await res.json();
             renderSuggestions(data.results || []);
@@ -369,6 +369,7 @@ document.getElementById('templateForm').addEventListener('submit', async (e) => 
     const endpoint = '<%= mode === "create" ? "/api/events/templates/create" : "/api/events/templates/update" %>';
     const res = await fetch(endpoint, {
         method: 'POST',
+        credentials: 'include',
         headers: { 'Content-Type': 'application/json', 'x-access-token': '<%= process.env.apiKey %>' },
         body: JSON.stringify(body),
     });

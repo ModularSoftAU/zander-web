@@ -466,7 +466,7 @@ function initHostRowSearch(row) {
     const doSearch = async (term) => {
         if (!term || term.length < 2) { clearSuggestions(); return; }
         try {
-            const res = await fetch(`/api/events/users/search?q=${encodeURIComponent(term)}`);
+            const res = await fetch(`/api/events/users/search?q=${encodeURIComponent(term)}`, { credentials: 'include' });
             if (!res.ok) { clearSuggestions(); return; }
             const data = await res.json();
             renderSuggestions(data.results || []);
@@ -633,6 +633,7 @@ document.getElementById('eventForm').addEventListener('submit', async (e) => {
         const apiEndpoint = '<%= apiEndpoint %>';
         const res = await fetch(apiEndpoint, {
             method: 'POST',
+            credentials: 'include',
             headers: { 'Content-Type': 'application/json', 'x-access-token': '<%= process.env.apiKey %>' },
             body: JSON.stringify(body),
         });
@@ -644,11 +645,13 @@ document.getElementById('eventForm').addEventListener('submit', async (e) => {
             await Promise.all([
                 fetch('/api/events/actions/update', {
                     method: 'POST',
+                    credentials: 'include',
                     headers: { 'Content-Type': 'application/json', 'x-access-token': '<%= process.env.apiKey %>' },
                     body: JSON.stringify({ eventId, actions: body.actions }),
                 }),
                 fetch('/api/events/announcements/update', {
                     method: 'POST',
+                    credentials: 'include',
                     headers: { 'Content-Type': 'application/json', 'x-access-token': '<%= process.env.apiKey %>' },
                     body: JSON.stringify({ eventId, announcements: body.announcements }),
                 }),
@@ -672,6 +675,7 @@ if (submitBtn) {
         if (!confirm('Submit this event for admin review?')) return;
         const res = await fetch('/api/events/submit-review', {
             method: 'POST',
+            credentials: 'include',
             headers: { 'Content-Type': 'application/json', 'x-access-token': '<%= process.env.apiKey %>' },
             body: JSON.stringify({ eventId: submitBtn.dataset.eventId }),
         });
@@ -688,6 +692,7 @@ if (publishBtn) {
         if (!confirm('Publish this event? This will trigger Discord and website actions.')) return;
         const res = await fetch('/api/events/publish', {
             method: 'POST',
+            credentials: 'include',
             headers: { 'Content-Type': 'application/json', 'x-access-token': '<%= process.env.apiKey %>' },
             body: JSON.stringify({ eventId: publishBtn.dataset.eventId }),
         });

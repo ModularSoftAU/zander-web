@@ -166,6 +166,7 @@ document.getElementById('confirmApprove').addEventListener('click', async () => 
     if (!currentEventId) return;
     const res = await fetch('/api/events/approve', {
         method: 'POST',
+        credentials: 'include',
         headers: { 'Content-Type': 'application/json', 'x-access-token': '<%= process.env.apiKey %>' },
         body: JSON.stringify({ eventId: currentEventId }),
     });
@@ -189,6 +190,7 @@ document.getElementById('confirmReject').addEventListener('click', async () => {
     const note = document.getElementById('rejectionNote').value;
     const res = await fetch('/api/events/reject', {
         method: 'POST',
+        credentials: 'include',
         headers: { 'Content-Type': 'application/json', 'x-access-token': '<%= process.env.apiKey %>' },
         body: JSON.stringify({ eventId: currentEventId, rejectionNote: note }),
     });

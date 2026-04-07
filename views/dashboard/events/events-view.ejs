@@ -301,6 +301,7 @@ document.querySelectorAll('.js-datetime').forEach(el => {
 async function eventAction(endpoint, body, redirect) {
     const res = await fetch(endpoint, {
         method: 'POST',
+        credentials: 'include',
         headers: { 'Content-Type': 'application/json', 'x-access-token': '<%= process.env.apiKey %>' },
         body: JSON.stringify(body),
     });
@@ -344,6 +345,7 @@ document.querySelector('.btn-cancel')?.addEventListener('click', e => {
 document.querySelector('.btn-duplicate')?.addEventListener('click', async e => {
     const res = await fetch('/api/events/duplicate', {
         method: 'POST',
+        credentials: 'include',
         headers: { 'Content-Type': 'application/json', 'x-access-token': '<%= process.env.apiKey %>' },
         body: JSON.stringify({ eventId: e.target.dataset.eventId }),
     });
