@@ -285,14 +285,8 @@
                                             </label>
                                         </div>
                                         <% if (at.type === 'discord_message') { %>
-                                        <div class="mt-2 action-config" data-action-type="<%= at.type %>">
-                                            <div class="row g-2">
-                                                <div class="col-md-6">
-                                                    <label class="form-label small">Channel ID</label>
-                                                    <input type="text" class="form-control form-control-sm" data-config-key="channelId" data-action-type="<%= at.type %>"
-                                                        value="<%= (existing.config || {}).channelId || '' %>" placeholder="Discord Channel ID">
-                                                </div>
-                                            </div>
+                                        <div class="mt-2">
+                                            <small class="text-muted"><i class="fab fa-discord me-1"></i>Posts event information to the configured events channel.</small>
                                         </div>
                                         <% } %>
                                         <% if (at.type === 'discord_guild_event') { %>

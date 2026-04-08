@@ -249,6 +249,19 @@ export async function runDiscordActionsForEvent(event, trigger, discordConfig = 
         }
       }
 
+      if (action.actionType === "website_page") {
+        if (trigger === "on_publish") {
+          await updateSyncStatus(event.eventId, "website", "ok", null);
+          await logEventAudit(
+            event.eventId,
+            null,
+            "System",
+            "website_published",
+            `Event listed on /events`
+          );
+        }
+      }
+
       // Mark action as run
       await updateActionRunStatus(action.id, "ok", null);
     } catch (error) {

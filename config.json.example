@@ -73,6 +73,9 @@
       }
     }
   },
+  "events": {
+    "discordChannelId": "CHANNELID"
+  },
   "staffAuditReport": {
     "enabled": true,
     "dayOfWeek": "Monday",
