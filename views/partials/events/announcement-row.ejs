@@ -1,0 +1,52 @@
+<div class="announcement-row border rounded p-3 mb-2 position-relative">
+    <button type="button" class="btn btn-xs btn-danger position-absolute top-0 end-0 m-2 remove-announcement">×</button>
+    <div class="row g-2">
+        <div class="col-md-3">
+            <label class="form-label small">Label</label>
+            <input type="text" class="form-control form-control-sm ann-label" placeholder="e.g. 24h Reminder" value="<%= announcement.label || '' %>">
+        </div>
+        <div class="col-md-2">
+            <label class="form-label small">Type</label>
+            <select class="form-select form-select-sm ann-type">
+                <option value="on_publish" <%= announcement.announcementType === 'on_publish' ? 'selected' : '' %>>On Publish</option>
+                <option value="reminder" <%= announcement.announcementType === 'reminder' ? 'selected' : '' %>>Reminder</option>
+                <option value="event_start" <%= announcement.announcementType === 'event_start' ? 'selected' : '' %>>At Start</option>
+                <option value="recap" <%= announcement.announcementType === 'recap' ? 'selected' : '' %>>Recap</option>
+            </select>
+        </div>
+        <div class="col-md-2">
+            <label class="form-label small">Trigger</label>
+            <select class="form-select form-select-sm ann-trigger">
+                <option value="on_publish" <%= announcement.triggerType === 'on_publish' ? 'selected' : '' %>>On Publish</option>
+                <option value="before_event" <%= announcement.triggerType === 'before_event' ? 'selected' : '' %>>Before Event</option>
+                <option value="event_start" <%= announcement.triggerType === 'event_start' ? 'selected' : '' %>>Event Start</option>
+            </select>
+        </div>
+        <div class="col-md-2 ann-offset-group <%= announcement.triggerType !== 'before_event' ? 'd-none' : '' %>">
+            <label class="form-label small">Minutes Before</label>
+            <input type="number" class="form-control form-control-sm ann-offsetMinutes" placeholder="60" min="0" value="<%= announcement.offsetMinutes || '' %>">
+        </div>
+        <div class="col-md-3">
+            <label class="form-label small">Channel ID</label>
+            <input type="text" class="form-control form-control-sm ann-channelId" placeholder="Discord Channel ID" value="<%= announcement.channelId || '' %>">
+        </div>
+        <div class="col-12">
+            <label class="form-label small">Content Template <small class="text-muted">(leave blank for default)</small></label>
+            <textarea class="form-control form-control-sm ann-contentTemplate" rows="2" placeholder="Use {title}, {startAt}, {startRelative}…"><%= announcement.contentTemplate || '' %></textarea>
+        </div>
+    </div>
+</div>
+<script>
+(function() {
+    const rows = document.querySelectorAll('#announcementsContainer .announcement-row');
+    const row = rows[rows.length - 1];
+    if (!row) return;
+    row.querySelector('.remove-announcement').addEventListener('click', () => row.remove());
+    const trigger = row.querySelector('.ann-trigger');
+    const offsetGroup = row.querySelector('.ann-offset-group');
+    if (trigger && offsetGroup) {
+        const toggle = () => offsetGroup.classList.toggle('d-none', trigger.value !== 'before_event');
+        trigger.addEventListener('change', toggle);
+    }
+})();
+</script>

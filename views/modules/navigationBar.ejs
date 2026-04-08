@@ -41,6 +41,7 @@
                         <li class="nav-item"><a class="nav-link" href="/vote">Vote</a></li>
                     <% } %>
                     <li class="nav-item"><a class="nav-link" href="/webstore">Webstore</a></li>
+                    <li class="nav-item"><a class="nav-link" href="/rules">Rules</a></li>
                     <% if (req.session?.user?.permissions?.includes('zander.web.dashboard') || req.session?.user?.permissions?.includes('zander.web.*') || req.session?.user?.permissions?.includes('*')) { %>
                         <li class="nav-item dropdown">
                             <a class="nav-link dropdown-toggle" href="#" id="dashboardDropdown" role="button" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
@@ -49,6 +50,7 @@
                             <div class="dropdown-menu" aria-labelledby="dashboardDropdown">
                                 <a class="dropdown-item" href="/dashboard">Overview</a>
                                 <a class="dropdown-item" href="/dashboard/announcements">Announcements</a>
+                                <a class="dropdown-item" href="/dashboard/events">Events</a>
                                 <a class="dropdown-item" href="/dashboard/servers">Servers</a>
                                 <a class="dropdown-item" href="/dashboard/applications">Applications</a>
                                 <a class="dropdown-item" href="/dashboard/support">Support</a>

@@ -330,7 +330,7 @@ export default function supportRoutes(
         participants.groups.some((group) => group.rankSlug === slug)
       );
       const isAppeal = /Appeal #/i.test(ticket.title || "");
-      const canManageParticipants = isStaff || !isAppeal;
+      const canManageParticipants = userHasPermissionNode(permissions, "zander.web.tickets.manageparticipants") || !isAppeal;
       const canManageTicket = isOwner || isStaff || isParticipantUser || isParticipantRank;
 
       if (!canManageTicket) {
@@ -821,8 +821,10 @@ export default function supportRoutes(
       const isParticipantRank = userRankSlugs.some((slug) =>
         participants.groups.some((group) => group.rankSlug === slug)
       );
+      const isAppealAddUser = /Appeal #/i.test(ticket.title || "");
+      const canManageParticipantsAddUser = userHasPermissionNode(req.session.user.permissions || [], "zander.web.tickets.manageparticipants") || !isAppealAddUser;
 
-      if (!isOwner && !isStaff && !isParticipantUser && !isParticipantRank) {
+      if (!canManageParticipantsAddUser || (!isOwner && !isStaff && !isParticipantUser && !isParticipantRank)) {
         return res.redirect("/support");
       }
 
@@ -891,8 +893,10 @@ export default function supportRoutes(
       const isParticipantRank = userRankSlugs.some((slug) =>
         participants.groups.some((group) => group.rankSlug === slug)
       );
+      const isAppealAddGroup = /Appeal #/i.test(ticket.title || "");
+      const canManageParticipantsAddGroup = userHasPermissionNode(req.session.user.permissions || [], "zander.web.tickets.manageparticipants") || !isAppealAddGroup;
 
-      if (!isOwner && !isStaff && !isParticipantUser && !isParticipantRank) {
+      if (!canManageParticipantsAddGroup || (!isOwner && !isStaff && !isParticipantUser && !isParticipantRank)) {
         return res.redirect("/support");
       }
 
@@ -956,8 +960,10 @@ export default function supportRoutes(
       const isParticipantRank = userRankSlugs.some((slug) =>
         participants.groups.some((group) => group.rankSlug === slug)
       );
+      const isAppealRemoveUser = /Appeal #/i.test(ticket.title || "");
+      const canManageParticipantsRemoveUser = userHasPermissionNode(req.session.user.permissions || [], "zander.web.tickets.manageparticipants") || !isAppealRemoveUser;
 
-      if (!isOwner && !isStaff && !isParticipantUser && !isParticipantRank) {
+      if (!canManageParticipantsRemoveUser || (!isOwner && !isStaff && !isParticipantUser && !isParticipantRank)) {
         return res.redirect("/support");
       }
 
@@ -1034,8 +1040,10 @@ export default function supportRoutes(
       const isParticipantRank = userRankSlugs.some((slug) =>
         participants.groups.some((group) => group.rankSlug === slug)
       );
+      const isAppealRemoveGroup = /Appeal #/i.test(ticket.title || "");
+      const canManageParticipantsRemoveGroup = userHasPermissionNode(req.session.user.permissions || [], "zander.web.tickets.manageparticipants") || !isAppealRemoveGroup;
 
-      if (!isOwner && !isStaff && !isParticipantUser && !isParticipantRank) {
+      if (!canManageParticipantsRemoveGroup || (!isOwner && !isStaff && !isParticipantUser && !isParticipantRank)) {
         return res.redirect("/support");
       }
 

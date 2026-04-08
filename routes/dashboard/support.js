@@ -68,6 +68,10 @@ export default function supportDashboardRoutes(
     const slug = getCategorySlug(category);
 
     if (!userHasCategoryPermission(slug, req.session.user?.permissions)) {
+      const [globalImage, announcementWeb] = await Promise.all([
+        getGlobalImage(),
+        getWebAnnouncement(),
+      ]);
       res.header("content-type", "text/html; charset=utf-8").send(
         await app.view("session/noPermission", {
         pageTitle: "Access Restricted",
@@ -75,8 +79,8 @@ export default function supportDashboardRoutes(
         req,
         res,
         features,
-        globalImage: await getGlobalImage(),
-        announcementWeb: await getWebAnnouncement(),
+        globalImage,
+        announcementWeb,
       }));
       return;
     }
@@ -109,6 +113,10 @@ export default function supportDashboardRoutes(
         permittedCategoryIds.includes(ticket.categoryId)
       );
 
+      const [globalImage, announcementWeb] = await Promise.all([
+        getGlobalImage(),
+        getWebAnnouncement(),
+      ]);
       res.header("content-type", "text/html; charset=utf-8").send(
         await app.view("modules/dashboard/support/index", {
         pageTitle: "Support Tickets",
@@ -117,8 +125,8 @@ export default function supportDashboardRoutes(
         req,
         features,
         tickets,
-        globalImage: await getGlobalImage(),
-        announcementWeb: await getWebAnnouncement(),
+        globalImage,
+        announcementWeb,
       }));
       return;
     } catch (error) {
@@ -156,6 +164,10 @@ export default function supportDashboardRoutes(
       );
 
       if (category && !selectedCategory) {
+        const [globalImage, announcementWeb] = await Promise.all([
+          getGlobalImage(),
+          getWebAnnouncement(),
+        ]);
         res.header("content-type", "text/html; charset=utf-8").send(
           await app.view("session/noPermission", {
           pageTitle: "Access Restricted",
@@ -163,8 +175,8 @@ export default function supportDashboardRoutes(
           req,
           res,
           features,
-          globalImage: await getGlobalImage(),
-          announcementWeb: await getWebAnnouncement(),
+          globalImage,
+          announcementWeb,
         }));
         return;
       }
@@ -180,6 +192,10 @@ export default function supportDashboardRoutes(
         );
       }
 
+      const [globalImage, announcementWeb] = await Promise.all([
+        getGlobalImage(),
+        getWebAnnouncement(),
+      ]);
       res.header("content-type", "text/html; charset=utf-8").send(
         await app.view("modules/dashboard/support/explorer", {
         pageTitle: "Support Ticket Explorer",
@@ -190,8 +206,8 @@ export default function supportDashboardRoutes(
         tickets,
         categories: permittedCategories,
         selectedCategory: selectedCategory?.categoryId,
-        globalImage: await getGlobalImage(),
-        announcementWeb: await getWebAnnouncement(),
+        globalImage,
+        announcementWeb,
       }));
       return;
     } catch (error) {
@@ -258,6 +274,10 @@ export default function supportDashboardRoutes(
         roles?.length ?? 0
       );
 
+      const [globalImage, announcementWeb] = await Promise.all([
+        getGlobalImage(),
+        getWebAnnouncement(),
+      ]);
       res.header("content-type", "text/html; charset=utf-8").send(
         await app.view("modules/dashboard/support/categories", {
         pageTitle: "Support Ticket Categories",
@@ -267,8 +287,8 @@ export default function supportDashboardRoutes(
         features,
         categories: categoriesWithRoleNames,
         roles,
-        globalImage: await getGlobalImage(),
-        announcementWeb: await getWebAnnouncement(),
+        globalImage,
+        announcementWeb,
       }));
       return;
     } catch (error) {
@@ -422,6 +442,10 @@ export default function supportDashboardRoutes(
         ),
       };
 
+      const [globalImage, announcementWeb] = await Promise.all([
+        getGlobalImage(),
+        getWebAnnouncement(),
+      ]);
       res.header("content-type", "text/html; charset=utf-8").send(
         await app.view("modules/dashboard/support/edit-category", {
         pageTitle: "Edit Support Category",
@@ -431,8 +455,8 @@ export default function supportDashboardRoutes(
         features,
         category: categoryWithPermissions,
         roles,
-        globalImage: await getGlobalImage(),
-        announcementWeb: await getWebAnnouncement(),
+        globalImage,
+        announcementWeb,
       }));
       return;
     } catch (error) {
