@@ -302,7 +302,7 @@ async function eventAction(endpoint, body, redirect) {
     const res = await fetch(endpoint, {
         method: 'POST',
         credentials: 'include',
-        headers: { 'Content-Type': 'application/json', 'x-access-token': '<%= process.env.apiKey %>' },
+        headers: { 'Content-Type': 'application/json', 'x-access-token': <%- JSON.stringify(process.env.apiKey || '') %> },
         body: JSON.stringify(body),
     });
     const data = await res.json();
@@ -346,7 +346,7 @@ document.querySelector('.btn-duplicate')?.addEventListener('click', async e => {
     const res = await fetch('/api/events/duplicate', {
         method: 'POST',
         credentials: 'include',
-        headers: { 'Content-Type': 'application/json', 'x-access-token': '<%= process.env.apiKey %>' },
+        headers: { 'Content-Type': 'application/json', 'x-access-token': <%- JSON.stringify(process.env.apiKey || '') %> },
         body: JSON.stringify({ eventId: e.target.dataset.eventId }),
     });
     const data = await res.json();
