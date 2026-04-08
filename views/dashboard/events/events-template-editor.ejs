@@ -244,12 +244,120 @@ const dayNames = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','S
                     </div>
                 </div>
 
+                <div class="card mb-3">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <span>Default Announcements</span>
+                        <button type="button" class="btn btn-sm btn-primary" id="addTemplateAnnouncementBtn">
+                            <i class="fas fa-plus me-1"></i>Add Announcement
+                        </button>
+                    </div>
+                    <div class="card-body">
+                        <p class="text-muted small mb-3">Announcements added here are copied to every draft generated from this template.</p>
+                        <div id="templateAnnouncementsContainer">
+                            <% const tmplAnnouncements = tmpl.announcements || []; %>
+                            <% tmplAnnouncements.forEach(function(ann) { %>
+                            <div class="announcement-row border rounded p-3 mb-2 position-relative">
+                                <button type="button" class="btn btn-xs btn-danger position-absolute top-0 end-0 m-2 remove-announcement">×</button>
+                                <div class="row g-2">
+                                    <div class="col-md-3">
+                                        <label class="form-label small">Label</label>
+                                        <input type="text" class="form-control form-control-sm ann-label" placeholder="e.g. 24h Reminder" value="<%= ann.label || '' %>">
+                                    </div>
+                                    <div class="col-md-2">
+                                        <label class="form-label small">Type</label>
+                                        <select class="form-select form-select-sm ann-type">
+                                            <option value="on_publish" <%= ann.announcementType === 'on_publish' ? 'selected' : '' %>>On Publish</option>
+                                            <option value="reminder" <%= ann.announcementType === 'reminder' ? 'selected' : '' %>>Reminder</option>
+                                            <option value="event_start" <%= ann.announcementType === 'event_start' ? 'selected' : '' %>>At Start</option>
+                                            <option value="recap" <%= ann.announcementType === 'recap' ? 'selected' : '' %>>Recap</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-2">
+                                        <label class="form-label small">Trigger</label>
+                                        <select class="form-select form-select-sm ann-trigger">
+                                            <option value="on_publish" <%= ann.triggerType === 'on_publish' ? 'selected' : '' %>>On Publish</option>
+                                            <option value="before_event" <%= ann.triggerType === 'before_event' ? 'selected' : '' %>>Before Event</option>
+                                            <option value="event_start" <%= ann.triggerType === 'event_start' ? 'selected' : '' %>>Event Start</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-2 ann-offset-group <%= ann.triggerType !== 'before_event' ? 'd-none' : '' %>">
+                                        <label class="form-label small">Minutes Before</label>
+                                        <input type="number" class="form-control form-control-sm ann-offsetMinutes" placeholder="60" min="0" value="<%= ann.offsetMinutes || '' %>">
+                                    </div>
+                                    <div class="col-md-3">
+                                        <label class="form-label small">Channel ID</label>
+                                        <input type="text" class="form-control form-control-sm ann-channelId" placeholder="Discord Channel ID" value="<%= ann.channelId || '' %>">
+                                    </div>
+                                    <div class="col-12">
+                                        <label class="form-label small">Content Template <small class="text-muted">(leave blank for default)</small></label>
+                                        <textarea class="form-control form-control-sm ann-contentTemplate" rows="2" placeholder="Use {title}, {startAt}, {startRelative}…"><%= ann.contentTemplate || '' %></textarea>
+                                    </div>
+                                    <div class="col-md-3 d-flex align-items-end">
+                                        <div class="form-check form-switch mb-1">
+                                            <input class="form-check-input ann-enabled" type="checkbox" <%= ann.enabled !== false ? 'checked' : '' %>>
+                                            <label class="form-check-label small">Enabled</label>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <% }) %>
+                        </div>
+                    </div>
+                </div>
+
                 <div class="d-flex gap-2">
                     <button type="submit" class="btn btn-primary">
                         <i class="fas fa-save me-1"></i><%= mode === 'create' ? 'Create Template' : 'Save Template' %>
                     </button>
                 </div>
             </form>
+
+            <template id="tmplAnnouncementRowTemplate">
+                <div class="announcement-row border rounded p-3 mb-2 position-relative">
+                    <button type="button" class="btn btn-xs btn-danger position-absolute top-0 end-0 m-2 remove-announcement">×</button>
+                    <div class="row g-2">
+                        <div class="col-md-3">
+                            <label class="form-label small">Label</label>
+                            <input type="text" class="form-control form-control-sm ann-label" placeholder="e.g. 24h Reminder" value="">
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label small">Type</label>
+                            <select class="form-select form-select-sm ann-type">
+                                <option value="on_publish">On Publish</option>
+                                <option value="reminder" selected>Reminder</option>
+                                <option value="event_start">At Start</option>
+                                <option value="recap">Recap</option>
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label small">Trigger</label>
+                            <select class="form-select form-select-sm ann-trigger">
+                                <option value="on_publish">On Publish</option>
+                                <option value="before_event" selected>Before Event</option>
+                                <option value="event_start">Event Start</option>
+                            </select>
+                        </div>
+                        <div class="col-md-2 ann-offset-group">
+                            <label class="form-label small">Minutes Before</label>
+                            <input type="number" class="form-control form-control-sm ann-offsetMinutes" placeholder="60" min="0" value="">
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label small">Channel ID</label>
+                            <input type="text" class="form-control form-control-sm ann-channelId" placeholder="Discord Channel ID" value="">
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label small">Content Template <small class="text-muted">(leave blank for default)</small></label>
+                            <textarea class="form-control form-control-sm ann-contentTemplate" rows="2" placeholder="Use {title}, {startAt}, {startRelative}…"></textarea>
+                        </div>
+                        <div class="col-md-3 d-flex align-items-end">
+                            <div class="form-check form-switch mb-1">
+                                <input class="form-check-input ann-enabled" type="checkbox" checked>
+                                <label class="form-check-label small">Enabled</label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </template>
         </main>
     </div>
 </div>
@@ -489,9 +597,65 @@ document.getElementById('templateForm').addEventListener('submit', async (e) => 
         body: JSON.stringify(body),
     });
     const data = await res.json();
-    if (data.success) window.location.href = '/dashboard/events/templates';
-    else alert('Error: ' + data.message);
+    if (!data.success) { alert('Error: ' + data.message); return; }
+
+    // Save announcements (use returned templateId for new templates)
+    const savedTemplateId = data.data?.templateId || body.templateId;
+    if (savedTemplateId) {
+        const annRes = await fetch('/api/events/templates/announcements/update', {
+            method: 'POST',
+            credentials: 'include',
+            headers: { 'Content-Type': 'application/json', 'x-access-token': <%- JSON.stringify(process.env.apiKey || '') %> },
+            body: JSON.stringify({ templateId: savedTemplateId, announcements: collectTemplateAnnouncements() }),
+        });
+        const annData = await annRes.json();
+        if (!annData.success) { alert('Template saved but announcements failed: ' + annData.message); return; }
+    }
+
+    window.location.href = '/dashboard/events/templates';
 });
+
+// Announcements
+function initAnnouncementRow(row) {
+    row.querySelector('.remove-announcement').addEventListener('click', () => row.remove());
+    const trigger = row.querySelector('.ann-trigger');
+    const offsetGroup = row.querySelector('.ann-offset-group');
+    if (trigger && offsetGroup) {
+        const toggle = () => offsetGroup.classList.toggle('d-none', trigger.value !== 'before_event');
+        trigger.addEventListener('change', toggle);
+        toggle();
+    }
+}
+
+function addTemplateAnnouncementRow(ann = {}) {
+    const tmpl = document.getElementById('tmplAnnouncementRowTemplate');
+    const row = tmpl.content.cloneNode(true).querySelector('.announcement-row');
+    if (ann.label) row.querySelector('.ann-label').value = ann.label;
+    if (ann.announcementType) row.querySelector('.ann-type').value = ann.announcementType;
+    if (ann.triggerType) row.querySelector('.ann-trigger').value = ann.triggerType;
+    if (ann.offsetMinutes) row.querySelector('.ann-offsetMinutes').value = ann.offsetMinutes;
+    if (ann.channelId) row.querySelector('.ann-channelId').value = ann.channelId;
+    if (ann.contentTemplate) row.querySelector('.ann-contentTemplate').value = ann.contentTemplate;
+    if (ann.enabled === false) row.querySelector('.ann-enabled').checked = false;
+    document.getElementById('templateAnnouncementsContainer').appendChild(row);
+    initAnnouncementRow(row);
+}
+
+function collectTemplateAnnouncements() {
+    return Array.from(document.querySelectorAll('#templateAnnouncementsContainer .announcement-row')).map(row => ({
+        label: row.querySelector('.ann-label')?.value || null,
+        announcementType: row.querySelector('.ann-type')?.value || 'reminder',
+        platform: 'discord',
+        channelId: row.querySelector('.ann-channelId')?.value || null,
+        contentTemplate: row.querySelector('.ann-contentTemplate')?.value || null,
+        triggerType: row.querySelector('.ann-trigger')?.value || 'before_event',
+        offsetMinutes: row.querySelector('.ann-offsetMinutes')?.value ? parseInt(row.querySelector('.ann-offsetMinutes').value) : null,
+        enabled: row.querySelector('.ann-enabled')?.checked !== false,
+    }));
+}
+
+document.getElementById('addTemplateAnnouncementBtn').addEventListener('click', () => addTemplateAnnouncementRow());
+document.querySelectorAll('#templateAnnouncementsContainer .announcement-row').forEach(initAnnouncementRow);
 
 // Summernote description editor
 $(document).ready(function () {
