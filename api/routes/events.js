@@ -135,8 +135,6 @@ export default function eventsApiRoute(app, _config, _db, features, _lang) {
   app.get("/api/events/get", async (req, res) => {
     if (!features.events) return res.send({ success: false, message: "Events feature disabled" });
 
-    if (!req.session?.user) return res.send({ success: false, message: "Authentication required" });
-
     try {
       const result = await getEvents({
         status: req.query.status || null,
@@ -157,8 +155,6 @@ export default function eventsApiRoute(app, _config, _db, features, _lang) {
   app.get("/api/events/calendar", async (req, res) => {
     if (!features.events) return res.send({ success: false, message: "Events feature disabled" });
 
-    if (!req.session?.user) return res.send({ success: false, message: "Authentication required" });
-
     try {
       const { start, end } = req.query;
       if (!start || !end) return res.send({ success: false, message: "start and end query params required" });
@@ -175,8 +171,6 @@ export default function eventsApiRoute(app, _config, _db, features, _lang) {
   app.get("/api/events/pending-review", async (req, res) => {
     if (!features.events) return res.send({ success: false, message: "Events feature disabled" });
 
-    if (!req.session?.user) return res.send({ success: false, message: "Authentication required" });
-
     try {
       const events = await getPendingReviewEvents();
       return res.send({ success: true, data: events });
@@ -189,8 +183,6 @@ export default function eventsApiRoute(app, _config, _db, features, _lang) {
   /** GET /api/events/single?eventId=X */
   app.get("/api/events/single", async (req, res) => {
     if (!features.events) return res.send({ success: false, message: "Events feature disabled" });
-
-    if (!req.session?.user) return res.send({ success: false, message: "Authentication required" });
 
     try {
       const eventId = req.query.eventId;
@@ -214,8 +206,6 @@ export default function eventsApiRoute(app, _config, _db, features, _lang) {
   app.post("/api/events/create", async (req, res) => {
     if (!features.events) return res.send({ success: false, message: "Events feature disabled" });
 
-    if (!req.session?.user) return res.send({ success: false, message: "Authentication required" });
-
     const body = req.body;
     if (!body?.title) return res.send({ success: false, message: "title is required" });
     if (!body?.startAt) return res.send({ success: false, message: "startAt is required" });
@@ -235,8 +225,6 @@ export default function eventsApiRoute(app, _config, _db, features, _lang) {
   app.post("/api/events/update", async (req, res) => {
     if (!features.events) return res.send({ success: false, message: "Events feature disabled" });
 
-    if (!req.session?.user) return res.send({ success: false, message: "Authentication required" });
-
     const body = req.body;
     if (!body?.eventId) return res.send({ success: false, message: "eventId is required" });
 
@@ -253,8 +241,6 @@ export default function eventsApiRoute(app, _config, _db, features, _lang) {
   /** POST /api/events/submit-review */
   app.post("/api/events/submit-review", async (req, res) => {
     if (!features.events) return res.send({ success: false, message: "Events feature disabled" });
-
-    if (!req.session?.user) return res.send({ success: false, message: "Authentication required" });
 
     const eventId = req.body?.eventId;
     if (!eventId) return res.send({ success: false, message: "eventId is required" });
@@ -273,8 +259,6 @@ export default function eventsApiRoute(app, _config, _db, features, _lang) {
   app.post("/api/events/approve", async (req, res) => {
     if (!features.events) return res.send({ success: false, message: "Events feature disabled" });
 
-    if (!req.session?.user) return res.send({ success: false, message: "Authentication required" });
-
     const eventId = req.body?.eventId;
     if (!eventId) return res.send({ success: false, message: "eventId is required" });
 
@@ -292,8 +276,6 @@ export default function eventsApiRoute(app, _config, _db, features, _lang) {
   app.post("/api/events/reject", async (req, res) => {
     if (!features.events) return res.send({ success: false, message: "Events feature disabled" });
 
-    if (!req.session?.user) return res.send({ success: false, message: "Authentication required" });
-
     const { eventId, rejectionNote } = req.body || {};
     if (!eventId) return res.send({ success: false, message: "eventId is required" });
 
@@ -310,8 +292,6 @@ export default function eventsApiRoute(app, _config, _db, features, _lang) {
   /** POST /api/events/publish */
   app.post("/api/events/publish", async (req, res) => {
     if (!features.events) return res.send({ success: false, message: "Events feature disabled" });
-
-    if (!req.session?.user) return res.send({ success: false, message: "Authentication required" });
 
     const { eventId } = req.body || {};
     if (!eventId) return res.send({ success: false, message: "eventId is required" });
@@ -347,8 +327,6 @@ export default function eventsApiRoute(app, _config, _db, features, _lang) {
   app.post("/api/events/update-published", async (req, res) => {
     if (!features.events) return res.send({ success: false, message: "Events feature disabled" });
 
-    if (!req.session?.user) return res.send({ success: false, message: "Authentication required" });
-
     const body = req.body || {};
     if (!body?.eventId) return res.send({ success: false, message: "eventId is required" });
 
@@ -381,8 +359,6 @@ export default function eventsApiRoute(app, _config, _db, features, _lang) {
   app.post("/api/events/cancel", async (req, res) => {
     if (!features.events) return res.send({ success: false, message: "Events feature disabled" });
 
-    if (!req.session?.user) return res.send({ success: false, message: "Authentication required" });
-
     const { eventId, reason } = req.body || {};
     if (!eventId) return res.send({ success: false, message: "eventId is required" });
 
@@ -414,8 +390,6 @@ export default function eventsApiRoute(app, _config, _db, features, _lang) {
   app.post("/api/events/archive", async (req, res) => {
     if (!features.events) return res.send({ success: false, message: "Events feature disabled" });
 
-    if (!req.session?.user) return res.send({ success: false, message: "Authentication required" });
-
     const { eventId } = req.body || {};
     if (!eventId) return res.send({ success: false, message: "eventId is required" });
 
@@ -433,8 +407,6 @@ export default function eventsApiRoute(app, _config, _db, features, _lang) {
   app.post("/api/events/delete", async (req, res) => {
     if (!features.events) return res.send({ success: false, message: "Events feature disabled" });
 
-    if (!req.session?.user) return res.send({ success: false, message: "Authentication required" });
-
     const { eventId } = req.body || {};
     if (!eventId) return res.send({ success: false, message: "eventId is required" });
 
@@ -451,8 +423,6 @@ export default function eventsApiRoute(app, _config, _db, features, _lang) {
   /** POST /api/events/duplicate */
   app.post("/api/events/duplicate", async (req, res) => {
     if (!features.events) return res.send({ success: false, message: "Events feature disabled" });
-
-    if (!req.session?.user) return res.send({ success: false, message: "Authentication required" });
 
     const { eventId } = req.body || {};
     if (!eventId) return res.send({ success: false, message: "eventId is required" });
@@ -475,8 +445,6 @@ export default function eventsApiRoute(app, _config, _db, features, _lang) {
   app.post("/api/events/actions/update", async (req, res) => {
     if (!features.events) return res.send({ success: false, message: "Events feature disabled" });
 
-    if (!req.session?.user) return res.send({ success: false, message: "Authentication required" });
-
     const { eventId, actions } = req.body || {};
     if (!eventId) return res.send({ success: false, message: "eventId is required" });
 
@@ -493,8 +461,6 @@ export default function eventsApiRoute(app, _config, _db, features, _lang) {
   /** POST /api/events/announcements/update */
   app.post("/api/events/announcements/update", async (req, res) => {
     if (!features.events) return res.send({ success: false, message: "Events feature disabled" });
-
-    if (!req.session?.user) return res.send({ success: false, message: "Authentication required" });
 
     const { eventId, announcements } = req.body || {};
     if (!eventId) return res.send({ success: false, message: "eventId is required" });
@@ -517,8 +483,6 @@ export default function eventsApiRoute(app, _config, _db, features, _lang) {
   app.get("/api/events/templates/get", async (req, res) => {
     if (!features.events) return res.send({ success: false, message: "Events feature disabled" });
 
-    if (!req.session?.user) return res.send({ success: false, message: "Authentication required" });
-
     try {
       const templates = await getTemplates();
       return res.send({ success: true, data: templates });
@@ -531,8 +495,6 @@ export default function eventsApiRoute(app, _config, _db, features, _lang) {
   /** GET /api/events/templates/single?templateId=X */
   app.get("/api/events/templates/single", async (req, res) => {
     if (!features.events) return res.send({ success: false, message: "Events feature disabled" });
-
-    if (!req.session?.user) return res.send({ success: false, message: "Authentication required" });
 
     const { templateId } = req.query;
     if (!templateId) return res.send({ success: false, message: "templateId required" });
@@ -551,8 +513,6 @@ export default function eventsApiRoute(app, _config, _db, features, _lang) {
   app.post("/api/events/templates/create", async (req, res) => {
     if (!features.events) return res.send({ success: false, message: "Events feature disabled" });
 
-    if (!req.session?.user) return res.send({ success: false, message: "Authentication required" });
-
     if (!req.body?.title) return res.send({ success: false, message: "title is required" });
 
     try {
@@ -568,8 +528,6 @@ export default function eventsApiRoute(app, _config, _db, features, _lang) {
   /** POST /api/events/templates/update */
   app.post("/api/events/templates/update", async (req, res) => {
     if (!features.events) return res.send({ success: false, message: "Events feature disabled" });
-
-    if (!req.session?.user) return res.send({ success: false, message: "Authentication required" });
 
     const { templateId } = req.body || {};
     if (!templateId) return res.send({ success: false, message: "templateId is required" });
@@ -588,8 +546,6 @@ export default function eventsApiRoute(app, _config, _db, features, _lang) {
   app.post("/api/events/templates/delete", async (req, res) => {
     if (!features.events) return res.send({ success: false, message: "Events feature disabled" });
 
-    if (!req.session?.user) return res.send({ success: false, message: "Authentication required" });
-
     const { templateId } = req.body || {};
     if (!templateId) return res.send({ success: false, message: "templateId is required" });
 
@@ -605,8 +561,6 @@ export default function eventsApiRoute(app, _config, _db, features, _lang) {
   /** POST /api/events/templates/generate-draft - manually trigger draft generation */
   app.post("/api/events/templates/generate-draft", async (req, res) => {
     if (!features.events) return res.send({ success: false, message: "Events feature disabled" });
-
-    if (!req.session?.user) return res.send({ success: false, message: "Authentication required" });
 
     const { templateId, targetDate } = req.body || {};
     if (!templateId) return res.send({ success: false, message: "templateId is required" });
