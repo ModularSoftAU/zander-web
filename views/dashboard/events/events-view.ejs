@@ -106,7 +106,14 @@ const canEdit = ['draft','rejected','approved','published'].includes(ev.status);
                                 <dd class="col-sm-9"><span class="js-datetime" data-iso="<%= ev.endAt ? new Date(ev.endAt).toISOString() : '' %>"></span></dd>
                                 <% if (ev.locationLabel) { %>
                                 <dt class="col-sm-3">Location</dt>
-                                <dd class="col-sm-9"><%= ev.locationLabel %></dd>
+                                <dd class="col-sm-9">
+                                    <%= ev.locationLabel %>
+                                    <% if (ev.locationType === 'discord' && ev.locationDiscordChannelId && config.discord?.guildId) { %>
+                                    <a href="https://discord.com/channels/<%= config.discord.guildId %>/<%= ev.locationDiscordChannelId %>" target="_blank" rel="noopener" class="btn btn-xs btn-outline-primary ms-2">
+                                        <i class="fab fa-discord me-1"></i>Join Channel
+                                    </a>
+                                    <% } %>
+                                </dd>
                                 <% } %>
                                 <% if (ev.serverName) { %>
                                 <dt class="col-sm-3">Server</dt>

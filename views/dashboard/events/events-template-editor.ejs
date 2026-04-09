@@ -61,13 +61,17 @@ const dayNames = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','S
                         <div class="row g-3">
                             <div class="col-md-4">
                                 <label class="form-label fw-semibold">Default Start Time</label>
-                                <input type="time" class="form-control" name="defaultStartTime" value="<%= tmpl.defaultStartTime || '' %>">
-                                <small class="text-muted">In UTC.</small>
+                                <input type="time" class="form-control" id="defaultStartTimeLocal"
+                                    data-utc="<%= tmpl.defaultStartTime || '' %>">
+                                <input type="hidden" name="defaultStartTime" id="defaultStartTimeUtc">
+                                <small class="text-muted js-tz-label">In your local timezone.</small>
                             </div>
                             <div class="col-md-4">
                                 <label class="form-label fw-semibold">Default End Time</label>
-                                <input type="time" class="form-control" name="defaultEndTime" value="<%= tmpl.defaultEndTime || '' %>">
-                                <small class="text-muted">In UTC.</small>
+                                <input type="time" class="form-control" id="defaultEndTimeLocal"
+                                    data-utc="<%= tmpl.defaultEndTime || '' %>">
+                                <input type="hidden" name="defaultEndTime" id="defaultEndTimeUtc">
+                                <small class="text-muted js-tz-label">In your local timezone.</small>
                             </div>
                             <div class="col-md-4">
                                 <label class="form-label fw-semibold">Duration (mins)</label>
@@ -196,10 +200,19 @@ const dayNames = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','S
                         <div class="mb-3">
                             <label class="form-label fw-semibold">Banner URL</label>
                             <input type="url" class="form-control" name="bannerUrl" value="<%= tmpl.bannerUrl || '' %>">
+                            <small class="text-muted">
+                                Recommended: <strong>1920×480px</strong> (4:1 ratio) for website banners.
+                                Discord event cover images are displayed at <strong>16:9</strong> (e.g. 1280×720px).
+                                Use PNG or JPG, max 8 MB.
+                            </small>
                         </div>
                         <div class="mb-3">
                             <label class="form-label fw-semibold">Logo URL</label>
                             <input type="url" class="form-control" name="logoUrl" value="<%= tmpl.logoUrl || '' %>">
+                            <small class="text-muted">
+                                Recommended: <strong>512×512px</strong> (1:1 square) — used as the event thumbnail on the website and as the Discord embed thumbnail.
+                                Use PNG with transparency. Max 8 MB.
+                            </small>
                         </div>
                     </div>
                 </div>
@@ -255,22 +268,30 @@ const dayNames = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','S
                         <p class="text-muted small mb-3">Announcements added here are copied to every draft generated from this template.</p>
                         <div id="templateAnnouncementsContainer">
                             <% const tmplAnnouncements = tmpl.announcements || []; %>
-                            <% tmplAnnouncements.forEach(function(ann) { %>
+                            <% tmplAnnouncements.forEach(function(ann) {
+                                const ap = ann.platform || 'discord';
+                                const isDiscord = ap === 'discord';
+                                const isMC = ['motd','tip'].includes(ap);
+                                const hasLink = ['tip','web','popup'].includes(ap);
+                                const isPopup = ap === 'popup';
+                                const hasBody = !isDiscord;
+                            %>
                             <div class="announcement-row border rounded p-3 mb-2 position-relative">
                                 <button type="button" class="btn btn-xs btn-danger position-absolute top-0 end-0 m-2 remove-announcement">×</button>
                                 <div class="row g-2">
                                     <div class="col-md-3">
+                                        <label class="form-label small">Platform</label>
+                                        <select class="form-select form-select-sm ann-platform">
+                                            <option value="discord" <%= isDiscord ? 'selected' : '' %>>Discord Message</option>
+                                            <option value="motd" <%= ap === 'motd' ? 'selected' : '' %>>MOTD (Minecraft)</option>
+                                            <option value="tip" <%= ap === 'tip' ? 'selected' : '' %>>In-Game Tip</option>
+                                            <option value="web" <%= ap === 'web' ? 'selected' : '' %>>Website Banner</option>
+                                            <option value="popup" <%= ap === 'popup' ? 'selected' : '' %>>Website Popup</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-3">
                                         <label class="form-label small">Label</label>
                                         <input type="text" class="form-control form-control-sm ann-label" placeholder="e.g. 24h Reminder" value="<%= ann.label || '' %>">
-                                    </div>
-                                    <div class="col-md-2">
-                                        <label class="form-label small">Type</label>
-                                        <select class="form-select form-select-sm ann-type">
-                                            <option value="on_publish" <%= ann.announcementType === 'on_publish' ? 'selected' : '' %>>On Publish</option>
-                                            <option value="reminder" <%= ann.announcementType === 'reminder' ? 'selected' : '' %>>Reminder</option>
-                                            <option value="event_start" <%= ann.announcementType === 'event_start' ? 'selected' : '' %>>At Start</option>
-                                            <option value="recap" <%= ann.announcementType === 'recap' ? 'selected' : '' %>>Recap</option>
-                                        </select>
                                     </div>
                                     <div class="col-md-2">
                                         <label class="form-label small">Trigger</label>
@@ -284,39 +305,74 @@ const dayNames = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','S
                                         <label class="form-label small">Minutes Before</label>
                                         <input type="number" class="form-control form-control-sm ann-offsetMinutes" placeholder="60" min="0" value="<%= ann.offsetMinutes || '' %>">
                                     </div>
-                                    <div class="col-md-3">
+                                    <!-- Discord: Type -->
+                                    <div class="col-md-2 ann-discord-group <%= !isDiscord ? 'd-none' : '' %>">
+                                        <label class="form-label small">Type</label>
+                                        <select class="form-select form-select-sm ann-type">
+                                            <option value="on_publish" <%= ann.announcementType === 'on_publish' ? 'selected' : '' %>>On Publish</option>
+                                            <option value="reminder" <%= ann.announcementType === 'reminder' ? 'selected' : '' %>>Reminder</option>
+                                            <option value="event_start" <%= ann.announcementType === 'event_start' ? 'selected' : '' %>>At Start</option>
+                                            <option value="recap" <%= ann.announcementType === 'recap' ? 'selected' : '' %>>Recap</option>
+                                        </select>
+                                    </div>
+                                    <!-- Discord: Channel ID -->
+                                    <div class="col-md-3 ann-discord-group <%= !isDiscord ? 'd-none' : '' %>">
                                         <label class="form-label small">Channel ID</label>
                                         <input type="text" class="form-control form-control-sm ann-channelId" placeholder="Discord Channel ID" value="<%= ann.channelId || '' %>">
                                     </div>
-                                    <div class="col-12">
+                                    <!-- Discord: Content Template -->
+                                    <div class="col-12 ann-discord-group <%= !isDiscord ? 'd-none' : '' %>">
                                         <div class="d-flex justify-content-between align-items-center mb-1">
                                             <label class="form-label small mb-0">Content Template <small class="text-muted">(leave blank for default)</small></label>
                                             <div class="dropdown">
-                                                <button type="button" class="btn btn-xs btn-outline-secondary dropdown-toggle ann-ts-btn" data-bs-toggle="dropdown" aria-expanded="false">
+                                                <button type="button" class="btn btn-xs btn-outline-secondary dropdown-toggle ann-ts-btn" data-bs-toggle="dropdown">
                                                     <i class="fab fa-discord me-1"></i>Timestamps
                                                 </button>
                                                 <ul class="dropdown-menu dropdown-menu-end" style="min-width:260px;font-size:0.8rem;">
                                                     <li><h6 class="dropdown-header">Start time</h6></li>
-                                                    <li><a class="dropdown-item ann-ts-insert" href="#" data-token="{startAt}"><code>{startAt}</code> <span class="text-muted">— Tue, 20 Apr 09:01</span></a></li>
-                                                    <li><a class="dropdown-item ann-ts-insert" href="#" data-token="{startRelative}"><code>{startRelative}</code> <span class="text-muted">— in 2 months</span></a></li>
-                                                    <li><a class="dropdown-item ann-ts-insert" href="#" data-token="{discord_f}"><code>{discord_f}</code> <span class="text-muted">— 20 April 2021 09:01</span></a></li>
-                                                    <li><a class="dropdown-item ann-ts-insert" href="#" data-token="{discord_d}"><code>{discord_d}</code> <span class="text-muted">— 20/04/2021</span></a></li>
-                                                    <li><a class="dropdown-item ann-ts-insert" href="#" data-token="{discord_D}"><code>{discord_D}</code> <span class="text-muted">— 20 April 2021</span></a></li>
-                                                    <li><a class="dropdown-item ann-ts-insert" href="#" data-token="{discord_t}"><code>{discord_t}</code> <span class="text-muted">— 9:01 AM</span></a></li>
-                                                    <li><a class="dropdown-item ann-ts-insert" href="#" data-token="{discord_T}"><code>{discord_T}</code> <span class="text-muted">— 9:01:00 AM</span></a></li>
+                                                    <li><a class="dropdown-item ann-ts-insert" href="#" data-token="{startAt}"><code>{startAt}</code> <span class="text-muted">— full date/time</span></a></li>
+                                                    <li><a class="dropdown-item ann-ts-insert" href="#" data-token="{startRelative}"><code>{startRelative}</code> <span class="text-muted">— relative</span></a></li>
+                                                    <li><a class="dropdown-item ann-ts-insert" href="#" data-token="{discord_f}"><code>{discord_f}</code> <span class="text-muted">— short date/time</span></a></li>
+                                                    <li><a class="dropdown-item ann-ts-insert" href="#" data-token="{discord_t}"><code>{discord_t}</code> <span class="text-muted">— time only</span></a></li>
+                                                    <li><a class="dropdown-item ann-ts-insert" href="#" data-token="{discord_d}"><code>{discord_d}</code> <span class="text-muted">— date only</span></a></li>
                                                     <li><hr class="dropdown-divider"></li>
                                                     <li><h6 class="dropdown-header">End time</h6></li>
-                                                    <li><a class="dropdown-item ann-ts-insert" href="#" data-token="{endAt}"><code>{endAt}</code> <span class="text-muted">— Tue, 20 Apr 10:01</span></a></li>
-                                                    <li><a class="dropdown-item ann-ts-insert" href="#" data-token="{endRelative}"><code>{endRelative}</code> <span class="text-muted">— in 3 months</span></a></li>
+                                                    <li><a class="dropdown-item ann-ts-insert" href="#" data-token="{endAt}"><code>{endAt}</code></a></li>
+                                                    <li><a class="dropdown-item ann-ts-insert" href="#" data-token="{endRelative}"><code>{endRelative}</code></a></li>
                                                     <li><hr class="dropdown-divider"></li>
-                                                    <li><h6 class="dropdown-header">Other tokens</h6></li>
+                                                    <li><h6 class="dropdown-header">Other</h6></li>
                                                     <li><a class="dropdown-item ann-ts-insert" href="#" data-token="{title}"><code>{title}</code></a></li>
                                                     <li><a class="dropdown-item ann-ts-insert" href="#" data-token="{location}"><code>{location}</code></a></li>
                                                 </ul>
                                             </div>
                                         </div>
-                                        <textarea class="form-control form-control-sm ann-contentTemplate" rows="2" placeholder="Use {title}, {startAt}, {startRelative}, {endAt}…"><%= ann.contentTemplate || '' %></textarea>
+                                        <textarea class="form-control form-control-sm ann-contentTemplate" rows="2" placeholder="Use {title}, {startAt}, {startRelative}…"><%= ann.contentTemplate || '' %></textarea>
                                     </div>
+                                    <!-- Non-Discord: Body -->
+                                    <div class="col-12 ann-body-group <%= !hasBody ? 'd-none' : '' %>">
+                                        <label class="form-label small">Message Body</label>
+                                        <textarea class="form-control form-control-sm ann-body" rows="2"><%= ann.body || '' %></textarea>
+                                    </div>
+                                    <!-- MOTD/Tip: Colour format -->
+                                    <div class="col-12 ann-colour-group <%= !isMC ? 'd-none' : '' %>">
+                                        <label class="form-label small">Colour Format <small class="text-muted">(Minecraft)</small></label>
+                                        <input type="text" class="form-control form-control-sm ann-colourMessageFormat" placeholder="&aHello!" value="<%= ann.colourMessageFormat || '' %>">
+                                    </div>
+                                    <!-- Tip/Web/Popup: Link -->
+                                    <div class="col-md-8 ann-link-group <%= !hasLink ? 'd-none' : '' %>">
+                                        <label class="form-label small">Link URL <small class="text-muted">(optional)</small></label>
+                                        <input type="url" class="form-control form-control-sm ann-link" placeholder="https://…" value="<%= ann.link || '' %>">
+                                    </div>
+                                    <!-- Popup: Button text & image -->
+                                    <div class="col-md-4 ann-popup-group <%= !isPopup ? 'd-none' : '' %>">
+                                        <label class="form-label small">Button Text</label>
+                                        <input type="text" class="form-control form-control-sm ann-popupButtonText" placeholder="Learn More" value="<%= ann.popupButtonText || '' %>">
+                                    </div>
+                                    <div class="col-12 ann-popup-group <%= !isPopup ? 'd-none' : '' %>">
+                                        <label class="form-label small">Popup Image URL</label>
+                                        <input type="url" class="form-control form-control-sm ann-popupImageUrl" placeholder="https://…" value="<%= ann.popupImageUrl || '' %>">
+                                    </div>
+                                    <!-- Enabled -->
                                     <div class="col-md-3 d-flex align-items-end">
                                         <div class="form-check form-switch mb-1">
                                             <input class="form-check-input ann-enabled" type="checkbox" <%= ann.enabled !== false ? 'checked' : '' %>>
@@ -342,17 +398,18 @@ const dayNames = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','S
                     <button type="button" class="btn btn-xs btn-danger position-absolute top-0 end-0 m-2 remove-announcement">×</button>
                     <div class="row g-2">
                         <div class="col-md-3">
+                            <label class="form-label small">Platform</label>
+                            <select class="form-select form-select-sm ann-platform">
+                                <option value="discord" selected>Discord Message</option>
+                                <option value="motd">MOTD (Minecraft)</option>
+                                <option value="tip">In-Game Tip</option>
+                                <option value="web">Website Banner</option>
+                                <option value="popup">Website Popup</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
                             <label class="form-label small">Label</label>
                             <input type="text" class="form-control form-control-sm ann-label" placeholder="e.g. 24h Reminder" value="">
-                        </div>
-                        <div class="col-md-2">
-                            <label class="form-label small">Type</label>
-                            <select class="form-select form-select-sm ann-type">
-                                <option value="on_publish">On Publish</option>
-                                <option value="reminder" selected>Reminder</option>
-                                <option value="event_start">At Start</option>
-                                <option value="recap">Recap</option>
-                            </select>
                         </div>
                         <div class="col-md-2">
                             <label class="form-label small">Trigger</label>
@@ -366,11 +423,23 @@ const dayNames = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','S
                             <label class="form-label small">Minutes Before</label>
                             <input type="number" class="form-control form-control-sm ann-offsetMinutes" placeholder="60" min="0" value="">
                         </div>
-                        <div class="col-md-3">
+                        <!-- Discord: Type -->
+                        <div class="col-md-2 ann-discord-group">
+                            <label class="form-label small">Type</label>
+                            <select class="form-select form-select-sm ann-type">
+                                <option value="on_publish">On Publish</option>
+                                <option value="reminder" selected>Reminder</option>
+                                <option value="event_start">At Start</option>
+                                <option value="recap">Recap</option>
+                            </select>
+                        </div>
+                        <!-- Discord: Channel ID -->
+                        <div class="col-md-3 ann-discord-group">
                             <label class="form-label small">Channel ID</label>
                             <input type="text" class="form-control form-control-sm ann-channelId" placeholder="Discord Channel ID" value="">
                         </div>
-                        <div class="col-12">
+                        <!-- Discord: Content Template + timestamp insert -->
+                        <div class="col-12 ann-discord-group">
                             <div class="d-flex justify-content-between align-items-center mb-1">
                                 <label class="form-label small mb-0">Content Template <small class="text-muted">(leave blank for default)</small></label>
                                 <div class="dropdown">
@@ -399,6 +468,32 @@ const dayNames = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','S
                             </div>
                             <textarea class="form-control form-control-sm ann-contentTemplate" rows="2" placeholder="Use {title}, {startAt}, {startRelative}, {endAt}…"></textarea>
                         </div>
+                        <!-- Non-Discord: Body -->
+                        <div class="col-12 ann-body-group d-none">
+                            <label class="form-label small">Message Body</label>
+                            <textarea class="form-control form-control-sm ann-body" rows="2" placeholder="Announcement text…"></textarea>
+                        </div>
+                        <!-- MOTD/Tip: Colour format -->
+                        <div class="col-12 ann-colour-group d-none">
+                            <label class="form-label small">Colour Format <small class="text-muted">(Minecraft color codes, e.g. <code>&amp;aGreen</code>)</small></label>
+                            <input type="text" class="form-control form-control-sm ann-colourMessageFormat" placeholder="&aHello!" value="">
+                        </div>
+                        <!-- Tip/Web/Popup: Link -->
+                        <div class="col-md-8 ann-link-group d-none">
+                            <label class="form-label small">Link URL <small class="text-muted">(optional)</small></label>
+                            <input type="url" class="form-control form-control-sm ann-link" placeholder="https://…" value="">
+                        </div>
+                        <!-- Popup: Button text -->
+                        <div class="col-md-4 ann-popup-group d-none">
+                            <label class="form-label small">Button Text</label>
+                            <input type="text" class="form-control form-control-sm ann-popupButtonText" placeholder="Learn More" value="">
+                        </div>
+                        <!-- Popup: Image URL -->
+                        <div class="col-12 ann-popup-group d-none">
+                            <label class="form-label small">Popup Image URL <small class="text-muted">(optional)</small></label>
+                            <input type="url" class="form-control form-control-sm ann-popupImageUrl" placeholder="https://…" value="">
+                        </div>
+                        <!-- Enabled -->
                         <div class="col-md-3 d-flex align-items-end">
                             <div class="form-check form-switch mb-1">
                                 <input class="form-check-input ann-enabled" type="checkbox" checked>
@@ -417,6 +512,51 @@ const dayNames = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','S
 <style>.btn-xs { padding: 0.15rem 0.5rem; font-size: 0.75rem; }</style>
 
 <script>
+// ============================================================
+// Timezone-aware time helpers for default start/end time
+// ============================================================
+const _tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+
+// Show timezone name in labels
+document.querySelectorAll('.js-tz-label').forEach(el => {
+    el.textContent = `In your local timezone (${_tz}).`;
+});
+
+/** Convert a stored UTC HH:MM:SS string to a local HH:MM string for <input type="time">. */
+function utcTimeToLocal(utcTimeStr) {
+    if (!utcTimeStr) return '';
+    const [h, m] = utcTimeStr.split(':');
+    const d = new Date();
+    d.setUTCHours(parseInt(h, 10), parseInt(m, 10), 0, 0);
+    const parts = new Intl.DateTimeFormat('en-CA', {
+        timeZone: _tz, hour: '2-digit', minute: '2-digit', hour12: false,
+    }).formatToParts(d);
+    const p = {};
+    parts.forEach(({ type, value }) => { p[type] = value; });
+    const hh = p.hour === '24' ? '00' : p.hour;
+    return `${hh}:${p.minute}`;
+}
+
+/** Convert a local HH:MM string from <input type="time"> back to UTC HH:MM:SS for storage. */
+function localTimeToUtc(localTimeStr) {
+    if (!localTimeStr) return '';
+    const [h, m] = localTimeStr.split(':');
+    const d = new Date();
+    // Set to today's date in local time at that hour/minute, then read UTC
+    const fake = new Date(`${d.toISOString().slice(0, 10)}T${h.padStart(2,'0')}:${m.padStart(2,'0')}:00`);
+    // This parses as LOCAL time only in some environments; use Intl to be safe
+    const asUtc = new Date(d.getFullYear(), d.getMonth(), d.getDate(), parseInt(h, 10), parseInt(m, 10), 0);
+    return `${String(asUtc.getUTCHours()).padStart(2,'0')}:${String(asUtc.getUTCMinutes()).padStart(2,'0')}:00`;
+}
+
+// Init: convert stored UTC times to local for display
+(function initTemplateTimes() {
+    const startLocal = document.getElementById('defaultStartTimeLocal');
+    const endLocal   = document.getElementById('defaultEndTimeLocal');
+    if (startLocal) startLocal.value = utcTimeToLocal(startLocal.dataset.utc);
+    if (endLocal)   endLocal.value   = utcTimeToLocal(endLocal.dataset.utc);
+})();
+
 // Recurrence type toggle
 const recTypeSelect = document.getElementById('recurrenceType');
 const weeklyOpts = document.getElementById('weeklyOptions');
@@ -601,6 +741,12 @@ document.getElementById('templateForm').addEventListener('submit', async (e) => 
         body.description = $('#tmplDescriptionEditor').summernote('code');
     }
 
+    // Convert local times back to UTC before submission
+    const startLocalEl = document.getElementById('defaultStartTimeLocal');
+    const endLocalEl   = document.getElementById('defaultEndTimeLocal');
+    document.getElementById('defaultStartTimeUtc').value = startLocalEl?.value ? localTimeToUtc(startLocalEl.value) : '';
+    document.getElementById('defaultEndTimeUtc').value   = endLocalEl?.value   ? localTimeToUtc(endLocalEl.value)   : '';
+
     // Recurrence days
     const days = Array.from(document.querySelectorAll('.recurrence-day:checked')).map(cb => parseInt(cb.value));
     body.recurrenceDays = days;
@@ -668,13 +814,27 @@ document.getElementById('templateForm').addEventListener('submit', async (e) => 
 // Announcements
 function initAnnouncementRow(row) {
     row.querySelector('.remove-announcement').addEventListener('click', () => row.remove());
+
     const trigger = row.querySelector('.ann-trigger');
     const offsetGroup = row.querySelector('.ann-offset-group');
     if (trigger && offsetGroup) {
-        const toggle = () => offsetGroup.classList.toggle('d-none', trigger.value !== 'before_event');
-        trigger.addEventListener('change', toggle);
-        toggle();
+        const toggleOffset = () => offsetGroup.classList.toggle('d-none', trigger.value !== 'before_event');
+        trigger.addEventListener('change', toggleOffset);
+        toggleOffset();
     }
+
+    const platformSel = row.querySelector('.ann-platform');
+    const togglePlatform = () => {
+        const p = platformSel?.value || 'discord';
+        row.querySelectorAll('.ann-discord-group').forEach(el => el.classList.toggle('d-none', p !== 'discord'));
+        row.querySelector('.ann-body-group')?.classList.toggle('d-none', p === 'discord');
+        row.querySelector('.ann-colour-group')?.classList.toggle('d-none', !['motd','tip'].includes(p));
+        row.querySelector('.ann-link-group')?.classList.toggle('d-none', !['tip','web','popup'].includes(p));
+        row.querySelectorAll('.ann-popup-group').forEach(el => el.classList.toggle('d-none', p !== 'popup'));
+    };
+    platformSel?.addEventListener('change', togglePlatform);
+    togglePlatform();
+
     row.querySelectorAll('.ann-ts-insert').forEach(link => {
         link.addEventListener('click', (e) => {
             e.preventDefault();
@@ -691,12 +851,18 @@ function initAnnouncementRow(row) {
 function addTemplateAnnouncementRow(ann = {}) {
     const tmpl = document.getElementById('tmplAnnouncementRowTemplate');
     const row = tmpl.content.cloneNode(true).querySelector('.announcement-row');
+    if (ann.platform) row.querySelector('.ann-platform').value = ann.platform;
     if (ann.label) row.querySelector('.ann-label').value = ann.label;
     if (ann.announcementType) row.querySelector('.ann-type').value = ann.announcementType;
     if (ann.triggerType) row.querySelector('.ann-trigger').value = ann.triggerType;
     if (ann.offsetMinutes) row.querySelector('.ann-offsetMinutes').value = ann.offsetMinutes;
     if (ann.channelId) row.querySelector('.ann-channelId').value = ann.channelId;
     if (ann.contentTemplate) row.querySelector('.ann-contentTemplate').value = ann.contentTemplate;
+    if (ann.body) row.querySelector('.ann-body').value = ann.body;
+    if (ann.colourMessageFormat) row.querySelector('.ann-colourMessageFormat').value = ann.colourMessageFormat;
+    if (ann.link) row.querySelector('.ann-link').value = ann.link;
+    if (ann.popupButtonText) row.querySelector('.ann-popupButtonText').value = ann.popupButtonText;
+    if (ann.popupImageUrl) row.querySelector('.ann-popupImageUrl').value = ann.popupImageUrl;
     if (ann.enabled === false) row.querySelector('.ann-enabled').checked = false;
     document.getElementById('templateAnnouncementsContainer').appendChild(row);
     initAnnouncementRow(row);
@@ -704,11 +870,16 @@ function addTemplateAnnouncementRow(ann = {}) {
 
 function collectTemplateAnnouncements() {
     return Array.from(document.querySelectorAll('#templateAnnouncementsContainer .announcement-row')).map(row => ({
+        platform: row.querySelector('.ann-platform')?.value || 'discord',
         label: row.querySelector('.ann-label')?.value || null,
         announcementType: row.querySelector('.ann-type')?.value || 'reminder',
-        platform: 'discord',
         channelId: row.querySelector('.ann-channelId')?.value || null,
         contentTemplate: row.querySelector('.ann-contentTemplate')?.value || null,
+        body: row.querySelector('.ann-body')?.value || null,
+        colourMessageFormat: row.querySelector('.ann-colourMessageFormat')?.value || null,
+        link: row.querySelector('.ann-link')?.value || null,
+        popupButtonText: row.querySelector('.ann-popupButtonText')?.value || null,
+        popupImageUrl: row.querySelector('.ann-popupImageUrl')?.value || null,
         triggerType: row.querySelector('.ann-trigger')?.value || 'before_event',
         offsetMinutes: row.querySelector('.ann-offsetMinutes')?.value ? parseInt(row.querySelector('.ann-offsetMinutes').value) : null,
         enabled: row.querySelector('.ann-enabled')?.checked !== false,

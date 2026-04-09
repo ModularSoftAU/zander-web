@@ -212,7 +212,7 @@
                             <div class="mb-3">
                                 <label class="form-label fw-semibold">Banner Image URL</label>
                                 <input type="url" class="form-control" name="bannerUrl" value="<%= ev.bannerUrl || '' %>" placeholder="https://…" id="bannerUrlInput">
-                                <small class="text-muted">Displayed as the hero image on the event page and in Discord embeds.</small>
+                                <small class="text-muted">Displayed as the hero image on the event page and in Discord embeds. Recommended: <strong>1920×480px</strong> (4:1) for website; <strong>1280×720px</strong> (16:9) for Discord events. PNG/JPG, max 8 MB.</small>
                                 <div id="bannerPreview" class="mt-2 <%= ev.bannerUrl ? '' : 'd-none' %>">
                                     <img src="<%= ev.bannerUrl || '' %>" class="img-fluid rounded" style="max-height:200px" alt="Banner preview">
                                 </div>
@@ -220,7 +220,7 @@
                             <div class="mb-3">
                                 <label class="form-label fw-semibold">Logo / Thumbnail URL</label>
                                 <input type="url" class="form-control" name="logoUrl" value="<%= ev.logoUrl || '' %>" placeholder="https://…" id="logoUrlInput">
-                                <small class="text-muted">Shown as thumbnail in Discord embeds and on the event page.</small>
+                                <small class="text-muted">Shown as thumbnail in Discord embeds and on the event page. Recommended: <strong>512×512px</strong> (1:1 square). PNG with transparency preferred. Max 8 MB.</small>
                                 <div id="logoPreview" class="mt-2 <%= ev.logoUrl ? '' : 'd-none' %>">
                                     <img src="<%= ev.logoUrl || '' %>" class="rounded" style="max-height:80px;max-width:80px;object-fit:contain" alt="Logo preview">
                                 </div>
@@ -389,23 +389,24 @@
         <button type="button" class="btn btn-xs btn-danger position-absolute top-0 end-0 m-2 remove-announcement">×</button>
         <div class="row g-2">
             <div class="col-md-3">
+                <label class="form-label small">Platform</label>
+                <select class="form-select form-select-sm ann-platform">
+                    <option value="discord">Discord Message</option>
+                    <option value="motd">MOTD (Minecraft)</option>
+                    <option value="tip">In-Game Tip</option>
+                    <option value="web">Website Banner</option>
+                    <option value="popup">Website Popup</option>
+                </select>
+            </div>
+            <div class="col-md-3">
                 <label class="form-label small">Label</label>
                 <input type="text" class="form-control form-control-sm ann-label" placeholder="e.g. 24h Reminder">
-            </div>
-            <div class="col-md-2">
-                <label class="form-label small">Type</label>
-                <select class="form-select form-select-sm ann-type">
-                    <option value="on_publish">On Publish</option>
-                    <option value="reminder">Reminder</option>
-                    <option value="event_start">At Start</option>
-                    <option value="recap">Recap</option>
-                </select>
             </div>
             <div class="col-md-2">
                 <label class="form-label small">Trigger</label>
                 <select class="form-select form-select-sm ann-trigger">
                     <option value="on_publish">On Publish</option>
-                    <option value="before_event">Before Event</option>
+                    <option value="before_event" selected>Before Event</option>
                     <option value="event_start">Event Start</option>
                 </select>
             </div>
@@ -413,11 +414,21 @@
                 <label class="form-label small">Minutes Before</label>
                 <input type="number" class="form-control form-control-sm ann-offsetMinutes" placeholder="60" min="0">
             </div>
-            <div class="col-md-3">
+            <!-- Discord -->
+            <div class="col-md-2 ann-discord-group">
+                <label class="form-label small">Type</label>
+                <select class="form-select form-select-sm ann-type">
+                    <option value="on_publish">On Publish</option>
+                    <option value="reminder" selected>Reminder</option>
+                    <option value="event_start">At Start</option>
+                    <option value="recap">Recap</option>
+                </select>
+            </div>
+            <div class="col-md-3 ann-discord-group">
                 <label class="form-label small">Channel ID</label>
                 <input type="text" class="form-control form-control-sm ann-channelId" placeholder="Discord Channel ID">
             </div>
-            <div class="col-12">
+            <div class="col-12 ann-discord-group">
                 <div class="d-flex justify-content-between align-items-center mb-1">
                     <label class="form-label small mb-0">Content Template <small class="text-muted">(leave blank for default)</small></label>
                     <div class="dropdown">
@@ -438,13 +449,40 @@
                             <li><a class="dropdown-item ann-ts-insert" href="#" data-token="{endAt}"><code>{endAt}</code> <span class="text-muted">— Tue, 20 Apr 10:01</span></a></li>
                             <li><a class="dropdown-item ann-ts-insert" href="#" data-token="{endRelative}"><code>{endRelative}</code> <span class="text-muted">— in 3 months</span></a></li>
                             <li><hr class="dropdown-divider"></li>
-                            <li><h6 class="dropdown-header">Other tokens</h6></li>
+                            <li><h6 class="dropdown-header">Other</h6></li>
                             <li><a class="dropdown-item ann-ts-insert" href="#" data-token="{title}"><code>{title}</code></a></li>
                             <li><a class="dropdown-item ann-ts-insert" href="#" data-token="{location}"><code>{location}</code></a></li>
                         </ul>
                     </div>
                 </div>
                 <textarea class="form-control form-control-sm ann-contentTemplate" rows="2" placeholder="Use {title}, {startAt}, {startRelative}, {endAt}…"></textarea>
+            </div>
+            <!-- Non-Discord -->
+            <div class="col-12 ann-body-group d-none">
+                <label class="form-label small">Message Body</label>
+                <textarea class="form-control form-control-sm ann-body" rows="2" placeholder="Announcement text…"></textarea>
+            </div>
+            <div class="col-12 ann-colour-group d-none">
+                <label class="form-label small">Colour Message Format <small class="text-muted">(Minecraft color codes)</small></label>
+                <input type="text" class="form-control form-control-sm ann-colourMessageFormat" placeholder="&aHello!">
+            </div>
+            <div class="col-md-8 ann-link-group d-none">
+                <label class="form-label small">Link URL <small class="text-muted">(optional)</small></label>
+                <input type="url" class="form-control form-control-sm ann-link" placeholder="https://…">
+            </div>
+            <div class="col-md-4 ann-popup-group d-none">
+                <label class="form-label small">Button Text</label>
+                <input type="text" class="form-control form-control-sm ann-popupButtonText" placeholder="Learn More">
+            </div>
+            <div class="col-12 ann-popup-group d-none">
+                <label class="form-label small">Popup Image URL</label>
+                <input type="url" class="form-control form-control-sm ann-popupImageUrl" placeholder="https://…">
+            </div>
+            <div class="col-md-3 d-flex align-items-end">
+                <div class="form-check form-switch mb-1">
+                    <input class="form-check-input ann-enabled" type="checkbox" checked>
+                    <label class="form-check-label small">Enabled</label>
+                </div>
             </div>
         </div>
     </div>
@@ -574,43 +612,48 @@ function collectAnnouncements() {
     return Array.from(rows).map(row => ({
         label: row.querySelector('.ann-label')?.value || null,
         announcementType: row.querySelector('.ann-type')?.value || 'reminder',
-        platform: 'discord',
+        platform: row.querySelector('.ann-platform')?.value || 'discord',
         channelId: row.querySelector('.ann-channelId')?.value || null,
         contentTemplate: row.querySelector('.ann-contentTemplate')?.value || null,
+        body: row.querySelector('.ann-body')?.value || null,
+        colourMessageFormat: row.querySelector('.ann-colourMessageFormat')?.value || null,
+        link: row.querySelector('.ann-link')?.value || null,
+        popupButtonText: row.querySelector('.ann-popupButtonText')?.value || null,
+        popupImageUrl: row.querySelector('.ann-popupImageUrl')?.value || null,
         triggerType: row.querySelector('.ann-trigger')?.value || 'before_event',
         offsetMinutes: parseInt(row.querySelector('.ann-offsetMinutes')?.value || '0') || null,
-        enabled: true,
+        enabled: row.querySelector('.ann-enabled')?.checked !== false,
     }));
 }
 
-function addAnnouncementRow(ann = {}) {
-    const tmpl = document.getElementById('announcementRowTemplate').content.cloneNode(true);
-    const row = tmpl.querySelector('.announcement-row');
-    if (ann.label) row.querySelector('.ann-label').value = ann.label;
-    if (ann.announcementType) row.querySelector('.ann-type').value = ann.announcementType;
-    if (ann.triggerType) row.querySelector('.ann-trigger').value = ann.triggerType;
-    if (ann.offsetMinutes) row.querySelector('.ann-offsetMinutes').value = ann.offsetMinutes;
-    if (ann.channelId) row.querySelector('.ann-channelId').value = ann.channelId;
-    if (ann.contentTemplate) row.querySelector('.ann-contentTemplate').value = ann.contentTemplate;
+function initAnnouncementRow(row) {
+    row.querySelector('.remove-announcement')?.addEventListener('click', () => row.remove());
 
-    const triggerSel = row.querySelector('.ann-trigger');
+    const trigger = row.querySelector('.ann-trigger');
     const offsetGroup = row.querySelector('.ann-offset-group');
-    const toggleOffset = () => {
-        offsetGroup.classList.toggle('d-none', triggerSel.value !== 'before_event');
+    if (trigger && offsetGroup) {
+        const toggleOffset = () => offsetGroup.classList.toggle('d-none', trigger.value !== 'before_event');
+        trigger.addEventListener('change', toggleOffset);
+        toggleOffset();
+    }
+
+    const platformSel = row.querySelector('.ann-platform');
+    const togglePlatform = () => {
+        const p = platformSel?.value || 'discord';
+        row.querySelectorAll('.ann-discord-group').forEach(el => el.classList.toggle('d-none', p !== 'discord'));
+        row.querySelector('.ann-body-group')?.classList.toggle('d-none', p === 'discord');
+        row.querySelector('.ann-colour-group')?.classList.toggle('d-none', !['motd','tip'].includes(p));
+        row.querySelector('.ann-link-group')?.classList.toggle('d-none', !['tip','web','popup'].includes(p));
+        row.querySelectorAll('.ann-popup-group').forEach(el => el.classList.toggle('d-none', p !== 'popup'));
     };
-    triggerSel.addEventListener('change', toggleOffset);
-    toggleOffset();
+    platformSel?.addEventListener('change', togglePlatform);
+    togglePlatform();
 
-    row.querySelector('.remove-announcement').addEventListener('click', () => row.remove());
-    initAnnouncementRowTimestamps(row);
-    document.getElementById('announcementsContainer').appendChild(tmpl);
-}
-
-function initAnnouncementRowTimestamps(row) {
     row.querySelectorAll('.ann-ts-insert').forEach(link => {
         link.addEventListener('click', (e) => {
             e.preventDefault();
             const ta = row.querySelector('.ann-contentTemplate');
+            if (!ta) return;
             const token = link.dataset.token;
             const start = ta.selectionStart, end = ta.selectionEnd;
             ta.value = ta.value.slice(0, start) + token + ta.value.slice(end);
@@ -620,19 +663,32 @@ function initAnnouncementRowTimestamps(row) {
     });
 }
 
+function addAnnouncementRow(ann = {}) {
+    const tmpl = document.getElementById('announcementRowTemplate').content.cloneNode(true);
+    const row = tmpl.querySelector('.announcement-row');
+    if (ann.platform) row.querySelector('.ann-platform').value = ann.platform;
+    if (ann.label) row.querySelector('.ann-label').value = ann.label;
+    if (ann.announcementType) row.querySelector('.ann-type').value = ann.announcementType;
+    if (ann.triggerType) row.querySelector('.ann-trigger').value = ann.triggerType;
+    if (ann.offsetMinutes) row.querySelector('.ann-offsetMinutes').value = ann.offsetMinutes;
+    if (ann.channelId) row.querySelector('.ann-channelId').value = ann.channelId;
+    if (ann.contentTemplate) row.querySelector('.ann-contentTemplate').value = ann.contentTemplate;
+    if (ann.body) row.querySelector('.ann-body').value = ann.body;
+    if (ann.colourMessageFormat) row.querySelector('.ann-colourMessageFormat').value = ann.colourMessageFormat;
+    if (ann.link) row.querySelector('.ann-link').value = ann.link;
+    if (ann.popupButtonText) row.querySelector('.ann-popupButtonText').value = ann.popupButtonText;
+    if (ann.popupImageUrl) row.querySelector('.ann-popupImageUrl').value = ann.popupImageUrl;
+    if (ann.enabled === false) row.querySelector('.ann-enabled').checked = false;
+    document.getElementById('announcementsContainer').appendChild(tmpl);
+    initAnnouncementRow(row);
+}
+
 document.getElementById('addAnnouncementBtn').addEventListener('click', () => addAnnouncementRow());
 
-// Re-hydrate existing announcement rows
+// Re-hydrate existing announcement rows (server-rendered via partial)
 document.querySelectorAll('#announcementsContainer .announcement-row').forEach(row => {
-    const trigger = row.querySelector('.ann-trigger');
-    const offsetGroup = row.querySelector('.ann-offset-group');
-    if (trigger && offsetGroup) {
-        const toggle = () => offsetGroup.classList.toggle('d-none', trigger.value !== 'before_event');
-        trigger.addEventListener('change', toggle);
-        toggle();
-    }
+    // Partial already wired up trigger/platform toggle via its IIFE, but ensure remove is bound
     row.querySelector('.remove-announcement')?.addEventListener('click', () => row.remove());
-    initAnnouncementRowTimestamps(row);
 });
 
 // ============================================================

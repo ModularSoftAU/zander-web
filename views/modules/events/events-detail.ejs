@@ -100,6 +100,11 @@
                             <li class="mb-2">
                                 <i class="fas fa-map-marker-alt me-2 text-danger"></i>
                                 <strong>Location:</strong> <%= event.locationLabel %>
+                                <% if (event.locationType === 'discord' && event.locationDiscordChannelId && config.discord?.guildId) { %>
+                                <br><a href="https://discord.com/channels/<%= config.discord.guildId %>/<%= event.locationDiscordChannelId %>" target="_blank" rel="noopener" class="btn btn-sm btn-outline-primary mt-1 ms-4">
+                                    <i class="fab fa-discord me-1"></i>Join Voice Channel
+                                </a>
+                                <% } %>
                             </li>
                             <% } %>
                             <% if (event.serverName) { %>

@@ -1,36 +1,59 @@
+<%
+const ann = announcement;
+const platform = ann.platform || 'discord';
+const isDiscord = platform === 'discord';
+const isMC = ['motd', 'tip'].includes(platform);
+const hasLink = ['tip', 'web', 'popup'].includes(platform);
+const isPopup = platform === 'popup';
+const hasBody = !isDiscord;
+%>
 <div class="announcement-row border rounded p-3 mb-2 position-relative">
     <button type="button" class="btn btn-xs btn-danger position-absolute top-0 end-0 m-2 remove-announcement">×</button>
     <div class="row g-2">
         <div class="col-md-3">
-            <label class="form-label small">Label</label>
-            <input type="text" class="form-control form-control-sm ann-label" placeholder="e.g. 24h Reminder" value="<%= announcement.label || '' %>">
-        </div>
-        <div class="col-md-2">
-            <label class="form-label small">Type</label>
-            <select class="form-select form-select-sm ann-type">
-                <option value="on_publish" <%= announcement.announcementType === 'on_publish' ? 'selected' : '' %>>On Publish</option>
-                <option value="reminder" <%= announcement.announcementType === 'reminder' ? 'selected' : '' %>>Reminder</option>
-                <option value="event_start" <%= announcement.announcementType === 'event_start' ? 'selected' : '' %>>At Start</option>
-                <option value="recap" <%= announcement.announcementType === 'recap' ? 'selected' : '' %>>Recap</option>
+            <label class="form-label small">Platform</label>
+            <select class="form-select form-select-sm ann-platform">
+                <option value="discord" <%= isDiscord ? 'selected' : '' %>>Discord Message</option>
+                <option value="motd" <%= platform === 'motd' ? 'selected' : '' %>>MOTD (Minecraft)</option>
+                <option value="tip" <%= platform === 'tip' ? 'selected' : '' %>>In-Game Tip</option>
+                <option value="web" <%= platform === 'web' ? 'selected' : '' %>>Website Banner</option>
+                <option value="popup" <%= platform === 'popup' ? 'selected' : '' %>>Website Popup</option>
             </select>
+        </div>
+        <div class="col-md-3">
+            <label class="form-label small">Label</label>
+            <input type="text" class="form-control form-control-sm ann-label" placeholder="e.g. 24h Reminder" value="<%= ann.label || '' %>">
         </div>
         <div class="col-md-2">
             <label class="form-label small">Trigger</label>
             <select class="form-select form-select-sm ann-trigger">
-                <option value="on_publish" <%= announcement.triggerType === 'on_publish' ? 'selected' : '' %>>On Publish</option>
-                <option value="before_event" <%= announcement.triggerType === 'before_event' ? 'selected' : '' %>>Before Event</option>
-                <option value="event_start" <%= announcement.triggerType === 'event_start' ? 'selected' : '' %>>Event Start</option>
+                <option value="on_publish" <%= ann.triggerType === 'on_publish' ? 'selected' : '' %>>On Publish</option>
+                <option value="before_event" <%= ann.triggerType === 'before_event' ? 'selected' : '' %>>Before Event</option>
+                <option value="event_start" <%= ann.triggerType === 'event_start' ? 'selected' : '' %>>Event Start</option>
             </select>
         </div>
-        <div class="col-md-2 ann-offset-group <%= announcement.triggerType !== 'before_event' ? 'd-none' : '' %>">
+        <div class="col-md-2 ann-offset-group <%= ann.triggerType !== 'before_event' ? 'd-none' : '' %>">
             <label class="form-label small">Minutes Before</label>
-            <input type="number" class="form-control form-control-sm ann-offsetMinutes" placeholder="60" min="0" value="<%= announcement.offsetMinutes || '' %>">
+            <input type="number" class="form-control form-control-sm ann-offsetMinutes" placeholder="60" min="0" value="<%= ann.offsetMinutes || '' %>">
         </div>
-        <div class="col-md-3">
+
+        <!-- Discord: Type -->
+        <div class="col-md-2 ann-discord-group <%= !isDiscord ? 'd-none' : '' %>">
+            <label class="form-label small">Type</label>
+            <select class="form-select form-select-sm ann-type">
+                <option value="on_publish" <%= ann.announcementType === 'on_publish' ? 'selected' : '' %>>On Publish</option>
+                <option value="reminder" <%= ann.announcementType === 'reminder' ? 'selected' : '' %>>Reminder</option>
+                <option value="event_start" <%= ann.announcementType === 'event_start' ? 'selected' : '' %>>At Start</option>
+                <option value="recap" <%= ann.announcementType === 'recap' ? 'selected' : '' %>>Recap</option>
+            </select>
+        </div>
+        <!-- Discord: Channel ID -->
+        <div class="col-md-3 ann-discord-group <%= !isDiscord ? 'd-none' : '' %>">
             <label class="form-label small">Channel ID</label>
-            <input type="text" class="form-control form-control-sm ann-channelId" placeholder="Discord Channel ID" value="<%= announcement.channelId || '' %>">
+            <input type="text" class="form-control form-control-sm ann-channelId" placeholder="Discord Channel ID" value="<%= ann.channelId || '' %>">
         </div>
-        <div class="col-12">
+        <!-- Discord: Content Template + timestamp insert -->
+        <div class="col-12 ann-discord-group <%= !isDiscord ? 'd-none' : '' %>">
             <div class="d-flex justify-content-between align-items-center mb-1">
                 <label class="form-label small mb-0">Content Template <small class="text-muted">(leave blank for default)</small></label>
                 <div class="dropdown">
@@ -39,7 +62,7 @@
                     </button>
                     <ul class="dropdown-menu dropdown-menu-end" style="min-width:260px;font-size:0.8rem;">
                         <li><h6 class="dropdown-header">Start time</h6></li>
-                        <li><a class="dropdown-item ann-ts-insert" href="#" data-token="{startAt}"><code>{startAt}</code> <span class="text-muted">— Tue, 20 Apr 2021 09:01</span></a></li>
+                        <li><a class="dropdown-item ann-ts-insert" href="#" data-token="{startAt}"><code>{startAt}</code> <span class="text-muted">— Tue, 20 Apr 09:01</span></a></li>
                         <li><a class="dropdown-item ann-ts-insert" href="#" data-token="{startRelative}"><code>{startRelative}</code> <span class="text-muted">— in 2 months</span></a></li>
                         <li><a class="dropdown-item ann-ts-insert" href="#" data-token="{discord_f}"><code>{discord_f}</code> <span class="text-muted">— 20 April 2021 09:01</span></a></li>
                         <li><a class="dropdown-item ann-ts-insert" href="#" data-token="{discord_d}"><code>{discord_d}</code> <span class="text-muted">— 20/04/2021</span></a></li>
@@ -48,16 +71,50 @@
                         <li><a class="dropdown-item ann-ts-insert" href="#" data-token="{discord_T}"><code>{discord_T}</code> <span class="text-muted">— 9:01:00 AM</span></a></li>
                         <li><hr class="dropdown-divider"></li>
                         <li><h6 class="dropdown-header">End time</h6></li>
-                        <li><a class="dropdown-item ann-ts-insert" href="#" data-token="{endAt}"><code>{endAt}</code> <span class="text-muted">— Tue, 20 Apr 2021 10:01</span></a></li>
+                        <li><a class="dropdown-item ann-ts-insert" href="#" data-token="{endAt}"><code>{endAt}</code> <span class="text-muted">— Tue, 20 Apr 10:01</span></a></li>
                         <li><a class="dropdown-item ann-ts-insert" href="#" data-token="{endRelative}"><code>{endRelative}</code> <span class="text-muted">— in 3 months</span></a></li>
                         <li><hr class="dropdown-divider"></li>
-                        <li><h6 class="dropdown-header">Other tokens</h6></li>
+                        <li><h6 class="dropdown-header">Other</h6></li>
                         <li><a class="dropdown-item ann-ts-insert" href="#" data-token="{title}"><code>{title}</code></a></li>
                         <li><a class="dropdown-item ann-ts-insert" href="#" data-token="{location}"><code>{location}</code></a></li>
                     </ul>
                 </div>
             </div>
-            <textarea class="form-control form-control-sm ann-contentTemplate" rows="2" placeholder="Use {title}, {startAt}, {startRelative}, {endAt}…"><%= announcement.contentTemplate || '' %></textarea>
+            <textarea class="form-control form-control-sm ann-contentTemplate" rows="2" placeholder="Use {title}, {startAt}, {startRelative}, {endAt}…"><%= ann.contentTemplate || '' %></textarea>
+        </div>
+
+        <!-- MOTD/Tip/Web/Popup: Body text -->
+        <div class="col-12 ann-body-group <%= !hasBody ? 'd-none' : '' %>">
+            <label class="form-label small">Message Body</label>
+            <textarea class="form-control form-control-sm ann-body" rows="2" placeholder="Announcement text…"><%= ann.body || '' %></textarea>
+        </div>
+        <!-- MOTD/Tip: Colour format -->
+        <div class="col-12 ann-colour-group <%= !isMC ? 'd-none' : '' %>">
+            <label class="form-label small">Colour Message Format <small class="text-muted">(Minecraft color codes, e.g. <code>&amp;aGreen</code>)</small></label>
+            <input type="text" class="form-control form-control-sm ann-colourMessageFormat" placeholder="&aHello!" value="<%= ann.colourMessageFormat || '' %>">
+        </div>
+        <!-- Tip/Web/Popup: Link -->
+        <div class="col-md-8 ann-link-group <%= !hasLink ? 'd-none' : '' %>">
+            <label class="form-label small">Link URL <small class="text-muted">(optional)</small></label>
+            <input type="url" class="form-control form-control-sm ann-link" placeholder="https://…" value="<%= ann.link || '' %>">
+        </div>
+        <!-- Popup: Button text -->
+        <div class="col-md-4 ann-popup-group <%= !isPopup ? 'd-none' : '' %>">
+            <label class="form-label small">Button Text</label>
+            <input type="text" class="form-control form-control-sm ann-popupButtonText" placeholder="Learn More" value="<%= ann.popupButtonText || '' %>">
+        </div>
+        <!-- Popup: Image URL -->
+        <div class="col-12 ann-popup-group <%= !isPopup ? 'd-none' : '' %>">
+            <label class="form-label small">Popup Image URL <small class="text-muted">(optional)</small></label>
+            <input type="url" class="form-control form-control-sm ann-popupImageUrl" placeholder="https://…" value="<%= ann.popupImageUrl || '' %>">
+        </div>
+
+        <!-- Enabled (all platforms) -->
+        <div class="col-md-3 d-flex align-items-end">
+            <div class="form-check form-switch mb-1">
+                <input class="form-check-input ann-enabled" type="checkbox" <%= ann.enabled !== false ? 'checked' : '' %>>
+                <label class="form-check-label small">Enabled</label>
+            </div>
         </div>
     </div>
 </div>
@@ -67,12 +124,25 @@
     const row = rows[rows.length - 1];
     if (!row) return;
     row.querySelector('.remove-announcement').addEventListener('click', () => row.remove());
+
     const trigger = row.querySelector('.ann-trigger');
     const offsetGroup = row.querySelector('.ann-offset-group');
     if (trigger && offsetGroup) {
-        const toggle = () => offsetGroup.classList.toggle('d-none', trigger.value !== 'before_event');
-        trigger.addEventListener('change', toggle);
+        const toggleOffset = () => offsetGroup.classList.toggle('d-none', trigger.value !== 'before_event');
+        trigger.addEventListener('change', toggleOffset);
     }
+
+    const platformSel = row.querySelector('.ann-platform');
+    const togglePlatform = () => {
+        const p = platformSel?.value || 'discord';
+        row.querySelectorAll('.ann-discord-group').forEach(el => el.classList.toggle('d-none', p !== 'discord'));
+        row.querySelector('.ann-body-group')?.classList.toggle('d-none', p === 'discord');
+        row.querySelector('.ann-colour-group')?.classList.toggle('d-none', !['motd','tip'].includes(p));
+        row.querySelector('.ann-link-group')?.classList.toggle('d-none', !['tip','web','popup'].includes(p));
+        row.querySelectorAll('.ann-popup-group').forEach(el => el.classList.toggle('d-none', p !== 'popup'));
+    };
+    platformSel?.addEventListener('change', togglePlatform);
+
     row.querySelectorAll('.ann-ts-insert').forEach(link => {
         link.addEventListener('click', (e) => {
             e.preventDefault();
