@@ -57,17 +57,17 @@
                                     <strong><%= ev.title %></strong>
                                     <span class="badge bg-secondary ms-2"><%= ev.eventType %></span>
                                 </div>
-                                <small class="text-muted">Submitted <span class="js-datetime" data-iso="<%= ev.updatedAt %>"></span></small>
+                                <small class="text-muted">Submitted <span class="js-datetime" data-iso="<%= ev.updatedAt ? new Date(ev.updatedAt).toISOString() : '' %>"></span></small>
                             </div>
                             <div class="card-body">
                                 <div class="row g-2">
                                     <div class="col-md-6">
                                         <small class="text-muted d-block">Start</small>
-                                        <span class="js-datetime" data-iso="<%= ev.startAt %>"></span>
+                                        <span class="js-datetime" data-iso="<%= ev.startAt ? new Date(ev.startAt).toISOString() : '' %>"></span>
                                     </div>
                                     <div class="col-md-6">
                                         <small class="text-muted d-block">End</small>
-                                        <span class="js-datetime" data-iso="<%= ev.endAt %>"></span>
+                                        <span class="js-datetime" data-iso="<%= ev.endAt ? new Date(ev.endAt).toISOString() : '' %>"></span>
                                     </div>
                                     <% if (ev.locationLabel) { %>
                                     <div class="col-md-6">
@@ -148,7 +148,10 @@
 <script>
 document.querySelectorAll('.js-datetime').forEach(el => {
     const d = el.dataset.iso ? new Date(el.dataset.iso) : null;
-    el.textContent = d && !isNaN(d) ? d.toLocaleString() : '—';
+    el.textContent = d && !isNaN(d) ? d.toLocaleString(undefined, {
+        year: 'numeric', month: 'short', day: 'numeric',
+        hour: '2-digit', minute: '2-digit', timeZoneName: 'short'
+    }) : '—';
 });
 
 let currentEventId = null;

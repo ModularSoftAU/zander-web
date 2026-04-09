@@ -88,13 +88,13 @@
                             <li class="mb-2">
                                 <i class="fas fa-calendar-day me-2 text-primary"></i>
                                 <strong>Starts:</strong><br>
-                                <span class="ms-4 js-datetime-full" data-iso="<%= event.startAt %>"></span><br>
-                                <span class="ms-4 text-muted small js-datetime-relative" data-iso="<%= event.startAt %>"></span>
+                                <span class="ms-4 js-datetime-full" data-iso="<%= event.startAt ? new Date(event.startAt).toISOString() : '' %>"></span><br>
+                                <span class="ms-4 text-muted small js-datetime-relative" data-iso="<%= event.startAt ? new Date(event.startAt).toISOString() : '' %>"></span>
                             </li>
                             <li class="mb-2">
                                 <i class="fas fa-calendar-check me-2 text-secondary"></i>
                                 <strong>Ends:</strong><br>
-                                <span class="ms-4 js-datetime-full" data-iso="<%= event.endAt %>"></span>
+                                <span class="ms-4 js-datetime-full" data-iso="<%= event.endAt ? new Date(event.endAt).toISOString() : '' %>"></span>
                             </li>
                             <% if (event.locationLabel) { %>
                             <li class="mb-2">

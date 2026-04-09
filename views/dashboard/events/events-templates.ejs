@@ -79,7 +79,7 @@
                                     <dt class="col-5">Next Generate</dt>
                                     <dd class="col-7">
                                         <% if (tmpl.nextGenerateAt) { %>
-                                            <span class="js-datetime" data-iso="<%= tmpl.nextGenerateAt %>"></span>
+                                            <span class="js-datetime" data-iso="<%= new Date(tmpl.nextGenerateAt).toISOString() %>"></span>
                                         <% } else { %><span class="text-muted">—</span><% } %>
                                     </dd>
                                     <dt class="col-5">Events</dt>
@@ -111,7 +111,10 @@
 <script>
 document.querySelectorAll('.js-datetime').forEach(el => {
     const d = el.dataset.iso ? new Date(el.dataset.iso) : null;
-    el.textContent = d && !isNaN(d) ? d.toLocaleString() : '—';
+    el.textContent = d && !isNaN(d) ? d.toLocaleString(undefined, {
+        year: 'numeric', month: 'short', day: 'numeric',
+        hour: '2-digit', minute: '2-digit', timeZoneName: 'short'
+    }) : '—';
 });
 
 document.querySelectorAll('.btn-generate-draft').forEach(btn => {

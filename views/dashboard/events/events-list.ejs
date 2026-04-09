@@ -99,7 +99,7 @@
                                         </span>
                                     </td>
                                     <td data-label="Start">
-                                        <small class="js-datetime" data-iso="<%= ev.startAt %>" data-fallback="—"></small>
+                                        <small class="js-datetime" data-iso="<%= ev.startAt ? new Date(ev.startAt).toISOString() : '' %>" data-fallback="—"></small>
                                     </td>
                                     <td data-label="Actions">
                                         <div class="d-flex flex-wrap gap-1">
@@ -139,6 +139,9 @@
 <script>
 document.querySelectorAll('.js-datetime').forEach(el => {
     const d = el.dataset.iso ? new Date(el.dataset.iso) : null;
-    el.textContent = d && !isNaN(d) ? d.toLocaleString() : (el.dataset.fallback || '');
+    el.textContent = d && !isNaN(d) ? d.toLocaleString(undefined, {
+        year: 'numeric', month: 'short', day: 'numeric',
+        hour: '2-digit', minute: '2-digit', timeZoneName: 'short'
+    }) : (el.dataset.fallback || '');
 });
 </script>
