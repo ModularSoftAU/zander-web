@@ -91,7 +91,7 @@ document.addEventListener('DOMContentLoaded', function () {
         events: async function (fetchInfo, successCallback, failureCallback) {
             try {
                 const res = await fetch(
-                    `/api/events/calendar?start=${fetchInfo.startStr}&end=${fetchInfo.endStr}`,
+                    `/api/events/calendar?start=${encodeURIComponent(fetchInfo.startStr)}&end=${encodeURIComponent(fetchInfo.endStr)}`,
                     { headers: { 'x-access-token': <%- JSON.stringify(process.env.apiKey || '') %> } }
                 );
                 const data = await res.json();

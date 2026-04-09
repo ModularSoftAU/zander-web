@@ -136,9 +136,15 @@ export async function getEvents({
  * Get events within a date range for calendar view.
  */
 export async function getEventsInRange(startDate, endDate, includeDeleted = false) {
+  const start = new Date(startDate);
+  const end = new Date(endDate);
+  if (isNaN(start.getTime()) || isNaN(end.getTime())) {
+    throw new Error(`Invalid date range: start=${startDate}, end=${endDate}`);
+  }
+
   const where = {
-    startAt: { lt: new Date(endDate) },
-    endAt: { gt: new Date(startDate) },
+    startAt: { lt: end },
+    endAt: { gt: start },
   };
   if (!includeDeleted) where.deletedAt = null;
 
