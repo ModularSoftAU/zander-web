@@ -79,7 +79,7 @@ export async function createTemplate(data, creatorId) {
     await prisma.event_template_hosts.createMany({
       data: data.defaultHosts.map((h) => ({
         templateId: tmpl.templateId,
-        userId: h.userId || null,
+        userId: h.userId ? parseInt(h.userId) : null,
         discordUserId: h.discordUserId || null,
         displayName: h.displayName || null,
         role: h.role || "host",
@@ -138,7 +138,7 @@ export async function updateTemplate(templateId, data, actorId) {
       await prisma.event_template_hosts.createMany({
         data: data.defaultHosts.map((h) => ({
           templateId: parseInt(templateId),
-          userId: h.userId || null,
+          userId: h.userId ? parseInt(h.userId) : null,
           discordUserId: h.discordUserId || null,
           displayName: h.displayName || null,
           role: h.role || "host",

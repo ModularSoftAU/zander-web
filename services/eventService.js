@@ -252,7 +252,7 @@ export async function createEvent(data, actorId, actorName) {
     await prisma.event_hosts.createMany({
       data: data.hosts.map((h) => ({
         eventId: event.eventId,
-        userId: h.userId || null,
+        userId: h.userId ? parseInt(h.userId) : null,
         discordUserId: h.discordUserId || null,
         displayName: h.displayName || null,
         role: h.role || "host",
@@ -317,7 +317,7 @@ export async function updateEvent(eventId, data, actorId, actorName) {
       await prisma.event_hosts.createMany({
         data: data.hosts.map((h) => ({
           eventId: parseInt(eventId),
-          userId: h.userId || null,
+          userId: h.userId ? parseInt(h.userId) : null,
           discordUserId: h.discordUserId || null,
           displayName: h.displayName || null,
           role: h.role || "host",
@@ -780,7 +780,7 @@ export async function duplicateEvent(eventId, actorId, actorName) {
     await prisma.event_hosts.createMany({
       data: source.hosts.map((h) => ({
         eventId: newEvent.eventId,
-        userId: h.userId,
+        userId: h.userId ? parseInt(h.userId) : null,
         discordUserId: h.discordUserId,
         displayName: h.displayName,
         role: h.role,
