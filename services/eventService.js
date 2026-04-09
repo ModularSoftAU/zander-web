@@ -137,8 +137,8 @@ export async function getEvents({
  */
 export async function getEventsInRange(startDate, endDate, includeDeleted = false) {
   const where = {
-    startAt: { gte: new Date(startDate) },
-    endAt: { lte: new Date(endDate) },
+    startAt: { lt: new Date(endDate) },
+    endAt: { gt: new Date(startDate) },
   };
   if (!includeDeleted) where.deletedAt = null;
 
