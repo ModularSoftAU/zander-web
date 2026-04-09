@@ -374,7 +374,7 @@ export async function approveEvent(eventId, reviewerId, reviewerName) {
     throw new Error(`Cannot approve event in status '${event.status}'`);
   }
 
-  const updated = await prisma.events.update({
+  await prisma.events.update({
     where: { eventId: parseInt(eventId) },
     data: {
       status: "approved",
@@ -386,7 +386,8 @@ export async function approveEvent(eventId, reviewerId, reviewerName) {
 
   await logEventAudit(parseInt(eventId), reviewerId, reviewerName, "approved", "Event approved");
 
-  return updated;
+  // Immediately publish after approval
+  return publishEvent(eventId, reviewerId, reviewerName);
 }
 
 /**

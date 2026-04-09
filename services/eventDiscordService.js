@@ -7,6 +7,25 @@ import { client } from "../controllers/discordController.js";
 import { EmbedBuilder, GuildScheduledEventEntityType, GuildScheduledEventPrivacyLevel } from "discord.js";
 import { updateSyncStatus, logEventAudit } from "./eventService.js";
 
+/** Strip HTML tags from a string for plain-text Discord output. */
+function stripHtml(html) {
+  if (!html) return "";
+  return html
+    .replace(/<br\s*\/?>/gi, "\n")
+    .replace(/<\/p>/gi, "\n\n")
+    .replace(/<\/li>/gi, "\n")
+    .replace(/<li>/gi, "• ")
+    .replace(/<[^>]+>/g, "")
+    .replace(/&amp;/g, "&")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/&nbsp;/g, " ")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
+}
+
 /**
  * Build an embed for an event announcement/publication.
  */
@@ -23,7 +42,7 @@ function buildEventEmbed(event) {
     );
 
   if (event.description) {
-    embed.setDescription(event.description.slice(0, 2048));
+    embed.setDescription(stripHtml(event.description).slice(0, 2048));
   }
 
   if (event.locationLabel) {
@@ -119,16 +138,25 @@ export async function createGuildScheduledEvent(event, guildId) {
   const guild = await client.guilds.fetch(guildId);
   if (!guild) throw new Error(`Guild ${guildId} not found`);
 
+  const isVoiceChannel = event.locationType === "discord" && event.locationDiscordChannelId;
+
   const eventData = {
     name: event.title,
     scheduledStartTime: new Date(event.startAt),
     scheduledEndTime: new Date(event.endAt),
     privacyLevel: GuildScheduledEventPrivacyLevel.GuildOnly,
-    entityType: GuildScheduledEventEntityType.External,
-    description: event.description ? event.description.slice(0, 1000) : undefined,
-    entityMetadata: {
-      location: event.locationLabel || event.serverIp || "Online",
-    },
+    description: event.description ? stripHtml(event.description).slice(0, 1000) : undefined,
+    ...(isVoiceChannel
+      ? {
+          entityType: GuildScheduledEventEntityType.Voice,
+          channel: event.locationDiscordChannelId,
+        }
+      : {
+          entityType: GuildScheduledEventEntityType.External,
+          entityMetadata: {
+            location: event.locationLabel || event.serverIp || "Online",
+          },
+        }),
   };
 
   if (event.bannerUrl) {
@@ -169,14 +197,24 @@ export async function editGuildScheduledEvent(event, guildId, guildEventId) {
   const guildEvent = await guild.scheduledEvents.fetch(guildEventId);
   if (!guildEvent) throw new Error(`Guild event ${guildEventId} not found`);
 
+  const isVoiceChannel = event.locationType === "discord" && event.locationDiscordChannelId;
+
   await guildEvent.edit({
     name: event.title,
     scheduledStartTime: new Date(event.startAt),
     scheduledEndTime: new Date(event.endAt),
-    description: event.description ? event.description.slice(0, 1000) : undefined,
-    entityMetadata: {
-      location: event.locationLabel || event.serverIp || "Online",
-    },
+    description: event.description ? stripHtml(event.description).slice(0, 1000) : undefined,
+    ...(isVoiceChannel
+      ? {
+          entityType: GuildScheduledEventEntityType.Voice,
+          channel: event.locationDiscordChannelId,
+        }
+      : {
+          entityType: GuildScheduledEventEntityType.External,
+          entityMetadata: {
+            location: event.locationLabel || event.serverIp || "Online",
+          },
+        }),
   });
 
   await logEventAudit(

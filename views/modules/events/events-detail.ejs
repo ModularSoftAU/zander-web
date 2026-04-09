@@ -11,7 +11,6 @@
     <div class="container h-100 d-flex align-items-end pb-4 position-relative">
         <div class="text-white">
             <h1 class="display-5 fw-bold mb-1"><%= event.title %></h1>
-            <span class="badge bg-primary me-2"><%= event.eventType %></span>
         </div>
     </div>
 </div>
@@ -112,12 +111,6 @@
                                 <i class="fas fa-server me-2 text-info"></i>
                                 <strong>Server:</strong> <%= event.serverName %>
                                 <% if (event.serverIp) { %><br><span class="ms-4 font-monospace small"><%= event.serverIp %></span><% } %>
-                            </li>
-                            <% } %>
-                            <% if (event.eventType === 'recurring') { %>
-                            <li class="mb-2">
-                                <i class="fas fa-redo me-2 text-success"></i>
-                                <strong>Type:</strong> Recurring event
                             </li>
                             <% } %>
                         </ul>
