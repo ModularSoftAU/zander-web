@@ -268,9 +268,9 @@ export async function createEvent(data, actorId, actorName) {
 
   // Create default actions
   const defaultActions = [
-    { actionType: "discord_message", trigger: "on_publish", enabled: true },
-    { actionType: "discord_guild_event", trigger: "on_publish", enabled: false },
-    { actionType: "website_page", trigger: "on_publish", enabled: true },
+    { actionType: "discord_message", trigger: "on_publish", enabled: true, config: {} },
+    { actionType: "discord_guild_event", trigger: "on_publish", enabled: true, config: {} },
+    { actionType: "website_page", trigger: "on_publish", enabled: true, config: {} },
   ];
   await prisma.event_actions.createMany({
     data: defaultActions.map((a) => ({ ...a, eventId: event.eventId })),

@@ -111,6 +111,7 @@
                                                 <a href="/dashboard/events/edit?eventId=<%= ev.eventId %>" class="btn btn-xs btn-warning">Edit Live</a>
                                                 <a href="/events/<%= ev.slug %>" target="_blank" class="btn btn-xs btn-outline-success">Public</a>
                                             <% } %>
+                                            <button type="button" class="btn btn-xs btn-outline-danger btn-delete-event" data-event-id="<%= ev.eventId %>" data-event-title="<%= ev.title %>">Delete</button>
                                         </div>
                                     </td>
                                 </tr>
@@ -143,5 +144,34 @@ document.querySelectorAll('.js-datetime').forEach(el => {
         year: 'numeric', month: 'short', day: 'numeric',
         hour: '2-digit', minute: '2-digit', timeZoneName: 'short'
     }) : (el.dataset.fallback || '');
+});
+
+document.querySelectorAll('.btn-delete-event').forEach(btn => {
+    btn.addEventListener('click', async () => {
+        const title = btn.dataset.eventTitle;
+        if (!confirm(`Delete "${title}"? This cannot be undone.`)) return;
+        btn.disabled = true;
+        btn.textContent = '…';
+        try {
+            const res = await fetch('/api/events/delete', {
+                method: 'POST',
+                credentials: 'include',
+                headers: { 'Content-Type': 'application/json', 'x-access-token': <%- JSON.stringify(process.env.apiKey || '') %> },
+                body: JSON.stringify({ eventId: btn.dataset.eventId }),
+            });
+            const data = await res.json();
+            if (data.success) {
+                btn.closest('tr').remove();
+            } else {
+                alert('Delete failed: ' + data.message);
+                btn.disabled = false;
+                btn.textContent = 'Delete';
+            }
+        } catch {
+            alert('Delete failed. Please try again.');
+            btn.disabled = false;
+            btn.textContent = 'Delete';
+        }
+    });
 });
 </script>

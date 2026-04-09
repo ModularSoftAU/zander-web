@@ -200,7 +200,7 @@ export async function generateDraftFromTemplate(template, targetDate, actorId = 
   const eventData = {
     title: template.title,
     description: template.description,
-    eventType: "recurring",
+    eventType: "standard",
     startAt: startAt.toISOString(),
     endAt: endAt.toISOString(),
     timezone,
