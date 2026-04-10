@@ -900,7 +900,14 @@ $(document).ready(function () {
             ['insert', ['link']],
             ['view', ['fullscreen', 'codeview']],
         ],
-        styleTags: ['p', 'h3', 'h4', 'blockquote'],
+        styleTags: [
+            { title: 'Paragraph', tag: 'p', className: '', value: 'p' },
+            { title: 'Heading 1', tag: 'h1', className: '', value: 'h1' },
+            { title: 'Heading 2', tag: 'h2', className: '', value: 'h2' },
+            { title: 'Heading 3', tag: 'h3', className: '', value: 'h3' },
+            { title: 'Heading 4', tag: 'h4', className: '', value: 'h4' },
+            { title: 'Quote', tag: 'blockquote', className: 'blockquote', value: 'blockquote' },
+        ],
     });
 });
 </script>
