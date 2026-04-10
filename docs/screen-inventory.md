@@ -25,22 +25,15 @@ Status key: **Rewritten** = new WP-style layout + content | **Bridged** = new la
 
 ---
 
-## Applications
-
-| Screen | Path | Permission node | Feature flag | Status |
-|---|---|---|---|---|
-| Applications List | `/dashboard/applications` | `zander.web.application` | `applications` | **Bridged** |
-| View Application | `/dashboard/applications?applicationId=N` | `zander.web.application` | `applications` | **Bridged** |
-
----
-
-## Servers
+## Community
 
 | Screen | Path | Permission node | Feature flag | Status |
 |---|---|---|---|---|
 | Server List | `/dashboard/servers` | `zander.web.server` | `server` | **Rewritten** |
 | Create Server | `/dashboard/servers/create` | `zander.web.server` | `server` | **Bridged** |
 | Edit Server | `/dashboard/servers/edit?id=N` | `zander.web.server` | `server` | **Bridged** |
+| Applications List | `/dashboard/applications` | `zander.web.application` | `applications` | **Bridged** |
+| View Application | `/dashboard/applications?applicationId=N` | `zander.web.application` | `applications` | **Bridged** |
 
 ---
 

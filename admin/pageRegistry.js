@@ -60,6 +60,30 @@ export const adminPages = [
     sortOrder: 15,
   },
 
+  // ── Community group ────────────────────────────────────────────────────────
+  {
+    slug: "servers",
+    title: "Servers",
+    menuTitle: "Servers",
+    icon: "fas fa-server",
+    capability: "zander.web.server",
+    path: "/dashboard/servers",
+    featureFlag: "server",
+    group: "Community",
+    sortOrder: 20,
+  },
+  {
+    slug: "applications",
+    title: "Applications",
+    menuTitle: "Applications",
+    icon: "fas fa-file-alt",
+    capability: "zander.web.application",
+    path: "/dashboard/applications",
+    featureFlag: "applications",
+    group: "Community",
+    sortOrder: 21,
+  },
+
   // ── Events group ───────────────────────────────────────────────────────────
   {
     slug: "events-calendar",
@@ -70,7 +94,7 @@ export const adminPages = [
     path: "/dashboard/events",
     featureFlag: "events",
     group: "Events",
-    sortOrder: 20,
+    sortOrder: 30,
   },
   {
     slug: "events-list",
@@ -81,7 +105,7 @@ export const adminPages = [
     path: "/dashboard/events/list",
     featureFlag: "events",
     group: "Events",
-    sortOrder: 21,
+    sortOrder: 31,
   },
   {
     slug: "events-review",
@@ -92,7 +116,7 @@ export const adminPages = [
     path: "/dashboard/events/review",
     featureFlag: "events",
     group: "Events",
-    sortOrder: 22,
+    sortOrder: 32,
   },
   {
     slug: "events-templates",
@@ -103,29 +127,7 @@ export const adminPages = [
     path: "/dashboard/events/templates",
     featureFlag: "events",
     group: "Events",
-    sortOrder: 23,
-  },
-  {
-    slug: "servers",
-    title: "Servers",
-    menuTitle: "Servers",
-    icon: "fas fa-server",
-    capability: "zander.web.server",
-    path: "/dashboard/servers",
-    featureFlag: "server",
-    group: "Events",
-    sortOrder: 24,
-  },
-  {
-    slug: "applications",
-    title: "Applications",
-    menuTitle: "Applications",
-    icon: "fas fa-file-alt",
-    capability: "zander.web.application",
-    path: "/dashboard/applications",
-    featureFlag: "applications",
-    group: "Events",
-    sortOrder: 25,
+    sortOrder: 33,
   },
 
   // ── Moderation group ───────────────────────────────────────────────────────
@@ -137,7 +139,7 @@ export const adminPages = [
     capability: "zander.web.web-punishments",
     path: "/dashboard/web-punishments",
     group: "Moderation",
-    sortOrder: 30,
+    sortOrder: 40,
   },
 
   // ── Support group ──────────────────────────────────────────────────────────
@@ -150,7 +152,7 @@ export const adminPages = [
     path: "/dashboard/support",
     featureFlag: "support",
     group: "Support",
-    sortOrder: 40,
+    sortOrder: 50,
   },
   {
     slug: "support-explorer",
@@ -161,7 +163,7 @@ export const adminPages = [
     path: "/dashboard/support/explorer",
     featureFlag: "support",
     group: "Support",
-    sortOrder: 41,
+    sortOrder: 51,
   },
   {
     slug: "support-categories",
@@ -172,7 +174,7 @@ export const adminPages = [
     path: "/dashboard/support/categories",
     featureFlag: "support",
     group: "Support",
-    sortOrder: 42,
+    sortOrder: 52,
   },
 
   // ── Voting group ───────────────────────────────────────────────────────────
@@ -185,7 +187,7 @@ export const adminPages = [
     path: "/dashboard/voting",
     featureFlag: "vote",
     group: "Voting",
-    sortOrder: 50,
+    sortOrder: 60,
   },
   {
     slug: "voting-rewards",
@@ -196,7 +198,7 @@ export const adminPages = [
     path: "/dashboard/voting/rewards",
     featureFlag: "vote",
     group: "Voting",
-    sortOrder: 51,
+    sortOrder: 61,
   },
   {
     slug: "voting-leaderboard",
@@ -207,7 +209,7 @@ export const adminPages = [
     path: "/dashboard/voting/leaderboard",
     featureFlag: "vote",
     group: "Voting",
-    sortOrder: 52,
+    sortOrder: 62,
   },
   {
     slug: "voting-queue",
@@ -218,7 +220,7 @@ export const adminPages = [
     path: "/dashboard/voting/queue",
     featureFlag: "vote",
     group: "Voting",
-    sortOrder: 53,
+    sortOrder: 63,
   },
 
   // ── System group ───────────────────────────────────────────────────────────
@@ -231,7 +233,7 @@ export const adminPages = [
     path: "/dashboard/vault",
     featureFlag: "vault",
     group: "System",
-    sortOrder: 60,
+    sortOrder: 70,
   },
   {
     slug: "logs",
@@ -241,7 +243,7 @@ export const adminPages = [
     capability: "zander.web.logs",
     path: "/dashboard/logs",
     group: "System",
-    sortOrder: 61,
+    sortOrder: 71,
   },
   {
     slug: "bridge",
@@ -251,7 +253,7 @@ export const adminPages = [
     capability: "zander.web.bridge",
     path: "/dashboard/bridge",
     group: "System",
-    sortOrder: 62,
+    sortOrder: 72,
   },
   {
     slug: "ranks",
@@ -262,7 +264,7 @@ export const adminPages = [
     path: "/dashboard/ranks",
     featureFlag: "ranks",
     group: "System",
-    sortOrder: 63,
+    sortOrder: 73,
   },
   {
     slug: "scheduler",
@@ -272,7 +274,7 @@ export const adminPages = [
     capability: "zander.web.scheduler",
     path: "/dashboard/scheduler",
     group: "System",
-    sortOrder: 64,
+    sortOrder: 74,
   },
 ];
 
