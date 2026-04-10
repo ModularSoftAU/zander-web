@@ -4,6 +4,7 @@ import {
   getGlobalImage,
   hasPermission,
 } from "../../api/common.js";
+import { adminViewData } from "../../admin/adminHelpers.js";
 import { ActionRowBuilder, ButtonBuilder, ButtonStyle } from "discord.js";
 import {
   getSupportCategories,
@@ -127,6 +128,7 @@ export default function supportDashboardRoutes(
         tickets,
         globalImage,
         announcementWeb,
+        ...adminViewData(req, features),
       }));
       return;
     } catch (error) {
@@ -208,6 +210,7 @@ export default function supportDashboardRoutes(
         selectedCategory: selectedCategory?.categoryId,
         globalImage,
         announcementWeb,
+        ...adminViewData(req, features),
       }));
       return;
     } catch (error) {
@@ -289,6 +292,7 @@ export default function supportDashboardRoutes(
         roles,
         globalImage,
         announcementWeb,
+        ...adminViewData(req, features),
       }));
       return;
     } catch (error) {
@@ -457,6 +461,7 @@ export default function supportDashboardRoutes(
         roles,
         globalImage,
         announcementWeb,
+        ...adminViewData(req, features),
       }));
       return;
     } catch (error) {

@@ -1,8 +1,9 @@
 import {
-  getGlobalImage,
   hasPermission,
   isFeatureWebRouteEnabled,
 } from "../../api/common.js";
+import { adminViewData } from "../../admin/adminHelpers.js";
+import { prisma } from "../../controllers/databaseController.js";
 import { getWebAnnouncement } from "../../controllers/announcementController.js";
 
 export default function dashboardAnnouncementSiteRoute(
@@ -13,100 +14,84 @@ export default function dashboardAnnouncementSiteRoute(
   features,
   lang
 ) {
-  const headers = { "x-access-token": process.env.apiKey };
-
-  /** Fetch a URL with the internal API key and parse JSON, returning fallback on error. */
-  async function fetchJson(url, fallback = null) {
-    try {
-      const res = await fetch(url, { headers });
-      return await res.json();
-    } catch (error) {
-      console.error(`[dashboard/announcements] fetchJson failed for ${url}:`, error.message);
-      return fallback;
-    }
-  }
-
   //
-  // Announcements
+  // Announcements list
   //
   app.get("/dashboard/announcements", async function (req, res) {
-    if (!await isFeatureWebRouteEnabled(app, features.announcements, req, res, features))
-      return;
-
+    if (!await isFeatureWebRouteEnabled(app, features.announcements, req, res, features)) return;
     if (!await hasPermission("zander.web.announcements", req, res, features)) return;
 
-    const [apiData, globalImage, announcementWeb] = await Promise.all([
-      fetchJson(`${process.env.siteAddress}/api/announcement/get`, { data: [] }),
-      getGlobalImage(),
+    // Direct Prisma query — no internal HTTP fetch.
+    const [announcements, announcementWeb] = await Promise.all([
+      prisma.announcements.findMany({
+        orderBy: { announcementId: "desc" },
+      }),
       getWebAnnouncement(),
     ]);
 
     res.header("content-type", "text/html; charset=utf-8").send(
       await app.view("dashboard/announcements/announcements-list", {
-        pageTitle: `Dashboard - Announcements`,
-        config: config,
-        apiData: apiData,
-        features: features,
-        req: req,
-        globalImage,
+        pageTitle: "Announcements",
+        config,
+        // Provide the same shape the template historically expected via apiData.
+        apiData: { success: true, data: announcements },
+        features,
+        req,
         announcementWeb,
+        ...adminViewData(req, features),
       })
     );
-    return;
   });
 
+  //
+  // Create announcement
+  //
   app.get("/dashboard/announcements/create", async function (req, res) {
-    if (!await isFeatureWebRouteEnabled(app, features.announcements, req, res, features))
-      return;
-
+    if (!await isFeatureWebRouteEnabled(app, features.announcements, req, res, features)) return;
     if (!await hasPermission("zander.web.announcements", req, res, features)) return;
 
-    const [globalImage, announcementWeb] = await Promise.all([
-      getGlobalImage(),
-      getWebAnnouncement(),
-    ]);
+    const announcementWeb = await getWebAnnouncement();
 
     res.header("content-type", "text/html; charset=utf-8").send(
       await app.view("dashboard/announcements/announcements-editor", {
-        pageTitle: `Dashboard - Announcement Creator`,
-        config: config,
+        pageTitle: "Create Announcement",
+        config,
         type: "create",
-        features: features,
-        req: req,
-        globalImage,
+        features,
+        req,
         announcementWeb,
+        ...adminViewData(req, features),
       })
     );
-    return;
   });
 
+  //
+  // Edit announcement
+  //
   app.get("/dashboard/announcements/edit", async function (req, res) {
-    if (!await isFeatureWebRouteEnabled(app, features.announcements, req, res, features))
-      return;
-
+    if (!await isFeatureWebRouteEnabled(app, features.announcements, req, res, features)) return;
     if (!await hasPermission("zander.web.announcements", req, res, features)) return;
 
-    const announcementId = req.query.announcementId;
-    const fetchURL = `${process.env.siteAddress}/api/announcement/get?announcementId=${announcementId}`;
+    const announcementId = Number(req.query.announcementId);
 
-    const [announcementApiData, globalImage, announcementWeb] = await Promise.all([
-      fetchJson(fetchURL, { data: [] }),
-      getGlobalImage(),
+    const [announcement, announcementWeb] = await Promise.all([
+      announcementId
+        ? prisma.announcements.findUnique({ where: { announcementId } })
+        : Promise.resolve(null),
       getWebAnnouncement(),
     ]);
 
     res.header("content-type", "text/html; charset=utf-8").send(
       await app.view("dashboard/announcements/announcements-editor", {
-        pageTitle: `Dashboard - Announcement Editor`,
-        config: config,
-        announcementApiData: announcementApiData.data[0],
+        pageTitle: "Edit Announcement",
+        config,
+        announcementApiData: announcement,
         type: "edit",
-        features: features,
-        req: req,
-        globalImage,
+        features,
+        req,
         announcementWeb,
+        ...adminViewData(req, features),
       })
     );
-    return;
   });
 }

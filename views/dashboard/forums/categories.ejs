@@ -1,102 +1,17 @@
-<%- include("../../modules/header.ejs", {
-    pageTitle: pageTitle,
-    pageDescription: "Manage forum categories"
-}) %>
+<%- include("../../admin/_head.ejs", { pageTitle }) %>
+<%- include("../../admin/_topbar.ejs") %>
+<%- include("../../admin/_sidebar.ejs") %>
 
-<%- include("../../modules/navigationBar.ejs") %>
-
-<%- include("../../partials/miniHeader.ejs", {
-  headerTitle: "Forum Categories",
-  backgroundImage: globalImage
-}) %>
-
-<%
-  function renderParentOptions(categories, depth, selectedId, excludeId) {
-    categories.forEach(function (category) {
-      if (excludeId && category.categoryId === excludeId) {
-        if (category.children && category.children.length) {
-          renderParentOptions(category.children, depth + 1, selectedId, excludeId);
-        }
-      } else {
-%>
-  <option value="<%= category.categoryId %>" <%= selectedId === category.categoryId ? 'selected' : '' %>>
-    <%= Array(depth).fill('— ').join('') %><%= category.name %>
-  </option>
-<%
-        if (category.children && category.children.length) {
-          renderParentOptions(category.children, depth + 1, selectedId, excludeId);
-        }
-      }
-    });
-  }
-
-  function renderCategoryRows(rows, depth) {
-    rows.forEach(function (row) {
-%>
-  <tr>
-    <td>
-      <div class="forums-admin-category-name" style="padding-left: <%= depth * 20 %>px;">
-        <strong><%= row.name %></strong>
-        <% if (row.description) { %>
-          <div class="text-muted small"><%= row.description %></div>
-        <% } %>
-      </div>
-    </td>
-    <td><code><%= row.slug %></code></td>
-    <td>
-      <% if (row.viewPermission) { %>
-        <code><%= row.viewPermission %></code>
-      <% } else { %>
-        <span class="badge bg-success">Public</span>
-      <% } %>
-    </td>
-    <td>
-      <% if (row.postPermission) { %>
-        <code><%= row.postPermission %></code>
-      <% } else { %>
-        <span class="badge bg-primary">Open</span>
-      <% } %>
-    </td>
-    <td class="text-center"><%= row.position %></td>
-    <td class="text-end">
-      <div class="btn-group btn-group-sm" role="group">
-        <a class="btn btn-outline-primary" href="/dashboard/forums/categories?create_under=<%= row.categoryId %>" title="Add subcategory"><i class="fa-solid fa-plus"></i></a>
-        <a class="btn btn-outline-secondary" href="/dashboard/forums/categories?edit=<%= row.categoryId %>">Edit</a>
-        <form action="/dashboard/forums/categories/<%= row.categoryId %>/delete" method="post" class="d-inline" onsubmit="return confirm('Delete this category? Discussions within will also be removed.');">
-          <button type="submit" class="btn btn-outline-danger">Delete</button>
-        </form>
-      </div>
-    </td>
-  </tr>
-<%
-      if (row.children && row.children.length) {
-        renderCategoryRows(row.children, depth + 1);
-      }
-    });
-  }
-%>
-
-<%- include("../../modules/dashboard/dashboard-header.ejs") %>
-
-<div class="container my-4">
-  <div class="row g-4">
-    <div class="col-lg-3">
-      <%- include("../../modules/dashboard/dashboard-sidebar.ejs") %>
-    </div>
-    <main class="col-lg-9">
+<div id="wpcontent">
+  <div id="wpbody-content">
+    <div class="wrap">
     <div class="d-flex justify-content-between align-items-center mb-3">
       <div>
         <h3 class="mb-0">Forum Categories</h3>
         <p class="text-muted mb-0">Organise the forum navigation, visibility, and posting permissions.</p>
       </div>
     </div>
-
-    <% if (req.cookies.alertType) { %>
-      <%- include("../../partials/alert.ejs", {
-        alertType: req.cookies.alertType,
-        content: req.cookies.alertContent
-      }) %>
-    <% } %>
+      <%- include("../../admin/_notices.ejs") %>
 
     <% if (categoryToEdit) { %>
       <div class="card shadow-sm mb-4">
@@ -229,8 +144,7 @@
         </div>
       </div>
     </div>
-    </main>
-  </div>
-</div>
-
-<%- include("../../modules/footer.ejs") %>
+    </div><!-- /.wrap -->
+  </div><!-- /#wpbody-content -->
+  <%- include("../../admin/_footer.ejs") %>
+</div><!-- /#wpcontent -->

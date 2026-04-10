@@ -1,0 +1,110 @@
+<%
+  /**
+   * _sidebar.ejs — Admin sidebar generated from the page registry.
+   *
+   * Reads from:
+   *   adminMenuGroups  (array of { group, items[] })  — preferred, set via
+   *                    adminViewData() helper or the dashboard preHandler hook.
+   *   req              (Fastify request)               — req.adminMenuGroups
+   *                    used as a fallback.
+   *
+   * Active-state detection compares each page's path against the current URL.
+   */
+  const _menuGroups = (typeof adminMenuGroups !== 'undefined' ? adminMenuGroups : null)
+                   || (req && req.adminMenuGroups)
+                   || [];
+
+  const _currentPath = (typeof adminCurrentPath !== 'undefined' ? adminCurrentPath : null)
+                    || (req && req.url ? req.url.split('?')[0] : '/dashboard');
+
+  /**
+   * Returns true if the given menu-item path should be highlighted as active.
+   * The dashboard root only matches exactly; all other items use a prefix match.
+   */
+  function _isActive(pagePath) {
+    if (pagePath === '/dashboard') return _currentPath === '/dashboard';
+    return _currentPath.startsWith(pagePath);
+  }
+%>
+
+<!-- ── Admin Sidebar ────────────────────────────────────────────────────── -->
+<div id="adminmenuback" role="navigation" aria-label="Admin menu">
+  <ul id="adminmenu" role="menubar">
+
+    <% for (const _group of _menuGroups) { %>
+
+      <% if (_group.group) { %>
+        <!-- Section heading -->
+        <li class="wp-menu-heading" role="presentation" aria-hidden="true">
+          <%= _group.group %>
+        </li>
+      <% } %>
+
+      <% for (const _page of _group.items) { %>
+        <li class="wp-menu-item <%= _isActive(_page.path) ? 'current' : '' %>"
+            role="none">
+          <a href="<%= _page.path %>"
+             role="menuitem"
+             aria-current="<%= _isActive(_page.path) ? 'page' : 'false' %>"
+             title="<%= _page.title %>">
+            <span class="wp-menu-icon" aria-hidden="true"><i class="<%= _page.icon %>"></i></span>
+            <span class="wp-menu-label"><%= _page.menuTitle %></span>
+          </a>
+        </li>
+      <% } %>
+
+    <% } %>
+
+    <% if (_menuGroups.length === 0) { %>
+      <!-- Fallback: no menu items available (insufficient permissions or no features enabled) -->
+      <li class="wp-menu-item">
+        <a href="/dashboard">
+          <span class="wp-menu-icon"><i class="fas fa-home"></i></span>
+          <span class="wp-menu-label">Overview</span>
+        </a>
+      </li>
+    <% } %>
+
+  </ul>
+</div>
+
+<!-- Overlay backdrop (mobile only — closes the sidebar when tapped) -->
+<div id="wp-admin-overlay" aria-hidden="true"></div>
+
+<script>
+  (function () {
+    var toggle  = document.getElementById('ab-mobile-toggle');
+    var sidebar = document.getElementById('adminmenuback');
+    var overlay = document.getElementById('wp-admin-overlay');
+
+    if (!toggle || !sidebar || !overlay) return;
+
+    function openSidebar() {
+      sidebar.classList.add('mobile-open');
+      overlay.classList.add('visible');
+      toggle.setAttribute('aria-expanded', 'true');
+      document.body.style.overflow = 'hidden';
+    }
+
+    function closeSidebar() {
+      sidebar.classList.remove('mobile-open');
+      overlay.classList.remove('visible');
+      toggle.setAttribute('aria-expanded', 'false');
+      document.body.style.overflow = '';
+    }
+
+    toggle.addEventListener('click', function () {
+      sidebar.classList.contains('mobile-open') ? closeSidebar() : openSidebar();
+    });
+
+    overlay.addEventListener('click', closeSidebar);
+
+    // Close on ESC key
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape' && sidebar.classList.contains('mobile-open')) {
+        closeSidebar();
+        toggle.focus();
+      }
+    });
+  }());
+</script>
