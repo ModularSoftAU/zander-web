@@ -12,6 +12,11 @@ import org.modularsoft.zander.hub.events.HubPlayerJoinChristmas;
 import org.modularsoft.zander.hub.events.HubPlayerLeave;
 import org.modularsoft.zander.hub.events.HubPlayerVoid;
 import org.modularsoft.zander.hub.gui.HubCompassItem;
+import org.modularsoft.zander.hub.hall.commands.HallAdminCommand;
+import org.modularsoft.zander.hub.hall.commands.MyStatueCommand;
+import org.modularsoft.zander.hub.hall.events.HallListeners;
+import org.modularsoft.zander.hub.hall.events.HallProtection;
+import org.modularsoft.zander.hub.hall.manager.HallManager;
 import org.modularsoft.zander.hub.protection.HubCreatureSpawnProtection;
 import org.modularsoft.zander.hub.protection.HubInteractionProtection;
 import org.modularsoft.zander.hub.protection.HubProtection;
@@ -19,6 +24,7 @@ import org.modularsoft.zander.hub.utils.CopyResources;
 
 public class ZanderHubMain extends JavaPlugin {
     public static ZanderHubMain plugin;
+    private HallManager hallManager;
 
     public void onEnable() {
         plugin = this;
@@ -59,12 +65,28 @@ public class ZanderHubMain extends JavaPlugin {
         // Item Event Registry
         pluginmanager.registerEvents(new HubCompassItem(), this);
 
+        // Hall of Supporters
+        this.hallManager = new HallManager(this);
+        this.hallManager.init();
+        pluginmanager.registerEvents(this.hallManager.getCustomizationGui(), this);
+        pluginmanager.registerEvents(new HallListeners(this), this);
+        pluginmanager.registerEvents(new HallProtection(this), this);
+
         // Command Registry
         this.getCommand("fly").setExecutor(new fly());
+        this.getCommand("hall").setExecutor(new HallAdminCommand(this));
+        this.getCommand("mystatue").setExecutor(new MyStatueCommand(this));
+    }
+
+    public HallManager getHallManager() {
+        return hallManager;
     }
 
     // load defaults from the embedded resource & don't override existing values
     @Override
     public void onDisable() {
+        if (hallManager != null) {
+            hallManager.stop();
+        }
     }
 }
