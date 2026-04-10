@@ -719,6 +719,29 @@ model event_templates {
 
   events              events[]
   defaultHosts        event_template_hosts[]
+  announcements       event_template_announcements[]
+}
+
+model event_template_announcements {
+  id                  Int      @id @default(autoincrement())
+  templateId          Int
+  label               String?  @db.VarChar(100)
+  announcementType    String   @default("reminder") @db.VarChar(32)
+  platform            String   @default("discord") @db.VarChar(32)
+  channelId           String?  @db.VarChar(32)
+  contentTemplate     String?  @db.Text
+  body                String?  @db.Text
+  colourMessageFormat String?  @db.Text
+  link                String?  @db.Text
+  popupButtonText     String?  @db.VarChar(60)
+  popupImageUrl       String?  @db.Text
+  triggerType         String   @default("before_event") @db.VarChar(32)
+  offsetMinutes       Int?
+  enabled             Boolean  @default(true)
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  template            event_templates @relation(fields: [templateId], references: [templateId], onDelete: Cascade)
 }
 
 model event_template_hosts {
@@ -758,15 +781,20 @@ model event_actions {
 }
 
 model event_announcements {
-  id              Int      @id @default(autoincrement())
-  eventId         Int
-  label           String?  @db.VarChar(100)
-  announcementType String  @default("reminder") @db.VarChar(32)
-  platform        String   @default("discord") @db.VarChar(32)
-  channelId       String?  @db.VarChar(32)
-  contentTemplate String?  @db.Text
-  triggerType     String   @default("before_event") @db.VarChar(32)
-  offsetMinutes   Int?
+  id                  Int      @id @default(autoincrement())
+  eventId             Int
+  label               String?  @db.VarChar(100)
+  announcementType    String   @default("reminder") @db.VarChar(32)
+  platform            String   @default("discord") @db.VarChar(32)
+  channelId           String?  @db.VarChar(32)
+  contentTemplate     String?  @db.Text
+  body                String?  @db.Text
+  colourMessageFormat String?  @db.Text
+  link                String?  @db.Text
+  popupButtonText     String?  @db.VarChar(60)
+  popupImageUrl       String?  @db.Text
+  triggerType         String   @default("before_event") @db.VarChar(32)
+  offsetMinutes       Int?
   scheduledFor    DateTime?
   enabled         Boolean  @default(true)
   status          String   @default("pending") @db.VarChar(16)

@@ -30,14 +30,28 @@ function buildAnnouncementEmbed(event, template, announcementType) {
   }
 
   // Replace template variables
+  const startTs = Math.floor(new Date(event.startAt).getTime() / 1000);
+  const endTs = event.endAt ? Math.floor(new Date(event.endAt).getTime() / 1000) : null;
+
   description = description
     .replace(/\{title\}/g, event.title)
     .replace(/\{description\}/g, event.description || "")
     .replace(/\{location\}/g, event.locationLabel || "TBA")
     .replace(/\{server\}/g, event.serverName || "")
     .replace(/\{serverIp\}/g, event.serverIp || "")
-    .replace(/\{startAt\}/g, `<t:${Math.floor(new Date(event.startAt).getTime() / 1000)}:F>`)
-    .replace(/\{startRelative\}/g, `<t:${Math.floor(new Date(event.startAt).getTime() / 1000)}:R>`);
+    // Start time — Discord timestamp formats
+    .replace(/\{startAt\}/g, `<t:${startTs}:F>`)
+    .replace(/\{startRelative\}/g, `<t:${startTs}:R>`)
+    .replace(/\{discord_t\}/g, `<t:${startTs}:t>`)   // short time: 9:01 AM
+    .replace(/\{discord_T\}/g, `<t:${startTs}:T>`)   // long time: 9:01:00 AM
+    .replace(/\{discord_d\}/g, `<t:${startTs}:d>`)   // short date: 20/04/2021
+    .replace(/\{discord_D\}/g, `<t:${startTs}:D>`)   // long date: 20 April 2021
+    .replace(/\{discord_f\}/g, `<t:${startTs}:f>`)   // short date/time: 20 April 2021 09:01
+    .replace(/\{discord_F\}/g, `<t:${startTs}:F>`)   // full date/time: Tuesday, 20 April 2021 09:01
+    .replace(/\{discord_R\}/g, `<t:${startTs}:R>`)   // relative: 2 months ago
+    // End time
+    .replace(/\{endAt\}/g, endTs ? `<t:${endTs}:F>` : "")
+    .replace(/\{endRelative\}/g, endTs ? `<t:${endTs}:R>` : "");
 
   const embed = new EmbedBuilder()
     .setTitle(event.title)

@@ -136,9 +136,15 @@ export async function getEvents({
  * Get events within a date range for calendar view.
  */
 export async function getEventsInRange(startDate, endDate, includeDeleted = false) {
+  const start = new Date(startDate);
+  const end = new Date(endDate);
+  if (isNaN(start.getTime()) || isNaN(end.getTime())) {
+    throw new Error(`Invalid date range: start=${startDate}, end=${endDate}`);
+  }
+
   const where = {
-    startAt: { gte: new Date(startDate) },
-    endAt: { lte: new Date(endDate) },
+    startAt: { lt: end },
+    endAt: { gt: start },
   };
   if (!includeDeleted) where.deletedAt = null;
 
@@ -252,7 +258,7 @@ export async function createEvent(data, actorId, actorName) {
     await prisma.event_hosts.createMany({
       data: data.hosts.map((h) => ({
         eventId: event.eventId,
-        userId: h.userId || null,
+        userId: h.userId ? parseInt(h.userId) : null,
         discordUserId: h.discordUserId || null,
         displayName: h.displayName || null,
         role: h.role || "host",
@@ -262,12 +268,12 @@ export async function createEvent(data, actorId, actorName) {
 
   // Create default actions
   const defaultActions = [
-    { actionType: "discord_message", trigger: "on_publish" },
-    { actionType: "discord_guild_event", trigger: "on_publish" },
-    { actionType: "website_page", trigger: "on_publish" },
+    { actionType: "discord_message", trigger: "on_publish", enabled: true, config: {} },
+    { actionType: "discord_guild_event", trigger: "on_publish", enabled: true, config: {} },
+    { actionType: "website_page", trigger: "on_publish", enabled: true, config: {} },
   ];
   await prisma.event_actions.createMany({
-    data: defaultActions.map((a) => ({ ...a, eventId: event.eventId, enabled: false })),
+    data: defaultActions.map((a) => ({ ...a, eventId: event.eventId })),
   });
 
   await logEventAudit(event.eventId, actorId, actorName, "created", "Event draft created");
@@ -317,7 +323,7 @@ export async function updateEvent(eventId, data, actorId, actorName) {
       await prisma.event_hosts.createMany({
         data: data.hosts.map((h) => ({
           eventId: parseInt(eventId),
-          userId: h.userId || null,
+          userId: h.userId ? parseInt(h.userId) : null,
           discordUserId: h.discordUserId || null,
           displayName: h.displayName || null,
           role: h.role || "host",
@@ -374,7 +380,7 @@ export async function approveEvent(eventId, reviewerId, reviewerName) {
     throw new Error(`Cannot approve event in status '${event.status}'`);
   }
 
-  const updated = await prisma.events.update({
+  await prisma.events.update({
     where: { eventId: parseInt(eventId) },
     data: {
       status: "approved",
@@ -386,7 +392,8 @@ export async function approveEvent(eventId, reviewerId, reviewerName) {
 
   await logEventAudit(parseInt(eventId), reviewerId, reviewerName, "approved", "Event approved");
 
-  return updated;
+  // Immediately publish after approval
+  return publishEvent(eventId, reviewerId, reviewerName);
 }
 
 /**
@@ -597,6 +604,11 @@ export async function upsertEventAnnouncements(eventId, announcements, actorId, 
         platform: a.platform || "discord",
         channelId: a.channelId || null,
         contentTemplate: a.contentTemplate || null,
+        body: a.body || null,
+        colourMessageFormat: a.colourMessageFormat || null,
+        link: a.link || null,
+        popupButtonText: a.popupButtonText || null,
+        popupImageUrl: a.popupImageUrl || null,
         triggerType: a.triggerType || "before_event",
         offsetMinutes: a.offsetMinutes || null,
         enabled: a.enabled !== undefined ? a.enabled : true,
@@ -629,56 +641,99 @@ async function scheduleAnnouncementsForEvent(eventId, startAt, actorId) {
       scheduledFor = new Date(startAt);
     }
 
-    if (!scheduledFor || !ann.channelId) continue;
+    if (!scheduledFor) continue;
 
     // Skip if the scheduled time is already in the past
     if (scheduledFor < new Date()) {
       scheduledFor = new Date(); // send immediately
     }
 
-    // Build embed description
-    let description = ann.contentTemplate || null;
-    if (!description && event) {
-      const ts = Math.floor(new Date(startAt).getTime() / 1000);
-      if (ann.triggerType === "on_publish") {
-        description = `A new event has been announced: **${event.title}**\n\n<t:${ts}:F> (<t:${ts}:R>)`;
-      } else if (ann.triggerType === "before_event") {
-        description = `**${event.title}** starts in ${ann.offsetMinutes} minutes! (<t:${ts}:R>)`;
-      } else if (ann.triggerType === "event_start") {
-        description = `**${event.title}** is starting now!`;
-      } else {
-        description = `Reminder: **${event.title}** — <t:${ts}:F>`;
+    const platform = ann.platform || "discord";
+
+    if (platform === "discord") {
+      if (!ann.channelId) continue;
+
+      // Build embed description
+      let description = ann.contentTemplate || null;
+      if (!description && event) {
+        const ts = Math.floor(new Date(startAt).getTime() / 1000);
+        if (ann.triggerType === "on_publish") {
+          description = `A new event has been announced: **${event.title}**\n\n<t:${ts}:F> (<t:${ts}:R>)`;
+        } else if (ann.triggerType === "before_event") {
+          description = `**${event.title}** starts in ${ann.offsetMinutes} minutes! (<t:${ts}:R>)`;
+        } else if (ann.triggerType === "event_start") {
+          description = `**${event.title}** is starting now!`;
+        } else {
+          description = `Reminder: **${event.title}** — <t:${ts}:F>`;
+        }
       }
+
+      // Replace template variables
+      if (description && event) {
+        const ts = Math.floor(new Date(startAt).getTime() / 1000);
+        description = description
+          .replace(/\{title\}/g, event.title)
+          .replace(/\{location\}/g, event.locationLabel || "TBA")
+          .replace(/\{startAt\}/g, `<t:${ts}:F>`)
+          .replace(/\{startRelative\}/g, `<t:${ts}:R>`);
+      }
+
+      await prisma.scheduledDiscordMessages.create({
+        data: {
+          channelId: ann.channelId,
+          embedTitle: event?.title || ann.label || "Event Announcement",
+          embedDescription: description,
+          embedColor: "#2f508c",
+          scheduledFor,
+          createdBy: actorId || 0,
+          status: "scheduled",
+        },
+      });
+
+      await prisma.event_announcements.update({
+        where: { id: ann.id },
+        data: { scheduledFor, status: "sent" },
+      });
+    } else {
+      // Non-Discord platforms (motd, tip, web, popup) → create announcements record
+      const validTypes = ["motd", "tip", "web", "popup"];
+      if (!validTypes.includes(platform)) continue;
+
+      // Compute startDate / endDate based on trigger
+      let annStartDate = null;
+      let annEndDate = null;
+
+      if (ann.triggerType === "on_publish") {
+        annStartDate = null; // always active
+        annEndDate = event?.endAt ? new Date(event.endAt) : null;
+      } else if (ann.triggerType === "before_event" && ann.offsetMinutes != null) {
+        annStartDate = new Date(new Date(startAt).getTime() - ann.offsetMinutes * 60000);
+        annEndDate = new Date(startAt);
+      } else if (ann.triggerType === "event_start") {
+        annStartDate = new Date(startAt);
+        annEndDate = event?.endAt ? new Date(event.endAt) : null;
+      }
+
+      await prisma.announcements.create({
+        data: {
+          enabled: true,
+          announcementType: platform,
+          body: ann.body || null,
+          colourMessageFormat: ann.colourMessageFormat || null,
+          link: ann.link || null,
+          popupButtonText: ann.popupButtonText || null,
+          popupImageUrl: ann.popupImageUrl || null,
+          startDate: annStartDate,
+          endDate: annEndDate,
+          updatedDate: new Date(),
+        },
+      });
+
+      await prisma.event_announcements.update({
+        where: { id: ann.id },
+        data: { scheduledFor, status: "sent" },
+      });
     }
-
-    // Replace template variables
-    if (description && event) {
-      const ts = Math.floor(new Date(startAt).getTime() / 1000);
-      description = description
-        .replace(/\{title\}/g, event.title)
-        .replace(/\{location\}/g, event.locationLabel || "TBA")
-        .replace(/\{startAt\}/g, `<t:${ts}:F>`)
-        .replace(/\{startRelative\}/g, `<t:${ts}:R>`);
-    }
-
-    // Create a scheduledDiscordMessages entry (processed by schedulerCron)
-    await prisma.scheduledDiscordMessages.create({
-      data: {
-        channelId: ann.channelId,
-        embedTitle: event?.title || ann.label || "Event Announcement",
-        embedDescription: description,
-        embedColor: "#2f508c",
-        scheduledFor,
-        createdBy: actorId || 0,
-        status: "scheduled",
-      },
-    });
-
-    // Mark the event_announcement as scheduled
-    await prisma.event_announcements.update({
-      where: { id: ann.id },
-      data: { scheduledFor, status: "sent" }, // mark sent — actual sending is via schedulerCron
-    });
   }
 }
 
@@ -732,7 +787,7 @@ export async function duplicateEvent(eventId, actorId, actorName) {
     await prisma.event_hosts.createMany({
       data: source.hosts.map((h) => ({
         eventId: newEvent.eventId,
-        userId: h.userId,
+        userId: h.userId ? parseInt(h.userId) : null,
         discordUserId: h.discordUserId,
         displayName: h.displayName,
         role: h.role,

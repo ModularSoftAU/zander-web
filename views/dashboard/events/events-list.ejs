@@ -99,7 +99,7 @@
                                         </span>
                                     </td>
                                     <td data-label="Start">
-                                        <small class="js-datetime" data-iso="<%= ev.startAt %>" data-fallback="—"></small>
+                                        <small class="js-datetime" data-iso="<%= ev.startAt ? new Date(ev.startAt).toISOString() : '' %>" data-fallback="—"></small>
                                     </td>
                                     <td data-label="Actions">
                                         <div class="d-flex flex-wrap gap-1">
@@ -111,6 +111,8 @@
                                                 <a href="/dashboard/events/edit?eventId=<%= ev.eventId %>" class="btn btn-xs btn-warning">Edit Live</a>
                                                 <a href="/events/<%= ev.slug %>" target="_blank" class="btn btn-xs btn-outline-success">Public</a>
                                             <% } %>
+                                            <button type="button" class="btn btn-xs btn-outline-secondary btn-duplicate-event" data-event-id="<%= ev.eventId %>" data-event-title="<%= ev.title %>">Duplicate</button>
+                                            <button type="button" class="btn btn-xs btn-outline-danger btn-delete-event" data-event-id="<%= ev.eventId %>" data-event-title="<%= ev.title %>">Delete</button>
                                         </div>
                                     </td>
                                 </tr>
@@ -139,6 +141,65 @@
 <script>
 document.querySelectorAll('.js-datetime').forEach(el => {
     const d = el.dataset.iso ? new Date(el.dataset.iso) : null;
-    el.textContent = d && !isNaN(d) ? d.toLocaleString() : (el.dataset.fallback || '');
+    el.textContent = d && !isNaN(d) ? d.toLocaleString(undefined, {
+        year: 'numeric', month: 'short', day: 'numeric',
+        hour: '2-digit', minute: '2-digit', timeZoneName: 'short'
+    }) : (el.dataset.fallback || '');
+});
+
+document.querySelectorAll('.btn-duplicate-event').forEach(btn => {
+    btn.addEventListener('click', async () => {
+        btn.disabled = true;
+        btn.textContent = '…';
+        try {
+            const res = await fetch('/api/events/duplicate', {
+                method: 'POST',
+                credentials: 'include',
+                headers: { 'Content-Type': 'application/json', 'x-access-token': <%- JSON.stringify(process.env.apiKey || '') %> },
+                body: JSON.stringify({ eventId: btn.dataset.eventId }),
+            });
+            const data = await res.json();
+            if (data.success) {
+                window.location.href = `/dashboard/events/edit?eventId=${data.data.eventId}`;
+            } else {
+                alert('Duplicate failed: ' + data.message);
+                btn.disabled = false;
+                btn.textContent = 'Duplicate';
+            }
+        } catch {
+            alert('Duplicate failed. Please try again.');
+            btn.disabled = false;
+            btn.textContent = 'Duplicate';
+        }
+    });
+});
+
+document.querySelectorAll('.btn-delete-event').forEach(btn => {
+    btn.addEventListener('click', async () => {
+        const title = btn.dataset.eventTitle;
+        if (!confirm(`Delete "${title}"? This cannot be undone.`)) return;
+        btn.disabled = true;
+        btn.textContent = '…';
+        try {
+            const res = await fetch('/api/events/delete', {
+                method: 'POST',
+                credentials: 'include',
+                headers: { 'Content-Type': 'application/json', 'x-access-token': <%- JSON.stringify(process.env.apiKey || '') %> },
+                body: JSON.stringify({ eventId: btn.dataset.eventId }),
+            });
+            const data = await res.json();
+            if (data.success) {
+                btn.closest('tr').remove();
+            } else {
+                alert('Delete failed: ' + data.message);
+                btn.disabled = false;
+                btn.textContent = 'Delete';
+            }
+        } catch {
+            alert('Delete failed. Please try again.');
+            btn.disabled = false;
+            btn.textContent = 'Delete';
+        }
+    });
 });
 </script>

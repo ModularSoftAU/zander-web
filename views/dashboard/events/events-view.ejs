@@ -101,12 +101,19 @@ const canEdit = ['draft','rejected','approved','published'].includes(ev.status);
                         <div class="card-body">
                             <dl class="row mb-0">
                                 <dt class="col-sm-3">Start</dt>
-                                <dd class="col-sm-9"><span class="js-datetime" data-iso="<%= ev.startAt %>"></span> (<%= ev.timezone %>)</dd>
+                                <dd class="col-sm-9"><span class="js-datetime" data-iso="<%= ev.startAt ? new Date(ev.startAt).toISOString() : '' %>"></span></dd>
                                 <dt class="col-sm-3">End</dt>
-                                <dd class="col-sm-9"><span class="js-datetime" data-iso="<%= ev.endAt %>"></span></dd>
+                                <dd class="col-sm-9"><span class="js-datetime" data-iso="<%= ev.endAt ? new Date(ev.endAt).toISOString() : '' %>"></span></dd>
                                 <% if (ev.locationLabel) { %>
                                 <dt class="col-sm-3">Location</dt>
-                                <dd class="col-sm-9"><%= ev.locationLabel %></dd>
+                                <dd class="col-sm-9">
+                                    <%= ev.locationLabel %>
+                                    <% if (ev.locationType === 'discord' && ev.locationDiscordChannelId && config.discord?.guildId) { %>
+                                    <a href="https://discord.com/channels/<%= config.discord.guildId %>/<%= ev.locationDiscordChannelId %>" target="_blank" rel="noopener" class="btn btn-xs btn-outline-primary ms-2">
+                                        <i class="fab fa-discord me-1"></i>Join Channel
+                                    </a>
+                                    <% } %>
+                                </dd>
                                 <% } %>
                                 <% if (ev.serverName) { %>
                                 <dt class="col-sm-3">Server</dt>
@@ -295,14 +302,17 @@ const canEdit = ['draft','rejected','approved','published'].includes(ev.status);
 <script>
 document.querySelectorAll('.js-datetime').forEach(el => {
     const d = el.dataset.iso ? new Date(el.dataset.iso) : null;
-    el.textContent = d && !isNaN(d) ? d.toLocaleString() : (el.dataset.fallback || '—');
+    el.textContent = d && !isNaN(d) ? d.toLocaleString(undefined, {
+        year: 'numeric', month: 'short', day: 'numeric',
+        hour: '2-digit', minute: '2-digit', timeZoneName: 'short'
+    }) : (el.dataset.fallback || '—');
 });
 
 async function eventAction(endpoint, body, redirect) {
     const res = await fetch(endpoint, {
         method: 'POST',
         credentials: 'include',
-        headers: { 'Content-Type': 'application/json', 'x-access-token': '<%= process.env.apiKey %>' },
+        headers: { 'Content-Type': 'application/json', 'x-access-token': <%- JSON.stringify(process.env.apiKey || '') %> },
         body: JSON.stringify(body),
     });
     const data = await res.json();
@@ -346,7 +356,7 @@ document.querySelector('.btn-duplicate')?.addEventListener('click', async e => {
     const res = await fetch('/api/events/duplicate', {
         method: 'POST',
         credentials: 'include',
-        headers: { 'Content-Type': 'application/json', 'x-access-token': '<%= process.env.apiKey %>' },
+        headers: { 'Content-Type': 'application/json', 'x-access-token': <%- JSON.stringify(process.env.apiKey || '') %> },
         body: JSON.stringify({ eventId: e.target.dataset.eventId }),
     });
     const data = await res.json();

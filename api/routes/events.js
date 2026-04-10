@@ -31,6 +31,7 @@ import {
   createTemplate,
   updateTemplate,
   deleteTemplate,
+  upsertTemplateAnnouncements,
 } from "../../services/eventTemplateService.js";
 
 import {
@@ -265,7 +266,22 @@ export default function eventsApiRoute(app, _config, _db, features, _lang) {
     try {
       const { actorId, actorName } = actorFromReq(req);
       const event = await approveEvent(eventId, actorId, actorName);
-      return res.send({ success: true, data: event, message: "Event approved" });
+
+      // approveEvent auto-publishes; run Discord actions asynchronously
+      const fullEvent = await getEventById(eventId);
+      setImmediate(async () => {
+        try {
+          const discordCfg = {
+            channelId: config?.events?.discordChannelId || null,
+            guildId: config?.discord?.guildId || config?.events?.discordGuildId || null,
+          };
+          await runDiscordActionsForEvent(fullEvent, "on_publish", discordCfg);
+        } catch (e) {
+          console.error("[Events] Discord actions failed on approve:", e.message);
+        }
+      });
+
+      return res.send({ success: true, data: event, message: "Event approved and published" });
     } catch (err) {
       console.error("[Events API] approve:", err);
       return res.send({ success: false, message: err.message || "Failed to approve event" });
@@ -555,6 +571,25 @@ export default function eventsApiRoute(app, _config, _db, features, _lang) {
     } catch (err) {
       console.error("[Events API] templates/delete:", err);
       return res.send({ success: false, message: err.message || "Failed to delete template" });
+    }
+  });
+
+  /** POST /api/events/templates/announcements/update */
+  app.post("/api/events/templates/announcements/update", async (req, res) => {
+    if (!features.events) return res.send({ success: false, message: "Events feature disabled" });
+
+    const { templateId, announcements } = req.body || {};
+    if (!templateId) return res.send({ success: false, message: "templateId is required" });
+
+    try {
+      const tmpl = await getTemplateById(templateId);
+      if (!tmpl) return res.send({ success: false, message: "Template not found" });
+
+      await upsertTemplateAnnouncements(templateId, announcements || []);
+      return res.send({ success: true, message: "Template announcements updated" });
+    } catch (err) {
+      console.error("[Events API] templates/announcements/update:", err);
+      return res.send({ success: false, message: err.message || "Failed to update template announcements" });
     }
   });
 
