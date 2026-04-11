@@ -1,6 +1,7 @@
 package org.modularsoft.zander.hub.hall.commands;
 
 import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.TextComponent;
 import net.kyori.adventure.text.format.NamedTextColor;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
@@ -18,6 +19,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 public class HallAdminCommand implements CommandExecutor {
     private final ZanderHubMain plugin;
@@ -88,12 +90,26 @@ public class HallAdminCommand implements CommandExecutor {
     }
 
     private void handleSection(CommandSender sender, String[] args) {
-        if (args.length < 3) {
-            sender.sendMessage(Component.text("Usage: /hall section <create|setlabel|setpriority|addgroup> <id> [value]", NamedTextColor.RED));
+        if (args.length < 2) {
+            sender.sendMessage(Component.text("Usage: /hall section <list|create|setlabel|setpriority|addgroup> [id]", NamedTextColor.RED));
             return;
         }
 
         String sub = args[1].toLowerCase();
+
+        if (sub.equals("list")) {
+            sender.sendMessage(Component.text("Sections:", NamedTextColor.GOLD));
+            for (HallSection sec : hallManager.getSectionManager().getSections().values()) {
+                sender.sendMessage(Component.text("- " + sec.getId() + " (" + sec.getDisplayName() + ") P:" + sec.getPriority(), NamedTextColor.YELLOW));
+            }
+            return;
+        }
+
+        if (args.length < 3) {
+            sender.sendMessage(Component.text("Provide section id.", NamedTextColor.RED));
+            return;
+        }
+
         String id = args[2];
         HallSection sec = hallManager.getSectionManager().getSections().get(id);
 
@@ -109,7 +125,7 @@ public class HallAdminCommand implements CommandExecutor {
         }
 
         if (sec == null) {
-            sender.sendMessage(Component.text("Section not found.", NamedTextColor.RED));
+            sender.sendMessage(Component.text("Section not found: " + id, NamedTextColor.RED));
             return;
         }
 
@@ -132,24 +148,51 @@ public class HallAdminCommand implements CommandExecutor {
                 hallManager.getSectionManager().save();
                 sender.sendMessage(Component.text("Group added to " + id, NamedTextColor.GREEN));
                 break;
+            case "info":
+                sender.sendMessage(Component.text("Section Info: " + id, NamedTextColor.GOLD));
+                sender.sendMessage(Component.text("Label: " + sec.getSignLabel(), NamedTextColor.YELLOW));
+                sender.sendMessage(Component.text("Priority: " + sec.getPriority(), NamedTextColor.YELLOW));
+                sender.sendMessage(Component.text("Groups: " + String.join(", ", sec.getGroups()), NamedTextColor.YELLOW));
+                sender.sendMessage(Component.text("Mode: " + sec.getSortMode(), NamedTextColor.YELLOW));
+                break;
         }
     }
 
     private void handleSlot(CommandSender sender, String[] args) {
         if (args.length < 2) {
-            sender.sendMessage(Component.text("Usage: /hall slot <create|remove> [args]", NamedTextColor.RED));
+            sender.sendMessage(Component.text("Usage: /hall slot <list|create|remove|info> [args]", NamedTextColor.RED));
             return;
         }
 
         String sub = args[1].toLowerCase();
 
+        if (sub.equals("list")) {
+            sender.sendMessage(Component.text("Slots:", NamedTextColor.GOLD));
+            for (HallSlot slot : hallManager.getSlotManager().getSlots().values()) {
+                HallAssignment a = hallManager.getAssignmentForSlot(slot.getId());
+                String pName = "Empty";
+                if (a != null) {
+                    OfflinePlayer op = Bukkit.getOfflinePlayer(a.getPlayerUuid());
+                    pName = op.getName() != null ? op.getName() : "Unknown";
+                }
+                sender.sendMessage(Component.text("- " + slot.getId() + " [" + slot.getSectionId() + "] -> " + pName + (slot.isLocked() ? " (LOCKED)" : ""), NamedTextColor.YELLOW));
+            }
+            return;
+        }
+
         if (sub.equals("create")) {
             if (!(sender instanceof Player player)) { sender.sendMessage("Players only."); return; }
             if (args.length < 3) { sender.sendMessage("Provide section id."); return; }
             String sectionId = args[2];
+            String id = (args.length > 3) ? args[3] : UUID.randomUUID().toString().substring(0, 8);
+
+            if (hallManager.getSlotManager().getSlots().containsKey(id)) {
+                sender.sendMessage(Component.text("Slot ID already exists.", NamedTextColor.RED));
+                return;
+            }
+
             Location loc = player.getLocation();
             Location signLoc = loc.clone().add(0, -1, 0);
-            String id = UUID.randomUUID().toString().substring(0, 8);
             HallSlot slot = new HallSlot(id, sectionId, loc, signLoc, false, 0);
             hallManager.getSlotManager().addSlot(slot);
             sender.sendMessage(Component.text("Slot created: " + id + " for section " + sectionId, NamedTextColor.GREEN));
@@ -157,6 +200,19 @@ public class HallAdminCommand implements CommandExecutor {
             if (args.length < 3) { sender.sendMessage("Provide slot id."); return; }
             hallManager.getSlotManager().removeSlot(args[2]);
             sender.sendMessage(Component.text("Slot removed: " + args[2], NamedTextColor.GREEN));
+        } else if (sub.equals("info")) {
+            if (args.length < 3) { sender.sendMessage("Provide slot id."); return; }
+            HallSlot slot = hallManager.getSlotManager().getSlots().get(args[2]);
+            if (slot == null) { sender.sendMessage("Slot not found."); return; }
+            sender.sendMessage(Component.text("Slot Info: " + slot.getId(), NamedTextColor.GOLD));
+            sender.sendMessage(Component.text("Section: " + slot.getSectionId(), NamedTextColor.YELLOW));
+            sender.sendMessage(Component.text("Location: " + slot.getLocation().getWorld().getName() + " " + slot.getLocation().getBlockX() + "," + slot.getLocation().getBlockY() + "," + slot.getLocation().getBlockZ(), NamedTextColor.YELLOW));
+            sender.sendMessage(Component.text("Locked: " + slot.isLocked(), NamedTextColor.YELLOW));
+            HallAssignment a = hallManager.getAssignmentForSlot(slot.getId());
+            if (a != null) {
+                OfflinePlayer op = Bukkit.getOfflinePlayer(a.getPlayerUuid());
+                sender.sendMessage(Component.text("Assigned: " + (op.getName() != null ? op.getName() : "Unknown") + " (" + a.getType() + ")", NamedTextColor.YELLOW));
+            }
         }
     }
 
@@ -219,7 +275,6 @@ public class HallAdminCommand implements CommandExecutor {
         if (args.length < 2) { sender.sendMessage("Provide player."); return; }
         OfflinePlayer op = Bukkit.getOfflinePlayer(args[1]);
 
-        // Find a slot to preview on, or just inform sender
         sender.sendMessage(Component.text("Previewing " + op.getName() + " (not fully implemented, re-render triggered for their slots)", NamedTextColor.YELLOW));
         HallAssignment assignment = hallManager.getAssignmentForPlayer(op.getUniqueId());
         if (assignment != null) {
@@ -232,8 +287,8 @@ public class HallAdminCommand implements CommandExecutor {
         sender.sendMessage(Component.text("Hall Admin Commands:", NamedTextColor.GOLD));
         sender.sendMessage(Component.text("/hall reload", NamedTextColor.YELLOW));
         sender.sendMessage(Component.text("/hall refresh", NamedTextColor.YELLOW));
-        sender.sendMessage(Component.text("/hall section create|setlabel|setpriority|addgroup <id>", NamedTextColor.YELLOW));
-        sender.sendMessage(Component.text("/hall slot create|remove <args>", NamedTextColor.YELLOW));
+        sender.sendMessage(Component.text("/hall section <list|info|create|setlabel|setpriority|addgroup> <args>", NamedTextColor.YELLOW));
+        sender.sendMessage(Component.text("/hall slot <list|info|create|remove> <args>", NamedTextColor.YELLOW));
         sender.sendMessage(Component.text("/hall assign <player> <slotId>", NamedTextColor.YELLOW));
         sender.sendMessage(Component.text("/hall unassign <slotId>", NamedTextColor.YELLOW));
         sender.sendMessage(Component.text("/hall lock|unlock <slotId>", NamedTextColor.YELLOW));
