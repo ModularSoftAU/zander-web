@@ -1,0 +1,16 @@
+main: org.modularsoft.zander.addon.ZanderAddonMain
+name: zander-addon
+version: ${project.version}
+author: ModularSoft
+api-version: 1.21
+
+commands:
+  policy:
+    description: View server policies.
+    usage: /policy <tos|rules|privacy|refund>
+  social:
+    description: View our social media platforms.
+    usage: /social
+  pettrust:
+    description: Manage trust for your tamed pets.
+    usage: /pettrust <trust|untrust|public|private|list|help>

@@ -15,6 +15,7 @@
         <module>zander-velocity</module>
         <module>zander-hub</module>
         <module>zander-auth</module>
+        <module>zander-addon</module>
     </modules>
 
     <properties>

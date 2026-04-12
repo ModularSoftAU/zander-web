@@ -1,0 +1,28 @@
+# Zander Addon Configuration
+
+# --- API Server Settings ---
+# Enable the built-in API server
+# If enabled, this server will host the /api/config/policy endpoint
+api-server:
+  enabled: true
+  port: 8080
+
+# --- Plugin Settings ---
+# The base URL for the API (where the plugin fetches policy URLs from)
+api-url: "https://craftingforchrist.net/api"
+
+# Settings for the in-game policy book
+policy-book:
+  enabled: true
+  slot: 8
+
+# Settings for the social media paper
+social-paper:
+  enabled: true
+  slot: 7
+
+# --- Pet Trust Settings ---
+petTrust:
+  enabled: true
+  noPermissionMessage: "&cYou are not trusted to use this pet."
+  preventDamageWithoutManage: true
