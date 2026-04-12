@@ -132,9 +132,13 @@ public class HallAdminCommand implements CommandExecutor {
         switch (sub) {
             case "setlabel":
                 if (args.length < 4) { sender.sendMessage("Provide label."); return; }
-                sec.setSignLabel(args[3]);
+                StringBuilder labelBuilder = new StringBuilder();
+                for (int i = 3; i < args.length; i++) {
+                    labelBuilder.append(args[i]).append(i == args.length - 1 ? "" : " ");
+                }
+                sec.setSignLabel(labelBuilder.toString());
                 hallManager.getSectionManager().save();
-                sender.sendMessage(Component.text("Label set for " + id, NamedTextColor.GREEN));
+                sender.sendMessage(Component.text("Label set for " + id + " to: " + sec.getSignLabel(), NamedTextColor.GREEN));
                 break;
             case "setpriority":
                 if (args.length < 4) { sender.sendMessage("Provide priority."); return; }

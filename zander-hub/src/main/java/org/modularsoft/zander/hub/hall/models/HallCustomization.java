@@ -12,6 +12,7 @@ public class HallCustomization {
     private Material mainHand;
     private Material offHand;
     private String posePreset;
+    private String particleEffect;
     private EulerAngle bodyPose;
     private EulerAngle headPose;
     private EulerAngle leftArmPose;
@@ -39,6 +40,8 @@ public class HallCustomization {
     public void setOffHand(Material offHand) { this.offHand = offHand; }
     public String getPosePreset() { return posePreset; }
     public void setPosePreset(String posePreset) { this.posePreset = posePreset; }
+    public String getParticleEffect() { return particleEffect; }
+    public void setParticleEffect(String particleEffect) { this.particleEffect = particleEffect; }
     public EulerAngle getBodyPose() { return bodyPose; }
     public void setBodyPose(EulerAngle bodyPose) { this.bodyPose = bodyPose; }
     public EulerAngle getHeadPose() { return headPose; }

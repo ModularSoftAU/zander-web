@@ -21,6 +21,21 @@ public class CustomizationGui implements Listener {
     private final ZanderHubMain plugin;
     private final String title = "Statue Customization";
 
+    private final List<Material> chestplates = Arrays.asList(
+            Material.LEATHER_CHESTPLATE, Material.CHAINMAIL_CHESTPLATE, Material.IRON_CHESTPLATE,
+            Material.GOLDEN_CHESTPLATE, Material.DIAMOND_CHESTPLATE, Material.NETHERITE_CHESTPLATE, Material.AIR
+    );
+
+    private final List<Material> leggings = Arrays.asList(
+            Material.LEATHER_LEGGINGS, Material.CHAINMAIL_LEGGINGS, Material.IRON_LEGGINGS,
+            Material.GOLDEN_LEGGINGS, Material.DIAMOND_LEGGINGS, Material.NETHERITE_LEGGINGS, Material.AIR
+    );
+
+    private final List<Material> boots = Arrays.asList(
+            Material.LEATHER_BOOTS, Material.CHAINMAIL_BOOTS, Material.IRON_BOOTS,
+            Material.GOLDEN_BOOTS, Material.DIAMOND_BOOTS, Material.NETHERITE_BOOTS, Material.AIR
+    );
+
     private final List<Material> weapons = Arrays.asList(
             Material.IRON_SWORD, Material.GOLDEN_SWORD, Material.DIAMOND_SWORD, Material.NETHERITE_SWORD,
             Material.IRON_AXE, Material.GOLDEN_AXE, Material.DIAMOND_AXE, Material.NETHERITE_AXE,
@@ -32,6 +47,8 @@ public class CustomizationGui implements Listener {
     );
 
     private final List<String> posePresets = Arrays.asList("DEFAULT", "ZOMBIE", "RUNNING", "DANCING");
+
+    private final List<String> particlePresets = Arrays.asList("NONE", "HEART", "HAPPY_VILLAGER", "FLAME", "SOUL_FIRE_FLAME", "WITCH", "TOTEM_OF_UNDYING");
 
     public CustomizationGui(ZanderHubMain plugin) {
         this.plugin = plugin;
@@ -54,8 +71,9 @@ public class CustomizationGui implements Listener {
         inv.setItem(14, createItem(Material.IRON_SWORD, "Main Hand"));
         inv.setItem(15, createItem(Material.SHIELD, "Off Hand"));
 
-        // Pose
+        // Effects
         inv.setItem(16, createItem(Material.ARMOR_STAND, "Cycle Pose"));
+        inv.setItem(17, createItem(Material.BLAZE_POWDER, "Cycle Particles"));
 
         // Reset
         inv.setItem(22, createItem(Material.BARRIER, "Reset Statue"));
@@ -98,6 +116,7 @@ public class CustomizationGui implements Listener {
                 }
                 break;
             case 16: cyclePose(player, custom); break;
+            case 17: cycleParticles(player, custom); break;
             case 22:
                 plugin.getHallManager().getCustomizationService().saveCustomization(new HallCustomization(player.getUniqueId()));
                 player.sendMessage(Component.text("Statue reset!", NamedTextColor.GREEN));
@@ -110,7 +129,13 @@ public class CustomizationGui implements Listener {
     }
 
     private void cycleArmor(Player player, HallCustomization custom, String type) {
-        List<Material> allowed = plugin.getHallManager().getHallConfig().getAllowedMaterials();
+        List<Material> pool = switch (type) {
+            case "chest" -> chestplates;
+            case "legs" -> leggings;
+            case "boots" -> boots;
+            default -> Arrays.asList(Material.AIR);
+        };
+
         Material current = switch (type) {
             case "chest" -> custom.getChestplate();
             case "legs" -> custom.getLeggings();
@@ -118,9 +143,10 @@ public class CustomizationGui implements Listener {
             default -> null;
         };
 
-        int index = (current == null) ? -1 : allowed.indexOf(current);
-        index = (index + 1) % (allowed.size() + 1);
-        Material next = (index == allowed.size()) ? null : allowed.get(index);
+        int index = (current == null) ? pool.indexOf(Material.AIR) : pool.indexOf(current);
+        index = (index + 1) % pool.size();
+        Material next = pool.get(index);
+        if (next == Material.AIR) next = null;
 
         switch (type) {
             case "chest" -> custom.setChestplate(next);
@@ -152,7 +178,6 @@ public class CustomizationGui implements Listener {
         String next = posePresets.get(index);
 
         custom.setPosePreset(next);
-        // Reset manual poses when using a preset for simplicity in this implementation
         custom.setBodyPose(null);
         custom.setHeadPose(null);
         custom.setLeftArmPose(null);
@@ -161,5 +186,17 @@ public class CustomizationGui implements Listener {
         custom.setRightLegPose(null);
 
         player.sendMessage(Component.text("Updated pose to " + next + "!", NamedTextColor.GREEN));
+    }
+
+    private void cycleParticles(Player player, HallCustomization custom) {
+        String current = custom.getParticleEffect();
+        if (current == null) current = "NONE";
+
+        int index = particlePresets.indexOf(current);
+        index = (index + 1) % particlePresets.size();
+        String next = particlePresets.get(index);
+
+        custom.setParticleEffect(next.equals("NONE") ? null : next);
+        player.sendMessage(Component.text("Updated particles to " + next + "!", NamedTextColor.GREEN));
     }
 }

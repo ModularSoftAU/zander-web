@@ -5,6 +5,7 @@ import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.OfflinePlayer;
+import org.bukkit.Particle;
 import org.bukkit.block.Block;
 import org.bukkit.block.Sign;
 import org.bukkit.entity.ArmorStand;
@@ -30,6 +31,7 @@ public class RenderService {
     public RenderService(ZanderHubMain plugin, HallManager hallManager) {
         this.plugin = plugin;
         this.hallManager = hallManager;
+        startParticleTask();
     }
 
     public void renderAll() {
@@ -68,6 +70,7 @@ public class RenderService {
 
         as.setBasePlate(false);
         as.setArms(true);
+        as.setGravity(false);
         as.setCustomNameVisible(true);
         as.customName(Component.text(player.getName() != null ? player.getName() : "Unknown"));
 
@@ -97,7 +100,6 @@ public class RenderService {
                 if (custom.getRightLegPose() != null) as.setRightLegPose(custom.getRightLegPose());
             }
         } else {
-            // Default appearance if no customization
             as.getEquipment().setChestplate(null);
             as.getEquipment().setLeggings(null);
             as.getEquipment().setBoots(null);
@@ -170,5 +172,23 @@ public class RenderService {
                 as.setRightLegPose(new EulerAngle(Math.toRadians(1), 0, Math.toRadians(-1)));
                 break;
         }
+    }
+
+    private void startParticleTask() {
+        Bukkit.getScheduler().runTaskTimer(plugin, () -> {
+            for (HallSlot slot : hallManager.getSlotManager().getSlots().values()) {
+                if (!slot.getLocation().isChunkLoaded()) continue;
+                HallAssignment assignment = hallManager.getAssignmentForSlot(slot.getId());
+                if (assignment == null) continue;
+
+                HallCustomization custom = hallManager.getCustomizationService().getCustomization(assignment.getPlayerUuid());
+                if (custom == null || custom.getParticleEffect() == null) continue;
+
+                try {
+                    Particle particle = Particle.valueOf(custom.getParticleEffect());
+                    slot.getLocation().getWorld().spawnParticle(particle, slot.getLocation().clone().add(0, 1, 0), 3, 0.3, 0.5, 0.3, 0.02);
+                } catch (Exception ignored) {}
+            }
+        }, 20L, 10L);
     }
 }

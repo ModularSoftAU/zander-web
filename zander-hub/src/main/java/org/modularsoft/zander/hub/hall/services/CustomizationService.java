@@ -40,6 +40,7 @@ public class CustomizationService {
     }
 
     public boolean isValidMaterial(Material m) {
-        return hallManager.getHallConfig().getAllowedMaterials().contains(m) || m == Material.AIR;
+        // Now lax, allow all materials
+        return m != null;
     }
 }

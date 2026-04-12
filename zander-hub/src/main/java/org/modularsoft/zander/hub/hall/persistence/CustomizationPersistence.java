@@ -1,7 +1,6 @@
 package org.modularsoft.zander.hub.hall.persistence;
 
 import org.bukkit.Material;
-import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.util.EulerAngle;
@@ -10,8 +9,6 @@ import org.modularsoft.zander.hub.hall.models.HallCustomization;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.UUID;
 
 public class CustomizationPersistence {
@@ -36,6 +33,7 @@ public class CustomizationPersistence {
         c.setMainHand(getMaterial(config.getString("main-hand")));
         c.setOffHand(getMaterial(config.getString("off-hand")));
         c.setPosePreset(config.getString("pose-preset"));
+        c.setParticleEffect(config.getString("particle-effect"));
         c.setBodyPose(getEulerAngle(config, "body-pose"));
         c.setHeadPose(getEulerAngle(config, "head-pose"));
         c.setLeftArmPose(getEulerAngle(config, "left-arm-pose"));
@@ -55,6 +53,7 @@ public class CustomizationPersistence {
         config.set("main-hand", c.getMainHand() != null ? c.getMainHand().name() : null);
         config.set("off-hand", c.getOffHand() != null ? c.getOffHand().name() : null);
         config.set("pose-preset", c.getPosePreset());
+        config.set("particle-effect", c.getParticleEffect());
         setEulerAngle(config, "body-pose", c.getBodyPose());
         setEulerAngle(config, "head-pose", c.getHeadPose());
         setEulerAngle(config, "left-arm-pose", c.getLeftArmPose());
