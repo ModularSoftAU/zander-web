@@ -54,16 +54,32 @@ public class RenderService {
     }
 
     private void clearSlot(HallSlot slot) {
-        removeArmorStandAt(slot.getLocation());
+        removeArmorStandsAt(slot.getLocation());
         clearSign(slot.getSignLocation());
     }
 
     private void updateArmorStand(HallSlot slot, HallAssignment assignment) {
         Location loc = slot.getLocation();
-        ArmorStand as = getArmorStandAt(loc);
+
+        // Remove duplicates if any and find an existing one
+        Collection<Entity> entities = loc.getWorld().getNearbyEntities(loc, 0.5, 0.5, 0.5);
+        ArmorStand as = null;
+        for (Entity e : entities) {
+            if (e instanceof ArmorStand) {
+                if (as == null) {
+                    as = (ArmorStand) e;
+                } else {
+                    e.remove();
+                }
+            }
+        }
+
         if (as == null) {
             as = (ArmorStand) loc.getWorld().spawnEntity(loc, EntityType.ARMOR_STAND);
         }
+
+        // Fix rotation and location
+        as.teleport(loc);
 
         OfflinePlayer player = Bukkit.getOfflinePlayer(assignment.getPlayerUuid());
         HallCustomization custom = hallManager.getCustomizationService().getCustomization(assignment.getPlayerUuid());
@@ -143,9 +159,11 @@ public class RenderService {
         return null;
     }
 
-    private void removeArmorStandAt(Location loc) {
-        ArmorStand as = getArmorStandAt(loc);
-        if (as != null) as.remove();
+    private void removeArmorStandsAt(Location loc) {
+        Collection<Entity> entities = loc.getWorld().getNearbyEntities(loc, 0.5, 0.5, 0.5);
+        for (Entity e : entities) {
+            if (e instanceof ArmorStand) e.remove();
+        }
     }
 
     private void applyPosePreset(ArmorStand as, String preset) {
@@ -162,7 +180,7 @@ public class RenderService {
                 break;
             case "DANCING":
                 as.setLeftArmPose(new EulerAngle(Math.toRadians(-120), Math.toRadians(40), 0));
-                as.setRightArmPose(new EulerAngle(Math.toRadians(-120), Math.toRadians(-40), 0));
+                as.setRightArmPose(new EulerAngle(Math.toRadians(-120), Math.toRadians(40), 0));
                 break;
             default: // DEFAULT
                 as.setBodyPose(EulerAngle.ZERO);

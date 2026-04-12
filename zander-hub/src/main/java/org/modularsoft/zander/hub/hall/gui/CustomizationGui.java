@@ -2,6 +2,7 @@ package org.modularsoft.zander.hub.hall.gui;
 
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
+import net.kyori.adventure.text.format.TextDecoration;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
@@ -72,7 +73,7 @@ public class CustomizationGui implements Listener {
         inv.setItem(15, createItem(Material.SHIELD, "Off Hand"));
 
         // Effects
-        inv.setItem(16, createItem(Material.ARMOR_STAND, "Cycle Pose"));
+        inv.setItem(16, createPoseItem());
         inv.setItem(17, createItem(Material.BLAZE_POWDER, "Cycle Particles"));
 
         // Reset
@@ -84,7 +85,20 @@ public class CustomizationGui implements Listener {
     private ItemStack createItem(Material m, String name) {
         ItemStack item = new ItemStack(m == Material.AIR ? Material.BARRIER : m);
         ItemMeta meta = item.getItemMeta();
-        meta.displayName(Component.text(name, NamedTextColor.YELLOW));
+        meta.displayName(Component.text(name, NamedTextColor.YELLOW).decoration(TextDecoration.ITALIC, false));
+        item.setItemMeta(meta);
+        return item;
+    }
+
+    private ItemStack createPoseItem() {
+        ItemStack item = new ItemStack(Material.ARMOR_STAND);
+        ItemMeta meta = item.getItemMeta();
+        meta.displayName(Component.text("Cycle Pose", NamedTextColor.YELLOW).decoration(TextDecoration.ITALIC, false));
+        meta.lore(Arrays.asList(
+            Component.text("Use ", NamedTextColor.GRAY).append(Component.text("Left Shift + Right Button", NamedTextColor.LIGHT_PURPLE)).append(Component.text(" with", NamedTextColor.GRAY)).decoration(TextDecoration.ITALIC, false),
+            Component.text("an empty hand to open", NamedTextColor.GRAY).decoration(TextDecoration.ITALIC, false),
+            Component.text("configuration screen.", NamedTextColor.GRAY).decoration(TextDecoration.ITALIC, false)
+        ));
         item.setItemMeta(meta);
         return item;
     }

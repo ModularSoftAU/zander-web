@@ -3,10 +3,10 @@
 As a supporter with an assigned statue in the Hall of Supporters, you have the ability to customize its appearance!
 
 ## How to Customize
-To open the customization menu, use the following command while in the hub:
-```
-/mystatue
-```
+There are two ways to open the customization menu:
+
+1.  **Command**: Use `/mystatue` while in the hub.
+2.  **Interaction**: **Left Shift + Right Click** your own statue with an empty hand.
 
 ## Customization Options
 
@@ -22,10 +22,7 @@ You can cycle through various armor pieces for your statue:
 
 ### 3. Poses
 Change the stance of your statue by cycling through presets:
-*   **DEFAULT**: A standard standing pose.
-*   **ZOMBIE**: Arms extended forward.
-*   **RUNNING**: A dynamic movement pose.
-*   **DANCING**: A celebratory pose.
+*   **Presets**: Default, Zombie (arms forward), Running, and Dancing.
 
 ### 4. Particle Effects
 Add some flair to your statue with particle effects:
@@ -37,4 +34,4 @@ If you want to start over, use the **Reset Statue** option (Barrier icon) in the
 ## Rules & Limitations
 *   **Identity**: Your statue will always use your current Minecraft skin head and your username. This cannot be changed.
 *   **Location**: You cannot move your statue; it is fixed to its assigned slot.
-*   **Visibility**: Customizations are visible to everyone in the hub!
+*   **Signs**: The sign below your statue is controlled by the plugin and displays your name and rank.

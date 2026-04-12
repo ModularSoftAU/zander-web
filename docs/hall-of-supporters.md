@@ -6,41 +6,18 @@ The Hall of Supporters is a feature for the Zander Hub plugin that automatically
 
 Follow these steps to get your Hall of Supporters running in minutes:
 
-1.  **Create a Section**: Define a role group (e.g., Staff).
+1.  **Create a Section**: A section represents a group of players sharing a rank.
     *   `/hall section create staff`
-    *   `/hall section setlabel staff Staff`
-    *   `/hall section addgroup staff admin`
-    *   `/hall section addgroup staff moderator`
-2.  **Create Slots**: Place physical statue locations.
-    *   Stand where you want a statue.
-    *   Place a sign block exactly one block below your feet.
-    *   `/hall slot create staff staff-1`
-    *   (Repeat for more slots, e.g., `/hall slot create staff staff-2`)
-3.  **Refresh**: Trigger the auto-population.
+    *   `/hall section setlabel staff Staff` (This label appears on the signs below the statues)
+    *   `/hall section addgroup staff admin` (Link the section to a LuckPerms group)
+2.  **Create Slots**: A slot is a physical location where a statue will stand.
+    *   Find the exact spot where you want a statue. **Statues will face the direction you are looking when you run the command.**
+    *   **Place a sign block** exactly one block below your feet. The plugin uses this sign to display the player's name and rank label. **Note: The sign block is meant to stay there as a permanent part of the pedestal.**
+    *   Run: `/hall slot create staff staff-1`
+3.  **Refresh**: Trigger the auto-population system.
     *   `/hall refresh`
-4.  **Verification**: Check what was created.
+4.  **Verification**: Check your work.
     *   `/hall slot list`
-    *   `/hall section list`
-
-## Detailed Admin Setup Guide
-
-### 1. Planning your Hall
-Before creating slots, decide on your sections (ranks) and their priorities. Sections with higher priority numbers will be filled first. Players who belong to multiple sections will only appear in the one with the highest priority.
-
-### 2. Managing Sections
-*   **Sign Labels**: This text appears on the second line of the sign below the statue. Use `/hall section setlabel <id> <text>`.
-*   **LuckPerms Groups**: Link sections to LP groups using `/hall section addgroup <id> <group>`. A section can have multiple groups.
-*   **Priority**: Use `/hall section setpriority <id> <number>` to control assignment order.
-
-### 3. Placing Slots
-Slots are the physical "pedestals" for statues.
-*   Always ensure there is a sign block below the statue location for the label.
-*   Use custom IDs for slots to make them easier to manage (e.g., `vip-row-1`).
-*   `/hall slot create <sectionId> [customId]`
-
-### 4. Manual Overrides & Locking
-*   **Manual Assignment**: Force a specific player to a slot using `/hall assign <player> <slotId>`.
-*   **Locking**: Use `/hall lock <slotId>` to prevent the auto-population system from overwriting a manual assignment or an empty slot.
 
 ## Features
 - **Auto-population**: Players are automatically assigned to available slots based on their LuckPerms groups and priority.
@@ -50,6 +27,18 @@ Slots are the physical "pedestals" for statues.
 - **Plugin-controlled Signs**: Signs below statues automatically display the player's name and their role label.
 - **Manual Overrides**: Admins can manually assign or lock slots for specific players.
 - **YAML Persistence**: All data is stored in simple YAML files for easy maintenance.
+
+## Detailed Administration
+
+### Sections
+Sections are the "containers" for ranks.
+*   **Priority**: If a player has multiple ranks, they appear in the section with the highest priority number. Use `/hall section setpriority <id> <number>`.
+*   **Sign Labels**: Set what appears on the sign below the statue using `/hall section setlabel <id> <text>`.
+
+### Slots
+Slots are physical locations.
+*   **Rotation**: When creating a slot with `/hall slot create`, the statue's facing direction is set to your current yaw.
+*   **Signs**: The sign block below the slot is a mandatory part of the pedestal. The plugin will take control of its text.
 
 ## Documentation Links
 - [User Customization Guide](statue-customization-guide.md)
