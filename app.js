@@ -51,6 +51,7 @@ import("./cron/unverifiedReminderCron.js");
 // eventAnnouncementCron removed — event announcements now use scheduledDiscordMessages via schedulerCron
 import("./cron/eventTemplateCron.js");
 import("./cron/announcementExpiryCron.js");
+import("./cron/webstoreCommandSyncCron.js");
 
 //
 // Website Related
@@ -60,6 +61,7 @@ import("./cron/announcementExpiryCron.js");
 import siteRoutes from "./routes/index.js";
 import apiRoutes from "./api/routes/index.js";
 import apiRedirectRoutes from "./api/internal_redirect/index.js";
+import webstoreWebhookRoutes from "./api/internal_redirect/webstore.js";
 import configApiRoute from "./api/routes/config.js";
 
 // API token authentication
@@ -214,6 +216,24 @@ const buildApp = async () => {
     // protected by
     try {
       apiRedirectRoutes(instance, config, lang, features);
+    } catch (err) {
+      return next(err);
+    }
+    next();
+  });
+
+  // Stripe webhook — needs raw body for HMAC-SHA256 signature verification.
+  // Registered in its own plugin scope with a buffer content-type parser so
+  // the raw bytes are preserved; all other routes continue to use the normal
+  // JSON parser registered by @fastify/formbody above.
+  await app.register((instance, options, next) => {
+    instance.addContentTypeParser(
+      "application/json",
+      { parseAs: "buffer" },
+      (_req, body, done) => done(null, body)
+    );
+    try {
+      webstoreWebhookRoutes(instance, config);
     } catch (err) {
       return next(err);
     }

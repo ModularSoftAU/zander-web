@@ -820,3 +820,148 @@ model event_audit_logs {
 
   event          events   @relation(fields: [eventId], references: [eventId], onDelete: Cascade)
 }
+
+// =============================================================================
+// Webstore Module
+// =============================================================================
+
+enum webstorePurchases_status {
+  pending
+  paid
+  fulfilled
+  failed
+  refunded
+}
+
+enum webstorePurchases_purchaseType {
+  one_time
+  subscription
+}
+
+enum webstoreSubscriptions_status {
+  active
+  past_due
+  cancelled
+  expired
+  unpaid
+}
+
+enum webstoreStripeCommands_action {
+  grant
+  revoke
+}
+
+enum webstoreCommandRuns_status {
+  queued
+  processing
+  completed
+  failed
+}
+
+/// One row per Stripe checkout session.
+model webstorePurchases {
+  purchaseId                   Int                              @id @default(autoincrement())
+  userId                       Int
+  itemSlug                     String                           @db.VarChar(120)
+  itemName                     String                           @db.VarChar(180)
+  purchaseType                 webstorePurchases_purchaseType
+  purchaserMinecraftUsername   String                           @db.VarChar(16)
+  recipientMinecraftUsername   String                           @db.VarChar(16)
+  status                       webstorePurchases_status         @default(pending)
+  stripeSessionId              String                           @unique @db.VarChar(255)
+  stripePaymentIntentId        String?                          @db.VarChar(255)
+  stripeSubscriptionId         String?                          @db.VarChar(255)
+  stripeCustomerId             String?                          @db.VarChar(255)
+  amountCents                  Int
+  currency                     String                           @db.VarChar(10)
+  isGift                       Int                              @default(0) @db.TinyInt
+  createdAt                    DateTime                         @default(now())
+  updatedAt                    DateTime                         @updatedAt
+
+  @@index([userId])
+  @@index([status])
+  @@index([stripeSubscriptionId])
+}
+
+/// Tracks the lifecycle of every active subscription.
+model webstoreSubscriptions {
+  subscriptionId               Int                           @id @default(autoincrement())
+  purchaseId                   Int
+  stripeSubscriptionId         String                        @unique @db.VarChar(255)
+  stripeCustomerId             String?                       @db.VarChar(255)
+  stripePriceId                String                        @db.VarChar(120)
+  recipientMinecraftUsername   String                        @db.VarChar(16)
+  purchaserMinecraftUsername   String                        @db.VarChar(16)
+  purchaserUserId              Int
+  status                       webstoreSubscriptions_status  @default(active)
+  currentPeriodStart           DateTime?
+  currentPeriodEnd             DateTime?
+  cancelAtPeriodEnd            Int                           @default(0) @db.TinyInt
+  cancelledAt                  DateTime?
+  createdAt                    DateTime                      @default(now())
+  updatedAt                    DateTime                      @updatedAt
+
+  @@index([purchaseId])
+  @@index([recipientMinecraftUsername])
+  @@index([status])
+}
+
+/// Idempotency log for Stripe webhook events.
+model webstoreWebhookEvents {
+  webhookEventId  Int      @id @default(autoincrement())
+  stripeEventId   String   @unique @db.VarChar(255)
+  purchaseId      Int?
+  eventType       String   @db.VarChar(80)
+  payload         Json?
+  processedAt     DateTime @default(now())
+
+  @@index([purchaseId])
+}
+
+/// Maps Stripe price IDs to in-game command templates.
+model webstoreStripeCommands {
+  commandId       Int                            @id @default(autoincrement())
+  stripePriceId   String                         @db.VarChar(120)
+  action          webstoreStripeCommands_action  @default(grant)
+  commandTemplate String                         @db.Text
+  sortOrder       Int                            @default(0)
+  createdAt       DateTime                       @default(now())
+
+  @@index([stripePriceId])
+  @@index([action])
+}
+
+/// Tracks each individual command dispatched to executorTasks.
+model webstoreCommandRuns {
+  commandRunId         Int                         @id @default(autoincrement())
+  purchaseId           Int
+  stripeSubscriptionId String?                     @db.VarChar(255)
+  action               webstoreStripeCommands_action @default(grant)
+  commandTemplate      String                      @db.Text
+  resolvedCommand      String                      @db.Text
+  executorTaskId       Int?
+  status               webstoreCommandRuns_status  @default(queued)
+  attempts             Int                         @default(0)
+  lastError            String?                     @db.Text
+  createdAt            DateTime                    @default(now())
+  updatedAt            DateTime                    @updatedAt
+
+  @@index([purchaseId])
+  @@index([executorTaskId])
+  @@index([status])
+}
+
+/// Audit ledger — records both sides of every completed payment.
+model webstoreTransactions {
+  transactionId                  Int      @id @default(autoincrement())
+  purchaseId                     Int
+  userId                         Int
+  direction                      String   @db.VarChar(16)
+  counterpartyMinecraftUsername  String   @db.VarChar(16)
+  amountCents                    Int
+  currency                       String   @db.VarChar(10)
+  createdAt                      DateTime @default(now())
+
+  @@index([userId])
+  @@index([purchaseId])
+}

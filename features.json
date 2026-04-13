@@ -32,6 +32,7 @@
   "watch": true,
   "vote": true,
   "events": true,
+  "webstore": true,
 
   "smDiscord": true,
   "smFacebook": true,

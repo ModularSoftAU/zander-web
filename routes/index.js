@@ -25,6 +25,7 @@ import watchSiteRoutes from "./watchRoutes.js";
 import sitemapRoutes from "./sitemapRoute.js";
 import voteSiteRoutes from "./voteRoutes.js";
 import eventsSiteRoutes from "./eventsRoutes.js";
+import webstoreSiteRoutes from "./webstoreRoutes.js";
 
 const rankData = require("../ranks.json");
 
@@ -50,6 +51,7 @@ export default function applicationSiteRoutes(
   sitemapRoutes(app, config, features);
   voteSiteRoutes(app, fetch, config, db, features, lang);
   eventsSiteRoutes(app, config, features);
+  webstoreSiteRoutes(app, config, features);
 
   // Summernote editor fetches /emojis to populate its emoji picker.
   // Return an empty map so it silently falls back to the GitHub emoji list
