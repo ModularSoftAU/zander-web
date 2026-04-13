@@ -4,6 +4,8 @@ import net.luckperms.api.LuckPerms;
 import net.luckperms.api.LuckPermsProvider;
 import net.luckperms.api.model.group.Group;
 import net.luckperms.api.model.user.User;
+import net.luckperms.api.node.Node;
+import net.luckperms.api.node.matcher.NodeMatcher;
 import net.luckperms.api.node.types.InheritanceNode;
 import org.bukkit.Bukkit;
 import org.modularsoft.zander.hub.ZanderHubMain;
@@ -66,5 +68,22 @@ public class LuckPermsService {
                 .map(group -> group.getWeight().orElse(0))
                 .max(Integer::compare)
                 .orElse(0);
+    }
+
+    public CompletableFuture<Set<UUID>> getUuidsInGroups(List<String> groups) {
+        if (!isAvailable()) return CompletableFuture.completedFuture(Collections.emptySet());
+
+        List<CompletableFuture<Map<UUID, Collection<InheritanceNode>>>> futures = new ArrayList<>();
+        for (String group : groups) {
+            futures.add(luckPerms.getUserManager().searchAll(NodeMatcher.key(InheritanceNode.builder(group).build())));
+        }
+
+        return CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).thenApply(v -> {
+            Set<UUID> uuids = new HashSet<>();
+            for (CompletableFuture<Map<UUID, Collection<InheritanceNode>>> future : futures) {
+                uuids.addAll(future.join().keySet());
+            }
+            return uuids;
+        });
     }
 }

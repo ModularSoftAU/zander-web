@@ -7,7 +7,10 @@ import org.bukkit.Material;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.Particle;
 import org.bukkit.block.Block;
+import org.bukkit.block.BlockFace;
 import org.bukkit.block.Sign;
+import org.bukkit.block.data.BlockData;
+import org.bukkit.block.data.Rotatable;
 import org.bukkit.entity.ArmorStand;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.EntityType;
@@ -129,6 +132,30 @@ public class RenderService {
         if (loc == null) return;
         Block block = loc.getBlock();
         if (!(block.getState() instanceof Sign)) return;
+
+        // Try to match sign rotation to armor stand yaw if it's a standing sign
+        BlockData data = block.getBlockData();
+        if (data instanceof Rotatable rotatable) {
+            float yaw = slot.getLocation().getYaw();
+            // Normalize yaw to 0-360
+            yaw = (yaw % 360 + 360) % 360;
+            // Map 0-360 to 0-15 (16 positions)
+            int rotationIndex = Math.round(yaw / 22.5f) % 16;
+
+            BlockFace[] faces = {
+                BlockFace.SOUTH, BlockFace.SOUTH_SOUTH_WEST, BlockFace.SOUTH_WEST, BlockFace.WEST_SOUTH_WEST,
+                BlockFace.WEST, BlockFace.WEST_NORTH_WEST, BlockFace.NORTH_WEST, BlockFace.NORTH_NORTH_WEST,
+                BlockFace.NORTH, BlockFace.NORTH_NORTH_EAST, BlockFace.NORTH_EAST, BlockFace.EAST_NORTH_EAST,
+                BlockFace.EAST, BlockFace.EAST_SOUTH_EAST, BlockFace.SOUTH_EAST, BlockFace.SOUTH_SOUTH_EAST
+            };
+            // Note: Minecraft Sign rotation 0 is South, 4 is West, 8 is North, 12 is East.
+            // But Bukkit/Minecraft Yaw: 0 is South, 90 is West, 180 is North, 270 is East.
+            // So the mapping index matches the rotation index.
+            if (rotationIndex >= 0 && rotationIndex < faces.length) {
+                rotatable.setRotation(faces[rotationIndex]);
+                block.setBlockData(rotatable);
+            }
+        }
 
         Sign sign = (Sign) block.getState();
         OfflinePlayer player = Bukkit.getOfflinePlayer(assignment.getPlayerUuid());

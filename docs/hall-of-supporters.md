@@ -39,6 +39,8 @@ Sections are the "containers" for ranks.
 Slots are physical locations.
 *   **Rotation**: When creating a slot with `/hall slot create`, the statue's facing direction is set to your current yaw.
 *   **Signs**: The sign block below the slot is a mandatory part of the pedestal. The plugin will take control of its text.
+*   **Dynamic Sorting**: By default, slots are filled automatically based on player priority (usually LuckPerms weight). If a new, higher-priority player joins the server or gains a rank, they may "bump" an existing player out of their slot or move them to a different one.
+*   **Slot Locking**: If you want a specific player to stay in a specific slot permanently, you can use `/hall lock <slotId>`. This prevents the auto-assignment system from moving or replacing the player in that slot.
 
 ## Documentation Links
 - [User Customization Guide](statue-customization-guide.md)

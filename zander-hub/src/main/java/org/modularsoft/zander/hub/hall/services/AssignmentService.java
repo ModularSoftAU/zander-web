@@ -29,8 +29,17 @@ public class AssignmentService {
             Bukkit.getOnlinePlayers().forEach(p -> pool.add(p.getUniqueId()));
             hallManager.getAssignments().forEach(a -> pool.add(a.getPlayerUuid()));
 
-            // Preload users in LuckPerms asynchronously
-            luckPermsService.preloadUsers(pool).thenRun(() -> {
+            // Fetch global UUIDs from all configured sections
+            List<String> allGroups = hallManager.getSectionManager().getSections().values().stream()
+                    .flatMap(s -> s.getGroups().stream())
+                    .distinct()
+                    .collect(Collectors.toList());
+
+            luckPermsService.getUuidsInGroups(allGroups).thenCompose(globalUuids -> {
+                pool.addAll(globalUuids);
+                // Preload users in LuckPerms asynchronously
+                return luckPermsService.preloadUsers(pool);
+            }).thenRun(() -> {
                 // Now run the assignment logic (back on main thread for safety with collections and rendering)
                 Bukkit.getScheduler().runTask(plugin, () -> {
                     performAssignment(pool);
