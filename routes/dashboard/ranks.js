@@ -60,7 +60,7 @@ export default function dashboardRanksRoute(
 
     // Filter out internal GriefDefender auto-groups
     const ranks = rankRows.filter(
-      (r) => !r.rankSlug?.startsWith("griefdefender_")
+      (r) => !String(r.rankSlug ?? "").startsWith("griefdefender_")
     );
 
     res.header("content-type", "text/html; charset=utf-8").send(
