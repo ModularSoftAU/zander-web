@@ -908,6 +908,181 @@ body.wp-admin h4 {
   opacity: 0.4;
 }
 
+/* ── Bootstrap 5 normalization ──────────────────────────────────────────── */
+/*
+ * The bridged pages use Bootstrap component classes. These rules override
+ * Bootstrap's defaults so every component matches the WP-admin palette.
+ * All rules are scoped to body.wp-admin so the public site is unaffected.
+ */
+
+/* -- Buttons ---------------------------------------------------------------- */
+body.wp-admin .btn { font-size: 13px; border-radius: 3px; }
+body.wp-admin .btn:focus-visible { outline: 2px solid var(--wp-blue); outline-offset: 2px; box-shadow: none; }
+body.wp-admin .btn:focus { box-shadow: none; }
+
+body.wp-admin .btn-primary,
+body.wp-admin .btn-primary:active,
+body.wp-admin .btn-primary.active { background-color: var(--wp-blue); border-color: var(--wp-blue-h); color: #fff; }
+body.wp-admin .btn-primary:hover,
+body.wp-admin .btn-primary:focus  { background-color: var(--wp-blue-h); border-color: var(--wp-blue-h); color: #fff; }
+
+body.wp-admin .btn-outline-primary         { color: var(--wp-blue);   border-color: var(--wp-blue); }
+body.wp-admin .btn-outline-primary:hover,
+body.wp-admin .btn-outline-primary:focus   { background-color: var(--wp-blue);   border-color: var(--wp-blue);   color: #fff; }
+
+body.wp-admin .btn-secondary,
+body.wp-admin .btn-secondary:active        { background-color: #787c82; border-color: #646970; color: #fff; }
+body.wp-admin .btn-secondary:hover         { background-color: #646970; border-color: #646970; color: #fff; }
+
+body.wp-admin .btn-outline-secondary       { color: #646970; border-color: #c3c4c7; }
+body.wp-admin .btn-outline-secondary:hover { background-color: #646970; border-color: #646970; color: #fff; }
+
+body.wp-admin .btn-danger,
+body.wp-admin .btn-danger:active           { background-color: var(--wp-red); border-color: #b32d2e; color: #fff; }
+body.wp-admin .btn-danger:hover            { background-color: #b32d2e; border-color: #b32d2e; color: #fff; }
+
+body.wp-admin .btn-outline-danger          { color: var(--wp-red); border-color: var(--wp-red); }
+body.wp-admin .btn-outline-danger:hover    { background-color: var(--wp-red); border-color: var(--wp-red); color: #fff; }
+
+body.wp-admin .btn-success,
+body.wp-admin .btn-success:active          { background-color: var(--wp-green); border-color: #007a1e; color: #fff; }
+body.wp-admin .btn-success:hover           { background-color: #007a1e; border-color: #007a1e; color: #fff; }
+
+body.wp-admin .btn-outline-success         { color: var(--wp-green); border-color: var(--wp-green); }
+body.wp-admin .btn-outline-success:hover   { background-color: var(--wp-green); border-color: var(--wp-green); color: #fff; }
+
+body.wp-admin .btn-warning,
+body.wp-admin .btn-warning:active          { background-color: var(--wp-amber); border-color: #c49a00; color: #1d2327; }
+body.wp-admin .btn-warning:hover           { background-color: #c49a00; border-color: #c49a00; color: #1d2327; }
+
+/* btn-info reused as alias for primary in admin */
+body.wp-admin .btn-info,
+body.wp-admin .btn-info:active             { background-color: var(--wp-blue); border-color: var(--wp-blue-h); color: #fff; }
+body.wp-admin .btn-info:hover              { background-color: var(--wp-blue-h); color: #fff; }
+
+body.wp-admin .btn-sm  { font-size: 12px; padding: 3px 10px; line-height: 1.5; }
+body.wp-admin .btn-lg  { font-size: 15px; padding: 8px 18px; }
+
+/* btn-link must never render blue-on-blue */
+body.wp-admin .btn-link             { color: var(--wp-blue); background: transparent; border-color: transparent; text-decoration: none; padding-left: 0; padding-right: 0; }
+body.wp-admin .btn-link:hover       { color: var(--wp-blue-h); text-decoration: underline; background: transparent; border-color: transparent; }
+
+/* .btn-main — custom class used in forums & support views */
+body.wp-admin .btn-main             { background-color: var(--wp-blue); border-color: var(--wp-blue-h); color: #fff; }
+body.wp-admin .btn-main:hover,
+body.wp-admin .btn-main:focus       { background-color: var(--wp-blue-h); color: #fff; }
+
+/* btn-group separator lines */
+body.wp-admin .btn-group > .btn + .btn { border-left-color: rgba(255,255,255,0.15); }
+
+/* -- Badges ----------------------------------------------------------------- */
+body.wp-admin .badge                  { font-size: 11px; font-weight: 600; border-radius: 10px; }
+body.wp-admin .badge.bg-primary       { background-color: var(--wp-blue)  !important; }
+body.wp-admin .badge.bg-success       { background-color: var(--wp-green) !important; }
+body.wp-admin .badge.bg-danger        { background-color: var(--wp-red)   !important; }
+body.wp-admin .badge.bg-warning       { background-color: var(--wp-amber) !important; color: #1d2327 !important; }
+body.wp-admin .badge.bg-secondary     { background-color: #787c82 !important; }
+body.wp-admin .badge.bg-info          { background-color: #72aee6 !important; color: #0a3f6f !important; }
+body.wp-admin .badge.bg-light         { background-color: #f6f7f7 !important; color: #646970 !important; border: 1px solid #c3c4c7; }
+body.wp-admin .badge.bg-dark          { background-color: #1d2327 !important; }
+
+/* -- Cards ------------------------------------------------------------------ */
+body.wp-admin .card                 { border-color: var(--wp-card-border); border-radius: 4px; box-shadow: 0 1px 1px rgba(0,0,0,0.04); }
+body.wp-admin .card-header          { background-color: #f6f7f7; border-bottom-color: var(--wp-card-border); font-size: 13px; font-weight: 600; color: #1d2327; padding: 10px 16px; }
+body.wp-admin .card-header.bg-light { background-color: #f6f7f7 !important; color: #1d2327 !important; }
+body.wp-admin .card-header.bg-info  { background-color: var(--wp-blue)  !important; color: #fff !important; }
+body.wp-admin .card-header.bg-white { background-color: #fff !important; }
+body.wp-admin .card-body            { font-size: 13px; }
+body.wp-admin .card-footer          { background-color: #f6f7f7; border-top-color: var(--wp-card-border); font-size: 12px; color: var(--wp-text-dim); padding: 8px 16px; }
+body.wp-admin .shadow-sm            { box-shadow: 0 1px 1px rgba(0,0,0,0.04) !important; }
+
+/* -- Tables ----------------------------------------------------------------- */
+body.wp-admin .table                { font-size: 13px; color: var(--wp-text); }
+body.wp-admin .table th             { font-weight: 600; color: #1d2327; font-size: 13px; }
+body.wp-admin .table-light          { --bs-table-bg: #f6f7f7; }
+body.wp-admin .table-light th,
+body.wp-admin .table-light td       { background-color: #f6f7f7 !important; color: #1d2327 !important; }
+body.wp-admin .table-striped > tbody > tr:nth-of-type(odd) > * { --bs-table-accent-bg: rgba(0,0,0,.02); }
+body.wp-admin .table-hover > tbody > tr:hover > * { --bs-table-accent-bg: #f9f9f9; }
+body.wp-admin .table-responsive     { border-radius: 4px; }
+body.wp-admin .table-bordered       { border-color: var(--wp-card-border); }
+body.wp-admin .table-bordered th,
+body.wp-admin .table-bordered td    { border-color: var(--wp-card-border); }
+
+/* -- Forms ------------------------------------------------------------------ */
+body.wp-admin .form-label           { font-size: 13px; font-weight: 600; color: #1d2327; margin-bottom: 4px; }
+body.wp-admin .form-control,
+body.wp-admin .form-select          { font-size: 13px; border-color: #c3c4c7; color: var(--wp-text); border-radius: 3px; }
+body.wp-admin .form-control:focus,
+body.wp-admin .form-select:focus    { border-color: var(--wp-blue); box-shadow: 0 0 0 0.15rem rgba(34,113,179,0.18); }
+body.wp-admin .form-control::placeholder { color: #a7aaad; }
+body.wp-admin .form-text            { font-size: 12px; color: var(--wp-text-dim); }
+body.wp-admin .form-check-input:checked            { background-color: var(--wp-blue); border-color: var(--wp-blue); }
+body.wp-admin .form-check-input:focus              { box-shadow: 0 0 0 0.15rem rgba(34,113,179,0.18); }
+body.wp-admin .input-group-text     { font-size: 13px; border-color: #c3c4c7; background-color: #f6f7f7; color: var(--wp-text); }
+body.wp-admin .invalid-feedback     { font-size: 12px; }
+body.wp-admin .valid-feedback       { font-size: 12px; }
+
+/* -- Alerts ----------------------------------------------------------------- */
+body.wp-admin .alert                { font-size: 13px; border-radius: 3px; border-left-width: 4px; padding: 10px 14px; }
+body.wp-admin .alert-success        { background-color: #f0fdf3; border-color: var(--wp-green); color: #004b20; }
+body.wp-admin .alert-danger         { background-color: #fdf2f2; border-color: var(--wp-red);   color: #8a2424; }
+body.wp-admin .alert-warning        { background-color: #fefce8; border-color: var(--wp-amber); color: #674c00; }
+body.wp-admin .alert-info           { background-color: #e5f0f8; border-color: #72aee6;          color: #0a3f6f; }
+
+/* -- Modals ----------------------------------------------------------------- */
+body.wp-admin .modal-content        { border-radius: 4px; border-color: var(--wp-card-border); font-size: 13px; }
+body.wp-admin .modal-header         { background-color: #f6f7f7; border-bottom-color: var(--wp-card-border); padding: 12px 16px; }
+body.wp-admin .modal-title          { font-size: 14px; font-weight: 600; color: #1d2327; }
+body.wp-admin .modal-body           { padding: 16px; font-size: 13px; }
+body.wp-admin .modal-footer         { background-color: #f6f7f7; border-top-color: var(--wp-card-border); padding: 10px 16px; gap: 6px; }
+body.wp-admin .modal-sm             { --bs-modal-width: 400px; }
+
+/* -- Dropdowns -------------------------------------------------------------- */
+body.wp-admin .dropdown-menu        { font-size: 13px; border-color: var(--wp-card-border); border-radius: 3px; box-shadow: 0 3px 10px rgba(0,0,0,0.12); }
+body.wp-admin .dropdown-item        { font-size: 13px; color: var(--wp-text); padding: 6px 14px; }
+body.wp-admin .dropdown-item:hover,
+body.wp-admin .dropdown-item:focus  { background-color: #f0f0f1; color: var(--wp-text); }
+body.wp-admin .dropdown-divider     { border-color: var(--wp-card-border); }
+body.wp-admin .dropdown-header      { font-size: 11px; color: rgba(255,255,255,0.3); text-transform: uppercase; letter-spacing: 0.07em; }
+
+/* -- Nav tabs --------------------------------------------------------------- */
+body.wp-admin .nav-tabs                       { border-bottom-color: var(--wp-card-border); }
+body.wp-admin .nav-tabs .nav-link             { font-size: 13px; color: var(--wp-text-dim); border-radius: 3px 3px 0 0; }
+body.wp-admin .nav-tabs .nav-link.active      { color: var(--wp-text); border-color: var(--wp-card-border) var(--wp-card-border) #fff; font-weight: 600; }
+body.wp-admin .nav-tabs .nav-link:hover       { color: var(--wp-text); border-color: var(--wp-card-border) var(--wp-card-border) transparent; }
+
+/* -- Bootstrap pagination --------------------------------------------------- */
+body.wp-admin .pagination               { font-size: 13px; }
+body.wp-admin .page-link                { color: var(--wp-blue); border-color: #c3c4c7; font-size: 13px; padding: 4px 10px; }
+body.wp-admin .page-item.active .page-link { background-color: var(--wp-blue); border-color: var(--wp-blue-h); }
+body.wp-admin .page-link:focus          { box-shadow: 0 0 0 0.15rem rgba(34,113,179,0.18); }
+body.wp-admin .page-link:hover          { background-color: #f0f0f1; color: var(--wp-blue-h); }
+
+/* -- Spinner / progress ----------------------------------------------------- */
+body.wp-admin .spinner-border,
+body.wp-admin .spinner-grow          { color: var(--wp-blue); }
+
+/* -- List group (used in some ticket/vault pages) --------------------------- */
+body.wp-admin .list-group-item       { font-size: 13px; border-color: var(--wp-card-border); color: var(--wp-text); }
+body.wp-admin .list-group-item.active { background-color: var(--wp-blue); border-color: var(--wp-blue); }
+body.wp-admin .list-group-item:hover  { background-color: #f6f7f7; }
+
+/* -- Bootstrap utility overrides -------------------------------------------- */
+body.wp-admin .text-primary   { color: var(--wp-blue)  !important; }
+body.wp-admin .text-success   { color: var(--wp-green) !important; }
+body.wp-admin .text-danger    { color: var(--wp-red)   !important; }
+body.wp-admin .text-warning   { color: var(--wp-amber) !important; }
+body.wp-admin .text-muted     { color: var(--wp-text-dim) !important; }
+body.wp-admin .bg-primary     { background-color: var(--wp-blue)  !important; }
+body.wp-admin .bg-success     { background-color: var(--wp-green) !important; }
+body.wp-admin .bg-danger      { background-color: var(--wp-red)   !important; }
+body.wp-admin .bg-warning     { background-color: var(--wp-amber) !important; }
+body.wp-admin .border         { border-color: var(--wp-card-border) !important; }
+body.wp-admin .border-top     { border-top-color:    var(--wp-card-border) !important; }
+body.wp-admin .border-bottom  { border-bottom-color: var(--wp-card-border) !important; }
+body.wp-admin code            { font-size: 12px; color: #c0392b; background: #fdf7f7; padding: 1px 5px; border-radius: 3px; }
+
 /* ── Responsive breakpoints ─────────────────────────────────────────────── */
 @media (max-width: 991px) {
   :root {
@@ -1020,6 +1195,21 @@ body.wp-admin h4 {
     grid-template-columns: 1fr 1fr;
   }
 
+  .stat-card {
+    padding: 12px;
+    gap: 10px;
+  }
+
+  .stat-icon {
+    width: 36px;
+    height: 36px;
+    font-size: 15px;
+  }
+
+  .stat-info .stat-value {
+    font-size: 20px;
+  }
+
   .quick-action-grid {
     grid-template-columns: repeat(3, 1fr);
   }
@@ -1030,5 +1220,32 @@ body.wp-admin h4 {
 
   .wp-search-box input[type="search"] {
     width: 140px;
+  }
+
+  /* Modals fill more of the screen on small phones */
+  body.wp-admin .modal-dialog {
+    margin: 10px;
+  }
+
+  /* Stack btn-group on very small screens */
+  body.wp-admin .btn-group.flex-wrap-mobile {
+    flex-wrap: wrap;
+    gap: 4px;
+  }
+
+  /* Ensure table action buttons don't overflow */
+  body.wp-admin .table td .btn-group {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 3px;
+  }
+
+  /* Card headers on mobile */
+  body.wp-admin .card-header {
+    padding: 8px 12px;
+  }
+
+  body.wp-admin .card-body {
+    padding: 12px;
   }
 }

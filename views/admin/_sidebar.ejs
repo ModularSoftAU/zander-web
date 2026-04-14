@@ -79,31 +79,65 @@
 
     if (!toggle || !sidebar || !overlay) return;
 
+    // iOS Safari requires locking both <html> and <body> to prevent background scroll
+    function lockScroll() {
+      document.body.style.overflow = 'hidden';
+      document.documentElement.style.overflow = 'hidden';
+    }
+    function unlockScroll() {
+      document.body.style.overflow = '';
+      document.documentElement.style.overflow = '';
+    }
+
+    function isMobile() {
+      return window.innerWidth < 992;
+    }
+
     function openSidebar() {
       sidebar.classList.add('mobile-open');
       overlay.classList.add('visible');
       toggle.setAttribute('aria-expanded', 'true');
-      document.body.style.overflow = 'hidden';
+      lockScroll();
     }
 
     function closeSidebar() {
       sidebar.classList.remove('mobile-open');
       overlay.classList.remove('visible');
       toggle.setAttribute('aria-expanded', 'false');
-      document.body.style.overflow = '';
+      unlockScroll();
     }
 
-    toggle.addEventListener('click', function () {
+    // Toggle on hamburger click
+    toggle.addEventListener('click', function (e) {
+      e.preventDefault();
       sidebar.classList.contains('mobile-open') ? closeSidebar() : openSidebar();
     });
 
+    // Close when tapping the overlay backdrop
     overlay.addEventListener('click', closeSidebar);
+
+    // On mobile: close the sidebar when a nav link is tapped so scroll is
+    // unlocked before the new page loads (prevents stuck body-overflow:hidden)
+    sidebar.addEventListener('click', function (e) {
+      if (!isMobile()) return;
+      var target = e.target.closest('a[href]');
+      if (target && !target.getAttribute('href').startsWith('#')) {
+        closeSidebar();
+      }
+    });
 
     // Close on ESC key
     document.addEventListener('keydown', function (e) {
       if (e.key === 'Escape' && sidebar.classList.contains('mobile-open')) {
         closeSidebar();
         toggle.focus();
+      }
+    });
+
+    // When viewport resizes from mobile → desktop, clean up any stuck state
+    window.addEventListener('resize', function () {
+      if (!isMobile() && sidebar.classList.contains('mobile-open')) {
+        closeSidebar();
       }
     });
   }());
