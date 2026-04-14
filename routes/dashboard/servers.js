@@ -1,8 +1,9 @@
 import {
-  getGlobalImage,
   hasPermission,
   isFeatureWebRouteEnabled,
 } from "../../api/common.js";
+import { adminViewData } from "../../admin/adminHelpers.js";
+import { prisma } from "../../controllers/databaseController.js";
 import { getWebAnnouncement } from "../../controllers/announcementController.js";
 
 export default function dashboardServersSiteRoute(
@@ -13,95 +14,80 @@ export default function dashboardServersSiteRoute(
   features,
   lang
 ) {
-  const headers = { "x-access-token": process.env.apiKey };
-
-  async function fetchJson(url, fallback = null) {
-    try {
-      const res = await fetch(url, { headers });
-      return await res.json();
-    } catch (error) {
-      console.error(`[dashboard/servers] fetchJson failed for ${url}:`, error.message);
-      return fallback;
-    }
-  }
-
   //
-  // Servers
+  // Servers list
   //
   app.get("/dashboard/servers", async function (req, res) {
     if (!await isFeatureWebRouteEnabled(app, features.server, req, res, features)) return;
-
     if (!await hasPermission("zander.web.server", req, res, features)) return;
 
-    const [apiData, globalImage, announcementWeb] = await Promise.all([
-      fetchJson(`${process.env.siteAddress}/api/server/get`, { data: [] }),
-      getGlobalImage(),
+    // Direct Prisma query — no internal HTTP fetch.
+    const [servers, announcementWeb] = await Promise.all([
+      prisma.servers.findMany({ orderBy: { position: "asc" } }),
       getWebAnnouncement(),
     ]);
 
     res.header("content-type", "text/html; charset=utf-8").send(
       await app.view("dashboard/servers/server-list", {
-        pageTitle: `Dashboard - Servers`,
-        config: config,
-        apiData: apiData,
-        features: features,
-        req: req,
-        globalImage,
+        pageTitle: "Servers",
+        config,
+        // Provide the same shape legacy template expected from apiData.
+        apiData: { success: true, data: servers },
+        features,
+        req,
         announcementWeb,
+        ...adminViewData(req, features),
       })
     );
-    return;
   });
 
+  //
+  // Create server
+  //
   app.get("/dashboard/servers/create", async function (req, res) {
     if (!await isFeatureWebRouteEnabled(app, features.server, req, res, features)) return;
-
     if (!await hasPermission("zander.web.server", req, res, features)) return;
 
-    const [globalImage, announcementWeb] = await Promise.all([
-      getGlobalImage(),
-      getWebAnnouncement(),
-    ]);
+    const announcementWeb = await getWebAnnouncement();
 
     res.header("content-type", "text/html; charset=utf-8").send(
       await app.view("dashboard/servers/server-editor", {
-        pageTitle: `Dashboard - Server Creator`,
-        config: config,
+        pageTitle: "Create Server",
+        config,
         type: "create",
-        features: features,
-        globalImage,
-        req: req,
+        features,
+        req,
         announcementWeb,
+        ...adminViewData(req, features),
       })
     );
-    return;
   });
 
+  //
+  // Edit server
+  //
   app.get("/dashboard/servers/edit", async function (req, res) {
     if (!await isFeatureWebRouteEnabled(app, features.server, req, res, features)) return;
-
     if (!await hasPermission("zander.web.server", req, res, features)) return;
 
-    const id = req.query.id;
+    const id = Number(req.query.id);
 
-    const [serverApiData, globalImage, announcementWeb] = await Promise.all([
-      fetchJson(`${process.env.siteAddress}/api/server/get?id=${id}`, { data: [{}] }),
-      getGlobalImage(),
+    const [server, announcementWeb] = await Promise.all([
+      id ? prisma.servers.findUnique({ where: { serverId: id } }) : Promise.resolve(null),
       getWebAnnouncement(),
     ]);
 
     res.header("content-type", "text/html; charset=utf-8").send(
       await app.view("dashboard/servers/server-editor", {
-        pageTitle: `Dashboard - Server Editor`,
-        config: config,
-        serverApiData: serverApiData.data[0],
+        pageTitle: "Edit Server",
+        config,
+        serverApiData: server,
         type: "edit",
-        features: features,
-        globalImage,
-        req: req,
+        features,
+        req,
         announcementWeb,
+        ...adminViewData(req, features),
       })
     );
-    return;
   });
 }

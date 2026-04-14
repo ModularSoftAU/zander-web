@@ -1,23 +1,10 @@
-<%- include("../../modules/header.ejs", {
-    pageTitle: pageTitle,
-    pageDescription: "Manage reward command templates for votes and monthly top voters"
-}) %>
+<%- include("../../admin/_head.ejs", { pageTitle }) %>
+<%- include("../../admin/_topbar.ejs") %>
+<%- include("../../admin/_sidebar.ejs") %>
 
-<%- include("../../modules/navigationBar.ejs") %>
-
-<%- include("../../partials/miniHeader.ejs", {
-  headerTitle: "Reward Templates",
-  backgroundImage: globalImage
-}) %>
-
-<%- include("../../modules/dashboard/dashboard-header.ejs") %>
-
-<div class="container my-4">
-    <div class="row g-4">
-        <div class="col-lg-3">
-            <%- include("../../modules/dashboard/dashboard-sidebar.ejs") %>
-        </div>
-        <main class="col-lg-9">
+<div id="wpcontent">
+  <div id="wpbody-content">
+    <div class="wrap">
             <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
                 <h1 class="h2">Reward Templates</h1>
                 <div class="btn-toolbar mb-2 mb-md-0 gap-2">
@@ -57,9 +44,7 @@
             <h5 class="mb-2"><i class="fas fa-trophy me-2 text-warning"></i>Monthly Top-Voter Rewards <span class="badge bg-warning text-dark ms-1"><%= monthlyTemplates.length %></span></h5>
             <p class="text-muted small">Fired once per winner when monthly rewards are processed.</p>
             <%- include("../../partials/voting/template-table.ejs", { templates: monthlyTemplates }) %>
-        </main>
-    </div>
-</div>
+
 
 <!-- Create Template Modal -->
 <div class="modal fade" id="createTemplateModal" tabindex="-1" aria-hidden="true">
@@ -204,7 +189,10 @@
     </div>
 </div>
 
-<%- include("../../modules/footer.ejs") %>
+    </div><!-- /.wrap -->
+  </div><!-- /#wpbody-content -->
+  <%- include("../../admin/_footer.ejs") %>
+</div><!-- /#wpcontent -->
 
 <script>
 async function apiRequest(method, url, body) {

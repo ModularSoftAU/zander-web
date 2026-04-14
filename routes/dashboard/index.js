@@ -1,3 +1,5 @@
+import { getMenuGroups } from "../../admin/pageRegistry.js";
+
 import dashboardSiteRoute from "./dashboard.js";
 import dashboardServersSiteRoute from "./servers.js";
 import dashboardApplicationsSiteRoute from "./applications.js";
@@ -21,6 +23,21 @@ export default function dashboardSiteRoutes(
   features,
   lang
 ) {
+  /**
+   * Attach admin menu data to every /dashboard/* request so that
+   * _sidebar.ejs can read it from req.adminMenuGroups without requiring
+   * each route handler to pass it explicitly.
+   *
+   * This hook runs after session parsing, so req.session.user is available.
+   */
+  app.addHook("preHandler", async (req) => {
+    if (req.url && req.url.startsWith("/dashboard")) {
+      const perms = req.session?.user?.permissions ?? [];
+      req.adminMenuGroups = getMenuGroups(perms, features);
+    }
+  });
+
+  // ── Route modules ─────────────────────────────────────────────────────────
   supportDashboardRoutes(app, client, fetch, moment, config, db, features, lang);
   dashboardSiteRoute(app, config, features, lang);
   dashboardServersSiteRoute(app, fetch, config, db, features, lang);
