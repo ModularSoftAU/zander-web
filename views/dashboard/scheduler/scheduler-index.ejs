@@ -1,4 +1,6 @@
-<%- include("../../admin/_head.ejs", { pageTitle }) %>
+<%- include("../../admin/_head.ejs", { pageTitle, extraHead: `
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tom-select@2.3.1/dist/css/tom-select.bootstrap5.min.css">
+` }) %>
 <%- include("../../admin/_topbar.ejs") %>
 <%- include("../../admin/_sidebar.ejs") %>
 
@@ -307,13 +309,13 @@
                     <input type="hidden" name="timezoneOffset" value="">
                     <div class="wizard-step" data-step="1">
                         <div class="mb-3">
-                            <label for="channelId">Channel</label>
-                            <%- include("../../partials/form/inputSelect.ejs", {
-                                elementName: "channelId",
-                                elementValue: "null",
-                                required: true,
-                                optionElements: channelOptions
-                            }) %>
+                            <label for="channelId" class="form-label">Channel</label>
+                            <select id="discordChannelSelect" name="channelId" required class="form-select">
+                                <option value="" disabled selected>Select a Channel</option>
+                                <% discordChannels.forEach(function(channel) { %>
+                                  <option value="<%= channel.id %>">#<%= channel.name %></option>
+                                <% }); %>
+                            </select>
                         </div>
 
                         <div class="mb-3">
@@ -496,5 +498,36 @@
 
     </div><!-- /.wrap -->
   </div><!-- /#wpbody-content -->
-  <%- include("../../admin/_footer.ejs") %>
+  <%- include("../../admin/_footer.ejs", { extraScripts: `
+    <script src="https://cdn.jsdelivr.net/npm/tom-select@2.3.1/dist/js/tom-select.complete.min.js"></script>
+    <script>
+      (function () {
+        var selectEl = document.getElementById('discordChannelSelect');
+        if (!selectEl) return;
+
+        var ts = new TomSelect(selectEl, {
+          placeholder: 'Search channels…',
+          allowEmptyOption: false,
+          maxOptions: 300,
+          render: {
+            option: function (data, escape) {
+              return '<div>' + escape(data.text) + '</div>';
+            },
+            item: function (data, escape) {
+              return '<div>' + escape(data.text) + '</div>';
+            },
+          },
+        });
+
+        // Re-init when the modal resets so the selection clears properly
+        var discordModal = document.getElementById('discordWizardModal');
+        if (discordModal) {
+          discordModal.addEventListener('hidden.bs.modal', function () {
+            ts.clear();
+            ts.blur();
+          });
+        }
+      }());
+    </script>
+  ` }) %>
 </div><!-- /#wpcontent -->

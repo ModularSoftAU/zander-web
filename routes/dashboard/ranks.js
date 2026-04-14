@@ -1,9 +1,37 @@
 import {
-  getGlobalImage,
   hasPermission,
   isFeatureWebRouteEnabled,
 } from "../../api/common.js";
 import { getWebAnnouncement } from "../../controllers/announcementController.js";
+import prismaDb from "../../controllers/databaseController.js";
+
+const RANK_VIEW = "ranks";
+
+/**
+ * Query the `ranks` cross-database view directly — same logic as
+ * getRankDirectory() in api/routes/ranks.js but without the HTTP round-trip.
+ */
+function getAllRanks() {
+  return new Promise((resolve, reject) => {
+    prismaDb.query(
+      `SELECT
+        rankSlug,
+        displayName,
+        priority,
+        rankBadgeColour,
+        rankTextColour,
+        discordRoleId,
+        isStaff,
+        isDonator
+      FROM ${RANK_VIEW}
+      ORDER BY CAST(COALESCE(priority, 0) AS UNSIGNED) DESC, rankSlug`,
+      (error, results) => {
+        if (error) return reject(error);
+        resolve(results || []);
+      }
+    );
+  });
+}
 
 export default function dashboardRanksRoute(
   app,
@@ -25,26 +53,23 @@ export default function dashboardRanksRoute(
 
     if (!hasRankPermission) return;
 
-    const [rankData, globalImage, announcementWeb] = await Promise.all([
-      fetch(`${process.env.siteAddress}/api/rank/get`, {
-        headers: { "x-access-token": process.env.apiKey },
-      })
-        .then((r) => r.json())
-        .catch(() => ({ data: [] })),
-      getGlobalImage(),
+    const [rankRows, announcementWeb] = await Promise.all([
+      getAllRanks().catch(() => []),
       getWebAnnouncement(),
     ]);
+
+    // Filter out internal GriefDefender auto-groups
+    const ranks = rankRows.filter(
+      (r) => !r.rankSlug?.startsWith("griefdefender_")
+    );
 
     res.header("content-type", "text/html; charset=utf-8").send(
       await app.view("dashboard/ranks/index", {
         pageTitle: `Dashboard - Ranks`,
-        config: config,
-        features: features,
-        req: req,
-        ranks: Array.isArray(rankData.data)
-          ? rankData.data.filter((r) => !r.name?.startsWith("griefdefender_"))
-          : [],
-        globalImage,
+        config,
+        features,
+        req,
+        ranks,
         announcementWeb,
       })
     );
