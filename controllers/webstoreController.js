@@ -400,6 +400,30 @@ export async function getPurchaseHistoryCount(userId) {
   return Number(rows[0]?.total || 0);
 }
 
+/**
+ * Return paginated gifts received by a Minecraft username from other players,
+ * newest first.  Excludes self-purchases (isGift = 1 ensures it's a real gift).
+ */
+export async function getReceivedGifts(minecraftUsername, limit = 20, offset = 0) {
+  return query(
+    `SELECT purchaseId, itemName, purchaseType, purchaserMinecraftUsername,
+            amountCents, currency, status, createdAt
+     FROM webstorePurchases
+     WHERE recipientMinecraftUsername = ? AND isGift = 1
+     ORDER BY createdAt DESC
+     LIMIT ? OFFSET ?`,
+    [minecraftUsername, limit, offset]
+  );
+}
+
+export async function getReceivedGiftsCount(minecraftUsername) {
+  const rows = await query(
+    "SELECT COUNT(*) AS total FROM webstorePurchases WHERE recipientMinecraftUsername = ? AND isGift = 1",
+    [minecraftUsername]
+  );
+  return Number(rows[0]?.total || 0);
+}
+
 // ---------------------------------------------------------------------------
 // Subscriptions
 // ---------------------------------------------------------------------------

@@ -25,6 +25,8 @@ import {
   getMonthlyPurchaseTotals,
   getPurchaseHistory,
   getPurchaseHistoryCount,
+  getReceivedGifts,
+  getReceivedGiftsCount,
   getWebstoreItems,
   preferredCurrencyFromLocale,
 } from "../controllers/webstoreController.js";
@@ -257,18 +259,25 @@ export default function webstoreRoutes(app, config, features) {
     }
 
     const page = Math.max(1, parseInt(req.query.page, 10) || 1);
+    const giftPage = Math.max(1, parseInt(req.query.giftPage, 10) || 1);
     const limit = 15;
     const offset = (page - 1) * limit;
+    const giftOffset = (giftPage - 1) * limit;
 
     const userId = req.session.user.userId;
+    const minecraftUsername = req.session.user.username;
 
     let purchases = [];
     let totalCount = 0;
+    let receivedGifts = [];
+    let receivedGiftsTotal = 0;
 
     try {
-      [purchases, totalCount] = await Promise.all([
+      [purchases, totalCount, receivedGifts, receivedGiftsTotal] = await Promise.all([
         getPurchaseHistory(userId, limit, offset),
         getPurchaseHistoryCount(userId),
+        minecraftUsername ? getReceivedGifts(minecraftUsername, limit, giftOffset) : [],
+        minecraftUsername ? getReceivedGiftsCount(minecraftUsername) : 0,
       ]);
     } catch (err) {
       console.error("[webstore] getPurchaseHistory error:", err.message);
@@ -276,6 +285,7 @@ export default function webstoreRoutes(app, config, features) {
     }
 
     const totalPages = Math.max(1, Math.ceil(totalCount / limit));
+    const receivedGiftsTotalPages = Math.max(1, Math.ceil(receivedGiftsTotal / limit));
 
     return res.view("modules/webstore/history", {
       pageTitle: "Purchase History",
@@ -289,6 +299,10 @@ export default function webstoreRoutes(app, config, features) {
       page,
       totalPages,
       totalCount,
+      receivedGifts,
+      receivedGiftsTotal,
+      giftPage,
+      receivedGiftsTotalPages,
     });
   });
 
