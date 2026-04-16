@@ -25,19 +25,26 @@
       <%- include("../../admin/_notices.ejs") %>
 
             <!-- Filters -->
-            <form method="GET" action="/dashboard/events/list" class="row g-2 mb-3">
+            <form method="GET" action="/dashboard/events/list" class="row g-2 mb-3 align-items-center">
                 <div class="col-sm-4">
                     <select name="status" class="form-select form-select-sm" onchange="this.form.submit()">
-                        <option value="">All Statuses</option>
+                        <option value="">Active (Draft, Approved, Published)</option>
                         <% ['draft','pending_review','approved','published','rejected','cancelled','archived'].forEach(s => { %>
                             <option value="<%= s %>" <%= statusFilter === s ? 'selected' : '' %>><%= s.replace('_',' ').replace(/\b\w/g,c=>c.toUpperCase()) %></option>
                         <% }) %>
                     </select>
                 </div>
-                <div class="col-sm-6">
+                <div class="col-sm-5">
                     <div class="input-group input-group-sm">
                         <input type="text" name="search" class="form-control" placeholder="Search events…" value="<%= search %>">
                         <button class="btn btn-outline-secondary" type="submit"><i class="fas fa-search"></i></button>
+                    </div>
+                </div>
+                <div class="col-sm-3">
+                    <div class="form-check form-switch mb-0">
+                        <input class="form-check-input" type="checkbox" role="switch" id="showPastToggle"
+                            name="showPast" value="1" <%= showPast ? 'checked' : '' %> onchange="this.form.submit()">
+                        <label class="form-check-label small" for="showPastToggle">Show past events</label>
                     </div>
                 </div>
             </form>

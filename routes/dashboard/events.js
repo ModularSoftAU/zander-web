@@ -58,9 +58,17 @@ export default function dashboardEventsSiteRoute(app, fetch, config, db, feature
 
     const statusFilter = req.query.status || "";
     const search = req.query.search || "";
+    const showPast = req.query.showPast === "1";
+
+    const DEFAULT_STATUSES = ["draft", "approved", "published"];
 
     let qs = "";
-    if (statusFilter) qs += `&status=${encodeURIComponent(statusFilter)}`;
+    if (statusFilter) {
+      qs += `&status=${encodeURIComponent(statusFilter)}`;
+    } else {
+      qs += `&statuses=${encodeURIComponent(DEFAULT_STATUSES.join(","))}`;
+    }
+    if (!showPast) qs += "&hidePast=1";
     if (search) qs += `&search=${encodeURIComponent(search)}`;
 
     const fetchURL = `${process.env.siteAddress}/api/events/get?limit=100${qs}`;
@@ -80,6 +88,7 @@ export default function dashboardEventsSiteRoute(app, fetch, config, db, feature
         apiData,
         statusFilter,
         search,
+        showPast,
         globalImage,
         announcementWeb,
       })
