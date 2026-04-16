@@ -141,7 +141,8 @@ export default function dashboardEventsSiteRoute(app, fetch, config, db, feature
         features,
         req,
         mode: "create",
-        eventData: null,
+        ev: {},
+        isPublished: false,
         templatesData,
         globalImage,
         announcementWeb,
@@ -171,6 +172,8 @@ export default function dashboardEventsSiteRoute(app, fetch, config, db, feature
       return res.redirect("/dashboard/events/list");
     }
 
+    const ev = apiData.data;
+
     res.header("content-type", "text/html; charset=utf-8").send(
       await app.view("dashboard/events/events-editor", {
         pageTitle: `Dashboard - Edit Event`,
@@ -178,7 +181,8 @@ export default function dashboardEventsSiteRoute(app, fetch, config, db, feature
         features,
         req,
         mode: "edit",
-        eventData: apiData.data,
+        ev,
+        isPublished: ev.status === "published",
         templatesData,
         globalImage,
         announcementWeb,
@@ -268,6 +272,8 @@ export default function dashboardEventsSiteRoute(app, fetch, config, db, feature
       getWebAnnouncement(),
     ]);
 
+    const DAY_NAMES = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+
     res.header("content-type", "text/html; charset=utf-8").send(
       await app.view("dashboard/events/events-template-editor", {
         pageTitle: "Dashboard - Create Event Template",
@@ -275,7 +281,9 @@ export default function dashboardEventsSiteRoute(app, fetch, config, db, feature
         features,
         req,
         mode: "create",
-        tmpl: null,
+        tmpl: {},
+        dayNames: DAY_NAMES,
+        recDays: [],
         globalImage,
         announcementWeb,
       })
@@ -303,6 +311,9 @@ export default function dashboardEventsSiteRoute(app, fetch, config, db, feature
       return res.redirect("/dashboard/events/templates");
     }
 
+    const DAY_NAMES = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+    const tmpl = apiData.data;
+
     res.header("content-type", "text/html; charset=utf-8").send(
       await app.view("dashboard/events/events-template-editor", {
         pageTitle: "Dashboard - Edit Event Template",
@@ -310,7 +321,9 @@ export default function dashboardEventsSiteRoute(app, fetch, config, db, feature
         features,
         req,
         mode: "edit",
-        tmpl: apiData.data,
+        tmpl,
+        dayNames: DAY_NAMES,
+        recDays: (tmpl.recurrenceDays || []).map(Number),
         globalImage,
         announcementWeb,
       })
