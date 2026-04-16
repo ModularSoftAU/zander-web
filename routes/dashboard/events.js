@@ -275,7 +275,7 @@ export default function dashboardEventsSiteRoute(app, fetch, config, db, feature
         features,
         req,
         mode: "create",
-        templateData: null,
+        tmpl: null,
         globalImage,
         announcementWeb,
       })
@@ -310,7 +310,7 @@ export default function dashboardEventsSiteRoute(app, fetch, config, db, feature
         features,
         req,
         mode: "edit",
-        templateData: apiData.data,
+        tmpl: apiData.data,
         globalImage,
         announcementWeb,
       })
