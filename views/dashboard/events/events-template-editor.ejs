@@ -28,7 +28,11 @@
                         </div>
                         <div class="mb-3">
                             <label class="form-label fw-semibold">Default Description</label>
-                            <textarea class="form-control" name="description" id="tmplDescriptionEditor" rows="4"><%= tmpl.description || '' %></textarea>
+                            <%- include("../../partials/summerNoteEditor.ejs", {
+                                editorElementName: "tmplDescriptionEditor",
+                                editorPOSTElementName: "description",
+                                editorElementText: tmpl.description || ''
+                            }) %>
                         </div>
                         <div class="row g-3">
                             <div class="col-md-4">
@@ -707,10 +711,8 @@ document.getElementById('templateForm').addEventListener('submit', async (e) => 
     const fd = new FormData(form);
     const body = Object.fromEntries(fd.entries());
 
-    // Sync Summernote description
-    if (typeof $.fn.summernote !== 'undefined') {
-        body.description = $('#tmplDescriptionEditor').summernote('code');
-    }
+    // Description is synced by summerNoteEditor partial before submit
+    body.description = document.getElementById('tmplDescriptionEditor')?.value || '';
 
     // Convert local times back to UTC before submission
     const startLocalEl = document.getElementById('defaultStartTimeLocal');
@@ -860,25 +862,4 @@ function collectTemplateAnnouncements() {
 document.getElementById('addTemplateAnnouncementBtn').addEventListener('click', () => addTemplateAnnouncementRow());
 document.querySelectorAll('#templateAnnouncementsContainer .announcement-row').forEach(initAnnouncementRow);
 
-// Summernote description editor
-$(document).ready(function () {
-    $('#tmplDescriptionEditor').summernote({
-        height: 200,
-        toolbar: [
-            ['style', ['style']],
-            ['font', ['bold', 'italic', 'underline', 'strikethrough']],
-            ['para', ['ul', 'ol', 'paragraph']],
-            ['insert', ['link']],
-            ['view', ['fullscreen', 'codeview']],
-        ],
-        styleTags: [
-            { title: 'Paragraph', tag: 'p', className: '', value: 'p' },
-            { title: 'Heading 1', tag: 'h1', className: '', value: 'h1' },
-            { title: 'Heading 2', tag: 'h2', className: '', value: 'h2' },
-            { title: 'Heading 3', tag: 'h3', className: '', value: 'h3' },
-            { title: 'Heading 4', tag: 'h4', className: '', value: 'h4' },
-            { title: 'Quote', tag: 'blockquote', className: 'blockquote', value: 'blockquote' },
-        ],
-    });
-});
 </script>

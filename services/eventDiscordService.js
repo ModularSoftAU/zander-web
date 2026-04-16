@@ -7,21 +7,45 @@ import { client } from "../controllers/discordController.js";
 import { EmbedBuilder, GuildScheduledEventEntityType, GuildScheduledEventPrivacyLevel } from "discord.js";
 import { updateSyncStatus, logEventAudit } from "./eventService.js";
 
-/** Strip HTML tags from a string for plain-text Discord output. */
-function stripHtml(html) {
+/** Convert HTML from Summernote to Discord-compatible markdown. */
+function htmlToMarkdown(html) {
   if (!html) return "";
   return html
+    // Block-level: headings → bold line
+    .replace(/<h[1-3][^>]*>(.*?)<\/h[1-3]>/gi, (_, inner) => `**${inner.trim()}**\n`)
+    .replace(/<h[4-6][^>]*>(.*?)<\/h[4-6]>/gi, (_, inner) => `${inner.trim()}\n`)
+    // Inline formatting
+    .replace(/<strong[^>]*>(.*?)<\/strong>/gi, (_, inner) => `**${inner}**`)
+    .replace(/<b[^>]*>(.*?)<\/b>/gi, (_, inner) => `**${inner}**`)
+    .replace(/<em[^>]*>(.*?)<\/em>/gi, (_, inner) => `*${inner}*`)
+    .replace(/<i[^>]*>(.*?)<\/i>/gi, (_, inner) => `*${inner}*`)
+    .replace(/<u[^>]*>(.*?)<\/u>/gi, (_, inner) => `__${inner}__`)
+    .replace(/<s[^>]*>(.*?)<\/s>/gi, (_, inner) => `~~${inner}~~`)
+    .replace(/<del[^>]*>(.*?)<\/del>/gi, (_, inner) => `~~${inner}~~`)
+    .replace(/<code[^>]*>(.*?)<\/code>/gi, (_, inner) => `\`${inner}\``)
+    // Links
+    .replace(/<a[^>]+href="([^"]*)"[^>]*>(.*?)<\/a>/gi, (_, href, text) => {
+      const label = text.trim();
+      return label ? `[${label}](${href})` : href;
+    })
+    // Lists
+    .replace(/<li[^>]*>(.*?)<\/li>/gi, (_, inner) => `• ${inner.trim()}\n`)
+    .replace(/<\/[uo]l>/gi, "\n")
+    .replace(/<[uo]l[^>]*>/gi, "")
+    // Line breaks and paragraphs
     .replace(/<br\s*\/?>/gi, "\n")
     .replace(/<\/p>/gi, "\n\n")
-    .replace(/<\/li>/gi, "\n")
-    .replace(/<li>/gi, "• ")
+    .replace(/<\/div>/gi, "\n")
+    // Strip all remaining tags
     .replace(/<[^>]+>/g, "")
+    // Decode HTML entities
     .replace(/&amp;/g, "&")
     .replace(/&lt;/g, "<")
     .replace(/&gt;/g, ">")
     .replace(/&quot;/g, '"')
     .replace(/&#39;/g, "'")
     .replace(/&nbsp;/g, " ")
+    // Collapse excess blank lines
     .replace(/\n{3,}/g, "\n\n")
     .trim();
 }
@@ -42,7 +66,7 @@ function buildEventEmbed(event) {
     );
 
   if (event.description) {
-    embed.setDescription(stripHtml(event.description).slice(0, 2048));
+    embed.setDescription(htmlToMarkdown(event.description).slice(0, 2048));
   }
 
   if (event.locationLabel) {
@@ -145,7 +169,7 @@ export async function createGuildScheduledEvent(event, guildId) {
     scheduledStartTime: new Date(event.startAt),
     scheduledEndTime: new Date(event.endAt),
     privacyLevel: GuildScheduledEventPrivacyLevel.GuildOnly,
-    description: event.description ? stripHtml(event.description).slice(0, 1000) : undefined,
+    description: event.description ? htmlToMarkdown(event.description).slice(0, 1000) : undefined,
     ...(isVoiceChannel
       ? {
           entityType: GuildScheduledEventEntityType.Voice,
@@ -203,7 +227,7 @@ export async function editGuildScheduledEvent(event, guildId, guildEventId) {
     name: event.title,
     scheduledStartTime: new Date(event.startAt),
     scheduledEndTime: new Date(event.endAt),
-    description: event.description ? stripHtml(event.description).slice(0, 1000) : undefined,
+    description: event.description ? htmlToMarkdown(event.description).slice(0, 1000) : undefined,
     ...(isVoiceChannel
       ? {
           entityType: GuildScheduledEventEntityType.Voice,
