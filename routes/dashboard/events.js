@@ -207,13 +207,23 @@ export default function dashboardEventsSiteRoute(app, fetch, config, db, feature
       return res.redirect("/dashboard/events/list");
     }
 
+    const ev = apiData.data;
+    const statusColors = {
+      draft: "secondary", pending_review: "warning", approved: "info",
+      published: "success", rejected: "danger", cancelled: "purple", archived: "dark",
+    };
+    const badgeClass = statusColors[ev.status] || "secondary";
+    const canEdit = ["draft", "rejected", "published"].includes(ev.status);
+
     res.header("content-type", "text/html; charset=utf-8").send(
       await app.view("dashboard/events/events-view", {
-        pageTitle: `Dashboard - ${apiData.data.title}`,
+        pageTitle: `Dashboard - ${ev.title}`,
         config,
         features,
         req,
-        eventData: apiData.data,
+        ev,
+        badgeClass,
+        canEdit,
         globalImage,
         announcementWeb,
       })
