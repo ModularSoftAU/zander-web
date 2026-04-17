@@ -143,6 +143,7 @@ export default function dashboardEventsSiteRoute(app, fetch, config, db, feature
         mode: "create",
         ev: {},
         isPublished: false,
+        apiEndpoint: "/api/events/create",
         templatesData,
         globalImage,
         announcementWeb,
@@ -174,6 +175,8 @@ export default function dashboardEventsSiteRoute(app, fetch, config, db, feature
 
     const ev = apiData.data;
 
+    const isPublished = ev.status === "published";
+
     res.header("content-type", "text/html; charset=utf-8").send(
       await app.view("dashboard/events/events-editor", {
         pageTitle: `Dashboard - Edit Event`,
@@ -182,7 +185,8 @@ export default function dashboardEventsSiteRoute(app, fetch, config, db, feature
         req,
         mode: "edit",
         ev,
-        isPublished: ev.status === "published",
+        isPublished,
+        apiEndpoint: isPublished ? "/api/events/update-published" : "/api/events/update",
         templatesData,
         globalImage,
         announcementWeb,
