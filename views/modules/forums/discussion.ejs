@@ -586,6 +586,16 @@
         }, 0);
       });
     });
+
+    // Reload when the browser restores this page from the back-forward cache
+    // (bfcache). Without this, submitting a form and being redirected back to
+    // the same URL can result in the browser displaying the stale cached page
+    // (with disabled buttons and old content) instead of the fresh response.
+    window.addEventListener('pageshow', (event) => {
+      if (event.persisted) {
+        window.location.reload();
+      }
+    });
   })();
 </script>
 
