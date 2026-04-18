@@ -158,6 +158,134 @@
                   <div class="forums-post-body mt-3">
                     <%- post.content %>
                   </div>
+
+                  <% if (post.isOriginal && typeof poll !== 'undefined' && poll) { %>
+                    <div class="forums-poll mt-4">
+                      <div class="forums-poll-header">
+                        <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+                          <h6 class="mb-0"><i class="fa-solid fa-chart-bar me-1"></i>Poll</h6>
+                          <span class="forums-poll-badge <%= poll.isOpen ? 'open' : 'closed' %>">
+                            <i class="fa-solid fa-circle" style="font-size:0.5rem;"></i>
+                            <%= poll.isOpen ? 'Open' : 'Closed' %>
+                          </span>
+                        </div>
+                        <p class="forums-poll-question mt-2 mb-0"><%= poll.question %></p>
+                      </div>
+
+                      <div class="forums-poll-body">
+                        <% poll.options.forEach(function(opt) { %>
+                          <div class="forums-poll-option">
+                            <div class="d-flex justify-content-between align-items-center mb-1">
+                              <span class="forums-poll-option-label <%= opt.votedByViewer ? 'voted' : '' %>">
+                                <% if (opt.votedByViewer) { %>
+                                  <i class="fa-solid fa-circle-check" style="color:#2f508c;font-size:0.85rem;"></i>
+                                <% } %>
+                                <%= opt.label %>
+                              </span>
+                              <span class="forums-poll-bar-pct">
+                                <%= opt.voteCount %> · <%= opt.percentage %>%
+                              </span>
+                            </div>
+                            <div class="forums-poll-bar-track">
+                              <div class="forums-poll-bar-fill <%= opt.votedByViewer ? 'voted' : '' %>"
+                                   style="width: <%= opt.percentage %>%"></div>
+                            </div>
+                          </div>
+                        <% }); %>
+
+                        <% if (currentUser && poll.isOpen) { %>
+                          <% if (poll.viewerCanVote) { %>
+                            <div class="forums-poll-vote-controls">
+                              <form action="/forums/discussion/<%= discussion.discussionId %>/poll/vote" method="post">
+                                <p class="small text-muted mb-2">
+                                  Cast your vote<% if (poll.allowMultiple) { %> — multiple choices allowed<% } %>:
+                                </p>
+                                <% poll.options.forEach(function(opt) { %>
+                                  <div class="form-check mb-1">
+                                    <input class="form-check-input"
+                                           type="<%= poll.allowMultiple ? 'checkbox' : 'radio' %>"
+                                           name="optionId"
+                                           value="<%= opt.optionId %>"
+                                           id="voteOpt-<%= opt.optionId %>">
+                                    <label class="form-check-label" for="voteOpt-<%= opt.optionId %>">
+                                      <%= opt.label %>
+                                    </label>
+                                  </div>
+                                <% }); %>
+                                <button type="submit" class="btn btn-main btn-sm mt-2">
+                                  <i class="fa-solid fa-check me-1"></i>Submit Vote
+                                </button>
+                              </form>
+                            </div>
+                          <% } else if (poll.viewerCanChange) { %>
+                            <div class="forums-poll-vote-controls">
+                              <form action="/forums/discussion/<%= discussion.discussionId %>/poll/vote/change" method="post">
+                                <p class="small text-muted mb-2">
+                                  Change your vote<% if (poll.allowMultiple) { %> — multiple choices allowed<% } %>:
+                                </p>
+                                <% poll.options.forEach(function(opt) { %>
+                                  <div class="form-check mb-1">
+                                    <input class="form-check-input"
+                                           type="<%= poll.allowMultiple ? 'checkbox' : 'radio' %>"
+                                           name="optionId"
+                                           value="<%= opt.optionId %>"
+                                           id="changeOpt-<%= opt.optionId %>"
+                                           <%= opt.votedByViewer ? 'checked' : '' %>>
+                                    <label class="form-check-label" for="changeOpt-<%= opt.optionId %>">
+                                      <%= opt.label %>
+                                    </label>
+                                  </div>
+                                <% }); %>
+                                <button type="submit" class="btn btn-outline-primary btn-sm mt-2">
+                                  <i class="fa-solid fa-rotate-right me-1"></i>Update Vote
+                                </button>
+                              </form>
+                            </div>
+                          <% } else if (poll.viewerHasVoted) { %>
+                            <div class="forums-poll-vote-controls">
+                              <p class="small text-muted mb-0">
+                                <i class="fa-solid fa-check me-1 text-success"></i>
+                                You have voted.<% if (!poll.allowVoteChange) { %> Vote changes are not allowed for this poll.<% } %>
+                              </p>
+                            </div>
+                          <% } %>
+                        <% } else if (!currentUser) { %>
+                          <div class="forums-poll-vote-controls">
+                            <a href="/login?returnTo=<%= encodeURIComponent(req.url) %>"
+                               class="btn btn-outline-primary btn-sm">
+                              <i class="fa-solid fa-right-to-bracket me-1"></i>Log in to vote
+                            </a>
+                          </div>
+                        <% } else if (!poll.isOpen) { %>
+                          <div class="forums-poll-vote-controls">
+                            <p class="small text-muted mb-0">
+                              <i class="fa-solid fa-lock me-1"></i>This poll is closed.
+                            </p>
+                          </div>
+                        <% } %>
+                      </div>
+
+                      <div class="forums-poll-footer d-flex flex-wrap gap-3">
+                        <span>
+                          <i class="fa-solid fa-users me-1"></i>
+                          <%= poll.totalVotes %> vote<%= poll.totalVotes !== 1 ? 's' : '' %>
+                        </span>
+                        <% if (poll.allowMultiple) { %>
+                          <span><i class="fa-solid fa-list-check me-1"></i>Multiple choices allowed</span>
+                        <% } %>
+                        <% if (poll.expiresAt) { %>
+                          <span>
+                            <i class="fa-solid fa-clock me-1"></i>
+                            <% if (poll.isOpen) { %>
+                              Closes <span data-relative-time="<%= new Date(poll.expiresAt).toISOString() %>" data-relative-format="datetime"></span>
+                            <% } else { %>
+                              Closed <span data-relative-time="<%= new Date(poll.expiresAt).toISOString() %>" data-relative-format="datetime"></span>
+                            <% } %>
+                          </span>
+                        <% } %>
+                      </div>
+                    </div>
+                  <% } %>
                 </div>
               </div>
             </div>
