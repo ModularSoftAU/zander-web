@@ -50,16 +50,19 @@ export async function createPoll(discussionId, createdByUserId, {
   options,
   allowMultiple = false,
   allowVoteChange = false,
+  showVoters = false,
   expiresAt = null,
 }) {
   const result = await query(
-    `INSERT INTO forumPolls (discussionId, question, allowMultiple, allowVoteChange, expiresAt, createdByUserId)
-     VALUES (?, ?, ?, ?, ?, ?)`,
+    `INSERT INTO forumPolls
+       (discussionId, question, allowMultiple, allowVoteChange, showVoters, expiresAt, createdByUserId)
+     VALUES (?, ?, ?, ?, ?, ?, ?)`,
     [
       discussionId,
       question.trim(),
       allowMultiple ? 1 : 0,
       allowVoteChange ? 1 : 0,
+      showVoters ? 1 : 0,
       expiresAt ? new Date(expiresAt) : null,
       createdByUserId,
     ]
@@ -79,8 +82,8 @@ export async function createPoll(discussionId, createdByUserId, {
 
 export async function getPollByDiscussionId(discussionId, viewerUserId = null) {
   const [pollRow] = await query(
-    `SELECT pollId, discussionId, question, allowMultiple, allowVoteChange, expiresAt,
-            createdByUserId, createdAt, updatedAt
+    `SELECT pollId, discussionId, question, allowMultiple, allowVoteChange, showVoters,
+            expiresAt, createdByUserId, createdAt, updatedAt
        FROM forumPolls
       WHERE discussionId = ?
       LIMIT 1`,
@@ -125,6 +128,39 @@ export async function getPollByDiscussionId(discussionId, viewerUserId = null) {
     userVotedOptionIds = userVotes.map((r) => r.optionId);
   }
 
+  // Fetch voter identities when showVoters is enabled
+  const votersByOption = new Map();
+  if (pollRow.showVoters) {
+    const voterRows = await query(
+      `SELECT fpv.optionId, u.userId, u.username, u.uuid,
+              u.profilePicture_type, u.profilePicture_email
+         FROM forumPollVotes fpv
+         JOIN users u ON u.userId = fpv.userId
+        WHERE fpv.pollId = ?
+        ORDER BY fpv.createdAt ASC`,
+      [pollId]
+    );
+
+    for (const row of voterRows) {
+      if (!votersByOption.has(row.optionId)) {
+        votersByOption.set(row.optionId, []);
+      }
+      let avatarUrl;
+      if (row.profilePicture_type === "GRAVATAR" && row.profilePicture_email) {
+        avatarUrl = null; // resolved at render time via gravatar hash; omit for simplicity
+      } else if (row.uuid) {
+        avatarUrl = `https://crafthead.net/helm/${row.uuid}`;
+      } else {
+        avatarUrl = "https://crafthead.net/helm/steve";
+      }
+      votersByOption.get(row.optionId).push({
+        userId: row.userId,
+        username: row.username,
+        avatarUrl: avatarUrl || `https://crafthead.net/helm/${row.uuid || "steve"}`,
+      });
+    }
+  }
+
   const options = optionRows.map((row) => {
     const count = voteCountMap.get(row.optionId) || 0;
     return {
@@ -134,6 +170,7 @@ export async function getPollByDiscussionId(discussionId, viewerUserId = null) {
       voteCount: count,
       percentage: totalVotes > 0 ? Math.round((count / totalVotes) * 100) : 0,
       votedByViewer: userVotedOptionIds.includes(row.optionId),
+      voters: votersByOption.get(row.optionId) || [],
     };
   });
 
@@ -148,6 +185,7 @@ export async function getPollByDiscussionId(discussionId, viewerUserId = null) {
     question: pollRow.question,
     allowMultiple: !!pollRow.allowMultiple,
     allowVoteChange: !!pollRow.allowVoteChange,
+    showVoters: !!pollRow.showVoters,
     expiresAt: pollRow.expiresAt || null,
     createdByUserId: pollRow.createdByUserId,
     createdAt: pollRow.createdAt,

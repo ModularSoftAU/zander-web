@@ -255,6 +255,7 @@ model forumPolls {
   question        String            @db.VarChar(500)
   allowMultiple   Boolean           @default(false)
   allowVoteChange Boolean           @default(false)
+  showVoters      Boolean           @default(false)
   expiresAt       DateTime?
   createdByUserId Int
   createdAt       DateTime          @default(now())

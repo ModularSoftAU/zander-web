@@ -190,6 +190,24 @@
                               <div class="forums-poll-bar-fill <%= opt.votedByViewer ? 'voted' : '' %>"
                                    style="width: <%= opt.percentage %>%"></div>
                             </div>
+                            <% if (poll.showVoters && opt.voters && opt.voters.length > 0) { %>
+                              <div class="forums-poll-voters mt-1">
+                                <% opt.voters.forEach(function(voter) { %>
+                                  <a href="/profile/<%= voter.username %>"
+                                     class="forums-poll-voter-chip"
+                                     title="<%= voter.username %>">
+                                    <img src="<%= voter.avatarUrl %>"
+                                         alt="<%= voter.username %>"
+                                         class="forums-poll-voter-avatar">
+                                    <span><%= voter.username %></span>
+                                  </a>
+                                <% }); %>
+                              </div>
+                            <% } else if (poll.showVoters && opt.voteCount === 0) { %>
+                              <div class="forums-poll-voters mt-1">
+                                <span class="text-muted" style="font-size:0.75rem;">No votes yet</span>
+                              </div>
+                            <% } %>
                           </div>
                         <% }); %>
 
@@ -272,6 +290,9 @@
                         </span>
                         <% if (poll.allowMultiple) { %>
                           <span><i class="fa-solid fa-list-check me-1"></i>Multiple choices allowed</span>
+                        <% } %>
+                        <% if (poll.showVoters) { %>
+                          <span><i class="fa-solid fa-eye me-1"></i>Voters are public</span>
                         <% } %>
                         <% if (poll.expiresAt) { %>
                           <span>

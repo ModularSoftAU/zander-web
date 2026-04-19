@@ -259,7 +259,10 @@ async function renderForumsView(app, res, req, viewPath, data, config, features)
     getWebAnnouncement(),
   ]);
 
-  res.header("content-type", "text/html; charset=utf-8").send(
+  res
+    .header("content-type", "text/html; charset=utf-8")
+    .header("cache-control", "no-store")
+    .send(
     await app.view(viewPath, {
       ...data,
       config,
@@ -579,6 +582,7 @@ export default function forumRoutes(
             options: parsedPollOptions,
             allowMultiple: req.body.pollAllowMultiple === "1",
             allowVoteChange: req.body.pollAllowVoteChange === "1",
+            showVoters: req.body.pollShowVoters === "1",
             expiresAt: req.body.pollExpiresAt || null,
           });
         } catch (pollErr) {
