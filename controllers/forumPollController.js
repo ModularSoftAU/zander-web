@@ -128,37 +128,35 @@ export async function getPollByDiscussionId(discussionId, viewerUserId = null) {
     userVotedOptionIds = userVotes.map((r) => r.optionId);
   }
 
-  // Fetch voter identities when showVoters is enabled
+  // Always fetch voter identities so avatars can be shown per option
   const votersByOption = new Map();
-  if (pollRow.showVoters) {
-    const voterRows = await query(
-      `SELECT fpv.optionId, u.userId, u.username, u.uuid,
-              u.profilePicture_type, u.profilePicture_email
-         FROM forumPollVotes fpv
-         JOIN users u ON u.userId = fpv.userId
-        WHERE fpv.pollId = ?
-        ORDER BY fpv.createdAt ASC`,
-      [pollId]
-    );
+  const voterRows = await query(
+    `SELECT fpv.optionId, u.userId, u.username, u.uuid,
+            u.profilePicture_type, u.profilePicture_email
+       FROM forumPollVotes fpv
+       JOIN users u ON u.userId = fpv.userId
+      WHERE fpv.pollId = ?
+      ORDER BY fpv.createdAt ASC`,
+    [pollId]
+  );
 
-    for (const row of voterRows) {
-      if (!votersByOption.has(row.optionId)) {
-        votersByOption.set(row.optionId, []);
-      }
-      let avatarUrl;
-      if (row.profilePicture_type === "GRAVATAR" && row.profilePicture_email) {
-        avatarUrl = null; // resolved at render time via gravatar hash; omit for simplicity
-      } else if (row.uuid) {
-        avatarUrl = `https://crafthead.net/helm/${row.uuid}`;
-      } else {
-        avatarUrl = "https://crafthead.net/helm/steve";
-      }
-      votersByOption.get(row.optionId).push({
-        userId: row.userId,
-        username: row.username,
-        avatarUrl: avatarUrl || `https://crafthead.net/helm/${row.uuid || "steve"}`,
-      });
+  for (const row of voterRows) {
+    if (!votersByOption.has(row.optionId)) {
+      votersByOption.set(row.optionId, []);
     }
+    let avatarUrl;
+    if (row.profilePicture_type === "GRAVATAR" && row.profilePicture_email) {
+      avatarUrl = null;
+    } else if (row.uuid) {
+      avatarUrl = `https://crafthead.net/helm/${row.uuid}`;
+    } else {
+      avatarUrl = "https://crafthead.net/helm/steve";
+    }
+    votersByOption.get(row.optionId).push({
+      userId: row.userId,
+      username: row.username,
+      avatarUrl: avatarUrl || `https://crafthead.net/helm/${row.uuid || "steve"}`,
+    });
   }
 
   const options = optionRows.map((row) => {

@@ -2582,3 +2582,9 @@ a:focus {
   border-radius: 3px;
   object-fit: cover;
 }
+
+.forums-poll-voter-chip--anon {
+  pointer-events: none;
+  cursor: default;
+  background: rgba(15, 23, 42, 0.06);
+}
