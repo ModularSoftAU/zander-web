@@ -177,6 +177,8 @@ export async function getPollByDiscussionId(discussionId, viewerUserId = null) {
     };
   });
 
+  options.sort((a, b) => b.voteCount - a.voteCount || a.orderIndex - b.orderIndex);
+
   const viewerHasVoted = userVotedOptionIds.length > 0;
   const viewerCanVote = isOpen && viewerUserId !== null && !viewerHasVoted;
   const viewerCanChange =
