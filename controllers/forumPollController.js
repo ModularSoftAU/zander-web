@@ -48,6 +48,7 @@ export function validatePollInput({ question, options, expiresAt }) {
 export async function createPoll(discussionId, createdByUserId, {
   question,
   options,
+  imageUrls = [],
   allowMultiple = false,
   allowVoteChange = false,
   showVoters = false,
@@ -71,9 +72,10 @@ export async function createPoll(discussionId, createdByUserId, {
   const pollId = result.insertId || result?.[0]?.insertId;
 
   for (let i = 0; i < options.length; i++) {
+    const imageUrl = imageUrls[i] || null;
     await query(
-      `INSERT INTO forumPollOptions (pollId, label, orderIndex) VALUES (?, ?, ?)`,
-      [pollId, options[i].trim(), i]
+      `INSERT INTO forumPollOptions (pollId, label, imageUrl, orderIndex) VALUES (?, ?, ?, ?)`,
+      [pollId, options[i].trim(), imageUrl, i]
     );
   }
 
@@ -97,7 +99,7 @@ export async function getPollByDiscussionId(discussionId, viewerUserId = null) {
   const isOpen = !pollRow.expiresAt || new Date(pollRow.expiresAt) > now;
 
   const optionRows = await query(
-    `SELECT optionId, label, orderIndex
+    `SELECT optionId, label, imageUrl, orderIndex
        FROM forumPollOptions
       WHERE pollId = ?
       ORDER BY orderIndex ASC, optionId ASC`,
@@ -128,35 +130,37 @@ export async function getPollByDiscussionId(discussionId, viewerUserId = null) {
     userVotedOptionIds = userVotes.map((r) => r.optionId);
   }
 
-  // Always fetch voter identities so avatars can be shown per option
+  // Fetch voter identities only when showVoters is enabled
   const votersByOption = new Map();
-  const voterRows = await query(
-    `SELECT fpv.optionId, u.userId, u.username, u.uuid,
-            u.profilePicture_type, u.profilePicture_email
-       FROM forumPollVotes fpv
-       JOIN users u ON u.userId = fpv.userId
-      WHERE fpv.pollId = ?
-      ORDER BY fpv.createdAt ASC`,
-    [pollId]
-  );
+  if (pollRow.showVoters) {
+    const voterRows = await query(
+      `SELECT fpv.optionId, u.userId, u.username, u.uuid,
+              u.profilePicture_type, u.profilePicture_email
+         FROM forumPollVotes fpv
+         JOIN users u ON u.userId = fpv.userId
+        WHERE fpv.pollId = ?
+        ORDER BY fpv.createdAt ASC`,
+      [pollId]
+    );
 
-  for (const row of voterRows) {
-    if (!votersByOption.has(row.optionId)) {
-      votersByOption.set(row.optionId, []);
+    for (const row of voterRows) {
+      if (!votersByOption.has(row.optionId)) {
+        votersByOption.set(row.optionId, []);
+      }
+      let avatarUrl;
+      if (row.profilePicture_type === "GRAVATAR" && row.profilePicture_email) {
+        avatarUrl = null;
+      } else if (row.uuid) {
+        avatarUrl = `https://crafthead.net/helm/${row.uuid}`;
+      } else {
+        avatarUrl = "https://crafthead.net/helm/steve";
+      }
+      votersByOption.get(row.optionId).push({
+        userId: row.userId,
+        username: row.username,
+        avatarUrl: avatarUrl || `https://crafthead.net/helm/${row.uuid || "steve"}`,
+      });
     }
-    let avatarUrl;
-    if (row.profilePicture_type === "GRAVATAR" && row.profilePicture_email) {
-      avatarUrl = null;
-    } else if (row.uuid) {
-      avatarUrl = `https://crafthead.net/helm/${row.uuid}`;
-    } else {
-      avatarUrl = "https://crafthead.net/helm/steve";
-    }
-    votersByOption.get(row.optionId).push({
-      userId: row.userId,
-      username: row.username,
-      avatarUrl: avatarUrl || `https://crafthead.net/helm/${row.uuid || "steve"}`,
-    });
   }
 
   const options = optionRows.map((row) => {
@@ -164,6 +168,7 @@ export async function getPollByDiscussionId(discussionId, viewerUserId = null) {
     return {
       optionId: row.optionId,
       label: row.label,
+      imageUrl: row.imageUrl || null,
       orderIndex: row.orderIndex,
       voteCount: count,
       percentage: totalVotes > 0 ? Math.round((count / totalVotes) * 100) : 0,

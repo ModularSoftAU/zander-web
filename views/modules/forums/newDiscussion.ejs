@@ -68,16 +68,26 @@
                   </label>
                   <div id="pollOptionsList">
                     <div class="forums-poll-option-row">
-                      <input type="text" class="form-control" name="pollOptions"
-                             maxlength="300" placeholder="Option 1">
+                      <div class="forums-poll-option-fields">
+                        <input type="text" class="form-control" name="pollOptions"
+                               maxlength="300" placeholder="Option 1">
+                        <input type="url" class="form-control forums-poll-option-image-url"
+                               name="pollOptionImages" maxlength="2000"
+                               placeholder="Image URL (optional)">
+                      </div>
                       <button type="button" class="btn btn-sm btn-outline-danger poll-remove-option"
                               title="Remove option" disabled>
                         <i class="fa-solid fa-xmark"></i>
                       </button>
                     </div>
                     <div class="forums-poll-option-row">
-                      <input type="text" class="form-control" name="pollOptions"
-                             maxlength="300" placeholder="Option 2">
+                      <div class="forums-poll-option-fields">
+                        <input type="text" class="form-control" name="pollOptions"
+                               maxlength="300" placeholder="Option 2">
+                        <input type="url" class="form-control forums-poll-option-image-url"
+                               name="pollOptionImages" maxlength="2000"
+                               placeholder="Image URL (optional)">
+                      </div>
                       <button type="button" class="btn btn-sm btn-outline-danger poll-remove-option"
                               title="Remove option" disabled>
                         <i class="fa-solid fa-xmark"></i>
@@ -177,14 +187,18 @@
       const row = document.createElement('div');
       row.className = 'forums-poll-option-row';
       row.innerHTML = `
-        <input type="text" class="form-control" name="pollOptions"
-               maxlength="300" placeholder="Option ${rows.length + 1}">
+        <div class="forums-poll-option-fields">
+          <input type="text" class="form-control" name="pollOptions"
+                 maxlength="300" placeholder="Option ${rows.length + 1}">
+          <input type="url" class="form-control forums-poll-option-image-url"
+                 name="pollOptionImages" maxlength="2000" placeholder="Image URL (optional)">
+        </div>
         <button type="button" class="btn btn-sm btn-outline-danger poll-remove-option" title="Remove option">
           <i class="fa-solid fa-xmark"></i>
         </button>
       `;
       optionsList.appendChild(row);
-      row.querySelector('input').focus();
+      row.querySelector('input[name="pollOptions"]').focus();
       updateRemoveButtons();
     });
 

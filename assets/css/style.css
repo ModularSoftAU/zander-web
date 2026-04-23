@@ -2583,8 +2583,80 @@ a:focus {
   object-fit: cover;
 }
 
-.forums-poll-voter-chip--anon {
-  pointer-events: none;
-  cursor: default;
-  background: rgba(15, 23, 42, 0.06);
+/* Picture-based poll options */
+.forums-poll-picture-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 0.75rem;
+}
+
+.forums-poll-option--picture {
+  border: 2px solid rgba(15, 23, 42, 0.08);
+  border-radius: 10px;
+  overflow: hidden;
+  padding: 0;
+  background: #fff;
+  transition: border-color 0.15s;
+}
+
+.forums-poll-option--picture.voted {
+  border-color: #2f508c;
+}
+
+.forums-poll-option--picture .forums-poll-option-label,
+.forums-poll-option--picture .forums-poll-bar-pct,
+.forums-poll-option--picture .forums-poll-bar-track,
+.forums-poll-option--picture .forums-poll-voters {
+  padding-left: 0.65rem;
+  padding-right: 0.65rem;
+}
+
+.forums-poll-option--picture .d-flex {
+  padding: 0.5rem 0.65rem 0.25rem;
+}
+
+.forums-poll-option--picture .forums-poll-bar-track {
+  margin-bottom: 0.5rem;
+}
+
+.forums-poll-option-image-wrap {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  overflow: hidden;
+  background: rgba(15, 23, 42, 0.04);
+}
+
+.forums-poll-option-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.forums-poll-option-image-check {
+  position: absolute;
+  top: 0.4rem;
+  right: 0.4rem;
+  background: #2f508c;
+  color: #fff;
+  border-radius: 50%;
+  width: 1.5rem;
+  height: 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.8rem;
+}
+
+/* Poll option creation form — stacked label + image url inputs */
+.forums-poll-option-fields {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  flex: 1;
+}
+
+.forums-poll-option-image-url {
+  font-size: 0.8rem;
 }

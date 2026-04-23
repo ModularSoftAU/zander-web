@@ -270,6 +270,7 @@ model forumPollOptions {
   optionId    Int              @id @default(autoincrement())
   pollId      Int
   label       String           @db.VarChar(300)
+  imageUrl    String?          @db.VarChar(2000)
   orderIndex  Int              @default(0)
   createdAt   DateTime         @default(now())
 

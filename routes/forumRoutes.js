@@ -550,10 +550,18 @@ export default function forumRoutes(
     // Validate poll fields before creating the discussion
     const pollEnabled = req.body.pollEnabled === "1";
     let parsedPollOptions = [];
+    let parsedOptionImages = [];
     if (pollEnabled) {
       let rawOptions = req.body.pollOptions;
       if (!Array.isArray(rawOptions)) rawOptions = rawOptions ? [rawOptions] : [];
       parsedPollOptions = rawOptions.map((o) => (o || "").trim()).filter((o) => o);
+
+      let rawImages = req.body.pollOptionImages;
+      if (!Array.isArray(rawImages)) rawImages = rawImages ? [rawImages] : [];
+      parsedOptionImages = rawOptions.map((_, i) => {
+        const u = (rawImages[i] || "").trim();
+        return (u.startsWith("http://") || u.startsWith("https://")) ? u : null;
+      });
 
       const pollErrors = validatePollInput({
         question: req.body.pollQuestion,
@@ -580,6 +588,7 @@ export default function forumRoutes(
           await createPoll(discussion.discussionId, userId, {
             question: (req.body.pollQuestion || "").trim(),
             options: parsedPollOptions,
+            imageUrls: parsedOptionImages,
             allowMultiple: req.body.pollAllowMultiple === "1",
             allowVoteChange: req.body.pollAllowVoteChange === "1",
             showVoters: req.body.pollShowVoters === "1",

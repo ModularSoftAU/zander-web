@@ -172,12 +172,24 @@
                         <p class="forums-poll-question mt-2 mb-0"><%= poll.question %></p>
                       </div>
 
+                      <% const isPicturePoll = poll.options.some(function(o) { return !!o.imageUrl; }); %>
                       <div class="forums-poll-body">
+                        <div class="<%= isPicturePoll ? 'forums-poll-picture-grid' : '' %>">
                         <% poll.options.forEach(function(opt) { %>
-                          <div class="forums-poll-option">
+                          <div class="forums-poll-option<%= isPicturePoll ? ' forums-poll-option--picture' : '' %><%= opt.votedByViewer ? ' voted' : '' %>">
+                            <% if (opt.imageUrl) { %>
+                              <div class="forums-poll-option-image-wrap">
+                                <img src="<%= opt.imageUrl %>" alt="<%= opt.label %>" class="forums-poll-option-image">
+                                <% if (opt.votedByViewer) { %>
+                                  <span class="forums-poll-option-image-check">
+                                    <i class="fa-solid fa-circle-check"></i>
+                                  </span>
+                                <% } %>
+                              </div>
+                            <% } %>
                             <div class="d-flex justify-content-between align-items-center mb-1">
                               <span class="forums-poll-option-label <%= opt.votedByViewer ? 'voted' : '' %>">
-                                <% if (opt.votedByViewer) { %>
+                                <% if (opt.votedByViewer && !opt.imageUrl) { %>
                                   <i class="fa-solid fa-circle-check" style="color:#2f508c;font-size:0.85rem;"></i>
                                 <% } %>
                                 <%= opt.label %>
@@ -190,25 +202,23 @@
                               <div class="forums-poll-bar-fill <%= opt.votedByViewer ? 'voted' : '' %>"
                                    style="width: <%= opt.percentage %>%"></div>
                             </div>
-                            <% if (opt.voters && opt.voters.length > 0) { %>
+                            <% if (poll.showVoters && opt.voters && opt.voters.length > 0) { %>
                               <div class="forums-poll-voters mt-1">
                                 <% opt.voters.forEach(function(voter) { %>
-                                  <a href="<%= poll.showVoters ? '/profile/' + voter.username : '#' %>"
-                                     class="forums-poll-voter-chip<%= poll.showVoters ? '' : ' forums-poll-voter-chip--anon' %>"
-                                     title="<%= poll.showVoters ? voter.username : 'Anonymous voter' %>"
-                                     <%= poll.showVoters ? '' : 'tabindex="-1" aria-hidden="true"' %>>
+                                  <a href="/profile/<%= voter.username %>"
+                                     class="forums-poll-voter-chip"
+                                     title="<%= voter.username %>">
                                     <img src="<%= voter.avatarUrl %>"
-                                         alt="<%= poll.showVoters ? voter.username : 'voter' %>"
+                                         alt="<%= voter.username %>"
                                          class="forums-poll-voter-avatar">
-                                    <% if (poll.showVoters) { %>
-                                      <span><%= voter.username %></span>
-                                    <% } %>
+                                    <span><%= voter.username %></span>
                                   </a>
                                 <% }); %>
                               </div>
                             <% } %>
                           </div>
                         <% }); %>
+                        </div>
 
                         <% if (currentUser && poll.isOpen) { %>
                           <% if (poll.viewerCanVote) { %>
