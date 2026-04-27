@@ -238,37 +238,25 @@ export default function supportDashboardRoutes(
       const categories = await getSupportCategoriesWithPermissions();
       const roles = await getLuckPermRoles();
 
-      const roleNameMap = new Map(
-        roles.map((role) => [String(role.id), role.name])
+      const rankStyleMap = new Map(roles.map((role) => [String(role.id), role]));
+
+      const categoriesWithRoleNames = await Promise.all(
+        categories.map(async (category) => {
+          const permissionIds = category.permissions
+            ? category.permissions.split(",").filter(Boolean)
+            : [];
+
+          const permissionIdSet = new Set(permissionIds.map((id) => String(id)));
+
+          return {
+            ...category,
+            permissions: await resolvePermissionRoles(permissionIds, rankStyleMap),
+            availableRoles: roles.filter(
+              (role) => !permissionIdSet.has(String(role.id))
+            ),
+          };
+        })
       );
-
-      const roleStyleMap = new Map(
-        roles.map((role) => [String(role.id), role])
-      );
-
-      const categoriesWithRoleNames = categories.map((category) => {
-        const permissionIds = category.permissions
-          ? category.permissions.split(",").filter(Boolean)
-          : [];
-
-        const permissionIdSet = new Set(permissionIds.map((id) => String(id)));
-
-        return {
-          ...category,
-          permissions: permissionIds.map((roleId) => {
-            const roleMeta = roleStyleMap.get(String(roleId));
-            return {
-              roleId,
-              roleName: roleMeta?.name || roleId,
-              badgeColor: roleMeta?.rankBadgeColour,
-              textColor: roleMeta?.rankTextColour,
-            };
-          }),
-          availableRoles: roles.filter(
-            (role) => !permissionIdSet.has(String(role.id))
-          ),
-        };
-      });
 
       console.info(
         "Loaded support categories",
@@ -423,24 +411,12 @@ export default function supportDashboardRoutes(
       const categoryPermissions =
         (await getCategoryPermissions(category.categoryId)) || [];
 
-      const roleStyleMap = new Map(
-        roles.map((role) => [String(role.id), role])
-      );
-      const permissionIdSet = new Set(
-        categoryPermissions.map((roleId) => String(roleId))
-      );
+      const rankStyleMap = new Map(roles.map((role) => [String(role.id), role]));
+      const permissionIdSet = new Set(categoryPermissions.map((roleId) => String(roleId)));
 
       const categoryWithPermissions = {
         ...category,
-        permissions: categoryPermissions.map((roleId) => {
-          const roleMeta = roleStyleMap.get(String(roleId));
-          return {
-            roleId,
-            roleName: roleMeta?.name || roleId,
-            badgeColor: roleMeta?.rankBadgeColour,
-            textColor: roleMeta?.rankTextColour,
-          };
-        }),
+        permissions: await resolvePermissionRoles(categoryPermissions, rankStyleMap),
         availableRoles: roles.filter(
           (role) => !permissionIdSet.has(String(role.id))
         ),
@@ -660,6 +636,57 @@ export default function supportDashboardRoutes(
       );
       return [];
     }
+  }
+
+  /**
+   * Build a Map of Discord role ID -> role name by fetching the guild's role list.
+   * Used as a fallback when a stored permission roleId is not mapped to any rank.
+   */
+  async function getDiscordGuildRoleNames() {
+    const guildId = config.discord?.guildId || process.env.DISCORD_GUILD_ID;
+    if (!client || !guildId) return new Map();
+
+    try {
+      const guild = client.guilds.cache.get(guildId) ?? await client.guilds.fetch(guildId);
+      if (!guild) return new Map();
+
+      if (guild.roles.cache.size === 0) {
+        await guild.roles.fetch();
+      }
+
+      const map = new Map();
+      guild.roles.cache.forEach((role) => {
+        map.set(String(role.id), role.name);
+      });
+      return map;
+    } catch (err) {
+      console.warn("getDiscordGuildRoleNames: failed to fetch guild roles", err.message);
+      return new Map();
+    }
+  }
+
+  /**
+   * Map a list of stored permission roleIds to enriched objects with human-readable names.
+   * Resolution priority:
+   *  1. Rank displayName / rankSlug from the ranks table
+   *  2. Discord role name fetched from the guild
+   *  3. Raw role ID as a last resort
+   */
+  async function resolvePermissionRoles(permissionIds, rankStyleMap) {
+    // Check if any ID is missing from the ranks map and needs Discord lookup
+    const needsDiscord = permissionIds.some((id) => !rankStyleMap.has(String(id)));
+    const discordNames = needsDiscord ? await getDiscordGuildRoleNames() : new Map();
+
+    return permissionIds.map((roleId) => {
+      const roleMeta = rankStyleMap.get(String(roleId));
+      const name = roleMeta?.name || discordNames.get(String(roleId)) || String(roleId);
+      return {
+        roleId,
+        roleName: name,
+        badgeColor: roleMeta?.rankBadgeColour,
+        textColor: roleMeta?.rankTextColour,
+      };
+    });
   }
 
   async function postSupportMessage(client) {
