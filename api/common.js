@@ -78,22 +78,21 @@ export function optional(body, field) {
     @param res Passing through res
     @param features Passing through features
 */
-export async function isFeatureWebRouteEnabled(
-  isFeatureEnabled,
-  req,
-  res,
-  features
-) {
+export async function isFeatureWebRouteEnabled(app, isFeatureEnabled, req, res, features) {
   if (!isFeatureEnabled) {
-    res.view("session/featureDisabled", {
-      pageTitle: `Feature Disabled`,
-      config: config,
-      req: req,
-      res: res,
-      features: features,
-      globalImage: await getGlobalImage(),
-      announcementWeb: await getWebAnnouncement(),
-    });
+    const [globalImage, announcementWeb] = await Promise.all([getGlobalImage(), getWebAnnouncement()]);
+    res.header("content-type", "text/html; charset=utf-8").send(
+      await app.view("session/featureDisabled", {
+        pageTitle: "Feature Disabled",
+        config,
+        req,
+        res,
+        features,
+        globalImage,
+        announcementWeb,
+      })
+    );
+    return false;
   }
   return true;
 }
@@ -249,14 +248,27 @@ export async function postAPIRequest(
     then selects a random file from the list using the Math.random() function.
     Finally, the function returns the path of the chosen file by concatenating the file name with the relative path to the directory.
 */
-export async function getGlobalImage() {
-  var path = "./assets/images/globalImages/";
-  var files = await readdirSync(path);
+export function getGlobalImage() {
+  try {
+    const files = readdirSync("./assets/images/globalImages/");
+    if (!files.length) return null;
+    const chosenFile = files[Math.floor(Math.random() * files.length)];
+    return "../../../images/globalImages/" + chosenFile;
+  } catch {
+    return null;
+  }
+}
 
-  // Now files is an Array of the name of the files in the folder and you can pick a random name inside of that array.
-  let chosenFile = await files[Math.floor(Math.random() * files.length)];
-
-  return "../../../images/globalImages/" + chosenFile;
+export function getJumboVideo() {
+  try {
+    const files = readdirSync("./assets/videos/").filter((f) =>
+      /\.(mp4|webm|ogg)$/i.test(f)
+    );
+    if (files.length === 0) return null;
+    return "/videos/" + files[Math.floor(Math.random() * files.length)];
+  } catch {
+    return null;
+  }
 }
 
 /*

@@ -4,6 +4,7 @@ import {
   getGlobalImage,
   hasPermission,
 } from "../../api/common.js";
+import { adminViewData } from "../../admin/adminHelpers.js";
 import { ActionRowBuilder, ButtonBuilder, ButtonStyle } from "discord.js";
 import {
   getSupportCategories,
@@ -68,15 +69,21 @@ export default function supportDashboardRoutes(
     const slug = getCategorySlug(category);
 
     if (!userHasCategoryPermission(slug, req.session.user?.permissions)) {
-      return res.view("session/noPermission", {
+      const [globalImage, announcementWeb] = await Promise.all([
+        getGlobalImage(),
+        getWebAnnouncement(),
+      ]);
+      res.header("content-type", "text/html; charset=utf-8").send(
+        await app.view("session/noPermission", {
         pageTitle: "Access Restricted",
         config,
         req,
         res,
         features,
-        globalImage: await getGlobalImage(),
-        announcementWeb: await getWebAnnouncement(),
-      });
+        globalImage,
+        announcementWeb,
+      }));
+      return;
     }
 
     return true;
@@ -107,19 +114,27 @@ export default function supportDashboardRoutes(
         permittedCategoryIds.includes(ticket.categoryId)
       );
 
-      return res.view("modules/dashboard/support/index", {
+      const [globalImage, announcementWeb] = await Promise.all([
+        getGlobalImage(),
+        getWebAnnouncement(),
+      ]);
+      res.header("content-type", "text/html; charset=utf-8").send(
+        await app.view("modules/dashboard/support/index", {
         pageTitle: "Support Tickets",
         pageDescription: "Manage Support Tickets",
         config,
         req,
         features,
         tickets,
-        globalImage: await getGlobalImage(),
-        announcementWeb: await getWebAnnouncement(),
-      });
+        globalImage,
+        announcementWeb,
+        ...adminViewData(req, features),
+      }));
+      return;
     } catch (error) {
       console.error(error);
-      return res.view("session/error", {
+      res.header("content-type", "text/html; charset=utf-8").send(
+        await app.view("session/error", {
         pageTitle: "Error",
         pageDescription: "Error",
         config,
@@ -128,7 +143,8 @@ export default function supportDashboardRoutes(
         features,
         globalImage: await getGlobalImage(),
         announcementWeb: await getWebAnnouncement(),
-      });
+      }));
+      return;
     }
   });
 
@@ -150,15 +166,21 @@ export default function supportDashboardRoutes(
       );
 
       if (category && !selectedCategory) {
-        return res.view("session/noPermission", {
+        const [globalImage, announcementWeb] = await Promise.all([
+          getGlobalImage(),
+          getWebAnnouncement(),
+        ]);
+        res.header("content-type", "text/html; charset=utf-8").send(
+          await app.view("session/noPermission", {
           pageTitle: "Access Restricted",
           config,
           req,
           res,
           features,
-          globalImage: await getGlobalImage(),
-          announcementWeb: await getWebAnnouncement(),
-        });
+          globalImage,
+          announcementWeb,
+        }));
+        return;
       }
 
       if (selectedCategory) {
@@ -172,7 +194,12 @@ export default function supportDashboardRoutes(
         );
       }
 
-      return res.view("modules/dashboard/support/explorer", {
+      const [globalImage, announcementWeb] = await Promise.all([
+        getGlobalImage(),
+        getWebAnnouncement(),
+      ]);
+      res.header("content-type", "text/html; charset=utf-8").send(
+        await app.view("modules/dashboard/support/explorer", {
         pageTitle: "Support Ticket Explorer",
         pageDescription: "Support Ticket Explorer",
         config,
@@ -181,12 +208,15 @@ export default function supportDashboardRoutes(
         tickets,
         categories: permittedCategories,
         selectedCategory: selectedCategory?.categoryId,
-        globalImage: await getGlobalImage(),
-        announcementWeb: await getWebAnnouncement(),
-      });
+        globalImage,
+        announcementWeb,
+        ...adminViewData(req, features),
+      }));
+      return;
     } catch (error) {
       console.error(error);
-      return res.view("session/error", {
+      res.header("content-type", "text/html; charset=utf-8").send(
+        await app.view("session/error", {
         pageTitle: "Error",
         pageDescription: "Error",
         config,
@@ -195,7 +225,8 @@ export default function supportDashboardRoutes(
         features,
         globalImage: await getGlobalImage(),
         announcementWeb: await getWebAnnouncement(),
-      });
+      }));
+      return;
     }
   });
 
@@ -246,7 +277,12 @@ export default function supportDashboardRoutes(
         roles?.length ?? 0
       );
 
-      return res.view("modules/dashboard/support/categories", {
+      const [globalImage, announcementWeb] = await Promise.all([
+        getGlobalImage(),
+        getWebAnnouncement(),
+      ]);
+      res.header("content-type", "text/html; charset=utf-8").send(
+        await app.view("modules/dashboard/support/categories", {
         pageTitle: "Support Ticket Categories",
         pageDescription: "Support Ticket Categories",
         config,
@@ -254,12 +290,15 @@ export default function supportDashboardRoutes(
         features,
         categories: categoriesWithRoleNames,
         roles,
-        globalImage: await getGlobalImage(),
-        announcementWeb: await getWebAnnouncement(),
-      });
+        globalImage,
+        announcementWeb,
+        ...adminViewData(req, features),
+      }));
+      return;
     } catch (error) {
       console.error("Failed to render support categories dashboard", error);
-      return res.view("session/error", {
+      res.header("content-type", "text/html; charset=utf-8").send(
+        await app.view("session/error", {
         pageTitle: "Error",
         pageDescription: "Error",
         config,
@@ -268,7 +307,8 @@ export default function supportDashboardRoutes(
         features,
         globalImage: await getGlobalImage(),
         announcementWeb: await getWebAnnouncement(),
-      });
+      }));
+      return;
     }
   });
 
@@ -293,7 +333,8 @@ export default function supportDashboardRoutes(
         return res.redirect(addRedirect);
       } catch (error) {
         console.error(error);
-        return res.view("session/error", {
+        res.header("content-type", "text/html; charset=utf-8").send(
+          await app.view("session/error", {
           pageTitle: "Error",
           pageDescription: "Error",
           config,
@@ -302,7 +343,8 @@ export default function supportDashboardRoutes(
           features,
           globalImage: await getGlobalImage(),
           announcementWeb: await getWebAnnouncement(),
-        });
+        }));
+        return;
       }
     }
   );
@@ -327,7 +369,8 @@ export default function supportDashboardRoutes(
         return res.redirect(removeRedirect);
       } catch (error) {
         console.error(error);
-        return res.view("session/error", {
+        res.header("content-type", "text/html; charset=utf-8").send(
+          await app.view("session/error", {
           pageTitle: "Error",
           pageDescription: "Error",
           config,
@@ -336,7 +379,8 @@ export default function supportDashboardRoutes(
           features,
           globalImage: await getGlobalImage(),
           announcementWeb: await getWebAnnouncement(),
-        });
+        }));
+        return;
       }
     }
   );
@@ -354,7 +398,8 @@ export default function supportDashboardRoutes(
       return res.redirect("/dashboard/support/categories");
     } catch (error) {
       console.error(error);
-      return res.view("session/error", {
+      res.header("content-type", "text/html; charset=utf-8").send(
+        await app.view("session/error", {
         pageTitle: "Error",
         pageDescription: "Error",
         config,
@@ -363,7 +408,8 @@ export default function supportDashboardRoutes(
         features,
         globalImage: await getGlobalImage(),
         announcementWeb: await getWebAnnouncement(),
-      });
+      }));
+      return;
     }
   });
 
@@ -400,7 +446,12 @@ export default function supportDashboardRoutes(
         ),
       };
 
-      return res.view("modules/dashboard/support/edit-category", {
+      const [globalImage, announcementWeb] = await Promise.all([
+        getGlobalImage(),
+        getWebAnnouncement(),
+      ]);
+      res.header("content-type", "text/html; charset=utf-8").send(
+        await app.view("modules/dashboard/support/edit-category", {
         pageTitle: "Edit Support Category",
         pageDescription: "Edit Support Category",
         config,
@@ -408,12 +459,15 @@ export default function supportDashboardRoutes(
         features,
         category: categoryWithPermissions,
         roles,
-        globalImage: await getGlobalImage(),
-        announcementWeb: await getWebAnnouncement(),
-      });
+        globalImage,
+        announcementWeb,
+        ...adminViewData(req, features),
+      }));
+      return;
     } catch (error) {
       console.error(error);
-      return res.view("session/error", {
+      res.header("content-type", "text/html; charset=utf-8").send(
+        await app.view("session/error", {
         pageTitle: "Error",
         pageDescription: "Error",
         config,
@@ -422,7 +476,8 @@ export default function supportDashboardRoutes(
         features,
         globalImage: await getGlobalImage(),
         announcementWeb: await getWebAnnouncement(),
-      });
+      }));
+      return;
     }
   });
 
@@ -440,7 +495,8 @@ export default function supportDashboardRoutes(
       return res.redirect("/dashboard/support/categories");
     } catch (error) {
       console.error(error);
-      return res.view("session/error", {
+      res.header("content-type", "text/html; charset=utf-8").send(
+        await app.view("session/error", {
         pageTitle: "Error",
         pageDescription: "Error",
         config,
@@ -449,7 +505,8 @@ export default function supportDashboardRoutes(
         features,
         globalImage: await getGlobalImage(),
         announcementWeb: await getWebAnnouncement(),
-      });
+      }));
+      return;
     }
   });
 
@@ -468,7 +525,8 @@ export default function supportDashboardRoutes(
         return res.redirect("/dashboard/support/categories");
       } catch (error) {
         console.error(error);
-        return res.view("session/error", {
+        res.header("content-type", "text/html; charset=utf-8").send(
+          await app.view("session/error", {
           pageTitle: "Error",
           pageDescription: "Error",
           config,
@@ -477,7 +535,8 @@ export default function supportDashboardRoutes(
           features,
           globalImage: await getGlobalImage(),
           announcementWeb: await getWebAnnouncement(),
-        });
+        }));
+        return;
       }
     }
   );
@@ -532,7 +591,8 @@ export default function supportDashboardRoutes(
       return res.redirect(`/support/ticket/${req.params.id}`);
     } catch (error) {
       console.error(error);
-      return res.view("session/error", {
+      res.header("content-type", "text/html; charset=utf-8").send(
+        await app.view("session/error", {
         pageTitle: "Error",
         pageDescription: "Error",
         config,
@@ -541,7 +601,8 @@ export default function supportDashboardRoutes(
         features,
         globalImage: await getGlobalImage(),
         announcementWeb: await getWebAnnouncement(),
-      });
+      }));
+      return;
     }
   });
 
@@ -555,7 +616,8 @@ export default function supportDashboardRoutes(
       return res.redirect("/dashboard/support/categories");
     } catch (error) {
       console.error(error);
-      return res.view("session/error", {
+      res.header("content-type", "text/html; charset=utf-8").send(
+        await app.view("session/error", {
         pageTitle: "Error",
         pageDescription: "Error",
         config,
@@ -564,7 +626,8 @@ export default function supportDashboardRoutes(
         features,
         globalImage: await getGlobalImage(),
         announcementWeb: await getWebAnnouncement(),
-      });
+      }));
+      return;
     }
   });
 

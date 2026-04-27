@@ -39,7 +39,8 @@ export default function dashboardWebPunishmentsRoute(
       getWebAnnouncement(),
     ]);
 
-    return res.view("dashboard/web-punishments", {
+    res.header("content-type", "text/html; charset=utf-8").send(
+      await app.view("dashboard/web-punishments", {
       pageTitle: `Dashboard - Web Punishments`,
       config,
       features,
@@ -52,7 +53,8 @@ export default function dashboardWebPunishmentsRoute(
       moment,
       globalImage,
       announcementWeb,
-    });
+    }));
+    return;
   });
 
   // Issue a new web punishment

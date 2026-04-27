@@ -37,25 +37,16 @@
                     <% if (features.forums) { %>
                         <li class="nav-item"><a class="nav-link" href="/forums">Forums</a></li>
                     <% } %>
+                    <% if (features.vote) { %>
+                        <li class="nav-item"><a class="nav-link" href="/vote">Vote</a></li>
+                    <% } %>
+                    <% if (features.events) { %>
+                        <li class="nav-item"><a class="nav-link" href="/events">Events</a></li>
+                    <% } %>
                     <li class="nav-item"><a class="nav-link" href="/webstore">Webstore</a></li>
+                    <li class="nav-item"><a class="nav-link" href="/rules">Rules</a></li>
                     <% if (req.session?.user?.permissions?.includes('zander.web.dashboard') || req.session?.user?.permissions?.includes('zander.web.*') || req.session?.user?.permissions?.includes('*')) { %>
-                        <li class="nav-item dropdown">
-                            <a class="nav-link dropdown-toggle" href="#" id="dashboardDropdown" role="button" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                                Dashboard
-                            </a>
-                            <div class="dropdown-menu" aria-labelledby="dashboardDropdown">
-                                <a class="dropdown-item" href="/dashboard">Overview</a>
-                                <a class="dropdown-item" href="/dashboard/announcements">Announcements</a>
-                                <a class="dropdown-item" href="/dashboard/servers">Servers</a>
-                                <a class="dropdown-item" href="/dashboard/applications">Applications</a>
-                                <a class="dropdown-item" href="/dashboard/support">Support</a>
-                                <a class="dropdown-item" href="/dashboard/vault">Vault</a>
-                                <a class="dropdown-item" href="/dashboard/logs">Logs</a>
-                                <a class="dropdown-item" href="/dashboard/bridge">Bridge</a>
-                                <a class="dropdown-item" href="/dashboard/ranks">Ranks</a>
-                                <a class="dropdown-item" href="/dashboard/scheduler">Scheduler</a>
-                            </div>
-                        </li>
+                        <li class="nav-item"><a class="nav-link" href="/dashboard">Dashboard</a></li>
                     <% } %>
                     <% if (req.session?.user) { %>
                         <li class="nav-item dropdown">

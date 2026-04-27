@@ -13,20 +13,23 @@ import {
 export default function notificationRoutes(app, config, features) {
   app.get("/notifications", async function (req, res) {
     if (!req.session.user) {
-      return res.view("session/notLoggedIn", {
+      res.header("content-type", "text/html; charset=utf-8").send(
+        await app.view("session/notLoggedIn", {
         pageTitle: "Not Logged In",
         config,
         req,
         features,
         globalImage: await getGlobalImage(),
         announcementWeb: await getWebAnnouncement(),
-      });
+      }));
+      return;
     }
 
     const notifications = await getUserNotifications(req.session.user.userId, 50);
     const summary = await getNotificationSummary(req.session.user.userId, 50);
 
-    return res.view("modules/notifications/index", {
+    res.header("content-type", "text/html; charset=utf-8").send(
+      await app.view("modules/notifications/index", {
       pageTitle: "Notifications",
       pageDescription: "Notifications",
       config,
@@ -36,7 +39,8 @@ export default function notificationRoutes(app, config, features) {
       unreadCount: summary.unreadCount,
       globalImage: await getGlobalImage(),
       announcementWeb: await getWebAnnouncement(),
-    });
+    }));
+    return;
   });
 
   app.get("/notifications/vapid-public-key", async function (req, res) {
@@ -84,14 +88,16 @@ export default function notificationRoutes(app, config, features) {
 
   app.get("/notifications/visit/:id", async function (req, res) {
     if (!req.session.user) {
-      return res.view("session/notLoggedIn", {
+      res.header("content-type", "text/html; charset=utf-8").send(
+        await app.view("session/notLoggedIn", {
         pageTitle: "Not Logged In",
         config,
         req,
         features,
         globalImage: await getGlobalImage(),
         announcementWeb: await getWebAnnouncement(),
-      });
+      }));
+      return;
     }
 
     const notificationId = Number(req.params.id);
@@ -117,14 +123,16 @@ export default function notificationRoutes(app, config, features) {
 
   app.post("/notifications/mark-all", async function (req, res) {
     if (!req.session.user) {
-      return res.view("session/notLoggedIn", {
+      res.header("content-type", "text/html; charset=utf-8").send(
+        await app.view("session/notLoggedIn", {
         pageTitle: "Not Logged In",
         config,
         req,
         features,
         globalImage: await getGlobalImage(),
         announcementWeb: await getWebAnnouncement(),
-      });
+      }));
+      return;
     }
 
     await markAllNotificationsRead(req.session.user.userId);
@@ -134,14 +142,16 @@ export default function notificationRoutes(app, config, features) {
 
   app.post("/notifications/:id/dismiss", async function (req, res) {
     if (!req.session.user) {
-      return res.view("session/notLoggedIn", {
+      res.header("content-type", "text/html; charset=utf-8").send(
+        await app.view("session/notLoggedIn", {
         pageTitle: "Not Logged In",
         config,
         req,
         features,
         globalImage: await getGlobalImage(),
         announcementWeb: await getWebAnnouncement(),
-      });
+      }));
+      return;
     }
 
     const notificationId = Number(req.params.id);

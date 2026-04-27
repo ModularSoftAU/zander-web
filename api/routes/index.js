@@ -16,6 +16,9 @@ import configApiRoute from "./config.js";
 import discordPunishmentsApiRoute from "./discordPunishments.js";
 import schedulerApiRoute from "./scheduler.js";
 import formApiRoute from "./form.js";
+import voteApiRoute from "./vote.js";
+import commandBridgeApiRoute from "./commandBridge.js";
+import eventsApiRoute from "./events.js";
 
 export default (app, client, moment, config, db, features, lang) => {
   announcementApiRoute(app, config, db, features, lang);
@@ -36,4 +39,8 @@ export default (app, client, moment, config, db, features, lang) => {
   formApiRoute(app, client, config, db, features, lang);
   discordPunishmentsApiRoute(app, config, db, features, lang);
   configApiRoute(app, config, db, features, lang);
+  voteApiRoute(app, config, db, features, lang);
+  commandBridgeApiRoute(app, config, db, features, lang);
+  eventsApiRoute(app, config, db, features, lang);
+
 };

@@ -1,5 +1,5 @@
 import { hashEmail } from "../api/common.js";
-import db from "./databaseController.js";
+import db, { luckpermsDb } from "./databaseController.js";
 
 export function UserGetter() {
   this.byUsername = function (username) {
@@ -153,15 +153,20 @@ export function UserGetter() {
 
     const luckPermsParams = [trimmedUsername];
     let luckPermsQuery =
-      `SELECT 1 FROM luckPermsPlayers WHERE LOWER(username) = LOWER(?) LIMIT 1`;
+      `SELECT 1 FROM luckperms_players WHERE LOWER(username) = LOWER(?) LIMIT 1`;
 
     if (trimmedUuid) {
       luckPermsQuery =
-        `SELECT 1 FROM luckPermsPlayers WHERE LOWER(username) = LOWER(?) OR uuid = UNHEX(REPLACE(?, '-', '')) LIMIT 1`;
+        `SELECT 1 FROM luckperms_players WHERE LOWER(username) = LOWER(?) OR uuid = UNHEX(REPLACE(?, '-', '')) LIMIT 1`;
       luckPermsParams.push(trimmedUuid);
     }
 
-    const luckPermsMatch = await runQuery(luckPermsQuery, luckPermsParams);
+    const luckPermsMatch = await new Promise((resolve, reject) => {
+      luckpermsDb.query(luckPermsQuery, luckPermsParams, (error, results) => {
+        if (error) return reject(error);
+        resolve(results || []);
+      });
+    });
 
     return luckPermsMatch.length > 0;
   };
@@ -187,11 +192,17 @@ export function UserGetter() {
       return userRows[0].uuid;
     }
 
-    // Check luckPermsPlayers table
-    const luckPermsRows = await runQuery(
-      `SELECT HEX(uuid) AS hexUuid FROM luckPermsPlayers WHERE LOWER(username) = LOWER(?) LIMIT 1`,
-      [trimmedUsername]
-    );
+    // Check luckperms_players table
+    const luckPermsRows = await new Promise((resolve, reject) => {
+      luckpermsDb.query(
+        `SELECT LOWER(HEX(uuid)) AS hexUuid FROM luckperms_players WHERE LOWER(username) = LOWER(?) LIMIT 1`,
+        [trimmedUsername],
+        (error, results) => {
+          if (error) return reject(error);
+          resolve(results || []);
+        }
+      );
+    });
     if (luckPermsRows.length && luckPermsRows[0].hexUuid) {
       const hex = luckPermsRows[0].hexUuid;
       if (hex.length === 32) {
@@ -509,10 +520,9 @@ export function updateUserPassword(userId, passwordHash) {
   });
 }
 
-const LUCKPERMS_USER_PERMISSIONS_TABLE =
-  "cfcdev_luckperms.luckperms_user_permissions";
-const LUCKPERMS_GROUP_PERMISSIONS_TABLE =
-  "cfcdev_luckperms.luckperms_group_permissions";
+const LUCKPERMS_USER_PERMISSIONS_TABLE = "luckperms_user_permissions";
+const LUCKPERMS_GROUP_PERMISSIONS_TABLE = "luckperms_group_permissions";
+const LUCKPERMS_PLAYERS_TABLE = "luckperms_players";
 
 function normaliseUuid(uuid) {
   if (!uuid) return null;
@@ -526,10 +536,16 @@ function normaliseUuid(uuid) {
 function runQuery(query, params = []) {
   return new Promise((resolve, reject) => {
     db.query(query, params, (error, results) => {
-      if (error) {
-        return reject(error);
-      }
+      if (error) return reject(error);
+      resolve(results || []);
+    });
+  });
+}
 
+function runLuckPermsQuery(query, params = []) {
+  return new Promise((resolve, reject) => {
+    luckpermsDb.query(query, params, (error, results) => {
+      if (error) return reject(error);
       resolve(results || []);
     });
   });
@@ -543,9 +559,13 @@ export async function getUserPermissions(userData = {}) {
   const queuedRankSet = new Set();
 
   const userId = userData?.userId || null;
-  const rawUuid = userData?.uuid || null;
+  // rawUuid is the LP-native UUID string (VARCHAR with dashes, e.g. "550e8400-e29b-41d4-a716-446655440000").
+  // LuckPerms MySQL stores uuid as VARCHAR(36) with dashes, so LP queries must use this value
+  // directly rather than UNHEX(hex-without-dashes), which would produce binary that never matches.
+  let rawUuid = userData?.uuid || null;
   const username = userData?.username || null;
 
+  // uuidHex is kept only as a non-null sentinel for the "do we have a UUID?" guards below.
   let uuidHex = normaliseUuid(rawUuid);
 
   const ensureUuid = async () => {
@@ -560,24 +580,22 @@ export async function getUserPermissions(userData = {}) {
       );
 
       if (rows.length && rows[0].uuid) {
+        rawUuid = rows[0].uuid;
         uuidHex = normaliseUuid(rows[0].uuid);
         return;
       }
     }
 
     if (username) {
-      const rows = await runQuery(
-        `SELECT uuid FROM luckPermsPlayers WHERE LOWER(username) = LOWER(?) LIMIT 1`,
+      // LP stores uuid as VARCHAR(36) with dashes — select it as-is, no HEX() conversion.
+      const rows = await runLuckPermsQuery(
+        `SELECT uuid FROM ${LUCKPERMS_PLAYERS_TABLE} WHERE LOWER(username) = LOWER(?) LIMIT 1`,
         [username]
       );
 
-      if (rows.length) {
-        const candidate = rows[0].uuid;
-        if (Buffer.isBuffer(candidate)) {
-          uuidHex = candidate.toString("hex");
-        } else {
-          uuidHex = normaliseUuid(candidate);
-        }
+      if (rows.length && rows[0].uuid) {
+        rawUuid = rows[0].uuid;
+        uuidHex = normaliseUuid(rows[0].uuid);
       }
     }
   };
@@ -613,14 +631,14 @@ export async function getUserPermissions(userData = {}) {
 
   if (uuidHex) {
     try {
-      const directPermissions = await runQuery(
+      const directPermissions = await runLuckPermsQuery(
         `SELECT permission
            FROM ${LUCKPERMS_USER_PERMISSIONS_TABLE}
-          WHERE uuid = UNHEX(?)
+          WHERE uuid = ?
             AND permission NOT LIKE 'group.%'
             AND value = 1
             AND (expiry IS NULL OR expiry = 0 OR expiry > UNIX_TIMESTAMP())`,
-        [uuidHex]
+        [rawUuid]
       );
 
       directPermissions.forEach(({ permission }) => pushPermission(permission));
@@ -629,15 +647,15 @@ export async function getUserPermissions(userData = {}) {
     }
 
     try {
-      const rankRows = await runQuery(
+      const rankRows = await runLuckPermsQuery(
         `SELECT SUBSTRING_INDEX(permission, '.', -1) AS rankSlug
            FROM ${LUCKPERMS_USER_PERMISSIONS_TABLE}
-          WHERE uuid = UNHEX(?)
+          WHERE uuid = ?
             AND permission LIKE 'group.%'
             AND value = 1
             AND (expiry IS NULL OR expiry = 0 OR expiry > UNIX_TIMESTAMP())
           ORDER BY permission`,
-        [uuidHex]
+        [rawUuid]
       );
 
       rankRows.forEach(({ rankSlug }) => queueRank(rankSlug, { direct: true }));
@@ -663,12 +681,12 @@ export async function getUserPermissions(userData = {}) {
 
   if (!queuedRanks.length && uuidHex) {
     try {
-      const primaryGroupRows = await runQuery(
+      const primaryGroupRows = await runLuckPermsQuery(
         `SELECT primary_group AS rankSlug
-           FROM luckPermsPlayers
-          WHERE uuid = UNHEX(?)
+           FROM ${LUCKPERMS_PLAYERS_TABLE}
+          WHERE uuid = ?
           LIMIT 1`,
-        [uuidHex]
+        [rawUuid]
       );
 
       primaryGroupRows.forEach(({ rankSlug }) => queueRank(rankSlug, { direct: true }));
@@ -681,7 +699,7 @@ export async function getUserPermissions(userData = {}) {
     const currentRank = queuedRanks.shift();
 
     try {
-      const groupPermissions = await runQuery(
+      const groupPermissions = await runLuckPermsQuery(
         `SELECT permission
            FROM ${LUCKPERMS_GROUP_PERMISSIONS_TABLE}
           WHERE name = ?
@@ -751,27 +769,32 @@ export async function getUserPermissions(userData = {}) {
 }
 
 export async function getUserStats(userId) {
-  return new Promise((resolve) => {
+  const playtimeResult = await new Promise((resolve, reject) => {
     db.query(
-      `SELECT SUM(TIME_TO_SEC(TIMEDIFF(COALESCE(sessionEnd, NOW()), sessionStart))) AS totalSeconds FROM gameSessions WHERE userId=?; SELECT COUNT(*) AS totalLogins FROM gameSessions WHERE userId = ?;`,
-      [userId, userId],
-      async function (err, results) {
-        if (err) {
-          throw err;
-        }
-
-        const seconds = results[0][0].totalSeconds;
-        const logins = results[1][0].totalLogins;
-
-        const userStats = {
-          totalPlaytime: convertSecondsToDuration(seconds),
-          totalLogins: logins,
-        };
-
-        resolve(userStats);
+      `SELECT SUM(TIME_TO_SEC(TIMEDIFF(COALESCE(sessionEnd, NOW()), sessionStart))) AS totalSeconds FROM gameSessions WHERE userId=?`,
+      [userId],
+      function (err, results) {
+        if (err) return reject(err);
+        resolve(results);
       }
     );
   });
+
+  const loginsResult = await new Promise((resolve, reject) => {
+    db.query(
+      `SELECT COUNT(*) AS totalLogins FROM gameSessions WHERE userId = ?`,
+      [userId],
+      function (err, results) {
+        if (err) return reject(err);
+        resolve(results);
+      }
+    );
+  });
+
+  return {
+    totalPlaytime: convertSecondsToDuration(playtimeResult[0].totalSeconds),
+    totalLogins: loginsResult[0].totalLogins,
+  };
 }
 
 export function convertSecondsToDuration(seconds) {

@@ -1589,6 +1589,35 @@ export async function searchUsersByUsername(query) {
     });
 }
 
+export async function searchLinkedUsers(query) {
+    const term = query?.trim();
+    if (!term || term.length < 2) return [];
+
+    return new Promise((resolve) => {
+        db.query(
+            "SELECT userId, username, discordId, profilePicture_type, profilePicture_email, uuid FROM users WHERE username LIKE ? AND discordId IS NOT NULL ORDER BY username ASC LIMIT 8",
+            [`${term}%`],
+            async (err, results) => {
+                if (err) {
+                    console.error("searchLinkedUsers: failed to run query", err);
+                    resolve([]);
+                    return;
+                }
+
+                const enriched = await Promise.all(
+                    results.map(async (row) => ({
+                        userId: row.userId,
+                        username: row.username,
+                        discordId: row.discordId,
+                        avatarUrl: await buildAvatarUrl(row),
+                    })),
+                );
+                resolve(enriched);
+            },
+        );
+    });
+}
+
 export async function createUnlinkedUser(discordId, username) {
     // Truncate username to fit VARCHAR(16) column – Discord usernames can be up to 32 chars
     const safeName = username ? username.substring(0, 16) : "Unknown";
@@ -1652,6 +1681,24 @@ export async function getTicketsAccessibleByUser(userId, rankSlugs = []) {
                 resolve(results);
             }
         });
+    });
+}
+
+export async function getOpenTicketsWithChannelForUser(userId) {
+    return new Promise((resolve, reject) => {
+        db.query(
+            `SELECT DISTINCT st.*
+             FROM supportTickets st
+             LEFT JOIN supportTicketParticipants p ON p.ticketId = st.ticketId AND p.userId = ?
+             WHERE (st.userId = ? OR p.userId IS NOT NULL)
+               AND st.discordChannelId IS NOT NULL
+               AND st.status NOT IN ('closed', 'locked')`,
+            [userId, userId],
+            (err, results) => {
+                if (err) reject(err);
+                else resolve(results);
+            },
+        );
     });
 }
 

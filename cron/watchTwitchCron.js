@@ -14,7 +14,8 @@ import { createRequire } from "module";
 const require = createRequire(import.meta.url);
 const config = require("../config.json");
 
-import { ActionRowBuilder, ButtonBuilder, ButtonStyle, EmbedBuilder, WebhookClient } from "discord.js";
+import { ActionRowBuilder, ButtonBuilder, ButtonStyle, EmbedBuilder } from "discord.js";
+import { client } from "../controllers/discordController.js";
 import {
   getEligibleCreators,
   matchesCfcFilter,
@@ -23,6 +24,7 @@ import {
   updateSyncStatus,
   hasNotificationBeenSent,
   recordNotification,
+  createInGameAnnouncement,
 } from "../controllers/watchController.js";
 
 // ---------------------------------------------------------------------------
@@ -49,7 +51,8 @@ async function getTwitchAppToken(fetchFn) {
     });
 
     if (!res.ok) {
-      console.error("[WatchTwitch] Failed to obtain app access token:", res.status);
+      const body = await res.text();
+      console.error(`[WatchTwitch] Failed to obtain app access token (${res.status}):`, body);
       return null;
     }
 
@@ -68,11 +71,19 @@ async function getTwitchAppToken(fetchFn) {
 // ---------------------------------------------------------------------------
 
 async function sendLiveNotification(item) {
-  const webhookUrl = config?.watch?.contentChannelWebhook;
-  if (!webhookUrl || !webhookUrl.startsWith("http")) return null;
+  const channelId = config?.watch?.contentChannelId;
+  if (!channelId) {
+    console.warn("[WatchTwitch] contentChannelId is not set in config.json — skipping Discord notification.");
+    return null;
+  }
 
   try {
-    const webhook = new WebhookClient({ url: webhookUrl });
+    const channel = await client.channels.fetch(channelId);
+    if (!channel) {
+      console.warn(`[WatchTwitch] Discord channel "${channelId}" not found — skipping notification.`);
+      return null;
+    }
+
     const embed = new EmbedBuilder()
       .setColor(0x9146FF)
       .setTitle(`${item.platform_display_name || item.username} is live on Twitch!`)
@@ -94,14 +105,14 @@ async function sendLiveNotification(item) {
           .setLabel("Watch More")
           .setStyle(ButtonStyle.Link)
           .setURL(siteWatchUrl)
-          .setEmoji({ name: "📺" }),
+          .setEmoji("📺"),
       ] : [])
     );
 
     const pingRole = config?.watch?.contentPingRoleId;
     const content = pingRole ? `<@&${pingRole}>` : undefined;
 
-    const msg = await webhook.send({ content, embeds: [embed], components: [buttons] });
+    const msg = await channel.send({ content, embeds: [embed], components: [buttons] });
     return msg?.id || "sent";
   } catch (err) {
     console.error("[WatchTwitch] Discord notification failed:", err);
@@ -110,32 +121,17 @@ async function sendLiveNotification(item) {
 }
 
 // ---------------------------------------------------------------------------
-// Sync logic
+// Sync logic — accepts the already-fetched stream object to avoid a
+// redundant API call from the outer cron loop.
+// stream is null when the creator is currently offline.
 // ---------------------------------------------------------------------------
 
-async function syncTwitchCreator(creator, appToken, fetchFn) {
+async function syncTwitchCreator(creator, stream) {
   const broadcasterId = creator.platform_account_id;
 
   try {
-    const streamRes = await fetchFn(
-      `https://api.twitch.tv/helix/streams?user_id=${encodeURIComponent(broadcasterId)}`,
-      {
-        headers: {
-          Authorization: `Bearer ${appToken}`,
-          "Client-Id": process.env.twitchClientId,
-        },
-      }
-    );
-
-    if (!streamRes.ok) {
-      throw new Error(`Helix streams API returned ${streamRes.status}`);
-    }
-
-    const streamData = await streamRes.json();
-    const stream = streamData?.data?.[0]; // null when offline
-
     if (!stream) {
-      // Creator is offline — the outer cron loop handles markStreamsOffline
+      // Creator is offline — outer loop handles markStreamsOffline
       await updateSyncStatus(creator.user_id, "twitch", { success: true });
       return;
     }
@@ -148,7 +144,7 @@ async function syncTwitchCreator(creator, appToken, fetchFn) {
     );
 
     const isCfc = Boolean(matchedRule);
-    const isPublic = true; // all eligible creators (permission-gated) are publicly visible when live
+    const isPublic = isCfc; // only CFC-tagged streams are publicly visible
 
     const thumbnailUrl = stream.thumbnail_url
       ? stream.thumbnail_url.replace("{width}", "640").replace("{height}", "360")
@@ -177,14 +173,34 @@ async function syncTwitchCreator(creator, appToken, fetchFn) {
 
     await upsertContentItem(contentItem);
 
-    // Send Discord live notification if not already sent
+    // Send Discord live notification if not already sent.
+    // Only notify for CFC-tagged streams that are publicly visible.
+    // Only record the notification when the Discord send actually succeeds —
+    // if messageId is null the send failed and we want the next run to retry.
     if (isPublic) {
       const alreadySent = await hasNotificationBeenSent("twitch", stream.id, "live");
       if (!alreadySent) {
         const messageId = await sendLiveNotification(
           { ...contentItem, platform_display_name: creator.platform_display_name, username: creator.username }
         );
-        await recordNotification("twitch", stream.id, "live", messageId);
+        if (messageId) {
+          await recordNotification("twitch", stream.id, "live", messageId);
+        } else {
+          console.warn(`[WatchTwitch] userId=${creator.user_id}: notification failed for stream "${stream.id}" — will retry on next run.`);
+        }
+      }
+
+      // In-game tip announcement (deduplicated independently of Discord)
+      const ingameAlreadySent = await hasNotificationBeenSent("twitch", stream.id, "ingame_live");
+      if (!ingameAlreadySent) {
+        const creatorName = creator.platform_display_name || creator.username;
+        const announcementBody = `Creator ${creatorName} is now live — watch now at craftingforchrist.net/watch`;
+        try {
+          await createInGameAnnouncement(announcementBody);
+          await recordNotification("twitch", stream.id, "ingame_live", null);
+        } catch (err) {
+          console.error(`[WatchTwitch] userId=${creator.user_id}: failed to create in-game announcement for stream "${stream.id}":`, err);
+        }
       }
     }
 
@@ -202,19 +218,29 @@ async function syncTwitchCreator(creator, appToken, fetchFn) {
 let isTwitchSyncRunning = false;
 
 const twitchSyncTask = cron.schedule("*/5 * * * *", async () => {
-  if (!process.env.twitchClientId || !process.env.twitchClientSecret) return;
-  if (isTwitchSyncRunning) return;
+  if (!process.env.twitchClientId || !process.env.twitchClientSecret) {
+    console.warn("[WatchTwitch] twitchClientId or twitchClientSecret env vars not set — skipping sync.");
+    return;
+  }
+
+  if (isTwitchSyncRunning) {
+    console.warn("[WatchTwitch] Previous sync is still running — skipping this tick.");
+    return;
+  }
 
   isTwitchSyncRunning = true;
+
   try {
     const { default: fetch } = await import("node-fetch");
     const appToken = await getTwitchAppToken(fetch);
-    if (!appToken) return;
+    if (!appToken) {
+      console.error("[WatchTwitch] Could not obtain app access token — aborting sync.");
+      return;
+    }
 
     const creators = await getEligibleCreators("twitch");
     if (creators.length === 0) return;
 
-    // Sync each creator
     const liveStreamIds = [];
     for (const creator of creators) {
       const broadcasterId = creator.platform_account_id;
@@ -229,18 +255,23 @@ const twitchSyncTask = cron.schedule("*/5 * * * *", async () => {
           }
         );
 
-        if (!streamRes.ok) continue;
+        if (!streamRes.ok) {
+          const body = await streamRes.text();
+          console.error(`[WatchTwitch] Stream fetch failed for userId=${creator.user_id} (HTTP ${streamRes.status}):`, body);
+          continue;
+        }
+
         const streamData = await streamRes.json();
-        const stream = streamData?.data?.[0];
+        const stream = streamData?.data?.[0] || null;
+
         if (stream) liveStreamIds.push(stream.id);
 
-        await syncTwitchCreator(creator, appToken, fetch);
+        await syncTwitchCreator(creator, stream);
       } catch (err) {
         console.error(`[WatchTwitch] Error during creator sync (${creator.user_id}):`, err);
       }
     }
 
-    // Mark any previously-live entries that are no longer live as ended
     await markStreamsOffline("twitch", liveStreamIds);
   } catch (err) {
     console.error("[WatchTwitch] Cron error:", err);

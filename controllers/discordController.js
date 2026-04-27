@@ -1,5 +1,13 @@
-import { SapphireClient } from "@sapphire/framework";
+import { SapphireClient, ApplicationCommandRegistries, RegisterBehavior } from "@sapphire/framework";
 import { GatewayIntentBits } from "discord.js";
+
+// Use BulkOverwrite instead of the default per-command Overwrite.
+// The default behavior makes one Discord API call per command on every startup
+// (20+ commands = 20+ sequential HTTP round-trips), which congests the event
+// loop long enough for incoming interaction tokens to expire before the handler
+// can call deferReply, causing "application did not respond" errors.
+// BulkOverwrite replaces all of that with a single PUT call.
+ApplicationCommandRegistries.setDefaultBehaviorWhenNotIdentical(RegisterBehavior.BulkOverwrite);
 
 //
 // Discord

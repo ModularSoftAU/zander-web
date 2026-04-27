@@ -8,7 +8,9 @@
       "generalKenobi": true,
       "guildMemberBoost": true,
       "guildMemberVerify": true,
-      "nicknameCheck": true
+      "nicknameCheck": true,
+      "unverifiedReminder": true,
+      "ipAutoDetect": true
     },
     "punishments": true
   },
@@ -29,6 +31,8 @@
 
   "staffAuditReport": true,
   "watch": true,
+  "vote": true,
+  "events": true,
 
   "smDiscord": true,
   "smFacebook": true,
