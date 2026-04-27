@@ -2,6 +2,14 @@
 <%- include("../admin/_topbar.ejs") %>
 <%- include("../admin/_sidebar.ejs") %>
 
+<%
+  function badge(enabled) {
+    return enabled
+      ? '<span class="wp-badge active" style="font-size:11px;padding:3px 8px;">Enabled</span>'
+      : '<span class="wp-badge inactive" style="font-size:11px;padding:3px 8px;">Disabled</span>';
+  }
+%>
+
 <div id="wpcontent">
   <div id="wpbody-content">
     <div class="wrap">
@@ -13,346 +21,154 @@
 
       <%- include("../admin/_notices.ejs") %>
 
-      <form method="POST" action="/dashboard/settings">
+      <p style="font-size:13px;color:#646970;margin-bottom:20px;">
+        Feature flags are configured in <code>features.json</code>. This page shows the current state of each feature.
+        See <code>features.json.example</code> for all available options.
+      </p>
 
-        <!-- ── Dashboard Features ──────────────────────────────────────────── -->
-        <div class="wp-card" style="margin-bottom:20px;">
-          <div class="wp-card-header">
-            <h2 class="wp-card-title"><i class="fas fa-th-large" aria-hidden="true"></i> Dashboard Features</h2>
-            <p style="margin:0;font-size:13px;color:#646970;">Enable or disable major dashboard modules. Disabled modules are hidden from the sidebar and all related routes are protected.</p>
-          </div>
-          <div class="wp-card-body">
-            <table class="form-table" style="width:100%;">
-              <tbody>
-                <tr>
-                  <th style="width:220px;padding:12px 10px;font-weight:600;font-size:13px;vertical-align:top;">Support Tickets</th>
-                  <td style="padding:12px 10px;">
-                    <label class="wp-toggle" style="display:flex;align-items:center;gap:10px;cursor:pointer;">
-                      <input type="checkbox" name="support" <%= features.support ? 'checked' : '' %>>
-                      <span style="font-size:13px;">Enable the support ticketing system (manage tickets, categories, and Discord panel)</span>
-                    </label>
-                  </td>
-                </tr>
-                <tr>
-                  <th style="padding:12px 10px;font-weight:600;font-size:13px;vertical-align:top;">Announcements</th>
-                  <td style="padding:12px 10px;">
-                    <label class="wp-toggle" style="display:flex;align-items:center;gap:10px;cursor:pointer;">
-                      <input type="checkbox" name="announcements" <%= features.announcements ? 'checked' : '' %>>
-                      <span style="font-size:13px;">Enable site announcements management</span>
-                    </label>
-                  </td>
-                </tr>
-                <tr>
-                  <th style="padding:12px 10px;font-weight:600;font-size:13px;vertical-align:top;">Forums</th>
-                  <td style="padding:12px 10px;">
-                    <label class="wp-toggle" style="display:flex;align-items:center;gap:10px;cursor:pointer;">
-                      <input type="checkbox" name="forums" <%= features.forums ? 'checked' : '' %>>
-                      <span style="font-size:13px;">Enable forum category and thread management</span>
-                    </label>
-                  </td>
-                </tr>
-                <tr>
-                  <th style="padding:12px 10px;font-weight:600;font-size:13px;vertical-align:top;">Servers</th>
-                  <td style="padding:12px 10px;">
-                    <label class="wp-toggle" style="display:flex;align-items:center;gap:10px;cursor:pointer;">
-                      <input type="checkbox" name="server" <%= features.server ? 'checked' : '' %>>
-                      <span style="font-size:13px;">Enable server management</span>
-                    </label>
-                  </td>
-                </tr>
-                <tr>
-                  <th style="padding:12px 10px;font-weight:600;font-size:13px;vertical-align:top;">Applications</th>
-                  <td style="padding:12px 10px;">
-                    <label class="wp-toggle" style="display:flex;align-items:center;gap:10px;cursor:pointer;">
-                      <input type="checkbox" name="applications" <%= features.applications ? 'checked' : '' %>>
-                      <span style="font-size:13px;">Enable staff applications management</span>
-                    </label>
-                  </td>
-                </tr>
-                <tr>
-                  <th style="padding:12px 10px;font-weight:600;font-size:13px;vertical-align:top;">Events</th>
-                  <td style="padding:12px 10px;">
-                    <label class="wp-toggle" style="display:flex;align-items:center;gap:10px;cursor:pointer;">
-                      <input type="checkbox" name="events" <%= features.events ? 'checked' : '' %>>
-                      <span style="font-size:13px;">Enable events calendar and scheduling</span>
-                    </label>
-                  </td>
-                </tr>
-                <tr>
-                  <th style="padding:12px 10px;font-weight:600;font-size:13px;vertical-align:top;">Voting</th>
-                  <td style="padding:12px 10px;">
-                    <label class="wp-toggle" style="display:flex;align-items:center;gap:10px;cursor:pointer;">
-                      <input type="checkbox" name="vote" <%= features.vote ? 'checked' : '' %>>
-                      <span style="font-size:13px;">Enable vote sites, leaderboard, and reward management</span>
-                    </label>
-                  </td>
-                </tr>
-                <tr>
-                  <th style="padding:12px 10px;font-weight:600;font-size:13px;vertical-align:top;">Vault</th>
-                  <td style="padding:12px 10px;">
-                    <label class="wp-toggle" style="display:flex;align-items:center;gap:10px;cursor:pointer;">
-                      <input type="checkbox" name="vault" <%= features.vault ? 'checked' : '' %>>
-                      <span style="font-size:13px;">Enable vault and redirect management</span>
-                    </label>
-                  </td>
-                </tr>
-                <tr>
-                  <th style="padding:12px 10px;font-weight:600;font-size:13px;vertical-align:top;">Ranks</th>
-                  <td style="padding:12px 10px;">
-                    <label class="wp-toggle" style="display:flex;align-items:center;gap:10px;cursor:pointer;">
-                      <input type="checkbox" name="ranks" <%= features.ranks ? 'checked' : '' %>>
-                      <span style="font-size:13px;">Enable rank management via LuckPerms</span>
-                    </label>
-                  </td>
-                </tr>
-                <tr>
-                  <th style="padding:12px 10px;font-weight:600;font-size:13px;vertical-align:top;">Reports</th>
-                  <td style="padding:12px 10px;">
-                    <label class="wp-toggle" style="display:flex;align-items:center;gap:10px;cursor:pointer;">
-                      <input type="checkbox" name="report" <%= features.report ? 'checked' : '' %>>
-                      <span style="font-size:13px;">Enable player report system</span>
-                    </label>
-                  </td>
-                </tr>
-                <tr>
-                  <th style="padding:12px 10px;font-weight:600;font-size:13px;vertical-align:top;">Shop Directory</th>
-                  <td style="padding:12px 10px;">
-                    <label class="wp-toggle" style="display:flex;align-items:center;gap:10px;cursor:pointer;">
-                      <input type="checkbox" name="shopdirectory" <%= features.shopdirectory ? 'checked' : '' %>>
-                      <span style="font-size:13px;">Enable the shop directory feature</span>
-                    </label>
-                  </td>
-                </tr>
-                <tr>
-                  <th style="padding:12px 10px;font-weight:600;font-size:13px;vertical-align:top;">Bridge</th>
-                  <td style="padding:12px 10px;">
-                    <label class="wp-toggle" style="display:flex;align-items:center;gap:10px;cursor:pointer;">
-                      <input type="checkbox" name="bridge" <%= features.bridge ? 'checked' : '' %>>
-                      <span style="font-size:13px;">Enable bridge processor monitoring</span>
-                    </label>
-                  </td>
-                </tr>
-                <tr>
-                  <th style="padding:12px 10px;font-weight:600;font-size:13px;vertical-align:top;">Staff Audit Report</th>
-                  <td style="padding:12px 10px;">
-                    <label class="wp-toggle" style="display:flex;align-items:center;gap:10px;cursor:pointer;">
-                      <input type="checkbox" name="staffAuditReport" <%= features.staffAuditReport ? 'checked' : '' %>>
-                      <span style="font-size:13px;">Enable automated staff activity audit reports</span>
-                    </label>
-                  </td>
-                </tr>
-                <tr>
-                  <th style="padding:12px 10px;font-weight:600;font-size:13px;vertical-align:top;">Content Watch</th>
-                  <td style="padding:12px 10px;">
-                    <label class="wp-toggle" style="display:flex;align-items:center;gap:10px;cursor:pointer;">
-                      <input type="checkbox" name="watch" <%= features.watch ? 'checked' : '' %>>
-                      <span style="font-size:13px;">Enable YouTube/Twitch content monitoring and announcements</span>
-                    </label>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
+      <!-- ── Dashboard Features ──────────────────────────────────────────── -->
+      <div class="wp-card" style="margin-bottom:20px;">
+        <div class="wp-card-header">
+          <h2 class="wp-card-title"><i class="fas fa-th-large" aria-hidden="true"></i> Dashboard Features</h2>
         </div>
-
-        <!-- ── Web Features ────────────────────────────────────────────────── -->
-        <div class="wp-card" style="margin-bottom:20px;">
-          <div class="wp-card-header">
-            <h2 class="wp-card-title"><i class="fas fa-globe" aria-hidden="true"></i> Web Features</h2>
-            <p style="margin:0;font-size:13px;color:#646970;">Control access to web authentication flows.</p>
-          </div>
-          <div class="wp-card-body">
-            <table class="form-table" style="width:100%;">
-              <tbody>
-                <tr>
-                  <th style="width:220px;padding:12px 10px;font-weight:600;font-size:13px;vertical-align:top;">Login</th>
-                  <td style="padding:12px 10px;">
-                    <label class="wp-toggle" style="display:flex;align-items:center;gap:10px;cursor:pointer;">
-                      <input type="checkbox" name="web.login" <%= features.web && features.web.login ? 'checked' : '' %>>
-                      <span style="font-size:13px;">Allow users to log in to the website</span>
-                    </label>
-                  </td>
+        <div class="wp-card-body" style="padding:0;">
+          <table style="width:100%;border-collapse:collapse;font-size:13px;">
+            <tbody>
+              <% const dashboardFeatures = [
+                { label: 'Support Tickets',   desc: 'Ticketing system — manage tickets, categories, and Discord panel',  value: features.support },
+                { label: 'Announcements',     desc: 'Site announcements management',                                      value: features.announcements },
+                { label: 'Forums',            desc: 'Forum category and thread management',                                value: features.forums },
+                { label: 'Servers',           desc: 'Server management',                                                  value: features.server },
+                { label: 'Applications',      desc: 'Staff applications management',                                      value: features.applications },
+                { label: 'Events',            desc: 'Events calendar and scheduling',                                     value: features.events },
+                { label: 'Voting',            desc: 'Vote sites, leaderboard, and reward management',                     value: features.vote },
+                { label: 'Vault',             desc: 'Vault and redirect management',                                      value: features.vault },
+                { label: 'Ranks',             desc: 'Rank management via LuckPerms',                                      value: features.ranks },
+                { label: 'Reports',           desc: 'Player report system',                                               value: features.report },
+                { label: 'Shop Directory',    desc: 'Shop directory listing feature',                                     value: features.shopdirectory },
+                { label: 'Bridge',            desc: 'Bridge processor monitoring',                                        value: features.bridge },
+                { label: 'Staff Audit',       desc: 'Automated staff activity audit reports',                             value: features.staffAuditReport },
+                { label: 'Content Watch',     desc: 'YouTube / Twitch content monitoring and announcements',              value: features.watch },
+              ]; %>
+              <% dashboardFeatures.forEach((f, i) => { %>
+                <tr style="border-bottom:<%= i < dashboardFeatures.length - 1 ? '1px solid #f0f0f1' : 'none' %>;">
+                  <td style="padding:10px 16px;font-weight:600;width:200px;"><%- f.label %></td>
+                  <td style="padding:10px 16px;color:#646970;"><%- f.desc %></td>
+                  <td style="padding:10px 16px;text-align:right;white-space:nowrap;"><%- badge(f.value) %></td>
                 </tr>
-                <tr>
-                  <th style="padding:12px 10px;font-weight:600;font-size:13px;vertical-align:top;">Registration</th>
-                  <td style="padding:12px 10px;">
-                    <label class="wp-toggle" style="display:flex;align-items:center;gap:10px;cursor:pointer;">
-                      <input type="checkbox" name="web.register" <%= features.web && features.web.register ? 'checked' : '' %>>
-                      <span style="font-size:13px;">Allow new users to register an account</span>
-                    </label>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
+              <% }) %>
+            </tbody>
+          </table>
         </div>
+      </div>
 
-        <!-- ── Discord Features ───────────────────────────────────────────── -->
-        <div class="wp-card" style="margin-bottom:20px;">
-          <div class="wp-card-header">
-            <h2 class="wp-card-title"><i class="fab fa-discord" aria-hidden="true"></i> Discord Features</h2>
-            <p style="margin:0;font-size:13px;color:#646970;">Control Discord bot event listeners and integrations.</p>
-          </div>
-          <div class="wp-card-body">
-            <table class="form-table" style="width:100%;">
-              <tbody>
-                <tr>
-                  <th style="width:220px;padding:12px 10px;font-weight:600;font-size:13px;vertical-align:top;">Punishments</th>
-                  <td style="padding:12px 10px;">
-                    <label class="wp-toggle" style="display:flex;align-items:center;gap:10px;cursor:pointer;">
-                      <input type="checkbox" name="discord.punishments" <%= features.discord && features.discord.punishments ? 'checked' : '' %>>
-                      <span style="font-size:13px;">Enable Discord punishment commands and logging</span>
-                    </label>
-                  </td>
-                </tr>
-                <tr>
-                  <th style="padding:12px 10px;font-weight:600;font-size:13px;vertical-align:top;">General Kenobi</th>
-                  <td style="padding:12px 10px;">
-                    <label class="wp-toggle" style="display:flex;align-items:center;gap:10px;cursor:pointer;">
-                      <input type="checkbox" name="discord.events.generalKenobi" <%= features.discord && features.discord.events && features.discord.events.generalKenobi ? 'checked' : '' %>>
-                      <span style="font-size:13px;">Enable the "General Kenobi" greeting event listener</span>
-                    </label>
-                  </td>
-                </tr>
-                <tr>
-                  <th style="padding:12px 10px;font-weight:600;font-size:13px;vertical-align:top;">Boost Event</th>
-                  <td style="padding:12px 10px;">
-                    <label class="wp-toggle" style="display:flex;align-items:center;gap:10px;cursor:pointer;">
-                      <input type="checkbox" name="discord.events.guildMemberBoost" <%= features.discord && features.discord.events && features.discord.events.guildMemberBoost ? 'checked' : '' %>>
-                      <span style="font-size:13px;">Enable Discord Server Boost event handling</span>
-                    </label>
-                  </td>
-                </tr>
-                <tr>
-                  <th style="padding:12px 10px;font-weight:600;font-size:13px;vertical-align:top;">Member Verify</th>
-                  <td style="padding:12px 10px;">
-                    <label class="wp-toggle" style="display:flex;align-items:center;gap:10px;cursor:pointer;">
-                      <input type="checkbox" name="discord.events.guildMemberVerify" <%= features.discord && features.discord.events && features.discord.events.guildMemberVerify ? 'checked' : '' %>>
-                      <span style="font-size:13px;">Enable Discord member verification event</span>
-                    </label>
-                  </td>
-                </tr>
-                <tr>
-                  <th style="padding:12px 10px;font-weight:600;font-size:13px;vertical-align:top;">Nickname Check</th>
-                  <td style="padding:12px 10px;">
-                    <label class="wp-toggle" style="display:flex;align-items:center;gap:10px;cursor:pointer;">
-                      <input type="checkbox" name="discord.events.nicknameCheck" <%= features.discord && features.discord.events && features.discord.events.nicknameCheck ? 'checked' : '' %>>
-                      <span style="font-size:13px;">Enable automated Discord nickname compliance checking</span>
-                    </label>
-                  </td>
-                </tr>
-                <tr>
-                  <th style="padding:12px 10px;font-weight:600;font-size:13px;vertical-align:top;">Unverified Reminder</th>
-                  <td style="padding:12px 10px;">
-                    <label class="wp-toggle" style="display:flex;align-items:center;gap:10px;cursor:pointer;">
-                      <input type="checkbox" name="discord.events.unverifiedReminder" <%= features.discord && features.discord.events && features.discord.events.unverifiedReminder ? 'checked' : '' %>>
-                      <span style="font-size:13px;">Send reminders to Discord members who have not yet verified</span>
-                    </label>
-                  </td>
-                </tr>
-                <tr>
-                  <th style="padding:12px 10px;font-weight:600;font-size:13px;vertical-align:top;">IP Auto-Detect</th>
-                  <td style="padding:12px 10px;">
-                    <label class="wp-toggle" style="display:flex;align-items:center;gap:10px;cursor:pointer;">
-                      <input type="checkbox" name="discord.events.ipAutoDetect" <%= features.discord && features.discord.events && features.discord.events.ipAutoDetect ? 'checked' : '' %>>
-                      <span style="font-size:13px;">Enable automatic IP detection for Discord members</span>
-                    </label>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
+      <!-- ── Web Features ────────────────────────────────────────────────── -->
+      <div class="wp-card" style="margin-bottom:20px;">
+        <div class="wp-card-header">
+          <h2 class="wp-card-title"><i class="fas fa-globe" aria-hidden="true"></i> Web Features</h2>
         </div>
+        <div class="wp-card-body" style="padding:0;">
+          <table style="width:100%;border-collapse:collapse;font-size:13px;">
+            <tbody>
+              <tr style="border-bottom:1px solid #f0f0f1;">
+                <td style="padding:10px 16px;font-weight:600;width:200px;">Login</td>
+                <td style="padding:10px 16px;color:#646970;">Allow users to log in to the website</td>
+                <td style="padding:10px 16px;text-align:right;"><%- badge(features.web && features.web.login) %></td>
+              </tr>
+              <tr>
+                <td style="padding:10px 16px;font-weight:600;">Registration</td>
+                <td style="padding:10px 16px;color:#646970;">Allow new users to register an account</td>
+                <td style="padding:10px 16px;text-align:right;"><%- badge(features.web && features.web.register) %></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
 
-        <!-- ── Content Filters ────────────────────────────────────────────── -->
-        <div class="wp-card" style="margin-bottom:20px;">
-          <div class="wp-card-header">
-            <h2 class="wp-card-title"><i class="fas fa-filter" aria-hidden="true"></i> Content Filters</h2>
-            <p style="margin:0;font-size:13px;color:#646970;">Automated content moderation filters.</p>
-          </div>
-          <div class="wp-card-body">
-            <table class="form-table" style="width:100%;">
-              <tbody>
-                <tr>
-                  <th style="width:220px;padding:12px 10px;font-weight:600;font-size:13px;vertical-align:top;">Link Filter</th>
-                  <td style="padding:12px 10px;">
-                    <label class="wp-toggle" style="display:flex;align-items:center;gap:10px;cursor:pointer;">
-                      <input type="checkbox" name="filter.link" <%= features.filter && features.filter.link ? 'checked' : '' %>>
-                      <span style="font-size:13px;">Automatically detect and filter disallowed links</span>
-                    </label>
-                  </td>
+      <!-- ── Discord Features ───────────────────────────────────────────── -->
+      <div class="wp-card" style="margin-bottom:20px;">
+        <div class="wp-card-header">
+          <h2 class="wp-card-title"><i class="fab fa-discord" aria-hidden="true"></i> Discord Features</h2>
+        </div>
+        <div class="wp-card-body" style="padding:0;">
+          <table style="width:100%;border-collapse:collapse;font-size:13px;">
+            <tbody>
+              <% const discordFeatures = [
+                { label: 'Punishments',        desc: 'Discord punishment commands and logging',               value: features.discord && features.discord.punishments },
+                { label: 'General Kenobi',     desc: '"Hello there" / "General Kenobi" greeting listener',   value: features.discord && features.discord.events && features.discord.events.generalKenobi },
+                { label: 'Boost Event',        desc: 'Discord Server Boost event handling',                   value: features.discord && features.discord.events && features.discord.events.guildMemberBoost },
+                { label: 'Member Verify',      desc: 'Discord member verification event',                     value: features.discord && features.discord.events && features.discord.events.guildMemberVerify },
+                { label: 'Nickname Check',     desc: 'Automated Discord nickname compliance checking',        value: features.discord && features.discord.events && features.discord.events.nicknameCheck },
+                { label: 'Unverified Reminder',desc: 'Reminders to members who have not yet verified',       value: features.discord && features.discord.events && features.discord.events.unverifiedReminder },
+                { label: 'IP Auto-Detect',     desc: 'Automatic IP detection for Discord members',            value: features.discord && features.discord.events && features.discord.events.ipAutoDetect },
+              ]; %>
+              <% discordFeatures.forEach((f, i) => { %>
+                <tr style="border-bottom:<%= i < discordFeatures.length - 1 ? '1px solid #f0f0f1' : 'none' %>;">
+                  <td style="padding:10px 16px;font-weight:600;width:200px;"><%- f.label %></td>
+                  <td style="padding:10px 16px;color:#646970;"><%- f.desc %></td>
+                  <td style="padding:10px 16px;text-align:right;"><%- badge(f.value) %></td>
                 </tr>
-                <tr>
-                  <th style="padding:12px 10px;font-weight:600;font-size:13px;vertical-align:top;">Phrase Filter</th>
-                  <td style="padding:12px 10px;">
-                    <label class="wp-toggle" style="display:flex;align-items:center;gap:10px;cursor:pointer;">
-                      <input type="checkbox" name="filter.phrase" <%= features.filter && features.filter.phrase ? 'checked' : '' %>>
-                      <span style="font-size:13px;">Automatically detect and filter disallowed phrases</span>
-                    </label>
+              <% }) %>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- ── Content Filters ────────────────────────────────────────────── -->
+      <div class="wp-card" style="margin-bottom:20px;">
+        <div class="wp-card-header">
+          <h2 class="wp-card-title"><i class="fas fa-filter" aria-hidden="true"></i> Content Filters</h2>
+        </div>
+        <div class="wp-card-body" style="padding:0;">
+          <table style="width:100%;border-collapse:collapse;font-size:13px;">
+            <tbody>
+              <tr style="border-bottom:1px solid #f0f0f1;">
+                <td style="padding:10px 16px;font-weight:600;width:200px;">Link Filter</td>
+                <td style="padding:10px 16px;color:#646970;">Automatically detect and filter disallowed links</td>
+                <td style="padding:10px 16px;text-align:right;"><%- badge(features.filter && features.filter.link) %></td>
+              </tr>
+              <tr>
+                <td style="padding:10px 16px;font-weight:600;">Phrase Filter</td>
+                <td style="padding:10px 16px;color:#646970;">Automatically detect and filter disallowed phrases</td>
+                <td style="padding:10px 16px;text-align:right;"><%- badge(features.filter && features.filter.phrase) %></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- ── Social Media ───────────────────────────────────────────────── -->
+      <div class="wp-card" style="margin-bottom:30px;">
+        <div class="wp-card-header">
+          <h2 class="wp-card-title"><i class="fas fa-share-alt" aria-hidden="true"></i> Social Media Links</h2>
+        </div>
+        <div class="wp-card-body" style="padding:0;">
+          <table style="width:100%;border-collapse:collapse;font-size:13px;">
+            <tbody>
+              <% const socialFeatures = [
+                { label: 'Discord',   icon: 'fab fa-discord',   value: features.smDiscord },
+                { label: 'Facebook',  icon: 'fab fa-facebook',  value: features.smFacebook },
+                { label: 'Twitter / X', icon: 'fab fa-twitter', value: features.smTwitter },
+                { label: 'Instagram', icon: 'fab fa-instagram', value: features.smInstagram },
+                { label: 'Reddit',    icon: 'fab fa-reddit',    value: features.smReddit },
+                { label: 'Twitch',    icon: 'fab fa-twitch',    value: features.smTwitch },
+                { label: 'YouTube',   icon: 'fab fa-youtube',   value: features.smYouTube },
+                { label: 'LinkedIn',  icon: 'fab fa-linkedin',  value: features.smLinkedIn },
+                { label: 'TikTok',    icon: 'fab fa-tiktok',    value: features.smTikTok },
+              ]; %>
+              <% socialFeatures.forEach((f, i) => { %>
+                <tr style="border-bottom:<%= i < socialFeatures.length - 1 ? '1px solid #f0f0f1' : 'none' %>;">
+                  <td style="padding:10px 16px;font-weight:600;width:200px;">
+                    <i class="<%= f.icon %>" style="width:16px;text-align:center;margin-right:6px;"></i><%- f.label %>
                   </td>
+                  <td style="padding:10px 16px;color:#646970;">Show <%= f.label %> link on the site</td>
+                  <td style="padding:10px 16px;text-align:right;"><%- badge(f.value) %></td>
                 </tr>
-              </tbody>
-            </table>
-          </div>
+              <% }) %>
+            </tbody>
+          </table>
         </div>
-
-        <!-- ── Social Media ───────────────────────────────────────────────── -->
-        <div class="wp-card" style="margin-bottom:20px;">
-          <div class="wp-card-header">
-            <h2 class="wp-card-title"><i class="fas fa-share-alt" aria-hidden="true"></i> Social Media Links</h2>
-            <p style="margin:0;font-size:13px;color:#646970;">Control which social media platform links are shown on the site.</p>
-          </div>
-          <div class="wp-card-body">
-            <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px;padding:4px 0;">
-              <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px;">
-                <input type="checkbox" name="smDiscord" <%= features.smDiscord ? 'checked' : '' %>>
-                <i class="fab fa-discord" style="width:16px;text-align:center;"></i> Discord
-              </label>
-              <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px;">
-                <input type="checkbox" name="smFacebook" <%= features.smFacebook ? 'checked' : '' %>>
-                <i class="fab fa-facebook" style="width:16px;text-align:center;"></i> Facebook
-              </label>
-              <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px;">
-                <input type="checkbox" name="smTwitter" <%= features.smTwitter ? 'checked' : '' %>>
-                <i class="fab fa-twitter" style="width:16px;text-align:center;"></i> Twitter / X
-              </label>
-              <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px;">
-                <input type="checkbox" name="smInstagram" <%= features.smInstagram ? 'checked' : '' %>>
-                <i class="fab fa-instagram" style="width:16px;text-align:center;"></i> Instagram
-              </label>
-              <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px;">
-                <input type="checkbox" name="smReddit" <%= features.smReddit ? 'checked' : '' %>>
-                <i class="fab fa-reddit" style="width:16px;text-align:center;"></i> Reddit
-              </label>
-              <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px;">
-                <input type="checkbox" name="smTwitch" <%= features.smTwitch ? 'checked' : '' %>>
-                <i class="fab fa-twitch" style="width:16px;text-align:center;"></i> Twitch
-              </label>
-              <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px;">
-                <input type="checkbox" name="smYouTube" <%= features.smYouTube ? 'checked' : '' %>>
-                <i class="fab fa-youtube" style="width:16px;text-align:center;"></i> YouTube
-              </label>
-              <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px;">
-                <input type="checkbox" name="smLinkedIn" <%= features.smLinkedIn ? 'checked' : '' %>>
-                <i class="fab fa-linkedin" style="width:16px;text-align:center;"></i> LinkedIn
-              </label>
-              <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px;">
-                <input type="checkbox" name="smTikTok" <%= features.smTikTok ? 'checked' : '' %>>
-                <i class="fab fa-tiktok" style="width:16px;text-align:center;"></i> TikTok
-              </label>
-            </div>
-          </div>
-        </div>
-
-        <!-- ── Save ───────────────────────────────────────────────────────── -->
-        <div style="display:flex;gap:12px;align-items:center;padding-bottom:30px;">
-          <button type="submit" class="button-primary">
-            <i class="fas fa-save" aria-hidden="true"></i> Save Settings
-          </button>
-          <a href="/dashboard" class="button" style="text-decoration:none;">Cancel</a>
-        </div>
-
-      </form>
+      </div>
 
     </div><!-- /.wrap -->
   </div><!-- /#wpbody-content -->
