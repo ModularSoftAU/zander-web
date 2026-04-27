@@ -25,6 +25,7 @@ import {
   recreateTicketChannel,
 } from "../../controllers/supportTicketController.js";
 import { hasPermission as hasPermissionNode } from "../../lib/discord/permissions.mjs";
+import { luckpermsDb } from "../../controllers/databaseController.js";
 
 export default function supportDashboardRoutes(
   app,
@@ -609,20 +610,54 @@ export default function supportDashboardRoutes(
 
   async function getLuckPermRoles() {
     try {
-      const ranks = await new Promise((resolve, reject) => {
-        db.query(
-          "SELECT rankSlug, displayName, discordRoleId, rankBadgeColour, rankTextColour FROM ranks WHERE discordRoleId IS NOT NULL AND discordRoleId != ''",
+      const rows = await new Promise((resolve, reject) => {
+        luckpermsDb.query(
+          `SELECT
+            lpGroups.name AS rankSlug,
+            COALESCE(SUBSTRING_INDEX(lpGroupDisplayName.permission, '.', -1), lpGroups.name) AS displayName,
+            COALESCE(
+              CONCAT('#', SUBSTRING_INDEX(lpMetaBadgeColour.permission, '.', -1)),
+              CASE LEFT(SUBSTRING_INDEX(lpGroupPrefix.permission, '[&', -1), 1)
+                WHEN '0' THEN '#000000' WHEN '1' THEN '#0000AA' WHEN '2' THEN '#00AA00'
+                WHEN '3' THEN '#00AAAA' WHEN '4' THEN '#AA0000' WHEN '5' THEN '#AA00AA'
+                WHEN '6' THEN '#FFAA00' WHEN '7' THEN '#AAAAAA' WHEN '8' THEN '#555555'
+                WHEN '9' THEN '#5555FF' WHEN 'a' THEN '#55FF55' WHEN 'b' THEN '#55FFFF'
+                WHEN 'c' THEN '#FF5555' WHEN 'd' THEN '#FF55FF' WHEN 'e' THEN '#FFFF55'
+                WHEN 'g' THEN '#DDD605' ELSE '#FFFFFF'
+              END
+            ) AS rankBadgeColour,
+            COALESCE(
+              CONCAT('#', SUBSTRING_INDEX(lpMetaTextColour.permission, '.', -1)),
+              CASE WHEN LEFT(SUBSTRING_INDEX(lpGroupPrefix.permission, '[&', -1), 1)
+                IN ('0','1','2','3','4','5','8','9') THEN '#FFFFFF' ELSE '#000000' END
+            ) AS rankTextColour,
+            SUBSTRING_INDEX(lpMetaDiscordId.permission, '.', -1) AS discordRoleId
+          FROM luckperms_groups lpGroups
+            LEFT JOIN luckperms_group_permissions lpGroupDisplayName
+              ON lpGroups.name = lpGroupDisplayName.name
+              AND lpGroupDisplayName.permission LIKE 'displayname.%' AND lpGroupDisplayName.value = 1
+            LEFT JOIN luckperms_group_permissions lpGroupPrefix
+              ON lpGroups.name = lpGroupPrefix.name
+              AND lpGroupPrefix.permission LIKE 'prefix.%' AND lpGroupPrefix.value = 1
+            LEFT JOIN luckperms_group_permissions lpMetaBadgeColour
+              ON lpGroups.name = lpMetaBadgeColour.name
+              AND lpMetaBadgeColour.permission LIKE 'meta.rankbadgecolour.%' AND lpMetaBadgeColour.value = 1
+            LEFT JOIN luckperms_group_permissions lpMetaTextColour
+              ON lpGroups.name = lpMetaTextColour.name
+              AND lpMetaTextColour.permission LIKE 'meta.ranktextcolour.%' AND lpMetaTextColour.value = 1
+            LEFT JOIN luckperms_group_permissions lpMetaDiscordId
+              ON lpGroups.name = lpMetaDiscordId.name
+              AND lpMetaDiscordId.permission LIKE 'meta.discordid.%' AND lpMetaDiscordId.value = 1
+          HAVING discordRoleId IS NOT NULL AND discordRoleId != '' AND discordRoleId != 'NULL'
+          ORDER BY lpGroups.name ASC`,
           (error, results) => {
-            if (error) {
-              reject(error);
-            } else {
-              resolve(results);
-            }
+            if (error) reject(error);
+            else resolve(results || []);
           }
         );
       });
 
-      return ranks.map((rank) => ({
+      return rows.map((rank) => ({
         id: rank.discordRoleId,
         name: rank.displayName || rank.rankSlug,
         rankSlug: rank.rankSlug,
@@ -631,7 +666,7 @@ export default function supportDashboardRoutes(
       }));
     } catch (error) {
       console.error(
-        "getLuckPermRoles: failed to fetch rank Discord role mappings for support categories",
+        "getLuckPermRoles: failed to fetch rank Discord role mappings from LuckPerms",
         error
       );
       return [];
