@@ -139,9 +139,11 @@ export default function eventsApiRoute(app, _config, _db, features, _lang) {
     try {
       const result = await getEvents({
         status: req.query.status || null,
+        statuses: req.query.statuses ? req.query.statuses.split(",").filter(Boolean) : null,
         eventType: req.query.eventType || null,
         search: req.query.search || null,
         templateId: req.query.templateId ? parseInt(req.query.templateId) : null,
+        hidePast: req.query.hidePast === "true" || req.query.hidePast === "1",
         page: Math.max(parseInt(req.query.page || "1"), 1),
         limit: Math.min(parseInt(req.query.limit || "50"), 200),
       });

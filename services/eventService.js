@@ -92,18 +92,25 @@ export async function logEventAudit(eventId, actorId, actorName, action, details
  */
 export async function getEvents({
   status = null,
+  statuses = null,
   eventType = null,
   visibility = null,
   search = null,
   templateId = null,
   includeDeleted = false,
+  hidePast = false,
   page = 1,
   limit = 50,
 } = {}) {
   const where = {};
 
   if (!includeDeleted) where.deletedAt = null;
-  if (status) where.status = status;
+  if (statuses && statuses.length > 0) {
+    where.status = { in: statuses };
+  } else if (status) {
+    where.status = status;
+  }
+  if (hidePast) where.endAt = { gte: new Date() };
   if (eventType) where.eventType = eventType;
   if (visibility) where.visibility = visibility;
   if (templateId) where.templateId = templateId;
