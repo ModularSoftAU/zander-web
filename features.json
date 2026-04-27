@@ -28,6 +28,7 @@
     "register": true
   },
 
+  "support": true,
   "staffAuditReport": true,
   "watch": true,
   "vote": true,

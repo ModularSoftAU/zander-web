@@ -12,6 +12,7 @@ import dashboardSchedulerSiteRoute from "./scheduler.js";
 import dashboardWebPunishmentsRoute from "./webPunishments.js";
 import dashboardVotingRoute from "./voting.js";
 import dashboardEventsRoute from "./events.js";
+import dashboardSettingsRoute from "./settings.js";
 
 export default function dashboardSiteRoutes(
   app,
@@ -50,4 +51,5 @@ export default function dashboardSiteRoutes(
   dashboardWebPunishmentsRoute(app, client, fetch, config, db, features, lang);
   dashboardVotingRoute(app, fetch, config, db, features, lang);
   dashboardEventsRoute(app, fetch, config, db, features, lang);
+  dashboardSettingsRoute(app, config, features, lang);
 }
