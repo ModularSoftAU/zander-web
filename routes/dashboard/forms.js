@@ -3,6 +3,7 @@ import {
   isFeatureWebRouteEnabled,
   setBannerCookie,
 } from "../../api/common.js";
+import { adminViewData } from "../../admin/adminHelpers.js";
 import {
   getFormById,
   getAllForms,
@@ -81,6 +82,7 @@ export default function dashboardFormsSiteRoute(
           forms: formsWithCounts,
           features,
           req,
+          ...adminViewData(req, features),
         })
       );
     } catch (error) {
@@ -104,6 +106,7 @@ export default function dashboardFormsSiteRoute(
         blocks: [],
         features,
         req,
+        ...adminViewData(req, features),
       })
     );
   });
@@ -139,6 +142,7 @@ export default function dashboardFormsSiteRoute(
           blocks,
           features,
           req,
+          ...adminViewData(req, features),
         })
       );
     } catch (error) {
@@ -188,6 +192,7 @@ export default function dashboardFormsSiteRoute(
           moment,
           features,
           req,
+          ...adminViewData(req, features),
         })
       );
     } catch (error) {
@@ -231,6 +236,7 @@ export default function dashboardFormsSiteRoute(
           moment,
           features,
           req,
+          ...adminViewData(req, features),
         })
       );
     } catch (error) {
