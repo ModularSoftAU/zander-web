@@ -399,6 +399,36 @@ export async function getTemplatesDueForGeneration() {
 }
 
 /**
+ * Soft-delete template-generated events that are still in draft/pending_review
+ * and whose startAt has already passed. These are "unused" events that were
+ * auto-created but never promoted before their scheduled time.
+ *
+ * Returns the count of deleted events.
+ */
+export async function cleanupStaleTemplateEvents() {
+  const now = new Date();
+
+  const stale = await prisma.events.findMany({
+    where: {
+      templateId: { not: null },
+      status: { in: ["draft", "pending_review"] },
+      startAt: { lt: now },
+      deletedAt: null,
+    },
+    select: { eventId: true, title: true, templateId: true },
+  });
+
+  if (stale.length === 0) return 0;
+
+  await prisma.events.updateMany({
+    where: { eventId: { in: stale.map((e) => e.eventId) } },
+    data: { deletedAt: now },
+  });
+
+  return stale.length;
+}
+
+/**
  * Mark a template as having just generated a draft and set the next generation time.
  */
 export async function markTemplateGenerated(templateId, generatedAt = new Date()) {

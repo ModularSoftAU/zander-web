@@ -17,6 +17,7 @@ import {
 } from "../common.js";
 import { hasActiveWebBan } from "../../controllers/discordPunishmentController.js";
 import { checkRateLimit } from "../../lib/rateLimiter.mjs";
+import { punishmentsDb } from "../../controllers/databaseController.js";
 
 export default function userApiRoute(app, config, db, features, lang) {
   const baseEndpoint = "/api/user";
@@ -250,22 +251,82 @@ export default function userApiRoute(app, config, db, features, lang) {
         });
       }
 
-      const punishments = await new Promise((resolve, reject) => {
-        db.query(
-          `SELECT p.*, banner.username AS bannedByUsername, remover.username AS removedByUsername
-           FROM punishments p
-           LEFT JOIN users banner ON p.bannedByUserId = banner.userId
-           LEFT JOIN users remover ON p.removedByUserId = remover.userId
-           WHERE p.bannedUuid = ?
-           ORDER BY p.dateStart DESC
+      const normalizedUuid = resolvedUuid.replace(/-/g, "").toLowerCase();
+      const rawPunishments = await new Promise((resolve, reject) => {
+        punishmentsDb.query(
+          `SELECT litebans.id AS punishmentId,
+                  litebans.uuid AS bannedUuid,
+                  litebans.banned_by_uuid AS bannedByUuid,
+                  litebans.removed_by_uuid AS removedByUuid,
+                  litebans.type,
+                  litebans.active,
+                  litebans.silent,
+                  FROM_UNIXTIME(litebans.time / 1000) AS dateStart,
+                  FROM_UNIXTIME(NULLIF(litebans.until / 1000, 0)) AS dateEnd,
+                  litebans.removed_by_date AS dateRemoved,
+                  litebans.reason,
+                  litebans.removed_by_reason AS reasonRemoved,
+                  litebans.ip,
+                  litebans.ipban,
+                  litebans.ipban_wildcard AS ipBanWildcard
+           FROM (
+             SELECT id, uuid, ip, reason, banned_by_uuid, time,
+                    NULL AS until, NULL AS removed_by_uuid, NULL AS removed_by_reason,
+                    NULL AS removed_by_date, silent, ipban, ipban_wildcard, NULL AS active,
+                    'kick' AS type FROM litebans_kicks
+             UNION ALL
+             SELECT id, uuid, ip, reason, banned_by_uuid, time,
+                    until, removed_by_uuid, removed_by_reason, removed_by_date,
+                    silent, ipban, ipban_wildcard, active, 'ban' AS type FROM litebans_bans
+             UNION ALL
+             SELECT id, uuid, ip, reason, banned_by_uuid, time,
+                    until, removed_by_uuid, removed_by_reason, removed_by_date,
+                    silent, ipban, ipban_wildcard, active, 'mute' AS type FROM litebans_mutes
+             UNION ALL
+             SELECT id, uuid, ip, reason, banned_by_uuid, time,
+                    until, removed_by_uuid, removed_by_reason, removed_by_date,
+                    silent, ipban, ipban_wildcard, active, 'warning' AS type FROM litebans_warnings
+           ) AS litebans
+           WHERE REPLACE(litebans.uuid, '-', '') = ?
+           ORDER BY litebans.time DESC
            LIMIT 50`,
-          [resolvedUuid],
+          [normalizedUuid],
           (error, results) => {
             if (error) return reject(error);
             resolve(results || []);
           }
         );
       });
+
+      // Resolve banner/remover UUIDs → usernames from the main DB.
+      const actorUuids = [...new Set(
+        rawPunishments.flatMap((p) => [p.bannedByUuid, p.removedByUuid].filter(Boolean))
+      )];
+      let usernameByUuid = {};
+      if (actorUuids.length > 0) {
+        const placeholders = actorUuids.map(() => "REPLACE(uuid, '-', '') = ?").join(" OR ");
+        const normalized = actorUuids.map((u) => u.replace(/-/g, "").toLowerCase());
+        const usersRows = await new Promise((resolve, reject) => {
+          db.query(
+            `SELECT uuid, username FROM users WHERE ${placeholders}`,
+            normalized,
+            (err, rows) => { if (err) return reject(err); resolve(rows || []); }
+          );
+        });
+        for (const row of usersRows) {
+          usernameByUuid[row.uuid.replace(/-/g, "").toLowerCase()] = row.username;
+        }
+      }
+
+      const punishments = rawPunishments.map((p) => ({
+        ...p,
+        bannedByUsername: p.bannedByUuid
+          ? usernameByUuid[p.bannedByUuid.replace(/-/g, "").toLowerCase()] || null
+          : null,
+        removedByUsername: p.removedByUuid
+          ? usernameByUuid[p.removedByUuid.replace(/-/g, "").toLowerCase()] || null
+          : null,
+      }));
 
       return res.send({
         success: true,
