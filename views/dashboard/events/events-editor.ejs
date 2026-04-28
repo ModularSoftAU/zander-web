@@ -58,9 +58,11 @@
                                 <div class="col-md-6">
                                     <label class="form-label fw-semibold">Event Type</label>
                                     <select class="form-select" name="eventType">
-                                        <option value="once" <%= (ev.eventType || 'once') === 'once' ? 'selected' : '' %>>One-off Event</option>
-                                        <option value="recurring" <%= ev.eventType === 'recurring' ? 'selected' : '' %>>Recurring Event</option>
+                                        <option value="once" selected>One-off Event</option>
                                     </select>
+                                    <% if (ev.templateId) { %>
+                                    <small class="text-muted">This event was generated from a <a href="/dashboard/events/templates/edit?templateId=<%= ev.templateId %>">template</a>.</small>
+                                    <% } %>
                                 </div>
                                 <div class="col-md-6">
                                     <label class="form-label fw-semibold">Visibility</label>
