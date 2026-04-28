@@ -98,6 +98,7 @@
                                             <thead class="table-light">
                                                 <tr>
                                                     <th scope="col">Punishment ID</th>
+                                                    <th scope="col">Date</th>
                                                     <th scope="col">Punished By</th>
                                                     <th scope="col">Type</th>
                                                     <th scope="col">Reason</th>
@@ -135,6 +136,7 @@
                                                     <% } %>
                                                     <tr class="<%= isAppealed ? 'table-warning' : '' %>">
                                                         <th scope="row"><%= punishmentId %></th>
+                                                        <td><%= moment(punishment.dateStart).isValid() ? moment(punishment.dateStart).format('DD MMM YYYY') : '—' %></td>
                                                         <td><%= punishedBy %></td>
                                                         <td>
                                                             <span class="badge <%= typeBadge %> text-uppercase"><%= typeLabel %></span>
