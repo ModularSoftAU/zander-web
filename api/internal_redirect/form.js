@@ -2,7 +2,7 @@ import { hasPermission, postAPIRequest, setBannerCookie } from "../common.js";
 import { hasPermission as hasPermissionNode } from "../../lib/discord/permissions.mjs";
 import { getFormById } from "../../controllers/formController.js";
 
-export default function formRedirectRoute(app, config, lang) {
+export default function formRedirectRoute(app, config, lang, features) {
   const baseEndpoint = "/redirect/forms";
 
   const userHasFormPermission = (slug, permissions = []) => {
@@ -31,7 +31,7 @@ export default function formRedirectRoute(app, config, lang) {
 
   // ─── Create form ───
   app.post(baseEndpoint + "/create", async function (req, res) {
-    if (!(await hasPermission("zander.web.forms", req, res))) return;
+    if (!(await hasPermission("zander.web.forms", req, res, features))) return;
 
     req.body.actioningUser = req.session.user.userId;
 
@@ -63,7 +63,7 @@ export default function formRedirectRoute(app, config, lang) {
 
   // ─── Edit form ───
   app.post(baseEndpoint + "/edit", async function (req, res) {
-    if (!(await hasPermission("zander.web.forms", req, res))) return;
+    if (!(await hasPermission("zander.web.forms", req, res, features))) return;
     if (!(await requireFormPermissionById(req.body.formId, req, res))) return;
 
     req.body.actioningUser = req.session.user.userId;
@@ -94,7 +94,7 @@ export default function formRedirectRoute(app, config, lang) {
 
   // ─── Delete form ───
   app.post(baseEndpoint + "/delete", async function (req, res) {
-    if (!(await hasPermission("zander.web.forms", req, res))) return;
+    if (!(await hasPermission("zander.web.forms", req, res, features))) return;
     if (!(await requireFormPermissionById(req.body.formId, req, res))) return;
 
     req.body.actioningUser = req.session.user.userId;
@@ -112,7 +112,7 @@ export default function formRedirectRoute(app, config, lang) {
 
   // ─── Publish / unpublish form ───
   app.post(baseEndpoint + "/publish", async function (req, res) {
-    if (!(await hasPermission("zander.web.forms", req, res))) return;
+    if (!(await hasPermission("zander.web.forms", req, res, features))) return;
     if (!(await requireFormPermissionById(req.body.formId, req, res))) return;
 
     req.body.actioningUser = req.session.user.userId;
@@ -130,7 +130,7 @@ export default function formRedirectRoute(app, config, lang) {
 
   // ─── Update response status ───
   app.post(baseEndpoint + "/response/status", async function (req, res) {
-    if (!(await hasPermission("zander.web.forms", req, res))) return;
+    if (!(await hasPermission("zander.web.forms", req, res, features))) return;
     if (!(await requireFormPermissionById(req.body.formId, req, res))) return;
 
     req.body.actioningUser = req.session.user.userId;

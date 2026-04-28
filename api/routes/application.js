@@ -13,21 +13,34 @@ export default function applicationApiRoute(app, config, db, features, lang) {
     const applicationId = optional(req.query, "id");
 
     try {
-      const results = await new Promise((resolve, reject) => {
-        let dbQuery;
-        let params = [];
-        if (applicationId) {
-          dbQuery = `SELECT a.*, f.name as linkedFormName, f.slug as linkedFormSlug, f.status as linkedFormStatus FROM applications a LEFT JOIN forms f ON a.linkedFormId = f.formId WHERE a.applicationId=?;`;
-          params = [applicationId];
-        } else {
-          dbQuery = `SELECT a.*, f.name as linkedFormName, f.slug as linkedFormSlug, f.status as linkedFormStatus FROM applications a LEFT JOIN forms f ON a.linkedFormId = f.formId ORDER BY a.position ASC;`;
-        }
-
-        db.query(dbQuery, params, (error, results) => {
-          if (error) return reject(error);
-          resolve(results);
+      let results;
+      try {
+        results = await new Promise((resolve, reject) => {
+          let dbQuery;
+          let params = [];
+          if (applicationId) {
+            dbQuery = `SELECT a.*, f.name as linkedFormName, f.slug as linkedFormSlug, f.status as linkedFormStatus FROM applications a LEFT JOIN forms f ON a.linkedFormId = f.formId WHERE a.applicationId=?;`;
+            params = [applicationId];
+          } else {
+            dbQuery = `SELECT a.*, f.name as linkedFormName, f.slug as linkedFormSlug, f.status as linkedFormStatus FROM applications a LEFT JOIN forms f ON a.linkedFormId = f.formId ORDER BY a.position ASC;`;
+          }
+          db.query(dbQuery, params, (error, results) => {
+            if (error) return reject(error);
+            resolve(results);
+          });
         });
-      });
+      } catch (joinError) {
+        results = await new Promise((resolve, reject) => {
+          const dbQuery = applicationId
+            ? `SELECT * FROM applications WHERE applicationId=?;`
+            : `SELECT * FROM applications ORDER BY position ASC;`;
+          const params = applicationId ? [applicationId] : [];
+          db.query(dbQuery, params, (error, results) => {
+            if (error) return reject(error);
+            resolve(results);
+          });
+        });
+      }
 
       if (!results || !results.length) {
         return res.send({

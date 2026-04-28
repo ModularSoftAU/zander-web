@@ -1,10 +1,8 @@
 import {
-  getGlobalImage,
   hasPermission,
   isFeatureWebRouteEnabled,
   setBannerCookie,
 } from "../../api/common.js";
-import { getWebAnnouncement } from "../../controllers/announcementController.js";
 import {
   getFormById,
   getAllForms,
@@ -32,22 +30,7 @@ export default function dashboardFormsSiteRoute(
   features,
   lang
 ) {
-  const parseApiResponse = async (response) => {
-    try {
-      const text = await response.text();
-      if (!text) {
-        return { success: false, message: "Empty response from API." };
-      }
-      return JSON.parse(text);
-    } catch (error) {
-      return { success: false, message: "Invalid response from API." };
-    }
-  };
-
   // ─── Per-form permission helpers ───
-  // Permission node: zander.web.forms.<slug>
-  // Wildcard node:   zander.web.forms.*
-
   const userHasFormPermission = (slug, permissions = []) => {
     if (!slug) return false;
     const formNode = `zander.web.forms.${slug}`;
@@ -57,17 +40,11 @@ export default function dashboardFormsSiteRoute(
     );
   };
 
-  const requireFormPermission = async (form, req, res) => {
+  const requireFormPermission = (form, req, res) => {
     if (!userHasFormPermission(form.slug, req.session.user?.permissions)) {
-      return res.view("session/noPermission", {
-        pageTitle: "Access Restricted",
-        config,
-        req,
-        res,
-        features,
-        globalImage: await getGlobalImage(),
-        announcementWeb: await getWebAnnouncement(),
-      });
+      setBannerCookie("danger", "You do not have permission to manage this form.", res);
+      res.redirect("/dashboard/forms");
+      return false;
     }
     return true;
   };
@@ -80,8 +57,8 @@ export default function dashboardFormsSiteRoute(
 
   // ─── Forms list ───
   app.get("/dashboard/forms", async function (req, res) {
-    if (!isFeatureWebRouteEnabled(features.forms, req, res, features)) return;
-    if (!(await hasPermission("zander.web.forms", req, res, features))) return;
+    if (!await isFeatureWebRouteEnabled(app, features.forms, req, res, features)) return;
+    if (!await hasPermission("zander.web.forms", req, res, features)) return;
 
     try {
       const allForms = await getAllForms();
@@ -90,7 +67,6 @@ export default function dashboardFormsSiteRoute(
         req.session.user.permissions
       );
 
-      // Get response counts for each form
       const formsWithCounts = await Promise.all(
         forms.map(async (form) => {
           const counts = await getFormResponseCount(form.formId);
@@ -98,52 +74,44 @@ export default function dashboardFormsSiteRoute(
         })
       );
 
-      return res.view("dashboard/forms/form-list", {
-        pageTitle: "Dashboard - Forms",
-        config,
-        forms: formsWithCounts,
-        features,
-        req,
-        globalImage: await getGlobalImage(),
-        announcementWeb: await getWebAnnouncement(),
-      });
+      res.header("content-type", "text/html; charset=utf-8").send(
+        await app.view("dashboard/forms/form-list", {
+          pageTitle: "Dashboard - Forms",
+          config,
+          forms: formsWithCounts,
+          features,
+          req,
+        })
+      );
     } catch (error) {
       console.error("Error loading forms list:", error);
-      return res.view("session/error", {
-        pageTitle: "Error",
-        pageDescription: "Error loading forms",
-        config,
-        req,
-        error,
-        features,
-        globalImage: await getGlobalImage(),
-        announcementWeb: await getWebAnnouncement(),
-      });
+      setBannerCookie("danger", "Error loading forms.", res);
+      return res.redirect("/dashboard");
     }
   });
 
   // ─── Create form page ───
   app.get("/dashboard/forms/create", async function (req, res) {
-    if (!isFeatureWebRouteEnabled(features.forms, req, res, features)) return;
-    if (!(await hasPermission("zander.web.forms", req, res, features))) return;
+    if (!await isFeatureWebRouteEnabled(app, features.forms, req, res, features)) return;
+    if (!await hasPermission("zander.web.forms", req, res, features)) return;
 
-    return res.view("dashboard/forms/form-editor", {
-      pageTitle: "Dashboard - Create Form",
-      config,
-      type: "create",
-      form: null,
-      blocks: [],
-      features,
-      req,
-      globalImage: await getGlobalImage(),
-      announcementWeb: await getWebAnnouncement(),
-    });
+    res.header("content-type", "text/html; charset=utf-8").send(
+      await app.view("dashboard/forms/form-editor", {
+        pageTitle: "Dashboard - Create Form",
+        config,
+        type: "create",
+        form: null,
+        blocks: [],
+        features,
+        req,
+      })
+    );
   });
 
   // ─── Edit form page ───
   app.get("/dashboard/forms/edit", async function (req, res) {
-    if (!isFeatureWebRouteEnabled(features.forms, req, res, features)) return;
-    if (!(await hasPermission("zander.web.forms", req, res, features))) return;
+    if (!await isFeatureWebRouteEnabled(app, features.forms, req, res, features)) return;
+    if (!await hasPermission("zander.web.forms", req, res, features)) return;
 
     const formId = req.query.formId;
     if (!formId) {
@@ -158,22 +126,21 @@ export default function dashboardFormsSiteRoute(
         return res.redirect("/dashboard/forms");
       }
 
-      const hasFormAccess = await requireFormPermission(form, req, res);
-      if (hasFormAccess !== true) return hasFormAccess;
+      if (!requireFormPermission(form, req, res)) return;
 
       const blocks = await getFormBlocks(formId);
 
-      return res.view("dashboard/forms/form-editor", {
-        pageTitle: "Dashboard - Edit Form",
-        config,
-        type: "edit",
-        form,
-        blocks,
-        features,
-        req,
-        globalImage: await getGlobalImage(),
-        announcementWeb: await getWebAnnouncement(),
-      });
+      res.header("content-type", "text/html; charset=utf-8").send(
+        await app.view("dashboard/forms/form-editor", {
+          pageTitle: "Dashboard - Edit Form",
+          config,
+          type: "edit",
+          form,
+          blocks,
+          features,
+          req,
+        })
+      );
     } catch (error) {
       console.error("Error loading form editor:", error);
       setBannerCookie("danger", "Error loading form.", res);
@@ -183,8 +150,8 @@ export default function dashboardFormsSiteRoute(
 
   // ─── Responses inbox for a form ───
   app.get("/dashboard/forms/:formId/responses", async function (req, res) {
-    if (!isFeatureWebRouteEnabled(features.forms, req, res, features)) return;
-    if (!(await hasPermission("zander.web.forms", req, res, features))) return;
+    if (!await isFeatureWebRouteEnabled(app, features.forms, req, res, features)) return;
+    if (!await hasPermission("zander.web.forms", req, res, features)) return;
 
     const formId = req.params.formId;
 
@@ -195,8 +162,7 @@ export default function dashboardFormsSiteRoute(
         return res.redirect("/dashboard/forms");
       }
 
-      const hasFormAccess = await requireFormPermission(form, req, res);
-      if (hasFormAccess !== true) return hasFormAccess;
+      if (!requireFormPermission(form, req, res)) return;
 
       const statusFilter = req.query.status || null;
       const page = Math.max(parseInt(req.query.page, 10) || 1, 1);
@@ -209,40 +175,32 @@ export default function dashboardFormsSiteRoute(
       });
       const counts = await getFormResponseCount(formId);
 
-      return res.view("dashboard/forms/response-list", {
-        pageTitle: `Dashboard - ${form.name} Responses`,
-        config,
-        form,
-        responses,
-        counts,
-        statusFilter,
-        page,
-        limit,
-        moment,
-        features,
-        req,
-        globalImage: await getGlobalImage(),
-        announcementWeb: await getWebAnnouncement(),
-      });
+      res.header("content-type", "text/html; charset=utf-8").send(
+        await app.view("dashboard/forms/response-list", {
+          pageTitle: `Dashboard - ${form.name} Responses`,
+          config,
+          form,
+          responses,
+          counts,
+          statusFilter,
+          page,
+          limit,
+          moment,
+          features,
+          req,
+        })
+      );
     } catch (error) {
       console.error("Error loading responses:", error);
-      return res.view("session/error", {
-        pageTitle: "Error",
-        pageDescription: "Error loading responses",
-        config,
-        req,
-        error,
-        features,
-        globalImage: await getGlobalImage(),
-        announcementWeb: await getWebAnnouncement(),
-      });
+      setBannerCookie("danger", "Error loading responses.", res);
+      return res.redirect("/dashboard/forms");
     }
   });
 
   // ─── View single response ───
   app.get("/dashboard/forms/:formId/responses/:responseId", async function (req, res) {
-    if (!isFeatureWebRouteEnabled(features.forms, req, res, features)) return;
-    if (!(await hasPermission("zander.web.forms", req, res, features))) return;
+    if (!await isFeatureWebRouteEnabled(app, features.forms, req, res, features)) return;
+    if (!await hasPermission("zander.web.forms", req, res, features)) return;
 
     try {
       const form = await getFormById(req.params.formId);
@@ -251,8 +209,7 @@ export default function dashboardFormsSiteRoute(
         return res.redirect("/dashboard/forms");
       }
 
-      const hasFormAccess = await requireFormPermission(form, req, res);
-      if (hasFormAccess !== true) return hasFormAccess;
+      if (!requireFormPermission(form, req, res)) return;
 
       const response = await getFormResponseById(req.params.responseId);
       if (!response || response.formId !== parseInt(form.formId)) {
@@ -263,38 +220,30 @@ export default function dashboardFormsSiteRoute(
       const blocks = await getFormBlocks(form.formId);
       const formattedAnswers = formatResponseForDisplay(blocks, response.answers);
 
-      return res.view("dashboard/forms/response-detail", {
-        pageTitle: `Dashboard - Response #${response.responseId}`,
-        config,
-        form,
-        response,
-        blocks,
-        formattedAnswers,
-        moment,
-        features,
-        req,
-        globalImage: await getGlobalImage(),
-        announcementWeb: await getWebAnnouncement(),
-      });
+      res.header("content-type", "text/html; charset=utf-8").send(
+        await app.view("dashboard/forms/response-detail", {
+          pageTitle: `Dashboard - Response #${response.responseId}`,
+          config,
+          form,
+          response,
+          blocks,
+          formattedAnswers,
+          moment,
+          features,
+          req,
+        })
+      );
     } catch (error) {
       console.error("Error loading response detail:", error);
-      return res.view("session/error", {
-        pageTitle: "Error",
-        pageDescription: "Error loading response",
-        config,
-        req,
-        error,
-        features,
-        globalImage: await getGlobalImage(),
-        announcementWeb: await getWebAnnouncement(),
-      });
+      setBannerCookie("danger", "Error loading response.", res);
+      return res.redirect("/dashboard/forms");
     }
   });
 
   // ─── Convert response to ticket ───
   app.post("/dashboard/forms/:formId/responses/:responseId/convert-to-ticket", async function (req, res) {
-    if (!isFeatureWebRouteEnabled(features.forms, req, res, features)) return;
-    if (!(await hasPermission("zander.web.forms", req, res, features))) return;
+    if (!await isFeatureWebRouteEnabled(app, features.forms, req, res, features)) return;
+    if (!await hasPermission("zander.web.forms", req, res, features)) return;
 
     try {
       const form = await getFormById(req.params.formId);
@@ -303,8 +252,7 @@ export default function dashboardFormsSiteRoute(
         return res.redirect("/dashboard/forms");
       }
 
-      const hasFormAccess = await requireFormPermission(form, req, res);
-      if (hasFormAccess !== true) return hasFormAccess;
+      if (!requireFormPermission(form, req, res)) return;
 
       const response = await getFormResponseById(req.params.responseId);
       if (!response || response.formId !== parseInt(form.formId)) {
@@ -317,13 +265,10 @@ export default function dashboardFormsSiteRoute(
         return res.redirect(`/dashboard/forms/${form.formId}/responses/${response.responseId}`);
       }
 
-      // Get or create a category for form-converted tickets
       const categoryId = await ensureUncategorisedCategory();
-
       const ticketTitle = `Form Submission: ${form.name}`;
       const ticketUserId = response.submittedByUserId || req.session.user.userId;
 
-      // Build ticket body from formatted answers
       const blocks = await getFormBlocks(form.formId);
       const formattedAnswers = formatResponseForDisplay(blocks, response.answers);
       let ticketBody = `**Converted from Form Response #${response.responseId}**\n`;
@@ -335,7 +280,6 @@ export default function dashboardFormsSiteRoute(
         ticketBody += `**${answer.label}**\n${answer.value}\n\n`;
       }
 
-      // Create ticket
       const ticket = await createSupportTicket(
         client,
         ticketUserId,
@@ -349,7 +293,6 @@ export default function dashboardFormsSiteRoute(
 
       const ticketId = ticket.ticketId;
 
-      // Add the form content as the first message
       await createSupportTicketMessage(
         client,
         ticketId,
@@ -358,7 +301,6 @@ export default function dashboardFormsSiteRoute(
         "web"
       );
 
-      // Add conversion note
       await createSupportTicketMessage(
         client,
         ticketId,
@@ -367,7 +309,6 @@ export default function dashboardFormsSiteRoute(
         "web"
       );
 
-      // Update response status
       await setResponseConvertedToTicket(response.responseId, ticketId, req.session.user.userId);
 
       setBannerCookie("success", `Response converted to Ticket #${ticketId}.`, res);

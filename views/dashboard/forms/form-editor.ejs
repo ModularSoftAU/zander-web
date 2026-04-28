@@ -1,165 +1,153 @@
-<%- include("../../modules/header.ejs", {
-    pageTitle: pageTitle,
-    pageDescription: type === 'create' ? 'Create a new form' : 'Edit form'
-}) %>
+<%- include("../../admin/_head.ejs", { pageTitle }) %>
+<%- include("../../admin/_topbar.ejs") %>
+<%- include("../../admin/_sidebar.ejs") %>
 
-<%- include("../../modules/navigationBar.ejs") %>
+<div id="wpcontent">
+  <div id="wpbody-content">
+    <div class="wrap">
+      <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+        <h1 class="h2"><%= type === 'create' ? 'Create' : 'Edit' %> Form</h1>
+      </div>
+      <%- include("../../admin/_notices.ejs") %>
 
-<%- include("../../partials/miniHeader.ejs", {
-  headerTitle: type === 'create' ? 'Create Form' : 'Edit Form',
-  backgroundImage: globalImage
-}) %>
+      <form method="post" action="<%= process.env.siteAddress %>/redirect/forms/<%= type === 'create' ? 'create' : 'edit' %>" id="formEditorForm">
+        <% if (type === 'edit' && form) { %>
+          <input type="hidden" name="formId" value="<%= form.formId %>">
+        <% } %>
 
-<%- include("../../modules/dashboard/dashboard-header.ejs") %>
-
-<div class="container my-4">
-    <div class="row g-4">
-        <div class="col-lg-3">
-            <%- include("../../modules/dashboard/dashboard-sidebar.ejs") %>
-        </div>
-        <main class="col-lg-9">
-            <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
-                <h1 class="h2"><%= type === 'create' ? 'Create' : 'Edit' %> Form</h1>
+        <!-- Form Settings -->
+        <div class="card mb-4">
+          <div class="card-header"><h5 class="mb-0">Form Settings</h5></div>
+          <div class="card-body">
+            <div class="row">
+              <div class="mb-3 col-md-6">
+                <label for="name" class="form-label">Form Name</label>
+                <input type="text" class="form-control" id="name" name="name"
+                  value="<%= form ? form.name : '' %>" required>
+              </div>
+              <div class="mb-3 col-md-6">
+                <label for="slug" class="form-label">Slug (URL path)</label>
+                <div class="input-group">
+                  <span class="input-group-text">/forms/</span>
+                  <input type="text" class="form-control" id="slug" name="slug"
+                    value="<%= form ? form.slug : '' %>"
+                    pattern="[a-z0-9\-]+" title="Only lowercase letters, numbers, and hyphens">
+                </div>
+                <small class="form-text text-muted">Leave blank to auto-generate from name.</small>
+              </div>
             </div>
 
-            <form method="post" action="<%= process.env.siteAddress %>/redirect/forms/<%= type === 'create' ? 'create' : 'edit' %>" id="formEditorForm">
-                <% if (type === 'edit' && form) { %>
-                    <input type="hidden" name="formId" value="<%= form.formId %>">
-                <% } %>
-
-                <!-- Form Settings -->
-                <div class="card mb-4">
-                    <div class="card-header"><h5 class="mb-0">Form Settings</h5></div>
-                    <div class="card-body">
-                        <div class="row">
-                            <div class="mb-3 col-md-6">
-                                <label for="name" class="form-label">Form Name</label>
-                                <input type="text" class="form-control" id="name" name="name"
-                                    value="<%= form ? form.name : '' %>" required>
-                            </div>
-                            <div class="mb-3 col-md-6">
-                                <label for="slug" class="form-label">Slug (URL path)</label>
-                                <div class="input-group">
-                                    <span class="input-group-text">/forms/</span>
-                                    <input type="text" class="form-control" id="slug" name="slug"
-                                        value="<%= form ? form.slug : '' %>"
-                                        pattern="[a-z0-9\-]+" title="Only lowercase letters, numbers, and hyphens">
-                                </div>
-                                <small class="form-text text-muted">Leave blank to auto-generate from name.</small>
-                            </div>
-                        </div>
-
-                        <div class="row">
-                            <div class="mb-3 col-md-4">
-                                <label for="status" class="form-label">Status</label>
-                                <select class="form-select" id="status" name="status">
-                                    <option value="draft" <%= form && form.status === 'draft' ? 'selected' : '' %>>Draft</option>
-                                    <option value="published" <%= form && form.status === 'published' ? 'selected' : '' %>>Published</option>
-                                    <option value="archived" <%= form && form.status === 'archived' ? 'selected' : '' %>>Archived</option>
-                                </select>
-                            </div>
-                            <div class="mb-3 col-md-4">
-                                <label class="form-label d-block">Options</label>
-                                <div class="form-check">
-                                    <input class="form-check-input" type="checkbox" id="requireLogin" name="requireLogin"
-                                        <%= (!form || form.requireLogin) ? 'checked' : '' %>>
-                                    <label class="form-check-label" for="requireLogin">Require login to submit</label>
-                                </div>
-                                <div class="form-check">
-                                    <input class="form-check-input" type="checkbox" id="submitterCanView" name="submitterCanView"
-                                        <%= (!form || form.submitterCanView) ? 'checked' : '' %>>
-                                    <label class="form-check-label" for="submitterCanView">Submitter can view their response</label>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+            <div class="row">
+              <div class="mb-3 col-md-4">
+                <label for="status" class="form-label">Status</label>
+                <select class="form-select" id="status" name="status">
+                  <option value="draft" <%= form && form.status === 'draft' ? 'selected' : '' %>>Draft</option>
+                  <option value="published" <%= form && form.status === 'published' ? 'selected' : '' %>>Published</option>
+                  <option value="archived" <%= form && form.status === 'archived' ? 'selected' : '' %>>Archived</option>
+                </select>
+              </div>
+              <div class="mb-3 col-md-4">
+                <label class="form-label d-block">Options</label>
+                <div class="form-check">
+                  <input class="form-check-input" type="checkbox" id="requireLogin" name="requireLogin"
+                    <%= (!form || form.requireLogin) ? 'checked' : '' %>>
+                  <label class="form-check-label" for="requireLogin">Require login to submit</label>
                 </div>
-
-                <!-- Discord Settings -->
-                <div class="card mb-4">
-                    <div class="card-header"><h5 class="mb-0">Discord Delivery</h5></div>
-                    <div class="card-body">
-                        <div class="row">
-                            <div class="mb-3 col-md-6">
-                                <label for="discordWebhookUrl" class="form-label">Webhook URL</label>
-                                <input type="url" class="form-control" id="discordWebhookUrl" name="discordWebhookUrl"
-                                    value="<%= form ? (form.discordWebhookUrl || '') : '' %>"
-                                    placeholder="https://discord.com/api/webhooks/...">
-                                <div class="form-check mt-2">
-                                    <input class="form-check-input" type="checkbox" id="webhookEnabled" name="webhookEnabled"
-                                        <%= form && form.webhookEnabled ? 'checked' : '' %>>
-                                    <label class="form-check-label" for="webhookEnabled">Enable webhook notifications</label>
-                                </div>
-                            </div>
-                            <div class="mb-3 col-md-6">
-                                <label for="discordForumChannelId" class="form-label">Forum Channel ID</label>
-                                <input type="text" class="form-control" id="discordForumChannelId" name="discordForumChannelId"
-                                    value="<%= form ? (form.discordForumChannelId || '') : '' %>"
-                                    placeholder="Channel ID">
-                                <div class="form-check mt-2">
-                                    <input class="form-check-input" type="checkbox" id="postToForumEnabled" name="postToForumEnabled"
-                                        <%= form && form.postToForumEnabled ? 'checked' : '' %>>
-                                    <label class="form-check-label" for="postToForumEnabled">Enable forum post creation (via bot)</label>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+                <div class="form-check">
+                  <input class="form-check-input" type="checkbox" id="submitterCanView" name="submitterCanView"
+                    <%= (!form || form.submitterCanView) ? 'checked' : '' %>>
+                  <label class="form-check-label" for="submitterCanView">Submitter can view their response</label>
                 </div>
+              </div>
+            </div>
+          </div>
+        </div>
 
-                <!-- Form Builder -->
-                <div class="card mb-4">
-                    <div class="card-header d-flex justify-content-between align-items-center">
-                        <h5 class="mb-0">Form Blocks</h5>
-                        <div class="dropdown">
-                            <button class="btn btn-sm btn-primary dropdown-toggle" type="button" data-bs-toggle="dropdown">
-                                <i class="fas fa-plus me-1"></i> Add Block
-                            </button>
-                            <ul class="dropdown-menu">
-                                <li class="dropdown-header">Questions</li>
-                                <li><a class="dropdown-item" href="#" onclick="addBlock('short_answer'); return false;">Short Answer</a></li>
-                                <li><a class="dropdown-item" href="#" onclick="addBlock('paragraph'); return false;">Paragraph</a></li>
-                                <li><a class="dropdown-item" href="#" onclick="addBlock('multiple_choice'); return false;">Multiple Choice</a></li>
-                                <li><a class="dropdown-item" href="#" onclick="addBlock('checkboxes'); return false;">Checkboxes</a></li>
-                                <li><a class="dropdown-item" href="#" onclick="addBlock('dropdown'); return false;">Dropdown</a></li>
-                                <li><a class="dropdown-item" href="#" onclick="addBlock('linear_scale'); return false;">Linear Scale</a></li>
-                                <li><hr class="dropdown-divider"></li>
-                                <li class="dropdown-header">Layout</li>
-                                <li><a class="dropdown-item" href="#" onclick="addBlock('title_description'); return false;">Title & Description</a></li>
-                                <li><a class="dropdown-item" href="#" onclick="addBlock('section_break'); return false;">Section Break</a></li>
-                            </ul>
-                        </div>
-                    </div>
-                    <div class="card-body" id="blocksContainer">
-                        <div id="emptyBlocksMessage" class="text-center py-4 text-muted" style="display: none;">
-                            <i class="fas fa-puzzle-piece" style="font-size: 2rem;"></i>
-                            <p class="mt-2">No blocks added yet. Use "Add Block" to start building your form.</p>
-                        </div>
-                        <!-- Blocks will be rendered here by JavaScript -->
-                    </div>
+        <!-- Discord Settings -->
+        <div class="card mb-4">
+          <div class="card-header"><h5 class="mb-0">Discord Delivery</h5></div>
+          <div class="card-body">
+            <div class="row">
+              <div class="mb-3 col-md-6">
+                <label for="discordWebhookUrl" class="form-label">Webhook URL</label>
+                <input type="url" class="form-control" id="discordWebhookUrl" name="discordWebhookUrl"
+                  value="<%= form ? (form.discordWebhookUrl || '') : '' %>"
+                  placeholder="https://discord.com/api/webhooks/...">
+                <div class="form-check mt-2">
+                  <input class="form-check-input" type="checkbox" id="webhookEnabled" name="webhookEnabled"
+                    <%= form && form.webhookEnabled ? 'checked' : '' %>>
+                  <label class="form-check-label" for="webhookEnabled">Enable webhook notifications</label>
                 </div>
-
-                <!-- Hidden field for blocks JSON -->
-                <input type="hidden" name="blocksJson" id="blocksJson" value="">
-
-                <div class="d-flex gap-2">
-                    <% if (type === 'create') { %>
-                        <button type="submit" class="btn btn-primary"><i class="fas fa-plus me-1"></i> Create Form</button>
-                    <% } else { %>
-                        <button type="submit" class="btn btn-warning"><i class="fas fa-save me-1"></i> Save Form</button>
-                    <% } %>
-                    <a href="/dashboard/forms" class="btn btn-outline-secondary">Cancel</a>
+              </div>
+              <div class="mb-3 col-md-6">
+                <label for="discordForumChannelId" class="form-label">Forum Channel ID</label>
+                <input type="text" class="form-control" id="discordForumChannelId" name="discordForumChannelId"
+                  value="<%= form ? (form.discordForumChannelId || '') : '' %>"
+                  placeholder="Channel ID">
+                <div class="form-check mt-2">
+                  <input class="form-check-input" type="checkbox" id="postToForumEnabled" name="postToForumEnabled"
+                    <%= form && form.postToForumEnabled ? 'checked' : '' %>>
+                  <label class="form-check-label" for="postToForumEnabled">Enable forum post creation (via bot)</label>
                 </div>
-            </form>
-        </main>
-    </div>
-</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Form Builder -->
+        <div class="card mb-4">
+          <div class="card-header d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">Form Blocks</h5>
+            <div class="dropdown">
+              <button class="btn btn-sm btn-primary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                <i class="fas fa-plus me-1"></i> Add Block
+              </button>
+              <ul class="dropdown-menu">
+                <li class="dropdown-header">Questions</li>
+                <li><a class="dropdown-item" href="#" onclick="addBlock('short_answer'); return false;">Short Answer</a></li>
+                <li><a class="dropdown-item" href="#" onclick="addBlock('paragraph'); return false;">Paragraph</a></li>
+                <li><a class="dropdown-item" href="#" onclick="addBlock('multiple_choice'); return false;">Multiple Choice</a></li>
+                <li><a class="dropdown-item" href="#" onclick="addBlock('checkboxes'); return false;">Checkboxes</a></li>
+                <li><a class="dropdown-item" href="#" onclick="addBlock('dropdown'); return false;">Dropdown</a></li>
+                <li><a class="dropdown-item" href="#" onclick="addBlock('linear_scale'); return false;">Linear Scale</a></li>
+                <li><hr class="dropdown-divider"></li>
+                <li class="dropdown-header">Layout</li>
+                <li><a class="dropdown-item" href="#" onclick="addBlock('title_description'); return false;">Title & Description</a></li>
+                <li><a class="dropdown-item" href="#" onclick="addBlock('section_break'); return false;">Section Break</a></li>
+              </ul>
+            </div>
+          </div>
+          <div class="card-body" id="blocksContainer">
+            <div id="emptyBlocksMessage" class="text-center py-4 text-muted" style="display: none;">
+              <i class="fas fa-puzzle-piece" style="font-size: 2rem;"></i>
+              <p class="mt-2">No blocks added yet. Use "Add Block" to start building your form.</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Hidden field for blocks JSON -->
+        <input type="hidden" name="blocksJson" id="blocksJson" value="">
+
+        <div class="d-flex gap-2">
+          <% if (type === 'create') { %>
+            <button type="submit" class="btn btn-primary"><i class="fas fa-plus me-1"></i> Create Form</button>
+          <% } else { %>
+            <button type="submit" class="btn btn-warning"><i class="fas fa-save me-1"></i> Save Form</button>
+          <% } %>
+          <a href="/dashboard/forms" class="btn btn-outline-secondary">Cancel</a>
+        </div>
+      </form>
+
+    </div><!-- /.wrap -->
+  </div><!-- /#wpbody-content -->
+  <%- include("../../admin/_footer.ejs") %>
+</div><!-- /#wpcontent -->
 
 <script>
 (function() {
     var blocks = [];
     var blockIdCounter = 0;
 
-    // Load existing blocks if editing
     <% if (type === 'edit' && blocks && blocks.length > 0) { %>
         blocks = <%- JSON.stringify(blocks.map(function(b) {
             return {
@@ -192,8 +180,6 @@
     function renderBlocks() {
         var container = document.getElementById('blocksContainer');
         var emptyMsg = document.getElementById('emptyBlocksMessage');
-
-        // Remove existing block elements (not the empty message)
         var existingBlocks = container.querySelectorAll('.form-block-item');
         existingBlocks.forEach(function(el) { el.remove(); });
 
@@ -227,20 +213,15 @@
             html += '</div>';
 
             html += '<div class="card-body">';
-
-            // Label field
             html += '<div class="mb-2">';
             html += '<label class="form-label">Label</label>';
             html += '<input type="text" class="form-control form-control-sm" value="' + escapeAttr(block.label) + '" onchange="updateBlockField(' + index + ', \'label\', this.value)">';
             html += '</div>';
-
-            // Description field
             html += '<div class="mb-2">';
             html += '<label class="form-label">Description <small class="text-muted">(optional)</small></label>';
             html += '<input type="text" class="form-control form-control-sm" value="' + escapeAttr(block.description) + '" onchange="updateBlockField(' + index + ', \'description\', this.value)">';
             html += '</div>';
 
-            // Required checkbox (for question types only)
             if (isQuestion) {
                 html += '<div class="form-check mb-2">';
                 html += '<input class="form-check-input" type="checkbox" id="req_' + index + '" ' + (block.required ? 'checked' : '') + ' onchange="updateBlockField(' + index + ', \'required\', this.checked)">';
@@ -248,9 +229,7 @@
                 html += '</div>';
             }
 
-            // Type-specific config
             html += renderBlockConfig(block, index);
-
             html += '</div>';
 
             div.innerHTML = html;
@@ -266,28 +245,20 @@
             case 'short_answer':
             case 'paragraph':
                 html += '<div class="row">';
-                html += '<div class="col-md-4 mb-2">';
-                html += '<label class="form-label">Min Length</label>';
-                html += '<input type="number" class="form-control form-control-sm" value="' + (config.minLength || '') + '" onchange="updateBlockConfig(' + index + ', \'minLength\', this.value ? parseInt(this.value) : null)">';
-                html += '</div>';
-                html += '<div class="col-md-4 mb-2">';
-                html += '<label class="form-label">Max Length</label>';
-                html += '<input type="number" class="form-control form-control-sm" value="' + (config.maxLength || '') + '" onchange="updateBlockConfig(' + index + ', \'maxLength\', this.value ? parseInt(this.value) : null)">';
-                html += '</div>';
-                html += '<div class="col-md-4 mb-2">';
-                html += '<label class="form-label">Placeholder</label>';
-                html += '<input type="text" class="form-control form-control-sm" value="' + escapeAttr(config.placeholder || '') + '" onchange="updateBlockConfig(' + index + ', \'placeholder\', this.value)">';
-                html += '</div>';
+                html += '<div class="col-md-4 mb-2"><label class="form-label">Min Length</label>';
+                html += '<input type="number" class="form-control form-control-sm" value="' + (config.minLength || '') + '" onchange="updateBlockConfig(' + index + ', \'minLength\', this.value ? parseInt(this.value) : null)"></div>';
+                html += '<div class="col-md-4 mb-2"><label class="form-label">Max Length</label>';
+                html += '<input type="number" class="form-control form-control-sm" value="' + (config.maxLength || '') + '" onchange="updateBlockConfig(' + index + ', \'maxLength\', this.value ? parseInt(this.value) : null)"></div>';
+                html += '<div class="col-md-4 mb-2"><label class="form-label">Placeholder</label>';
+                html += '<input type="text" class="form-control form-control-sm" value="' + escapeAttr(config.placeholder || '') + '" onchange="updateBlockConfig(' + index + ', \'placeholder\', this.value)"></div>';
                 html += '</div>';
                 if (block.type === 'short_answer') {
-                    html += '<div class="mb-2">';
-                    html += '<label class="form-label">Validation</label>';
+                    html += '<div class="mb-2"><label class="form-label">Validation</label>';
                     html += '<select class="form-select form-select-sm" onchange="updateBlockConfig(' + index + ', \'validation\', this.value || null)">';
                     html += '<option value="">None</option>';
                     html += '<option value="email" ' + (config.validation === 'email' ? 'selected' : '') + '>Email</option>';
                     html += '<option value="url" ' + (config.validation === 'url' ? 'selected' : '') + '>URL</option>';
-                    html += '</select>';
-                    html += '</div>';
+                    html += '</select></div>';
                 }
                 break;
 
@@ -295,8 +266,7 @@
             case 'checkboxes':
             case 'dropdown':
                 var options = config.options || [];
-                html += '<div class="mb-2">';
-                html += '<label class="form-label">Options</label>';
+                html += '<div class="mb-2"><label class="form-label">Options</label>';
                 html += '<div id="options_' + index + '">';
                 options.forEach(function(opt, optIdx) {
                     html += '<div class="input-group input-group-sm mb-1">';
@@ -314,14 +284,10 @@
                 }
                 if (block.type === 'checkboxes') {
                     html += '<div class="row mt-2">';
-                    html += '<div class="col-md-6">';
-                    html += '<label class="form-label">Min Selections</label>';
-                    html += '<input type="number" class="form-control form-control-sm" value="' + (config.minSelected || '') + '" onchange="updateBlockConfig(' + index + ', \'minSelected\', this.value ? parseInt(this.value) : null)">';
-                    html += '</div>';
-                    html += '<div class="col-md-6">';
-                    html += '<label class="form-label">Max Selections</label>';
-                    html += '<input type="number" class="form-control form-control-sm" value="' + (config.maxSelected || '') + '" onchange="updateBlockConfig(' + index + ', \'maxSelected\', this.value ? parseInt(this.value) : null)">';
-                    html += '</div>';
+                    html += '<div class="col-md-6"><label class="form-label">Min Selections</label>';
+                    html += '<input type="number" class="form-control form-control-sm" value="' + (config.minSelected || '') + '" onchange="updateBlockConfig(' + index + ', \'minSelected\', this.value ? parseInt(this.value) : null)"></div>';
+                    html += '<div class="col-md-6"><label class="form-label">Max Selections</label>';
+                    html += '<input type="number" class="form-control form-control-sm" value="' + (config.maxSelected || '') + '" onchange="updateBlockConfig(' + index + ', \'maxSelected\', this.value ? parseInt(this.value) : null)"></div>';
                     html += '</div>';
                 }
                 html += '</div>';
@@ -329,45 +295,30 @@
 
             case 'linear_scale':
                 html += '<div class="row">';
-                html += '<div class="col-md-3 mb-2">';
-                html += '<label class="form-label">Min</label>';
-                html += '<input type="number" class="form-control form-control-sm" value="' + (config.min !== undefined ? config.min : 1) + '" onchange="updateBlockConfig(' + index + ', \'min\', parseInt(this.value))">';
-                html += '</div>';
-                html += '<div class="col-md-3 mb-2">';
-                html += '<label class="form-label">Max</label>';
-                html += '<input type="number" class="form-control form-control-sm" value="' + (config.max !== undefined ? config.max : 5) + '" onchange="updateBlockConfig(' + index + ', \'max\', parseInt(this.value))">';
-                html += '</div>';
-                html += '<div class="col-md-3 mb-2">';
-                html += '<label class="form-label">Min Label</label>';
-                html += '<input type="text" class="form-control form-control-sm" value="' + escapeAttr(config.minLabel || '') + '" onchange="updateBlockConfig(' + index + ', \'minLabel\', this.value)">';
-                html += '</div>';
-                html += '<div class="col-md-3 mb-2">';
-                html += '<label class="form-label">Max Label</label>';
-                html += '<input type="text" class="form-control form-control-sm" value="' + escapeAttr(config.maxLabel || '') + '" onchange="updateBlockConfig(' + index + ', \'maxLabel\', this.value)">';
-                html += '</div>';
+                html += '<div class="col-md-3 mb-2"><label class="form-label">Min</label>';
+                html += '<input type="number" class="form-control form-control-sm" value="' + (config.min !== undefined ? config.min : 1) + '" onchange="updateBlockConfig(' + index + ', \'min\', parseInt(this.value))"></div>';
+                html += '<div class="col-md-3 mb-2"><label class="form-label">Max</label>';
+                html += '<input type="number" class="form-control form-control-sm" value="' + (config.max !== undefined ? config.max : 5) + '" onchange="updateBlockConfig(' + index + ', \'max\', parseInt(this.value))"></div>';
+                html += '<div class="col-md-3 mb-2"><label class="form-label">Min Label</label>';
+                html += '<input type="text" class="form-control form-control-sm" value="' + escapeAttr(config.minLabel || '') + '" onchange="updateBlockConfig(' + index + ', \'minLabel\', this.value)"></div>';
+                html += '<div class="col-md-3 mb-2"><label class="form-label">Max Label</label>';
+                html += '<input type="text" class="form-control form-control-sm" value="' + escapeAttr(config.maxLabel || '') + '" onchange="updateBlockConfig(' + index + ', \'maxLabel\', this.value)"></div>';
                 html += '</div>';
                 break;
 
             case 'title_description':
-                html += '<div class="mb-2">';
-                html += '<small class="text-muted">Use the Label and Description fields above for the title and description text.</small>';
-                html += '</div>';
+                html += '<div class="mb-2"><small class="text-muted">Use the Label and Description fields above for the title and description text.</small></div>';
                 break;
 
             case 'section_break':
                 html += '<div class="row">';
-                html += '<div class="col-md-6 mb-2">';
-                html += '<label class="form-label">Section Title</label>';
-                html += '<input type="text" class="form-control form-control-sm" value="' + escapeAttr(config.sectionTitle || '') + '" onchange="updateBlockConfig(' + index + ', \'sectionTitle\', this.value)">';
-                html += '</div>';
-                html += '<div class="col-md-6 mb-2">';
-                html += '<label class="form-label">Section Description</label>';
-                html += '<input type="text" class="form-control form-control-sm" value="' + escapeAttr(config.sectionDescription || '') + '" onchange="updateBlockConfig(' + index + ', \'sectionDescription\', this.value)">';
-                html += '</div>';
+                html += '<div class="col-md-6 mb-2"><label class="form-label">Section Title</label>';
+                html += '<input type="text" class="form-control form-control-sm" value="' + escapeAttr(config.sectionTitle || '') + '" onchange="updateBlockConfig(' + index + ', \'sectionTitle\', this.value)"></div>';
+                html += '<div class="col-md-6 mb-2"><label class="form-label">Section Description</label>';
+                html += '<input type="text" class="form-control form-control-sm" value="' + escapeAttr(config.sectionDescription || '') + '" onchange="updateBlockConfig(' + index + ', \'sectionDescription\', this.value)"></div>';
                 html += '</div>';
                 break;
         }
-
         return html;
     }
 
@@ -376,7 +327,6 @@
         return String(str).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
     }
 
-    // Global functions
     window.addBlock = function(type) {
         var block = {
             _tempId: 'new_' + (blockIdCounter++),
@@ -387,8 +337,6 @@
             description: '',
             config: {}
         };
-
-        // Set defaults for option-based types
         if (type === 'multiple_choice' || type === 'checkboxes' || type === 'dropdown') {
             block.config.options = ['Option 1'];
         }
@@ -396,14 +344,12 @@
             block.config.min = 1;
             block.config.max = 5;
         }
-
         blocks.push(block);
         renderBlocks();
     };
 
     window.removeBlock = function(index) {
         blocks.splice(index, 1);
-        // Reindex
         blocks.forEach(function(b, i) { b.orderIndex = i; });
         renderBlocks();
     };
@@ -447,13 +393,11 @@
         blocks[blockIndex].config.options[optIndex] = value;
     };
 
-    // On form submit, serialize blocks to JSON
     document.getElementById('formEditorForm').addEventListener('submit', function() {
         blocks.forEach(function(b, i) { b.orderIndex = i; });
         document.getElementById('blocksJson').value = JSON.stringify(blocks);
     });
 
-    // Auto-generate slug from name
     document.getElementById('name').addEventListener('input', function() {
         var slugField = document.getElementById('slug');
         if (!slugField.value || slugField.dataset.autoGenerated === 'true') {
@@ -465,9 +409,6 @@
         this.dataset.autoGenerated = 'false';
     });
 
-    // Initial render
     renderBlocks();
 })();
 </script>
-
-<%- include("../../modules/footer.ejs") %>
