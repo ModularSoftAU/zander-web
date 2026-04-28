@@ -267,12 +267,14 @@ export async function getUserPunishments(username) {
     }
 
     const punishments = await new Promise((resolve, reject) => {
+      // Litebans stores UUIDs without dashes; users table stores with dashes.
+      // REPLACE on both sides normalises the comparison regardless of which format is live.
       db.query(
         `SELECT p.*, banner.username AS bannedByUsername, remover.username AS removedByUsername
          FROM punishments p
          LEFT JOIN users banner ON p.bannedByUserId = banner.userId
          LEFT JOIN users remover ON p.removedByUserId = remover.userId
-         WHERE p.bannedUuid = ?
+         WHERE REPLACE(p.bannedUuid, '-', '') = REPLACE(?, '-', '')
          ORDER BY p.dateStart DESC
          LIMIT 50`,
         [userRecord.uuid],

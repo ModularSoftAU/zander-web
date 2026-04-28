@@ -605,6 +605,7 @@ CREATE TABLE logs (
 
 CREATE VIEW zanderdev.punishments AS
 SELECT
+    litebans.id AS punishmentId,
     litebans.uuid AS bannedUuid,
     banned.userId AS bannedUserId,
     litebans.banned_by_uuid AS bannedByUuid,
@@ -624,6 +625,7 @@ SELECT
     litebans.ipban_wildcard AS ipBanWildcard
 FROM (
 	SELECT
+		id,
 		uuid,
 		ip,
 		reason,
@@ -639,8 +641,9 @@ FROM (
 		null AS active,
 		'kick' AS type
 	FROM cfcdev_litebans.litebans_kicks
-	UNION
+	UNION ALL
 	SELECT
+		id,
 		uuid,
 		ip,
 		reason,
@@ -656,8 +659,9 @@ FROM (
 		active,
 		'ban' AS type
 	FROM cfcdev_litebans.litebans_bans
-	UNION
+	UNION ALL
 	SELECT
+		id,
 		uuid,
 		ip,
 		reason,
@@ -673,8 +677,9 @@ FROM (
 		active,
 		'mute' AS type
 	FROM cfcdev_litebans.litebans_mutes
-	UNION
+	UNION ALL
 	SELECT
+		id,
 		uuid,
 		ip,
 		reason,
@@ -691,9 +696,9 @@ FROM (
 		'warning' AS type
 	FROM cfcdev_litebans.litebans_warnings
 ) AS litebans
-	LEFT JOIN zanderdev.users banned ON litebans.uuid = banned.uuid
-    LEFT JOIN zanderdev.users banner ON litebans.banned_by_uuid = banner.uuid
-    LEFT JOIN zanderdev.users remover ON litebans.removed_by_uuid = remover.uuid;
+	LEFT JOIN zanderdev.users banned ON REPLACE(litebans.uuid, '-', '') = REPLACE(banned.uuid, '-', '')
+    LEFT JOIN zanderdev.users banner ON REPLACE(litebans.banned_by_uuid, '-', '') = REPLACE(banner.uuid, '-', '')
+    LEFT JOIN zanderdev.users remover ON REPLACE(litebans.removed_by_uuid, '-', '') = REPLACE(remover.uuid, '-', '');
 
 CREATE TABLE IF NOT EXISTS discord_punishments (
     id INT NOT NULL AUTO_INCREMENT,

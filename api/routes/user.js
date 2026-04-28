@@ -256,7 +256,7 @@ export default function userApiRoute(app, config, db, features, lang) {
            FROM punishments p
            LEFT JOIN users banner ON p.bannedByUserId = banner.userId
            LEFT JOIN users remover ON p.removedByUserId = remover.userId
-           WHERE p.bannedUuid = ?
+           WHERE REPLACE(p.bannedUuid, '-', '') = REPLACE(?, '-', '')
            ORDER BY p.dateStart DESC
            LIMIT 50`,
           [resolvedUuid],
