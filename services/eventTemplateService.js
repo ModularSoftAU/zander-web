@@ -317,24 +317,28 @@ export function computeNextGenerationDate(template, fromDate = null) {
         // The draft should be generated now (today), the event is on result
         // So generate trigger = result - advanceDays
         const generateOn = new Date(result.getTime() - advanceDays * 86400000);
+        // If generateOn is not strictly in the future, advance by one week
+        if (generateOn <= base) {
+          result.setUTCDate(result.getUTCDate() + 7);
+          return new Date(result.getTime() - advanceDays * 86400000);
+        }
         return generateOn;
       }
     }
   }
 
   if (template.recurrenceType === "daily") {
-    // Generate a draft for tomorrow's event today
-    const nextEventDate = new Date(base);
-    nextEventDate.setUTCDate(nextEventDate.getUTCDate() + 1);
-    nextEventDate.setUTCHours(0, 0, 0, 0);
-    const generateOn = new Date(nextEventDate.getTime() - advanceDays * 86400000);
-    return generateOn < base ? base : generateOn;
+    // Schedule the next generation for the following day at midnight UTC
+    const next = new Date(base);
+    next.setUTCDate(next.getUTCDate() + 1);
+    next.setUTCHours(0, 0, 0, 0);
+    return next;
   }
 
   if (template.recurrenceType === "custom" && template.recurrenceEveryDays) {
     const every = template.recurrenceEveryDays;
-    const last = template.lastGeneratedAt ? new Date(template.lastGeneratedAt) : base;
-    const next = new Date(last.getTime() + every * 86400000);
+    // Anchor the next generation to the current generation time
+    const next = new Date(base.getTime() + every * 86400000);
     return next;
   }
 
@@ -392,6 +396,36 @@ export async function getTemplatesDueForGeneration() {
     },
     include: { defaultHosts: true, announcements: { orderBy: { id: "asc" } } },
   });
+}
+
+/**
+ * Soft-delete template-generated events that are still in draft/pending_review
+ * and whose startAt has already passed. These are "unused" events that were
+ * auto-created but never promoted before their scheduled time.
+ *
+ * Returns the count of deleted events.
+ */
+export async function cleanupStaleTemplateEvents() {
+  const now = new Date();
+
+  const stale = await prisma.events.findMany({
+    where: {
+      templateId: { not: null },
+      status: { in: ["draft", "pending_review"] },
+      startAt: { lt: now },
+      deletedAt: null,
+    },
+    select: { eventId: true, title: true, templateId: true },
+  });
+
+  if (stale.length === 0) return 0;
+
+  await prisma.events.updateMany({
+    where: { eventId: { in: stale.map((e) => e.eventId) } },
+    data: { deletedAt: now },
+  });
+
+  return stale.length;
 }
 
 /**

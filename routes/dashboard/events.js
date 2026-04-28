@@ -58,9 +58,17 @@ export default function dashboardEventsSiteRoute(app, fetch, config, db, feature
 
     const statusFilter = req.query.status || "";
     const search = req.query.search || "";
+    const showPast = req.query.showPast === "1";
+
+    const DEFAULT_STATUSES = ["draft", "approved", "published"];
 
     let qs = "";
-    if (statusFilter) qs += `&status=${encodeURIComponent(statusFilter)}`;
+    if (statusFilter) {
+      qs += `&status=${encodeURIComponent(statusFilter)}`;
+    } else {
+      qs += `&statuses=${encodeURIComponent(DEFAULT_STATUSES.join(","))}`;
+    }
+    if (!showPast) qs += "&hidePast=1";
     if (search) qs += `&search=${encodeURIComponent(search)}`;
 
     const fetchURL = `${process.env.siteAddress}/api/events/get?limit=100${qs}`;
@@ -80,6 +88,7 @@ export default function dashboardEventsSiteRoute(app, fetch, config, db, feature
         apiData,
         statusFilter,
         search,
+        showPast,
         globalImage,
         announcementWeb,
       })
@@ -132,7 +141,9 @@ export default function dashboardEventsSiteRoute(app, fetch, config, db, feature
         features,
         req,
         mode: "create",
-        eventData: null,
+        ev: {},
+        isPublished: false,
+        apiEndpoint: "/api/events/create",
         templatesData,
         globalImage,
         announcementWeb,
@@ -162,6 +173,10 @@ export default function dashboardEventsSiteRoute(app, fetch, config, db, feature
       return res.redirect("/dashboard/events/list");
     }
 
+    const ev = apiData.data;
+
+    const isPublished = ev.status === "published";
+
     res.header("content-type", "text/html; charset=utf-8").send(
       await app.view("dashboard/events/events-editor", {
         pageTitle: `Dashboard - Edit Event`,
@@ -169,7 +184,9 @@ export default function dashboardEventsSiteRoute(app, fetch, config, db, feature
         features,
         req,
         mode: "edit",
-        eventData: apiData.data,
+        ev,
+        isPublished,
+        apiEndpoint: isPublished ? "/api/events/update-published" : "/api/events/update",
         templatesData,
         globalImage,
         announcementWeb,
@@ -198,13 +215,23 @@ export default function dashboardEventsSiteRoute(app, fetch, config, db, feature
       return res.redirect("/dashboard/events/list");
     }
 
+    const ev = apiData.data;
+    const statusColors = {
+      draft: "secondary", pending_review: "warning", approved: "info",
+      published: "success", rejected: "danger", cancelled: "purple", archived: "dark",
+    };
+    const badgeClass = statusColors[ev.status] || "secondary";
+    const canEdit = ["draft", "rejected", "published"].includes(ev.status);
+
     res.header("content-type", "text/html; charset=utf-8").send(
       await app.view("dashboard/events/events-view", {
-        pageTitle: `Dashboard - ${apiData.data.title}`,
+        pageTitle: `Dashboard - ${ev.title}`,
         config,
         features,
         req,
-        eventData: apiData.data,
+        ev,
+        badgeClass,
+        canEdit,
         globalImage,
         announcementWeb,
       })
@@ -249,6 +276,8 @@ export default function dashboardEventsSiteRoute(app, fetch, config, db, feature
       getWebAnnouncement(),
     ]);
 
+    const DAY_NAMES = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+
     res.header("content-type", "text/html; charset=utf-8").send(
       await app.view("dashboard/events/events-template-editor", {
         pageTitle: "Dashboard - Create Event Template",
@@ -256,7 +285,9 @@ export default function dashboardEventsSiteRoute(app, fetch, config, db, feature
         features,
         req,
         mode: "create",
-        templateData: null,
+        tmpl: {},
+        dayNames: DAY_NAMES,
+        recDays: [],
         globalImage,
         announcementWeb,
       })
@@ -284,6 +315,9 @@ export default function dashboardEventsSiteRoute(app, fetch, config, db, feature
       return res.redirect("/dashboard/events/templates");
     }
 
+    const DAY_NAMES = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+    const tmpl = apiData.data;
+
     res.header("content-type", "text/html; charset=utf-8").send(
       await app.view("dashboard/events/events-template-editor", {
         pageTitle: "Dashboard - Edit Event Template",
@@ -291,7 +325,9 @@ export default function dashboardEventsSiteRoute(app, fetch, config, db, feature
         features,
         req,
         mode: "edit",
-        templateData: apiData.data,
+        tmpl,
+        dayNames: DAY_NAMES,
+        recDays: (tmpl.recurrenceDays || []).map(Number),
         globalImage,
         announcementWeb,
       })

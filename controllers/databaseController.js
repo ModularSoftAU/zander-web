@@ -11,9 +11,9 @@
  *                  modification.  Import as: import db from "./databaseController.js"
  *
  * Cross-database views (luckPermsPlayers, ranks, userRanks, userPermissions,
- * rankRanks, rankPermissions, punishments, shoppingDirectory) cannot be modelled
- * in Prisma because they span external databases.  Use prisma.$queryRawUnsafe()
- * for those queries.
+ * rankRanks, rankPermissions, shoppingDirectory) cannot be modelled in Prisma
+ * because they span external databases.  Use prisma.$queryRawUnsafe() for those.
+ * Punishments are queried directly via punishmentsDb (LiteBans DB instance).
  */
 
 import { PrismaClient } from "@prisma/client";
@@ -28,6 +28,7 @@ dotenv.config();
 const dbUrl = new URL(process.env.DATABASE_URL);
 const lpUrl = new URL(process.env.LUCKPERMS_URL);
 const qsUrl = new URL(process.env.QUICKSHOP_URL);
+const pnUrl = new URL(process.env.PUNISHMENTS_URL);
 
 // ---------------------------------------------------------------------------
 // Prisma client (primary interface for new code)
@@ -198,6 +199,45 @@ quickshopPool.getConnection(function (err, connection) {
 });
 
 export const quickshopDb = quickshopPool;
+
+// ---------------------------------------------------------------------------
+// Punishments pool — separate MySQL instance (LiteBans database)
+// ---------------------------------------------------------------------------
+
+const punishmentsPool = mysql2.createPool({
+  connectionLimit: 5,
+  host: pnUrl.hostname,
+  port: parseInt(pnUrl.port) || 3306,
+  user: decodeURIComponent(pnUrl.username),
+  password: decodeURIComponent(pnUrl.password),
+  database: pnUrl.pathname.slice(1),
+  charset: "utf8mb4",
+  connectTimeout: 10000,
+  waitForConnections: true,
+  timezone: "Z",
+  enableKeepAlive: true,
+  keepAliveInitialDelay: 10000,
+});
+
+punishmentsPool.on("connection", function (connection) {
+  console.info("[DB] Punishments pool connection established.");
+  connection.query("SET NAMES 'utf8mb4' COLLATE 'utf8mb4_unicode_ci'");
+});
+
+punishmentsPool.on("error", (err) => {
+  console.error(`[ERROR] [DB] Punishments Pool Error: ${err.message}`);
+});
+
+punishmentsPool.getConnection(function (err, connection) {
+  if (err) {
+    console.error(`[ERROR] [DB] Punishments connection failed:\n ${err.stack}`);
+    return;
+  }
+  console.info("[DB] Punishments pool connection is successful.");
+  connection.release();
+});
+
+export const punishmentsDb = punishmentsPool;
 
 // ---------------------------------------------------------------------------
 // Default export: mysql2 pool (drop-in replacement for the old `mysql` pool)

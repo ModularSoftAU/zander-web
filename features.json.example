@@ -1,9 +1,21 @@
 {
   "announcements": true,
   "applications": true,
-  "forms": true,
   "forums": true,
+  "support": true,
+  "server": true,
+  "ranks": true,
+  "report": true,
+  "shopdirectory": true,
+  "vault": true,
+  "bridge": true,
+  "staffAuditReport": true,
+  "watch": true,
+  "vote": true,
+  "events": true,
+
   "discord": {
+    "punishments": true,
     "events": {
       "generalKenobi": true,
       "guildMemberBoost": true,
@@ -11,29 +23,18 @@
       "nicknameCheck": true,
       "unverifiedReminder": true,
       "ipAutoDetect": true
-    },
-    "punishments": true
+    }
   },
-  "server": true,
-  "ranks": true,
-  "report": true,
-  "shopdirectory": true,
-  "vault": true,
-  "bridge": true,
+
   "filter": {
     "link": true,
     "phrase": true
   },
+
   "web": {
     "login": true,
     "register": true
   },
-
-  "support": true,
-  "staffAuditReport": true,
-  "watch": true,
-  "vote": true,
-  "events": true,
 
   "smDiscord": true,
   "smFacebook": true,
