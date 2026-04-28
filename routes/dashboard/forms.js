@@ -62,7 +62,27 @@ export default function dashboardFormsSiteRoute(
     if (!await hasPermission("zander.web.forms", req, res, features)) return;
 
     try {
-      const allForms = await getAllForms();
+      let allForms = [];
+      try {
+        allForms = await getAllForms();
+      } catch (dbError) {
+        if (dbError.code === 'ER_NO_SUCH_TABLE') {
+          res.header("content-type", "text/html; charset=utf-8").send(
+            await app.view("dashboard/forms/form-list", {
+              pageTitle: "Dashboard - Forms",
+              config,
+              forms: [],
+              features,
+              req,
+              migrationNeeded: true,
+              ...adminViewData(req, features),
+            })
+          );
+          return;
+        }
+        throw dbError;
+      }
+
       const forms = filterFormsByPermission(
         allForms,
         req.session.user.permissions

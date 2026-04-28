@@ -13,7 +13,12 @@
       </div>
       <%- include("../../admin/_notices.ejs") %>
 
-      <% if (!forms || forms.length === 0) { %>
+      <% if (typeof migrationNeeded !== 'undefined' && migrationNeeded) { %>
+        <div class="alert alert-warning">
+          <i class="fas fa-database me-2"></i>
+          <strong>Migration required.</strong> The forms database tables have not been created yet. Run the migration <code>v1.9.0_v1.10.0.sql</code> against your database to enable forms.
+        </div>
+      <% } else if (!forms || forms.length === 0) { %>
         <div class="text-center py-5">
           <i class="fas fa-file-alt text-muted" style="font-size: 3rem;"></i>
           <p class="text-muted mt-3">No forms have been created yet.</p>
