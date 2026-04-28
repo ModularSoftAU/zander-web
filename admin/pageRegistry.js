@@ -276,16 +276,6 @@ export const adminPages = [
     group: "System",
     sortOrder: 74,
   },
-  {
-    slug: "settings",
-    title: "Settings",
-    menuTitle: "Settings",
-    icon: "fas fa-cog",
-    capability: "zander.web.settings",
-    path: "/dashboard/settings",
-    group: "System",
-    sortOrder: 99,
-  },
 ];
 
 // ---------------------------------------------------------------------------
