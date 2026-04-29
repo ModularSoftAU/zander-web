@@ -99,6 +99,9 @@
                                             <% if (canEditThis && ['draft','rejected'].includes(ev.status)) { %>
                                                 <a href="/dashboard/events/edit?eventId=<%= ev.eventId %>" class="btn btn-xs btn-warning">Edit</a>
                                             <% } %>
+                                            <% if (hasReviewPermission && ['pending_review','approved'].includes(ev.status)) { %>
+                                                <a href="/dashboard/events/edit?eventId=<%= ev.eventId %>" class="btn btn-xs btn-warning">Edit</a>
+                                            <% } %>
                                             <% if (ev.status === 'published') { %>
                                                 <% if (canEditThis) { %>
                                                     <a href="/dashboard/events/edit?eventId=<%= ev.eventId %>" class="btn btn-xs btn-warning">Edit Live</a>

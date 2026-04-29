@@ -237,7 +237,12 @@ export default function dashboardEventsSiteRoute(app, fetch, config, db, feature
       published: "success", rejected: "danger", cancelled: "purple", archived: "dark",
     };
     const badgeClass = statusColors[ev.status] || "secondary";
-    const canEdit = ["draft", "rejected", "published"].includes(ev.status) && userCanEditEvent(ev, req);
+    const userPerms = req.session.user?.permissions || [];
+    const isReviewer = hasPermissionNode(userPerms, "zander.web.events.review");
+    const ownerStatuses = ["draft", "rejected", "published"];
+    const reviewerStatuses = ["draft", "rejected", "published", "pending_review", "approved"];
+    const editableStatuses = isReviewer ? reviewerStatuses : ownerStatuses;
+    const canEdit = editableStatuses.includes(ev.status) && userCanEditEvent(ev, req);
 
     res.header("content-type", "text/html; charset=utf-8").send(
       await app.view("dashboard/events/events-view", {

@@ -423,6 +423,34 @@ const buildApp = async () => {
     }
   }
 
+  // ── Auto-migration: supportTicketMessages charset → utf8mb4 (emoji support) ──
+  if (db) {
+    try {
+      await new Promise((resolve) => {
+        db.query(
+          `SELECT CHARACTER_SET_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'supportTicketMessages' AND COLUMN_NAME = 'message'`,
+          (err, results) => {
+            if (err || !results || results.length === 0) return resolve();
+            if (results[0].CHARACTER_SET_NAME === 'utf8mb4') return resolve();
+            db.query(
+              `ALTER TABLE supportTicketMessages CONVERT TO CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci`,
+              (alterErr) => {
+                if (alterErr) {
+                  console.warn("[DB] supportTicketMessages charset migration skipped:", alterErr.message);
+                } else {
+                  console.log("[DB] supportTicketMessages converted to utf8mb4 for emoji support.");
+                }
+                resolve();
+              }
+            );
+          }
+        );
+      });
+    } catch (err) {
+      console.error("[DB] supportTicketMessages auto-migration error:", err.message);
+    }
+  }
+
   try {
     const port = process.env.PORT;
 
