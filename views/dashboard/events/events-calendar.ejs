@@ -59,6 +59,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const calendarEl = document.getElementById('events-calendar');
 
     const calendar = new FullCalendar.Calendar(calendarEl, {
+        timeZone: 'local',
         initialView: 'timeGridWeek',
         headerToolbar: {
             left: 'prev,next today',

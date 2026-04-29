@@ -140,7 +140,7 @@
                                         <td><%= a.label || '—' %></td>
                                         <td><span class="badge bg-secondary"><%= a.announcementType %></span></td>
                                         <td><%= a.triggerType %><% if (a.offsetMinutes) { %> (<%= a.offsetMinutes %>m)<% } %></td>
-                                        <td><small class="js-datetime" data-iso="<%= a.scheduledFor || '' %>" data-fallback="Not scheduled"></small></td>
+                                        <td><small class="js-datetime" data-iso="<%= a.scheduledFor ? new Date(a.scheduledFor).toISOString() : '' %>" data-fallback="Not scheduled"></small></td>
                                         <td>
                                             <% if (a.status === 'sent') { %><span class="badge bg-success">Sent</span><% } %>
                                             <% if (a.status === 'pending') { %><span class="badge bg-warning text-dark">Pending</span><% } %>
@@ -200,16 +200,16 @@
                         <div class="card-body">
                             <dl class="row mb-0 small">
                                 <dt class="col-5">Created</dt>
-                                <dd class="col-7"><span class="js-datetime" data-iso="<%= ev.createdAt %>"></span></dd>
+                                <dd class="col-7"><span class="js-datetime" data-iso="<%= ev.createdAt ? new Date(ev.createdAt).toISOString() : '' %>"></span></dd>
                                 <dt class="col-5">Updated</dt>
-                                <dd class="col-7"><span class="js-datetime" data-iso="<%= ev.updatedAt %>"></span></dd>
+                                <dd class="col-7"><span class="js-datetime" data-iso="<%= ev.updatedAt ? new Date(ev.updatedAt).toISOString() : '' %>"></span></dd>
                                 <% if (ev.approvedAt) { %>
                                 <dt class="col-5">Approved</dt>
-                                <dd class="col-7"><span class="js-datetime" data-iso="<%= ev.approvedAt %>"></span></dd>
+                                <dd class="col-7"><span class="js-datetime" data-iso="<%= new Date(ev.approvedAt).toISOString() %>"></span></dd>
                                 <% } %>
                                 <% if (ev.publishedAt) { %>
                                 <dt class="col-5">Published</dt>
-                                <dd class="col-7"><span class="js-datetime" data-iso="<%= ev.publishedAt %>"></span></dd>
+                                <dd class="col-7"><span class="js-datetime" data-iso="<%= new Date(ev.publishedAt).toISOString() %>"></span></dd>
                                 <% } %>
                                 <dt class="col-5">Slug</dt>
                                 <dd class="col-7"><code class="small"><%= ev.slug %></code></dd>
@@ -231,7 +231,7 @@
                         <tbody>
                             <% ev.auditLogs.forEach(log => { %>
                             <tr>
-                                <td class="text-nowrap" style="width:160px;"><small class="js-datetime text-muted" data-iso="<%= log.createdAt %>"></small></td>
+                                <td class="text-nowrap" style="width:160px;"><small class="js-datetime text-muted" data-iso="<%= log.createdAt ? new Date(log.createdAt).toISOString() : '' %>"></small></td>
                                 <td style="width:120px;"><span class="badge bg-secondary small"><%= log.action %></span></td>
                                 <td><small><%= log.actorName || 'System' %></small></td>
                                 <td><small class="text-muted"><%= log.details || '' %></small></td>
