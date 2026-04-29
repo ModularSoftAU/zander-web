@@ -10,6 +10,7 @@ import {
   setBannerCookie,
 } from "../../api/common.js";
 import { getWebAnnouncement } from "../../controllers/announcementController.js";
+import { hasPermission as hasPermissionNode } from "../../lib/discord/permissions.mjs";
 
 /** Fetch a URL with the internal API key and parse JSON, returning fallback on error. */
 async function fetchJson(fetchFn, url, fallback = null) {
@@ -25,6 +26,12 @@ async function fetchJson(fetchFn, url, fallback = null) {
 }
 
 export default function dashboardEventsSiteRoute(app, fetch, config, db, features, lang) {
+  function userCanEditEvent(ev, req) {
+    const userPerms = req.session.user?.permissions || [];
+    const isCreator = ev.creatorId && ev.creatorId === req.session.user?.userId;
+    const hasReview = hasPermissionNode(userPerms, "zander.web.events.review");
+    return isCreator || hasReview;
+  }
   // ============================================================================
   // Calendar View
   // ============================================================================
@@ -79,6 +86,9 @@ export default function dashboardEventsSiteRoute(app, fetch, config, db, feature
       getWebAnnouncement(),
     ]);
 
+    const userPerms = req.session.user?.permissions || [];
+    const hasReviewPermission = hasPermissionNode(userPerms, "zander.web.events.review");
+
     res.header("content-type", "text/html; charset=utf-8").send(
       await app.view("dashboard/events/events-list", {
         pageTitle: "Dashboard - Events",
@@ -89,6 +99,7 @@ export default function dashboardEventsSiteRoute(app, fetch, config, db, feature
         statusFilter,
         search,
         showPast,
+        hasReviewPermission,
         globalImage,
         announcementWeb,
       })
@@ -175,6 +186,11 @@ export default function dashboardEventsSiteRoute(app, fetch, config, db, feature
 
     const ev = apiData.data;
 
+    if (!userCanEditEvent(ev, req)) {
+      await setBannerCookie("danger", "You can only edit your own events.", res);
+      return res.redirect("/dashboard/events/list");
+    }
+
     const isPublished = ev.status === "published";
 
     res.header("content-type", "text/html; charset=utf-8").send(
@@ -221,7 +237,7 @@ export default function dashboardEventsSiteRoute(app, fetch, config, db, feature
       published: "success", rejected: "danger", cancelled: "purple", archived: "dark",
     };
     const badgeClass = statusColors[ev.status] || "secondary";
-    const canEdit = ["draft", "rejected", "published"].includes(ev.status);
+    const canEdit = ["draft", "rejected", "published"].includes(ev.status) && userCanEditEvent(ev, req);
 
     res.header("content-type", "text/html; charset=utf-8").send(
       await app.view("dashboard/events/events-view", {

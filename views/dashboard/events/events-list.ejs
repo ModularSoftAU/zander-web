@@ -90,17 +90,25 @@
                                         <small class="js-datetime" data-iso="<%= ev.startAt ? new Date(ev.startAt).toISOString() : '' %>" data-fallback="—"></small>
                                     </td>
                                     <td data-label="Actions">
+                                        <%
+                                            var isOwner = ev.creatorId && ev.creatorId === req.session.user.userId;
+                                            var canEditThis = isOwner || hasReviewPermission;
+                                        %>
                                         <div class="d-flex flex-wrap gap-1">
                                             <a href="/dashboard/events/view?eventId=<%= ev.eventId %>" class="btn btn-xs btn-outline-secondary">View</a>
-                                            <% if (['draft','rejected'].includes(ev.status)) { %>
+                                            <% if (canEditThis && ['draft','rejected'].includes(ev.status)) { %>
                                                 <a href="/dashboard/events/edit?eventId=<%= ev.eventId %>" class="btn btn-xs btn-warning">Edit</a>
                                             <% } %>
                                             <% if (ev.status === 'published') { %>
-                                                <a href="/dashboard/events/edit?eventId=<%= ev.eventId %>" class="btn btn-xs btn-warning">Edit Live</a>
+                                                <% if (canEditThis) { %>
+                                                    <a href="/dashboard/events/edit?eventId=<%= ev.eventId %>" class="btn btn-xs btn-warning">Edit Live</a>
+                                                <% } %>
                                                 <a href="/events/<%= ev.slug %>" target="_blank" class="btn btn-xs btn-outline-success">Public</a>
                                             <% } %>
                                             <button type="button" class="btn btn-xs btn-outline-secondary btn-duplicate-event" data-event-id="<%= ev.eventId %>" data-event-title="<%= ev.title %>">Duplicate</button>
-                                            <button type="button" class="btn btn-xs btn-outline-danger btn-delete-event" data-event-id="<%= ev.eventId %>" data-event-title="<%= ev.title %>">Delete</button>
+                                            <% if (canEditThis) { %>
+                                                <button type="button" class="btn btn-xs btn-outline-danger btn-delete-event" data-event-id="<%= ev.eventId %>" data-event-title="<%= ev.title %>">Delete</button>
+                                            <% } %>
                                         </div>
                                     </td>
                                 </tr>
