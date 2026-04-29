@@ -50,6 +50,22 @@ export default function formSiteRoutes(
         return res.redirect(`/login?returnTo=${returnTo}`);
       }
 
+      // Password gate
+      if (form.accessPassword) {
+        const unlockedForms = req.session.unlockedForms || [];
+        if (!unlockedForms.includes(form.slug)) {
+          return res.view("modules/forms/form-password", {
+            pageTitle: form.name,
+            config,
+            req,
+            features,
+            form,
+            globalImage: await getGlobalImage(),
+            announcementWeb: await getWebAnnouncement(),
+          });
+        }
+      }
+
       const blocks = await getFormBlocks(form.formId);
 
       return res.view("modules/forms/form-submit", {
@@ -74,6 +90,34 @@ export default function formSiteRoutes(
         globalImage: await getGlobalImage(),
         announcementWeb: await getWebAnnouncement(),
       });
+    }
+  });
+
+  // ─── Password unlock (POST) ───
+  app.post("/forms/:slug/unlock", async function (req, res) {
+    if (!await isFeatureWebRouteEnabled(app, features.forms, req, res, features)) return;
+
+    try {
+      const form = await getFormBySlug(req.params.slug);
+      if (!form || form.status !== "published" || !form.accessPassword) {
+        return res.redirect("/forms/" + req.params.slug);
+      }
+
+      const enteredPassword = req.body.accessPassword || "";
+      if (enteredPassword !== form.accessPassword) {
+        setBannerCookie("danger", "Incorrect password.", res);
+        return res.redirect("/forms/" + req.params.slug);
+      }
+
+      if (!req.session.unlockedForms) {
+        req.session.unlockedForms = [];
+      }
+      req.session.unlockedForms.push(form.slug);
+
+      return res.redirect("/forms/" + req.params.slug);
+    } catch (error) {
+      console.error("Error unlocking form:", error);
+      return res.redirect("/forms/" + req.params.slug);
     }
   });
 

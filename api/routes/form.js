@@ -94,6 +94,7 @@ export default function formApiRoute(app, client, config, db, features, lang) {
       const submitterCanView = optional(req.body, "submitterCanView") !== false;
       const requireLogin = optional(req.body, "requireLogin") !== false;
       const allowAnonymous = optional(req.body, "allowAnonymous") || false;
+      const accessPassword = optional(req.body, "accessPassword") || null;
       const blocks = optional(req.body, "blocks") || [];
 
       // Check slug uniqueness
@@ -114,6 +115,7 @@ export default function formApiRoute(app, client, config, db, features, lang) {
         submitterCanView,
         requireLogin,
         allowAnonymous,
+        accessPassword,
       });
 
       const formId = result.insertId;
@@ -153,6 +155,7 @@ export default function formApiRoute(app, client, config, db, features, lang) {
       const submitterCanView = optional(req.body, "submitterCanView") !== false;
       const requireLogin = optional(req.body, "requireLogin") !== false;
       const allowAnonymous = optional(req.body, "allowAnonymous") || false;
+      const accessPassword = optional(req.body, "accessPassword") || null;
       const blocks = optional(req.body, "blocks");
 
       // Check slug uniqueness (excluding current form)
@@ -172,6 +175,7 @@ export default function formApiRoute(app, client, config, db, features, lang) {
         submitterCanView,
         requireLogin,
         allowAnonymous,
+        accessPassword,
       });
 
       // Replace blocks if provided

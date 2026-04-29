@@ -52,12 +52,12 @@ export function getPublishedForms() {
     });
 }
 
-export function createForm({ name, slug, status, createdByUserId, discordWebhookUrl, discordForumChannelId, postToForumEnabled, webhookEnabled, submitterCanView, requireLogin, allowAnonymous }) {
+export function createForm({ name, slug, status, createdByUserId, discordWebhookUrl, discordForumChannelId, postToForumEnabled, webhookEnabled, submitterCanView, requireLogin, allowAnonymous, accessPassword }) {
     return new Promise((resolve, reject) => {
         db.query(
-            `INSERT INTO forms (name, slug, status, createdByUserId, discordWebhookUrl, discordForumChannelId, postToForumEnabled, webhookEnabled, submitterCanView, requireLogin, allowAnonymous)
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-            [name, slug, status || "draft", createdByUserId, discordWebhookUrl || null, discordForumChannelId || null, postToForumEnabled ? 1 : 0, webhookEnabled ? 1 : 0, submitterCanView ? 1 : 0, requireLogin ? 1 : 0, allowAnonymous ? 1 : 0],
+            `INSERT INTO forms (name, slug, status, createdByUserId, discordWebhookUrl, discordForumChannelId, postToForumEnabled, webhookEnabled, submitterCanView, requireLogin, allowAnonymous, accessPassword)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+            [name, slug, status || "draft", createdByUserId, discordWebhookUrl || null, discordForumChannelId || null, postToForumEnabled ? 1 : 0, webhookEnabled ? 1 : 0, submitterCanView ? 1 : 0, requireLogin ? 1 : 0, allowAnonymous ? 1 : 0, accessPassword || null],
             (err, results) => {
                 if (err) return reject(err);
                 resolve(results);
@@ -66,11 +66,11 @@ export function createForm({ name, slug, status, createdByUserId, discordWebhook
     });
 }
 
-export function updateForm(formId, { name, slug, status, discordWebhookUrl, discordForumChannelId, postToForumEnabled, webhookEnabled, submitterCanView, requireLogin, allowAnonymous }) {
+export function updateForm(formId, { name, slug, status, discordWebhookUrl, discordForumChannelId, postToForumEnabled, webhookEnabled, submitterCanView, requireLogin, allowAnonymous, accessPassword }) {
     return new Promise((resolve, reject) => {
         db.query(
-            `UPDATE forms SET name=?, slug=?, status=?, discordWebhookUrl=?, discordForumChannelId=?, postToForumEnabled=?, webhookEnabled=?, submitterCanView=?, requireLogin=?, allowAnonymous=? WHERE formId=?`,
-            [name, slug, status, discordWebhookUrl || null, discordForumChannelId || null, postToForumEnabled ? 1 : 0, webhookEnabled ? 1 : 0, submitterCanView ? 1 : 0, requireLogin ? 1 : 0, allowAnonymous ? 1 : 0, formId],
+            `UPDATE forms SET name=?, slug=?, status=?, discordWebhookUrl=?, discordForumChannelId=?, postToForumEnabled=?, webhookEnabled=?, submitterCanView=?, requireLogin=?, allowAnonymous=?, accessPassword=? WHERE formId=?`,
+            [name, slug, status, discordWebhookUrl || null, discordForumChannelId || null, postToForumEnabled ? 1 : 0, webhookEnabled ? 1 : 0, submitterCanView ? 1 : 0, requireLogin ? 1 : 0, allowAnonymous ? 1 : 0, accessPassword || null, formId],
             (err, results) => {
                 if (err) return reject(err);
                 resolve(results);

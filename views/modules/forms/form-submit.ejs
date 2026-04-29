@@ -23,14 +23,28 @@
                 <% } %>
 
                 <form method="post" action="/forms/<%= form.slug %>/submit" id="formSubmission">
-                    <%
-                        let currentSection = 0;
-                        let totalSections = blocks.filter(b => b.type === 'section_break').length + 1;
-                        let sectionOpen = true;
-                    %>
+                    <% let inSection = false; %>
 
                     <% blocks.forEach(function(block, index) { %>
-                        <% if (block.type === 'title_description') { %>
+                        <% if (block.type === 'section_break') { %>
+                            <% if (inSection) { %>
+                                </div></div>
+                            <% } %>
+                            <div class="card mb-4">
+                                <% if ((block.config && block.config.sectionTitle) || (block.config && block.config.sectionDescription)) { %>
+                                    <div class="card-header">
+                                        <% if (block.config && block.config.sectionTitle) { %>
+                                            <h5 class="mb-0"><%= block.config.sectionTitle %></h5>
+                                        <% } %>
+                                        <% if (block.config && block.config.sectionDescription) { %>
+                                            <small class="text-muted"><%= block.config.sectionDescription %></small>
+                                        <% } %>
+                                    </div>
+                                <% } %>
+                                <div class="card-body">
+                            <% inSection = true; %>
+
+                        <% } else if (block.type === 'title_description') { %>
                             <div class="mb-4">
                                 <% if (block.label) { %>
                                     <h4><%= block.label %></h4>
@@ -39,15 +53,6 @@
                                     <p class="text-muted"><%= block.description %></p>
                                 <% } %>
                             </div>
-
-                        <% } else if (block.type === 'section_break') { %>
-                            <hr class="my-4">
-                            <% if (block.config && block.config.sectionTitle) { %>
-                                <h4 class="mb-2"><%= block.config.sectionTitle %></h4>
-                            <% } %>
-                            <% if (block.config && block.config.sectionDescription) { %>
-                                <p class="text-muted"><%= block.config.sectionDescription %></p>
-                            <% } %>
 
                         <% } else if (block.type === 'short_answer') { %>
                             <div class="mb-3">
@@ -205,6 +210,10 @@
 
                         <% } %>
                     <% }) %>
+
+                    <% if (inSection) { %>
+                        </div></div>
+                    <% } %>
 
                     <% if (req.session.user && form.allowAnonymous) { %>
                         <div class="form-check mt-3">

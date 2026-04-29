@@ -317,6 +317,7 @@ const buildApp = async () => {
                     submitterCanView TINYINT(1) NOT NULL DEFAULT 1,
                     requireLogin TINYINT(1) NOT NULL DEFAULT 1,
                     allowAnonymous TINYINT(1) NOT NULL DEFAULT 0,
+                    accessPassword VARCHAR(255),
                     createdAt DATETIME NOT NULL DEFAULT NOW(),
                     updatedAt DATETIME NOT NULL DEFAULT NOW() ON UPDATE NOW(),
                     PRIMARY KEY (formId),
@@ -386,20 +387,27 @@ const buildApp = async () => {
                 );
               });
             } else {
-              // Forms table exists — add allowAnonymous column if missing
+              // Forms table exists — add missing columns
               db.query(
-                `SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'forms' AND COLUMN_NAME = 'allowAnonymous'`,
+                `SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'forms' AND COLUMN_NAME IN ('allowAnonymous', 'accessPassword')`,
                 (colErr, colResults) => {
-                  if (colErr || (colResults && colResults.length > 0)) {
-                    return resolve();
+                  if (colErr) return resolve();
+                  const existing = (colResults || []).map(r => r.COLUMN_NAME);
+                  const alters = [];
+                  if (!existing.includes('allowAnonymous')) {
+                    alters.push(`ADD COLUMN allowAnonymous TINYINT(1) NOT NULL DEFAULT 0 AFTER requireLogin`);
                   }
+                  if (!existing.includes('accessPassword')) {
+                    alters.push(`ADD COLUMN accessPassword VARCHAR(255) AFTER allowAnonymous`);
+                  }
+                  if (alters.length === 0) return resolve();
                   db.query(
-                    `ALTER TABLE forms ADD COLUMN allowAnonymous TINYINT(1) NOT NULL DEFAULT 0 AFTER requireLogin`,
+                    `ALTER TABLE forms ${alters.join(', ')}`,
                     (alterErr) => {
                       if (alterErr) {
-                        console.warn("[DB] Forms allowAnonymous ALTER skipped:", alterErr.message);
+                        console.warn("[DB] Forms ALTER skipped:", alterErr.message);
                       } else {
-                        console.log("[DB] Forms table updated with allowAnonymous column.");
+                        console.log("[DB] Forms table updated with new columns.");
                       }
                       resolve();
                     }

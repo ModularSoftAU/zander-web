@@ -64,6 +64,13 @@
                   <label class="form-check-label" for="allowAnonymous">Allow anonymous submissions</label>
                 </div>
               </div>
+              <div class="mb-3 col-md-4">
+                <label for="accessPassword" class="form-label">Access Password</label>
+                <input type="text" class="form-control" id="accessPassword" name="accessPassword"
+                  value="<%= form && form.accessPassword ? form.accessPassword : '' %>"
+                  placeholder="Leave blank for no password">
+                <small class="form-text text-muted">Users must enter this password before viewing the form.</small>
+              </div>
             </div>
           </div>
         </div>
@@ -118,7 +125,7 @@
                 <li><hr class="dropdown-divider"></li>
                 <li class="dropdown-header">Layout</li>
                 <li><a class="dropdown-item" href="#" onclick="addBlock('title_description'); return false;">Title & Description</a></li>
-                <li><a class="dropdown-item" href="#" onclick="addBlock('section_break'); return false;">Section Break</a></li>
+                <li><a class="dropdown-item" href="#" onclick="addBlock('section_break'); return false;">Section (grouped card)</a></li>
               </ul>
             </div>
           </div>
