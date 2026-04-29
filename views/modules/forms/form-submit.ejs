@@ -110,6 +110,7 @@
                                                 id="block_<%= block.blockId %>_<%= optIndex %>"
                                                 value="<%= option %>"
                                                 <% if (block.required && optIndex === 0) { %>required<% } %>
+                                                <% if (block.config.allowOther) { %>onchange="document.getElementById('block_<%= block.blockId %>_other_text').style.display='none'"<% } %>
                                             >
                                             <label class="form-check-label" for="block_<%= block.blockId %>_<%= optIndex %>">
                                                 <%= option %>
@@ -122,10 +123,16 @@
                                                 name="block_<%= block.blockId %>"
                                                 id="block_<%= block.blockId %>_other"
                                                 value="__other__"
+                                                onchange="document.getElementById('block_<%= block.blockId %>_other_text').style.display='block'"
                                             >
                                             <label class="form-check-label" for="block_<%= block.blockId %>_other">
                                                 Other
                                             </label>
+                                            <input type="text" class="form-control form-control-sm mt-1"
+                                                id="block_<%= block.blockId %>_other_text"
+                                                name="block_<%= block.blockId %>_other_text"
+                                                placeholder="Please specify..."
+                                                style="display:none;">
                                         </div>
                                     <% } %>
                                 <% } %>
@@ -152,6 +159,24 @@
                                             </label>
                                         </div>
                                     <% }) %>
+                                    <% if (block.config.allowOther) { %>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox"
+                                                name="block_<%= block.blockId %>"
+                                                id="block_<%= block.blockId %>_other"
+                                                value="__other__"
+                                                onchange="document.getElementById('block_<%= block.blockId %>_other_text').style.display = this.checked ? 'block' : 'none'"
+                                            >
+                                            <label class="form-check-label" for="block_<%= block.blockId %>_other">
+                                                Other
+                                            </label>
+                                            <input type="text" class="form-control form-control-sm mt-1"
+                                                id="block_<%= block.blockId %>_other_text"
+                                                name="block_<%= block.blockId %>_other_text"
+                                                placeholder="Please specify..."
+                                                style="display:none;">
+                                        </div>
+                                    <% } %>
                                 <% } %>
                             </div>
 

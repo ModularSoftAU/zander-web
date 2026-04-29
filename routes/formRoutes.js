@@ -145,10 +145,21 @@ export default function formSiteRoutes(
           continue;
         }
         const fieldName = `block_${block.blockId}`;
+        const otherTextField = `block_${block.blockId}_other_text`;
         if (block.type === "checkboxes") {
-          // Checkboxes come as multiple values with same name
           const val = req.body[fieldName];
-          answers[block.blockId] = Array.isArray(val) ? val : val ? [val] : [];
+          let arr = Array.isArray(val) ? val : val ? [val] : [];
+          if (arr.includes("__other__")) {
+            const otherText = req.body[otherTextField] || "Other";
+            arr = arr.map(v => v === "__other__" ? otherText : v);
+          }
+          answers[block.blockId] = arr;
+        } else if (block.type === "multiple_choice") {
+          let val = req.body[fieldName] || "";
+          if (val === "__other__") {
+            val = req.body[otherTextField] || "Other";
+          }
+          answers[block.blockId] = val;
         } else {
           answers[block.blockId] = req.body[fieldName] || "";
         }
