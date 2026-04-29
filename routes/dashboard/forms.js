@@ -18,8 +18,12 @@ import {
   createSupportTicket,
   createSupportTicketMessage,
   ensureUncategorisedCategory,
+  syncParticipantsForMessage,
+  addTicketUserParticipant,
+  applyTicketParticipantPermissions,
 } from "../../controllers/supportTicketController.js";
 import { hasPermission as hasPermissionNode } from "../../lib/discord/permissions.mjs";
+import { ActionRowBuilder, ButtonBuilder, ButtonStyle, EmbedBuilder } from "discord.js";
 
 export default function dashboardFormsSiteRoute(
   app,
@@ -299,6 +303,7 @@ export default function dashboardFormsSiteRoute(
       const categoryId = await ensureUncategorisedCategory();
       const ticketTitle = `Form Submission: ${form.name}`;
       const ticketUserId = response.submittedByUserId;
+      const submitterDiscordId = response.submitterDiscordId || null;
 
       const blocks = await getFormBlocks(form.formId);
       const formattedAnswers = formatResponseForDisplay(blocks, response.answers);
@@ -311,33 +316,103 @@ export default function dashboardFormsSiteRoute(
         ticketBody += `**${answer.label}**\n${answer.value}\n\n`;
       }
 
-      const ticket = await createSupportTicket(
+      const ticketRecord = await createSupportTicket(
         client,
         ticketUserId,
         categoryId,
         ticketTitle,
         {
-          discordUserId: response.submitterDiscordId || null,
+          discordUserId: submitterDiscordId,
           staffRoleIds: [],
         }
       );
 
-      const ticketId = ticket.ticketId;
+      const { ticketId, channel } = ticketRecord;
 
+      // Initial message (same pattern as normal ticket creation)
       await createSupportTicketMessage(
         client,
         ticketId,
         ticketUserId,
         ticketBody,
-        "web"
+        "web",
+        { skipDiscordPost: true }
       );
 
+      // Add submitter as participant
+      await syncParticipantsForMessage(client, ticketId, {
+        userId: ticketUserId,
+        rankSlugs: [],
+      });
+
+      // Add the converting staff member as participant
+      try {
+        await addTicketUserParticipant(ticketId, { userId: req.session.user.userId });
+        await applyTicketParticipantPermissions(client, ticketId);
+      } catch (participantError) {
+        console.error("Failed to add staff participant to converted ticket", participantError);
+      }
+
+      // Post the Discord channel embed (mirrors normal ticket creation)
+      if (channel) {
+        const siteBaseUrl =
+          (config.siteConfiguration && config.siteConfiguration.siteUrl) ||
+          process.env.SITE_URL ||
+          process.env.siteAddress ||
+          "";
+        const normalizedSiteUrl = siteBaseUrl.endsWith("/")
+          ? siteBaseUrl.slice(0, -1)
+          : siteBaseUrl;
+        const ticketUrl = `${normalizedSiteUrl}/support/ticket/${ticketId}`;
+
+        const ticketEmbed = new EmbedBuilder()
+          .setTitle(`Ticket #${ticketId}: ${ticketTitle}`)
+          .setDescription(ticketBody.length > 4000 ? ticketBody.substring(0, 4000) + "..." : ticketBody)
+          .addFields(
+            { name: "Submitted by", value: response.submitterUsername || "Unknown" },
+            { name: "Converted by", value: req.session.user.username || "Staff" },
+            { name: "Category", value: "Uncategorised" }
+          )
+          .setTimestamp(new Date())
+          .setColor(0x2b6cb0);
+
+        const closeButton = new ButtonBuilder()
+          .setCustomId("support_ticket_close")
+          .setLabel("Close Ticket")
+          .setStyle(ButtonStyle.Danger);
+
+        const viewOnlineButton = new ButtonBuilder()
+          .setStyle(ButtonStyle.Link)
+          .setLabel("View Ticket Online")
+          .setURL(ticketUrl);
+
+        try {
+          const createdMessage = await channel.send({
+            content: submitterDiscordId
+              ? `<@${submitterDiscordId}> a ticket has been created from your form submission.`
+              : "A ticket has been created from a form submission.",
+            embeds: [ticketEmbed],
+            components: [new ActionRowBuilder().addComponents(viewOnlineButton, closeButton)],
+          });
+
+          try {
+            await createdMessage.pin();
+          } catch (pinError) {
+            console.error("Failed to pin converted ticket opener message", pinError);
+          }
+        } catch (channelError) {
+          console.error("Failed to send ticket embed for converted form response", channelError);
+        }
+      }
+
+      // Status message noting the conversion
       await createSupportTicketMessage(
         client,
         ticketId,
         req.session.user.userId,
         `Converted by ${req.session.user.username} from a form response submitted by ${response.submitterUsername || "Unknown"}.`,
-        "web"
+        "web",
+        { messageType: "status" }
       );
 
       await setResponseConvertedToTicket(response.responseId, ticketId, req.session.user.userId);
