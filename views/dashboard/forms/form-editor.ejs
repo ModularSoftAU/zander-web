@@ -190,6 +190,7 @@
     var questionTypes = ['short_answer', 'paragraph', 'multiple_choice', 'checkboxes', 'dropdown', 'linear_scale'];
 
     function renderBlocks() {
+        var scrollPos = window.scrollY;
         var container = document.getElementById('blocksContainer');
         var emptyMsg = document.getElementById('emptyBlocksMessage');
         var existingBlocks = container.querySelectorAll('.form-block-item');
@@ -247,6 +248,7 @@
             div.innerHTML = html;
             container.appendChild(div);
         });
+        requestAnimationFrame(function() { window.scrollTo(0, scrollPos); });
     }
 
     function renderBlockConfig(block, index) {
