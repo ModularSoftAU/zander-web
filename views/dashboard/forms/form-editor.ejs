@@ -58,6 +58,11 @@
                     <%= (!form || form.submitterCanView) ? 'checked' : '' %>>
                   <label class="form-check-label" for="submitterCanView">Submitter can view their response</label>
                 </div>
+                <div class="form-check">
+                  <input class="form-check-input" type="checkbox" id="allowAnonymous" name="allowAnonymous"
+                    <%= form && form.allowAnonymous ? 'checked' : '' %>>
+                  <label class="form-check-label" for="allowAnonymous">Allow anonymous submissions</label>
+                </div>
               </div>
             </div>
           </div>

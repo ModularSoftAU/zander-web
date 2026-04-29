@@ -30,7 +30,7 @@ export default function formSiteRoutes(
 ) {
   // ─── Public form page (fill out form) ───
   app.get("/forms/:slug", async function (req, res) {
-    if (!isFeatureWebRouteEnabled(features.forms, req, res, features)) return;
+    if (!await isFeatureWebRouteEnabled(app, features.forms, req, res, features)) return;
 
     try {
       const form = await getFormBySlug(req.params.slug);
@@ -79,7 +79,7 @@ export default function formSiteRoutes(
 
   // ─── Submit form (POST) ───
   app.post("/forms/:slug/submit", async function (req, res) {
-    if (!isFeatureWebRouteEnabled(features.forms, req, res, features)) return;
+    if (!await isFeatureWebRouteEnabled(app, features.forms, req, res, features)) return;
 
     try {
       const form = await getFormBySlug(req.params.slug);
@@ -118,12 +118,18 @@ export default function formSiteRoutes(
         return res.redirect("/forms/" + req.params.slug);
       }
 
-      const submittedByUserId = req.session.user ? req.session.user.userId : null;
+      const submitAnonymous = req.body.submitAnonymous === "on" || req.body.submitAnonymous === "1";
+      const isLoggedIn = !!req.session.user;
+      const submittedByUserId = (isLoggedIn && !(submitAnonymous && form.allowAnonymous))
+        ? req.session.user.userId
+        : null;
+      const submitterName = submittedByUserId ? req.session.user.username : "Anonymous";
+
       const result = await createFormResponse(form.formId, submittedByUserId, answers);
       const responseId = result.insertId;
 
       // Discord delivery (async, non-blocking)
-      deliverToDiscord(form, blocks, answers, responseId, submittedByUserId, client).catch((err) => {
+      deliverToDiscord(form, blocks, answers, responseId, submitterName, client).catch((err) => {
         console.error("[Forms] Discord delivery error:", err);
       });
 
@@ -143,7 +149,7 @@ export default function formSiteRoutes(
 
   // ─── Submission confirmation page ───
   app.get("/forms/:slug/submitted", async function (req, res) {
-    if (!isFeatureWebRouteEnabled(features.forms, req, res, features)) return;
+    if (!await isFeatureWebRouteEnabled(app, features.forms, req, res, features)) return;
 
     const form = await getFormBySlug(req.params.slug);
 
@@ -160,7 +166,7 @@ export default function formSiteRoutes(
 
   // ─── View own response ───
   app.get("/forms/:slug/response/:responseId", async function (req, res) {
-    if (!isFeatureWebRouteEnabled(features.forms, req, res, features)) return;
+    if (!await isFeatureWebRouteEnabled(app, features.forms, req, res, features)) return;
 
     try {
       if (!req.session.user) {
@@ -243,7 +249,7 @@ export default function formSiteRoutes(
 
   // ─── My responses ───
   app.get("/my/forms/responses", async function (req, res) {
-    if (!isFeatureWebRouteEnabled(features.forms, req, res, features)) return;
+    if (!await isFeatureWebRouteEnabled(app, features.forms, req, res, features)) return;
 
     if (!req.session.user) {
       return res.redirect(`/login?returnTo=${encodeURIComponent(req.url)}`);
@@ -280,7 +286,7 @@ export default function formSiteRoutes(
 
 // ─── Discord Delivery (shared with form routes) ───
 
-async function deliverToDiscord(form, blocks, answers, responseId, submittedByUserId, client) {
+async function deliverToDiscord(form, blocks, answers, responseId, submitterName, client) {
   const viewUrl = `${process.env.siteAddress}/dashboard/forms/${form.formId}/responses/${responseId}`;
 
   // Webhook embed notification
@@ -295,7 +301,7 @@ async function deliverToDiscord(form, blocks, answers, responseId, submittedByUs
         .setColor("#4e73df")
         .addField("Form", form.name, true)
         .addField("Submission ID", `#${responseId}`, true)
-        .addField("Submitter", submittedByUserId ? `User ${submittedByUserId}` : "Anonymous", true)
+        .addField("Submitter", submitterName || "Anonymous", true)
         .addField("View Online", viewUrl)
         .setTimestamp();
 

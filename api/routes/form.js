@@ -28,6 +28,7 @@ import {
   setResponseDiscordForumPostFailed,
   setResponseDiscordForumThreadId,
   setResponseConvertedToTicket,
+  getUsernameById,
 } from "../../controllers/formController.js";
 
 export default function formApiRoute(app, client, config, db, features, lang) {
@@ -92,6 +93,7 @@ export default function formApiRoute(app, client, config, db, features, lang) {
       const webhookEnabled = optional(req.body, "webhookEnabled") || false;
       const submitterCanView = optional(req.body, "submitterCanView") !== false;
       const requireLogin = optional(req.body, "requireLogin") !== false;
+      const allowAnonymous = optional(req.body, "allowAnonymous") || false;
       const blocks = optional(req.body, "blocks") || [];
 
       // Check slug uniqueness
@@ -111,6 +113,7 @@ export default function formApiRoute(app, client, config, db, features, lang) {
         webhookEnabled,
         submitterCanView,
         requireLogin,
+        allowAnonymous,
       });
 
       const formId = result.insertId;
@@ -149,6 +152,7 @@ export default function formApiRoute(app, client, config, db, features, lang) {
       const webhookEnabled = optional(req.body, "webhookEnabled") || false;
       const submitterCanView = optional(req.body, "submitterCanView") !== false;
       const requireLogin = optional(req.body, "requireLogin") !== false;
+      const allowAnonymous = optional(req.body, "allowAnonymous") || false;
       const blocks = optional(req.body, "blocks");
 
       // Check slug uniqueness (excluding current form)
@@ -167,6 +171,7 @@ export default function formApiRoute(app, client, config, db, features, lang) {
         webhookEnabled,
         submitterCanView,
         requireLogin,
+        allowAnonymous,
       });
 
       // Replace blocks if provided
@@ -234,7 +239,8 @@ export default function formApiRoute(app, client, config, db, features, lang) {
 
     const formId = required(req.body, "formId", res);
     const answers = required(req.body, "answers", res);
-    const submittedByUserId = optional(req.body, "submittedByUserId");
+    let submittedByUserId = optional(req.body, "submittedByUserId");
+    const anonymous = optional(req.body, "anonymous");
 
     try {
       const form = await getFormById(formId);
@@ -246,6 +252,13 @@ export default function formApiRoute(app, client, config, db, features, lang) {
       }
       if (form.requireLogin && !submittedByUserId) {
         return res.send({ success: false, message: "You must be logged in to submit this form." });
+      }
+
+      let submitterName = "Anonymous";
+      if (anonymous && form.allowAnonymous) {
+        submittedByUserId = null;
+      } else if (submittedByUserId) {
+        submitterName = await getUsernameById(submittedByUserId) || "Unknown";
       }
 
       // Validate answers against blocks
@@ -263,7 +276,7 @@ export default function formApiRoute(app, client, config, db, features, lang) {
       const responseId = result.insertId;
 
       // Discord delivery (async, non-blocking — submission succeeds regardless)
-      deliverToDiscord(form, blocks, answers, responseId, submittedByUserId, client).catch((err) => {
+      deliverToDiscord(form, blocks, answers, responseId, submitterName, client).catch((err) => {
         console.error("[Forms] Discord delivery error:", err);
       });
 
@@ -354,7 +367,7 @@ export default function formApiRoute(app, client, config, db, features, lang) {
 
 // ─── Discord Delivery ───
 
-async function deliverToDiscord(form, blocks, answers, responseId, submittedByUserId, client) {
+async function deliverToDiscord(form, blocks, answers, responseId, submitterName, client) {
   const viewUrl = `${process.env.siteAddress}/dashboard/forms/${form.formId}/responses/${responseId}`;
 
   // Webhook embed notification
@@ -369,7 +382,7 @@ async function deliverToDiscord(form, blocks, answers, responseId, submittedByUs
         .setColor("#4e73df")
         .addField("Form", form.name, true)
         .addField("Submission ID", `#${responseId}`, true)
-        .addField("Submitter", submittedByUserId ? `User ${submittedByUserId}` : "Anonymous", true)
+        .addField("Submitter", submitterName || "Anonymous", true)
         .addField("View Online", viewUrl)
         .setTimestamp();
 

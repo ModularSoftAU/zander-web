@@ -316,6 +316,7 @@ const buildApp = async () => {
                     webhookEnabled TINYINT(1) NOT NULL DEFAULT 0,
                     submitterCanView TINYINT(1) NOT NULL DEFAULT 1,
                     requireLogin TINYINT(1) NOT NULL DEFAULT 1,
+                    allowAnonymous TINYINT(1) NOT NULL DEFAULT 0,
                     createdAt DATETIME NOT NULL DEFAULT NOW(),
                     updatedAt DATETIME NOT NULL DEFAULT NOW() ON UPDATE NOW(),
                     PRIMARY KEY (formId),
@@ -385,7 +386,26 @@ const buildApp = async () => {
                 );
               });
             } else {
-              resolve();
+              // Forms table exists — add allowAnonymous column if missing
+              db.query(
+                `SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'forms' AND COLUMN_NAME = 'allowAnonymous'`,
+                (colErr, colResults) => {
+                  if (colErr || (colResults && colResults.length > 0)) {
+                    return resolve();
+                  }
+                  db.query(
+                    `ALTER TABLE forms ADD COLUMN allowAnonymous TINYINT(1) NOT NULL DEFAULT 0 AFTER requireLogin`,
+                    (alterErr) => {
+                      if (alterErr) {
+                        console.warn("[DB] Forms allowAnonymous ALTER skipped:", alterErr.message);
+                      } else {
+                        console.log("[DB] Forms table updated with allowAnonymous column.");
+                      }
+                      resolve();
+                    }
+                  );
+                }
+              );
             }
           }
         );

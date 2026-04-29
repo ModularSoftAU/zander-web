@@ -206,6 +206,16 @@
                         <% } %>
                     <% }) %>
 
+                    <% if (req.session.user && form.allowAnonymous) { %>
+                        <div class="form-check mt-3">
+                            <input class="form-check-input" type="checkbox" id="submitAnonymous" name="submitAnonymous">
+                            <label class="form-check-label" for="submitAnonymous">
+                                Submit anonymously
+                            </label>
+                            <small class="form-text text-muted d-block">Your identity will not be recorded with this response.</small>
+                        </div>
+                    <% } %>
+
                     <div class="mt-4">
                         <button type="submit" class="btn btn-primary" id="submitBtn">
                             <i class="fas fa-paper-plane me-1"></i> Submit

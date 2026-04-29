@@ -49,6 +49,7 @@ export default function formRedirectRoute(app, config, lang, features) {
     req.body.webhookEnabled = req.body.webhookEnabled === "on" || req.body.webhookEnabled === "1";
     req.body.submitterCanView = req.body.submitterCanView === "on" || req.body.submitterCanView === "1";
     req.body.requireLogin = req.body.requireLogin === "on" || req.body.requireLogin === "1";
+    req.body.allowAnonymous = req.body.allowAnonymous === "on" || req.body.allowAnonymous === "1";
 
     postAPIRequest(
       `${process.env.siteAddress}/api/forms/create`,
@@ -80,6 +81,7 @@ export default function formRedirectRoute(app, config, lang, features) {
     req.body.webhookEnabled = req.body.webhookEnabled === "on" || req.body.webhookEnabled === "1";
     req.body.submitterCanView = req.body.submitterCanView === "on" || req.body.submitterCanView === "1";
     req.body.requireLogin = req.body.requireLogin === "on" || req.body.requireLogin === "1";
+    req.body.allowAnonymous = req.body.allowAnonymous === "on" || req.body.allowAnonymous === "1";
 
     postAPIRequest(
       `${process.env.siteAddress}/api/forms/edit`,

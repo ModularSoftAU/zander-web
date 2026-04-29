@@ -52,12 +52,12 @@ export function getPublishedForms() {
     });
 }
 
-export function createForm({ name, slug, status, createdByUserId, discordWebhookUrl, discordForumChannelId, postToForumEnabled, webhookEnabled, submitterCanView, requireLogin }) {
+export function createForm({ name, slug, status, createdByUserId, discordWebhookUrl, discordForumChannelId, postToForumEnabled, webhookEnabled, submitterCanView, requireLogin, allowAnonymous }) {
     return new Promise((resolve, reject) => {
         db.query(
-            `INSERT INTO forms (name, slug, status, createdByUserId, discordWebhookUrl, discordForumChannelId, postToForumEnabled, webhookEnabled, submitterCanView, requireLogin)
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-            [name, slug, status || "draft", createdByUserId, discordWebhookUrl || null, discordForumChannelId || null, postToForumEnabled ? 1 : 0, webhookEnabled ? 1 : 0, submitterCanView ? 1 : 0, requireLogin ? 1 : 0],
+            `INSERT INTO forms (name, slug, status, createdByUserId, discordWebhookUrl, discordForumChannelId, postToForumEnabled, webhookEnabled, submitterCanView, requireLogin, allowAnonymous)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+            [name, slug, status || "draft", createdByUserId, discordWebhookUrl || null, discordForumChannelId || null, postToForumEnabled ? 1 : 0, webhookEnabled ? 1 : 0, submitterCanView ? 1 : 0, requireLogin ? 1 : 0, allowAnonymous ? 1 : 0],
             (err, results) => {
                 if (err) return reject(err);
                 resolve(results);
@@ -66,11 +66,11 @@ export function createForm({ name, slug, status, createdByUserId, discordWebhook
     });
 }
 
-export function updateForm(formId, { name, slug, status, discordWebhookUrl, discordForumChannelId, postToForumEnabled, webhookEnabled, submitterCanView, requireLogin }) {
+export function updateForm(formId, { name, slug, status, discordWebhookUrl, discordForumChannelId, postToForumEnabled, webhookEnabled, submitterCanView, requireLogin, allowAnonymous }) {
     return new Promise((resolve, reject) => {
         db.query(
-            `UPDATE forms SET name=?, slug=?, status=?, discordWebhookUrl=?, discordForumChannelId=?, postToForumEnabled=?, webhookEnabled=?, submitterCanView=?, requireLogin=? WHERE formId=?`,
-            [name, slug, status, discordWebhookUrl || null, discordForumChannelId || null, postToForumEnabled ? 1 : 0, webhookEnabled ? 1 : 0, submitterCanView ? 1 : 0, requireLogin ? 1 : 0, formId],
+            `UPDATE forms SET name=?, slug=?, status=?, discordWebhookUrl=?, discordForumChannelId=?, postToForumEnabled=?, webhookEnabled=?, submitterCanView=?, requireLogin=?, allowAnonymous=? WHERE formId=?`,
+            [name, slug, status, discordWebhookUrl || null, discordForumChannelId || null, postToForumEnabled ? 1 : 0, webhookEnabled ? 1 : 0, submitterCanView ? 1 : 0, requireLogin ? 1 : 0, allowAnonymous ? 1 : 0, formId],
             (err, results) => {
                 if (err) return reject(err);
                 resolve(results);
@@ -537,6 +537,23 @@ export function formatResponseForDisplay(blocks, answers) {
         });
     }
     return formatted;
+}
+
+export function getUsernameById(userId) {
+    if (!userId) return Promise.resolve(null);
+    return new Promise((resolve) => {
+        db.query(
+            "SELECT username FROM users WHERE userId = ? LIMIT 1",
+            [userId],
+            (err, results) => {
+                if (err) {
+                    resolve(null);
+                    return;
+                }
+                resolve(results?.[0]?.username || null);
+            }
+        );
+    });
 }
 
 export function formatResponseForDiscord(blocks, answers, maxLength = 2000) {
