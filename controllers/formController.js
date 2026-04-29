@@ -273,7 +273,7 @@ export function getFormResponseCount(formId) {
 export function getFormResponseById(responseId) {
     return new Promise((resolve, reject) => {
         db.query(
-            "SELECT r.*, u.username as submitterUsername FROM formResponses r LEFT JOIN users u ON r.submittedByUserId = u.userId WHERE r.responseId = ? LIMIT 1",
+            "SELECT r.*, u.username as submitterUsername, u.discordId as submitterDiscordId FROM formResponses r LEFT JOIN users u ON r.submittedByUserId = u.userId WHERE r.responseId = ? LIMIT 1",
             [responseId],
             (err, results) => {
                 if (err) return reject(err);

@@ -291,9 +291,14 @@ export default function dashboardFormsSiteRoute(
         return res.redirect(`/dashboard/forms/${form.formId}/responses/${response.responseId}`);
       }
 
+      if (!response.submittedByUserId) {
+        setBannerCookie("danger", "Anonymous responses cannot be converted to tickets.", res);
+        return res.redirect(`/dashboard/forms/${form.formId}/responses/${response.responseId}`);
+      }
+
       const categoryId = await ensureUncategorisedCategory();
       const ticketTitle = `Form Submission: ${form.name}`;
-      const ticketUserId = response.submittedByUserId || req.session.user.userId;
+      const ticketUserId = response.submittedByUserId;
 
       const blocks = await getFormBlocks(form.formId);
       const formattedAnswers = formatResponseForDisplay(blocks, response.answers);
@@ -312,7 +317,7 @@ export default function dashboardFormsSiteRoute(
         categoryId,
         ticketTitle,
         {
-          discordUserId: req.session.user.discordId || null,
+          discordUserId: response.submitterDiscordId || null,
           staffRoleIds: [],
         }
       );

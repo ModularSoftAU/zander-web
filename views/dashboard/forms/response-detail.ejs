@@ -95,7 +95,7 @@
           </form>
         <% } %>
 
-        <% if (response.status !== 'converted') { %>
+        <% if (response.status !== 'converted' && response.submittedByUserId) { %>
           <form action="/dashboard/forms/<%= form.formId %>/responses/<%= response.responseId %>/convert-to-ticket" method="post" style="display:inline;">
             <button class="btn btn-success" type="submit" onclick="return confirm('Convert this response to a support ticket?')">
               <i class="fas fa-ticket-alt me-1"></i> Convert to Ticket
