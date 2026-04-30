@@ -30,10 +30,11 @@ const hasBody = !isDiscord;
                 <option value="on_publish" <%= ann.triggerType === 'on_publish' ? 'selected' : '' %>>On Publish</option>
                 <option value="before_event" <%= ann.triggerType === 'before_event' ? 'selected' : '' %>>Before Event</option>
                 <option value="event_start" <%= ann.triggerType === 'event_start' ? 'selected' : '' %>>Event Start</option>
+                <option value="after_event" <%= ann.triggerType === 'after_event' ? 'selected' : '' %>>After Event</option>
             </select>
         </div>
-        <div class="col-md-2 ann-offset-group <%= ann.triggerType !== 'before_event' ? 'd-none' : '' %>">
-            <label class="form-label small">Minutes Before</label>
+        <div class="col-md-2 ann-offset-group <%= (ann.triggerType !== 'before_event' && ann.triggerType !== 'after_event') ? 'd-none' : '' %>">
+            <label class="form-label small ann-offset-label"><%= ann.triggerType === 'after_event' ? 'Minutes After' : 'Minutes Before' %></label>
             <input type="number" class="form-control form-control-sm ann-offsetMinutes" placeholder="60" min="0" value="<%= ann.offsetMinutes || '' %>">
         </div>
 
@@ -129,8 +130,13 @@ const hasBody = !isDiscord;
 
     const trigger = row.querySelector('.ann-trigger');
     const offsetGroup = row.querySelector('.ann-offset-group');
+    const offsetLabel = row.querySelector('.ann-offset-label');
     if (trigger && offsetGroup) {
-        const toggleOffset = () => offsetGroup.classList.toggle('d-none', trigger.value !== 'before_event');
+        const toggleOffset = () => {
+            const v = trigger.value;
+            offsetGroup.classList.toggle('d-none', v !== 'before_event' && v !== 'after_event');
+            if (offsetLabel) offsetLabel.textContent = v === 'after_event' ? 'Minutes After' : 'Minutes Before';
+        };
         trigger.addEventListener('change', toggleOffset);
     }
 

@@ -394,10 +394,11 @@
                     <option value="on_publish">On Publish</option>
                     <option value="before_event" selected>Before Event</option>
                     <option value="event_start">Event Start</option>
+                    <option value="after_event">After Event</option>
                 </select>
             </div>
             <div class="col-md-2 ann-offset-group">
-                <label class="form-label small">Minutes Before</label>
+                <label class="form-label small ann-offset-label">Minutes Before</label>
                 <input type="number" class="form-control form-control-sm ann-offsetMinutes" placeholder="60" min="0">
             </div>
             <!-- Discord -->
@@ -622,8 +623,13 @@ function initAnnouncementRow(row) {
 
     const trigger = row.querySelector('.ann-trigger');
     const offsetGroup = row.querySelector('.ann-offset-group');
+    const offsetLabel = row.querySelector('.ann-offset-label');
     if (trigger && offsetGroup) {
-        const toggleOffset = () => offsetGroup.classList.toggle('d-none', trigger.value !== 'before_event');
+        const toggleOffset = () => {
+            const v = trigger.value;
+            offsetGroup.classList.toggle('d-none', v !== 'before_event' && v !== 'after_event');
+            if (offsetLabel) offsetLabel.textContent = v === 'after_event' ? 'Minutes After' : 'Minutes Before';
+        };
         trigger.addEventListener('change', toggleOffset);
         toggleOffset();
     }
