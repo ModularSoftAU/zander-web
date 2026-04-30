@@ -140,7 +140,7 @@ export default function eventsApiRoute(app, _config, _db, features, _lang) {
       const all = await guild.channels.fetch();
       const channels = [];
       all.forEach(ch => {
-        if (ch && ch.type === ChannelType.GuildText) {
+        if (ch && (ch.type === ChannelType.GuildText || ch.type === ChannelType.GuildAnnouncement)) {
           channels.push({ id: ch.id, name: ch.name, category: ch.parent?.name || null });
         }
       });
