@@ -265,12 +265,14 @@
                                         <% if (at.type === 'discord_message') { %>
                                         <div class="mt-2 row g-2">
                                             <div class="col-md-6">
-                                                <label class="form-label small mb-1">Channel ID <span class="text-danger">*</span></label>
-                                                <input type="text" class="form-control form-control-sm"
+                                                <label class="form-label small mb-1">Channel <span class="text-danger">*</span></label>
+                                                <select class="form-select form-select-sm"
+                                                    id="discordMessageChannelSelect"
                                                     data-action-type="discord_message"
                                                     data-config-key="channelId"
-                                                    placeholder="Discord text channel ID"
-                                                    value="<%= cfg.channelId || '' %>">
+                                                    data-saved="<%= cfg.channelId || (config.events && config.events.discordChannelId) || '' %>">
+                                                    <option value="">Loading channels…</option>
+                                                </select>
                                                 <small class="text-muted">The text channel to post the event announcement in.</small>
                                             </div>
                                         </div>
@@ -409,8 +411,10 @@
                 </select>
             </div>
             <div class="col-md-3 ann-discord-group">
-                <label class="form-label small">Channel ID</label>
-                <input type="text" class="form-control form-control-sm ann-channelId" placeholder="Discord Channel ID">
+                <label class="form-label small">Channel</label>
+                <select class="form-select form-select-sm ann-channelId">
+                    <option value="">— select —</option>
+                </select>
             </div>
             <div class="col-12 ann-discord-group">
                 <div class="d-flex justify-content-between align-items-center mb-1">
@@ -658,7 +662,8 @@ function addAnnouncementRow(ann = {}) {
     if (ann.announcementType) row.querySelector('.ann-type').value = ann.announcementType;
     if (ann.triggerType) row.querySelector('.ann-trigger').value = ann.triggerType;
     if (ann.offsetMinutes) row.querySelector('.ann-offsetMinutes').value = ann.offsetMinutes;
-    if (ann.channelId) row.querySelector('.ann-channelId').value = ann.channelId;
+    const annChannelSel = row.querySelector('.ann-channelId');
+    if (annChannelSel) populateTextChannelSelect(annChannelSel, ann.channelId || '');
     if (ann.contentTemplate) row.querySelector('.ann-contentTemplate').value = ann.contentTemplate;
     if (ann.body) row.querySelector('.ann-body').value = ann.body;
     if (ann.colourMessageFormat) row.querySelector('.ann-colourMessageFormat').value = ann.colourMessageFormat;
@@ -867,6 +872,55 @@ function localInputToUtc(localStr, ianaTimezone) {
     });
 
     loadMinecraftServers();
+})();
+
+// ============================================================
+// Discord text channel picker (for actions + announcements)
+// ============================================================
+let _textChannels = [];
+
+function populateTextChannelSelect(select, selectedId) {
+    select.innerHTML = '<option value="">— select a channel —</option>';
+    let lastCat = null;
+    let grp;
+    _textChannels.forEach(ch => {
+        if (ch.category !== lastCat) {
+            grp = document.createElement('optgroup');
+            grp.label = ch.category || 'Uncategorised';
+            select.appendChild(grp);
+            lastCat = ch.category;
+        }
+        const opt = document.createElement('option');
+        opt.value = ch.id;
+        opt.textContent = '#' + ch.name;
+        if (ch.id === selectedId) opt.selected = true;
+        (grp || select).appendChild(opt);
+    });
+    if (!_textChannels.length) {
+        select.innerHTML = '<option value="">No text channels found</option>';
+    }
+}
+
+(async function loadTextChannels() {
+    try {
+        const res = await fetch('/api/events/discord/text-channels', {
+            credentials: 'include',
+            headers: { 'x-access-token': <%- JSON.stringify(process.env.apiKey || '') %> },
+        });
+        const data = await res.json();
+        _textChannels = data.channels || [];
+    } catch {
+        _textChannels = [];
+    }
+
+    const actionSelect = document.getElementById('discordMessageChannelSelect');
+    if (actionSelect) {
+        populateTextChannelSelect(actionSelect, actionSelect.dataset.saved || '');
+    }
+
+    document.querySelectorAll('.ann-channelId').forEach(sel => {
+        populateTextChannelSelect(sel, sel.dataset.saved || '');
+    });
 })();
 
 // ============================================================

@@ -128,6 +128,30 @@ export default function eventsApiRoute(app, _config, _db, features, _lang) {
     }
   });
 
+  /** GET /api/events/discord/text-channels - list text channels for action picker */
+  app.get("/api/events/discord/text-channels", async (req, res) => {
+    if (!features.events) return res.send({ success: false, message: "Events feature disabled" });
+    if (!req.session?.user) return res.status(401).send({ channels: [] });
+    try {
+      const guildId = _config.discord?.guildId ?? process.env.DISCORD_GUILD_ID;
+      if (!guildId || !discordClient?.isReady?.()) return res.send({ channels: [] });
+
+      const guild = await discordClient.guilds.fetch(guildId);
+      const all = await guild.channels.fetch();
+      const channels = [];
+      all.forEach(ch => {
+        if (ch && ch.type === ChannelType.GuildText) {
+          channels.push({ id: ch.id, name: ch.name, category: ch.parent?.name || null });
+        }
+      });
+      channels.sort((a, b) => (a.category || '').localeCompare(b.category || '') || a.name.localeCompare(b.name));
+      return res.send({ channels });
+    } catch (err) {
+      console.error("[Events API] discord/text-channels:", err);
+      return res.send({ channels: [] });
+    }
+  });
+
   // ============================================================================
   // Event list / search (dashboard)
   // ============================================================================

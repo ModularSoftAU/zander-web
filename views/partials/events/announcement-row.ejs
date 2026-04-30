@@ -47,10 +47,12 @@ const hasBody = !isDiscord;
                 <option value="recap" <%= ann.announcementType === 'recap' ? 'selected' : '' %>>Recap</option>
             </select>
         </div>
-        <!-- Discord: Channel ID -->
+        <!-- Discord: Channel -->
         <div class="col-md-3 ann-discord-group <%= !isDiscord ? 'd-none' : '' %>">
-            <label class="form-label small">Channel ID</label>
-            <input type="text" class="form-control form-control-sm ann-channelId" placeholder="Discord Channel ID" value="<%= ann.channelId || '' %>">
+            <label class="form-label small">Channel</label>
+            <select class="form-select form-select-sm ann-channelId" data-saved="<%= ann.channelId || '' %>">
+                <option value="">— select —</option>
+            </select>
         </div>
         <!-- Discord: Content Template + timestamp insert -->
         <div class="col-12 ann-discord-group <%= !isDiscord ? 'd-none' : '' %>">
