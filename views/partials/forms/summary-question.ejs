@@ -1,29 +1,78 @@
 <%
 /**
  * Renders the summary visualisation for a single question.
- * Expects: q (summary object from buildFormSummary)
+ * Expects: q (summary object from buildFormSummary), chartPrefix (string)
+ *
+ * Chart.js 4 is loaded via the admin footer.
  */
+var _prefix = (typeof chartPrefix !== 'undefined' ? chartPrefix : 'c');
+var chartColors = [
+    '#4e79a7','#f28e2b','#e15759','#76b7b2','#59a14f',
+    '#edc948','#b07aa1','#ff9da7','#9c755f','#bab0ac',
+    '#5fa2ce','#fc7d0b','#a3cce9','#ffbc79','#d67195'
+];
 %>
 
 <% if (q.answered === 0) { %>
     <p class="text-muted mb-0">No responses yet.</p>
 
 <% } else if (q.optionCounts) { %>
-    <%/* multiple_choice, checkboxes, dropdown */%>
-    <% q.optionCounts.forEach(function(opt) { %>
-        <div class="mb-2">
-            <div class="d-flex justify-content-between align-items-center mb-1">
-                <span class="small fw-semibold"><%= opt.label %></span>
-                <span class="small text-muted"><%= opt.count %> (<%= opt.percentage %>%)</span>
-            </div>
-            <div class="progress" style="height: 6px;">
-                <div class="progress-bar" role="progressbar" style="width: <%= opt.percentage %>%;" aria-valuenow="<%= opt.percentage %>" aria-valuemin="0" aria-valuemax="100"></div>
+    <%/* multiple_choice, checkboxes, dropdown — pie chart */%>
+    <div class="row align-items-center">
+        <div class="col-md-6">
+            <div style="max-width:280px;margin:0 auto;">
+                <canvas id="pieChart_<%= _prefix %>_<%= q.blockId %>"></canvas>
             </div>
         </div>
-    <% }) %>
+        <div class="col-md-6">
+            <% q.optionCounts.forEach(function(opt, oi) { %>
+                <div class="d-flex align-items-center gap-2 mb-1">
+                    <span style="width:12px;height:12px;border-radius:2px;background:<%= chartColors[oi % chartColors.length] %>;flex-shrink:0;display:inline-block;"></span>
+                    <span class="small flex-grow-1"><%= opt.label %></span>
+                    <span class="small text-muted fw-semibold"><%= opt.count %> (<%= opt.percentage %>%)</span>
+                </div>
+            <% }) %>
+        </div>
+    </div>
+    <script>
+    (function() {
+        function init() {
+            if (typeof Chart === 'undefined') { setTimeout(init, 100); return; }
+            var ctx = document.getElementById('pieChart_<%= _prefix %>_<%= q.blockId %>');
+            if (!ctx || ctx.dataset.rendered) return;
+            ctx.dataset.rendered = '1';
+            new Chart(ctx, {
+                type: 'pie',
+                data: {
+                    labels: <%- JSON.stringify(q.optionCounts.map(function(o) { return o.label; })) %>,
+                    datasets: [{
+                        data: <%- JSON.stringify(q.optionCounts.map(function(o) { return o.count; })) %>,
+                        backgroundColor: <%- JSON.stringify(chartColors.slice(0, q.optionCounts.length)) %>
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                label: function(ctx) {
+                                    var total = ctx.dataset.data.reduce(function(a, b) { return a + b; }, 0);
+                                    var pct = total ? Math.round(ctx.raw / total * 100) : 0;
+                                    return ctx.label + ': ' + ctx.raw + ' (' + pct + '%)';
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+        init();
+    })();
+    </script>
 
 <% } else if (q.distribution) { %>
-    <%/* linear_scale */%>
+    <%/* linear_scale — bar chart */%>
     <div class="mb-2">
         <span class="fw-semibold">Average: </span>
         <span class="badge bg-primary fs-6"><%= q.average %></span>
@@ -31,17 +80,58 @@
             <small class="text-muted ms-2">(<%= q.minLabel || q.distribution[0].value %> &ndash; <%= q.maxLabel || q.distribution[q.distribution.length - 1].value %>)</small>
         <% } %>
     </div>
-    <% q.distribution.forEach(function(d) { %>
-        <div class="mb-2">
-            <div class="d-flex justify-content-between align-items-center mb-1">
-                <span class="small fw-semibold"><%= d.value %></span>
-                <span class="small text-muted"><%= d.count %> (<%= d.percentage %>%)</span>
-            </div>
-            <div class="progress" style="height: 6px;">
-                <div class="progress-bar bg-info" role="progressbar" style="width: <%= d.percentage %>%;" aria-valuenow="<%= d.percentage %>" aria-valuemin="0" aria-valuemax="100"></div>
-            </div>
-        </div>
-    <% }) %>
+    <div style="max-width:500px;">
+        <canvas id="barChart_<%= _prefix %>_<%= q.blockId %>"></canvas>
+    </div>
+    <script>
+    (function() {
+        function init() {
+            if (typeof Chart === 'undefined') { setTimeout(init, 100); return; }
+            var ctx = document.getElementById('barChart_<%= _prefix %>_<%= q.blockId %>');
+            if (!ctx || ctx.dataset.rendered) return;
+            ctx.dataset.rendered = '1';
+            new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: <%- JSON.stringify(q.distribution.map(function(d) { return String(d.value); })) %>,
+                    datasets: [{
+                        label: 'Responses',
+                        data: <%- JSON.stringify(q.distribution.map(function(d) { return d.count; })) %>,
+                        backgroundColor: '#4e79a7',
+                        borderRadius: 4,
+                        maxBarThickness: 48
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: { stepSize: 1, precision: 0 },
+                            title: { display: true, text: 'Responses' }
+                        },
+                        x: {
+                            title: { display: true, text: '<%= q.minLabel ? q.minLabel + " → " + q.maxLabel : "Value" %>' }
+                        }
+                    },
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                label: function(ctx) {
+                                    var total = ctx.dataset.data.reduce(function(a, b) { return a + b; }, 0);
+                                    var pct = total ? Math.round(ctx.raw / total * 100) : 0;
+                                    return ctx.raw + ' responses (' + pct + '%)';
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+        init();
+    })();
+    </script>
 
 <% } else if (q.imageUrls) { %>
     <%/* image_upload */%>

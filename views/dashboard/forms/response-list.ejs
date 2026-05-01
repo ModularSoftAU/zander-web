@@ -161,7 +161,7 @@
                       <span class="badge bg-secondary"><%= q.answered %> / <%= q.totalResponses %> answered</span>
                     </div>
                     <div class="card-body">
-                      <%- include("../../partials/forms/summary-question.ejs", { q: q }) %>
+                      <%- include("../../partials/forms/summary-question.ejs", { q: q, chartPrefix: 'all' }) %>
                     </div>
                   </div>
                 <% }) %>
@@ -179,7 +179,7 @@
                       </small>
                     </div>
                     <div class="card-body">
-                      <%- include("../../partials/forms/summary-question.ejs", { q: q }) %>
+                      <%- include("../../partials/forms/summary-question.ejs", { q: q, chartPrefix: 'ind' }) %>
                     </div>
                   </div>
                 </div>
@@ -197,3 +197,11 @@
   </div><!-- /#wpbody-content -->
   <%- include("../../admin/_footer.ejs") %>
 </div><!-- /#wpcontent -->
+<script>
+document.querySelectorAll('[data-bs-toggle="tab"], [data-bs-toggle="pill"]').forEach(function(el) {
+    el.addEventListener('shown.bs.tab', function() {
+        if (typeof Chart === 'undefined') return;
+        Object.values(Chart.instances || {}).forEach(function(c) { c.resize(); });
+    });
+});
+</script>
