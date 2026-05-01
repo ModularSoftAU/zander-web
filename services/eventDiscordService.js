@@ -4,7 +4,7 @@
  */
 
 import { client } from "../controllers/discordController.js";
-import { EmbedBuilder, GuildScheduledEventEntityType, GuildScheduledEventPrivacyLevel } from "discord.js";
+import { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, GuildScheduledEventEntityType, GuildScheduledEventPrivacyLevel } from "discord.js";
 import { updateSyncStatus, logEventAudit } from "./eventService.js";
 
 /** Convert HTML from Summernote to Discord-compatible markdown. */
@@ -86,17 +86,33 @@ function buildEventEmbed(event) {
     embed.setThumbnail(event.logoUrl);
   }
 
-  embed.setFooter({ text: `Event ID: ${event.eventId}` });
+  const hosts = event.hosts || [];
+  const hostNames = hosts.map(h => h.displayName || "Unknown").filter(Boolean);
+  const footerParts = [];
+  if (hostNames.length > 0) footerParts.push(`Hosted by ${hostNames.join(", ")}`);
+  footerParts.push(`Event ID: ${event.eventId}`);
+  embed.setFooter({ text: footerParts.join(" • ") });
   embed.setTimestamp();
 
   return embed;
+}
+
+function buildEventButton(event, siteBaseUrl) {
+  const normalizedUrl = siteBaseUrl.endsWith("/") ? siteBaseUrl.slice(0, -1) : siteBaseUrl;
+  const eventUrl = `${normalizedUrl}/events/${event.slug}`;
+  return new ActionRowBuilder().addComponents(
+    new ButtonBuilder()
+      .setStyle(ButtonStyle.Link)
+      .setLabel("View Event Online")
+      .setURL(eventUrl)
+  );
 }
 
 /**
  * Post a Discord announcement message on publish.
  * Returns the message ID.
  */
-export async function postEventDiscordMessage(event, channelId) {
+export async function postEventDiscordMessage(event, channelId, siteBaseUrl) {
   if (!client?.isReady?.()) throw new Error("Discord client not ready");
   if (!channelId) throw new Error("No channel ID provided");
 
@@ -106,7 +122,11 @@ export async function postEventDiscordMessage(event, channelId) {
   }
 
   const embed = buildEventEmbed(event);
-  const msg = await channel.send({ embeds: [embed] });
+  const messagePayload = { embeds: [embed] };
+  if (siteBaseUrl && event.slug) {
+    messagePayload.components = [buildEventButton(event, siteBaseUrl)];
+  }
+  const msg = await channel.send(messagePayload);
 
   await updateSyncStatus(event.eventId, "discord", "ok", null, {
     discordMessageId: msg.id,
@@ -127,7 +147,7 @@ export async function postEventDiscordMessage(event, channelId) {
 /**
  * Edit an existing Discord event announcement message.
  */
-export async function editEventDiscordMessage(event, channelId, messageId) {
+export async function editEventDiscordMessage(event, channelId, messageId, siteBaseUrl) {
   if (!client?.isReady?.()) throw new Error("Discord client not ready");
   if (!channelId || !messageId) throw new Error("channelId and messageId required");
 
@@ -138,7 +158,11 @@ export async function editEventDiscordMessage(event, channelId, messageId) {
 
   const msg = await channel.messages.fetch(messageId);
   const embed = buildEventEmbed(event);
-  await msg.edit({ embeds: [embed] });
+  const editPayload = { embeds: [embed] };
+  if (siteBaseUrl && event.slug) {
+    editPayload.components = [buildEventButton(event, siteBaseUrl)];
+  }
+  await msg.edit(editPayload);
 
   await logEventAudit(
     event.eventId,
@@ -292,12 +316,14 @@ export async function runDiscordActionsForEvent(event, trigger, discordConfig = 
     const channelId = cfg.channelId || discordConfig.channelId;
     const guildId = cfg.guildId || discordConfig.guildId;
 
+    const siteBaseUrl = discordConfig.siteBaseUrl || "";
+
     try {
       if (action.actionType === "discord_message") {
         if (trigger === "on_publish") {
-          await postEventDiscordMessage(event, channelId);
+          await postEventDiscordMessage(event, channelId, siteBaseUrl);
         } else if (trigger === "on_update" && event.discordMessageId && event.discordChannelId) {
-          await editEventDiscordMessage(event, event.discordChannelId, event.discordMessageId);
+          await editEventDiscordMessage(event, event.discordChannelId, event.discordMessageId, siteBaseUrl);
         }
       }
 

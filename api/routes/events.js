@@ -300,6 +300,7 @@ export default function eventsApiRoute(app, _config, _db, features, _lang) {
           const discordCfg = {
             channelId: config?.events?.discordChannelId || null,
             guildId: config?.discord?.guildId || config?.events?.discordGuildId || null,
+            siteBaseUrl: config?.siteConfiguration?.siteUrl || process.env.siteAddress || "",
           };
           await runDiscordActionsForEvent(fullEvent, "on_publish", discordCfg);
         } catch (e) {
@@ -351,6 +352,7 @@ export default function eventsApiRoute(app, _config, _db, features, _lang) {
           const discordCfg = {
             channelId: config?.events?.discordChannelId || null,
             guildId: config?.discord?.guildId || config?.events?.discordGuildId || null,
+            siteBaseUrl: config?.siteConfiguration?.siteUrl || process.env.siteAddress || "",
           };
           await runDiscordActionsForEvent(fullEvent, "on_publish", discordCfg);
         } catch (e) {
@@ -383,6 +385,7 @@ export default function eventsApiRoute(app, _config, _db, features, _lang) {
           const discordCfg = {
             channelId: config?.events?.discordChannelId || null,
             guildId: config?.discord?.guildId || config?.events?.discordGuildId || null,
+            siteBaseUrl: config?.siteConfiguration?.siteUrl || process.env.siteAddress || "",
           };
           await runDiscordActionsForEvent(fullEvent, "on_update", discordCfg);
         } catch (e) {
