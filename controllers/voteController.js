@@ -170,22 +170,23 @@ export async function getVoteSiteByServiceName(serviceName) {
   return rows[0] || null;
 }
 
-export async function createVoteSite({ siteName, serviceName, voteUrl, isActive = true, displayOrder = 0 }) {
+export async function createVoteSite({ siteName, serviceName, voteUrl, imageUrl, isActive = true, displayOrder = 0 }) {
   const result = await query(
-    `INSERT INTO vote_sites (site_name, service_name, vote_url, is_active, display_order)
-     VALUES (?, ?, ?, ?, ?)`,
-    [siteName, normaliseServiceName(serviceName), voteUrl, isActive ? 1 : 0, displayOrder]
+    `INSERT INTO vote_sites (site_name, service_name, vote_url, image_url, is_active, display_order)
+     VALUES (?, ?, ?, ?, ?, ?)`,
+    [siteName, normaliseServiceName(serviceName), voteUrl, imageUrl || null, isActive ? 1 : 0, displayOrder]
   );
   return result.insertId;
 }
 
-export async function updateVoteSite(id, { siteName, serviceName, voteUrl, isActive, displayOrder }) {
+export async function updateVoteSite(id, { siteName, serviceName, voteUrl, imageUrl, isActive, displayOrder }) {
   const fields = [];
   const params = [];
 
   if (siteName !== undefined) { fields.push("site_name = ?"); params.push(siteName); }
   if (serviceName !== undefined) { fields.push("service_name = ?"); params.push(normaliseServiceName(serviceName)); }
   if (voteUrl !== undefined) { fields.push("vote_url = ?"); params.push(voteUrl); }
+  if (imageUrl !== undefined) { fields.push("image_url = ?"); params.push(imageUrl || null); }
   if (isActive !== undefined) { fields.push("is_active = ?"); params.push(isActive ? 1 : 0); }
   if (displayOrder !== undefined) { fields.push("display_order = ?"); params.push(displayOrder); }
 

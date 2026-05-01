@@ -234,6 +234,7 @@ export default function voteApiRoute(app, config, db, features, lang) {
 
     const isActive = body.isActive !== undefined ? Boolean(body.isActive) : true;
     const displayOrder = parseInt(body.displayOrder, 10) || 0;
+    const imageUrl = body.imageUrl || null;
 
     try {
       // Check for duplicate service name
@@ -242,7 +243,7 @@ export default function voteApiRoute(app, config, db, features, lang) {
         return res.send({ success: false, message: `Service name '${normaliseServiceName(serviceName)}' already exists.` });
       }
 
-      const id = await createVoteSite({ siteName, serviceName, voteUrl, isActive, displayOrder });
+      const id = await createVoteSite({ siteName, serviceName, voteUrl, imageUrl, isActive, displayOrder });
       const site = await getVoteSiteById(id);
       return res.send({ success: true, message: "Vote site created.", data: site });
     } catch (error) {
@@ -266,6 +267,7 @@ export default function voteApiRoute(app, config, db, features, lang) {
     if (body.siteName !== undefined) updates.siteName = body.siteName;
     if (body.serviceName !== undefined) updates.serviceName = body.serviceName;
     if (body.voteUrl !== undefined) updates.voteUrl = body.voteUrl;
+    if (body.imageUrl !== undefined) updates.imageUrl = body.imageUrl || null;
     if (body.isActive !== undefined) updates.isActive = Boolean(body.isActive);
     if (body.displayOrder !== undefined) updates.displayOrder = parseInt(body.displayOrder, 10) || 0;
 

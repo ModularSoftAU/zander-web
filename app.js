@@ -423,6 +423,34 @@ const buildApp = async () => {
     }
   }
 
+  // ── Auto-migration: vote_sites image_url column ──
+  if (db) {
+    try {
+      await new Promise((resolve) => {
+        db.query(
+          `SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'vote_sites' AND COLUMN_NAME = 'image_url'`,
+          (err, results) => {
+            if (err || !results) return resolve();
+            if (results.length > 0) return resolve();
+            db.query(
+              `ALTER TABLE vote_sites ADD COLUMN image_url VARCHAR(512) NULL AFTER vote_url`,
+              (alterErr) => {
+                if (alterErr) {
+                  console.warn("[DB] vote_sites image_url migration skipped:", alterErr.message);
+                } else {
+                  console.log("[DB] vote_sites: added image_url column.");
+                }
+                resolve();
+              }
+            );
+          }
+        );
+      });
+    } catch (err) {
+      console.error("[DB] vote_sites auto-migration error:", err.message);
+    }
+  }
+
   // ── Auto-migration: supportTicketMessages charset → utf8mb4 (emoji support) ──
   if (db) {
     try {
