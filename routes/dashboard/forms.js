@@ -12,6 +12,7 @@ import {
   getFormResponseCount,
   getFormResponseById,
   formatResponseForDisplay,
+  buildFormSummary,
   setResponseConvertedToTicket,
 } from "../../controllers/formController.js";
 import {
@@ -196,12 +197,14 @@ export default function dashboardFormsSiteRoute(
       const page = Math.max(parseInt(req.query.page, 10) || 1, 1);
       const limit = 25;
 
-      const responses = await getFormResponses(formId, {
-        status: statusFilter,
-        page,
-        limit,
-      });
-      const counts = await getFormResponseCount(formId);
+      const [responses, counts, blocks, allResponses] = await Promise.all([
+        getFormResponses(formId, { status: statusFilter, page, limit }),
+        getFormResponseCount(formId),
+        getFormBlocks(formId),
+        getFormResponses(formId, {}),
+      ]);
+
+      const summary = buildFormSummary(blocks, allResponses);
 
       res.header("content-type", "text/html; charset=utf-8").send(
         await app.view("dashboard/forms/response-list", {
@@ -210,6 +213,8 @@ export default function dashboardFormsSiteRoute(
           form,
           responses,
           counts,
+          summary,
+          blocks,
           statusFilter,
           page,
           limit,

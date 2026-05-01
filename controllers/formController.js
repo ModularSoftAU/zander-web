@@ -393,6 +393,115 @@ export function setResponseConvertedToTicket(responseId, ticketId, convertedByUs
     });
 }
 
+// ─── Summary ───
+
+export function buildFormSummary(blocks, responses) {
+    const questionBlocks = blocks.filter(
+        (b) => b.type !== "title_description" && b.type !== "section_break"
+    );
+
+    return questionBlocks.map((block) => {
+        const config = block.config || {};
+        const answers = [];
+
+        for (const r of responses) {
+            const a = r.answers?.[block.blockId];
+            if (a !== undefined && a !== null && a !== "") {
+                answers.push(a);
+            }
+        }
+
+        const summary = {
+            blockId: block.blockId,
+            label: block.label || `Question ${block.blockId}`,
+            type: block.type,
+            totalResponses: responses.length,
+            answered: answers.length,
+            skipped: responses.length - answers.length,
+        };
+
+        switch (block.type) {
+            case "multiple_choice":
+            case "dropdown": {
+                const options = config.options || [];
+                const counts = {};
+                for (const opt of options) counts[opt] = 0;
+                let otherCount = 0;
+                for (const a of answers) {
+                    if (options.includes(a)) counts[a]++;
+                    else otherCount++;
+                }
+                summary.optionCounts = options.map((opt) => ({
+                    label: opt || "(empty)",
+                    count: counts[opt],
+                    percentage: answers.length ? Math.round((counts[opt] / answers.length) * 100) : 0,
+                }));
+                if (config.allowOther && otherCount > 0) {
+                    summary.optionCounts.push({
+                        label: "Other",
+                        count: otherCount,
+                        percentage: answers.length ? Math.round((otherCount / answers.length) * 100) : 0,
+                    });
+                }
+                break;
+            }
+            case "checkboxes": {
+                const options = config.options || [];
+                const counts = {};
+                for (const opt of options) counts[opt] = 0;
+                let otherCount = 0;
+                for (const a of answers) {
+                    const arr = Array.isArray(a) ? a : [a];
+                    for (const v of arr) {
+                        if (options.includes(v)) counts[v]++;
+                        else otherCount++;
+                    }
+                }
+                summary.optionCounts = options.map((opt) => ({
+                    label: opt || "(empty)",
+                    count: counts[opt],
+                    percentage: answers.length ? Math.round((counts[opt] / answers.length) * 100) : 0,
+                }));
+                if (config.allowOther && otherCount > 0) {
+                    summary.optionCounts.push({
+                        label: "Other",
+                        count: otherCount,
+                        percentage: answers.length ? Math.round((otherCount / answers.length) * 100) : 0,
+                    });
+                }
+                break;
+            }
+            case "linear_scale": {
+                const nums = answers.map(Number).filter((n) => !isNaN(n));
+                const min = config.min !== undefined ? config.min : 1;
+                const max = config.max !== undefined ? config.max : 5;
+                summary.average = nums.length ? (nums.reduce((s, n) => s + n, 0) / nums.length).toFixed(1) : null;
+                summary.distribution = [];
+                for (let i = min; i <= max; i++) {
+                    const cnt = nums.filter((n) => n === i).length;
+                    summary.distribution.push({
+                        value: i,
+                        count: cnt,
+                        percentage: nums.length ? Math.round((cnt / nums.length) * 100) : 0,
+                    });
+                }
+                summary.minLabel = config.minLabel || "";
+                summary.maxLabel = config.maxLabel || "";
+                break;
+            }
+            case "short_answer":
+            case "paragraph":
+                summary.textAnswers = answers.map(String).slice(0, 200);
+                break;
+            case "image_upload":
+                summary.imageUrls = answers.map(String).filter((u) => u.startsWith("http")).slice(0, 100);
+                break;
+        }
+
+        return summary;
+    });
+}
+
 // ─── Validation ───
 
 export function validateFormSubmission(blocks, answers) {
