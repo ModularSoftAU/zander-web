@@ -48,6 +48,7 @@ async function generateSlug(title, startAt, existingSlug = null) {
  * Called whenever event start time changes.
  */
 async function recalculateAnnouncementSchedules(eventId, startAt) {
+  const event = await prisma.events.findUnique({ where: { eventId } });
   const announcements = await prisma.event_announcements.findMany({
     where: { eventId, status: "pending", enabled: true },
   });
@@ -59,6 +60,9 @@ async function recalculateAnnouncementSchedules(eventId, startAt) {
       scheduledFor = new Date(new Date(startAt).getTime() - ann.offsetMinutes * 60000);
     } else if (ann.triggerType === "event_start") {
       scheduledFor = new Date(startAt);
+    } else if (ann.triggerType === "after_event" && event?.endAt) {
+      const offset = (ann.offsetMinutes || 0) * 60000;
+      scheduledFor = new Date(new Date(event.endAt).getTime() + offset);
     }
 
     if (scheduledFor) {
@@ -646,6 +650,9 @@ async function scheduleAnnouncementsForEvent(eventId, startAt, actorId) {
       scheduledFor = new Date(new Date(startAt).getTime() - ann.offsetMinutes * 60000);
     } else if (ann.triggerType === "event_start") {
       scheduledFor = new Date(startAt);
+    } else if (ann.triggerType === "after_event" && event?.endAt) {
+      const offset = (ann.offsetMinutes || 0) * 60000;
+      scheduledFor = new Date(new Date(event.endAt).getTime() + offset);
     }
 
     if (!scheduledFor) continue;
@@ -670,6 +677,8 @@ async function scheduleAnnouncementsForEvent(eventId, startAt, actorId) {
           description = `**${event.title}** starts in ${ann.offsetMinutes} minutes! (<t:${ts}:R>)`;
         } else if (ann.triggerType === "event_start") {
           description = `**${event.title}** is starting now!`;
+        } else if (ann.triggerType === "after_event") {
+          description = `**${event.title}** has ended. Thanks for participating!`;
         } else {
           description = `Reminder: **${event.title}** — <t:${ts}:F>`;
         }
@@ -719,6 +728,10 @@ async function scheduleAnnouncementsForEvent(eventId, startAt, actorId) {
       } else if (ann.triggerType === "event_start") {
         annStartDate = new Date(startAt);
         annEndDate = event?.endAt ? new Date(event.endAt) : null;
+      } else if (ann.triggerType === "after_event" && event?.endAt) {
+        const offset = (ann.offsetMinutes || 0) * 60000;
+        annStartDate = new Date(new Date(event.endAt).getTime() + offset);
+        annEndDate = null;
       }
 
       await prisma.announcements.create({

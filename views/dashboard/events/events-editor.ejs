@@ -12,6 +12,9 @@
                         <a href="/dashboard/events/view?eventId=<%= ev.eventId %>" class="btn btn-sm btn-outline-secondary">
                             <i class="fas fa-arrow-left fa-fw me-1"></i>Back
                         </a>
+                        <a href="/dashboard/events/preview?eventId=<%= ev.eventId %>" target="_blank" class="btn btn-sm btn-outline-info">
+                            <i class="fas fa-eye me-1"></i>Preview
+                        </a>
                     <% } else { %>
                         <a href="/dashboard/events/list" class="btn btn-sm btn-outline-secondary">
                             <i class="fas fa-arrow-left fa-fw me-1"></i>Back
@@ -186,19 +189,47 @@
                     <div class="card mb-3">
                         <div class="card-body">
                             <div class="mb-3">
-                                <label class="form-label fw-semibold">Banner Image URL</label>
-                                <input type="url" class="form-control" name="bannerUrl" value="<%= ev.bannerUrl || '' %>" placeholder="https://…" id="bannerUrlInput">
-                                <small class="text-muted">Displayed as the hero image on the event page and in Discord embeds. Recommended: <strong>1920×480px</strong> (4:1) for website; <strong>1280×720px</strong> (16:9) for Discord events. PNG/JPG, max 8 MB.</small>
+                                <label class="form-label fw-semibold">Banner Image</label>
+                                <input type="hidden" name="bannerUrl" id="bannerUrlInput" value="<%= ev.bannerUrl || '' %>">
+                                <div class="input-group mb-1">
+                                    <input type="file" class="form-control" id="bannerFileInput" accept="image/png,image/jpeg,image/gif,image/webp">
+                                    <button type="button" class="btn btn-outline-secondary" id="bannerUploadBtn" disabled>
+                                        <i class="fas fa-cloud-upload-alt me-1"></i>Upload
+                                    </button>
+                                </div>
+                                <div class="d-flex align-items-center gap-2 mb-1">
+                                    <small class="text-muted flex-grow-1">Or enter URL directly:</small>
+                                    <span id="bannerUploadStatus" class="small d-none"></span>
+                                </div>
+                                <input type="url" class="form-control form-control-sm" id="bannerUrlManual" value="<%= ev.bannerUrl || '' %>" placeholder="https://…">
+                                <small class="text-muted">Recommended: <strong>1920×480px</strong> (4:1) for website; <strong>1280×720px</strong> (16:9) for Discord. PNG/JPG, max 8 MB.</small>
                                 <div id="bannerPreview" class="mt-2 <%= ev.bannerUrl ? '' : 'd-none' %>">
-                                    <img src="<%= ev.bannerUrl || '' %>" class="img-fluid rounded" style="max-height:200px" alt="Banner preview">
+                                    <div class="position-relative d-inline-block">
+                                        <img src="<%= ev.bannerUrl || '' %>" class="img-fluid rounded" style="max-height:200px" alt="Banner preview">
+                                        <button type="button" class="btn btn-sm btn-danger position-absolute top-0 end-0 m-1" id="bannerClearBtn" title="Remove"><i class="fas fa-times"></i></button>
+                                    </div>
                                 </div>
                             </div>
                             <div class="mb-3">
-                                <label class="form-label fw-semibold">Logo / Thumbnail URL</label>
-                                <input type="url" class="form-control" name="logoUrl" value="<%= ev.logoUrl || '' %>" placeholder="https://…" id="logoUrlInput">
-                                <small class="text-muted">Shown as thumbnail in Discord embeds and on the event page. Recommended: <strong>512×512px</strong> (1:1 square). PNG with transparency preferred. Max 8 MB.</small>
+                                <label class="form-label fw-semibold">Logo / Thumbnail</label>
+                                <input type="hidden" name="logoUrl" id="logoUrlInput" value="<%= ev.logoUrl || '' %>">
+                                <div class="input-group mb-1">
+                                    <input type="file" class="form-control" id="logoFileInput" accept="image/png,image/jpeg,image/gif,image/webp">
+                                    <button type="button" class="btn btn-outline-secondary" id="logoUploadBtn" disabled>
+                                        <i class="fas fa-cloud-upload-alt me-1"></i>Upload
+                                    </button>
+                                </div>
+                                <div class="d-flex align-items-center gap-2 mb-1">
+                                    <small class="text-muted flex-grow-1">Or enter URL directly:</small>
+                                    <span id="logoUploadStatus" class="small d-none"></span>
+                                </div>
+                                <input type="url" class="form-control form-control-sm" id="logoUrlManual" value="<%= ev.logoUrl || '' %>" placeholder="https://…">
+                                <small class="text-muted">Recommended: <strong>512×512px</strong> (1:1 square). PNG with transparency preferred. Max 8 MB.</small>
                                 <div id="logoPreview" class="mt-2 <%= ev.logoUrl ? '' : 'd-none' %>">
-                                    <img src="<%= ev.logoUrl || '' %>" class="rounded" style="max-height:80px;max-width:80px;object-fit:contain" alt="Logo preview">
+                                    <div class="position-relative d-inline-block">
+                                        <img src="<%= ev.logoUrl || '' %>" class="rounded" style="max-height:80px;max-width:80px;object-fit:contain" alt="Logo preview">
+                                        <button type="button" class="btn btn-sm btn-danger position-absolute top-0 end-0 m-1" id="logoClearBtn" title="Remove"><i class="fas fa-times"></i></button>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -265,12 +296,14 @@
                                         <% if (at.type === 'discord_message') { %>
                                         <div class="mt-2 row g-2">
                                             <div class="col-md-6">
-                                                <label class="form-label small mb-1">Channel ID <span class="text-danger">*</span></label>
-                                                <input type="text" class="form-control form-control-sm"
+                                                <label class="form-label small mb-1">Channel <span class="text-danger">*</span></label>
+                                                <select class="form-select form-select-sm"
+                                                    id="discordMessageChannelSelect"
                                                     data-action-type="discord_message"
                                                     data-config-key="channelId"
-                                                    placeholder="Discord text channel ID"
-                                                    value="<%= cfg.channelId || '' %>">
+                                                    data-saved="<%= cfg.channelId || (config.events && config.events.discordChannelId) || '' %>">
+                                                    <option value="">Loading channels…</option>
+                                                </select>
                                                 <small class="text-muted">The text channel to post the event announcement in.</small>
                                             </div>
                                         </div>
@@ -392,10 +425,11 @@
                     <option value="on_publish">On Publish</option>
                     <option value="before_event" selected>Before Event</option>
                     <option value="event_start">Event Start</option>
+                    <option value="after_event">After Event</option>
                 </select>
             </div>
             <div class="col-md-2 ann-offset-group">
-                <label class="form-label small">Minutes Before</label>
+                <label class="form-label small ann-offset-label">Minutes Before</label>
                 <input type="number" class="form-control form-control-sm ann-offsetMinutes" placeholder="60" min="0">
             </div>
             <!-- Discord -->
@@ -409,8 +443,10 @@
                 </select>
             </div>
             <div class="col-md-3 ann-discord-group">
-                <label class="form-label small">Channel ID</label>
-                <input type="text" class="form-control form-control-sm ann-channelId" placeholder="Discord Channel ID">
+                <label class="form-label small">Channel</label>
+                <select class="form-select form-select-sm ann-channelId">
+                    <option value="">— select —</option>
+                </select>
             </div>
             <div class="col-12 ann-discord-group">
                 <div class="d-flex justify-content-between align-items-center mb-1">
@@ -618,8 +654,13 @@ function initAnnouncementRow(row) {
 
     const trigger = row.querySelector('.ann-trigger');
     const offsetGroup = row.querySelector('.ann-offset-group');
+    const offsetLabel = row.querySelector('.ann-offset-label');
     if (trigger && offsetGroup) {
-        const toggleOffset = () => offsetGroup.classList.toggle('d-none', trigger.value !== 'before_event');
+        const toggleOffset = () => {
+            const v = trigger.value;
+            offsetGroup.classList.toggle('d-none', v !== 'before_event' && v !== 'after_event');
+            if (offsetLabel) offsetLabel.textContent = v === 'after_event' ? 'Minutes After' : 'Minutes Before';
+        };
         trigger.addEventListener('change', toggleOffset);
         toggleOffset();
     }
@@ -658,7 +699,8 @@ function addAnnouncementRow(ann = {}) {
     if (ann.announcementType) row.querySelector('.ann-type').value = ann.announcementType;
     if (ann.triggerType) row.querySelector('.ann-trigger').value = ann.triggerType;
     if (ann.offsetMinutes) row.querySelector('.ann-offsetMinutes').value = ann.offsetMinutes;
-    if (ann.channelId) row.querySelector('.ann-channelId').value = ann.channelId;
+    const annChannelSel = row.querySelector('.ann-channelId');
+    if (annChannelSel) populateTextChannelSelect(annChannelSel, ann.channelId || '');
     if (ann.contentTemplate) row.querySelector('.ann-contentTemplate').value = ann.contentTemplate;
     if (ann.body) row.querySelector('.ann-body').value = ann.body;
     if (ann.colourMessageFormat) row.querySelector('.ann-colourMessageFormat').value = ann.colourMessageFormat;
@@ -703,25 +745,70 @@ function collectActions() {
 }
 
 // ============================================================
-// Image previews
+// Image upload + preview (Cloudinary)
 // ============================================================
-function setupPreview(inputId, previewId) {
-    const input = document.getElementById(inputId);
+function setupImageUpload(hiddenId, fileId, uploadBtnId, manualId, previewId, statusId, clearBtnId, folder) {
+    const hidden = document.getElementById(hiddenId);
+    const fileInput = document.getElementById(fileId);
+    const uploadBtn = document.getElementById(uploadBtnId);
+    const manual = document.getElementById(manualId);
     const preview = document.getElementById(previewId);
-    if (!input || !preview) return;
-    input.addEventListener('change', () => {
-        const url = input.value.trim();
+    const statusEl = document.getElementById(statusId);
+    const clearBtn = document.getElementById(clearBtnId);
+    if (!hidden || !fileInput || !uploadBtn || !manual || !preview) return;
+
+    function setUrl(url) {
+        hidden.value = url;
+        manual.value = url;
         const img = preview.querySelector('img');
-        if (url && img) {
-            img.src = url;
-            preview.classList.remove('d-none');
-        } else {
-            preview.classList.add('d-none');
+        if (url && img) { img.src = url; preview.classList.remove('d-none'); }
+        else { preview.classList.add('d-none'); }
+    }
+
+    fileInput.addEventListener('change', () => { uploadBtn.disabled = !fileInput.files.length; });
+
+    uploadBtn.addEventListener('click', async () => {
+        const file = fileInput.files[0];
+        if (!file) return;
+        uploadBtn.disabled = true;
+        statusEl.className = 'small text-info';
+        statusEl.textContent = 'Uploading…';
+        statusEl.classList.remove('d-none');
+        try {
+            const fd = new FormData();
+            fd.append('file', file);
+            fd.append('folder', folder);
+            const res = await fetch('/api/upload/image', { method: 'POST', body: fd });
+            const json = await res.json();
+            if (json.success) {
+                setUrl(json.data.url);
+                statusEl.className = 'small text-success';
+                statusEl.textContent = 'Uploaded!';
+                fileInput.value = '';
+            } else {
+                statusEl.className = 'small text-danger';
+                statusEl.textContent = json.message || 'Upload failed';
+            }
+        } catch {
+            statusEl.className = 'small text-danger';
+            statusEl.textContent = 'Upload failed';
         }
+        uploadBtn.disabled = true;
+        setTimeout(() => statusEl.classList.add('d-none'), 4000);
     });
+
+    manual.addEventListener('change', () => setUrl(manual.value.trim()));
+
+    if (clearBtn) {
+        clearBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            setUrl('');
+            fileInput.value = '';
+        });
+    }
 }
-setupPreview('bannerUrlInput', 'bannerPreview');
-setupPreview('logoUrlInput', 'logoPreview');
+setupImageUpload('bannerUrlInput', 'bannerFileInput', 'bannerUploadBtn', 'bannerUrlManual', 'bannerPreview', 'bannerUploadStatus', 'bannerClearBtn', 'zander/events/banners');
+setupImageUpload('logoUrlInput', 'logoFileInput', 'logoUploadBtn', 'logoUrlManual', 'logoPreview', 'logoUploadStatus', 'logoClearBtn', 'zander/events/logos');
 
 // ============================================================
 // Timezone-aware datetime helpers
@@ -867,6 +954,55 @@ function localInputToUtc(localStr, ianaTimezone) {
     });
 
     loadMinecraftServers();
+})();
+
+// ============================================================
+// Discord text channel picker (for actions + announcements)
+// ============================================================
+let _textChannels = [];
+
+function populateTextChannelSelect(select, selectedId) {
+    select.innerHTML = '<option value="">— select a channel —</option>';
+    let lastCat = null;
+    let grp;
+    _textChannels.forEach(ch => {
+        if (ch.category !== lastCat) {
+            grp = document.createElement('optgroup');
+            grp.label = ch.category || 'Uncategorised';
+            select.appendChild(grp);
+            lastCat = ch.category;
+        }
+        const opt = document.createElement('option');
+        opt.value = ch.id;
+        opt.textContent = '#' + ch.name;
+        if (ch.id === selectedId) opt.selected = true;
+        (grp || select).appendChild(opt);
+    });
+    if (!_textChannels.length) {
+        select.innerHTML = '<option value="">No text channels found</option>';
+    }
+}
+
+(async function loadTextChannels() {
+    try {
+        const res = await fetch('/api/events/discord/text-channels', {
+            credentials: 'include',
+            headers: { 'x-access-token': <%- JSON.stringify(process.env.apiKey || '') %> },
+        });
+        const data = await res.json();
+        _textChannels = data.channels || [];
+    } catch {
+        _textChannels = [];
+    }
+
+    const actionSelect = document.getElementById('discordMessageChannelSelect');
+    if (actionSelect) {
+        populateTextChannelSelect(actionSelect, actionSelect.dataset.saved || '');
+    }
+
+    document.querySelectorAll('.ann-channelId').forEach(sel => {
+        populateTextChannelSelect(sel, sel.dataset.saved || '');
+    });
 })();
 
 // ============================================================

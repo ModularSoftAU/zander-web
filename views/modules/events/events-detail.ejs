@@ -5,13 +5,22 @@
 
 <%- include("../navigationBar.ejs") %>
 
+<% if (typeof isPreview !== 'undefined' && isPreview) { %>
+<div class="alert alert-warning text-center mb-0 rounded-0 border-start-0 border-end-0 border-top-0" role="alert" style="position:relative;z-index:1050;">
+    <i class="fas fa-eye me-2"></i><strong>Preview Mode</strong> — This is how the event will appear to the public. It is not yet visible to visitors.
+    <a href="/dashboard/events/view?eventId=<%= event.eventId %>" class="btn btn-sm btn-outline-dark ms-3">
+        <i class="fas fa-arrow-left me-1"></i>Back to Dashboard
+    </a>
+</div>
+<% } %>
+
 <% if (event.bannerUrl) { %>
-<div style="background:url('<%= event.bannerUrl %>') center/cover no-repeat;height:320px;position:relative;">
-    <div style="position:absolute;inset:0;background:linear-gradient(to bottom, rgba(0,0,0,0.1) 0%, rgba(0,0,0,0.6) 100%);"></div>
+<div style="background:url('<%= event.bannerUrl %>') center/cover no-repeat;height:320px;position:relative;overflow:hidden;">
+    <div style="position:absolute;inset:0;background:linear-gradient(to bottom, transparent 30%, rgba(0,0,0,0.85) 100%);"></div>
     <div class="container h-100 d-flex align-items-end pb-4 position-relative">
-        <div class="text-white">
+        <div>
             <% if (event.featured) { %><span class="badge bg-warning text-dark mb-2"><i class="fas fa-star me-1"></i>Featured</span><br><% } %>
-            <h1 class="display-5 fw-bold mb-0"><%= event.title %></h1>
+            <h1 class="fw-bold mb-0" style="color:#ffffff;font-size:clamp(1.5rem, 4vw, 2.5rem);text-shadow:0 2px 12px rgba(0,0,0,0.8);"><%= event.title %></h1>
         </div>
     </div>
 </div>

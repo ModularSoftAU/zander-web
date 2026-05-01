@@ -83,6 +83,17 @@ export const adminPages = [
     group: "Community",
     sortOrder: 21,
   },
+  {
+    slug: "forms",
+    title: "Forms",
+    menuTitle: "Forms",
+    icon: "fas fa-poll",
+    capability: "zander.web.forms",
+    path: "/dashboard/forms",
+    featureFlag: "forms",
+    group: "Community",
+    sortOrder: 22,
+  },
 
   // ── Events group ───────────────────────────────────────────────────────────
   {
@@ -316,6 +327,20 @@ export const adminSubPages = [
     parent: "events-list",
     path: "/dashboard/events",
     capability: "zander.web.events",
+  },
+  {
+    slug: "forms-create",
+    title: "Create Form",
+    parent: "forms",
+    path: "/dashboard/forms/create",
+    capability: "zander.web.forms",
+  },
+  {
+    slug: "forms-edit",
+    title: "Edit Form",
+    parent: "forms",
+    path: "/dashboard/forms/edit",
+    capability: "zander.web.forms",
   },
 ];
 

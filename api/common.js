@@ -156,8 +156,8 @@ function hasSpecificPermission(permissionArray, node) {
     }
 
     if (candidate.endsWith(".*")) {
-      const base = candidate.slice(0, -1);
-      return target.startsWith(base);
+      const base = candidate.slice(0, -2);
+      return target === base || target.startsWith(base + ".");
     }
 
     return false;

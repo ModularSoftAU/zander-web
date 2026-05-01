@@ -33,6 +33,16 @@
           </div>
         </a>
 
+        <% if (features.forms) { %>
+          <a class="stat-card" href="/dashboard/forms">
+            <div class="stat-icon purple"><i class="fas fa-poll" aria-hidden="true"></i></div>
+            <div class="stat-info">
+              <div class="stat-label">Forms</div>
+              <div class="stat-value"><%= formsCount %></div>
+            </div>
+          </a>
+        <% } %>
+
         <a class="stat-card" href="/dashboard/servers">
           <div class="stat-icon amber"><i class="fas fa-server" aria-hidden="true"></i></div>
           <div class="stat-info">
@@ -76,6 +86,13 @@
                 <a class="quick-action-item" href="/dashboard/events">
                   <i class="fas fa-calendar-plus" aria-hidden="true"></i>
                   Events Calendar
+                </a>
+              <% } %>
+
+              <% if (features.forms) { %>
+                <a class="quick-action-item" href="/dashboard/forms/create">
+                  <i class="fas fa-poll" aria-hidden="true"></i>
+                  Create Form
                 </a>
               <% } %>
 

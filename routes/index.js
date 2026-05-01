@@ -21,6 +21,7 @@ import profileSiteRoutes from "./profileRoutes.js";
 import forumSiteRoutes from "./forumRoutes.js";
 import supportRoutes from "./support.js";
 import notificationRoutes from "./notificationRoutes.js";
+import formSiteRoutes from "./formRoutes.js";
 import watchSiteRoutes from "./watchRoutes.js";
 import sitemapRoutes from "./sitemapRoute.js";
 import voteSiteRoutes from "./voteRoutes.js";
@@ -46,6 +47,7 @@ export default function applicationSiteRoutes(
   redirectSiteRoutes(app, config, features);
   supportRoutes(app, client, fetch, moment, config, db, features, lang);
   notificationRoutes(app, config, features);
+  formSiteRoutes(app, client, fetch, moment, config, db, features, lang);
   watchSiteRoutes(app, client, fetch, moment, config, db, features, lang);
   sitemapRoutes(app, config, features);
   voteSiteRoutes(app, fetch, config, db, features, lang);
