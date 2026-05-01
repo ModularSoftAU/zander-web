@@ -3,41 +3,10 @@
  * Provides the public-facing events listing and event detail pages.
  */
 
-import { getGlobalImage, isFeatureWebRouteEnabled, hashEmail } from "../api/common.js";
+import { getGlobalImage, isFeatureWebRouteEnabled } from "../api/common.js";
 import { getWebAnnouncement } from "../controllers/announcementController.js";
 import { getUpcomingPublishedEvents, getAllPublishedEvents, getPublishedEventBySlug } from "../services/eventService.js";
-import { prisma } from "../controllers/databaseController.js";
-
-/** Resolve an avatar URL from a users row. */
-async function resolveAvatarUrl(user) {
-  if (!user) return null;
-  if (user.profilePicture_type === "CRAFTATAR" && user.uuid) {
-    return `https://crafthead.net/avatar/${user.uuid}`;
-  }
-  if (user.profilePicture_type === "GRAVATAR" && user.profilePicture_email) {
-    const hash = await hashEmail(user.profilePicture_email);
-    return `https://gravatar.com/avatar/${hash}?size=128`;
-  }
-  if (user.uuid) return `https://crafthead.net/avatar/${user.uuid}`;
-  return `https://mc-heads.net/avatar/${user.username}/128`;
-}
-
-/** Enrich event hosts with resolved avatar URLs. */
-async function enrichHostsWithAvatars(hosts) {
-  const userIds = hosts.map(h => h.userId).filter(Boolean);
-  const users = userIds.length
-    ? await prisma.users.findMany({
-        where: { userId: { in: userIds } },
-        select: { userId: true, uuid: true, username: true, profilePicture_type: true, profilePicture_email: true },
-      })
-    : [];
-  const userMap = Object.fromEntries(users.map(u => [u.userId, u]));
-
-  return Promise.all(hosts.map(async h => ({
-    ...h,
-    avatarUrl: h.userId ? await resolveAvatarUrl(userMap[h.userId] || null) : null,
-  })));
-}
+import { enrichHostsWithAvatars } from "../lib/avatarHelpers.js";
 
 export default function eventsRoutes(app, config, features) {
   // ============================================================================

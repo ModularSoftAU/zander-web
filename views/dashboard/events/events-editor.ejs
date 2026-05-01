@@ -12,6 +12,9 @@
                         <a href="/dashboard/events/view?eventId=<%= ev.eventId %>" class="btn btn-sm btn-outline-secondary">
                             <i class="fas fa-arrow-left fa-fw me-1"></i>Back
                         </a>
+                        <a href="/dashboard/events/preview?eventId=<%= ev.eventId %>" target="_blank" class="btn btn-sm btn-outline-info">
+                            <i class="fas fa-eye me-1"></i>Preview
+                        </a>
                     <% } else { %>
                         <a href="/dashboard/events/list" class="btn btn-sm btn-outline-secondary">
                             <i class="fas fa-arrow-left fa-fw me-1"></i>Back

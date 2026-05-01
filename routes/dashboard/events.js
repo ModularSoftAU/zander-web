@@ -11,6 +11,8 @@ import {
 } from "../../api/common.js";
 import { getWebAnnouncement } from "../../controllers/announcementController.js";
 import { hasPermission as hasPermissionNode } from "../../lib/discord/permissions.mjs";
+import { getEventById } from "../../services/eventService.js";
+import { enrichHostsWithAvatars } from "../../lib/avatarHelpers.js";
 
 /** Fetch a URL with the internal API key and parse JSON, returning fallback on error. */
 async function fetchJson(fetchFn, url, fallback = null) {
@@ -313,6 +315,73 @@ export default function dashboardEventsSiteRoute(app, fetch, config, db, feature
         announcementWeb,
       })
     );
+  });
+
+  // ============================================================================
+  // Preview Event (renders public template regardless of status)
+  // ============================================================================
+  app.get("/dashboard/events/preview", async (req, res) => {
+    if (!await isFeatureWebRouteEnabled(app, features.events, req, res, features)) return;
+    if (!await hasPermission("zander.web.events", req, res, features)) return;
+
+    const eventId = req.query.eventId;
+    if (!eventId) return res.redirect("/dashboard/events/list");
+
+    try {
+      const event = await getEventById(eventId);
+      if (!event) {
+        await setBannerCookie("danger", "Event not found", res);
+        return res.redirect("/dashboard/events/list");
+      }
+
+      if (!userCanEditEvent(event, req)) {
+        await setBannerCookie("danger", "You do not have permission to preview this event.", res);
+        return res.redirect("/dashboard/events/list");
+      }
+
+      event.hosts = await enrichHostsWithAvatars(event.hosts || []);
+
+      const startTs = Math.floor(new Date(event.startAt).getTime() / 1000);
+      const endTs = Math.floor(new Date(event.endAt).getTime() / 1000);
+
+      const gcalStart = new Date(event.startAt).toISOString().replace(/[-:]/g, "").replace(".000", "");
+      const gcalEnd = new Date(event.endAt).toISOString().replace(/[-:]/g, "").replace(".000", "");
+      const gcalUrl = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(event.title)}&dates=${gcalStart}/${gcalEnd}&details=${encodeURIComponent((event.description || "").slice(0, 500))}&location=${encodeURIComponent(event.locationLabel || event.serverIp || "")}`;
+
+      let tags = [];
+      try { tags = Array.isArray(event.tags) ? event.tags : (event.tags ? JSON.parse(event.tags) : []); } catch { tags = []; }
+
+      let externalLinks = [];
+      try { externalLinks = Array.isArray(event.externalLinks) ? event.externalLinks : (event.externalLinks ? JSON.parse(event.externalLinks) : []); } catch { externalLinks = []; }
+
+      const [globalImage, announcementWeb] = await Promise.all([
+        getGlobalImage(),
+        getWebAnnouncement(),
+      ]);
+
+      res.header("content-type", "text/html; charset=utf-8").send(
+        await app.view("modules/events/events-detail", {
+          pageTitle: `Preview: ${event.title}`,
+          pageDescription: event.description ? event.description.replace(/<[^>]+>/g, "").slice(0, 200) : `${event.title} — Community event`,
+          config,
+          req,
+          features,
+          event,
+          tags,
+          externalLinks,
+          startTs,
+          endTs,
+          gcalUrl,
+          globalImage,
+          announcementWeb,
+          isPreview: true,
+        })
+      );
+    } catch (err) {
+      console.error("[Events] preview error:", err);
+      await setBannerCookie("danger", "Error loading event preview", res);
+      return res.redirect("/dashboard/events/list");
+    }
   });
 
   // ============================================================================
