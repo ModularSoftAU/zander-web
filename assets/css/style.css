@@ -2668,6 +2668,32 @@ a:focus {
   display: block;
 }
 
+.forums-poll-pic-enlarge {
+  position: absolute;
+  top: 0.4rem;
+  left: 0.4rem;
+  background: rgba(0, 0, 0, 0.55);
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  width: 1.7rem;
+  height: 1.7rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.15s;
+  z-index: 2;
+}
+.forums-poll-pic-enlarge:hover {
+  background: rgba(0, 0, 0, 0.75);
+}
+.forums-poll-pic-img-wrap:hover .forums-poll-pic-enlarge {
+  opacity: 1;
+}
+
 .forums-poll-pic-img-placeholder {
   width: 100%;
   height: 100%;
