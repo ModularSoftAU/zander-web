@@ -498,6 +498,13 @@ export function validateFormSubmission(blocks, answers) {
                 }
                 break;
             }
+            case "image_upload": {
+                const val = String(answer);
+                if (!/^https?:\/\/.+/.test(val)) {
+                    errors.push({ blockId: block.blockId, message: `"${block.label}" must be a valid image URL.` });
+                }
+                break;
+            }
         }
     }
 
@@ -530,11 +537,15 @@ export function formatResponseForDisplay(blocks, answers) {
         } else {
             displayValue = "(no answer)";
         }
-        formatted.push({
+        const entry = {
             label: block.label || `Question ${block.blockId}`,
             type: block.type,
             value: displayValue,
-        });
+        };
+        if (block.type === "image_upload" && displayValue && displayValue !== "(no answer)") {
+            entry.imageUrl = displayValue;
+        }
+        formatted.push(entry);
     }
     return formatted;
 }
@@ -571,7 +582,11 @@ export function formatResponseForDiscord(blocks, answers, maxLength = 2000) {
         } else {
             displayValue = "(no answer)";
         }
-        lines.push(`**${block.label || "Question"}**\n${displayValue}`);
+        if (block.type === "image_upload" && displayValue && displayValue !== "(no answer)") {
+            lines.push(`**${block.label || "Image"}**\n${displayValue}`);
+        } else {
+            lines.push(`**${block.label || "Question"}**\n${displayValue}`);
+        }
     }
     let text = lines.join("\n\n");
     if (text.length > maxLength) {

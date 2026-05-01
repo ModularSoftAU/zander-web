@@ -423,6 +423,35 @@ const buildApp = async () => {
     }
   }
 
+  // ── Auto-migration: formBlocks type ENUM → add image_upload ──
+  if (db) {
+    try {
+      await new Promise((resolve) => {
+        db.query(
+          `SELECT COLUMN_TYPE FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'formBlocks' AND COLUMN_NAME = 'type'`,
+          (err, results) => {
+            if (err || !results || results.length === 0) return resolve();
+            const colType = results[0].COLUMN_TYPE || '';
+            if (colType.includes('image_upload')) return resolve();
+            db.query(
+              `ALTER TABLE formBlocks MODIFY COLUMN type ENUM('short_answer','paragraph','multiple_choice','checkboxes','dropdown','linear_scale','title_description','section_break','image_upload') NOT NULL`,
+              (alterErr) => {
+                if (alterErr) {
+                  console.warn("[DB] formBlocks type ENUM migration skipped:", alterErr.message);
+                } else {
+                  console.log("[DB] formBlocks: added image_upload to type ENUM.");
+                }
+                resolve();
+              }
+            );
+          }
+        );
+      });
+    } catch (err) {
+      console.error("[DB] formBlocks auto-migration error:", err.message);
+    }
+  }
+
   // ── Auto-migration: vote_sites image_url column ──
   if (db) {
     try {

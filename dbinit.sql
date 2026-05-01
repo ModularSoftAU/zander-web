@@ -380,7 +380,8 @@ CREATE TABLE formBlocks (
         'dropdown',
         'linear_scale',
         'title_description',
-        'section_break'
+        'section_break',
+        'image_upload'
     ) NOT NULL,
     orderIndex INT NOT NULL DEFAULT 0,
     required TINYINT(1) NOT NULL DEFAULT 0,

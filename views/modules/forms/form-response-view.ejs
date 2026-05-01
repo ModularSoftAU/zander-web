@@ -37,7 +37,15 @@
                         <% formattedAnswers.forEach(function(answer) { %>
                             <div class="mb-3">
                                 <label class="form-label fw-bold"><%= answer.label %></label>
-                                <p class="mb-0"><%= answer.value %></p>
+                                <% if (answer.imageUrl) { %>
+                                    <div>
+                                        <a href="<%= answer.imageUrl %>" target="_blank" rel="noopener">
+                                            <img src="<%= answer.imageUrl %>" alt="<%= answer.label %>" class="img-fluid rounded" style="max-height:300px;">
+                                        </a>
+                                    </div>
+                                <% } else { %>
+                                    <p class="mb-0"><%= answer.value %></p>
+                                <% } %>
                             </div>
                         <% }) %>
                     </div>

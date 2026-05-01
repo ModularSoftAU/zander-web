@@ -122,6 +122,7 @@
                 <li><a class="dropdown-item" href="#" onclick="addBlock('checkboxes'); return false;">Checkboxes</a></li>
                 <li><a class="dropdown-item" href="#" onclick="addBlock('dropdown'); return false;">Dropdown</a></li>
                 <li><a class="dropdown-item" href="#" onclick="addBlock('linear_scale'); return false;">Linear Scale</a></li>
+                <li><a class="dropdown-item" href="#" onclick="addBlock('image_upload'); return false;">Image Upload</a></li>
                 <li><hr class="dropdown-divider"></li>
                 <li class="dropdown-header">Layout</li>
                 <li><a class="dropdown-item" href="#" onclick="addBlock('title_description'); return false;">Title & Description</a></li>
@@ -183,11 +184,12 @@
         'checkboxes': 'Checkboxes',
         'dropdown': 'Dropdown',
         'linear_scale': 'Linear Scale',
+        'image_upload': 'Image Upload',
         'title_description': 'Title & Description',
         'section_break': 'Section Break'
     };
 
-    var questionTypes = ['short_answer', 'paragraph', 'multiple_choice', 'checkboxes', 'dropdown', 'linear_scale'];
+    var questionTypes = ['short_answer', 'paragraph', 'multiple_choice', 'checkboxes', 'dropdown', 'linear_scale', 'image_upload'];
 
     function renderBlocks() {
         var scrollPos = window.scrollY;
@@ -322,6 +324,14 @@
 
             case 'title_description':
                 html += '<div class="mb-2"><small class="text-muted">Use the Label and Description fields above for the title and description text.</small></div>';
+                break;
+
+            case 'image_upload':
+                html += '<div class="mb-2"><small class="text-muted">Users will be able to upload an image (PNG, JPG, GIF, WebP, max 8 MB). Images are stored on Cloudinary. Use the Label field above for the upload prompt.</small></div>';
+                html += '<div class="row">';
+                html += '<div class="col-md-6 mb-2"><label class="form-label">Max File Size (MB)</label>';
+                html += '<input type="number" class="form-control form-control-sm" value="' + (config.maxSizeMB || 8) + '" min="1" max="8" onchange="updateBlockConfig(' + index + ', \'maxSizeMB\', parseInt(this.value) || 8)"></div>';
+                html += '</div>';
                 break;
 
             case 'section_break':

@@ -200,6 +200,29 @@
                                 </select>
                             </div>
 
+                        <% } else if (block.type === 'image_upload') { %>
+                            <div class="mb-3">
+                                <label class="form-label">
+                                    <%= block.label %><% if (block.required) { %> <span class="text-danger">*</span><% } %>
+                                </label>
+                                <% if (block.description) { %>
+                                    <small class="form-text text-muted d-block mb-1"><%= block.description %></small>
+                                <% } %>
+                                <input type="hidden" name="block_<%= block.blockId %>" id="imgVal_<%= block.blockId %>" value="">
+                                <div class="input-group">
+                                    <input type="file" class="form-control" id="imgFile_<%= block.blockId %>" accept="image/png,image/jpeg,image/gif,image/webp">
+                                    <button type="button" class="btn btn-outline-primary img-upload-btn" data-block-id="<%= block.blockId %>" disabled>
+                                        <i class="fas fa-cloud-upload-alt me-1"></i>Upload
+                                    </button>
+                                </div>
+                                <div class="mt-1">
+                                    <small class="img-upload-status text-muted" id="imgStatus_<%= block.blockId %>">PNG, JPG, GIF, or WebP — max <%= (block.config && block.config.maxSizeMB) || 8 %> MB</small>
+                                </div>
+                                <div class="mt-2 d-none" id="imgPreview_<%= block.blockId %>">
+                                    <img src="" alt="Preview" class="img-fluid rounded" style="max-height:200px;">
+                                </div>
+                            </div>
+
                         <% } else if (block.type === 'linear_scale') { %>
                             <div class="mb-3">
                                 <label class="form-label">
@@ -263,12 +286,56 @@
 </section>
 
 <script>
+(function() {
+    // Image upload handling
+    document.querySelectorAll('.img-upload-btn').forEach(function(btn) {
+        var blockId = btn.dataset.blockId;
+        var fileInput = document.getElementById('imgFile_' + blockId);
+        var hiddenInput = document.getElementById('imgVal_' + blockId);
+        var statusEl = document.getElementById('imgStatus_' + blockId);
+        var previewEl = document.getElementById('imgPreview_' + blockId);
+
+        fileInput.addEventListener('change', function() { btn.disabled = !fileInput.files.length; });
+
+        btn.addEventListener('click', async function() {
+            var file = fileInput.files[0];
+            if (!file) return;
+            btn.disabled = true;
+            statusEl.className = 'img-upload-status small text-info';
+            statusEl.textContent = 'Uploading…';
+            try {
+                var fd = new FormData();
+                fd.append('file', file);
+                fd.append('folder', 'zander/forms');
+                var res = await fetch('/api/upload/image', { method: 'POST', body: fd });
+                var json = await res.json();
+                if (json.success) {
+                    hiddenInput.value = json.data.url;
+                    statusEl.className = 'img-upload-status small text-success';
+                    statusEl.textContent = 'Uploaded successfully';
+                    var img = previewEl.querySelector('img');
+                    img.src = json.data.url;
+                    previewEl.classList.remove('d-none');
+                } else {
+                    statusEl.className = 'img-upload-status small text-danger';
+                    statusEl.textContent = json.message || 'Upload failed';
+                    btn.disabled = false;
+                }
+            } catch (e) {
+                statusEl.className = 'img-upload-status small text-danger';
+                statusEl.textContent = 'Upload failed';
+                btn.disabled = false;
+            }
+        });
+    });
+
     // Prevent double submission
     document.getElementById('formSubmission').addEventListener('submit', function() {
         var btn = document.getElementById('submitBtn');
         btn.disabled = true;
         btn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i> Submitting...';
     });
+})();
 </script>
 
 <%- include("../../modules/footer.ejs") %>
