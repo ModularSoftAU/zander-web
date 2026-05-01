@@ -15,11 +15,13 @@
 <% } %>
 
 <% if (event.bannerUrl) { %>
-<div style="background:url('<%= event.bannerUrl %>') center/cover no-repeat;height:320px;"></div>
-<div class="bg-dark text-white py-3">
-    <div class="container">
-        <% if (event.featured) { %><span class="badge bg-warning text-dark mb-2"><i class="fas fa-star me-1"></i>Featured</span><br><% } %>
-        <h1 class="fw-bold mb-0" style="font-size:clamp(1.5rem, 4vw, 2.5rem);"><%= event.title %></h1>
+<div style="background:url('<%= event.bannerUrl %>') center/cover no-repeat;height:320px;position:relative;overflow:hidden;">
+    <div style="position:absolute;inset:0;background:linear-gradient(to bottom, transparent 30%, rgba(0,0,0,0.85) 100%);"></div>
+    <div class="container h-100 d-flex align-items-end pb-4 position-relative">
+        <div>
+            <% if (event.featured) { %><span class="badge bg-warning text-dark mb-2"><i class="fas fa-star me-1"></i>Featured</span><br><% } %>
+            <h1 class="fw-bold mb-0" style="color:#ffffff;font-size:clamp(1.5rem, 4vw, 2.5rem);text-shadow:0 2px 12px rgba(0,0,0,0.8);"><%= event.title %></h1>
+        </div>
     </div>
 </div>
 <% } else { %>
