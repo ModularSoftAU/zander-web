@@ -286,7 +286,7 @@
                 html += '<div id="options_' + index + '">';
                 options.forEach(function(opt, optIdx) {
                     html += '<div class="input-group input-group-sm mb-1">';
-                    html += '<input type="text" class="form-control" value="' + escapeAttr(opt) + '" onchange="updateOption(' + index + ', ' + optIdx + ', this.value)">';
+                    html += '<input type="text" class="form-control" value="' + escapeAttr(opt) + '" placeholder="Option ' + (optIdx + 1) + '" onchange="updateOption(' + index + ', ' + optIdx + ', this.value)">';
                     html += '<button type="button" class="btn btn-outline-danger" onclick="removeOption(' + index + ', ' + optIdx + ')"><i class="fas fa-times"></i></button>';
                     html += '</div>';
                 });
@@ -362,7 +362,7 @@
             config: {}
         };
         if (type === 'multiple_choice' || type === 'checkboxes' || type === 'dropdown') {
-            block.config.options = ['Option 1'];
+            block.config.options = [''];
         }
         if (type === 'linear_scale') {
             block.config.min = 1;
@@ -404,7 +404,7 @@
     window.addOption = function(blockIndex) {
         if (!blocks[blockIndex].config) blocks[blockIndex].config = {};
         if (!blocks[blockIndex].config.options) blocks[blockIndex].config.options = [];
-        blocks[blockIndex].config.options.push('Option ' + (blocks[blockIndex].config.options.length + 1));
+        blocks[blockIndex].config.options.push('');
         renderBlocks();
     };
 
