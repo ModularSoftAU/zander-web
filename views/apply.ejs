@@ -22,7 +22,11 @@
               content: apiData.message
             }) %>
           <% } else { %>
-            <% apiData.data.forEach(function (application) { %>
+            <% apiData.data.forEach(function (application) {
+              const eligibility = eligibilityByApplicationId && eligibilityByApplicationId[application.applicationId];
+              const isEligible = !req.session || !req.session.user || !eligibility || eligibility.eligible;
+              const failedRules = eligibility && !eligibility.eligible ? eligibility.failedRules : [];
+            %>
               <!-- <%= application.displayName %> Application Item -->
               <div class="col-lg-4 col-md-6 col-sm-6">
                 <div class="service-item mb-4">
@@ -33,34 +37,53 @@
                     <h4 class="mb-3"><%= application.displayName %></h4>
                     <p><%= application.description %></p>
 
-                    <!-- <%= application.displayName %> Modal -->
                     <% if (application.applicationStatus === 0) { %>
                       <a href="#" target="_blank"><button type="button" class="btn btn-danger" disabled>Closed</button></a>
+                    <% } else if (!isEligible) { %>
+                      <button type="button" class="btn btn-warning" data-bs-toggle="modal" data-bs-target="#modal-<%= application.applicationId %>">View Requirements</button>
                     <% } else { %>
-                      <!-- Updated data-target with unique ID -->
                       <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modal-<%= application.applicationId %>">Apply</button>
                     <% } %>
 
-                    <!-- Updated modal ID -->
                     <div class="modal fade" id="modal-<%= application.applicationId %>" tabindex="-1" role="dialog" aria-labelledby="<%= application.applicationId %>Label" aria-hidden="true">
                       <div class="modal-dialog modal-lg">
                         <div class="modal-content">
                           <div class="container" style="padding:20px;">
                             <h2>Applicant Requirements</h2>
                             <small>You must read and be applicable for the following requirements to apply, when finished, click Apply at the bottom.</small>
-                              <br><br>
-                                <zero-md src="<%= application.requirementsMarkdown %>"></zero-md>
-                              <br><br>
+                            <br><br>
+                              <zero-md src="<%= application.requirementsMarkdown %>"></zero-md>
+                            <br>
 
-                              <% if (application.applicationStatus === '0') { %>
-                                <a href="#" target="_blank"><button type="button" class="btn btn-danger" disabled>Applications Closed</button></a>
-                              <% } else if (application.applicationType === 'linked_form' && application.linkedFormSlug) { %>
-                                <a href="/forms/<%= application.linkedFormSlug %>"><button type="button" class="btn btn-info">Apply</button></a>
-                                <small>Upon clicking Apply, you will be taken to the application form.</small>
-                              <% } else { %>
-                                <a href="<%= application.redirectUrl %>" target="_blank"><button type="button" class="btn btn-info">Apply</button></a>
-                                <small>Upon clicking Apply, you will be redirected to an external site.</small>
+                            <% if (!isEligible && failedRules.length > 0) { %>
+                              <div class="alert alert-warning mt-3">
+                                <strong>You are not currently eligible to apply for <%= application.displayName %>.</strong>
+                                <br><br>
+                                <strong>Requirements not met:</strong>
+                                <ul class="mb-0 mt-2">
+                                  <% failedRules.forEach(function(rule) { %>
+                                    <li><%= rule.message %></li>
+                                  <% }); %>
+                                </ul>
+                              </div>
+                            <% } %>
+
+                            <br>
+
+                            <% if (application.applicationStatus === '0') { %>
+                              <a href="#" target="_blank"><button type="button" class="btn btn-danger" disabled>Applications Closed</button></a>
+                            <% } else if (!isEligible) { %>
+                              <button type="button" class="btn btn-secondary" disabled>Not Eligible</button>
+                              <% if (!req.session || !req.session.user) { %>
+                                <small class="ms-2">Please <a href="/login">log in</a> to check your eligibility.</small>
                               <% } %>
+                            <% } else if (application.applicationType === 'linked_form' && application.linkedFormSlug) { %>
+                              <a href="/forms/<%= application.linkedFormSlug %>"><button type="button" class="btn btn-info">Apply</button></a>
+                              <small>Upon clicking Apply, you will be taken to the application form.</small>
+                            <% } else { %>
+                              <a href="<%= application.redirectUrl %>" target="_blank"><button type="button" class="btn btn-info">Apply</button></a>
+                              <small>Upon clicking Apply, you will be redirected to an external site.</small>
+                            <% } %>
                           </div>
                         </div>
                       </div>

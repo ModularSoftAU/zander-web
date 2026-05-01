@@ -258,6 +258,106 @@
                       </div>
                   </div>
 
+                  <!-- Eligibility Rules Section -->
+                  <hr class="mt-4 mb-4">
+                  <h4 class="mb-3">Eligibility Rules</h4>
+                  <p class="text-muted mb-3">Configure requirements users must meet before they can view or submit this application. All rules are optional — only enabled rules are checked.</p>
+
+                  <!-- Playtime -->
+                  <div class="card mb-3">
+                    <div class="card-header">In-Game Activity</div>
+                    <div class="card-body">
+                      <div class="mb-3">
+                        <label for="eligibility_minimum_playtime_hours">Minimum In-Game Activity Hours</label>
+                        <input type="number" class="form-control" name="eligibility_minimum_playtime_hours" id="eligibility_minimum_playtime_hours"
+                          min="0" placeholder="Leave blank to disable"
+                          value="<%= type === 'edit' && eligibilityRules && eligibilityRules.minimum_playtime_hours !== null ? eligibilityRules.minimum_playtime_hours : '' %>">
+                        <small class="form-text text-muted">Users with fewer hours cannot apply. Leave blank to disable.</small>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Ban checks -->
+                  <div class="card mb-3">
+                    <div class="card-header">Ban Checks</div>
+                    <div class="card-body">
+                      <div class="form-check mb-2">
+                        <input class="form-check-input" type="checkbox" name="eligibility_block_if_currently_banned" id="eligibility_block_if_currently_banned" value="1"
+                          <%= type === 'edit' && eligibilityRules && eligibilityRules.block_if_currently_banned ? 'checked' : '' %>>
+                        <label class="form-check-label" for="eligibility_block_if_currently_banned">
+                          Block if the player is currently banned
+                        </label>
+                      </div>
+                      <div class="form-check mb-2">
+                        <input class="form-check-input" type="checkbox" name="eligibility_block_if_ever_banned" id="eligibility_block_if_ever_banned" value="1"
+                          <%= type === 'edit' && eligibilityRules && eligibilityRules.block_if_ever_banned ? 'checked' : '' %>>
+                        <label class="form-check-label" for="eligibility_block_if_ever_banned">
+                          Block if the player has ever been banned
+                        </label>
+                      </div>
+                      <div class="form-check mb-2">
+                        <input class="form-check-input" type="checkbox" name="eligibility_block_if_banned_on_any_platform" id="eligibility_block_if_banned_on_any_platform" value="1"
+                          <%= type === 'edit' && eligibilityRules && eligibilityRules.block_if_banned_on_any_platform ? 'checked' : '' %>>
+                        <label class="form-check-label" for="eligibility_block_if_banned_on_any_platform">
+                          Block if the player is banned on any Crafting For Christ platform (Minecraft, Discord, Website)
+                        </label>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Punishment history -->
+                  <div class="card mb-3">
+                    <div class="card-header">Punishment History</div>
+                    <div class="card-body">
+                      <div class="row">
+                        <div class="mb-3 col-md-6">
+                          <label for="eligibility_punishment_lookback_months">Punishment Lookback Period (months)</label>
+                          <input type="number" class="form-control" name="eligibility_punishment_lookback_months" id="eligibility_punishment_lookback_months"
+                            min="1" placeholder="Leave blank to disable"
+                            value="<%= type === 'edit' && eligibilityRules && eligibilityRules.punishment_lookback_months !== null ? eligibilityRules.punishment_lookback_months : '' %>">
+                          <small class="form-text text-muted">Check punishments within the last X months.</small>
+                        </div>
+                        <div class="mb-3 col-md-6">
+                          <label for="eligibility_max_punishments_in_lookback">Max Punishments Allowed (within lookback)</label>
+                          <input type="number" class="form-control" name="eligibility_max_punishments_in_lookback" id="eligibility_max_punishments_in_lookback"
+                            min="0" placeholder="0 = none allowed"
+                            value="<%= type === 'edit' && eligibilityRules && eligibilityRules.max_punishments_in_lookback !== null ? eligibilityRules.max_punishments_in_lookback : '' %>">
+                          <small class="form-text text-muted">0 means no punishments allowed in the lookback period. Requires the lookback period to be set.</small>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Discord activity -->
+                  <div class="card mb-4">
+                    <div class="card-header">Discord Community Activity</div>
+                    <div class="card-body">
+                      <div class="form-check mb-3">
+                        <input class="form-check-input" type="checkbox" name="eligibility_require_discord_activity" id="eligibility_require_discord_activity" value="1"
+                          <%= type === 'edit' && eligibilityRules && eligibilityRules.require_discord_activity ? 'checked' : '' %>>
+                        <label class="form-check-label" for="eligibility_require_discord_activity">
+                          Require consistent Discord activity / community interaction
+                        </label>
+                      </div>
+                      <div id="discordActivityFields">
+                        <div class="row">
+                          <div class="mb-3 col-md-6">
+                            <label for="eligibility_discord_activity_lookback_days">Activity Lookback Period (days)</label>
+                            <input type="number" class="form-control" name="eligibility_discord_activity_lookback_days" id="eligibility_discord_activity_lookback_days"
+                              min="1" placeholder="e.g. 30"
+                              value="<%= type === 'edit' && eligibilityRules && eligibilityRules.discord_activity_lookback_days !== null ? eligibilityRules.discord_activity_lookback_days : '' %>">
+                          </div>
+                          <div class="mb-3 col-md-6">
+                            <label for="eligibility_minimum_discord_messages">Minimum Interactions Required</label>
+                            <input type="number" class="form-control" name="eligibility_minimum_discord_messages" id="eligibility_minimum_discord_messages"
+                              min="1" placeholder="e.g. 25"
+                              value="<%= type === 'edit' && eligibilityRules && eligibilityRules.minimum_discord_messages !== null ? eligibilityRules.minimum_discord_messages : '' %>">
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
                   <% if (type === 'create') { %>
                       <button type="submit" class="btn btn-primary"><i class="fal fa-copy"></i> Create Application</button>
                   <% } %>
@@ -292,6 +392,20 @@
     if (typeSelect) {
         typeSelect.addEventListener('change', toggleFields);
         toggleFields();
+    }
+
+    // Toggle Discord activity sub-fields
+    var discordCheck = document.getElementById('eligibility_require_discord_activity');
+    var discordFields = document.getElementById('discordActivityFields');
+
+    function toggleDiscordFields() {
+        if (!discordCheck || !discordFields) return;
+        discordFields.style.display = discordCheck.checked ? 'block' : 'none';
+    }
+
+    if (discordCheck) {
+        discordCheck.addEventListener('change', toggleDiscordFields);
+        toggleDiscordFields();
     }
 })();
 </script>

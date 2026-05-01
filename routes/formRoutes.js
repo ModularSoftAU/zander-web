@@ -17,6 +17,11 @@ import {
   setResponseDiscordForumPostFailed,
   setResponseDiscordForumThreadId,
 } from "../controllers/formController.js";
+import {
+  checkApplicationEligibility,
+  getApplicationByLinkedFormId,
+  saveEligibilitySnapshot,
+} from "../controllers/applicationEligibilityController.js";
 
 export default function formSiteRoutes(
   app,
@@ -136,6 +141,29 @@ export default function formSiteRoutes(
         return res.redirect(`/login?returnTo=${encodeURIComponent("/forms/" + req.params.slug)}`);
       }
 
+      // Server-side eligibility check for application-linked forms
+      let linkedApplicationId = null;
+      if (req.session.user) {
+        try {
+          const linkedApp = await getApplicationByLinkedFormId(form.formId);
+          if (linkedApp) {
+            linkedApplicationId = linkedApp.applicationId;
+            const eligibility = await checkApplicationEligibility(
+              req.session.user.userId,
+              linkedApp.applicationId
+            );
+            if (!eligibility.eligible) {
+              const reasons = eligibility.failedRules.map((r) => r.message).join(" ");
+              setBannerCookie("danger", `You are not eligible to submit this application. ${reasons}`, res);
+              return res.redirect("/forms/" + req.params.slug);
+            }
+          }
+        } catch (err) {
+          console.error("[Forms] Eligibility check error:", err);
+          // On unexpected error, allow submission to proceed rather than blocking users
+        }
+      }
+
       const blocks = await getFormBlocks(form.formId);
 
       // Build answers object from form body
@@ -182,6 +210,22 @@ export default function formSiteRoutes(
 
       const result = await createFormResponse(form.formId, submittedByUserId, answers);
       const responseId = result.insertId;
+
+      // Save eligibility snapshot for staff review (non-blocking)
+      if (submittedByUserId && linkedApplicationId) {
+        checkApplicationEligibility(submittedByUserId, linkedApplicationId)
+          .then((eligibility) =>
+            saveEligibilitySnapshot({
+              formResponseId: responseId,
+              applicationFormId: linkedApplicationId,
+              userId: submittedByUserId,
+              eligible: eligibility.eligible,
+              failedRules: eligibility.failedRules,
+              snapshot: eligibility.snapshot,
+            })
+          )
+          .catch((err) => console.error("[Forms] Failed to save eligibility snapshot:", err));
+      }
 
       // Discord delivery (async, non-blocking)
       deliverToDiscord(form, blocks, answers, responseId, submitterName, client).catch((err) => {

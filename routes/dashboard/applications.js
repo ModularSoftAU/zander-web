@@ -75,6 +75,7 @@ export default function dashboardApplicationsSiteRoute(
         pageTitle: `Dashboard - Application Creator`,
         config: config,
         type: "create",
+        eligibilityRules: null,
         features: features,
         req: req,
         globalImage,
@@ -92,9 +93,13 @@ export default function dashboardApplicationsSiteRoute(
 
     const applicationId = req.query.applicationId;
     const fetchURL = `${process.env.siteAddress}/api/application/get?id=${applicationId}`;
+    const rulesURL = `${process.env.siteAddress}/api/application/eligibility/rules?applicationId=${applicationId}`;
 
-    const [response, globalImage, announcementWeb] = await Promise.all([
+    const [response, rulesResponse, globalImage, announcementWeb] = await Promise.all([
       fetch(fetchURL, {
+        headers: { "x-access-token": process.env.apiKey },
+      }).catch(() => null),
+      fetch(rulesURL, {
         headers: { "x-access-token": process.env.apiKey },
       }).catch(() => null),
       getGlobalImage(),
@@ -108,11 +113,15 @@ export default function dashboardApplicationsSiteRoute(
       return res.redirect("/dashboard/applications");
     }
 
+    const rulesApiData = rulesResponse ? await parseApiResponse(rulesResponse) : { success: false };
+    const eligibilityRules = rulesApiData.success ? rulesApiData.data : null;
+
     res.header("content-type", "text/html; charset=utf-8").send(
       await app.view("dashboard/applications/application-editor", {
         pageTitle: `Dashboard - Application Editor`,
         config: config,
         applicationApiData: applicationApiData.data[0],
+        eligibilityRules: eligibilityRules,
         type: "edit",
         features: features,
         req: req,

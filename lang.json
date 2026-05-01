@@ -23,7 +23,13 @@
     "noApplicationsFound": "No applications could be found at this time.",
     "applicationCreated": "The application has been created.",
     "applicationEdited": "The application has been updated.",
-    "applicationDeleted": "The application has been deleted."
+    "applicationDeleted": "The application has been deleted.",
+    "eligibility": {
+      "rulesUpdated": "Eligibility rules have been saved.",
+      "rulesDeleted": "Eligibility rules have been removed.",
+      "notEligible": "You are not currently eligible to apply for this role.",
+      "overrideRecorded": "Eligibility override has been recorded."
+    }
   },
   "forms": {
     "noFormsFound": "No forms could be found at this time.",

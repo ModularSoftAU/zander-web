@@ -12,6 +12,7 @@ import {
   getDiscordPunishmentsForProfile,
 } from "../controllers/discordPunishmentController.js";
 import { UserGetter } from "../controllers/userController.js";
+import { checkApplicationEligibility } from "../controllers/applicationEligibilityController.js";
 
 import dashboardSiteRoutes from "./dashboard/index.js";
 import sessionRoutes from "./sessionRoutes.js";
@@ -155,6 +156,24 @@ export default function applicationSiteRoutes(
     });
     const apiData = await response.json();
 
+    // Run eligibility checks per application for logged-in users
+    const eligibilityByApplicationId = {};
+    if (req.session.user && apiData.success && Array.isArray(apiData.data)) {
+      const userId = req.session.user.userId;
+      await Promise.all(
+        apiData.data.map(async (application) => {
+          try {
+            const result = await checkApplicationEligibility(userId, application.applicationId);
+            eligibilityByApplicationId[application.applicationId] = result;
+          } catch (err) {
+            console.error(`[Apply] Eligibility check failed for application ${application.applicationId}:`, err);
+            // On error, default to eligible so the application is still visible
+            eligibilityByApplicationId[application.applicationId] = { eligible: true, failedRules: [] };
+          }
+        })
+      );
+    }
+
     res.header("content-type", "text/html; charset=utf-8").send(
       await app.view("apply", {
       pageTitle: `Apply`,
@@ -162,6 +181,7 @@ export default function applicationSiteRoutes(
       config: config,
       req: req,
       apiData: apiData,
+      eligibilityByApplicationId: eligibilityByApplicationId,
       features: features,
       globalImage: await getGlobalImage(),
       announcementWeb: await getWebAnnouncement(),
