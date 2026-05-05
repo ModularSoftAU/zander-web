@@ -51,6 +51,7 @@ import("./cron/unverifiedReminderCron.js");
 // eventAnnouncementCron removed — event announcements now use scheduledDiscordMessages via schedulerCron
 import("./cron/eventTemplateCron.js");
 import("./cron/announcementExpiryCron.js");
+import("./cron/badgeLuckpermsSync.js");
 
 //
 // Website Related

@@ -16,6 +16,7 @@ import { getTicketsAccessibleByUser, getOpenTicketsWithChannelForUser } from "..
 import {
   getUserByUsername,
   getUserRanks,
+  getUserBadges,
   getReportsByReporterId,
   getUserPunishments,
 } from "../services/profileService.js";
@@ -245,6 +246,7 @@ export default function profileSiteRoutes(
           canAppeal: canAppeal,
           profileStats: await getUserStats(profileData.userId),
           profileSession: await getUserLastSession(profileData.userId),
+          profileBadges: await getUserBadges(profileData.userId),
           moment: moment,
           contextPermissions: contextPermissions,
           platformConnections: profilePlatformConnections,

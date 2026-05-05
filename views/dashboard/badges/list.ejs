@@ -1,0 +1,367 @@
+<%- include("../../admin/_head.ejs", { pageTitle }) %>
+<%- include("../../admin/_topbar.ejs") %>
+<%- include("../../admin/_sidebar.ejs") %>
+
+<div id="wpcontent">
+  <div id="wpbody-content">
+    <div class="wrap">
+      <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+        <h1 class="h2">Badges</h1>
+        <div class="btn-toolbar mb-2 mb-md-0 gap-2">
+          <button type="button" class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#createBadgeModal">
+            <i class="fa-solid fa-plus me-1"></i> Create Badge
+          </button>
+        </div>
+      </div>
+      <%- include("../../admin/_notices.ejs") %>
+
+      <div class="table-responsive">
+        <table class="table align-middle">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Preview</th>
+              <th>Name</th>
+              <th>Description</th>
+              <th>LP Group</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% if (!badgesData.success || !badgesData.data || !badgesData.data.length) { %>
+              <tr><td colspan="6" class="text-center text-muted">No badges created yet.</td></tr>
+            <% } else { %>
+              <% badgesData.data.forEach(function(badge) { %>
+                <tr>
+                  <td><%= badge.badgeId %></td>
+                  <td>
+                    <div class="mc-badge-toast d-inline-flex" style="background: <%= badge.backgroundColor || '#1a1a2e' %>; min-width:0; max-width:260px;">
+                      <% if (badge.iconUrl) { %>
+                        <img src="<%- badge.iconUrl %>" alt="" class="mc-badge-icon" style="width:28px;height:28px;">
+                      <% } else { %>
+                        <span class="mc-badge-icon-fallback" style="width:28px;height:28px;font-size:1.1rem;"><i class="fa-solid fa-award"></i></span>
+                      <% } %>
+                      <span class="mc-badge-name" style="font-size:0.8rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:160px;"><%- badge.name %></span>
+                    </div>
+                  </td>
+                  <td><strong><%- badge.name %></strong></td>
+                  <td class="text-muted small"><%= badge.description || '—' %></td>
+                  <td><% if (badge.luckpermsGroup) { %><code><%= badge.luckpermsGroup %></code><% } else { %><span class="text-muted">—</span><% } %></td>
+                  <td>
+                    <div class="d-flex flex-wrap gap-2">
+                      <button class="btn btn-sm btn-warning"
+                        data-bs-toggle="modal" data-bs-target="#editBadgeModal"
+                        data-id="<%= badge.badgeId %>"
+                        data-name="<%- badge.name.replace(/"/g,'&quot;') %>"
+                        data-description="<%- (badge.description||'').replace(/"/g,'&quot;') %>"
+                        data-icon-url="<%- (badge.iconUrl||'').replace(/"/g,'&quot;') %>"
+                        data-background-color="<%= badge.backgroundColor %>"
+                        data-luckperms-group="<%= badge.luckpermsGroup || '' %>">
+                        Edit
+                      </button>
+                      <button class="btn btn-sm btn-outline-secondary btn-duplicate-badge" data-id="<%= badge.badgeId %>">
+                        Duplicate
+                      </button>
+                      <button class="btn btn-sm btn-outline-primary"
+                        data-bs-toggle="modal" data-bs-target="#assignBadgeModal"
+                        data-id="<%= badge.badgeId %>"
+                        data-name="<%- badge.name.replace(/"/g,'&quot;') %>">
+                        Assign
+                      </button>
+                      <button class="btn btn-sm btn-danger"
+                        data-bs-toggle="modal" data-bs-target="#deleteBadgeModal"
+                        data-id="<%= badge.badgeId %>"
+                        data-name="<%- badge.name.replace(/"/g,'&quot;') %>">
+                        Delete
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              <% }) %>
+            <% } %>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── Create Badge Modal ──────────────────────────────────────────────────── -->
+<div class="modal fade" id="createBadgeModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Create Badge</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <div id="createBadgeError" class="alert alert-danger d-none"></div>
+        <div class="mb-3">
+          <label class="form-label">Name <span class="text-danger">*</span></label>
+          <input type="text" class="form-control" id="createBadgeName" maxlength="100" placeholder="Build Competition: Gingerbread House — 1st Place">
+        </div>
+        <div class="mb-3">
+          <label class="form-label">Description</label>
+          <input type="text" class="form-control" id="createBadgeDescription" maxlength="255" placeholder="Optional short description">
+        </div>
+        <div class="mb-3">
+          <label class="form-label">Icon URL</label>
+          <input type="url" class="form-control" id="createBadgeIconUrl" placeholder="https://…/diamond.png">
+          <div class="form-text">Link to any image (32×32 or 64×64 px Minecraft item textures work best).</div>
+        </div>
+        <div class="mb-3">
+          <label class="form-label">Background Colour <span class="text-danger">*</span></label>
+          <div class="input-group">
+            <input type="color" class="form-control form-control-color" id="createBadgeBgPicker" value="#1a1a2e">
+            <input type="text" class="form-control" id="createBadgeBackgroundColor" value="#1a1a2e" maxlength="7" placeholder="#1a1a2e">
+          </div>
+        </div>
+        <div class="mb-0">
+          <label class="form-label">LuckPerms Group</label>
+          <input type="text" class="form-control" id="createBadgeLpGroup" maxlength="100" placeholder="e.g. diamond (auto-assign when user has this group)">
+          <div class="form-text">Leave blank to assign only manually.</div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+        <button type="button" class="btn btn-primary" id="createBadgeSubmit">Create</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── Edit Badge Modal ────────────────────────────────────────────────────── -->
+<div class="modal fade" id="editBadgeModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Edit Badge</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="editBadgeId">
+        <div id="editBadgeError" class="alert alert-danger d-none"></div>
+        <div class="mb-3">
+          <label class="form-label">Name <span class="text-danger">*</span></label>
+          <input type="text" class="form-control" id="editBadgeName" maxlength="100">
+        </div>
+        <div class="mb-3">
+          <label class="form-label">Description</label>
+          <input type="text" class="form-control" id="editBadgeDescription" maxlength="255">
+        </div>
+        <div class="mb-3">
+          <label class="form-label">Icon URL</label>
+          <input type="url" class="form-control" id="editBadgeIconUrl">
+        </div>
+        <div class="mb-3">
+          <label class="form-label">Background Colour <span class="text-danger">*</span></label>
+          <div class="input-group">
+            <input type="color" class="form-control form-control-color" id="editBadgeBgPicker">
+            <input type="text" class="form-control" id="editBadgeBackgroundColor" maxlength="7">
+          </div>
+        </div>
+        <div class="mb-0">
+          <label class="form-label">LuckPerms Group</label>
+          <input type="text" class="form-control" id="editBadgeLpGroup" maxlength="100">
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+        <button type="button" class="btn btn-warning" id="editBadgeSubmit">Save Changes</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── Delete Badge Modal ──────────────────────────────────────────────────── -->
+<div class="modal fade" id="deleteBadgeModal" tabindex="-1">
+  <div class="modal-dialog modal-sm">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Delete Badge</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="deleteBadgeId">
+        <p>Delete <strong id="deleteBadgeName"></strong>? This will remove it from all users.</p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+        <button type="button" class="btn btn-danger" id="deleteBadgeSubmit">Delete</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── Assign Badge Modal ──────────────────────────────────────────────────── -->
+<div class="modal fade" id="assignBadgeModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Assign Badge</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="assignBadgeId">
+        <p>Assigning: <strong id="assignBadgeName"></strong></p>
+        <div id="assignBadgeError" class="alert alert-danger d-none"></div>
+        <div id="assignBadgeSuccess" class="alert alert-success d-none"></div>
+        <div class="mb-3">
+          <label class="form-label">Username <span class="text-danger">*</span></label>
+          <input type="text" class="form-control" id="assignBadgeUsername" placeholder="Minecraft username">
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+        <button type="button" class="btn btn-primary" id="assignBadgeSubmit">Assign</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── Remove Badge From User Modal ───────────────────────────────────────── -->
+<div class="modal fade" id="removeUserBadgeModal" tabindex="-1">
+  <div class="modal-dialog modal-sm">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Remove Badge</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="removeUserBadgeUserId">
+        <input type="hidden" id="removeUserBadgeBadgeId">
+        <p>Remove <strong id="removeUserBadgeName"></strong> from <strong id="removeUserBadgeUsername"></strong>?</p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+        <button type="button" class="btn btn-danger" id="removeUserBadgeSubmit">Remove</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function () {
+  const API = '/dashboard/badges';
+
+  // ── Colour picker sync ─────────────────────────────────────────────────────
+  function syncColour(picker, text) {
+    picker.addEventListener('input', () => { text.value = picker.value; });
+    text.addEventListener('input', () => {
+      if (/^#[0-9a-fA-F]{6}$/.test(text.value)) picker.value = text.value;
+    });
+  }
+  syncColour(document.getElementById('createBadgeBgPicker'), document.getElementById('createBadgeBackgroundColor'));
+  syncColour(document.getElementById('editBadgeBgPicker'), document.getElementById('editBadgeBackgroundColor'));
+
+  // ── Populate edit modal ────────────────────────────────────────────────────
+  document.getElementById('editBadgeModal').addEventListener('show.bs.modal', function (e) {
+    const btn = e.relatedTarget;
+    document.getElementById('editBadgeId').value              = btn.dataset.id;
+    document.getElementById('editBadgeName').value            = btn.dataset.name;
+    document.getElementById('editBadgeDescription').value     = btn.dataset.description;
+    document.getElementById('editBadgeIconUrl').value         = btn.dataset.iconUrl;
+    document.getElementById('editBadgeBackgroundColor').value = btn.dataset.backgroundColor;
+    document.getElementById('editBadgeBgPicker').value        = btn.dataset.backgroundColor;
+    document.getElementById('editBadgeLpGroup').value         = btn.dataset.luckpermsGroup;
+    document.getElementById('editBadgeError').classList.add('d-none');
+  });
+
+  // ── Populate delete modal ──────────────────────────────────────────────────
+  document.getElementById('deleteBadgeModal').addEventListener('show.bs.modal', function (e) {
+    const btn = e.relatedTarget;
+    document.getElementById('deleteBadgeId').value = btn.dataset.id;
+    document.getElementById('deleteBadgeName').textContent = btn.dataset.name;
+  });
+
+  // ── Populate assign modal ──────────────────────────────────────────────────
+  document.getElementById('assignBadgeModal').addEventListener('show.bs.modal', function (e) {
+    const btn = e.relatedTarget;
+    document.getElementById('assignBadgeId').value = btn.dataset.id;
+    document.getElementById('assignBadgeName').textContent = btn.dataset.name;
+    document.getElementById('assignBadgeUsername').value = '';
+    document.getElementById('assignBadgeError').classList.add('d-none');
+    document.getElementById('assignBadgeSuccess').classList.add('d-none');
+  });
+
+  // ── Generic request helper (session-auth via cookie, no API key needed) ────
+  async function apiReq(method, url, body) {
+    const opts = { method, headers: { 'Content-Type': 'application/json' } };
+    if (body) opts.body = JSON.stringify(body);
+    const r = await fetch(url, opts);
+    return r.json();
+  }
+
+  function showError(el, msg) {
+    el.textContent = msg;
+    el.classList.remove('d-none');
+  }
+
+  // ── Create ─────────────────────────────────────────────────────────────────
+  document.getElementById('createBadgeSubmit').addEventListener('click', async () => {
+    const err = document.getElementById('createBadgeError');
+    err.classList.add('d-none');
+    const data = await apiReq('POST', API, {
+      name:            document.getElementById('createBadgeName').value,
+      description:     document.getElementById('createBadgeDescription').value,
+      iconUrl:         document.getElementById('createBadgeIconUrl').value,
+      backgroundColor: document.getElementById('createBadgeBackgroundColor').value,
+      luckpermsGroup:  document.getElementById('createBadgeLpGroup').value,
+    });
+    if (data.success) { location.reload(); } else { showError(err, data.message); }
+  });
+
+  // ── Edit ───────────────────────────────────────────────────────────────────
+  document.getElementById('editBadgeSubmit').addEventListener('click', async () => {
+    const id  = document.getElementById('editBadgeId').value;
+    const err = document.getElementById('editBadgeError');
+    err.classList.add('d-none');
+    const data = await apiReq('PUT', `${API}/${id}`, {
+      name:            document.getElementById('editBadgeName').value,
+      description:     document.getElementById('editBadgeDescription').value,
+      iconUrl:         document.getElementById('editBadgeIconUrl').value,
+      backgroundColor: document.getElementById('editBadgeBackgroundColor').value,
+      luckpermsGroup:  document.getElementById('editBadgeLpGroup').value,
+    });
+    if (data.success) { location.reload(); } else { showError(err, data.message); }
+  });
+
+  // ── Delete ─────────────────────────────────────────────────────────────────
+  document.getElementById('deleteBadgeSubmit').addEventListener('click', async () => {
+    const id = document.getElementById('deleteBadgeId').value;
+    const data = await apiReq('DELETE', `${API}/${id}`);
+    if (data.success) { location.reload(); }
+  });
+
+  // ── Duplicate ──────────────────────────────────────────────────────────────
+  document.querySelectorAll('.btn-duplicate-badge').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const data = await apiReq('POST', `${API}/${btn.dataset.id}/duplicate`);
+      if (data.success) { location.reload(); }
+    });
+  });
+
+  // ── Assign ─────────────────────────────────────────────────────────────────
+  document.getElementById('assignBadgeSubmit').addEventListener('click', async () => {
+    const badgeId  = document.getElementById('assignBadgeId').value;
+    const username = document.getElementById('assignBadgeUsername').value.trim();
+    const errEl    = document.getElementById('assignBadgeError');
+    const succEl   = document.getElementById('assignBadgeSuccess');
+    errEl.classList.add('d-none');
+    succEl.classList.add('d-none');
+
+    if (!username) { showError(errEl, 'Username is required.'); return; }
+
+    const data = await apiReq('POST', `${API}/assign-by-username`, { username, badgeId: parseInt(badgeId, 10) });
+    if (data.success) {
+      succEl.textContent = data.message;
+      succEl.classList.remove('d-none');
+      document.getElementById('assignBadgeUsername').value = '';
+    } else {
+      showError(errEl, data.message);
+    }
+  });
+})();
+</script>
+
+<%- include("../../admin/_footer.ejs") %>

@@ -32,6 +32,14 @@
                                 <i class="fa-solid fa-user me-2"></i>About Me
                             </a>
                         </li>
+                        <li class="nav-item" role="presentation">
+                            <a class="nav-link profile-tab-link" id="badges-tab" data-bs-toggle="tab" href="#badges" role="tab" aria-controls="badges" aria-selected="false">
+                                <i class="fa-solid fa-award me-2"></i>Badges
+                                <% if (profileBadges && profileBadges.length) { %>
+                                    <span class="badge bg-secondary ms-1"><%= profileBadges.length %></span>
+                                <% } %>
+                            </a>
+                        </li>
                         <% if ((contextPermissions && contextPermissions.includes('zander.web.punishments')) || canAppeal) { %>
                             <li class="nav-item" role="presentation">
                                 <a class="nav-link profile-tab-link" id="punishments-tab" data-bs-toggle="tab" href="#punishments" role="tab" aria-controls="punishments" aria-selected="false">
@@ -81,6 +89,21 @@
                             <% } else { %>
                                 <div class="alert alert-warning mb-0" role="alert">
                                     <%= profileApiData.username %> hasn't added an About section yet.
+                                </div>
+                            <% } %>
+                        </div>
+
+                        <div class="tab-pane fade" id="badges" role="tabpanel" aria-labelledby="badges-tab">
+                            <% const earnedBadges = (typeof profileBadges !== 'undefined' && Array.isArray(profileBadges)) ? profileBadges : []; %>
+                            <% if (!earnedBadges.length) { %>
+                                <div class="alert alert-warning mb-0" role="alert">
+                                    <%= profileApiData.username %> hasn't earned any badges yet.
+                                </div>
+                            <% } else { %>
+                                <div class="mc-badges-grid">
+                                    <% earnedBadges.forEach(function(ub) { %>
+                                        <%- include("../../modules/profile/_badgeCard.ejs", { badge: ub.badge }) %>
+                                    <% }) %>
                                 </div>
                             <% } %>
                         </div>

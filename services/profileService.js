@@ -1,5 +1,6 @@
 import db, { luckpermsDb, punishmentsDb } from "../controllers/databaseController.js";
 import { UserGetter } from "../controllers/userController.js";
+import { getUserBadges as getBadgesForUser } from "../controllers/badgeController.js";
 
 const RANK_VIEW = "ranks";
 const USER_RANKS_VIEW = "userRanks";
@@ -226,6 +227,18 @@ export async function getUserRanks(username) {
     console.error("[PROFILE SERVICE] Failed to fetch ranks for", username, error);
     return [];
   }
+}
+
+/**
+ * Get badge ownership records for a user, with badge data included.
+ * @param {number} userId
+ * @returns {Promise<Array>}
+ */
+export function getUserBadges(userId) {
+  return getBadgesForUser(userId).catch((err) => {
+    console.error("[PROFILE SERVICE] Failed to fetch badges for userId", userId, err);
+    return [];
+  });
 }
 
 /**

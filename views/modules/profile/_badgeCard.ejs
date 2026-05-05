@@ -1,0 +1,17 @@
+<%#
+  Reusable Minecraft achievement-toast style badge card.
+  Required locals: badge (badges row object)
+%>
+<div class="mc-badge-toast" style="background: <%= badge.backgroundColor || '#1a1a2e' %>;">
+    <% if (badge.iconUrl) { %>
+        <img src="<%- badge.iconUrl %>" alt="" class="mc-badge-icon" loading="lazy">
+    <% } else { %>
+        <span class="mc-badge-icon-fallback"><i class="fa-solid fa-award"></i></span>
+    <% } %>
+    <div class="mc-badge-info">
+        <span class="mc-badge-name"><%- badge.name %></span>
+        <% if (badge.description) { %>
+            <span class="mc-badge-desc"><%- badge.description %></span>
+        <% } %>
+    </div>
+</div>

@@ -18,6 +18,7 @@ import {
 import { hasActiveWebBan } from "../../controllers/discordPunishmentController.js";
 import { checkRateLimit } from "../../lib/rateLimiter.mjs";
 import { punishmentsDb } from "../../controllers/databaseController.js";
+import { getUserBadges } from "../../controllers/badgeController.js";
 
 export default function userApiRoute(app, config, db, features, lang) {
   const baseEndpoint = "/api/user";
@@ -158,9 +159,19 @@ export default function userApiRoute(app, config, db, features, lang) {
           });
         }
 
-        const profilePicture = await getProfilePicture(userRecord.username);
-        const profileStats = await getUserStats(userRecord.userId);
-        const profileSession = await getUserLastSession(userRecord.userId);
+        const [profilePicture, profileStats, profileSession, profileBadgesRaw] = await Promise.all([
+          getProfilePicture(userRecord.username),
+          getUserStats(userRecord.userId),
+          getUserLastSession(userRecord.userId),
+          getUserBadges(userRecord.userId).catch(() => []),
+        ]);
+
+        const profileBadges = profileBadgesRaw.map((ub) => ({
+          userBadgeId: ub.userBadgeId,
+          earnedAt: ub.earnedAt,
+          isManual: ub.isManual,
+          badge: ub.badge,
+        }));
 
         return res.send({
           success: true,
@@ -169,6 +180,7 @@ export default function userApiRoute(app, config, db, features, lang) {
             profilePicture: profilePicture,
             profileStats: profileStats,
             profileSession: profileSession,
+            profileBadges: profileBadges,
           },
         });
       };

@@ -140,6 +140,21 @@ export class ProfileCommand extends Command {
           }
         );
 
+      const badges = Array.isArray(apiData.data.profileBadges) ? apiData.data.profileBadges : [];
+      if (badges.length > 0) {
+        const MAX_SHOWN = 5;
+        const shown = badges.slice(0, MAX_SHOWN);
+        const badgeLines = shown.map((ub) => `🏅 ${ub.badge.name}`).join("\n");
+        const overflow = badges.length > MAX_SHOWN
+          ? `\n*+${badges.length - MAX_SHOWN} more — [view on profile](${process.env.siteAddress}/profile/${apiData.data.profileData.username})*`
+          : "";
+        embed.addFields({
+          name: `Badges (${badges.length})`,
+          value: badgeLines + overflow,
+          inline: false,
+        });
+      }
+
       interaction.reply({
         embeds: [embed],
         empheral: false,

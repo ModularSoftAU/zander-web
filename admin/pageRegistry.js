@@ -141,6 +141,18 @@ export const adminPages = [
     sortOrder: 33,
   },
 
+  // ── Community group (continued) ────────────────────────────────────────────
+  {
+    slug: "badges",
+    title: "Badges",
+    menuTitle: "Badges",
+    icon: "fa-solid fa-award",
+    capability: "zander.web.badges",
+    path: "/dashboard/badges",
+    group: "Community",
+    sortOrder: 23,
+  },
+
   // ── Moderation group ───────────────────────────────────────────────────────
   {
     slug: "web-punishments",
