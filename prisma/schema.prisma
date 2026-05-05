@@ -877,6 +877,7 @@ model badges {
   description     String?      @db.Text
   iconUrl         String?      @db.VarChar(512)
   backgroundColor String       @default("#1a1a2e") @db.VarChar(7)
+  textColor       String       @default("#ffd700") @db.VarChar(7)
   luckpermsGroup  String?      @db.VarChar(100)
   createdAt       DateTime     @default(now())
   updatedAt       DateTime     @updatedAt

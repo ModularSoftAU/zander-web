@@ -19,19 +19,20 @@ export function getBadgeById(badgeId) {
   return prisma.badges.findUnique({ where: { badgeId } });
 }
 
-export function createBadge({ name, description, iconUrl, backgroundColor, luckpermsGroup }) {
+export function createBadge({ name, description, iconUrl, backgroundColor, textColor, luckpermsGroup }) {
   return prisma.badges.create({
     data: {
       name: name.trim(),
       description: description?.trim() || null,
       iconUrl: iconUrl?.trim() || null,
       backgroundColor: backgroundColor?.trim() || "#1a1a2e",
+      textColor: textColor?.trim() || "#ffd700",
       luckpermsGroup: luckpermsGroup?.trim() || null,
     },
   });
 }
 
-export function updateBadge(badgeId, { name, description, iconUrl, backgroundColor, luckpermsGroup }) {
+export function updateBadge(badgeId, { name, description, iconUrl, backgroundColor, textColor, luckpermsGroup }) {
   return prisma.badges.update({
     where: { badgeId },
     data: {
@@ -39,6 +40,7 @@ export function updateBadge(badgeId, { name, description, iconUrl, backgroundCol
       description: description?.trim() || null,
       iconUrl: iconUrl?.trim() || null,
       backgroundColor: backgroundColor?.trim() || "#1a1a2e",
+      textColor: textColor?.trim() || "#ffd700",
       luckpermsGroup: luckpermsGroup?.trim() || null,
     },
   });

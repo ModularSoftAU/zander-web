@@ -1319,7 +1319,6 @@ body.wp-admin code            { font-size: 12px; color: var(--wp-text); backgrou
 }
 
 .mc-badge-name {
-  color: #ffd700;
   font-weight: 700;
   display: block;
 }

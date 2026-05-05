@@ -1,16 +1,13 @@
 {
   "announcements": true,
   "applications": true,
-  "forms": true,
   "forums": true,
   "discord": {
     "events": {
       "generalKenobi": true,
       "guildMemberBoost": true,
       "guildMemberVerify": true,
-      "nicknameCheck": true,
-      "unverifiedReminder": true,
-      "ipAutoDetect": true
+      "nicknameCheck": true
     },
     "punishments": true
   },
@@ -29,11 +26,8 @@
     "register": true
   },
 
-  "support": true,
   "staffAuditReport": true,
   "watch": true,
-  "vote": true,
-  "events": true,
 
   "smDiscord": true,
   "smFacebook": true,

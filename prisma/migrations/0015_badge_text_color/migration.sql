@@ -1,0 +1,1 @@
+ALTER TABLE `badges` ADD COLUMN `textColor` VARCHAR(7) NOT NULL DEFAULT '#ffd700';

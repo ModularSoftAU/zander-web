@@ -39,9 +39,9 @@
                       <% if (badge.iconUrl) { %>
                         <img src="<%- badge.iconUrl %>" alt="" class="mc-badge-icon" style="width:28px;height:28px;">
                       <% } else { %>
-                        <span class="mc-badge-icon-fallback" style="width:28px;height:28px;font-size:1.1rem;"><i class="fa-solid fa-award"></i></span>
+                        <span class="mc-badge-icon-fallback" style="width:28px;height:28px;font-size:1.1rem;color:<%= badge.textColor || '#ffd700' %>;"><i class="fa-solid fa-award"></i></span>
                       <% } %>
-                      <span class="mc-badge-name" style="font-size:0.8rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:160px;"><%- badge.name %></span>
+                      <span class="mc-badge-name" style="font-size:0.8rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:160px;color:<%= badge.textColor || '#ffd700' %>;"><%- badge.name %></span>
                     </div>
                   </td>
                   <td><strong><%- badge.name %></strong></td>
@@ -56,6 +56,7 @@
                         data-description="<%- (badge.description||'').replace(/"/g,'&quot;') %>"
                         data-icon-url="<%- (badge.iconUrl||'').replace(/"/g,'&quot;') %>"
                         data-background-color="<%= badge.backgroundColor %>"
+                        data-text-color="<%= badge.textColor || '#ffd700' %>"
                         data-luckperms-group="<%= badge.luckpermsGroup || '' %>">
                         Edit
                       </button>
@@ -116,6 +117,13 @@
             <input type="text" class="form-control" id="createBadgeBackgroundColor" value="#1a1a2e" maxlength="7" placeholder="#1a1a2e">
           </div>
         </div>
+        <div class="mb-3">
+          <label class="form-label">Text Colour <span class="text-danger">*</span></label>
+          <div class="input-group">
+            <input type="color" class="form-control form-control-color" id="createBadgeTextPicker" value="#ffd700">
+            <input type="text" class="form-control" id="createBadgeTextColor" value="#ffd700" maxlength="7" placeholder="#ffd700">
+          </div>
+        </div>
         <div class="mb-0">
           <label class="form-label">LuckPerms Group</label>
           <input type="text" class="form-control" id="createBadgeLpGroup" maxlength="100" placeholder="e.g. diamond (auto-assign when user has this group)">
@@ -158,6 +166,13 @@
           <div class="input-group">
             <input type="color" class="form-control form-control-color" id="editBadgeBgPicker">
             <input type="text" class="form-control" id="editBadgeBackgroundColor" maxlength="7">
+          </div>
+        </div>
+        <div class="mb-3">
+          <label class="form-label">Text Colour <span class="text-danger">*</span></label>
+          <div class="input-group">
+            <input type="color" class="form-control form-control-color" id="editBadgeTextPicker">
+            <input type="text" class="form-control" id="editBadgeTextColor" maxlength="7">
           </div>
         </div>
         <div class="mb-0">
@@ -258,7 +273,9 @@
     });
   }
   syncColour(document.getElementById('createBadgeBgPicker'), document.getElementById('createBadgeBackgroundColor'));
+  syncColour(document.getElementById('createBadgeTextPicker'), document.getElementById('createBadgeTextColor'));
   syncColour(document.getElementById('editBadgeBgPicker'), document.getElementById('editBadgeBackgroundColor'));
+  syncColour(document.getElementById('editBadgeTextPicker'), document.getElementById('editBadgeTextColor'));
 
   // ── Populate edit modal ────────────────────────────────────────────────────
   document.getElementById('editBadgeModal').addEventListener('show.bs.modal', function (e) {
@@ -269,6 +286,8 @@
     document.getElementById('editBadgeIconUrl').value         = btn.dataset.iconUrl;
     document.getElementById('editBadgeBackgroundColor').value = btn.dataset.backgroundColor;
     document.getElementById('editBadgeBgPicker').value        = btn.dataset.backgroundColor;
+    document.getElementById('editBadgeTextColor').value       = btn.dataset.textColor;
+    document.getElementById('editBadgeTextPicker').value      = btn.dataset.textColor;
     document.getElementById('editBadgeLpGroup').value         = btn.dataset.luckpermsGroup;
     document.getElementById('editBadgeError').classList.add('d-none');
   });
@@ -316,6 +335,7 @@
       description:     document.getElementById('createBadgeDescription').value,
       iconUrl:         document.getElementById('createBadgeIconUrl').value,
       backgroundColor: document.getElementById('createBadgeBackgroundColor').value,
+      textColor:       document.getElementById('createBadgeTextColor').value,
       luckpermsGroup:  document.getElementById('createBadgeLpGroup').value,
     });
     if (data.success) { location.reload(); } else { showError(err, data.message); }
@@ -331,6 +351,7 @@
       description:     document.getElementById('editBadgeDescription').value,
       iconUrl:         document.getElementById('editBadgeIconUrl').value,
       backgroundColor: document.getElementById('editBadgeBackgroundColor').value,
+      textColor:       document.getElementById('editBadgeTextColor').value,
       luckpermsGroup:  document.getElementById('editBadgeLpGroup').value,
     });
     if (data.success) { location.reload(); } else { showError(err, data.message); }

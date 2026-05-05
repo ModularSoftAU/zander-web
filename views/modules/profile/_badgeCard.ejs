@@ -6,12 +6,12 @@
     <% if (badge.iconUrl) { %>
         <img src="<%- badge.iconUrl %>" alt="" class="mc-badge-icon" loading="lazy">
     <% } else { %>
-        <span class="mc-badge-icon-fallback"><i class="fa-solid fa-award"></i></span>
+        <span class="mc-badge-icon-fallback" style="color: <%= badge.textColor || '#ffd700' %>;"><i class="fa-solid fa-award"></i></span>
     <% } %>
     <div class="mc-badge-info">
-        <span class="mc-badge-name"><%- badge.name %></span>
+        <span class="mc-badge-name" style="color: <%= badge.textColor || '#ffd700' %>;"><%- badge.name %></span>
         <% if (badge.description) { %>
-            <span class="mc-badge-desc"><%- badge.description %></span>
+            <span class="mc-badge-desc" style="color: <%= badge.textColor || '#ffd700' %>;"><%- badge.description %></span>
         <% } %>
     </div>
 </div>

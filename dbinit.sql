@@ -87,7 +87,7 @@ CREATE TABLE forumCategories (
     UNIQUE KEY forumCategories_slug_unique (slug),
     INDEX forumCategories_parent_idx (parentCategoryId),
     CONSTRAINT fk_forumCategories_parent FOREIGN KEY (parentCategoryId) REFERENCES forumCategories(categoryId) ON DELETE SET NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+);
 
 CREATE TABLE forumDiscussions (
     discussionId INT NOT NULL AUTO_INCREMENT,
@@ -109,7 +109,7 @@ CREATE TABLE forumDiscussions (
     CONSTRAINT fk_forumDiscussions_category FOREIGN KEY (categoryId) REFERENCES forumCategories(categoryId) ON DELETE CASCADE,
     CONSTRAINT fk_forumDiscussions_creator FOREIGN KEY (createdBy) REFERENCES users(userId) ON DELETE CASCADE,
     CONSTRAINT fk_forumDiscussions_lastPostUser FOREIGN KEY (lastPostBy) REFERENCES users(userId) ON DELETE SET NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+);
 
 CREATE TABLE forumPosts (
     postId INT NOT NULL AUTO_INCREMENT,
@@ -124,7 +124,7 @@ CREATE TABLE forumPosts (
     INDEX forumPosts_user_idx (userId),
     CONSTRAINT fk_forumPosts_discussion FOREIGN KEY (discussionId) REFERENCES forumDiscussions(discussionId) ON DELETE CASCADE,
     CONSTRAINT fk_forumPosts_user FOREIGN KEY (userId) REFERENCES users(userId) ON DELETE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+);
 
 CREATE TABLE forumPostRevisions (
     revisionId INT NOT NULL AUTO_INCREMENT,
@@ -136,7 +136,7 @@ CREATE TABLE forumPostRevisions (
     INDEX forumPostRevisions_post_idx (postId),
     CONSTRAINT fk_forumPostRevisions_post FOREIGN KEY (postId) REFERENCES forumPosts(postId) ON DELETE CASCADE,
     CONSTRAINT fk_forumPostRevisions_editor FOREIGN KEY (editorId) REFERENCES users(userId) ON DELETE SET NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+);
 
 INSERT INTO users (uuid, username, account_disabled)
 VALUES ('f78a4d8d-d51b-4b39-98a3-230f2de0c670','CONSOLE',0);
@@ -345,73 +345,7 @@ CREATE TABLE applications (
     redirectUrl TEXT,
     position INT,
     applicationStatus BOOLEAN DEFAULT 0,
-    applicationType ENUM('external', 'linked_form') NOT NULL DEFAULT 'external',
-    linkedFormId INT,
     PRIMARY KEY (applicationId)
-);
-
-CREATE TABLE forms (
-    formId INT NOT NULL AUTO_INCREMENT,
-    name VARCHAR(120) NOT NULL,
-    slug VARCHAR(150) NOT NULL,
-    status ENUM('draft', 'published', 'archived') NOT NULL DEFAULT 'draft',
-    createdByUserId INT NOT NULL,
-    discordWebhookUrl TEXT,
-    discordForumChannelId VARCHAR(255),
-    postToForumEnabled TINYINT(1) NOT NULL DEFAULT 0,
-    webhookEnabled TINYINT(1) NOT NULL DEFAULT 0,
-    submitterCanView TINYINT(1) NOT NULL DEFAULT 1,
-    requireLogin TINYINT(1) NOT NULL DEFAULT 1,
-    createdAt DATETIME NOT NULL DEFAULT NOW(),
-    updatedAt DATETIME NOT NULL DEFAULT NOW() ON UPDATE NOW(),
-    PRIMARY KEY (formId),
-    UNIQUE KEY forms_slug_unique (slug),
-    INDEX forms_status_idx (status)
-);
-
-CREATE TABLE formBlocks (
-    blockId INT NOT NULL AUTO_INCREMENT,
-    formId INT NOT NULL,
-    type ENUM(
-        'short_answer',
-        'paragraph',
-        'multiple_choice',
-        'checkboxes',
-        'dropdown',
-        'linear_scale',
-        'title_description',
-        'section_break',
-        'image_upload'
-    ) NOT NULL,
-    orderIndex INT NOT NULL DEFAULT 0,
-    required TINYINT(1) NOT NULL DEFAULT 0,
-    label VARCHAR(255),
-    description TEXT,
-    config JSON,
-    PRIMARY KEY (blockId),
-    INDEX formBlocks_formId_idx (formId),
-    INDEX formBlocks_order_idx (formId, orderIndex),
-    CONSTRAINT fk_formBlocks_form FOREIGN KEY (formId) REFERENCES forms(formId) ON DELETE CASCADE
-);
-
-CREATE TABLE formResponses (
-    responseId INT NOT NULL AUTO_INCREMENT,
-    formId INT NOT NULL,
-    submittedByUserId INT,
-    submittedAt DATETIME NOT NULL DEFAULT NOW(),
-    answers JSON NOT NULL,
-    status ENUM('new', 'reviewed', 'converted', 'archived') NOT NULL DEFAULT 'new',
-    discordWebhookFailed TINYINT(1) NOT NULL DEFAULT 0,
-    discordForumPostFailed TINYINT(1) NOT NULL DEFAULT 0,
-    discordForumThreadId VARCHAR(255),
-    ticketId INT,
-    convertedByUserId INT,
-    convertedAt DATETIME,
-    PRIMARY KEY (responseId),
-    INDEX formResponses_formId_idx (formId),
-    INDEX formResponses_submitter_idx (submittedByUserId),
-    INDEX formResponses_status_idx (status),
-    CONSTRAINT fk_formResponses_form FOREIGN KEY (formId) REFERENCES forms(formId) ON DELETE CASCADE
 );
 
 CREATE TABLE reports (
@@ -669,17 +603,109 @@ CREATE TABLE logs (
     PRIMARY KEY (logId)
 );
 
+CREATE VIEW zanderdev.punishments AS
+SELECT
+    litebans.uuid AS bannedUuid,
+    banned.userId AS bannedUserId,
+    litebans.banned_by_uuid AS bannedByUuid,
+    banner.userId AS bannedByUserId,
+    litebans.removed_by_uuid AS removedByUuid,
+    remover.userId AS removedByUserId,
+    litebans.type,
+    litebans.active,
+    litebans.silent,
+    FROM_UNIXTIME(litebans.time/1000) AS dateStart,
+    FROM_UNIXTIME(nullif((litebans.until / 1000), 0)) AS dateEnd,
+    litebans.removed_by_date AS dateRemoved,
+    litebans.reason,
+    litebans.removed_by_reason AS reasonRemoved,
+    litebans.ip,
+    litebans.ipban,
+    litebans.ipban_wildcard AS ipBanWildcard
+FROM (
+	SELECT
+		uuid,
+		ip,
+		reason,
+		banned_by_uuid,
+		time,
+		null AS until,
+		null AS removed_by_uuid,
+		null AS removed_by_reason,
+		null AS removed_by_date,
+		silent,
+		ipban,
+		ipban_wildcard,
+		null AS active,
+		'kick' AS type
+	FROM cfcdev_litebans.litebans_kicks
+	UNION
+	SELECT
+		uuid,
+		ip,
+		reason,
+		banned_by_uuid,
+		time,
+		until,
+		removed_by_uuid,
+		removed_by_reason,
+		removed_by_date,
+		silent,
+		ipban,
+		ipban_wildcard,
+		active,
+		'ban' AS type
+	FROM cfcdev_litebans.litebans_bans
+	UNION
+	SELECT
+		uuid,
+		ip,
+		reason,
+		banned_by_uuid,
+		time,
+		until,
+		removed_by_uuid,
+		removed_by_reason,
+		removed_by_date,
+		silent,
+		ipban,
+		ipban_wildcard,
+		active,
+		'mute' AS type
+	FROM cfcdev_litebans.litebans_mutes
+	UNION
+	SELECT
+		uuid,
+		ip,
+		reason,
+		banned_by_uuid,
+		time,
+		until,
+		removed_by_uuid,
+		removed_by_reason,
+		removed_by_date,
+		silent,
+		ipban,
+		ipban_wildcard,
+		active,
+		'warning' AS type
+	FROM cfcdev_litebans.litebans_warnings
+) AS litebans
+	LEFT JOIN zanderdev.users banned ON litebans.uuid = banned.uuid
+    LEFT JOIN zanderdev.users banner ON litebans.banned_by_uuid = banner.uuid
+    LEFT JOIN zanderdev.users remover ON litebans.removed_by_uuid = remover.uuid;
+
 CREATE TABLE IF NOT EXISTS discord_punishments (
     id INT NOT NULL AUTO_INCREMENT,
     type ENUM('WARN', 'DISCORD_KICK', 'TEMP_BAN', 'PERM_BAN', 'TEMP_MUTE', 'PERM_MUTE') NOT NULL,
     platform VARCHAR(16) NOT NULL DEFAULT 'DISCORD',
     target_discord_user_id VARCHAR(24) DEFAULT NULL,
-    target_discord_tag  VARCHAR(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
+    target_discord_tag VARCHAR(100),
     target_player_id INT DEFAULT NULL,
     actor_discord_user_id VARCHAR(24) DEFAULT NULL,
     actor_player_id INT DEFAULT NULL,
-    actor_name_snapshot VARCHAR(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
-    reason TEXT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+    actor_name_snapshot VARCHAR(100),
+    reason TEXT NOT NULL,
     created_at DATETIME NOT NULL DEFAULT NOW(),
     expires_at DATETIME DEFAULT NULL,
     lifted_at DATETIME DEFAULT NULL,
@@ -700,7 +726,7 @@ CREATE TABLE IF NOT EXISTS discord_punishment_appeals (
     id INT NOT NULL AUTO_INCREMENT,
     punishment_id INT NOT NULL,
     discord_user_id VARCHAR(24) NOT NULL,
-    appeal_reason TEXT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+    appeal_reason TEXT NOT NULL,
     status ENUM('PENDING', 'APPROVED', 'REJECTED') NOT NULL DEFAULT 'PENDING',
     reviewer_discord_user_id VARCHAR(24) DEFAULT NULL,
     reviewer_notes TEXT DEFAULT NULL,
@@ -712,68 +738,3 @@ CREATE TABLE IF NOT EXISTS discord_punishment_appeals (
     INDEX idx_appeals_status (status),
     CONSTRAINT fk_appeals_punishment FOREIGN KEY (punishment_id) REFERENCES discord_punishments(id) ON DELETE CASCADE
 );
-
--- Watch feature tables (v1.15.0 -> v1.16.0)
-
-CREATE TABLE IF NOT EXISTS user_platform_connections (
-  id                      INT UNSIGNED  NOT NULL AUTO_INCREMENT,
-  user_id                 INT           NOT NULL,
-  platform                VARCHAR(32)   NOT NULL,
-  platform_account_id     VARCHAR(128)  NOT NULL,
-  platform_channel_id     VARCHAR(128)  DEFAULT NULL,
-  platform_username       VARCHAR(128)  DEFAULT NULL,
-  platform_display_name   VARCHAR(128)  DEFAULT NULL,
-  avatar_url              VARCHAR(512)  DEFAULT NULL,
-  access_token            TEXT          DEFAULT NULL,
-  refresh_token           TEXT          DEFAULT NULL,
-  token_expires_at        DATETIME      DEFAULT NULL,
-  is_active               TINYINT(1)    NOT NULL DEFAULT 1,
-  last_successful_sync_at DATETIME      DEFAULT NULL,
-  last_sync_error         VARCHAR(255)  DEFAULT NULL,
-  created_at              TIMESTAMP     NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  updated_at              TIMESTAMP     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  PRIMARY KEY (id),
-  UNIQUE KEY uq_user_platform (user_id, platform),
-  KEY idx_platform_active (platform, is_active)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
-CREATE TABLE IF NOT EXISTS creator_content_items (
-  id                  INT UNSIGNED  NOT NULL AUTO_INCREMENT,
-  user_id             INT           NOT NULL,
-  platform            VARCHAR(32)   NOT NULL,
-  external_content_id VARCHAR(128)  NOT NULL,
-  external_channel_id VARCHAR(128)  DEFAULT NULL,
-  content_type        VARCHAR(32)   NOT NULL,
-  title               VARCHAR(512)  DEFAULT NULL,
-  description         TEXT          DEFAULT NULL,
-  thumbnail_url       VARCHAR(512)  DEFAULT NULL,
-  watch_url           VARCHAR(512)  DEFAULT NULL,
-  viewer_count        INT UNSIGNED  DEFAULT NULL,
-  tags_json           TEXT          DEFAULT NULL,
-  is_live             TINYINT(1)    NOT NULL DEFAULT 0,
-  published_at        DATETIME      DEFAULT NULL,
-  started_at          DATETIME      DEFAULT NULL,
-  ended_at            DATETIME      DEFAULT NULL,
-  matched_rule        VARCHAR(128)  DEFAULT NULL,
-  is_cfc_related      TINYINT(1)    NOT NULL DEFAULT 0,
-  is_publicly_visible TINYINT(1)    NOT NULL DEFAULT 0,
-  last_seen_at        DATETIME      NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  created_at          TIMESTAMP     NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  updated_at          TIMESTAMP     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  PRIMARY KEY (id),
-  UNIQUE KEY uq_platform_content (platform, external_content_id),
-  KEY idx_public_live  (is_publicly_visible, is_live),
-  KEY idx_public_video (is_publicly_visible, content_type, is_live),
-  KEY idx_user_platform (user_id, platform)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
-CREATE TABLE IF NOT EXISTS creator_content_notifications (
-  id                  INT UNSIGNED  NOT NULL AUTO_INCREMENT,
-  platform            VARCHAR(32)   NOT NULL,
-  external_content_id VARCHAR(128)  NOT NULL,
-  notification_type   VARCHAR(64)   NOT NULL,
-  discord_message_id  VARCHAR(32)   DEFAULT NULL,
-  created_at          TIMESTAMP     NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  PRIMARY KEY (id),
-  UNIQUE KEY uq_notification (platform, external_content_id, notification_type)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

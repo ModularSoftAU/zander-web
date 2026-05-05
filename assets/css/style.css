@@ -2859,7 +2859,6 @@ a:focus {
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #ffd700;
   font-size: 1.4rem;
   flex-shrink: 0;
 }
@@ -2872,7 +2871,6 @@ a:focus {
 }
 
 .mc-badge-name {
-  color: #ffd700;
   font-weight: 700;
   font-size: 0.875rem;
   line-height: 1.3;

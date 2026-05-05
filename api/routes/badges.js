@@ -65,14 +65,16 @@ export default function badgesApiRoute(app, config, db, features, lang) {
     const description = String(body.description || "").trim();
     const iconUrl = String(body.iconUrl || "").trim();
     const backgroundColor = String(body.backgroundColor || "#1a1a2e").trim();
+    const textColor = String(body.textColor || "#ffd700").trim();
     const luckpermsGroup = String(body.luckpermsGroup || "").trim();
 
     if (!name) return res.send({ success: false, message: "Name is required." });
     if (name.length > 100) return res.send({ success: false, message: "Name must be 100 characters or fewer." });
     if (!validateHexColor(backgroundColor)) return res.send({ success: false, message: "backgroundColor must be a valid hex colour (e.g. #1a1a2e)." });
+    if (!validateHexColor(textColor)) return res.send({ success: false, message: "textColor must be a valid hex colour (e.g. #ffd700)." });
 
     try {
-      const badge = await createBadge({ name, description: description || null, iconUrl: iconUrl || null, backgroundColor, luckpermsGroup: luckpermsGroup || null });
+      const badge = await createBadge({ name, description: description || null, iconUrl: iconUrl || null, backgroundColor, textColor, luckpermsGroup: luckpermsGroup || null });
       return res.send({ success: true, message: "Badge created.", data: badge });
     } catch (error) {
       console.error("[badges] POST /admin/badges:", error);
@@ -90,14 +92,16 @@ export default function badgesApiRoute(app, config, db, features, lang) {
     const description = String(body.description || "").trim();
     const iconUrl = String(body.iconUrl || "").trim();
     const backgroundColor = String(body.backgroundColor || "#1a1a2e").trim();
+    const textColor = String(body.textColor || "#ffd700").trim();
     const luckpermsGroup = String(body.luckpermsGroup || "").trim();
 
     if (!name) return res.send({ success: false, message: "Name is required." });
     if (name.length > 100) return res.send({ success: false, message: "Name must be 100 characters or fewer." });
     if (!validateHexColor(backgroundColor)) return res.send({ success: false, message: "backgroundColor must be a valid hex colour (e.g. #1a1a2e)." });
+    if (!validateHexColor(textColor)) return res.send({ success: false, message: "textColor must be a valid hex colour (e.g. #ffd700)." });
 
     try {
-      const badge = await updateBadge(id, { name, description: description || null, iconUrl: iconUrl || null, backgroundColor, luckpermsGroup: luckpermsGroup || null });
+      const badge = await updateBadge(id, { name, description: description || null, iconUrl: iconUrl || null, backgroundColor, textColor, luckpermsGroup: luckpermsGroup || null });
       return res.send({ success: true, message: "Badge updated.", data: badge });
     } catch (error) {
       console.error("[badges] PUT /admin/badges/:id:", error);
