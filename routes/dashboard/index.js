@@ -8,6 +8,10 @@ import dashboardForumsSiteRoute from "./forums.js";
 import supportDashboardRoutes from "./support.js";
 import dashboardSchedulerSiteRoute from "./scheduler.js";
 import dashboardWebPunishmentsRoute from "./webPunishments.js";
+import dashboardEventsSiteRoute from "./events.js";
+import dashboardFormsSiteRoute from "./forms.js";
+import dashboardVotingSiteRoute from "./voting.js";
+import dashboardBadgesRoute from "./badges.js";
 
 export default function dashboardSiteRoutes(
   app,
@@ -29,4 +33,8 @@ export default function dashboardSiteRoutes(
   dashboardForumsSiteRoute(app, fetch, config, db, features, lang);
   dashboardSchedulerSiteRoute(app, client, fetch, config, features, lang);
   dashboardWebPunishmentsRoute(app, client, fetch, config, db, features, lang);
+  dashboardEventsSiteRoute(app, fetch, config, db, features, lang);
+  dashboardFormsSiteRoute(app, client, fetch, moment, config, db, features, lang);
+  dashboardVotingSiteRoute(app, fetch, config, db, features, lang);
+  dashboardBadgesRoute(app, fetch, config, db, features, lang);
 }
