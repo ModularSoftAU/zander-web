@@ -481,6 +481,34 @@ const buildApp = async () => {
     }
   }
 
+  // ── Auto-migration: badges textColor column ────────────────────────────────
+  if (db) {
+    try {
+      await new Promise((resolve) => {
+        db.query(
+          `SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'badges' AND COLUMN_NAME = 'textColor'`,
+          (err, results) => {
+            if (err || !results) return resolve();
+            if (results.length > 0) return resolve();
+            db.query(
+              `ALTER TABLE badges ADD COLUMN textColor VARCHAR(7) NOT NULL DEFAULT '#ffd700' AFTER backgroundColor`,
+              (alterErr) => {
+                if (alterErr) {
+                  console.warn("[DB] badges textColor migration skipped:", alterErr.message);
+                } else {
+                  console.log("[DB] badges: added textColor column.");
+                }
+                resolve();
+              }
+            );
+          }
+        );
+      });
+    } catch (err) {
+      console.error("[DB] badges textColor auto-migration error:", err.message);
+    }
+  }
+
   // ── Auto-migration: supportTicketMessages charset → utf8mb4 (emoji support) ──
   if (db) {
     try {
