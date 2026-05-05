@@ -2,6 +2,7 @@ import moment from "moment";
 import fetch from "node-fetch";
 import { getGlobalImage, hasPermission } from "../../api/common.js";
 import { getWebAnnouncement } from "../../controllers/announcementController.js";
+import { adminViewData } from "../../admin/adminHelpers.js";
 
 export default function dashboardSiteRoute(app, config, features, lang) {
   //
@@ -43,6 +44,7 @@ export default function dashboardSiteRoute(app, config, features, lang) {
       serversCount: servers.data ? servers.data.length : 0,
       formsCount: forms.data ? forms.data.length : 0,
       recentAnnouncements: Array.isArray(announcements.data) ? announcements.data.slice(0, 5) : [],
+      ...adminViewData(req, features),
     });
   });
 
@@ -76,6 +78,7 @@ export default function dashboardSiteRoute(app, config, features, lang) {
       globalImage: await getGlobalImage(),
       moment: moment,
       announcementWeb: await getWebAnnouncement(),
+      ...adminViewData(req, features),
     });
 
     return res;
@@ -116,6 +119,7 @@ export default function dashboardSiteRoute(app, config, features, lang) {
       globalImage: await getGlobalImage(),
       moment: moment,
       announcementWeb: await getWebAnnouncement(),
+      ...adminViewData(req, features),
     });
 
     return res;
