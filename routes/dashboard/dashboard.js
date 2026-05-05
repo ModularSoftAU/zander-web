@@ -17,26 +17,19 @@ export default function dashboardSiteRoute(app, config, features, lang) {
 
     if (!permissionBoolean) return;
 
-    const announcements = await fetch(
-      `${process.env.siteAddress}/api/announcement/get`,
-      {
-        headers: { "x-access-token": process.env.apiKey },
-      }
-    ).then((res) => res.json());
+    const apiHeaders = { headers: { "x-access-token": process.env.apiKey } };
+    const base = process.env.siteAddress;
 
-    const applications = await fetch(
-      `${process.env.siteAddress}/api/application/get`,
-      {
-        headers: { "x-access-token": process.env.apiKey },
-      }
-    ).then((res) => res.json());
+    const fetches = [
+      fetch(`${base}/api/announcement/get`, apiHeaders).then((r) => r.json()).catch(() => ({})),
+      fetch(`${base}/api/application/get`, apiHeaders).then((r) => r.json()).catch(() => ({})),
+      fetch(`${base}/api/server/get`, apiHeaders).then((r) => r.json()).catch(() => ({})),
+      features.forms
+        ? fetch(`${base}/api/form/get`, apiHeaders).then((r) => r.json()).catch(() => ({}))
+        : Promise.resolve({}),
+    ];
 
-    const servers = await fetch(
-      `${process.env.siteAddress}/api/server/get`,
-      {
-        headers: { "x-access-token": process.env.apiKey },
-      }
-    ).then((res) => res.json());
+    const [announcements, applications, servers, forms] = await Promise.all(fetches);
 
     return res.view("dashboard/dashboard-index", {
       pageTitle: `Dashboard`,
@@ -48,6 +41,8 @@ export default function dashboardSiteRoute(app, config, features, lang) {
       announcementsCount: announcements.data ? announcements.data.length : 0,
       applicationsCount: applications.data ? applications.data.length : 0,
       serversCount: servers.data ? servers.data.length : 0,
+      formsCount: forms.data ? forms.data.length : 0,
+      recentAnnouncements: Array.isArray(announcements.data) ? announcements.data.slice(0, 5) : [],
     });
   });
 
