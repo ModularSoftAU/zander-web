@@ -19,6 +19,7 @@ import {
   getReportsByReporterId,
   getUserPunishments,
 } from "../services/profileService.js";
+import { getBadgesForUser } from "../controllers/badgeController.js";
 import {
   getDiscordPunishmentsForProfile,
   hasActiveWebBan,
@@ -225,6 +226,16 @@ export default function profileSiteRoutes(
         }
 
         //
+        // Load badges for profile
+        //
+        let profileBadges = [];
+        try {
+          profileBadges = await getBadgesForUser(profileData.userId);
+        } catch (err) {
+          console.error("[PROFILE] Failed to load badges for profile", err);
+        }
+
+        //
         // Render the profile page
         //
         res.header("content-type", "text/html; charset=utf-8").send(
@@ -248,6 +259,7 @@ export default function profileSiteRoutes(
           moment: moment,
           contextPermissions: contextPermissions,
           platformConnections: profilePlatformConnections,
+          profileBadges: profileBadges,
         }));
         return;
       }

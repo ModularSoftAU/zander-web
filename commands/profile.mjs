@@ -140,6 +140,31 @@ export class ProfileCommand extends Command {
           }
         );
 
+      // Fetch and display badges
+      try {
+        const badgeRes = await fetch(
+          `${process.env.siteAddress}/api/badges/user/${encodeURIComponent(apiData.data.profileData.username)}`,
+          { headers: { "x-access-token": process.env.apiKey } }
+        );
+        const badgeData = await badgeRes.json();
+
+        if (badgeData.success && badgeData.data && badgeData.data.length > 0) {
+          const MAX_SHOWN = 5;
+          const badges = badgeData.data;
+          const shown = badges.slice(0, MAX_SHOWN);
+          const extra = badges.length - shown.length;
+
+          const badgeLines = shown.map((b) => `🏅 ${b.name}`).join("\n");
+          const badgeValue = extra > 0
+            ? `${badgeLines}\n*+${extra} more — [view profile](${process.env.siteAddress}/profile/${apiData.data.profileData.username})*`
+            : badgeLines;
+
+          embed.addFields({ name: "Badges", value: badgeValue, inline: false });
+        }
+      } catch (_) {
+        // badges unavailable — profile still renders without them
+      }
+
       interaction.reply({
         embeds: [embed],
         empheral: false,

@@ -1,0 +1,256 @@
+<%- include("../../admin/_head.ejs", { pageTitle }) %>
+<%- include("../../admin/_topbar.ejs") %>
+<%- include("../../admin/_sidebar.ejs") %>
+
+<div id="wpcontent">
+  <div id="wpbody-content">
+    <div class="wrap">
+
+      <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+        <h1 class="h2">
+          <i class="fa-solid fa-user-plus me-2"></i>Assign Badge
+        </h1>
+        <div class="btn-toolbar mb-2 mb-md-0">
+          <a href="/dashboard/badges" class="btn btn-sm btn-outline-secondary">
+            <i class="fa-solid fa-arrow-left me-1"></i>Back to Badges
+          </a>
+        </div>
+      </div>
+
+      <%- include("../../admin/_notices.ejs") %>
+
+      <div class="row g-4">
+        <div class="col-lg-5">
+          <!-- Badge preview -->
+          <div class="card shadow-sm mb-4">
+            <div class="card-body p-4">
+              <h6 class="text-muted text-uppercase mb-3">Badge</h6>
+              <div class="mc-badge-toast" style="background-color: <%= badge.backgroundColor %>;">
+                <img
+                  src="https://mc.nerobot.ru/img/items/<%= badge.itemIcon %>.png"
+                  alt="<%= badge.itemIcon %>"
+                  class="mc-badge-icon"
+                  onerror="this.src='/images/siteLogo.png'"
+                >
+                <div class="mc-badge-text">
+                  <span class="mc-badge-achievement">Achievement Unlocked</span>
+                  <span class="mc-badge-name"><%= badge.name %></span>
+                </div>
+              </div>
+              <% if (badge.description) { %>
+                <p class="text-muted small mt-2 mb-0"><%= badge.description %></p>
+              <% } %>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-lg-7">
+          <!-- Assign to user -->
+          <div class="card shadow-sm mb-4">
+            <div class="card-body p-4">
+              <h6 class="text-muted text-uppercase mb-3">Assign to User</h6>
+              <div id="assignError" class="alert alert-danger d-none mb-3"></div>
+              <div id="assignSuccess" class="alert alert-success d-none mb-3"></div>
+
+              <div class="mb-3">
+                <label class="form-label fw-semibold">Minecraft Username</label>
+                <div class="input-group">
+                  <input type="text" class="form-control" id="assignUsername" placeholder="Steve">
+                  <button class="btn btn-outline-secondary" type="button" id="btnLookup">
+                    <i class="fa-solid fa-magnifying-glass"></i> Lookup
+                  </button>
+                </div>
+              </div>
+
+              <div id="userResult" class="d-none mb-3">
+                <div class="d-flex align-items-center gap-3 p-3 border rounded">
+                  <img id="userAvatar" src="" alt="Avatar" style="width:40px;height:40px;border-radius:4px;">
+                  <div>
+                    <strong id="userDisplayName"></strong>
+                    <div class="text-muted small">User ID: <span id="userIdDisplay"></span></div>
+                  </div>
+                </div>
+              </div>
+
+              <input type="hidden" id="foundUserId">
+
+              <button type="button" class="btn btn-success" id="btnAssign" disabled>
+                <i class="fa-solid fa-user-plus me-1"></i>Assign Badge
+              </button>
+            </div>
+          </div>
+
+          <!-- Remove from user -->
+          <div class="card shadow-sm">
+            <div class="card-body p-4">
+              <h6 class="text-muted text-uppercase mb-3">Remove from User</h6>
+              <div id="removeError" class="alert alert-danger d-none mb-3"></div>
+              <div id="removeSuccess" class="alert alert-success d-none mb-3"></div>
+
+              <div class="mb-3">
+                <label class="form-label fw-semibold">Minecraft Username</label>
+                <div class="input-group">
+                  <input type="text" class="form-control" id="removeUsername" placeholder="Steve">
+                  <button class="btn btn-outline-secondary" type="button" id="btnRemoveLookup">
+                    <i class="fa-solid fa-magnifying-glass"></i> Lookup
+                  </button>
+                </div>
+              </div>
+
+              <div id="removeUserResult" class="d-none mb-3">
+                <div class="d-flex align-items-center gap-3 p-3 border rounded">
+                  <img id="removeUserAvatar" src="" alt="Avatar" style="width:40px;height:40px;border-radius:4px;">
+                  <div>
+                    <strong id="removeUserDisplayName"></strong>
+                    <div class="text-muted small">User ID: <span id="removeUserIdDisplay"></span></div>
+                  </div>
+                </div>
+              </div>
+
+              <input type="hidden" id="removeFoundUserId">
+
+              <button type="button" class="btn btn-danger" id="btnRemove" disabled>
+                <i class="fa-solid fa-user-minus me-1"></i>Remove Badge
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /.wrap -->
+  </div><!-- /#wpbody-content -->
+  <%- include("../../admin/_footer.ejs") %>
+</div><!-- /#wpcontent -->
+
+<style>
+.mc-badge-toast {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  border-radius: 4px;
+  border: 2px solid rgba(255,255,255,0.15);
+  min-height: 60px;
+}
+.mc-badge-icon {
+  width: 44px;
+  height: 44px;
+  image-rendering: pixelated;
+  flex-shrink: 0;
+}
+.mc-badge-text { display: flex; flex-direction: column; }
+.mc-badge-achievement {
+  font-size: 10px;
+  color: rgba(255,255,255,0.65);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+.mc-badge-name {
+  font-size: 15px;
+  font-weight: 700;
+  color: #fff;
+  text-shadow: 1px 1px 2px rgba(0,0,0,0.8);
+}
+</style>
+
+<script>
+const badgeId = <%= badge.badgeId %>;
+
+async function lookupUser(username) {
+  const r = await fetch(`/dashboard/badges/user-search?q=${encodeURIComponent(username)}`);
+  const data = await r.json();
+  return (data.success && data.data && data.data[0]) ? data.data[0] : null;
+}
+
+// Assign — lookup
+document.getElementById('btnLookup').addEventListener('click', async () => {
+  const username = document.getElementById('assignUsername').value.trim();
+  if (!username) return;
+
+  const user = await lookupUser(username);
+  const resultEl = document.getElementById('userResult');
+  const btnAssign = document.getElementById('btnAssign');
+
+  if (!user) {
+    resultEl.classList.add('d-none');
+    btnAssign.disabled = true;
+    document.getElementById('assignError').textContent = 'User not found.';
+    document.getElementById('assignError').classList.remove('d-none');
+    return;
+  }
+
+  document.getElementById('assignError').classList.add('d-none');
+  document.getElementById('userAvatar').src = `https://craftatar.com/avatars/${user.username}?size=40&overlay`;
+  document.getElementById('userDisplayName').textContent = user.username;
+  document.getElementById('userIdDisplay').textContent = user.userId;
+  document.getElementById('foundUserId').value = user.userId;
+  resultEl.classList.remove('d-none');
+  btnAssign.disabled = false;
+});
+
+// Assign — submit
+document.getElementById('btnAssign').addEventListener('click', async () => {
+  const userId = document.getElementById('foundUserId').value;
+  const errEl = document.getElementById('assignError');
+  const okEl = document.getElementById('assignSuccess');
+  errEl.classList.add('d-none');
+  okEl.classList.add('d-none');
+
+  const r = await fetch(`/dashboard/badges/${badgeId}/assign/${userId}`, { method: 'POST' });
+  const data = await r.json();
+
+  if (data.success) {
+    okEl.textContent = `Badge assigned to ${document.getElementById('userDisplayName').textContent}.`;
+    okEl.classList.remove('d-none');
+  } else {
+    errEl.textContent = data.message || 'Failed to assign badge.';
+    errEl.classList.remove('d-none');
+  }
+});
+
+// Remove — lookup
+document.getElementById('btnRemoveLookup').addEventListener('click', async () => {
+  const username = document.getElementById('removeUsername').value.trim();
+  if (!username) return;
+
+  const user = await lookupUser(username);
+  const resultEl = document.getElementById('removeUserResult');
+  const btnRemove = document.getElementById('btnRemove');
+
+  if (!user) {
+    resultEl.classList.add('d-none');
+    btnRemove.disabled = true;
+    document.getElementById('removeError').textContent = 'User not found.';
+    document.getElementById('removeError').classList.remove('d-none');
+    return;
+  }
+
+  document.getElementById('removeError').classList.add('d-none');
+  document.getElementById('removeUserAvatar').src = `https://craftatar.com/avatars/${user.username}?size=40&overlay`;
+  document.getElementById('removeUserDisplayName').textContent = user.username;
+  document.getElementById('removeUserIdDisplay').textContent = user.userId;
+  document.getElementById('removeFoundUserId').value = user.userId;
+  resultEl.classList.remove('d-none');
+  btnRemove.disabled = false;
+});
+
+// Remove — submit
+document.getElementById('btnRemove').addEventListener('click', async () => {
+  const userId = document.getElementById('removeFoundUserId').value;
+  const errEl = document.getElementById('removeError');
+  const okEl = document.getElementById('removeSuccess');
+  errEl.classList.add('d-none');
+  okEl.classList.add('d-none');
+
+  const r = await fetch(`/dashboard/badges/${badgeId}/assign/${userId}`, { method: 'DELETE' });
+  const data = await r.json();
+
+  if (data.success) {
+    okEl.textContent = `Badge removed from ${document.getElementById('removeUserDisplayName').textContent}.`;
+    okEl.classList.remove('d-none');
+  } else {
+    errEl.textContent = data.message || 'Failed to remove badge.';
+    errEl.classList.remove('d-none');
+  }
+});
+</script>
