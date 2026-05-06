@@ -20,9 +20,9 @@
       <%- include("../../admin/_notices.ejs") %>
 
       <div class="row g-4">
-        <div class="col-lg-5">
-          <!-- Badge preview -->
-          <div class="card shadow-sm mb-4">
+        <!-- Badge preview -->
+        <div class="col-lg-4">
+          <div class="card shadow-sm">
             <div class="card-body p-4">
               <h6 class="text-muted text-uppercase mb-3">Badge</h6>
               <div class="mc-badge-toast" style="background-color: <%= badge.backgroundColor %>;">
@@ -33,18 +33,18 @@
                   onerror="this.src='/images/siteLogo.png'"
                 >
                 <div class="mc-badge-text">
-                  <span class="mc-badge-achievement">Achievement Unlocked</span>
-                  <span class="mc-badge-name"><%= badge.name %></span>
+                  <span class="mc-badge-achievement" style="color: <%= badge.textColor %>88;">Achievement Unlocked</span>
+                  <span class="mc-badge-name" style="color: <%= badge.textColor %>;"><%= badge.name %></span>
+                  <% if (badge.description) { %>
+                    <span class="mc-badge-desc" style="color: <%= badge.textColor %>cc;"><%= badge.description %></span>
+                  <% } %>
                 </div>
               </div>
-              <% if (badge.description) { %>
-                <p class="text-muted small mt-2 mb-0"><%= badge.description %></p>
-              <% } %>
             </div>
           </div>
         </div>
 
-        <div class="col-lg-7">
+        <div class="col-lg-8">
           <!-- Assign to user -->
           <div class="card shadow-sm mb-4">
             <div class="card-body p-4">
@@ -54,25 +54,25 @@
 
               <div class="mb-3">
                 <label class="form-label fw-semibold">Minecraft Username</label>
-                <div class="input-group">
-                  <input type="text" class="form-control" id="assignUsername" placeholder="Steve">
-                  <button class="btn btn-outline-secondary" type="button" id="btnLookup">
-                    <i class="fa-solid fa-magnifying-glass"></i> Lookup
-                  </button>
+                <div class="position-relative">
+                  <input type="text" class="form-control" id="assignSearch"
+                    placeholder="Start typing a username…" autocomplete="off">
+                  <div id="assignSuggestions"
+                    class="list-group position-absolute w-100 shadow-sm"
+                    style="z-index:1000;display:none;max-height:220px;overflow-y:auto;top:100%;"></div>
                 </div>
+                <input type="hidden" id="assignUserId">
               </div>
 
-              <div id="userResult" class="d-none mb-3">
+              <div id="assignUserCard" class="d-none mb-3">
                 <div class="d-flex align-items-center gap-3 p-3 border rounded">
-                  <img id="userAvatar" src="" alt="Avatar" style="width:40px;height:40px;border-radius:4px;">
+                  <img id="assignUserAvatar" src="" alt="Avatar" style="width:40px;height:40px;border-radius:4px;">
                   <div>
-                    <strong id="userDisplayName"></strong>
-                    <div class="text-muted small">User ID: <span id="userIdDisplay"></span></div>
+                    <strong id="assignUserName"></strong>
+                    <div class="text-muted small">User ID: <span id="assignUserIdDisplay"></span></div>
                   </div>
                 </div>
               </div>
-
-              <input type="hidden" id="foundUserId">
 
               <button type="button" class="btn btn-success" id="btnAssign" disabled>
                 <i class="fa-solid fa-user-plus me-1"></i>Assign Badge
@@ -89,25 +89,25 @@
 
               <div class="mb-3">
                 <label class="form-label fw-semibold">Minecraft Username</label>
-                <div class="input-group">
-                  <input type="text" class="form-control" id="removeUsername" placeholder="Steve">
-                  <button class="btn btn-outline-secondary" type="button" id="btnRemoveLookup">
-                    <i class="fa-solid fa-magnifying-glass"></i> Lookup
-                  </button>
+                <div class="position-relative">
+                  <input type="text" class="form-control" id="removeSearch"
+                    placeholder="Start typing a username…" autocomplete="off">
+                  <div id="removeSuggestions"
+                    class="list-group position-absolute w-100 shadow-sm"
+                    style="z-index:1000;display:none;max-height:220px;overflow-y:auto;top:100%;"></div>
                 </div>
+                <input type="hidden" id="removeUserId">
               </div>
 
-              <div id="removeUserResult" class="d-none mb-3">
+              <div id="removeUserCard" class="d-none mb-3">
                 <div class="d-flex align-items-center gap-3 p-3 border rounded">
                   <img id="removeUserAvatar" src="" alt="Avatar" style="width:40px;height:40px;border-radius:4px;">
                   <div>
-                    <strong id="removeUserDisplayName"></strong>
+                    <strong id="removeUserName"></strong>
                     <div class="text-muted small">User ID: <span id="removeUserIdDisplay"></span></div>
                   </div>
                 </div>
               </div>
-
-              <input type="hidden" id="removeFoundUserId">
 
               <button type="button" class="btn btn-danger" id="btnRemove" disabled>
                 <i class="fa-solid fa-user-minus me-1"></i>Remove Badge
@@ -141,66 +141,122 @@
 .mc-badge-text { display: flex; flex-direction: column; }
 .mc-badge-achievement {
   font-size: 10px;
-  color: rgba(255,255,255,0.65);
   text-transform: uppercase;
   letter-spacing: 0.05em;
 }
 .mc-badge-name {
   font-size: 15px;
   font-weight: 700;
-  color: #fff;
-  text-shadow: 1px 1px 2px rgba(0,0,0,0.8);
+  text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+}
+.mc-badge-desc {
+  font-size: 11px;
+  opacity: 0.85;
+  margin-top: 2px;
 }
 </style>
 
 <script>
 const badgeId = <%= badge.badgeId %>;
 
-async function lookupUser(username) {
-  const r = await fetch(`/dashboard/badges/user-search?q=${encodeURIComponent(username)}`);
-  const data = await r.json();
-  return (data.success && data.data && data.data[0]) ? data.data[0] : null;
-}
+// ---------------------------------------------------------------------------
+// Generic autocomplete initialiser — reused for both assign and remove panels
+// ---------------------------------------------------------------------------
+function initUserAutocomplete({ searchInputId, suggestionsId, userIdHiddenId, userCardId, avatarId, nameId, idDisplayId, buttonId, onSelect }) {
+  const searchEl   = document.getElementById(searchInputId);
+  const suggestEl  = document.getElementById(suggestionsId);
+  let searchTimer  = null;
 
-// Assign — lookup
-document.getElementById('btnLookup').addEventListener('click', async () => {
-  const username = document.getElementById('assignUsername').value.trim();
-  if (!username) return;
-
-  const user = await lookupUser(username);
-  const resultEl = document.getElementById('userResult');
-  const btnAssign = document.getElementById('btnAssign');
-
-  if (!user) {
-    resultEl.classList.add('d-none');
-    btnAssign.disabled = true;
-    document.getElementById('assignError').textContent = 'User not found.';
-    document.getElementById('assignError').classList.remove('d-none');
-    return;
+  function clearSuggestions() {
+    suggestEl.innerHTML = '';
+    suggestEl.style.display = 'none';
   }
 
-  document.getElementById('assignError').classList.add('d-none');
-  document.getElementById('userAvatar').src = `https://craftatar.com/avatars/${user.username}?size=40&overlay`;
-  document.getElementById('userDisplayName').textContent = user.username;
-  document.getElementById('userIdDisplay').textContent = user.userId;
-  document.getElementById('foundUserId').value = user.userId;
-  resultEl.classList.remove('d-none');
-  btnAssign.disabled = false;
+  function renderSuggestions(results) {
+    clearSuggestions();
+    if (!results.length) return;
+    results.forEach(user => {
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'list-group-item list-group-item-action d-flex align-items-center gap-2 py-1 px-2';
+      if (user.avatarUrl) {
+        const img = document.createElement('img');
+        img.src = user.avatarUrl;
+        img.alt = '';
+        img.width = 28; img.height = 28;
+        img.className = 'rounded';
+        btn.appendChild(img);
+      }
+      const span = document.createElement('span');
+      span.textContent = user.username;
+      span.className = 'flex-fill text-start small';
+      btn.appendChild(span);
+      btn.addEventListener('click', () => {
+        searchEl.value = user.username;
+        clearSuggestions();
+        onSelect(user);
+      });
+      suggestEl.appendChild(btn);
+    });
+    suggestEl.style.display = 'block';
+  }
+
+  async function doSearch(term) {
+    if (!term || term.length < 2) { clearSuggestions(); return; }
+    try {
+      const r    = await fetch(`/dashboard/badges/user-search?q=${encodeURIComponent(term)}`, { credentials: 'include' });
+      const data = await r.json();
+      renderSuggestions(data.results || []);
+    } catch { clearSuggestions(); }
+  }
+
+  searchEl.addEventListener('input', e => {
+    document.getElementById(userIdHiddenId).value = '';
+    document.getElementById(buttonId).disabled = true;
+    document.getElementById(userCardId).classList.add('d-none');
+    clearTimeout(searchTimer);
+    searchTimer = setTimeout(() => doSearch(e.target.value.trim()), 200);
+  });
+
+  document.addEventListener('click', e => {
+    if (!searchEl.contains(e.target) && !suggestEl.contains(e.target)) clearSuggestions();
+  });
+}
+
+// ---------------------------------------------------------------------------
+// Assign panel
+// ---------------------------------------------------------------------------
+initUserAutocomplete({
+  searchInputId: 'assignSearch',
+  suggestionsId: 'assignSuggestions',
+  userIdHiddenId: 'assignUserId',
+  userCardId: 'assignUserCard',
+  avatarId: 'assignUserAvatar',
+  nameId: 'assignUserName',
+  idDisplayId: 'assignUserIdDisplay',
+  buttonId: 'btnAssign',
+  onSelect(user) {
+    document.getElementById('assignUserId').value = user.userId;
+    document.getElementById('assignUserAvatar').src = user.avatarUrl || '';
+    document.getElementById('assignUserName').textContent = user.username;
+    document.getElementById('assignUserIdDisplay').textContent = user.userId;
+    document.getElementById('assignUserCard').classList.remove('d-none');
+    document.getElementById('btnAssign').disabled = false;
+    document.getElementById('assignError').classList.add('d-none');
+  },
 });
 
-// Assign — submit
 document.getElementById('btnAssign').addEventListener('click', async () => {
-  const userId = document.getElementById('foundUserId').value;
-  const errEl = document.getElementById('assignError');
-  const okEl = document.getElementById('assignSuccess');
+  const userId = document.getElementById('assignUserId').value;
+  const errEl  = document.getElementById('assignError');
+  const okEl   = document.getElementById('assignSuccess');
   errEl.classList.add('d-none');
   okEl.classList.add('d-none');
 
-  const r = await fetch(`/dashboard/badges/${badgeId}/assign/${userId}`, { method: 'POST' });
+  const r    = await fetch(`/dashboard/badges/${badgeId}/assign/${userId}`, { method: 'POST' });
   const data = await r.json();
-
   if (data.success) {
-    okEl.textContent = `Badge assigned to ${document.getElementById('userDisplayName').textContent}.`;
+    okEl.textContent = `Badge assigned to ${document.getElementById('assignUserName').textContent}.`;
     okEl.classList.remove('d-none');
   } else {
     errEl.textContent = data.message || 'Failed to assign badge.';
@@ -208,45 +264,40 @@ document.getElementById('btnAssign').addEventListener('click', async () => {
   }
 });
 
-// Remove — lookup
-document.getElementById('btnRemoveLookup').addEventListener('click', async () => {
-  const username = document.getElementById('removeUsername').value.trim();
-  if (!username) return;
-
-  const user = await lookupUser(username);
-  const resultEl = document.getElementById('removeUserResult');
-  const btnRemove = document.getElementById('btnRemove');
-
-  if (!user) {
-    resultEl.classList.add('d-none');
-    btnRemove.disabled = true;
-    document.getElementById('removeError').textContent = 'User not found.';
-    document.getElementById('removeError').classList.remove('d-none');
-    return;
-  }
-
-  document.getElementById('removeError').classList.add('d-none');
-  document.getElementById('removeUserAvatar').src = `https://craftatar.com/avatars/${user.username}?size=40&overlay`;
-  document.getElementById('removeUserDisplayName').textContent = user.username;
-  document.getElementById('removeUserIdDisplay').textContent = user.userId;
-  document.getElementById('removeFoundUserId').value = user.userId;
-  resultEl.classList.remove('d-none');
-  btnRemove.disabled = false;
+// ---------------------------------------------------------------------------
+// Remove panel
+// ---------------------------------------------------------------------------
+initUserAutocomplete({
+  searchInputId: 'removeSearch',
+  suggestionsId: 'removeSuggestions',
+  userIdHiddenId: 'removeUserId',
+  userCardId: 'removeUserCard',
+  avatarId: 'removeUserAvatar',
+  nameId: 'removeUserName',
+  idDisplayId: 'removeUserIdDisplay',
+  buttonId: 'btnRemove',
+  onSelect(user) {
+    document.getElementById('removeUserId').value = user.userId;
+    document.getElementById('removeUserAvatar').src = user.avatarUrl || '';
+    document.getElementById('removeUserName').textContent = user.username;
+    document.getElementById('removeUserIdDisplay').textContent = user.userId;
+    document.getElementById('removeUserCard').classList.remove('d-none');
+    document.getElementById('btnRemove').disabled = false;
+    document.getElementById('removeError').classList.add('d-none');
+  },
 });
 
-// Remove — submit
 document.getElementById('btnRemove').addEventListener('click', async () => {
-  const userId = document.getElementById('removeFoundUserId').value;
-  const errEl = document.getElementById('removeError');
-  const okEl = document.getElementById('removeSuccess');
+  const userId = document.getElementById('removeUserId').value;
+  const errEl  = document.getElementById('removeError');
+  const okEl   = document.getElementById('removeSuccess');
   errEl.classList.add('d-none');
   okEl.classList.add('d-none');
 
-  const r = await fetch(`/dashboard/badges/${badgeId}/assign/${userId}`, { method: 'DELETE' });
+  const r    = await fetch(`/dashboard/badges/${badgeId}/assign/${userId}`, { method: 'DELETE' });
   const data = await r.json();
-
   if (data.success) {
-    okEl.textContent = `Badge removed from ${document.getElementById('removeUserDisplayName').textContent}.`;
+    okEl.textContent = `Badge removed from ${document.getElementById('removeUserName').textContent}.`;
     okEl.classList.remove('d-none');
   } else {
     errEl.textContent = data.message || 'Failed to remove badge.';

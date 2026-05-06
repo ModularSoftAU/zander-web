@@ -36,8 +36,11 @@
                       onerror="this.src='/images/siteLogo.png'"
                     >
                     <div class="mc-badge-text">
-                      <span class="mc-badge-achievement">Achievement Unlocked</span>
-                      <span class="mc-badge-name"><%= badge.name %></span>
+                      <span class="mc-badge-achievement" style="color: <%= badge.textColor %>88;">Achievement Unlocked</span>
+                      <span class="mc-badge-name" style="color: <%= badge.textColor %>;"><%= badge.name %></span>
+                      <% if (badge.description) { %>
+                        <span class="mc-badge-desc" style="color: <%= badge.textColor %>cc;"><%= badge.description %></span>
+                      <% } %>
                     </div>
                   </div>
 
@@ -133,16 +136,19 @@
 }
 .mc-badge-achievement {
   font-size: 10px;
-  color: rgba(255,255,255,0.65);
   text-transform: uppercase;
   letter-spacing: 0.05em;
 }
 .mc-badge-name {
   font-size: 14px;
   font-weight: 700;
-  color: #fff;
-  text-shadow: 1px 1px 2px rgba(0,0,0,0.8);
+  text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
   line-height: 1.2;
+}
+.mc-badge-desc {
+  font-size: 11px;
+  opacity: 0.85;
+  margin-top: 2px;
 }
 </style>
 

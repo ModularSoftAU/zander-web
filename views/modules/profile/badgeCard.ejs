@@ -3,10 +3,12 @@
    * badgeCard.ejs — Minecraft-style achievement toast for a single badge.
    *
    * Expected locals:
-   *   badge  – badge object { name, itemIcon, backgroundColor, description, earnedAt }
+   *   badge  – { name, description, itemIcon, backgroundColor, textColor, earnedAt }
    */
+  const tc = badge.textColor || '#ffffff';
 %>
-<div class="mc-badge-card" style="background-color: <%= badge.backgroundColor %>;" title="<%= badge.description || badge.name %>">
+<div class="mc-badge-card" style="background-color: <%= badge.backgroundColor %>;"
+     title="<%= badge.description ? badge.description : badge.name %>">
   <img
     src="https://mc.nerobot.ru/img/items/<%= badge.itemIcon %>.png"
     alt="<%= badge.itemIcon %>"
@@ -14,7 +16,10 @@
     onerror="this.src='/images/siteLogo.png'"
   >
   <div class="mc-badge-card-text">
-    <span class="mc-badge-card-label">Achievement Unlocked</span>
-    <span class="mc-badge-card-name"><%= badge.name %></span>
+    <span class="mc-badge-card-label" style="color: <%= tc %>88;">Achievement Unlocked</span>
+    <span class="mc-badge-card-name" style="color: <%= tc %>;"><%= badge.name %></span>
+    <% if (badge.description) { %>
+      <span class="mc-badge-card-desc" style="color: <%= tc %>cc;"><%= badge.description %></span>
+    <% } %>
   </div>
 </div>

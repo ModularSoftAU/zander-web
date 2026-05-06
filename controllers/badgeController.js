@@ -28,8 +28,8 @@ export async function getBadgeByLuckpermsGroup(luckpermsGroup) {
   return prisma.badges.findFirst({ where: { luckpermsGroup } });
 }
 
-export async function createBadge({ name, description, itemIcon, backgroundColor, luckpermsGroup }) {
-  validateBadgeInput({ name, itemIcon, backgroundColor });
+export async function createBadge({ name, description, itemIcon, backgroundColor, textColor, luckpermsGroup }) {
+  validateBadgeInput({ name, itemIcon, backgroundColor, textColor });
 
   return prisma.badges.create({
     data: {
@@ -37,13 +37,14 @@ export async function createBadge({ name, description, itemIcon, backgroundColor
       description: description?.trim() || null,
       itemIcon: itemIcon.trim().toLowerCase(),
       backgroundColor: normaliseHex(backgroundColor),
+      textColor: normaliseHex(textColor || "#ffffff"),
       luckpermsGroup: luckpermsGroup?.trim() || null,
     },
   });
 }
 
-export async function updateBadge(badgeId, { name, description, itemIcon, backgroundColor, luckpermsGroup }) {
-  validateBadgeInput({ name, itemIcon, backgroundColor });
+export async function updateBadge(badgeId, { name, description, itemIcon, backgroundColor, textColor, luckpermsGroup }) {
+  validateBadgeInput({ name, itemIcon, backgroundColor, textColor });
 
   return prisma.badges.update({
     where: { badgeId },
@@ -52,6 +53,7 @@ export async function updateBadge(badgeId, { name, description, itemIcon, backgr
       description: description?.trim() || null,
       itemIcon: itemIcon.trim().toLowerCase(),
       backgroundColor: normaliseHex(backgroundColor),
+      textColor: normaliseHex(textColor || "#ffffff"),
       luckpermsGroup: luckpermsGroup?.trim() || null,
     },
   });
@@ -152,13 +154,16 @@ export async function getUsersWithBadge(badgeId) {
 // Helpers
 // ---------------------------------------------------------------------------
 
-function validateBadgeInput({ name, itemIcon, backgroundColor }) {
+function validateBadgeInput({ name, itemIcon, backgroundColor, textColor }) {
   if (!name || name.trim().length === 0) throw new Error("Badge name is required.");
   if (name.trim().length > 100) throw new Error("Badge name must be 100 characters or fewer.");
   if (!itemIcon || itemIcon.trim().length === 0) throw new Error("Item icon is required.");
   if (itemIcon.trim().length > 100) throw new Error("Item icon must be 100 characters or fewer.");
   if (!backgroundColor || !/^#[0-9A-Fa-f]{6}$/.test(backgroundColor.trim())) {
     throw new Error("Background colour must be a valid hex colour (e.g. #1a1a2e).");
+  }
+  if (textColor && !/^#[0-9A-Fa-f]{6}$/.test(textColor.trim())) {
+    throw new Error("Text colour must be a valid hex colour (e.g. #ffffff).");
   }
 }
 
