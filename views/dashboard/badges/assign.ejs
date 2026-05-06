@@ -241,13 +241,23 @@ document.getElementById('btnAssign').addEventListener('click', async () => {
   errEl.classList.add('d-none');
   okEl.classList.add('d-none');
 
-  const r    = await fetch(`/dashboard/badges/${badgeId}/assign/${userId}`, { method: 'POST', credentials: 'include' });
-  const data = await r.json();
-  if (data.success) {
-    okEl.textContent = `Badge assigned to ${document.getElementById('assignUserName').textContent}.`;
-    okEl.classList.remove('d-none');
-  } else {
-    errEl.textContent = data.message || 'Failed to assign badge.';
+  try {
+    const r = await fetch(`/dashboard/badges/${badgeId}/assign/${userId}`, { method: 'POST', credentials: 'include' });
+    if (r.headers.get('content-type')?.includes('text/html')) {
+      errEl.textContent = `Server error (${r.status}). You may not have permission or your session has expired.`;
+      errEl.classList.remove('d-none');
+      return;
+    }
+    const data = await r.json();
+    if (data.success) {
+      okEl.textContent = `Badge assigned to ${document.getElementById('assignUserName').textContent}.`;
+      okEl.classList.remove('d-none');
+    } else {
+      errEl.textContent = data.message || 'Failed to assign badge.';
+      errEl.classList.remove('d-none');
+    }
+  } catch (e) {
+    errEl.textContent = `Unexpected error: ${e.message}`;
     errEl.classList.remove('d-none');
   }
 });
@@ -282,13 +292,23 @@ document.getElementById('btnRemove').addEventListener('click', async () => {
   errEl.classList.add('d-none');
   okEl.classList.add('d-none');
 
-  const r    = await fetch(`/dashboard/badges/${badgeId}/assign/${userId}`, { method: 'DELETE', credentials: 'include' });
-  const data = await r.json();
-  if (data.success) {
-    okEl.textContent = `Badge removed from ${document.getElementById('removeUserName').textContent}.`;
-    okEl.classList.remove('d-none');
-  } else {
-    errEl.textContent = data.message || 'Failed to remove badge.';
+  try {
+    const r = await fetch(`/dashboard/badges/${badgeId}/assign/${userId}`, { method: 'DELETE', credentials: 'include' });
+    if (r.headers.get('content-type')?.includes('text/html')) {
+      errEl.textContent = `Server error (${r.status}). You may not have permission or your session has expired.`;
+      errEl.classList.remove('d-none');
+      return;
+    }
+    const data = await r.json();
+    if (data.success) {
+      okEl.textContent = `Badge removed from ${document.getElementById('removeUserName').textContent}.`;
+      okEl.classList.remove('d-none');
+    } else {
+      errEl.textContent = data.message || 'Failed to remove badge.';
+      errEl.classList.remove('d-none');
+    }
+  } catch (e) {
+    errEl.textContent = `Unexpected error: ${e.message}`;
     errEl.classList.remove('d-none');
   }
 });
