@@ -24,6 +24,11 @@ import {
 import { getWebAnnouncement } from "../../controllers/announcementController.js";
 import db from "../../controllers/databaseController.js";
 import { getProfilePicture } from "../../controllers/userController.js";
+import {
+  assignBadgeToUser,
+  removeBadgeFromUser,
+  getBadgeById,
+} from "../../controllers/badgeController.js";
 
 async function proxyToApi(fetch, method, path, body) {
   const res = await fetch(`${process.env.siteAddress}${path}`, {
@@ -228,14 +233,32 @@ export default function dashboardBadgesRoute(app, fetch, config, db, features, l
 
   app.post("/dashboard/badges/:id/assign/:userId", async (req, res) => {
     if (!await hasPermission("zander.web.badges", req, res, features)) return;
-    res.send(await proxyToApi(fetch, "POST", `/admin/badges/${req.params.id}/assign/${req.params.userId}`));
-    return;
+    const badgeId = parseInt(req.params.id, 10);
+    const userId  = parseInt(req.params.userId, 10);
+    if (!badgeId || !userId) return res.send({ success: false, message: "Invalid badge or user id." });
+    try {
+      const badge = await getBadgeById(badgeId);
+      if (!badge) return res.send({ success: false, message: "Badge not found." });
+      await assignBadgeToUser(userId, badgeId);
+      return res.send({ success: true, message: "Badge assigned." });
+    } catch (err) {
+      console.error("[dashboard/badges] assign error:", err);
+      return res.send({ success: false, message: err.message || "Failed to assign badge." });
+    }
   });
 
   app.delete("/dashboard/badges/:id/assign/:userId", async (req, res) => {
     if (!await hasPermission("zander.web.badges", req, res, features)) return;
-    res.send(await proxyToApi(fetch, "DELETE", `/admin/badges/${req.params.id}/assign/${req.params.userId}`));
-    return;
+    const badgeId = parseInt(req.params.id, 10);
+    const userId  = parseInt(req.params.userId, 10);
+    if (!badgeId || !userId) return res.send({ success: false, message: "Invalid badge or user id." });
+    try {
+      await removeBadgeFromUser(userId, badgeId);
+      return res.send({ success: true, message: "Badge removed from user." });
+    } catch (err) {
+      console.error("[dashboard/badges] remove error:", err);
+      return res.send({ success: false, message: err.message || "Failed to remove badge." });
+    }
   });
 
 }
