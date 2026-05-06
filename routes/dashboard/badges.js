@@ -91,6 +91,39 @@ export default function dashboardBadgesRoute(app, fetch, config, db, features, l
     return;
   });
 
+  // User autocomplete for the assign form (session-authenticated, prefix search)
+  // Registered before parameterized routes so Fastify's static-segment preference is explicit.
+  app.get("/dashboard/badges/user-search", async (req, res) => {
+    if (!await hasPermission("zander.web.badges", req, res, features)) return;
+
+    const q = (req.query.q || "").trim();
+    if (!q || q.length < 2) return res.send({ results: [] });
+
+    try {
+      const rows = await new Promise((resolve, reject) => {
+        db.query(
+          `SELECT userId, username, uuid, profilePicture_type, profilePicture_email
+             FROM users WHERE username LIKE ? ORDER BY username ASC LIMIT 8`,
+          [`${q}%`],
+          (err, results) => { if (err) return reject(err); resolve(results || []); }
+        );
+      });
+
+      const results = await Promise.all(
+        rows.map(async (row) => ({
+          userId: row.userId,
+          username: row.username,
+          avatarUrl: await getProfilePicture(row.username),
+        }))
+      );
+
+      return res.send({ results });
+    } catch (error) {
+      console.error("[dashboard/badges] user-search error:", error);
+      if (!res.sent) return res.status(500).send({ results: [] });
+    }
+  });
+
   // =========================================================================
   // GET /dashboard/badges/:id/edit — edit badge form
   // =========================================================================
@@ -205,35 +238,4 @@ export default function dashboardBadgesRoute(app, fetch, config, db, features, l
     return;
   });
 
-  // User autocomplete for the assign form (session-authenticated, prefix search)
-  app.get("/dashboard/badges/user-search", async (req, res) => {
-    if (!await hasPermission("zander.web.badges", req, res, features)) return;
-
-    const q = (req.query.q || "").trim();
-    if (!q || q.length < 2) return res.send({ results: [] });
-
-    try {
-      const rows = await new Promise((resolve, reject) => {
-        db.query(
-          `SELECT userId, username, uuid, profilePicture_type, profilePicture_email
-             FROM users WHERE username LIKE ? ORDER BY username ASC LIMIT 8`,
-          [`${q}%`],
-          (err, results) => { if (err) return reject(err); resolve(results || []); }
-        );
-      });
-
-      const results = await Promise.all(
-        rows.map(async (row) => ({
-          userId: row.userId,
-          username: row.username,
-          avatarUrl: await getProfilePicture(row.username),
-        }))
-      );
-
-      return res.send({ results });
-    } catch (error) {
-      console.error("[dashboard/badges] user-search error:", error);
-      if (!res.sent) return res.status(500).send({ results: [] });
-    }
-  });
 }

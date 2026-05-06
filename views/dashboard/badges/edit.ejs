@@ -40,16 +40,6 @@
                   placeholder="Short description of how this badge is earned."><%= badge ? (badge.description || '') : '' %></textarea>
               </div>
 
-              <div class="mb-3">
-                <label class="form-label fw-semibold">Minecraft Item Icon <span class="text-danger">*</span></label>
-                <input type="text" class="form-control font-monospace" id="inputItemIcon"
-                  placeholder="golden_apple"
-                  value="<%= badge ? badge.itemIcon : '' %>">
-                <div class="form-text">
-                  Minecraft material name (lowercase, underscores). e.g. <code>cake</code>, <code>diamond_sword</code>, <code>grass_block</code>
-                </div>
-              </div>
-
               <div class="row">
                 <div class="col-md-6 mb-3">
                   <label class="form-label fw-semibold">Background Colour <span class="text-danger">*</span></label>
@@ -100,13 +90,6 @@
               <h6 class="text-muted text-uppercase mb-3">Live Preview</h6>
               <div class="mc-badge-toast" id="badgePreview"
                 style="background-color: <%= badge ? badge.backgroundColor : '#1a1a2e' %>;">
-                <img
-                  src="https://mc.nerobot.ru/img/items/<%= badge ? badge.itemIcon : 'grass_block' %>.png"
-                  alt="icon"
-                  class="mc-badge-icon"
-                  id="previewIcon"
-                  onerror="this.src='/images/siteLogo.png'"
-                >
                 <div class="mc-badge-text">
                   <span class="mc-badge-achievement" id="previewAchievement"
                     style="color: <%= badge ? badge.textColor + 'aa' : 'rgba(255,255,255,0.65)' %>;">
@@ -148,12 +131,6 @@
   border-radius: 4px;
   border: 2px solid rgba(255,255,255,0.15);
   min-height: 60px;
-}
-.mc-badge-icon {
-  width: 44px;
-  height: 44px;
-  image-rendering: pixelated;
-  flex-shrink: 0;
 }
 .mc-badge-text { display: flex; flex-direction: column; }
 .mc-badge-achievement {
@@ -233,13 +210,6 @@ document.getElementById('inputTextColor').addEventListener('input', e => {
 
 document.getElementById('inputName').addEventListener('input', updatePreview);
 document.getElementById('inputDescription').addEventListener('input', updatePreview);
-document.getElementById('inputItemIcon').addEventListener('input', () => {
-  updatePreview();
-  const icon = document.getElementById('inputItemIcon').value.trim().toLowerCase();
-  if (icon) {
-    document.getElementById('previewIcon').src = `https://mc.nerobot.ru/img/items/${icon}.png`;
-  }
-});
 
 document.getElementById('btnSave').addEventListener('click', async () => {
   const errEl = document.getElementById('formError');
@@ -250,7 +220,6 @@ document.getElementById('btnSave').addEventListener('click', async () => {
   const payload = {
     name:            document.getElementById('inputName').value.trim(),
     description:     document.getElementById('inputDescription').value.trim() || null,
-    itemIcon:        document.getElementById('inputItemIcon').value.trim().toLowerCase(),
     backgroundColor: document.getElementById('inputBackgroundColor').value.trim(),
     textColor:       document.getElementById('inputTextColor').value.trim(),
     luckpermsGroup:  document.getElementById('inputLuckpermsGroup').value.trim() || null,

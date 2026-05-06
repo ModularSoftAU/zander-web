@@ -26,12 +26,6 @@
             <div class="card-body p-4">
               <h6 class="text-muted text-uppercase mb-3">Badge</h6>
               <div class="mc-badge-toast" style="background-color: <%= badge.backgroundColor %>;">
-                <img
-                  src="https://mc.nerobot.ru/img/items/<%= badge.itemIcon %>.png"
-                  alt="<%= badge.itemIcon %>"
-                  class="mc-badge-icon"
-                  onerror="this.src='/images/siteLogo.png'"
-                >
                 <div class="mc-badge-text">
                   <span class="mc-badge-achievement" style="color: <%= badge.textColor %>88;">Achievement Unlocked</span>
                   <span class="mc-badge-name" style="color: <%= badge.textColor %>;"><%= badge.name %></span>
@@ -131,12 +125,6 @@
   border-radius: 4px;
   border: 2px solid rgba(255,255,255,0.15);
   min-height: 60px;
-}
-.mc-badge-icon {
-  width: 44px;
-  height: 44px;
-  image-rendering: pixelated;
-  flex-shrink: 0;
 }
 .mc-badge-text { display: flex; flex-direction: column; }
 .mc-badge-achievement {
@@ -253,7 +241,7 @@ document.getElementById('btnAssign').addEventListener('click', async () => {
   errEl.classList.add('d-none');
   okEl.classList.add('d-none');
 
-  const r    = await fetch(`/dashboard/badges/${badgeId}/assign/${userId}`, { method: 'POST' });
+  const r    = await fetch(`/dashboard/badges/${badgeId}/assign/${userId}`, { method: 'POST', credentials: 'include' });
   const data = await r.json();
   if (data.success) {
     okEl.textContent = `Badge assigned to ${document.getElementById('assignUserName').textContent}.`;
@@ -294,7 +282,7 @@ document.getElementById('btnRemove').addEventListener('click', async () => {
   errEl.classList.add('d-none');
   okEl.classList.add('d-none');
 
-  const r    = await fetch(`/dashboard/badges/${badgeId}/assign/${userId}`, { method: 'DELETE' });
+  const r    = await fetch(`/dashboard/badges/${badgeId}/assign/${userId}`, { method: 'DELETE', credentials: 'include' });
   const data = await r.json();
   if (data.success) {
     okEl.textContent = `Badge removed from ${document.getElementById('removeUserName').textContent}.`;

@@ -875,7 +875,6 @@ model badges {
   badgeId         Int           @id @default(autoincrement())
   name            String        @db.VarChar(100)
   description     String?       @db.Text
-  itemIcon        String        @db.VarChar(100)
   backgroundColor String        @default("#1a1a2e") @db.VarChar(7)
   textColor       String        @default("#ffffff") @db.VarChar(7)
   luckpermsGroup  String?       @db.VarChar(64)

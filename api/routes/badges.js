@@ -69,10 +69,10 @@ export default function badgeApiRoute(app, config, db, features, lang) {
   // POST /admin/badges — create badge
   // =========================================================================
   app.post("/admin/badges", async function (req, res) {
-    const { name, description, itemIcon, backgroundColor, textColor, luckpermsGroup } = req.body || {};
+    const { name, description, backgroundColor, textColor, luckpermsGroup } = req.body || {};
 
     try {
-      const badge = await createBadge({ name, description, itemIcon, backgroundColor, textColor, luckpermsGroup });
+      const badge = await createBadge({ name, description, backgroundColor, textColor, luckpermsGroup });
       return res.send({ success: true, message: "Badge created.", data: badge });
     } catch (error) {
       console.error("[badges] POST /admin/badges:", error);
@@ -87,13 +87,13 @@ export default function badgeApiRoute(app, config, db, features, lang) {
     const id = parseInt(req.params.id, 10);
     if (!id) return res.send({ success: false, message: "Invalid badge id." });
 
-    const { name, description, itemIcon, backgroundColor, textColor, luckpermsGroup } = req.body || {};
+    const { name, description, backgroundColor, textColor, luckpermsGroup } = req.body || {};
 
     try {
       const existing = await getBadgeById(id);
       if (!existing) return res.send({ success: false, message: "Badge not found." });
 
-      const badge = await updateBadge(id, { name, description, itemIcon, backgroundColor, textColor, luckpermsGroup });
+      const badge = await updateBadge(id, { name, description, backgroundColor, textColor, luckpermsGroup });
       return res.send({ success: true, message: "Badge updated.", data: badge });
     } catch (error) {
       console.error("[badges] PUT /admin/badges/:id:", error);

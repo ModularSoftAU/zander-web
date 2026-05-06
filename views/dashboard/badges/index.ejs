@@ -29,12 +29,6 @@
                 <div class="card-body">
                   <!-- Minecraft-style achievement toast preview -->
                   <div class="mc-badge-toast mb-3" style="background-color: <%= badge.backgroundColor %>;">
-                    <img
-                      src="https://mc.nerobot.ru/img/items/<%= badge.itemIcon %>.png"
-                      alt="<%= badge.itemIcon %>"
-                      class="mc-badge-icon"
-                      onerror="this.src='/images/siteLogo.png'"
-                    >
                     <div class="mc-badge-text">
                       <span class="mc-badge-achievement" style="color: <%= badge.textColor %>88;">Achievement Unlocked</span>
                       <span class="mc-badge-name" style="color: <%= badge.textColor %>;"><%= badge.name %></span>
@@ -49,7 +43,6 @@
                   <% } %>
 
                   <div class="d-flex flex-wrap gap-1 mb-3">
-                    <span class="badge text-bg-secondary font-monospace"><%= badge.itemIcon %></span>
                     <span class="badge" style="background-color:<%= badge.backgroundColor %>;color:#fff;">
                       <%= badge.backgroundColor %>
                     </span>
@@ -123,12 +116,6 @@
   border-radius: 4px;
   border: 2px solid rgba(255,255,255,0.15);
   min-height: 56px;
-}
-.mc-badge-icon {
-  width: 40px;
-  height: 40px;
-  image-rendering: pixelated;
-  flex-shrink: 0;
 }
 .mc-badge-text {
   display: flex;

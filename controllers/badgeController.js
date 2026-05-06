@@ -28,14 +28,13 @@ export async function getBadgeByLuckpermsGroup(luckpermsGroup) {
   return prisma.badges.findFirst({ where: { luckpermsGroup } });
 }
 
-export async function createBadge({ name, description, itemIcon, backgroundColor, textColor, luckpermsGroup }) {
-  validateBadgeInput({ name, itemIcon, backgroundColor, textColor });
+export async function createBadge({ name, description, backgroundColor, textColor, luckpermsGroup }) {
+  validateBadgeInput({ name, backgroundColor, textColor });
 
   return prisma.badges.create({
     data: {
       name: name.trim(),
       description: description?.trim() || null,
-      itemIcon: itemIcon.trim().toLowerCase(),
       backgroundColor: normaliseHex(backgroundColor),
       textColor: normaliseHex(textColor || "#ffffff"),
       luckpermsGroup: luckpermsGroup?.trim() || null,
@@ -43,15 +42,14 @@ export async function createBadge({ name, description, itemIcon, backgroundColor
   });
 }
 
-export async function updateBadge(badgeId, { name, description, itemIcon, backgroundColor, textColor, luckpermsGroup }) {
-  validateBadgeInput({ name, itemIcon, backgroundColor, textColor });
+export async function updateBadge(badgeId, { name, description, backgroundColor, textColor, luckpermsGroup }) {
+  validateBadgeInput({ name, backgroundColor, textColor });
 
   return prisma.badges.update({
     where: { badgeId },
     data: {
       name: name.trim(),
       description: description?.trim() || null,
-      itemIcon: itemIcon.trim().toLowerCase(),
       backgroundColor: normaliseHex(backgroundColor),
       textColor: normaliseHex(textColor || "#ffffff"),
       luckpermsGroup: luckpermsGroup?.trim() || null,
@@ -71,9 +69,9 @@ export async function duplicateBadge(badgeId) {
     data: {
       name: `${source.name} (Copy)`,
       description: source.description,
-      itemIcon: source.itemIcon,
       backgroundColor: source.backgroundColor,
-      luckpermsGroup: null, // don't copy LP link to avoid duplicate auto-assignment
+      textColor: source.textColor,
+      luckpermsGroup: null,
     },
   });
 }
@@ -154,11 +152,9 @@ export async function getUsersWithBadge(badgeId) {
 // Helpers
 // ---------------------------------------------------------------------------
 
-function validateBadgeInput({ name, itemIcon, backgroundColor, textColor }) {
+function validateBadgeInput({ name, backgroundColor, textColor }) {
   if (!name || name.trim().length === 0) throw new Error("Badge name is required.");
   if (name.trim().length > 100) throw new Error("Badge name must be 100 characters or fewer.");
-  if (!itemIcon || itemIcon.trim().length === 0) throw new Error("Item icon is required.");
-  if (itemIcon.trim().length > 100) throw new Error("Item icon must be 100 characters or fewer.");
   if (!backgroundColor || !/^#[0-9A-Fa-f]{6}$/.test(backgroundColor.trim())) {
     throw new Error("Background colour must be a valid hex colour (e.g. #1a1a2e).");
   }
