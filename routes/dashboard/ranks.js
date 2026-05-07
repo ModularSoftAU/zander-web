@@ -4,6 +4,7 @@ import {
 } from "../../api/common.js";
 import { getWebAnnouncement } from "../../controllers/announcementController.js";
 import { luckpermsDb } from "../../controllers/databaseController.js";
+import { getProfilePicture } from "../../controllers/userController.js";
 
 /**
  * Query LuckPerms directly for all rank groups.
@@ -101,6 +102,38 @@ export default function dashboardRanksRoute(
   features,
   lang
 ) {
+  // User prefix search for the username autocomplete on the rank tools form
+  app.get("/dashboard/ranks/user-search", async (req, res) => {
+    if (!await isFeatureWebRouteEnabled(app, features.ranks, req, res, features)) return;
+    if (!await hasPermission("zander.web.rank", req, res, features)) return;
+
+    const q = (req.query.q || "").trim();
+    if (!q || q.length < 2) return res.send({ results: [] });
+
+    try {
+      const rows = await new Promise((resolve, reject) => {
+        db.query(
+          `SELECT userId, username FROM users WHERE username LIKE ? ORDER BY username ASC LIMIT 8`,
+          [`${q}%`],
+          (err, results) => { if (err) return reject(err); resolve(results || []); }
+        );
+      });
+
+      const results = await Promise.all(
+        rows.map(async (row) => ({
+          userId: row.userId,
+          username: row.username,
+          avatarUrl: await getProfilePicture(row.username),
+        }))
+      );
+
+      return res.send({ results });
+    } catch (error) {
+      console.error("[dashboard/ranks] user-search error:", error);
+      if (!res.sent) return res.status(500).send({ results: [] });
+    }
+  });
+
   app.get("/dashboard/ranks", async function (req, res) {
     if (!await isFeatureWebRouteEnabled(app, features.ranks, req, res, features)) return;
 
