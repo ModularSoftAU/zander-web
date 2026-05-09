@@ -1,0 +1,19 @@
+<%
+  /**
+   * badgeCard.ejs — Minecraft-style achievement toast for a single badge.
+   *
+   * Expected locals:
+   *   badge  – { name, description, backgroundColor, textColor, earnedAt }
+   */
+  const tc = badge.textColor || '#ffffff';
+%>
+<div class="mc-badge-card" style="background-color: <%= badge.backgroundColor %>;"
+     title="<%= badge.description ? badge.description : badge.name %>">
+  <div class="mc-badge-card-text">
+    <span class="mc-badge-card-label" style="color: <%= tc %>88;">Achievement Unlocked</span>
+    <span class="mc-badge-card-name" style="color: <%= tc %>;"><%= badge.name %></span>
+    <% if (badge.description) { %>
+      <span class="mc-badge-card-desc" style="color: <%= tc %>cc;"><%= badge.description %></span>
+    <% } %>
+  </div>
+</div>

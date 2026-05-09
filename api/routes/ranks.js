@@ -11,6 +11,11 @@ const LUCKPERMS_PLAYERS_TABLE = "luckperms_players";
 const LUCKPERMS_GROUP_PERMISSIONS_TABLE = "luckperms_group_permissions";
 const LUCKPERMS_USER_PERMISSIONS_TABLE = "luckperms_user_permissions";
 
+function stripUUID(uuid) {
+  if (!uuid) return null;
+  return String(uuid).replace(/-/g, '').toLowerCase();
+}
+
 function parseBoolean(value) {
   if (value === null || value === undefined) return null;
   if (typeof value === "boolean") return value;
@@ -122,10 +127,14 @@ export default function rankApiRoute(app, config, db, features, lang) {
       return null;
     }
 
+    // Normalise to 32-char hex (no dashes) so it matches the userRanks
+    // cross-DB view which stores uuid as LOWER(HEX(lp_binary_uuid)).
+    const uuidHex = luckPermsUser?.uuid ?? stripUUID(webUser?.uuid) ?? null;
+
     return {
       userId: webUser?.userId ?? null,
       username: webUser?.username || luckPermsUser?.username || trimmedUsername,
-      uuid: webUser?.uuid || luckPermsUser?.uuid || null,
+      uuid: uuidHex,
     };
   }
 
@@ -512,7 +521,7 @@ export default function rankApiRoute(app, config, db, features, lang) {
 
       const [existing] = await queryLuckPermsDb(
         `SELECT uuid FROM ${LUCKPERMS_USER_PERMISSIONS_TABLE}
-          WHERE uuid = ? AND permission = ? AND value = 1 LIMIT 1`,
+          WHERE uuid = UNHEX(?) AND permission = ? AND value = 1 LIMIT 1`,
         [player.uuid, `group.${rankSlug}`]
       );
 
@@ -526,13 +535,13 @@ export default function rankApiRoute(app, config, db, features, lang) {
       await queryLuckPermsDb(
         `INSERT INTO ${LUCKPERMS_USER_PERMISSIONS_TABLE}
           (uuid, permission, value, server, world, expiry, contexts)
-        VALUES (?, ?, 1, 'global', 'global', 0, '[]')`,
+        VALUES (UNHEX(?), ?, 1, 'global', 'global', 0, '[]')`,
         [player.uuid, `group.${rankSlug}`]
       );
 
       await queryLuckPermsDb(
         `DELETE FROM ${LUCKPERMS_USER_PERMISSIONS_TABLE}
-          WHERE uuid = ?
+          WHERE uuid = UNHEX(?)
             AND permission LIKE CONCAT('meta.group.', ?, '.title.%')`,
         [player.uuid, rankSlug]
       );
@@ -541,7 +550,7 @@ export default function rankApiRoute(app, config, db, features, lang) {
         await queryLuckPermsDb(
           `INSERT INTO ${LUCKPERMS_USER_PERMISSIONS_TABLE}
             (uuid, permission, value, server, world, expiry, contexts)
-          VALUES (?, ?, 1, 'global', 'global', 0, '[]')`,
+          VALUES (UNHEX(?), ?, 1, 'global', 'global', 0, '[]')`,
           [player.uuid, `meta.group.${rankSlug}.title.${title.substring(0, 64)}`]
         );
       }
@@ -579,13 +588,13 @@ export default function rankApiRoute(app, config, db, features, lang) {
 
       const result = await queryLuckPermsDb(
         `DELETE FROM ${LUCKPERMS_USER_PERMISSIONS_TABLE}
-          WHERE uuid = ? AND permission = ?`,
+          WHERE uuid = UNHEX(?) AND permission = ?`,
         [player.uuid, `group.${rankSlug}`]
       );
 
       await queryLuckPermsDb(
         `DELETE FROM ${LUCKPERMS_USER_PERMISSIONS_TABLE}
-          WHERE uuid = ?
+          WHERE uuid = UNHEX(?)
             AND permission LIKE CONCAT('meta.group.', ?, '.title.%')`,
         [player.uuid, rankSlug]
       );

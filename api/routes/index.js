@@ -20,6 +20,7 @@ import voteApiRoute from "./vote.js";
 import commandBridgeApiRoute from "./commandBridge.js";
 import eventsApiRoute from "./events.js";
 import uploadApiRoute from "./upload.js";
+import badgeApiRoute from "./badges.js";
 
 export default (app, client, moment, config, db, features, lang) => {
   announcementApiRoute(app, config, db, features, lang);
@@ -44,5 +45,6 @@ export default (app, client, moment, config, db, features, lang) => {
   commandBridgeApiRoute(app, config, db, features, lang);
   eventsApiRoute(app, config, db, features, lang);
   uploadApiRoute(app, config, db, features, lang);
+  badgeApiRoute(app, config, db, features, lang);
 
 };

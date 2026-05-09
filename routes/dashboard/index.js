@@ -13,6 +13,7 @@ import dashboardFormsSiteRoute from "./forms.js";
 import dashboardWebPunishmentsRoute from "./webPunishments.js";
 import dashboardVotingRoute from "./voting.js";
 import dashboardEventsRoute from "./events.js";
+import dashboardBadgesRoute from "./badges.js";
 
 export default function dashboardSiteRoutes(
   app,
@@ -52,4 +53,5 @@ export default function dashboardSiteRoutes(
   dashboardWebPunishmentsRoute(app, client, fetch, config, db, features, lang);
   dashboardVotingRoute(app, fetch, config, db, features, lang);
   dashboardEventsRoute(app, fetch, config, db, features, lang);
+  dashboardBadgesRoute(app, fetch, config, db, features, lang);
 }
