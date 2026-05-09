@@ -241,7 +241,11 @@ export async function searchShops(material, page = 1, options = {}) {
     const likeTerm = `%${material}%`;
     const likeTermUnderscored = `%${underscored}%`;
 
-    // Get total count for pagination
+    // Get total count for pagination.
+    // qs_data.item stores plain YAML for old shops and base64+gzip NBT for new ones
+    // (QuickShop-Hikari changed format ~2026-04-22, id ≥ 6000). The indexing cron
+    // decodes new-format rows and writes the bare item ID into data.name so we can
+    // still search them with a LIKE query.
     const totalCount = await new Promise((resolve, reject) => {
       quickshopDb.query(
         `SELECT COUNT(*) AS total
@@ -250,8 +254,12 @@ export async function searchShops(material, page = 1, options = {}) {
          JOIN qs_data data ON shops.data = data.id
          JOIN qs_external_cache stock ON shops.id = stock.shop
          WHERE data.unlimited = 0
-           AND (data.item LIKE ? OR data.item LIKE ?)`,
-        [likeTerm, likeTermUnderscored],
+           AND (
+             (data.item LIKE 'item:%' AND (data.item LIKE ? OR data.item LIKE ?))
+             OR
+             (data.item NOT LIKE 'item:%' AND (data.name LIKE ? OR data.name LIKE ?))
+           )`,
+        [likeTerm, likeTermUnderscored, likeTerm, likeTermUnderscored],
         (error, results) => {
           if (error) return reject(error);
           resolve(results[0]?.total || 0);
@@ -272,18 +280,26 @@ export async function searchShops(material, page = 1, options = {}) {
 
     // Fetch the page of results — replicate the shoppingDirectory VIEW logic
     // directly against the QuickShop pool (cross-server JOINs are not possible).
+    // For new-format shops (item NOT LIKE 'item:%'), the item ID comes from data.name
+    // (populated by shopItemIndexCron) and component extraction falls back to NULL.
     const results = await new Promise((resolve, reject) => {
       quickshopDb.query(
         `SELECT
            shops.id,
            data.owner AS uuid,
-           REPLACE(TRIM(SUBSTRING_INDEX(
-             SUBSTR(data.item, LOCATE('id:', data.item) + 3), '\n', 1
-           )), 'minecraft:', '') AS item,
-           CASE WHEN LOCATE('count:', data.item) = 0 THEN NULL
-                ELSE TRIM(SUBSTRING_INDEX(
-                  SUBSTR(data.item, LOCATE('count:', data.item) + 6), '\n', 1
-                ))
+           CASE
+             WHEN data.item LIKE 'item:%' THEN
+               REPLACE(TRIM(SUBSTRING_INDEX(
+                 SUBSTR(data.item, LOCATE('id:', data.item) + 3), '\n', 1
+               )), 'minecraft:', '')
+             ELSE data.name
+           END AS item,
+           CASE
+             WHEN data.item NOT LIKE 'item:%' THEN NULL
+             WHEN LOCATE('count:', data.item) = 0 THEN NULL
+             ELSE TRIM(SUBSTRING_INDEX(
+               SUBSTR(data.item, LOCATE('count:', data.item) + 6), '\n', 1
+             ))
            END AS amount,
            data.price,
            stock.stock,
@@ -292,6 +308,7 @@ export async function searchShops(material, page = 1, options = {}) {
            map.y,
            map.z,
            CASE
+             WHEN data.item NOT LIKE 'item:%' THEN NULL
              WHEN LOCATE('minecraft:stored_enchantments:', data.item) > 0
              THEN CONCAT(
                CONCAT(
@@ -326,10 +343,14 @@ export async function searchShops(material, page = 1, options = {}) {
          JOIN qs_data data ON shops.data = data.id
          JOIN qs_external_cache stock ON shops.id = stock.shop
          WHERE data.unlimited = 0
-           AND (data.item LIKE ? OR data.item LIKE ?)
+           AND (
+             (data.item LIKE 'item:%' AND (data.item LIKE ? OR data.item LIKE ?))
+             OR
+             (data.item NOT LIKE 'item:%' AND (data.name LIKE ? OR data.name LIKE ?))
+           )
          ORDER BY shops.id
          LIMIT ? OFFSET ?`,
-        [likeTerm, likeTermUnderscored, MAX_RESULTS, offset],
+        [likeTerm, likeTermUnderscored, likeTerm, likeTermUnderscored, MAX_RESULTS, offset],
         (error, results) => {
           if (error) return reject(error);
           resolve(results || []);
