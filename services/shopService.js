@@ -257,7 +257,10 @@ export async function searchShops(material, page = 1, options = {}) {
            AND (
              (data.item LIKE 'item:%' AND (data.item LIKE ? OR data.item LIKE ?))
              OR
-             (data.item NOT LIKE 'item:%' AND (data.name LIKE ? OR data.name LIKE ?))
+             (data.item NOT LIKE 'item:%' AND (
+               JSON_UNQUOTE(JSON_EXTRACT(data.name, '$.id')) LIKE ?
+               OR JSON_UNQUOTE(JSON_EXTRACT(data.name, '$.id')) LIKE ?
+             ))
            )`,
         [likeTerm, likeTermUnderscored, likeTerm, likeTermUnderscored],
         (error, results) => {
@@ -292,10 +295,11 @@ export async function searchShops(material, page = 1, options = {}) {
                REPLACE(TRIM(SUBSTRING_INDEX(
                  SUBSTR(data.item, LOCATE('id:', data.item) + 3), '\n', 1
                )), 'minecraft:', '')
-             ELSE data.name
+             ELSE JSON_UNQUOTE(JSON_EXTRACT(data.name, '$.id'))
            END AS item,
            CASE
-             WHEN data.item NOT LIKE 'item:%' THEN NULL
+             WHEN data.item NOT LIKE 'item:%' THEN
+               JSON_EXTRACT(data.name, '$.count')
              WHEN LOCATE('count:', data.item) = 0 THEN NULL
              ELSE TRIM(SUBSTRING_INDEX(
                SUBSTR(data.item, LOCATE('count:', data.item) + 6), '\n', 1
@@ -346,7 +350,10 @@ export async function searchShops(material, page = 1, options = {}) {
            AND (
              (data.item LIKE 'item:%' AND (data.item LIKE ? OR data.item LIKE ?))
              OR
-             (data.item NOT LIKE 'item:%' AND (data.name LIKE ? OR data.name LIKE ?))
+             (data.item NOT LIKE 'item:%' AND (
+               JSON_UNQUOTE(JSON_EXTRACT(data.name, '$.id')) LIKE ?
+               OR JSON_UNQUOTE(JSON_EXTRACT(data.name, '$.id')) LIKE ?
+             ))
            )
          ORDER BY shops.id
          LIMIT ? OFFSET ?`,

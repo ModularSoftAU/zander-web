@@ -2,23 +2,30 @@ import cron from "node-cron";
 import zlib from "zlib";
 import { quickshopDb } from "../controllers/databaseController.js";
 
-// Extract the Minecraft item ID from a base64+gzip-encoded NBT binary.
-// QuickShop-Hikari changed its storage format (around 2026-04-22, data id ~6000):
-// old format: item column = plain YAML text ("item:\n  id: minecraft:bow\n ...")
-// new format: item column = base64(gzip(NBT binary)) — same as the encoded column
-// The item ID is stored as a TAG_String with key "id" inside the NBT compound.
-function decodeNbtItemId(rawItem) {
+// Decode a base64+gzip NBT binary (QuickShop-Hikari new format, ~2026-04-22, id ≥ 6000)
+// and extract the item ID and count.  Returns { id, count } or null on failure.
+// NBT layout we rely on:
+//   TAG_String (0x08) key="id"    → item ID string e.g. "minecraft:diamond"
+//   TAG_Int    (0x03) key="count" → stack size as big-endian int32
+function decodeNbtItemData(rawItem) {
   try {
     const buf = Buffer.from(rawItem, "base64");
     const nbt = zlib.gunzipSync(buf);
-    // TAG_String = 0x08, followed by 2-byte key length, key bytes, 2-byte value length, value bytes
-    // We look for the sequence: 0x08 0x00 0x02 'i' 'd'
-    const pattern = Buffer.from([0x08, 0x00, 0x02, 0x69, 0x64]);
-    const idx = nbt.indexOf(pattern);
-    if (idx === -1) return null;
-    const valueLen = nbt.readUInt16BE(idx + 5);
-    const rawId = nbt.toString("utf8", idx + 7, idx + 7 + valueLen);
-    return rawId.replace("minecraft:", "");
+
+    // TAG_String = 0x08 | 2-byte key len | key bytes | 2-byte value len | value bytes
+    const idPattern = Buffer.from([0x08, 0x00, 0x02, 0x69, 0x64]); // \x08\x00\x02id
+    const idIdx = nbt.indexOf(idPattern);
+    if (idIdx === -1) return null;
+    const idLen = nbt.readUInt16BE(idIdx + 5);
+    const rawId = nbt.toString("utf8", idIdx + 7, idIdx + 7 + idLen);
+    const itemId = rawId.replace("minecraft:", "");
+
+    // TAG_Int = 0x03 | 2-byte key len | key bytes | 4-byte big-endian int32
+    const countPattern = Buffer.from([0x03, 0x00, 0x05, 0x63, 0x6f, 0x75, 0x6e, 0x74]); // \x03\x00\x05count
+    const countIdx = nbt.indexOf(countPattern);
+    const count = countIdx !== -1 ? nbt.readInt32BE(countIdx + 8) : 1;
+
+    return { id: itemId, count };
   } catch {
     return null;
   }
@@ -26,8 +33,13 @@ function decodeNbtItemId(rawItem) {
 
 async function indexNewShopItems() {
   return new Promise((resolve) => {
+    // Pick up rows that are new-format AND either not yet indexed (name IS NULL)
+    // or previously indexed with the old plain-ID format (name NOT LIKE '{%').
     quickshopDb.query(
-      `SELECT id, item FROM qs_data WHERE item NOT LIKE 'item:%' AND name IS NULL LIMIT 500`,
+      `SELECT id, item FROM qs_data
+       WHERE item NOT LIKE 'item:%'
+         AND (name IS NULL OR name NOT LIKE '{%')
+       LIMIT 500`,
       (error, rows) => {
         if (error) {
           console.error("Shop item index query error:", error);
@@ -40,23 +52,16 @@ async function indexNewShopItems() {
         const total = rows.length;
 
         for (const row of rows) {
-          const itemId = decodeNbtItemId(row.item);
-          if (!itemId) {
-            // Mark as attempted with a placeholder so we don't retry forever
-            quickshopDb.query(
-              `UPDATE qs_data SET name = '' WHERE id = ? AND name IS NULL`,
-              [row.id],
-              () => { completed++; if (completed === total) resolve(indexed); }
-            );
-            continue;
-          }
+          const data = decodeNbtItemData(row.item);
+          // On decode failure store '{}' so we don't keep retrying this row
+          const nameValue = data ? JSON.stringify({ id: data.id, count: data.count }) : "{}";
           quickshopDb.query(
-            `UPDATE qs_data SET name = ? WHERE id = ? AND name IS NULL`,
-            [itemId, row.id],
+            `UPDATE qs_data SET name = ? WHERE id = ?`,
+            [nameValue, row.id],
             (err) => {
               if (err) {
                 console.error(`Shop index update error for data id=${row.id}:`, err);
-              } else {
+              } else if (data) {
                 indexed++;
               }
               completed++;
