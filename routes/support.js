@@ -822,9 +822,12 @@ export default function supportRoutes(
         participants.groups.some((group) => group.rankSlug === slug)
       );
       const isAppealAddUser = /Appeal #/i.test(ticket.title || "");
-      const canManageParticipantsAddUser = userHasPermissionNode(req.session.user.permissions || [], "zander.web.tickets.manageparticipants") || !isAppealAddUser;
+      const hasMgParticipantsPermAddUser = userHasPermissionNode(req.session.user.permissions || [], "zander.web.tickets.manageparticipants");
 
-      if (!canManageParticipantsAddUser || (!isOwner && !isStaff && !isParticipantUser && !isParticipantRank)) {
+      if (isAppealAddUser && !hasMgParticipantsPermAddUser) {
+        return res.redirect("/support");
+      }
+      if (!hasMgParticipantsPermAddUser && !isOwner && !isStaff && !isParticipantUser && !isParticipantRank) {
         return res.redirect("/support");
       }
 
@@ -894,9 +897,12 @@ export default function supportRoutes(
         participants.groups.some((group) => group.rankSlug === slug)
       );
       const isAppealAddGroup = /Appeal #/i.test(ticket.title || "");
-      const canManageParticipantsAddGroup = userHasPermissionNode(req.session.user.permissions || [], "zander.web.tickets.manageparticipants") || !isAppealAddGroup;
+      const hasMgParticipantsPermAddGroup = userHasPermissionNode(req.session.user.permissions || [], "zander.web.tickets.manageparticipants");
 
-      if (!canManageParticipantsAddGroup || (!isOwner && !isStaff && !isParticipantUser && !isParticipantRank)) {
+      if (isAppealAddGroup && !hasMgParticipantsPermAddGroup) {
+        return res.redirect("/support");
+      }
+      if (!hasMgParticipantsPermAddGroup && !isOwner && !isStaff && !isParticipantUser && !isParticipantRank) {
         return res.redirect("/support");
       }
 
@@ -961,9 +967,12 @@ export default function supportRoutes(
         participants.groups.some((group) => group.rankSlug === slug)
       );
       const isAppealRemoveUser = /Appeal #/i.test(ticket.title || "");
-      const canManageParticipantsRemoveUser = userHasPermissionNode(req.session.user.permissions || [], "zander.web.tickets.manageparticipants") || !isAppealRemoveUser;
+      const hasMgParticipantsPermRemoveUser = userHasPermissionNode(req.session.user.permissions || [], "zander.web.tickets.manageparticipants");
 
-      if (!canManageParticipantsRemoveUser || (!isOwner && !isStaff && !isParticipantUser && !isParticipantRank)) {
+      if (isAppealRemoveUser && !hasMgParticipantsPermRemoveUser) {
+        return res.redirect("/support");
+      }
+      if (!hasMgParticipantsPermRemoveUser && !isOwner && !isStaff && !isParticipantUser && !isParticipantRank) {
         return res.redirect("/support");
       }
 
@@ -1041,9 +1050,12 @@ export default function supportRoutes(
         participants.groups.some((group) => group.rankSlug === slug)
       );
       const isAppealRemoveGroup = /Appeal #/i.test(ticket.title || "");
-      const canManageParticipantsRemoveGroup = userHasPermissionNode(req.session.user.permissions || [], "zander.web.tickets.manageparticipants") || !isAppealRemoveGroup;
+      const hasMgParticipantsPermRemoveGroup = userHasPermissionNode(req.session.user.permissions || [], "zander.web.tickets.manageparticipants");
 
-      if (!canManageParticipantsRemoveGroup || (!isOwner && !isStaff && !isParticipantUser && !isParticipantRank)) {
+      if (isAppealRemoveGroup && !hasMgParticipantsPermRemoveGroup) {
+        return res.redirect("/support");
+      }
+      if (!hasMgParticipantsPermRemoveGroup && !isOwner && !isStaff && !isParticipantUser && !isParticipantRank) {
         return res.redirect("/support");
       }
 

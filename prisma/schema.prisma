@@ -866,3 +866,33 @@ model event_audit_logs {
 
   event          events   @relation(fields: [eventId], references: [eventId], onDelete: Cascade)
 }
+
+// =============================================================================
+// Badge System
+// =============================================================================
+
+model badges {
+  badgeId         Int           @id @default(autoincrement())
+  name            String        @db.VarChar(100)
+  description     String?       @db.Text
+  backgroundColor String        @default("#1a1a2e") @db.VarChar(7)
+  textColor       String        @default("#ffffff") @db.VarChar(7)
+  luckpermsGroup  String?       @db.VarChar(64)
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  userBadges      user_badges[]
+}
+
+model user_badges {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  badgeId   Int
+  earnedAt  DateTime @default(now())
+  isManual  Boolean  @default(false)
+
+  badge     badges   @relation(fields: [badgeId], references: [badgeId], onDelete: Cascade)
+
+  @@unique([userId, badgeId])
+  @@index([userId])
+}

@@ -287,6 +287,18 @@ export const adminPages = [
     group: "System",
     sortOrder: 74,
   },
+
+  // ── Community — Badges ─────────────────────────────────────────────────────
+  {
+    slug: "badges",
+    title: "Badges",
+    menuTitle: "Badges",
+    icon: "fa-solid fa-award",
+    capability: "zander.web.badges",
+    path: "/dashboard/badges",
+    group: "Community",
+    sortOrder: 23,
+  },
 ];
 
 // ---------------------------------------------------------------------------
@@ -341,6 +353,27 @@ export const adminSubPages = [
     parent: "forms",
     path: "/dashboard/forms/edit",
     capability: "zander.web.forms",
+  },
+  {
+    slug: "badges-create",
+    title: "Create Badge",
+    parent: "badges",
+    path: "/dashboard/badges/create",
+    capability: "zander.web.badges",
+  },
+  {
+    slug: "badges-edit",
+    title: "Edit Badge",
+    parent: "badges",
+    path: "/dashboard/badges/edit",
+    capability: "zander.web.badges",
+  },
+  {
+    slug: "badges-assign",
+    title: "Assign Badge",
+    parent: "badges",
+    path: "/dashboard/badges/assign",
+    capability: "zander.web.badges",
   },
 ];
 
