@@ -52,6 +52,7 @@ import("./cron/unverifiedReminderCron.js");
 import("./cron/eventTemplateCron.js");
 import("./cron/announcementExpiryCron.js");
 import("./cron/badgeLuckpermsSyncCron.js");
+import("./cron/shopItemIndexCron.js");
 
 //
 // Website Related
