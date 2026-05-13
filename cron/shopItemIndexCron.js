@@ -26,62 +26,62 @@ function decodeNbtItemData(rawItem) {
     const count = countIdx !== -1 ? nbt.readInt32BE(countIdx + 8) : 1;
 
     return { id: itemId, count };
-  } catch {
+  } catch (err) {
     return null;
   }
 }
 
-async function indexNewShopItems() {
-  return new Promise((resolve) => {
-    // Pick up rows that are new-format AND either not yet indexed (name IS NULL)
-    // or previously indexed with the old plain-ID format (name NOT LIKE '{%').
-    quickshopDb.query(
-      `SELECT id, item FROM qs_data
-       WHERE item NOT LIKE 'item:%'
-         AND (name IS NULL OR name NOT LIKE '{%')
-       LIMIT 500`,
-      (error, rows) => {
-        if (error) {
-          console.error("Shop item index query error:", error);
-          return resolve(0);
-        }
-        if (!rows || rows.length === 0) return resolve(0);
-
-        let completed = 0;
-        let indexed = 0;
-        const total = rows.length;
-
-        for (const row of rows) {
-          const data = decodeNbtItemData(row.item);
-          // On decode failure store '{}' so we don't keep retrying this row
-          const nameValue = data ? JSON.stringify({ id: data.id, count: data.count }) : "{}";
-          quickshopDb.query(
-            `UPDATE qs_data SET name = ? WHERE id = ?`,
-            [nameValue, row.id],
-            (err) => {
-              if (err) {
-                console.error(`Shop index update error for data id=${row.id}:`, err);
-              } else if (data) {
-                indexed++;
-              }
-              completed++;
-              if (completed === total) resolve(indexed);
-            }
-          );
-        }
-      }
-    );
+function queryAsync(sql, params) {
+  return new Promise((resolve, reject) => {
+    quickshopDb.query(sql, params, (err, rows) => {
+      if (err) return reject(err);
+      resolve(rows);
+    });
   });
 }
 
+async function indexNewShopItems() {
+  // Pick up rows that are new-format AND either not yet indexed (name IS NULL)
+  // or previously indexed with the old plain-ID format (name NOT LIKE '{%').
+  const rows = await queryAsync(
+    `SELECT id, item FROM qs_data
+     WHERE item NOT LIKE 'item:%'
+       AND (name IS NULL OR name NOT LIKE '{%')
+     LIMIT 500`,
+    []
+  );
+
+  if (!rows || rows.length === 0) return 0;
+
+  const updates = rows.map((row) => {
+    const data = decodeNbtItemData(row.item);
+    // On decode failure store '{}' so we don't keep retrying this row
+    const nameValue = data ? JSON.stringify({ id: data.id, count: data.count }) : "{}";
+    return queryAsync(`UPDATE qs_data SET name = ? WHERE id = ?`, [nameValue, row.id])
+      .then(() => (data ? 1 : 0))
+      .catch((err) => {
+        console.error(`Shop index update error for data id=${row.id}:`, err);
+        return 0;
+      });
+  });
+
+  const results = await Promise.all(updates);
+  return results.reduce((sum, n) => sum + n, 0);
+}
+
+async function runIndex(label) {
+  try {
+    const n = await indexNewShopItems();
+    if (n > 0) console.log(`Shop item index: ${label} ${n} item(s)`);
+  } catch (err) {
+    console.error("Shop item index error:", err);
+  }
+}
+
 // Run on startup to backfill existing unindexed rows
-indexNewShopItems().then((n) => {
-  if (n > 0) console.log(`Shop item index: backfilled ${n} item(s) on startup`);
-});
+runIndex("backfilled");
 
 // Run every 5 minutes to pick up newly created shops
 cron.schedule("*/5 * * * *", () => {
-  indexNewShopItems().then((n) => {
-    if (n > 0) console.log(`Shop item index: indexed ${n} new item(s)`);
-  });
+  runIndex("indexed");
 });
