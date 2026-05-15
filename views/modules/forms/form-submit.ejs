@@ -305,9 +305,13 @@
             statusEl.textContent = 'Uploading…';
             try {
                 var fd = new FormData();
-                fd.append('file', file);
                 fd.append('folder', 'zander/forms');
-                var res = await fetch('/api/upload/image', { method: 'POST', body: fd });
+                fd.append('file', file);
+                var res = await fetch('/api/upload/image', {
+                    method: 'POST',
+                    body: fd,
+                    headers: { 'x-access-token': <%- JSON.stringify(process.env.apiKey || '') %> },
+                });
                 var json = await res.json();
                 if (json.success) {
                     hiddenInput.value = json.data.url;

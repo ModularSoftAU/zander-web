@@ -776,9 +776,13 @@ function setupImageUpload(hiddenId, fileId, uploadBtnId, manualId, previewId, st
         statusEl.classList.remove('d-none');
         try {
             const fd = new FormData();
-            fd.append('file', file);
             fd.append('folder', folder);
-            const res = await fetch('/api/upload/image', { method: 'POST', body: fd });
+            fd.append('file', file);
+            const res = await fetch('/api/upload/image', {
+                method: 'POST',
+                body: fd,
+                headers: { 'x-access-token': <%- JSON.stringify(process.env.apiKey || '') %> },
+            });
             const json = await res.json();
             if (json.success) {
                 setUrl(json.data.url);

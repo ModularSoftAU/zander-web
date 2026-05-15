@@ -36,6 +36,8 @@ import {
 
 import {
   runDiscordActionsForEvent,
+  editEventDiscordMessage,
+  editGuildScheduledEvent,
 } from "../../services/eventDiscordService.js";
 
 import { ChannelType } from "discord.js";
@@ -387,7 +389,24 @@ export default function eventsApiRoute(app, _config, _db, features, _lang) {
             guildId: config?.discord?.guildId || config?.events?.discordGuildId || null,
             siteBaseUrl: config?.siteConfiguration?.siteUrl || process.env.siteAddress || "",
           };
-          await runDiscordActionsForEvent(fullEvent, "on_update", discordCfg);
+
+          const hasUpdateActions = (fullEvent.actions || []).some(a => a.enabled && a.trigger === "on_update");
+          if (hasUpdateActions) {
+            await runDiscordActionsForEvent(fullEvent, "on_update", discordCfg);
+          } else {
+            // Fallback for events created before on_update actions existed
+            const guildId = discordCfg.guildId;
+            if (fullEvent.discordMessageId && fullEvent.discordChannelId) {
+              await editEventDiscordMessage(fullEvent, fullEvent.discordChannelId, fullEvent.discordMessageId, discordCfg.siteBaseUrl).catch(e =>
+                console.error("[Events] Discord message update failed:", e.message)
+              );
+            }
+            if (fullEvent.discordGuildEventId && guildId) {
+              await editGuildScheduledEvent(fullEvent, guildId, fullEvent.discordGuildEventId).catch(e =>
+                console.error("[Events] Guild event update failed:", e.message)
+              );
+            }
+          }
         } catch (e) {
           console.error("[Events] Discord sync failed:", e.message);
         }
