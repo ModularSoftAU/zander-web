@@ -38,6 +38,8 @@ import {
   runDiscordActionsForEvent,
   editEventDiscordMessage,
   editGuildScheduledEvent,
+  postCancellationDiscordMessage,
+  cancelGuildScheduledEvent,
 } from "../../services/eventDiscordService.js";
 
 import { ChannelType } from "discord.js";
@@ -451,14 +453,33 @@ export default function eventsApiRoute(app, _config, _db, features, _lang) {
       const { actorId, actorName } = actorFromReq(req);
       const event = await cancelEvent(eventId, actorId, actorName, reason);
 
-      // Cancel Discord guild event if exists
       const fullEvent = await getEventById(eventId, true);
       setImmediate(async () => {
         try {
-          const discordCfg = {
-            guildId: config?.discord?.guildId || config?.events?.discordGuildId || null,
-          };
-          await runDiscordActionsForEvent(fullEvent, "on_cancel", discordCfg);
+          const guildId = config?.discord?.guildId || config?.events?.discordGuildId || null;
+          const channelId = config?.events?.discordChannelId || config?.discord?.eventsChannelId || null;
+          const discordCfg = { guildId, channelId, siteBaseUrl: config?.siteAddress || "" };
+
+          const hasCancelActions = (fullEvent.actions || []).some(
+            (a) => a.enabled && a.trigger === "on_cancel"
+          );
+
+          if (hasCancelActions) {
+            await runDiscordActionsForEvent(fullEvent, "on_cancel", discordCfg);
+          } else {
+            // Fallback for legacy events without on_cancel actions
+            const notifyChannel = fullEvent.discordChannelId || channelId;
+            if (notifyChannel) {
+              await postCancellationDiscordMessage(fullEvent, notifyChannel).catch((e) =>
+                console.error("[Events] Cancel message failed:", e.message)
+              );
+            }
+            if (fullEvent.discordGuildEventId && guildId) {
+              await cancelGuildScheduledEvent(fullEvent, guildId, fullEvent.discordGuildEventId).catch((e) =>
+                console.error("[Events] Guild event cancel failed:", e.message)
+              );
+            }
+          }
         } catch (e) {
           console.error("[Events] Discord cancel sync failed:", e.message);
         }

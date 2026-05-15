@@ -284,6 +284,8 @@ export async function createEvent(data, actorId, actorName) {
     { actionType: "website_page", trigger: "on_publish", enabled: true, config: {} },
     { actionType: "discord_message", trigger: "on_update", enabled: true, config: {} },
     { actionType: "discord_guild_event", trigger: "on_update", enabled: true, config: {} },
+    { actionType: "discord_message", trigger: "on_cancel", enabled: true, config: {} },
+    { actionType: "discord_guild_event", trigger: "on_cancel", enabled: true, config: {} },
   ];
   await prisma.event_actions.createMany({
     data: defaultActions.map((a) => ({ ...a, eventId: event.eventId })),
