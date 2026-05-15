@@ -43,6 +43,7 @@ import {
 import { ChannelType } from "discord.js";
 import { client as discordClient } from "../../controllers/discordController.js";
 import { required, optional } from "../common.js";
+import { hasPermission as checkPermNode } from "../../lib/discord/permissions.mjs";
 import { searchLinkedUsers } from "../../controllers/supportTicketController.js";
 import { createRequire } from "module";
 import path from "path";
@@ -55,6 +56,10 @@ function actorFromReq(req) {
     actorId: user?.userId || null,
     actorName: user?.username || "System",
   };
+}
+
+function isReviewer(req) {
+  return checkPermNode(req.session?.user?.permissions || [], "zander.web.events.review");
 }
 
 export default function eventsApiRoute(app, _config, _db, features, _lang) {
@@ -258,6 +263,14 @@ export default function eventsApiRoute(app, _config, _db, features, _lang) {
     if (!body?.eventId) return res.send({ success: false, message: "eventId is required" });
 
     try {
+      const existing = await getEventById(body.eventId);
+      if (!existing) return res.send({ success: false, message: "Event not found" });
+
+      // Approved events may only be modified by reviewers
+      if (existing.status === "approved" && !isReviewer(req)) {
+        return res.status(403).send({ success: false, message: "Only approvers can edit an approved event." });
+      }
+
       const { actorId, actorName } = actorFromReq(req);
       const event = await updateEvent(body.eventId, body, actorId, actorName);
       return res.send({ success: true, data: event, message: "Event updated" });
@@ -427,6 +440,14 @@ export default function eventsApiRoute(app, _config, _db, features, _lang) {
     if (!eventId) return res.send({ success: false, message: "eventId is required" });
 
     try {
+      const existing = await getEventById(eventId);
+      if (!existing) return res.send({ success: false, message: "Event not found" });
+
+      // Approved and published events can only be cancelled by reviewers
+      if (["approved", "published"].includes(existing.status) && !isReviewer(req)) {
+        return res.status(403).send({ success: false, message: "Only approvers can cancel an approved or live event." });
+      }
+
       const { actorId, actorName } = actorFromReq(req);
       const event = await cancelEvent(eventId, actorId, actorName, reason);
 

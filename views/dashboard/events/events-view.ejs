@@ -28,12 +28,12 @@
                             <i class="fas fa-paper-plane me-1"></i>Submit for Review
                         </button>
                     <% } %>
-                    <% if (ev.status === 'approved') { %>
+                    <% if (ev.status === 'approved' && isReviewer) { %>
                         <button class="btn btn-sm btn-success btn-publish" data-event-id="<%= ev.eventId %>">
                             <i class="fas fa-globe me-1"></i>Publish
                         </button>
                     <% } %>
-                    <% if (ev.status === 'pending_review') { %>
+                    <% if (ev.status === 'pending_review' && isReviewer) { %>
                         <button class="btn btn-sm btn-success btn-approve" data-event-id="<%= ev.eventId %>">
                             <i class="fas fa-check me-1"></i>Approve
                         </button>
@@ -41,7 +41,12 @@
                             <i class="fas fa-times me-1"></i>Reject
                         </button>
                     <% } %>
-                    <% if (['draft','pending_review','approved','published'].includes(ev.status)) { %>
+                    <%
+                      // Draft/pending: creator or reviewer can cancel their own event; approved/published: reviewer only
+                      const canCancel = ['draft','pending_review'].includes(ev.status) ||
+                                        (['approved','published'].includes(ev.status) && isReviewer);
+                    %>
+                    <% if (canCancel) { %>
                         <button class="btn btn-sm btn-outline-danger btn-cancel" data-event-id="<%= ev.eventId %>">
                             <i class="fas fa-ban me-1"></i>Cancel
                         </button>
@@ -64,6 +69,25 @@
             <% if (ev.rejectionNote) { %>
                 <div class="alert alert-danger">
                     <strong><i class="fas fa-times-circle me-2"></i>Rejected:</strong> <%= ev.rejectionNote %>
+                </div>
+            <% } %>
+
+            <% if (ev.status === 'approved' && isReviewer) { %>
+                <div class="alert alert-info d-flex justify-content-between align-items-center mb-3">
+                    <span>
+                        <i class="fas fa-check-circle me-2"></i>
+                        <strong>This event is approved</strong> and ready to publish. If it won't proceed, cancel it before publishing.
+                    </span>
+                    <button class="btn btn-sm btn-outline-danger btn-cancel ms-3 flex-shrink-0" data-event-id="<%= ev.eventId %>">
+                        <i class="fas fa-ban me-1"></i>Cancel Event
+                    </button>
+                </div>
+            <% } %>
+
+            <% if (['approved','published','pending_review'].includes(ev.status) && !isReviewer) { %>
+                <div class="alert alert-warning mb-3">
+                    <i class="fas fa-lock me-2"></i>
+                    This event is <strong><%= ev.status.replace(/_/g,' ') %></strong> — only approvers can make changes from this point.
                 </div>
             <% } %>
 

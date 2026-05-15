@@ -32,7 +32,16 @@ export default function dashboardEventsSiteRoute(app, fetch, config, db, feature
     const userPerms = req.session.user?.permissions || [];
     const isCreator = ev.creatorId && ev.creatorId === req.session.user?.userId;
     const hasReview = hasPermissionNode(userPerms, "zander.web.events.review");
+
+    // Once approved or published only reviewers may edit; draft/rejected allow creator or reviewer
+    if (["approved", "published", "pending_review"].includes(ev.status)) {
+      return hasReview;
+    }
     return isCreator || hasReview;
+  }
+
+  function userIsReviewer(req) {
+    return hasPermissionNode(req.session.user?.permissions || [], "zander.web.events.review");
   }
   // ============================================================================
   // Calendar View
@@ -189,8 +198,11 @@ export default function dashboardEventsSiteRoute(app, fetch, config, db, feature
     const ev = apiData.data;
 
     if (!userCanEditEvent(ev, req)) {
-      await setBannerCookie("danger", "You can only edit your own events.", res);
-      return res.redirect("/dashboard/events/list");
+      const lockedMsg = ["approved", "published", "pending_review"].includes(ev.status)
+        ? "This event is approved or live — only approvers can edit it."
+        : "You can only edit your own events.";
+      await setBannerCookie("danger", lockedMsg, res);
+      return res.redirect(`/dashboard/events/view?eventId=${ev.eventId}`);
     }
 
     const isPublished = ev.status === "published";
@@ -239,12 +251,9 @@ export default function dashboardEventsSiteRoute(app, fetch, config, db, feature
       published: "success", rejected: "danger", cancelled: "purple", archived: "dark",
     };
     const badgeClass = statusColors[ev.status] || "secondary";
-    const userPerms = req.session.user?.permissions || [];
-    const isReviewer = hasPermissionNode(userPerms, "zander.web.events.review");
-    const ownerStatuses = ["draft", "rejected", "published"];
-    const reviewerStatuses = ["draft", "rejected", "published", "pending_review", "approved"];
-    const editableStatuses = isReviewer ? reviewerStatuses : ownerStatuses;
-    const canEdit = editableStatuses.includes(ev.status) && userCanEditEvent(ev, req);
+    const isReviewer = userIsReviewer(req);
+    // userCanEditEvent already accounts for status; only exclude terminal states
+    const canEdit = !["cancelled", "archived"].includes(ev.status) && userCanEditEvent(ev, req);
 
     res.header("content-type", "text/html; charset=utf-8").send(
       await app.view("dashboard/events/events-view", {
@@ -255,6 +264,7 @@ export default function dashboardEventsSiteRoute(app, fetch, config, db, feature
         ev,
         badgeClass,
         canEdit,
+        isReviewer,
         globalImage,
         announcementWeb,
       })
