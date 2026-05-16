@@ -78,13 +78,8 @@ function buildEventEmbed(event) {
     embed.addFields({ name: "Server", value: serverValue, inline: true });
   }
 
-  if (event.bannerUrl) {
-    embed.setImage(event.bannerUrl);
-  }
-
-  if (event.logoUrl) {
-    embed.setThumbnail(event.logoUrl);
-  }
+  embed.setImage(event.bannerUrl || null);
+  embed.setThumbnail(event.logoUrl || null);
 
   const hosts = event.hosts || [];
   const hostNames = hosts.map(h => h.displayName || "Unknown").filter(Boolean);
@@ -247,7 +242,7 @@ export async function editGuildScheduledEvent(event, guildId, guildEventId) {
 
   const isVoiceChannel = event.locationType === "discord" && event.locationDiscordChannelId;
 
-  await guildEvent.edit({
+  const editData = {
     name: event.title,
     scheduledStartTime: new Date(event.startAt),
     scheduledEndTime: new Date(event.endAt),
@@ -263,7 +258,16 @@ export async function editGuildScheduledEvent(event, guildId, guildEventId) {
             location: event.locationLabel || event.serverIp || "Online",
           },
         }),
-  });
+  };
+
+  if (event.bannerUrl) {
+    editData.image = event.bannerUrl;
+  } else {
+    // Explicitly clear the image if bannerUrl was removed
+    editData.image = null;
+  }
+
+  await guildEvent.edit(editData);
 
   await logEventAudit(
     event.eventId,
