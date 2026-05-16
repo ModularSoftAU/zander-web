@@ -74,11 +74,24 @@ export class ProfileCommand extends Command {
       fetchURL.searchParams.set("discordId", resolvedDiscordId);
     }
 
-    const response = await fetch(fetchURL, {
-      headers: { "x-access-token": process.env.apiKey },
-    });
+    let response;
+    let apiData;
+    try {
+      response = await fetch(fetchURL, {
+        headers: { "x-access-token": process.env.apiKey },
+      });
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}`);
+      }
+      apiData = await response.json();
+    } catch (err) {
+      console.error("[profile command] API fetch failed:", err.message);
+      return interaction.reply({
+        content: "Failed to reach the profile API. Please try again later.",
+        ephemeral: true,
+      });
+    }
 
-    const apiData = await response.json();
     if (!apiData.success) {
       const noProfileEmbed = new EmbedBuilder()
         .setTitle(`Could not fetch profile.`)
