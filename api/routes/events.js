@@ -64,6 +64,11 @@ function isReviewer(req) {
   return checkPermNode(req.session?.user?.permissions || [], "zander.web.events.review");
 }
 
+function isEditor(req) {
+  const perms = req.session?.user?.permissions || [];
+  return checkPermNode(perms, "zander.web.events.edit") || checkPermNode(perms, "zander.web.events.review");
+}
+
 export default function eventsApiRoute(app, _config, _db, features, _lang) {
   // ============================================================================
   // Public endpoints (no auth check beyond token)
@@ -241,6 +246,7 @@ export default function eventsApiRoute(app, _config, _db, features, _lang) {
   /** POST /api/events/create */
   app.post("/api/events/create", async (req, res) => {
     if (!features.events) return res.send({ success: false, message: "Events feature disabled" });
+    if (!isEditor(req)) return res.status(403).send({ success: false, message: "You do not have permission to create events." });
 
     const body = req.body;
     if (!body?.title) return res.send({ success: false, message: "title is required" });
@@ -260,6 +266,7 @@ export default function eventsApiRoute(app, _config, _db, features, _lang) {
   /** POST /api/events/update */
   app.post("/api/events/update", async (req, res) => {
     if (!features.events) return res.send({ success: false, message: "Events feature disabled" });
+    if (!isEditor(req)) return res.status(403).send({ success: false, message: "You do not have permission to edit events." });
 
     const body = req.body;
     if (!body?.eventId) return res.send({ success: false, message: "eventId is required" });
@@ -285,6 +292,7 @@ export default function eventsApiRoute(app, _config, _db, features, _lang) {
   /** POST /api/events/submit-review */
   app.post("/api/events/submit-review", async (req, res) => {
     if (!features.events) return res.send({ success: false, message: "Events feature disabled" });
+    if (!isEditor(req)) return res.status(403).send({ success: false, message: "You do not have permission to submit events for review." });
 
     const eventId = req.body?.eventId;
     if (!eventId) return res.send({ success: false, message: "eventId is required" });
@@ -445,6 +453,10 @@ export default function eventsApiRoute(app, _config, _db, features, _lang) {
       const existing = await getEventById(eventId);
       if (!existing) return res.send({ success: false, message: "Event not found" });
 
+      // All cancellations require at least edit permission
+      if (!isEditor(req)) {
+        return res.status(403).send({ success: false, message: "You do not have permission to cancel events." });
+      }
       // Approved and published events can only be cancelled by reviewers
       if (["approved", "published"].includes(existing.status) && !isReviewer(req)) {
         return res.status(403).send({ success: false, message: "Only approvers can cancel an approved or live event." });

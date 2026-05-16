@@ -32,16 +32,23 @@ export default function dashboardEventsSiteRoute(app, fetch, config, db, feature
     const userPerms = req.session.user?.permissions || [];
     const isCreator = ev.creatorId && ev.creatorId === req.session.user?.userId;
     const hasReview = hasPermissionNode(userPerms, "zander.web.events.review");
+    const hasEdit = hasPermissionNode(userPerms, "zander.web.events.edit");
 
-    // Once approved or published only reviewers may edit; draft/rejected allow creator or reviewer
+    // Once approved or published only reviewers may edit; draft/rejected allow editor or reviewer
     if (["approved", "published", "pending_review"].includes(ev.status)) {
       return hasReview;
     }
-    return isCreator || hasReview;
+    return (isCreator && hasEdit) || hasReview;
   }
 
   function userIsReviewer(req) {
     return hasPermissionNode(req.session.user?.permissions || [], "zander.web.events.review");
+  }
+
+  function userIsEditor(req) {
+    const userPerms = req.session.user?.permissions || [];
+    return hasPermissionNode(userPerms, "zander.web.events.edit") ||
+           hasPermissionNode(userPerms, "zander.web.events.review");
   }
   // ============================================================================
   // Calendar View
@@ -99,6 +106,7 @@ export default function dashboardEventsSiteRoute(app, fetch, config, db, feature
 
     const userPerms = req.session.user?.permissions || [];
     const hasReviewPermission = hasPermissionNode(userPerms, "zander.web.events.review");
+    const hasEditPermission = hasPermissionNode(userPerms, "zander.web.events.edit") || hasReviewPermission;
 
     res.header("content-type", "text/html; charset=utf-8").send(
       await app.view("dashboard/events/events-list", {
@@ -111,6 +119,7 @@ export default function dashboardEventsSiteRoute(app, fetch, config, db, feature
         search,
         showPast,
         hasReviewPermission,
+        hasEditPermission,
         globalImage,
         announcementWeb,
       })
@@ -148,7 +157,7 @@ export default function dashboardEventsSiteRoute(app, fetch, config, db, feature
   // ============================================================================
   app.get("/dashboard/events/create", async (req, res) => {
     if (!await isFeatureWebRouteEnabled(app, features.events, req, res, features)) return;
-    if (!await hasPermission("zander.web.events", req, res, features)) return;
+    if (!await hasPermission("zander.web.events.edit", req, res, features)) return;
 
     const [templatesData, globalImage, announcementWeb] = await Promise.all([
       fetchJson(fetch, `${process.env.siteAddress}/api/events/templates/get`, { data: [] }),
@@ -178,7 +187,7 @@ export default function dashboardEventsSiteRoute(app, fetch, config, db, feature
   // ============================================================================
   app.get("/dashboard/events/edit", async (req, res) => {
     if (!await isFeatureWebRouteEnabled(app, features.events, req, res, features)) return;
-    if (!await hasPermission("zander.web.events", req, res, features)) return;
+    if (!await hasPermission("zander.web.events.edit", req, res, features)) return;
 
     const eventId = req.query.eventId;
     if (!eventId) return res.redirect("/dashboard/events/list");
@@ -302,7 +311,7 @@ export default function dashboardEventsSiteRoute(app, fetch, config, db, feature
   // ============================================================================
   app.get("/dashboard/events/templates/create", async (req, res) => {
     if (!await isFeatureWebRouteEnabled(app, features.events, req, res, features)) return;
-    if (!await hasPermission("zander.web.events", req, res, features)) return;
+    if (!await hasPermission("zander.web.events.edit", req, res, features)) return;
 
     const [globalImage, announcementWeb] = await Promise.all([
       getGlobalImage(),
@@ -399,7 +408,7 @@ export default function dashboardEventsSiteRoute(app, fetch, config, db, feature
   // ============================================================================
   app.get("/dashboard/events/templates/edit", async (req, res) => {
     if (!await isFeatureWebRouteEnabled(app, features.events, req, res, features)) return;
-    if (!await hasPermission("zander.web.events", req, res, features)) return;
+    if (!await hasPermission("zander.web.events.edit", req, res, features)) return;
 
     const templateId = req.query.templateId;
     if (!templateId) return res.redirect("/dashboard/events/templates");
