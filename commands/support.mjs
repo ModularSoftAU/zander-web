@@ -210,25 +210,19 @@ export class SupportCommand extends Command {
         });
       }
 
+      await interaction.deferReply({ ephemeral: true });
+
       const ticketDetails = await getTicketDetailsByChannel(interaction.channel.id);
 
       if (!ticketDetails) {
-        return interaction.reply({
-          content: "This channel is not linked to a ticket.",
-          ephemeral: true,
-        });
+        return interaction.editReply({ content: "This channel is not linked to a ticket." });
       }
 
       const canAdd = await callerHasManageParticipants(interaction.user.id);
 
       if (!canAdd) {
-        return interaction.reply({
-          content: "You need the manage participants permission to update ticket access.",
-          ephemeral: true,
-        });
+        return interaction.editReply({ content: "You need the manage participants permission to update ticket access." });
       }
-
-      await interaction.deferReply({ ephemeral: true });
 
       const additions = [];
       const staffUserId = await getUserIdByDiscordId(interaction.user.id);
@@ -342,25 +336,19 @@ export class SupportCommand extends Command {
         });
       }
 
+      await interaction.deferReply({ ephemeral: true });
+
       const ticketDetails = await getTicketDetailsByChannel(interaction.channel.id);
 
       if (!ticketDetails) {
-        return interaction.reply({
-          content: "This channel is not linked to a ticket.",
-          ephemeral: true,
-        });
+        return interaction.editReply({ content: "This channel is not linked to a ticket." });
       }
 
       const canRemove = await callerHasManageParticipants(interaction.user.id);
 
       if (!canRemove) {
-        return interaction.reply({
-          content: "You need the manage participants permission to update ticket access.",
-          ephemeral: true,
-        });
+        return interaction.editReply({ content: "You need the manage participants permission to update ticket access." });
       }
-
-      await interaction.deferReply({ ephemeral: true });
 
       const removals = [];
       const staffUserId = await getUserIdByDiscordId(interaction.user.id);
