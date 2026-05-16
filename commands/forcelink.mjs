@@ -1,8 +1,8 @@
 import { Command } from "@sapphire/framework";
 import { Colors, EmbedBuilder, SlashCommandBuilder } from "discord.js";
 import { hasPermission } from "../lib/discord/permissions.mjs";
-import { UserGetter, getUserPermissions, linkDiscordAccount } from "../controllers/userController.js";
-import { prisma } from "../controllers/databaseController.js";
+import { UserGetter, getUserPermissions, linkDiscordAccount, unlinkDiscordAccount } from "../controllers/userController.js";
+import db from "../controllers/databaseController.js";
 
 const PERMISSION_NODE = "zander.discord.forcelink";
 
@@ -91,10 +91,7 @@ export class ForceLinkCommand extends Command {
         `⚠️ <@${targetDiscordUser.id}> was previously linked to \`${existingDiscordLink.username}\` — that link will be cleared.`
       );
       // Clear the old link from the Discord user's previous MC account
-      await prisma.users.update({
-        where: { userId: existingDiscordLink.userId },
-        data: { discordId: null, social_discord: null },
-      });
+      await unlinkDiscordAccount(existingDiscordLink.userId);
     }
 
     if (mcUser.discordId && mcUser.discordId !== targetDiscordUser.id) {
@@ -109,14 +106,17 @@ export class ForceLinkCommand extends Command {
 
     // Mark account as registered if not already, and clean up any pending verify codes
     if (!mcUser.account_registered) {
-      await prisma.users.update({
-        where: { userId: mcUser.userId },
-        data: { account_registered: new Date() },
-      });
+      await new Promise((resolve, reject) =>
+        db.query("UPDATE users SET account_registered=? WHERE userId=?", [new Date(), mcUser.userId], (err) =>
+          err ? reject(err) : resolve()
+        )
+      );
     }
-    await prisma.userVerifyLink.deleteMany({
-      where: { uuid: mcUser.uuid },
-    });
+    await new Promise((resolve, reject) =>
+      db.query("DELETE FROM userVerifyLink WHERE uuid=?", [mcUser.uuid], (err) =>
+        err ? reject(err) : resolve()
+      )
+    );
 
     const embed = new EmbedBuilder()
       .setTitle("Account Force-Linked")
