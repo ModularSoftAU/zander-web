@@ -1,0 +1,139 @@
+import { Command } from "@sapphire/framework";
+import { Colors, EmbedBuilder, SlashCommandBuilder } from "discord.js";
+import { hasPermission } from "../lib/discord/permissions.mjs";
+import { UserGetter, getUserPermissions, linkDiscordAccount } from "../controllers/userController.js";
+import { prisma } from "../controllers/databaseController.js";
+
+const PERMISSION_NODE = "zander.discord.forcelink";
+
+export class ForceLinkCommand extends Command {
+  constructor(context, options) {
+    super(context, { ...options });
+  }
+
+  registerApplicationCommands(registry) {
+    registry.registerChatInputCommand((builder) =>
+      builder
+        .setName("forcelink")
+        .setDescription("Force-link a Discord user to a Minecraft player account.")
+        .addUserOption((option) =>
+          option
+            .setName("discord_user")
+            .setDescription("The Discord user to link")
+            .setRequired(true)
+        )
+        .addStringOption((option) =>
+          option
+            .setName("minecraft_username")
+            .setDescription("The Minecraft username to link them to")
+            .setRequired(true)
+        )
+    );
+  }
+
+  async chatInputRun(interaction) {
+    await interaction.deferReply({ ephemeral: true });
+
+    // Permission gate — executor must be linked and have the node
+    const userGetter = new UserGetter();
+    const executorAccount = await userGetter.byDiscordId(interaction.user.id);
+
+    if (!executorAccount) {
+      return interaction.editReply({
+        embeds: [
+          new EmbedBuilder()
+            .setTitle("No Linked Account")
+            .setDescription("You must have a linked Minecraft account to use this command.")
+            .setColor(Colors.Red),
+        ],
+      });
+    }
+
+    const userPermissions = await getUserPermissions(executorAccount);
+    if (!hasPermission(userPermissions, PERMISSION_NODE)) {
+      return interaction.editReply({
+        embeds: [
+          new EmbedBuilder()
+            .setTitle("No Permission")
+            .setDescription("You do not have permission to force-link accounts.")
+            .setColor(Colors.Red),
+        ],
+      });
+    }
+
+    const targetDiscordUser = interaction.options.getUser("discord_user");
+    const minecraftUsername = interaction.options.getString("minecraft_username").trim();
+
+    // Look up the Minecraft user
+    const mcUser = await userGetter.byUsername(minecraftUsername);
+    if (!mcUser) {
+      return interaction.editReply({
+        embeds: [
+          new EmbedBuilder()
+            .setTitle("Minecraft User Not Found")
+            .setDescription(
+              `No player named \`${minecraftUsername}\` exists in the database.\n` +
+              `They must have joined the server at least once before they can be linked.`
+            )
+            .setColor(Colors.Red),
+        ],
+      });
+    }
+
+    // Check for existing links that will be displaced
+    const existingDiscordLink = await userGetter.byDiscordId(targetDiscordUser.id);
+    const previousMcLink = mcUser.discordId ? await userGetter.byDiscordId(mcUser.discordId) : null;
+
+    const warnings = [];
+
+    if (existingDiscordLink && existingDiscordLink.userId !== mcUser.userId) {
+      warnings.push(
+        `⚠️ <@${targetDiscordUser.id}> was previously linked to \`${existingDiscordLink.username}\` — that link will be cleared.`
+      );
+      // Clear the old link from the Discord user's previous MC account
+      await prisma.users.update({
+        where: { userId: existingDiscordLink.userId },
+        data: { discordId: null, social_discord: null },
+      });
+    }
+
+    if (mcUser.discordId && mcUser.discordId !== targetDiscordUser.id) {
+      warnings.push(
+        `⚠️ \`${minecraftUsername}\` was previously linked to <@${mcUser.discordId}> — that link will be replaced.`
+      );
+    }
+
+    // Execute the force link
+    const discordHandle = targetDiscordUser.username;
+    await linkDiscordAccount(mcUser.userId, targetDiscordUser.id, discordHandle);
+
+    // Mark account as registered if not already, and clean up any pending verify codes
+    if (!mcUser.account_registered) {
+      await prisma.users.update({
+        where: { userId: mcUser.userId },
+        data: { account_registered: new Date() },
+      });
+    }
+    await prisma.userVerifyLink.deleteMany({
+      where: { uuid: mcUser.uuid },
+    });
+
+    const embed = new EmbedBuilder()
+      .setTitle("Account Force-Linked")
+      .setColor(Colors.Green)
+      .addFields(
+        { name: "Discord User", value: `<@${targetDiscordUser.id}> (${targetDiscordUser.tag ?? targetDiscordUser.username})`, inline: true },
+        { name: "Minecraft Player", value: `\`${mcUser.username}\``, inline: true },
+        { name: "UUID", value: `\`${mcUser.uuid}\``, inline: false },
+        { name: "Linked By", value: `<@${interaction.user.id}>`, inline: true }
+      )
+      .setFooter({ text: `User ID: ${mcUser.userId}` })
+      .setTimestamp();
+
+    if (warnings.length > 0) {
+      embed.addFields({ name: "Warnings", value: warnings.join("\n"), inline: false });
+    }
+
+    return interaction.editReply({ embeds: [embed] });
+  }
+}
