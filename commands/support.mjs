@@ -31,6 +31,18 @@ import {
   updateTicketStatus,
   deleteTicketChannel,
 } from "../controllers/supportTicketController.js";
+import { hasPermission } from "../lib/discord/permissions.mjs";
+import { UserGetter, getUserPermissions } from "../controllers/userController.js";
+
+const MANAGE_PARTICIPANTS_NODE = "zander.web.tickets.manageparticipants";
+
+async function callerHasManageParticipants(discordUserId) {
+  const userGetter = new UserGetter();
+  const linked = await userGetter.byDiscordId(discordUserId);
+  if (!linked) return false;
+  const perms = await getUserPermissions(linked);
+  return hasPermission(perms, MANAGE_PARTICIPANTS_NODE);
+}
 
 export class SupportCommand extends Command {
   constructor(context, options) {
@@ -207,15 +219,11 @@ export class SupportCommand extends Command {
         });
       }
 
-      const categoryStaffRoles = await getCategoryPermissions(ticketDetails.categoryId);
-      const member = await interaction.guild.members.fetch(interaction.user.id);
-      const hasPermission =
-        member.permissions.has(PermissionFlagsBits.ManageChannels) ||
-        member.roles.cache.some((role) => categoryStaffRoles.includes(role.id));
+      const canAdd = await callerHasManageParticipants(interaction.user.id);
 
-      if (!hasPermission) {
+      if (!canAdd) {
         return interaction.reply({
-          content: "You need support staff permissions to update ticket access.",
+          content: "You need the manage participants permission to update ticket access.",
           ephemeral: true,
         });
       }
@@ -343,15 +351,11 @@ export class SupportCommand extends Command {
         });
       }
 
-      const categoryStaffRoles = await getCategoryPermissions(ticketDetails.categoryId);
-      const member = await interaction.guild.members.fetch(interaction.user.id);
-      const hasPermission =
-        member.permissions.has(PermissionFlagsBits.ManageChannels) ||
-        member.roles.cache.some((role) => categoryStaffRoles.includes(role.id));
+      const canRemove = await callerHasManageParticipants(interaction.user.id);
 
-      if (!hasPermission) {
+      if (!canRemove) {
         return interaction.reply({
-          content: "You need support staff permissions to update ticket access.",
+          content: "You need the manage participants permission to update ticket access.",
           ephemeral: true,
         });
       }
