@@ -40,6 +40,8 @@ import {
   editGuildScheduledEvent,
   postCancellationDiscordMessage,
   cancelGuildScheduledEvent,
+  postEventDiscordMessage,
+  createGuildScheduledEvent,
 } from "../../services/eventDiscordService.js";
 
 import { ChannelType } from "discord.js";
@@ -501,6 +503,66 @@ export default function eventsApiRoute(app, _config, _db, features, _lang) {
     } catch (err) {
       console.error("[Events API] cancel:", err);
       return res.send({ success: false, message: err.message || "Failed to cancel event" });
+    }
+  });
+
+  /** POST /api/events/resync-discord — re-post message and/or recreate guild event for a published event */
+  app.post("/api/events/resync-discord", async (req, res) => {
+    if (!features.events) return res.send({ success: false, message: "Events feature disabled" });
+    if (!isReviewer(req)) return res.status(403).send({ success: false, message: "Only reviewers can resync Discord." });
+
+    const { eventId, resyncMessage, resyncGuildEvent } = req.body || {};
+    if (!eventId) return res.send({ success: false, message: "eventId is required" });
+
+    try {
+      const event = await getEventById(eventId);
+      if (!event) return res.send({ success: false, message: "Event not found" });
+      if (event.status !== "published") return res.send({ success: false, message: "Only published events can be resynced." });
+
+      const guildId = config?.discord?.guildId || config?.events?.discordGuildId || null;
+      const channelId = config?.events?.discordChannelId || null;
+      const siteBaseUrl = config?.siteConfiguration?.siteUrl || process.env.siteAddress || "";
+
+      const results = { message: null, guildEvent: null };
+
+      if (resyncMessage) {
+        try {
+          if (event.discordMessageId && event.discordChannelId) {
+            await editEventDiscordMessage(event, event.discordChannelId, event.discordMessageId, siteBaseUrl);
+            results.message = "updated";
+          } else {
+            const targetChannel = event.discordChannelId || channelId;
+            if (!targetChannel) throw new Error("No channel configured");
+            await postEventDiscordMessage(event, targetChannel, siteBaseUrl);
+            results.message = "posted";
+          }
+        } catch (e) {
+          console.error("[Events] resync message failed:", e.message);
+          results.message = `failed: ${e.message}`;
+        }
+      }
+
+      if (resyncGuildEvent) {
+        try {
+          if (event.discordGuildEventId && guildId) {
+            await editGuildScheduledEvent(event, guildId, event.discordGuildEventId);
+            results.guildEvent = "updated";
+          } else if (guildId) {
+            await createGuildScheduledEvent(event, guildId);
+            results.guildEvent = "created";
+          } else {
+            results.guildEvent = "skipped: no guild configured";
+          }
+        } catch (e) {
+          console.error("[Events] resync guild event failed:", e.message);
+          results.guildEvent = `failed: ${e.message}`;
+        }
+      }
+
+      return res.send({ success: true, results, message: "Discord resync complete" });
+    } catch (err) {
+      console.error("[Events API] resync-discord:", err);
+      return res.send({ success: false, message: err.message || "Resync failed" });
     }
   });
 
