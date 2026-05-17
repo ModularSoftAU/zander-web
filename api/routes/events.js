@@ -520,8 +520,23 @@ export default function eventsApiRoute(app, _config, _db, features, _lang) {
       if (event.status !== "published") return res.send({ success: false, message: "Only published events can be resynced." });
 
       const guildId = config?.discord?.guildId || config?.events?.discordGuildId || null;
-      const channelId = config?.events?.discordChannelId || null;
       const siteBaseUrl = config?.siteConfiguration?.siteUrl || process.env.siteAddress || "";
+
+      // Resolve channel: stored on event > action config > global config
+      const msgAction = (event.actions || []).find(
+        (a) => a.enabled && a.trigger === "on_publish" && a.actionType === "discord_message"
+      );
+      const channelId =
+        event.discordChannelId ||
+        msgAction?.config?.channelId ||
+        config?.events?.discordChannelId ||
+        null;
+
+      // Resolve guild from action config if not set globally
+      const guildAction = (event.actions || []).find(
+        (a) => a.enabled && a.trigger === "on_publish" && a.actionType === "discord_guild_event"
+      );
+      const resolvedGuildId = guildId || guildAction?.config?.guildId || null;
 
       const results = { message: null, guildEvent: null };
 
@@ -531,9 +546,8 @@ export default function eventsApiRoute(app, _config, _db, features, _lang) {
             await editEventDiscordMessage(event, event.discordChannelId, event.discordMessageId, siteBaseUrl);
             results.message = "updated";
           } else {
-            const targetChannel = event.discordChannelId || channelId;
-            if (!targetChannel) throw new Error("No channel configured");
-            await postEventDiscordMessage(event, targetChannel, siteBaseUrl);
+            if (!channelId) throw new Error("No channel configured — set a channel in the event's Discord Message action");
+            await postEventDiscordMessage(event, channelId, siteBaseUrl);
             results.message = "posted";
           }
         } catch (e) {
@@ -544,11 +558,11 @@ export default function eventsApiRoute(app, _config, _db, features, _lang) {
 
       if (resyncGuildEvent) {
         try {
-          if (event.discordGuildEventId && guildId) {
-            await editGuildScheduledEvent(event, guildId, event.discordGuildEventId);
+          if (event.discordGuildEventId && resolvedGuildId) {
+            await editGuildScheduledEvent(event, resolvedGuildId, event.discordGuildEventId);
             results.guildEvent = "updated";
-          } else if (guildId) {
-            await createGuildScheduledEvent(event, guildId);
+          } else if (resolvedGuildId) {
+            await createGuildScheduledEvent(event, resolvedGuildId);
             results.guildEvent = "created";
           } else {
             results.guildEvent = "skipped: no guild configured";
