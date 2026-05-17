@@ -38,7 +38,7 @@ export default function dashboardEventsSiteRoute(app, fetch, config, db, feature
     if (["approved", "published", "pending_review"].includes(ev.status)) {
       return hasReview;
     }
-    return (isCreator && hasEdit) || hasReview;
+    return hasEdit || hasReview;
   }
 
   function userIsReviewer(req) {

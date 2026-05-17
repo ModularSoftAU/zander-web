@@ -93,8 +93,7 @@
                                     </td>
                                     <td data-label="Actions">
                                         <%
-                                            var isOwner = ev.creatorId && ev.creatorId === req.session.user.userId;
-                                            var canEditThis = (isOwner && hasEditPermission) || hasReviewPermission;
+                                            var canEditThis = hasEditPermission || hasReviewPermission;
                                         %>
                                         <div class="d-flex flex-wrap gap-1">
                                             <a href="/dashboard/events/view?eventId=<%= ev.eventId %>" class="btn btn-xs btn-outline-secondary">View</a>
