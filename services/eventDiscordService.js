@@ -78,13 +78,8 @@ function buildEventEmbed(event) {
     embed.addFields({ name: "Server", value: serverValue, inline: true });
   }
 
-  if (event.bannerUrl) {
-    embed.setImage(event.bannerUrl);
-  }
-
-  if (event.logoUrl) {
-    embed.setThumbnail(event.logoUrl);
-  }
+  embed.setImage(event.bannerUrl || null);
+  embed.setThumbnail(event.logoUrl || null);
 
   const hosts = event.hosts || [];
   const hostNames = hosts.map(h => h.displayName || "Unknown").filter(Boolean);
@@ -247,7 +242,7 @@ export async function editGuildScheduledEvent(event, guildId, guildEventId) {
 
   const isVoiceChannel = event.locationType === "discord" && event.locationDiscordChannelId;
 
-  await guildEvent.edit({
+  const editData = {
     name: event.title,
     scheduledStartTime: new Date(event.startAt),
     scheduledEndTime: new Date(event.endAt),
@@ -263,7 +258,16 @@ export async function editGuildScheduledEvent(event, guildId, guildEventId) {
             location: event.locationLabel || event.serverIp || "Online",
           },
         }),
-  });
+  };
+
+  if (event.bannerUrl) {
+    editData.image = event.bannerUrl;
+  } else {
+    // Explicitly clear the image if bannerUrl was removed
+    editData.image = null;
+  }
+
+  await guildEvent.edit(editData);
 
   await logEventAudit(
     event.eventId,
@@ -274,6 +278,41 @@ export async function editGuildScheduledEvent(event, guildId, guildEventId) {
   );
 
   return guildEventId;
+}
+
+/**
+ * Post a cancellation notice to the event's Discord channel.
+ */
+export async function postCancellationDiscordMessage(event, channelId) {
+  if (!client?.isReady?.()) throw new Error("Discord client not ready");
+  if (!channelId) throw new Error("No channel ID provided");
+
+  const channel = await client.channels.fetch(channelId);
+  if (!channel?.isTextBased?.()) throw new Error(`Channel ${channelId} is not text-based`);
+
+  const startTimestamp = Math.floor(new Date(event.startAt).getTime() / 1000);
+
+  const embed = new EmbedBuilder()
+    .setTitle(`❌ Event Cancelled: ${event.title}`)
+    .setDescription(
+      `This event has been cancelled and will no longer take place.\n\n` +
+      `Originally scheduled for <t:${startTimestamp}:F>.`
+    )
+    .setColor(0xe74c3c)
+    .setFooter({ text: `Event ID: ${event.eventId}` })
+    .setTimestamp();
+
+  if (event.bannerUrl) embed.setImage(event.bannerUrl);
+
+  await channel.send({ embeds: [embed] });
+
+  await logEventAudit(
+    event.eventId,
+    null,
+    "System",
+    "discord_cancellation_posted",
+    `Cancellation notice posted to channel ${channelId}`
+  );
 }
 
 /**
@@ -324,6 +363,9 @@ export async function runDiscordActionsForEvent(event, trigger, discordConfig = 
           await postEventDiscordMessage(event, channelId, siteBaseUrl);
         } else if (trigger === "on_update" && event.discordMessageId && event.discordChannelId) {
           await editEventDiscordMessage(event, event.discordChannelId, event.discordMessageId, siteBaseUrl);
+        } else if (trigger === "on_cancel") {
+          const targetChannel = event.discordChannelId || channelId;
+          if (targetChannel) await postCancellationDiscordMessage(event, targetChannel);
         }
       }
 
