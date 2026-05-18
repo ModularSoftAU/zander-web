@@ -20,13 +20,13 @@ export class ForceLinkCommand extends Command {
           option
             .setName("discord_user")
             .setDescription("The Discord user to link")
-            .setRequired(true)
+            .setRequired(true),
         )
         .addStringOption((option) =>
           option
             .setName("minecraft_username")
             .setDescription("The Minecraft username to link them to")
-            .setRequired(true)
+            .setRequired(true),
         )
     );
   }
@@ -73,7 +73,7 @@ export class ForceLinkCommand extends Command {
             .setTitle("Minecraft User Not Found")
             .setDescription(
               `No player named \`${minecraftUsername}\` exists in the database.\n` +
-              `They must have joined the server at least once before they can be linked.`
+              `They must have joined the server at least once before they can be linked.`,
             )
             .setColor(Colors.Red),
         ],
@@ -87,7 +87,7 @@ export class ForceLinkCommand extends Command {
 
     if (existingDiscordLink && existingDiscordLink.userId !== mcUser.userId) {
       warnings.push(
-        `⚠️ <@${targetDiscordUser.id}> was previously linked to \`${existingDiscordLink.username}\` — that link will be cleared.`
+        `⚠️ <@${targetDiscordUser.id}> was previously linked to \`${existingDiscordLink.username}\` — that link will be cleared.`,
       );
       // Clear the old link from the Discord user's previous MC account
       await unlinkDiscordAccount(existingDiscordLink.userId);
@@ -95,7 +95,7 @@ export class ForceLinkCommand extends Command {
 
     if (mcUser.discordId && mcUser.discordId !== targetDiscordUser.id) {
       warnings.push(
-        `⚠️ \`${minecraftUsername}\` was previously linked to <@${mcUser.discordId}> — that link will be replaced.`
+        `⚠️ \`${minecraftUsername}\` was previously linked to <@${mcUser.discordId}> — that link will be replaced.`,
       );
     }
 
@@ -124,7 +124,7 @@ export class ForceLinkCommand extends Command {
         { name: "Discord User", value: `<@${targetDiscordUser.id}> (${targetDiscordUser.tag ?? targetDiscordUser.username})`, inline: true },
         { name: "Minecraft Player", value: `\`${mcUser.username}\``, inline: true },
         { name: "UUID", value: `\`${mcUser.uuid}\``, inline: false },
-        { name: "Linked By", value: `<@${interaction.user.id}>`, inline: true }
+        { name: "Linked By", value: `<@${interaction.user.id}>`, inline: true },
       )
       .setFooter({ text: `User ID: ${mcUser.userId}` })
       .setTimestamp();

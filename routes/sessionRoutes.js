@@ -103,11 +103,11 @@ export default function sessionSiteRoute(
     const rankSlugs = userPermissionData.userRanks || [];
 
     // Store ranks as objects so callers can do rank.rankSlug (used across support, appeal, profile routes)
-    const userRanks = rankSlugs.map(slug => ({ rankSlug: slug }));
+    const userRanks = rankSlugs.map((slug) => ({ rankSlug: slug }));
 
     // Derive isStaff from whether the user's resolved permissions include meta.staff.1 (set on staff groups in LuckPerms)
     const isStaff = userPermissionData.some(
-      p => p && String(p).trim().toLowerCase().startsWith("meta.staff.")
+      (p) => p && String(p).trim().toLowerCase().startsWith("meta.staff.")
     );
 
     req.session.authenticated = true;
