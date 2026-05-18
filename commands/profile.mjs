@@ -100,7 +100,6 @@ export class ProfileCommand extends Command {
 
       interaction.reply({
         embeds: [noProfileEmbed],
-        empheral: false,
       });
     } else {
       let isLinked = apiData.data.profileData.discordId;
@@ -178,10 +177,7 @@ export class ProfileCommand extends Command {
         // badges unavailable — profile still renders without them
       }
 
-      interaction.reply({
-        embeds: [embed],
-        empheral: false,
-      });
+      interaction.reply({ embeds: [embed] });
     }
   }
 }

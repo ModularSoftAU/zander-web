@@ -82,7 +82,6 @@ export class ForceLinkCommand extends Command {
 
     // Check for existing links that will be displaced
     const existingDiscordLink = await userGetter.byDiscordId(targetDiscordUser.id);
-    const previousMcLink = mcUser.discordId ? await userGetter.byDiscordId(mcUser.discordId) : null;
 
     const warnings = [];
 
