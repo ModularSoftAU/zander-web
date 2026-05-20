@@ -412,6 +412,32 @@ export async function approveEvent(eventId, reviewerId, reviewerName) {
 }
 
 /**
+ * Revert a pending_review event back to draft (reviewer action).
+ */
+export async function revertToDraft(eventId, actorId, actorName) {
+  const event = await getEventById(eventId);
+  if (!event) throw new Error("Event not found");
+  if (event.status !== "pending_review") {
+    throw new Error(`Cannot revert event in status '${event.status}' to draft`);
+  }
+
+  const updated = await prisma.events.update({
+    where: { eventId: parseInt(eventId) },
+    data: { status: "draft" },
+  });
+
+  await logEventAudit(
+    parseInt(eventId),
+    actorId,
+    actorName,
+    "reverted_to_draft",
+    "Event reverted from review back to draft"
+  );
+
+  return updated;
+}
+
+/**
  * Reject an event (admin action).
  */
 export async function rejectEvent(eventId, reviewerId, reviewerName, rejectionNote) {

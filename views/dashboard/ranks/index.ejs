@@ -222,6 +222,50 @@
                     </div>
                   </div>
                 </div>
+                <div class="col-12">
+                  <div class="card shadow-sm">
+                    <div class="card-header">
+                      <h5 class="card-title mb-1">Rank targeting &amp; CSV export</h5>
+                      <p class="card-subtitle text-muted mb-0">
+                        Select one or more ranks to export a CSV of all players currently holding those ranks.
+                      </p>
+                    </div>
+                    <div class="card-body">
+                      <form id="rankExportForm" class="row g-3 align-items-end">
+                        <div class="col-12">
+                          <label class="form-label">Select ranks to target</label>
+                          <div id="rankExportCheckboxes" class="d-flex flex-wrap gap-2">
+                            <% ranks.forEach(function(rank) { %>
+                              <div class="form-check">
+                                <input
+                                  class="form-check-input rank-export-check"
+                                  type="checkbox"
+                                  value="<%= rank.rankSlug %>"
+                                  id="exportRank_<%= rank.rankSlug %>"
+                                >
+                                <label class="form-check-label d-flex align-items-center gap-1" for="exportRank_<%= rank.rankSlug %>">
+                                  <span
+                                    class="rank-pill rank-pill-xs"
+                                    style="--rank-pill-bg: <%= rank.rankBadgeColour || '#1f2937' %>; --rank-pill-text: <%= rank.rankTextColour || '#ffffff' %>"
+                                  ><%= rank.displayName %></span>
+                                </label>
+                              </div>
+                            <% }) %>
+                          </div>
+                          <div id="rankExportNone" class="text-muted small mt-2 d-none">No ranks available.</div>
+                        </div>
+                        <div class="col-12 d-flex gap-2 align-items-center flex-wrap">
+                          <button type="submit" class="btn btn-primary" id="rankExportSubmit" disabled>
+                            <i class="fas fa-download me-1"></i>Export CSV
+                          </button>
+                          <button type="button" class="btn btn-outline-secondary" id="rankExportSelectAll">Select all</button>
+                          <button type="button" class="btn btn-outline-secondary" id="rankExportClearAll">Clear</button>
+                          <span id="rankExportCount" class="text-muted small"></span>
+                        </div>
+                      </form>
+                    </div>
+                  </div>
+                </div>
               </div>
 
 
@@ -836,6 +880,44 @@
       permissionForm.addEventListener('submit', handlePermissionSubmit);
     }
   })();
+
+  // Rank export
+  (function () {
+    const form = document.getElementById('rankExportForm');
+    const submitBtn = document.getElementById('rankExportSubmit');
+    const selectAllBtn = document.getElementById('rankExportSelectAll');
+    const clearBtn = document.getElementById('rankExportClearAll');
+    const countLabel = document.getElementById('rankExportCount');
+
+    function getChecked() {
+      return Array.from(document.querySelectorAll('.rank-export-check:checked')).map(el => el.value);
+    }
+
+    function updateState() {
+      const checked = getChecked();
+      submitBtn.disabled = checked.length === 0;
+      countLabel.textContent = checked.length > 0 ? `${checked.length} rank${checked.length === 1 ? '' : 's'} selected` : '';
+    }
+
+    document.querySelectorAll('.rank-export-check').forEach(el => el.addEventListener('change', updateState));
+
+    selectAllBtn?.addEventListener('click', () => {
+      document.querySelectorAll('.rank-export-check').forEach(el => { el.checked = true; });
+      updateState();
+    });
+
+    clearBtn?.addEventListener('click', () => {
+      document.querySelectorAll('.rank-export-check').forEach(el => { el.checked = false; });
+      updateState();
+    });
+
+    form?.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const checked = getChecked();
+      if (!checked.length) return;
+      window.location.href = `/dashboard/ranks/export-csv?ranks=${encodeURIComponent(checked.join(','))}`;
+    });
+  })();
 </script>
 
     </div><!-- /.wrap -->
@@ -844,6 +926,11 @@
 </div><!-- /#wpcontent -->
 
 <style>
+  .rank-pill-xs {
+    font-size: 0.7rem;
+    padding: 2px 8px;
+  }
+
   @media (max-width: 768px) {
     #rankConfigModal .modal-body {
       max-height: 70vh;
