@@ -4,6 +4,7 @@ import {
   getGlobalImage,
   hasPermission,
 } from "../../api/common.js";
+import { adminViewData } from "../../admin/adminHelpers.js";
 import { ActionRowBuilder, ButtonBuilder, ButtonStyle } from "discord.js";
 import {
   getSupportCategories,
@@ -24,6 +25,7 @@ import {
   recreateTicketChannel,
 } from "../../controllers/supportTicketController.js";
 import { hasPermission as hasPermissionNode } from "../../lib/discord/permissions.mjs";
+import { luckpermsDb } from "../../controllers/databaseController.js";
 
 export default function supportDashboardRoutes(
   app,
@@ -127,6 +129,7 @@ export default function supportDashboardRoutes(
         tickets,
         globalImage,
         announcementWeb,
+        ...adminViewData(req, features),
       }));
       return;
     } catch (error) {
@@ -208,6 +211,7 @@ export default function supportDashboardRoutes(
         selectedCategory: selectedCategory?.categoryId,
         globalImage,
         announcementWeb,
+        ...adminViewData(req, features),
       }));
       return;
     } catch (error) {
@@ -235,37 +239,25 @@ export default function supportDashboardRoutes(
       const categories = await getSupportCategoriesWithPermissions();
       const roles = await getLuckPermRoles();
 
-      const roleNameMap = new Map(
-        roles.map((role) => [String(role.id), role.name])
+      const rankStyleMap = new Map(roles.map((role) => [String(role.id), role]));
+
+      const categoriesWithRoleNames = await Promise.all(
+        categories.map(async (category) => {
+          const permissionIds = category.permissions
+            ? category.permissions.split(",").filter(Boolean)
+            : [];
+
+          const permissionIdSet = new Set(permissionIds.map((id) => String(id)));
+
+          return {
+            ...category,
+            permissions: await resolvePermissionRoles(permissionIds, rankStyleMap),
+            availableRoles: roles.filter(
+              (role) => !permissionIdSet.has(String(role.id))
+            ),
+          };
+        })
       );
-
-      const roleStyleMap = new Map(
-        roles.map((role) => [String(role.id), role])
-      );
-
-      const categoriesWithRoleNames = categories.map((category) => {
-        const permissionIds = category.permissions
-          ? category.permissions.split(",").filter(Boolean)
-          : [];
-
-        const permissionIdSet = new Set(permissionIds.map((id) => String(id)));
-
-        return {
-          ...category,
-          permissions: permissionIds.map((roleId) => {
-            const roleMeta = roleStyleMap.get(String(roleId));
-            return {
-              roleId,
-              roleName: roleMeta?.name || roleId,
-              badgeColor: roleMeta?.rankBadgeColour,
-              textColor: roleMeta?.rankTextColour,
-            };
-          }),
-          availableRoles: roles.filter(
-            (role) => !permissionIdSet.has(String(role.id))
-          ),
-        };
-      });
 
       console.info(
         "Loaded support categories",
@@ -289,6 +281,7 @@ export default function supportDashboardRoutes(
         roles,
         globalImage,
         announcementWeb,
+        ...adminViewData(req, features),
       }));
       return;
     } catch (error) {
@@ -419,24 +412,12 @@ export default function supportDashboardRoutes(
       const categoryPermissions =
         (await getCategoryPermissions(category.categoryId)) || [];
 
-      const roleStyleMap = new Map(
-        roles.map((role) => [String(role.id), role])
-      );
-      const permissionIdSet = new Set(
-        categoryPermissions.map((roleId) => String(roleId))
-      );
+      const rankStyleMap = new Map(roles.map((role) => [String(role.id), role]));
+      const permissionIdSet = new Set(categoryPermissions.map((roleId) => String(roleId)));
 
       const categoryWithPermissions = {
         ...category,
-        permissions: categoryPermissions.map((roleId) => {
-          const roleMeta = roleStyleMap.get(String(roleId));
-          return {
-            roleId,
-            roleName: roleMeta?.name || roleId,
-            badgeColor: roleMeta?.rankBadgeColour,
-            textColor: roleMeta?.rankTextColour,
-          };
-        }),
+        permissions: await resolvePermissionRoles(categoryPermissions, rankStyleMap),
         availableRoles: roles.filter(
           (role) => !permissionIdSet.has(String(role.id))
         ),
@@ -457,6 +438,7 @@ export default function supportDashboardRoutes(
         roles,
         globalImage,
         announcementWeb,
+        ...adminViewData(req, features),
       }));
       return;
     } catch (error) {
@@ -628,20 +610,54 @@ export default function supportDashboardRoutes(
 
   async function getLuckPermRoles() {
     try {
-      const ranks = await new Promise((resolve, reject) => {
-        db.query(
-          "SELECT rankSlug, displayName, discordRoleId, rankBadgeColour, rankTextColour FROM ranks WHERE discordRoleId IS NOT NULL AND discordRoleId != ''",
+      const rows = await new Promise((resolve, reject) => {
+        luckpermsDb.query(
+          `SELECT
+            lpGroups.name AS rankSlug,
+            COALESCE(SUBSTRING_INDEX(lpGroupDisplayName.permission, '.', -1), lpGroups.name) AS displayName,
+            COALESCE(
+              CONCAT('#', SUBSTRING_INDEX(lpMetaBadgeColour.permission, '.', -1)),
+              CASE LEFT(SUBSTRING_INDEX(lpGroupPrefix.permission, '[&', -1), 1)
+                WHEN '0' THEN '#000000' WHEN '1' THEN '#0000AA' WHEN '2' THEN '#00AA00'
+                WHEN '3' THEN '#00AAAA' WHEN '4' THEN '#AA0000' WHEN '5' THEN '#AA00AA'
+                WHEN '6' THEN '#FFAA00' WHEN '7' THEN '#AAAAAA' WHEN '8' THEN '#555555'
+                WHEN '9' THEN '#5555FF' WHEN 'a' THEN '#55FF55' WHEN 'b' THEN '#55FFFF'
+                WHEN 'c' THEN '#FF5555' WHEN 'd' THEN '#FF55FF' WHEN 'e' THEN '#FFFF55'
+                WHEN 'g' THEN '#DDD605' ELSE '#FFFFFF'
+              END
+            ) AS rankBadgeColour,
+            COALESCE(
+              CONCAT('#', SUBSTRING_INDEX(lpMetaTextColour.permission, '.', -1)),
+              CASE WHEN LEFT(SUBSTRING_INDEX(lpGroupPrefix.permission, '[&', -1), 1)
+                IN ('0','1','2','3','4','5','8','9') THEN '#FFFFFF' ELSE '#000000' END
+            ) AS rankTextColour,
+            SUBSTRING_INDEX(lpMetaDiscordId.permission, '.', -1) AS discordRoleId
+          FROM luckperms_groups lpGroups
+            LEFT JOIN luckperms_group_permissions lpGroupDisplayName
+              ON lpGroups.name = lpGroupDisplayName.name
+              AND lpGroupDisplayName.permission LIKE 'displayname.%' AND lpGroupDisplayName.value = 1
+            LEFT JOIN luckperms_group_permissions lpGroupPrefix
+              ON lpGroups.name = lpGroupPrefix.name
+              AND lpGroupPrefix.permission LIKE 'prefix.%' AND lpGroupPrefix.value = 1
+            LEFT JOIN luckperms_group_permissions lpMetaBadgeColour
+              ON lpGroups.name = lpMetaBadgeColour.name
+              AND lpMetaBadgeColour.permission LIKE 'meta.rankbadgecolour.%' AND lpMetaBadgeColour.value = 1
+            LEFT JOIN luckperms_group_permissions lpMetaTextColour
+              ON lpGroups.name = lpMetaTextColour.name
+              AND lpMetaTextColour.permission LIKE 'meta.ranktextcolour.%' AND lpMetaTextColour.value = 1
+            LEFT JOIN luckperms_group_permissions lpMetaDiscordId
+              ON lpGroups.name = lpMetaDiscordId.name
+              AND lpMetaDiscordId.permission LIKE 'meta.discordid.%' AND lpMetaDiscordId.value = 1
+          HAVING discordRoleId IS NOT NULL AND discordRoleId != '' AND discordRoleId != 'NULL'
+          ORDER BY lpGroups.name ASC`,
           (error, results) => {
-            if (error) {
-              reject(error);
-            } else {
-              resolve(results);
-            }
+            if (error) reject(error);
+            else resolve(results || []);
           }
         );
       });
 
-      return ranks.map((rank) => ({
+      return rows.map((rank) => ({
         id: rank.discordRoleId,
         name: rank.displayName || rank.rankSlug,
         rankSlug: rank.rankSlug,
@@ -650,11 +666,62 @@ export default function supportDashboardRoutes(
       }));
     } catch (error) {
       console.error(
-        "getLuckPermRoles: failed to fetch rank Discord role mappings for support categories",
+        "getLuckPermRoles: failed to fetch rank Discord role mappings from LuckPerms",
         error
       );
       return [];
     }
+  }
+
+  /**
+   * Build a Map of Discord role ID -> role name by fetching the guild's role list.
+   * Used as a fallback when a stored permission roleId is not mapped to any rank.
+   */
+  async function getDiscordGuildRoleNames() {
+    const guildId = config.discord?.guildId || process.env.DISCORD_GUILD_ID;
+    if (!client || !guildId) return new Map();
+
+    try {
+      const guild = client.guilds.cache.get(guildId) ?? await client.guilds.fetch(guildId);
+      if (!guild) return new Map();
+
+      if (guild.roles.cache.size === 0) {
+        await guild.roles.fetch();
+      }
+
+      const map = new Map();
+      guild.roles.cache.forEach((role) => {
+        map.set(String(role.id), role.name);
+      });
+      return map;
+    } catch (err) {
+      console.warn("getDiscordGuildRoleNames: failed to fetch guild roles", err.message);
+      return new Map();
+    }
+  }
+
+  /**
+   * Map a list of stored permission roleIds to enriched objects with human-readable names.
+   * Resolution priority:
+   *  1. Rank displayName / rankSlug from the ranks table
+   *  2. Discord role name fetched from the guild
+   *  3. Raw role ID as a last resort
+   */
+  async function resolvePermissionRoles(permissionIds, rankStyleMap) {
+    // Check if any ID is missing from the ranks map and needs Discord lookup
+    const needsDiscord = permissionIds.some((id) => !rankStyleMap.has(String(id)));
+    const discordNames = needsDiscord ? await getDiscordGuildRoleNames() : new Map();
+
+    return permissionIds.map((roleId) => {
+      const roleMeta = rankStyleMap.get(String(roleId));
+      const name = roleMeta?.name || discordNames.get(String(roleId)) || String(roleId);
+      return {
+        roleId,
+        roleName: name,
+        badgeColor: roleMeta?.rankBadgeColour,
+        textColor: roleMeta?.rankTextColour,
+      };
+    });
   }
 
   async function postSupportMessage(client) {

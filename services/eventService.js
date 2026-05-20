@@ -48,6 +48,7 @@ async function generateSlug(title, startAt, existingSlug = null) {
  * Called whenever event start time changes.
  */
 async function recalculateAnnouncementSchedules(eventId, startAt) {
+  const event = await prisma.events.findUnique({ where: { eventId } });
   const announcements = await prisma.event_announcements.findMany({
     where: { eventId, status: "pending", enabled: true },
   });
@@ -59,6 +60,9 @@ async function recalculateAnnouncementSchedules(eventId, startAt) {
       scheduledFor = new Date(new Date(startAt).getTime() - ann.offsetMinutes * 60000);
     } else if (ann.triggerType === "event_start") {
       scheduledFor = new Date(startAt);
+    } else if (ann.triggerType === "after_event" && event?.endAt) {
+      const offset = (ann.offsetMinutes || 0) * 60000;
+      scheduledFor = new Date(new Date(event.endAt).getTime() + offset);
     }
 
     if (scheduledFor) {
@@ -92,18 +96,25 @@ export async function logEventAudit(eventId, actorId, actorName, action, details
  */
 export async function getEvents({
   status = null,
+  statuses = null,
   eventType = null,
   visibility = null,
   search = null,
   templateId = null,
   includeDeleted = false,
+  hidePast = false,
   page = 1,
   limit = 50,
 } = {}) {
   const where = {};
 
   if (!includeDeleted) where.deletedAt = null;
-  if (status) where.status = status;
+  if (statuses && statuses.length > 0) {
+    where.status = { in: statuses };
+  } else if (status) {
+    where.status = status;
+  }
+  if (hidePast) where.endAt = { gte: new Date() };
   if (eventType) where.eventType = eventType;
   if (visibility) where.visibility = visibility;
   if (templateId) where.templateId = templateId;
@@ -271,6 +282,10 @@ export async function createEvent(data, actorId, actorName) {
     { actionType: "discord_message", trigger: "on_publish", enabled: true, config: {} },
     { actionType: "discord_guild_event", trigger: "on_publish", enabled: true, config: {} },
     { actionType: "website_page", trigger: "on_publish", enabled: true, config: {} },
+    { actionType: "discord_message", trigger: "on_update", enabled: true, config: {} },
+    { actionType: "discord_guild_event", trigger: "on_update", enabled: true, config: {} },
+    { actionType: "discord_message", trigger: "on_cancel", enabled: true, config: {} },
+    { actionType: "discord_guild_event", trigger: "on_cancel", enabled: true, config: {} },
   ];
   await prisma.event_actions.createMany({
     data: defaultActions.map((a) => ({ ...a, eventId: event.eventId })),
@@ -639,6 +654,9 @@ async function scheduleAnnouncementsForEvent(eventId, startAt, actorId) {
       scheduledFor = new Date(new Date(startAt).getTime() - ann.offsetMinutes * 60000);
     } else if (ann.triggerType === "event_start") {
       scheduledFor = new Date(startAt);
+    } else if (ann.triggerType === "after_event" && event?.endAt) {
+      const offset = (ann.offsetMinutes || 0) * 60000;
+      scheduledFor = new Date(new Date(event.endAt).getTime() + offset);
     }
 
     if (!scheduledFor) continue;
@@ -663,6 +681,8 @@ async function scheduleAnnouncementsForEvent(eventId, startAt, actorId) {
           description = `**${event.title}** starts in ${ann.offsetMinutes} minutes! (<t:${ts}:R>)`;
         } else if (ann.triggerType === "event_start") {
           description = `**${event.title}** is starting now!`;
+        } else if (ann.triggerType === "after_event") {
+          description = `**${event.title}** has ended. Thanks for participating!`;
         } else {
           description = `Reminder: **${event.title}** — <t:${ts}:F>`;
         }
@@ -712,6 +732,10 @@ async function scheduleAnnouncementsForEvent(eventId, startAt, actorId) {
       } else if (ann.triggerType === "event_start") {
         annStartDate = new Date(startAt);
         annEndDate = event?.endAt ? new Date(event.endAt) : null;
+      } else if (ann.triggerType === "after_event" && event?.endAt) {
+        const offset = (ann.offsetMinutes || 0) * 60000;
+        annStartDate = new Date(new Date(event.endAt).getTime() + offset);
+        annEndDate = null;
       }
 
       await prisma.announcements.create({

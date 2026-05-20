@@ -1,23 +1,10 @@
-<%- include("../../modules/header.ejs", {
-  pageTitle: pageTitle,
-  pageDescription: "Review rank metadata and manage player permissions."
-}) %>
+<%- include("../../admin/_head.ejs", { pageTitle }) %>
+<%- include("../../admin/_topbar.ejs") %>
+<%- include("../../admin/_sidebar.ejs") %>
 
-<%- include("../../modules/navigationBar.ejs") %>
-
-<%- include("../../partials/miniHeader.ejs", {
-  headerTitle: "Ranks",
-  backgroundImage: globalImage
-}) %>
-
-<%- include("../../modules/dashboard/dashboard-header.ejs") %>
-
-<div class="container my-4">
-    <div class="row g-4">
-        <div class="col-lg-3">
-            <%- include("../../modules/dashboard/dashboard-sidebar.ejs") %>
-        </div>
-        <main class="col-lg-9">
+<div id="wpcontent">
+  <div id="wpbody-content">
+    <div class="wrap">
             <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
                 <h1 class="h2">Rank Management</h1>
             </div>
@@ -126,15 +113,20 @@
                       <form id="rankUserLookupForm" class="row g-3 align-items-end">
                         <div class="col-md-6">
                           <label for="rankLookupUsername" class="form-label">Minecraft username</label>
-                          <input
-                            type="text"
-                            class="form-control"
-                            id="rankLookupUsername"
-                            name="username"
-                            placeholder="Enter a username"
-                            autocomplete="off"
-                            required
-                          >
+                          <div class="position-relative">
+                            <input
+                              type="text"
+                              class="form-control"
+                              id="rankLookupUsername"
+                              name="username"
+                              placeholder="Start typing a username…"
+                              autocomplete="off"
+                              required
+                            >
+                            <div id="rankLookupSuggestions"
+                              class="list-group position-absolute w-100 shadow-sm"
+                              style="z-index:1000;display:none;max-height:220px;overflow-y:auto;top:100%;"></div>
+                          </div>
                         </div>
                         <div class="col-md-auto">
                           <button type="submit" class="btn btn-primary">Load profile</button>
@@ -231,9 +223,7 @@
                   </div>
                 </div>
               </div>
-        </main>
-    </div>
-</div>
+
 
 <div
   class="modal fade"
@@ -764,6 +754,64 @@
       }
     }
 
+    // Username autocomplete
+    (function () {
+      const searchEl = document.getElementById('rankLookupUsername');
+      const suggestEl = document.getElementById('rankLookupSuggestions');
+      let searchTimer = null;
+
+      function clearSuggestions() {
+        suggestEl.innerHTML = '';
+        suggestEl.style.display = 'none';
+      }
+
+      function renderSuggestions(results) {
+        clearSuggestions();
+        if (!results.length) return;
+        results.forEach(user => {
+          const btn = document.createElement('button');
+          btn.type = 'button';
+          btn.className = 'list-group-item list-group-item-action d-flex align-items-center gap-2 py-1 px-2';
+          if (user.avatarUrl) {
+            const img = document.createElement('img');
+            img.src = user.avatarUrl;
+            img.alt = '';
+            img.width = 28; img.height = 28;
+            img.className = 'rounded';
+            btn.appendChild(img);
+          }
+          const span = document.createElement('span');
+          span.textContent = user.username;
+          span.className = 'flex-fill text-start small';
+          btn.appendChild(span);
+          btn.addEventListener('click', () => {
+            searchEl.value = user.username;
+            clearSuggestions();
+            loadUser(user.username);
+          });
+          suggestEl.appendChild(btn);
+        });
+        suggestEl.style.display = 'block';
+      }
+
+      searchEl.addEventListener('input', e => {
+        const q = e.target.value.trim();
+        clearTimeout(searchTimer);
+        if (q.length < 2) { clearSuggestions(); return; }
+        searchTimer = setTimeout(async () => {
+          try {
+            const r = await fetch(`/dashboard/ranks/user-search?q=${encodeURIComponent(q)}`);
+            const data = await r.json();
+            renderSuggestions(data.results || []);
+          } catch { clearSuggestions(); }
+        }, 200);
+      });
+
+      document.addEventListener('click', e => {
+        if (!searchEl.contains(e.target) && !suggestEl.contains(e.target)) clearSuggestions();
+      });
+    })();
+
     if (lookupForm) {
       lookupForm.addEventListener('submit', (event) => {
         event.preventDefault();
@@ -790,7 +838,10 @@
   })();
 </script>
 
-<%- include("../../modules/footer.ejs") %>
+    </div><!-- /.wrap -->
+  </div><!-- /#wpbody-content -->
+  <%- include("../../admin/_footer.ejs") %>
+</div><!-- /#wpcontent -->
 
 <style>
   @media (max-width: 768px) {

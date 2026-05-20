@@ -4,24 +4,48 @@
  */
 
 import { client } from "../controllers/discordController.js";
-import { EmbedBuilder, GuildScheduledEventEntityType, GuildScheduledEventPrivacyLevel } from "discord.js";
+import { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, GuildScheduledEventEntityType, GuildScheduledEventPrivacyLevel } from "discord.js";
 import { updateSyncStatus, logEventAudit } from "./eventService.js";
 
-/** Strip HTML tags from a string for plain-text Discord output. */
-function stripHtml(html) {
+/** Convert HTML from Summernote to Discord-compatible markdown. */
+function htmlToMarkdown(html) {
   if (!html) return "";
   return html
+    // Block-level: headings → bold line
+    .replace(/<h[1-3][^>]*>(.*?)<\/h[1-3]>/gi, (_, inner) => `**${inner.trim()}**\n`)
+    .replace(/<h[4-6][^>]*>(.*?)<\/h[4-6]>/gi, (_, inner) => `${inner.trim()}\n`)
+    // Inline formatting
+    .replace(/<strong[^>]*>(.*?)<\/strong>/gi, (_, inner) => `**${inner}**`)
+    .replace(/<b[^>]*>(.*?)<\/b>/gi, (_, inner) => `**${inner}**`)
+    .replace(/<em[^>]*>(.*?)<\/em>/gi, (_, inner) => `*${inner}*`)
+    .replace(/<i[^>]*>(.*?)<\/i>/gi, (_, inner) => `*${inner}*`)
+    .replace(/<u[^>]*>(.*?)<\/u>/gi, (_, inner) => `__${inner}__`)
+    .replace(/<s[^>]*>(.*?)<\/s>/gi, (_, inner) => `~~${inner}~~`)
+    .replace(/<del[^>]*>(.*?)<\/del>/gi, (_, inner) => `~~${inner}~~`)
+    .replace(/<code[^>]*>(.*?)<\/code>/gi, (_, inner) => `\`${inner}\``)
+    // Links
+    .replace(/<a[^>]+href="([^"]*)"[^>]*>(.*?)<\/a>/gi, (_, href, text) => {
+      const label = text.trim();
+      return label ? `[${label}](${href})` : href;
+    })
+    // Lists
+    .replace(/<li[^>]*>(.*?)<\/li>/gi, (_, inner) => `• ${inner.trim()}\n`)
+    .replace(/<\/[uo]l>/gi, "\n")
+    .replace(/<[uo]l[^>]*>/gi, "")
+    // Line breaks and paragraphs
     .replace(/<br\s*\/?>/gi, "\n")
     .replace(/<\/p>/gi, "\n\n")
-    .replace(/<\/li>/gi, "\n")
-    .replace(/<li>/gi, "• ")
+    .replace(/<\/div>/gi, "\n")
+    // Strip all remaining tags
     .replace(/<[^>]+>/g, "")
+    // Decode HTML entities
     .replace(/&amp;/g, "&")
     .replace(/&lt;/g, "<")
     .replace(/&gt;/g, ">")
     .replace(/&quot;/g, '"')
     .replace(/&#39;/g, "'")
     .replace(/&nbsp;/g, " ")
+    // Collapse excess blank lines
     .replace(/\n{3,}/g, "\n\n")
     .trim();
 }
@@ -42,7 +66,7 @@ function buildEventEmbed(event) {
     );
 
   if (event.description) {
-    embed.setDescription(stripHtml(event.description).slice(0, 2048));
+    embed.setDescription(htmlToMarkdown(event.description).slice(0, 2048));
   }
 
   if (event.locationLabel) {
@@ -54,25 +78,36 @@ function buildEventEmbed(event) {
     embed.addFields({ name: "Server", value: serverValue, inline: true });
   }
 
-  if (event.bannerUrl) {
-    embed.setImage(event.bannerUrl);
-  }
+  embed.setImage(event.bannerUrl || null);
+  embed.setThumbnail(event.logoUrl || null);
 
-  if (event.logoUrl) {
-    embed.setThumbnail(event.logoUrl);
-  }
-
-  embed.setFooter({ text: `Event ID: ${event.eventId}` });
+  const hosts = event.hosts || [];
+  const hostNames = hosts.map(h => h.displayName || "Unknown").filter(Boolean);
+  const footerParts = [];
+  if (hostNames.length > 0) footerParts.push(`Hosted by ${hostNames.join(", ")}`);
+  footerParts.push(`Event ID: ${event.eventId}`);
+  embed.setFooter({ text: footerParts.join(" • ") });
   embed.setTimestamp();
 
   return embed;
+}
+
+function buildEventButton(event, siteBaseUrl) {
+  const normalizedUrl = siteBaseUrl.endsWith("/") ? siteBaseUrl.slice(0, -1) : siteBaseUrl;
+  const eventUrl = `${normalizedUrl}/events/${event.slug}`;
+  return new ActionRowBuilder().addComponents(
+    new ButtonBuilder()
+      .setStyle(ButtonStyle.Link)
+      .setLabel("View Event Online")
+      .setURL(eventUrl)
+  );
 }
 
 /**
  * Post a Discord announcement message on publish.
  * Returns the message ID.
  */
-export async function postEventDiscordMessage(event, channelId) {
+export async function postEventDiscordMessage(event, channelId, siteBaseUrl) {
   if (!client?.isReady?.()) throw new Error("Discord client not ready");
   if (!channelId) throw new Error("No channel ID provided");
 
@@ -82,7 +117,11 @@ export async function postEventDiscordMessage(event, channelId) {
   }
 
   const embed = buildEventEmbed(event);
-  const msg = await channel.send({ embeds: [embed] });
+  const messagePayload = { embeds: [embed] };
+  if (siteBaseUrl && event.slug) {
+    messagePayload.components = [buildEventButton(event, siteBaseUrl)];
+  }
+  const msg = await channel.send(messagePayload);
 
   await updateSyncStatus(event.eventId, "discord", "ok", null, {
     discordMessageId: msg.id,
@@ -103,7 +142,7 @@ export async function postEventDiscordMessage(event, channelId) {
 /**
  * Edit an existing Discord event announcement message.
  */
-export async function editEventDiscordMessage(event, channelId, messageId) {
+export async function editEventDiscordMessage(event, channelId, messageId, siteBaseUrl) {
   if (!client?.isReady?.()) throw new Error("Discord client not ready");
   if (!channelId || !messageId) throw new Error("channelId and messageId required");
 
@@ -114,7 +153,11 @@ export async function editEventDiscordMessage(event, channelId, messageId) {
 
   const msg = await channel.messages.fetch(messageId);
   const embed = buildEventEmbed(event);
-  await msg.edit({ embeds: [embed] });
+  const editPayload = { embeds: [embed] };
+  if (siteBaseUrl && event.slug) {
+    editPayload.components = [buildEventButton(event, siteBaseUrl)];
+  }
+  await msg.edit(editPayload);
 
   await logEventAudit(
     event.eventId,
@@ -145,7 +188,7 @@ export async function createGuildScheduledEvent(event, guildId) {
     scheduledStartTime: new Date(event.startAt),
     scheduledEndTime: new Date(event.endAt),
     privacyLevel: GuildScheduledEventPrivacyLevel.GuildOnly,
-    description: event.description ? stripHtml(event.description).slice(0, 1000) : undefined,
+    description: event.description ? htmlToMarkdown(event.description).slice(0, 1000) : undefined,
     ...(isVoiceChannel
       ? {
           entityType: GuildScheduledEventEntityType.Voice,
@@ -199,11 +242,11 @@ export async function editGuildScheduledEvent(event, guildId, guildEventId) {
 
   const isVoiceChannel = event.locationType === "discord" && event.locationDiscordChannelId;
 
-  await guildEvent.edit({
+  const editData = {
     name: event.title,
     scheduledStartTime: new Date(event.startAt),
     scheduledEndTime: new Date(event.endAt),
-    description: event.description ? stripHtml(event.description).slice(0, 1000) : undefined,
+    description: event.description ? htmlToMarkdown(event.description).slice(0, 1000) : undefined,
     ...(isVoiceChannel
       ? {
           entityType: GuildScheduledEventEntityType.Voice,
@@ -215,7 +258,16 @@ export async function editGuildScheduledEvent(event, guildId, guildEventId) {
             location: event.locationLabel || event.serverIp || "Online",
           },
         }),
-  });
+  };
+
+  if (event.bannerUrl) {
+    editData.image = event.bannerUrl;
+  } else {
+    // Explicitly clear the image if bannerUrl was removed
+    editData.image = null;
+  }
+
+  await guildEvent.edit(editData);
 
   await logEventAudit(
     event.eventId,
@@ -226,6 +278,41 @@ export async function editGuildScheduledEvent(event, guildId, guildEventId) {
   );
 
   return guildEventId;
+}
+
+/**
+ * Post a cancellation notice to the event's Discord channel.
+ */
+export async function postCancellationDiscordMessage(event, channelId) {
+  if (!client?.isReady?.()) throw new Error("Discord client not ready");
+  if (!channelId) throw new Error("No channel ID provided");
+
+  const channel = await client.channels.fetch(channelId);
+  if (!channel?.isTextBased?.()) throw new Error(`Channel ${channelId} is not text-based`);
+
+  const startTimestamp = Math.floor(new Date(event.startAt).getTime() / 1000);
+
+  const embed = new EmbedBuilder()
+    .setTitle(`❌ Event Cancelled: ${event.title}`)
+    .setDescription(
+      `This event has been cancelled and will no longer take place.\n\n` +
+      `Originally scheduled for <t:${startTimestamp}:F>.`
+    )
+    .setColor(0xe74c3c)
+    .setFooter({ text: `Event ID: ${event.eventId}` })
+    .setTimestamp();
+
+  if (event.bannerUrl) embed.setImage(event.bannerUrl);
+
+  await channel.send({ embeds: [embed] });
+
+  await logEventAudit(
+    event.eventId,
+    null,
+    "System",
+    "discord_cancellation_posted",
+    `Cancellation notice posted to channel ${channelId}`
+  );
 }
 
 /**
@@ -268,12 +355,17 @@ export async function runDiscordActionsForEvent(event, trigger, discordConfig = 
     const channelId = cfg.channelId || discordConfig.channelId;
     const guildId = cfg.guildId || discordConfig.guildId;
 
+    const siteBaseUrl = discordConfig.siteBaseUrl || "";
+
     try {
       if (action.actionType === "discord_message") {
         if (trigger === "on_publish") {
-          await postEventDiscordMessage(event, channelId);
+          await postEventDiscordMessage(event, channelId, siteBaseUrl);
         } else if (trigger === "on_update" && event.discordMessageId && event.discordChannelId) {
-          await editEventDiscordMessage(event, event.discordChannelId, event.discordMessageId);
+          await editEventDiscordMessage(event, event.discordChannelId, event.discordMessageId, siteBaseUrl);
+        } else if (trigger === "on_cancel") {
+          const targetChannel = event.discordChannelId || channelId;
+          if (targetChannel) await postCancellationDiscordMessage(event, targetChannel);
         }
       }
 

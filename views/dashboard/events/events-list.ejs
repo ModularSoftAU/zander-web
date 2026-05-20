@@ -1,23 +1,10 @@
-<%- include("../../modules/header.ejs", {
-    pageTitle: pageTitle,
-    pageDescription: "Events List"
-}) %>
+<%- include("../../admin/_head.ejs", { pageTitle }) %>
+<%- include("../../admin/_topbar.ejs") %>
+<%- include("../../admin/_sidebar.ejs") %>
 
-<%- include("../../modules/navigationBar.ejs") %>
-
-<%- include("../../partials/miniHeader.ejs", {
-  headerTitle: "Events",
-  backgroundImage: globalImage
-}) %>
-
-<%- include("../../modules/dashboard/dashboard-header.ejs") %>
-
-<div class="container my-4">
-    <div class="row g-4">
-        <div class="col-lg-3">
-            <%- include("../../modules/dashboard/dashboard-sidebar.ejs") %>
-        </div>
-        <main class="col-lg-9">
+<div id="wpcontent">
+  <div id="wpbody-content">
+    <div class="wrap">
             <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
                 <h1 class="h2">Events</h1>
                 <div class="btn-toolbar mb-2 mb-md-0 gap-2">
@@ -27,36 +14,39 @@
                     <a href="/dashboard/events/review" class="btn btn-sm btn-outline-warning">
                         <i class="fas fa-clock fa-fw me-1"></i>Review Queue
                     </a>
+                    <% if (hasEditPermission) { %>
                     <a href="/dashboard/events/create" class="btn btn-sm btn-primary">
                         <i class="fas fa-plus fa-fw me-1"></i>New Event
                     </a>
+                    <% } %>
                     <%- include("../../partials/documentationLink.ejs", {
                         doclink: "https://modularsoft.org/docs/products/zander/features/events/"
                     }) %>
                 </div>
             </div>
-
-            <% if (req.cookies.alertType) { %>
-                <%- include("../../partials/alert.ejs", {
-                  alertType: req.cookies.alertType,
-                  content: req.cookies.alertContent
-                }) %>
-            <% } %>
+      <%- include("../../admin/_notices.ejs") %>
 
             <!-- Filters -->
-            <form method="GET" action="/dashboard/events/list" class="row g-2 mb-3">
+            <form method="GET" action="/dashboard/events/list" class="row g-2 mb-3 align-items-center">
                 <div class="col-sm-4">
                     <select name="status" class="form-select form-select-sm" onchange="this.form.submit()">
-                        <option value="">All Statuses</option>
+                        <option value="">Active (Draft, Approved, Published)</option>
                         <% ['draft','pending_review','approved','published','rejected','cancelled','archived'].forEach(s => { %>
                             <option value="<%= s %>" <%= statusFilter === s ? 'selected' : '' %>><%= s.replace('_',' ').replace(/\b\w/g,c=>c.toUpperCase()) %></option>
                         <% }) %>
                     </select>
                 </div>
-                <div class="col-sm-6">
+                <div class="col-sm-5">
                     <div class="input-group input-group-sm">
                         <input type="text" name="search" class="form-control" placeholder="Search events…" value="<%= search %>">
                         <button class="btn btn-outline-secondary" type="submit"><i class="fas fa-search"></i></button>
+                    </div>
+                </div>
+                <div class="col-sm-3">
+                    <div class="form-check form-switch mb-0">
+                        <input class="form-check-input" type="checkbox" role="switch" id="showPastToggle"
+                            name="showPast" value="1" <%= showPast ? 'checked' : '' %> onchange="this.form.submit()">
+                        <label class="form-check-label small" for="showPastToggle">Show past events</label>
                     </div>
                 </div>
             </form>
@@ -102,17 +92,27 @@
                                         <small class="js-datetime" data-iso="<%= ev.startAt ? new Date(ev.startAt).toISOString() : '' %>" data-fallback="—"></small>
                                     </td>
                                     <td data-label="Actions">
+                                        <%
+                                            var canEditThis = hasEditPermission || hasReviewPermission;
+                                        %>
                                         <div class="d-flex flex-wrap gap-1">
                                             <a href="/dashboard/events/view?eventId=<%= ev.eventId %>" class="btn btn-xs btn-outline-secondary">View</a>
-                                            <% if (['draft','rejected'].includes(ev.status)) { %>
+                                            <% if (canEditThis && ['draft','rejected'].includes(ev.status)) { %>
+                                                <a href="/dashboard/events/edit?eventId=<%= ev.eventId %>" class="btn btn-xs btn-warning">Edit</a>
+                                            <% } %>
+                                            <% if (hasReviewPermission && ['pending_review','approved'].includes(ev.status)) { %>
                                                 <a href="/dashboard/events/edit?eventId=<%= ev.eventId %>" class="btn btn-xs btn-warning">Edit</a>
                                             <% } %>
                                             <% if (ev.status === 'published') { %>
-                                                <a href="/dashboard/events/edit?eventId=<%= ev.eventId %>" class="btn btn-xs btn-warning">Edit Live</a>
+                                                <% if (canEditThis) { %>
+                                                    <a href="/dashboard/events/edit?eventId=<%= ev.eventId %>" class="btn btn-xs btn-warning">Edit Live</a>
+                                                <% } %>
                                                 <a href="/events/<%= ev.slug %>" target="_blank" class="btn btn-xs btn-outline-success">Public</a>
                                             <% } %>
                                             <button type="button" class="btn btn-xs btn-outline-secondary btn-duplicate-event" data-event-id="<%= ev.eventId %>" data-event-title="<%= ev.title %>">Duplicate</button>
-                                            <button type="button" class="btn btn-xs btn-outline-danger btn-delete-event" data-event-id="<%= ev.eventId %>" data-event-title="<%= ev.title %>">Delete</button>
+                                            <% if (canEditThis) { %>
+                                                <button type="button" class="btn btn-xs btn-outline-danger btn-delete-event" data-event-id="<%= ev.eventId %>" data-event-title="<%= ev.title %>">Delete</button>
+                                            <% } %>
                                         </div>
                                     </td>
                                 </tr>
@@ -123,11 +123,10 @@
                 </div>
                 <small class="text-muted">Showing <%= apiData.events ? apiData.events.length : 0 %> of <%= apiData.total || 0 %> events</small>
             <% } %>
-        </main>
-    </div>
-</div>
-
-<%- include("../../modules/footer.ejs") %>
+    </div><!-- /.wrap -->
+  </div><!-- /#wpbody-content -->
+  <%- include("../../admin/_footer.ejs") %>
+</div><!-- /#wpcontent -->
 
 <style>
 .btn-xs { padding: 0.15rem 0.4rem; font-size: 0.75rem; }

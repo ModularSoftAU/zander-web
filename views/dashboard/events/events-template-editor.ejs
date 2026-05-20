@@ -1,45 +1,17 @@
-<%- include("../../modules/header.ejs", {
-    pageTitle: pageTitle,
-    pageDescription: mode === 'create' ? 'Create Template' : 'Edit Template'
-}) %>
+<%- include("../../admin/_head.ejs", { pageTitle }) %>
+<%- include("../../admin/_topbar.ejs") %>
+<%- include("../../admin/_sidebar.ejs") %>
 
-<%- include("../../modules/navigationBar.ejs") %>
-
-<%- include("../../partials/miniHeader.ejs", {
-  headerTitle: mode === 'create' ? 'Create Template' : 'Edit Template',
-  backgroundImage: globalImage
-}) %>
-
-<%- include("../../modules/dashboard/dashboard-header.ejs") %>
-
-<%
-const tmpl = templateData || {};
-const recDays = (() => {
-    try { return Array.isArray(tmpl.recurrenceDays) ? tmpl.recurrenceDays : JSON.parse(tmpl.recurrenceDays || '[]'); }
-    catch(e) { return []; }
-})();
-const dayNames = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
-%>
-
-<div class="container my-4">
-    <div class="row g-4">
-        <div class="col-lg-3">
-            <%- include("../../modules/dashboard/dashboard-sidebar.ejs") %>
-        </div>
-        <main class="col-lg-9">
+<div id="wpcontent">
+  <div id="wpbody-content">
+    <div class="wrap">
             <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
                 <h1 class="h2"><%= mode === 'create' ? 'Create Template' : 'Edit Template' %></h1>
                 <a href="/dashboard/events/templates" class="btn btn-sm btn-outline-secondary">
                     <i class="fas fa-arrow-left fa-fw me-1"></i>Back
                 </a>
             </div>
-
-            <% if (req.cookies.alertType) { %>
-                <%- include("../../partials/alert.ejs", {
-                  alertType: req.cookies.alertType,
-                  content: req.cookies.alertContent
-                }) %>
-            <% } %>
+      <%- include("../../admin/_notices.ejs") %>
 
             <form id="templateForm">
                 <% if (mode === 'edit') { %>
@@ -56,7 +28,11 @@ const dayNames = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','S
                         </div>
                         <div class="mb-3">
                             <label class="form-label fw-semibold">Default Description</label>
-                            <textarea class="form-control" name="description" id="tmplDescriptionEditor" rows="4"><%= tmpl.description || '' %></textarea>
+                            <%- include("../../partials/summerNoteEditor.ejs", {
+                                editorElementName: "tmplDescriptionEditor",
+                                editorPOSTElementName: "description",
+                                editorElementText: tmpl.description || ''
+                            }) %>
                         </div>
                         <div class="row g-3">
                             <div class="col-md-4">
@@ -86,44 +62,55 @@ const dayNames = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','S
                     <div class="card-header">Recurrence</div>
                     <div class="card-body">
                         <div class="mb-3">
-                            <label class="form-label fw-semibold">Recurrence Type</label>
+                            <label class="form-label fw-semibold">Template Type</label>
                             <select class="form-select" name="recurrenceType" id="recurrenceType">
+                                <option value="once" <%= tmpl.recurrenceType === 'once' ? 'selected' : '' %>>Once-off / Master Template</option>
                                 <option value="weekly" <%= (tmpl.recurrenceType || 'weekly') === 'weekly' ? 'selected' : '' %>>Weekly (specific days)</option>
                                 <option value="daily" <%= tmpl.recurrenceType === 'daily' ? 'selected' : '' %>>Daily</option>
                                 <option value="custom" <%= tmpl.recurrenceType === 'custom' ? 'selected' : '' %>>Every N Days</option>
                             </select>
                         </div>
 
-                        <div id="weeklyOptions" class="mb-3 <%= (tmpl.recurrenceType || 'weekly') !== 'weekly' ? 'd-none' : '' %>">
-                            <label class="form-label fw-semibold">Days of Week</label>
-                            <div class="d-flex flex-wrap gap-2">
-                                <% dayNames.forEach((day, i) => { %>
-                                <div class="form-check form-check-inline">
-                                    <input class="form-check-input recurrence-day" type="checkbox" value="<%= i %>" id="day_<%= i %>" <%= recDays.includes(i) ? 'checked' : '' %>>
-                                    <label class="form-check-label" for="day_<%= i %>"><%= day %></label>
-                                </div>
-                                <% }) %>
-                            </div>
-                            <input type="hidden" name="recurrenceDaysJson" id="recurrenceDaysJson">
+                        <div id="onceInfo" class="alert alert-info mb-3 <%= tmpl.recurrenceType !== 'once' ? 'd-none' : '' %>">
+                            <i class="fas fa-info-circle me-2"></i>
+                            A <strong>once-off / master template</strong> stores default settings you can manually apply to create individual events. No drafts are auto-generated — click <strong>Generate Draft</strong> from the templates list when you need it.
                         </div>
 
-                        <div id="customOptions" class="mb-3 <%= tmpl.recurrenceType !== 'custom' ? 'd-none' : '' %>">
-                            <label class="form-label fw-semibold">Every N Days</label>
-                            <input type="number" class="form-control" name="recurrenceEveryDays" min="1" value="<%= tmpl.recurrenceEveryDays || '' %>" placeholder="7">
-                        </div>
-
-                        <div class="row g-3">
-                            <div class="col-md-4">
-                                <label class="form-label fw-semibold">Draft Lead Time (days)</label>
-                                <input type="number" class="form-control" name="draftAdvanceDays" min="0" value="<%= tmpl.draftAdvanceDays || 7 %>">
-                                <small class="text-muted">Generate the draft this many days before the event.</small>
+                        <div id="recurringOptions" class="<%= tmpl.recurrenceType === 'once' ? 'd-none' : '' %>">
+                            <div id="weeklyOptions" class="mb-3 <%= (tmpl.recurrenceType || 'weekly') !== 'weekly' ? 'd-none' : '' %>">
+                                <label class="form-label fw-semibold">Days of Week</label>
+                                <div class="d-flex flex-wrap gap-2">
+                                    <% dayNames.forEach((day, i) => { %>
+                                    <div class="form-check form-check-inline">
+                                        <input class="form-check-input recurrence-day" type="checkbox" value="<%= i %>" id="day_<%= i %>" <%= recDays.includes(i) ? 'checked' : '' %>>
+                                        <label class="form-check-label" for="day_<%= i %>"><%= day %></label>
+                                    </div>
+                                    <% }) %>
+                                </div>
+                                <input type="hidden" name="recurrenceDaysJson" id="recurrenceDaysJson">
                             </div>
-                            <div class="col-md-4 d-flex align-items-end">
-                                <div class="form-check form-switch mb-2">
-                                    <input class="form-check-input" type="checkbox" name="autoGenerateDrafts" id="autoGenCheck" value="true" <%= (tmpl.autoGenerateDrafts !== false) ? 'checked' : '' %>>
-                                    <label class="form-check-label" for="autoGenCheck">Auto-generate drafts</label>
+
+                            <div id="customOptions" class="mb-3 <%= tmpl.recurrenceType !== 'custom' ? 'd-none' : '' %>">
+                                <label class="form-label fw-semibold">Every N Days</label>
+                                <input type="number" class="form-control" name="recurrenceEveryDays" min="1" value="<%= tmpl.recurrenceEveryDays || '' %>" placeholder="7">
+                            </div>
+
+                            <div class="row g-3">
+                                <div class="col-md-4">
+                                    <label class="form-label fw-semibold">Draft Lead Time (days)</label>
+                                    <input type="number" class="form-control" name="draftAdvanceDays" min="0" value="<%= tmpl.draftAdvanceDays || 7 %>">
+                                    <small class="text-muted">Generate the draft this many days before the event.</small>
+                                </div>
+                                <div class="col-md-4 d-flex align-items-end">
+                                    <div class="form-check form-switch mb-2">
+                                        <input class="form-check-input" type="checkbox" name="autoGenerateDrafts" id="autoGenCheck" value="true" <%= (tmpl.autoGenerateDrafts !== false) ? 'checked' : '' %>>
+                                        <label class="form-check-label" for="autoGenCheck">Auto-generate drafts</label>
+                                    </div>
                                 </div>
                             </div>
+                        </div>
+
+                        <div class="row g-3 mt-0">
                             <div class="col-md-4 d-flex align-items-end">
                                 <div class="form-check form-switch mb-2">
                                     <input class="form-check-input" type="checkbox" name="isActive" id="isActiveCheck" value="true" <%= (tmpl.isActive !== false) ? 'checked' : '' %>>
@@ -503,11 +490,10 @@ const dayNames = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','S
                     </div>
                 </div>
             </template>
-        </main>
-    </div>
-</div>
-
-<%- include("../../modules/footer.ejs") %>
+    </div><!-- /.wrap -->
+  </div><!-- /#wpbody-content -->
+  <%- include("../../admin/_footer.ejs") %>
+</div><!-- /#wpcontent -->
 
 <style>.btn-xs { padding: 0.15rem 0.5rem; font-size: 0.75rem; }</style>
 
@@ -561,9 +547,14 @@ function localTimeToUtc(localTimeStr) {
 const recTypeSelect = document.getElementById('recurrenceType');
 const weeklyOpts = document.getElementById('weeklyOptions');
 const customOpts = document.getElementById('customOptions');
+const recurringOpts = document.getElementById('recurringOptions');
+const onceInfo = document.getElementById('onceInfo');
 
 function toggleRecurrenceOptions() {
     const val = recTypeSelect.value;
+    const isOnce = val === 'once';
+    recurringOpts.classList.toggle('d-none', isOnce);
+    onceInfo.classList.toggle('d-none', !isOnce);
     weeklyOpts.classList.toggle('d-none', val !== 'weekly');
     customOpts.classList.toggle('d-none', val !== 'custom');
 }
@@ -736,10 +727,8 @@ document.getElementById('templateForm').addEventListener('submit', async (e) => 
     const fd = new FormData(form);
     const body = Object.fromEntries(fd.entries());
 
-    // Sync Summernote description
-    if (typeof $.fn.summernote !== 'undefined') {
-        body.description = $('#tmplDescriptionEditor').summernote('code');
-    }
+    // Description is synced by summerNoteEditor partial before submit
+    body.description = document.getElementById('tmplDescriptionEditor')?.value || '';
 
     // Convert local times back to UTC before submission
     const startLocalEl = document.getElementById('defaultStartTimeLocal');
@@ -750,7 +739,8 @@ document.getElementById('templateForm').addEventListener('submit', async (e) => 
     // Recurrence days
     const days = Array.from(document.querySelectorAll('.recurrence-day:checked')).map(cb => parseInt(cb.value));
     body.recurrenceDays = days;
-    body.autoGenerateDrafts = document.getElementById('autoGenCheck').checked;
+    const isOnce = body.recurrenceType === 'once';
+    body.autoGenerateDrafts = isOnce ? false : document.getElementById('autoGenCheck').checked;
     body.isActive = document.getElementById('isActiveCheck').checked;
     body.recurrenceEveryDays = body.recurrenceEveryDays ? parseInt(body.recurrenceEveryDays) : null;
     body.defaultDurationMins = body.defaultDurationMins ? parseInt(body.defaultDurationMins) : null;
@@ -889,25 +879,4 @@ function collectTemplateAnnouncements() {
 document.getElementById('addTemplateAnnouncementBtn').addEventListener('click', () => addTemplateAnnouncementRow());
 document.querySelectorAll('#templateAnnouncementsContainer .announcement-row').forEach(initAnnouncementRow);
 
-// Summernote description editor
-$(document).ready(function () {
-    $('#tmplDescriptionEditor').summernote({
-        height: 200,
-        toolbar: [
-            ['style', ['style']],
-            ['font', ['bold', 'italic', 'underline', 'strikethrough']],
-            ['para', ['ul', 'ol', 'paragraph']],
-            ['insert', ['link']],
-            ['view', ['fullscreen', 'codeview']],
-        ],
-        styleTags: [
-            { title: 'Paragraph', tag: 'p', className: '', value: 'p' },
-            { title: 'Heading 1', tag: 'h1', className: '', value: 'h1' },
-            { title: 'Heading 2', tag: 'h2', className: '', value: 'h2' },
-            { title: 'Heading 3', tag: 'h3', className: '', value: 'h3' },
-            { title: 'Heading 4', tag: 'h4', className: '', value: 'h4' },
-            { title: 'Quote', tag: 'blockquote', className: 'blockquote', value: 'blockquote' },
-        ],
-    });
-});
 </script>

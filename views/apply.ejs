@@ -22,7 +22,7 @@
               content: apiData.message
             }) %>
           <% } else { %>
-            <% apiData.data.forEach(function (application) { %>              
+            <% apiData.data.forEach(function (application) { %>
               <!-- <%= application.displayName %> Application Item -->
               <div class="col-lg-4 col-md-6 col-sm-6">
                 <div class="service-item mb-4">
@@ -54,6 +54,9 @@
 
                               <% if (application.applicationStatus === '0') { %>
                                 <a href="#" target="_blank"><button type="button" class="btn btn-danger" disabled>Applications Closed</button></a>
+                              <% } else if (application.applicationType === 'linked_form' && application.linkedFormSlug) { %>
+                                <a href="/forms/<%= application.linkedFormSlug %>"><button type="button" class="btn btn-info">Apply</button></a>
+                                <small>Upon clicking Apply, you will be taken to the application form.</small>
                               <% } else { %>
                                 <a href="<%= application.redirectUrl %>" target="_blank"><button type="button" class="btn btn-info">Apply</button></a>
                                 <small>Upon clicking Apply, you will be redirected to an external site.</small>
@@ -74,4 +77,4 @@
 </section>
 
 
-<%- include("modules/footer.ejs") %>  
+<%- include("modules/footer.ejs") %>

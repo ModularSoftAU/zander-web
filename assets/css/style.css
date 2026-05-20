@@ -2413,3 +2413,407 @@ a:focus {
   background: rgba(0, 0, 0, 0.04);
   flex-shrink: 0;
 }
+
+/* ============================================================
+   Forum Polls
+   ============================================================ */
+
+.forums-poll {
+  border: 1px solid rgba(47, 80, 140, 0.2);
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.forums-poll-header {
+  background: rgba(47, 80, 140, 0.05);
+  padding: 0.9rem 1.2rem 0.75rem;
+  border-bottom: 1px solid rgba(47, 80, 140, 0.12);
+}
+
+.forums-poll-header h6 {
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #2f508c;
+  margin: 0;
+}
+
+.forums-poll-question {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #0f172a;
+}
+
+.forums-poll-body {
+  padding: 1.1rem 1.2rem;
+}
+
+.forums-poll-option {
+  margin-bottom: 0.8rem;
+}
+
+.forums-poll-option:last-child {
+  margin-bottom: 0;
+}
+
+.forums-poll-option-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.92rem;
+  color: #374151;
+}
+
+.forums-poll-option-label.voted {
+  font-weight: 600;
+  color: #1e3a6e;
+}
+
+.forums-poll-bar-track {
+  height: 7px;
+  background: rgba(15, 23, 42, 0.08);
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.forums-poll-bar-fill {
+  height: 100%;
+  background: rgba(47, 80, 140, 0.45);
+  border-radius: 999px;
+  transition: width 0.4s ease;
+  min-width: 0;
+}
+
+.forums-poll-bar-fill.voted {
+  background: #2f508c;
+}
+
+.forums-poll-bar-pct {
+  font-size: 0.78rem;
+  color: rgba(15, 23, 42, 0.5);
+  white-space: nowrap;
+}
+
+.forums-poll-vote-controls {
+  margin-top: 1.1rem;
+  padding-top: 1.1rem;
+  border-top: 1px solid rgba(15, 23, 42, 0.07);
+}
+
+.forums-poll-footer {
+  padding: 0.6rem 1.2rem;
+  background: rgba(15, 23, 42, 0.025);
+  border-top: 1px solid rgba(15, 23, 42, 0.06);
+  font-size: 0.8rem;
+  color: rgba(15, 23, 42, 0.5);
+}
+
+.forums-poll-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.2rem 0.55rem;
+  border-radius: 999px;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.forums-poll-badge.open {
+  background: rgba(34, 197, 94, 0.12);
+  color: #15803d;
+}
+
+.forums-poll-badge.closed {
+  background: rgba(239, 68, 68, 0.1);
+  color: #b91c1c;
+}
+
+/* Poll creator form in newDiscussion */
+.forums-poll-creator {
+  border: 1px solid rgba(47, 80, 140, 0.18);
+  border-radius: 8px;
+  padding: 1.25rem;
+  margin-top: 0.75rem;
+  background: rgba(47, 80, 140, 0.02);
+}
+
+.forums-poll-option-row {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+
+.forums-poll-option-row .form-control {
+  flex: 1;
+}
+
+/* Poll voter chips */
+.forums-poll-voters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+
+.forums-poll-voter-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.15rem 0.5rem 0.15rem 0.25rem;
+  border-radius: 999px;
+  background: rgba(47, 80, 140, 0.07);
+  color: inherit;
+  text-decoration: none;
+  font-size: 0.75rem;
+  transition: background 0.15s;
+}
+
+.forums-poll-voter-chip:hover {
+  background: rgba(47, 80, 140, 0.15);
+  color: inherit;
+}
+
+.forums-poll-voter-avatar {
+  width: 18px;
+  height: 18px;
+  border-radius: 3px;
+  object-fit: cover;
+}
+
+/* Inline option thumbnail (picture polls) */
+.forums-poll-option-thumb {
+  width: 24px;
+  height: 24px;
+  object-fit: cover;
+  border-radius: 4px;
+  vertical-align: middle;
+  margin-right: 0.25rem;
+  flex-shrink: 0;
+}
+
+/* Label group: label text + inline voter avatars side by side */
+.forums-poll-option-label-group {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  min-width: 0;
+  flex: 1;
+}
+
+.forums-poll-voters-inline {
+  display: flex;
+  gap: 0.15rem;
+  flex-shrink: 0;
+}
+
+.forums-poll-voters-inline a {
+  display: block;
+  line-height: 0;
+}
+
+.forums-poll-voters-inline .forums-poll-voter-avatar {
+  width: 20px;
+  height: 20px;
+  border-radius: 3px;
+  object-fit: cover;
+}
+
+/* Poll option creation form — stacked label + image url inputs */
+.forums-poll-option-fields {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  flex: 1;
+}
+
+.forums-poll-option-image-url {
+  font-size: 0.8rem;
+}
+
+/* ── Picture poll results grid ── */
+.forums-poll-pic-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 0.75rem;
+  padding: 0.25rem 0;
+}
+
+.forums-poll-pic-card {
+  border: 2px solid rgba(15, 23, 42, 0.08);
+  border-radius: 10px;
+  overflow: hidden;
+  background: #fff;
+  transition: border-color 0.15s;
+}
+
+.forums-poll-pic-card.voted {
+  border-color: #2f508c;
+}
+
+.forums-poll-pic-img-wrap {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  overflow: hidden;
+  background: rgba(15, 23, 42, 0.04);
+}
+
+.forums-poll-pic-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.forums-poll-pic-enlarge {
+  position: absolute;
+  top: 0.4rem;
+  left: 0.4rem;
+  background: rgba(0, 0, 0, 0.55);
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  width: 1.7rem;
+  height: 1.7rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.15s;
+  z-index: 2;
+}
+.forums-poll-pic-enlarge:hover {
+  background: rgba(0, 0, 0, 0.75);
+}
+.forums-poll-pic-img-wrap:hover .forums-poll-pic-enlarge {
+  opacity: 1;
+}
+
+.forums-poll-pic-img-placeholder {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: rgba(15, 23, 42, 0.25);
+  font-size: 1.75rem;
+}
+
+.forums-poll-pic-check {
+  position: absolute;
+  top: 0.4rem;
+  right: 0.4rem;
+  background: #2f508c;
+  color: #fff;
+  border-radius: 50%;
+  width: 1.6rem;
+  height: 1.6rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.85rem;
+}
+
+.forums-poll-pic-pct-badge {
+  position: absolute;
+  bottom: 0.35rem;
+  right: 0.4rem;
+  background: rgba(0, 0, 0, 0.55);
+  color: #fff;
+  border-radius: 4px;
+  padding: 0.1rem 0.4rem;
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+.forums-poll-pic-card-body {
+  padding: 0.5rem 0.65rem 0.55rem;
+}
+
+.forums-poll-pic-label {
+  font-size: 0.82rem;
+  font-weight: 600;
+  margin-bottom: 0.35rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.forums-poll-pic-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 0.72rem;
+  color: rgba(15, 23, 42, 0.5);
+  margin-top: 0.25rem;
+}
+
+/* ── Picture poll vote grid (clickable cards) ── */
+.forums-poll-pic-vote-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 0.75rem;
+  margin-bottom: 0.5rem;
+}
+
+.forums-poll-pic-vote-card {
+  border: 2px solid rgba(15, 23, 42, 0.1);
+  border-radius: 10px;
+  overflow: hidden;
+  cursor: pointer;
+  transition: border-color 0.15s, box-shadow 0.15s;
+  display: block;
+  background: #fff;
+}
+
+.forums-poll-pic-vote-card:hover {
+  border-color: rgba(47, 80, 140, 0.4);
+  box-shadow: 0 0 0 3px rgba(47, 80, 140, 0.08);
+}
+
+.forums-poll-pic-vote-input {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+  pointer-events: none;
+}
+
+.forums-poll-pic-vote-card:has(.forums-poll-pic-vote-input:checked) {
+  border-color: #2f508c;
+  box-shadow: 0 0 0 3px rgba(47, 80, 140, 0.15);
+}
+
+.forums-poll-pic-vote-check-overlay {
+  position: absolute;
+  top: 0.4rem;
+  right: 0.4rem;
+  background: #2f508c;
+  color: #fff;
+  border-radius: 50%;
+  width: 1.6rem;
+  height: 1.6rem;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.85rem;
+}
+
+.forums-poll-pic-vote-card:has(.forums-poll-pic-vote-input:checked) .forums-poll-pic-vote-check-overlay {
+  display: flex;
+}
+
+.forums-poll-pic-vote-label {
+  padding: 0.45rem 0.65rem 0.5rem;
+  font-size: 0.82rem;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}

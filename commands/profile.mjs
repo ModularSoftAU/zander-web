@@ -74,11 +74,24 @@ export class ProfileCommand extends Command {
       fetchURL.searchParams.set("discordId", resolvedDiscordId);
     }
 
-    const response = await fetch(fetchURL, {
-      headers: { "x-access-token": process.env.apiKey },
-    });
+    let response;
+    let apiData;
+    try {
+      response = await fetch(fetchURL, {
+        headers: { "x-access-token": process.env.apiKey },
+      });
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}`);
+      }
+      apiData = await response.json();
+    } catch (err) {
+      console.error("[profile command] API fetch failed:", err.message);
+      return interaction.reply({
+        content: "Failed to reach the profile API. Please try again later.",
+        ephemeral: true,
+      });
+    }
 
-    const apiData = await response.json();
     if (!apiData.success) {
       const noProfileEmbed = new EmbedBuilder()
         .setTitle(`Could not fetch profile.`)
@@ -87,7 +100,6 @@ export class ProfileCommand extends Command {
 
       interaction.reply({
         embeds: [noProfileEmbed],
-        empheral: false,
       });
     } else {
       let isLinked = apiData.data.profileData.discordId;
@@ -140,10 +152,32 @@ export class ProfileCommand extends Command {
           }
         );
 
-      interaction.reply({
-        embeds: [embed],
-        empheral: false,
-      });
+      // Fetch and display badges
+      try {
+        const badgeRes = await fetch(
+          `${process.env.siteAddress}/api/badges/user/${encodeURIComponent(apiData.data.profileData.username)}`,
+          { headers: { "x-access-token": process.env.apiKey } }
+        );
+        const badgeData = await badgeRes.json();
+
+        if (badgeData.success && badgeData.data && badgeData.data.length > 0) {
+          const MAX_SHOWN = 5;
+          const badges = badgeData.data;
+          const shown = badges.slice(0, MAX_SHOWN);
+          const extra = badges.length - shown.length;
+
+          const badgeLines = shown.map((b) => `🏅 ${b.name}`).join("\n");
+          const badgeValue = extra > 0
+            ? `${badgeLines}\n*+${extra} more — [view profile](${process.env.siteAddress}/profile/${apiData.data.profileData.username})*`
+            : badgeLines;
+
+          embed.addFields({ name: "Badges", value: badgeValue, inline: false });
+        }
+      } catch (_) {
+        // badges unavailable — profile still renders without them
+      }
+
+      interaction.reply({ embeds: [embed] });
     }
   }
 }

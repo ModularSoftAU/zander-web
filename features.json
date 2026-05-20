@@ -1,6 +1,7 @@
 {
   "announcements": true,
   "applications": true,
+  "forms": true,
   "forums": true,
   "discord": {
     "events": {
@@ -28,6 +29,7 @@
     "register": true
   },
 
+  "support": true,
   "staffAuditReport": true,
   "watch": true,
   "vote": true,

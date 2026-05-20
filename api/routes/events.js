@@ -36,11 +36,18 @@ import {
 
 import {
   runDiscordActionsForEvent,
+  editEventDiscordMessage,
+  editGuildScheduledEvent,
+  postCancellationDiscordMessage,
+  cancelGuildScheduledEvent,
+  postEventDiscordMessage,
+  createGuildScheduledEvent,
 } from "../../services/eventDiscordService.js";
 
 import { ChannelType } from "discord.js";
 import { client as discordClient } from "../../controllers/discordController.js";
 import { required, optional } from "../common.js";
+import { hasPermission as checkPermNode } from "../../lib/discord/permissions.mjs";
 import { searchLinkedUsers } from "../../controllers/supportTicketController.js";
 import { createRequire } from "module";
 import path from "path";
@@ -53,6 +60,15 @@ function actorFromReq(req) {
     actorId: user?.userId || null,
     actorName: user?.username || "System",
   };
+}
+
+function isReviewer(req) {
+  return checkPermNode(req.session?.user?.permissions || [], "zander.web.events.review");
+}
+
+function isEditor(req) {
+  const perms = req.session?.user?.permissions || [];
+  return checkPermNode(perms, "zander.web.events.edit") || checkPermNode(perms, "zander.web.events.review");
 }
 
 export default function eventsApiRoute(app, _config, _db, features, _lang) {
@@ -128,6 +144,30 @@ export default function eventsApiRoute(app, _config, _db, features, _lang) {
     }
   });
 
+  /** GET /api/events/discord/text-channels - list text channels for action picker */
+  app.get("/api/events/discord/text-channels", async (req, res) => {
+    if (!features.events) return res.send({ success: false, message: "Events feature disabled" });
+    if (!req.session?.user) return res.status(401).send({ channels: [] });
+    try {
+      const guildId = _config.discord?.guildId ?? process.env.DISCORD_GUILD_ID;
+      if (!guildId || !discordClient?.isReady?.()) return res.send({ channels: [] });
+
+      const guild = await discordClient.guilds.fetch(guildId);
+      const all = await guild.channels.fetch();
+      const channels = [];
+      all.forEach(ch => {
+        if (ch && (ch.type === ChannelType.GuildText || ch.type === ChannelType.GuildAnnouncement)) {
+          channels.push({ id: ch.id, name: ch.name, category: ch.parent?.name || null });
+        }
+      });
+      channels.sort((a, b) => (a.category || '').localeCompare(b.category || '') || a.name.localeCompare(b.name));
+      return res.send({ channels });
+    } catch (err) {
+      console.error("[Events API] discord/text-channels:", err);
+      return res.send({ channels: [] });
+    }
+  });
+
   // ============================================================================
   // Event list / search (dashboard)
   // ============================================================================
@@ -139,9 +179,11 @@ export default function eventsApiRoute(app, _config, _db, features, _lang) {
     try {
       const result = await getEvents({
         status: req.query.status || null,
+        statuses: req.query.statuses ? req.query.statuses.split(",").filter(Boolean) : null,
         eventType: req.query.eventType || null,
         search: req.query.search || null,
         templateId: req.query.templateId ? parseInt(req.query.templateId) : null,
+        hidePast: req.query.hidePast === "true" || req.query.hidePast === "1",
         page: Math.max(parseInt(req.query.page || "1"), 1),
         limit: Math.min(parseInt(req.query.limit || "50"), 200),
       });
@@ -206,6 +248,7 @@ export default function eventsApiRoute(app, _config, _db, features, _lang) {
   /** POST /api/events/create */
   app.post("/api/events/create", async (req, res) => {
     if (!features.events) return res.send({ success: false, message: "Events feature disabled" });
+    if (!isEditor(req)) return res.status(403).send({ success: false, message: "You do not have permission to create events." });
 
     const body = req.body;
     if (!body?.title) return res.send({ success: false, message: "title is required" });
@@ -225,11 +268,20 @@ export default function eventsApiRoute(app, _config, _db, features, _lang) {
   /** POST /api/events/update */
   app.post("/api/events/update", async (req, res) => {
     if (!features.events) return res.send({ success: false, message: "Events feature disabled" });
+    if (!isEditor(req)) return res.status(403).send({ success: false, message: "You do not have permission to edit events." });
 
     const body = req.body;
     if (!body?.eventId) return res.send({ success: false, message: "eventId is required" });
 
     try {
+      const existing = await getEventById(body.eventId);
+      if (!existing) return res.send({ success: false, message: "Event not found" });
+
+      // Approved events may only be modified by reviewers
+      if (existing.status === "approved" && !isReviewer(req)) {
+        return res.status(403).send({ success: false, message: "Only approvers can edit an approved event." });
+      }
+
       const { actorId, actorName } = actorFromReq(req);
       const event = await updateEvent(body.eventId, body, actorId, actorName);
       return res.send({ success: true, data: event, message: "Event updated" });
@@ -242,6 +294,7 @@ export default function eventsApiRoute(app, _config, _db, features, _lang) {
   /** POST /api/events/submit-review */
   app.post("/api/events/submit-review", async (req, res) => {
     if (!features.events) return res.send({ success: false, message: "Events feature disabled" });
+    if (!isEditor(req)) return res.status(403).send({ success: false, message: "You do not have permission to submit events for review." });
 
     const eventId = req.body?.eventId;
     if (!eventId) return res.send({ success: false, message: "eventId is required" });
@@ -274,6 +327,7 @@ export default function eventsApiRoute(app, _config, _db, features, _lang) {
           const discordCfg = {
             channelId: config?.events?.discordChannelId || null,
             guildId: config?.discord?.guildId || config?.events?.discordGuildId || null,
+            siteBaseUrl: config?.siteConfiguration?.siteUrl || process.env.siteAddress || "",
           };
           await runDiscordActionsForEvent(fullEvent, "on_publish", discordCfg);
         } catch (e) {
@@ -325,6 +379,7 @@ export default function eventsApiRoute(app, _config, _db, features, _lang) {
           const discordCfg = {
             channelId: config?.events?.discordChannelId || null,
             guildId: config?.discord?.guildId || config?.events?.discordGuildId || null,
+            siteBaseUrl: config?.siteConfiguration?.siteUrl || process.env.siteAddress || "",
           };
           await runDiscordActionsForEvent(fullEvent, "on_publish", discordCfg);
         } catch (e) {
@@ -357,8 +412,26 @@ export default function eventsApiRoute(app, _config, _db, features, _lang) {
           const discordCfg = {
             channelId: config?.events?.discordChannelId || null,
             guildId: config?.discord?.guildId || config?.events?.discordGuildId || null,
+            siteBaseUrl: config?.siteConfiguration?.siteUrl || process.env.siteAddress || "",
           };
-          await runDiscordActionsForEvent(fullEvent, "on_update", discordCfg);
+
+          const hasUpdateActions = (fullEvent.actions || []).some(a => a.enabled && a.trigger === "on_update");
+          if (hasUpdateActions) {
+            await runDiscordActionsForEvent(fullEvent, "on_update", discordCfg);
+          } else {
+            // Fallback for events created before on_update actions existed
+            const guildId = discordCfg.guildId;
+            if (fullEvent.discordMessageId && fullEvent.discordChannelId) {
+              await editEventDiscordMessage(fullEvent, fullEvent.discordChannelId, fullEvent.discordMessageId, discordCfg.siteBaseUrl).catch(e =>
+                console.error("[Events] Discord message update failed:", e.message)
+              );
+            }
+            if (fullEvent.discordGuildEventId && guildId) {
+              await editGuildScheduledEvent(fullEvent, guildId, fullEvent.discordGuildEventId).catch(e =>
+                console.error("[Events] Guild event update failed:", e.message)
+              );
+            }
+          }
         } catch (e) {
           console.error("[Events] Discord sync failed:", e.message);
         }
@@ -379,17 +452,48 @@ export default function eventsApiRoute(app, _config, _db, features, _lang) {
     if (!eventId) return res.send({ success: false, message: "eventId is required" });
 
     try {
+      const existing = await getEventById(eventId);
+      if (!existing) return res.send({ success: false, message: "Event not found" });
+
+      // All cancellations require at least edit permission
+      if (!isEditor(req)) {
+        return res.status(403).send({ success: false, message: "You do not have permission to cancel events." });
+      }
+      // Approved and published events can only be cancelled by reviewers
+      if (["approved", "published"].includes(existing.status) && !isReviewer(req)) {
+        return res.status(403).send({ success: false, message: "Only approvers can cancel an approved or live event." });
+      }
+
       const { actorId, actorName } = actorFromReq(req);
       const event = await cancelEvent(eventId, actorId, actorName, reason);
 
-      // Cancel Discord guild event if exists
       const fullEvent = await getEventById(eventId, true);
       setImmediate(async () => {
         try {
-          const discordCfg = {
-            guildId: config?.discord?.guildId || config?.events?.discordGuildId || null,
-          };
-          await runDiscordActionsForEvent(fullEvent, "on_cancel", discordCfg);
+          const guildId = config?.discord?.guildId || config?.events?.discordGuildId || null;
+          const channelId = config?.events?.discordChannelId || config?.discord?.eventsChannelId || null;
+          const discordCfg = { guildId, channelId, siteBaseUrl: config?.siteAddress || "" };
+
+          const hasCancelActions = (fullEvent.actions || []).some(
+            (a) => a.enabled && a.trigger === "on_cancel"
+          );
+
+          if (hasCancelActions) {
+            await runDiscordActionsForEvent(fullEvent, "on_cancel", discordCfg);
+          } else {
+            // Fallback for legacy events without on_cancel actions
+            const notifyChannel = fullEvent.discordChannelId || channelId;
+            if (notifyChannel) {
+              await postCancellationDiscordMessage(fullEvent, notifyChannel).catch((e) =>
+                console.error("[Events] Cancel message failed:", e.message)
+              );
+            }
+            if (fullEvent.discordGuildEventId && guildId) {
+              await cancelGuildScheduledEvent(fullEvent, guildId, fullEvent.discordGuildEventId).catch((e) =>
+                console.error("[Events] Guild event cancel failed:", e.message)
+              );
+            }
+          }
         } catch (e) {
           console.error("[Events] Discord cancel sync failed:", e.message);
         }
@@ -399,6 +503,80 @@ export default function eventsApiRoute(app, _config, _db, features, _lang) {
     } catch (err) {
       console.error("[Events API] cancel:", err);
       return res.send({ success: false, message: err.message || "Failed to cancel event" });
+    }
+  });
+
+  /** POST /api/events/resync-discord — re-post message and/or recreate guild event for a published event */
+  app.post("/api/events/resync-discord", async (req, res) => {
+    if (!features.events) return res.send({ success: false, message: "Events feature disabled" });
+    if (!isReviewer(req)) return res.status(403).send({ success: false, message: "Only reviewers can resync Discord." });
+
+    const { eventId, resyncMessage, resyncGuildEvent } = req.body || {};
+    if (!eventId) return res.send({ success: false, message: "eventId is required" });
+
+    try {
+      const event = await getEventById(eventId);
+      if (!event) return res.send({ success: false, message: "Event not found" });
+      if (event.status !== "published") return res.send({ success: false, message: "Only published events can be resynced." });
+
+      const guildId = config?.discord?.guildId || config?.events?.discordGuildId || null;
+      const siteBaseUrl = config?.siteConfiguration?.siteUrl || process.env.siteAddress || "";
+
+      // Resolve channel: stored on event > action config > global config
+      const msgAction = (event.actions || []).find(
+        (a) => a.enabled && a.trigger === "on_publish" && a.actionType === "discord_message"
+      );
+      const channelId =
+        event.discordChannelId ||
+        msgAction?.config?.channelId ||
+        config?.events?.discordChannelId ||
+        null;
+
+      // Resolve guild from action config if not set globally
+      const guildAction = (event.actions || []).find(
+        (a) => a.enabled && a.trigger === "on_publish" && a.actionType === "discord_guild_event"
+      );
+      const resolvedGuildId = guildId || guildAction?.config?.guildId || null;
+
+      const results = { message: null, guildEvent: null };
+
+      if (resyncMessage) {
+        try {
+          if (event.discordMessageId && event.discordChannelId) {
+            await editEventDiscordMessage(event, event.discordChannelId, event.discordMessageId, siteBaseUrl);
+            results.message = "updated";
+          } else {
+            if (!channelId) throw new Error("No channel configured — set a channel in the event's Discord Message action");
+            await postEventDiscordMessage(event, channelId, siteBaseUrl);
+            results.message = "posted";
+          }
+        } catch (e) {
+          console.error("[Events] resync message failed:", e.message);
+          results.message = `failed: ${e.message}`;
+        }
+      }
+
+      if (resyncGuildEvent) {
+        try {
+          if (event.discordGuildEventId && resolvedGuildId) {
+            await editGuildScheduledEvent(event, resolvedGuildId, event.discordGuildEventId);
+            results.guildEvent = "updated";
+          } else if (resolvedGuildId) {
+            await createGuildScheduledEvent(event, resolvedGuildId);
+            results.guildEvent = "created";
+          } else {
+            results.guildEvent = "skipped: no guild configured";
+          }
+        } catch (e) {
+          console.error("[Events] resync guild event failed:", e.message);
+          results.guildEvent = `failed: ${e.message}`;
+        }
+      }
+
+      return res.send({ success: true, results, message: "Discord resync complete" });
+    } catch (err) {
+      console.error("[Events API] resync-discord:", err);
+      return res.send({ success: false, message: err.message || "Resync failed" });
     }
   });
 

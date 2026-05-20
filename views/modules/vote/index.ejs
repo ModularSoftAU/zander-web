@@ -33,6 +33,18 @@
     justify-content: center;
     flex-shrink: 0;
   }
+  .vote-site-icon {
+    width: 2.5rem;
+    height: 2.5rem;
+    object-fit: contain;
+    border-radius: 6px;
+    flex-shrink: 0;
+    cursor: pointer;
+    transition: transform 0.15s ease;
+  }
+  .vote-site-icon:hover {
+    transform: scale(1.15);
+  }
   .leaderboard-row {
     border-left: 3px solid transparent;
     transition: background 0.1s;
@@ -65,19 +77,20 @@
       <% } else { %>
         <div class="d-flex flex-column gap-3">
           <% sitesData.data.forEach(function(site, i) { %>
-            <a href="<%= site.vote_url %>"
-               target="_blank"
-               rel="noopener noreferrer"
-               class="vote-site-card card card-body text-decoration-none d-flex flex-row align-items-center gap-3 shadow-sm border-0 border-start border-primary border-3">
-              <span class="vote-site-number"><%= i + 1 %></span>
+            <div class="vote-site-card card card-body d-flex flex-row align-items-center gap-3 shadow-sm border-0 border-start border-primary border-3">
+              <% if (site.image_url) { %>
+                <img src="<%= site.image_url %>" alt="<%= site.site_name %>" class="vote-site-icon" title="Click to enlarge" data-bs-toggle="modal" data-bs-target="#imageModal" data-img-src="<%= site.image_url %>" data-img-alt="<%= site.site_name %>">
+              <% } else { %>
+                <span class="vote-site-number"><%= i + 1 %></span>
+              <% } %>
               <div class="flex-grow-1 min-w-0">
                 <strong class="d-block text-body"><%= site.site_name %></strong>
                 <small class="text-muted"><%= site.service_name %></small>
               </div>
-              <span class="btn btn-sm btn-primary px-3 flex-shrink-0">
+              <a href="<%= site.vote_url %>" target="_blank" rel="noopener noreferrer" class="btn btn-sm btn-primary px-3 flex-shrink-0 text-decoration-none">
                 Vote <i class="fas fa-external-link-alt ms-1 small"></i>
-              </span>
-            </a>
+              </a>
+            </div>
           <% }) %>
         </div>
         <p class="text-muted small mt-3 mb-0">
@@ -147,5 +160,29 @@
 
   </div>
 </div>
+
+<!-- Image Enlarge Modal -->
+<div class="modal fade" id="imageModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-lg">
+    <div class="modal-content bg-transparent border-0 shadow-none">
+      <div class="modal-body p-0 text-center">
+        <button type="button" class="btn-close btn-close-white position-absolute top-0 end-0 m-3" data-bs-dismiss="modal" aria-label="Close" style="z-index:1;"></button>
+        <img id="imageModalImg" src="" alt="" class="img-fluid rounded" style="max-height:80vh;">
+      </div>
+    </div>
+  </div>
+</div>
+<script>
+(function() {
+  const modal = document.getElementById('imageModal');
+  if (!modal) return;
+  modal.addEventListener('show.bs.modal', function(e) {
+    const trigger = e.relatedTarget;
+    if (!trigger) return;
+    document.getElementById('imageModalImg').src = trigger.dataset.imgSrc || '';
+    document.getElementById('imageModalImg').alt = trigger.dataset.imgAlt || '';
+  });
+})();
+</script>
 
 <%- include("../../modules/footer.ejs") %>

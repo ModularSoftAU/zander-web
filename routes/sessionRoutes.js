@@ -99,7 +99,16 @@ export default function sessionSiteRoute(
 
   async function hydrateUserSession(req, userLoginData) {
     const userPermissionData = await getUserPermissions(userLoginData);
-    const userRanks = userPermissionData.userRanks || [];
+    // userPermissionData.userRanks is an array of rank slug strings e.g. ["admin","member"]
+    const rankSlugs = userPermissionData.userRanks || [];
+
+    // Store ranks as objects so callers can do rank.rankSlug (used across support, appeal, profile routes)
+    const userRanks = rankSlugs.map((slug) => ({ rankSlug: slug }));
+
+    // Derive isStaff from whether the user's resolved permissions include meta.staff.1 (set on staff groups in LuckPerms)
+    const isStaff = userPermissionData.some(
+      (p) => p && String(p).trim().toLowerCase().startsWith("meta.staff.")
+    );
 
     req.session.authenticated = true;
     req.session.user = {
@@ -110,7 +119,7 @@ export default function sessionSiteRoute(
       uuid: userLoginData.uuid,
       ranks: userRanks,
       permissions: userPermissionData,
-      isStaff: userRanks.some(rank => rank.isStaff),
+      isStaff,
     };
 
     await updateAudit_lastWebsiteLogin(new Date(), userLoginData.username);
@@ -1025,6 +1034,31 @@ export default function sessionSiteRoute(
       discordId: discordId,
     }));
     return;
+  });
+
+  app.get("/auth/refresh-session", async function (req, res) {
+    if (!req.session?.user) {
+      return res.redirect("/login");
+    }
+
+    try {
+      const userGetter = new UserGetter();
+      const userData = await userGetter.byUserId(req.session.user.userId);
+
+      if (!userData) {
+        setBannerCookie("error", "Could not refresh session: user not found.", res);
+        return res.redirect("/dashboard");
+      }
+
+      await hydrateUserSession(req, userData);
+      setBannerCookie("success", "Permissions refreshed successfully.", res);
+    } catch (err) {
+      logRouteError("refresh session", err);
+      setBannerCookie("error", "Failed to refresh permissions. Please try logging out and back in.", res);
+    }
+
+    const returnTo = req.headers.referer || "/dashboard";
+    return res.redirect(returnTo);
   });
 
   app.get("/logout", async function (req, res) {

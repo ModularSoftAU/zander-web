@@ -1,23 +1,10 @@
-<%- include("../../modules/header.ejs", {
-    pageTitle: pageTitle,
-    pageDescription: "Manage voting sites and view the current leaderboard"
-}) %>
+<%- include("../../admin/_head.ejs", { pageTitle }) %>
+<%- include("../../admin/_topbar.ejs") %>
+<%- include("../../admin/_sidebar.ejs") %>
 
-<%- include("../../modules/navigationBar.ejs") %>
-
-<%- include("../../partials/miniHeader.ejs", {
-  headerTitle: "Voting",
-  backgroundImage: globalImage
-}) %>
-
-<%- include("../../modules/dashboard/dashboard-header.ejs") %>
-
-<div class="container my-4">
-    <div class="row g-4">
-        <div class="col-lg-3">
-            <%- include("../../modules/dashboard/dashboard-sidebar.ejs") %>
-        </div>
-        <main class="col-lg-9">
+<div id="wpcontent">
+  <div id="wpbody-content">
+    <div class="wrap">
             <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
                 <h1 class="h2">Vote Sites</h1>
                 <div class="btn-toolbar mb-2 mb-md-0 gap-2">
@@ -29,19 +16,14 @@
                     </button>
                 </div>
             </div>
-
-            <% if (req.cookies.alertType) { %>
-                <%- include("../../partials/alert.ejs", {
-                  alertType: req.cookies.alertType,
-                  content: req.cookies.alertContent
-                }) %>
-            <% } %>
+      <%- include("../../admin/_notices.ejs") %>
 
             <div class="table-responsive">
                 <table class="table align-middle vote-sites-table">
                     <thead>
                         <tr>
                             <th>#</th>
+                            <th>Image</th>
                             <th>Site Name</th>
                             <th>Service Name</th>
                             <th>Vote URL</th>
@@ -52,11 +34,18 @@
                     </thead>
                     <tbody>
                         <% if (!sitesData.success || !sitesData.data || !sitesData.data.length) { %>
-                            <tr><td colspan="7" class="text-center text-muted">No vote sites configured.</td></tr>
+                            <tr><td colspan="8" class="text-center text-muted">No vote sites configured.</td></tr>
                         <% } else { %>
                             <% sitesData.data.forEach(function (site) { %>
                                 <tr>
                                     <td data-label="#"><%= site.id %></td>
+                                    <td data-label="Image">
+                                        <% if (site.image_url) { %>
+                                            <img src="<%= site.image_url %>" alt="<%= site.site_name %>" style="width:32px;height:32px;object-fit:contain;border-radius:4px;">
+                                        <% } else { %>
+                                            <span class="text-muted small">—</span>
+                                        <% } %>
+                                    </td>
                                     <td data-label="Site Name"><strong><%= site.site_name %></strong></td>
                                     <td data-label="Service Name"><code><%= site.service_name %></code></td>
                                     <td data-label="Vote URL">
@@ -79,6 +68,7 @@
                                                 data-site-name="<%= site.site_name %>"
                                                 data-service-name="<%= site.service_name %>"
                                                 data-vote-url="<%= site.vote_url %>"
+                                                data-image-url="<%= site.image_url || '' %>"
                                                 data-display-order="<%= site.display_order %>"
                                                 data-is-active="<%= site.is_active %>">
                                                 Edit
@@ -116,9 +106,7 @@
                     <p class="text-muted">No votes recorded this month yet.</p>
                 <% } %>
             </div>
-        </main>
-    </div>
-</div>
+
 
 <!-- Create Site Modal -->
 <div class="modal fade" id="createSiteModal" tabindex="-1" aria-hidden="true">
@@ -141,6 +129,10 @@
                     <div class="mb-3">
                         <label class="form-label">Vote URL</label>
                         <input type="url" class="form-control" name="voteUrl" required placeholder="https://www.planetminecraft.com/server/...">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Image URL <small class="text-muted">(optional — site icon/logo)</small></label>
+                        <input type="url" class="form-control" name="imageUrl" placeholder="https://example.com/logo.png">
                     </div>
                     <div class="row">
                         <div class="col mb-3">
@@ -189,6 +181,10 @@
                         <label class="form-label">Vote URL</label>
                         <input type="url" class="form-control" name="voteUrl" id="editVoteUrl" required>
                     </div>
+                    <div class="mb-3">
+                        <label class="form-label">Image URL <small class="text-muted">(optional — site icon/logo)</small></label>
+                        <input type="url" class="form-control" name="imageUrl" id="editImageUrl">
+                    </div>
                     <div class="row">
                         <div class="col mb-3">
                             <label class="form-label">Display Order</label>
@@ -235,7 +231,10 @@
     </div>
 </div>
 
-<%- include("../../modules/footer.ejs") %>
+    </div><!-- /.wrap -->
+  </div><!-- /#wpbody-content -->
+  <%- include("../../admin/_footer.ejs") %>
+</div><!-- /#wpcontent -->
 
 <script>
 // Populate edit modal
@@ -245,6 +244,7 @@ document.querySelectorAll('[data-bs-target="#editSiteModal"]').forEach(btn => {
         document.getElementById('editSiteName').value = btn.dataset.siteName;
         document.getElementById('editServiceName').value = btn.dataset.serviceName;
         document.getElementById('editVoteUrl').value = btn.dataset.voteUrl;
+        document.getElementById('editImageUrl').value = btn.dataset.imageUrl || '';
         document.getElementById('editDisplayOrder').value = btn.dataset.displayOrder;
         document.getElementById('editIsActive').value = btn.dataset.isActive === '1' ? 'true' : 'false';
         document.getElementById('editSiteError').classList.add('d-none');
@@ -277,6 +277,7 @@ document.getElementById('createSiteSubmit').addEventListener('click', async () =
         siteName: form.siteName.value.trim(),
         serviceName: form.serviceName.value.trim(),
         voteUrl: form.voteUrl.value.trim(),
+        imageUrl: form.imageUrl.value.trim() || null,
         displayOrder: parseInt(form.displayOrder.value, 10) || 0,
         isActive: form.isActive.value === 'true',
     };
@@ -294,6 +295,7 @@ document.getElementById('editSiteSubmit').addEventListener('click', async () => 
         siteName: form.siteName.value.trim(),
         serviceName: form.serviceName.value.trim(),
         voteUrl: form.voteUrl.value.trim(),
+        imageUrl: form.imageUrl.value.trim() || null,
         displayOrder: parseInt(form.displayOrder.value, 10) || 0,
         isActive: form.isActive.value === 'true',
     };

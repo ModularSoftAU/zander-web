@@ -1,29 +1,10 @@
-<%- include("../modules/header.ejs", {
-    pageTitle: pageTitle,
-    pageDescription: "Bridge processor configuration and tooling."
-}) %>
+<%- include("../admin/_head.ejs", { pageTitle }) %>
+<%- include("../admin/_topbar.ejs") %>
+<%- include("../admin/_sidebar.ejs") %>
 
-<%- include("../modules/navigationBar.ejs") %>
-
-<%- include("../partials/miniHeader.ejs", {
-  headerTitle: "Bridge",
-  backgroundImage: globalImage
-}) %>
-
-<%- include("../modules/dashboard/dashboard-header.ejs") %>
-
-<%
-  const pendingList = pendingTasks && pendingTasks.success ? pendingTasks.data : [];
-  const processingList = processingTasks && processingTasks.success ? processingTasks.data : [];
-  const routinesList = routines && routines.success ? routines.data : [];
-%>
-
-<div class="container my-4">
-  <div class="row g-4">
-    <div class="col-lg-3">
-      <%- include("../modules/dashboard/dashboard-sidebar.ejs") %>
-    </div>
-    <main class="col-lg-9 bridge-layout">
+<div id="wpcontent">
+  <div id="wpbody-content">
+    <div class="wrap">
     <div class="mb-4">
       <%- include("../partials/documentationLink.ejs", {
           doclink: "https://modularsoft.org/docs/products/zander/features/bridge/"
@@ -43,13 +24,7 @@
         </ul>
       </div>
     </div>
-
-    <% if (req.cookies.alertType) { %>
-      <%- include("../partials/alert.ejs", {
-        alertType: req.cookies.alertType,
-        content: req.cookies.alertContent
-      }) %>
-    <% } %>
+      <%- include("../admin/_notices.ejs") %>
 
     <% if (pendingTasks && pendingTasks.success === false) { %>
       <%- include("../partials/alert.ejs", {
@@ -368,9 +343,7 @@
           </div>
         </div>
       </div>
-    </main>
-  </div>
-</div>
+
 
 
 <div class="modal fade" id="singleCommandModal" tabindex="-1" aria-labelledby="singleCommandModalLabel" aria-hidden="true">
@@ -1164,4 +1137,7 @@
   });
 </script>
 
-<%- include("../modules/footer.ejs") %>
+    </div><!-- /.wrap -->
+  </div><!-- /#wpbody-content -->
+  <%- include("../admin/_footer.ejs") %>
+</div><!-- /#wpcontent -->

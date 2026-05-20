@@ -1,60 +1,60 @@
-import moment from "moment";
-import fetch from "node-fetch";
-import { getGlobalImage, hasPermission } from "../../api/common.js";
+import { hasPermission } from "../../api/common.js";
+import { adminViewData } from "../../admin/adminHelpers.js";
+import { prisma } from "../../controllers/databaseController.js";
 import { getWebAnnouncement } from "../../controllers/announcementController.js";
-
-/** Fetch a URL with the internal API key and parse the JSON response.
- *  Returns `fallback` on any network or parse error instead of throwing. */
-async function fetchJson(url, fallback = null) {
-  try {
-    const res = await fetch(url, {
-      headers: { "x-access-token": process.env.apiKey },
-    });
-    return await res.json();
-  } catch (error) {
-    console.error(`[dashboard] fetchJson failed for ${url}:`, error.message);
-    return fallback;
-  }
-}
+import { getAllForms } from "../../controllers/formController.js";
 
 export default function dashboardSiteRoute(app, config, features, lang) {
   //
-  // Dashboard
+  // Dashboard home
   //
   app.get("/dashboard", async function (req, res) {
-    const permissionBoolean = await hasPermission(
-      "zander.web.dashboard",
-      req,
-      res,
-      features
-    );
+    if (!await hasPermission("zander.web.dashboard", req, res, features)) return;
 
-    if (!permissionBoolean) return;
-
-    // Run all data fetches and page-chrome lookups concurrently.
-    const [announcements, applications, servers, globalImage, announcementWeb] =
-      await Promise.all([
-        fetchJson(`${process.env.siteAddress}/api/announcement/get`, { data: [] }),
-        fetchJson(`${process.env.siteAddress}/api/application/get`, { data: [] }),
-        fetchJson(`${process.env.siteAddress}/api/server/get`, { data: [] }),
-        getGlobalImage(),
-        getWebAnnouncement(),
-      ]);
+    // Fetch summary counts + recent data directly via Prisma — no self-HTTP.
+    const [
+      announcementsCount,
+      applicationsCount,
+      serversCount,
+      formsCount,
+      recentAnnouncements,
+      announcementWeb,
+    ] = await Promise.all([
+      prisma.announcements.count(),
+      prisma.applications.count(),
+      prisma.servers.count(),
+      features.forms ? getAllForms().then(f => f.length).catch(() => 0) : Promise.resolve(0),
+      prisma.announcements.findMany({
+        orderBy: { announcementId: "desc" },
+        take: 5,
+        select: {
+          announcementId: true,
+          announcementType: true,
+          colourMessageFormat: true,
+          body: true,
+          enabled: true,
+          startDate: true,
+          endDate: true,
+        },
+      }),
+      getWebAnnouncement(),
+    ]);
 
     res.header("content-type", "text/html; charset=utf-8").send(
       await app.view("dashboard/dashboard-index", {
-        pageTitle: `Dashboard`,
-        config: config,
-        features: features,
-        req: req,
-        globalImage,
+        pageTitle: "Dashboard",
+        config,
+        features,
+        req,
         announcementWeb,
-        announcementsCount: announcements.data ? announcements.data.length : 0,
-        applicationsCount: applications.data ? applications.data.length : 0,
-        serversCount: servers.data ? servers.data.length : 0,
+        announcementsCount,
+        applicationsCount,
+        serversCount,
+        formsCount,
+        recentAnnouncements,
+        ...adminViewData(req, features),
       })
     );
-    return;
   });
 
   //
@@ -63,89 +63,81 @@ export default function dashboardSiteRoute(app, config, features, lang) {
   app.get("/dashboard/logs", async function (req, res) {
     if (!await hasPermission("zander.web.logs", req, res, features)) return;
 
-    const queryParams = new URLSearchParams();
-    if (req.query?.user) {
-      queryParams.set("user", req.query.user);
-    }
-    if (req.query?.feature) {
-      queryParams.set("feature", req.query.feature);
-    }
-    const fetchURL = `${process.env.siteAddress}/api/web/logs/get${
-      queryParams.toString() ? `?${queryParams.toString()}` : ""
-    }`;
+    // Build query-string for the logs API (still fetches via internal HTTP
+    // because the logs controller uses raw cross-database queries that are
+    // not yet fully wrapped in Prisma).
+    const params = new URLSearchParams();
+    if (req.query?.user)    params.set("user",    req.query.user);
+    if (req.query?.feature) params.set("feature", req.query.feature);
 
-    const [apiData, globalImage, announcementWeb] = await Promise.all([
-      fetchJson(fetchURL, { data: [] }),
-      getGlobalImage(),
-      getWebAnnouncement(),
-    ]);
+    let apiData = { data: [] };
+    try {
+      const qs  = params.toString() ? `?${params.toString()}` : "";
+      const url = `${process.env.siteAddress}/api/web/logs/get${qs}`;
+      const r   = await fetch(url, { headers: { "x-access-token": process.env.apiKey } });
+      apiData   = await r.json();
+    } catch (err) {
+      console.error("[dashboard/logs] fetch failed:", err.message);
+    }
+
+    const announcementWeb = await getWebAnnouncement();
 
     res.header("content-type", "text/html; charset=utf-8").send(
       await app.view("dashboard/logs", {
-        pageTitle: `Dashboard - Logs`,
-        config: config,
-        apiData: apiData,
-        features: features,
-        req: req,
-        globalImage,
-        moment: moment,
+        pageTitle: "Dashboard - Logs",
+        config,
+        apiData,
+        features,
+        req,
         announcementWeb,
+        ...adminViewData(req, features),
       })
     );
-    return;
   });
 
   //
-  // Bridge
+  // Bridge processor
   //
   app.get("/dashboard/bridge", async function (req, res) {
     if (!await hasPermission("zander.web.bridge", req, res, features)) return;
 
-    let pendingTasks = { data: [] };
+    let pendingTasks    = { data: [] };
     let processingTasks = { data: [] };
-    let routines = { data: [] };
+    let routines        = { data: [] };
 
     try {
-      const [pendingResponse, processingResponse, routineResponse] = await Promise.all([
-        fetch(`${process.env.siteAddress}/api/bridge/processor/get?status=pending&limit=100`, {
-          headers: { "x-access-token": process.env.apiKey },
-        }),
-        fetch(`${process.env.siteAddress}/api/bridge/processor/get?status=processing&limit=100`, {
-          headers: { "x-access-token": process.env.apiKey },
-        }),
-        fetch(`${process.env.siteAddress}/api/bridge/routine/get`, {
-          headers: { "x-access-token": process.env.apiKey },
-        }),
+      const base    = process.env.siteAddress;
+      const headers = { "x-access-token": process.env.apiKey };
+
+      const [pr, cr, rr] = await Promise.all([
+        fetch(`${base}/api/bridge/processor/get?status=pending&limit=100`,    { headers }),
+        fetch(`${base}/api/bridge/processor/get?status=processing&limit=100`, { headers }),
+        fetch(`${base}/api/bridge/routine/get`,                               { headers }),
       ]);
 
       [pendingTasks, processingTasks, routines] = await Promise.all([
-        pendingResponse.json().catch(() => ({ data: [] })),
-        processingResponse.json().catch(() => ({ data: [] })),
-        routineResponse.json().catch(() => ({ data: [] })),
+        pr.json().catch(() => ({ data: [] })),
+        cr.json().catch(() => ({ data: [] })),
+        rr.json().catch(() => ({ data: [] })),
       ]);
-    } catch (error) {
-      console.error("[dashboard/bridge] Failed to fetch bridge data:", error.message);
+    } catch (err) {
+      console.error("[dashboard/bridge] fetch failed:", err.message);
     }
 
-    const [globalImage, announcementWeb] = await Promise.all([
-      getGlobalImage(),
-      getWebAnnouncement(),
-    ]);
+    const announcementWeb = await getWebAnnouncement();
 
     res.header("content-type", "text/html; charset=utf-8").send(
       await app.view("dashboard/bridge", {
-        pageTitle: `Dashboard - Bridge`,
-        config: config,
-        pendingTasks: pendingTasks,
-        processingTasks: processingTasks,
-        routines: routines,
-        features: features,
-        req: req,
-        globalImage,
-        moment: moment,
+        pageTitle: "Dashboard - Bridge",
+        config,
+        pendingTasks,
+        processingTasks,
+        routines,
+        features,
+        req,
         announcementWeb,
+        ...adminViewData(req, features),
       })
     );
-    return;
   });
 }

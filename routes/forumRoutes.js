@@ -19,6 +19,13 @@ import {
   getAllCategoriesForAdmin,
 } from "../controllers/forumController.js";
 import {
+  validatePollInput,
+  createPoll,
+  getPollByDiscussionId,
+  castVote,
+  changeVote,
+} from "../controllers/forumPollController.js";
+import {
   getGlobalImage,
   isFeatureWebRouteEnabled,
   isLoggedIn,
@@ -252,7 +259,10 @@ async function renderForumsView(app, res, req, viewPath, data, config, features)
     getWebAnnouncement(),
   ]);
 
-  res.header("content-type", "text/html; charset=utf-8").send(
+  res
+    .header("content-type", "text/html; charset=utf-8")
+    .header("cache-control", "no-store")
+    .send(
     await app.view(viewPath, {
       ...data,
       config,
@@ -537,6 +547,34 @@ export default function forumRoutes(
       return res.redirect(`/forums/category/${category.slug}/new`);
     }
 
+    // Validate poll fields before creating the discussion
+    const pollEnabled = req.body.pollEnabled === "1";
+    let parsedPollOptions = [];
+    let parsedOptionImages = [];
+    if (pollEnabled) {
+      let rawOptions = req.body.pollOptions;
+      if (!Array.isArray(rawOptions)) rawOptions = rawOptions ? [rawOptions] : [];
+      parsedPollOptions = rawOptions.map((o) => (o || "").trim()).filter((o) => o);
+
+      let rawImages = req.body.pollOptionImages;
+      if (!Array.isArray(rawImages)) rawImages = rawImages ? [rawImages] : [];
+      parsedOptionImages = rawOptions.map((_, i) => {
+        const u = (rawImages[i] || "").trim();
+        return (u.startsWith("http://") || u.startsWith("https://")) ? u : null;
+      });
+
+      const pollErrors = validatePollInput({
+        question: req.body.pollQuestion,
+        options: parsedPollOptions,
+        expiresAt: req.body.pollExpiresAt || null,
+      });
+
+      if (pollErrors.length) {
+        await setBannerCookie("danger", pollErrors[0], res);
+        return res.redirect(`/forums/category/${category.slug}/new`);
+      }
+    }
+
     try {
       const discussion = await createDiscussion({
         categoryId: category.categoryId,
@@ -544,6 +582,22 @@ export default function forumRoutes(
         title,
         content,
       });
+
+      if (pollEnabled) {
+        try {
+          await createPoll(discussion.discussionId, userId, {
+            question: (req.body.pollQuestion || "").trim(),
+            options: parsedPollOptions,
+            imageUrls: parsedOptionImages,
+            allowMultiple: req.body.pollAllowMultiple === "1",
+            allowVoteChange: req.body.pollAllowVoteChange === "1",
+            showVoters: req.body.pollShowVoters === "1",
+            expiresAt: req.body.pollExpiresAt || null,
+          });
+        } catch (pollErr) {
+          console.error("[FORUMS] Failed to create poll, discussion created without one", pollErr);
+        }
+      }
 
       const baseUrl = getSiteBaseUrl(req);
       const username = req.session?.user?.username || "Unknown";
@@ -644,6 +698,12 @@ export default function forumRoutes(
         !discussion.isArchived &&
         (userCanPostInCategory(category, req) || canModerate);
 
+      const viewerUserId = req.session?.user?.userId || null;
+      const poll = await getPollByDiscussionId(discussionId, viewerUserId).catch((err) => {
+        console.error("[FORUMS] Failed to load poll", err);
+        return null;
+      });
+
       await renderForumsView(
         app,
         res,
@@ -656,13 +716,14 @@ export default function forumRoutes(
           category,
           discussion,
           posts,
+          poll,
           moment,
           canReply,
           canModerate,
           canSticky: userCanSticky(req),
           canLock: userCanLock(req),
           canArchive: userCanArchive(req),
-          currentUserId: req.session?.user?.userId || null,
+          currentUserId: viewerUserId,
           canDeleteAnyPost: userCanDeleteAnyPost(req),
           moveCategories: allCategories.flat,
         },
@@ -1622,6 +1683,64 @@ export default function forumRoutes(
 
     return res.redirect(`/forums/discussion/${result.discussion.discussionId}/${result.discussion.slug}`);
   });
+
+  async function handlePollVote(req, res, isChange) {
+    if (!(await ensureFeature(req, res))) return;
+
+    if (!isLoggedIn(req)) {
+      await setBannerCookie("warning", "You must be logged in to vote.", res);
+      return res.redirect("/login");
+    }
+
+    const userId = getCurrentUserId(req);
+    const discussionId = Number.parseInt(req.params.discussionId, 10);
+    const result = await getDiscussionWithCategory(discussionId);
+
+    if (!result || !userCanViewCategory(result.category, req)) {
+      await setBannerCookie("danger", "Discussion not found.", res);
+      return res.redirect("/forums");
+    }
+
+    const redirectUrl = `/forums/discussion/${result.discussion.discussionId}/${result.discussion.slug}`;
+
+    const poll = await getPollByDiscussionId(discussionId, userId).catch(() => null);
+    if (!poll) {
+      await setBannerCookie("danger", "Poll not found.", res);
+      return res.redirect(redirectUrl);
+    }
+
+    let rawOptionIds = req.body.optionId;
+    if (!Array.isArray(rawOptionIds)) rawOptionIds = rawOptionIds ? [rawOptionIds] : [];
+    const optionIds = rawOptionIds
+      .map((id) => Number.parseInt(id, 10))
+      .filter((id) => Number.isFinite(id) && id > 0);
+
+    if (!optionIds.length) {
+      await setBannerCookie("danger", "Please select at least one option.", res);
+      return res.redirect(redirectUrl);
+    }
+
+    try {
+      if (isChange) {
+        await changeVote(poll.pollId, userId, optionIds);
+        await setBannerCookie("success", "Your vote has been updated.", res);
+      } else {
+        await castVote(poll.pollId, userId, optionIds);
+        await setBannerCookie("success", "Your vote has been recorded.", res);
+      }
+    } catch (error) {
+      await setBannerCookie("danger", error.message || "Failed to record your vote.", res);
+    }
+
+    return res.redirect(redirectUrl);
+  }
+
+  app.post("/forums/discussion/:discussionId/poll/vote", (req, res) =>
+    handlePollVote(req, res, false)
+  );
+  app.post("/forums/discussion/:discussionId/poll/vote/change", (req, res) =>
+    handlePollVote(req, res, true)
+  );
 
   app.get("/forums/post/:postId/revisions", async function (req, res) {
     if (!(await ensureFeature(req, res))) {

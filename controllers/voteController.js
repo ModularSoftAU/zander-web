@@ -21,6 +21,32 @@ function query(sql, params = []) {
   });
 }
 
+// Cached promise — resolves to true once the column has been confirmed/added.
+let expiresAtColumnReady;
+
+async function ensureExpiresAtColumn() {
+  if (!expiresAtColumnReady) {
+    expiresAtColumnReady = new Promise((resolve) => {
+      db.query(
+        "SHOW COLUMNS FROM player_command_queue LIKE 'expires_at'",
+        (err, results) => {
+          if (err) { console.error("[vote] ensureExpiresAtColumn check failed:", err.message); resolve(false); return; }
+          if (results.length > 0) { resolve(true); return; }
+          db.query(
+            "ALTER TABLE player_command_queue ADD COLUMN expires_at DATETIME NULL",
+            (alterErr) => {
+              if (alterErr) { console.error("[vote] Failed to add expires_at column:", alterErr.message); resolve(false); return; }
+              console.info("[vote] Added expires_at column to player_command_queue.");
+              resolve(true);
+            }
+          );
+        }
+      );
+    });
+  }
+  return expiresAtColumnReady;
+}
+
 /**
  * Derive a YYYY-MM string from a Date or ISO string (always UTC).
  */
@@ -144,22 +170,23 @@ export async function getVoteSiteByServiceName(serviceName) {
   return rows[0] || null;
 }
 
-export async function createVoteSite({ siteName, serviceName, voteUrl, isActive = true, displayOrder = 0 }) {
+export async function createVoteSite({ siteName, serviceName, voteUrl, imageUrl, isActive = true, displayOrder = 0 }) {
   const result = await query(
-    `INSERT INTO vote_sites (site_name, service_name, vote_url, is_active, display_order)
-     VALUES (?, ?, ?, ?, ?)`,
-    [siteName, normaliseServiceName(serviceName), voteUrl, isActive ? 1 : 0, displayOrder]
+    `INSERT INTO vote_sites (site_name, service_name, vote_url, image_url, is_active, display_order)
+     VALUES (?, ?, ?, ?, ?, ?)`,
+    [siteName, normaliseServiceName(serviceName), voteUrl, imageUrl || null, isActive ? 1 : 0, displayOrder]
   );
   return result.insertId;
 }
 
-export async function updateVoteSite(id, { siteName, serviceName, voteUrl, isActive, displayOrder }) {
+export async function updateVoteSite(id, { siteName, serviceName, voteUrl, imageUrl, isActive, displayOrder }) {
   const fields = [];
   const params = [];
 
   if (siteName !== undefined) { fields.push("site_name = ?"); params.push(siteName); }
   if (serviceName !== undefined) { fields.push("service_name = ?"); params.push(normaliseServiceName(serviceName)); }
   if (voteUrl !== undefined) { fields.push("vote_url = ?"); params.push(voteUrl); }
+  if (imageUrl !== undefined) { fields.push("image_url = ?"); params.push(imageUrl || null); }
   if (isActive !== undefined) { fields.push("is_active = ?"); params.push(isActive ? 1 : 0); }
   if (displayOrder !== undefined) { fields.push("display_order = ?"); params.push(displayOrder); }
 
@@ -232,25 +259,34 @@ export async function upsertMonthlyTotal({ playerUuid, playerName, monthKey, vot
 export async function enqueueCommands(entries) {
   if (!entries || !entries.length) return;
 
+  const hasExpiresAt = await ensureExpiresAtColumn();
+
   for (const e of entries) {
     try {
       const availableAt = e.availableAt || new Date();
-      await query(
-        `INSERT IGNORE INTO player_command_queue
-           (player_uuid, player_name, source, command_text, execute_as, server_scope, dedupe_key, available_at, expires_at)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, DATE_ADD(?, INTERVAL 3 DAY))`,
-        [
-          e.playerUuid,
-          e.playerName,
-          e.source,
-          e.commandText,
-          e.executeAs || "console",
-          e.serverScope || "any",
-          e.dedupeKey,
-          availableAt,
-          availableAt,
-        ]
-      );
+      if (hasExpiresAt) {
+        await query(
+          `INSERT IGNORE INTO player_command_queue
+             (player_uuid, player_name, source, command_text, execute_as, server_scope, dedupe_key, available_at, expires_at)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, DATE_ADD(?, INTERVAL 3 DAY))`,
+          [
+            e.playerUuid, e.playerName, e.source, e.commandText,
+            e.executeAs || "console", e.serverScope || "any",
+            e.dedupeKey, availableAt, availableAt,
+          ]
+        );
+      } else {
+        await query(
+          `INSERT IGNORE INTO player_command_queue
+             (player_uuid, player_name, source, command_text, execute_as, server_scope, dedupe_key, available_at)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+          [
+            e.playerUuid, e.playerName, e.source, e.commandText,
+            e.executeAs || "console", e.serverScope || "any",
+            e.dedupeKey, availableAt,
+          ]
+        );
+      }
     } catch (err) {
       // Duplicate key: already queued. Safe to skip.
       if (err.code !== "ER_DUP_ENTRY") throw err;

@@ -221,6 +221,7 @@ model forumDiscussions {
 
   category     forumCategories @relation(fields: [categoryId], references: [categoryId])
   posts        forumPosts[]
+  poll         forumPolls?
 
   @@unique([categoryId, slug])
 }
@@ -246,6 +247,51 @@ model forumPostRevisions {
   createdAt       DateTime @default(now())
 
   post            forumPosts @relation(fields: [postId], references: [postId])
+}
+
+model forumPolls {
+  pollId          Int               @id @default(autoincrement())
+  discussionId    Int               @unique
+  question        String            @db.VarChar(500)
+  allowMultiple   Boolean           @default(false)
+  allowVoteChange Boolean           @default(false)
+  showVoters      Boolean           @default(false)
+  expiresAt       DateTime?
+  createdByUserId Int
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+
+  discussion      forumDiscussions  @relation(fields: [discussionId], references: [discussionId], onDelete: Cascade)
+  options         forumPollOptions[]
+  votes           forumPollVotes[]
+}
+
+model forumPollOptions {
+  optionId    Int              @id @default(autoincrement())
+  pollId      Int
+  label       String           @db.VarChar(300)
+  imageUrl    String?          @db.VarChar(2000)
+  orderIndex  Int              @default(0)
+  createdAt   DateTime         @default(now())
+
+  poll        forumPolls       @relation(fields: [pollId], references: [pollId], onDelete: Cascade)
+  votes       forumPollVotes[]
+
+  @@index([pollId])
+}
+
+model forumPollVotes {
+  voteId    Int              @id @default(autoincrement())
+  pollId    Int
+  optionId  Int
+  userId    Int
+  createdAt DateTime         @default(now())
+
+  poll      forumPolls       @relation(fields: [pollId], references: [pollId], onDelete: Cascade)
+  option    forumPollOptions @relation(fields: [optionId], references: [optionId], onDelete: Cascade)
+
+  @@unique([pollId, optionId, userId])
+  @@index([pollId, userId])
 }
 
 model servers {
@@ -964,4 +1010,34 @@ model webstoreTransactions {
 
   @@index([userId])
   @@index([purchaseId])
+}
+
+// =============================================================================
+// Badge System
+// =============================================================================
+
+model badges {
+  badgeId         Int           @id @default(autoincrement())
+  name            String        @db.VarChar(100)
+  description     String?       @db.Text
+  backgroundColor String        @default("#1a1a2e") @db.VarChar(7)
+  textColor       String        @default("#ffffff") @db.VarChar(7)
+  luckpermsGroup  String?       @db.VarChar(64)
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  userBadges      user_badges[]
+}
+
+model user_badges {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  badgeId   Int
+  earnedAt  DateTime @default(now())
+  isManual  Boolean  @default(false)
+
+  badge     badges   @relation(fields: [badgeId], references: [badgeId], onDelete: Cascade)
+
+  @@unique([userId, badgeId])
+  @@index([userId])
 }

@@ -817,6 +817,7 @@ async function fetchUserSummaries(userIds) {
       });
 
       for (const row of userRankRows) {
+        if (row.rankSlug === "default") continue;
         const userId = uuidToUserId.get(row.uuid);
         if (userId === undefined) continue;
         const summary = summaries.get(userId);
