@@ -18,6 +18,21 @@ var bridgeCleanupTask = cron.schedule("5 0 * * *", () => {
     );
 
     db.query(
+      `DELETE FROM player_command_queue WHERE status IN ('completed', 'failed') AND updated_at <= NOW() - INTERVAL 7 DAY;`,
+      function (error, results) {
+        if (error) {
+          return console.log(`Command bridge cleanup error: ${error}`);
+        }
+
+        if (results.affectedRows > 0) {
+          console.log(
+            `Command bridge cleanup removed ${results.affectedRows} completed/failed command(s).`
+          );
+        }
+      }
+    );
+
+    db.query(
       `UPDATE executorTasks SET status = 'pending', executedBy = NULL, result = NULL, processedAt = NULL, updatedAt = NOW() WHERE status = 'processing' AND updatedAt <= NOW() - INTERVAL 1 HOUR;`,
       function (error, results) {
         if (error) {
