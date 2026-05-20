@@ -1,0 +1,165 @@
+<%- include("../../admin/_head.ejs", { pageTitle }) %>
+<%- include("../../admin/_topbar.ejs") %>
+<%- include("../../admin/_sidebar.ejs") %>
+
+<div id="wpcontent">
+  <div id="wpbody-content">
+    <div class="wrap">
+
+      <% const typeColors = { income:'bg-success', expense:'bg-danger', transfer:'bg-info text-dark' }; %>
+
+      <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+        <div>
+          <h1 class="h2 mb-0"><i class="fa-solid fa-right-left fa-fw me-2"></i><%= tx.description %></h1>
+          <div class="text-muted small mt-1">
+            <span class="badge <%= typeColors[tx.type] || 'bg-secondary' %>"><%= tx.type %></span>
+            <% if (tx.isLocked) { %><span class="badge bg-secondary ms-1"><i class="fa-solid fa-lock fa-xs me-1"></i>Locked</span><% } %>
+            <span class="ms-2"><%= tx.txDate ? new Date(tx.txDate).toLocaleDateString('en-AU',{day:'numeric',month:'short',year:'numeric'}) : '—' %></span>
+          </div>
+        </div>
+        <div class="btn-toolbar gap-2">
+          <% if (canManage && !tx.isLocked) { %>
+            <a href="/dashboard/finance/transactions/<%= tx.transactionId %>/edit" class="btn btn-sm btn-warning">
+              <i class="fa-solid fa-pen me-1"></i>Edit
+            </a>
+            <form method="post" action="/dashboard/finance/transactions/<%= tx.transactionId %>/delete" class="d-inline"
+                  onsubmit="return confirm('Delete this transaction? This cannot be undone.')">
+              <button type="submit" class="btn btn-sm btn-danger"><i class="fa-solid fa-trash me-1"></i>Delete</button>
+            </form>
+          <% } %>
+          <a href="/dashboard/finance/transactions" class="btn btn-sm btn-outline-secondary">
+            <i class="fa-solid fa-arrow-left me-1"></i>Transactions
+          </a>
+        </div>
+      </div>
+
+      <%- include("../../admin/_notices.ejs") %>
+
+      <div class="row g-4 mb-4">
+        <%# Details card -%>
+        <div class="col-md-5">
+          <div class="card shadow-sm h-100">
+            <div class="card-header fw-semibold">Details</div>
+            <div class="card-body">
+              <dl class="mb-0">
+                <dt class="text-muted small">Amount</dt>
+                <dd class="fs-5 fw-bold <%= tx.type === 'income' ? 'text-success' : tx.type === 'expense' ? 'text-danger' : '' %>">
+                  <%= tx.type === 'income' ? '+' : tx.type === 'expense' ? '−' : '' %>
+                  <%= new Intl.NumberFormat('en-US',{style:'currency',currency:tx.currency||'USD'}).format((tx.amountCents||0)/100) %>
+                </dd>
+                <% if (tx.accountName) { %>
+                  <dt class="text-muted small mt-2"><%= tx.type === 'transfer' ? 'From Account' : 'Account' %></dt>
+                  <dd><%= tx.accountName %></dd>
+                <% } %>
+                <% if (tx.toAccountName) { %>
+                  <dt class="text-muted small mt-2">To Account</dt>
+                  <dd><%= tx.toAccountName %></dd>
+                <% } %>
+                <% if (tx.categoryName) { %>
+                  <dt class="text-muted small mt-2">Category</dt>
+                  <dd><span class="badge bg-secondary"><%= tx.categoryName %></span></dd>
+                <% } %>
+                <% if (tags && tags.length) { %>
+                  <dt class="text-muted small mt-2">Tags</dt>
+                  <dd>
+                    <% tags.forEach(function(tag) { %>
+                      <% if (tag.color) { %>
+                        <span class="badge rounded-pill me-1" style="background-color:<%= tag.color %>"><%= tag.name %></span>
+                      <% } else { %>
+                        <span class="badge bg-secondary me-1"><%= tag.name %></span>
+                      <% } %>
+                    <% }) %>
+                  </dd>
+                <% } %>
+                <% if (tx.notes) { %>
+                  <dt class="text-muted small mt-2">Notes</dt>
+                  <dd class="text-muted small"><%= tx.notes %></dd>
+                <% } %>
+                <dt class="text-muted small mt-2">Created</dt>
+                <dd class="text-muted small"><%= tx.createdAt ? new Date(tx.createdAt).toLocaleString('en-AU') : '—' %></dd>
+              </dl>
+            </div>
+          </div>
+        </div>
+
+        <%# Attachments -%>
+        <div class="col-md-7">
+          <div class="card shadow-sm h-100">
+            <div class="card-header d-flex justify-content-between align-items-center">
+              <span class="fw-semibold"><i class="fa-solid fa-paperclip me-1"></i>Attachments</span>
+              <% if (canManage && !tx.isLocked) { %>
+                <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#uploadModal">
+                  <i class="fa-solid fa-upload me-1"></i>Upload
+                </button>
+              <% } %>
+            </div>
+            <div class="card-body">
+              <% if (!attachments || !attachments.length) { %>
+                <p class="text-muted small mb-0">No attachments.</p>
+              <% } else { %>
+                <div class="row g-2">
+                  <% attachments.forEach(function(att) { %>
+                    <div class="col-12">
+                      <div class="border rounded p-2 d-flex justify-content-between align-items-center">
+                        <div class="d-flex align-items-center gap-2 min-w-0">
+                          <i class="fa-solid fa-file-pdf text-danger fa-fw"></i>
+                          <div class="min-w-0">
+                            <div class="fw-semibold small text-truncate"><%= att.label || att.fileName %></div>
+                            <div class="text-muted" style="font-size:0.72rem;"><%= att.fileName %> &middot; <%= Math.round((att.fileSizeBytes||0)/1024) %>KB</div>
+                          </div>
+                        </div>
+                        <div class="d-flex gap-1 ms-2">
+                          <a href="<%= att.fileUrl %>" target="_blank" rel="noopener noreferrer" class="btn btn-sm btn-outline-secondary">
+                            <i class="fa-solid fa-download"></i>
+                          </a>
+                          <% if (canManage && !tx.isLocked) { %>
+                            <form method="post" action="/dashboard/finance/attachments/<%= att.attachmentId %>/delete" class="d-inline"
+                                  onsubmit="return confirm('Delete this attachment?')">
+                              <button type="submit" class="btn btn-sm btn-outline-danger"><i class="fa-solid fa-trash"></i></button>
+                            </form>
+                          <% } %>
+                        </div>
+                      </div>
+                    </div>
+                  <% }) %>
+                </div>
+              <% } %>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+  <%- include("../../admin/_footer.ejs") %>
+</div>
+
+<%# Upload Modal -%>
+<% if (canManage && !tx.isLocked) { %>
+<div class="modal fade" id="uploadModal" tabindex="-1" aria-labelledby="uploadModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <form method="post" action="/dashboard/finance/transactions/<%= tx.transactionId %>/attachments" enctype="multipart/form-data">
+        <div class="modal-header">
+          <h5 class="modal-title" id="uploadModalLabel">Upload Attachment</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <div class="mb-3">
+            <label for="attFile" class="form-label fw-semibold">File (PDF) <span class="text-danger">*</span></label>
+            <input type="file" class="form-control" id="attFile" name="file" required accept=".pdf,application/pdf">
+          </div>
+          <div class="mb-3">
+            <label for="attLabel" class="form-label fw-semibold">Label</label>
+            <input type="text" class="form-control" id="attLabel" name="label" maxlength="200" placeholder="e.g. Receipt, Invoice">
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button type="submit" class="btn btn-primary"><i class="fa-solid fa-upload me-1"></i>Upload</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+<% } %>

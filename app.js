@@ -54,6 +54,7 @@ import("./cron/announcementExpiryCron.js");
 import("./cron/webstoreCommandSyncCron.js");
 import("./cron/badgeLuckpermsSyncCron.js");
 import("./cron/shopItemIndexCron.js");
+import("./cron/financeVendorFaviconCron.js");
 
 //
 // Website Related

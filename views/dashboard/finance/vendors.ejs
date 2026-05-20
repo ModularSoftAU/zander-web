@@ -1,0 +1,108 @@
+<%- include("../../admin/_head.ejs", { pageTitle }) %>
+<%- include("../../admin/_topbar.ejs") %>
+<%- include("../../admin/_sidebar.ejs") %>
+
+<div id="wpcontent">
+  <div id="wpbody-content">
+    <div class="wrap">
+
+      <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+        <h1 class="h2"><i class="fa-solid fa-building fa-fw me-2"></i>Vendors</h1>
+        <div class="btn-toolbar gap-2">
+          <% if (canManage) { %>
+            <a href="/dashboard/finance/vendors/create" class="btn btn-sm btn-primary">
+              <i class="fa-solid fa-plus me-1"></i>Add Vendor
+            </a>
+          <% } %>
+        </div>
+      </div>
+
+      <%- include("../../admin/_notices.ejs") %>
+
+      <%# Filter bar -%>
+      <div class="d-flex gap-2 mb-3 flex-wrap">
+        <a href="/dashboard/finance/vendors" class="btn btn-sm <%= !statusFilter || statusFilter === 'all' ? 'btn-secondary' : 'btn-outline-secondary' %>">All</a>
+        <a href="/dashboard/finance/vendors?status=active" class="btn btn-sm <%= statusFilter === 'active' ? 'btn-secondary' : 'btn-outline-secondary' %>">Active</a>
+        <a href="/dashboard/finance/vendors?status=inactive" class="btn btn-sm <%= statusFilter === 'inactive' ? 'btn-secondary' : 'btn-outline-secondary' %>">Inactive</a>
+      </div>
+
+      <% if (!vendors || !vendors.length) { %>
+        <div class="alert alert-info">No vendors found.
+          <% if (canManage) { %><a href="/dashboard/finance/vendors/create" class="alert-link ms-1">Add the first vendor &rarr;</a><% } %>
+        </div>
+      <% } else { %>
+        <div class="table-responsive">
+          <table class="table table-hover align-middle">
+            <thead>
+              <tr>
+                <th>Vendor</th>
+                <th>Category</th>
+                <th class="text-end">Total Spent</th>
+                <th class="text-center">Invoices</th>
+                <th>Status</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              <% vendors.forEach(function(v) {
+                const spentStr = new Intl.NumberFormat('en-US', {style:'currency',currency:'USD'}).format((v.totalSpentCents||0)/100);
+              %>
+                <tr>
+                  <td>
+                    <div class="d-flex align-items-center gap-2">
+                      <% if (v.faviconUrl) { %>
+                        <img src="<%= v.faviconUrl %>" width="24" height="24" alt="" class="rounded" onerror="this.style.display='none'">
+                      <% } else { %>
+                        <span class="rounded d-flex align-items-center justify-content-center bg-light border" style="width:24px;height:24px;font-size:12px;"><i class="fa-solid fa-building text-muted"></i></span>
+                      <% } %>
+                      <div>
+                        <a href="/dashboard/finance/vendors/<%= v.vendorId %>" class="fw-semibold text-decoration-none"><%= v.name %></a>
+                        <% if (v.website) { %>
+                          <div><a href="<%= v.website %>" target="_blank" rel="noopener noreferrer" class="text-muted small"><%= v.website.replace(/^https?:\/\/(www\.)?/,'').split('/')[0] %> <i class="fa-solid fa-arrow-up-right-from-square fa-xs"></i></a></div>
+                        <% } %>
+                      </div>
+                    </div>
+                  </td>
+                  <td>
+                    <% if (v.categoryName) { %>
+                      <span class="badge bg-secondary"><%= v.categoryName %></span>
+                    <% } else { %>
+                      <span class="text-muted small">—</span>
+                    <% } %>
+                  </td>
+                  <td class="text-end fw-semibold text-danger">
+                    <% if ((v.totalSpentCents||0) > 0) { %>−<%= spentStr %><% } else { %>—<% } %>
+                  </td>
+                  <td class="text-center">
+                    <% if ((v.unpaidInvoicesCount||0) > 0) { %>
+                      <span class="badge bg-warning text-dark me-1" title="Unpaid"><%= v.unpaidInvoicesCount %> unpaid</span>
+                    <% } %>
+                    <% if ((v.overdueInvoicesCount||0) > 0) { %>
+                      <span class="badge bg-danger" title="Overdue"><%= v.overdueInvoicesCount %> overdue</span>
+                    <% } %>
+                    <% if (!v.unpaidInvoicesCount && !v.overdueInvoicesCount) { %>
+                      <span class="text-muted small">—</span>
+                    <% } %>
+                  </td>
+                  <td>
+                    <span class="badge <%= v.isActive ? 'bg-success' : 'bg-secondary' %>"><%= v.isActive ? 'Active' : 'Inactive' %></span>
+                  </td>
+                  <td class="text-end">
+                    <div class="d-flex gap-1 justify-content-end">
+                      <a href="/dashboard/finance/vendors/<%= v.vendorId %>" class="btn btn-sm btn-outline-secondary">View</a>
+                      <% if (canManage) { %>
+                        <a href="/dashboard/finance/vendors/<%= v.vendorId %>/edit" class="btn btn-sm btn-warning">Edit</a>
+                      <% } %>
+                    </div>
+                  </td>
+                </tr>
+              <% }) %>
+            </tbody>
+          </table>
+        </div>
+      <% } %>
+
+    </div>
+  </div>
+  <%- include("../../admin/_footer.ejs") %>
+</div>

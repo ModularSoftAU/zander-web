@@ -1,0 +1,216 @@
+<%- include("../../admin/_head.ejs", { pageTitle }) %>
+<%- include("../../admin/_topbar.ejs") %>
+<%- include("../../admin/_sidebar.ejs") %>
+
+<div id="wpcontent">
+  <div id="wpbody-content">
+    <div class="wrap">
+
+      <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+        <h1 class="h2"><i class="fa-solid fa-chart-line fa-fw me-2"></i>Finance</h1>
+        <div class="btn-toolbar gap-2">
+          <% if (canManage) { %>
+            <a href="/dashboard/finance/transactions/create" class="btn btn-sm btn-primary">
+              <i class="fa-solid fa-plus me-1"></i>Add Transaction
+            </a>
+          <% } %>
+          <a href="/dashboard/finance/reports" class="btn btn-sm btn-outline-secondary">
+            <i class="fa-solid fa-file-chart-column me-1"></i>Reports
+          </a>
+        </div>
+      </div>
+
+      <%- include("../../admin/_notices.ejs") %>
+
+      <%# Account Balance Cards -%>
+      <div class="row g-3 mb-4">
+        <% if (!accounts || !accounts.length) { %>
+          <div class="col-12">
+            <div class="alert alert-info mb-0">
+              No accounts configured yet.
+              <% if (canManage) { %><a href="/dashboard/finance/settings" class="alert-link ms-1">Set up accounts &rarr;</a><% } %>
+            </div>
+          </div>
+        <% } else { %>
+          <% accounts.forEach(function(acct) { %>
+            <div class="col-12 col-sm-6 col-xl-3">
+              <div class="card shadow-sm h-100">
+                <div class="card-body">
+                  <div class="d-flex justify-content-between align-items-start mb-2">
+                    <span class="text-muted small text-uppercase fw-semibold"><%= acct.name %></span>
+                    <span class="badge bg-secondary text-capitalize"><%= (acct.accountType || 'bank').replace(/_/g,' ') %></span>
+                  </div>
+                  <div class="fs-4 fw-bold <%= acct.balanceCents < 0 ? 'text-danger' : 'text-success' %>">
+                    <%= new Intl.NumberFormat('en-US', { style: 'currency', currency: acct.currency || 'USD' }).format((acct.balanceCents || 0) / 100) %>
+                  </div>
+                  <div class="text-muted small mt-1">
+                    Opening: <%= new Intl.NumberFormat('en-US', { style: 'currency', currency: acct.currency || 'USD' }).format((acct.openingBalanceCents || 0) / 100) %>
+                  </div>
+                </div>
+              </div>
+            </div>
+          <% }) %>
+        <% } %>
+      </div>
+
+      <div class="row g-4 mb-4">
+
+        <%# Unpaid / Overdue Invoices -%>
+        <div class="col-lg-6">
+          <div class="card shadow-sm h-100">
+            <div class="card-header d-flex justify-content-between align-items-center">
+              <span class="fw-semibold"><i class="fa-solid fa-file-invoice fa-fw me-2 text-warning"></i>Unpaid Invoices</span>
+              <a href="/dashboard/finance/invoices?status=pending" class="btn btn-sm btn-outline-secondary">View All</a>
+            </div>
+            <div class="card-body p-0">
+              <% if (!unpaidInvoices || !unpaidInvoices.length) { %>
+                <div class="p-3 text-muted small">No unpaid invoices.</div>
+              <% } else { %>
+                <ul class="list-group list-group-flush">
+                  <% unpaidInvoices.forEach(function(inv) {
+                    const isOverdue = inv.status === 'overdue';
+                    const dueStr = inv.dueDate ? new Date(inv.dueDate).toLocaleDateString('en-AU', { day:'numeric', month:'short', year:'numeric' }) : '—';
+                    const amtStr = new Intl.NumberFormat('en-US', { style:'currency', currency: inv.currency || 'USD' }).format((inv.amountCents||0)/100);
+                  %>
+                    <li class="list-group-item d-flex justify-content-between align-items-center py-2 px-3">
+                      <div>
+                        <a href="/dashboard/finance/invoices/<%= inv.invoiceId %>" class="fw-semibold text-decoration-none"><%= inv.invoiceNumber %></a>
+                        <div class="text-muted small"><%= inv.vendorName %></div>
+                      </div>
+                      <div class="text-end">
+                        <div class="fw-semibold <%= isOverdue ? 'text-danger' : '' %>"><%= amtStr %></div>
+                        <div class="small <%= isOverdue ? 'text-danger' : 'text-muted' %>">Due <%= dueStr %></div>
+                      </div>
+                    </li>
+                  <% }) %>
+                </ul>
+              <% } %>
+            </div>
+          </div>
+        </div>
+
+        <%# Recent Transactions -%>
+        <div class="col-lg-6">
+          <div class="card shadow-sm h-100">
+            <div class="card-header d-flex justify-content-between align-items-center">
+              <span class="fw-semibold"><i class="fa-solid fa-arrows-left-right fa-fw me-2 text-primary"></i>Recent Transactions</span>
+              <a href="/dashboard/finance/transactions" class="btn btn-sm btn-outline-secondary">View All</a>
+            </div>
+            <div class="card-body p-0">
+              <% if (!recentTransactions || !recentTransactions.length) { %>
+                <div class="p-3 text-muted small">No transactions yet.</div>
+              <% } else { %>
+                <ul class="list-group list-group-flush">
+                  <% recentTransactions.forEach(function(tx) {
+                    const amtStr = new Intl.NumberFormat('en-US', { style:'currency', currency: tx.currency||'USD' }).format((tx.amountCents||0)/100);
+                    const dateStr = tx.transactionDate ? new Date(tx.transactionDate).toLocaleDateString('en-AU', { day:'numeric', month:'short' }) : '—';
+                    const typeColors = { income: 'text-success', expense: 'text-danger', transfer: 'text-info' };
+                    const typeIcons = { income: 'fa-arrow-down', expense: 'fa-arrow-up', transfer: 'fa-arrows-left-right' };
+                  %>
+                    <li class="list-group-item d-flex justify-content-between align-items-center py-2 px-3">
+                      <div class="d-flex align-items-center gap-2">
+                        <i class="fa-solid <%= typeIcons[tx.type] || 'fa-circle' %> fa-fw <%= typeColors[tx.type] || '' %>"></i>
+                        <div>
+                          <div class="small fw-semibold"><%= tx.description || tx.vendorName || tx.type %></div>
+                          <div class="text-muted" style="font-size:0.75rem;"><%= tx.accountName %><% if (tx.vendorName) { %> &middot; <%= tx.vendorName %><% } %></div>
+                        </div>
+                      </div>
+                      <div class="text-end">
+                        <div class="fw-semibold <%= typeColors[tx.type] || '' %>"><%= tx.type === 'expense' ? '−' : tx.type === 'income' ? '+' : '' %><%= amtStr %></div>
+                        <div class="text-muted" style="font-size:0.75rem;"><%= dateStr %></div>
+                      </div>
+                    </li>
+                  <% }) %>
+                </ul>
+              <% } %>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <div class="row g-4 mb-4">
+
+        <%# Top Vendors -%>
+        <div class="col-lg-5">
+          <div class="card shadow-sm h-100">
+            <div class="card-header d-flex justify-content-between align-items-center">
+              <span class="fw-semibold"><i class="fa-solid fa-building fa-fw me-2 text-secondary"></i>Top Vendors (30 days)</span>
+              <a href="/dashboard/finance/vendors" class="btn btn-sm btn-outline-secondary">All Vendors</a>
+            </div>
+            <div class="card-body p-0">
+              <% if (!topVendors || !topVendors.length) { %>
+                <div class="p-3 text-muted small">No vendor spend recorded yet.</div>
+              <% } else { %>
+                <ul class="list-group list-group-flush">
+                  <% topVendors.forEach(function(v) {
+                    const spentStr = new Intl.NumberFormat('en-US', { style:'currency', currency:'USD' }).format((v.totalSpentCents||0)/100);
+                  %>
+                    <li class="list-group-item d-flex justify-content-between align-items-center py-2 px-3">
+                      <div class="d-flex align-items-center gap-2">
+                        <% if (v.faviconUrl) { %>
+                          <img src="<%= v.faviconUrl %>" width="20" height="20" alt="" class="rounded" onerror="this.style.display='none'">
+                        <% } else { %>
+                          <span class="rounded d-flex align-items-center justify-content-center bg-light border" style="width:20px;height:20px;font-size:10px;"><i class="fa-solid fa-building text-muted"></i></span>
+                        <% } %>
+                        <a href="/dashboard/finance/vendors/<%= v.vendorId %>" class="text-decoration-none fw-semibold"><%= v.name %></a>
+                      </div>
+                      <span class="fw-semibold text-danger">−<%= spentStr %></span>
+                    </li>
+                  <% }) %>
+                </ul>
+              <% } %>
+            </div>
+          </div>
+        </div>
+
+        <%# Budget Summary -%>
+        <div class="col-lg-7">
+          <div class="card shadow-sm h-100">
+            <div class="card-header d-flex justify-content-between align-items-center">
+              <span class="fw-semibold"><i class="fa-solid fa-gauge fa-fw me-2 text-info"></i>Operations Budget (this month)</span>
+              <a href="/dashboard/finance/budget" class="btn btn-sm btn-outline-secondary">Full Budget</a>
+            </div>
+            <div class="card-body p-0">
+              <% if (!budgetSummary || !budgetSummary.length) { %>
+                <div class="p-3 text-muted small">No budget entries configured.
+                  <% if (canManage) { %><a href="/dashboard/finance/budget" class="ms-1">Set up budget &rarr;</a><% } %>
+                </div>
+              <% } else { %>
+                <div class="table-responsive">
+                  <table class="table table-sm align-middle mb-0">
+                    <thead><tr><th>Line Item</th><th class="text-end">Budget</th><th class="text-end">Actual</th><th class="text-end">Variance</th></tr></thead>
+                    <tbody>
+                      <% budgetSummary.forEach(function(b) {
+                        const budgetStr = new Intl.NumberFormat('en-US', { style:'currency', currency: b.currency||'USD' }).format((b.monthlyBudgetCents||0)/100);
+                        const actualStr = new Intl.NumberFormat('en-US', { style:'currency', currency: b.currency||'USD' }).format((b.actualCents||0)/100);
+                        const variance = (b.monthlyBudgetCents||0) - (b.actualCents||0);
+                        const varianceStr = new Intl.NumberFormat('en-US', { style:'currency', currency: b.currency||'USD' }).format(Math.abs(variance)/100);
+                        const isOver = variance < 0;
+                      %>
+                        <tr>
+                          <td>
+                            <% if (b.faviconUrl) { %><img src="<%= b.faviconUrl %>" width="16" height="16" class="rounded me-1" onerror="this.style.display='none'"><% } %>
+                            <%= b.label %>
+                          </td>
+                          <td class="text-end text-muted"><%= budgetStr %></td>
+                          <td class="text-end fw-semibold"><%= actualStr %></td>
+                          <td class="text-end <%= isOver ? 'text-danger fw-semibold' : 'text-success' %>">
+                            <%= isOver ? '▲ +' : '▼ ' %><%= varianceStr %>
+                          </td>
+                        </tr>
+                      <% }) %>
+                    </tbody>
+                  </table>
+                </div>
+              <% } %>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+  </div>
+  <%- include("../../admin/_footer.ejs") %>
+</div>

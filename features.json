@@ -35,6 +35,7 @@
   "vote": true,
   "events": true,
   "webstore": true,
+  "finance": true,
 
   "smDiscord": true,
   "smFacebook": true,
