@@ -43,6 +43,7 @@ import {
   cancelGuildScheduledEvent,
   postEventDiscordMessage,
   createGuildScheduledEvent,
+  postReviewRequestDiscordMessage,
 } from "../../services/eventDiscordService.js";
 
 import { ChannelType } from "discord.js";
@@ -303,6 +304,21 @@ export default function eventsApiRoute(app, _config, _db, features, _lang) {
     try {
       const { actorId, actorName } = actorFromReq(req);
       const event = await submitForReview(eventId, actorId, actorName);
+
+      // Fire review notification asynchronously — don't block the response
+      setImmediate(async () => {
+        try {
+          const reviewChannelId = config?.events?.reviewChannelId || null;
+          const siteBaseUrl = config?.siteConfiguration?.siteUrl || process.env.siteAddress || "";
+          if (reviewChannelId) {
+            const fullEvent = await getEventById(eventId);
+            await postReviewRequestDiscordMessage(fullEvent, actorName, reviewChannelId, siteBaseUrl);
+          }
+        } catch (e) {
+          console.error("[Events] Review notification failed:", e.message);
+        }
+      });
+
       return res.send({ success: true, data: event, message: "Event submitted for review" });
     } catch (err) {
       console.error("[Events API] submit-review:", err);

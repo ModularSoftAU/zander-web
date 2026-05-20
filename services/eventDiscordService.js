@@ -104,6 +104,59 @@ function buildEventButton(event, siteBaseUrl) {
 }
 
 /**
+ * Post a review-request notification embed to the configured review channel.
+ * Sent when an event is submitted for review by an editor.
+ */
+export async function postReviewRequestDiscordMessage(event, submitterName, channelId, siteBaseUrl) {
+  if (!client?.isReady?.()) throw new Error("Discord client not ready");
+  if (!channelId) throw new Error("No review channel ID configured");
+
+  const channel = await client.channels.fetch(channelId);
+  if (!channel?.isTextBased?.()) {
+    throw new Error(`Channel ${channelId} is not text-based`);
+  }
+
+  const startTimestamp = Math.floor(new Date(event.startAt).getTime() / 1000);
+
+  const embed = new EmbedBuilder()
+    .setTitle(`📋 Event Pending Review: ${event.title}`)
+    .setColor(0xf0a500)
+    .setDescription(
+      event.description
+        ? htmlToMarkdown(event.description).slice(0, 512) + (event.description.length > 512 ? "…" : "")
+        : null
+    )
+    .addFields(
+      { name: "Submitted by", value: submitterName || "Unknown", inline: true },
+      { name: "Starts", value: `<t:${startTimestamp}:F>`, inline: true }
+    )
+    .setFooter({ text: `Event ID: ${event.eventId}` })
+    .setTimestamp();
+
+  if (event.thumbnailUrl || event.logoUrl) embed.setThumbnail(event.thumbnailUrl || event.logoUrl);
+  if (event.bannerUrl) embed.setImage(event.bannerUrl);
+
+  const normalizedUrl = (siteBaseUrl || "").replace(/\/$/, "");
+  const reviewUrl = `${normalizedUrl}/dashboard/events/view?eventId=${event.eventId}`;
+  const row = new ActionRowBuilder().addComponents(
+    new ButtonBuilder()
+      .setStyle(ButtonStyle.Link)
+      .setLabel("Review Event")
+      .setURL(reviewUrl)
+  );
+
+  await channel.send({ embeds: [embed], components: [row] });
+
+  await logEventAudit(
+    event.eventId,
+    null,
+    "System",
+    "discord_review_notification_sent",
+    `Review notification posted to channel ${channelId}`
+  );
+}
+
+/**
  * Post a Discord announcement message on publish.
  * Returns the message ID.
  */
