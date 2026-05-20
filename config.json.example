@@ -39,7 +39,8 @@
       "adminLog": "WEBHOOKURL",
       "staffChannel": "WEBHOOKURL",
       "staffAuditLog": "WEBHOOKURL",
-      "staffPunishmentNotifications": "WEBHOOKURL"
+      "staffPunishmentNotifications": "WEBHOOKURL",
+      "webstoreChannel": "WEBHOOKURL"
     },
     "nicknameReportChannelId": "786042085937643540",
     "roles": {

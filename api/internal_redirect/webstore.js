@@ -106,10 +106,8 @@ function verifyStripeSignature({ signatureHeader, rawPayload, secret }) {
 // Discord notification helper
 // ---------------------------------------------------------------------------
 
-async function notifyStaff(config, title, fields, color = Colors.Green) {
-  const webhookUrl = config?.discord?.webhooks?.staffChannel;
+async function sendToWebhook(webhookUrl, title, fields, color = Colors.Green) {
   if (!webhookUrl) return;
-
   try {
     const hook = new Webhook(webhookUrl);
     const embed = new MessageBuilder().setTitle(title).setColor(color).setTimestamp();
@@ -120,6 +118,33 @@ async function notifyStaff(config, title, fields, color = Colors.Green) {
   } catch (err) {
     console.error("[webstore] Discord notification failed:", err.message);
   }
+}
+
+async function notifyStaff(config, title, fields, color = Colors.Green) {
+  await sendToWebhook(config?.discord?.webhooks?.staffChannel, title, fields, color);
+}
+
+async function notifyPurchase(config, purchase) {
+  const webhookUrl = config?.discord?.webhooks?.webstoreChannel;
+  if (!webhookUrl) return;
+
+  const recipient = purchase.recipientMinecraftUsername || "—";
+  const purchaser = purchase.purchaserMinecraftUsername || "—";
+  const price = `${(purchase.currency || "USD").toUpperCase()} ${(purchase.amountCents / 100).toFixed(2)}`;
+  const type = purchase.purchaseType === "subscription" ? "Subscription" : "One-time";
+
+  const fields = [
+    ["Package", purchase.itemName, false],
+    ["Player", recipient, true],
+    ["Price", price, true],
+    ["Type", type, true],
+  ];
+
+  if (purchase.isGift) {
+    fields.push(["Gifted by", purchaser, true]);
+  }
+
+  await sendToWebhook(webhookUrl, "🛒 New Purchase", fields, Colors.Gold);
 }
 
 // ---------------------------------------------------------------------------
@@ -331,21 +356,24 @@ async function handleCheckoutCompleted(event, config) {
     currency: purchase.currency,
   });
 
-  await notifyStaff(
-    config,
-    `${purchase.itemName} Purchased`,
-    [
-      ["Player", purchase.recipientMinecraftUsername, true],
-      ["Type", purchase.purchaseType === "subscription" ? "Subscription" : "One-time", true],
+  await Promise.all([
+    notifyStaff(
+      config,
+      `${purchase.itemName} Purchased`,
       [
-        "Amount",
-        `${(purchase.currency || "usd").toUpperCase()} ${(purchase.amountCents / 100).toFixed(2)}`,
-        true,
+        ["Player", purchase.recipientMinecraftUsername, true],
+        ["Type", purchase.purchaseType === "subscription" ? "Subscription" : "One-time", true],
+        [
+          "Amount",
+          `${(purchase.currency || "usd").toUpperCase()} ${(purchase.amountCents / 100).toFixed(2)}`,
+          true,
+        ],
+        ["Gifted", purchase.isGift ? "Yes" : "No", true],
       ],
-      ["Gifted", purchase.isGift ? "Yes" : "No", true],
-    ],
-    Colors.Green
-  );
+      Colors.Green
+    ),
+    notifyPurchase(config, purchase),
+  ]);
 }
 
 // ---------------------------------------------------------------------------
