@@ -113,7 +113,7 @@
                     My account &mdash; <strong><%= username %></strong>
                   </label>
                 </div>
-                <div class="form-check">
+                <div class="form-check" id="giftRadioWrapper">
                   <input class="form-check-input" type="radio" name="purchaseFor"
                     id="purchaseForGift" value="gift">
                   <label class="form-check-label" for="purchaseForGift">
@@ -158,6 +158,7 @@
           const submitBtn        = document.getElementById("modalSubmitBtn");
           const selfRadio        = document.getElementById("purchaseForSelf");
           const giftRadio        = document.getElementById("purchaseForGift");
+          const giftRadioWrapper = document.getElementById("giftRadioWrapper");
           const giftSection      = document.getElementById("giftSection");
           const recipientInput   = document.getElementById("recipientUsername");
           const giftSuggestions  = document.getElementById("giftSuggestions");
@@ -184,9 +185,17 @@
             recipientInput.value = "";
             clearSuggestions();
 
+            // Subscriptions cannot be gifted — hide the gift option
+            const isSubscription = type === "subscription";
+            giftRadioWrapper.classList.toggle("d-none", isSubscription);
+            if (isSubscription && giftRadio.checked) {
+              selfRadio.checked = true;
+              updateGiftSection();
+            }
+
             // Show subscription notice if applicable
             if (subscriptionNote) {
-              subscriptionNote.classList.toggle("d-none", type !== "subscription");
+              subscriptionNote.classList.toggle("d-none", !isSubscription);
             }
           });
 

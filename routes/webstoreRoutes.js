@@ -153,6 +153,11 @@ export default function webstoreRoutes(app, config, features) {
     let recipientUsername;
     let isGift = false;
 
+    if (purchaseFor === "gift" && item.purchaseType === "subscription") {
+      setBannerCookie("warning", "Subscriptions cannot be gifted.", res);
+      return res.redirect("/webstore");
+    }
+
     if (purchaseFor === "gift") {
       const raw = typeof req.body?.recipientUsername === "string"
         ? req.body.recipientUsername.trim()
