@@ -44,6 +44,10 @@ import {
   updateSubscriptionStatus,
   upsertSubscription,
 } from "../../controllers/webstoreController.js";
+import {
+  createTransaction,
+  getDefaultWebstoreAccount,
+} from "../../controllers/financeController.js";
 
 // ---------------------------------------------------------------------------
 // Stripe signature verification
@@ -355,6 +359,28 @@ async function handleCheckoutCompleted(event, config) {
     amountCents: purchase.amountCents,
     currency: purchase.currency,
   });
+
+  // --- Record income in finance ledger ---
+  try {
+    const account = await getDefaultWebstoreAccount();
+    if (account) {
+      const recipient = purchase.recipientMinecraftUsername || purchase.purchaserMinecraftUsername || "unknown";
+      await createTransaction({
+        type: "income",
+        amountCents: purchase.amountCents,
+        currency: purchase.currency || "USD",
+        accountId: account.accountId,
+        description: `${purchase.itemName} — ${recipient}`,
+        notes: `Webstore purchase #${purchase.purchaseId}. Type: ${purchase.purchaseType}.${purchase.isGift ? ` Gift from ${purchase.purchaserMinecraftUsername}.` : ""}`,
+        transactionDate: new Date().toISOString().slice(0, 10),
+        createdByUserId: 0,
+      });
+    } else {
+      console.warn("[webstore] No finance account found — skipping income record for purchase", purchase.purchaseId);
+    }
+  } catch (err) {
+    console.error("[webstore] Failed to record finance income for purchase", purchase.purchaseId, err.message);
+  }
 
   await Promise.all([
     notifyStaff(

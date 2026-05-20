@@ -36,6 +36,14 @@ export async function getAccountById(id) {
   return prisma.financeAccounts.findUnique({ where: { accountId: id } });
 }
 
+/** Returns the first Stripe account, falling back to any account. Used by automated income recording. */
+export async function getDefaultWebstoreAccount() {
+  return (
+    (await prisma.financeAccounts.findFirst({ where: { accountType: "stripe" }, orderBy: { accountId: "asc" } })) ??
+    (await prisma.financeAccounts.findFirst({ orderBy: { accountId: "asc" } }))
+  );
+}
+
 export async function createAccount({ name, accountType, openingBalanceCents, currency, notes }) {
   if (!name || !name.trim()) throw new Error("Account name is required.");
   return prisma.financeAccounts.create({
