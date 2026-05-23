@@ -431,12 +431,13 @@ export default function dashboardFinanceRoute(app, fetch, config, db, features, 
     try {
       const { limit, page, offset } = getPagination(req.query);
       const statusFilter = req.query.status || null;
-      const filters = { status: statusFilter, limit, offset };
+      const vendorId = req.query.vendorId ? parseInt(req.query.vendorId, 10) : null;
+      const filters = { status: statusFilter, vendorId, limit, offset };
 
       const [base, invoices, total] = await Promise.all([
         baseViewData(req, features),
         getInvoices(filters),
-        getInvoiceCount({ status: statusFilter }),
+        getInvoiceCount({ status: statusFilter, vendorId }),
       ]);
 
       res.header("content-type", "text/html; charset=utf-8").send(
@@ -448,10 +449,12 @@ export default function dashboardFinanceRoute(app, fetch, config, db, features, 
           ...base,
           invoices,
           total,
+          totalCount: total,
           page,
           limit,
           totalPages: Math.ceil(total / limit),
           statusFilter,
+          vendorId,
         })
       );
     } catch (error) {
@@ -658,6 +661,7 @@ export default function dashboardFinanceRoute(app, fetch, config, db, features, 
           ...base,
           payments,
           total,
+          totalCount: total,
           page,
           limit,
           totalPages: Math.ceil(total / limit),
@@ -819,6 +823,7 @@ export default function dashboardFinanceRoute(app, fetch, config, db, features, 
           ...base,
           transactions,
           total,
+          totalCount: total,
           page,
           limit,
           totalPages: Math.ceil(total / limit),
@@ -1096,10 +1101,12 @@ export default function dashboardFinanceRoute(app, fetch, config, db, features, 
       const now = new Date();
       const currentYear = now.getFullYear();
       const currentMonth = now.getMonth() + 1;
+      const selectedYear = parseInt(req.query.year, 10) || currentYear;
+      const selectedMonth = parseInt(req.query.month, 10) || currentMonth;
 
-      const [base, budgetVsActual, allEntries, vendors, categories] = await Promise.all([
+      const [base, budgetItems, allEntries, vendors, categories] = await Promise.all([
         baseViewData(req, features),
-        getBudgetVsActual(currentYear, currentMonth),
+        getBudgetVsActual(selectedYear, selectedMonth),
         getAllBudgetEntries(),
         getVendors({ activeOnly: true }),
         getCategories(),
@@ -1112,12 +1119,14 @@ export default function dashboardFinanceRoute(app, fetch, config, db, features, 
           req,
           features,
           ...base,
-          budgetVsActual,
+          budgetItems,
           allEntries,
           vendors,
           categories,
           currentYear,
           currentMonth,
+          selectedYear,
+          selectedMonth,
         })
       );
     } catch (error) {
