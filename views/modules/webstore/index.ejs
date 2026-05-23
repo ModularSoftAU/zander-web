@@ -36,7 +36,11 @@
 
     <%# Product grid -%>
     <div class="row g-4">
-      <% if (!items || !items.length) { %>
+      <% if (itemsError) { %>
+        <div class="col-12">
+          <div class="alert alert-warning">Webstore items are temporarily unavailable. Please try again shortly.</div>
+        </div>
+      <% } else if (!items || !items.length) { %>
         <div class="col-12">
           <div class="alert alert-info">The webstore is being stocked — check back soon!</div>
         </div>

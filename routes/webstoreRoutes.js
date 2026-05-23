@@ -82,6 +82,7 @@ export default function webstoreRoutes(app, config, features) {
     }
 
     let items = [];
+    let itemsError = false;
     try {
       items = (await getWebstoreItems(preferredCurrency)).map((item) => ({
         ...item,
@@ -92,7 +93,7 @@ export default function webstoreRoutes(app, config, features) {
       console.log(`[webstore] loaded ${items.length} item(s) for storefront`);
     } catch (err) {
       console.error("[webstore] Failed to load items:", err.message);
-      setBannerCookie("warning", "Webstore items are temporarily unavailable.", res);
+      itemsError = true;
     }
 
     return res.view("modules/webstore/index", {
@@ -104,6 +105,7 @@ export default function webstoreRoutes(app, config, features) {
       globalImage: await getGlobalImage(),
       announcementWeb: await getWebAnnouncement(),
       items,
+      itemsError,
       username: loggedIn ? req.session.user.username : null,
       loggedIn,
     });

@@ -215,8 +215,13 @@ export function resolveCommandTemplate(template, metadata) {
 export async function getWebstoreItems(preferredCurrency = null) {
   const prices = await fetchStripePrices();
 
+  const unexpanded = prices.filter((p) => typeof p.product === "string");
+  if (unexpanded.length > 0) {
+    console.warn(`[webstore] ${unexpanded.length} price(s) have an unexpanded product reference — they will be excluded from the storefront`);
+  }
+
   const items = prices
-    .filter((p) => p.active && p.product?.active)
+    .filter((p) => p.active && typeof p.product === "object" && p.product?.active)
     .map((p) => {
       const { amount, currency } = resolveStripePriceAmount(p, preferredCurrency);
       const sortKey =
