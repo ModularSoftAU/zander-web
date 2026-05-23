@@ -14,32 +14,74 @@ All permission nodes follow dot-notation and are managed via LuckPerms. Wildcard
 | `zander.web.dashboard` | Access the main dashboard |
 | `zander.web.logs` | View system logs and audit trails |
 | `zander.web.announcements` | Create, edit, and view announcements |
-| `zander.web.announcement` | Internal API access for announcements |
 | `zander.web.application` | Manage player applications |
 | `zander.web.server` | Manage game servers |
-| `zander.web.rank` | Manage player ranks |
+| `zander.web.rank` | Manage individual player ranks via the API |
+| `zander.web.ranks` | Access the ranks dashboard page |
 | `zander.web.scheduler` | Schedule announcements/messages |
 | `zander.web.vault` | Access vault management |
 | `zander.web.bridge` | Manage bridge/integrations |
-| `zander.web.punishment.view` | View the global punishments list |
-| `zander.web.punishments` | View punishments on user profiles |
-| `zander.web.audit` | Run audit commands in Discord |
-| `zander.web.nicknamecheck` | Run nickname check commands |
+| `zander.web.badges` | Access the badge management dashboard (create, edit, assign, delete badges) |
+
+### Events
+
+| Permission Node | Description |
+|---|---|
+| `zander.web.events` | Access the events dashboard (view only) |
+| `zander.web.events.edit` | Create and edit events |
+| `zander.web.events.review` | Review and publish events (implies edit access) |
+
+### Finance
+
+| Permission Node | Description |
+|---|---|
+| `zander.web.finance` | View the finance dashboard (accounts, transactions, categories) |
+| `zander.web.finance.manage` | Create, edit, and delete finance records |
+| `zander.web.finance.*` | Equivalent to both `zander.web.finance` and `zander.web.finance.manage` |
+
+### Forms
+
+| Permission Node | Description |
+|---|---|
+| `zander.web.forms` | Access the forms dashboard |
+| `zander.web.forms.{slug}` | Access a specific form by its slug (dynamic) |
+| `zander.web.forms.*` | Access all forms |
 
 ### Support Tickets
 
 | Permission Node | Description |
 |---|---|
-| `zander.web.tickets` | Access the support ticket dashboard |
+| `zander.web.ticket` | Access the support ticket dashboard |
+| `zander.web.tickets` | Access ticket category listings |
 | `zander.web.tickets.{slug}` | Access a specific ticket category (dynamic, based on category slug) |
 | `zander.web.tickets.*` | Access all ticket categories |
-| `zander.web.ticket.escalate` | Escalate support tickets |
+| `zander.web.ticket.escalate` | Escalate and de-escalate support tickets |
+| `zander.web.tickets.manageparticipants` | Add and remove participants on support tickets |
+
+### Punishments & Moderation
+
+| Permission Node | Description |
+|---|---|
+| `zander.web.punishment.view` | View the global punishments list |
+| `zander.web.punishment.manage` | Manage (edit/delete) punishments |
+| `zander.web.punishments` | View punishments on user profiles |
+| `zander.web.web-punishments` | Access the web-based punishment dashboard |
+| `zander.web.audit` | View user audit entries on profiles |
+| `zander.web.reports` | View player reports on profiles |
+
+### Voting
+
+| Permission Node | Description |
+|---|---|
+| `zander.web.voting` | Access the voting site management dashboard |
 
 ### Forums
 
 | Permission Node | Description |
 |---|---|
+| `zander.web.forums` | Access the forums management dashboard |
 | `zander.forums.moderate` | General forum moderation rights |
+| `zander.forums.view` | View forum content |
 | `zander.forums.post.delete` | Delete forum posts |
 | `zander.forums.viewArchived` | View archived forum discussions |
 | `zander.forums.discussion.sticky` | Sticky forum discussions |
@@ -256,7 +298,7 @@ The webstore posts to a Discord webhook on key events. Configure the webhook URL
 
 ### Database migration
 
-Run `prisma/migrations/0011_webstore/migration.sql` against your database (or run `prisma migrate deploy` if using Prisma Migrate):
+Run `prisma/migrations/0017_webstore/migration.sql` against your database (or run `prisma migrate deploy` if using Prisma Migrate):
 
 | Table | Purpose |
 |---|---|
