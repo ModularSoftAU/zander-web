@@ -68,8 +68,11 @@ export default function webstoreRoutes(app, config, features) {
     const locale = parseLocale(req);
     const preferredCurrency = preferredCurrencyFromLocale(locale);
 
+    console.log(`[webstore] storefront visited | user=${loggedIn ? req.session.user.userId : "guest"} locale=${locale} currency=${preferredCurrency || "default"}`);
+
     // Require a linked Minecraft account before allowing purchases
     if (loggedIn && !req.session?.user?.username) {
+      console.log(`[webstore] user ${req.session.user.userId} has no linked Minecraft account — redirecting to profile`);
       setBannerCookie(
         "warning",
         "Please link your Minecraft account before purchasing.",
@@ -86,6 +89,7 @@ export default function webstoreRoutes(app, config, features) {
         purchaseLabel: item.purchaseType === "subscription" ? "Subscribe" : "Buy Now",
         badgeLabel: item.purchaseType === "subscription" ? "Monthly" : "One-time",
       }));
+      console.log(`[webstore] loaded ${items.length} item(s) for storefront`);
     } catch (err) {
       console.error("[webstore] Failed to load items:", err.message);
       setBannerCookie("warning", "Webstore items are temporarily unavailable.", res);
@@ -117,15 +121,19 @@ export default function webstoreRoutes(app, config, features) {
 
     const purchaserUsername = req.session?.user?.username;
     if (!purchaserUsername) {
+      console.log(`[webstore] checkout attempted by user ${req.session?.user?.userId} with no linked Minecraft account`);
       setBannerCookie("warning", "Please link your Minecraft account before purchasing.", res);
       return res.redirect("/profile");
     }
 
     const itemSlug = typeof req.body?.itemSlug === "string" ? req.body.itemSlug.trim() : "";
     if (!itemSlug) {
+      console.log(`[webstore] checkout attempted with missing itemSlug | user=${req.session.user.userId}`);
       setBannerCookie("warning", "Invalid item.", res);
       return res.redirect("/webstore");
     }
+
+    console.log(`[webstore] checkout initiated | user=${req.session.user.userId} username=${purchaserUsername} itemSlug=${itemSlug}`);
 
     let item;
     try {
@@ -199,6 +207,7 @@ export default function webstoreRoutes(app, config, features) {
         purchaserMinecraftUsername: purchaserUsername,
         isGift,
       });
+      console.log(`[webstore] Stripe session created | sessionId=${session.id} user=${req.session.user.userId} item=${item.slug} recipient=${recipientUsername} isGift=${isGift}`);
     } catch (err) {
       console.error("[webstore] Stripe checkout session error:", err.message);
       setBannerCookie(
@@ -219,16 +228,19 @@ export default function webstoreRoutes(app, config, features) {
         stripeSessionId: session.id,
         isGift,
       });
+      console.log(`[webstore] pending purchase recorded | sessionId=${session.id} user=${req.session.user.userId} item=${item.slug}`);
     } catch (err) {
       // Log but don't block — the webhook can still look up the session ID
       console.error("[webstore] createPendingPurchase error:", err.message);
     }
 
     if (!session.url) {
+      console.error(`[webstore] Stripe session has no URL | sessionId=${session.id}`);
       setBannerCookie("danger", "Checkout session creation failed. Please try again.", res);
       return res.redirect("/webstore");
     }
 
+    console.log(`[webstore] redirecting to Stripe checkout | sessionId=${session.id}`);
     return res.redirect(session.url);
   });
 
@@ -241,6 +253,9 @@ export default function webstoreRoutes(app, config, features) {
     if (!isLoggedIn(req)) {
       return res.redirect("/login?returnTo=/webstore/thank-you");
     }
+
+    const sessionId = req.query?.session_id || "unknown";
+    console.log(`[webstore] thank-you page visited | user=${req.session.user.userId} sessionId=${sessionId}`);
 
     return res.view("modules/webstore/thank-you", {
       pageTitle: "Thank You",
@@ -272,6 +287,8 @@ export default function webstoreRoutes(app, config, features) {
     const userId = req.session.user.userId;
     const minecraftUsername = req.session.user.username;
 
+    console.log(`[webstore] purchase history requested | user=${userId} page=${page} giftPage=${giftPage}`);
+
     let purchases = [];
     let totalCount = 0;
     let receivedGifts = [];
@@ -284,6 +301,7 @@ export default function webstoreRoutes(app, config, features) {
         minecraftUsername ? getReceivedGifts(minecraftUsername, limit, giftOffset) : [],
         minecraftUsername ? getReceivedGiftsCount(minecraftUsername) : 0,
       ]);
+      console.log(`[webstore] purchase history loaded | user=${userId} purchases=${totalCount} receivedGifts=${receivedGiftsTotal}`);
     } catch (err) {
       console.error("[webstore] getPurchaseHistory error:", err.message);
       setBannerCookie("warning", "Could not load purchase history right now.", res);
@@ -327,6 +345,7 @@ export default function webstoreRoutes(app, config, features) {
     let raisedCents = 0;
     try {
       raisedCents = await getMonthlyPurchaseTotals(startOfMonth, endOfMonth);
+      console.log(`[webstore] give page loaded | raisedCents=${raisedCents} goalCents=${monthlyGoalCents} progress=${Math.min(100, Math.round((raisedCents / monthlyGoalCents) * 100))}%`);
     } catch (err) {
       console.error("[webstore] getMonthlyPurchaseTotals error:", err.message);
     }
