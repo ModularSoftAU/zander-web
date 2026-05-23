@@ -11,15 +11,6 @@
     <artifactId>zander-hub</artifactId>
 
 
-    <build>
-        <resources>
-            <resource>
-                <directory>src/main/resources</directory>
-                <filtering>true</filtering>
-            </resource>
-        </resources>
-    </build>
-
     <repositories>
         <repository>
             <id>papermc</id>
