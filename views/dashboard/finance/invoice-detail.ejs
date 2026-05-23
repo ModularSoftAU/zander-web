@@ -180,7 +180,7 @@
                         <i class="fa-solid fa-download"></i>
                       </a>
                       <% if (canManage) { %>
-                        <form method="post" action="/dashboard/finance/attachments/<%= att.attachmentId %>/delete" class="d-inline"
+                        <form method="post" action="/dashboard/finance/invoices/<%= invoice.invoiceId %>/attachments/<%= att.attachmentId %>/delete" class="d-inline"
                               onsubmit="return confirm('Delete this attachment?')">
                           <button type="submit" class="btn btn-sm btn-outline-danger"><i class="fa-solid fa-trash"></i></button>
                         </form>

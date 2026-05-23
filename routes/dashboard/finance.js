@@ -474,9 +474,10 @@ export default function dashboardFinanceRoute(app, fetch, config, db, features, 
     }
 
     try {
-      const [base, vendors] = await Promise.all([
+      const [base, vendors, categories] = await Promise.all([
         baseViewData(req, features),
         getVendors({ activeOnly: true }),
+        getCategories(),
       ]);
 
       res.header("content-type", "text/html; charset=utf-8").send(
@@ -487,6 +488,8 @@ export default function dashboardFinanceRoute(app, fetch, config, db, features, 
           features,
           ...base,
           vendors,
+          categories,
+          prefillVendorId: req.query.vendorId || null,
         })
       );
     } catch (error) {
@@ -587,6 +590,50 @@ export default function dashboardFinanceRoute(app, fetch, config, db, features, 
     }
   });
 
+  // GET /dashboard/finance/invoices/:invoiceId/edit
+  app.get("/dashboard/finance/invoices/:invoiceId/edit", async function (req, res) {
+    if (!await hasPermission("zander.web.finance", req, res, features)) return;
+
+    const invoiceId = parseInt(req.params.invoiceId, 10);
+    if (!invoiceId) return res.redirect("/dashboard/finance/invoices");
+
+    if (!canManageFinance(req)) {
+      await setBannerCookie("danger", "You do not have permission to edit invoices.", res);
+      return res.redirect(`/dashboard/finance/invoices/${invoiceId}`);
+    }
+
+    try {
+      const [base, invoice, vendors, categories] = await Promise.all([
+        baseViewData(req, features),
+        getInvoiceById(invoiceId),
+        getVendors({ activeOnly: true }),
+        getCategories(),
+      ]);
+
+      if (!invoice) {
+        await setBannerCookie("danger", "Invoice not found.", res);
+        return res.redirect("/dashboard/finance/invoices");
+      }
+
+      res.header("content-type", "text/html; charset=utf-8").send(
+        await app.view("dashboard/finance/invoice-edit", {
+          pageTitle: `Finance - Edit Invoice ${invoice.invoiceNumber || `#${invoiceId}`}`,
+          config,
+          req,
+          features,
+          ...base,
+          invoice,
+          vendors,
+          categories,
+        })
+      );
+    } catch (error) {
+      console.error("[finance] GET /dashboard/finance/invoices/:invoiceId/edit:", error);
+      await setBannerCookie("danger", error.message, res);
+      return res.redirect(`/dashboard/finance/invoices/${invoiceId}`);
+    }
+  });
+
   // POST /dashboard/finance/invoices/:invoiceId/delete
   app.post("/dashboard/finance/invoices/:invoiceId/delete", async function (req, res) {
     if (!await hasPermission("zander.web.finance", req, res, features)) return;
@@ -631,6 +678,108 @@ export default function dashboardFinanceRoute(app, fetch, config, db, features, 
       await setBannerCookie("danger", error.message, res);
       return res.redirect(`/dashboard/finance/invoices/${invoiceId}`);
     }
+  });
+
+  // POST /dashboard/finance/invoices/:invoiceId/payments  (inline from invoice detail)
+  app.post("/dashboard/finance/invoices/:invoiceId/payments", async function (req, res) {
+    if (!await hasPermission("zander.web.finance", req, res, features)) return;
+
+    const invoiceId = parseInt(req.params.invoiceId, 10);
+    if (!invoiceId) return res.redirect("/dashboard/finance/invoices");
+
+    if (!canManageFinance(req)) {
+      await setBannerCookie("danger", "You do not have permission to record payments.", res);
+      return res.redirect(`/dashboard/finance/invoices/${invoiceId}`);
+    }
+
+    try {
+      const invoice = await getInvoiceById(invoiceId);
+      if (!invoice) throw new Error("Invoice not found.");
+
+      const { amountCents, currency, paidDate, accountId, notes } = req.body || {};
+      await createPayment({
+        invoiceId,
+        vendorId: invoice.vendorId,
+        amountCents: Math.round(parseFloat(amountCents) * 100),
+        currency: currency || invoice.currency || "USD",
+        paidDate: paidDate ? new Date(paidDate) : new Date(),
+        accountId: accountId ? parseInt(accountId, 10) : null,
+        notes: notes?.trim() || null,
+        createdByUserId: req.session?.user?.userId || 0,
+      });
+      await recalculateInvoiceStatus(invoiceId);
+      await setBannerCookie("success", "Payment recorded.", res);
+      return res.redirect(`/dashboard/finance/invoices/${invoiceId}`);
+    } catch (error) {
+      console.error("[finance] POST /dashboard/finance/invoices/:invoiceId/payments:", error);
+      await setBannerCookie("danger", error.message, res);
+      return res.redirect(`/dashboard/finance/invoices/${invoiceId}`);
+    }
+  });
+
+  // POST /dashboard/finance/invoices/:invoiceId/attachments  (upload)
+  app.post("/dashboard/finance/invoices/:invoiceId/attachments", async function (req, res) {
+    if (!await hasPermission("zander.web.finance", req, res, features)) return;
+
+    const invoiceId = parseInt(req.params.invoiceId, 10);
+    if (!invoiceId) return res.redirect("/dashboard/finance/invoices");
+
+    if (!canManageFinance(req)) {
+      await setBannerCookie("danger", "You do not have permission to upload attachments.", res);
+      return res.redirect(`/dashboard/finance/invoices/${invoiceId}`);
+    }
+
+    try {
+      const data = await req.file();
+      if (!data) throw new Error("No file uploaded.");
+
+      const allowedMimeTypes = ["application/pdf", "image/png", "image/jpeg", "image/jpg", "image/webp"];
+      if (!allowedMimeTypes.includes(data.mimetype)) throw new Error("Only PDF and image files are allowed.");
+
+      const buffer = await data.toBuffer();
+      if (buffer.length > 10 * 1024 * 1024) throw new Error("File size must be under 10 MB.");
+
+      const result = await uploadImage(buffer, { folder: "zander/finance", resourceType: "raw" });
+      await createAttachment({
+        invoiceId,
+        fileName: data.filename,
+        fileUrl: result.url,
+        filePublicId: result.publicId,
+        mimeType: data.mimetype,
+        fileSizeBytes: buffer.length,
+        label: req.body?.label || null,
+        uploadedByUserId: req.session?.user?.userId || 0,
+      });
+
+      await setBannerCookie("success", "Attachment uploaded.", res);
+      return res.redirect(`/dashboard/finance/invoices/${invoiceId}`);
+    } catch (error) {
+      console.error("[finance] POST /dashboard/finance/invoices/:invoiceId/attachments:", error);
+      await setBannerCookie("danger", error.message, res);
+      return res.redirect(`/dashboard/finance/invoices/${invoiceId}`);
+    }
+  });
+
+  // POST /dashboard/finance/invoices/:invoiceId/attachments/:attachmentId/delete
+  app.post("/dashboard/finance/invoices/:invoiceId/attachments/:attachmentId/delete", async function (req, res) {
+    if (!await hasPermission("zander.web.finance", req, res, features)) return;
+
+    const invoiceId = parseInt(req.params.invoiceId, 10);
+    const attachmentId = parseInt(req.params.attachmentId, 10);
+
+    if (!canManageFinance(req)) {
+      await setBannerCookie("danger", "You do not have permission to delete attachments.", res);
+      return res.redirect(`/dashboard/finance/invoices/${invoiceId}`);
+    }
+
+    try {
+      await deleteAttachment(attachmentId);
+      await setBannerCookie("success", "Attachment deleted.", res);
+    } catch (error) {
+      console.error("[finance] POST /dashboard/finance/invoices/attachments/delete:", error);
+      await setBannerCookie("danger", error.message, res);
+    }
+    return res.redirect(`/dashboard/finance/invoices/${invoiceId}`);
   });
 
   // ===========================================================================
@@ -703,8 +852,9 @@ export default function dashboardFinanceRoute(app, fetch, config, db, features, 
           features,
           ...base,
           vendors,
-          pendingInvoices,
+          invoices: pendingInvoices,
           accounts,
+          prefillInvoiceId: req.query.invoiceId || null,
         })
       );
     } catch (error) {
@@ -941,6 +1091,8 @@ export default function dashboardFinanceRoute(app, fetch, config, db, features, 
           features,
           ...base,
           transaction,
+          tx: transaction,
+          tags: (transaction.tags || []).map((t) => t.tag),
           attachments,
         })
       );
@@ -948,6 +1100,61 @@ export default function dashboardFinanceRoute(app, fetch, config, db, features, 
       console.error("[finance] GET /dashboard/finance/transactions/:transactionId:", error);
       await setBannerCookie("danger", error.message, res);
       return res.redirect("/dashboard/finance/transactions");
+    }
+  });
+
+  // GET /dashboard/finance/transactions/:transactionId/edit
+  app.get("/dashboard/finance/transactions/:transactionId/edit", async function (req, res) {
+    if (!await hasPermission("zander.web.finance", req, res, features)) return;
+
+    const transactionId = parseInt(req.params.transactionId, 10);
+    if (!transactionId) return res.redirect("/dashboard/finance/transactions");
+
+    if (!canManageFinance(req)) {
+      await setBannerCookie("danger", "You do not have permission to edit transactions.", res);
+      return res.redirect(`/dashboard/finance/transactions/${transactionId}`);
+    }
+
+    try {
+      const [base, transaction, accounts, categories, vendors, tags] = await Promise.all([
+        baseViewData(req, features),
+        getTransactionById(transactionId),
+        getAccounts(),
+        getCategories(),
+        getVendors({ activeOnly: true }),
+        getTags(),
+      ]);
+
+      if (!transaction) {
+        await setBannerCookie("danger", "Transaction not found.", res);
+        return res.redirect("/dashboard/finance/transactions");
+      }
+
+      if (transaction.isLocked) {
+        await setBannerCookie("danger", "This transaction is locked and cannot be edited.", res);
+        return res.redirect(`/dashboard/finance/transactions/${transactionId}`);
+      }
+
+      res.header("content-type", "text/html; charset=utf-8").send(
+        await app.view("dashboard/finance/transaction-edit", {
+          pageTitle: `Finance - Edit Transaction #${transactionId}`,
+          config,
+          req,
+          features,
+          ...base,
+          transaction,
+          tx: transaction,
+          selectedTagIds: (transaction.tags || []).map((t) => t.tagId || t.tag?.tagId),
+          accounts,
+          categories,
+          vendors,
+          tags,
+        })
+      );
+    } catch (error) {
+      console.error("[finance] GET /dashboard/finance/transactions/:transactionId/edit:", error);
+      await setBannerCookie("danger", error.message, res);
+      return res.redirect(`/dashboard/finance/transactions/${transactionId}`);
     }
   });
 

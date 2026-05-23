@@ -113,7 +113,7 @@
                             <i class="fa-solid fa-download"></i>
                           </a>
                           <% if (canManage && !tx.isLocked) { %>
-                            <form method="post" action="/dashboard/finance/attachments/<%= att.attachmentId %>/delete" class="d-inline"
+                            <form method="post" action="/dashboard/finance/transactions/<%= tx.transactionId %>/attachments/<%= att.attachmentId %>/delete" class="d-inline"
                                   onsubmit="return confirm('Delete this attachment?')">
                               <button type="submit" class="btn btn-sm btn-outline-danger"><i class="fa-solid fa-trash"></i></button>
                             </form>
@@ -139,7 +139,7 @@
 <div class="modal fade" id="uploadModal" tabindex="-1" aria-labelledby="uploadModalLabel" aria-hidden="true">
   <div class="modal-dialog">
     <div class="modal-content">
-      <form method="post" action="/dashboard/finance/transactions/<%= tx.transactionId %>/attachments" enctype="multipart/form-data">
+      <form method="post" action="/dashboard/finance/transactions/<%= tx.transactionId %>/upload" enctype="multipart/form-data">
         <div class="modal-header">
           <h5 class="modal-title" id="uploadModalLabel">Upload Attachment</h5>
           <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
