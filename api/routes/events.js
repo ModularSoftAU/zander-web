@@ -14,6 +14,7 @@ import {
   submitForReview,
   approveEvent,
   rejectEvent,
+  revertToDraft,
   publishEvent,
   updatePublishedEvent,
   cancelEvent,
@@ -42,6 +43,7 @@ import {
   cancelGuildScheduledEvent,
   postEventDiscordMessage,
   createGuildScheduledEvent,
+  postReviewRequestDiscordMessage,
 } from "../../services/eventDiscordService.js";
 
 import { ChannelType } from "discord.js";
@@ -302,6 +304,21 @@ export default function eventsApiRoute(app, _config, _db, features, _lang) {
     try {
       const { actorId, actorName } = actorFromReq(req);
       const event = await submitForReview(eventId, actorId, actorName);
+
+      // Fire review notification asynchronously — don't block the response
+      setImmediate(async () => {
+        try {
+          const reviewChannelId = config?.events?.reviewChannelId || null;
+          const siteBaseUrl = config?.siteConfiguration?.siteUrl || process.env.siteAddress || "";
+          if (reviewChannelId) {
+            const fullEvent = await getEventById(eventId);
+            await postReviewRequestDiscordMessage(fullEvent, actorName, reviewChannelId, siteBaseUrl);
+          }
+        } catch (e) {
+          console.error("[Events] Review notification failed:", e.message);
+        }
+      });
+
       return res.send({ success: true, data: event, message: "Event submitted for review" });
     } catch (err) {
       console.error("[Events API] submit-review:", err);
@@ -356,6 +373,24 @@ export default function eventsApiRoute(app, _config, _db, features, _lang) {
     } catch (err) {
       console.error("[Events API] reject:", err);
       return res.send({ success: false, message: err.message || "Failed to reject event" });
+    }
+  });
+
+  /** POST /api/events/revert-to-draft */
+  app.post("/api/events/revert-to-draft", async (req, res) => {
+    if (!features.events) return res.send({ success: false, message: "Events feature disabled" });
+    if (!isReviewer(req)) return res.status(403).send({ success: false, message: "Only reviewers can revert events to draft." });
+
+    const { eventId } = req.body || {};
+    if (!eventId) return res.send({ success: false, message: "eventId is required" });
+
+    try {
+      const { actorId, actorName } = actorFromReq(req);
+      const event = await revertToDraft(eventId, actorId, actorName);
+      return res.send({ success: true, data: event, message: "Event reverted to draft" });
+    } catch (err) {
+      console.error("[Events API] revert-to-draft:", err);
+      return res.send({ success: false, message: err.message || "Failed to revert event" });
     }
   });
 
