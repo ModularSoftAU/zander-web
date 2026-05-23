@@ -1,0 +1,89 @@
+<%- include("../../admin/_head.ejs", { pageTitle }) %>
+<%- include("../../admin/_topbar.ejs") %>
+<%- include("../../admin/_sidebar.ejs") %>
+
+<div id="wpcontent">
+  <div id="wpbody-content">
+    <div class="wrap">
+
+      <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+        <h1 class="h2"><i class="fa-solid fa-terminal fa-fw me-2"></i>Webstore — Command Config</h1>
+        <a href="/dashboard/webstore" class="btn btn-sm btn-outline-secondary">
+          <i class="fa-solid fa-arrow-left me-1"></i>Back to Purchases
+        </a>
+      </div>
+
+      <%- include("../../admin/_notices.ejs") %>
+
+      <div class="alert alert-info mb-4">
+        Products and prices are managed in the <a href="https://dashboard.stripe.com/products" target="_blank" rel="noopener">Stripe dashboard</a>.
+        Commands below run when a Stripe price is purchased (<strong>grant</strong>) or a subscription is cancelled (<strong>revoke</strong>).
+        Insert rows into <code>webstoreStripeCommands</code> to configure them.
+      </div>
+
+      <% if (!commands || !commands.length) { %>
+        <div class="alert alert-warning">
+          No commands configured. Insert rows into <code>webstoreStripeCommands</code> to map Stripe price IDs to in-game commands.
+        </div>
+      <% } else { %>
+        <%
+          const byPrice = {};
+          commands.forEach(function(cmd) {
+            if (!byPrice[cmd.stripePriceId]) byPrice[cmd.stripePriceId] = [];
+            byPrice[cmd.stripePriceId].push(cmd);
+          });
+        %>
+        <% Object.entries(byPrice).forEach(function([priceId, cmds]) { %>
+          <div class="card shadow-sm mb-3">
+            <div class="card-header">
+              <code class="small"><%= priceId %></code>
+            </div>
+            <div class="table-responsive">
+              <table class="table table-sm mb-0">
+                <thead class="table-light">
+                  <tr>
+                    <th style="width:90px">Action</th>
+                    <th style="width:60px">Order</th>
+                    <th>Command Template</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <% cmds.forEach(function(cmd) { %>
+                    <tr>
+                      <td>
+                        <span class="badge <%= cmd.action === 'grant' ? 'bg-success' : 'bg-danger' %>">
+                          <%= cmd.action %>
+                        </span>
+                      </td>
+                      <td class="text-muted"><%= cmd.sortOrder %></td>
+                      <td><code class="small"><%= cmd.commandTemplate %></code></td>
+                    </tr>
+                  <% }) %>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        <% }) %>
+      <% } %>
+
+      <div class="card shadow-sm mt-4">
+        <div class="card-header fw-semibold">Available Placeholders</div>
+        <div class="card-body p-0">
+          <table class="table table-sm mb-0">
+            <thead class="table-light"><tr><th>Placeholder</th><th>Replaced with</th></tr></thead>
+            <tbody>
+              <tr><td><code>{{ username }}</code></td><td>Recipient's Minecraft username</td></tr>
+              <tr><td><code>{{ purchaserUsername }}</code></td><td>Purchaser's Minecraft username</td></tr>
+              <tr><td><code>{{ purchaseId }}</code></td><td>Internal purchase ID</td></tr>
+              <tr><td><code>{{ itemSlug }}</code></td><td>Stripe price ID</td></tr>
+              <tr><td><code>{{ purchaseType }}</code></td><td><code>one_time</code> or <code>subscription</code></td></tr>
+              <tr><td><code>{{ isGift }}</code></td><td><code>true</code> or <code>false</code></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+  </div>
+  <%- include("../../admin/_footer.ejs") %>
+</div>

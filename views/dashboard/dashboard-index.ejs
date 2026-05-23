@@ -61,6 +61,26 @@
           </a>
         <% } %>
 
+        <% if (features.webstore) { %>
+          <a class="stat-card" href="/dashboard/webstore">
+            <div class="stat-icon green"><i class="fas fa-store" aria-hidden="true"></i></div>
+            <div class="stat-info">
+              <div class="stat-label">Webstore</div>
+              <div class="stat-value">—</div>
+            </div>
+          </a>
+        <% } %>
+
+        <% if (features.finance) { %>
+          <a class="stat-card" href="/dashboard/finance">
+            <div class="stat-icon amber"><i class="fas fa-chart-line" aria-hidden="true"></i></div>
+            <div class="stat-info">
+              <div class="stat-label">Finance</div>
+              <div class="stat-value">—</div>
+            </div>
+          </a>
+        <% } %>
+
       </div>
       <!-- /stat-card-grid -->
 
@@ -133,6 +153,20 @@
                 <i class="fas fa-bridge" aria-hidden="true"></i>
                 Bridge Status
               </a>
+
+              <% if (features.webstore) { %>
+                <a class="quick-action-item" href="/dashboard/webstore">
+                  <i class="fas fa-store" aria-hidden="true"></i>
+                  Webstore Purchases
+                </a>
+              <% } %>
+
+              <% if (features.finance) { %>
+                <a class="quick-action-item" href="/dashboard/finance">
+                  <i class="fas fa-chart-line" aria-hidden="true"></i>
+                  Finance
+                </a>
+              <% } %>
 
             </div>
           </div>

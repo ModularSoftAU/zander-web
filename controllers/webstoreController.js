@@ -799,3 +799,44 @@ export async function getPurchasesWithPendingCommandRuns() {
     []
   );
 }
+
+export async function getAllPurchases(limit = 20, offset = 0) {
+  return query(
+    `SELECT purchaseId, userId, itemName, purchaseType,
+            purchaserMinecraftUsername, recipientMinecraftUsername,
+            amountCents, currency, isGift, status, createdAt
+     FROM webstorePurchases
+     ORDER BY createdAt DESC
+     LIMIT ? OFFSET ?`,
+    [limit, offset]
+  );
+}
+
+export async function getAllPurchasesCount() {
+  const rows = await query("SELECT COUNT(*) AS total FROM webstorePurchases");
+  return Number(rows[0]?.total || 0);
+}
+
+export async function getActiveSubscriptionsCount() {
+  const rows = await query(
+    "SELECT COUNT(*) AS total FROM webstoreSubscriptions WHERE status = 'active'"
+  );
+  return Number(rows[0]?.total || 0);
+}
+
+export async function getTotalRevenueCents() {
+  const rows = await query(
+    `SELECT COALESCE(SUM(amountCents), 0) AS total
+     FROM webstorePurchases
+     WHERE status IN ('paid', 'fulfilled')`
+  );
+  return Number(rows[0]?.total || 0);
+}
+
+export async function getAllCommands() {
+  return query(
+    `SELECT commandId, stripePriceId, action, commandTemplate, sortOrder, createdAt
+     FROM webstoreStripeCommands
+     ORDER BY stripePriceId ASC, action ASC, sortOrder ASC`
+  );
+}
