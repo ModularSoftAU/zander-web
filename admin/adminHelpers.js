@@ -27,8 +27,19 @@ import { getMenuGroups } from "./pageRegistry.js";
  */
 export function adminViewData(req, features) {
   const userPermissions = req.session?.user?.permissions ?? [];
+  const groups = getMenuGroups(userPermissions, features);
+  console.log(
+    `[adminViewData] url=${req.url} perms=${Array.isArray(userPermissions) ? userPermissions.length : typeof userPermissions} groups=${groups.map(g => g.group + ':' + g.items.length).join(', ')}`
+  );
+  if (Array.isArray(userPermissions)) {
+    const financePerms = userPermissions.filter(p => p && String(p).toLowerCase().includes('finance'));
+    const webstorePerms = userPermissions.filter(p => p && String(p).toLowerCase().includes('webstore'));
+    console.log(`[adminViewData] finance-related perms: [${financePerms.join(', ')}]`);
+    console.log(`[adminViewData] webstore-related perms: [${webstorePerms.join(', ')}]`);
+    console.log(`[adminViewData] features.finance=${features.finance} features.webstore=${features.webstore}`);
+  }
   return {
-    adminMenuGroups: getMenuGroups(userPermissions, features),
+    adminMenuGroups: groups,
     adminCurrentPath: req.url.split("?")[0],
   };
 }
