@@ -129,6 +129,17 @@ function getPagination(query, defaultLimit = 50) {
 export default function dashboardFinanceRoute(app, fetch, config, db, features, lang) {
 
   // ===========================================================================
+  // POST /dashboard/finance/_ping — diagnostic: no DB, just redirects.
+  // Helps distinguish Fastify routing issues from database issues.
+  // Remove once POST routing is confirmed working.
+  // ===========================================================================
+  app.post("/dashboard/finance/_ping", async function (req, res) {
+    console.log("[finance] POST /_ping – body:", JSON.stringify(req.body || {}));
+    await setBannerCookie("success", "POST routing works!", res);
+    return res.redirect("/dashboard/finance");
+  });
+
+  // ===========================================================================
   // GET /dashboard/finance — dashboard overview
   // ===========================================================================
   app.get("/dashboard/finance", async function (req, res) {
@@ -238,6 +249,7 @@ export default function dashboardFinanceRoute(app, fetch, config, db, features, 
 
   // POST /dashboard/finance/vendors/create
   app.post("/dashboard/finance/vendors/create", async function (req, res) {
+    console.log("[finance] POST /vendors/create start – user:", req.session?.user?.userId, "body keys:", Object.keys(req.body || {}));
     if (!await hasPermission("zander.web.finance", req, res, features)) return;
 
     if (!canManageFinance(req)) {
@@ -247,13 +259,16 @@ export default function dashboardFinanceRoute(app, fetch, config, db, features, 
 
     try {
       const { name, website, contactEmail, notes, categoryId } = req.body || {};
+      console.log("[finance] POST /vendors/create – calling createVendor, name:", name);
       const vendor = await createVendor({ name, website, contactEmail, notes, categoryId });
+      console.log("[finance] POST /vendors/create – createVendor OK, id:", vendor.vendorId);
 
       if (vendor.website) {
         setImmediate(() => fetchAndCacheVendorFavicon(vendor.vendorId));
       }
 
       await setBannerCookie("success", `Vendor "${vendor.name}" created successfully.`, res);
+      console.log("[finance] POST /vendors/create – redirecting");
       return res.redirect("/dashboard/finance/vendors");
     } catch (error) {
       console.error("[finance] POST /dashboard/finance/vendors/create:", error);

@@ -43,7 +43,37 @@ const prismaBase = new PrismaClient({
   },
 });
 
-export const prisma = prismaBase;
+// Mutating operations that can be blocked by table/row locks.
+// Wrap them with a hard deadline so a stalled MySQL lock never hangs
+// the HTTP request indefinitely — the route's catch block will
+// receive the timeout error and send a redirect instead.
+const WRITE_OPS = new Set([
+  "create", "createMany", "createManyAndReturn",
+  "update", "updateMany", "updateManyAndReturn",
+  "upsert",
+  "delete", "deleteMany",
+]);
+const WRITE_TIMEOUT_MS = 30_000;
+
+export const prisma = prismaBase.$extends({
+  query: {
+    $allModels: {
+      async $allOperations({ operation, model, args, query }) {
+        if (!WRITE_OPS.has(operation)) return query(args);
+        const timeout = new Promise((_, reject) =>
+          setTimeout(
+            () => reject(new Error(
+              `Database ${operation} on ${model} timed out after 30 s — ` +
+              "the database may be under heavy load. Please try again."
+            )),
+            WRITE_TIMEOUT_MS
+          )
+        );
+        return Promise.race([query(args), timeout]);
+      },
+    },
+  },
+});
 
 // ---------------------------------------------------------------------------
 // Health tracking
