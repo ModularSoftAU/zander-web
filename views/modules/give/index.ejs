@@ -19,7 +19,7 @@
         content: req.cookies.alertContent
     }) %>
     <% } %>
-    <%- include("../../partials/announcementWeb.ejs") %>
+    <%- include("../../partials/announcementWeb.ejs", { announcementData: announcementWeb }) %>
 
     <%# Hero -%>
     <div class="text-center mb-5">

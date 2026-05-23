@@ -19,7 +19,7 @@
         content: req.cookies.alertContent
     }) %>
     <% } %>
-    <%- include("../../partials/announcementWeb.ejs") %>
+    <%- include("../../partials/announcementWeb.ejs", { announcementData: announcementWeb }) %>
 
     <%# Welcome / login prompt -%>
     <div class="mb-4">
