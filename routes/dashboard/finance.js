@@ -166,13 +166,20 @@ export default function dashboardFinanceRoute(app, fetch, config, db, features, 
     if (!await hasPermission("zander.web.finance", req, res, features)) return;
 
     try {
+      const statusFilter = req.query?.status ?? null;
+      const activeOnly = statusFilter === "active";
       const [base, vendors] = await Promise.all([
         baseViewData(req, features),
-        getVendors(),
+        getVendors(activeOnly ? { activeOnly: true } : {}),
       ]);
 
+      let vendorsFiltered = vendors;
+      if (statusFilter === "inactive") {
+        vendorsFiltered = vendors.filter((v) => !v.isActive);
+      }
+
       const vendorsWithStats = await Promise.all(
-        vendors.map(async (vendor) => {
+        vendorsFiltered.map(async (vendor) => {
           const stats = await getVendorStats(vendor.vendorId);
           return { ...vendor, ...stats };
         })
@@ -185,6 +192,7 @@ export default function dashboardFinanceRoute(app, fetch, config, db, features, 
           req,
           features,
           ...base,
+          statusFilter,
           vendors: vendorsWithStats,
         })
       );
