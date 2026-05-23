@@ -13,7 +13,12 @@
 <section class="section">
   <div class="container">
 
-    <%- include("../../partials/alert.ejs") %>
+    <% if (req.cookies.alertType) { %>
+    <%- include("../../partials/alert.ejs", {
+        alertType: req.cookies.alertType,
+        content: req.cookies.alertContent
+    }) %>
+    <% } %>
     <%- include("../../partials/announcementWeb.ejs") %>
 
     <%# Welcome / login prompt -%>
