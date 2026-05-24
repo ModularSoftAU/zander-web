@@ -21,16 +21,18 @@
         </div>
       <% } else { %>
         <%
-          // Build a lookup of commands by stripePriceId for fast access
-          const cmdsByPrice = {};
+          const cmdsByPkg = {};
           (commands || []).forEach(function(cmd) {
-            if (!cmdsByPrice[cmd.stripePriceId]) cmdsByPrice[cmd.stripePriceId] = [];
-            cmdsByPrice[cmd.stripePriceId].push(cmd);
+            const key = cmd.packageId;
+            if (key) {
+              if (!cmdsByPkg[key]) cmdsByPkg[key] = [];
+              cmdsByPkg[key].push(cmd);
+            }
           });
         %>
 
         <% packages.forEach(function(item) {
-          const itemCmds = cmdsByPrice[item.stripePriceId] || [];
+          const itemCmds = cmdsByPkg[item.packageId] || [];
           const grantCmds = itemCmds.filter(c => c.action === 'grant');
           const revokeCmds = itemCmds.filter(c => c.action === 'revoke');
         %>
@@ -46,7 +48,7 @@
                 <% } %>
               </div>
               <% if (canManage) { %>
-                <a href="/dashboard/webstore/commands/create?priceId=<%= encodeURIComponent(item.stripePriceId) %>"
+                <a href="/dashboard/webstore/commands/create?packageId=<%= item.packageId %>"
                    class="btn btn-sm btn-outline-primary">
                   <i class="fa-solid fa-plus me-1"></i>Add Command
                 </a>
@@ -117,10 +119,10 @@
           </div>
         <% }) %>
 
-        <%# Show a card for orphaned commands whose price ID is no longer in Stripe %>
+        <%# Show a card for commands not linked to any package %>
         <%
-          const knownPriceIds = new Set(packages.map(i => i.stripePriceId));
-          const orphanCmds = (commands || []).filter(c => !knownPriceIds.has(c.stripePriceId));
+          const knownPkgIds = new Set(packages.map(i => i.packageId));
+          const orphanCmds = (commands || []).filter(c => !c.packageId || !knownPkgIds.has(c.packageId));
         %>
         <% if (orphanCmds.length) { %>
           <div class="card shadow-sm mb-3 border-warning">

@@ -177,27 +177,25 @@ export async function getWebstoreItems(preferredCurrency = null) {
 
   if (!packages.length) return [];
 
-  // Attach commands — only packages with a stripePriceId can have commands
-  const priceIds = packages.filter((p) => p.stripePriceId).map((p) => p.stripePriceId);
-  const grantByPrice = {};
-  const revokeByPrice = {};
+  // Attach commands via packageId (primary) or stripePriceId (legacy fallback)
+  const pkgIds = packages.map((p) => p.packageId);
+  const placeholders = pkgIds.map(() => "?").join(",");
+  const commands = await query(
+    `SELECT packageId, action, commandTemplate, commandType
+     FROM webstoreStripeCommands
+     WHERE packageId IN (${placeholders})
+     ORDER BY action ASC, sortOrder ASC, commandId ASC`,
+    pkgIds
+  );
 
-  if (priceIds.length) {
-    const placeholders = priceIds.map(() => "?").join(",");
-    const commands = await query(
-      `SELECT stripePriceId, action, commandTemplate, commandType
-       FROM webstoreStripeCommands
-       WHERE stripePriceId IN (${placeholders})
-       ORDER BY action ASC, sortOrder ASC, commandId ASC`,
-      priceIds
-    );
-    for (const cmd of commands) {
-      const entry = { commandTemplate: cmd.commandTemplate, commandType: cmd.commandType || "minecraft" };
-      if (cmd.action === "revoke") {
-        (revokeByPrice[cmd.stripePriceId] = revokeByPrice[cmd.stripePriceId] || []).push(entry);
-      } else {
-        (grantByPrice[cmd.stripePriceId] = grantByPrice[cmd.stripePriceId] || []).push(entry);
-      }
+  const grantByPkg = {};
+  const revokeByPkg = {};
+  for (const cmd of commands) {
+    const entry = { commandTemplate: cmd.commandTemplate, commandType: cmd.commandType || "minecraft" };
+    if (cmd.action === "revoke") {
+      (revokeByPkg[cmd.packageId] = revokeByPkg[cmd.packageId] || []).push(entry);
+    } else {
+      (grantByPkg[cmd.packageId] = grantByPkg[cmd.packageId] || []).push(entry);
     }
   }
 
@@ -211,8 +209,8 @@ export async function getWebstoreItems(preferredCurrency = null) {
     currency: pkg.currency,
     purchaseType: pkg.purchaseType,
     sortKey: pkg.sortOrder,
-    grantCommands: grantByPrice[pkg.stripePriceId] || [],
-    revokeCommands: revokeByPrice[pkg.stripePriceId] || [],
+    grantCommands: grantByPkg[pkg.packageId] || [],
+    revokeCommands: revokeByPkg[pkg.packageId] || [],
   }));
 }
 
@@ -228,12 +226,16 @@ export async function findWebstoreItem(slug) {
  * where only the price ID is known.
  */
 export async function getCommandsByPriceId(stripePriceId) {
+  // Match commands linked via packageId→package.stripePriceId (new path)
+  // OR directly via the cached stripePriceId column (legacy / back-compat path)
   const rows = await query(
-    `SELECT action, commandTemplate, commandType
-     FROM webstoreStripeCommands
-     WHERE stripePriceId = ?
-     ORDER BY action ASC, sortOrder ASC, commandId ASC`,
-    [stripePriceId]
+    `SELECT c.action, c.commandTemplate, c.commandType
+     FROM webstoreStripeCommands c
+     LEFT JOIN webstorePackages p ON p.packageId = c.packageId
+     WHERE p.stripePriceId = ?
+        OR (c.packageId IS NULL AND c.stripePriceId = ?)
+     ORDER BY c.action ASC, c.sortOrder ASC, c.commandId ASC`,
+    [stripePriceId, stripePriceId]
   );
   const toEntry = (r) => ({ commandTemplate: r.commandTemplate, commandType: r.commandType || "minecraft" });
   return {
@@ -926,9 +928,13 @@ export async function getTotalRevenueCents() {
 
 export async function getAllCommands() {
   return query(
-    `SELECT commandId, stripePriceId, action, commandType, commandTemplate, sortOrder, createdAt
-     FROM webstoreStripeCommands
-     ORDER BY stripePriceId ASC, action ASC, sortOrder ASC`
+    `SELECT c.commandId, c.packageId, c.stripePriceId,
+            c.action, c.commandType, c.commandTemplate, c.sortOrder, c.createdAt,
+            p.displayName AS packageName
+     FROM webstoreStripeCommands c
+     LEFT JOIN webstorePackages p ON p.packageId = c.packageId
+     ORDER BY COALESCE(p.sortOrder, 0) ASC, p.displayName ASC,
+              c.action ASC, c.sortOrder ASC`
   );
 }
 
@@ -1006,21 +1012,29 @@ export async function deletePackage(packageId) {
 
 export async function getCommandById(commandId) {
   const rows = await query(
-    `SELECT commandId, stripePriceId, action, commandType, commandTemplate, sortOrder, createdAt
-     FROM webstoreStripeCommands
-     WHERE commandId = ?
+    `SELECT c.commandId, c.packageId, c.stripePriceId,
+            c.action, c.commandType, c.commandTemplate, c.sortOrder, c.createdAt,
+            p.displayName AS packageName
+     FROM webstoreStripeCommands c
+     LEFT JOIN webstorePackages p ON p.packageId = c.packageId
+     WHERE c.commandId = ?
      LIMIT 1`,
     [commandId]
   );
   return rows[0] || null;
 }
 
-export async function createCommand({ stripePriceId, action, commandType, commandTemplate, sortOrder }) {
+export async function createCommand({ packageId, action, commandType, commandTemplate, sortOrder }) {
+  // Look up the package to cache its stripePriceId for fulfillment lookups
+  const pkg = packageId ? await getPackageById(parseInt(packageId, 10)) : null;
+  const stripePriceId = pkg?.stripePriceId || null;
+
   const result = await query(
     `INSERT INTO webstoreStripeCommands
-       (stripePriceId, action, commandType, commandTemplate, sortOrder)
-     VALUES (?, ?, ?, ?, ?)`,
+       (packageId, stripePriceId, action, commandType, commandTemplate, sortOrder)
+     VALUES (?, ?, ?, ?, ?, ?)`,
     [
+      pkg?.packageId || null,
       stripePriceId,
       action,
       commandType || "minecraft",

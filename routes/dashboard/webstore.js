@@ -288,14 +288,14 @@ export default function dashboardWebstoreRoute(app, fetch, config, db, features,
     }
 
     const announcementWeb = await getWebAnnouncement();
-    const defaultPriceId = req.query.priceId || null;
+    const defaultPackageId = req.query.packageId ? parseInt(req.query.packageId, 10) : null;
 
     return res.header("content-type", "text/html; charset=utf-8").send(
       await app.view("dashboard/webstore/command-create", {
         pageTitle: "Webstore — Add Command",
         config, features, req, announcementWeb,
         packages,
-        defaultPriceId,
+        defaultPackageId,
         canManage: canManageWebstore(req),
         ...adminViewData(req, features),
       })
@@ -313,14 +313,14 @@ export default function dashboardWebstoreRoute(app, fetch, config, db, features,
     }
 
     try {
-      const { stripePriceId, action, commandType, commandTemplate, sortOrder } = req.body || {};
+      const { packageId, action, commandType, commandTemplate, sortOrder } = req.body || {};
 
-      if (!stripePriceId || !action || !commandTemplate) {
+      if (!packageId || !action || !commandTemplate) {
         setBannerCookie("danger", "Package, action, and command/role ID are required.", res);
         return res.redirect("/dashboard/webstore/commands/create");
       }
 
-      await createCommand({ stripePriceId, action, commandType, commandTemplate, sortOrder });
+      await createCommand({ packageId, action, commandType, commandTemplate, sortOrder });
       setBannerCookie("success", "Command created successfully.", res);
       return res.redirect("/dashboard/webstore/commands");
     } catch (error) {
