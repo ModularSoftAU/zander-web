@@ -22,17 +22,6 @@
 
       <%- include("../../admin/_notices.ejs") %>
 
-      <%# POST routing smoke test — remove once CRUD forms confirmed working -%>
-      <% if (canManage) { %>
-      <div class="alert alert-secondary d-flex align-items-center gap-3 py-2 mb-3" style="font-size:0.85rem;">
-        <strong>POST test:</strong>
-        <form method="post" action="/dashboard/finance/_ping" class="d-inline">
-          <button type="submit" class="btn btn-sm btn-outline-secondary">Test POST redirect</button>
-        </form>
-        <span class="text-muted">Click — if it redirects here with a green banner, POST routing works.</span>
-      </div>
-      <% } %>
-
       <%# Account Balance Cards -%>
       <div class="row g-3 mb-4">
         <% if (!accounts || !accounts.length) { %>

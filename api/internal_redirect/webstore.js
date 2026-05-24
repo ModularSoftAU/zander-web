@@ -26,6 +26,7 @@ import fetch from "node-fetch";
 import { Colors } from "discord.js";
 import { Webhook, MessageBuilder } from "discord-webhook-node";
 import { sendWebhookMessage } from "../../lib/discord/webhooks.mjs";
+import { client as discordClient } from "../../controllers/discordController.js";
 import {
   createTransactionsForPurchase,
   fetchStripeSubscription,
@@ -348,7 +349,7 @@ async function handleCheckoutCompleted(event, config) {
 
   // --- Enqueue grant commands ---
   const item = await findWebstoreItem(purchase.itemSlug);
-  await fulfillPurchase(purchase, item);
+  await fulfillPurchase(purchase, item, { discordClient, guildId: config?.discord?.guildId });
 
   // --- Record transaction ---
   await createTransactionsForPurchase({
@@ -459,7 +460,7 @@ async function handleInvoicePaymentSucceeded(event, config) {
   // Re-enqueue grant commands for the renewed period
   const { grantCommands } = await getCommandsByPriceId(subscription.stripePriceId);
   if (grantCommands.length > 0) {
-    await fulfillSubscriptionRenewal(subscription, grantCommands);
+    await fulfillSubscriptionRenewal(subscription, grantCommands, { discordClient, guildId: config?.discord?.guildId });
   }
 
   const periodEndDate = stripeSub?.current_period_end
@@ -614,7 +615,7 @@ async function handleSubscriptionDeleted(event, config) {
   // Enqueue revoke commands for the recipient
   const { revokeCommands } = await getCommandsByPriceId(subscription.stripePriceId);
   if (revokeCommands.length > 0) {
-    await revokeSubscription(subscription, revokeCommands);
+    await revokeSubscription(subscription, revokeCommands, { discordClient, guildId: config?.discord?.guildId });
   }
 
   await notifyStaff(

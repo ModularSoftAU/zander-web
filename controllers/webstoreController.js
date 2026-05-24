@@ -11,7 +11,7 @@
  *   webstorePurchases       — one row per Stripe checkout session / order
  *   webstoreSubscriptions   — active subscription lifecycle tracking
  *   webstoreWebhookEvents   — idempotency log for Stripe webhook events
- *   webstoreStripeCommands  — maps Stripe price IDs to in-game commands
+ *   webstoreStripeCommands  — maps Stripe price IDs to commands (Minecraft or Discord role)
  *   webstoreCommandRuns     — individual command execution records
  *   webstoreTransactions    — audit ledger for all completed payments
  *
@@ -244,11 +244,11 @@ export async function getWebstoreItems(preferredCurrency = null) {
 
   if (!items.length) return [];
 
-  // Attach command templates from DB
+  // Attach command entries from DB — each entry is { commandTemplate, commandType }
   const priceIds = items.map((i) => i.stripePriceId);
   const placeholders = priceIds.map(() => "?").join(",");
   const commands = await query(
-    `SELECT stripePriceId, action, commandTemplate
+    `SELECT stripePriceId, action, commandTemplate, commandType
      FROM webstoreStripeCommands
      WHERE stripePriceId IN (${placeholders})
      ORDER BY action ASC, sortOrder ASC, commandId ASC`,
@@ -258,14 +258,11 @@ export async function getWebstoreItems(preferredCurrency = null) {
   const grantByPrice = {};
   const revokeByPrice = {};
   for (const cmd of commands) {
+    const entry = { commandTemplate: cmd.commandTemplate, commandType: cmd.commandType || "minecraft" };
     if (cmd.action === "revoke") {
-      (revokeByPrice[cmd.stripePriceId] = revokeByPrice[cmd.stripePriceId] || []).push(
-        cmd.commandTemplate
-      );
+      (revokeByPrice[cmd.stripePriceId] = revokeByPrice[cmd.stripePriceId] || []).push(entry);
     } else {
-      (grantByPrice[cmd.stripePriceId] = grantByPrice[cmd.stripePriceId] || []).push(
-        cmd.commandTemplate
-      );
+      (grantByPrice[cmd.stripePriceId] = grantByPrice[cmd.stripePriceId] || []).push(entry);
     }
   }
 
@@ -289,15 +286,16 @@ export async function findWebstoreItem(slug) {
  */
 export async function getCommandsByPriceId(stripePriceId) {
   const rows = await query(
-    `SELECT action, commandTemplate
+    `SELECT action, commandTemplate, commandType
      FROM webstoreStripeCommands
      WHERE stripePriceId = ?
      ORDER BY action ASC, sortOrder ASC, commandId ASC`,
     [stripePriceId]
   );
+  const toEntry = (r) => ({ commandTemplate: r.commandTemplate, commandType: r.commandType || "minecraft" });
   return {
-    grantCommands: rows.filter((r) => r.action === "grant").map((r) => r.commandTemplate),
-    revokeCommands: rows.filter((r) => r.action === "revoke").map((r) => r.commandTemplate),
+    grantCommands: rows.filter((r) => r.action === "grant").map(toEntry),
+    revokeCommands: rows.filter((r) => r.action === "revoke").map(toEntry),
   };
 }
 
@@ -535,8 +533,9 @@ export async function recordWebhookEvent({ stripeEventId, purchaseId, eventType,
 // ---------------------------------------------------------------------------
 
 /**
- * For each command template, create an executorTask (console command to be
- * run by zander-addon) and a webstoreCommandRun to track it.
+ * Enqueue Minecraft console commands via executorTasks.
+ * Each entry in `commands` is { commandTemplate, commandType } — only
+ * entries with commandType === 'minecraft' are processed here.
  *
  * Returns an array of inserted commandRunIds.
  */
@@ -544,16 +543,17 @@ export async function enqueueCommands({
   purchaseId,
   stripeSubscriptionId = null,
   action,
-  commandTemplates,
+  commands,
   metadata,
   priority = 5,
 }) {
-  if (!Array.isArray(commandTemplates) || !commandTemplates.length) return [];
+  if (!Array.isArray(commands) || !commands.length) return [];
 
+  const minecraftCmds = commands.filter((c) => (c.commandType || "minecraft") === "minecraft");
   const runIds = [];
 
-  for (const template of commandTemplates) {
-    const resolvedCommand = resolveCommandTemplate(template, metadata);
+  for (const cmd of minecraftCmds) {
+    const resolvedCommand = resolveCommandTemplate(cmd.commandTemplate, metadata);
 
     // Insert executor task — picked up by zander-addon and run as a console command
     const taskResult = await query(
@@ -569,7 +569,6 @@ export async function enqueueCommands({
 
     const executorTaskId = taskResult.insertId;
 
-    // Record the command run for auditability and status tracking
     const runResult = await query(
       `INSERT INTO webstoreCommandRuns
          (purchaseId, stripeSubscriptionId, action, commandTemplate,
@@ -579,7 +578,7 @@ export async function enqueueCommands({
         purchaseId,
         stripeSubscriptionId || null,
         action,
-        template,
+        cmd.commandTemplate,
         resolvedCommand,
         executorTaskId,
       ]
@@ -591,15 +590,123 @@ export async function enqueueCommands({
   return runIds;
 }
 
+/**
+ * Execute Discord role commands immediately (no queue needed — Discord API is fast).
+ * Each entry in `commands` with commandType === 'discord_role' causes a role
+ * add (grant) or remove (revoke) on the recipient's linked Discord account.
+ *
+ * @param {object} opts
+ * @param {number}   opts.purchaseId
+ * @param {string|null} opts.stripeSubscriptionId
+ * @param {'grant'|'revoke'} opts.action
+ * @param {Array<{commandTemplate:string, commandType:string}>} opts.commands
+ * @param {string}   opts.recipientMinecraftUsername
+ * @param {object}   opts.discordClient  - Discord.js client
+ * @param {string}   opts.guildId        - Discord guild ID from config
+ */
+export async function executeDiscordRoleCommands({
+  purchaseId,
+  stripeSubscriptionId = null,
+  action,
+  commands,
+  recipientMinecraftUsername,
+  discordClient,
+  guildId,
+}) {
+  const roleCmds = (commands || []).filter((c) => c.commandType === "discord_role");
+  if (!roleCmds.length) return;
+
+  // Look up the recipient's Discord ID via their Minecraft username
+  const userRows = await query(
+    "SELECT discordId FROM users WHERE username = ? LIMIT 1",
+    [recipientMinecraftUsername]
+  );
+  const discordId = userRows?.[0]?.discordId;
+
+  if (!discordId) {
+    console.warn(
+      `[webstore] discord_role ${action}: no Discord account linked for "${recipientMinecraftUsername}" — skipping role commands`
+    );
+    for (const cmd of roleCmds) {
+      await query(
+        `INSERT INTO webstoreCommandRuns
+           (purchaseId, stripeSubscriptionId, action, commandTemplate,
+            resolvedCommand, executorTaskId, status, attempts, lastError)
+         VALUES (?, ?, ?, ?, ?, NULL, 'failed', 1, ?)`,
+        [
+          purchaseId,
+          stripeSubscriptionId || null,
+          action,
+          cmd.commandTemplate,
+          `discord_role:${cmd.commandTemplate}`,
+          `No Discord account linked for username "${recipientMinecraftUsername}"`,
+        ]
+      );
+    }
+    return;
+  }
+
+  let member = null;
+  try {
+    const guild = discordClient?.guilds?.cache?.get(guildId);
+    member = guild ? await guild.members.fetch(discordId).catch(() => null) : null;
+  } catch {
+    member = null;
+  }
+
+  for (const cmd of roleCmds) {
+    const roleId = cmd.commandTemplate.trim();
+    let status = "completed";
+    let lastError = null;
+
+    try {
+      if (!member) throw new Error(`Guild member not found for Discord ID ${discordId}`);
+      if (action === "grant") {
+        await member.roles.add(roleId);
+      } else {
+        await member.roles.remove(roleId);
+      }
+    } catch (err) {
+      status = "failed";
+      lastError = err.message;
+      console.error(
+        `[webstore] discord_role ${action} role ${roleId} for ${recipientMinecraftUsername}:`,
+        err.message
+      );
+    }
+
+    await query(
+      `INSERT INTO webstoreCommandRuns
+         (purchaseId, stripeSubscriptionId, action, commandTemplate,
+          resolvedCommand, executorTaskId, status, attempts, lastError)
+       VALUES (?, ?, ?, ?, ?, NULL, ?, 1, ?)`,
+      [
+        purchaseId,
+        stripeSubscriptionId || null,
+        action,
+        cmd.commandTemplate,
+        `discord_role:${action}:${roleId}`,
+        status,
+        lastError,
+      ]
+    );
+  }
+}
+
 // ---------------------------------------------------------------------------
 // High-level fulfillment helpers
 // ---------------------------------------------------------------------------
 
 /**
- * Enqueue grant commands for a completed purchase.
- * Marks the purchase fulfilled immediately if there are no commands.
+ * Run all grant commands for a completed purchase.
+ * Minecraft commands are queued via executorTasks; Discord role commands run immediately.
+ * Marks the purchase fulfilled if there are no commands at all.
+ *
+ * @param {object} purchase
+ * @param {object} item
+ * @param {{ discordClient, guildId }} [discord]
  */
-export async function fulfillPurchase(purchase, item) {
+export async function fulfillPurchase(purchase, item, discord = {}) {
   if (!item || !Array.isArray(item.grantCommands) || !item.grantCommands.length) {
     await updatePurchaseStatus(purchase.purchaseId, "fulfilled");
     return;
@@ -610,15 +717,30 @@ export async function fulfillPurchase(purchase, item) {
     purchaseId: purchase.purchaseId,
     stripeSubscriptionId: purchase.stripeSubscriptionId || null,
     action: "grant",
-    commandTemplates: item.grantCommands,
+    commands: item.grantCommands,
     metadata,
   });
+  if (discord.discordClient) {
+    await executeDiscordRoleCommands({
+      purchaseId: purchase.purchaseId,
+      stripeSubscriptionId: purchase.stripeSubscriptionId || null,
+      action: "grant",
+      commands: item.grantCommands,
+      recipientMinecraftUsername: purchase.recipientMinecraftUsername,
+      discordClient: discord.discordClient,
+      guildId: discord.guildId,
+    });
+  }
 }
 
 /**
- * Enqueue grant commands for a subscription renewal period.
+ * Run grant commands for a subscription renewal period.
+ *
+ * @param {object} subscription
+ * @param {Array<{commandTemplate,commandType}>} grantCommands
+ * @param {{ discordClient, guildId }} [discord]
  */
-export async function fulfillSubscriptionRenewal(subscription, grantCommands) {
+export async function fulfillSubscriptionRenewal(subscription, grantCommands, discord = {}) {
   if (!grantCommands.length) return;
 
   const metadata = {
@@ -637,15 +759,30 @@ export async function fulfillSubscriptionRenewal(subscription, grantCommands) {
     purchaseId: subscription.purchaseId,
     stripeSubscriptionId: subscription.stripeSubscriptionId,
     action: "grant",
-    commandTemplates: grantCommands,
+    commands: grantCommands,
     metadata,
   });
+  if (discord.discordClient) {
+    await executeDiscordRoleCommands({
+      purchaseId: subscription.purchaseId,
+      stripeSubscriptionId: subscription.stripeSubscriptionId,
+      action: "grant",
+      commands: grantCommands,
+      recipientMinecraftUsername: subscription.recipientMinecraftUsername,
+      discordClient: discord.discordClient,
+      guildId: discord.guildId,
+    });
+  }
 }
 
 /**
- * Enqueue revoke commands when a subscription is cancelled or expires.
+ * Run revoke commands when a subscription is cancelled or expires.
+ *
+ * @param {object} subscription
+ * @param {Array<{commandTemplate,commandType}>} revokeCommands
+ * @param {{ discordClient, guildId }} [discord]
  */
-export async function revokeSubscription(subscription, revokeCommands) {
+export async function revokeSubscription(subscription, revokeCommands, discord = {}) {
   if (!revokeCommands.length) return;
 
   const metadata = {
@@ -664,9 +801,20 @@ export async function revokeSubscription(subscription, revokeCommands) {
     purchaseId: subscription.purchaseId,
     stripeSubscriptionId: subscription.stripeSubscriptionId,
     action: "revoke",
-    commandTemplates: revokeCommands,
+    commands: revokeCommands,
     metadata,
   });
+  if (discord.discordClient) {
+    await executeDiscordRoleCommands({
+      purchaseId: subscription.purchaseId,
+      stripeSubscriptionId: subscription.stripeSubscriptionId,
+      action: "revoke",
+      commands: revokeCommands,
+      recipientMinecraftUsername: subscription.recipientMinecraftUsername,
+      discordClient: discord.discordClient,
+      guildId: discord.guildId,
+    });
+  }
 }
 
 function buildCommandMetadata(purchase) {
@@ -835,7 +983,7 @@ export async function getTotalRevenueCents() {
 
 export async function getAllCommands() {
   return query(
-    `SELECT commandId, stripePriceId, action, commandTemplate, sortOrder, createdAt
+    `SELECT commandId, stripePriceId, action, commandType, commandTemplate, sortOrder, createdAt
      FROM webstoreStripeCommands
      ORDER BY stripePriceId ASC, action ASC, sortOrder ASC`
   );

@@ -129,15 +129,6 @@ function getPagination(query, defaultLimit = 50) {
 export default function dashboardFinanceRoute(app, fetch, config, db, features, lang) {
 
   // ===========================================================================
-  // POST /dashboard/finance/_ping — quick smoke-test for POST routing.
-  // Remove once CRUD forms are confirmed working in production.
-  // ===========================================================================
-  app.post("/dashboard/finance/_ping", async function (req, res) {
-    setBannerCookie("success", "POST routing works!", res);
-    return res.redirect("/dashboard/finance");
-  });
-
-  // ===========================================================================
   // GET /dashboard/finance — dashboard overview
   // ===========================================================================
   app.get("/dashboard/finance", async function (req, res) {
