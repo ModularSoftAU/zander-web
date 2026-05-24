@@ -4,15 +4,19 @@ import { getWebAnnouncement } from "../../controllers/announcementController.js"
 import {
   formatPrice,
   getAllCommands,
+  getAllPackages,
   getAllPurchases,
   getAllPurchasesCount,
   getActiveSubscriptionsCount,
   getTotalRevenueCents,
-  getWebstoreItems,
   getCommandById,
+  getPackageById,
   createCommand,
+  createPackage,
   updateCommand,
+  updatePackage,
   deleteCommand,
+  deletePackage,
 } from "../../controllers/webstoreController.js";
 
 // ---------------------------------------------------------------------------
@@ -65,16 +69,189 @@ export default function dashboardWebstoreRoute(app, fetch, config, db, features,
     );
   });
 
+  // ── Packages CRUD ──────────────────────────────────────────────────────────
+
+  // GET /dashboard/webstore/packages
+  app.get("/dashboard/webstore/packages", async function (req, res) {
+    if (!await hasPermission("zander.web.webstore", req, res, features)) return;
+    if (!features.webstore) return res.redirect("/dashboard");
+
+    let packages = [];
+    try {
+      packages = await getAllPackages();
+    } catch (err) {
+      console.error("[dashboard/webstore/packages] failed to load:", err.message);
+    }
+
+    const announcementWeb = await getWebAnnouncement();
+
+    return res.header("content-type", "text/html; charset=utf-8").send(
+      await app.view("dashboard/webstore/packages", {
+        pageTitle: "Webstore — Packages",
+        config, features, req, announcementWeb,
+        packages,
+        formatPrice,
+        canManage: canManageWebstore(req),
+        ...adminViewData(req, features),
+      })
+    );
+  });
+
+  // GET /dashboard/webstore/packages/create
+  app.get("/dashboard/webstore/packages/create", async function (req, res) {
+    if (!await hasPermission("zander.web.webstore", req, res, features)) return;
+    if (!features.webstore) return res.redirect("/dashboard");
+
+    if (!canManageWebstore(req)) {
+      setBannerCookie("danger", "You do not have permission to create packages.", res);
+      return res.redirect("/dashboard/webstore/packages");
+    }
+
+    const announcementWeb = await getWebAnnouncement();
+
+    return res.header("content-type", "text/html; charset=utf-8").send(
+      await app.view("dashboard/webstore/package-create", {
+        pageTitle: "Webstore — Add Package",
+        config, features, req, announcementWeb,
+        canManage: canManageWebstore(req),
+        ...adminViewData(req, features),
+      })
+    );
+  });
+
+  // POST /dashboard/webstore/packages/create
+  app.post("/dashboard/webstore/packages/create", async function (req, res) {
+    if (!await hasPermission("zander.web.webstore", req, res, features)) return;
+    if (!features.webstore) return res.redirect("/dashboard");
+
+    if (!canManageWebstore(req)) {
+      setBannerCookie("danger", "You do not have permission to create packages.", res);
+      return res.redirect("/dashboard/webstore/packages");
+    }
+
+    try {
+      const { stripePriceId, displayName, description, imageUrl, priceCents, currency, purchaseType, sortOrder, isActive } = req.body || {};
+
+      if (!displayName) {
+        setBannerCookie("danger", "Package name is required.", res);
+        return res.redirect("/dashboard/webstore/packages/create");
+      }
+
+      await createPackage({ stripePriceId, displayName, description, imageUrl, priceCents, currency, purchaseType, sortOrder, isActive });
+      setBannerCookie("success", "Package created successfully.", res);
+      return res.redirect("/dashboard/webstore/packages");
+    } catch (error) {
+      console.error("[dashboard/webstore] POST /packages/create:", error);
+      setBannerCookie("danger", error.message, res);
+      return res.redirect("/dashboard/webstore/packages/create");
+    }
+  });
+
+  // GET /dashboard/webstore/packages/:id/edit
+  app.get("/dashboard/webstore/packages/:id/edit", async function (req, res) {
+    if (!await hasPermission("zander.web.webstore", req, res, features)) return;
+    if (!features.webstore) return res.redirect("/dashboard");
+
+    if (!canManageWebstore(req)) {
+      setBannerCookie("danger", "You do not have permission to edit packages.", res);
+      return res.redirect("/dashboard/webstore/packages");
+    }
+
+    const packageId = parseInt(req.params.id, 10);
+    if (!packageId) return res.redirect("/dashboard/webstore/packages");
+
+    let pkg = null;
+    try {
+      pkg = await getPackageById(packageId);
+    } catch (err) {
+      console.error("[dashboard/webstore/packages/:id/edit] failed to load:", err.message);
+    }
+
+    if (!pkg) {
+      setBannerCookie("danger", "Package not found.", res);
+      return res.redirect("/dashboard/webstore/packages");
+    }
+
+    const announcementWeb = await getWebAnnouncement();
+
+    return res.header("content-type", "text/html; charset=utf-8").send(
+      await app.view("dashboard/webstore/package-edit", {
+        pageTitle: "Webstore — Edit Package",
+        config, features, req, announcementWeb,
+        pkg,
+        canManage: canManageWebstore(req),
+        ...adminViewData(req, features),
+      })
+    );
+  });
+
+  // POST /dashboard/webstore/packages/:id/edit
+  app.post("/dashboard/webstore/packages/:id/edit", async function (req, res) {
+    if (!await hasPermission("zander.web.webstore", req, res, features)) return;
+    if (!features.webstore) return res.redirect("/dashboard");
+
+    if (!canManageWebstore(req)) {
+      setBannerCookie("danger", "You do not have permission to edit packages.", res);
+      return res.redirect("/dashboard/webstore/packages");
+    }
+
+    const packageId = parseInt(req.params.id, 10);
+    if (!packageId) return res.redirect("/dashboard/webstore/packages");
+
+    try {
+      const { stripePriceId, displayName, description, imageUrl, priceCents, currency, purchaseType, sortOrder, isActive } = req.body || {};
+
+      if (!displayName) {
+        setBannerCookie("danger", "Package name is required.", res);
+        return res.redirect(`/dashboard/webstore/packages/${packageId}/edit`);
+      }
+
+      await updatePackage(packageId, { stripePriceId, displayName, description, imageUrl, priceCents, currency, purchaseType, sortOrder, isActive });
+      setBannerCookie("success", "Package updated.", res);
+      return res.redirect("/dashboard/webstore/packages");
+    } catch (error) {
+      console.error("[dashboard/webstore] POST /packages/:id/edit:", error);
+      setBannerCookie("danger", error.message, res);
+      return res.redirect(`/dashboard/webstore/packages/${packageId}/edit`);
+    }
+  });
+
+  // POST /dashboard/webstore/packages/:id/delete
+  app.post("/dashboard/webstore/packages/:id/delete", async function (req, res) {
+    if (!await hasPermission("zander.web.webstore", req, res, features)) return;
+    if (!features.webstore) return res.redirect("/dashboard");
+
+    if (!canManageWebstore(req)) {
+      setBannerCookie("danger", "You do not have permission to delete packages.", res);
+      return res.redirect("/dashboard/webstore/packages");
+    }
+
+    const packageId = parseInt(req.params.id, 10);
+    if (!packageId) return res.redirect("/dashboard/webstore/packages");
+
+    try {
+      await deletePackage(packageId);
+      setBannerCookie("success", "Package deleted.", res);
+      return res.redirect("/dashboard/webstore/packages");
+    } catch (error) {
+      console.error("[dashboard/webstore] POST /packages/:id/delete:", error);
+      setBannerCookie("danger", error.message, res);
+      return res.redirect("/dashboard/webstore/packages");
+    }
+  });
+
+  // ── Commands CRUD ──────────────────────────────────────────────────────────
+
   // GET /dashboard/webstore/commands — command configuration
   app.get("/dashboard/webstore/commands", async function (req, res) {
     if (!await hasPermission("zander.web.webstore", req, res, features)) return;
     if (!features.webstore) return res.redirect("/dashboard");
 
-    let commands = [], stripeItems = [];
+    let commands = [], packages = [];
     try {
-      [commands, stripeItems] = await Promise.all([
+      [commands, packages] = await Promise.all([
         getAllCommands(),
-        getWebstoreItems().catch(() => []),
+        getAllPackages().catch(() => []),
       ]);
     } catch (err) {
       console.error("[dashboard/webstore/commands] failed to load:", err.message);
@@ -86,7 +263,7 @@ export default function dashboardWebstoreRoute(app, fetch, config, db, features,
       await app.view("dashboard/webstore/commands", {
         pageTitle: "Webstore — Commands",
         config, features, req, announcementWeb,
-        commands, stripeItems,
+        commands, packages,
         canManage: canManageWebstore(req),
         ...adminViewData(req, features),
       })
@@ -103,22 +280,21 @@ export default function dashboardWebstoreRoute(app, fetch, config, db, features,
       return res.redirect("/dashboard/webstore/commands");
     }
 
-    let stripeItems = [];
+    let packages = [];
     try {
-      stripeItems = await getWebstoreItems();
+      packages = await getAllPackages();
     } catch (err) {
-      console.error("[dashboard/webstore/commands/create] failed to load stripe items:", err.message);
+      console.error("[dashboard/webstore/commands/create] failed to load packages:", err.message);
     }
 
     const announcementWeb = await getWebAnnouncement();
-
     const defaultPriceId = req.query.priceId || null;
 
     return res.header("content-type", "text/html; charset=utf-8").send(
       await app.view("dashboard/webstore/command-create", {
         pageTitle: "Webstore — Add Command",
         config, features, req, announcementWeb,
-        stripeItems,
+        packages,
         defaultPriceId,
         canManage: canManageWebstore(req),
         ...adminViewData(req, features),
@@ -140,7 +316,7 @@ export default function dashboardWebstoreRoute(app, fetch, config, db, features,
       const { stripePriceId, action, commandType, commandTemplate, sortOrder } = req.body || {};
 
       if (!stripePriceId || !action || !commandTemplate) {
-        setBannerCookie("danger", "Price ID, action, and command/role ID are required.", res);
+        setBannerCookie("danger", "Package, action, and command/role ID are required.", res);
         return res.redirect("/dashboard/webstore/commands/create");
       }
 
@@ -167,12 +343,11 @@ export default function dashboardWebstoreRoute(app, fetch, config, db, features,
     const commandId = parseInt(req.params.id, 10);
     if (!commandId) return res.redirect("/dashboard/webstore/commands");
 
-    let command = null;
-    let stripeItems = [];
+    let command = null, packages = [];
     try {
-      [command, stripeItems] = await Promise.all([
+      [command, packages] = await Promise.all([
         getCommandById(commandId),
-        getWebstoreItems().catch(() => []),
+        getAllPackages().catch(() => []),
       ]);
     } catch (err) {
       console.error("[dashboard/webstore/commands/:id/edit] failed to load:", err.message);
@@ -189,8 +364,7 @@ export default function dashboardWebstoreRoute(app, fetch, config, db, features,
       await app.view("dashboard/webstore/command-edit", {
         pageTitle: "Webstore — Edit Command",
         config, features, req, announcementWeb,
-        command,
-        stripeItems,
+        command, packages,
         canManage: canManageWebstore(req),
         ...adminViewData(req, features),
       })

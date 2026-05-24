@@ -15,9 +15,9 @@
 
       <%- include("../../admin/_notices.ejs") %>
 
-      <% if (!stripeItems || !stripeItems.length) { %>
-        <div class="alert alert-warning">
-          No Stripe products found. Make sure <code>STRIPE_SECRET_KEY</code> is configured and you have active products in your Stripe account.
+      <% if (!packages || !packages.length) { %>
+        <div class="alert alert-info">
+          No packages configured yet. <% if (canManage) { %>Go to <a href="/dashboard/webstore/packages">Packages</a> to add your first package, then come back here to configure its commands.<% } else { %>Contact an admin to add packages.<% } %>
         </div>
       <% } else { %>
         <%
@@ -29,7 +29,7 @@
           });
         %>
 
-        <% stripeItems.forEach(function(item) {
+        <% packages.forEach(function(item) {
           const itemCmds = cmdsByPrice[item.stripePriceId] || [];
           const grantCmds = itemCmds.filter(c => c.action === 'grant');
           const revokeCmds = itemCmds.filter(c => c.action === 'revoke');
@@ -119,7 +119,7 @@
 
         <%# Show a card for orphaned commands whose price ID is no longer in Stripe %>
         <%
-          const knownPriceIds = new Set(stripeItems.map(i => i.stripePriceId));
+          const knownPriceIds = new Set(packages.map(i => i.stripePriceId));
           const orphanCmds = (commands || []).filter(c => !knownPriceIds.has(c.stripePriceId));
         %>
         <% if (orphanCmds.length) { %>

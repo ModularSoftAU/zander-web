@@ -22,7 +22,7 @@
               <form method="post" action="/dashboard/webstore/commands/create">
 
                 <% if (defaultPriceId) {
-                  const matchedItem = (stripeItems || []).find(i => i.stripePriceId === defaultPriceId);
+                  const matchedItem = (packages || []).find(i => i.stripePriceId === defaultPriceId);
                 %>
                   <div class="mb-3">
                     <label class="form-label fw-semibold">Package</label>
@@ -38,20 +38,19 @@
                 <% } else { %>
                   <div class="mb-3">
                     <label for="stripePriceId" class="form-label fw-semibold">Package <span class="text-danger">*</span></label>
-                    <% if (stripeItems && stripeItems.length) { %>
+                    <% if (packages && packages.length) { %>
                       <select class="form-select" id="stripePriceId" name="stripePriceId" required>
                         <option value="">— Select a package —</option>
-                        <% stripeItems.forEach(function(item) { %>
-                          <option value="<%= item.stripePriceId %>">
-                            <%= item.displayName %> (<%= item.stripePriceId %>)
+                        <% packages.forEach(function(item) { %>
+                          <option value="<%= item.stripePriceId || '' %>" <%= !item.stripePriceId ? 'disabled' : '' %>>
+                            <%= item.displayName %><% if (item.stripePriceId) { %> (<%= item.stripePriceId %>)<% } else { %> — no Stripe price set<% } %>
                           </option>
                         <% }) %>
                       </select>
+                      <div class="form-text">Only packages with a Stripe price ID can have commands.</div>
                     <% } else { %>
-                      <input type="text" class="form-control" id="stripePriceId" name="stripePriceId"
-                             required maxlength="120" placeholder="price_xxxxxxxxxxxxxxxxxxxxxxxx">
-                      <div class="form-text text-warning">
-                        <i class="fa-solid fa-triangle-exclamation me-1"></i>Could not load Stripe products — enter the price ID manually.
+                      <div class="alert alert-warning py-2 mb-0">
+                        No packages found. <a href="/dashboard/webstore/packages/create">Create a package</a> first.
                       </div>
                     <% } %>
                   </div>

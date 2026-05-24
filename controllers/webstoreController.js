@@ -44,53 +44,6 @@ function query(sql, params = []) {
 // Stripe API helpers
 // ---------------------------------------------------------------------------
 
-/**
- * Fetch all active Stripe prices with expanded product data.
- * Uses cursor pagination to handle large catalogs.
- */
-async function fetchStripePrices() {
-  const apiKey = process.env.STRIPE_SECRET_KEY;
-  if (!apiKey) throw new Error("STRIPE_SECRET_KEY is not configured");
-
-  const prices = [];
-  let startingAfter = null;
-  let hasMore = true;
-
-  while (hasMore) {
-    const params = new URLSearchParams({ limit: "100", active: "true" });
-    params.append("expand[]", "data.product");
-    if (startingAfter) params.append("starting_after", startingAfter);
-
-    const response = await fetch(`https://api.stripe.com/v1/prices?${params}`, {
-      headers: { Authorization: `Bearer ${apiKey}` },
-    });
-
-    if (!response.ok) {
-      const text = await response.text();
-      throw new Error(`Stripe API error ${response.status}: ${text}`);
-    }
-
-    const data = await response.json();
-    prices.push(...(data.data || []));
-    hasMore = Boolean(data.has_more);
-    startingAfter = data.data?.length ? data.data[data.data.length - 1].id : null;
-  }
-
-  return prices;
-}
-
-/**
- * Resolve the best price amount for a requested currency, falling back to the
- * price's default currency when the preferred one is not available.
- */
-function resolveStripePriceAmount(price, preferredCurrency) {
-  if (preferredCurrency) {
-    const key = preferredCurrency.toLowerCase();
-    const opt = price.currency_options?.[key];
-    if (opt?.unit_amount) return { amount: opt.unit_amount, currency: key };
-  }
-  return { amount: price.unit_amount || 0, currency: price.currency || "usd" };
-}
 
 /**
  * Fetch a single Stripe subscription object.
@@ -208,68 +161,58 @@ export function resolveCommandTemplate(template, metadata) {
 // ---------------------------------------------------------------------------
 
 /**
- * Return all active Stripe items enriched with their command templates from
- * the webstoreStripeCommands table.  Prices are optionally converted to a
- * preferred currency.
+ * Return all active packages from webstorePackages, enriched with their
+ * command templates from webstoreStripeCommands.
+ * The preferredCurrency parameter is accepted for API compatibility but
+ * ignored — prices are stored directly in the DB.
  */
 export async function getWebstoreItems(preferredCurrency = null) {
-  const prices = await fetchStripePrices();
-
-  const unexpanded = prices.filter((p) => typeof p.product === "string");
-  if (unexpanded.length > 0) {
-    console.warn(`[webstore] ${unexpanded.length} price(s) have an unexpanded product reference — they will be excluded from the storefront`);
-  }
-
-  const items = prices
-    .filter((p) => p.active && typeof p.product === "object" && p.product?.active)
-    .map((p) => {
-      const { amount, currency } = resolveStripePriceAmount(p, preferredCurrency);
-      const sortKey =
-        typeof p.product?.metadata?.sortOrder === "string"
-          ? Number(p.product.metadata.sortOrder) || 0
-          : 0;
-      return {
-        slug: p.id,
-        stripePriceId: p.id,
-        displayName: p.product?.name || p.nickname || p.id,
-        description: p.product?.description || "",
-        imageUrl: p.product?.images?.[0] || null,
-        priceCents: amount,
-        currency,
-        purchaseType: p.type === "recurring" || p.recurring ? "subscription" : "one_time",
-        sortKey,
-      };
-    })
-    .sort((a, b) => a.sortKey - b.sortKey || a.displayName.localeCompare(b.displayName));
-
-  if (!items.length) return [];
-
-  // Attach command entries from DB — each entry is { commandTemplate, commandType }
-  const priceIds = items.map((i) => i.stripePriceId);
-  const placeholders = priceIds.map(() => "?").join(",");
-  const commands = await query(
-    `SELECT stripePriceId, action, commandTemplate, commandType
-     FROM webstoreStripeCommands
-     WHERE stripePriceId IN (${placeholders})
-     ORDER BY action ASC, sortOrder ASC, commandId ASC`,
-    priceIds
+  const packages = await query(
+    `SELECT packageId, stripePriceId, displayName, description, imageUrl,
+            priceCents, currency, purchaseType, sortOrder
+     FROM webstorePackages
+     WHERE isActive = 1
+     ORDER BY sortOrder ASC, displayName ASC`
   );
 
+  if (!packages.length) return [];
+
+  // Attach commands — only packages with a stripePriceId can have commands
+  const priceIds = packages.filter((p) => p.stripePriceId).map((p) => p.stripePriceId);
   const grantByPrice = {};
   const revokeByPrice = {};
-  for (const cmd of commands) {
-    const entry = { commandTemplate: cmd.commandTemplate, commandType: cmd.commandType || "minecraft" };
-    if (cmd.action === "revoke") {
-      (revokeByPrice[cmd.stripePriceId] = revokeByPrice[cmd.stripePriceId] || []).push(entry);
-    } else {
-      (grantByPrice[cmd.stripePriceId] = grantByPrice[cmd.stripePriceId] || []).push(entry);
+
+  if (priceIds.length) {
+    const placeholders = priceIds.map(() => "?").join(",");
+    const commands = await query(
+      `SELECT stripePriceId, action, commandTemplate, commandType
+       FROM webstoreStripeCommands
+       WHERE stripePriceId IN (${placeholders})
+       ORDER BY action ASC, sortOrder ASC, commandId ASC`,
+      priceIds
+    );
+    for (const cmd of commands) {
+      const entry = { commandTemplate: cmd.commandTemplate, commandType: cmd.commandType || "minecraft" };
+      if (cmd.action === "revoke") {
+        (revokeByPrice[cmd.stripePriceId] = revokeByPrice[cmd.stripePriceId] || []).push(entry);
+      } else {
+        (grantByPrice[cmd.stripePriceId] = grantByPrice[cmd.stripePriceId] || []).push(entry);
+      }
     }
   }
 
-  return items.map((item) => ({
-    ...item,
-    grantCommands: grantByPrice[item.stripePriceId] || [],
-    revokeCommands: revokeByPrice[item.stripePriceId] || [],
+  return packages.map((pkg) => ({
+    slug: pkg.stripePriceId || String(pkg.packageId),
+    stripePriceId: pkg.stripePriceId,
+    displayName: pkg.displayName,
+    description: pkg.description || "",
+    imageUrl: pkg.imageUrl || null,
+    priceCents: pkg.priceCents,
+    currency: pkg.currency,
+    purchaseType: pkg.purchaseType,
+    sortKey: pkg.sortOrder,
+    grantCommands: grantByPrice[pkg.stripePriceId] || [],
+    revokeCommands: revokeByPrice[pkg.stripePriceId] || [],
   }));
 }
 
@@ -987,6 +930,74 @@ export async function getAllCommands() {
      FROM webstoreStripeCommands
      ORDER BY stripePriceId ASC, action ASC, sortOrder ASC`
   );
+}
+
+// ---------------------------------------------------------------------------
+// Package CRUD (webstorePackages)
+// ---------------------------------------------------------------------------
+
+export async function getAllPackages() {
+  return query(
+    `SELECT packageId, stripePriceId, displayName, description, imageUrl,
+            priceCents, currency, purchaseType, sortOrder, isActive, createdAt
+     FROM webstorePackages
+     ORDER BY sortOrder ASC, displayName ASC`
+  );
+}
+
+export async function getPackageById(packageId) {
+  const rows = await query(
+    `SELECT packageId, stripePriceId, displayName, description, imageUrl,
+            priceCents, currency, purchaseType, sortOrder, isActive, createdAt
+     FROM webstorePackages WHERE packageId = ? LIMIT 1`,
+    [packageId]
+  );
+  return rows[0] || null;
+}
+
+export async function createPackage({ stripePriceId, displayName, description, imageUrl, priceCents, currency, purchaseType, sortOrder, isActive }) {
+  const result = await query(
+    `INSERT INTO webstorePackages
+       (stripePriceId, displayName, description, imageUrl, priceCents, currency, purchaseType, sortOrder, isActive)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    [
+      stripePriceId || null,
+      displayName,
+      description || null,
+      imageUrl || null,
+      parseInt(priceCents, 10) || 0,
+      currency || "usd",
+      purchaseType === "subscription" ? "subscription" : "one_time",
+      parseInt(sortOrder, 10) || 0,
+      isActive === false || isActive === "0" || isActive === 0 ? 0 : 1,
+    ]
+  );
+  return result.insertId;
+}
+
+export async function updatePackage(packageId, { stripePriceId, displayName, description, imageUrl, priceCents, currency, purchaseType, sortOrder, isActive }) {
+  return query(
+    `UPDATE webstorePackages
+     SET stripePriceId = ?, displayName = ?, description = ?, imageUrl = ?,
+         priceCents = ?, currency = ?, purchaseType = ?, sortOrder = ?, isActive = ?, updatedAt = NOW()
+     WHERE packageId = ?`,
+    [
+      stripePriceId || null,
+      displayName,
+      description || null,
+      imageUrl || null,
+      parseInt(priceCents, 10) || 0,
+      currency || "usd",
+      purchaseType === "subscription" ? "subscription" : "one_time",
+      parseInt(sortOrder, 10) || 0,
+      isActive === false || isActive === "0" || isActive === 0 ? 0 : 1,
+      packageId,
+    ]
+  );
+}
+
+export async function deletePackage(packageId) {
+  return query("DELETE FROM webstorePackages WHERE packageId = ?", [packageId]);
 }
 
 // ---------------------------------------------------------------------------

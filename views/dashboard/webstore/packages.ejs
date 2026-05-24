@@ -1,0 +1,111 @@
+<%- include("../../admin/_head.ejs", { pageTitle }) %>
+<%- include("../../admin/_topbar.ejs") %>
+<%- include("../../admin/_sidebar.ejs") %>
+
+<div id="wpcontent">
+  <div id="wpbody-content">
+    <div class="wrap">
+
+      <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+        <h1 class="h2"><i class="fa-solid fa-box-open fa-fw me-2"></i>Webstore — Packages</h1>
+        <div class="d-flex gap-2">
+          <% if (canManage) { %>
+            <a href="/dashboard/webstore/packages/create" class="btn btn-sm btn-primary">
+              <i class="fa-solid fa-plus me-1"></i>Add Package
+            </a>
+          <% } %>
+          <a href="/dashboard/webstore" class="btn btn-sm btn-outline-secondary">
+            <i class="fa-solid fa-arrow-left me-1"></i>Back to Purchases
+          </a>
+        </div>
+      </div>
+
+      <%- include("../../admin/_notices.ejs") %>
+
+      <% if (!packages || !packages.length) { %>
+        <div class="alert alert-info">
+          No packages configured yet.<% if (canManage) { %> Use <strong>Add Package</strong> above to create your first one.<% } %>
+        </div>
+      <% } else { %>
+        <div class="table-responsive">
+          <table class="table table-sm table-hover align-middle">
+            <thead class="table-light">
+              <tr>
+                <th style="width:40px">Order</th>
+                <th>Name</th>
+                <th style="width:200px">Stripe Price ID</th>
+                <th style="width:100px">Price</th>
+                <th style="width:110px">Type</th>
+                <th style="width:70px">Status</th>
+                <% if (canManage) { %><th style="width:110px"></th><% } %>
+              </tr>
+            </thead>
+            <tbody>
+              <% packages.forEach(function(pkg) { %>
+                <tr class="<%= pkg.isActive ? '' : 'text-muted' %>">
+                  <td class="text-muted"><%= pkg.sortOrder %></td>
+                  <td>
+                    <strong><%= pkg.displayName %></strong>
+                    <% if (pkg.description) { %>
+                      <div class="text-muted small text-truncate" style="max-width:320px;"><%= pkg.description %></div>
+                    <% } %>
+                  </td>
+                  <td>
+                    <% if (pkg.stripePriceId) { %>
+                      <code class="small"><%= pkg.stripePriceId %></code>
+                    <% } else { %>
+                      <span class="text-warning small"><i class="fa-solid fa-triangle-exclamation me-1"></i>Not set</span>
+                    <% } %>
+                  </td>
+                  <td>
+                    <% if (pkg.priceCents > 0) { %>
+                      <%= formatPrice(pkg.priceCents, pkg.currency) %>
+                    <% } else { %>
+                      <span class="text-muted">Free</span>
+                    <% } %>
+                  </td>
+                  <td>
+                    <% if (pkg.purchaseType === 'subscription') { %>
+                      <span class="badge bg-info text-dark">Subscription</span>
+                    <% } else { %>
+                      <span class="badge bg-secondary">One-time</span>
+                    <% } %>
+                  </td>
+                  <td>
+                    <% if (pkg.isActive) { %>
+                      <span class="badge bg-success">Active</span>
+                    <% } else { %>
+                      <span class="badge bg-secondary">Inactive</span>
+                    <% } %>
+                  </td>
+                  <% if (canManage) { %>
+                    <td class="text-end pe-2">
+                      <a href="/dashboard/webstore/commands?pkg=<%= pkg.stripePriceId || '' %>"
+                         class="btn btn-xs btn-outline-primary py-0 px-1 me-1" style="font-size:0.75rem;"
+                         title="Configure commands">
+                        <i class="fa-solid fa-terminal fa-fw"></i>
+                      </a>
+                      <a href="/dashboard/webstore/packages/<%= pkg.packageId %>/edit"
+                         class="btn btn-xs btn-outline-secondary py-0 px-1 me-1" style="font-size:0.75rem;">
+                        <i class="fa-solid fa-pencil fa-fw"></i>
+                      </a>
+                      <form method="post" action="/dashboard/webstore/packages/<%= pkg.packageId %>/delete"
+                            class="d-inline"
+                            onsubmit="return confirm('Delete package &quot;<%= pkg.displayName %>&quot;? Commands for this package will remain but will be orphaned.')">
+                        <button type="submit" class="btn btn-xs btn-outline-danger py-0 px-1" style="font-size:0.75rem;">
+                          <i class="fa-solid fa-trash fa-fw"></i>
+                        </button>
+                      </form>
+                    </td>
+                  <% } %>
+                </tr>
+              <% }) %>
+            </tbody>
+          </table>
+        </div>
+      <% } %>
+
+    </div>
+  </div>
+  <%- include("../../admin/_footer.ejs") %>
+</div>

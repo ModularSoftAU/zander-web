@@ -301,6 +301,17 @@ export const adminPages = [
     sortOrder: 78,
   },
   {
+    slug: "webstore-packages",
+    title: "Webstore Packages",
+    menuTitle: "Packages",
+    icon: "fa-solid fa-box-open",
+    capability: "zander.web.webstore",
+    path: "/dashboard/webstore/packages",
+    featureFlag: "webstore",
+    group: "Webstore",
+    sortOrder: 79,
+  },
+  {
     slug: "webstore-commands",
     title: "Command Config",
     menuTitle: "Command Config",
@@ -309,7 +320,7 @@ export const adminPages = [
     path: "/dashboard/webstore/commands",
     featureFlag: "webstore",
     group: "Webstore",
-    sortOrder: 79,
+    sortOrder: 80,
   },
 
   // ── Finance group ──────────────────────────────────────────────────────────

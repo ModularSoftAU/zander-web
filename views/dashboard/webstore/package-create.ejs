@@ -1,0 +1,114 @@
+<%- include("../../admin/_head.ejs", { pageTitle }) %>
+<%- include("../../admin/_topbar.ejs") %>
+<%- include("../../admin/_sidebar.ejs") %>
+
+<div id="wpcontent">
+  <div id="wpbody-content">
+    <div class="wrap">
+
+      <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+        <h1 class="h2"><i class="fa-solid fa-plus fa-fw me-2"></i>Add Package</h1>
+        <a href="/dashboard/webstore/packages" class="btn btn-sm btn-outline-secondary">
+          <i class="fa-solid fa-arrow-left me-1"></i>Back to Packages
+        </a>
+      </div>
+
+      <%- include("../../admin/_notices.ejs") %>
+
+      <div class="row justify-content-center">
+        <div class="col-lg-7">
+          <div class="card shadow-sm">
+            <div class="card-body">
+              <form method="post" action="/dashboard/webstore/packages/create">
+
+                <div class="mb-3">
+                  <label for="displayName" class="form-label fw-semibold">Package Name <span class="text-danger">*</span></label>
+                  <input type="text" class="form-control" id="displayName" name="displayName"
+                         required maxlength="255" placeholder="e.g. VIP Rank">
+                </div>
+
+                <div class="mb-3">
+                  <label for="description" class="form-label fw-semibold">Description</label>
+                  <textarea class="form-control" id="description" name="description"
+                            rows="3" maxlength="2000"
+                            placeholder="Shown on the storefront listing for this package."></textarea>
+                </div>
+
+                <div class="mb-3">
+                  <label for="stripePriceId" class="form-label fw-semibold">Stripe Price ID</label>
+                  <input type="text" class="form-control" id="stripePriceId" name="stripePriceId"
+                         maxlength="120" placeholder="price_xxxxxxxxxxxxxxxxxxxxxxxx">
+                  <div class="form-text">
+                    The Stripe price ID used when creating a checkout session.
+                    Leave blank for packages that don't use Stripe for payment.
+                    Find this in the <a href="https://dashboard.stripe.com/products" target="_blank" rel="noopener">Stripe dashboard</a> under the product's pricing section.
+                  </div>
+                </div>
+
+                <div class="row g-3 mb-3">
+                  <div class="col-sm-6">
+                    <label for="priceCents" class="form-label fw-semibold">Price (in cents)</label>
+                    <input type="number" class="form-control" id="priceCents" name="priceCents"
+                           value="0" min="0" placeholder="e.g. 999 = $9.99">
+                    <div class="form-text">Used for display only. e.g. $9.99 = 999</div>
+                  </div>
+                  <div class="col-sm-6">
+                    <label for="currency" class="form-label fw-semibold">Currency</label>
+                    <select class="form-select" id="currency" name="currency">
+                      <option value="aud">AUD — Australian Dollar</option>
+                      <option value="usd">USD — US Dollar</option>
+                      <option value="gbp">GBP — British Pound</option>
+                      <option value="eur">EUR — Euro</option>
+                      <option value="cad">CAD — Canadian Dollar</option>
+                      <option value="nzd">NZD — New Zealand Dollar</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div class="mb-3">
+                  <label for="purchaseType" class="form-label fw-semibold">Purchase Type</label>
+                  <select class="form-select" id="purchaseType" name="purchaseType">
+                    <option value="one_time">One-time purchase</option>
+                    <option value="subscription">Subscription (recurring)</option>
+                  </select>
+                </div>
+
+                <div class="mb-3">
+                  <label for="imageUrl" class="form-label fw-semibold">Image URL</label>
+                  <input type="url" class="form-control" id="imageUrl" name="imageUrl"
+                         maxlength="512" placeholder="https://example.com/image.png">
+                  <div class="form-text">Optional. Displayed on the storefront package card.</div>
+                </div>
+
+                <div class="mb-3">
+                  <label for="sortOrder" class="form-label fw-semibold">Sort Order</label>
+                  <input type="number" class="form-control" id="sortOrder" name="sortOrder"
+                         value="0" min="0" style="max-width:140px;">
+                  <div class="form-text">Lower numbers appear first. Default is 0.</div>
+                </div>
+
+                <div class="mb-4">
+                  <div class="form-check form-switch">
+                    <input class="form-check-input" type="checkbox" role="switch"
+                           id="isActive" name="isActive" value="1" checked>
+                    <label class="form-check-label" for="isActive">Active (visible on storefront)</label>
+                  </div>
+                </div>
+
+                <div class="d-flex gap-2">
+                  <button type="submit" class="btn btn-primary">
+                    <i class="fa-solid fa-check me-1"></i>Create Package
+                  </button>
+                  <a href="/dashboard/webstore/packages" class="btn btn-outline-secondary">Cancel</a>
+                </div>
+
+              </form>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+  <%- include("../../admin/_footer.ejs") %>
+</div>

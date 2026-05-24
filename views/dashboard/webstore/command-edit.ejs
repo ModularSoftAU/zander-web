@@ -22,8 +22,8 @@
             <div class="card-header">
               <span class="text-muted small">Price ID</span>
               <code class="ms-2 small"><%= command.stripePriceId %></code>
-              <% if (stripeItems && stripeItems.length) {
-                   const match = stripeItems.find(i => i.stripePriceId === command.stripePriceId);
+              <% if (packages && packages.length) {
+                   const match = packages.find(i => i.stripePriceId === command.stripePriceId);
                    if (match) { %>
                 <span class="text-muted small ms-2">— <%= match.displayName %></span>
               <%   }
