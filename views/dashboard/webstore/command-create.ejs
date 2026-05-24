@@ -21,37 +21,37 @@
             <div class="card-body">
               <form method="post" action="/dashboard/webstore/commands/create">
 
-                <% if (defaultPackageId) {
-                  const matchedItem = (packages || []).find(i => i.packageId === defaultPackageId);
+                <% if (defaultPriceId) {
+                  const matchedItem = (stripeItems || []).find(i => i.stripePriceId === defaultPriceId);
                 %>
                   <div class="mb-3">
                     <label class="form-label fw-semibold">Package</label>
                     <div class="form-control bg-light text-muted" style="cursor:default;">
                       <% if (matchedItem) { %>
-                        <%= matchedItem.displayName %>
-                        <% if (matchedItem.stripePriceId) { %><span class="ms-1 text-muted small">— <code><%= matchedItem.stripePriceId %></code></span><% } %>
+                        <%= matchedItem.displayName %> &mdash; <code><%= defaultPriceId %></code>
                       <% } else { %>
-                        Package #<%= defaultPackageId %>
+                        <code><%= defaultPriceId %></code>
                       <% } %>
                     </div>
-                    <input type="hidden" name="packageId" value="<%= defaultPackageId %>">
+                    <input type="hidden" name="stripePriceId" value="<%= defaultPriceId %>">
                   </div>
                 <% } else { %>
                   <div class="mb-3">
-                    <label for="packageId" class="form-label fw-semibold">Package <span class="text-danger">*</span></label>
-                    <% if (packages && packages.length) { %>
-                      <select class="form-select" id="packageId" name="packageId" required>
+                    <label for="stripePriceId" class="form-label fw-semibold">Package <span class="text-danger">*</span></label>
+                    <% if (stripeItems && stripeItems.length) { %>
+                      <select class="form-select" id="stripePriceId" name="stripePriceId" required>
                         <option value="">— Select a package —</option>
-                        <% packages.forEach(function(item) { %>
-                          <option value="<%= item.packageId %>">
-                            <%= item.displayName %>
-                            <% if (item.stripePriceId) { %>(<%= item.stripePriceId %>)<% } %>
+                        <% stripeItems.forEach(function(item) { %>
+                          <option value="<%= item.stripePriceId %>">
+                            <%= item.displayName %> (<%= item.stripePriceId %>)
                           </option>
                         <% }) %>
                       </select>
                     <% } else { %>
-                      <div class="alert alert-warning py-2 mb-0">
-                        No packages found. <a href="/dashboard/webstore/packages/create">Create a package</a> first.
+                      <input type="text" class="form-control" id="stripePriceId" name="stripePriceId"
+                             required maxlength="120" placeholder="price_xxxxxxxxxxxxxxxxxxxxxxxx">
+                      <div class="form-text text-warning">
+                        <i class="fa-solid fa-triangle-exclamation me-1"></i>Could not load Stripe products — enter the price ID manually.
                       </div>
                     <% } %>
                   </div>

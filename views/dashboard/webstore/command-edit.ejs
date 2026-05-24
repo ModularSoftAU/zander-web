@@ -20,13 +20,14 @@
 
           <div class="card shadow-sm mb-3">
             <div class="card-header">
-              <span class="text-muted small">Package</span>
-              <% if (command.packageName) { %>
-                <strong class="ms-2"><%= command.packageName %></strong>
-              <% } %>
-              <% if (command.stripePriceId) { %>
-                <code class="ms-2 small text-muted"><%= command.stripePriceId %></code>
-              <% } %>
+              <span class="text-muted small">Price ID</span>
+              <code class="ms-2 small"><%= command.stripePriceId %></code>
+              <% if (stripeItems && stripeItems.length) {
+                   const match = stripeItems.find(i => i.stripePriceId === command.stripePriceId);
+                   if (match) { %>
+                <span class="text-muted small ms-2">— <%= match.displayName %></span>
+              <%   }
+                 } %>
             </div>
           </div>
 

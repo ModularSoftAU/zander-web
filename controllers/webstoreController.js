@@ -44,6 +44,53 @@ function query(sql, params = []) {
 // Stripe API helpers
 // ---------------------------------------------------------------------------
 
+/**
+ * Fetch all active Stripe prices with expanded product data.
+ * Uses cursor pagination to handle large catalogs.
+ */
+async function fetchStripePrices() {
+  const apiKey = process.env.STRIPE_SECRET_KEY;
+  if (!apiKey) throw new Error("STRIPE_SECRET_KEY is not configured");
+
+  const prices = [];
+  let startingAfter = null;
+  let hasMore = true;
+
+  while (hasMore) {
+    const params = new URLSearchParams({ limit: "100", active: "true" });
+    params.append("expand[]", "data.product");
+    if (startingAfter) params.append("starting_after", startingAfter);
+
+    const response = await fetch(`https://api.stripe.com/v1/prices?${params}`, {
+      headers: { Authorization: `Bearer ${apiKey}` },
+    });
+
+    if (!response.ok) {
+      const text = await response.text();
+      throw new Error(`Stripe API error ${response.status}: ${text}`);
+    }
+
+    const data = await response.json();
+    prices.push(...(data.data || []));
+    hasMore = Boolean(data.has_more);
+    startingAfter = data.data?.length ? data.data[data.data.length - 1].id : null;
+  }
+
+  return prices;
+}
+
+/**
+ * Resolve the best price amount for a requested currency, falling back to the
+ * price's default currency when the preferred one is not available.
+ */
+function resolveStripePriceAmount(price, preferredCurrency) {
+  if (preferredCurrency) {
+    const key = preferredCurrency.toLowerCase();
+    const opt = price.currency_options?.[key];
+    if (opt?.unit_amount) return { amount: opt.unit_amount, currency: key };
+  }
+  return { amount: price.unit_amount || 0, currency: price.currency || "usd" };
+}
 
 /**
  * Fetch a single Stripe subscription object.
@@ -161,56 +208,68 @@ export function resolveCommandTemplate(template, metadata) {
 // ---------------------------------------------------------------------------
 
 /**
- * Return all active packages from webstorePackages, enriched with their
- * command templates from webstoreStripeCommands.
- * The preferredCurrency parameter is accepted for API compatibility but
- * ignored — prices are stored directly in the DB.
+ * Return all active Stripe items enriched with their command templates from
+ * the webstoreStripeCommands table.  Prices are optionally converted to a
+ * preferred currency.
  */
 export async function getWebstoreItems(preferredCurrency = null) {
-  const packages = await query(
-    `SELECT packageId, stripePriceId, displayName, description, imageUrl,
-            priceCents, currency, purchaseType, sortOrder
-     FROM webstorePackages
-     WHERE isActive = 1
-     ORDER BY sortOrder ASC, displayName ASC`
-  );
+  const prices = await fetchStripePrices();
 
-  if (!packages.length) return [];
+  const unexpanded = prices.filter((p) => typeof p.product === "string");
+  if (unexpanded.length > 0) {
+    console.warn(`[webstore] ${unexpanded.length} price(s) have an unexpanded product reference — they will be excluded from the storefront`);
+  }
 
-  // Attach commands via packageId (primary) or stripePriceId (legacy fallback)
-  const pkgIds = packages.map((p) => p.packageId);
-  const placeholders = pkgIds.map(() => "?").join(",");
+  const items = prices
+    .filter((p) => p.active && typeof p.product === "object" && p.product?.active)
+    .map((p) => {
+      const { amount, currency } = resolveStripePriceAmount(p, preferredCurrency);
+      const sortKey =
+        typeof p.product?.metadata?.sortOrder === "string"
+          ? Number(p.product.metadata.sortOrder) || 0
+          : 0;
+      return {
+        slug: p.id,
+        stripePriceId: p.id,
+        displayName: p.product?.name || p.nickname || p.id,
+        description: p.product?.description || "",
+        imageUrl: p.product?.images?.[0] || null,
+        priceCents: amount,
+        currency,
+        purchaseType: p.type === "recurring" || p.recurring ? "subscription" : "one_time",
+        sortKey,
+      };
+    })
+    .sort((a, b) => a.sortKey - b.sortKey || a.displayName.localeCompare(b.displayName));
+
+  if (!items.length) return [];
+
+  // Attach command entries from DB — each entry is { commandTemplate, commandType }
+  const priceIds = items.map((i) => i.stripePriceId);
+  const placeholders = priceIds.map(() => "?").join(",");
   const commands = await query(
-    `SELECT packageId, action, commandTemplate, commandType
+    `SELECT stripePriceId, action, commandTemplate, commandType
      FROM webstoreStripeCommands
-     WHERE packageId IN (${placeholders})
+     WHERE stripePriceId IN (${placeholders})
      ORDER BY action ASC, sortOrder ASC, commandId ASC`,
-    pkgIds
+    priceIds
   );
 
-  const grantByPkg = {};
-  const revokeByPkg = {};
+  const grantByPrice = {};
+  const revokeByPrice = {};
   for (const cmd of commands) {
     const entry = { commandTemplate: cmd.commandTemplate, commandType: cmd.commandType || "minecraft" };
     if (cmd.action === "revoke") {
-      (revokeByPkg[cmd.packageId] = revokeByPkg[cmd.packageId] || []).push(entry);
+      (revokeByPrice[cmd.stripePriceId] = revokeByPrice[cmd.stripePriceId] || []).push(entry);
     } else {
-      (grantByPkg[cmd.packageId] = grantByPkg[cmd.packageId] || []).push(entry);
+      (grantByPrice[cmd.stripePriceId] = grantByPrice[cmd.stripePriceId] || []).push(entry);
     }
   }
 
-  return packages.map((pkg) => ({
-    slug: pkg.stripePriceId || String(pkg.packageId),
-    stripePriceId: pkg.stripePriceId,
-    displayName: pkg.displayName,
-    description: pkg.description || "",
-    imageUrl: pkg.imageUrl || null,
-    priceCents: pkg.priceCents,
-    currency: pkg.currency,
-    purchaseType: pkg.purchaseType,
-    sortKey: pkg.sortOrder,
-    grantCommands: grantByPkg[pkg.packageId] || [],
-    revokeCommands: revokeByPkg[pkg.packageId] || [],
+  return items.map((item) => ({
+    ...item,
+    grantCommands: grantByPrice[item.stripePriceId] || [],
+    revokeCommands: revokeByPrice[item.stripePriceId] || [],
   }));
 }
 
@@ -226,16 +285,12 @@ export async function findWebstoreItem(slug) {
  * where only the price ID is known.
  */
 export async function getCommandsByPriceId(stripePriceId) {
-  // Match commands linked via packageId→package.stripePriceId (new path)
-  // OR directly via the cached stripePriceId column (legacy / back-compat path)
   const rows = await query(
-    `SELECT c.action, c.commandTemplate, c.commandType
-     FROM webstoreStripeCommands c
-     LEFT JOIN webstorePackages p ON p.packageId = c.packageId
-     WHERE p.stripePriceId = ?
-        OR (c.packageId IS NULL AND c.stripePriceId = ?)
-     ORDER BY c.action ASC, c.sortOrder ASC, c.commandId ASC`,
-    [stripePriceId, stripePriceId]
+    `SELECT action, commandTemplate, commandType
+     FROM webstoreStripeCommands
+     WHERE stripePriceId = ?
+     ORDER BY action ASC, sortOrder ASC, commandId ASC`,
+    [stripePriceId]
   );
   const toEntry = (r) => ({ commandTemplate: r.commandTemplate, commandType: r.commandType || "minecraft" });
   return {
@@ -928,82 +983,10 @@ export async function getTotalRevenueCents() {
 
 export async function getAllCommands() {
   return query(
-    `SELECT c.commandId, c.packageId, c.stripePriceId,
-            c.action, c.commandType, c.commandTemplate, c.sortOrder, c.createdAt,
-            p.displayName AS packageName
-     FROM webstoreStripeCommands c
-     LEFT JOIN webstorePackages p ON p.packageId = c.packageId
-     ORDER BY COALESCE(p.sortOrder, 0) ASC, p.displayName ASC,
-              c.action ASC, c.sortOrder ASC`
+    `SELECT commandId, stripePriceId, action, commandType, commandTemplate, sortOrder, createdAt
+     FROM webstoreStripeCommands
+     ORDER BY stripePriceId ASC, action ASC, sortOrder ASC`
   );
-}
-
-// ---------------------------------------------------------------------------
-// Package CRUD (webstorePackages)
-// ---------------------------------------------------------------------------
-
-export async function getAllPackages() {
-  return query(
-    `SELECT packageId, stripePriceId, displayName, description, imageUrl,
-            priceCents, currency, purchaseType, sortOrder, isActive, createdAt
-     FROM webstorePackages
-     ORDER BY sortOrder ASC, displayName ASC`
-  );
-}
-
-export async function getPackageById(packageId) {
-  const rows = await query(
-    `SELECT packageId, stripePriceId, displayName, description, imageUrl,
-            priceCents, currency, purchaseType, sortOrder, isActive, createdAt
-     FROM webstorePackages WHERE packageId = ? LIMIT 1`,
-    [packageId]
-  );
-  return rows[0] || null;
-}
-
-export async function createPackage({ stripePriceId, displayName, description, imageUrl, priceCents, currency, purchaseType, sortOrder, isActive }) {
-  const result = await query(
-    `INSERT INTO webstorePackages
-       (stripePriceId, displayName, description, imageUrl, priceCents, currency, purchaseType, sortOrder, isActive)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-    [
-      stripePriceId || null,
-      displayName,
-      description || null,
-      imageUrl || null,
-      parseInt(priceCents, 10) || 0,
-      currency || "usd",
-      purchaseType === "subscription" ? "subscription" : "one_time",
-      parseInt(sortOrder, 10) || 0,
-      isActive === false || isActive === "0" || isActive === 0 ? 0 : 1,
-    ]
-  );
-  return result.insertId;
-}
-
-export async function updatePackage(packageId, { stripePriceId, displayName, description, imageUrl, priceCents, currency, purchaseType, sortOrder, isActive }) {
-  return query(
-    `UPDATE webstorePackages
-     SET stripePriceId = ?, displayName = ?, description = ?, imageUrl = ?,
-         priceCents = ?, currency = ?, purchaseType = ?, sortOrder = ?, isActive = ?, updatedAt = NOW()
-     WHERE packageId = ?`,
-    [
-      stripePriceId || null,
-      displayName,
-      description || null,
-      imageUrl || null,
-      parseInt(priceCents, 10) || 0,
-      currency || "usd",
-      purchaseType === "subscription" ? "subscription" : "one_time",
-      parseInt(sortOrder, 10) || 0,
-      isActive === false || isActive === "0" || isActive === 0 ? 0 : 1,
-      packageId,
-    ]
-  );
-}
-
-export async function deletePackage(packageId) {
-  return query("DELETE FROM webstorePackages WHERE packageId = ?", [packageId]);
 }
 
 // ---------------------------------------------------------------------------
@@ -1012,29 +995,21 @@ export async function deletePackage(packageId) {
 
 export async function getCommandById(commandId) {
   const rows = await query(
-    `SELECT c.commandId, c.packageId, c.stripePriceId,
-            c.action, c.commandType, c.commandTemplate, c.sortOrder, c.createdAt,
-            p.displayName AS packageName
-     FROM webstoreStripeCommands c
-     LEFT JOIN webstorePackages p ON p.packageId = c.packageId
-     WHERE c.commandId = ?
+    `SELECT commandId, stripePriceId, action, commandType, commandTemplate, sortOrder, createdAt
+     FROM webstoreStripeCommands
+     WHERE commandId = ?
      LIMIT 1`,
     [commandId]
   );
   return rows[0] || null;
 }
 
-export async function createCommand({ packageId, action, commandType, commandTemplate, sortOrder }) {
-  // Look up the package to cache its stripePriceId for fulfillment lookups
-  const pkg = packageId ? await getPackageById(parseInt(packageId, 10)) : null;
-  const stripePriceId = pkg?.stripePriceId || null;
-
+export async function createCommand({ stripePriceId, action, commandType, commandTemplate, sortOrder }) {
   const result = await query(
     `INSERT INTO webstoreStripeCommands
-       (packageId, stripePriceId, action, commandType, commandTemplate, sortOrder)
-     VALUES (?, ?, ?, ?, ?, ?)`,
+       (stripePriceId, action, commandType, commandTemplate, sortOrder)
+     VALUES (?, ?, ?, ?, ?)`,
     [
-      pkg?.packageId || null,
       stripePriceId,
       action,
       commandType || "minecraft",
