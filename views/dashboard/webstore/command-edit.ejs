@@ -46,26 +46,44 @@
                 <div class="mb-3">
                   <label for="commandType" class="form-label fw-semibold">Command Type <span class="text-danger">*</span></label>
                   <select class="form-select" id="commandType" name="commandType">
-                    <option value="minecraft" <%= (command.commandType || 'minecraft') === 'minecraft' ? 'selected' : '' %>>Minecraft</option>
+                    <option value="minecraft" <%= (command.commandType || 'minecraft') === 'minecraft' ? 'selected' : '' %>>Minecraft command</option>
                     <option value="discord_role" <%= command.commandType === 'discord_role' ? 'selected' : '' %>>Discord role</option>
                   </select>
+                </div>
+
+                <%# Minecraft command field %>
+                <div class="mb-3" id="field-minecraft">
+                  <label for="commandTemplate-mc" class="form-label fw-semibold">Command <span class="text-danger">*</span></label>
+                  <input type="text" class="form-control" id="commandTemplate-mc" name="commandTemplate"
+                         maxlength="1000"
+                         value="<%= command.commandType !== 'discord_role' ? command.commandTemplate : '' %>">
                   <div class="form-text">
-                    <strong>Minecraft</strong> — sends a console command to the Minecraft server (supports <code>{{ username }}</code> etc.).
-                    <br>
-                    <strong>Discord role</strong> — adds or removes a Discord role from the recipient's linked account; the template field should be the bare Discord role ID.
+                    Supports: <code>{{ username }}</code>, <code>{{ purchaserUsername }}</code>, <code>{{ purchaseId }}</code>, <code>{{ itemSlug }}</code>, <code>{{ purchaseType }}</code>, <code>{{ isGift }}</code>
                   </div>
                 </div>
 
-                <div class="mb-3">
-                  <label for="commandTemplate" class="form-label fw-semibold">Command / Role ID <span class="text-danger">*</span></label>
-                  <input type="text" class="form-control" id="commandTemplate" name="commandTemplate"
-                         required maxlength="1000"
-                         value="<%= command.commandTemplate %>">
-                  <div class="form-text">
-                    Minecraft console command — supports <code>{{ username }}</code>, <code>{{ purchaserUsername }}</code>, <code>{{ purchaseId }}</code>, <code>{{ itemSlug }}</code>, <code>{{ purchaseType }}</code>, <code>{{ isGift }}</code>.
-                    <br>
-                    For <strong>Discord role</strong> type: paste the Discord role ID (right-click the role in Discord &rsaquo; Copy ID).
-                  </div>
+                <%# Discord role field %>
+                <div class="mb-3 d-none" id="field-discord">
+                  <label for="commandTemplate-discord" class="form-label fw-semibold">Discord Role <span class="text-danger">*</span></label>
+                  <% if (discordRoles && discordRoles.length) { %>
+                    <select class="form-select" id="commandTemplate-discord" name="commandTemplate" disabled>
+                      <option value="">— Select a role —</option>
+                      <% discordRoles.forEach(function(role) { %>
+                        <option value="<%= role.id %>"
+                                <%= command.commandType === 'discord_role' && command.commandTemplate === role.id ? 'selected' : '' %>>
+                          <%= role.name %> (<%= role.id %>)
+                        </option>
+                      <% }) %>
+                    </select>
+                  <% } else { %>
+                    <input type="text" class="form-control" id="commandTemplate-discord" name="commandTemplate"
+                           maxlength="30"
+                           value="<%= command.commandType === 'discord_role' ? command.commandTemplate : '' %>"
+                           placeholder="Discord role ID" disabled>
+                    <div class="form-text text-warning">
+                      <i class="fa-solid fa-triangle-exclamation me-1"></i>Bot is offline or not in the guild — enter the role ID manually.
+                    </div>
+                  <% } %>
                 </div>
 
                 <div class="mb-4">
@@ -93,3 +111,26 @@
   </div>
   <%- include("../../admin/_footer.ejs") %>
 </div>
+
+<script>
+(function () {
+  var typeSelect   = document.getElementById('commandType');
+  var mcField      = document.getElementById('field-minecraft');
+  var discordField = document.getElementById('field-discord');
+  var mcInput      = document.getElementById('commandTemplate-mc');
+  var discordInput = document.getElementById('commandTemplate-discord');
+
+  function toggle() {
+    var isDiscord = typeSelect.value === 'discord_role';
+    mcField.classList.toggle('d-none', isDiscord);
+    discordField.classList.toggle('d-none', !isDiscord);
+    mcInput.disabled = isDiscord;
+    mcInput.required = !isDiscord;
+    discordInput.disabled = !isDiscord;
+    discordInput.required = isDiscord;
+  }
+
+  typeSelect.addEventListener('change', toggle);
+  toggle();
+}());
+</script>

@@ -71,17 +71,37 @@
                     <option value="minecraft">Minecraft command</option>
                     <option value="discord_role">Discord role</option>
                   </select>
+                </div>
+
+                <%# Minecraft command field %>
+                <div class="mb-3" id="field-minecraft">
+                  <label for="commandTemplate-mc" class="form-label fw-semibold">Command <span class="text-danger">*</span></label>
+                  <input type="text" class="form-control" id="commandTemplate-mc" name="commandTemplate"
+                         maxlength="1000" placeholder="e.g. lp user {{ username }} parent add vip">
                   <div class="form-text">
-                    <strong>Minecraft</strong> — console command sent to the server; supports <code>{{ username }}</code> etc.<br>
-                    <strong>Discord role</strong> — adds or removes a role from the recipient's linked Discord account; enter the bare role ID below.
+                    Supports: <code>{{ username }}</code>, <code>{{ purchaserUsername }}</code>, <code>{{ purchaseId }}</code>, <code>{{ itemSlug }}</code>, <code>{{ purchaseType }}</code>, <code>{{ isGift }}</code>
                   </div>
                 </div>
 
-                <div class="mb-3">
-                  <label for="commandTemplate" class="form-label fw-semibold">Command / Role ID <span class="text-danger">*</span></label>
-                  <input type="text" class="form-control" id="commandTemplate" name="commandTemplate"
-                         required maxlength="1000"
-                         placeholder="e.g. lp user {{ username }} parent add vip">
+                <%# Discord role field %>
+                <div class="mb-3 d-none" id="field-discord">
+                  <label for="commandTemplate-discord" class="form-label fw-semibold">Discord Role <span class="text-danger">*</span></label>
+                  <% if (discordRoles && discordRoles.length) { %>
+                    <select class="form-select" id="commandTemplate-discord" name="commandTemplate" disabled>
+                      <option value="">— Select a role —</option>
+                      <% discordRoles.forEach(function(role) { %>
+                        <option value="<%= role.id %>">
+                          <%= role.name %> (<%= role.id %>)
+                        </option>
+                      <% }) %>
+                    </select>
+                  <% } else { %>
+                    <input type="text" class="form-control" id="commandTemplate-discord" name="commandTemplate"
+                           maxlength="30" placeholder="Discord role ID" disabled>
+                    <div class="form-text text-warning">
+                      <i class="fa-solid fa-triangle-exclamation me-1"></i>Bot is offline or not in the guild — enter the role ID manually.
+                    </div>
+                  <% } %>
                 </div>
 
                 <div class="mb-4">
@@ -108,3 +128,26 @@
   </div>
   <%- include("../../admin/_footer.ejs") %>
 </div>
+
+<script>
+(function () {
+  var typeSelect   = document.getElementById('commandType');
+  var mcField      = document.getElementById('field-minecraft');
+  var discordField = document.getElementById('field-discord');
+  var mcInput      = document.getElementById('commandTemplate-mc');
+  var discordInput = document.getElementById('commandTemplate-discord');
+
+  function toggle() {
+    var isDiscord = typeSelect.value === 'discord_role';
+    mcField.classList.toggle('d-none', isDiscord);
+    discordField.classList.toggle('d-none', !isDiscord);
+    mcInput.disabled = isDiscord;
+    mcInput.required = !isDiscord;
+    discordInput.disabled = !isDiscord;
+    discordInput.required = isDiscord;
+  }
+
+  typeSelect.addEventListener('change', toggle);
+  toggle();
+}());
+</script>

@@ -1,6 +1,7 @@
 import { hasPermission, setBannerCookie } from "../../api/common.js";
 import { adminViewData } from "../../admin/adminHelpers.js";
 import { getWebAnnouncement } from "../../controllers/announcementController.js";
+import { client as discordClient } from "../../controllers/discordController.js";
 import {
   formatPrice,
   getAllCommands,
@@ -16,7 +17,7 @@ import {
 } from "../../controllers/webstoreController.js";
 
 // ---------------------------------------------------------------------------
-// Permission helper
+// Helpers
 // ---------------------------------------------------------------------------
 
 function canManageWebstore(req) {
@@ -25,6 +26,19 @@ function canManageWebstore(req) {
     const c = String(p).trim().toLowerCase();
     return c === "*" || c === "zander.web.webstore.manage" || c === "zander.web.webstore.*";
   });
+}
+
+function getDiscordRoles(config) {
+  try {
+    const guild = discordClient?.guilds?.cache?.get(config?.discord?.guildId);
+    if (!guild) return [];
+    return [...guild.roles.cache.values()]
+      .filter((r) => !r.managed && r.name !== "@everyone")
+      .sort((a, b) => b.position - a.position)
+      .map((r) => ({ id: r.id, name: r.name, color: r.hexColor }));
+  } catch {
+    return [];
+  }
 }
 
 export default function dashboardWebstoreRoute(app, fetch, config, db, features, lang) {
@@ -111,8 +125,8 @@ export default function dashboardWebstoreRoute(app, fetch, config, db, features,
     }
 
     const announcementWeb = await getWebAnnouncement();
-
     const defaultPriceId = req.query.priceId || null;
+    const discordRoles = getDiscordRoles(config);
 
     return res.header("content-type", "text/html; charset=utf-8").send(
       await app.view("dashboard/webstore/command-create", {
@@ -120,6 +134,7 @@ export default function dashboardWebstoreRoute(app, fetch, config, db, features,
         config, features, req, announcementWeb,
         stripeItems,
         defaultPriceId,
+        discordRoles,
         canManage: canManageWebstore(req),
         ...adminViewData(req, features),
       })
@@ -184,6 +199,7 @@ export default function dashboardWebstoreRoute(app, fetch, config, db, features,
     }
 
     const announcementWeb = await getWebAnnouncement();
+    const discordRoles = getDiscordRoles(config);
 
     return res.header("content-type", "text/html; charset=utf-8").send(
       await app.view("dashboard/webstore/command-edit", {
@@ -191,6 +207,7 @@ export default function dashboardWebstoreRoute(app, fetch, config, db, features,
         config, features, req, announcementWeb,
         command,
         stripeItems,
+        discordRoles,
         canManage: canManageWebstore(req),
         ...adminViewData(req, features),
       })
