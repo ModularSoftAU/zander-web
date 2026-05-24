@@ -129,28 +129,11 @@ function getPagination(query, defaultLimit = 50) {
 export default function dashboardFinanceRoute(app, fetch, config, db, features, lang) {
 
   // ===========================================================================
-  // POST /dashboard/finance/_ping — diagnostic routes (no DB, no auth).
-  // Remove once POST routing is confirmed working.
+  // POST /dashboard/finance/_ping — quick smoke-test for POST routing.
+  // Remove once CRUD forms are confirmed working in production.
   // ===========================================================================
-
-  // Step 1: plain-text response (no redirect) — confirms pipeline can send responses at all
-  app.post("/dashboard/finance/_ping/plain", async function (req, res) {
-    console.log("[finance] POST /_ping/plain – reached handler");
-    return res.code(200).header("content-type", "text/plain; charset=utf-8").send("pong");
-  });
-
-  // Step 2: redirect without cookies — confirms redirect works
-  app.post("/dashboard/finance/_ping/redirect", async function (req, res) {
-    console.log("[finance] POST /_ping/redirect – about to redirect");
-    return res.redirect("/dashboard/finance");
-  });
-
-  // Step 3: full flow (cookies + redirect) — original test
   app.post("/dashboard/finance/_ping", async function (req, res) {
-    console.log("[finance] POST /_ping – body:", JSON.stringify(req.body || {}));
-    console.log("[finance] POST /_ping – calling setBannerCookie");
-    await setBannerCookie("success", "POST routing works!", res);
-    console.log("[finance] POST /_ping – calling res.redirect");
+    setBannerCookie("success", "POST routing works!", res);
     return res.redirect("/dashboard/finance");
   });
 
@@ -178,7 +161,7 @@ export default function dashboardFinanceRoute(app, fetch, config, db, features, 
       );
     } catch (error) {
       console.error("[finance] GET /dashboard/finance:", error);
-      await setBannerCookie("danger", error.message, res);
+      setBannerCookie("danger", error.message, res);
       return res.redirect("/dashboard");
     }
   });
@@ -224,7 +207,7 @@ export default function dashboardFinanceRoute(app, fetch, config, db, features, 
       );
     } catch (error) {
       console.error("[finance] GET /dashboard/finance/vendors:", error);
-      await setBannerCookie("danger", error.message, res);
+      setBannerCookie("danger", error.message, res);
       return res.redirect("/dashboard/finance");
     }
   });
@@ -235,7 +218,7 @@ export default function dashboardFinanceRoute(app, fetch, config, db, features, 
 
     const canManage = canManageFinance(req);
     if (!canManage) {
-      await setBannerCookie("danger", "You do not have permission to create vendors.", res);
+      setBannerCookie("danger", "You do not have permission to create vendors.", res);
       return res.redirect("/dashboard/finance/vendors");
     }
 
@@ -257,37 +240,33 @@ export default function dashboardFinanceRoute(app, fetch, config, db, features, 
       );
     } catch (error) {
       console.error("[finance] GET /dashboard/finance/vendors/create:", error);
-      await setBannerCookie("danger", error.message, res);
+      setBannerCookie("danger", error.message, res);
       return res.redirect("/dashboard/finance/vendors");
     }
   });
 
   // POST /dashboard/finance/vendors/create
   app.post("/dashboard/finance/vendors/create", async function (req, res) {
-    console.log("[finance] POST /vendors/create start – user:", req.session?.user?.userId, "body keys:", Object.keys(req.body || {}));
     if (!await hasPermission("zander.web.finance", req, res, features)) return;
 
     if (!canManageFinance(req)) {
-      await setBannerCookie("danger", "You do not have permission to create vendors.", res);
+      setBannerCookie("danger", "You do not have permission to create vendors.", res);
       return res.redirect("/dashboard/finance/vendors");
     }
 
     try {
       const { name, website, contactEmail, notes, categoryId } = req.body || {};
-      console.log("[finance] POST /vendors/create – calling createVendor, name:", name);
       const vendor = await createVendor({ name, website, contactEmail, notes, categoryId });
-      console.log("[finance] POST /vendors/create – createVendor OK, id:", vendor.vendorId);
 
       if (vendor.website) {
         setImmediate(() => fetchAndCacheVendorFavicon(vendor.vendorId));
       }
 
-      await setBannerCookie("success", `Vendor "${vendor.name}" created successfully.`, res);
-      console.log("[finance] POST /vendors/create – redirecting");
+      setBannerCookie("success", `Vendor "${vendor.name}" created successfully.`, res);
       return res.redirect("/dashboard/finance/vendors");
     } catch (error) {
       console.error("[finance] POST /dashboard/finance/vendors/create:", error);
-      await setBannerCookie("danger", error.message, res);
+      setBannerCookie("danger", error.message, res);
       return res.redirect("/dashboard/finance/vendors/create");
     }
   });
@@ -310,7 +289,7 @@ export default function dashboardFinanceRoute(app, fetch, config, db, features, 
       ]);
 
       if (!vendor) {
-        await setBannerCookie("danger", "Vendor not found.", res);
+        setBannerCookie("danger", "Vendor not found.", res);
         return res.redirect("/dashboard/finance/vendors");
       }
 
@@ -329,7 +308,7 @@ export default function dashboardFinanceRoute(app, fetch, config, db, features, 
       );
     } catch (error) {
       console.error("[finance] GET /dashboard/finance/vendors/:vendorId:", error);
-      await setBannerCookie("danger", error.message, res);
+      setBannerCookie("danger", error.message, res);
       return res.redirect("/dashboard/finance/vendors");
     }
   });
@@ -342,7 +321,7 @@ export default function dashboardFinanceRoute(app, fetch, config, db, features, 
     if (!vendorId) return res.redirect("/dashboard/finance/vendors");
 
     if (!canManageFinance(req)) {
-      await setBannerCookie("danger", "You do not have permission to edit vendors.", res);
+      setBannerCookie("danger", "You do not have permission to edit vendors.", res);
       return res.redirect(`/dashboard/finance/vendors/${vendorId}`);
     }
 
@@ -354,7 +333,7 @@ export default function dashboardFinanceRoute(app, fetch, config, db, features, 
       ]);
 
       if (!vendor) {
-        await setBannerCookie("danger", "Vendor not found.", res);
+        setBannerCookie("danger", "Vendor not found.", res);
         return res.redirect("/dashboard/finance/vendors");
       }
 
@@ -371,7 +350,7 @@ export default function dashboardFinanceRoute(app, fetch, config, db, features, 
       );
     } catch (error) {
       console.error("[finance] GET /dashboard/finance/vendors/:vendorId/edit:", error);
-      await setBannerCookie("danger", error.message, res);
+      setBannerCookie("danger", error.message, res);
       return res.redirect(`/dashboard/finance/vendors/${vendorId}`);
     }
   });
@@ -384,18 +363,18 @@ export default function dashboardFinanceRoute(app, fetch, config, db, features, 
     if (!vendorId) return res.redirect("/dashboard/finance/vendors");
 
     if (!canManageFinance(req)) {
-      await setBannerCookie("danger", "You do not have permission to edit vendors.", res);
+      setBannerCookie("danger", "You do not have permission to edit vendors.", res);
       return res.redirect(`/dashboard/finance/vendors/${vendorId}`);
     }
 
     try {
       const { name, website, contactEmail, notes, categoryId, isActive } = req.body || {};
       await updateVendor(vendorId, { name, website, contactEmail, notes, categoryId, isActive: isActive === "1" ? 1 : 0 });
-      await setBannerCookie("success", "Vendor updated successfully.", res);
+      setBannerCookie("success", "Vendor updated successfully.", res);
       return res.redirect(`/dashboard/finance/vendors/${vendorId}`);
     } catch (error) {
       console.error("[finance] POST /dashboard/finance/vendors/:vendorId/edit:", error);
-      await setBannerCookie("danger", error.message, res);
+      setBannerCookie("danger", error.message, res);
       return res.redirect(`/dashboard/finance/vendors/${vendorId}/edit`);
     }
   });
@@ -408,17 +387,17 @@ export default function dashboardFinanceRoute(app, fetch, config, db, features, 
     if (!vendorId) return res.redirect("/dashboard/finance/vendors");
 
     if (!canManageFinance(req)) {
-      await setBannerCookie("danger", "You do not have permission to delete vendors.", res);
+      setBannerCookie("danger", "You do not have permission to delete vendors.", res);
       return res.redirect(`/dashboard/finance/vendors/${vendorId}`);
     }
 
     try {
       await deleteVendor(vendorId);
-      await setBannerCookie("success", "Vendor deleted.", res);
+      setBannerCookie("success", "Vendor deleted.", res);
       return res.redirect("/dashboard/finance/vendors");
     } catch (error) {
       console.error("[finance] POST /dashboard/finance/vendors/:vendorId/delete:", error);
-      await setBannerCookie("danger", error.message, res);
+      setBannerCookie("danger", error.message, res);
       return res.redirect(`/dashboard/finance/vendors/${vendorId}`);
     }
   });
@@ -431,21 +410,21 @@ export default function dashboardFinanceRoute(app, fetch, config, db, features, 
     if (!vendorId) return res.redirect("/dashboard/finance/vendors");
 
     if (!canManageFinance(req)) {
-      await setBannerCookie("danger", "You do not have permission to refresh vendor favicons.", res);
+      setBannerCookie("danger", "You do not have permission to refresh vendor favicons.", res);
       return res.redirect(`/dashboard/finance/vendors/${vendorId}`);
     }
 
     try {
       const faviconUrl = await fetchAndCacheVendorFavicon(vendorId);
       if (faviconUrl) {
-        await setBannerCookie("success", "Favicon refreshed successfully.", res);
+        setBannerCookie("success", "Favicon refreshed successfully.", res);
       } else {
-        await setBannerCookie("warning", "Could not fetch favicon — check that the vendor has a valid website URL.", res);
+        setBannerCookie("warning", "Could not fetch favicon — check that the vendor has a valid website URL.", res);
       }
       return res.redirect(`/dashboard/finance/vendors/${vendorId}`);
     } catch (error) {
       console.error("[finance] POST /dashboard/finance/vendors/:vendorId/refresh-favicon:", error);
-      await setBannerCookie("danger", error.message, res);
+      setBannerCookie("danger", error.message, res);
       return res.redirect(`/dashboard/finance/vendors/${vendorId}`);
     }
   });
@@ -489,7 +468,7 @@ export default function dashboardFinanceRoute(app, fetch, config, db, features, 
       );
     } catch (error) {
       console.error("[finance] GET /dashboard/finance/invoices:", error);
-      await setBannerCookie("danger", error.message, res);
+      setBannerCookie("danger", error.message, res);
       return res.redirect("/dashboard/finance");
     }
   });
@@ -499,7 +478,7 @@ export default function dashboardFinanceRoute(app, fetch, config, db, features, 
     if (!await hasPermission("zander.web.finance", req, res, features)) return;
 
     if (!canManageFinance(req)) {
-      await setBannerCookie("danger", "You do not have permission to create invoices.", res);
+      setBannerCookie("danger", "You do not have permission to create invoices.", res);
       return res.redirect("/dashboard/finance/invoices");
     }
 
@@ -524,7 +503,7 @@ export default function dashboardFinanceRoute(app, fetch, config, db, features, 
       );
     } catch (error) {
       console.error("[finance] GET /dashboard/finance/invoices/create:", error);
-      await setBannerCookie("danger", error.message, res);
+      setBannerCookie("danger", error.message, res);
       return res.redirect("/dashboard/finance/invoices");
     }
   });
@@ -534,7 +513,7 @@ export default function dashboardFinanceRoute(app, fetch, config, db, features, 
     if (!await hasPermission("zander.web.finance", req, res, features)) return;
 
     if (!canManageFinance(req)) {
-      await setBannerCookie("danger", "You do not have permission to create invoices.", res);
+      setBannerCookie("danger", "You do not have permission to create invoices.", res);
       return res.redirect("/dashboard/finance/invoices");
     }
 
@@ -545,11 +524,11 @@ export default function dashboardFinanceRoute(app, fetch, config, db, features, 
       const createdByUserId = req.session?.user?.userId || 0;
       const invoice = await createInvoice({ vendorId, invoiceNumber, issueDate, dueDate, amountCents, currency, description, createdByUserId });
 
-      await setBannerCookie("success", `Invoice #${invoice.invoiceNumber || invoice.invoiceId} created.`, res);
+      setBannerCookie("success", `Invoice #${invoice.invoiceNumber || invoice.invoiceId} created.`, res);
       return res.redirect(`/dashboard/finance/invoices/${invoice.invoiceId}`);
     } catch (error) {
       console.error("[finance] POST /dashboard/finance/invoices/create:", error);
-      await setBannerCookie("danger", error.message, res);
+      setBannerCookie("danger", error.message, res);
       return res.redirect("/dashboard/finance/invoices/create");
     }
   });
@@ -571,7 +550,7 @@ export default function dashboardFinanceRoute(app, fetch, config, db, features, 
       ]);
 
       if (!invoice) {
-        await setBannerCookie("danger", "Invoice not found.", res);
+        setBannerCookie("danger", "Invoice not found.", res);
         return res.redirect("/dashboard/finance/invoices");
       }
 
@@ -590,7 +569,7 @@ export default function dashboardFinanceRoute(app, fetch, config, db, features, 
       );
     } catch (error) {
       console.error("[finance] GET /dashboard/finance/invoices/:invoiceId:", error);
-      await setBannerCookie("danger", error.message, res);
+      setBannerCookie("danger", error.message, res);
       return res.redirect("/dashboard/finance/invoices");
     }
   });
@@ -603,7 +582,7 @@ export default function dashboardFinanceRoute(app, fetch, config, db, features, 
     if (!invoiceId) return res.redirect("/dashboard/finance/invoices");
 
     if (!canManageFinance(req)) {
-      await setBannerCookie("danger", "You do not have permission to edit invoices.", res);
+      setBannerCookie("danger", "You do not have permission to edit invoices.", res);
       return res.redirect(`/dashboard/finance/invoices/${invoiceId}`);
     }
 
@@ -611,11 +590,11 @@ export default function dashboardFinanceRoute(app, fetch, config, db, features, 
       const { vendorId, invoiceNumber, issueDate, dueDate, amountCents, currency, description, status } = req.body || {};
       await updateInvoice(invoiceId, { vendorId, invoiceNumber, issueDate, dueDate, amountCents, currency, description, status });
       await recalculateInvoiceStatus(invoiceId);
-      await setBannerCookie("success", "Invoice updated.", res);
+      setBannerCookie("success", "Invoice updated.", res);
       return res.redirect(`/dashboard/finance/invoices/${invoiceId}`);
     } catch (error) {
       console.error("[finance] POST /dashboard/finance/invoices/:invoiceId/edit:", error);
-      await setBannerCookie("danger", error.message, res);
+      setBannerCookie("danger", error.message, res);
       return res.redirect(`/dashboard/finance/invoices/${invoiceId}`);
     }
   });
@@ -628,7 +607,7 @@ export default function dashboardFinanceRoute(app, fetch, config, db, features, 
     if (!invoiceId) return res.redirect("/dashboard/finance/invoices");
 
     if (!canManageFinance(req)) {
-      await setBannerCookie("danger", "You do not have permission to edit invoices.", res);
+      setBannerCookie("danger", "You do not have permission to edit invoices.", res);
       return res.redirect(`/dashboard/finance/invoices/${invoiceId}`);
     }
 
@@ -641,7 +620,7 @@ export default function dashboardFinanceRoute(app, fetch, config, db, features, 
       ]);
 
       if (!invoice) {
-        await setBannerCookie("danger", "Invoice not found.", res);
+        setBannerCookie("danger", "Invoice not found.", res);
         return res.redirect("/dashboard/finance/invoices");
       }
 
@@ -659,7 +638,7 @@ export default function dashboardFinanceRoute(app, fetch, config, db, features, 
       );
     } catch (error) {
       console.error("[finance] GET /dashboard/finance/invoices/:invoiceId/edit:", error);
-      await setBannerCookie("danger", error.message, res);
+      setBannerCookie("danger", error.message, res);
       return res.redirect(`/dashboard/finance/invoices/${invoiceId}`);
     }
   });
@@ -672,17 +651,17 @@ export default function dashboardFinanceRoute(app, fetch, config, db, features, 
     if (!invoiceId) return res.redirect("/dashboard/finance/invoices");
 
     if (!canManageFinance(req)) {
-      await setBannerCookie("danger", "You do not have permission to delete invoices.", res);
+      setBannerCookie("danger", "You do not have permission to delete invoices.", res);
       return res.redirect(`/dashboard/finance/invoices/${invoiceId}`);
     }
 
     try {
       await deleteInvoice(invoiceId);
-      await setBannerCookie("success", "Invoice deleted.", res);
+      setBannerCookie("success", "Invoice deleted.", res);
       return res.redirect("/dashboard/finance/invoices");
     } catch (error) {
       console.error("[finance] POST /dashboard/finance/invoices/:invoiceId/delete:", error);
-      await setBannerCookie("danger", error.message, res);
+      setBannerCookie("danger", error.message, res);
       return res.redirect(`/dashboard/finance/invoices/${invoiceId}`);
     }
   });
@@ -695,17 +674,17 @@ export default function dashboardFinanceRoute(app, fetch, config, db, features, 
     if (!invoiceId) return res.redirect("/dashboard/finance/invoices");
 
     if (!canManageFinance(req)) {
-      await setBannerCookie("danger", "You do not have permission to cancel invoices.", res);
+      setBannerCookie("danger", "You do not have permission to cancel invoices.", res);
       return res.redirect(`/dashboard/finance/invoices/${invoiceId}`);
     }
 
     try {
       await updateInvoice(invoiceId, { status: "cancelled" });
-      await setBannerCookie("success", "Invoice marked as cancelled.", res);
+      setBannerCookie("success", "Invoice marked as cancelled.", res);
       return res.redirect(`/dashboard/finance/invoices/${invoiceId}`);
     } catch (error) {
       console.error("[finance] POST /dashboard/finance/invoices/:invoiceId/mark-cancelled:", error);
-      await setBannerCookie("danger", error.message, res);
+      setBannerCookie("danger", error.message, res);
       return res.redirect(`/dashboard/finance/invoices/${invoiceId}`);
     }
   });
@@ -718,7 +697,7 @@ export default function dashboardFinanceRoute(app, fetch, config, db, features, 
     if (!invoiceId) return res.redirect("/dashboard/finance/invoices");
 
     if (!canManageFinance(req)) {
-      await setBannerCookie("danger", "You do not have permission to record payments.", res);
+      setBannerCookie("danger", "You do not have permission to record payments.", res);
       return res.redirect(`/dashboard/finance/invoices/${invoiceId}`);
     }
 
@@ -738,11 +717,11 @@ export default function dashboardFinanceRoute(app, fetch, config, db, features, 
         createdByUserId: req.session?.user?.userId || 0,
       });
       await recalculateInvoiceStatus(invoiceId);
-      await setBannerCookie("success", "Payment recorded.", res);
+      setBannerCookie("success", "Payment recorded.", res);
       return res.redirect(`/dashboard/finance/invoices/${invoiceId}`);
     } catch (error) {
       console.error("[finance] POST /dashboard/finance/invoices/:invoiceId/payments:", error);
-      await setBannerCookie("danger", error.message, res);
+      setBannerCookie("danger", error.message, res);
       return res.redirect(`/dashboard/finance/invoices/${invoiceId}`);
     }
   });
@@ -755,7 +734,7 @@ export default function dashboardFinanceRoute(app, fetch, config, db, features, 
     if (!invoiceId) return res.redirect("/dashboard/finance/invoices");
 
     if (!canManageFinance(req)) {
-      await setBannerCookie("danger", "You do not have permission to upload attachments.", res);
+      setBannerCookie("danger", "You do not have permission to upload attachments.", res);
       return res.redirect(`/dashboard/finance/invoices/${invoiceId}`);
     }
 
@@ -781,11 +760,11 @@ export default function dashboardFinanceRoute(app, fetch, config, db, features, 
         uploadedByUserId: req.session?.user?.userId || 0,
       });
 
-      await setBannerCookie("success", "Attachment uploaded.", res);
+      setBannerCookie("success", "Attachment uploaded.", res);
       return res.redirect(`/dashboard/finance/invoices/${invoiceId}`);
     } catch (error) {
       console.error("[finance] POST /dashboard/finance/invoices/:invoiceId/attachments:", error);
-      await setBannerCookie("danger", error.message, res);
+      setBannerCookie("danger", error.message, res);
       return res.redirect(`/dashboard/finance/invoices/${invoiceId}`);
     }
   });
@@ -798,16 +777,16 @@ export default function dashboardFinanceRoute(app, fetch, config, db, features, 
     const attachmentId = parseInt(req.params.attachmentId, 10);
 
     if (!canManageFinance(req)) {
-      await setBannerCookie("danger", "You do not have permission to delete attachments.", res);
+      setBannerCookie("danger", "You do not have permission to delete attachments.", res);
       return res.redirect(`/dashboard/finance/invoices/${invoiceId}`);
     }
 
     try {
       await deleteAttachment(attachmentId);
-      await setBannerCookie("success", "Attachment deleted.", res);
+      setBannerCookie("success", "Attachment deleted.", res);
     } catch (error) {
       console.error("[finance] POST /dashboard/finance/invoices/attachments/delete:", error);
-      await setBannerCookie("danger", error.message, res);
+      setBannerCookie("danger", error.message, res);
     }
     return res.redirect(`/dashboard/finance/invoices/${invoiceId}`);
   });
@@ -849,7 +828,7 @@ export default function dashboardFinanceRoute(app, fetch, config, db, features, 
       );
     } catch (error) {
       console.error("[finance] GET /dashboard/finance/payments:", error);
-      await setBannerCookie("danger", error.message, res);
+      setBannerCookie("danger", error.message, res);
       return res.redirect("/dashboard/finance");
     }
   });
@@ -859,7 +838,7 @@ export default function dashboardFinanceRoute(app, fetch, config, db, features, 
     if (!await hasPermission("zander.web.finance", req, res, features)) return;
 
     if (!canManageFinance(req)) {
-      await setBannerCookie("danger", "You do not have permission to record payments.", res);
+      setBannerCookie("danger", "You do not have permission to record payments.", res);
       return res.redirect("/dashboard/finance/payments");
     }
 
@@ -889,7 +868,7 @@ export default function dashboardFinanceRoute(app, fetch, config, db, features, 
       );
     } catch (error) {
       console.error("[finance] GET /dashboard/finance/payments/create:", error);
-      await setBannerCookie("danger", error.message, res);
+      setBannerCookie("danger", error.message, res);
       return res.redirect("/dashboard/finance/payments");
     }
   });
@@ -899,7 +878,7 @@ export default function dashboardFinanceRoute(app, fetch, config, db, features, 
     if (!await hasPermission("zander.web.finance", req, res, features)) return;
 
     if (!canManageFinance(req)) {
-      await setBannerCookie("danger", "You do not have permission to record payments.", res);
+      setBannerCookie("danger", "You do not have permission to record payments.", res);
       return res.redirect("/dashboard/finance/payments");
     }
 
@@ -933,11 +912,11 @@ export default function dashboardFinanceRoute(app, fetch, config, db, features, 
 
       await createPayment({ vendorId, invoiceId, transactionId, accountId, amountCents, currency, paidDate, notes, createdByUserId });
 
-      await setBannerCookie("success", "Payment recorded successfully.", res);
+      setBannerCookie("success", "Payment recorded successfully.", res);
       return res.redirect("/dashboard/finance/payments");
     } catch (error) {
       console.error("[finance] POST /dashboard/finance/payments/create:", error);
-      await setBannerCookie("danger", error.message, res);
+      setBannerCookie("danger", error.message, res);
       return res.redirect("/dashboard/finance/payments/create");
     }
   });
@@ -950,17 +929,17 @@ export default function dashboardFinanceRoute(app, fetch, config, db, features, 
     if (!paymentId) return res.redirect("/dashboard/finance/payments");
 
     if (!canManageFinance(req)) {
-      await setBannerCookie("danger", "You do not have permission to delete payments.", res);
+      setBannerCookie("danger", "You do not have permission to delete payments.", res);
       return res.redirect("/dashboard/finance/payments");
     }
 
     try {
       await deletePayment(paymentId);
-      await setBannerCookie("success", "Payment deleted.", res);
+      setBannerCookie("success", "Payment deleted.", res);
       return res.redirect("/dashboard/finance/payments");
     } catch (error) {
       console.error("[finance] POST /dashboard/finance/payments/:paymentId/delete:", error);
-      await setBannerCookie("danger", error.message, res);
+      setBannerCookie("danger", error.message, res);
       return res.redirect("/dashboard/finance/payments");
     }
   });
@@ -1014,7 +993,7 @@ export default function dashboardFinanceRoute(app, fetch, config, db, features, 
       );
     } catch (error) {
       console.error("[finance] GET /dashboard/finance/transactions:", error);
-      await setBannerCookie("danger", error.message, res);
+      setBannerCookie("danger", error.message, res);
       return res.redirect("/dashboard/finance");
     }
   });
@@ -1024,7 +1003,7 @@ export default function dashboardFinanceRoute(app, fetch, config, db, features, 
     if (!await hasPermission("zander.web.finance", req, res, features)) return;
 
     if (!canManageFinance(req)) {
-      await setBannerCookie("danger", "You do not have permission to create transactions.", res);
+      setBannerCookie("danger", "You do not have permission to create transactions.", res);
       return res.redirect("/dashboard/finance/transactions");
     }
 
@@ -1052,7 +1031,7 @@ export default function dashboardFinanceRoute(app, fetch, config, db, features, 
       );
     } catch (error) {
       console.error("[finance] GET /dashboard/finance/transactions/create:", error);
-      await setBannerCookie("danger", error.message, res);
+      setBannerCookie("danger", error.message, res);
       return res.redirect("/dashboard/finance/transactions");
     }
   });
@@ -1062,7 +1041,7 @@ export default function dashboardFinanceRoute(app, fetch, config, db, features, 
     if (!await hasPermission("zander.web.finance", req, res, features)) return;
 
     if (!canManageFinance(req)) {
-      await setBannerCookie("danger", "You do not have permission to create transactions.", res);
+      setBannerCookie("danger", "You do not have permission to create transactions.", res);
       return res.redirect("/dashboard/finance/transactions");
     }
 
@@ -1085,11 +1064,11 @@ export default function dashboardFinanceRoute(app, fetch, config, db, features, 
         tagIds, createdByUserId,
       });
 
-      await setBannerCookie("success", "Transaction created successfully.", res);
+      setBannerCookie("success", "Transaction created successfully.", res);
       return res.redirect("/dashboard/finance/transactions");
     } catch (error) {
       console.error("[finance] POST /dashboard/finance/transactions/create:", error);
-      await setBannerCookie("danger", error.message, res);
+      setBannerCookie("danger", error.message, res);
       return res.redirect("/dashboard/finance/transactions/create");
     }
   });
@@ -1109,7 +1088,7 @@ export default function dashboardFinanceRoute(app, fetch, config, db, features, 
       ]);
 
       if (!transaction) {
-        await setBannerCookie("danger", "Transaction not found.", res);
+        setBannerCookie("danger", "Transaction not found.", res);
         return res.redirect("/dashboard/finance/transactions");
       }
 
@@ -1128,7 +1107,7 @@ export default function dashboardFinanceRoute(app, fetch, config, db, features, 
       );
     } catch (error) {
       console.error("[finance] GET /dashboard/finance/transactions/:transactionId:", error);
-      await setBannerCookie("danger", error.message, res);
+      setBannerCookie("danger", error.message, res);
       return res.redirect("/dashboard/finance/transactions");
     }
   });
@@ -1141,7 +1120,7 @@ export default function dashboardFinanceRoute(app, fetch, config, db, features, 
     if (!transactionId) return res.redirect("/dashboard/finance/transactions");
 
     if (!canManageFinance(req)) {
-      await setBannerCookie("danger", "You do not have permission to edit transactions.", res);
+      setBannerCookie("danger", "You do not have permission to edit transactions.", res);
       return res.redirect(`/dashboard/finance/transactions/${transactionId}`);
     }
 
@@ -1156,12 +1135,12 @@ export default function dashboardFinanceRoute(app, fetch, config, db, features, 
       ]);
 
       if (!transaction) {
-        await setBannerCookie("danger", "Transaction not found.", res);
+        setBannerCookie("danger", "Transaction not found.", res);
         return res.redirect("/dashboard/finance/transactions");
       }
 
       if (transaction.isLocked) {
-        await setBannerCookie("danger", "This transaction is locked and cannot be edited.", res);
+        setBannerCookie("danger", "This transaction is locked and cannot be edited.", res);
         return res.redirect(`/dashboard/finance/transactions/${transactionId}`);
       }
 
@@ -1183,7 +1162,7 @@ export default function dashboardFinanceRoute(app, fetch, config, db, features, 
       );
     } catch (error) {
       console.error("[finance] GET /dashboard/finance/transactions/:transactionId/edit:", error);
-      await setBannerCookie("danger", error.message, res);
+      setBannerCookie("danger", error.message, res);
       return res.redirect(`/dashboard/finance/transactions/${transactionId}`);
     }
   });
@@ -1196,7 +1175,7 @@ export default function dashboardFinanceRoute(app, fetch, config, db, features, 
     if (!transactionId) return res.redirect("/dashboard/finance/transactions");
 
     if (!canManageFinance(req)) {
-      await setBannerCookie("danger", "You do not have permission to edit transactions.", res);
+      setBannerCookie("danger", "You do not have permission to edit transactions.", res);
       return res.redirect(`/dashboard/finance/transactions/${transactionId}`);
     }
 
@@ -1211,14 +1190,14 @@ export default function dashboardFinanceRoute(app, fetch, config, db, features, 
         categoryId, vendorId, description, notes, transactionDate, tagIds,
       });
 
-      await setBannerCookie("success", "Transaction updated.", res);
+      setBannerCookie("success", "Transaction updated.", res);
       return res.redirect(`/dashboard/finance/transactions/${transactionId}`);
     } catch (error) {
       if (error.message === "locked") {
-        await setBannerCookie("danger", "This transaction is locked and cannot be edited.", res);
+        setBannerCookie("danger", "This transaction is locked and cannot be edited.", res);
       } else {
         console.error("[finance] POST /dashboard/finance/transactions/:transactionId/edit:", error);
-        await setBannerCookie("danger", error.message, res);
+        setBannerCookie("danger", error.message, res);
       }
       return res.redirect(`/dashboard/finance/transactions/${transactionId}`);
     }
@@ -1232,20 +1211,20 @@ export default function dashboardFinanceRoute(app, fetch, config, db, features, 
     if (!transactionId) return res.redirect("/dashboard/finance/transactions");
 
     if (!canManageFinance(req)) {
-      await setBannerCookie("danger", "You do not have permission to delete transactions.", res);
+      setBannerCookie("danger", "You do not have permission to delete transactions.", res);
       return res.redirect(`/dashboard/finance/transactions/${transactionId}`);
     }
 
     try {
       await deleteTransaction(transactionId);
-      await setBannerCookie("success", "Transaction deleted.", res);
+      setBannerCookie("success", "Transaction deleted.", res);
       return res.redirect("/dashboard/finance/transactions");
     } catch (error) {
       if (error.message === "locked") {
-        await setBannerCookie("danger", "This transaction is locked and cannot be deleted.", res);
+        setBannerCookie("danger", "This transaction is locked and cannot be deleted.", res);
       } else {
         console.error("[finance] POST /dashboard/finance/transactions/:transactionId/delete:", error);
-        await setBannerCookie("danger", error.message, res);
+        setBannerCookie("danger", error.message, res);
       }
       return res.redirect(`/dashboard/finance/transactions/${transactionId}`);
     }
@@ -1259,7 +1238,7 @@ export default function dashboardFinanceRoute(app, fetch, config, db, features, 
     if (!transactionId) return res.redirect("/dashboard/finance/transactions");
 
     if (!canManageFinance(req)) {
-      await setBannerCookie("danger", "You do not have permission to upload attachments.", res);
+      setBannerCookie("danger", "You do not have permission to upload attachments.", res);
       return res.redirect(`/dashboard/finance/transactions/${transactionId}`);
     }
 
@@ -1291,11 +1270,11 @@ export default function dashboardFinanceRoute(app, fetch, config, db, features, 
         uploadedByUserId,
       });
 
-      await setBannerCookie("success", "Attachment uploaded successfully.", res);
+      setBannerCookie("success", "Attachment uploaded successfully.", res);
       return res.redirect(`/dashboard/finance/transactions/${transactionId}`);
     } catch (error) {
       console.error("[finance] POST /dashboard/finance/transactions/:transactionId/upload:", error);
-      await setBannerCookie("danger", error.message, res);
+      setBannerCookie("danger", error.message, res);
       return res.redirect(`/dashboard/finance/transactions/${transactionId}`);
     }
   });
@@ -1308,7 +1287,7 @@ export default function dashboardFinanceRoute(app, fetch, config, db, features, 
     const attachmentId = parseInt(req.params.attachmentId, 10);
 
     if (!canManageFinance(req)) {
-      await setBannerCookie("danger", "You do not have permission to delete attachments.", res);
+      setBannerCookie("danger", "You do not have permission to delete attachments.", res);
       return res.redirect(`/dashboard/finance/transactions/${transactionId}`);
     }
 
@@ -1317,11 +1296,11 @@ export default function dashboardFinanceRoute(app, fetch, config, db, features, 
       if (attachment.filePublicId) {
         console.info(`[finance] Attachment deleted — Cloudinary publicId for manual cleanup: ${attachment.filePublicId}`);
       }
-      await setBannerCookie("success", "Attachment deleted.", res);
+      setBannerCookie("success", "Attachment deleted.", res);
       return res.redirect(`/dashboard/finance/transactions/${transactionId}`);
     } catch (error) {
       console.error("[finance] POST …/attachments/:attachmentId/delete:", error);
-      await setBannerCookie("danger", error.message, res);
+      setBannerCookie("danger", error.message, res);
       return res.redirect(`/dashboard/finance/transactions/${transactionId}`);
     }
   });
@@ -1368,7 +1347,7 @@ export default function dashboardFinanceRoute(app, fetch, config, db, features, 
       );
     } catch (error) {
       console.error("[finance] GET /dashboard/finance/budget:", error);
-      await setBannerCookie("danger", error.message, res);
+      setBannerCookie("danger", error.message, res);
       return res.redirect("/dashboard/finance");
     }
   });
@@ -1378,18 +1357,18 @@ export default function dashboardFinanceRoute(app, fetch, config, db, features, 
     if (!await hasPermission("zander.web.finance", req, res, features)) return;
 
     if (!canManageFinance(req)) {
-      await setBannerCookie("danger", "You do not have permission to manage budget entries.", res);
+      setBannerCookie("danger", "You do not have permission to manage budget entries.", res);
       return res.redirect("/dashboard/finance/budget");
     }
 
     try {
       const { vendorId, categoryId, label, monthlyBudgetCents, currency, notes } = req.body || {};
       await createBudgetEntry({ vendorId, categoryId, label, monthlyBudgetCents, currency, notes });
-      await setBannerCookie("success", "Budget entry created.", res);
+      setBannerCookie("success", "Budget entry created.", res);
       return res.redirect("/dashboard/finance/budget");
     } catch (error) {
       console.error("[finance] POST /dashboard/finance/budget/create:", error);
-      await setBannerCookie("danger", error.message, res);
+      setBannerCookie("danger", error.message, res);
       return res.redirect("/dashboard/finance/budget");
     }
   });
@@ -1402,18 +1381,18 @@ export default function dashboardFinanceRoute(app, fetch, config, db, features, 
     if (!budgetId) return res.redirect("/dashboard/finance/budget");
 
     if (!canManageFinance(req)) {
-      await setBannerCookie("danger", "You do not have permission to manage budget entries.", res);
+      setBannerCookie("danger", "You do not have permission to manage budget entries.", res);
       return res.redirect("/dashboard/finance/budget");
     }
 
     try {
       const { vendorId, categoryId, label, monthlyBudgetCents, currency, notes, isActive } = req.body || {};
       await updateBudgetEntry(budgetId, { vendorId, categoryId, label, monthlyBudgetCents, currency, notes, isActive: isActive === "1" ? 1 : 0 });
-      await setBannerCookie("success", "Budget entry updated.", res);
+      setBannerCookie("success", "Budget entry updated.", res);
       return res.redirect("/dashboard/finance/budget");
     } catch (error) {
       console.error("[finance] POST /dashboard/finance/budget/:budgetId/edit:", error);
-      await setBannerCookie("danger", error.message, res);
+      setBannerCookie("danger", error.message, res);
       return res.redirect("/dashboard/finance/budget");
     }
   });
@@ -1426,17 +1405,17 @@ export default function dashboardFinanceRoute(app, fetch, config, db, features, 
     if (!budgetId) return res.redirect("/dashboard/finance/budget");
 
     if (!canManageFinance(req)) {
-      await setBannerCookie("danger", "You do not have permission to manage budget entries.", res);
+      setBannerCookie("danger", "You do not have permission to manage budget entries.", res);
       return res.redirect("/dashboard/finance/budget");
     }
 
     try {
       await deleteBudgetEntry(budgetId);
-      await setBannerCookie("success", "Budget entry deleted.", res);
+      setBannerCookie("success", "Budget entry deleted.", res);
       return res.redirect("/dashboard/finance/budget");
     } catch (error) {
       console.error("[finance] POST /dashboard/finance/budget/:budgetId/delete:", error);
-      await setBannerCookie("danger", error.message, res);
+      setBannerCookie("danger", error.message, res);
       return res.redirect("/dashboard/finance/budget");
     }
   });
@@ -1467,7 +1446,7 @@ export default function dashboardFinanceRoute(app, fetch, config, db, features, 
       );
     } catch (error) {
       console.error("[finance] GET /dashboard/finance/reports:", error);
-      await setBannerCookie("danger", error.message, res);
+      setBannerCookie("danger", error.message, res);
       return res.redirect("/dashboard/finance");
     }
   });
@@ -1479,7 +1458,7 @@ export default function dashboardFinanceRoute(app, fetch, config, db, features, 
     const year = parseInt(req.params.year, 10);
     const month = parseInt(req.params.month, 10);
     if (!year || !month || month < 1 || month > 12) {
-      await setBannerCookie("danger", "Invalid report period.", res);
+      setBannerCookie("danger", "Invalid report period.", res);
       return res.redirect("/dashboard/finance/reports");
     }
 
@@ -1507,7 +1486,7 @@ export default function dashboardFinanceRoute(app, fetch, config, db, features, 
       );
     } catch (error) {
       console.error("[finance] GET /dashboard/finance/reports/:year/:month:", error);
-      await setBannerCookie("danger", error.message, res);
+      setBannerCookie("danger", error.message, res);
       return res.redirect("/dashboard/finance/reports");
     }
   });
@@ -1520,25 +1499,25 @@ export default function dashboardFinanceRoute(app, fetch, config, db, features, 
     const month = parseInt(req.params.month, 10);
 
     if (!canManageFinance(req)) {
-      await setBannerCookie("danger", "You do not have permission to generate reports.", res);
+      setBannerCookie("danger", "You do not have permission to generate reports.", res);
       return res.redirect(`/dashboard/finance/reports/${year}/${month}`);
     }
 
     try {
       const existing = await getMonthlyReport(year, month);
       if (existing?.isLocked) {
-        await setBannerCookie("danger", "This report is locked and cannot be regenerated.", res);
+        setBannerCookie("danger", "This report is locked and cannot be regenerated.", res);
         return res.redirect(`/dashboard/finance/reports/${year}/${month}`);
       }
 
       const data = await generateMonthlyReportData(year, month);
       await upsertMonthlyReport(year, month, data);
 
-      await setBannerCookie("success", `Report for ${year}/${String(month).padStart(2, "0")} regenerated.`, res);
+      setBannerCookie("success", `Report for ${year}/${String(month).padStart(2, "0")} regenerated.`, res);
       return res.redirect(`/dashboard/finance/reports/${year}/${month}`);
     } catch (error) {
       console.error("[finance] POST /dashboard/finance/reports/:year/:month/generate:", error);
-      await setBannerCookie("danger", error.message, res);
+      setBannerCookie("danger", error.message, res);
       return res.redirect(`/dashboard/finance/reports/${year}/${month}`);
     }
   });
@@ -1551,25 +1530,25 @@ export default function dashboardFinanceRoute(app, fetch, config, db, features, 
     const month = parseInt(req.params.month, 10);
 
     if (!canManageFinance(req)) {
-      await setBannerCookie("danger", "You do not have permission to publish reports.", res);
+      setBannerCookie("danger", "You do not have permission to publish reports.", res);
       return res.redirect(`/dashboard/finance/reports/${year}/${month}`);
     }
 
     try {
       const report = await getMonthlyReport(year, month);
       if (!report) {
-        await setBannerCookie("danger", "Report not found. Please generate it first.", res);
+        setBannerCookie("danger", "Report not found. Please generate it first.", res);
         return res.redirect(`/dashboard/finance/reports/${year}/${month}`);
       }
 
       const userId = req.session?.user?.userId || 0;
       await publishMonthlyReport(report.reportId, userId);
 
-      await setBannerCookie("success", `Report for ${year}/${String(month).padStart(2, "0")} published and locked.`, res);
+      setBannerCookie("success", `Report for ${year}/${String(month).padStart(2, "0")} published and locked.`, res);
       return res.redirect(`/dashboard/finance/reports/${year}/${month}`);
     } catch (error) {
       console.error("[finance] POST /dashboard/finance/reports/:year/:month/publish:", error);
-      await setBannerCookie("danger", error.message, res);
+      setBannerCookie("danger", error.message, res);
       return res.redirect(`/dashboard/finance/reports/${year}/${month}`);
     }
   });
@@ -1583,7 +1562,7 @@ export default function dashboardFinanceRoute(app, fetch, config, db, features, 
     if (!await hasPermission("zander.web.finance", req, res, features)) return;
 
     if (!canManageFinance(req)) {
-      await setBannerCookie("danger", "You do not have permission to access finance settings.", res);
+      setBannerCookie("danger", "You do not have permission to access finance settings.", res);
       return res.redirect("/dashboard/finance");
     }
 
@@ -1609,7 +1588,7 @@ export default function dashboardFinanceRoute(app, fetch, config, db, features, 
       );
     } catch (error) {
       console.error("[finance] GET /dashboard/finance/settings:", error);
-      await setBannerCookie("danger", error.message, res);
+      setBannerCookie("danger", error.message, res);
       return res.redirect("/dashboard/finance");
     }
   });
@@ -1619,16 +1598,16 @@ export default function dashboardFinanceRoute(app, fetch, config, db, features, 
   app.post("/dashboard/finance/settings/accounts/create", async function (req, res) {
     if (!await hasPermission("zander.web.finance", req, res, features)) return;
     if (!canManageFinance(req)) {
-      await setBannerCookie("danger", "Permission denied.", res);
+      setBannerCookie("danger", "Permission denied.", res);
       return res.redirect("/dashboard/finance/settings");
     }
     try {
       const { name, accountType, openingBalanceCents, currency, notes } = req.body || {};
       await createAccount({ name, accountType, openingBalanceCents, currency, notes });
-      await setBannerCookie("success", "Account created.", res);
+      setBannerCookie("success", "Account created.", res);
     } catch (error) {
       console.error("[finance] POST settings/accounts/create:", error);
-      await setBannerCookie("danger", error.message, res);
+      setBannerCookie("danger", error.message, res);
     }
     return res.redirect("/dashboard/finance/settings");
   });
@@ -1636,17 +1615,17 @@ export default function dashboardFinanceRoute(app, fetch, config, db, features, 
   app.post("/dashboard/finance/settings/accounts/:id/edit", async function (req, res) {
     if (!await hasPermission("zander.web.finance", req, res, features)) return;
     if (!canManageFinance(req)) {
-      await setBannerCookie("danger", "Permission denied.", res);
+      setBannerCookie("danger", "Permission denied.", res);
       return res.redirect("/dashboard/finance/settings");
     }
     const id = parseInt(req.params.id, 10);
     try {
       const { name, accountType, openingBalanceCents, currency, notes, isActive } = req.body || {};
       await updateAccount(id, { name, accountType, openingBalanceCents, currency, notes, isActive: isActive === "1" ? 1 : 0 });
-      await setBannerCookie("success", "Account updated.", res);
+      setBannerCookie("success", "Account updated.", res);
     } catch (error) {
       console.error("[finance] POST settings/accounts/:id/edit:", error);
-      await setBannerCookie("danger", error.message, res);
+      setBannerCookie("danger", error.message, res);
     }
     return res.redirect("/dashboard/finance/settings");
   });
@@ -1654,16 +1633,16 @@ export default function dashboardFinanceRoute(app, fetch, config, db, features, 
   app.post("/dashboard/finance/settings/accounts/:id/delete", async function (req, res) {
     if (!await hasPermission("zander.web.finance", req, res, features)) return;
     if (!canManageFinance(req)) {
-      await setBannerCookie("danger", "Permission denied.", res);
+      setBannerCookie("danger", "Permission denied.", res);
       return res.redirect("/dashboard/finance/settings");
     }
     const id = parseInt(req.params.id, 10);
     try {
       await deleteAccount(id);
-      await setBannerCookie("success", "Account deleted.", res);
+      setBannerCookie("success", "Account deleted.", res);
     } catch (error) {
       console.error("[finance] POST settings/accounts/:id/delete:", error);
-      await setBannerCookie("danger", error.message, res);
+      setBannerCookie("danger", error.message, res);
     }
     return res.redirect("/dashboard/finance/settings");
   });
@@ -1673,16 +1652,16 @@ export default function dashboardFinanceRoute(app, fetch, config, db, features, 
   app.post("/dashboard/finance/settings/categories/create", async function (req, res) {
     if (!await hasPermission("zander.web.finance", req, res, features)) return;
     if (!canManageFinance(req)) {
-      await setBannerCookie("danger", "Permission denied.", res);
+      setBannerCookie("danger", "Permission denied.", res);
       return res.redirect("/dashboard/finance/settings");
     }
     try {
       const { parentId, name, type, color } = req.body || {};
       await createCategory({ parentId, name, type, color });
-      await setBannerCookie("success", "Category created.", res);
+      setBannerCookie("success", "Category created.", res);
     } catch (error) {
       console.error("[finance] POST settings/categories/create:", error);
-      await setBannerCookie("danger", error.message, res);
+      setBannerCookie("danger", error.message, res);
     }
     return res.redirect("/dashboard/finance/settings");
   });
@@ -1690,17 +1669,17 @@ export default function dashboardFinanceRoute(app, fetch, config, db, features, 
   app.post("/dashboard/finance/settings/categories/:id/edit", async function (req, res) {
     if (!await hasPermission("zander.web.finance", req, res, features)) return;
     if (!canManageFinance(req)) {
-      await setBannerCookie("danger", "Permission denied.", res);
+      setBannerCookie("danger", "Permission denied.", res);
       return res.redirect("/dashboard/finance/settings");
     }
     const id = parseInt(req.params.id, 10);
     try {
       const { parentId, name, type, color, isActive } = req.body || {};
       await updateCategory(id, { parentId, name, type, color, isActive: isActive === "1" ? 1 : 0 });
-      await setBannerCookie("success", "Category updated.", res);
+      setBannerCookie("success", "Category updated.", res);
     } catch (error) {
       console.error("[finance] POST settings/categories/:id/edit:", error);
-      await setBannerCookie("danger", error.message, res);
+      setBannerCookie("danger", error.message, res);
     }
     return res.redirect("/dashboard/finance/settings");
   });
@@ -1708,16 +1687,16 @@ export default function dashboardFinanceRoute(app, fetch, config, db, features, 
   app.post("/dashboard/finance/settings/categories/:id/delete", async function (req, res) {
     if (!await hasPermission("zander.web.finance", req, res, features)) return;
     if (!canManageFinance(req)) {
-      await setBannerCookie("danger", "Permission denied.", res);
+      setBannerCookie("danger", "Permission denied.", res);
       return res.redirect("/dashboard/finance/settings");
     }
     const id = parseInt(req.params.id, 10);
     try {
       await deleteCategory(id);
-      await setBannerCookie("success", "Category deleted.", res);
+      setBannerCookie("success", "Category deleted.", res);
     } catch (error) {
       console.error("[finance] POST settings/categories/:id/delete:", error);
-      await setBannerCookie("danger", error.message, res);
+      setBannerCookie("danger", error.message, res);
     }
     return res.redirect("/dashboard/finance/settings");
   });
@@ -1727,16 +1706,16 @@ export default function dashboardFinanceRoute(app, fetch, config, db, features, 
   app.post("/dashboard/finance/settings/tags/create", async function (req, res) {
     if (!await hasPermission("zander.web.finance", req, res, features)) return;
     if (!canManageFinance(req)) {
-      await setBannerCookie("danger", "Permission denied.", res);
+      setBannerCookie("danger", "Permission denied.", res);
       return res.redirect("/dashboard/finance/settings");
     }
     try {
       const { name, color } = req.body || {};
       await createTag({ name, color });
-      await setBannerCookie("success", "Tag created.", res);
+      setBannerCookie("success", "Tag created.", res);
     } catch (error) {
       console.error("[finance] POST settings/tags/create:", error);
-      await setBannerCookie("danger", error.message, res);
+      setBannerCookie("danger", error.message, res);
     }
     return res.redirect("/dashboard/finance/settings");
   });
@@ -1744,16 +1723,16 @@ export default function dashboardFinanceRoute(app, fetch, config, db, features, 
   app.post("/dashboard/finance/settings/tags/:id/delete", async function (req, res) {
     if (!await hasPermission("zander.web.finance", req, res, features)) return;
     if (!canManageFinance(req)) {
-      await setBannerCookie("danger", "Permission denied.", res);
+      setBannerCookie("danger", "Permission denied.", res);
       return res.redirect("/dashboard/finance/settings");
     }
     const id = parseInt(req.params.id, 10);
     try {
       await deleteTag(id);
-      await setBannerCookie("success", "Tag deleted.", res);
+      setBannerCookie("success", "Tag deleted.", res);
     } catch (error) {
       console.error("[finance] POST settings/tags/:id/delete:", error);
-      await setBannerCookie("danger", error.message, res);
+      setBannerCookie("danger", error.message, res);
     }
     return res.redirect("/dashboard/finance/settings");
   });

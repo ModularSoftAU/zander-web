@@ -200,7 +200,7 @@ export default function dashboardEventsSiteRoute(app, fetch, config, db, feature
     ]);
 
     if (!apiData || !apiData.success) {
-      await setBannerCookie("danger", "Event not found", res);
+      setBannerCookie("danger", "Event not found", res);
       return res.redirect("/dashboard/events/list");
     }
 
@@ -210,7 +210,7 @@ export default function dashboardEventsSiteRoute(app, fetch, config, db, feature
       const lockedMsg = ["approved", "published", "pending_review"].includes(ev.status)
         ? "This event is approved or live — only approvers can edit it."
         : "You can only edit your own events.";
-      await setBannerCookie("danger", lockedMsg, res);
+      setBannerCookie("danger", lockedMsg, res);
       return res.redirect(`/dashboard/events/view?eventId=${ev.eventId}`);
     }
 
@@ -250,7 +250,7 @@ export default function dashboardEventsSiteRoute(app, fetch, config, db, feature
     ]);
 
     if (!apiData || !apiData.success) {
-      await setBannerCookie("danger", "Event not found", res);
+      setBannerCookie("danger", "Event not found", res);
       return res.redirect("/dashboard/events/list");
     }
 
@@ -349,12 +349,12 @@ export default function dashboardEventsSiteRoute(app, fetch, config, db, feature
     try {
       const event = await getEventById(eventId);
       if (!event) {
-        await setBannerCookie("danger", "Event not found", res);
+        setBannerCookie("danger", "Event not found", res);
         return res.redirect("/dashboard/events/list");
       }
 
       if (!userCanEditEvent(event, req)) {
-        await setBannerCookie("danger", "You do not have permission to preview this event.", res);
+        setBannerCookie("danger", "You do not have permission to preview this event.", res);
         return res.redirect("/dashboard/events/list");
       }
 
@@ -398,7 +398,7 @@ export default function dashboardEventsSiteRoute(app, fetch, config, db, feature
       );
     } catch (err) {
       console.error("[Events] preview error:", err);
-      await setBannerCookie("danger", "Error loading event preview", res);
+      setBannerCookie("danger", "Error loading event preview", res);
       return res.redirect("/dashboard/events/list");
     }
   });
@@ -420,7 +420,7 @@ export default function dashboardEventsSiteRoute(app, fetch, config, db, feature
     ]);
 
     if (!apiData || !apiData.success) {
-      await setBannerCookie("danger", "Template not found", res);
+      setBannerCookie("danger", "Template not found", res);
       return res.redirect("/dashboard/events/templates");
     }
 

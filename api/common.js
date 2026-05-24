@@ -279,27 +279,22 @@ export function getJumboVideo() {
     @param alertContent The alert content text.
     @param res Passing through res
 */
-export async function setBannerCookie(alertType, alertContent, res) {
+export function setBannerCookie(alertType, alertContent, res) {
   try {
     var expiryTime = new Date();
     expiryTime.setSeconds(expiryTime.getSeconds() + 2);
 
-    // Set Alert Type
     res.setCookie("alertType", alertType, {
       path: "/",
       expires: expiryTime,
       httpOnly: true,
     });
 
-    // Set Content Type
     res.setCookie("alertContent", alertContent, {
       path: "/",
       expires: expiryTime,
       httpOnly: true,
     });
-
-    // Make sure to send the res
-    return res;
   } catch (error) {
     console.log(error);
   }
