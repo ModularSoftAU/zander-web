@@ -21,25 +21,41 @@
             <div class="card-body">
               <form method="post" action="/dashboard/webstore/commands/create">
 
-                <div class="mb-3">
-                  <label for="stripePriceId" class="form-label fw-semibold">Stripe Price ID <span class="text-danger">*</span></label>
-                  <% if (stripeItems && stripeItems.length) { %>
-                    <select class="form-select" id="stripePriceId" name="stripePriceId" required>
-                      <option value="">— Select a product/price —</option>
-                      <% stripeItems.forEach(function(item) { %>
-                        <option value="<%= item.stripePriceId %>">
-                          <%= item.displayName %> (<%= item.stripePriceId %>)
-                        </option>
-                      <% }) %>
-                    </select>
-                  <% } else { %>
-                    <input type="text" class="form-control" id="stripePriceId" name="stripePriceId"
-                           required maxlength="120" placeholder="price_xxxxxxxxxxxxxxxxxxxxxxxx">
-                    <div class="form-text text-warning">
-                      <i class="fa-solid fa-triangle-exclamation me-1"></i>Could not load Stripe products — enter the price ID manually.
+                <% if (defaultPriceId) {
+                  const matchedItem = (stripeItems || []).find(i => i.stripePriceId === defaultPriceId);
+                %>
+                  <div class="mb-3">
+                    <label class="form-label fw-semibold">Package</label>
+                    <div class="form-control bg-light text-muted" style="cursor:default;">
+                      <% if (matchedItem) { %>
+                        <%= matchedItem.displayName %> &mdash; <code><%= defaultPriceId %></code>
+                      <% } else { %>
+                        <code><%= defaultPriceId %></code>
+                      <% } %>
                     </div>
-                  <% } %>
-                </div>
+                    <input type="hidden" name="stripePriceId" value="<%= defaultPriceId %>">
+                  </div>
+                <% } else { %>
+                  <div class="mb-3">
+                    <label for="stripePriceId" class="form-label fw-semibold">Package <span class="text-danger">*</span></label>
+                    <% if (stripeItems && stripeItems.length) { %>
+                      <select class="form-select" id="stripePriceId" name="stripePriceId" required>
+                        <option value="">— Select a package —</option>
+                        <% stripeItems.forEach(function(item) { %>
+                          <option value="<%= item.stripePriceId %>">
+                            <%= item.displayName %> (<%= item.stripePriceId %>)
+                          </option>
+                        <% }) %>
+                      </select>
+                    <% } else { %>
+                      <input type="text" class="form-control" id="stripePriceId" name="stripePriceId"
+                             required maxlength="120" placeholder="price_xxxxxxxxxxxxxxxxxxxxxxxx">
+                      <div class="form-text text-warning">
+                        <i class="fa-solid fa-triangle-exclamation me-1"></i>Could not load Stripe products — enter the price ID manually.
+                      </div>
+                    <% } %>
+                  </div>
+                <% } %>
 
                 <div class="mb-3">
                   <label for="action" class="form-label fw-semibold">Action <span class="text-danger">*</span></label>
@@ -50,15 +66,14 @@
                 </div>
 
                 <div class="mb-3">
-                  <label for="commandType" class="form-label fw-semibold">Command Type <span class="text-danger">*</span></label>
+                  <label for="commandType" class="form-label fw-semibold">Type <span class="text-danger">*</span></label>
                   <select class="form-select" id="commandType" name="commandType">
-                    <option value="minecraft">Minecraft</option>
+                    <option value="minecraft">Minecraft command</option>
                     <option value="discord_role">Discord role</option>
                   </select>
                   <div class="form-text">
-                    <strong>Minecraft</strong> — sends a console command to the Minecraft server (supports <code>{{ username }}</code> etc.).
-                    <br>
-                    <strong>Discord role</strong> — adds or removes a Discord role from the recipient's linked account; the template field should be the bare Discord role ID.
+                    <strong>Minecraft</strong> — console command sent to the server; supports <code>{{ username }}</code> etc.<br>
+                    <strong>Discord role</strong> — adds or removes a role from the recipient's linked Discord account; enter the bare role ID below.
                   </div>
                 </div>
 
@@ -67,18 +82,13 @@
                   <input type="text" class="form-control" id="commandTemplate" name="commandTemplate"
                          required maxlength="1000"
                          placeholder="e.g. lp user {{ username }} parent add vip">
-                  <div class="form-text" id="commandTemplateHint">
-                    Minecraft console command — supports <code>{{ username }}</code>, <code>{{ purchaserUsername }}</code>, <code>{{ purchaseId }}</code>, <code>{{ itemSlug }}</code>, <code>{{ purchaseType }}</code>, <code>{{ isGift }}</code>.
-                    <br>
-                    For <strong>Discord role</strong> type: paste the Discord role ID (right-click the role in Discord &rsaquo; Copy ID).
-                  </div>
                 </div>
 
                 <div class="mb-4">
                   <label for="sortOrder" class="form-label fw-semibold">Sort Order</label>
                   <input type="number" class="form-control" id="sortOrder" name="sortOrder"
                          value="0" min="0" style="max-width:140px;">
-                  <div class="form-text">Commands with a lower sort order run first. Default is 0.</div>
+                  <div class="form-text">Lower numbers run first. Default is 0.</div>
                 </div>
 
                 <div class="d-flex gap-2">

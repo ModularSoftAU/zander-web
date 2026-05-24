@@ -70,9 +70,12 @@ export default function dashboardWebstoreRoute(app, fetch, config, db, features,
     if (!await hasPermission("zander.web.webstore", req, res, features)) return;
     if (!features.webstore) return res.redirect("/dashboard");
 
-    let commands = [];
+    let commands = [], stripeItems = [];
     try {
-      commands = await getAllCommands();
+      [commands, stripeItems] = await Promise.all([
+        getAllCommands(),
+        getWebstoreItems().catch(() => []),
+      ]);
     } catch (err) {
       console.error("[dashboard/webstore/commands] failed to load:", err.message);
     }
@@ -83,7 +86,7 @@ export default function dashboardWebstoreRoute(app, fetch, config, db, features,
       await app.view("dashboard/webstore/commands", {
         pageTitle: "Webstore — Commands",
         config, features, req, announcementWeb,
-        commands,
+        commands, stripeItems,
         canManage: canManageWebstore(req),
         ...adminViewData(req, features),
       })
@@ -109,11 +112,14 @@ export default function dashboardWebstoreRoute(app, fetch, config, db, features,
 
     const announcementWeb = await getWebAnnouncement();
 
+    const defaultPriceId = req.query.priceId || null;
+
     return res.header("content-type", "text/html; charset=utf-8").send(
       await app.view("dashboard/webstore/command-create", {
         pageTitle: "Webstore — Add Command",
         config, features, req, announcementWeb,
         stripeItems,
+        defaultPriceId,
         canManage: canManageWebstore(req),
         ...adminViewData(req, features),
       })
