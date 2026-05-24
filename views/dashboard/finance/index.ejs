@@ -24,12 +24,23 @@
 
       <%# POST routing diagnostic — remove once confirmed working -%>
       <% if (canManage) { %>
-      <div class="alert alert-secondary d-flex align-items-center gap-3 py-2 mb-3" style="font-size:0.85rem;">
-        <strong>POST test:</strong>
-        <form method="post" action="/dashboard/finance/_ping" class="d-inline">
-          <button type="submit" class="btn btn-sm btn-outline-secondary">Test POST redirect</button>
-        </form>
-        <span class="text-muted">Click — if it redirects here with a green banner, POST routing works. Check server logs for details.</span>
+      <div class="alert alert-secondary py-2 mb-3" style="font-size:0.85rem;">
+        <strong>POST diagnostics:</strong>
+        <div class="d-flex flex-wrap align-items-center gap-2 mt-1">
+          <form method="post" action="/dashboard/finance/_ping/plain" class="d-inline">
+            <button type="submit" class="btn btn-sm btn-outline-dark">1: plain text</button>
+          </form>
+          <span class="text-muted small">→ should show "pong" in browser</span>
+          <form method="post" action="/dashboard/finance/_ping/redirect" class="d-inline">
+            <button type="submit" class="btn btn-sm btn-outline-dark">2: redirect (no cookie)</button>
+          </form>
+          <span class="text-muted small">→ should come back to this page</span>
+          <form method="post" action="/dashboard/finance/_ping" class="d-inline">
+            <button type="submit" class="btn btn-sm btn-outline-secondary">3: full (cookie + redirect)</button>
+          </form>
+          <span class="text-muted small">→ should show green banner</span>
+        </div>
+        <div class="text-muted small mt-1">Check server logs for [finance] POST /_ping* messages.</div>
       </div>
       <% } %>
 

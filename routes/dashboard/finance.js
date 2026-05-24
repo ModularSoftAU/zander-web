@@ -129,13 +129,28 @@ function getPagination(query, defaultLimit = 50) {
 export default function dashboardFinanceRoute(app, fetch, config, db, features, lang) {
 
   // ===========================================================================
-  // POST /dashboard/finance/_ping — diagnostic: no DB, just redirects.
-  // Helps distinguish Fastify routing issues from database issues.
+  // POST /dashboard/finance/_ping — diagnostic routes (no DB, no auth).
   // Remove once POST routing is confirmed working.
   // ===========================================================================
+
+  // Step 1: plain-text response (no redirect) — confirms pipeline can send responses at all
+  app.post("/dashboard/finance/_ping/plain", async function (req, res) {
+    console.log("[finance] POST /_ping/plain – reached handler");
+    return res.code(200).header("content-type", "text/plain; charset=utf-8").send("pong");
+  });
+
+  // Step 2: redirect without cookies — confirms redirect works
+  app.post("/dashboard/finance/_ping/redirect", async function (req, res) {
+    console.log("[finance] POST /_ping/redirect – about to redirect");
+    return res.redirect("/dashboard/finance");
+  });
+
+  // Step 3: full flow (cookies + redirect) — original test
   app.post("/dashboard/finance/_ping", async function (req, res) {
     console.log("[finance] POST /_ping – body:", JSON.stringify(req.body || {}));
+    console.log("[finance] POST /_ping – calling setBannerCookie");
     await setBannerCookie("success", "POST routing works!", res);
+    console.log("[finance] POST /_ping – calling res.redirect");
     return res.redirect("/dashboard/finance");
   });
 
