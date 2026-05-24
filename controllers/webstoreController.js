@@ -988,3 +988,56 @@ export async function getAllCommands() {
      ORDER BY stripePriceId ASC, action ASC, sortOrder ASC`
   );
 }
+
+// ---------------------------------------------------------------------------
+// Webstore command CRUD
+// ---------------------------------------------------------------------------
+
+export async function getCommandById(commandId) {
+  const rows = await query(
+    `SELECT commandId, stripePriceId, action, commandType, commandTemplate, sortOrder, createdAt
+     FROM webstoreStripeCommands
+     WHERE commandId = ?
+     LIMIT 1`,
+    [commandId]
+  );
+  return rows[0] || null;
+}
+
+export async function createCommand({ stripePriceId, action, commandType, commandTemplate, sortOrder }) {
+  const result = await query(
+    `INSERT INTO webstoreStripeCommands
+       (stripePriceId, action, commandType, commandTemplate, sortOrder)
+     VALUES (?, ?, ?, ?, ?)`,
+    [
+      stripePriceId,
+      action,
+      commandType || "minecraft",
+      commandTemplate,
+      parseInt(sortOrder, 10) || 0,
+    ]
+  );
+  return result.insertId;
+}
+
+export async function updateCommand(commandId, { action, commandType, commandTemplate, sortOrder }) {
+  return query(
+    `UPDATE webstoreStripeCommands
+     SET action = ?, commandType = ?, commandTemplate = ?, sortOrder = ?
+     WHERE commandId = ?`,
+    [
+      action,
+      commandType || "minecraft",
+      commandTemplate,
+      parseInt(sortOrder, 10) || 0,
+      commandId,
+    ]
+  );
+}
+
+export async function deleteCommand(commandId) {
+  return query(
+    "DELETE FROM webstoreStripeCommands WHERE commandId = ?",
+    [commandId]
+  );
+}

@@ -8,9 +8,16 @@
 
       <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
         <h1 class="h2"><i class="fa-solid fa-terminal fa-fw me-2"></i>Webstore — Command Config</h1>
-        <a href="/dashboard/webstore" class="btn btn-sm btn-outline-secondary">
-          <i class="fa-solid fa-arrow-left me-1"></i>Back to Purchases
-        </a>
+        <div class="d-flex gap-2">
+          <% if (canManage) { %>
+            <a href="/dashboard/webstore/commands/create" class="btn btn-sm btn-primary">
+              <i class="fa-solid fa-plus me-1"></i>Add Command
+            </a>
+          <% } %>
+          <a href="/dashboard/webstore" class="btn btn-sm btn-outline-secondary">
+            <i class="fa-solid fa-arrow-left me-1"></i>Back to Purchases
+          </a>
+        </div>
       </div>
 
       <%- include("../../admin/_notices.ejs") %>
@@ -21,14 +28,14 @@
           Commands below run when a Stripe price is purchased (<strong>grant</strong>) or a subscription is cancelled (<strong>revoke</strong>).
         </p>
         <p class="mb-0">
-          Insert rows into <code>webstoreStripeCommands</code> to configure them.
+          Use the <strong>Add Command</strong> button above to create new entries.
           Each package can have any combination of <strong>Minecraft</strong> commands and <strong>Discord role</strong> actions — they all run at purchase/revoke time.
         </p>
       </div>
 
       <% if (!commands || !commands.length) { %>
         <div class="alert alert-warning">
-          No commands configured. Insert rows into <code>webstoreStripeCommands</code> to map Stripe price IDs to grant/revoke actions.
+          No commands configured.<% if (canManage) { %> Use the <strong>Add Command</strong> button above to map Stripe price IDs to grant/revoke actions.<% } else { %> Contact an admin to configure commands via <code>webstoreStripeCommands</code>.<% } %>
         </div>
       <% } else { %>
         <%
@@ -51,6 +58,7 @@
                     <th style="width:120px">Type</th>
                     <th style="width:60px">Order</th>
                     <th>Command / Role ID</th>
+                    <% if (canManage) { %><th style="width:110px"></th><% } %>
                   </tr>
                 </thead>
                 <tbody>
@@ -77,6 +85,21 @@
                           <span class="text-muted small ms-1">← Discord role ID</span>
                         <% } %>
                       </td>
+                      <% if (canManage) { %>
+                        <td class="text-end pe-2">
+                          <a href="/dashboard/webstore/commands/<%= cmd.commandId %>/edit"
+                             class="btn btn-xs btn-outline-secondary py-0 px-1 me-1" style="font-size:0.75rem;">
+                            <i class="fa-solid fa-pencil fa-fw"></i>
+                          </a>
+                          <form method="post" action="/dashboard/webstore/commands/<%= cmd.commandId %>/delete"
+                                class="d-inline"
+                                onsubmit="return confirm('Delete this command? This cannot be undone.')">
+                            <button type="submit" class="btn btn-xs btn-outline-danger py-0 px-1" style="font-size:0.75rem;">
+                              <i class="fa-solid fa-trash fa-fw"></i>
+                            </button>
+                          </form>
+                        </td>
+                      <% } %>
                     </tr>
                   <% }) %>
                 </tbody>
