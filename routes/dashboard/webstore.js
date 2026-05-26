@@ -152,14 +152,14 @@ export default function dashboardWebstoreRoute(app, fetch, config, db, features,
     }
 
     try {
-      const { stripePriceId, action, commandType, commandTemplate, sortOrder } = req.body || {};
+      const { stripePriceId, action, commandType, commandTemplate, serverSlug, sortOrder } = req.body || {};
 
       if (!stripePriceId || !action || !commandTemplate) {
         setBannerCookie("danger", "Price ID, action, and command/role ID are required.", res);
         return res.redirect("/dashboard/webstore/commands/create");
       }
 
-      await createCommand({ stripePriceId, action, commandType, commandTemplate, sortOrder });
+      await createCommand({ stripePriceId, action, commandType, commandTemplate, serverSlug: serverSlug || null, sortOrder });
       setBannerCookie("success", "Command created successfully.", res);
       return res.redirect("/dashboard/webstore/commands");
     } catch (error) {
@@ -228,14 +228,14 @@ export default function dashboardWebstoreRoute(app, fetch, config, db, features,
     if (!commandId) return res.redirect("/dashboard/webstore/commands");
 
     try {
-      const { action, commandType, commandTemplate, sortOrder } = req.body || {};
+      const { action, commandType, commandTemplate, serverSlug, sortOrder } = req.body || {};
 
       if (!action || !commandTemplate) {
         setBannerCookie("danger", "Action and command/role ID are required.", res);
         return res.redirect(`/dashboard/webstore/commands/${commandId}/edit`);
       }
 
-      await updateCommand(commandId, { action, commandType, commandTemplate, sortOrder });
+      await updateCommand(commandId, { action, commandType, commandTemplate, serverSlug: serverSlug || null, sortOrder });
       setBannerCookie("success", "Command updated successfully.", res);
       return res.redirect("/dashboard/webstore/commands");
     } catch (error) {

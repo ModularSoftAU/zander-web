@@ -248,7 +248,7 @@ export async function getWebstoreItems(preferredCurrency = null) {
   const priceIds = items.map((i) => i.stripePriceId);
   const placeholders = priceIds.map(() => "?").join(",");
   const commands = await query(
-    `SELECT stripePriceId, action, commandTemplate, commandType
+    `SELECT stripePriceId, action, commandTemplate, commandType, serverSlug
      FROM webstoreStripeCommands
      WHERE stripePriceId IN (${placeholders})
      ORDER BY action ASC, sortOrder ASC, commandId ASC`,
@@ -258,7 +258,7 @@ export async function getWebstoreItems(preferredCurrency = null) {
   const grantByPrice = {};
   const revokeByPrice = {};
   for (const cmd of commands) {
-    const entry = { commandTemplate: cmd.commandTemplate, commandType: cmd.commandType || "minecraft" };
+    const entry = { commandTemplate: cmd.commandTemplate, commandType: cmd.commandType || "minecraft", serverSlug: cmd.serverSlug || null };
     if (cmd.action === "revoke") {
       (revokeByPrice[cmd.stripePriceId] = revokeByPrice[cmd.stripePriceId] || []).push(entry);
     } else {
@@ -286,13 +286,13 @@ export async function findWebstoreItem(slug) {
  */
 export async function getCommandsByPriceId(stripePriceId) {
   const rows = await query(
-    `SELECT action, commandTemplate, commandType
+    `SELECT action, commandTemplate, commandType, serverSlug
      FROM webstoreStripeCommands
      WHERE stripePriceId = ?
      ORDER BY action ASC, sortOrder ASC, commandId ASC`,
     [stripePriceId]
   );
-  const toEntry = (r) => ({ commandTemplate: r.commandTemplate, commandType: r.commandType || "minecraft" });
+  const toEntry = (r) => ({ commandTemplate: r.commandTemplate, commandType: r.commandType || "minecraft", serverSlug: r.serverSlug || null });
   return {
     grantCommands: rows.filter((r) => r.action === "grant").map(toEntry),
     revokeCommands: rows.filter((r) => r.action === "revoke").map(toEntry),
@@ -555,12 +555,14 @@ export async function enqueueCommands({
   for (const cmd of minecraftCmds) {
     const resolvedCommand = resolveCommandTemplate(cmd.commandTemplate, metadata);
 
-    // Insert executor task — picked up by zander-addon and run as a console command
+    // Insert executor task — picked up by zander-addon and run as a console command.
+    // Use the command's configured serverSlug so the right server claims the task.
+    const taskSlug = cmd.serverSlug || `webstore`;
     const taskResult = await query(
       `INSERT INTO executorTasks (slug, command, status, priority, metadata, createdAt, updatedAt)
        VALUES (?, ?, 'pending', ?, ?, NOW(), NOW())`,
       [
-        `webstore-${action}-${purchaseId}`,
+        taskSlug,
         resolvedCommand,
         priority,
         JSON.stringify({ source: "webstore", purchaseId, action, ...metadata }),
@@ -983,7 +985,7 @@ export async function getTotalRevenueCents() {
 
 export async function getAllCommands() {
   return query(
-    `SELECT commandId, stripePriceId, action, commandType, commandTemplate, sortOrder, createdAt
+    `SELECT commandId, stripePriceId, action, commandType, commandTemplate, serverSlug, sortOrder, createdAt
      FROM webstoreStripeCommands
      ORDER BY stripePriceId ASC, action ASC, sortOrder ASC`
   );
@@ -995,7 +997,7 @@ export async function getAllCommands() {
 
 export async function getCommandById(commandId) {
   const rows = await query(
-    `SELECT commandId, stripePriceId, action, commandType, commandTemplate, sortOrder, createdAt
+    `SELECT commandId, stripePriceId, action, commandType, commandTemplate, serverSlug, sortOrder, createdAt
      FROM webstoreStripeCommands
      WHERE commandId = ?
      LIMIT 1`,
@@ -1004,31 +1006,33 @@ export async function getCommandById(commandId) {
   return rows[0] || null;
 }
 
-export async function createCommand({ stripePriceId, action, commandType, commandTemplate, sortOrder }) {
+export async function createCommand({ stripePriceId, action, commandType, commandTemplate, serverSlug, sortOrder }) {
   const result = await query(
     `INSERT INTO webstoreStripeCommands
-       (stripePriceId, action, commandType, commandTemplate, sortOrder)
-     VALUES (?, ?, ?, ?, ?)`,
+       (stripePriceId, action, commandType, commandTemplate, serverSlug, sortOrder)
+     VALUES (?, ?, ?, ?, ?, ?)`,
     [
       stripePriceId,
       action,
       commandType || "minecraft",
       commandTemplate,
+      serverSlug || null,
       parseInt(sortOrder, 10) || 0,
     ]
   );
   return result.insertId;
 }
 
-export async function updateCommand(commandId, { action, commandType, commandTemplate, sortOrder }) {
+export async function updateCommand(commandId, { action, commandType, commandTemplate, serverSlug, sortOrder }) {
   return query(
     `UPDATE webstoreStripeCommands
-     SET action = ?, commandType = ?, commandTemplate = ?, sortOrder = ?
+     SET action = ?, commandType = ?, commandTemplate = ?, serverSlug = ?, sortOrder = ?
      WHERE commandId = ?`,
     [
       action,
       commandType || "minecraft",
       commandTemplate,
+      serverSlug || null,
       parseInt(sortOrder, 10) || 0,
       commandId,
     ]
