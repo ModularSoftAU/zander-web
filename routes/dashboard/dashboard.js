@@ -3,6 +3,7 @@ import { adminViewData } from "../../admin/adminHelpers.js";
 import { prisma } from "../../controllers/databaseController.js";
 import { getWebAnnouncement } from "../../controllers/announcementController.js";
 import { getAllForms } from "../../controllers/formController.js";
+import moment from "moment";
 
 export default function dashboardSiteRoute(app, config, features, lang) {
   //
@@ -136,6 +137,7 @@ export default function dashboardSiteRoute(app, config, features, lang) {
         pendingList: pendingTasks?.data || [],
         processingList: processingTasks?.data || [],
         routinesList: routines?.data || [],
+        moment,
         features,
         req,
         announcementWeb,
