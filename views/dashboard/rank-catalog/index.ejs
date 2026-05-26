@@ -39,8 +39,7 @@
                   <tr>
                     <th style="width:32px">#</th>
                     <th>Name</th>
-                    <th>Stripe Price</th>
-                    <th>Type</th>
+                    <th>Stripe Prices</th>
                     <th>Perks</th>
                     <th style="width:110px"></th>
                   </tr>
@@ -59,17 +58,12 @@
                         <% } %>
                       </td>
                       <td>
-                        <% if (entry.stripePriceId) { %>
-                          <code class="small"><%= entry.stripePriceId %></code>
+                        <% if (entry.stripePriceIds && entry.stripePriceIds.length) { %>
+                          <% entry.stripePriceIds.forEach(function(pid) { %>
+                            <code class="small d-block"><%= pid %></code>
+                          <% }) %>
                         <% } else { %>
                           <span class="text-muted small">— none</span>
-                        <% } %>
-                      </td>
-                      <td>
-                        <% if (entry.stripePriceId) { %>
-                          <span class="badge bg-light text-dark border">Linked</span>
-                        <% } else { %>
-                          <span class="badge bg-warning text-dark">No price</span>
                         <% } %>
                       </td>
                       <td class="text-muted small"><%= entry.perks ? entry.perks.length : 0 %> perks</td>

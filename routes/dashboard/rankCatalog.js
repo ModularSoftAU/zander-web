@@ -16,7 +16,7 @@ async function getStripeOptions() {
       .filter((p) => p.active && typeof p.product === "object" && p.product?.active)
       .map((p) => ({
         id: p.id,
-        label: `${p.product?.name || p.id} — ${p.nickname || p.id}`,
+        label: `${p.product?.name || p.id} — ${p.nickname || p.id} (${p.type === "recurring" || p.recurring ? "subscription" : "one-time"})`,
       }))
       .sort((a, b) => a.label.localeCompare(b.label));
   } catch {
@@ -24,8 +24,7 @@ async function getStripeOptions() {
   }
 }
 
-function parsePerksBody(raw) {
-  // raw is a JSON string sent by the form's hidden input
+function parseJsonBody(raw) {
   try {
     const parsed = JSON.parse(raw || "[]");
     if (Array.isArray(parsed)) return parsed.map(String).filter((s) => s.trim());
@@ -45,7 +44,6 @@ export default function dashboardRankCatalogRoute(app, config, db, features, lan
       getWebAnnouncement(),
     ]);
 
-    // Group for display
     const categoryMap = new Map();
     for (const e of entries) {
       if (!categoryMap.has(e.category)) categoryMap.set(e.category, []);
@@ -95,14 +93,14 @@ export default function dashboardRankCatalogRoute(app, config, db, features, lan
 
     try {
       await createCatalogEntry({
-        stripePriceId: body.stripePriceId?.trim() || null,
+        stripePriceIds: parseJsonBody(body.stripePriceIds),
         displayName: body.displayName.trim(),
         description: body.description?.trim() || null,
         imageUrl: body.imageUrl?.trim() || null,
         category: body.category?.trim() || "Ranks",
         categorySortOrder: body.categorySortOrder,
         sortOrder: body.sortOrder,
-        perks: parsePerksBody(body.perks),
+        perks: parseJsonBody(body.perks),
       });
       return res.redirect("/dashboard/rank-catalog");
     } catch (err) {
@@ -147,14 +145,14 @@ export default function dashboardRankCatalogRoute(app, config, db, features, lan
 
     try {
       await updateCatalogEntry(req.params.id, {
-        stripePriceId: body.stripePriceId?.trim() || null,
+        stripePriceIds: parseJsonBody(body.stripePriceIds),
         displayName: body.displayName.trim(),
         description: body.description?.trim() || null,
         imageUrl: body.imageUrl?.trim() || null,
         category: body.category?.trim() || "Ranks",
         categorySortOrder: body.categorySortOrder,
         sortOrder: body.sortOrder,
-        perks: parsePerksBody(body.perks),
+        perks: parseJsonBody(body.perks),
       });
       return res.redirect("/dashboard/rank-catalog");
     } catch (err) {

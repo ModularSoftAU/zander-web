@@ -10,40 +10,47 @@ function query(sql, params = []) {
   });
 }
 
-function parsePerks(raw) {
+function parseJsonArray(raw) {
   if (!raw) return [];
   if (Array.isArray(raw)) return raw;
   try { return JSON.parse(raw); } catch { return []; }
 }
 
+function rowToEntry(r) {
+  return {
+    ...r,
+    stripePriceIds: parseJsonArray(r.stripePriceIds),
+    perks: parseJsonArray(r.perks),
+  };
+}
+
 export async function getAllCatalogEntries() {
   const rows = await query(
-    `SELECT id, stripePriceId, displayName, description, imageUrl,
+    `SELECT id, stripePriceIds, displayName, description, imageUrl,
             category, categorySortOrder, sortOrder, perks, createdAt, updatedAt
      FROM rankCatalog
      ORDER BY categorySortOrder ASC, sortOrder ASC, displayName ASC`
   );
-  return rows.map((r) => ({ ...r, perks: parsePerks(r.perks) }));
+  return rows.map(rowToEntry);
 }
 
 export async function getCatalogEntry(id) {
   const rows = await query(
-    `SELECT id, stripePriceId, displayName, description, imageUrl,
+    `SELECT id, stripePriceIds, displayName, description, imageUrl,
             category, categorySortOrder, sortOrder, perks, createdAt, updatedAt
      FROM rankCatalog WHERE id = ?`,
     [id]
   );
   if (!rows.length) return null;
-  const r = rows[0];
-  return { ...r, perks: parsePerks(r.perks) };
+  return rowToEntry(rows[0]);
 }
 
-export async function createCatalogEntry({ stripePriceId, displayName, description, imageUrl, category, categorySortOrder, sortOrder, perks }) {
+export async function createCatalogEntry({ stripePriceIds, displayName, description, imageUrl, category, categorySortOrder, sortOrder, perks }) {
   const result = await query(
-    `INSERT INTO rankCatalog (stripePriceId, displayName, description, imageUrl, category, categorySortOrder, sortOrder, perks)
+    `INSERT INTO rankCatalog (stripePriceIds, displayName, description, imageUrl, category, categorySortOrder, sortOrder, perks)
      VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
     [
-      stripePriceId || null,
+      JSON.stringify(Array.isArray(stripePriceIds) ? stripePriceIds : []),
       displayName,
       description || null,
       imageUrl || null,
@@ -56,14 +63,14 @@ export async function createCatalogEntry({ stripePriceId, displayName, descripti
   return result.insertId;
 }
 
-export async function updateCatalogEntry(id, { stripePriceId, displayName, description, imageUrl, category, categorySortOrder, sortOrder, perks }) {
+export async function updateCatalogEntry(id, { stripePriceIds, displayName, description, imageUrl, category, categorySortOrder, sortOrder, perks }) {
   await query(
     `UPDATE rankCatalog
-     SET stripePriceId = ?, displayName = ?, description = ?, imageUrl = ?,
+     SET stripePriceIds = ?, displayName = ?, description = ?, imageUrl = ?,
          category = ?, categorySortOrder = ?, sortOrder = ?, perks = ?, updatedAt = NOW()
      WHERE id = ?`,
     [
-      stripePriceId || null,
+      JSON.stringify(Array.isArray(stripePriceIds) ? stripePriceIds : []),
       displayName,
       description || null,
       imageUrl || null,
@@ -82,14 +89,15 @@ export async function deleteCatalogEntry(id) {
 
 /**
  * Returns the catalog grouped by category, with Stripe price info merged in.
+ * Each package has a `prices` array with one entry per linked Stripe price.
  * Used by the public /ranks page.
  */
 export async function getRankCatalogForPublicPage(preferredCurrency = null) {
   const entries = await getAllCatalogEntries();
   if (!entries.length) return [];
 
-  // Build a Stripe price map for entries that have a stripePriceId
-  const neededIds = new Set(entries.map((e) => e.stripePriceId).filter(Boolean));
+  // Collect all needed Stripe price IDs across all entries
+  const neededIds = new Set(entries.flatMap((e) => e.stripePriceIds));
   const priceMap = {};
 
   if (neededIds.size > 0) {
@@ -99,6 +107,7 @@ export async function getRankCatalogForPublicPage(preferredCurrency = null) {
         if (neededIds.has(p.id)) {
           const { amount, currency } = resolveStripePriceAmount(p, preferredCurrency);
           priceMap[p.id] = {
+            stripePriceId: p.id,
             priceCents: amount,
             currency,
             purchaseType: p.type === "recurring" || p.recurring ? "subscription" : "one_time",
@@ -113,16 +122,23 @@ export async function getRankCatalogForPublicPage(preferredCurrency = null) {
   // Enrich entries and group by category
   const categoryMap = new Map();
   for (const entry of entries) {
-    const stripeInfo = entry.stripePriceId ? priceMap[entry.stripePriceId] : null;
-    const purchaseType = stripeInfo?.purchaseType || "one_time";
-    const pkg = {
-      ...entry,
-      priceCents: stripeInfo?.priceCents ?? null,
-      currency: stripeInfo?.currency ?? "usd",
-      purchaseType,
-      priceDisplay: stripeInfo ? formatPrice(stripeInfo.priceCents, stripeInfo.currency) : null,
-      badgeLabel: purchaseType === "subscription" ? "Monthly" : "One-time",
-    };
+    const prices = entry.stripePriceIds
+      .map((priceId) => {
+        const info = priceMap[priceId];
+        if (!info) return null;
+        const badgeLabel = info.purchaseType === "subscription" ? "Monthly" : "One-time";
+        return {
+          stripePriceId: priceId,
+          priceCents: info.priceCents,
+          currency: info.currency,
+          purchaseType: info.purchaseType,
+          priceDisplay: formatPrice(info.priceCents, info.currency),
+          badgeLabel,
+        };
+      })
+      .filter(Boolean);
+
+    const pkg = { ...entry, prices };
 
     if (!categoryMap.has(entry.category)) {
       categoryMap.set(entry.category, { sortOrder: entry.categorySortOrder, packages: [] });
