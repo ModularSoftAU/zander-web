@@ -48,7 +48,7 @@
 
       <% items.forEach(function (item) { %>
         <div class="col-lg-4 col-md-6 col-sm-12">
-          <div class="card h-100 shadow-sm">
+          <div class="card h-100 shadow-sm" id="ws-<%= item.slug %>">
             <% if (item.imageUrl) { %>
               <img src="<%= item.imageUrl %>" alt="<%= item.displayName %>" class="card-img-top" style="height:140px; object-fit:cover; object-position:center top;">
             <% } %>
@@ -281,5 +281,21 @@
 
   </div>
 </section>
+
+<script>
+(function () {
+  var hash = window.location.hash;
+  if (!hash || !hash.startsWith('#ws-')) return;
+  var target = document.getElementById(hash.slice(1));
+  if (!target) return;
+  // Small delay so the page is fully painted before scrolling
+  setTimeout(function () {
+    target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    target.style.transition = 'box-shadow 0.3s ease';
+    target.style.boxShadow = '0 0 0 3px var(--bs-primary)';
+    setTimeout(function () { target.style.boxShadow = ''; }, 2000);
+  }, 200);
+})();
+</script>
 
 <%- include("../../modules/footer.ejs") %>

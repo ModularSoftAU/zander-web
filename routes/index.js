@@ -27,8 +27,7 @@ import sitemapRoutes from "./sitemapRoute.js";
 import voteSiteRoutes from "./voteRoutes.js";
 import eventsSiteRoutes from "./eventsRoutes.js";
 import webstoreSiteRoutes from "./webstoreRoutes.js";
-
-const rankData = require("../ranks.json");
+import { getRankCatalog, formatPrice } from "../controllers/webstoreController.js";
 
 export default function applicationSiteRoutes(
   app,
@@ -177,17 +176,37 @@ export default function applicationSiteRoutes(
   app.get("/ranks", async function (req, res) {
     if (!await isFeatureWebRouteEnabled(app, features.ranks, req, res, features)) return;
 
+    let rankCategories = [];
+    let ranksError = null;
+    try {
+      const locale = req.headers["accept-language"]?.split(",")[0] || "en-US";
+      const raw = await getRankCatalog();
+      rankCategories = raw.map((cat) => ({
+        ...cat,
+        packages: cat.packages.map((pkg) => ({
+          ...pkg,
+          priceDisplay: formatPrice(pkg.priceCents, pkg.currency, locale),
+          badgeLabel: pkg.purchaseType === "subscription" ? "Monthly" : "One-time",
+        })),
+      }));
+    } catch (err) {
+      console.error("[ranks] Failed to load rank catalog from Stripe:", err.message);
+      ranksError = "Rank information is temporarily unavailable. Please try again shortly.";
+    }
+
     res.header("content-type", "text/html; charset=utf-8").send(
       await app.view("ranks", {
-      pageTitle: `Ranks`,
-      pageDescription: `Explore the ranks available on ${config.siteConfiguration.siteName} and find out what perks and privileges each one offers.`,
-      config: config,
-      req: req,
-      rankData: rankData.categories,
-      features: features,
-      globalImage: await getGlobalImage(),
-      announcementWeb: await getWebAnnouncement(),
-    }));
+        pageTitle: `Ranks`,
+        pageDescription: `Explore the ranks available on ${config.siteConfiguration.siteName} and find out what perks and privileges each one offers.`,
+        config: config,
+        req: req,
+        rankCategories,
+        ranksError,
+        features: features,
+        globalImage: await getGlobalImage(),
+        announcementWeb: await getWebAnnouncement(),
+      })
+    );
     return;
   });
 

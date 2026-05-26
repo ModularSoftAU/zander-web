@@ -273,6 +273,50 @@ export async function getWebstoreItems(preferredCurrency = null) {
   }));
 }
 
+/**
+ * Return Stripe products grouped by category for the public /ranks page.
+ * Each product's marketing_features array becomes a flat perks list.
+ * Products are grouped by product.metadata.category (defaults to "Other").
+ * Category order follows the first product's metadata.categorySortOrder.
+ */
+export async function getRankCatalog(preferredCurrency = null) {
+  const prices = await fetchStripePrices();
+
+  const items = prices
+    .filter((p) => p.active && typeof p.product === "object" && p.product?.active)
+    .map((p) => {
+      const { amount, currency } = resolveStripePriceAmount(p, preferredCurrency);
+      const product = p.product;
+      return {
+        stripePriceId: p.id,
+        displayName: product.name || p.nickname || p.id,
+        description: product.description || "",
+        imageUrl: product.images?.[0] || null,
+        priceCents: amount,
+        currency,
+        purchaseType: p.type === "recurring" || p.recurring ? "subscription" : "one_time",
+        features: (product.marketing_features || []).map((f) => f.name),
+        category: product.metadata?.category || "Other",
+        categorySortOrder: Number(product.metadata?.categorySortOrder) || 99,
+        sortOrder: Number(product.metadata?.sortOrder) || 0,
+      };
+    })
+    .sort((a, b) => a.sortOrder - b.sortOrder || a.displayName.localeCompare(b.displayName));
+
+  // Group by category preserving category sort order
+  const categoryMap = new Map();
+  for (const item of items) {
+    if (!categoryMap.has(item.category)) {
+      categoryMap.set(item.category, { sortOrder: item.categorySortOrder, packages: [] });
+    }
+    categoryMap.get(item.category).packages.push(item);
+  }
+
+  return Array.from(categoryMap.entries())
+    .sort((a, b) => a[1].sortOrder - b[1].sortOrder)
+    .map(([name, { packages }]) => ({ displayName: name, packages }));
+}
+
 /** Find a single webstore item by its slug (= Stripe price ID). */
 export async function findWebstoreItem(slug) {
   const items = await getWebstoreItems();
