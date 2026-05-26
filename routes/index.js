@@ -27,7 +27,7 @@ import sitemapRoutes from "./sitemapRoute.js";
 import voteSiteRoutes from "./voteRoutes.js";
 import eventsSiteRoutes from "./eventsRoutes.js";
 import webstoreSiteRoutes from "./webstoreRoutes.js";
-import { getRankCatalog, formatPrice } from "../controllers/webstoreController.js";
+import { getRankCatalogForPublicPage } from "../controllers/rankCatalogController.js";
 
 export default function applicationSiteRoutes(
   app,
@@ -179,18 +179,9 @@ export default function applicationSiteRoutes(
     let rankCategories = [];
     let ranksError = null;
     try {
-      const locale = req.headers["accept-language"]?.split(",")[0] || "en-US";
-      const raw = await getRankCatalog();
-      rankCategories = raw.map((cat) => ({
-        ...cat,
-        packages: cat.packages.map((pkg) => ({
-          ...pkg,
-          priceDisplay: formatPrice(pkg.priceCents, pkg.currency, locale),
-          badgeLabel: pkg.purchaseType === "subscription" ? "Monthly" : "One-time",
-        })),
-      }));
+      rankCategories = await getRankCatalogForPublicPage();
     } catch (err) {
-      console.error("[ranks] Failed to load rank catalog from Stripe:", err.message);
+      console.error("[ranks] Failed to load rank catalog:", err.message);
       ranksError = "Rank information is temporarily unavailable. Please try again shortly.";
     }
 

@@ -311,6 +311,17 @@ export const adminPages = [
     group: "Webstore",
     sortOrder: 79,
   },
+  {
+    slug: "rank-catalog",
+    title: "Rank Catalog",
+    menuTitle: "Rank Catalog",
+    icon: "fa-solid fa-layer-group",
+    capability: "zander.web.webstore",
+    path: "/dashboard/rank-catalog",
+    featureFlag: "webstore",
+    group: "Webstore",
+    sortOrder: 80,
+  },
 
   // ── Finance group ──────────────────────────────────────────────────────────
   {

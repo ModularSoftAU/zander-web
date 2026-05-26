@@ -1,0 +1,199 @@
+<%- include("../../admin/_head.ejs", { pageTitle }) %>
+<%- include("../../admin/_topbar.ejs") %>
+<%- include("../../admin/_sidebar.ejs") %>
+
+<div id="wpcontent">
+  <div id="wpbody-content">
+    <div class="wrap">
+
+      <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+        <h1 class="h2">
+          <i class="fa-solid fa-layer-group fa-fw me-2"></i>
+          <%= entry ? 'Edit Entry' : 'New Entry' %>
+        </h1>
+        <a href="/dashboard/rank-catalog" class="btn btn-sm btn-outline-secondary">
+          <i class="fa-solid fa-arrow-left me-1"></i>Back
+        </a>
+      </div>
+
+      <%- include("../../admin/_notices.ejs") %>
+
+      <form method="post" action="<%= formAction %>">
+        <div class="row g-4">
+
+          <%# Left column — main fields %>
+          <div class="col-lg-8">
+
+            <div class="card shadow-sm mb-3">
+              <div class="card-header fw-semibold">Details</div>
+              <div class="card-body">
+
+                <div class="mb-3">
+                  <label for="displayName" class="form-label fw-semibold">Display name <span class="text-danger">*</span></label>
+                  <input type="text" class="form-control" id="displayName" name="displayName"
+                         value="<%= entry ? entry.displayName : '' %>" required maxlength="128">
+                </div>
+
+                <div class="mb-3">
+                  <label for="description" class="form-label fw-semibold">Description <span class="text-muted fw-normal">(optional)</span></label>
+                  <textarea class="form-control" id="description" name="description" rows="3" maxlength="1000"><%= entry ? (entry.description || '') : '' %></textarea>
+                  <div class="form-text">Short tagline shown under the rank name on the public page.</div>
+                </div>
+
+                <div class="mb-0">
+                  <label for="imageUrl" class="form-label fw-semibold">Image URL <span class="text-muted fw-normal">(optional)</span></label>
+                  <input type="url" class="form-control" id="imageUrl" name="imageUrl"
+                         value="<%= entry ? (entry.imageUrl || '') : '' %>" maxlength="512">
+                  <div class="form-text">Full URL to the rank image (e.g. /images/ranks/iron.png or a CDN URL).</div>
+                </div>
+
+              </div>
+            </div>
+
+            <div class="card shadow-sm">
+              <div class="card-header fw-semibold">Perks</div>
+              <div class="card-body">
+                <p class="text-muted small mb-3">
+                  Each perk shows as a line with a checkmark on the public ranks page. Enter one perk per line; drag to reorder.
+                </p>
+
+                <div id="perks-list" class="mb-2"></div>
+
+                <button type="button" class="btn btn-sm btn-outline-secondary" id="add-perk">
+                  <i class="fa-solid fa-plus me-1"></i>Add perk
+                </button>
+
+                <input type="hidden" name="perks" id="perks-json">
+              </div>
+            </div>
+
+          </div>
+
+          <%# Right column — meta %>
+          <div class="col-lg-4">
+
+            <div class="card shadow-sm mb-3">
+              <div class="card-header fw-semibold">Stripe Price</div>
+              <div class="card-body">
+                <label for="stripePriceId" class="form-label fw-semibold small">Linked Stripe price <span class="text-muted fw-normal">(optional)</span></label>
+                <select class="form-select form-select-sm" id="stripePriceId" name="stripePriceId">
+                  <option value="">— None (display only) —</option>
+                  <% stripeOptions.forEach(function(opt) { %>
+                    <option value="<%= opt.id %>" <%= (entry && entry.stripePriceId === opt.id) ? 'selected' : '' %>>
+                      <%= opt.label %>
+                    </option>
+                  <% }) %>
+                </select>
+                <div class="form-text mt-1">When set, a "Buy" button appears on the ranks page linking to the webstore checkout for this price.</div>
+              </div>
+            </div>
+
+            <div class="card shadow-sm mb-3">
+              <div class="card-header fw-semibold">Category</div>
+              <div class="card-body">
+                <div class="mb-3">
+                  <label for="category" class="form-label fw-semibold small">Category name</label>
+                  <input type="text" class="form-control form-control-sm" id="category" name="category"
+                         value="<%= entry ? entry.category : 'Ranks' %>" maxlength="64" required>
+                  <div class="form-text">Group heading shown on the ranks page (e.g. "Ranks", "Donate").</div>
+                </div>
+                <div class="mb-0">
+                  <label for="categorySortOrder" class="form-label fw-semibold small">Category order</label>
+                  <input type="number" class="form-control form-control-sm" id="categorySortOrder" name="categorySortOrder"
+                         value="<%= entry ? entry.categorySortOrder : 0 %>" min="0">
+                  <div class="form-text">Lower numbers appear first. All entries with the same category share this order.</div>
+                </div>
+              </div>
+            </div>
+
+            <div class="card shadow-sm mb-4">
+              <div class="card-header fw-semibold">Sort order</div>
+              <div class="card-body">
+                <label for="sortOrder" class="form-label fw-semibold small">Position within category</label>
+                <input type="number" class="form-control form-control-sm" id="sortOrder" name="sortOrder"
+                       value="<%= entry ? entry.sortOrder : 0 %>" min="0">
+                <div class="form-text">Lower numbers appear first within their category.</div>
+              </div>
+            </div>
+
+            <div class="d-grid gap-2">
+              <button type="submit" class="btn btn-primary">
+                <i class="fa-solid fa-floppy-disk me-1"></i><%= entry ? 'Save changes' : 'Create entry' %>
+              </button>
+              <a href="/dashboard/rank-catalog" class="btn btn-outline-secondary">Cancel</a>
+            </div>
+
+          </div>
+        </div>
+      </form>
+
+    </div>
+  </div>
+</div>
+
+<script>
+(function () {
+  var initialPerks = <%- JSON.stringify(entry && entry.perks ? entry.perks : []) %>;
+  var perks = initialPerks.slice();
+
+  function escHtml(s) {
+    return String(s)
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
+  }
+
+  function syncJson() {
+    var inputs = document.querySelectorAll('#perks-list .perk-input');
+    perks = Array.from(inputs).map(function(i) { return i.value.trim(); }).filter(Boolean);
+    document.getElementById('perks-json').value = JSON.stringify(perks);
+  }
+
+  function renderPerks() {
+    var list = document.getElementById('perks-list');
+    list.innerHTML = '';
+    perks.forEach(function(perk, i) {
+      var row = document.createElement('div');
+      row.className = 'd-flex gap-1 mb-2 align-items-center';
+      row.innerHTML =
+        '<span class="text-muted" style="cursor:grab;font-size:0.8rem;" title="Drag to reorder">' +
+          '<i class="fa-solid fa-grip-vertical"></i>' +
+        '</span>' +
+        '<input type="text" class="form-control form-control-sm perk-input" value="' + escHtml(perk) + '" placeholder="Perk description">' +
+        '<button type="button" class="btn btn-sm btn-outline-danger flex-shrink-0 perk-remove" data-i="' + i + '">' +
+          '<i class="fa-solid fa-times"></i>' +
+        '</button>';
+      list.appendChild(row);
+    });
+    syncJson();
+
+    // Wire up remove buttons
+    list.querySelectorAll('.perk-remove').forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        perks.splice(Number(this.dataset.i), 1);
+        renderPerks();
+      });
+    });
+
+    // Sync on input change
+    list.querySelectorAll('.perk-input').forEach(function(input) {
+      input.addEventListener('input', syncJson);
+    });
+  }
+
+  document.getElementById('add-perk').addEventListener('click', function() {
+    syncJson();  // capture any unsaved edits first
+    perks.push('');
+    renderPerks();
+    // Focus the new input
+    var inputs = document.querySelectorAll('#perks-list .perk-input');
+    if (inputs.length) inputs[inputs.length - 1].focus();
+  });
+
+  // Initial render
+  renderPerks();
+  // Ensure perks-json is populated even if no perks
+  syncJson();
+})();
+</script>
+
+<%- include("../../admin/_footer.ejs") %>
