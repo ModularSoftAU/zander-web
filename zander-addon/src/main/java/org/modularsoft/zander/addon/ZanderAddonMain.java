@@ -8,10 +8,13 @@ import org.modularsoft.zander.addon.commands.PolicyCommand;
 import org.modularsoft.zander.addon.commands.SocialCommand;
 import org.modularsoft.zander.addon.events.FreezeEvents;
 import org.modularsoft.zander.addon.events.PlayerEvents;
+import org.modularsoft.zander.addon.events.StoreCommandEvents;
 import org.modularsoft.zander.addon.gui.PolicyGUI;
 import org.modularsoft.zander.addon.gui.SocialGUI;
+import org.modularsoft.zander.addon.service.BridgeService;
 import org.modularsoft.zander.addon.service.FreezeService;
 import org.modularsoft.zander.addon.service.PolicyService;
+import org.modularsoft.zander.addon.service.StoreCommandService;
 
 public class ZanderAddonMain extends JavaPlugin {
     @Getter
@@ -20,6 +23,10 @@ public class ZanderAddonMain extends JavaPlugin {
     private PolicyService policyService;
     @Getter
     private FreezeService freezeService;
+    @Getter
+    private StoreCommandService storeCommandService;
+    @Getter
+    private BridgeService bridgeService;
     private PolicyApiServer apiServer;
 
     @Override
@@ -30,6 +37,8 @@ public class ZanderAddonMain extends JavaPlugin {
 
         this.policyService = new PolicyService(this);
         this.freezeService = new FreezeService();
+        this.storeCommandService = new StoreCommandService(this);
+        this.bridgeService = new BridgeService(this);
 
         if (getConfig().getBoolean("api-server.enabled", true)) {
             this.apiServer = new PolicyApiServer(this);
@@ -42,6 +51,15 @@ public class ZanderAddonMain extends JavaPlugin {
         getServer().getPluginManager().registerEvents(socialGUI, this);
         getServer().getPluginManager().registerEvents(new PlayerEvents(this, policyGUI, socialGUI), this);
         getServer().getPluginManager().registerEvents(new FreezeEvents(freezeService), this);
+
+        if (getConfig().getBoolean("store-commands.enabled", true)) {
+            storeCommandService.start();
+            getServer().getPluginManager().registerEvents(new StoreCommandEvents(storeCommandService), this);
+        }
+
+        if (getConfig().getBoolean("bridge.enabled", true)) {
+            bridgeService.start();
+        }
 
         getCommand("policy").setExecutor(new PolicyCommand(this, policyService));
         getCommand("social").setExecutor(new SocialCommand(this, socialGUI));

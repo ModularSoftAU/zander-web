@@ -10,6 +10,8 @@ api-server:
 # --- Plugin Settings ---
 # The base URL for the API (where the plugin fetches policy URLs from)
 api-url: "https://craftingforchrist.net/api"
+# Shared API key sent as x-access-token header for authenticated endpoints
+api-key: "changeme"
 
 # Settings for the in-game policy book
 policy-book:
@@ -20,3 +22,23 @@ policy-book:
 social-paper:
   enabled: false
   slot: 7
+
+# --- Bridge Executor Settings ---
+bridge:
+  # Enable the command bridge executor (polls zander-web for queued console commands)
+  enabled: true
+  # This server's unique slug (must match the slug configured in zander-web)
+  server-slug: "survival"
+  # How often to poll for pending tasks in milliseconds
+  poll-interval-ms: 5000
+
+# --- Store Command Settings ---
+store-commands:
+  # Enable polling for purchase commands from the web store
+  enabled: true
+  # The server name registered in the web store (must match the server name in zander-web)
+  server-name: "survival"
+  # How often (in seconds) to poll for pending commands for all online players
+  poll-interval-seconds: 300
+  # Maximum number of retry attempts before a command is permanently marked failed
+  max-retry-attempts: 5
