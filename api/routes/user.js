@@ -404,7 +404,7 @@ export default function userApiRoute(app, config, db, features, lang) {
     }
   });
 
-  app.post(baseEndpoint + "/verify/ingame", verifyToken, async function (req, res) {
+  app.post(baseEndpoint + "/verify/ingame", { preHandler: verifyToken }, async function (req, res) {
     const uuid = required(req.body, "uuid", res);
     if (res.sent) return;
     const code = required(req.body, "code", res);
