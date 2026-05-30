@@ -7,6 +7,7 @@ import {
   markNotificationRead,
   markAllNotificationsRead,
   deleteNotification,
+  deleteAllNotifications,
   savePushSubscription,
 } from "../controllers/notificationController.js";
 
@@ -137,6 +138,25 @@ export default function notificationRoutes(app, config, features) {
 
     await markAllNotificationsRead(req.session.user.userId);
     setBannerCookie("success", "All notifications marked as read.", res);
+    return res.redirect("/notifications");
+  });
+
+  app.post("/notifications/clear-all", async function (req, res) {
+    if (!req.session.user) {
+      res.header("content-type", "text/html; charset=utf-8").send(
+        await app.view("session/notLoggedIn", {
+        pageTitle: "Not Logged In",
+        config,
+        req,
+        features,
+        globalImage: await getGlobalImage(),
+        announcementWeb: await getWebAnnouncement(),
+      }));
+      return;
+    }
+
+    await deleteAllNotifications(req.session.user.userId);
+    setBannerCookie("success", "All notifications cleared.", res);
     return res.redirect("/notifications");
   });
 
