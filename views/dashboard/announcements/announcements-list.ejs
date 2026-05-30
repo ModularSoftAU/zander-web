@@ -386,7 +386,7 @@
       fd.append("folder", "announcements");
 
       try {
-        var res  = await fetch("/api/upload/image", { method: "POST", body: fd });
+        var res  = await fetch("/dashboard/upload/image", { method: "POST", body: fd });
         var data = await res.json();
         if (data.success) {
           urlInput.value = data.data.url;
