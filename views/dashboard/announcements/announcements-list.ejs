@@ -99,9 +99,9 @@
                     <td data-label="Schedule">
                       <% if (ann.startDate || ann.endDate) { %>
                         <small class="text-muted-sm">
-                          <span class="js-datetime" data-iso="<%= ann.startDate || '' %>" data-fallback="Now"></span>
+                          <span class="js-datetime" data-iso="<%= ann.startDate ? new Date(ann.startDate).toISOString() : '' %>" data-fallback="Now"></span>
                           →
-                          <span class="js-datetime" data-iso="<%= ann.endDate || '' %>" data-fallback="No end"></span>
+                          <span class="js-datetime" data-iso="<%= ann.endDate ? new Date(ann.endDate).toISOString() : '' %>" data-fallback="No end"></span>
                         </small>
                       <% } else { %>
                         <small class="text-muted-sm">Always active</small>
