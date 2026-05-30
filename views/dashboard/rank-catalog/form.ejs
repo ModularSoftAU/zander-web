@@ -69,18 +69,18 @@
             </div>
 
             <div class="card shadow-sm">
-              <div class="card-header fw-semibold">Perks</div>
+              <div class="card-header d-flex justify-content-between align-items-center">
+                <span class="fw-semibold">Perks</span>
+                <button type="button" class="btn btn-sm btn-outline-secondary" id="add-perk-group">
+                  <i class="fa-solid fa-plus me-1"></i>Add section
+                </button>
+              </div>
               <div class="card-body">
                 <p class="text-muted small mb-3">
-                  Each perk shows as a line with a checkmark on the public ranks page.
+                  Organise perks into sections (e.g. <em>Global</em>, <em>Survival</em>, <em>Discord</em>).
+                  Each section gets its own heading on the public ranks page.
                 </p>
-
-                <div id="perks-list" class="mb-2"></div>
-
-                <button type="button" class="btn btn-sm btn-outline-secondary" id="add-perk">
-                  <i class="fa-solid fa-plus me-1"></i>Add perk
-                </button>
-
+                <div id="perk-groups"></div>
                 <input type="hidden" name="perks" id="perks-json">
               </div>
             </div>
@@ -203,9 +203,14 @@
 
   renderPrices();
 
-  // ── Perks dynamic list ───────────────────────────────────────────────────
-  var initialPerks = <%- JSON.stringify(entry && entry.perks ? entry.perks : []) %>;
-  var perks = initialPerks.slice();
+  // ── Grouped perks builder ────────────────────────────────────────────────
+  var rawPerks = <%- JSON.stringify(entry && entry.perks ? entry.perks : []) %>;
+  // Support both legacy flat string[] and new grouped [{group, perks}]
+  var groups = (Array.isArray(rawPerks) && rawPerks.length && typeof rawPerks[0] === 'string')
+    ? [{ group: '', perks: rawPerks }]
+    : (Array.isArray(rawPerks) ? rawPerks.map(function(g) {
+        return { group: g.group || '', perks: Array.isArray(g.perks) ? g.perks : [] };
+      }) : []);
 
   function escHtml(s) {
     return String(s)
@@ -214,49 +219,90 @@
   }
 
   function syncPerksJson() {
-    var inputs = document.querySelectorAll('#perks-list .perk-input');
-    perks = Array.from(inputs).map(function(i) { return i.value.trim(); }).filter(Boolean);
-    document.getElementById('perks-json').value = JSON.stringify(perks);
+    var container = document.getElementById('perk-groups');
+    var groupEls = container.querySelectorAll('.perk-group');
+    groups = Array.from(groupEls).map(function(el) {
+      var groupName = el.querySelector('.group-name-input').value.trim();
+      var perkInputs = el.querySelectorAll('.perk-input');
+      var perks = Array.from(perkInputs).map(function(i) { return i.value.trim(); }).filter(Boolean);
+      return { group: groupName, perks: perks };
+    }).filter(function(g) { return g.group || g.perks.length; });
+    document.getElementById('perks-json').value = JSON.stringify(groups);
   }
 
-  function renderPerks() {
-    var list = document.getElementById('perks-list');
-    list.innerHTML = '';
-    perks.forEach(function(perk, i) {
-      var row = document.createElement('div');
-      row.className = 'd-flex gap-1 mb-2 align-items-center';
-      row.innerHTML =
-        '<span class="text-muted" style="font-size:0.8rem;">' +
-          '<i class="fa-solid fa-grip-vertical"></i>' +
-        '</span>' +
-        '<input type="text" class="form-control form-control-sm perk-input" value="' + escHtml(perk) + '" placeholder="Perk description">' +
-        '<button type="button" class="btn btn-sm btn-outline-danger flex-shrink-0 perk-remove" data-i="' + i + '">' +
-          '<i class="fa-solid fa-times"></i>' +
-        '</button>';
-      list.appendChild(row);
+  function buildPerkRow(perk) {
+    var row = document.createElement('div');
+    row.className = 'd-flex gap-1 mb-1 align-items-center perk-row';
+    row.innerHTML =
+      '<span class="text-muted" style="font-size:0.8rem;"><i class="fa-solid fa-grip-vertical"></i></span>' +
+      '<input type="text" class="form-control form-control-sm perk-input" value="' + escHtml(perk) + '" placeholder="Perk description">' +
+      '<button type="button" class="btn btn-sm btn-outline-danger flex-shrink-0 perk-remove"><i class="fa-solid fa-times"></i></button>';
+    row.querySelector('.perk-remove').addEventListener('click', function() {
+      row.remove();
+      syncPerksJson();
     });
-    syncPerksJson();
-
-    list.querySelectorAll('.perk-remove').forEach(function(btn) {
-      btn.addEventListener('click', function() {
-        perks.splice(Number(this.dataset.i), 1);
-        renderPerks();
-      });
-    });
-    list.querySelectorAll('.perk-input').forEach(function(input) {
-      input.addEventListener('input', syncPerksJson);
-    });
+    row.querySelector('.perk-input').addEventListener('input', syncPerksJson);
+    return row;
   }
 
-  document.getElementById('add-perk').addEventListener('click', function() {
+  function buildGroupEl(groupData, groupIndex) {
+    var el = document.createElement('div');
+    el.className = 'perk-group border rounded p-3 mb-3';
+
+    var header = document.createElement('div');
+    header.className = 'd-flex gap-2 mb-2 align-items-center';
+    header.innerHTML =
+      '<input type="text" class="form-control form-control-sm group-name-input fw-semibold" ' +
+        'value="' + escHtml(groupData.group) + '" placeholder="Section name (e.g. Global, Survival, Discord)">' +
+      '<button type="button" class="btn btn-sm btn-outline-danger flex-shrink-0 remove-group">Remove section</button>';
+    header.querySelector('.remove-group').addEventListener('click', function() {
+      el.remove();
+      syncPerksJson();
+    });
+    header.querySelector('.group-name-input').addEventListener('input', syncPerksJson);
+    el.appendChild(header);
+
+    var itemsDiv = document.createElement('div');
+    itemsDiv.className = 'perk-items ps-1 mb-2';
+    (groupData.perks || []).forEach(function(perk) {
+      itemsDiv.appendChild(buildPerkRow(perk));
+    });
+    el.appendChild(itemsDiv);
+
+    var addBtn = document.createElement('button');
+    addBtn.type = 'button';
+    addBtn.className = 'btn btn-sm btn-outline-secondary';
+    addBtn.innerHTML = '<i class="fa-solid fa-plus me-1"></i>Add perk';
+    addBtn.addEventListener('click', function() {
+      var row = buildPerkRow('');
+      itemsDiv.appendChild(row);
+      row.querySelector('.perk-input').focus();
+      syncPerksJson();
+    });
+    el.appendChild(addBtn);
+
+    return el;
+  }
+
+  function renderGroups() {
+    var container = document.getElementById('perk-groups');
+    container.innerHTML = '';
+    groups.forEach(function(g, i) {
+      container.appendChild(buildGroupEl(g, i));
+    });
     syncPerksJson();
-    perks.push('');
-    renderPerks();
-    var inputs = document.querySelectorAll('#perks-list .perk-input');
-    if (inputs.length) inputs[inputs.length - 1].focus();
+  }
+
+  document.getElementById('add-perk-group').addEventListener('click', function() {
+    syncPerksJson();
+    var container = document.getElementById('perk-groups');
+    var el = buildGroupEl({ group: '', perks: [] }, groups.length);
+    container.appendChild(el);
+    el.querySelector('.group-name-input').focus();
+    syncPerksJson();
   });
 
-  renderPerks();
+  renderGroups();
   syncPerksJson();
 })();
 </script>

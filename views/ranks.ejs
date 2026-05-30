@@ -41,13 +41,26 @@
                   <% } %>
 
                   <% if (pkg.perks && pkg.perks.length) { %>
-                    <ul class="list-unstyled mb-3 flex-grow-1">
-                      <% pkg.perks.forEach(function(feature) { %>
-                        <li class="small mb-1">
-                          <i class="fa-solid fa-check text-success me-2"></i><%= feature %>
-                        </li>
+                    <div class="mb-3 flex-grow-1">
+                      <% pkg.perks.forEach(function(group) { %>
+                        <% if (group && typeof group === 'object' && group.group) { %>
+                          <p class="small fw-semibold mb-1 mt-2 text-muted text-uppercase" style="font-size:0.7rem; letter-spacing:0.04em;"><%= group.group %></p>
+                          <ul class="list-unstyled mb-0">
+                            <% (group.perks || []).forEach(function(perk) { %>
+                              <li class="small mb-1">
+                                <i class="fa-solid fa-check text-success me-2"></i><%= perk %>
+                              </li>
+                            <% }) %>
+                          </ul>
+                        <% } else if (typeof group === 'string') { %>
+                          <ul class="list-unstyled mb-0">
+                            <li class="small mb-1">
+                              <i class="fa-solid fa-check text-success me-2"></i><%= group %>
+                            </li>
+                          </ul>
+                        <% } %>
                       <% }) %>
-                    </ul>
+                    </div>
                   <% } else { %>
                     <div class="flex-grow-1"></div>
                   <% } %>
