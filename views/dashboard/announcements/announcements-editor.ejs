@@ -115,9 +115,9 @@
                             </div>
                         </div>
 
-                        <!-- Banner Body -->
+                        <!-- Body -->
                         <div class="mb-3" data-announcement-field="body">
-                            <label for="body">Banner Body</label>
+                            <label for="body" id="label-body">Message</label>
 
                             <% if (type === 'create') { %>
                                 <%- include("../../partials/form/inputTextArea.ejs", {
@@ -197,9 +197,9 @@
                                 <small class="text-muted">Optional label for popup call-to-action button.</small>
                             </div>
 
-                            <!-- Announcement Visability -->
+                            <!-- Announcement Visibility -->
                             <div class="mb-3 col">
-                                <label for="enabled">Announcement Visability</label>
+                                <label for="enabled">Announcement Visibility</label>
 
                                 <% if (type === 'create') { %>
                                     <%- include("../../partials/form/inputSelect.ejs", {
@@ -208,7 +208,7 @@
                                         required: true,
                                         optionElements: [
                                             {
-                                                optionName: "Select a Visability",
+                                                optionName: "Select a Visibility",
                                                 optionValue: "null",
                                                 selected: true,
                                                 disabled: true
@@ -235,7 +235,7 @@
                                         required: true,
                                         optionElements: [
                                             {
-                                                optionName: "Select a Visability",
+                                                optionName: "Select a Visibility",
                                                 optionValue: "null",
                                                 selected: true,
                                                 disabled: true
@@ -259,23 +259,40 @@
                         </div>
 
                         <div class="mb-3" data-announcement-field="popupImageUrl">
-                            <label for="popupImageUrl">Popup Image URL</label>
+                            <label class="form-label">Popup Image</label>
 
-                            <% if (type === 'create') { %>
-                                <%- include("../../partials/form/inputText.ejs", {
-                                    elementName: "popupImageUrl",
-                                    elementValue: null,
-                                    required: false
-                                }) %>
-                            <% } %>
-                            <% if (type === 'edit') { %>
-                                <%- include("../../partials/form/inputText.ejs", {
-                                    elementName: "popupImageUrl",
-                                    elementValue: announcementApiData.popupImageUrl,
-                                    required: false
-                                }) %>
-                            <% } %>
-                            <small class="text-muted">Optional banner image for popup announcements.</small>
+                            <div id="popup-img-preview" class="mb-2 d-none">
+                                <div class="d-inline-flex align-items-start gap-2 border rounded p-2">
+                                    <img id="popup-img-thumb" src="" alt="Popup image preview"
+                                         style="max-height:120px;max-width:280px;object-fit:contain;">
+                                    <button type="button" id="popup-img-remove"
+                                            class="btn btn-sm btn-outline-danger flex-shrink-0"
+                                            title="Remove image">
+                                        <i class="fas fa-times"></i>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div class="d-flex gap-2 align-items-center flex-wrap">
+                                <label for="popup-img-file"
+                                       class="btn btn-outline-secondary btn-sm mb-0"
+                                       style="cursor:pointer">
+                                    <i class="fas fa-upload me-1"></i>Upload image
+                                </label>
+                                <input type="file" id="popup-img-file"
+                                       accept="image/png,image/jpeg,image/gif,image/webp"
+                                       class="d-none">
+                                <span class="text-muted small">or paste a URL:</span>
+                                <input type="url" name="popupImageUrl" id="popupImageUrl"
+                                       class="form-control form-control-sm flex-grow-1"
+                                       style="max-width:420px"
+                                       placeholder="https://..."
+                                       value="<%= (type === 'edit' && announcementApiData.popupImageUrl) ? announcementApiData.popupImageUrl : '' %>">
+                                <span id="popup-img-status" class="small"></span>
+                            </div>
+                            <small class="text-muted mt-1 d-block">
+                                Upload PNG, JPG, GIF or WebP (max 8 MB) or paste an image URL directly.
+                            </small>
                         </div>
 
                         <div class="row">
@@ -359,8 +376,18 @@
         const announcementTypeSelect = document.querySelector("select[name='announcementType']");
         const fieldGroups = document.querySelectorAll("[data-announcement-field]");
 
+        const bodyLabel = document.getElementById("label-body");
+        const bodyLabelMap = {
+            motd: "Server Ping Message",
+            tip: "In-Game Tip Text",
+            web: "Banner Body",
+            popup: "Popup Message",
+        };
+
         const updateAnnouncementFields = () => {
             const type = announcementTypeSelect?.value || "";
+
+            if (bodyLabel) bodyLabel.textContent = bodyLabelMap[type] || "Message";
 
             fieldGroups.forEach((group) => {
                 const field = group.dataset.announcementField;
@@ -403,4 +430,67 @@
     document.querySelectorAll("input[name='timezoneOffset']").forEach((input) => {
         input.value = String(new Date().getTimezoneOffset());
     });
+
+    // ── Popup image upload widget ─────────────────────────────────────────
+    (function () {
+        const fileInput   = document.getElementById("popup-img-file");
+        const urlInput    = document.getElementById("popupImageUrl");
+        const preview     = document.getElementById("popup-img-preview");
+        const thumb       = document.getElementById("popup-img-thumb");
+        const removeBtn   = document.getElementById("popup-img-remove");
+        const statusEl    = document.getElementById("popup-img-status");
+        if (!fileInput || !urlInput) return;
+
+        function showPreview(url) {
+            if (url) {
+                thumb.src = url;
+                preview.classList.remove("d-none");
+            } else {
+                preview.classList.add("d-none");
+                thumb.src = "";
+            }
+        }
+
+        // Show existing image on page load (edit mode)
+        showPreview(urlInput.value.trim());
+
+        urlInput.addEventListener("input", () => showPreview(urlInput.value.trim()));
+
+        removeBtn.addEventListener("click", () => {
+            urlInput.value = "";
+            showPreview("");
+            statusEl.textContent = "";
+            statusEl.className = "small";
+        });
+
+        fileInput.addEventListener("change", async () => {
+            const file = fileInput.files[0];
+            if (!file) return;
+            fileInput.value = "";
+
+            statusEl.textContent = "Uploading…";
+            statusEl.className = "small text-muted";
+
+            const fd = new FormData();
+            fd.append("file", file, file.name);
+            fd.append("folder", "announcements");
+
+            try {
+                const res  = await fetch("/api/upload/image", { method: "POST", body: fd });
+                const data = await res.json();
+                if (data.success) {
+                    urlInput.value = data.data.url;
+                    showPreview(data.data.url);
+                    statusEl.textContent = "Uploaded ✓";
+                    statusEl.className = "small text-success";
+                } else {
+                    statusEl.textContent = data.message || "Upload failed.";
+                    statusEl.className = "small text-danger";
+                }
+            } catch {
+                statusEl.textContent = "Upload failed.";
+                statusEl.className = "small text-danger";
+            }
+        });
+    })();
 </script>
