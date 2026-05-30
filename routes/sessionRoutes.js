@@ -950,6 +950,7 @@ export default function sessionSiteRoute(
       globalImage: await getGlobalImage(),
       announcementWeb: await getWebAnnouncement(),
       pendingUserId: pendingRegistration.userId,
+      pendingUsername: pendingRegistration.username || null,
     }));
     return;
   });
