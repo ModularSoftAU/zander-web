@@ -45,6 +45,9 @@
                     <% } %>
                     <li class="nav-item"><a class="nav-link" href="/webstore">Webstore</a></li>
                     <li class="nav-item"><a class="nav-link" href="/rules">Rules</a></li>
+                    <% if (features.support) { %>
+                        <li class="nav-item"><a class="nav-link" href="/support">Support</a></li>
+                    <% } %>
                     <% if (req.session?.user?.permissions?.includes('zander.web.dashboard') || req.session?.user?.permissions?.includes('zander.web.*') || req.session?.user?.permissions?.includes('*')) { %>
                         <li class="nav-item"><a class="nav-link" href="/dashboard">Dashboard</a></li>
                     <% } %>
