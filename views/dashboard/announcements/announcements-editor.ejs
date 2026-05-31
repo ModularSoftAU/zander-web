@@ -601,7 +601,10 @@
             textarea.addEventListener('input', updateMcPreview);
             var typeSelect = document.querySelector("select[name='announcementType']");
             if (typeSelect) typeSelect.addEventListener('change', updateMcPreview);
-            updateMcPreview();
+            // inputSelect.ejs sets the select value via its own window.load listener,
+            // registered earlier in the DOM. By the time this listener fires, the
+            // correct type is already set, so updateMcPreview reads the right value.
+            window.addEventListener('load', updateMcPreview);
         }
 
         // Toolbar: insert colour/format code at cursor position

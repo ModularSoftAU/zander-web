@@ -32,6 +32,15 @@ function parseJsonBody(raw) {
   return [];
 }
 
+function parsePerkGroups(raw) {
+  try {
+    const parsed = JSON.parse(raw || "[]");
+    if (!Array.isArray(parsed)) return [];
+    return parsed.filter((g) => g && typeof g === "object");
+  } catch {}
+  return [];
+}
+
 export default function dashboardRankCatalogRoute(app, config, db, features, lang) {
 
   // ── List ──────────────────────────────────────────────────────────────────
@@ -100,7 +109,7 @@ export default function dashboardRankCatalogRoute(app, config, db, features, lan
         category: body.category?.trim() || "Ranks",
         categorySortOrder: body.categorySortOrder,
         sortOrder: body.sortOrder,
-        perks: parseJsonBody(body.perks),
+        perks: parsePerkGroups(body.perks),
       });
       return res.redirect("/dashboard/rank-catalog");
     } catch (err) {
@@ -152,7 +161,7 @@ export default function dashboardRankCatalogRoute(app, config, db, features, lan
         category: body.category?.trim() || "Ranks",
         categorySortOrder: body.categorySortOrder,
         sortOrder: body.sortOrder,
-        perks: parseJsonBody(body.perks),
+        perks: parsePerkGroups(body.perks),
       });
       return res.redirect("/dashboard/rank-catalog");
     } catch (err) {
