@@ -36,8 +36,19 @@
           <div class="flex-shrink-0 d-flex align-items-center justify-content-center rounded-circle bg-primary text-white fw-bold"
                style="width:36px;height:36px;font-size:16px;margin-top:2px;">1</div>
           <div class="flex-fill">
-            <h5 class="mb-1">Join a verification server</h5>
-            <p class="text-muted small mb-3">Copy the address for your platform and connect in Minecraft.</p>
+            <h5 class="mb-2">Open Minecraft and join a verification server</h5>
+
+            <div class="alert alert-warning d-flex gap-2 align-items-start py-2 px-3 mb-3" style="font-size:.875rem;">
+              <i class="fas fa-exclamation-triangle mt-1 flex-shrink-0"></i>
+              <span><strong>This is not a website link.</strong> You need to open the <strong>Minecraft game</strong> and add this as a server — do not paste it into your browser.</span>
+            </div>
+
+            <p class="text-muted small mb-2 fw-semibold">How to connect:</p>
+            <ol class="text-muted small mb-3 ps-3">
+              <li class="mb-1">Open <strong>Minecraft</strong> on your device</li>
+              <li class="mb-1">Go to <strong>Multiplayer</strong> (Java) or <strong>Play → Servers</strong> (Bedrock)</li>
+              <li class="mb-1">Click <strong>Add Server</strong>, paste the address below, then join</li>
+            </ol>
 
             <% if (apiData.success === false) { %>
               <%- include("../partials/alert.ejs", {
@@ -53,23 +64,27 @@
                      var badge     = isBedrock ? 'bg-warning text-dark' : isJava ? 'bg-success' : 'bg-secondary';
                      var label     = verifyServer.displayName || 'Verification Server';
                      var inputId   = 'srv-' + verifyServer.serverConnectionAddress.replace(/[^a-z0-9]/gi,'');
+                     var hint      = isBedrock ? 'For Minecraft Bedrock (mobile, console, Windows 10/11 edition)'
+                                   : isJava    ? 'For Minecraft Java Edition (PC/Mac)'
+                                   : '';
                 %>
                   <div class="card border">
                     <div class="card-body py-2 px-3">
-                      <div class="d-flex align-items-center gap-2 mb-2">
+                      <div class="d-flex align-items-center gap-2 mb-1">
                         <i class="fas <%= icon %> text-muted"></i>
                         <span class="fw-semibold small"><%= label %></span>
                         <% if (isBedrock || isJava) { %>
                           <span class="badge <%= badge %> ms-auto"><%= isBedrock ? 'Bedrock' : 'Java' %></span>
                         <% } %>
                       </div>
+                      <% if (hint) { %><p class="text-muted mb-2" style="font-size:.78rem;"><%= hint %></p><% } %>
                       <div class="d-flex align-items-center gap-2">
                         <input type="text" class="form-control form-control-sm font-monospace flex-fill"
                                value="<%= verifyServer.serverConnectionAddress %>"
                                id="<%= inputId %>" readonly>
                         <button type="button" class="btn btn-sm btn-outline-secondary copy-btn flex-shrink-0"
                                 data-target="<%= inputId %>" title="Copy address">
-                          <i class="fas fa-copy"></i>
+                          <i class="fas fa-copy"></i> Copy
                         </button>
                       </div>
                     </div>
