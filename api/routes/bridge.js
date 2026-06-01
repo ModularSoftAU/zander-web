@@ -139,7 +139,9 @@ export default function bridgeApiRoute(app, config, db, features, lang) {
       let sql = `SELECT * FROM ${TASK_TABLE} WHERE status = ?`;
 
       if (slug) {
-        sql += ` AND slug = ?`;
+        // Match tasks targeting this specific server OR tasks marked 'any'
+        // (claimable by whichever server polls first).
+        sql += ` AND (slug = ? OR slug = 'any')`;
         params.push(slug);
       }
 

@@ -259,38 +259,26 @@ export async function upsertMonthlyTotal({ playerUuid, playerName, monthKey, vot
 export async function enqueueCommands(entries) {
   if (!entries || !entries.length) return;
 
-  const hasExpiresAt = await ensureExpiresAtColumn();
-
   for (const e of entries) {
-    try {
-      const availableAt = e.availableAt || new Date();
-      if (hasExpiresAt) {
-        await query(
-          `INSERT IGNORE INTO player_command_queue
-             (player_uuid, player_name, source, command_text, execute_as, server_scope, dedupe_key, available_at, expires_at)
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?, DATE_ADD(?, INTERVAL 3 DAY))`,
-          [
-            e.playerUuid, e.playerName, e.source, e.commandText,
-            e.executeAs || "console", e.serverScope || "any",
-            e.dedupeKey, availableAt, availableAt,
-          ]
-        );
-      } else {
-        await query(
-          `INSERT IGNORE INTO player_command_queue
-             (player_uuid, player_name, source, command_text, execute_as, server_scope, dedupe_key, available_at)
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-          [
-            e.playerUuid, e.playerName, e.source, e.commandText,
-            e.executeAs || "console", e.serverScope || "any",
-            e.dedupeKey, availableAt,
-          ]
-        );
-      }
-    } catch (err) {
-      // Duplicate key: already queued. Safe to skip.
-      if (err.code !== "ER_DUP_ENTRY") throw err;
-    }
+    // Route through the unified bridge (executorTasks) so vote rewards and
+    // webstore rewards share one queue and one addon poll loop.
+    const slug = (!e.serverScope || e.serverScope === "any") ? "any" : e.serverScope;
+    await query(
+      `INSERT INTO executorTasks (slug, command, status, priority, metadata, createdAt, updatedAt)
+       VALUES (?, ?, 'pending', ?, ?, NOW(), NOW())`,
+      [
+        slug,
+        e.commandText,
+        3, // lower priority than webstore (5) so purchases are processed first
+        JSON.stringify({
+          source: e.source || "vote_reward",
+          playerUuid: e.playerUuid,
+          playerName: e.playerName,
+          executeAs: e.executeAs || "console",
+          dedupeKey: e.dedupeKey,
+        }),
+      ]
+    );
   }
 }
 

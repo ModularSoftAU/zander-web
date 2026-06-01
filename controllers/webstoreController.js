@@ -557,7 +557,7 @@ export async function enqueueCommands({
 
     // Insert executor task — picked up by zander-addon and run as a console command.
     // Use the command's configured serverSlug so the right server claims the task.
-    const taskSlug = cmd.serverSlug || `webstore`;
+    const taskSlug = cmd.serverSlug || "any";
     const taskResult = await query(
       `INSERT INTO executorTasks (slug, command, status, priority, metadata, createdAt, updatedAt)
        VALUES (?, ?, 'pending', ?, ?, NOW(), NOW())`,
