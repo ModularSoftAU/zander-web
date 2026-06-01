@@ -27,6 +27,7 @@ import { createRequire } from "module";
 const require = createRequire(import.meta.url);
 
 import { isFeatureEnabled, optional } from "../common.js";
+import { processMonthlyVoteRewards } from "../../cron/voteMonthlyRewardCron.js";
 import {
   getAllVoteSites,
   getVoteSiteById,
@@ -42,8 +43,6 @@ import {
   getVoteHistory,
   getQueue,
   getMonthlyWinners,
-  monthlyRewardsAlreadyGenerated,
-  recordMonthlyResults,
   getMonthlyResults,
   normaliseServiceName,
   buildVoteDedupeKey,
@@ -55,10 +54,7 @@ import {
   updateRewardTemplate,
   deleteRewardTemplate,
 } from "../../controllers/voteController.js";
-import {
-  buildVoteRewardCommands,
-  buildMonthlyRewardCommands,
-} from "../../services/voteRewardService.js";
+import { buildVoteRewardCommands } from "../../services/voteRewardService.js";
 
 export default function voteApiRoute(app, config, db, features, lang) {
 
@@ -404,40 +400,12 @@ export default function voteApiRoute(app, config, db, features, lang) {
     }
 
     try {
-      // Idempotency guard
-      const alreadyDone = await monthlyRewardsAlreadyGenerated(monthKey);
-      if (alreadyDone) {
-        return res.send({
-          success: false,
-          message: `Monthly rewards for ${monthKey} have already been generated.`,
-        });
-      }
-
+      await processMonthlyVoteRewards(monthKey);
       const winners = await getMonthlyWinners(monthKey);
-      if (!winners.length) {
-        return res.send({ success: false, message: `No votes found for ${monthKey}.` });
-      }
-
-      // Build and enqueue monthly reward commands for each winner.
-      const allCommands = [];
-      for (const winner of winners) {
-        const cmds = await buildMonthlyRewardCommands({
-          playerUuid: winner.player_uuid,
-          playerName: winner.player_name,
-          monthKey,
-          voteCount: winner.vote_count,
-        });
-        allCommands.push(...cmds);
-      }
-      await enqueueCommands(allCommands);
-
-      // Record the results (idempotent per month+player).
-      await recordMonthlyResults(monthKey, winners);
-
       return res.send({
         success: true,
-        message: `Monthly rewards generated for ${monthKey}. ${winners.length} winner(s), ${allCommands.length} command(s) queued.`,
-        data: { month: monthKey, winners, commandsQueued: allCommands.length },
+        message: `Monthly rewards processed for ${monthKey}.`,
+        data: { month: monthKey, winners },
       });
     } catch (error) {
       console.error("[vote] POST /admin/vote/monthly/process:", error);
