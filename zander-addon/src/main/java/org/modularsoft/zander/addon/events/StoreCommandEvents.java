@@ -16,8 +16,9 @@ public class StoreCommandEvents implements Listener {
 
     @EventHandler(priority = EventPriority.MONITOR)
     public void onPlayerJoin(PlayerJoinEvent event) {
-        String uuid = event.getPlayer().getUniqueId().toString();
-        String name = event.getPlayer().getName();
-        storeCommandService.onPlayerJoin(uuid, name);
+        storeCommandService.onPlayerJoin(
+                event.getPlayer().getUniqueId(),
+                event.getPlayer().getName()
+        );
     }
 }

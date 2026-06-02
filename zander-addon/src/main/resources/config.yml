@@ -1,44 +1,37 @@
 # Zander Addon Configuration
 
-# --- API Server Settings ---
-# Enable the built-in API server
-# If enabled, this server will host the /api/config/policy endpoint
-api-server:
-  enabled: true
-  port: 8080
-
 # --- Plugin Settings ---
-# The base URL for the API (where the plugin fetches policy URLs from)
-api-url: "https://craftingforchrist.net/api"
-# Shared API key sent as x-access-token header for authenticated endpoints
+# The base URL for the API
+api-url: "https://craftingforchrist.net"
+
+# API key for authenticated endpoints (x-access-token header)
 api-key: "changeme"
 
-# Settings for the in-game policy book
+# The name of this server (sent to the command bridge when claiming rewards)
+server-name: "survival"
+
+# --- Command Bridge ---
+# Claims and executes pending reward commands for players on join
+command-bridge:
+  enabled: true
+
+# --- Bridge Processor ---
+# Polls for queued server-side console tasks on a timer
+bridge:
+  enabled: true
+
+# --- Policy API Server ---
+# Hosts a local HTTP endpoint for policy/social config — disable if not needed
+api-server:
+  enabled: false
+  port: 8080
+
+# --- Policy Book ---
 policy-book:
   enabled: false
   slot: 8
 
-# Settings for the social media paper
+# --- Social Media Paper ---
 social-paper:
   enabled: false
   slot: 7
-
-# --- Bridge Executor Settings ---
-bridge:
-  # Enable the command bridge executor (polls zander-web for queued console commands)
-  enabled: true
-  # This server's unique slug (must match the slug configured in zander-web)
-  server-slug: "survival"
-  # How often to poll for pending tasks in milliseconds
-  poll-interval-ms: 5000
-
-# --- Store Command Settings ---
-store-commands:
-  # Enable polling for purchase commands from the web store
-  enabled: true
-  # The server name registered in the web store (must match the server name in zander-web)
-  server-name: "survival"
-  # How often (in seconds) to poll for pending commands for all online players
-  poll-interval-seconds: 300
-  # Maximum number of retry attempts before a command is permanently marked failed
-  max-retry-attempts: 5

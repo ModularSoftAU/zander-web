@@ -8,6 +8,7 @@ import dev.dejvokep.boostedyaml.route.Route;
 import io.github.ModularEnigma.Request;
 import io.github.ModularEnigma.Response;
 import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.TextComponent;
 import net.kyori.adventure.text.event.HoverEvent;
 import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.minimessage.MiniMessage;
@@ -16,7 +17,10 @@ import org.modularsoft.zander.velocity.ZanderVelocityMain;
 import org.modularsoft.zander.velocity.model.Filter;
 import org.modularsoft.zander.velocity.model.discord.DiscordChat;
 
-import java.lang.reflect.Method;
+import net.luckperms.api.LuckPermsProvider;
+import net.luckperms.api.model.user.User;
+import net.luckperms.api.cacheddata.CachedMetaData;
+import net.luckperms.api.platform.PlayerAdapter;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -35,6 +39,9 @@ public class UserChatEvent {
 
         // Filter out commands.
         if (rawMessage.startsWith("/")) return;
+
+        // Pass numeric-only messages through without processing (e.g. QuickShop quantity input)
+        if (rawMessage.matches("^[0-9]+$")) return;
 
         // Check chat for blocked content
         try {
@@ -55,8 +62,6 @@ public class UserChatEvent {
             Boolean success = JsonPath.parse(phraseJson).read("$.success");
             String phraseCaughtMessage = JsonPath.read(phraseJson, "$.message");
 
-            ZanderVelocityMain.getLogger().info("[FILTER] Response (" + phraseRes.getStatusCode() + "): " + phraseRes.getBody());
-
             if (!success) {
                 Component builder = Component.text(phraseCaughtMessage).color(NamedTextColor.RED);
                 player.sendMessage(builder);
@@ -76,8 +81,7 @@ public class UserChatEvent {
                         .setRequestBody(chat.toString())
                         .build();
 
-                Response discordChatReqRes = discordChatReq.execute();
-                ZanderVelocityMain.getLogger().info("Response (" + discordChatReqRes.getStatusCode() + "): " + discordChatReqRes.getBody());
+                discordChatReq.execute();
             }
 
             Component formattedMessage = formatChatMessage(player, originalMessage);
@@ -98,11 +102,14 @@ public class UserChatEvent {
 
     private Component formatChatMessage(Player player, Component originalMessage) {
         LuckPermsMeta metaData = resolveLuckPermsMeta(player).orElse(null);
-        Component rankPrefix = buildRankPrefix(metaData);
+        String prefix = metaData != null ? metaData.prefix : null;
 
-        return Component.text()
-                .append(rankPrefix)
-                .append(Component.space())
+        TextComponent.Builder builder = Component.text();
+        if (prefix != null && !prefix.isBlank()) {
+            builder.append(buildRankPrefix(metaData)).append(Component.space());
+        }
+
+        return builder
                 .append(Component.text(player.getUsername()))
                 .append(Component.text(": "))
                 .append(originalMessage)
@@ -178,40 +185,20 @@ public class UserChatEvent {
 
     private Optional<LuckPermsMeta> resolveLuckPermsMeta(Player player) {
         try {
-            Class<?> providerClass = Class.forName("net.luckperms.api.LuckPermsProvider");
-            Object luckPerms = providerClass.getMethod("get").invoke(null);
-            Object playerAdapter = luckPerms.getClass().getMethod("getPlayerAdapter", Class.class)
-                    .invoke(luckPerms, Player.class);
-            Object user = playerAdapter.getClass().getMethod("getUser", Player.class).invoke(playerAdapter, player);
-            Object metaData = playerAdapter.getClass().getMethod("getMetaData", Player.class).invoke(playerAdapter, player);
+            PlayerAdapter<Player> adapter = LuckPermsProvider.get().getPlayerAdapter(Player.class);
+            User user = adapter.getUser(player);
+            CachedMetaData metaData = adapter.getMetaData(player);
 
-            String prefix = null;
-            String primaryGroup = null;
-            Map<String, List<String>> metaMap = Map.of();
+            String prefix = metaData.getPrefix();
+            String primaryGroup = user != null ? user.getPrimaryGroup() : null;
+            Map<String, String> flatMeta = flattenMeta(metaData.getMeta());
 
-            if (user != null) {
-                Method primaryGroupMethod = user.getClass().getMethod("getPrimaryGroup");
-                Object primaryGroupResult = primaryGroupMethod.invoke(user);
-                if (primaryGroupResult instanceof String) {
-                    primaryGroup = (String) primaryGroupResult;
-                }
-            }
-
-            if (metaData != null) {
-                Method prefixMethod = metaData.getClass().getMethod("getPrefix");
-                Object prefixResult = prefixMethod.invoke(metaData);
-                if (prefixResult instanceof String) {
-                    prefix = (String) prefixResult;
-                }
-                Method metaMethod = metaData.getClass().getMethod("getMeta");
-                Object metaResult = metaMethod.invoke(metaData);
-                if (metaResult instanceof Map<?, ?> rawMeta) {
-                    metaMap = castMetaMap(rawMeta);
-                }
-            }
-
-            return Optional.of(new LuckPermsMeta(prefix, primaryGroup, flattenMeta(metaMap)));
-        } catch (ReflectiveOperationException | LinkageError ignored) {
+            return Optional.of(new LuckPermsMeta(prefix, primaryGroup, flatMeta));
+        } catch (IllegalStateException ignored) {
+            // LuckPerms not installed on this proxy
+            return Optional.empty();
+        } catch (Exception e) {
+            ZanderVelocityMain.getLogger().warn("Failed to resolve LuckPerms meta for {}: {}", player.getUsername(), e.getMessage());
             return Optional.empty();
         }
     }
@@ -220,9 +207,7 @@ public class UserChatEvent {
         Map<String, String> flattened = new java.util.HashMap<>();
         for (Map.Entry<String, List<String>> entry : metaMap.entrySet()) {
             List<String> values = entry.getValue();
-            if (values == null) {
-                continue;
-            }
+            if (values == null) continue;
             for (String value : values) {
                 if (value != null && !value.isBlank()) {
                     flattened.put(entry.getKey(), value);
@@ -231,19 +216,6 @@ public class UserChatEvent {
             }
         }
         return flattened;
-    }
-
-    @SuppressWarnings("unchecked")
-    private Map<String, List<String>> castMetaMap(Map<?, ?> rawMeta) {
-        Map<String, List<String>> casted = new java.util.HashMap<>();
-        for (Map.Entry<?, ?> entry : rawMeta.entrySet()) {
-            Object key = entry.getKey();
-            Object value = entry.getValue();
-            if (key instanceof String && value instanceof List<?> listValue) {
-                casted.put((String) key, (List<String>) listValue);
-            }
-        }
-        return casted;
     }
 
     private static class LuckPermsMeta {

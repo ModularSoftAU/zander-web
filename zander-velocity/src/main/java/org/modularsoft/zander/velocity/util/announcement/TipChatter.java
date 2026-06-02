@@ -39,11 +39,6 @@ public class TipChatter {
                 String colourMessageFormat = JsonPath.read(json, "$.data[0].colourMessageFormat");
                 String link = JsonPath.read(json, "$.data[0].link");
 
-                // Log the color message format and link
-                logger.info("Announcement Tip: {}", colourMessageFormat);
-                logger.info("Link: {}", link);
-                logger.info("JSON: {}", json);
-
                 // Broadcast the message to all online players
                 ZanderVelocityMain.getProxy().getAllPlayers().forEach(player -> {
                     // Send the message to each player
@@ -64,7 +59,6 @@ public class TipChatter {
             } catch (Exception e) {
                 // Handle exceptions here
                 logger.error("Announcement Tip Failed, will try again later.", e);
-                System.out.println("Announcement Tip Failed, will try again in " + interval + " minutes.");
             }
         }).repeat(interval, TimeUnit.MINUTES).schedule();
     }

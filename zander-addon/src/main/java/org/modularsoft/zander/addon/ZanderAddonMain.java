@@ -40,7 +40,7 @@ public class ZanderAddonMain extends JavaPlugin {
         this.storeCommandService = new StoreCommandService(this);
         this.bridgeService = new BridgeService(this);
 
-        if (getConfig().getBoolean("api-server.enabled", true)) {
+        if (getConfig().getBoolean("api-server.enabled", false)) {
             this.apiServer = new PolicyApiServer(this);
             this.apiServer.start();
         }
@@ -52,13 +52,15 @@ public class ZanderAddonMain extends JavaPlugin {
         getServer().getPluginManager().registerEvents(new PlayerEvents(this, policyGUI, socialGUI), this);
         getServer().getPluginManager().registerEvents(new FreezeEvents(freezeService), this);
 
-        if (getConfig().getBoolean("store-commands.enabled", true)) {
+        if (getConfig().getBoolean("command-bridge.enabled", true)) {
             storeCommandService.start();
             getServer().getPluginManager().registerEvents(new StoreCommandEvents(storeCommandService), this);
+            getLogger().info("Command bridge enabled for server: " + getConfig().getString("server-name", "survival"));
         }
 
         if (getConfig().getBoolean("bridge.enabled", true)) {
             bridgeService.start();
+            getLogger().info("Bridge processor enabled for server: " + getConfig().getString("server-name", "survival"));
         }
 
         getCommand("policy").setExecutor(new PolicyCommand(this, policyService));

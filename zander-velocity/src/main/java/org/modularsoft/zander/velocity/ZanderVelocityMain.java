@@ -17,6 +17,7 @@ import dev.dejvokep.boostedyaml.settings.loader.LoaderSettings;
 import dev.dejvokep.boostedyaml.settings.updater.UpdaterSettings;
 import lombok.Getter;
 import org.modularsoft.zander.velocity.commands.*;
+import org.modularsoft.zander.velocity.commands.moderation.alert;
 import org.modularsoft.zander.velocity.commands.moderation.clearchat;
 import org.modularsoft.zander.velocity.commands.moderation.freezechat;
 import org.modularsoft.zander.velocity.events.*;
@@ -76,6 +77,7 @@ public class ZanderVelocityMain {
         // Commands
         CommandManager commandManager = proxy.getCommandManager();
 
+        commandManager.register(commandManager.metaBuilder("verify").build(), new verify());
         commandManager.register(commandManager.metaBuilder("discord").build(), new discord());
         commandManager.register(commandManager.metaBuilder("rules").build(), new rules());
         commandManager.register(commandManager.metaBuilder("website").build(), new website());
@@ -83,6 +85,9 @@ public class ZanderVelocityMain {
         commandManager.register(commandManager.metaBuilder("report").build(), new report());
         commandManager.register(commandManager.metaBuilder("clearchat").build(), new clearchat());
         commandManager.register(commandManager.metaBuilder("freezechat").build(), new freezechat());
+        alert alertCommand = new alert();
+        commandManager.register(commandManager.metaBuilder("alert").build(), alertCommand);
+        commandManager.register(commandManager.metaBuilder("broadcast").build(), alertCommand);
         message messageCommand = new message();
         commandManager.register(commandManager.metaBuilder("message").build(), messageCommand);
         commandManager.register(commandManager.metaBuilder("m").build(), messageCommand);

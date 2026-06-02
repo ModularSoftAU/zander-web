@@ -79,8 +79,7 @@ public class UserSocialSpyEvent {
                         .setRequestBody(socialSpy.toString())
                         .build();
 
-                Response socialSpyRes = socialSpyReq.execute();
-                logger.info("Social Spy Response ({}): {}", socialSpyRes.getStatusCode(), socialSpyRes.getBody());
+                socialSpyReq.execute();
             } catch (Exception e) {
                 logger.error("Error occurred while handling social spy request for player {}", player.getUsername(), e);
             }

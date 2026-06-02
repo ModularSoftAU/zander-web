@@ -13,6 +13,8 @@ import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 import org.modularsoft.zander.velocity.ZanderVelocityMain;
 import org.slf4j.Logger;
 
+import java.util.List;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
 
 public class UserOnProxyPing {
@@ -20,7 +22,7 @@ public class UserOnProxyPing {
     private static final Logger logger = ZanderVelocityMain.getLogger();
 
     private final ZanderVelocityMain plugin;
-    private volatile Component cachedMotd = null;
+    private volatile List<Component> cachedMotds = List.of();
 
     public UserOnProxyPing(ZanderVelocityMain plugin) {
         this.plugin = plugin;
@@ -47,12 +49,12 @@ public class UserOnProxyPing {
             Response res = req.execute();
             String json = res.getBody();
 
-            String colourMessageFormat = JsonPath.read(json, "$.data[0].colourMessageFormat");
+            List<String> formats = JsonPath.read(json, "$.data[*].colourMessageFormat");
             String motdTopLine = ZanderVelocityMain.getConfig().getString(Route.from("announcementMOTDTopLine"));
-            cachedMotd = LegacyComponentSerializer.builder()
-                    .character('&')
-                    .build()
-                    .deserialize(motdTopLine + "\n" + colourMessageFormat);
+            LegacyComponentSerializer serializer = LegacyComponentSerializer.builder().character('&').build();
+            cachedMotds = formats.stream()
+                    .map(fmt -> (Component) serializer.deserialize(motdTopLine + "\n" + fmt))
+                    .toList();
         } catch (Exception e) {
             logger.error("Failed to refresh MOTD from API", e);
         }
@@ -62,17 +64,17 @@ public class UserOnProxyPing {
     public void onProxyPingEvent(ProxyPingEvent event) {
         Builder pingBuilder = event.getPing().asBuilder();
 
-        Component motd = cachedMotd;
-        if (motd != null) {
-            pingBuilder.description(motd);
+        List<Component> motds = cachedMotds;
+        if (!motds.isEmpty()) {
+            int index = motds.size() == 1 ? 0 : ThreadLocalRandom.current().nextInt(motds.size());
+            pingBuilder.description(motds.get(index));
         } else {
-            // Fallback MOTD when cache has not yet been populated
             String motdTopLine = ZanderVelocityMain.getConfig().getString(Route.from("announcementMOTDTopLine"));
-            Component fallbackDescription = LegacyComponentSerializer.builder()
+            Component fallback = LegacyComponentSerializer.builder()
                     .character('&')
                     .build()
                     .deserialize(motdTopLine + "\n" + "&3&lPowered by Zander");
-            pingBuilder.description(fallbackDescription);
+            pingBuilder.description(fallback);
         }
 
         event.setPing(pingBuilder.build());

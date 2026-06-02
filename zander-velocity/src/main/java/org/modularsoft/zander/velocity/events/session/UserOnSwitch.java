@@ -25,8 +25,6 @@ public class UserOnSwitch {
         String BaseAPIURL = ZanderVelocityMain.getConfig().getString(Route.from("BaseAPIURL"));
         String APIKey = ZanderVelocityMain.getConfig().getString(Route.from("APIKey"));
 
-        logger.info("Player {} is switching to server {}", username, server);
-
         ZanderVelocityMain.getProxy().getScheduler().buildTask(ZanderVelocityMain.getInstance(), () -> {
             // Handle Session Switch API
             try {
@@ -42,8 +40,7 @@ public class UserOnSwitch {
                         .setRequestBody(switchSession.toString())
                         .build();
 
-                Response switchSessionRes = switchSessionReq.execute();
-                logger.info("Session Switch Response ({}): {}", switchSessionRes.getStatusCode(), switchSessionRes.getBody());
+                switchSessionReq.execute();
             } catch (Exception e) {
                 logger.error("Error during Session Switch API request for player {}", username, e);
             }
@@ -62,8 +59,7 @@ public class UserOnSwitch {
                         .setRequestBody(discordSwitch.toString())
                         .build();
 
-                Response discordSwitchRes = discordSwitchReq.execute();
-                logger.info("Discord Switch Response ({}): {}", discordSwitchRes.getStatusCode(), discordSwitchRes.getBody());
+                discordSwitchReq.execute();
             } catch (Exception e) {
                 logger.error("Error during Discord Switch API request for player {}", username, e);
             }
