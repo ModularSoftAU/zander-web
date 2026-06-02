@@ -803,17 +803,14 @@ export function convertSecondsToDuration(seconds) {
   const DAY = 24 * HOUR;
   const MONTH = 30 * DAY;
 
-  if (seconds < MINUTE) {
-    return `${seconds} seconds`;
-  } else if (seconds < HOUR) {
-    return `${Math.floor(seconds / MINUTE)} minutes`;
-  } else if (seconds < DAY) {
-    return `${Math.floor(seconds / HOUR)} hours`;
-  } else if (seconds < MONTH) {
-    return `${Math.floor(seconds / DAY)} days`;
-  } else {
-    return `${Math.floor(seconds / MONTH)} months`;
-  }
+  const s = Math.max(0, Number(seconds) || 0);
+
+  if (s === 0) return "None yet";
+  if (s < MINUTE) return `${s} seconds`;
+  if (s < HOUR) return `${Math.floor(s / MINUTE)} minutes`;
+  if (s < DAY) return `${Math.floor(s / HOUR)} hours`;
+  if (s < MONTH) return `${Math.floor(s / DAY)} days`;
+  return `${Math.floor(s / MONTH)} months`;
 }
 
 export async function getRankPermissions(allRanks) {
