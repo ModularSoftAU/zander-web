@@ -79,7 +79,10 @@ async function fireRoutine(routineSlug, metadata = {}) {
   for (const step of steps) {
     let cmd = step.command || "";
     for (const [k, v] of Object.entries(metadata)) {
-      cmd = cmd.replace(new RegExp(`{{\\s*${k}\\s*}}`, "gi"), String(v ?? ""));
+      const ek = k.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+      const val = String(v ?? "");
+      cmd = cmd.replace(new RegExp(`{{\\s*${ek}\\s*}}`, "gi"), val);
+      cmd = cmd.replace(new RegExp(`(?<!\\{)\\{\\s*${ek}\\s*\\}(?!\\})`, "gi"), val);
     }
     cmd = cmd.replace(/^\/+/, "").trim();
     if (!cmd) continue;
@@ -189,11 +192,11 @@ export async function processMonthlyVoteRewards(monthKey) {
   // 3. Fire the bridge routine (e.g. in-game announcement / rank assignment).
   const routineSlug = config.voting?.monthlyRoutineSlug;
   if (routineSlug) {
+    const winnerNames = winners.map((w) => w.player_name).join(", ");
     const metaBase = {
       monthKey,
-      // For single winner, expose player details as placeholders.
-      // For ties all winners get the same routine — fire once with first winner's name.
-      playerName: winners.map((w) => w.player_name).join(", "),
+      playerName: winnerNames,
+      username: winnerNames,        // alias so {username} placeholders resolve
       playerUuid: winners[0].player_uuid,
       voteCount: winners[0].vote_count,
     };
