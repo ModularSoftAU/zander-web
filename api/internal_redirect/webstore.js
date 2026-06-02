@@ -129,6 +129,10 @@ async function notifyStaff(config, title, fields, color = Colors.Green) {
   await sendToWebhook(config?.discord?.webhooks?.staffChannel, title, fields, color);
 }
 
+async function notifyWebstore(config, title, fields, color = Colors.Green) {
+  await sendToWebhook(config?.discord?.webhooks?.webstoreChannel, title, fields, color);
+}
+
 async function notifyPurchase(config, purchase) {
   const webhookUrl = config?.discord?.webhooks?.webstoreChannel;
   if (!webhookUrl) return;
@@ -467,17 +471,16 @@ async function handleInvoicePaymentSucceeded(event, config) {
     ? new Date(stripeSub.current_period_end * 1000).toISOString().slice(0, 10)
     : "unknown";
 
-  await notifyStaff(
-    config,
-    "Subscription Renewed",
-    [
-      ["Player", subscription.recipientMinecraftUsername, true],
-      ["Purchaser", subscription.purchaserMinecraftUsername, true],
-      ["Price ID", subscription.stripePriceId, false],
-      ["Next Renewal", periodEndDate, true],
-    ],
-    Colors.Blue
-  );
+  const renewalFields = [
+    ["Player", subscription.recipientMinecraftUsername, true],
+    ["Purchaser", subscription.purchaserMinecraftUsername, true],
+    ["Price ID", subscription.stripePriceId, false],
+    ["Next Renewal", periodEndDate, true],
+  ];
+  await Promise.all([
+    notifyStaff(config, "Subscription Renewed", renewalFields, Colors.Blue),
+    notifyWebstore(config, "🔄 Subscription Renewed", renewalFields, Colors.Blue),
+  ]);
 }
 
 // ---------------------------------------------------------------------------
@@ -519,16 +522,15 @@ async function handleInvoicePaymentFailed(event, config) {
     payload: { subscriptionId: invoice.subscription, attempt_count: invoice.attempt_count },
   });
 
-  await notifyStaff(
-    config,
-    "Subscription Payment Failed",
-    [
-      ["Player", subscription.recipientMinecraftUsername, true],
-      ["Price ID", subscription.stripePriceId, true],
-      ["Attempt", String(invoice.attempt_count || 1), true],
-    ],
-    Colors.Yellow
-  );
+  const failedFields = [
+    ["Player", subscription.recipientMinecraftUsername, true],
+    ["Price ID", subscription.stripePriceId, true],
+    ["Attempt", String(invoice.attempt_count || 1), true],
+  ];
+  await Promise.all([
+    notifyStaff(config, "Subscription Payment Failed", failedFields, Colors.Yellow),
+    notifyWebstore(config, "⚠️ Subscription Payment Failed", failedFields, Colors.Yellow),
+  ]);
 }
 
 // ---------------------------------------------------------------------------
@@ -618,18 +620,17 @@ async function handleSubscriptionDeleted(event, config) {
     await revokeSubscription(subscription, revokeCommands, { discordClient, guildId: config?.discord?.guildId });
   }
 
-  await notifyStaff(
-    config,
-    "Subscription Cancelled",
-    [
-      ["Player", subscription.recipientMinecraftUsername, true],
-      ["Purchaser", subscription.purchaserMinecraftUsername, true],
-      ["Price ID", subscription.stripePriceId, false],
-      ["Reason", stripeSub.cancellation_details?.reason || "unknown", true],
-      ["Revoke commands", String(revokeCommands.length), true],
-    ],
-    Colors.Red
-  );
+  const cancelledFields = [
+    ["Player", subscription.recipientMinecraftUsername, true],
+    ["Purchaser", subscription.purchaserMinecraftUsername, true],
+    ["Price ID", subscription.stripePriceId, false],
+    ["Reason", stripeSub.cancellation_details?.reason || "unknown", true],
+    ["Revoke commands", String(revokeCommands.length), true],
+  ];
+  await Promise.all([
+    notifyStaff(config, "Subscription Cancelled", cancelledFields, Colors.Red),
+    notifyWebstore(config, "❌ Subscription Cancelled", cancelledFields, Colors.Red),
+  ]);
 }
 
 // ---------------------------------------------------------------------------
