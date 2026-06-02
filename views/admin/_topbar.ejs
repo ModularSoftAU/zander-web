@@ -31,6 +31,15 @@
     <div class="ab-right">
 
       <% if (_user) { %>
+        <!-- Reference drawer toggle -->
+        <button class="ab-item" id="refDrawerToggle" type="button"
+                title="Reference — placeholders, API endpoints &amp; more"
+                aria-controls="refDrawer" aria-expanded="false">
+          <i class="fas fa-book-open" aria-hidden="true"></i>
+          <span class="d-none d-sm-inline">Reference</span>
+        </button>
+        <div class="ab-divider" aria-hidden="true"></div>
+
         <!-- Notification bell -->
         <% if (req.notifications?.unreadCount) { %>
           <a class="ab-item" href="/notifications" title="<%= req.notifications.unreadCount %> unread notifications">
