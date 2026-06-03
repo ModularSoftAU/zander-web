@@ -39,7 +39,8 @@
       "adminLog": "WEBHOOKURL",
       "staffChannel": "WEBHOOKURL",
       "staffAuditLog": "WEBHOOKURL",
-      "staffPunishmentNotifications": "WEBHOOKURL"
+      "staffPunishmentNotifications": "WEBHOOKURL",
+      "webstoreChannel": "WEBHOOKURL"
     },
     "nicknameReportChannelId": "786042085937643540",
     "roles": {
@@ -85,6 +86,8 @@
     "webhookUrl": "WEBHOOKURL"
   },
   "voting": {
+    "announcementChannelId": "CHANNELID",
+    "monthlyRoutineSlug": "monthly-top-voter",
     "monthlyProcessingNote": "Monthly rewards run automatically at 00:05 UTC on the 1st of each month. Use POST /admin/vote/monthly/process to trigger manually.",
     "tieRule": "All players sharing the highest vote count in a month are rewarded. Within a tie group, earliest last_vote_at wins positional priority."
   }

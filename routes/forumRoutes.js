@@ -441,7 +441,7 @@ export default function forumRoutes(
 
       if (!userCanPostInCategory(category, req) && !userCanModerate(req)) {
         if (!isLoggedIn(req)) {
-          await setBannerCookie(
+          setBannerCookie(
             "warning",
             "You need to be signed in to start a discussion.",
             res
@@ -493,7 +493,7 @@ export default function forumRoutes(
     }
 
     if (await hasActiveWebBan(getCurrentUserId(req))) {
-      await setBannerCookie("danger", "You are currently banned and cannot create discussions.", res);
+      setBannerCookie("danger", "You are currently banned and cannot create discussions.", res);
       return res.redirect("/forums");
     }
 
@@ -516,7 +516,7 @@ export default function forumRoutes(
     }
 
     if (!userCanPostInCategory(category, req) && !userCanModerate(req)) {
-      await setBannerCookie(
+      setBannerCookie(
         "danger",
         "You do not have permission to start a discussion in this category.",
         res
@@ -530,7 +530,7 @@ export default function forumRoutes(
     const userId = getCurrentUserId(req);
 
     if (!userId) {
-      await setBannerCookie(
+      setBannerCookie(
         "warning",
         "You need to be signed in to start a discussion.",
         res
@@ -539,7 +539,7 @@ export default function forumRoutes(
     }
 
     if (!title || isContentEmpty(content)) {
-      await setBannerCookie(
+      setBannerCookie(
         "danger",
         "Both a title and content are required to create a discussion.",
         res
@@ -570,7 +570,7 @@ export default function forumRoutes(
       });
 
       if (pollErrors.length) {
-        await setBannerCookie("danger", pollErrors[0], res);
+        setBannerCookie("danger", pollErrors[0], res);
         return res.redirect(`/forums/category/${category.slug}/new`);
       }
     }
@@ -616,7 +616,7 @@ export default function forumRoutes(
         ],
       });
 
-      await setBannerCookie(
+      setBannerCookie(
         "success",
         "Discussion created successfully.",
         res
@@ -627,7 +627,7 @@ export default function forumRoutes(
       );
     } catch (error) {
       console.error("[FORUMS] Failed to create discussion", error);
-      await setBannerCookie(
+      setBannerCookie(
         "danger",
         "We were unable to create your discussion. Please try again.",
         res
@@ -746,7 +746,7 @@ export default function forumRoutes(
     }
 
     if (await hasActiveWebBan(getCurrentUserId(req))) {
-      await setBannerCookie("danger", "You are currently banned and cannot post replies.", res);
+      setBannerCookie("danger", "You are currently banned and cannot post replies.", res);
       return res.redirect("/forums");
     }
 
@@ -754,26 +754,26 @@ export default function forumRoutes(
     const result = await getDiscussionWithCategory(discussionId);
 
     if (!result) {
-      await setBannerCookie("danger", "Discussion not found.", res);
+      setBannerCookie("danger", "Discussion not found.", res);
       return res.redirect("/forums");
     }
 
     const { discussion, category } = result;
 
     if (!userCanViewCategory(category, req)) {
-      await setBannerCookie("danger", "You cannot reply to this discussion.", res);
+      setBannerCookie("danger", "You cannot reply to this discussion.", res);
       return res.redirect("/forums");
     }
 
     if (discussion.isLocked && !userCanModerate(req)) {
-      await setBannerCookie("warning", "This discussion is locked.", res);
+      setBannerCookie("warning", "This discussion is locked.", res);
       return res.redirect(
         `/forums/discussion/${discussion.discussionId}/${discussion.slug}`
       );
     }
 
     if (discussion.isArchived && !userCanModerate(req)) {
-      await setBannerCookie(
+      setBannerCookie(
         "warning",
         "This discussion has been archived.",
         res
@@ -786,7 +786,7 @@ export default function forumRoutes(
     const userId = getCurrentUserId(req);
 
     if (!userId) {
-      await setBannerCookie(
+      setBannerCookie(
         "warning",
         "You need to be signed in to reply.",
         res
@@ -795,7 +795,7 @@ export default function forumRoutes(
     }
 
     if (!userCanPostInCategory(category, req) && !userCanModerate(req)) {
-      await setBannerCookie(
+      setBannerCookie(
         "danger",
         "You do not have permission to reply in this category.",
         res
@@ -807,7 +807,7 @@ export default function forumRoutes(
 
     const content = req.body.content || "";
     if (isContentEmpty(content)) {
-      await setBannerCookie(
+      setBannerCookie(
         "danger",
         "Reply content cannot be empty.",
         res
@@ -841,10 +841,10 @@ export default function forumRoutes(
         ],
       });
 
-      await setBannerCookie("success", "Reply posted.", res);
+      setBannerCookie("success", "Reply posted.", res);
     } catch (error) {
       console.error("[FORUMS] Failed to create reply", error);
-      await setBannerCookie(
+      setBannerCookie(
         "danger",
         "We were unable to post your reply. Please try again.",
         res
@@ -957,7 +957,7 @@ export default function forumRoutes(
     }
 
     if (await hasActiveWebBan(getCurrentUserId(req))) {
-      await setBannerCookie("danger", "You are currently banned and cannot edit discussions.", res);
+      setBannerCookie("danger", "You are currently banned and cannot edit discussions.", res);
       return res.redirect("/forums");
     }
 
@@ -965,7 +965,7 @@ export default function forumRoutes(
     const result = await getDiscussionWithCategory(discussionId);
 
     if (!result) {
-      await setBannerCookie("danger", "Discussion not found.", res);
+      setBannerCookie("danger", "Discussion not found.", res);
       return res.redirect("/forums");
     }
 
@@ -975,7 +975,7 @@ export default function forumRoutes(
     const isAuthor = req.session?.user?.userId === discussion.createdBy;
 
     if (!canModerate && !isAuthor) {
-      await setBannerCookie(
+      setBannerCookie(
         "danger",
         "You do not have permission to edit this discussion.",
         res
@@ -989,7 +989,7 @@ export default function forumRoutes(
     const content = req.body.content || "";
 
     if (!title || isContentEmpty(content)) {
-      await setBannerCookie(
+      setBannerCookie(
         "danger",
         "A title and body are required.",
         res
@@ -1023,10 +1023,10 @@ export default function forumRoutes(
         ],
       });
 
-      await setBannerCookie("success", "Discussion updated.", res);
+      setBannerCookie("success", "Discussion updated.", res);
     } catch (error) {
       console.error("[FORUMS] Failed to update discussion", error);
-      await setBannerCookie(
+      setBannerCookie(
         "danger",
         "We were unable to update the discussion.",
         res
@@ -1044,7 +1044,7 @@ export default function forumRoutes(
     }
 
     if (await hasActiveWebBan(getCurrentUserId(req))) {
-      await setBannerCookie("danger", "You are currently banned and cannot delete discussions.", res);
+      setBannerCookie("danger", "You are currently banned and cannot delete discussions.", res);
       return res.redirect("/forums");
     }
 
@@ -1052,7 +1052,7 @@ export default function forumRoutes(
     const result = await getDiscussionWithCategory(discussionId);
 
     if (!result) {
-      await setBannerCookie("danger", "Discussion not found.", res);
+      setBannerCookie("danger", "Discussion not found.", res);
       return res.redirect("/forums");
     }
 
@@ -1062,7 +1062,7 @@ export default function forumRoutes(
     const isAuthor = getCurrentUserId(req) === discussion.createdBy;
 
     if (!canModerate && !isAuthor) {
-      await setBannerCookie(
+      setBannerCookie(
         "danger",
         "You do not have permission to delete this discussion.",
         res
@@ -1088,11 +1088,11 @@ export default function forumRoutes(
         ],
       });
 
-      await setBannerCookie("success", "Discussion deleted.", res);
+      setBannerCookie("success", "Discussion deleted.", res);
       return res.redirect(`/forums/category/${category.slug}`);
     } catch (error) {
       console.error("[FORUMS] Failed to delete discussion", error);
-      await setBannerCookie(
+      setBannerCookie(
         "danger",
         "We were unable to delete the discussion.",
         res
@@ -1200,7 +1200,7 @@ export default function forumRoutes(
     }
 
     if (await hasActiveWebBan(getCurrentUserId(req))) {
-      await setBannerCookie("danger", "You are currently banned and cannot edit posts.", res);
+      setBannerCookie("danger", "You are currently banned and cannot edit posts.", res);
       return res.redirect("/forums");
     }
 
@@ -1208,7 +1208,7 @@ export default function forumRoutes(
     const post = await getPostById(postId);
 
     if (!post) {
-      await setBannerCookie("danger", "Post not found.", res);
+      setBannerCookie("danger", "Post not found.", res);
       return res.redirect("/forums");
     }
 
@@ -1219,7 +1219,7 @@ export default function forumRoutes(
     const result = await getDiscussionWithCategory(post.discussionId);
 
     if (!result || !userCanViewCategory(result.category, req)) {
-      await setBannerCookie(
+      setBannerCookie(
         "danger",
         "You do not have permission to edit this post.",
         res
@@ -1231,7 +1231,7 @@ export default function forumRoutes(
     const isAuthor = getCurrentUserId(req) === post.userId;
 
     if (!canModerate && !isAuthor) {
-      await setBannerCookie(
+      setBannerCookie(
         "danger",
         "You do not have permission to edit this post.",
         res
@@ -1243,7 +1243,7 @@ export default function forumRoutes(
 
     const content = req.body.content || "";
     if (isContentEmpty(content)) {
-      await setBannerCookie("danger", "Post content cannot be empty.", res);
+      setBannerCookie("danger", "Post content cannot be empty.", res);
       return res.redirect(
         `/forums/discussion/${result.discussion.discussionId}/${result.discussion.slug}`
       );
@@ -1271,10 +1271,10 @@ export default function forumRoutes(
         ],
       });
 
-      await setBannerCookie("success", "Post updated.", res);
+      setBannerCookie("success", "Post updated.", res);
     } catch (error) {
       console.error("[FORUMS] Failed to update post", error);
-      await setBannerCookie(
+      setBannerCookie(
         "danger",
         "We were unable to update the post.",
         res
@@ -1292,7 +1292,7 @@ export default function forumRoutes(
     }
 
     if (await hasActiveWebBan(getCurrentUserId(req))) {
-      await setBannerCookie("danger", "You are currently banned and cannot delete posts.", res);
+      setBannerCookie("danger", "You are currently banned and cannot delete posts.", res);
       return res.redirect("/forums");
     }
 
@@ -1300,14 +1300,14 @@ export default function forumRoutes(
     const post = await getPostById(postId);
 
     if (!post) {
-      await setBannerCookie("danger", "Post not found.", res);
+      setBannerCookie("danger", "Post not found.", res);
       return res.redirect("/forums");
     }
 
     const result = await getDiscussionWithCategory(post.discussionId);
 
     if (!result || !userCanViewCategory(result.category, req)) {
-      await setBannerCookie(
+      setBannerCookie(
         "danger",
         "You do not have permission to delete this post.",
         res
@@ -1316,7 +1316,7 @@ export default function forumRoutes(
     }
 
     if (post.isOriginal) {
-      await setBannerCookie(
+      setBannerCookie(
         "danger",
         "The first post in a discussion cannot be deleted individually.",
         res
@@ -1330,7 +1330,7 @@ export default function forumRoutes(
     const isAuthor = getCurrentUserId(req) === post.userId;
 
     if (!canModerate && !isAuthor && !userCanDeleteAnyPost(req)) {
-      await setBannerCookie(
+      setBannerCookie(
         "danger",
         "You do not have permission to delete this post.",
         res
@@ -1355,10 +1355,10 @@ export default function forumRoutes(
         ],
       });
 
-      await setBannerCookie("success", "Post deleted.", res);
+      setBannerCookie("success", "Post deleted.", res);
     } catch (error) {
       console.error("[FORUMS] Failed to delete post", error);
-      await setBannerCookie(
+      setBannerCookie(
         "danger",
         "We were unable to delete the post.",
         res
@@ -1547,7 +1547,7 @@ export default function forumRoutes(
       const result = await getDiscussionWithCategory(discussionId);
 
       if (!result) {
-        await setBannerCookie("danger", "Discussion not found.", res);
+        setBannerCookie("danger", "Discussion not found.", res);
         return res.redirect("/forums");
       }
 
@@ -1569,7 +1569,7 @@ export default function forumRoutes(
       }
 
       if (!hasPermission) {
-        await setBannerCookie("danger", permissionMessage, res);
+        setBannerCookie("danger", permissionMessage, res);
         return res.redirect(
           `/forums/discussion/${result.discussion.discussionId}/${result.discussion.slug}`
         );
@@ -1584,7 +1584,7 @@ export default function forumRoutes(
       if (action === "unarchive") updates.isArchived = false;
 
       if (!Object.keys(updates).length) {
-        await setBannerCookie(
+        setBannerCookie(
           "warning",
           "Unknown moderation action.",
           res
@@ -1620,10 +1620,10 @@ export default function forumRoutes(
           ],
         });
 
-        await setBannerCookie("success", "Discussion updated.", res);
+        setBannerCookie("success", "Discussion updated.", res);
       } catch (error) {
         console.error("[FORUMS] Failed to update discussion flags", error);
-        await setBannerCookie(
+        setBannerCookie(
           "danger",
           "Unable to update the discussion state.",
           res
@@ -1656,7 +1656,7 @@ export default function forumRoutes(
 
     const newCategoryId = Number.parseInt(req.body.newCategoryId, 10);
     if (!newCategoryId || newCategoryId === result.discussion.categoryId) {
-      await setBannerCookie("warning", "Please select a different category.", res);
+      setBannerCookie("warning", "Please select a different category.", res);
       return res.redirect(`/forums/discussion/${result.discussion.discussionId}/${result.discussion.slug}`);
     }
 
@@ -1675,10 +1675,10 @@ export default function forumRoutes(
         fields: [["Moved By", username]],
       });
 
-      await setBannerCookie("success", "Discussion moved to the new category.", res);
+      setBannerCookie("success", "Discussion moved to the new category.", res);
     } catch (error) {
       console.error("[FORUMS] Failed to move discussion", error);
-      await setBannerCookie("danger", "Unable to move the discussion.", res);
+      setBannerCookie("danger", "Unable to move the discussion.", res);
     }
 
     return res.redirect(`/forums/discussion/${result.discussion.discussionId}/${result.discussion.slug}`);
@@ -1688,7 +1688,7 @@ export default function forumRoutes(
     if (!(await ensureFeature(req, res))) return;
 
     if (!isLoggedIn(req)) {
-      await setBannerCookie("warning", "You must be logged in to vote.", res);
+      setBannerCookie("warning", "You must be logged in to vote.", res);
       return res.redirect("/login");
     }
 
@@ -1697,7 +1697,7 @@ export default function forumRoutes(
     const result = await getDiscussionWithCategory(discussionId);
 
     if (!result || !userCanViewCategory(result.category, req)) {
-      await setBannerCookie("danger", "Discussion not found.", res);
+      setBannerCookie("danger", "Discussion not found.", res);
       return res.redirect("/forums");
     }
 
@@ -1705,7 +1705,7 @@ export default function forumRoutes(
 
     const poll = await getPollByDiscussionId(discussionId, userId).catch(() => null);
     if (!poll) {
-      await setBannerCookie("danger", "Poll not found.", res);
+      setBannerCookie("danger", "Poll not found.", res);
       return res.redirect(redirectUrl);
     }
 
@@ -1716,20 +1716,20 @@ export default function forumRoutes(
       .filter((id) => Number.isFinite(id) && id > 0);
 
     if (!optionIds.length) {
-      await setBannerCookie("danger", "Please select at least one option.", res);
+      setBannerCookie("danger", "Please select at least one option.", res);
       return res.redirect(redirectUrl);
     }
 
     try {
       if (isChange) {
         await changeVote(poll.pollId, userId, optionIds);
-        await setBannerCookie("success", "Your vote has been updated.", res);
+        setBannerCookie("success", "Your vote has been updated.", res);
       } else {
         await castVote(poll.pollId, userId, optionIds);
-        await setBannerCookie("success", "Your vote has been recorded.", res);
+        setBannerCookie("success", "Your vote has been recorded.", res);
       }
     } catch (error) {
-      await setBannerCookie("danger", error.message || "Failed to record your vote.", res);
+      setBannerCookie("danger", error.message || "Failed to record your vote.", res);
     }
 
     return res.redirect(redirectUrl);

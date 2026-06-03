@@ -14,32 +14,80 @@ All permission nodes follow dot-notation and are managed via LuckPerms. Wildcard
 | `zander.web.dashboard` | Access the main dashboard |
 | `zander.web.logs` | View system logs and audit trails |
 | `zander.web.announcements` | Create, edit, and view announcements |
-| `zander.web.announcement` | Internal API access for announcements |
 | `zander.web.application` | Manage player applications |
 | `zander.web.server` | Manage game servers |
-| `zander.web.rank` | Manage player ranks |
+| `zander.web.rank` | Manage individual player ranks via the API |
+| `zander.web.ranks` | Access the ranks dashboard page |
 | `zander.web.scheduler` | Schedule announcements/messages |
 | `zander.web.vault` | Access vault management |
 | `zander.web.bridge` | Manage bridge/integrations |
-| `zander.web.punishment.view` | View the global punishments list |
-| `zander.web.punishments` | View punishments on user profiles |
-| `zander.web.audit` | Run audit commands in Discord |
-| `zander.web.nicknamecheck` | Run nickname check commands |
+| `zander.web.badges` | Access the badge management dashboard (create, edit, assign, delete badges) |
+
+### Events
+
+| Permission Node | Description |
+|---|---|
+| `zander.web.events` | Access the events dashboard (view only) |
+| `zander.web.events.edit` | Create and edit events |
+| `zander.web.events.review` | Review and publish events (implies edit access) |
+
+### Webstore
+
+| Permission Node | Description |
+|---|---|
+| `zander.web.webstore` | Access the webstore admin dashboard (purchases, command configuration) |
+
+### Finance
+
+| Permission Node | Description |
+|---|---|
+| `zander.web.finance` | View the finance dashboard (accounts, transactions, categories) |
+| `zander.web.finance.manage` | Create, edit, and delete finance records |
+| `zander.web.finance.*` | Equivalent to both `zander.web.finance` and `zander.web.finance.manage` |
+
+### Forms
+
+| Permission Node | Description |
+|---|---|
+| `zander.web.forms` | Access the forms dashboard |
+| `zander.web.forms.{slug}` | Access a specific form by its slug (dynamic) |
+| `zander.web.forms.*` | Access all forms |
 
 ### Support Tickets
 
 | Permission Node | Description |
 |---|---|
-| `zander.web.tickets` | Access the support ticket dashboard |
+| `zander.web.ticket` | Access the support ticket dashboard |
+| `zander.web.tickets` | Access ticket category listings |
 | `zander.web.tickets.{slug}` | Access a specific ticket category (dynamic, based on category slug) |
 | `zander.web.tickets.*` | Access all ticket categories |
-| `zander.web.ticket.escalate` | Escalate support tickets |
+| `zander.web.ticket.escalate` | Escalate and de-escalate support tickets |
+| `zander.web.tickets.manageparticipants` | Add and remove participants on support tickets |
+
+### Punishments & Moderation
+
+| Permission Node | Description |
+|---|---|
+| `zander.web.punishment.view` | View the global punishments list |
+| `zander.web.punishment.manage` | Manage (edit/delete) punishments |
+| `zander.web.punishments` | View punishments on user profiles |
+| `zander.web.web-punishments` | Access the web-based punishment dashboard |
+| `zander.web.audit` | View user audit entries on profiles |
+| `zander.web.reports` | View player reports on profiles |
+
+### Voting
+
+| Permission Node | Description |
+|---|---|
+| `zander.web.voting` | Access the voting site management dashboard |
 
 ### Forums
 
 | Permission Node | Description |
 |---|---|
+| `zander.web.forums` | Access the forums management dashboard |
 | `zander.forums.moderate` | General forum moderation rights |
+| `zander.forums.view` | View forum content |
 | `zander.forums.post.delete` | Delete forum posts |
 | `zander.forums.viewArchived` | View archived forum discussions |
 | `zander.forums.discussion.sticky` | Sticky forum discussions |
@@ -158,4 +206,112 @@ Run `migration/v1.11.0_v1.12.0.sql` against your database to create the four tab
 | `creator_watch_settings` | Per-user toggles controlling listing visibility and Discord notification preferences |
 | `creator_content_items` | Cached CFC-eligible content items fetched by the cron jobs |
 | `creator_content_notifications` | Deduplication log preventing repeat Discord notifications for the same content |
+
+---
+
+## Webstore
+
+The `/webstore` module is a Stripe-powered store for selling in-game ranks and perks. It supports one-time purchases, recurring subscriptions, and gifting to other players. Rank grants are delivered as console commands via the `executorTasks` table (picked up by zander-addon), so the recipient does not need to be online.
+
+### Feature flag
+
+The webstore is controlled by the `webstore` key in `features.json`. Set it to `false` to disable the storefront and all checkout routes:
+
+```json
+{
+  "webstore": true
+}
+```
+
+The `/give` (support the server) page is always available — it does not check the webstore feature flag.
+
+### Environment variables
+
+Add the following to your `.env`:
+
+```env
+# Stripe secret key — obtain from https://dashboard.stripe.com/apikeys
+STRIPE_SECRET_KEY=sk_live_...
+
+# Stripe webhook signing secret — from the webhook endpoint settings in your Stripe dashboard
+STRIPE_WEBHOOK_SECRET=whsec_...
+
+# Monthly server cost goal in cents (e.g. 5000 = $50.00) — shown on the /give page
+WEBSTORE_MONTHLY_GOAL_CENTS=5000
+```
+
+### Stripe webhook setup
+
+1. In the [Stripe dashboard](https://dashboard.stripe.com/webhooks), create a new webhook endpoint pointing to `https://<your-domain>/api/internal/stripe-webhook`.
+2. Enable the following events:
+   - `checkout.session.completed`
+   - `invoice.payment_succeeded`
+   - `invoice.payment_failed`
+   - `customer.subscription.updated`
+   - `customer.subscription.deleted`
+3. Copy the **Signing secret** and set it as `STRIPE_WEBHOOK_SECRET` in your `.env`.
+
+### Adding products
+
+Products are pulled directly from Stripe. For each rank or perk:
+
+1. Create a **Product** and one or more **Prices** in the Stripe dashboard.
+   - Use a recurring price for subscription ranks; a one-time price for permanent ranks.
+2. Set the following **metadata** on the Stripe **Product**:
+   - `slug` — a short identifier used internally (e.g. `vip`, `mvp`). Must be unique.
+   - `description` *(optional)* — short description shown on the store card.
+3. Insert a row into `webstoreStripeCommands` for each command that should run when the price is purchased:
+
+```sql
+INSERT INTO webstoreStripeCommands (stripePriceId, action, commandTemplate, sortOrder)
+VALUES
+  ('price_xxx', 'grant', 'lp user {{ username }} parent add vip', 1),
+  ('price_xxx', 'grant', 'lp user {{ username }} meta set prefix "&6[VIP]"', 2);
+```
+
+For subscription ranks, also add a matching `revoke` command that fires when the subscription is cancelled:
+
+```sql
+INSERT INTO webstoreStripeCommands (stripePriceId, action, commandTemplate, sortOrder)
+VALUES
+  ('price_xxx', 'revoke', 'lp user {{ username }} parent remove vip', 1);
+```
+
+#### Command template placeholders
+
+| Placeholder | Replaced with |
+|---|---|
+| `{{ username }}` | Recipient's Minecraft username |
+| `{{ purchaserUsername }}` | Purchaser's Minecraft username (differs from `username` when gifted) |
+| `{{ purchaseId }}` | Internal purchase ID |
+| `{{ itemSlug }}` | Stripe product slug metadata value |
+| `{{ purchaseType }}` | `one_time` or `subscription` |
+| `{{ isGift }}` | `true` or `false` |
+
+### Subscription lifecycle
+
+| Stripe event | Action taken |
+|---|---|
+| `checkout.session.completed` | Purchase record created and fulfilled; subscription record created; `grant` commands enqueued |
+| `invoice.payment_succeeded` (renewal) | Subscription period updated; `grant` commands re-enqueued for the new period |
+| `invoice.payment_failed` | Subscription marked `past_due`; no rank change (Stripe retries) |
+| `customer.subscription.updated` | Local subscription status synced to Stripe status |
+| `customer.subscription.deleted` | Subscription marked `cancelled`; `revoke` commands enqueued |
+
+### Discord notifications
+
+The webstore posts to a Discord webhook on key events. Configure the webhook URL in `config.json` under `siteConfiguration.staffWebhook` (shared with other staff notifications).
+
+### Database migration
+
+Run `prisma/migrations/0017_webstore/migration.sql` against your database (or run `prisma migrate deploy` if using Prisma Migrate):
+
+| Table | Purpose |
+|---|---|
+| `webstorePurchases` | One row per Stripe checkout session; tracks status from `pending` through `fulfilled` |
+| `webstoreSubscriptions` | Tracks the full lifecycle of every active subscription (period, status, cancellation) |
+| `webstoreWebhookEvents` | Idempotency log — prevents duplicate processing if Stripe delivers the same event twice |
+| `webstoreStripeCommands` | Maps Stripe price IDs to in-game command templates, with `grant`/`revoke` action distinction |
+| `webstoreCommandRuns` | Tracks each individual command dispatched to `executorTasks` and its completion status |
+| `webstoreTransactions` | Audit ledger recording the financial side of every completed payment |
 

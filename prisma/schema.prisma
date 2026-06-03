@@ -868,6 +868,151 @@ model event_audit_logs {
 }
 
 // =============================================================================
+// Webstore Module
+// =============================================================================
+
+enum webstorePurchases_status {
+  pending
+  paid
+  fulfilled
+  failed
+  refunded
+}
+
+enum webstorePurchases_purchaseType {
+  one_time
+  subscription
+}
+
+enum webstoreSubscriptions_status {
+  active
+  past_due
+  cancelled
+  expired
+  unpaid
+}
+
+enum webstoreStripeCommands_action {
+  grant
+  revoke
+}
+
+enum webstoreCommandRuns_status {
+  queued
+  processing
+  completed
+  failed
+}
+
+/// One row per Stripe checkout session.
+model webstorePurchases {
+  purchaseId                   Int                              @id @default(autoincrement())
+  userId                       Int
+  itemSlug                     String                           @db.VarChar(120)
+  itemName                     String                           @db.VarChar(180)
+  purchaseType                 webstorePurchases_purchaseType
+  purchaserMinecraftUsername   String                           @db.VarChar(16)
+  recipientMinecraftUsername   String                           @db.VarChar(16)
+  status                       webstorePurchases_status         @default(pending)
+  stripeSessionId              String                           @unique @db.VarChar(255)
+  stripePaymentIntentId        String?                          @db.VarChar(255)
+  stripeSubscriptionId         String?                          @db.VarChar(255)
+  stripeCustomerId             String?                          @db.VarChar(255)
+  amountCents                  Int
+  currency                     String                           @db.VarChar(10)
+  isGift                       Int                              @default(0) @db.TinyInt
+  createdAt                    DateTime                         @default(now())
+  updatedAt                    DateTime                         @updatedAt
+
+  @@index([userId])
+  @@index([status])
+  @@index([stripeSubscriptionId])
+}
+
+/// Tracks the lifecycle of every active subscription.
+model webstoreSubscriptions {
+  subscriptionId               Int                           @id @default(autoincrement())
+  purchaseId                   Int
+  stripeSubscriptionId         String                        @unique @db.VarChar(255)
+  stripeCustomerId             String?                       @db.VarChar(255)
+  stripePriceId                String                        @db.VarChar(120)
+  recipientMinecraftUsername   String                        @db.VarChar(16)
+  purchaserMinecraftUsername   String                        @db.VarChar(16)
+  purchaserUserId              Int
+  status                       webstoreSubscriptions_status  @default(active)
+  currentPeriodStart           DateTime?
+  currentPeriodEnd             DateTime?
+  cancelAtPeriodEnd            Int                           @default(0) @db.TinyInt
+  cancelledAt                  DateTime?
+  createdAt                    DateTime                      @default(now())
+  updatedAt                    DateTime                      @updatedAt
+
+  @@index([purchaseId])
+  @@index([recipientMinecraftUsername])
+  @@index([status])
+}
+
+/// Idempotency log for Stripe webhook events.
+model webstoreWebhookEvents {
+  webhookEventId  Int      @id @default(autoincrement())
+  stripeEventId   String   @unique @db.VarChar(255)
+  purchaseId      Int?
+  eventType       String   @db.VarChar(80)
+  payload         Json?
+  processedAt     DateTime @default(now())
+
+  @@index([purchaseId])
+}
+
+/// Maps Stripe price IDs to in-game command templates.
+model webstoreStripeCommands {
+  commandId       Int                            @id @default(autoincrement())
+  stripePriceId   String                         @db.VarChar(120)
+  action          webstoreStripeCommands_action  @default(grant)
+  commandTemplate String                         @db.Text
+  sortOrder       Int                            @default(0)
+  createdAt       DateTime                       @default(now())
+
+  @@index([stripePriceId])
+  @@index([action])
+}
+
+/// Tracks each individual command dispatched to executorTasks.
+model webstoreCommandRuns {
+  commandRunId         Int                         @id @default(autoincrement())
+  purchaseId           Int
+  stripeSubscriptionId String?                     @db.VarChar(255)
+  action               webstoreStripeCommands_action @default(grant)
+  commandTemplate      String                      @db.Text
+  resolvedCommand      String                      @db.Text
+  executorTaskId       Int?
+  status               webstoreCommandRuns_status  @default(queued)
+  attempts             Int                         @default(0)
+  lastError            String?                     @db.Text
+  createdAt            DateTime                    @default(now())
+  updatedAt            DateTime                    @updatedAt
+
+  @@index([purchaseId])
+  @@index([executorTaskId])
+  @@index([status])
+}
+
+/// Audit ledger — records both sides of every completed payment.
+model webstoreTransactions {
+  transactionId                  Int      @id @default(autoincrement())
+  purchaseId                     Int
+  userId                         Int
+  direction                      String   @db.VarChar(16)
+  counterpartyMinecraftUsername  String   @db.VarChar(16)
+  amountCents                    Int
+  currency                       String   @db.VarChar(10)
+  createdAt                      DateTime @default(now())
+
+  @@index([userId])
+  @@index([purchaseId])
+}
+
+// =============================================================================
 // Badge System
 // =============================================================================
 
@@ -895,4 +1040,274 @@ model user_badges {
 
   @@unique([userId, badgeId])
   @@index([userId])
+}
+
+// =============================================================================
+// Finance Module
+// =============================================================================
+
+enum financeAccounts_accountType {
+  bank
+  credit_card
+  paypal
+  stripe
+  crypto
+  other
+}
+
+enum financeCategories_type {
+  income
+  expense
+}
+
+enum financeTransactions_type {
+  income
+  expense
+  transfer
+}
+
+enum financeInvoices_status {
+  pending
+  partial
+  paid
+  overdue
+  cancelled
+}
+
+/// Bank / payment accounts that money flows in and out of.
+model financeAccounts {
+  accountId            Int                            @id @default(autoincrement())
+  name                 String                         @db.VarChar(150)
+  accountType          financeAccounts_accountType    @default(bank)
+  openingBalanceCents  Int                            @default(0)
+  currency             String                         @default("USD") @db.VarChar(3)
+  isActive             Int                            @default(1) @db.TinyInt
+  notes                String?                        @db.Text
+  createdAt            DateTime                       @default(now())
+  updatedAt            DateTime                       @updatedAt
+
+  transactions         financeTransactions[]          @relation("AccountTransactions")
+  transfersTo          financeTransactions[]          @relation("AccountTransfersTo")
+  payments             financePayments[]
+}
+
+/// Hierarchical income / expense categories.
+model financeCategories {
+  categoryId  Int                      @id @default(autoincrement())
+  parentId    Int?
+  name        String                   @db.VarChar(100)
+  type        financeCategories_type   @default(expense)
+  color       String                   @default("#6c757d") @db.VarChar(7)
+  isActive    Int                      @default(1) @db.TinyInt
+  createdAt   DateTime                 @default(now())
+  updatedAt   DateTime                 @updatedAt
+
+  parent    financeCategories?   @relation("CategoryParent", fields: [parentId], references: [categoryId], onDelete: SetNull)
+  children  financeCategories[]  @relation("CategoryParent")
+
+  transactions         financeTransactions[]
+  vendors              financeVendors[]
+  budgetEntries        financeOperationsBudget[]
+
+  @@index([parentId])
+}
+
+/// Free-form tags that can be attached to transactions.
+model financeTags {
+  tagId     Int      @id @default(autoincrement())
+  name      String   @unique @db.VarChar(60)
+  color     String   @default("#0d6efd") @db.VarChar(7)
+  createdAt DateTime @default(now())
+
+  transactionTags financeTransactionTags[]
+}
+
+/// Vendors / suppliers that money is paid to or received from.
+model financeVendors {
+  vendorId          Int       @id @default(autoincrement())
+  name              String    @db.VarChar(150)
+  website           String?   @db.VarChar(255)
+  contactEmail      String?   @db.VarChar(180)
+  notes             String?   @db.Text
+  categoryId        Int?
+  faviconUrl        String?   @db.VarChar(500)
+  logoUrl           String?   @db.VarChar(500)
+  logoPublicId      String?   @db.VarChar(255)
+  isActive          Int       @default(1) @db.TinyInt
+  faviconFetchedAt  DateTime?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  category     financeCategories?        @relation(fields: [categoryId], references: [categoryId], onDelete: SetNull)
+  transactions financeTransactions[]
+  invoices     financeInvoices[]
+  payments     financePayments[]
+  attachments  financeAttachments[]
+  budgetEntries financeOperationsBudget[]
+
+  @@index([categoryId])
+}
+
+/// Individual income, expense and transfer transactions.
+model financeTransactions {
+  transactionId    Int                       @id @default(autoincrement())
+  type             financeTransactions_type  @default(expense)
+  amountCents      Int                       @default(0)
+  currency         String                    @default("USD") @db.VarChar(3)
+  accountId        Int
+  toAccountId      Int?
+  categoryId       Int?
+  vendorId         Int?
+  description      String                    @default("") @db.VarChar(500)
+  notes            String?                   @db.Text
+  transactionDate  DateTime                  @db.Date
+  isLocked         Int                       @default(0) @db.TinyInt
+  createdByUserId  Int
+  createdAt        DateTime                  @default(now())
+  updatedAt        DateTime                  @updatedAt
+
+  account     financeAccounts   @relation("AccountTransactions", fields: [accountId], references: [accountId], onDelete: Restrict)
+  toAccount   financeAccounts?  @relation("AccountTransfersTo", fields: [toAccountId], references: [accountId], onDelete: SetNull)
+  category    financeCategories? @relation(fields: [categoryId], references: [categoryId], onDelete: SetNull)
+  vendor      financeVendors?   @relation(fields: [vendorId], references: [vendorId], onDelete: SetNull)
+  tags        financeTransactionTags[]
+  payments    financePayments[]
+  attachments financeAttachments[]
+
+  @@index([accountId])
+  @@index([toAccountId])
+  @@index([categoryId])
+  @@index([vendorId])
+  @@index([transactionDate])
+  @@index([type])
+  @@index([isLocked])
+}
+
+/// Junction table: transactions ↔ tags (many-to-many).
+model financeTransactionTags {
+  id            Int @id @default(autoincrement())
+  transactionId Int
+  tagId         Int
+
+  transaction financeTransactions @relation(fields: [transactionId], references: [transactionId], onDelete: Cascade)
+  tag         financeTags         @relation(fields: [tagId], references: [tagId], onDelete: Cascade)
+
+  @@unique([transactionId, tagId])
+}
+
+/// Vendor invoices — represent money owed to or from a vendor.
+model financeInvoices {
+  invoiceId        Int                    @id @default(autoincrement())
+  vendorId         Int
+  invoiceNumber    String                 @default("") @db.VarChar(100)
+  issueDate        DateTime?              @db.Date
+  dueDate          DateTime?              @db.Date
+  amountCents      Int                    @default(0)
+  paidAmountCents  Int                    @default(0)
+  currency         String                 @default("USD") @db.VarChar(3)
+  status           financeInvoices_status @default(pending)
+  description      String?                @db.Text
+  createdByUserId  Int                    @default(0)
+  createdAt        DateTime               @default(now())
+  updatedAt        DateTime               @updatedAt
+
+  vendor      financeVendors      @relation(fields: [vendorId], references: [vendorId], onDelete: Restrict)
+  payments    financePayments[]
+  attachments financeAttachments[]
+
+  @@index([vendorId])
+  @@index([status])
+  @@index([dueDate])
+}
+
+/// Payments recorded against invoices or ad-hoc vendor payments.
+model financePayments {
+  paymentId       Int      @id @default(autoincrement())
+  vendorId        Int
+  invoiceId       Int?
+  transactionId   Int?
+  accountId       Int
+  amountCents     Int      @default(0)
+  currency        String   @default("USD") @db.VarChar(3)
+  paidDate        DateTime @db.Date
+  notes           String?  @db.Text
+  createdByUserId Int      @default(0)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  vendor      financeVendors      @relation(fields: [vendorId], references: [vendorId], onDelete: Restrict)
+  invoice     financeInvoices?    @relation(fields: [invoiceId], references: [invoiceId], onDelete: SetNull)
+  transaction financeTransactions? @relation(fields: [transactionId], references: [transactionId], onDelete: SetNull)
+  account     financeAccounts     @relation(fields: [accountId], references: [accountId], onDelete: Restrict)
+
+  @@index([vendorId])
+  @@index([invoiceId])
+  @@index([transactionId])
+  @@index([accountId])
+  @@index([paidDate])
+}
+
+/// File attachments (PDFs, images) for transactions, invoices, or vendors.
+model financeAttachments {
+  attachmentId      Int      @id @default(autoincrement())
+  transactionId     Int?
+  invoiceId         Int?
+  vendorId          Int?
+  fileName          String   @default("") @db.VarChar(255)
+  fileUrl           String   @default("") @db.VarChar(500)
+  filePublicId      String   @default("") @db.VarChar(255)
+  mimeType          String   @default("application/pdf") @db.VarChar(100)
+  fileSizeBytes     Int      @default(0)
+  label             String?  @db.VarChar(100)
+  uploadedByUserId  Int      @default(0)
+  createdAt         DateTime @default(now())
+
+  transaction financeTransactions? @relation(fields: [transactionId], references: [transactionId], onDelete: Cascade)
+  invoice     financeInvoices?     @relation(fields: [invoiceId], references: [invoiceId], onDelete: Cascade)
+  vendor      financeVendors?      @relation(fields: [vendorId], references: [vendorId], onDelete: Cascade)
+
+  @@index([transactionId])
+  @@index([invoiceId])
+  @@index([vendorId])
+}
+
+/// Monthly budget targets, optionally tied to a vendor or category.
+model financeOperationsBudget {
+  budgetId            Int      @id @default(autoincrement())
+  vendorId            Int?
+  categoryId          Int?
+  label               String   @default("") @db.VarChar(150)
+  monthlyBudgetCents  Int      @default(0)
+  currency            String   @default("USD") @db.VarChar(3)
+  notes               String?  @db.Text
+  isActive            Int      @default(1) @db.TinyInt
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  vendor   financeVendors?    @relation(fields: [vendorId], references: [vendorId], onDelete: SetNull)
+  category financeCategories? @relation(fields: [categoryId], references: [categoryId], onDelete: SetNull)
+
+  @@index([vendorId])
+  @@index([categoryId])
+}
+
+/// Published monthly financial summary reports.
+model financeMonthlyReports {
+  reportId            Int       @id @default(autoincrement())
+  year                Int       @db.SmallInt
+  month               Int       @db.TinyInt
+  totalIncomeCents    Int       @default(0)
+  totalExpensesCents  Int       @default(0)
+  netAmountCents      Int       @default(0)
+  isPublished         Int       @default(0) @db.TinyInt
+  isLocked            Int       @default(0) @db.TinyInt
+  publishedAt         DateTime?
+  publishedByUserId   Int?
+  notes               String?   @db.Text
+  reportData          Json?
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+
+  @@unique([year, month])
+  @@index([isPublished])
 }

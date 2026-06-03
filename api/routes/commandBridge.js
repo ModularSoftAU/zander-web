@@ -24,7 +24,7 @@ export default function commandBridgeApiRoute(app, config, db, features, lang) {
   // Returns pending commands for the player on the specified server, atomically
   // marking them as claimed.
   // =========================================================================
-  app.post("/command-bridge/claim", async function (req, res) {
+  app.post("/api/command-bridge/claim", async function (req, res) {
     if (!isFeatureEnabled(features.vote, res, lang)) return;
 
     const body = req.body || {};
@@ -61,7 +61,7 @@ export default function commandBridgeApiRoute(app, config, db, features, lang) {
   // Body: { playerUuid, completedCommandIds: [201, 202, ...] }
   // Marks the specified commands completed.  Only affects rows owned by playerUuid.
   // =========================================================================
-  app.post("/command-bridge/complete", async function (req, res) {
+  app.post("/api/command-bridge/complete", async function (req, res) {
     if (!isFeatureEnabled(features.vote, res, lang)) return;
 
     const body = req.body || {};
@@ -100,7 +100,7 @@ export default function commandBridgeApiRoute(app, config, db, features, lang) {
   // Body: { playerUuid, failed: [{ id: 201, reason: "..." }, ...] }
   // Marks the specified commands failed.  Only affects rows owned by playerUuid.
   // =========================================================================
-  app.post("/command-bridge/fail", async function (req, res) {
+  app.post("/api/command-bridge/fail", async function (req, res) {
     if (!isFeatureEnabled(features.vote, res, lang)) return;
 
     const body = req.body || {};

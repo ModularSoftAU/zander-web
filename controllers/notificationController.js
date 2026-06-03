@@ -358,3 +358,23 @@ export async function deleteNotification(notificationId, userId) {
     );
   });
 }
+
+export async function deleteAllNotifications(userId) {
+  const hasTable = await ensureNotificationTable();
+  if (!hasTable) return false;
+
+  return new Promise((resolve) => {
+    db.query(
+      "DELETE FROM userNotifications WHERE userId = ?",
+      [userId],
+      (err) => {
+        if (err) {
+          console.error("Failed to delete all notifications", err);
+          resolve(false);
+          return;
+        }
+        resolve(true);
+      },
+    );
+  });
+}

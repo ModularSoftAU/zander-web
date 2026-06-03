@@ -1,0 +1,111 @@
+<%- include("../../admin/_head.ejs", { pageTitle }) %>
+<%- include("../../admin/_topbar.ejs") %>
+<%- include("../../admin/_sidebar.ejs") %>
+
+<div id="wpcontent">
+  <div id="wpbody-content">
+    <div class="wrap">
+
+      <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+        <h1 class="h2"><i class="fa-solid fa-file-invoice fa-fw me-2"></i>Invoices</h1>
+        <div class="btn-toolbar gap-2">
+          <% if (canManage) { %>
+            <a href="/dashboard/finance/invoices/create" class="btn btn-sm btn-primary">
+              <i class="fa-solid fa-plus me-1"></i>New Invoice
+            </a>
+          <% } %>
+        </div>
+      </div>
+
+      <%- include("../../admin/_notices.ejs") %>
+
+      <%# Status filter -%>
+      <div class="d-flex gap-2 mb-3 flex-wrap">
+        <% ['', 'pending', 'partial', 'overdue', 'paid', 'cancelled'].forEach(function(s) {
+          const label = s || 'All';
+          const active = (statusFilter || '') === s;
+          const badgeColor = {pending:'warning', partial:'info', overdue:'danger', paid:'success', cancelled:'secondary'}[s] || 'secondary';
+        %>
+          <a href="/dashboard/finance/invoices<%= s ? '?status=' + s : '' %><%= vendorId ? (s ? '&' : '?') + 'vendorId=' + vendorId : '' %>"
+             class="btn btn-sm <%= active ? 'btn-secondary' : 'btn-outline-secondary' %>">
+            <%= label.charAt(0).toUpperCase() + label.slice(1) %>
+          </a>
+        <% }) %>
+      </div>
+
+      <p class="text-muted small mb-3"><%= totalCount %> invoice<%= totalCount !== 1 ? 's' : '' %> found.</p>
+
+      <% if (!invoices || !invoices.length) { %>
+        <div class="alert alert-info">No invoices found.</div>
+      <% } else { %>
+        <div class="table-responsive">
+          <table class="table table-hover align-middle">
+            <thead>
+              <tr>
+                <th>Invoice #</th>
+                <th>Vendor</th>
+                <th>Issue Date</th>
+                <th>Due Date</th>
+                <th class="text-end">Amount</th>
+                <th class="text-end">Paid</th>
+                <th>Status</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              <% invoices.forEach(function(inv) {
+                const statusColors = { pending:'bg-warning text-dark', partial:'bg-info text-dark', paid:'bg-success', overdue:'bg-danger', cancelled:'bg-secondary' };
+                const amtStr = new Intl.NumberFormat('en-US',{style:'currency',currency:inv.currency||'USD'}).format((inv.amountCents||0)/100);
+                const paidStr = new Intl.NumberFormat('en-US',{style:'currency',currency:inv.currency||'USD'}).format((inv.paidAmountCents||0)/100);
+                const isOverdue = inv.status === 'overdue';
+              %>
+                <tr>
+                  <td><a href="/dashboard/finance/invoices/<%= inv.invoiceId %>" class="fw-semibold text-decoration-none"><%= inv.invoiceNumber %></a></td>
+                  <td>
+                    <div class="d-flex align-items-center gap-2">
+                      <% if (inv.faviconUrl) { %>
+                        <img src="<%= inv.faviconUrl %>" width="18" height="18" alt="" class="rounded" onerror="this.style.display='none'">
+                      <% } %>
+                      <a href="/dashboard/finance/vendors/<%= inv.vendorId %>" class="text-decoration-none text-muted"><%= inv.vendorName %></a>
+                    </div>
+                  </td>
+                  <td class="text-muted small"><%= inv.issueDate ? new Date(inv.issueDate).toLocaleDateString('en-AU',{day:'numeric',month:'short',year:'numeric'}) : '—' %></td>
+                  <td class="<%= isOverdue ? 'text-danger fw-semibold' : 'text-muted' %> small">
+                    <%= inv.dueDate ? new Date(inv.dueDate).toLocaleDateString('en-AU',{day:'numeric',month:'short',year:'numeric'}) : '—' %>
+                  </td>
+                  <td class="text-end fw-semibold"><%= amtStr %></td>
+                  <td class="text-end text-muted small"><%= paidStr %></td>
+                  <td><span class="badge <%= statusColors[inv.status] || 'bg-secondary' %>"><%= inv.status %></span></td>
+                  <td class="text-end">
+                    <a href="/dashboard/finance/invoices/<%= inv.invoiceId %>" class="btn btn-sm btn-outline-secondary">View</a>
+                  </td>
+                </tr>
+              <% }) %>
+            </tbody>
+          </table>
+        </div>
+
+        <%# Pagination -%>
+        <% if (totalPages > 1) { %>
+          <nav aria-label="Invoice pagination">
+            <ul class="pagination justify-content-center">
+              <li class="page-item <%= page <= 1 ? 'disabled' : '' %>">
+                <a class="page-link" href="?page=<%= page - 1 %><%= statusFilter ? '&status=' + statusFilter : '' %>"><i class="fa-solid fa-chevron-left"></i></a>
+              </li>
+              <% for (let i = 1; i <= totalPages; i++) { %>
+                <li class="page-item <%= i === page ? 'active' : '' %>">
+                  <a class="page-link" href="?page=<%= i %><%= statusFilter ? '&status=' + statusFilter : '' %>"><%= i %></a>
+                </li>
+              <% } %>
+              <li class="page-item <%= page >= totalPages ? 'disabled' : '' %>">
+                <a class="page-link" href="?page=<%= page + 1 %><%= statusFilter ? '&status=' + statusFilter : '' %>"><i class="fa-solid fa-chevron-right"></i></a>
+              </li>
+            </ul>
+          </nav>
+        <% } %>
+      <% } %>
+
+    </div>
+  </div>
+  <%- include("../../admin/_footer.ejs") %>
+</div>

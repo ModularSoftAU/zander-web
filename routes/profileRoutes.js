@@ -294,7 +294,7 @@ export default function profileSiteRoutes(
       // Check if user is web-banned
       const sessionUserId = req.session?.user?.userId;
       if (sessionUserId && await hasActiveWebBan(sessionUserId)) {
-        await setBannerCookie("danger", "You are currently banned from editing your profile.", res);
+        setBannerCookie("danger", "You are currently banned from editing your profile.", res);
         return res.redirect(`/profile/${username}`);
       }
 

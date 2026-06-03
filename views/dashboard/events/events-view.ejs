@@ -44,6 +44,11 @@
                             <i class="fas fa-rotate-left me-1"></i>Revert to Draft
                         </button>
                     <% } %>
+                    <% if (['pending_review', 'approved'].includes(ev.status) && isReviewer) { %>
+                        <button class="btn btn-sm btn-outline-warning btn-revert-draft" data-event-id="<%= ev.eventId %>">
+                            <i class="fas fa-undo me-1"></i>Revert to Draft
+                        </button>
+                    <% } %>
                     <%
                       // Draft/pending: creator or reviewer can cancel their own event; approved/published: reviewer only
                       const canCancel = ['draft','pending_review'].includes(ev.status) ||

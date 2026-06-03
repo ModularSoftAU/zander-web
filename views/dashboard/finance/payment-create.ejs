@@ -1,0 +1,88 @@
+<%- include("../../admin/_head.ejs", { pageTitle }) %>
+<%- include("../../admin/_topbar.ejs") %>
+<%- include("../../admin/_sidebar.ejs") %>
+
+<div id="wpcontent">
+  <div id="wpbody-content">
+    <div class="wrap">
+
+      <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+        <h1 class="h2"><i class="fa-solid fa-money-check-dollar fa-fw me-2"></i>Record Payment</h1>
+        <a href="/dashboard/finance/payments" class="btn btn-sm btn-outline-secondary">
+          <i class="fa-solid fa-arrow-left me-1"></i>Back to Payments
+        </a>
+      </div>
+
+      <%- include("../../admin/_notices.ejs") %>
+
+      <div class="row justify-content-center">
+        <div class="col-lg-7">
+          <div class="card shadow-sm">
+            <div class="card-body">
+              <form method="post" action="/dashboard/finance/payments/create">
+
+                <div class="mb-3">
+                  <label for="invoiceId" class="form-label fw-semibold">Invoice <span class="text-danger">*</span></label>
+                  <select class="form-select" id="invoiceId" name="invoiceId" required>
+                    <option value="">— Select Invoice —</option>
+                    <% invoices.forEach(function(inv) { %>
+                      <option value="<%= inv.invoiceId %>"
+                        <%= prefillInvoiceId && String(prefillInvoiceId) === String(inv.invoiceId) ? 'selected' : '' %>>
+                        <%= inv.invoiceNumber %> — <%= inv.vendorName %> (<%= new Intl.NumberFormat('en-US',{style:'currency',currency:inv.currency||'USD'}).format((inv.amountCents||0)/100) %>)
+                      </option>
+                    <% }) %>
+                  </select>
+                </div>
+
+                <div class="mb-3">
+                  <label for="paidDate" class="form-label fw-semibold">Payment Date <span class="text-danger">*</span></label>
+                  <input type="date" class="form-control" id="paidDate" name="paidDate" required>
+                </div>
+
+                <div class="row g-3 mb-3">
+                  <div class="col-md-7">
+                    <label for="amountCents" class="form-label fw-semibold">Amount <span class="text-danger">*</span></label>
+                    <div class="input-group">
+                      <span class="input-group-text">$</span>
+                      <input type="number" class="form-control" id="amountCents" name="amountCents" required min="0.01" step="0.01" placeholder="0.00">
+                    </div>
+                  </div>
+                  <div class="col-md-5">
+                    <label for="currency" class="form-label fw-semibold">Currency</label>
+                    <select class="form-select" id="currency" name="currency">
+                      <% ['USD','AUD','EUR','GBP','CAD'].forEach(function(c) { %>
+                        <option value="<%= c %>" <%= c === 'USD' ? 'selected' : '' %>><%= c %></option>
+                      <% }) %>
+                    </select>
+                  </div>
+                </div>
+
+                <div class="mb-3">
+                  <label for="accountId" class="form-label fw-semibold">Account</label>
+                  <select class="form-select" id="accountId" name="accountId">
+                    <option value="">— None —</option>
+                    <% accounts.forEach(function(acc) { %>
+                      <option value="<%= acc.accountId %>"><%= acc.name %></option>
+                    <% }) %>
+                  </select>
+                </div>
+
+                <div class="mb-3">
+                  <label for="notes" class="form-label fw-semibold">Notes</label>
+                  <input type="text" class="form-control" id="notes" name="notes" maxlength="500" placeholder="Reference number, payment method...">
+                </div>
+
+                <div class="d-flex gap-2">
+                  <button type="submit" class="btn btn-primary"><i class="fa-solid fa-check me-1"></i>Record Payment</button>
+                  <a href="/dashboard/finance/payments" class="btn btn-outline-secondary">Cancel</a>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+  <%- include("../../admin/_footer.ejs") %>
+</div>

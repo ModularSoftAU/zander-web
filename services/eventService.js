@@ -468,6 +468,37 @@ export async function rejectEvent(eventId, reviewerId, reviewerName, rejectionNo
 }
 
 /**
+ * Revert an approved or pending-review event back to draft so the creator
+ * can make further changes before resubmitting.
+ */
+export async function revertEventToDraft(eventId, reviewerId, reviewerName) {
+  const event = await getEventById(eventId);
+  if (!event) throw new Error("Event not found");
+  if (!["pending_review", "approved"].includes(event.status)) {
+    throw new Error(`Cannot revert event in status '${event.status}' to draft`);
+  }
+
+  const updated = await prisma.events.update({
+    where: { eventId: parseInt(eventId) },
+    data: {
+      status: "draft",
+      reviewerId: null,
+      rejectionNote: null,
+    },
+  });
+
+  await logEventAudit(
+    parseInt(eventId),
+    reviewerId,
+    reviewerName,
+    "reverted_to_draft",
+    `Event reverted to draft from '${event.status}'`
+  );
+
+  return updated;
+}
+
+/**
  * Publish an event (transitions approved → published).
  * Triggers downstream sync actions.
  */

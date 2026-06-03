@@ -99,9 +99,9 @@
                     <td data-label="Schedule">
                       <% if (ann.startDate || ann.endDate) { %>
                         <small class="text-muted-sm">
-                          <span class="js-datetime" data-iso="<%= ann.startDate || '' %>" data-fallback="Now"></span>
+                          <span class="js-datetime" data-iso="<%= ann.startDate ? new Date(ann.startDate).toISOString() : '' %>" data-fallback="Now"></span>
                           →
-                          <span class="js-datetime" data-iso="<%= ann.endDate || '' %>" data-fallback="No end"></span>
+                          <span class="js-datetime" data-iso="<%= ann.endDate ? new Date(ann.endDate).toISOString() : '' %>" data-fallback="No end"></span>
                         </small>
                       <% } else { %>
                         <small class="text-muted-sm">Always active</small>
@@ -206,9 +206,32 @@
             </div>
 
             <div class="mb-3 d-none" data-announcement-field="popupImageUrl">
-              <label for="ann-img" class="form-label fw-semibold">Popup Image URL</label>
-              <input type="url" name="popupImageUrl" id="ann-img" class="form-control">
-              <small class="text-muted">Optional banner image for popup announcements.</small>
+              <label class="form-label fw-semibold">Popup Image</label>
+
+              <div id="modal-img-preview" class="mb-2 d-none">
+                <div class="d-inline-flex align-items-start gap-2 border rounded p-2">
+                  <img id="modal-img-thumb" src="" alt=""
+                       style="max-height:100px;max-width:240px;object-fit:contain;">
+                  <button type="button" id="modal-img-remove"
+                          class="btn btn-sm btn-outline-danger flex-shrink-0" title="Remove">
+                    <i class="fas fa-times"></i>
+                  </button>
+                </div>
+              </div>
+
+              <div class="d-flex gap-2 align-items-center flex-wrap">
+                <label for="modal-img-file" class="btn btn-outline-secondary btn-sm mb-0" style="cursor:pointer">
+                  <i class="fas fa-upload me-1"></i>Upload image
+                </label>
+                <input type="file" id="modal-img-file"
+                       accept="image/png,image/jpeg,image/gif,image/webp" class="d-none">
+                <span class="text-muted small">or paste a URL:</span>
+                <input type="url" name="popupImageUrl" id="ann-img"
+                       class="form-control form-control-sm flex-grow-1"
+                       style="max-width:340px" placeholder="https://...">
+                <span id="modal-img-status" class="small"></span>
+              </div>
+              <small class="text-muted mt-1 d-block">PNG, JPG, GIF or WebP — max 8 MB.</small>
             </div>
           </div>
 
@@ -312,5 +335,73 @@
   setMinDates();
   syncTimezone();
   render();
+
+  // ── Modal popup image upload widget ──────────────────────────────────────
+  (function () {
+    var fileInput = document.getElementById("modal-img-file");
+    var urlInput  = document.getElementById("ann-img");
+    var preview   = document.getElementById("modal-img-preview");
+    var thumb     = document.getElementById("modal-img-thumb");
+    var removeBtn = document.getElementById("modal-img-remove");
+    var statusEl  = document.getElementById("modal-img-status");
+    if (!fileInput || !urlInput) return;
+
+    function showPreview(url) {
+      if (url) {
+        thumb.src = url;
+        preview.classList.remove("d-none");
+      } else {
+        preview.classList.add("d-none");
+        thumb.src = "";
+      }
+    }
+
+    urlInput.addEventListener("input", function () { showPreview(urlInput.value.trim()); });
+
+    removeBtn.addEventListener("click", function () {
+      urlInput.value = "";
+      showPreview("");
+      statusEl.textContent = "";
+      statusEl.className = "small";
+    });
+
+    // Reset the widget when the modal closes
+    modal.addEventListener("hidden.bs.modal", function () {
+      urlInput.value = "";
+      showPreview("");
+      statusEl.textContent = "";
+      statusEl.className = "small";
+    });
+
+    fileInput.addEventListener("change", async function () {
+      var file = fileInput.files[0];
+      if (!file) return;
+      fileInput.value = "";
+
+      statusEl.textContent = "Uploading…";
+      statusEl.className = "small text-muted";
+
+      var fd = new FormData();
+      fd.append("file", file, file.name);
+      fd.append("folder", "announcements");
+
+      try {
+        var res  = await fetch("/dashboard/upload/image", { method: "POST", body: fd });
+        var data = await res.json();
+        if (data.success) {
+          urlInput.value = data.data.url;
+          showPreview(data.data.url);
+          statusEl.textContent = "Uploaded ✓";
+          statusEl.className = "small text-success";
+        } else {
+          statusEl.textContent = data.message || "Upload failed.";
+          statusEl.className = "small text-danger";
+        }
+      } catch {
+        statusEl.textContent = "Upload failed.";
+        statusEl.className = "small text-danger";
+      }
+    });
+  }());
 }());
 </script>

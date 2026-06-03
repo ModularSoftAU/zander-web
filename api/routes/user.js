@@ -18,6 +18,7 @@ import {
 import { hasActiveWebBan } from "../../controllers/discordPunishmentController.js";
 import { checkRateLimit } from "../../lib/rateLimiter.mjs";
 import { punishmentsDb } from "../../controllers/databaseController.js";
+import verifyToken from "./verifyToken.js";
 
 export default function userApiRoute(app, config, db, features, lang) {
   const baseEndpoint = "/api/user";
@@ -398,6 +399,49 @@ export default function userApiRoute(app, config, db, features, lang) {
         return res.status(500).send({
           success: false,
           message: `There was an error in setting your code, try again in 5 minutes.`,
+        });
+      }
+    }
+  });
+
+  app.post(baseEndpoint + "/verify/ingame", { preHandler: verifyToken }, async function (req, res) {
+    const uuid = required(req.body, "uuid", res);
+    if (res.sent) return;
+    const code = required(req.body, "code", res);
+    if (res.sent) return;
+
+    try {
+      const row = await new Promise((resolve, reject) => {
+        db.query(
+          `SELECT verifyId, uuid FROM userVerifyLink WHERE uuid = ? AND linkCode = ? AND codeExpiry > NOW()`,
+          [uuid, code],
+          function (error, results) {
+            if (error) return reject(error);
+            resolve(results && results.length ? results[0] : null);
+          }
+        );
+      });
+
+      if (!row) {
+        return res.send({
+          success: false,
+          message: "Invalid or expired code.",
+        });
+      }
+
+      const userLinkData = new UserLinkGetter();
+      await userLinkData.markWebsiteRegistrationComplete(uuid);
+
+      return res.send({
+        success: true,
+        message: "Your account has been verified and linked successfully.",
+      });
+    } catch (error) {
+      console.error("[user/verify/ingame] Error:", error);
+      if (!res.sent) {
+        return res.status(500).send({
+          success: false,
+          message: `${error}`,
         });
       }
     }

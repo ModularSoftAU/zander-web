@@ -26,8 +26,8 @@ import watchSiteRoutes from "./watchRoutes.js";
 import sitemapRoutes from "./sitemapRoute.js";
 import voteSiteRoutes from "./voteRoutes.js";
 import eventsSiteRoutes from "./eventsRoutes.js";
-
-const rankData = require("../ranks.json");
+import webstoreSiteRoutes from "./webstoreRoutes.js";
+import { getRankCatalogForPublicPage } from "../controllers/rankCatalogController.js";
 
 export default function applicationSiteRoutes(
   app,
@@ -52,6 +52,7 @@ export default function applicationSiteRoutes(
   sitemapRoutes(app, config, features);
   voteSiteRoutes(app, fetch, config, db, features, lang);
   eventsSiteRoutes(app, config, features);
+  webstoreSiteRoutes(app, config, features);
 
   // Summernote editor fetches /emojis to populate its emoji picker.
   // Return an empty map so it silently falls back to the GitHub emoji list
@@ -175,17 +176,28 @@ export default function applicationSiteRoutes(
   app.get("/ranks", async function (req, res) {
     if (!await isFeatureWebRouteEnabled(app, features.ranks, req, res, features)) return;
 
+    let rankCategories = [];
+    let ranksError = null;
+    try {
+      rankCategories = await getRankCatalogForPublicPage();
+    } catch (err) {
+      console.error("[ranks] Failed to load rank catalog:", err.message);
+      ranksError = "Rank information is temporarily unavailable. Please try again shortly.";
+    }
+
     res.header("content-type", "text/html; charset=utf-8").send(
       await app.view("ranks", {
-      pageTitle: `Ranks`,
-      pageDescription: `Explore the ranks available on ${config.siteConfiguration.siteName} and find out what perks and privileges each one offers.`,
-      config: config,
-      req: req,
-      rankData: rankData.categories,
-      features: features,
-      globalImage: await getGlobalImage(),
-      announcementWeb: await getWebAnnouncement(),
-    }));
+        pageTitle: `Ranks`,
+        pageDescription: `Explore the ranks available on ${config.siteConfiguration.siteName} and find out what perks and privileges each one offers.`,
+        config: config,
+        req: req,
+        rankCategories,
+        ranksError,
+        features: features,
+        globalImage: await getGlobalImage(),
+        announcementWeb: await getWebAnnouncement(),
+      })
+    );
     return;
   });
 

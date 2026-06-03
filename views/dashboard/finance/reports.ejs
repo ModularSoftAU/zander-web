@@ -1,0 +1,83 @@
+<%- include("../../admin/_head.ejs", { pageTitle }) %>
+<%- include("../../admin/_topbar.ejs") %>
+<%- include("../../admin/_sidebar.ejs") %>
+
+<div id="wpcontent">
+  <div id="wpbody-content">
+    <div class="wrap">
+
+      <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+        <h1 class="h2"><i class="fa-solid fa-file-chart-column fa-fw me-2"></i>Monthly Reports</h1>
+        <% if (canManage) { %>
+          <form method="post" action="/dashboard/finance/reports/generate">
+            <button type="submit" class="btn btn-sm btn-primary">
+              <i class="fa-solid fa-rotate me-1"></i>Generate Current Month
+            </button>
+          </form>
+        <% } %>
+      </div>
+
+      <%- include("../../admin/_notices.ejs") %>
+
+      <% if (!reports || !reports.length) { %>
+        <div class="alert alert-info">No reports yet.
+          <% if (canManage) { %> Generate one above.<% } %>
+        </div>
+      <% } else { %>
+        <div class="table-responsive">
+          <table class="table table-hover align-middle">
+            <thead>
+              <tr>
+                <th>Period</th>
+                <th class="text-end">Total Income</th>
+                <th class="text-end">Total Expenses</th>
+                <th class="text-end">Net</th>
+                <th>Status</th>
+                <th>Generated</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              <% reports.forEach(function(r) {
+                const net = (r.totalIncomeCents||0) - (r.totalExpenseCents||0);
+                const monthNames = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+                const periodLabel = monthNames[(r.month||1)-1] + ' ' + r.year;
+              %>
+                <tr>
+                  <td class="fw-semibold"><%= periodLabel %></td>
+                  <td class="text-end text-success">
+                    +<%= new Intl.NumberFormat('en-US',{style:'currency',currency:'USD'}).format((r.totalIncomeCents||0)/100) %>
+                  </td>
+                  <td class="text-end text-danger">
+                    −<%= new Intl.NumberFormat('en-US',{style:'currency',currency:'USD'}).format((r.totalExpenseCents||0)/100) %>
+                  </td>
+                  <td class="text-end fw-semibold <%= net >= 0 ? 'text-success' : 'text-danger' %>">
+                    <%= net >= 0 ? '+' : '−' %><%= new Intl.NumberFormat('en-US',{style:'currency',currency:'USD'}).format(Math.abs(net)/100) %>
+                  </td>
+                  <td>
+                    <% if (r.isPublished) { %>
+                      <span class="badge bg-success"><i class="fa-solid fa-check me-1"></i>Published</span>
+                    <% } else { %>
+                      <span class="badge bg-secondary">Draft</span>
+                    <% } %>
+                    <% if (r.isLocked) { %>
+                      <span class="badge bg-warning text-dark ms-1"><i class="fa-solid fa-lock fa-xs me-1"></i>Locked</span>
+                    <% } %>
+                  </td>
+                  <td class="text-muted small">
+                    <%= r.generatedAt ? new Date(r.generatedAt).toLocaleDateString('en-AU',{day:'numeric',month:'short',year:'numeric'}) : '—' %>
+                  </td>
+                  <td class="text-end">
+                    <a href="/dashboard/finance/reports/<%= r.reportId %>" class="btn btn-sm btn-outline-secondary">View</a>
+                  </td>
+                </tr>
+              <% }) %>
+            </tbody>
+          </table>
+        </div>
+      <% } %>
+
+    </div>
+  </div>
+  <%- include("../../admin/_footer.ejs") %>
+</div>
