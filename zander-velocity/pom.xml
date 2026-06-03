@@ -5,7 +5,7 @@
 
     <groupId>org.modularsoft</groupId>
     <artifactId>zander-velocity</artifactId>
-    <version>1.2.0</version>
+    <version>1.4.0</version>
     <packaging>jar</packaging>
 
     <name>zander-velocity</name>
