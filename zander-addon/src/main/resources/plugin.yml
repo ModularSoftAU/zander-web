@@ -12,13 +12,17 @@ commands:
     description: View our social media platforms.
     usage: /social
   pettrust:
-    description: Manage trust for your tamed pets.
-    usage: /pettrust <trust|untrust|public|private|list|help>
+    description: Manage trust settings for tamed pets.
+    usage: /pettrust <trust|untrust|public|private|list|anchor|unanchor|help>
+    aliases: [ptrust]
 
 permissions:
-  zander.pettrust.bypass:
-    description: Bypass pet trust checks (interact and damage any tamed pet).
+  zanderaddon.pettrust.use:
+    description: Allows players to manage trust for their own tamed pets.
+    default: true
+  zanderaddon.pettrust.admin:
+    description: Allows admins to manage trust for any tamed pet.
     default: op
-  zander.pettrust.admin:
-    description: Manage trust settings on any tamed pet regardless of ownership.
+  zanderaddon.pettrust.bypass:
+    description: Bypasses pet trust interaction restrictions entirely.
     default: op

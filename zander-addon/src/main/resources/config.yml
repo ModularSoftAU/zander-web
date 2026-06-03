@@ -24,5 +24,23 @@ social-paper:
 # --- Pet Trust Settings ---
 petTrust:
   enabled: true
-  noPermissionMessage: "&cYou are not trusted to use this pet."
+
+  # Default trust level granted when /pettrust trust <player> is run without a level argument.
+  defaultTrustLevel: "ACCESS"
+
+  # Range in blocks used to find the pet a player is looking at.
+  targetRange: 6.0
+
+  # If true, non-owners cannot damage pets unless allowed by trust and allowManagersToDamage.
   preventDamageWithoutManage: true
+
+  # If false, even MANAGE-trusted players cannot damage pets — only owner/bypass can.
+  allowManagersToDamage: false
+
+  messages:
+    prefix: "&6[PetTrust]&r "
+    noPermission: "&cYou are not trusted to do that with this pet."
+    noTarget: "&cLook at a tamed pet or ride one first."
+    notOwner: "&cOnly the pet owner can change trust for this pet."
+    featureDisabled: "&cPetTrust is currently disabled."
+
