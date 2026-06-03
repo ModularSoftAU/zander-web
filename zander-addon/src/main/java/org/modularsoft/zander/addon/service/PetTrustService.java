@@ -42,7 +42,7 @@ public class PetTrustService {
             String petType = entity.getType().name();
             trust = new PetTrust(petUuid, ownerUuid, ownerName, petType);
             petTrustCache.put(petUuid, trust);
-            repository.savePet(trust);
+            saveAsync(trust);
         }
         return trust;
     }
@@ -61,34 +61,30 @@ public class PetTrustService {
         PetTrust trust = getPetTrust(entity.getUniqueId());
         if (trust == null) return false;
 
-        // Check explicit player trust
         PlayerTrust playerTrust = trust.getTrustedPlayers().get(player.getUniqueId());
-        if (playerTrust != null && playerTrust.getLevel().isAtLeast(requiredLevel)) {
-            return true;
-        }
+        if (playerTrust != null && playerTrust.getLevel().isAtLeast(requiredLevel)) return true;
 
-        // Check public trust
-        if (trust.isPublicEnabled() && trust.getPublicLevel().isAtLeast(requiredLevel)) {
-            return true;
-        }
-
-        return false;
+        return trust.isPublicEnabled() && trust.getPublicLevel().isAtLeast(requiredLevel);
     }
 
     public void setPlayerTrust(PetTrust trust, Player player, TrustLevel level) {
         PlayerTrust pt = new PlayerTrust(player.getUniqueId(), player.getName(), level, LocalDateTime.now());
         trust.getTrustedPlayers().put(player.getUniqueId(), pt);
-        repository.savePet(trust);
+        saveAsync(trust);
     }
 
     public void removePlayerTrust(PetTrust trust, UUID playerUuid) {
         trust.getTrustedPlayers().remove(playerUuid);
-        repository.savePet(trust);
+        saveAsync(trust);
     }
 
     public void setPublicTrust(PetTrust trust, boolean enabled, TrustLevel level) {
         trust.setPublicEnabled(enabled);
         trust.setPublicLevel(level);
-        repository.savePet(trust);
+        saveAsync(trust);
+    }
+
+    private void saveAsync(PetTrust trust) {
+        plugin.getServer().getScheduler().runTaskAsynchronously(plugin, () -> repository.savePet(trust));
     }
 }

@@ -14,3 +14,11 @@ commands:
   pettrust:
     description: Manage trust for your tamed pets.
     usage: /pettrust <trust|untrust|public|private|list|help>
+
+permissions:
+  zander.pettrust.bypass:
+    description: Bypass pet trust checks (interact and damage any tamed pet).
+    default: op
+  zander.pettrust.admin:
+    description: Manage trust settings on any tamed pet regardless of ownership.
+    default: op

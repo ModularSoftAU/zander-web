@@ -1,7 +1,6 @@
 package org.modularsoft.zander.addon.events;
 
-import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.format.NamedTextColor;
+import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 import org.bukkit.entity.Tameable;
@@ -32,11 +31,10 @@ public class PetTrustInteractListener implements Listener {
         Player player = event.getPlayer();
         if (player.hasPermission("zander.pettrust.bypass")) return;
 
-        // Check for ACCESS level for interaction (mounting, etc.)
         if (!trustService.hasPermission(player, entity, TrustLevel.ACCESS)) {
             event.setCancelled(true);
-            String message = plugin.getConfig().getString("petTrust.noPermissionMessage", "&cYou are not trusted to use this pet.");
-            player.sendMessage(Component.text(message.replace("&", "§")).color(NamedTextColor.RED));
+            String raw = plugin.getConfig().getString("petTrust.noPermissionMessage", "&cYou are not trusted to use this pet.");
+            player.sendMessage(LegacyComponentSerializer.legacyAmpersand().deserialize(raw));
         }
     }
 }

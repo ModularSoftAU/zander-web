@@ -47,7 +47,9 @@ public class ZanderAddonMain extends JavaPlugin {
 
         getCommand("policy").setExecutor(new PolicyCommand(this, policyService));
         getCommand("social").setExecutor(new SocialCommand(this, socialGUI));
-        getCommand("pettrust").setExecutor(new PetTrustCommand(this, petTrustService));
+        PetTrustCommand petTrustCommand = new PetTrustCommand(this, petTrustService);
+        getCommand("pettrust").setExecutor(petTrustCommand);
+        getCommand("pettrust").setTabCompleter(petTrustCommand);
 
         getLogger().info("Zander Addon has been enabled.");
     }
