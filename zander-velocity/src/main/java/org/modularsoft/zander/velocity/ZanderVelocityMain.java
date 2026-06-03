@@ -43,7 +43,8 @@ import java.util.Optional;
         name = "zander-velocity",
         version = "1.2.0",
         dependencies = {
-                @Dependency(id = "signedvelocity")
+                @Dependency(id = "signedvelocity"),
+                @Dependency(id = "luckperms", optional = false)
         }
 )
 public class ZanderVelocityMain {
