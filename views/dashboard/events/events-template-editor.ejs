@@ -185,21 +185,48 @@
                     <div class="card-header">Default Branding</div>
                     <div class="card-body">
                         <div class="mb-3">
-                            <label class="form-label fw-semibold">Banner URL</label>
-                            <input type="url" class="form-control" name="bannerUrl" value="<%= tmpl.bannerUrl || '' %>">
-                            <small class="text-muted">
-                                Recommended: <strong>1920×480px</strong> (4:1 ratio) for website banners.
-                                Discord event cover images are displayed at <strong>16:9</strong> (e.g. 1280×720px).
-                                Use PNG or JPG, max 8 MB.
-                            </small>
+                            <label class="form-label fw-semibold">Banner Image</label>
+                            <input type="hidden" name="bannerUrl" id="bannerUrlInput" value="<%= tmpl.bannerUrl || '' %>">
+                            <div class="input-group mb-1">
+                                <input type="file" class="form-control" id="bannerFileInput" accept="image/png,image/jpeg,image/gif,image/webp">
+                                <button type="button" class="btn btn-outline-secondary" id="bannerUploadBtn" disabled>
+                                    <i class="fas fa-cloud-upload-alt me-1"></i>Upload
+                                </button>
+                            </div>
+                            <div class="d-flex align-items-center gap-2 mb-1">
+                                <small class="text-muted flex-grow-1">Or enter URL directly:</small>
+                                <span id="bannerUploadStatus" class="small d-none"></span>
+                            </div>
+                            <input type="url" class="form-control form-control-sm" id="bannerUrlManual" value="<%= tmpl.bannerUrl || '' %>" placeholder="https://…">
+                            <small class="text-muted">Recommended: <strong>1920×480px</strong> (4:1) for website; <strong>1280×720px</strong> (16:9) for Discord. PNG/JPG, max 8 MB.</small>
+                            <div id="bannerPreview" class="mt-2 <%= tmpl.bannerUrl ? '' : 'd-none' %>">
+                                <div class="position-relative d-inline-block">
+                                    <img src="<%= tmpl.bannerUrl || '' %>" class="img-fluid rounded" style="max-height:200px" alt="Banner preview">
+                                    <button type="button" class="btn btn-sm btn-danger position-absolute top-0 end-0 m-1" id="bannerClearBtn" title="Remove"><i class="fas fa-times"></i></button>
+                                </div>
+                            </div>
                         </div>
                         <div class="mb-3">
-                            <label class="form-label fw-semibold">Logo URL</label>
-                            <input type="url" class="form-control" name="logoUrl" value="<%= tmpl.logoUrl || '' %>">
-                            <small class="text-muted">
-                                Recommended: <strong>512×512px</strong> (1:1 square) — used as the event thumbnail on the website and as the Discord embed thumbnail.
-                                Use PNG with transparency. Max 8 MB.
-                            </small>
+                            <label class="form-label fw-semibold">Logo / Thumbnail</label>
+                            <input type="hidden" name="logoUrl" id="logoUrlInput" value="<%= tmpl.logoUrl || '' %>">
+                            <div class="input-group mb-1">
+                                <input type="file" class="form-control" id="logoFileInput" accept="image/png,image/jpeg,image/gif,image/webp">
+                                <button type="button" class="btn btn-outline-secondary" id="logoUploadBtn" disabled>
+                                    <i class="fas fa-cloud-upload-alt me-1"></i>Upload
+                                </button>
+                            </div>
+                            <div class="d-flex align-items-center gap-2 mb-1">
+                                <small class="text-muted flex-grow-1">Or enter URL directly:</small>
+                                <span id="logoUploadStatus" class="small d-none"></span>
+                            </div>
+                            <input type="url" class="form-control form-control-sm" id="logoUrlManual" value="<%= tmpl.logoUrl || '' %>" placeholder="https://…">
+                            <small class="text-muted">Recommended: <strong>512×512px</strong> (1:1 square). PNG with transparency preferred. Max 8 MB.</small>
+                            <div id="logoPreview" class="mt-2 <%= tmpl.logoUrl ? '' : 'd-none' %>">
+                                <div class="position-relative d-inline-block">
+                                    <img src="<%= tmpl.logoUrl || '' %>" class="rounded" style="max-height:80px;max-width:80px;object-fit:contain" alt="Logo preview">
+                                    <button type="button" class="btn btn-sm btn-danger position-absolute top-0 end-0 m-1" id="logoClearBtn" title="Remove"><i class="fas fa-times"></i></button>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -879,4 +906,73 @@ function collectTemplateAnnouncements() {
 document.getElementById('addTemplateAnnouncementBtn').addEventListener('click', () => addTemplateAnnouncementRow());
 document.querySelectorAll('#templateAnnouncementsContainer .announcement-row').forEach(initAnnouncementRow);
 
+// ============================================================
+// Image upload + preview (Cloudinary)
+// ============================================================
+function setupImageUpload(hiddenId, fileId, uploadBtnId, manualId, previewId, statusId, clearBtnId, folder) {
+    const hidden = document.getElementById(hiddenId);
+    const fileInput = document.getElementById(fileId);
+    const uploadBtn = document.getElementById(uploadBtnId);
+    const manual = document.getElementById(manualId);
+    const preview = document.getElementById(previewId);
+    const statusEl = document.getElementById(statusId);
+    const clearBtn = document.getElementById(clearBtnId);
+    if (!hidden || !fileInput || !uploadBtn || !manual || !preview) return;
+
+    function setUrl(url) {
+        hidden.value = url;
+        manual.value = url;
+        const img = preview.querySelector('img');
+        if (url && img) { img.src = url; preview.classList.remove('d-none'); }
+        else { preview.classList.add('d-none'); }
+    }
+
+    fileInput.addEventListener('change', () => { uploadBtn.disabled = !fileInput.files.length; });
+
+    uploadBtn.addEventListener('click', async () => {
+        const file = fileInput.files[0];
+        if (!file) return;
+        uploadBtn.disabled = true;
+        statusEl.className = 'small text-info';
+        statusEl.textContent = 'Uploading…';
+        statusEl.classList.remove('d-none');
+        try {
+            const fd = new FormData();
+            fd.append('folder', folder);
+            fd.append('file', file);
+            const res = await fetch('/api/upload/image', {
+                method: 'POST',
+                body: fd,
+                headers: { 'x-access-token': <%- JSON.stringify(process.env.apiKey || '') %> },
+            });
+            const json = await res.json();
+            if (json.success) {
+                setUrl(json.data.url);
+                statusEl.className = 'small text-success';
+                statusEl.textContent = 'Uploaded!';
+                fileInput.value = '';
+            } else {
+                statusEl.className = 'small text-danger';
+                statusEl.textContent = json.message || 'Upload failed';
+            }
+        } catch {
+            statusEl.className = 'small text-danger';
+            statusEl.textContent = 'Upload failed';
+        }
+        uploadBtn.disabled = true;
+        setTimeout(() => statusEl.classList.add('d-none'), 4000);
+    });
+
+    manual.addEventListener('change', () => setUrl(manual.value.trim()));
+
+    if (clearBtn) {
+        clearBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            setUrl('');
+            fileInput.value = '';
+        });
+    }
+}
+setupImageUpload('bannerUrlInput', 'bannerFileInput', 'bannerUploadBtn', 'bannerUrlManual', 'bannerPreview', 'bannerUploadStatus', 'bannerClearBtn', 'zander/events/banners');
+setupImageUpload('logoUrlInput', 'logoFileInput', 'logoUploadBtn', 'logoUrlManual', 'logoPreview', 'logoUploadStatus', 'logoClearBtn', 'zander/events/logos');
 </script>

@@ -6,6 +6,30 @@ import { getWebAnnouncement } from "../../controllers/announcementController.js"
 import { luckpermsDb } from "../../controllers/databaseController.js";
 import { getProfilePicture } from "../../controllers/userController.js";
 
+function getUsersForRanks(rankSlugs) {
+  if (!rankSlugs || !rankSlugs.length) return Promise.resolve([]);
+  const permissions = rankSlugs.map((s) => `group.${s}`);
+  const placeholders = permissions.map(() => "?").join(", ");
+  return new Promise((resolve, reject) => {
+    luckpermsDb.query(
+      `SELECT
+        lp.username,
+        lup.uuid,
+        SUBSTRING_INDEX(lup.permission, '.', -1) AS rankSlug
+      FROM luckperms_user_permissions lup
+      LEFT JOIN luckperms_players lp ON lup.uuid = lp.uuid
+      WHERE lup.permission IN (${placeholders})
+        AND lup.value = 1
+      ORDER BY lp.username ASC`,
+      permissions,
+      (err, results) => {
+        if (err) return reject(err);
+        resolve(results || []);
+      }
+    );
+  });
+}
+
 /**
  * Query LuckPerms directly for all rank groups.
  * Mirrors the logic of fetchLuckPermsRanks() in staffController.js and
@@ -102,6 +126,44 @@ export default function dashboardRanksRoute(
   features,
   lang
 ) {
+  app.get("/dashboard/ranks/export-csv", async (req, res) => {
+    if (!await isFeatureWebRouteEnabled(app, features.ranks, req, res, features)) return;
+    if (!await hasPermission("zander.web.rank", req, res, features)) return;
+
+    const raw = (req.query.ranks || "").trim();
+    if (!raw) {
+      return res.status(400).send("No ranks specified");
+    }
+
+    const rankSlugs = raw.split(",").map((s) => s.trim()).filter(Boolean);
+    if (!rankSlugs.length) {
+      return res.status(400).send("No valid ranks specified");
+    }
+
+    try {
+      const rows = await getUsersForRanks(rankSlugs);
+
+      const headers = ["username", "uuid", "rank"];
+      const csvRows = [
+        headers.join(","),
+        ...rows.map((r) => [
+          JSON.stringify(r.username || ""),
+          JSON.stringify(r.uuid || ""),
+          JSON.stringify(r.rankSlug || ""),
+        ].join(",")),
+      ];
+
+      const filename = `rank-export-${rankSlugs.join("-")}-${new Date().toISOString().slice(0, 10)}.csv`;
+      res
+        .header("Content-Type", "text/csv; charset=utf-8")
+        .header("Content-Disposition", `attachment; filename="${filename}"`)
+        .send(csvRows.join("\n"));
+    } catch (err) {
+      console.error("[RANKS] CSV export error:", err);
+      if (!res.sent) return res.status(500).send("Export failed");
+    }
+  });
+
   // User prefix search for the username autocomplete on the rank tools form
   app.get("/dashboard/ranks/user-search", async (req, res) => {
     if (!await isFeatureWebRouteEnabled(app, features.ranks, req, res, features)) return;

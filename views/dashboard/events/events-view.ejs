@@ -40,6 +40,9 @@
                         <button class="btn btn-sm btn-danger btn-reject-view" data-event-id="<%= ev.eventId %>">
                             <i class="fas fa-times me-1"></i>Reject
                         </button>
+                        <button class="btn btn-sm btn-outline-secondary btn-revert-draft" data-event-id="<%= ev.eventId %>">
+                            <i class="fas fa-rotate-left me-1"></i>Revert to Draft
+                        </button>
                     <% } %>
                     <% if (['pending_review', 'approved'].includes(ev.status) && isReviewer) { %>
                         <button class="btn btn-sm btn-outline-warning btn-revert-draft" data-event-id="<%= ev.eventId %>">
@@ -389,7 +392,7 @@ document.getElementById('confirmReject')?.addEventListener('click', async () => 
 });
 
 document.querySelector('.btn-revert-draft')?.addEventListener('click', e => {
-    if (!confirm('Revert this event to draft? The creator will be able to edit and resubmit it.')) return;
+    if (!confirm('Revert this event to draft? The submitter will need to re-submit for review.')) return;
     eventAction('/api/events/revert-to-draft', { eventId: e.target.dataset.eventId }, window.location.href);
 });
 

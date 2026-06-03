@@ -75,7 +75,8 @@
     }
   },
   "events": {
-    "discordChannelId": "CHANNELID"
+    "discordChannelId": "CHANNELID",
+    "reviewChannelId": "CHANNELID"
   },
   "staffAuditReport": {
     "enabled": true,
