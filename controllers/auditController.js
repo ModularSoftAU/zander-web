@@ -68,7 +68,7 @@ export async function updateAudit_lastDiscordMessage(auditDateTime, discordId) {
       }
     );
   } else {
-    console.warn(`Discord account for this user is not linked, chat audit ignored.`);
+    // unlinked accounts are expected; no log needed
   }
 }
 
@@ -87,6 +87,6 @@ export async function updateAudit_lastDiscordVoice(auditDateTime, discordId) {
       }
     );
   } else {
-    console.warn(`Discord account for this user is not linked, voice audit ignored.`);
+    // unlinked accounts are expected; no log needed
   }
 }
