@@ -1,6 +1,7 @@
 package org.modularsoft.zander.addon.pettrust.listeners;
 
 import org.bukkit.entity.Entity;
+import org.bukkit.entity.Monster;
 import org.bukkit.entity.Player;
 import org.bukkit.entity.Projectile;
 import org.bukkit.event.EventHandler;
@@ -29,6 +30,10 @@ public class PetTrustDamageListener implements Listener {
         Entity victim = event.getEntity();
         if (!service.isSupportedPet(victim)) return;
 
+        // If a hostile mob is riding this pet (e.g. zombie on a tamed wolf from a mob farm),
+        // skip protection so players can kill the combo without needing trust.
+        if (hasHostileRider(victim)) return;
+
         Player attacker = resolvePlayer(event.getDamager());
         if (attacker == null) return;
 
@@ -49,5 +54,9 @@ public class PetTrustDamageListener implements Listener {
         if (damager instanceof Player p) return p;
         if (damager instanceof Projectile proj && proj.getShooter() instanceof Player p) return p;
         return null;
+    }
+
+    private boolean hasHostileRider(Entity entity) {
+        return entity.getPassengers().stream().anyMatch(p -> p instanceof Monster);
     }
 }
