@@ -17,7 +17,8 @@ var cakeDayUserCheckTask = cron.schedule("0 7 * * *", async () => {
          WHERE account_registered IS NOT NULL
            AND DATE_FORMAT(joined, '%m-%d') = DATE_FORMAT(CURDATE(), '%m-%d')
            AND YEAR(joined) != YEAR(CURDATE())
-           AND account_disabled = 0`,
+           AND account_disabled = 0
+           AND audit_lastWebsiteLogin >= DATE_SUB(CURDATE(), INTERVAL 1 YEAR)`,
         (error, rows) => {
           if (error) return reject(error);
           resolve(rows);
