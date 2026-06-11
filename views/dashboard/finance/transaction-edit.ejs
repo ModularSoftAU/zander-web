@@ -8,8 +8,8 @@
 
       <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
         <h1 class="h2"><i class="fa-solid fa-right-left fa-fw me-2"></i>Edit Transaction</h1>
-        <a href="/dashboard/finance/transactions/<%= tx.transactionId %>" class="btn btn-sm btn-outline-secondary">
-          <i class="fa-solid fa-arrow-left me-1"></i>Back to Transaction
+        <a href="/dashboard/finance/transactions" class="btn btn-sm btn-outline-secondary">
+          <i class="fa-solid fa-arrow-left me-1"></i>Back to Transactions
         </a>
       </div>
 
@@ -26,15 +26,15 @@
                     <label for="type" class="form-label fw-semibold">Type <span class="text-danger">*</span></label>
                     <select class="form-select" id="type" name="type" required onchange="updateCategoryFilter(this.value)">
                       <option value="">— Select Type —</option>
-                      <% ['income','expense','transfer'].forEach(function(t) { %>
+                      <% ['income','expense'].forEach(function(t) { %>
                         <option value="<%= t %>" <%= t === tx.type ? 'selected' : '' %>><%= t.charAt(0).toUpperCase()+t.slice(1) %></option>
                       <% }) %>
                     </select>
                   </div>
                   <div class="col-md-6">
-                    <label for="txDate" class="form-label fw-semibold">Date <span class="text-danger">*</span></label>
-                    <input type="date" class="form-control" id="txDate" name="transactionDate" required
-                           value="<%= tx.txDate ? new Date(tx.txDate).toISOString().slice(0,10) : '' %>">
+                    <label for="transactionDate" class="form-label fw-semibold">Date <span class="text-danger">*</span></label>
+                    <input type="date" class="form-control" id="transactionDate" name="transactionDate" required
+                           value="<%= tx.transactionDate ? new Date(tx.transactionDate).toISOString().slice(0,10) : '' %>">
                   </div>
                 </div>
 
@@ -63,27 +63,6 @@
                   </div>
                 </div>
 
-                <div class="row g-3 mb-3">
-                  <div class="col-md-6" id="accountField">
-                    <label for="accountId" class="form-label fw-semibold" id="accountLabel">Account</label>
-                    <select class="form-select" id="accountId" name="accountId">
-                      <option value="">— None —</option>
-                      <% accounts.forEach(function(acc) { %>
-                        <option value="<%= acc.accountId %>" <%= String(acc.accountId) === String(tx.accountId) ? 'selected' : '' %>><%= acc.name %></option>
-                      <% }) %>
-                    </select>
-                  </div>
-                  <div class="col-md-6" id="toAccountField">
-                    <label for="toAccountId" class="form-label fw-semibold">To Account</label>
-                    <select class="form-select" id="toAccountId" name="toAccountId">
-                      <option value="">— None —</option>
-                      <% accounts.forEach(function(acc) { %>
-                        <option value="<%= acc.accountId %>" <%= String(acc.accountId) === String(tx.toAccountId) ? 'selected' : '' %>><%= acc.name %></option>
-                      <% }) %>
-                    </select>
-                  </div>
-                </div>
-
                 <div class="mb-3">
                   <label for="categoryId" class="form-label fw-semibold">Category</label>
                   <select class="form-select" id="categoryId" name="categoryId">
@@ -95,41 +74,6 @@
                   </select>
                 </div>
 
-                <% if (vendors && vendors.length) { %>
-                <div class="mb-3">
-                  <label for="vendorId" class="form-label fw-semibold">Vendor</label>
-                  <select class="form-select" id="vendorId" name="vendorId">
-                    <option value="">— None —</option>
-                    <% vendors.forEach(function(v) { %>
-                      <option value="<%= v.vendorId %>" <%= String(v.vendorId) === String(tx.vendorId) ? 'selected' : '' %>><%= v.name %></option>
-                    <% }) %>
-                  </select>
-                </div>
-                <% } %>
-
-                <% if (tags && tags.length) { %>
-                <div class="mb-3">
-                  <label class="form-label fw-semibold">Tags</label>
-                  <input type="hidden" name="tagIds" id="tagIdsInput" value="<%= (selectedTagIds || []).join(',') %>">
-                  <div class="d-flex flex-wrap gap-2" id="tagCheckboxes">
-                    <% tags.forEach(function(tag) {
-                      const isSelected = (selectedTagIds || []).some(id => String(id) === String(tag.tagId));
-                    %>
-                      <div class="form-check">
-                        <input class="form-check-input tag-check" type="checkbox" id="tag_<%= tag.tagId %>" value="<%= tag.tagId %>" <%= isSelected ? 'checked' : '' %>>
-                        <label class="form-check-label" for="tag_<%= tag.tagId %>">
-                          <% if (tag.color) { %>
-                            <span class="badge rounded-pill" style="background-color:<%= tag.color %>"><%= tag.name %></span>
-                          <% } else { %>
-                            <span class="badge bg-secondary"><%= tag.name %></span>
-                          <% } %>
-                        </label>
-                      </div>
-                    <% }) %>
-                  </div>
-                </div>
-                <% } %>
-
                 <div class="mb-3">
                   <label for="notes" class="form-label fw-semibold">Notes</label>
                   <textarea class="form-control" id="notes" name="notes" rows="3" maxlength="2000"><%= tx.notes || '' %></textarea>
@@ -137,7 +81,7 @@
 
                 <div class="d-flex gap-2">
                   <button type="submit" class="btn btn-warning"><i class="fa-solid fa-check me-1"></i>Save Changes</button>
-                  <a href="/dashboard/finance/transactions/<%= tx.transactionId %>" class="btn btn-outline-secondary">Cancel</a>
+                  <a href="/dashboard/finance/transactions" class="btn btn-outline-secondary">Cancel</a>
                 </div>
               </form>
             </div>
@@ -154,8 +98,6 @@
 (function () {
   function updateCategoryFilter(type) {
     const sel = document.getElementById('categoryId');
-    const toField = document.getElementById('toAccountField');
-    const accountLabel = document.getElementById('accountLabel');
     if (sel) {
       Array.from(sel.options).forEach(function(opt) {
         if (!opt.value) return;
@@ -163,18 +105,8 @@
       });
       if (sel.selectedOptions[0] && sel.selectedOptions[0].hidden) sel.value = '';
     }
-    if (toField) toField.style.display = type === 'transfer' ? '' : 'none';
-    if (accountLabel) accountLabel.textContent = type === 'transfer' ? 'From Account' : 'Account';
   }
   window.updateCategoryFilter = updateCategoryFilter;
-
-  // Sync tag checkboxes to the hidden input
-  document.querySelectorAll('.tag-check').forEach(function(cb) {
-    cb.addEventListener('change', function() {
-      const checked = Array.from(document.querySelectorAll('.tag-check:checked')).map(function(c) { return c.value; });
-      document.getElementById('tagIdsInput').value = checked.join(',');
-    });
-  });
 
   // Init display state
   const typeSelect = document.getElementById('type');

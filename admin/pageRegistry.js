@@ -336,39 +336,6 @@ export const adminPages = [
     sortOrder: 80,
   },
   {
-    slug: "finance-vendors",
-    title: "Vendors",
-    menuTitle: "Vendors",
-    icon: "fa-solid fa-building",
-    capability: "zander.web.finance",
-    path: "/dashboard/finance/vendors",
-    featureFlag: "finance",
-    group: "Finance",
-    sortOrder: 81,
-  },
-  {
-    slug: "finance-invoices",
-    title: "Invoices",
-    menuTitle: "Invoices",
-    icon: "fa-solid fa-file-invoice",
-    capability: "zander.web.finance",
-    path: "/dashboard/finance/invoices",
-    featureFlag: "finance",
-    group: "Finance",
-    sortOrder: 82,
-  },
-  {
-    slug: "finance-payments",
-    title: "Payments",
-    menuTitle: "Payments",
-    icon: "fa-solid fa-money-check-dollar",
-    capability: "zander.web.finance",
-    path: "/dashboard/finance/payments",
-    featureFlag: "finance",
-    group: "Finance",
-    sortOrder: 83,
-  },
-  {
     slug: "finance-transactions",
     title: "Transactions",
     menuTitle: "Transactions",
@@ -389,17 +356,6 @@ export const adminPages = [
     featureFlag: "finance",
     group: "Finance",
     sortOrder: 85,
-  },
-  {
-    slug: "finance-reports",
-    title: "Reports",
-    menuTitle: "Reports",
-    icon: "fa-solid fa-file-chart-column",
-    capability: "zander.web.finance",
-    path: "/dashboard/finance/reports",
-    featureFlag: "finance",
-    group: "Finance",
-    sortOrder: 86,
   },
   {
     slug: "finance-settings",
@@ -502,14 +458,8 @@ export const adminSubPages = [
   },
 
   // Finance sub-pages
-  { slug: "finance-vendor-detail", title: "Vendor", parent: "finance-vendors", path: "/dashboard/finance/vendors/", capability: "zander.web.finance" },
-  { slug: "finance-vendor-create", title: "Add Vendor", parent: "finance-vendors", path: "/dashboard/finance/vendors/create", capability: "zander.web.finance.manage" },
-  { slug: "finance-invoice-detail", title: "Invoice", parent: "finance-invoices", path: "/dashboard/finance/invoices/", capability: "zander.web.finance" },
-  { slug: "finance-invoice-create", title: "New Invoice", parent: "finance-invoices", path: "/dashboard/finance/invoices/create", capability: "zander.web.finance.manage" },
-  { slug: "finance-payment-create", title: "Record Payment", parent: "finance-payments", path: "/dashboard/finance/payments/create", capability: "zander.web.finance.manage" },
-  { slug: "finance-transaction-detail", title: "Transaction", parent: "finance-transactions", path: "/dashboard/finance/transactions/", capability: "zander.web.finance" },
   { slug: "finance-transaction-create", title: "New Transaction", parent: "finance-transactions", path: "/dashboard/finance/transactions/create", capability: "zander.web.finance.manage" },
-  { slug: "finance-report-detail", title: "Report", parent: "finance-reports", path: "/dashboard/finance/reports/", capability: "zander.web.finance" },
+  { slug: "finance-transaction-edit", title: "Edit Transaction", parent: "finance-transactions", path: "/dashboard/finance/transactions/", capability: "zander.web.finance.manage" },
 ];
 
 // ---------------------------------------------------------------------------

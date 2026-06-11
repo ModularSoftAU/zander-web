@@ -28,12 +28,11 @@
                       <option value="">— Select Type —</option>
                       <option value="income">Income</option>
                       <option value="expense">Expense</option>
-                      <option value="transfer">Transfer</option>
                     </select>
                   </div>
                   <div class="col-md-6">
-                    <label for="txDate" class="form-label fw-semibold">Date <span class="text-danger">*</span></label>
-                    <input type="date" class="form-control" id="txDate" name="txDate" required>
+                    <label for="transactionDate" class="form-label fw-semibold">Date <span class="text-danger">*</span></label>
+                    <input type="date" class="form-control" id="transactionDate" name="transactionDate" required>
                   </div>
                 </div>
 
@@ -60,27 +59,6 @@
                   </div>
                 </div>
 
-                <div class="row g-3 mb-3">
-                  <div class="col-md-6" id="accountField">
-                    <label for="accountId" class="form-label fw-semibold">Account</label>
-                    <select class="form-select" id="accountId" name="accountId">
-                      <option value="">— None —</option>
-                      <% accounts.forEach(function(acc) { %>
-                        <option value="<%= acc.accountId %>"><%= acc.name %></option>
-                      <% }) %>
-                    </select>
-                  </div>
-                  <div class="col-md-6" id="toAccountField" style="display:none">
-                    <label for="toAccountId" class="form-label fw-semibold">To Account</label>
-                    <select class="form-select" id="toAccountId" name="toAccountId">
-                      <option value="">— None —</option>
-                      <% accounts.forEach(function(acc) { %>
-                        <option value="<%= acc.accountId %>"><%= acc.name %></option>
-                      <% }) %>
-                    </select>
-                  </div>
-                </div>
-
                 <div class="mb-3">
                   <label for="categoryId" class="form-label fw-semibold">Category</label>
                   <select class="form-select" id="categoryId" name="categoryId">
@@ -89,24 +67,6 @@
                       <option value="<%= cat.categoryId %>" data-type="<%= cat.type %>"><%= cat.name %></option>
                     <% }) %>
                   </select>
-                </div>
-
-                <div class="mb-3">
-                  <label class="form-label fw-semibold">Tags</label>
-                  <div class="d-flex flex-wrap gap-2">
-                    <% tags.forEach(function(tag) { %>
-                      <div class="form-check">
-                        <input class="form-check-input" type="checkbox" name="tags[]" id="tag_<%= tag.tagId %>" value="<%= tag.tagId %>">
-                        <label class="form-check-label" for="tag_<%= tag.tagId %>">
-                          <% if (tag.color) { %>
-                            <span class="badge rounded-pill" style="background-color:<%= tag.color %>"><%= tag.name %></span>
-                          <% } else { %>
-                            <span class="badge bg-secondary"><%= tag.name %></span>
-                          <% } %>
-                        </label>
-                      </div>
-                    <% }) %>
-                  </div>
                 </div>
 
                 <div class="mb-3">
@@ -132,15 +92,10 @@
 <script>
 function updateCategoryFilter(type) {
   const sel = document.getElementById('categoryId');
-  const toField = document.getElementById('toAccountField');
-  const accountLabel = document.querySelector('label[for="accountId"]');
   Array.from(sel.options).forEach(opt => {
     if (!opt.value) return;
     opt.hidden = type && opt.dataset.type && opt.dataset.type !== type;
   });
   if (sel.selectedOptions[0] && sel.selectedOptions[0].hidden) sel.value = '';
-  toField.style.display = type === 'transfer' ? '' : 'none';
-  if (accountLabel) accountLabel.innerHTML = type === 'transfer'
-    ? 'From Account' : 'Account';
 }
 </script>

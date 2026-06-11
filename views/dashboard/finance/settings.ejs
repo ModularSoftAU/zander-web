@@ -12,141 +12,44 @@
 
       <%- include("../../admin/_notices.ejs") %>
 
-      <div class="row g-4">
-
-        <%# Accounts -%>
-        <div class="col-lg-6">
-          <div class="card shadow-sm">
-            <div class="card-header d-flex justify-content-between align-items-center">
-              <span class="fw-semibold"><i class="fa-solid fa-vault me-1"></i>Accounts</span>
-              <% if (canManage) { %>
-                <button type="button" class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#addAccountModal">
-                  <i class="fa-solid fa-plus me-1"></i>Add
-                </button>
-              <% } %>
-            </div>
-            <div class="card-body p-0">
-              <% if (!accounts || !accounts.length) { %>
-                <div class="p-3 text-muted small">No accounts configured.</div>
-              <% } else { %>
-                <div class="table-responsive">
-                  <table class="table table-sm align-middle mb-0">
-                    <thead><tr><th>Name</th><th>Type</th><th class="text-end">Opening Balance</th><th>Currency</th><% if (canManage) { %><th></th><% } %></tr></thead>
-                    <tbody>
-                      <% accounts.forEach(function(acc) { %>
-                        <tr>
-                          <td class="fw-semibold"><%= acc.name %></td>
-                          <td><span class="badge bg-secondary"><%= acc.accountType || '—' %></span></td>
-                          <td class="text-end"><%= new Intl.NumberFormat('en-US',{style:'currency',currency:acc.currency||'USD'}).format((acc.openingBalanceCents||0)/100) %></td>
-                          <td class="text-muted small"><%= acc.currency || 'USD' %></td>
-                          <% if (canManage) { %>
-                            <td class="text-end">
-                              <div class="d-flex gap-1 justify-content-end">
-                                <button type="button" class="btn btn-sm btn-outline-warning"
-                                        data-bs-toggle="modal" data-bs-target="#editAccountModal"
-                                        data-id="<%= acc.accountId %>"
-                                        data-name="<%= (acc.name||'').replace(/"/g,'&quot;') %>"
-                                        data-type="<%= acc.accountType || '' %>"
-                                        data-balance="<%= ((acc.openingBalanceCents||0)/100).toFixed(2) %>"
-                                        data-currency="<%= acc.currency || 'USD' %>"
-                                        data-notes="<%= (acc.notes||'').replace(/"/g,'&quot;') %>">
-                                  <i class="fa-solid fa-pen"></i>
-                                </button>
-                                <form method="post" action="/dashboard/finance/settings/accounts/<%= acc.accountId %>/delete" class="d-inline"
-                                      onsubmit="return confirm('Delete account <%= (acc.name||'').replace(/'/g,'&#39;') %>?')">
-                                  <button type="submit" class="btn btn-sm btn-outline-danger"><i class="fa-solid fa-trash"></i></button>
-                                </form>
-                              </div>
-                            </td>
-                          <% } %>
-                        </tr>
-                      <% }) %>
-                    </tbody>
-                  </table>
-                </div>
-              <% } %>
-            </div>
-          </div>
+      <%# Categories -%>
+      <div class="card shadow-sm">
+        <div class="card-header d-flex justify-content-between align-items-center">
+          <span class="fw-semibold"><i class="fa-solid fa-tags me-1"></i>Categories</span>
+          <% if (canManage) { %>
+            <button type="button" class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#addCategoryModal">
+              <i class="fa-solid fa-plus me-1"></i>Add
+            </button>
+          <% } %>
         </div>
-
-        <%# Categories -%>
-        <div class="col-lg-6">
-          <div class="card shadow-sm">
-            <div class="card-header d-flex justify-content-between align-items-center">
-              <span class="fw-semibold"><i class="fa-solid fa-tags me-1"></i>Categories</span>
-              <% if (canManage) { %>
-                <button type="button" class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#addCategoryModal">
-                  <i class="fa-solid fa-plus me-1"></i>Add
-                </button>
-              <% } %>
-            </div>
-            <div class="card-body p-0">
-              <% if (!categories || !categories.length) { %>
-                <div class="p-3 text-muted small">No categories configured.</div>
-              <% } else { %>
-                <div class="table-responsive">
-                  <table class="table table-sm align-middle mb-0">
-                    <thead><tr><th>Name</th><th>Type</th><th>Parent</th><% if (canManage) { %><th></th><% } %></tr></thead>
-                    <tbody>
-                      <% categories.forEach(function(cat) { %>
-                        <tr>
-                          <td class="fw-semibold"><%= cat.name %></td>
-                          <td><span class="badge <%= cat.type === 'income' ? 'bg-success' : cat.type === 'expense' ? 'bg-danger' : 'bg-info text-dark' %>"><%= cat.type || '—' %></span></td>
-                          <td class="text-muted small"><%= cat.parentName || '—' %></td>
-                          <% if (canManage) { %>
-                            <td class="text-end">
-                              <form method="post" action="/dashboard/finance/settings/categories/<%= cat.categoryId %>/delete" class="d-inline"
-                                    onsubmit="return confirm('Delete category <%= (cat.name||'').replace(/'/g,'&#39;') %>?')">
-                                <button type="submit" class="btn btn-sm btn-outline-danger"><i class="fa-solid fa-trash"></i></button>
-                              </form>
-                            </td>
-                          <% } %>
-                        </tr>
-                      <% }) %>
-                    </tbody>
-                  </table>
-                </div>
-              <% } %>
-            </div>
-          </div>
-        </div>
-
-        <%# Tags -%>
-        <div class="col-lg-6">
-          <div class="card shadow-sm">
-            <div class="card-header d-flex justify-content-between align-items-center">
-              <span class="fw-semibold"><i class="fa-solid fa-tag me-1"></i>Tags</span>
-              <% if (canManage) { %>
-                <button type="button" class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#addTagModal">
-                  <i class="fa-solid fa-plus me-1"></i>Add
-                </button>
-              <% } %>
-            </div>
-            <div class="card-body">
-              <% if (!tags || !tags.length) { %>
-                <div class="text-muted small">No tags configured.</div>
-              <% } else { %>
-                <div class="d-flex flex-wrap gap-2">
-                  <% tags.forEach(function(tag) { %>
-                    <div class="d-flex align-items-center gap-1 border rounded px-2 py-1">
-                      <% if (tag.color) { %>
-                        <span class="rounded-circle d-inline-block" style="width:10px;height:10px;background:<%= tag.color %>"></span>
-                      <% } %>
-                      <span class="small fw-semibold"><%= tag.name %></span>
+        <div class="card-body p-0">
+          <% if (!categories || !categories.length) { %>
+            <div class="p-3 text-muted small">No categories configured.</div>
+          <% } else { %>
+            <div class="table-responsive">
+              <table class="table table-sm align-middle mb-0">
+                <thead><tr><th>Name</th><th>Type</th><th>Parent</th><% if (canManage) { %><th></th><% } %></tr></thead>
+                <tbody>
+                  <% categories.forEach(function(cat) { %>
+                    <tr>
+                      <td class="fw-semibold"><%= cat.name %></td>
+                      <td><span class="badge <%= cat.type === 'income' ? 'bg-success' : cat.type === 'expense' ? 'bg-danger' : 'bg-info text-dark' %>"><%= cat.type || '—' %></span></td>
+                      <td class="text-muted small"><%= cat.parent ? cat.parent.name : '—' %></td>
                       <% if (canManage) { %>
-                        <form method="post" action="/dashboard/finance/settings/tags/<%= tag.tagId %>/delete" class="d-inline ms-1"
-                              onsubmit="return confirm('Delete tag <%= (tag.name||'').replace(/'/g,'&#39;') %>?')">
-                          <button type="submit" class="btn btn-sm p-0 border-0 text-danger lh-1" style="font-size:0.7rem;"><i class="fa-solid fa-xmark"></i></button>
-                        </form>
+                        <td class="text-end">
+                          <form method="post" action="/dashboard/finance/settings/categories/<%= cat.categoryId %>/delete" class="d-inline"
+                                onsubmit="return confirm('Delete category <%= (cat.name||'').replace(/'/g,'&#39;') %>?')">
+                            <button type="submit" class="btn btn-sm btn-outline-danger"><i class="fa-solid fa-trash"></i></button>
+                          </form>
+                        </td>
                       <% } %>
-                    </div>
+                    </tr>
                   <% }) %>
-                </div>
-              <% } %>
+                </tbody>
+              </table>
             </div>
-          </div>
+          <% } %>
         </div>
-
       </div>
 
     </div>
@@ -155,114 +58,6 @@
 </div>
 
 <% if (canManage) { %>
-
-<%# Add Account Modal -%>
-<div class="modal fade" id="addAccountModal" tabindex="-1" aria-labelledby="addAccountModalLabel" aria-hidden="true">
-  <div class="modal-dialog">
-    <div class="modal-content">
-      <form method="post" action="/dashboard/finance/settings/accounts/create">
-        <div class="modal-header">
-          <h5 class="modal-title" id="addAccountModalLabel">Add Account</h5>
-          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-        </div>
-        <div class="modal-body">
-          <div class="mb-3">
-            <label for="accName" class="form-label fw-semibold">Name <span class="text-danger">*</span></label>
-            <input type="text" class="form-control" id="accName" name="name" required maxlength="150" placeholder="e.g. Stripe, PayPal, Bank Account">
-          </div>
-          <div class="mb-3">
-            <label for="accType" class="form-label fw-semibold">Type</label>
-            <select class="form-select" id="accType" name="accountType">
-              <option value="">— None —</option>
-              <% ['bank','stripe','paypal','crypto','other'].forEach(function(t) { %>
-                <option value="<%= t %>"><%= t.charAt(0).toUpperCase()+t.slice(1) %></option>
-              <% }) %>
-            </select>
-          </div>
-          <div class="row g-3 mb-3">
-            <div class="col-7">
-              <label for="accBalance" class="form-label fw-semibold">Opening Balance</label>
-              <div class="input-group">
-                <span class="input-group-text">$</span>
-                <input type="number" class="form-control" id="accBalance" name="openingBalanceCents" min="0" step="0.01" value="0.00" placeholder="0.00">
-              </div>
-            </div>
-            <div class="col-5">
-              <label for="accCurrency" class="form-label fw-semibold">Currency</label>
-              <select class="form-select" id="accCurrency" name="currency">
-                <% ['USD','AUD','EUR','GBP','CAD'].forEach(function(c) { %>
-                  <option value="<%= c %>" <%= c === 'USD' ? 'selected' : '' %>><%= c %></option>
-                <% }) %>
-              </select>
-            </div>
-          </div>
-          <div class="mb-3">
-            <label for="accNotes" class="form-label fw-semibold">Notes</label>
-            <textarea class="form-control" id="accNotes" name="notes" rows="2" maxlength="1000"></textarea>
-          </div>
-        </div>
-        <div class="modal-footer">
-          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
-          <button type="submit" class="btn btn-primary"><i class="fa-solid fa-check me-1"></i>Create</button>
-        </div>
-      </form>
-    </div>
-  </div>
-</div>
-
-<%# Edit Account Modal -%>
-<div class="modal fade" id="editAccountModal" tabindex="-1" aria-labelledby="editAccountModalLabel" aria-hidden="true">
-  <div class="modal-dialog">
-    <div class="modal-content">
-      <form method="post" id="editAccountForm" action="/dashboard/finance/settings/accounts/__id__/edit">
-        <div class="modal-header">
-          <h5 class="modal-title" id="editAccountModalLabel">Edit Account</h5>
-          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-        </div>
-        <div class="modal-body">
-          <div class="mb-3">
-            <label for="editAccName" class="form-label fw-semibold">Name <span class="text-danger">*</span></label>
-            <input type="text" class="form-control" id="editAccName" name="name" required maxlength="150">
-          </div>
-          <div class="mb-3">
-            <label for="editAccType" class="form-label fw-semibold">Type</label>
-            <select class="form-select" id="editAccType" name="accountType">
-              <option value="">— None —</option>
-              <% ['bank','stripe','paypal','crypto','other'].forEach(function(t) { %>
-                <option value="<%= t %>"><%= t.charAt(0).toUpperCase()+t.slice(1) %></option>
-              <% }) %>
-            </select>
-          </div>
-          <div class="row g-3 mb-3">
-            <div class="col-7">
-              <label for="editAccBalance" class="form-label fw-semibold">Opening Balance</label>
-              <div class="input-group">
-                <span class="input-group-text">$</span>
-                <input type="number" class="form-control" id="editAccBalance" name="openingBalanceCents" min="0" step="0.01">
-              </div>
-            </div>
-            <div class="col-5">
-              <label for="editAccCurrency" class="form-label fw-semibold">Currency</label>
-              <select class="form-select" id="editAccCurrency" name="currency">
-                <% ['USD','AUD','EUR','GBP','CAD'].forEach(function(c) { %>
-                  <option value="<%= c %>"><%= c %></option>
-                <% }) %>
-              </select>
-            </div>
-          </div>
-          <div class="mb-3">
-            <label for="editAccNotes" class="form-label fw-semibold">Notes</label>
-            <textarea class="form-control" id="editAccNotes" name="notes" rows="2" maxlength="1000"></textarea>
-          </div>
-        </div>
-        <div class="modal-footer">
-          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
-          <button type="submit" class="btn btn-primary"><i class="fa-solid fa-check me-1"></i>Save</button>
-        </div>
-      </form>
-    </div>
-  </div>
-</div>
 
 <%# Add Category Modal -%>
 <div class="modal fade" id="addCategoryModal" tabindex="-1" aria-labelledby="addCategoryModalLabel" aria-hidden="true">
@@ -284,7 +79,6 @@
               <option value="">— Select —</option>
               <option value="expense">Expense</option>
               <option value="income">Income</option>
-              <option value="transfer">Transfer</option>
             </select>
           </div>
           <div class="mb-3">
@@ -306,45 +100,4 @@
   </div>
 </div>
 
-<%# Add Tag Modal -%>
-<div class="modal fade" id="addTagModal" tabindex="-1" aria-labelledby="addTagModalLabel" aria-hidden="true">
-  <div class="modal-dialog">
-    <div class="modal-content">
-      <form method="post" action="/dashboard/finance/settings/tags/create">
-        <div class="modal-header">
-          <h5 class="modal-title" id="addTagModalLabel">Add Tag</h5>
-          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-        </div>
-        <div class="modal-body">
-          <div class="mb-3">
-            <label for="tagName" class="form-label fw-semibold">Tag Name <span class="text-danger">*</span></label>
-            <input type="text" class="form-control" id="tagName" name="name" required maxlength="80" placeholder="e.g. tax-deductible, recurring">
-          </div>
-          <div class="mb-3">
-            <label for="tagColor" class="form-label fw-semibold">Color</label>
-            <input type="color" class="form-control form-control-color" id="tagColor" name="color" value="#6c757d">
-          </div>
-        </div>
-        <div class="modal-footer">
-          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
-          <button type="submit" class="btn btn-primary"><i class="fa-solid fa-check me-1"></i>Create</button>
-        </div>
-      </form>
-    </div>
-  </div>
-</div>
-
 <% } %>
-
-<script>
-document.getElementById('editAccountModal')?.addEventListener('show.bs.modal', function(e) {
-  const btn = e.relatedTarget;
-  const form = document.getElementById('editAccountForm');
-  form.action = '/dashboard/finance/settings/accounts/' + btn.dataset.id + '/edit';
-  document.getElementById('editAccName').value = btn.dataset.name;
-  document.getElementById('editAccType').value = btn.dataset.type;
-  document.getElementById('editAccBalance').value = btn.dataset.balance;
-  document.getElementById('editAccCurrency').value = btn.dataset.currency;
-  document.getElementById('editAccNotes').value = btn.dataset.notes;
-});
-</script>
