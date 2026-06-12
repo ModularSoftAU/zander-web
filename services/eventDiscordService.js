@@ -8,7 +8,7 @@ import { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, GuildSchedu
 import { updateSyncStatus, logEventAudit } from "./eventService.js";
 
 /** Convert HTML from Summernote to Discord-compatible markdown. */
-function htmlToMarkdown(html) {
+export function htmlToMarkdown(html) {
   if (!html) return "";
   return html
     // Block-level: headings → bold line

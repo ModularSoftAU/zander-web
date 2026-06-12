@@ -1,0 +1,205 @@
+import { describe, it, expect, vi, beforeEach } from "vitest";
+
+const mockAddTicketUserParticipant = vi.fn().mockResolvedValue(1);
+const mockCreateSupportTicket = vi.fn();
+const mockCreateSupportTicketMessage = vi.fn().mockResolvedValue(1);
+const mockGetCategoryName = vi.fn().mockResolvedValue("General");
+const mockGetCategoryPermissions = vi.fn().mockResolvedValue([]);
+const mockGetSupportCategories = vi.fn().mockResolvedValue([
+  { categoryId: 1, name: "General", description: "General support" },
+]);
+const mockGetTicketDetailsByChannel = vi.fn();
+const mockGetUserIdByDiscordId = vi.fn();
+const mockCreateUnlinkedUser = vi.fn();
+const mockNotifyTicketStatusChange = vi.fn().mockResolvedValue(undefined);
+const mockUpdateTicketStatus = vi.fn().mockResolvedValue(undefined);
+const mockDeleteTicketChannel = vi.fn().mockResolvedValue(undefined);
+
+vi.mock("../../controllers/supportTicketController.js", () => ({
+  addTicketUserParticipant: mockAddTicketUserParticipant,
+  createSupportTicket: mockCreateSupportTicket,
+  createSupportTicketMessage: mockCreateSupportTicketMessage,
+  getCategoryName: mockGetCategoryName,
+  getCategoryPermissions: mockGetCategoryPermissions,
+  getSupportCategories: mockGetSupportCategories,
+  getTicketDetailsByChannel: mockGetTicketDetailsByChannel,
+  getUserIdByDiscordId: mockGetUserIdByDiscordId,
+  createUnlinkedUser: mockCreateUnlinkedUser,
+  notifyTicketStatusChange: mockNotifyTicketStatusChange,
+  updateTicketStatus: mockUpdateTicketStatus,
+  deleteTicketChannel: mockDeleteTicketChannel,
+}));
+
+vi.mock("module", async (importOriginal) => {
+  const actual = await importOriginal();
+  return {
+    ...actual,
+    createRequire: () => () => ({
+      siteConfiguration: { siteUrl: "https://example.com" },
+      discord: { webhooks: {} },
+    }),
+  };
+});
+
+const mockChannelSend = vi.fn().mockResolvedValue({
+  id: "msg-1",
+  pin: vi.fn().mockResolvedValue(undefined),
+});
+const mockTicketChannel = { id: "ch-1", send: mockChannelSend };
+
+vi.mock("discord.js", async (importOriginal) => {
+  const actual = await importOriginal();
+  return {
+    ...actual,
+    SapphireClient: class { constructor() {} },
+    EmbedBuilder: class {
+      setTitle() { return this; }
+      setDescription() { return this; }
+      setColor() { return this; }
+      addFields() { return this; }
+      setTimestamp() { return this; }
+    },
+    ActionRowBuilder: class { addComponents() { return this; } },
+    ButtonBuilder: class {
+      setCustomId() { return this; }
+      setLabel() { return this; }
+      setStyle() { return this; }
+      setURL() { return this; }
+      setDisabled() { return this; }
+      setEmoji() { return this; }
+    },
+    ButtonStyle: { Link: 5, Danger: 4, Secondary: 2 },
+    PermissionFlagsBits: {
+      ViewChannel: 1n, SendMessages: 2n, AttachFiles: 4n,
+      ReadMessageHistory: 8n, ManageMessages: 16n, ManageChannels: 32n,
+    },
+    Colors: { Yellow: 0xfee75c },
+    ComponentType: { StringSelect: 3 },
+    ModalBuilder: class {
+      setCustomId() { return this; }
+      setTitle() { return this; }
+      addComponents() { return this; }
+    },
+    TextInputBuilder: class {
+      setCustomId() { return this; }
+      setLabel() { return this; }
+      setStyle() { return this; }
+      setRequired() { return this; }
+      setMaxLength() { return this; }
+    },
+    TextInputStyle: { Short: 1, Paragraph: 2 },
+    StringSelectMenuBuilder: class {
+      setCustomId() { return this; }
+      setPlaceholder() { return this; }
+      addOptions() { return this; }
+    },
+  };
+});
+
+const { startTicketFlow } = await import("../../lib/discord/ticketFlow.mjs");
+
+function buildInteraction() {
+  const modalEditReply = vi.fn().mockResolvedValue(undefined);
+  const mockModal = {
+    deferred: false,
+    replied: false,
+    deferReply: vi.fn().mockResolvedValue(undefined),
+    editReply: modalEditReply,
+    fields: {
+      getTextInputValue: vi.fn((key) =>
+        key === "subject" ? "Test Subject" : "Test description"
+      ),
+    },
+    user: { id: "discord-user-1", tag: "testuser#0001" },
+  };
+
+  const mockSelection = {
+    values: ["1"],
+    showModal: vi.fn().mockResolvedValue(undefined),
+    awaitModalSubmit: vi.fn().mockResolvedValue(mockModal),
+    followUp: vi.fn().mockResolvedValue(undefined),
+  };
+
+  // editReply returns a "message" object that has awaitMessageComponent
+  const mockPrompt = {
+    awaitMessageComponent: vi.fn().mockResolvedValue(mockSelection),
+  };
+
+  const interaction = {
+    deferred: false,
+    replied: false,
+    deferReply: vi.fn().mockResolvedValue(undefined),
+    editReply: vi.fn().mockResolvedValue(mockPrompt),
+    user: { id: "discord-user-1", tag: "testuser#0001" },
+    client: {},
+    _modal: mockModal,
+    _modalEditReply: modalEditReply,
+  };
+
+  return interaction;
+}
+
+describe("startTicketFlow", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockCreateSupportTicket.mockResolvedValue({ ticketId: 42, channel: mockTicketChannel });
+  });
+
+  it("prompts to link account when user is not linked", async () => {
+    mockGetUserIdByDiscordId.mockResolvedValue(null);
+    const interaction = buildInteraction();
+    await startTicketFlow(interaction);
+    // Should reply with an embed (not create a ticket)
+    expect(interaction.editReply).toHaveBeenCalledWith(
+      expect.objectContaining({ embeds: expect.any(Array) })
+    );
+    expect(mockCreateSupportTicket).not.toHaveBeenCalled();
+  });
+
+  it("adds ticket opener as a participant after ticket creation", async () => {
+    mockGetUserIdByDiscordId.mockResolvedValue(7);
+    const interaction = buildInteraction();
+    await startTicketFlow(interaction);
+    expect(mockAddTicketUserParticipant).toHaveBeenCalledWith(42, { userId: 7 });
+  });
+
+  it("creates a ticket message with the description after ticket creation", async () => {
+    mockGetUserIdByDiscordId.mockResolvedValue(7);
+    const interaction = buildInteraction();
+    await startTicketFlow(interaction);
+    expect(mockCreateSupportTicketMessage).toHaveBeenCalledWith(
+      interaction.client,
+      42,
+      7,
+      "Test description",
+      "discord"
+    );
+  });
+
+  it("continues creating the ticket even if addTicketUserParticipant fails", async () => {
+    mockGetUserIdByDiscordId.mockResolvedValue(7);
+    mockAddTicketUserParticipant.mockRejectedValueOnce(new Error("DB error"));
+    const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+
+    const interaction = buildInteraction();
+    await expect(startTicketFlow(interaction)).resolves.toBeUndefined();
+    expect(mockCreateSupportTicketMessage).toHaveBeenCalled();
+    errorSpy.mockRestore();
+  });
+
+  it("sends the ticket created confirmation reply with the ticket number", async () => {
+    mockGetUserIdByDiscordId.mockResolvedValue(7);
+    const interaction = buildInteraction();
+    await startTicketFlow(interaction);
+
+    const lastCall = interaction._modalEditReply.mock.calls.at(-1)?.[0];
+    expect(lastCall?.content).toContain("#42");
+  });
+
+  it("sends the opening message to the ticket channel", async () => {
+    mockGetUserIdByDiscordId.mockResolvedValue(7);
+    const interaction = buildInteraction();
+    await startTicketFlow(interaction);
+    expect(mockChannelSend).toHaveBeenCalledOnce();
+  });
+});
