@@ -93,9 +93,14 @@ export class ProfileCommand extends Command {
     }
 
     if (!apiData.success) {
+      const isDiscordLookup = !username;
       const noProfileEmbed = new EmbedBuilder()
-        .setTitle(`Could not fetch profile.`)
-        .setDescription(`User either does not exist or there was an issue fetching profile.`)
+        .setTitle("Could not fetch profile.")
+        .setDescription(
+          isDiscordLookup
+            ? "This user is not linked to a website account."
+            : "User either does not exist or there was an issue fetching profile."
+        )
         .setColor(Colors.Red);
 
       interaction.reply({

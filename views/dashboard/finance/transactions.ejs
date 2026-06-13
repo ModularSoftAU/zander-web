@@ -25,17 +25,8 @@
           <label class="form-label form-label-sm mb-1">Type</label>
           <select name="type" class="form-select form-select-sm">
             <option value="">All Types</option>
-            <% ['income','expense','transfer'].forEach(function(t) { %>
+            <% ['income','expense'].forEach(function(t) { %>
               <option value="<%= t %>" <%= filters.type === t ? 'selected' : '' %>><%= t.charAt(0).toUpperCase()+t.slice(1) %></option>
-            <% }) %>
-          </select>
-        </div>
-        <div class="col-sm-6 col-md-3 col-lg-2">
-          <label class="form-label form-label-sm mb-1">Account</label>
-          <select name="accountId" class="form-select form-select-sm">
-            <option value="">All Accounts</option>
-            <% accounts.forEach(function(acc) { %>
-              <option value="<%= acc.accountId %>" <%= String(filters.accountId) === String(acc.accountId) ? 'selected' : '' %>><%= acc.name %></option>
             <% }) %>
           </select>
         </div>
@@ -74,7 +65,6 @@
                 <th>Date</th>
                 <th>Description</th>
                 <th>Type</th>
-                <th>Account</th>
                 <th>Category</th>
                 <th class="text-end">Amount</th>
                 <th></th>
@@ -88,23 +78,30 @@
                 const amtSign = tx.type === 'income' ? '+' : tx.type === 'expense' ? '−' : '';
               %>
                 <tr>
-                  <td class="text-muted small"><%= tx.txDate ? new Date(tx.txDate).toLocaleDateString('en-AU',{day:'numeric',month:'short',year:'numeric'}) : '—' %></td>
+                  <td class="text-muted small"><%= tx.transactionDate ? new Date(tx.transactionDate).toLocaleDateString('en-AU',{day:'numeric',month:'short',year:'numeric'}) : '—' %></td>
                   <td>
-                    <a href="/dashboard/finance/transactions/<%= tx.transactionId %>" class="text-decoration-none fw-semibold"><%= tx.description %></a>
+                    <span class="fw-semibold"><%= tx.description %></span>
                     <% if (tx.isLocked) { %><span class="badge bg-secondary ms-1" title="Locked"><i class="fa-solid fa-lock fa-xs"></i></span><% } %>
                   </td>
                   <td><span class="badge <%= typeColors[tx.type] || 'bg-secondary' %>"><%= tx.type %></span></td>
-                  <td class="text-muted small"><%= tx.accountName || '—' %></td>
                   <td>
-                    <% if (tx.categoryName) { %>
-                      <span class="badge bg-secondary"><%= tx.categoryName %></span>
+                    <% if (tx.category) { %>
+                      <span class="badge bg-secondary"><%= tx.category.name %></span>
                     <% } else { %>
                       <span class="text-muted">—</span>
                     <% } %>
                   </td>
                   <td class="text-end fw-semibold <%= amtColor %>"><%= amtSign %><%= amtStr %></td>
                   <td class="text-end">
-                    <a href="/dashboard/finance/transactions/<%= tx.transactionId %>" class="btn btn-sm btn-outline-secondary">View</a>
+                    <% if (canManage && !tx.isLocked) { %>
+                      <a href="/dashboard/finance/transactions/<%= tx.transactionId %>/edit" class="btn btn-sm btn-outline-warning">Edit</a>
+                    <% } %>
+                    <% if (canManage) { %>
+                      <form method="post" action="/dashboard/finance/transactions/<%= tx.transactionId %>/delete" class="d-inline"
+                            onsubmit="return confirm('Delete this transaction?')">
+                        <button type="submit" class="btn btn-sm btn-outline-danger"><i class="fa-solid fa-trash"></i></button>
+                      </form>
+                    <% } %>
                   </td>
                 </tr>
               <% }) %>
@@ -118,7 +115,6 @@
             const buildPageUrl = function(p) {
               const q = new URLSearchParams();
               if (filters.type) q.set('type', filters.type);
-              if (filters.accountId) q.set('accountId', filters.accountId);
               if (filters.categoryId) q.set('categoryId', filters.categoryId);
               if (filters.dateFrom) q.set('dateFrom', filters.dateFrom);
               if (filters.dateTo) q.set('dateTo', filters.dateTo);

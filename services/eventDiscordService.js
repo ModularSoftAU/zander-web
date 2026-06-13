@@ -8,7 +8,7 @@ import { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, GuildSchedu
 import { updateSyncStatus, logEventAudit } from "./eventService.js";
 
 /** Convert HTML from Summernote to Discord-compatible markdown. */
-function htmlToMarkdown(html) {
+export function htmlToMarkdown(html) {
   if (!html) return "";
   return html
     // Block-level: headings → bold line
@@ -425,8 +425,12 @@ export async function runDiscordActionsForEvent(event, trigger, discordConfig = 
       if (action.actionType === "discord_guild_event") {
         if (trigger === "on_publish") {
           await createGuildScheduledEvent(event, guildId);
-        } else if (trigger === "on_update" && event.discordGuildEventId) {
-          await editGuildScheduledEvent(event, guildId, event.discordGuildEventId);
+        } else if (trigger === "on_update") {
+          if (event.discordGuildEventId) {
+            await editGuildScheduledEvent(event, guildId, event.discordGuildEventId);
+          } else {
+            await createGuildScheduledEvent(event, guildId);
+          }
         } else if (trigger === "on_cancel" && event.discordGuildEventId) {
           await cancelGuildScheduledEvent(event, guildId, event.discordGuildEventId);
         }

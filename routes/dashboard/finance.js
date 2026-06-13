@@ -14,34 +14,13 @@
 import { hasPermission, setBannerCookie } from "../../api/common.js";
 import { adminViewData } from "../../admin/adminHelpers.js";
 import { getWebAnnouncement } from "../../controllers/announcementController.js";
-import { uploadImage } from "../../services/cloudinaryService.js";
 
 import {
-  // Accounts
-  getAccounts,
-  getAccountById,
-  createAccount,
-  updateAccount,
-  deleteAccount,
-  computeAccountBalance,
   // Categories
   getCategories,
-  getCategoryById,
   createCategory,
   updateCategory,
   deleteCategory,
-  // Tags
-  getTags,
-  createTag,
-  deleteTag,
-  // Vendors
-  getVendors,
-  getVendorById,
-  createVendor,
-  updateVendor,
-  deleteVendor,
-  getVendorStats,
-  fetchAndCacheVendorFavicon,
   // Transactions
   getTransactions,
   getTransactionCount,
@@ -49,36 +28,12 @@ import {
   createTransaction,
   updateTransaction,
   deleteTransaction,
-  // Invoices
-  getInvoices,
-  getInvoiceCount,
-  getInvoiceById,
-  createInvoice,
-  updateInvoice,
-  deleteInvoice,
-  recalculateInvoiceStatus,
-  // Payments
-  getPayments,
-  getPaymentCount,
-  createPayment,
-  deletePayment,
-  // Attachments
-  getAttachments,
-  createAttachment,
-  deleteAttachment,
   // Budget
-  getOperationsBudget,
   getAllBudgetEntries,
   createBudgetEntry,
   updateBudgetEntry,
   deleteBudgetEntry,
   getBudgetVsActual,
-  // Reports
-  getMonthlyReports,
-  getMonthlyReport,
-  generateMonthlyReportData,
-  upsertMonthlyReport,
-  publishMonthlyReport,
   // Dashboard
   getFinanceDashboardData,
   // Helpers
@@ -158,784 +113,6 @@ export default function dashboardFinanceRoute(app, fetch, config, db, features, 
   });
 
   // ===========================================================================
-  // Vendors
-  // ===========================================================================
-
-  // GET /dashboard/finance/vendors
-  app.get("/dashboard/finance/vendors", async function (req, res) {
-    if (!await hasPermission("zander.web.finance", req, res, features)) return;
-
-    try {
-      const statusFilter = req.query?.status ?? null;
-      const activeOnly = statusFilter === "active";
-      const [base, vendors] = await Promise.all([
-        baseViewData(req, features),
-        getVendors(activeOnly ? { activeOnly: true } : {}),
-      ]);
-
-      let vendorsFiltered = vendors;
-      if (statusFilter === "inactive") {
-        vendorsFiltered = vendors.filter((v) => !v.isActive);
-      }
-
-      const vendorsWithStats = await Promise.all(
-        vendorsFiltered.map(async (vendor) => {
-          const stats = await getVendorStats(vendor.vendorId);
-          return { ...vendor, ...stats };
-        })
-      );
-
-      res.header("content-type", "text/html; charset=utf-8").send(
-        await app.view("dashboard/finance/vendors", {
-          pageTitle: "Finance - Vendors",
-          config,
-          req,
-          features,
-          ...base,
-          statusFilter,
-          vendors: vendorsWithStats,
-        })
-      );
-    } catch (error) {
-      console.error("[finance] GET /dashboard/finance/vendors:", error);
-      setBannerCookie("danger", error.message, res);
-      return res.redirect("/dashboard/finance");
-    }
-  });
-
-  // GET /dashboard/finance/vendors/create
-  app.get("/dashboard/finance/vendors/create", async function (req, res) {
-    if (!await hasPermission("zander.web.finance", req, res, features)) return;
-
-    const canManage = canManageFinance(req);
-    if (!canManage) {
-      setBannerCookie("danger", "You do not have permission to create vendors.", res);
-      return res.redirect("/dashboard/finance/vendors");
-    }
-
-    try {
-      const [base, categories] = await Promise.all([
-        baseViewData(req, features),
-        getCategories(),
-      ]);
-
-      res.header("content-type", "text/html; charset=utf-8").send(
-        await app.view("dashboard/finance/vendor-create", {
-          pageTitle: "Finance - Create Vendor",
-          config,
-          req,
-          features,
-          ...base,
-          categories,
-        })
-      );
-    } catch (error) {
-      console.error("[finance] GET /dashboard/finance/vendors/create:", error);
-      setBannerCookie("danger", error.message, res);
-      return res.redirect("/dashboard/finance/vendors");
-    }
-  });
-
-  // POST /dashboard/finance/vendors/create
-  app.post("/dashboard/finance/vendors/create", async function (req, res) {
-    if (!await hasPermission("zander.web.finance", req, res, features)) return;
-
-    if (!canManageFinance(req)) {
-      setBannerCookie("danger", "You do not have permission to create vendors.", res);
-      return res.redirect("/dashboard/finance/vendors");
-    }
-
-    try {
-      const { name, website, contactEmail, notes, categoryId } = req.body || {};
-      const vendor = await createVendor({ name, website, contactEmail, notes, categoryId });
-
-      if (vendor.website) {
-        setImmediate(() => fetchAndCacheVendorFavicon(vendor.vendorId));
-      }
-
-      setBannerCookie("success", `Vendor "${vendor.name}" created successfully.`, res);
-      return res.redirect("/dashboard/finance/vendors");
-    } catch (error) {
-      console.error("[finance] POST /dashboard/finance/vendors/create:", error);
-      setBannerCookie("danger", error.message, res);
-      return res.redirect("/dashboard/finance/vendors/create");
-    }
-  });
-
-  // GET /dashboard/finance/vendors/:vendorId
-  app.get("/dashboard/finance/vendors/:vendorId", async function (req, res) {
-    if (!await hasPermission("zander.web.finance", req, res, features)) return;
-
-    const vendorId = parseInt(req.params.vendorId, 10);
-    if (!vendorId) return res.redirect("/dashboard/finance/vendors");
-
-    try {
-      const [base, vendor, stats, invoices, payments, attachments] = await Promise.all([
-        baseViewData(req, features),
-        getVendorById(vendorId),
-        getVendorStats(vendorId),
-        getInvoices({ vendorId, limit: 20 }),
-        getPayments({ vendorId, limit: 20 }),
-        getAttachments({ vendorId }).catch(() => []),
-      ]);
-
-      if (!vendor) {
-        setBannerCookie("danger", "Vendor not found.", res);
-        return res.redirect("/dashboard/finance/vendors");
-      }
-
-      res.header("content-type", "text/html; charset=utf-8").send(
-        await app.view("dashboard/finance/vendor-detail", {
-          pageTitle: `Finance - ${vendor.name}`,
-          config,
-          req,
-          features,
-          ...base,
-          vendor: { ...vendor, ...stats },
-          invoices,
-          payments,
-          attachments,
-        })
-      );
-    } catch (error) {
-      console.error("[finance] GET /dashboard/finance/vendors/:vendorId:", error);
-      setBannerCookie("danger", error.message, res);
-      return res.redirect("/dashboard/finance/vendors");
-    }
-  });
-
-  // GET /dashboard/finance/vendors/:vendorId/edit
-  app.get("/dashboard/finance/vendors/:vendorId/edit", async function (req, res) {
-    if (!await hasPermission("zander.web.finance", req, res, features)) return;
-
-    const vendorId = parseInt(req.params.vendorId, 10);
-    if (!vendorId) return res.redirect("/dashboard/finance/vendors");
-
-    if (!canManageFinance(req)) {
-      setBannerCookie("danger", "You do not have permission to edit vendors.", res);
-      return res.redirect(`/dashboard/finance/vendors/${vendorId}`);
-    }
-
-    try {
-      const [base, vendor, categories] = await Promise.all([
-        baseViewData(req, features),
-        getVendorById(vendorId),
-        getCategories(),
-      ]);
-
-      if (!vendor) {
-        setBannerCookie("danger", "Vendor not found.", res);
-        return res.redirect("/dashboard/finance/vendors");
-      }
-
-      res.header("content-type", "text/html; charset=utf-8").send(
-        await app.view("dashboard/finance/vendor-edit", {
-          pageTitle: `Finance - Edit ${vendor.name}`,
-          config,
-          req,
-          features,
-          ...base,
-          vendor,
-          categories,
-        })
-      );
-    } catch (error) {
-      console.error("[finance] GET /dashboard/finance/vendors/:vendorId/edit:", error);
-      setBannerCookie("danger", error.message, res);
-      return res.redirect(`/dashboard/finance/vendors/${vendorId}`);
-    }
-  });
-
-  // POST /dashboard/finance/vendors/:vendorId/edit
-  app.post("/dashboard/finance/vendors/:vendorId/edit", async function (req, res) {
-    if (!await hasPermission("zander.web.finance", req, res, features)) return;
-
-    const vendorId = parseInt(req.params.vendorId, 10);
-    if (!vendorId) return res.redirect("/dashboard/finance/vendors");
-
-    if (!canManageFinance(req)) {
-      setBannerCookie("danger", "You do not have permission to edit vendors.", res);
-      return res.redirect(`/dashboard/finance/vendors/${vendorId}`);
-    }
-
-    try {
-      const { name, website, contactEmail, notes, categoryId, isActive } = req.body || {};
-      await updateVendor(vendorId, { name, website, contactEmail, notes, categoryId, isActive: isActive === "1" ? 1 : 0 });
-      setBannerCookie("success", "Vendor updated successfully.", res);
-      return res.redirect(`/dashboard/finance/vendors/${vendorId}`);
-    } catch (error) {
-      console.error("[finance] POST /dashboard/finance/vendors/:vendorId/edit:", error);
-      setBannerCookie("danger", error.message, res);
-      return res.redirect(`/dashboard/finance/vendors/${vendorId}/edit`);
-    }
-  });
-
-  // POST /dashboard/finance/vendors/:vendorId/delete
-  app.post("/dashboard/finance/vendors/:vendorId/delete", async function (req, res) {
-    if (!await hasPermission("zander.web.finance", req, res, features)) return;
-
-    const vendorId = parseInt(req.params.vendorId, 10);
-    if (!vendorId) return res.redirect("/dashboard/finance/vendors");
-
-    if (!canManageFinance(req)) {
-      setBannerCookie("danger", "You do not have permission to delete vendors.", res);
-      return res.redirect(`/dashboard/finance/vendors/${vendorId}`);
-    }
-
-    try {
-      await deleteVendor(vendorId);
-      setBannerCookie("success", "Vendor deleted.", res);
-      return res.redirect("/dashboard/finance/vendors");
-    } catch (error) {
-      console.error("[finance] POST /dashboard/finance/vendors/:vendorId/delete:", error);
-      setBannerCookie("danger", error.message, res);
-      return res.redirect(`/dashboard/finance/vendors/${vendorId}`);
-    }
-  });
-
-  // POST /dashboard/finance/vendors/:vendorId/refresh-favicon
-  app.post("/dashboard/finance/vendors/:vendorId/refresh-favicon", async function (req, res) {
-    if (!await hasPermission("zander.web.finance", req, res, features)) return;
-
-    const vendorId = parseInt(req.params.vendorId, 10);
-    if (!vendorId) return res.redirect("/dashboard/finance/vendors");
-
-    if (!canManageFinance(req)) {
-      setBannerCookie("danger", "You do not have permission to refresh vendor favicons.", res);
-      return res.redirect(`/dashboard/finance/vendors/${vendorId}`);
-    }
-
-    try {
-      const faviconUrl = await fetchAndCacheVendorFavicon(vendorId);
-      if (faviconUrl) {
-        setBannerCookie("success", "Favicon refreshed successfully.", res);
-      } else {
-        setBannerCookie("warning", "Could not fetch favicon — check that the vendor has a valid website URL.", res);
-      }
-      return res.redirect(`/dashboard/finance/vendors/${vendorId}`);
-    } catch (error) {
-      console.error("[finance] POST /dashboard/finance/vendors/:vendorId/refresh-favicon:", error);
-      setBannerCookie("danger", error.message, res);
-      return res.redirect(`/dashboard/finance/vendors/${vendorId}`);
-    }
-  });
-
-  // ===========================================================================
-  // Invoices
-  // ===========================================================================
-
-  // GET /dashboard/finance/invoices
-  app.get("/dashboard/finance/invoices", async function (req, res) {
-    if (!await hasPermission("zander.web.finance", req, res, features)) return;
-
-    try {
-      const { limit, page, offset } = getPagination(req.query);
-      const statusFilter = req.query.status || null;
-      const vendorId = req.query.vendorId ? parseInt(req.query.vendorId, 10) : null;
-      const filters = { status: statusFilter, vendorId, limit, offset };
-
-      const [base, invoices, total] = await Promise.all([
-        baseViewData(req, features),
-        getInvoices(filters),
-        getInvoiceCount({ status: statusFilter, vendorId }),
-      ]);
-
-      res.header("content-type", "text/html; charset=utf-8").send(
-        await app.view("dashboard/finance/invoices", {
-          pageTitle: "Finance - Invoices",
-          config,
-          req,
-          features,
-          ...base,
-          invoices,
-          total,
-          totalCount: total,
-          page,
-          limit,
-          totalPages: Math.ceil(total / limit),
-          statusFilter,
-          vendorId,
-        })
-      );
-    } catch (error) {
-      console.error("[finance] GET /dashboard/finance/invoices:", error);
-      setBannerCookie("danger", error.message, res);
-      return res.redirect("/dashboard/finance");
-    }
-  });
-
-  // GET /dashboard/finance/invoices/create
-  app.get("/dashboard/finance/invoices/create", async function (req, res) {
-    if (!await hasPermission("zander.web.finance", req, res, features)) return;
-
-    if (!canManageFinance(req)) {
-      setBannerCookie("danger", "You do not have permission to create invoices.", res);
-      return res.redirect("/dashboard/finance/invoices");
-    }
-
-    try {
-      const [base, vendors, categories] = await Promise.all([
-        baseViewData(req, features),
-        getVendors({ activeOnly: true }),
-        getCategories(),
-      ]);
-
-      res.header("content-type", "text/html; charset=utf-8").send(
-        await app.view("dashboard/finance/invoice-create", {
-          pageTitle: "Finance - Create Invoice",
-          config,
-          req,
-          features,
-          ...base,
-          vendors,
-          categories,
-          prefillVendorId: req.query.vendorId || null,
-        })
-      );
-    } catch (error) {
-      console.error("[finance] GET /dashboard/finance/invoices/create:", error);
-      setBannerCookie("danger", error.message, res);
-      return res.redirect("/dashboard/finance/invoices");
-    }
-  });
-
-  // POST /dashboard/finance/invoices/create
-  app.post("/dashboard/finance/invoices/create", async function (req, res) {
-    if (!await hasPermission("zander.web.finance", req, res, features)) return;
-
-    if (!canManageFinance(req)) {
-      setBannerCookie("danger", "You do not have permission to create invoices.", res);
-      return res.redirect("/dashboard/finance/invoices");
-    }
-
-    try {
-      const { vendorId, invoiceNumber, issueDate, dueDate, amountCents, currency, description } = req.body || {};
-      if (!vendorId) throw new Error("Vendor is required.");
-
-      const createdByUserId = req.session?.user?.userId || 0;
-      const invoice = await createInvoice({ vendorId, invoiceNumber, issueDate, dueDate, amountCents, currency, description, createdByUserId });
-
-      setBannerCookie("success", `Invoice #${invoice.invoiceNumber || invoice.invoiceId} created.`, res);
-      return res.redirect(`/dashboard/finance/invoices/${invoice.invoiceId}`);
-    } catch (error) {
-      console.error("[finance] POST /dashboard/finance/invoices/create:", error);
-      setBannerCookie("danger", error.message, res);
-      return res.redirect("/dashboard/finance/invoices/create");
-    }
-  });
-
-  // GET /dashboard/finance/invoices/:invoiceId
-  app.get("/dashboard/finance/invoices/:invoiceId", async function (req, res) {
-    if (!await hasPermission("zander.web.finance", req, res, features)) return;
-
-    const invoiceId = parseInt(req.params.invoiceId, 10);
-    if (!invoiceId) return res.redirect("/dashboard/finance/invoices");
-
-    try {
-      const [base, invoice, payments, attachments, accounts] = await Promise.all([
-        baseViewData(req, features),
-        getInvoiceById(invoiceId),
-        getPayments({ invoiceId, limit: 50 }),
-        getAttachments({ invoiceId }).catch(() => []),
-        getAccounts(),
-      ]);
-
-      if (!invoice) {
-        setBannerCookie("danger", "Invoice not found.", res);
-        return res.redirect("/dashboard/finance/invoices");
-      }
-
-      res.header("content-type", "text/html; charset=utf-8").send(
-        await app.view("dashboard/finance/invoice-detail", {
-          pageTitle: `Finance - Invoice ${invoice.invoiceNumber || `#${invoice.invoiceId}`}`,
-          config,
-          req,
-          features,
-          ...base,
-          invoice,
-          payments,
-          attachments,
-          accounts,
-        })
-      );
-    } catch (error) {
-      console.error("[finance] GET /dashboard/finance/invoices/:invoiceId:", error);
-      setBannerCookie("danger", error.message, res);
-      return res.redirect("/dashboard/finance/invoices");
-    }
-  });
-
-  // POST /dashboard/finance/invoices/:invoiceId/edit
-  app.post("/dashboard/finance/invoices/:invoiceId/edit", async function (req, res) {
-    if (!await hasPermission("zander.web.finance", req, res, features)) return;
-
-    const invoiceId = parseInt(req.params.invoiceId, 10);
-    if (!invoiceId) return res.redirect("/dashboard/finance/invoices");
-
-    if (!canManageFinance(req)) {
-      setBannerCookie("danger", "You do not have permission to edit invoices.", res);
-      return res.redirect(`/dashboard/finance/invoices/${invoiceId}`);
-    }
-
-    try {
-      const { vendorId, invoiceNumber, issueDate, dueDate, amountCents, currency, description, status } = req.body || {};
-      await updateInvoice(invoiceId, { vendorId, invoiceNumber, issueDate, dueDate, amountCents, currency, description, status });
-      await recalculateInvoiceStatus(invoiceId);
-      setBannerCookie("success", "Invoice updated.", res);
-      return res.redirect(`/dashboard/finance/invoices/${invoiceId}`);
-    } catch (error) {
-      console.error("[finance] POST /dashboard/finance/invoices/:invoiceId/edit:", error);
-      setBannerCookie("danger", error.message, res);
-      return res.redirect(`/dashboard/finance/invoices/${invoiceId}`);
-    }
-  });
-
-  // GET /dashboard/finance/invoices/:invoiceId/edit
-  app.get("/dashboard/finance/invoices/:invoiceId/edit", async function (req, res) {
-    if (!await hasPermission("zander.web.finance", req, res, features)) return;
-
-    const invoiceId = parseInt(req.params.invoiceId, 10);
-    if (!invoiceId) return res.redirect("/dashboard/finance/invoices");
-
-    if (!canManageFinance(req)) {
-      setBannerCookie("danger", "You do not have permission to edit invoices.", res);
-      return res.redirect(`/dashboard/finance/invoices/${invoiceId}`);
-    }
-
-    try {
-      const [base, invoice, vendors, categories] = await Promise.all([
-        baseViewData(req, features),
-        getInvoiceById(invoiceId),
-        getVendors({ activeOnly: true }),
-        getCategories(),
-      ]);
-
-      if (!invoice) {
-        setBannerCookie("danger", "Invoice not found.", res);
-        return res.redirect("/dashboard/finance/invoices");
-      }
-
-      res.header("content-type", "text/html; charset=utf-8").send(
-        await app.view("dashboard/finance/invoice-edit", {
-          pageTitle: `Finance - Edit Invoice ${invoice.invoiceNumber || `#${invoiceId}`}`,
-          config,
-          req,
-          features,
-          ...base,
-          invoice,
-          vendors,
-          categories,
-        })
-      );
-    } catch (error) {
-      console.error("[finance] GET /dashboard/finance/invoices/:invoiceId/edit:", error);
-      setBannerCookie("danger", error.message, res);
-      return res.redirect(`/dashboard/finance/invoices/${invoiceId}`);
-    }
-  });
-
-  // POST /dashboard/finance/invoices/:invoiceId/delete
-  app.post("/dashboard/finance/invoices/:invoiceId/delete", async function (req, res) {
-    if (!await hasPermission("zander.web.finance", req, res, features)) return;
-
-    const invoiceId = parseInt(req.params.invoiceId, 10);
-    if (!invoiceId) return res.redirect("/dashboard/finance/invoices");
-
-    if (!canManageFinance(req)) {
-      setBannerCookie("danger", "You do not have permission to delete invoices.", res);
-      return res.redirect(`/dashboard/finance/invoices/${invoiceId}`);
-    }
-
-    try {
-      await deleteInvoice(invoiceId);
-      setBannerCookie("success", "Invoice deleted.", res);
-      return res.redirect("/dashboard/finance/invoices");
-    } catch (error) {
-      console.error("[finance] POST /dashboard/finance/invoices/:invoiceId/delete:", error);
-      setBannerCookie("danger", error.message, res);
-      return res.redirect(`/dashboard/finance/invoices/${invoiceId}`);
-    }
-  });
-
-  // POST /dashboard/finance/invoices/:invoiceId/mark-cancelled
-  app.post("/dashboard/finance/invoices/:invoiceId/mark-cancelled", async function (req, res) {
-    if (!await hasPermission("zander.web.finance", req, res, features)) return;
-
-    const invoiceId = parseInt(req.params.invoiceId, 10);
-    if (!invoiceId) return res.redirect("/dashboard/finance/invoices");
-
-    if (!canManageFinance(req)) {
-      setBannerCookie("danger", "You do not have permission to cancel invoices.", res);
-      return res.redirect(`/dashboard/finance/invoices/${invoiceId}`);
-    }
-
-    try {
-      await updateInvoice(invoiceId, { status: "cancelled" });
-      setBannerCookie("success", "Invoice marked as cancelled.", res);
-      return res.redirect(`/dashboard/finance/invoices/${invoiceId}`);
-    } catch (error) {
-      console.error("[finance] POST /dashboard/finance/invoices/:invoiceId/mark-cancelled:", error);
-      setBannerCookie("danger", error.message, res);
-      return res.redirect(`/dashboard/finance/invoices/${invoiceId}`);
-    }
-  });
-
-  // POST /dashboard/finance/invoices/:invoiceId/payments  (inline from invoice detail)
-  app.post("/dashboard/finance/invoices/:invoiceId/payments", async function (req, res) {
-    if (!await hasPermission("zander.web.finance", req, res, features)) return;
-
-    const invoiceId = parseInt(req.params.invoiceId, 10);
-    if (!invoiceId) return res.redirect("/dashboard/finance/invoices");
-
-    if (!canManageFinance(req)) {
-      setBannerCookie("danger", "You do not have permission to record payments.", res);
-      return res.redirect(`/dashboard/finance/invoices/${invoiceId}`);
-    }
-
-    try {
-      const invoice = await getInvoiceById(invoiceId);
-      if (!invoice) throw new Error("Invoice not found.");
-
-      const { amountCents, currency, paidDate, accountId, notes } = req.body || {};
-      await createPayment({
-        invoiceId,
-        vendorId: invoice.vendorId,
-        amountCents: Math.round(parseFloat(amountCents) * 100),
-        currency: currency || invoice.currency || "USD",
-        paidDate: paidDate ? new Date(paidDate) : new Date(),
-        accountId: accountId ? parseInt(accountId, 10) : null,
-        notes: notes?.trim() || null,
-        createdByUserId: req.session?.user?.userId || 0,
-      });
-      await recalculateInvoiceStatus(invoiceId);
-      setBannerCookie("success", "Payment recorded.", res);
-      return res.redirect(`/dashboard/finance/invoices/${invoiceId}`);
-    } catch (error) {
-      console.error("[finance] POST /dashboard/finance/invoices/:invoiceId/payments:", error);
-      setBannerCookie("danger", error.message, res);
-      return res.redirect(`/dashboard/finance/invoices/${invoiceId}`);
-    }
-  });
-
-  // POST /dashboard/finance/invoices/:invoiceId/attachments  (upload)
-  app.post("/dashboard/finance/invoices/:invoiceId/attachments", async function (req, res) {
-    if (!await hasPermission("zander.web.finance", req, res, features)) return;
-
-    const invoiceId = parseInt(req.params.invoiceId, 10);
-    if (!invoiceId) return res.redirect("/dashboard/finance/invoices");
-
-    if (!canManageFinance(req)) {
-      setBannerCookie("danger", "You do not have permission to upload attachments.", res);
-      return res.redirect(`/dashboard/finance/invoices/${invoiceId}`);
-    }
-
-    try {
-      const data = await req.file();
-      if (!data) throw new Error("No file uploaded.");
-
-      const allowedMimeTypes = ["application/pdf", "image/png", "image/jpeg", "image/jpg", "image/webp"];
-      if (!allowedMimeTypes.includes(data.mimetype)) throw new Error("Only PDF and image files are allowed.");
-
-      const buffer = await data.toBuffer();
-      if (buffer.length > 10 * 1024 * 1024) throw new Error("File size must be under 10 MB.");
-
-      const result = await uploadImage(buffer, { folder: "zander/finance", resourceType: "raw" });
-      await createAttachment({
-        invoiceId,
-        fileName: data.filename,
-        fileUrl: result.url,
-        filePublicId: result.publicId,
-        mimeType: data.mimetype,
-        fileSizeBytes: buffer.length,
-        label: req.body?.label || null,
-        uploadedByUserId: req.session?.user?.userId || 0,
-      });
-
-      setBannerCookie("success", "Attachment uploaded.", res);
-      return res.redirect(`/dashboard/finance/invoices/${invoiceId}`);
-    } catch (error) {
-      console.error("[finance] POST /dashboard/finance/invoices/:invoiceId/attachments:", error);
-      setBannerCookie("danger", error.message, res);
-      return res.redirect(`/dashboard/finance/invoices/${invoiceId}`);
-    }
-  });
-
-  // POST /dashboard/finance/invoices/:invoiceId/attachments/:attachmentId/delete
-  app.post("/dashboard/finance/invoices/:invoiceId/attachments/:attachmentId/delete", async function (req, res) {
-    if (!await hasPermission("zander.web.finance", req, res, features)) return;
-
-    const invoiceId = parseInt(req.params.invoiceId, 10);
-    const attachmentId = parseInt(req.params.attachmentId, 10);
-
-    if (!canManageFinance(req)) {
-      setBannerCookie("danger", "You do not have permission to delete attachments.", res);
-      return res.redirect(`/dashboard/finance/invoices/${invoiceId}`);
-    }
-
-    try {
-      await deleteAttachment(attachmentId);
-      setBannerCookie("success", "Attachment deleted.", res);
-    } catch (error) {
-      console.error("[finance] POST /dashboard/finance/invoices/attachments/delete:", error);
-      setBannerCookie("danger", error.message, res);
-    }
-    return res.redirect(`/dashboard/finance/invoices/${invoiceId}`);
-  });
-
-  // ===========================================================================
-  // Payments
-  // ===========================================================================
-
-  // GET /dashboard/finance/payments
-  app.get("/dashboard/finance/payments", async function (req, res) {
-    if (!await hasPermission("zander.web.finance", req, res, features)) return;
-
-    try {
-      const { limit, page, offset } = getPagination(req.query);
-      const vendorIdFilter = req.query.vendorId ? parseInt(req.query.vendorId, 10) : null;
-      const filters = { vendorId: vendorIdFilter, limit, offset };
-
-      const [base, payments, total] = await Promise.all([
-        baseViewData(req, features),
-        getPayments(filters),
-        getPaymentCount({ vendorId: vendorIdFilter }),
-      ]);
-
-      res.header("content-type", "text/html; charset=utf-8").send(
-        await app.view("dashboard/finance/payments", {
-          pageTitle: "Finance - Payments",
-          config,
-          req,
-          features,
-          ...base,
-          payments,
-          total,
-          totalCount: total,
-          page,
-          limit,
-          totalPages: Math.ceil(total / limit),
-          vendorIdFilter,
-        })
-      );
-    } catch (error) {
-      console.error("[finance] GET /dashboard/finance/payments:", error);
-      setBannerCookie("danger", error.message, res);
-      return res.redirect("/dashboard/finance");
-    }
-  });
-
-  // GET /dashboard/finance/payments/create
-  app.get("/dashboard/finance/payments/create", async function (req, res) {
-    if (!await hasPermission("zander.web.finance", req, res, features)) return;
-
-    if (!canManageFinance(req)) {
-      setBannerCookie("danger", "You do not have permission to record payments.", res);
-      return res.redirect("/dashboard/finance/payments");
-    }
-
-    try {
-      const [base, vendors, openInvoices, accounts] = await Promise.all([
-        baseViewData(req, features),
-        getVendors({ activeOnly: true }),
-        getInvoices({ limit: 200, offset: 0 }),
-        getAccounts(),
-      ]);
-
-      // Filter to unpaid/partial invoices
-      const pendingInvoices = openInvoices.filter((i) => ["pending", "partial", "overdue"].includes(i.status));
-
-      res.header("content-type", "text/html; charset=utf-8").send(
-        await app.view("dashboard/finance/payment-create", {
-          pageTitle: "Finance - Record Payment",
-          config,
-          req,
-          features,
-          ...base,
-          vendors,
-          invoices: pendingInvoices,
-          accounts,
-          prefillInvoiceId: req.query.invoiceId || null,
-        })
-      );
-    } catch (error) {
-      console.error("[finance] GET /dashboard/finance/payments/create:", error);
-      setBannerCookie("danger", error.message, res);
-      return res.redirect("/dashboard/finance/payments");
-    }
-  });
-
-  // POST /dashboard/finance/payments/create
-  app.post("/dashboard/finance/payments/create", async function (req, res) {
-    if (!await hasPermission("zander.web.finance", req, res, features)) return;
-
-    if (!canManageFinance(req)) {
-      setBannerCookie("danger", "You do not have permission to record payments.", res);
-      return res.redirect("/dashboard/finance/payments");
-    }
-
-    try {
-      const { vendorId, invoiceId, accountId, amountCents, currency, paidDate, notes } = req.body || {};
-      if (!vendorId) throw new Error("Vendor is required.");
-      if (!accountId) throw new Error("Account is required.");
-      if (!paidDate) throw new Error("Payment date is required.");
-
-      const createdByUserId = req.session?.user?.userId || 0;
-
-      // Optionally create a linked transaction
-      let transactionId = null;
-      if (accountId && amountCents) {
-        try {
-          const tx = await createTransaction({
-            type: "expense",
-            amountCents,
-            currency,
-            accountId,
-            vendorId,
-            description: `Payment to vendor #${vendorId}${invoiceId ? ` (Invoice #${invoiceId})` : ""}`,
-            transactionDate: paidDate,
-            createdByUserId,
-          });
-          transactionId = tx.transactionId;
-        } catch (txError) {
-          console.warn("[finance] Could not auto-create linked transaction:", txError.message);
-        }
-      }
-
-      await createPayment({ vendorId, invoiceId, transactionId, accountId, amountCents, currency, paidDate, notes, createdByUserId });
-
-      setBannerCookie("success", "Payment recorded successfully.", res);
-      return res.redirect("/dashboard/finance/payments");
-    } catch (error) {
-      console.error("[finance] POST /dashboard/finance/payments/create:", error);
-      setBannerCookie("danger", error.message, res);
-      return res.redirect("/dashboard/finance/payments/create");
-    }
-  });
-
-  // POST /dashboard/finance/payments/:paymentId/delete
-  app.post("/dashboard/finance/payments/:paymentId/delete", async function (req, res) {
-    if (!await hasPermission("zander.web.finance", req, res, features)) return;
-
-    const paymentId = parseInt(req.params.paymentId, 10);
-    if (!paymentId) return res.redirect("/dashboard/finance/payments");
-
-    if (!canManageFinance(req)) {
-      setBannerCookie("danger", "You do not have permission to delete payments.", res);
-      return res.redirect("/dashboard/finance/payments");
-    }
-
-    try {
-      await deletePayment(paymentId);
-      setBannerCookie("success", "Payment deleted.", res);
-      return res.redirect("/dashboard/finance/payments");
-    } catch (error) {
-      console.error("[finance] POST /dashboard/finance/payments/:paymentId/delete:", error);
-      setBannerCookie("danger", error.message, res);
-      return res.redirect("/dashboard/finance/payments");
-    }
-  });
-
-  // ===========================================================================
   // Transactions
   // ===========================================================================
 
@@ -947,20 +124,17 @@ export default function dashboardFinanceRoute(app, fetch, config, db, features, 
       const { limit, page, offset } = getPagination(req.query);
       const filters = {
         type: req.query.type || null,
-        accountId: req.query.accountId || null,
         categoryId: req.query.categoryId || null,
-        vendorId: req.query.vendorId || null,
         dateFrom: req.query.dateFrom || null,
         dateTo: req.query.dateTo || null,
         limit,
         offset,
       };
 
-      const [base, transactions, total, accounts, categories] = await Promise.all([
+      const [base, transactions, total, categories] = await Promise.all([
         baseViewData(req, features),
         getTransactions(filters),
         getTransactionCount(filters),
-        getAccounts(),
         getCategories(),
       ]);
 
@@ -977,7 +151,6 @@ export default function dashboardFinanceRoute(app, fetch, config, db, features, 
           page,
           limit,
           totalPages: Math.ceil(total / limit),
-          accounts,
           categories,
           filters: req.query,
         })
@@ -999,12 +172,9 @@ export default function dashboardFinanceRoute(app, fetch, config, db, features, 
     }
 
     try {
-      const [base, accounts, categories, vendors, tags] = await Promise.all([
+      const [base, categories] = await Promise.all([
         baseViewData(req, features),
-        getAccounts(),
         getCategories(),
-        getVendors({ activeOnly: true }),
-        getTags(),
       ]);
 
       res.header("content-type", "text/html; charset=utf-8").send(
@@ -1014,10 +184,7 @@ export default function dashboardFinanceRoute(app, fetch, config, db, features, 
           req,
           features,
           ...base,
-          accounts,
           categories,
-          vendors,
-          tags,
         })
       );
     } catch (error) {
@@ -1037,22 +204,17 @@ export default function dashboardFinanceRoute(app, fetch, config, db, features, 
     }
 
     try {
-      const { type, amountCents, currency, accountId, toAccountId, categoryId, vendorId, description, notes, transactionDate } = req.body || {};
+      const { type, amountCents, currency, categoryId, description, notes, transactionDate } = req.body || {};
       if (!type) throw new Error("Transaction type is required.");
       if (!amountCents || parseInt(amountCents, 10) <= 0) throw new Error("Amount must be greater than 0.");
-      if (!accountId) throw new Error("Account is required.");
       if (!transactionDate) throw new Error("Transaction date is required.");
-
-      // tagIds may be comma-separated or an array
-      let tagIds = req.body.tagIds || [];
-      if (typeof tagIds === "string") tagIds = tagIds.split(",").filter(Boolean);
 
       const createdByUserId = req.session?.user?.userId || 0;
 
-      const transaction = await createTransaction({
-        type, amountCents, currency, accountId, toAccountId,
-        categoryId, vendorId, description, notes, transactionDate,
-        tagIds, createdByUserId,
+      await createTransaction({
+        type, amountCents, currency,
+        categoryId, description, notes, transactionDate,
+        createdByUserId,
       });
 
       setBannerCookie("success", "Transaction created successfully.", res);
@@ -1061,45 +223,6 @@ export default function dashboardFinanceRoute(app, fetch, config, db, features, 
       console.error("[finance] POST /dashboard/finance/transactions/create:", error);
       setBannerCookie("danger", error.message, res);
       return res.redirect("/dashboard/finance/transactions/create");
-    }
-  });
-
-  // GET /dashboard/finance/transactions/:transactionId
-  app.get("/dashboard/finance/transactions/:transactionId", async function (req, res) {
-    if (!await hasPermission("zander.web.finance", req, res, features)) return;
-
-    const transactionId = parseInt(req.params.transactionId, 10);
-    if (!transactionId) return res.redirect("/dashboard/finance/transactions");
-
-    try {
-      const [base, transaction, attachments] = await Promise.all([
-        baseViewData(req, features),
-        getTransactionById(transactionId),
-        getAttachments({ transactionId }).catch(() => []),
-      ]);
-
-      if (!transaction) {
-        setBannerCookie("danger", "Transaction not found.", res);
-        return res.redirect("/dashboard/finance/transactions");
-      }
-
-      res.header("content-type", "text/html; charset=utf-8").send(
-        await app.view("dashboard/finance/transaction-detail", {
-          pageTitle: `Finance - Transaction #${transaction.transactionId}`,
-          config,
-          req,
-          features,
-          ...base,
-          transaction,
-          tx: transaction,
-          tags: (transaction.tags || []).map((t) => t.tag),
-          attachments,
-        })
-      );
-    } catch (error) {
-      console.error("[finance] GET /dashboard/finance/transactions/:transactionId:", error);
-      setBannerCookie("danger", error.message, res);
-      return res.redirect("/dashboard/finance/transactions");
     }
   });
 
@@ -1112,17 +235,14 @@ export default function dashboardFinanceRoute(app, fetch, config, db, features, 
 
     if (!canManageFinance(req)) {
       setBannerCookie("danger", "You do not have permission to edit transactions.", res);
-      return res.redirect(`/dashboard/finance/transactions/${transactionId}`);
+      return res.redirect("/dashboard/finance/transactions");
     }
 
     try {
-      const [base, transaction, accounts, categories, vendors, tags] = await Promise.all([
+      const [base, transaction, categories] = await Promise.all([
         baseViewData(req, features),
         getTransactionById(transactionId),
-        getAccounts(),
         getCategories(),
-        getVendors({ activeOnly: true }),
-        getTags(),
       ]);
 
       if (!transaction) {
@@ -1132,7 +252,7 @@ export default function dashboardFinanceRoute(app, fetch, config, db, features, 
 
       if (transaction.isLocked) {
         setBannerCookie("danger", "This transaction is locked and cannot be edited.", res);
-        return res.redirect(`/dashboard/finance/transactions/${transactionId}`);
+        return res.redirect("/dashboard/finance/transactions");
       }
 
       res.header("content-type", "text/html; charset=utf-8").send(
@@ -1144,17 +264,13 @@ export default function dashboardFinanceRoute(app, fetch, config, db, features, 
           ...base,
           transaction,
           tx: transaction,
-          selectedTagIds: (transaction.tags || []).map((t) => t.tagId || t.tag?.tagId),
-          accounts,
           categories,
-          vendors,
-          tags,
         })
       );
     } catch (error) {
       console.error("[finance] GET /dashboard/finance/transactions/:transactionId/edit:", error);
       setBannerCookie("danger", error.message, res);
-      return res.redirect(`/dashboard/finance/transactions/${transactionId}`);
+      return res.redirect("/dashboard/finance/transactions");
     }
   });
 
@@ -1167,22 +283,19 @@ export default function dashboardFinanceRoute(app, fetch, config, db, features, 
 
     if (!canManageFinance(req)) {
       setBannerCookie("danger", "You do not have permission to edit transactions.", res);
-      return res.redirect(`/dashboard/finance/transactions/${transactionId}`);
+      return res.redirect("/dashboard/finance/transactions");
     }
 
     try {
-      const { type, amountCents, currency, accountId, toAccountId, categoryId, vendorId, description, notes, transactionDate } = req.body || {};
-
-      let tagIds = req.body.tagIds || [];
-      if (typeof tagIds === "string") tagIds = tagIds.split(",").filter(Boolean);
+      const { type, amountCents, currency, categoryId, description, notes, transactionDate } = req.body || {};
 
       await updateTransaction(transactionId, {
-        type, amountCents, currency, accountId, toAccountId,
-        categoryId, vendorId, description, notes, transactionDate, tagIds,
+        type, amountCents, currency,
+        categoryId, description, notes, transactionDate,
       });
 
       setBannerCookie("success", "Transaction updated.", res);
-      return res.redirect(`/dashboard/finance/transactions/${transactionId}`);
+      return res.redirect("/dashboard/finance/transactions");
     } catch (error) {
       if (error.message === "locked") {
         setBannerCookie("danger", "This transaction is locked and cannot be edited.", res);
@@ -1190,7 +303,7 @@ export default function dashboardFinanceRoute(app, fetch, config, db, features, 
         console.error("[finance] POST /dashboard/finance/transactions/:transactionId/edit:", error);
         setBannerCookie("danger", error.message, res);
       }
-      return res.redirect(`/dashboard/finance/transactions/${transactionId}`);
+      return res.redirect("/dashboard/finance/transactions");
     }
   });
 
@@ -1203,7 +316,7 @@ export default function dashboardFinanceRoute(app, fetch, config, db, features, 
 
     if (!canManageFinance(req)) {
       setBannerCookie("danger", "You do not have permission to delete transactions.", res);
-      return res.redirect(`/dashboard/finance/transactions/${transactionId}`);
+      return res.redirect("/dashboard/finance/transactions");
     }
 
     try {
@@ -1217,82 +330,7 @@ export default function dashboardFinanceRoute(app, fetch, config, db, features, 
         console.error("[finance] POST /dashboard/finance/transactions/:transactionId/delete:", error);
         setBannerCookie("danger", error.message, res);
       }
-      return res.redirect(`/dashboard/finance/transactions/${transactionId}`);
-    }
-  });
-
-  // POST /dashboard/finance/transactions/:transactionId/upload
-  app.post("/dashboard/finance/transactions/:transactionId/upload", async function (req, res) {
-    if (!await hasPermission("zander.web.finance", req, res, features)) return;
-
-    const transactionId = parseInt(req.params.transactionId, 10);
-    if (!transactionId) return res.redirect("/dashboard/finance/transactions");
-
-    if (!canManageFinance(req)) {
-      setBannerCookie("danger", "You do not have permission to upload attachments.", res);
-      return res.redirect(`/dashboard/finance/transactions/${transactionId}`);
-    }
-
-    try {
-      const data = await req.file();
-      if (!data) throw new Error("No file uploaded.");
-
-      const allowedMimeTypes = ["application/pdf", "image/png", "image/jpeg", "image/jpg", "image/webp"];
-      if (!allowedMimeTypes.includes(data.mimetype)) {
-        throw new Error("Only PDF and image files are allowed.");
-      }
-
-      const buffer = await data.toBuffer();
-      if (buffer.length > 10 * 1024 * 1024) {
-        throw new Error("File size must be under 10 MB.");
-      }
-
-      const uploadedByUserId = req.session?.user?.userId || 0;
-      const result = await uploadImage(buffer, { folder: "zander/finance", resourceType: "raw" });
-
-      await createAttachment({
-        transactionId,
-        fileName: data.filename,
-        fileUrl: result.url,
-        filePublicId: result.publicId,
-        mimeType: data.mimetype,
-        fileSizeBytes: buffer.length,
-        label: req.body?.label || null,
-        uploadedByUserId,
-      });
-
-      setBannerCookie("success", "Attachment uploaded successfully.", res);
-      return res.redirect(`/dashboard/finance/transactions/${transactionId}`);
-    } catch (error) {
-      console.error("[finance] POST /dashboard/finance/transactions/:transactionId/upload:", error);
-      setBannerCookie("danger", error.message, res);
-      return res.redirect(`/dashboard/finance/transactions/${transactionId}`);
-    }
-  });
-
-  // POST /dashboard/finance/transactions/:transactionId/attachments/:attachmentId/delete
-  app.post("/dashboard/finance/transactions/:transactionId/attachments/:attachmentId/delete", async function (req, res) {
-    if (!await hasPermission("zander.web.finance", req, res, features)) return;
-
-    const transactionId = parseInt(req.params.transactionId, 10);
-    const attachmentId = parseInt(req.params.attachmentId, 10);
-
-    if (!canManageFinance(req)) {
-      setBannerCookie("danger", "You do not have permission to delete attachments.", res);
-      return res.redirect(`/dashboard/finance/transactions/${transactionId}`);
-    }
-
-    try {
-      const attachment = await deleteAttachment(attachmentId);
-      if (attachment.filePublicId) {
-        console.info(`[finance] Attachment deleted — Cloudinary publicId for manual cleanup: ${attachment.filePublicId}`);
-      }
-      setBannerCookie("success", "Attachment deleted.", res);
-      return res.redirect(`/dashboard/finance/transactions/${transactionId}`);
-    } catch (error) {
-      console.error("[finance] POST …/attachments/:attachmentId/delete:", error);
-      setBannerCookie("danger", error.message, res);
-      return res.redirect(`/dashboard/finance/transactions/${transactionId}`);
+      return res.redirect("/dashboard/finance/transactions");
     }
   });
 
@@ -1311,11 +349,10 @@ export default function dashboardFinanceRoute(app, fetch, config, db, features, 
       const selectedYear = parseInt(req.query.year, 10) || currentYear;
       const selectedMonth = parseInt(req.query.month, 10) || currentMonth;
 
-      const [base, budgetItems, allEntries, vendors, categories] = await Promise.all([
+      const [base, budgetItems, allEntries, categories] = await Promise.all([
         baseViewData(req, features),
         getBudgetVsActual(selectedYear, selectedMonth),
         getAllBudgetEntries(),
-        getVendors({ activeOnly: true }),
         getCategories(),
       ]);
 
@@ -1328,7 +365,6 @@ export default function dashboardFinanceRoute(app, fetch, config, db, features, 
           ...base,
           budgetItems,
           allEntries,
-          vendors,
           categories,
           currentYear,
           currentMonth,
@@ -1353,8 +389,8 @@ export default function dashboardFinanceRoute(app, fetch, config, db, features, 
     }
 
     try {
-      const { vendorId, categoryId, label, monthlyBudgetCents, currency, notes } = req.body || {};
-      await createBudgetEntry({ vendorId, categoryId, label, monthlyBudgetCents, currency, notes });
+      const { categoryId, label, monthlyBudgetCents, currency, notes } = req.body || {};
+      await createBudgetEntry({ categoryId, label, monthlyBudgetCents, currency, notes });
       setBannerCookie("success", "Budget entry created.", res);
       return res.redirect("/dashboard/finance/budget");
     } catch (error) {
@@ -1377,8 +413,8 @@ export default function dashboardFinanceRoute(app, fetch, config, db, features, 
     }
 
     try {
-      const { vendorId, categoryId, label, monthlyBudgetCents, currency, notes, isActive } = req.body || {};
-      await updateBudgetEntry(budgetId, { vendorId, categoryId, label, monthlyBudgetCents, currency, notes, isActive: isActive === "1" ? 1 : 0 });
+      const { categoryId, label, monthlyBudgetCents, currency, notes, isActive } = req.body || {};
+      await updateBudgetEntry(budgetId, { categoryId, label, monthlyBudgetCents, currency, notes, isActive: isActive === "1" ? 1 : 0 });
       setBannerCookie("success", "Budget entry updated.", res);
       return res.redirect("/dashboard/finance/budget");
     } catch (error) {
@@ -1412,140 +448,7 @@ export default function dashboardFinanceRoute(app, fetch, config, db, features, 
   });
 
   // ===========================================================================
-  // Reports
-  // ===========================================================================
-
-  // GET /dashboard/finance/reports
-  app.get("/dashboard/finance/reports", async function (req, res) {
-    if (!await hasPermission("zander.web.finance", req, res, features)) return;
-
-    try {
-      const [base, reports] = await Promise.all([
-        baseViewData(req, features),
-        getMonthlyReports(),
-      ]);
-
-      res.header("content-type", "text/html; charset=utf-8").send(
-        await app.view("dashboard/finance/reports", {
-          pageTitle: "Finance - Monthly Reports",
-          config,
-          req,
-          features,
-          ...base,
-          reports,
-        })
-      );
-    } catch (error) {
-      console.error("[finance] GET /dashboard/finance/reports:", error);
-      setBannerCookie("danger", error.message, res);
-      return res.redirect("/dashboard/finance");
-    }
-  });
-
-  // GET /dashboard/finance/reports/:year/:month
-  app.get("/dashboard/finance/reports/:year/:month", async function (req, res) {
-    if (!await hasPermission("zander.web.finance", req, res, features)) return;
-
-    const year = parseInt(req.params.year, 10);
-    const month = parseInt(req.params.month, 10);
-    if (!year || !month || month < 1 || month > 12) {
-      setBannerCookie("danger", "Invalid report period.", res);
-      return res.redirect("/dashboard/finance/reports");
-    }
-
-    try {
-      let report = await getMonthlyReport(year, month);
-      if (!report) {
-        const data = await generateMonthlyReportData(year, month);
-        report = await upsertMonthlyReport(year, month, data);
-        report.reportData = data;
-      }
-
-      const base = await baseViewData(req, features);
-
-      res.header("content-type", "text/html; charset=utf-8").send(
-        await app.view("dashboard/finance/report-detail", {
-          pageTitle: `Finance - Report ${year}/${String(month).padStart(2, "0")}`,
-          config,
-          req,
-          features,
-          ...base,
-          report,
-          year,
-          month,
-        })
-      );
-    } catch (error) {
-      console.error("[finance] GET /dashboard/finance/reports/:year/:month:", error);
-      setBannerCookie("danger", error.message, res);
-      return res.redirect("/dashboard/finance/reports");
-    }
-  });
-
-  // POST /dashboard/finance/reports/:year/:month/generate
-  app.post("/dashboard/finance/reports/:year/:month/generate", async function (req, res) {
-    if (!await hasPermission("zander.web.finance", req, res, features)) return;
-
-    const year = parseInt(req.params.year, 10);
-    const month = parseInt(req.params.month, 10);
-
-    if (!canManageFinance(req)) {
-      setBannerCookie("danger", "You do not have permission to generate reports.", res);
-      return res.redirect(`/dashboard/finance/reports/${year}/${month}`);
-    }
-
-    try {
-      const existing = await getMonthlyReport(year, month);
-      if (existing?.isLocked) {
-        setBannerCookie("danger", "This report is locked and cannot be regenerated.", res);
-        return res.redirect(`/dashboard/finance/reports/${year}/${month}`);
-      }
-
-      const data = await generateMonthlyReportData(year, month);
-      await upsertMonthlyReport(year, month, data);
-
-      setBannerCookie("success", `Report for ${year}/${String(month).padStart(2, "0")} regenerated.`, res);
-      return res.redirect(`/dashboard/finance/reports/${year}/${month}`);
-    } catch (error) {
-      console.error("[finance] POST /dashboard/finance/reports/:year/:month/generate:", error);
-      setBannerCookie("danger", error.message, res);
-      return res.redirect(`/dashboard/finance/reports/${year}/${month}`);
-    }
-  });
-
-  // POST /dashboard/finance/reports/:year/:month/publish
-  app.post("/dashboard/finance/reports/:year/:month/publish", async function (req, res) {
-    if (!await hasPermission("zander.web.finance", req, res, features)) return;
-
-    const year = parseInt(req.params.year, 10);
-    const month = parseInt(req.params.month, 10);
-
-    if (!canManageFinance(req)) {
-      setBannerCookie("danger", "You do not have permission to publish reports.", res);
-      return res.redirect(`/dashboard/finance/reports/${year}/${month}`);
-    }
-
-    try {
-      const report = await getMonthlyReport(year, month);
-      if (!report) {
-        setBannerCookie("danger", "Report not found. Please generate it first.", res);
-        return res.redirect(`/dashboard/finance/reports/${year}/${month}`);
-      }
-
-      const userId = req.session?.user?.userId || 0;
-      await publishMonthlyReport(report.reportId, userId);
-
-      setBannerCookie("success", `Report for ${year}/${String(month).padStart(2, "0")} published and locked.`, res);
-      return res.redirect(`/dashboard/finance/reports/${year}/${month}`);
-    } catch (error) {
-      console.error("[finance] POST /dashboard/finance/reports/:year/:month/publish:", error);
-      setBannerCookie("danger", error.message, res);
-      return res.redirect(`/dashboard/finance/reports/${year}/${month}`);
-    }
-  });
-
-  // ===========================================================================
-  // Settings
+  // Settings (categories only)
   // ===========================================================================
 
   // GET /dashboard/finance/settings
@@ -1558,11 +461,9 @@ export default function dashboardFinanceRoute(app, fetch, config, db, features, 
     }
 
     try {
-      const [base, accounts, categories, tags] = await Promise.all([
+      const [base, categories] = await Promise.all([
         baseViewData(req, features),
-        getAccounts(),
         getCategories(),
-        getTags(),
       ]);
 
       res.header("content-type", "text/html; charset=utf-8").send(
@@ -1572,9 +473,7 @@ export default function dashboardFinanceRoute(app, fetch, config, db, features, 
           req,
           features,
           ...base,
-          accounts,
           categories,
-          tags,
         })
       );
     } catch (error) {
@@ -1582,60 +481,6 @@ export default function dashboardFinanceRoute(app, fetch, config, db, features, 
       setBannerCookie("danger", error.message, res);
       return res.redirect("/dashboard/finance");
     }
-  });
-
-  // ---- Accounts ----
-
-  app.post("/dashboard/finance/settings/accounts/create", async function (req, res) {
-    if (!await hasPermission("zander.web.finance", req, res, features)) return;
-    if (!canManageFinance(req)) {
-      setBannerCookie("danger", "Permission denied.", res);
-      return res.redirect("/dashboard/finance/settings");
-    }
-    try {
-      const { name, accountType, openingBalanceCents, currency, notes } = req.body || {};
-      await createAccount({ name, accountType, openingBalanceCents, currency, notes });
-      setBannerCookie("success", "Account created.", res);
-    } catch (error) {
-      console.error("[finance] POST settings/accounts/create:", error);
-      setBannerCookie("danger", error.message, res);
-    }
-    return res.redirect("/dashboard/finance/settings");
-  });
-
-  app.post("/dashboard/finance/settings/accounts/:id/edit", async function (req, res) {
-    if (!await hasPermission("zander.web.finance", req, res, features)) return;
-    if (!canManageFinance(req)) {
-      setBannerCookie("danger", "Permission denied.", res);
-      return res.redirect("/dashboard/finance/settings");
-    }
-    const id = parseInt(req.params.id, 10);
-    try {
-      const { name, accountType, openingBalanceCents, currency, notes, isActive } = req.body || {};
-      await updateAccount(id, { name, accountType, openingBalanceCents, currency, notes, isActive: isActive === "1" ? 1 : 0 });
-      setBannerCookie("success", "Account updated.", res);
-    } catch (error) {
-      console.error("[finance] POST settings/accounts/:id/edit:", error);
-      setBannerCookie("danger", error.message, res);
-    }
-    return res.redirect("/dashboard/finance/settings");
-  });
-
-  app.post("/dashboard/finance/settings/accounts/:id/delete", async function (req, res) {
-    if (!await hasPermission("zander.web.finance", req, res, features)) return;
-    if (!canManageFinance(req)) {
-      setBannerCookie("danger", "Permission denied.", res);
-      return res.redirect("/dashboard/finance/settings");
-    }
-    const id = parseInt(req.params.id, 10);
-    try {
-      await deleteAccount(id);
-      setBannerCookie("success", "Account deleted.", res);
-    } catch (error) {
-      console.error("[finance] POST settings/accounts/:id/delete:", error);
-      setBannerCookie("danger", error.message, res);
-    }
-    return res.redirect("/dashboard/finance/settings");
   });
 
   // ---- Categories ----
@@ -1687,42 +532,6 @@ export default function dashboardFinanceRoute(app, fetch, config, db, features, 
       setBannerCookie("success", "Category deleted.", res);
     } catch (error) {
       console.error("[finance] POST settings/categories/:id/delete:", error);
-      setBannerCookie("danger", error.message, res);
-    }
-    return res.redirect("/dashboard/finance/settings");
-  });
-
-  // ---- Tags ----
-
-  app.post("/dashboard/finance/settings/tags/create", async function (req, res) {
-    if (!await hasPermission("zander.web.finance", req, res, features)) return;
-    if (!canManageFinance(req)) {
-      setBannerCookie("danger", "Permission denied.", res);
-      return res.redirect("/dashboard/finance/settings");
-    }
-    try {
-      const { name, color } = req.body || {};
-      await createTag({ name, color });
-      setBannerCookie("success", "Tag created.", res);
-    } catch (error) {
-      console.error("[finance] POST settings/tags/create:", error);
-      setBannerCookie("danger", error.message, res);
-    }
-    return res.redirect("/dashboard/finance/settings");
-  });
-
-  app.post("/dashboard/finance/settings/tags/:id/delete", async function (req, res) {
-    if (!await hasPermission("zander.web.finance", req, res, features)) return;
-    if (!canManageFinance(req)) {
-      setBannerCookie("danger", "Permission denied.", res);
-      return res.redirect("/dashboard/finance/settings");
-    }
-    const id = parseInt(req.params.id, 10);
-    try {
-      await deleteTag(id);
-      setBannerCookie("success", "Tag deleted.", res);
-    } catch (error) {
-      console.error("[finance] POST settings/tags/:id/delete:", error);
       setBannerCookie("danger", error.message, res);
     }
     return res.redirect("/dashboard/finance/settings");

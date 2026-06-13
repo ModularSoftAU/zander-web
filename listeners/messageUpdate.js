@@ -30,8 +30,8 @@ export class GuildMessageUpdateListener extends Listener {
         `Message edit from \`${oldMessage.author.username}\` in \`#${oldMessage.channel.name}\``
       )
       .addFields(
-        { name: "Old Message", value: oldMessage.content || "[empty]", inline: false },
-        { name: "Edited Message", value: newMessage.content || "[empty]", inline: false }
+        { name: "Old Message", value: (oldMessage.content || "[empty]").slice(0, 1024), inline: false },
+        { name: "Edited Message", value: (newMessage.content || "[empty]").slice(0, 1024), inline: false }
       );
 
     const jumpButton = new ActionRowBuilder().addComponents(
