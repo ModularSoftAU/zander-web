@@ -140,6 +140,61 @@
       }
     });
 
+    // Matches a single, whole bare URL (http/https or www.).
+    var singleUrlPattern = /^(https?:\/\/|www\.)[^\s]+$/i;
+    // Matches a trailing URL token (used for auto-linking while typing).
+    var trailingUrlPattern = /(^|\s)((https?:\/\/|www\.)[^\s]+?)([.,!?;:)]*)$/i;
+
+    // Inspect the text immediately before the caret and, if it ends with a
+    // bare URL, convert that URL into an anchor element in place.
+    function autoLinkLastWord() {
+      var sel = window.getSelection && window.getSelection();
+      if (!sel || sel.rangeCount === 0) return;
+
+      var range = sel.getRangeAt(0);
+      var node = range.startContainer;
+      if (node.nodeType !== 3) return; // must be a text node
+
+      // Don't double-link if we're already inside an anchor.
+      if ($(node).closest('a').length) return;
+
+      var text = node.nodeValue || '';
+      // The caret may sit just after a space/newline the keypress inserted;
+      // examine the text up to the caret position.
+      var caret = range.startOffset;
+      var before = text.slice(0, caret);
+
+      var match = trailingUrlPattern.exec(before.replace(/[\s ]+$/, ''));
+      if (!match) return;
+
+      var url = match[2];
+      var href = /^www\./i.test(url) ? 'http://' + url : url;
+      var start = before.replace(/[\s ]+$/, '').length - url.length;
+
+      // Split the text node so we can wrap only the URL portion.
+      var urlNode = node.splitText(start);
+      urlNode.splitText(url.length);
+
+      var anchor = document.createElement('a');
+      anchor.setAttribute('href', href);
+      anchor.setAttribute('target', '_blank');
+      anchor.setAttribute('rel', 'noopener noreferrer');
+      anchor.textContent = url;
+      urlNode.parentNode.replaceChild(anchor, urlNode);
+
+      // Restore the caret to just after the (now linked) URL + trailing space.
+      var after = anchor.nextSibling;
+      var newRange = document.createRange();
+      if (after && after.nodeType === 3) {
+        newRange.setStart(after, after.nodeValue.length);
+      } else {
+        newRange.setStartAfter(anchor);
+      }
+      newRange.collapse(true);
+      sel.removeAllRanges();
+      sel.addRange(newRange);
+    }
+
     $('#<%= editorElementName %>').summernote({
         height: 250,
         minHeight: null,
@@ -170,7 +225,28 @@
               e.preventDefault();
               var html = marked.parse(plainText);
               $('#<%= editorElementName %>').summernote('pasteHTML', html);
+              return;
             }
+
+            // Auto-hyperlink: when pasting plain text that is a single bare URL,
+            // insert it as a clickable link rather than plain text.
+            if (!htmlData && plainText) {
+              var trimmed = plainText.trim();
+              if (singleUrlPattern.test(trimmed)) {
+                e.preventDefault();
+                $('#<%= editorElementName %>').summernote('createLink', {
+                  text: trimmed,
+                  url: trimmed,
+                  isNewWindow: true
+                });
+              }
+            }
+          },
+          onKeyup: function (e) {
+            // Auto-hyperlink the word just typed when the user presses
+            // space (32) or enter (13).
+            if (e.keyCode !== 32 && e.keyCode !== 13) return;
+            autoLinkLastWord();
           }
         },
         hint: {
