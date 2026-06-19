@@ -167,6 +167,38 @@ describe("runDiscordActionsForEvent — on_update guild event behaviour", () => 
     expect(mockCreate).not.toHaveBeenCalled();
   });
 
+  it("on_publish edits instead of creating a duplicate when a guild event already exists", async () => {
+    const guildEvent = { id: "existing-id", edit: mockEdit, delete: mockDelete };
+    mockScheduledEventsFetch.mockResolvedValueOnce(guildEvent);
+
+    const event = {
+      ...baseEvent,
+      discordGuildEventId: "existing-id",
+      actions: [{
+        id: 6, enabled: true, trigger: "on_publish",
+        actionType: "discord_guild_event", config: { guildId: "guild-789" },
+      }],
+    };
+    await runDiscordActionsForEvent(event, "on_publish", { guildId: "guild-789" });
+    expect(mockEdit).toHaveBeenCalledOnce();
+    expect(mockCreate).not.toHaveBeenCalled();
+  });
+
+  it("recreates the guild event when the stored ID no longer exists on Discord", async () => {
+    mockScheduledEventsFetch.mockRejectedValueOnce(new Error("Unknown Guild Scheduled Event"));
+
+    const event = {
+      ...baseEvent,
+      discordGuildEventId: "stale-id",
+      actions: [{
+        id: 7, enabled: true, trigger: "on_update",
+        actionType: "discord_guild_event", config: { guildId: "guild-456" },
+      }],
+    };
+    await runDiscordActionsForEvent(event, "on_update", { guildId: "guild-456" });
+    expect(mockCreate).toHaveBeenCalledOnce();
+  });
+
   it("on_publish trigger creates a new guild event", async () => {
     const event = {
       ...baseEvent,

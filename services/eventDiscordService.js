@@ -92,6 +92,58 @@ function buildEventEmbed(event) {
   return embed;
 }
 
+/**
+ * Resolve an event banner URL into a base64 data URI that discord.js accepts
+ * directly for Guild Scheduled Event cover images.
+ *
+ * Discord (and discord.js) will reject a remote URL it cannot fetch, or a
+ * non-image/oversized response — and that rejection happens inside
+ * scheduledEvents.create()/edit(), aborting the whole publish. We fetch it
+ * ourselves so a bad banner degrades gracefully (event published without a
+ * cover) instead of failing the entire Discord guild event.
+ *
+ * Returns a data-URI string, or null if the banner can't be used.
+ */
+async function resolveGuildEventImage(bannerUrl) {
+  if (!bannerUrl) return null;
+  try {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 8000);
+    let res;
+    try {
+      res = await fetch(bannerUrl, { signal: controller.signal });
+    } finally {
+      clearTimeout(timeout);
+    }
+
+    if (!res.ok) {
+      console.warn(`[EventDiscord] Banner fetch returned ${res.status} for ${bannerUrl}`);
+      return null;
+    }
+
+    const contentType = (res.headers.get("content-type") || "").toLowerCase();
+    // Discord supports JPG / PNG / GIF cover images. SVG/webp are not accepted.
+    const supported = ["image/jpeg", "image/jpg", "image/png", "image/gif"];
+    if (!supported.some((t) => contentType.startsWith(t))) {
+      console.warn(`[EventDiscord] Unsupported banner content-type '${contentType}' for ${bannerUrl}`);
+      return null;
+    }
+
+    const buffer = Buffer.from(await res.arrayBuffer());
+    // Discord cover image limit is ~10 MB; stay well under to be safe.
+    if (buffer.length === 0 || buffer.length > 8 * 1024 * 1024) {
+      console.warn(`[EventDiscord] Banner size ${buffer.length} bytes out of range for ${bannerUrl}`);
+      return null;
+    }
+
+    const mime = contentType.split(";")[0];
+    return `data:${mime};base64,${buffer.toString("base64")}`;
+  } catch (err) {
+    console.warn(`[EventDiscord] Failed to resolve banner ${bannerUrl}:`, err.message);
+    return null;
+  }
+}
+
 function buildEventButton(event, siteBaseUrl) {
   const normalizedUrl = siteBaseUrl.endsWith("/") ? siteBaseUrl.slice(0, -1) : siteBaseUrl;
   const eventUrl = `${normalizedUrl}/events/${event.slug}`;
@@ -231,14 +283,23 @@ export async function createGuildScheduledEvent(event, guildId) {
   if (!client?.isReady?.()) throw new Error("Discord client not ready");
   if (!guildId) throw new Error("No guild ID provided");
 
+  // Idempotency: if this event already has a guild scheduled event, update it
+  // instead of creating a duplicate (e.g. re-running publish / republishing).
+  if (event.discordGuildEventId) {
+    return editGuildScheduledEvent(event, guildId, event.discordGuildEventId);
+  }
+
   const guild = await client.guilds.fetch(guildId);
   if (!guild) throw new Error(`Guild ${guildId} not found`);
+
+  const startTime = new Date(event.startAt);
+  if (Number.isNaN(startTime.getTime())) throw new Error("Event has no valid start time");
 
   const isVoiceChannel = event.locationType === "discord" && event.locationDiscordChannelId;
 
   const eventData = {
     name: event.title,
-    scheduledStartTime: new Date(event.startAt),
+    scheduledStartTime: startTime,
     scheduledEndTime: new Date(event.endAt),
     privacyLevel: GuildScheduledEventPrivacyLevel.GuildOnly,
     description: event.description ? htmlToMarkdown(event.description).slice(0, 1000) : undefined,
@@ -255,13 +316,8 @@ export async function createGuildScheduledEvent(event, guildId) {
         }),
   };
 
-  if (event.bannerUrl) {
-    try {
-      eventData.image = event.bannerUrl;
-    } catch {
-      // Banner URL may not be a supported format; continue without it
-    }
-  }
+  const image = await resolveGuildEventImage(event.bannerUrl);
+  if (image) eventData.image = image;
 
   const guildEvent = await guild.scheduledEvents.create(eventData);
 
@@ -290,8 +346,13 @@ export async function editGuildScheduledEvent(event, guildId, guildEventId) {
   const guild = await client.guilds.fetch(guildId);
   if (!guild) throw new Error(`Guild ${guildId} not found`);
 
-  const guildEvent = await guild.scheduledEvents.fetch(guildEventId);
-  if (!guildEvent) throw new Error(`Guild event ${guildEventId} not found`);
+  // The stored guild event may have been deleted on Discord. Instead of
+  // failing the republish, recreate it from scratch.
+  const guildEvent = await guild.scheduledEvents.fetch(guildEventId).catch(() => null);
+  if (!guildEvent) {
+    console.warn(`[EventDiscord] Guild event ${guildEventId} no longer exists; recreating.`);
+    return createGuildScheduledEvent({ ...event, discordGuildEventId: null }, guildId);
+  }
 
   const isVoiceChannel = event.locationType === "discord" && event.locationDiscordChannelId;
 
@@ -313,12 +374,10 @@ export async function editGuildScheduledEvent(event, guildId, guildEventId) {
         }),
   };
 
-  if (event.bannerUrl) {
-    editData.image = event.bannerUrl;
-  } else {
-    // Explicitly clear the image if bannerUrl was removed
-    editData.image = null;
-  }
+  // Resolve the banner to a data URI; skip silently if it can't be used so a
+  // bad banner doesn't abort the whole update.
+  const image = await resolveGuildEventImage(event.bannerUrl);
+  if (image) editData.image = image;
 
   await guildEvent.edit(editData);
 
