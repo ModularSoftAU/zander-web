@@ -387,24 +387,8 @@ async function handleCheckoutCompleted(event, config) {
     console.error("[webstore] Failed to record finance income for purchase", purchase.purchaseId, err.message);
   }
 
-  await Promise.all([
-    notifyStaff(
-      config,
-      `${purchase.itemName} Purchased`,
-      [
-        ["Player", purchase.recipientMinecraftUsername, true],
-        ["Type", purchase.purchaseType === "subscription" ? "Subscription" : "One-time", true],
-        [
-          "Amount",
-          `${(purchase.currency || "usd").toUpperCase()} ${(purchase.amountCents / 100).toFixed(2)}`,
-          true,
-        ],
-        ["Gifted", purchase.isGift ? "Yes" : "No", true],
-      ],
-      Colors.Green
-    ),
-    notifyPurchase(config, purchase),
-  ]);
+  // Purchase notifications go to the webstore webhook only.
+  await notifyPurchase(config, purchase);
 }
 
 // ---------------------------------------------------------------------------
