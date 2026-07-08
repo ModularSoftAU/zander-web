@@ -56,7 +56,7 @@ queued (bounded; oldest dropped when full) and retried, optionally in batches.
 
 ### Required dependencies
 
-- **Paper** 1.20+ (`paper-api`)
+- **Paper** 1.21+ (`paper-api`)
 - **PGM** (runtime, required)
 - **LuckPerms** (optional; rank→permission syncing is disabled without it)
 - Gson (shaded), JDK 17 `HttpClient`/`WebSocket`
@@ -103,7 +103,7 @@ PLAYER_DEATH, OBJECTIVE_EVENT, LIVE_FEED_EVENT, MAP_VOTE_*, MAP_RATING_*,
 MAP_REQUEST_*. Inbound: PING, REQUEST_STATUS, REQUEST_STATS_FLUSH,
 REQUEST_RANK_SYNC, REQUEST_ENTITLEMENT_SYNC, MAP_TOKEN_REQUEST, START_MAP_VOTE,
 CANCEL_MAP_VOTE, FORCE_END_MAP_VOTE. (Remote console commands are **not**
-implemented in v0.1.0.)
+implemented in this initial version.)
 
 ## Commands
 
