@@ -1,0 +1,185 @@
+package org.modularsoft.zander.pgm.api;
+
+import org.modularsoft.zander.pgm.config.ZanderPGMConfig;
+import org.modularsoft.zander.pgm.api.dto.BridgeEvent;
+import org.modularsoft.zander.pgm.util.JsonUtil;
+import org.modularsoft.zander.pgm.util.SafeLogger;
+import org.modularsoft.zander.pgm.util.TimeUtil;
+
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
+import java.time.Duration;
+import java.util.List;
+import java.util.concurrent.CompletableFuture;
+
+/**
+ * Async REST client for zander-web. All calls run off the main thread via the
+ * JDK {@link HttpClient} executor and never throw into the caller. Failed
+ * generic events are pushed onto the {@link EventQueue} for later retry.
+ */
+public class ZanderApiClient {
+
+    private final ZanderPGMConfig config;
+    private final ApiHealth health;
+    private final EventQueue queue;
+    private final SafeLogger logger;
+    private final String pluginVersion;
+    private final HttpClient http;
+
+    public ZanderApiClient(ZanderPGMConfig config, ApiHealth health, EventQueue queue,
+                           SafeLogger logger, String pluginVersion) {
+        this.config = config;
+        this.health = health;
+        this.queue = queue;
+        this.logger = logger;
+        this.pluginVersion = pluginVersion;
+        this.http = HttpClient.newBuilder()
+                .connectTimeout(Duration.ofSeconds(config.connectTimeoutSeconds))
+                .build();
+    }
+
+    private void stamp(BridgeEvent event) {
+        event.serverId = config.serverId;
+        event.pluginVersion = pluginVersion;
+        if (event.timestamp == 0) {
+            event.timestamp = TimeUtil.now();
+        }
+    }
+
+    private HttpRequest.Builder request(String path) {
+        return HttpRequest.newBuilder()
+                .uri(URI.create(config.baseUrl + path))
+                .timeout(Duration.ofSeconds(config.requestTimeoutSeconds))
+                .header("Content-Type", "application/json")
+                .header("Authorization", "Bearer " + config.token)
+                .header("X-Server-Id", config.serverId)
+                .header("X-Plugin-Version", pluginVersion);
+    }
+
+    /** POST an arbitrary body to a path. Never throws; returns success flag. */
+    public CompletableFuture<Boolean> post(String path, Object body) {
+        HttpRequest req;
+        try {
+            req = request(path)
+                    .POST(HttpRequest.BodyPublishers.ofString(JsonUtil.toJson(body)))
+                    .build();
+        } catch (Exception e) {
+            return CompletableFuture.completedFuture(false);
+        }
+        return http.sendAsync(req, HttpResponse.BodyHandlers.ofString())
+                .handle((resp, err) -> {
+                    if (err != null || resp.statusCode() >= 300) {
+                        health.markRestFailure();
+                        return false;
+                    }
+                    health.markRestSuccess();
+                    return true;
+                });
+    }
+
+    /** GET a path and return the response body, or null on failure. */
+    public CompletableFuture<String> get(String path) {
+        HttpRequest req;
+        try {
+            req = request(path).GET().build();
+        } catch (Exception e) {
+            return CompletableFuture.completedFuture(null);
+        }
+        return http.sendAsync(req, HttpResponse.BodyHandlers.ofString())
+                .handle((resp, err) -> {
+                    if (err != null || resp.statusCode() >= 300) {
+                        health.markRestFailure();
+                        return null;
+                    }
+                    health.markRestSuccess();
+                    return resp.body();
+                });
+    }
+
+    /**
+     * Send a generic bridge event to {@code /api/mixed/events}. On failure the
+     * event is queued for retry when {@code retryFailedEvents} is enabled.
+     */
+    public void send(BridgeEvent event) {
+        stamp(event);
+        post("/api/mixed/events", event).thenAccept(ok -> {
+            if (!ok && config.retryFailedEvents) {
+                queue.offer(event);
+            }
+        });
+    }
+
+    /** Attempt to send a batch; returns whether the whole batch succeeded. */
+    public CompletableFuture<Boolean> sendBatch(List<BridgeEvent> events) {
+        for (BridgeEvent e : events) {
+            stamp(e);
+        }
+        return post("/api/mixed/events/batch", events);
+    }
+
+    // --- Specialised endpoints -------------------------------------------------
+
+    public void heartbeat(BridgeEvent event) {
+        stamp(event);
+        post("/api/mixed/servers/heartbeat", event);
+    }
+
+    public CompletableFuture<Boolean> offline(BridgeEvent event) {
+        stamp(event);
+        return post("/api/mixed/servers/offline", event);
+    }
+
+    public void statsPlayer(Object dto) {
+        post("/api/mixed/stats/player", dto);
+    }
+
+    public void statsMatch(Object dto) {
+        post("/api/mixed/stats/match", dto);
+    }
+
+    public void statsMap(Object dto) {
+        post("/api/mixed/stats/map", dto);
+    }
+
+    public void xp(Object dto) {
+        post("/api/mixed/xp", dto);
+    }
+
+    public void achievement(Object dto) {
+        post("/api/mixed/achievements", dto);
+    }
+
+    public CompletableFuture<String> fetchRank(String uuid) {
+        return get("/api/mixed/ranks/player/" + uuid);
+    }
+
+    public void ranksSync(Object dto) {
+        post("/api/mixed/ranks/sync", dto);
+    }
+
+    public void entitlementsSync(Object dto) {
+        post("/api/mixed/entitlements/sync", dto);
+    }
+
+    public CompletableFuture<String> pendingMapTokenRequests() {
+        return get("/api/mixed/map-token-requests/pending");
+    }
+
+    public void mapTokenResult(String id, Object dto) {
+        post("/api/mixed/map-token-requests/" + id + "/result", dto);
+    }
+
+    public CompletableFuture<String> currentVote() {
+        return get("/api/mixed/vote/current");
+    }
+
+    public void castVote(Object dto) {
+        post("/api/mixed/vote/cast", dto);
+    }
+
+    public void submitRating(String mapKey, Object dto) {
+        post("/api/mixed/maps/" + mapKey + "/ratings", dto);
+    }
+}
