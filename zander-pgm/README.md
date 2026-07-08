@@ -1,6 +1,6 @@
 # zander-pgm (ZanderPGM)
 
-A Mars-style [PGM](https://github.com/PGMDev/PGM) companion plugin for the
+A [PGM](https://github.com/PGMDev/PGM) companion plugin for the
 **Mixed** Minecraft server. ZanderPGM turns PGM match/objective/stat events into
 internal DTOs and streams them to **zander-web** over REST (and optionally
 WebSocket), and adds Map Tokens, Map Voting and post-match Map Ratings.
@@ -29,13 +29,6 @@ for stats, profiles, leaderboards, maps, voting, ratings and store integration.
 - Syncs **ranks / permission groups** (via LuckPerms) and generic **entitlements**.
 - Supports **Map Tokens**, **Map Voting** and **post-match Map Ratings + feedback**.
 - Emits **Discord hook** events to zander-web (zander-web decides what to post).
-
-## What is intentionally excluded
-
-No moderation, punishments, bans, mutes, warnings, reports, punishment GUIs, or
-punishment-evasion detection. **No chat tags, chat-tag management, or chat
-formatting management.** Ranks and permission groups are supported, but chat
-prefixes/suffixes/tags are never touched.
 
 ## Integration with PGM
 

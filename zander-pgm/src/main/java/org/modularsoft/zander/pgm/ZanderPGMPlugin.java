@@ -44,7 +44,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * ZanderPGM — Mars-style PGM companion plugin for the Mixed server. Bridges PGM
+ * ZanderPGM — PGM companion plugin for the Mixed server. Bridges PGM
  * match/stat/objective events to zander-web over REST and WebSocket, and adds
  * Map Tokens, Map Voting and post-match Map Ratings. Contains no moderation,
  * punishment or chat-tag features by design.
