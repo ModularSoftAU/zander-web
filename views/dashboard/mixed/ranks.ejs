@@ -1,0 +1,52 @@
+<%- include("../../admin/_head.ejs", { pageTitle }) %>
+<%- include("../../admin/_topbar.ejs") %>
+<%- include("../../admin/_sidebar.ejs") %>
+
+<div id="wpcontent"><div id="wpbody-content"><div class="wrap">
+  <div class="d-flex justify-content-between align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2">Mixed Ranks</h1>
+  </div>
+  <p class="text-muted small">Rank sync management only — chat-tag management is intentionally excluded.</p>
+
+  <div id="mixedAlert" class="alert d-none"></div>
+
+  <div class="row g-4">
+    <div class="col-lg-7">
+      <form class="row g-2 mb-2" method="get">
+        <div class="col-md-6"><input class="form-control form-control-sm" name="search" placeholder="Username or UUID" value="<%= query.search || '' %>"></div>
+        <div class="col-md-2"><button class="btn btn-sm btn-primary">Search</button></div>
+      </form>
+      <table class="table table-sm align-middle">
+        <thead><tr><th>Player</th><th>Rank</th><th>Expires</th><th>Sync</th><th></th></tr></thead>
+        <tbody>
+          <% ranks.forEach(function(r){ %>
+            <tr><td class="small"><%= r.username || r.player_uuid %></td><td><%= r.display_name || r.rank_key %></td>
+              <td class="small"><%= r.expires_at ? moment(r.expires_at).format('YYYY-MM-DD') : '—' %></td>
+              <td><span class="badge <%= r.sync_status==='synced'?'bg-success':(r.sync_status==='failed'?'bg-danger':'bg-secondary') %>"><%= r.sync_status %></span></td>
+              <td><button class="btn btn-sm btn-outline-primary force-sync" data-uuid="<%= r.player_uuid %>">Force sync</button></td></tr>
+          <% }) %>
+          <% if (!ranks.length) { %><tr><td colspan="5" class="text-muted text-center">No ranks.</td></tr><% } %>
+        </tbody>
+      </table>
+    </div>
+    <div class="col-lg-5">
+      <h5>Expiring within 7 days</h5>
+      <ul class="list-group list-group-flush">
+        <% expiring.forEach(function(r){ %>
+          <li class="list-group-item d-flex justify-content-between py-1"><span><%= r.username || r.player_uuid %> — <%= r.display_name || r.rank_key %></span><span class="small text-muted"><%= moment(r.expires_at).fromNow() %></span></li>
+        <% }) %>
+        <% if (!expiring.length) { %><li class="list-group-item text-muted">None expiring.</li><% } %>
+      </ul>
+    </div>
+  </div>
+</div></div></div>
+
+<script>
+  const alertEl = document.getElementById('mixedAlert');
+  document.querySelectorAll('.force-sync').forEach(b=>b.addEventListener('click', async()=>{
+    const r = await fetch('/api/admin/mixed/ranks/sync/'+b.dataset.uuid, { method:'POST' });
+    const j = await r.json(); alertEl.className='alert alert-'+(j.success?'success':'danger'); alertEl.textContent=j.message||'Done'; alertEl.classList.remove('d-none');
+  }));
+</script>
+
+<%- include("../../admin/_footer.ejs") %>

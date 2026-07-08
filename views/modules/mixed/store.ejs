@@ -1,0 +1,47 @@
+<%- include("_top.ejs") %>
+
+<% if (req.query.success) { %><div class="alert alert-success">Payment received! Your Map Tokens will be credited within a few seconds.</div><% } %>
+<% if (req.query.canceled) { %><div class="alert alert-secondary">Checkout canceled.</div><% } %>
+
+<% if (!storeConfigured) { %>
+  <div class="alert alert-warning">The store is not configured yet.</div>
+<% } %>
+
+<% if (!req.session || !req.session.user) { %>
+  <div class="alert alert-info">Please <a href="/login">log in</a> to buy Map Tokens.</div>
+<% } else if (!hasLinkedAccount) { %>
+  <div class="alert alert-warning">You must link your Minecraft account before purchasing Map Tokens.</div>
+<% } %>
+
+<div class="row g-3">
+  <% products.forEach(function(p){ %>
+    <div class="col-md-3">
+      <div class="card h-100 text-center"><div class="card-body">
+        <h5><%= p.name %></h5>
+        <div class="display-6 my-2"><%= p.tokenAmount %></div>
+        <div class="text-muted small mb-3">Map Token<%= p.tokenAmount === 1 ? '' : 's' %><%= p.mode === 'subscription' ? ' / month' : '' %></div>
+        <button class="btn btn-primary w-100 buy-btn" data-product="<%= p.key %>"
+          <%= (storeConfigured && hasLinkedAccount) ? '' : 'disabled' %>>Buy</button>
+      </div></div>
+    </div>
+  <% }) %>
+</div>
+
+<script>
+  document.querySelectorAll('.buy-btn').forEach(function(b){
+    b.addEventListener('click', async function(){
+      b.disabled = true; b.textContent = 'Redirecting…';
+      try {
+        const r = await fetch('/api/mixed/store/checkout', {
+          method:'POST', headers:{'Content-Type':'application/json'},
+          body: JSON.stringify({ product: b.dataset.product })
+        });
+        const j = await r.json();
+        if (j.success && j.data.url) { window.location = j.data.url; }
+        else { alert(j.message || 'Could not start checkout.'); b.disabled=false; b.textContent='Buy'; }
+      } catch(e){ alert('Checkout failed.'); b.disabled=false; b.textContent='Buy'; }
+    });
+  });
+</script>
+
+<%- include("_bottom.ejs") %>

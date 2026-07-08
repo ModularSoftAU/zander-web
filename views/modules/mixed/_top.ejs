@@ -1,0 +1,37 @@
+<%- include("../../modules/header.ejs", {
+    pageTitle: pageTitle,
+    pageDescription: typeof pageDescription !== 'undefined' ? pageDescription : 'Mixed'
+}) %>
+
+<%- include("../../modules/navigationBar.ejs") %>
+
+<%
+  const mixedNav = [
+    ["Live", "/mixed/live"],
+    ["Matches", "/mixed/matches"],
+    ["Maps", "/mixed/maps"],
+    ["Players", "/mixed/players"],
+    ["Leaderboards", "/mixed/leaderboards"],
+    ["Achievements", "/mixed/achievements"],
+    ["Vote", "/mixed/vote"],
+    ["Map Tokens", "/mixed/map-tokens"],
+    ["Store", "/mixed/store"],
+    ["Servers", "/mixed/servers"],
+  ];
+  const _path = req.url.split('?')[0];
+%>
+
+<section class="section" style="padding-top: 40px; padding-bottom: 0;">
+  <div class="container">
+    <div class="d-flex align-items-center justify-content-between flex-wrap mb-3">
+      <h1 class="mb-0"><a href="/mixed" class="text-decoration-none text-reset">Mixed</a></h1>
+      <span class="badge bg-primary">Public PGM Stats Portal</span>
+    </div>
+    <ul class="nav nav-pills flex-wrap gap-1 border-bottom pb-3 mb-4">
+      <% mixedNav.forEach(function(item){ %>
+        <li class="nav-item">
+          <a class="nav-link py-1 px-3 <%= _path === item[1] || (item[1] !== '/mixed' && _path.startsWith(item[1])) ? 'active' : '' %>"
+             href="<%= item[1] %>"><%= item[0] %></a>
+        </li>
+      <% }) %>
+    </ul>

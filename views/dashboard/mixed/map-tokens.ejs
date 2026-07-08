@@ -1,0 +1,71 @@
+<%- include("../../admin/_head.ejs", { pageTitle }) %>
+<%- include("../../admin/_topbar.ejs") %>
+<%- include("../../admin/_sidebar.ejs") %>
+
+<div id="wpcontent"><div id="wpbody-content"><div class="wrap">
+  <div class="d-flex justify-content-between align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2">Mixed Map Tokens</h1>
+  </div>
+
+  <div id="mixedAlert" class="alert d-none"></div>
+
+  <div class="row g-4">
+    <div class="col-lg-5">
+      <h5>Grant / remove tokens</h5>
+      <form id="grantForm" class="mb-4">
+        <input class="form-control form-control-sm mb-2" name="player_uuid" placeholder="Player UUID" required>
+        <input class="form-control form-control-sm mb-2" name="username" placeholder="Username (optional)">
+        <input type="number" class="form-control form-control-sm mb-2" name="amount" placeholder="Amount" min="1" required>
+        <input class="form-control form-control-sm mb-2" name="reason" placeholder="Reason">
+        <button class="btn btn-success btn-sm" data-op="grant">Grant</button>
+        <button class="btn btn-danger btn-sm" data-op="remove">Remove</button>
+      </form>
+
+      <h6>Pending map requests</h6>
+      <table class="table table-sm">
+        <thead><tr><th>Player</th><th>Map</th><th>Action</th><th></th></tr></thead>
+        <tbody>
+          <% pending.forEach(function(r){ %>
+            <tr><td class="small"><%= r.username || r.player_uuid %></td><td><%= r.map_key %></td><td><%= r.action_type %></td>
+              <td><button class="btn btn-sm btn-outline-warning refund" data-id="<%= r.id %>">Refund</button></td></tr>
+          <% }) %>
+          <% if (!pending.length) { %><tr><td colspan="4" class="text-muted text-center">None.</td></tr><% } %>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="col-lg-7">
+      <form class="row g-2 mb-2" method="get">
+        <div class="col-md-6"><input class="form-control form-control-sm" name="search" placeholder="Search balances" value="<%= query.search || '' %>"></div>
+        <div class="col-md-2"><button class="btn btn-sm btn-primary">Search</button></div>
+      </form>
+      <h5>Balances</h5>
+      <table class="table table-sm">
+        <thead><tr><th>Player</th><th>Balance</th><th>Earned</th><th>Spent</th></tr></thead>
+        <tbody>
+          <% balances.forEach(function(b){ %>
+            <tr><td class="small"><%= b.username || b.player_uuid %></td><td><%= b.balance %></td><td><%= b.lifetime_earned %></td><td><%= b.lifetime_spent %></td></tr>
+          <% }) %>
+          <% if (!balances.length) { %><tr><td colspan="4" class="text-muted text-center">No balances.</td></tr><% } %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div></div></div>
+
+<script>
+  const alertEl = document.getElementById('mixedAlert');
+  function notify(ok,msg){ alertEl.className='alert alert-'+(ok?'success':'danger'); alertEl.textContent=msg; alertEl.classList.remove('d-none'); }
+  document.querySelectorAll('#grantForm button').forEach(function(btn){
+    btn.addEventListener('click', async function(e){
+      e.preventDefault();
+      const f = document.getElementById('grantForm');
+      const body = { player_uuid: f.player_uuid.value.trim(), username: f.username.value.trim(), amount: Number(f.amount.value), reason: f.reason.value.trim() };
+      const r = await fetch('/api/admin/mixed/map-tokens/'+btn.dataset.op, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body) });
+      const j = await r.json(); notify(j.success, j.success?('New balance: '+j.data.balance):(j.message||'Failed')); if(j.success)setTimeout(()=>location.reload(),900);
+    });
+  });
+  document.querySelectorAll('.refund').forEach(b=>b.addEventListener('click', async()=>{ const r=await fetch('/api/admin/mixed/map-requests/'+b.dataset.id+'/refund',{method:'POST'}); const j=await r.json(); notify(j.success,j.success?'Refunded.':j.message); if(j.success)setTimeout(()=>location.reload(),600); }));
+</script>
+
+<%- include("../../admin/_footer.ejs") %>

@@ -1,0 +1,71 @@
+<%- include("../../admin/_head.ejs", { pageTitle }) %>
+<%- include("../../admin/_topbar.ejs") %>
+<%- include("../../admin/_sidebar.ejs") %>
+
+<div id="wpcontent"><div id="wpbody-content"><div class="wrap">
+  <div class="d-flex justify-content-between align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2">Mixed Maps</h1>
+  </div>
+
+  <form class="row g-2 mb-3" method="get">
+    <div class="col-md-4"><input class="form-control form-control-sm" name="search" placeholder="Search maps" value="<%= query.search || '' %>"></div>
+    <div class="col-md-2"><button class="btn btn-sm btn-primary">Search</button></div>
+  </form>
+
+  <div id="mixedAlert" class="alert d-none"></div>
+
+  <div class="table-responsive"><table class="table table-sm align-middle">
+    <thead><tr><th>Map</th><th>Gamemode</th><th>Visible</th><th>Voting</th><th>Tokens</th><th>Actions</th></tr></thead>
+    <tbody>
+      <% result.maps.forEach(function(m){ %>
+        <tr data-map="<%= m.map_key %>">
+          <td><strong><%= m.name %></strong><br><code class="small"><%= m.map_key %></code></td>
+          <td><%= m.gamemode || '—' %></td>
+          <td><input type="checkbox" class="toggle" data-field="public_visible" <%= m.public_visible?'checked':'' %>></td>
+          <td><input type="checkbox" class="toggle" data-field="blacklisted_from_voting" <%= m.blacklisted_from_voting?'checked':'' %>> <small>blacklist</small></td>
+          <td><input type="checkbox" class="toggle" data-field="blacklisted_from_tokens" <%= m.blacklisted_from_tokens?'checked':'' %>> <small>blacklist</small></td>
+          <td>
+            <button class="btn btn-sm btn-outline-secondary edit-thumb">Thumbnail</button>
+            <button class="btn btn-sm btn-outline-danger reset-ratings">Reset ratings</button>
+          </td>
+        </tr>
+      <% }) %>
+      <% if (!result.maps.length) { %><tr><td colspan="6" class="text-muted text-center">No maps.</td></tr><% } %>
+    </tbody>
+  </table></div>
+</div></div></div>
+
+<script>
+  const alertEl = document.getElementById('mixedAlert');
+  function notify(ok, msg){ alertEl.className = 'alert alert-'+(ok?'success':'danger'); alertEl.textContent = msg; alertEl.classList.remove('d-none'); setTimeout(()=>alertEl.classList.add('d-none'), 3000); }
+  async function patchMap(mapKey, body){
+    const r = await fetch('/api/admin/mixed/maps/'+encodeURIComponent(mapKey), { method:'PATCH', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body) });
+    return r.json();
+  }
+  document.querySelectorAll('.toggle').forEach(function(cb){
+    cb.addEventListener('change', async function(){
+      const key = cb.closest('tr').dataset.map;
+      const j = await patchMap(key, { [cb.dataset.field]: cb.checked ? 1 : 0 });
+      notify(j.success, j.success ? 'Saved.' : (j.message||'Failed'));
+    });
+  });
+  document.querySelectorAll('.edit-thumb').forEach(function(b){
+    b.addEventListener('click', async function(){
+      const key = b.closest('tr').dataset.map;
+      const url = prompt('Thumbnail URL:');
+      if (url === null) return;
+      const r = await fetch('/api/admin/mixed/maps/'+encodeURIComponent(key)+'/thumbnail', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ thumbnail_url: url }) });
+      const j = await r.json(); notify(j.success, j.success?'Thumbnail saved.':(j.message||'Failed'));
+    });
+  });
+  document.querySelectorAll('.reset-ratings').forEach(function(b){
+    b.addEventListener('click', async function(){
+      const key = b.closest('tr').dataset.map;
+      if (!confirm('Reset all ratings for '+key+'?')) return;
+      const r = await fetch('/api/admin/mixed/maps/'+encodeURIComponent(key)+'/ratings/reset', { method:'POST' });
+      const j = await r.json(); notify(j.success, j.success?'Ratings reset.':(j.message||'Failed'));
+    });
+  });
+</script>
+
+<%- include("../../admin/_footer.ejs") %>

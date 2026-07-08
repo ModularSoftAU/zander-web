@@ -1,0 +1,18 @@
+<%- include("_top.ejs") %>
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h4 class="text-capitalize mb-0"><%= category.replace(/_/g,' ') %></h4>
+  <a href="/mixed/leaderboards" class="btn btn-sm btn-outline-secondary">← All leaderboards</a>
+</div>
+
+<ol class="list-group list-group-numbered">
+  <% board.forEach(function(p){ %>
+    <li class="list-group-item d-flex justify-content-between align-items-center">
+      <a href="/mixed/players/<%= p.player_uuid %>"><%= p.username || p.player_uuid %></a>
+      <span class="badge bg-primary rounded-pill"><%= typeof p.score === 'number' ? (Number.isInteger(p.score) ? p.score : p.score.toFixed(2)) : p.score %></span>
+    </li>
+  <% }) %>
+  <% if (!board.length) { %><li class="list-group-item text-muted">No ranked players yet.</li><% } %>
+</ol>
+
+<%- include("_bottom.ejs") %>

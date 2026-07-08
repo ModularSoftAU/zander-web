@@ -36,6 +36,7 @@
   "events": true,
   "webstore": true,
   "finance": true,
+  "mixed": true,
 
   "smDiscord": true,
   "smFacebook": true,

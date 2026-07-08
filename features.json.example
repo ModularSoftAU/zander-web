@@ -37,6 +37,8 @@
     "register": true
   },
 
+  "mixed": true,
+
   "smDiscord": true,
   "smFacebook": true,
   "smTwitter": true,

@@ -1,0 +1,52 @@
+<%- include("_top.ejs") %>
+
+<% if (!req.session || !req.session.user) { %>
+  <div class="alert alert-info">Please <a href="/login">log in</a> to view your Map Tokens.</div>
+<% } else if (!req.session.user.uuid) { %>
+  <div class="alert alert-warning">Link your Minecraft account to earn and spend Map Tokens.</div>
+<% } else { %>
+  <div class="row g-3 mb-4">
+    <div class="col-md-4"><div class="card"><div class="card-body text-center"><div class="h3 mb-0"><%= balance.balance %></div><small class="text-muted">Current balance</small></div></div></div>
+    <div class="col-md-4"><div class="card"><div class="card-body text-center"><div class="h3 mb-0"><%= balance.lifetime_earned %></div><small class="text-muted">Lifetime earned</small></div></div></div>
+    <div class="col-md-4"><div class="card"><div class="card-body text-center"><div class="h3 mb-0"><%= balance.lifetime_spent %></div><small class="text-muted">Lifetime spent</small></div></div></div>
+  </div>
+  <a href="/mixed/store" class="btn btn-primary mb-4">Buy more Map Tokens</a>
+
+  <div class="row g-4">
+    <div class="col-lg-6">
+      <h5>Map requests</h5>
+      <div class="table-responsive"><table class="table table-sm">
+        <thead><tr><th>Map</th><th>Action</th><th>Cost</th><th>Status</th><th>When</th></tr></thead>
+        <tbody>
+          <% requests.forEach(function(r){ %>
+            <tr>
+              <td><%= r.map_key %></td><td><%= r.action_type %></td><td><%= r.token_cost %></td>
+              <td><span class="badge bg-secondary"><%= r.status %></span></td>
+              <td class="small text-muted"><%= moment(r.requested_at).fromNow() %></td>
+            </tr>
+          <% }) %>
+          <% if (!requests.length) { %><tr><td colspan="5" class="text-muted text-center">No requests yet.</td></tr><% } %>
+        </tbody>
+      </table></div>
+    </div>
+    <div class="col-lg-6">
+      <h5>Transactions</h5>
+      <div class="table-responsive" style="max-height:400px;overflow:auto;"><table class="table table-sm">
+        <thead><tr><th>Type</th><th>Amount</th><th>Reason</th><th>When</th></tr></thead>
+        <tbody>
+          <% transactions.forEach(function(t){ %>
+            <tr>
+              <td><%= t.type %></td>
+              <td class="<%= t.amount < 0 ? 'text-danger' : 'text-success' %>"><%= t.amount %></td>
+              <td class="small"><%= t.reason || '' %></td>
+              <td class="small text-muted"><%= moment(t.created_at).fromNow() %></td>
+            </tr>
+          <% }) %>
+          <% if (!transactions.length) { %><tr><td colspan="4" class="text-muted text-center">No transactions yet.</td></tr><% } %>
+        </tbody>
+      </table></div>
+    </div>
+  </div>
+<% } %>
+
+<%- include("_bottom.ejs") %>

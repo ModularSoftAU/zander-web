@@ -1,0 +1,69 @@
+<%- include("_top.ejs") %>
+
+<% const canVote = req.session && req.session.user && req.session.user.uuid && settings.allow_web_voting; %>
+
+<% if (!vote) { %>
+  <div class="alert alert-secondary">There is no active map vote right now.</div>
+<% } else { %>
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h4 class="mb-0">Current map vote</h4>
+    <span class="badge bg-success">Active</span>
+  </div>
+
+  <% if (!req.session || !req.session.user) { %>
+    <div class="alert alert-info">Log in and link your Minecraft account to vote.</div>
+  <% } else if (!req.session.user.uuid) { %>
+    <div class="alert alert-warning">Link your Minecraft account to vote.</div>
+  <% } else if (!settings.allow_web_voting) { %>
+    <div class="alert alert-warning">Web voting is currently disabled.</div>
+  <% } %>
+
+  <div class="row g-3" id="voteOptions">
+    <% vote.options.forEach(function(o){ %>
+      <div class="col-md-4">
+        <div class="card h-100">
+          <% if (o.thumbnail_url) { %><img src="<%= o.thumbnail_url %>" class="card-img-top" style="height:130px;object-fit:cover;" alt=""><% } %>
+          <div class="card-body">
+            <h6><%= o.map_name || o.map_key %></h6>
+            <div class="small text-muted mb-2">
+              <%= o.gamemode || '' %>
+              <% if (o.source === 'token') { %><span class="badge bg-warning text-dark">Token nominated</span><% } %>
+              <% if (o.token_boost_weight > 0) { %><span class="badge bg-danger">Boosted +<%= o.token_boost_weight %></span><% } %>
+            </div>
+            <div class="d-flex justify-content-between align-items-center">
+              <span class="badge bg-secondary vote-count" data-map="<%= o.map_key %>"><%= o.final_vote_count %> votes</span>
+              <% if (canVote) { %><button class="btn btn-sm btn-primary vote-btn" data-map="<%= o.map_key %>">Vote</button><% } %>
+            </div>
+          </div>
+        </div>
+      </div>
+    <% }) %>
+  </div>
+
+  <p class="text-muted small mt-3">Winning option: <strong><%= vote.winning ? (vote.winning.map_name || vote.winning.map_key) : '—' %></strong></p>
+
+  <script>
+    const voteId = <%- JSON.stringify(vote.vote_id) %>;
+    document.querySelectorAll('.vote-btn').forEach(function(b){
+      b.addEventListener('click', async function(){
+        b.disabled = true;
+        try {
+          const r = await fetch('/api/mixed/vote/cast', {
+            method:'POST', headers:{'Content-Type':'application/json'},
+            body: JSON.stringify({ vote_id: voteId, map_key: b.dataset.map })
+          });
+          const j = await r.json();
+          if (j.success) { location.reload(); } else { alert(j.message || 'Could not vote.'); b.disabled = false; }
+        } catch(e){ alert('Vote failed.'); b.disabled = false; }
+      });
+    });
+    // Live vote count updates via SSE
+    try {
+      const es = new EventSource('/api/mixed/stream');
+      es.addEventListener('MAP_VOTE_CAST', function(){ /* counts refresh on reload */ });
+      es.addEventListener('MAP_VOTE_ENDED', function(){ location.reload(); });
+    } catch(_){}
+  </script>
+<% } %>
+
+<%- include("_bottom.ejs") %>
