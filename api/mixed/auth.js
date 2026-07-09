@@ -16,7 +16,10 @@
 const ADMIN_NODES = ["zander.web.mixed", "zander.web.*", "*"];
 
 /**
- * Verify the Authorization: Bearer <token> header for plugin ingestion.
+ * Verify the plugin ingestion token.
+ * Prefer Authorization: Bearer <token>, but also accept the legacy
+ * x-access-token header so older plugin builds can continue to ingest while
+ * deployments catch up.
  * Returns true when authorised; otherwise sends a 401 and returns false.
  */
 export function requirePluginToken(req, res) {
@@ -31,13 +34,26 @@ export function requirePluginToken(req, res) {
     return false;
   }
 
-  const header = req.headers["authorization"] || "";
-  const token = header.startsWith("Bearer ") ? header.slice(7).trim() : null;
+  const authHeader = req.headers["authorization"] || "";
+  const bearerToken = authHeader.startsWith("Bearer ")
+    ? authHeader.slice(7).trim()
+    : null;
+  const legacyToken = typeof req.headers["x-access-token"] === "string"
+    ? req.headers["x-access-token"].trim()
+    : null;
+  const token = bearerToken || legacyToken;
 
   if (!token || !acceptedTokens.includes(token)) {
     const source = req.headers["x-server-id"] || req.ip || "unknown";
+    const presentedHeader = bearerToken
+      ? "authorization-bearer"
+      : legacyToken
+        ? "x-access-token"
+        : authHeader
+          ? "authorization-non-bearer"
+          : "none";
     console.warn(
-      `[mixed:auth] Rejected ingestion request from ${source}: invalid or missing bearer token.`
+      `[mixed:auth] Rejected ingestion request from ${source}: invalid or missing plugin token (header=${presentedHeader}).`
     );
     res.status(401).send({ success: false, message: "Invalid or missing plugin API token." });
     return false;

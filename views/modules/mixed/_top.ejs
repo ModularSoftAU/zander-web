@@ -5,6 +5,11 @@
 
 <%- include("../../modules/navigationBar.ejs") %>
 
+<%- include("../../partials/miniHeader.ejs", {
+    headerTitle: pageTitle || "Mixed",
+    globalImage,
+}) %>
+
 <%
   const mixedNav = [
     ["Live", "/mixed/live"],
@@ -20,7 +25,10 @@
 <section class="section" style="padding-top: 40px; padding-bottom: 0;">
   <div class="container">
     <div class="d-flex align-items-center justify-content-between flex-wrap mb-3">
-      <h1 class="mb-0"><a href="/mixed" class="text-decoration-none text-reset">Mixed</a></h1>
+      <div>
+        <div class="small text-uppercase text-muted mb-1">Mixed</div>
+        <h2 class="h4 mb-0"><a href="/mixed" class="text-decoration-none text-reset">Public PGM Stats Portal</a></h2>
+      </div>
       <span class="badge bg-primary">Public PGM Stats Portal</span>
     </div>
     <ul class="nav nav-pills flex-wrap gap-1 border-bottom pb-3 mb-4">
