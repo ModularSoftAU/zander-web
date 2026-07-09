@@ -25,8 +25,8 @@ export default function mixedSiteRoutes(app, config, features) {
     };
   }
 
-  const render = (res, view, data) =>
-    res.header("content-type", "text/html; charset=utf-8").send(app.view(view, data));
+  const render = async (res, view, data) =>
+    res.header("content-type", "text/html; charset=utf-8").send(await app.view(view, data));
 
   function guard(req, res) {
     if (enabled()) return true;
@@ -77,7 +77,12 @@ export default function mixedSiteRoutes(app, config, features) {
   app.get("/mixed/matches/:matchId", async (req, res) => {
     if (!guard(req, res)) return;
     const match = await mixed.getMatch(req.params.matchId);
-    if (!match) return res.status(404).send(app.view("session/notFound", await base(req, { pageTitle: "Match not found" })));
+    if (!match) {
+      return res
+        .status(404)
+        .header("content-type", "text/html; charset=utf-8")
+        .send(await app.view("session/notFound", await base(req, { pageTitle: "Match not found" })));
+    }
     const [events, map] = await Promise.all([
       mixed.getMatchEvents(match.match_id),
       match.map_key ? mixed.getMap(match.map_key) : null,
@@ -109,7 +114,10 @@ export default function mixedSiteRoutes(app, config, features) {
     if (!guard(req, res)) return;
     const map = await mixed.getMap(req.params.mapKey);
     if (!map || !map.public_visible) {
-      return res.status(404).send(app.view("session/notFound", await base(req, { pageTitle: "Map not found" })));
+      return res
+        .status(404)
+        .header("content-type", "text/html; charset=utf-8")
+        .send(await app.view("session/notFound", await base(req, { pageTitle: "Map not found" })));
     }
     const settings = await mixed.getSettings();
     const [matchesRes, feedback, voteHistory] = await Promise.all([
@@ -140,11 +148,19 @@ export default function mixedSiteRoutes(app, config, features) {
   app.get("/mixed/players/:uuid", async (req, res) => {
     if (!guard(req, res)) return;
     if (!mixed.isValidUuid(req.params.uuid)) {
-      return res.status(404).send(app.view("session/notFound", await base(req, { pageTitle: "Player not found" })));
+      return res
+        .status(404)
+        .header("content-type", "text/html; charset=utf-8")
+        .send(await app.view("session/notFound", await base(req, { pageTitle: "Player not found" })));
     }
     const uuid = mixed.normaliseUuid(req.params.uuid);
     const player = await mixed.getPlayer(uuid);
-    if (!player) return res.status(404).send(app.view("session/notFound", await base(req, { pageTitle: "Player not found" })));
+    if (!player) {
+      return res
+        .status(404)
+        .header("content-type", "text/html; charset=utf-8")
+        .send(await app.view("session/notFound", await base(req, { pageTitle: "Player not found" })));
+    }
     const viewer = req.session?.user;
     const isSelf = viewer?.uuid && mixed.normaliseUuid(viewer.uuid) === uuid;
     const isAdmin = Array.isArray(viewer?.permissions) &&
