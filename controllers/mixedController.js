@@ -610,11 +610,17 @@ export async function upsertPlayerTotals(data) {
     "best_killstreak", "playtime_seconds",
   ];
   const values = cols.map((c) => (c === "username" ? (data[c] || null) : (data[c] || 0)));
-  const updates = cols.map((c) => `${c} = VALUES(${c})`).join(", ");
+  // Only update columns actually present in the payload — otherwise a partial
+  // update (e.g. the XP endpoint sending just level/total_xp) would zero out
+  // every other stat via the `data[c] || 0` default above.
+  const providedCols = cols.filter((c) => data[c] !== undefined);
+  const updates = providedCols.length
+    ? providedCols.map((c) => `${c} = VALUES(${c})`).join(", ")
+    : null;
   await q(
     `INSERT INTO mixed_player_totals (player_uuid, ${cols.join(", ")}, last_seen_at)
      VALUES (?, ${cols.map(() => "?").join(", ")}, NOW())
-     ON DUPLICATE KEY UPDATE ${updates}, last_seen_at = NOW()`,
+     ON DUPLICATE KEY UPDATE ${updates ? `${updates}, ` : ""}last_seen_at = NOW()`,
     [data.player_uuid, ...values]
   );
   return getPlayer(data.player_uuid);
