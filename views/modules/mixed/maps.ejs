@@ -33,7 +33,20 @@
       </div>
     </div>
   <% }) %>
-  <% if (!result.maps.length) { %><div class="col-12"><div class="alert alert-secondary">No maps found.</div></div><% } %>
+  <% if (!result.maps.length) { %>
+    <div class="col-12">
+      <div class="alert alert-secondary mb-0">
+        <strong>No maps found.</strong>
+        <div class="small mt-2">
+          Maps only appear here after Mixed data has been loaded into <code>mixed_maps</code>.
+          That usually means either the Mixed plugin has not ingested any map or match data yet, or the GitHub map sync has not been enabled and run.
+          <% if (isAdmin) { %>
+            <a href="/dashboard/mixed/maps" class="alert-link">Open the Mixed maps dashboard</a> to check sync status and placeholder maps.
+          <% } %>
+        </div>
+      </div>
+    </div>
+  <% } %>
 </div>
 
 <%- include("_bottom.ejs") %>

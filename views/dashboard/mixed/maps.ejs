@@ -16,7 +16,11 @@
     </div>
     <div class="card-body">
       <% if (!sourcesInfo.enabled) { %>
-        <div class="alert alert-warning mb-0">Map sync is disabled (<code>mixed.mapSync.enabled = false</code> in config.json).</div>
+        <div class="alert alert-warning mb-0">
+          Map sync is disabled (<code>mixed.mapSync.enabled = false</code> in <code>config.json</code>).
+          Until you enable it and run a sync, the public maps page will only show rows created by Mixed ingestion such as
+          <code>/api/mixed/stats/map</code> or match placeholders from <code>/api/mixed/stats/match</code>.
+        </div>
       <% } else { %>
       <div class="table-responsive"><table class="table table-sm align-middle">
         <thead><tr>
