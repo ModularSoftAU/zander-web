@@ -41,6 +41,7 @@ import("./cron/userCodeExpiryCron.js");
 import("./cron/bridgeCleanupCron.js");
 import("./cron/cakeDayUserCheck.js");
 import("./cron/staffAuditReportCron.js");
+import("./cron/mixedMapSyncCron.js");
 import("./cron/schedulerCron.js");
 import("./cron/nicknameCheckCron.js");
 import("./cron/punishmentExpiryCron.js");

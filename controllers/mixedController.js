@@ -183,21 +183,52 @@ export async function upsertMap(data) {
   return getMap(data.map_key);
 }
 
-export async function getMap(mapKey) {
+/** Applies the custom-override-over-repo-data fallback chain used by public map views. */
+function withDisplayFields(row) {
+  const inferredTags = parseJson(row.inferred_tags, []);
+  const customTags = parseJson(row.custom_tags, []);
+  return {
+    ...row,
+    display_description: row.custom_description || row.description_from_xml || row.description || "No description available.",
+    display_thumbnail_url: row.custom_thumbnail_url || row.thumbnail_from_repo || row.thumbnail_url || null,
+    display_tags: [...new Set([...(inferredTags || []), ...(customTags || [])])],
+  };
+}
+
+/** Strips repo-source fields from a map row for non-admin public responses. */
+function stripSourceInfo(row) {
+  const {
+    source_key, source_display_name, source_org, source_repo,
+    source_branch, source_path, source_commit, ...rest
+  } = row;
+  return rest;
+}
+
+export async function getMap(mapKey, { includeSourceInfo = false } = {}) {
   const row = await one(`SELECT * FROM mixed_maps WHERE map_key = ?`, [mapKey]);
   if (!row) return null;
   row.authors = parseJson(row.authors, []);
+  row.contributors = parseJson(row.contributors, []);
   row.tags = parseJson(row.tags, []);
+  row.gamemodes = parseJson(row.gamemodes, []);
   row.objectives = parseJson(row.objectives, []);
+  row.teams_from_xml = parseJson(row.teams_from_xml, []);
+  row.objectives_from_xml = parseJson(row.objectives_from_xml, []);
+  row.rules_from_xml = parseJson(row.rules_from_xml, []);
+  row.screenshots_from_repo = parseJson(row.screenshots_from_repo, []);
+  row.inferred_tags = parseJson(row.inferred_tags, []);
+  row.custom_tags = parseJson(row.custom_tags, []);
   const totals = await one(`SELECT * FROM mixed_map_totals WHERE map_key = ?`, [mapKey]);
   if (totals) totals.team_win_counts = parseJson(totals.team_win_counts, {});
   const ratings = await getMapRatingTotals(mapKey);
-  return { ...row, totals: totals || null, ratingTotals: ratings };
+  let full = withDisplayFields({ ...row, totals: totals || null, ratingTotals: ratings });
+  if (!includeSourceInfo) full = stripSourceInfo(full);
+  return full;
 }
 
 export async function listMaps({
-  search, gamemode, author, sort = "last_played", order = "desc",
-  page = 1, limit = 24, includeHidden = false,
+  search, gamemode, author, sourceKey, sort = "last_played", order = "desc",
+  page = 1, limit = 24, includeHidden = false, includeSourceInfo = false,
 } = {}) {
   const where = [];
   const params = [];
@@ -205,6 +236,7 @@ export async function listMaps({
   if (search) { where.push(`m.name LIKE ?`); params.push(`%${search}%`); }
   if (gamemode) { where.push(`m.gamemode = ?`); params.push(gamemode); }
   if (author) { where.push(`JSON_SEARCH(m.authors, 'one', ?) IS NOT NULL`); params.push(author); }
+  if (sourceKey && includeSourceInfo) { where.push(`m.source_key = ?`); params.push(sourceKey); }
 
   const sortMap = {
     times_played: "m.times_played",
@@ -231,15 +263,178 @@ export async function listMaps({
     `SELECT COUNT(*) AS total FROM mixed_maps m ${whereSql}`, params
   );
   return {
-    maps: rows.map((r) => ({
-      ...r,
-      authors: parseJson(r.authors, []),
-      tags: parseJson(r.tags, []),
-    })),
+    maps: rows.map((r) => {
+      let row = withDisplayFields({
+        ...r,
+        authors: parseJson(r.authors, []),
+        tags: parseJson(r.tags, []),
+        inferred_tags: parseJson(r.inferred_tags, []),
+        custom_tags: parseJson(r.custom_tags, []),
+      });
+      if (!includeSourceInfo) row = stripSourceInfo(row);
+      return row;
+    }),
     total: totalRow?.total || 0,
     page: Math.max(1, page),
     limit,
   };
+}
+
+// ---------------------------------------------------------------------------
+// Repo sync: upsert, placeholders, conflicts, runs/errors
+// ---------------------------------------------------------------------------
+
+/**
+ * Upserts a map row from the GitHub repo sync. Distinct from upsertMap()
+ * (used by plugin ingestion) so that admin-controlled fields
+ * (public_visible, custom_*, voting_enabled, token_enabled, blacklisted_*)
+ * are NEVER touched by a re-sync — only set on first insert.
+ */
+export async function upsertMapFromRepoSync(row) {
+  await q(
+    `INSERT INTO mixed_maps
+       (map_key, name, version, gamemode, gamemodes, authors, contributors,
+        description_from_xml, teams_from_xml, objectives_from_xml, rules_from_xml,
+        thumbnail_from_repo, screenshots_from_repo, inferred_tags,
+        source_key, source_display_name, source_org, source_repo, source_branch,
+        source_path, source_commit, last_synced_at, last_sync_status, last_sync_error,
+        discovered_from_server, first_seen_at,
+        public_visible, voting_enabled, token_enabled,
+        blacklisted_from_voting, blacklisted_from_tokens)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), ?, ?, 0, NOW(),
+             ?, ?, ?, ?, ?)
+     ON DUPLICATE KEY UPDATE
+       name = VALUES(name),
+       version = VALUES(version),
+       gamemode = VALUES(gamemode),
+       gamemodes = VALUES(gamemodes),
+       authors = VALUES(authors),
+       contributors = VALUES(contributors),
+       description_from_xml = VALUES(description_from_xml),
+       teams_from_xml = VALUES(teams_from_xml),
+       objectives_from_xml = VALUES(objectives_from_xml),
+       rules_from_xml = VALUES(rules_from_xml),
+       thumbnail_from_repo = VALUES(thumbnail_from_repo),
+       screenshots_from_repo = VALUES(screenshots_from_repo),
+       inferred_tags = VALUES(inferred_tags),
+       source_key = VALUES(source_key),
+       source_display_name = VALUES(source_display_name),
+       source_org = VALUES(source_org),
+       source_repo = VALUES(source_repo),
+       source_branch = VALUES(source_branch),
+       source_path = VALUES(source_path),
+       source_commit = VALUES(source_commit),
+       last_synced_at = NOW(),
+       last_sync_status = VALUES(last_sync_status),
+       last_sync_error = VALUES(last_sync_error)`,
+    [
+      row.map_key, row.name || row.map_key, row.version || null,
+      row.gamemode || "Unknown", toJson(row.gamemodes || []),
+      toJson(row.authors || []), toJson(row.contributors || []),
+      row.description_from_xml || null, toJson(row.teams_from_xml || []),
+      toJson(row.objectives_from_xml || []), toJson(row.rules_from_xml || []),
+      row.thumbnail_from_repo || null, toJson(row.screenshots_from_repo || []),
+      toJson(row.inferred_tags || []),
+      row.source_key || null, row.source_display_name || null, row.source_org || null,
+      row.source_repo || null, row.source_branch || null, row.source_path || null,
+      row.source_commit || null, row.last_sync_status || "ok", row.last_sync_error || null,
+      row.public_visible ?? 1, row.voting_enabled ?? 1, row.token_enabled ?? 1,
+      row.blacklisted_from_voting ?? 0, row.blacklisted_from_tokens ?? 0,
+    ]
+  );
+  return getMap(row.map_key, { includeSourceInfo: true });
+}
+
+export async function markMapSyncConflict(mapKey, message) {
+  await q(
+    `UPDATE mixed_maps SET last_sync_status = 'conflict', last_sync_error = ? WHERE map_key = ?`,
+    [message, mapKey]
+  );
+}
+
+/**
+ * No-clobber placeholder insert used by plugin ingestion when a match
+ * references a map_key not (yet) known to any synced repo. Never overwrites
+ * an existing row (repo-synced or otherwise).
+ */
+export async function upsertPlaceholderMap(mapKey, { name, gamemode } = {}) {
+  await q(
+    `INSERT INTO mixed_maps
+       (map_key, name, gamemode, source_key, discovered_from_server, first_seen_at,
+        public_visible, voting_enabled, token_enabled)
+     VALUES (?, ?, ?, 'server-discovered', 1, NOW(), 1, 0, 0)
+     ON DUPLICATE KEY UPDATE map_key = map_key`,
+    [mapKey, name || mapKey, gamemode || "Unknown"]
+  );
+  return getMap(mapKey);
+}
+
+export async function listDuplicateConflicts() {
+  return q(`SELECT * FROM mixed_maps WHERE last_sync_status = 'conflict' ORDER BY last_synced_at DESC`);
+}
+
+export async function listPlaceholderMaps() {
+  return q(`SELECT * FROM mixed_maps WHERE discovered_from_server = 1 ORDER BY first_seen_at DESC`);
+}
+
+export async function createSyncRun({ sourceKey, sourceDisplayName, sourceOrg, sourceRepo, sourceBranch, triggeredBy } = {}) {
+  const res = await q(
+    `INSERT INTO mixed_map_sync_runs
+       (source_key, source_display_name, source_org, source_repo, source_branch,
+        status, triggered_by, started_at)
+     VALUES (?, ?, ?, ?, ?, 'running', ?, NOW())`,
+    [sourceKey || null, sourceDisplayName || null, sourceOrg || null, sourceRepo || null, sourceBranch || null, triggeredBy || null]
+  );
+  return res.insertId;
+}
+
+export async function finishSyncRun(runId, {
+  status, sourceCommit, mapsFound = 0, mapsCreated = 0, mapsUpdated = 0,
+  mapsSkipped = 0, conflictsFound = 0, errorMessage,
+} = {}) {
+  await q(
+    `UPDATE mixed_map_sync_runs
+        SET status = ?, source_commit = COALESCE(?, source_commit),
+            maps_found = ?, maps_created = ?, maps_updated = ?, maps_skipped = ?,
+            conflicts_found = ?, error_message = ?, finished_at = NOW()
+      WHERE id = ?`,
+    [status, sourceCommit || null, mapsFound, mapsCreated, mapsUpdated, mapsSkipped, conflictsFound, errorMessage || null, runId]
+  );
+}
+
+export async function recordSyncError({ runId, sourceKey, sourceOrg, sourceRepo, mapKey, sourcePath, errorType, message }) {
+  await q(
+    `INSERT INTO mixed_map_sync_errors
+       (sync_run_id, source_key, source_org, source_repo, map_key, source_path, error_type, error_message)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+    [runId, sourceKey || null, sourceOrg || null, sourceRepo || null, mapKey || null, sourcePath || null, errorType, message]
+  );
+}
+
+export async function listSyncRuns({ sourceKey, limit = 50 } = {}) {
+  const where = [];
+  const params = [];
+  if (sourceKey) { where.push(`source_key = ?`); params.push(sourceKey); }
+  const whereSql = where.length ? `WHERE ${where.join(" AND ")}` : "";
+  return q(
+    `SELECT * FROM mixed_map_sync_runs ${whereSql} ORDER BY started_at DESC LIMIT ?`,
+    [...params, limit]
+  );
+}
+
+export async function getLatestSyncRunPerSource() {
+  return q(
+    `SELECT r.* FROM mixed_map_sync_runs r
+       INNER JOIN (
+         SELECT source_key, MAX(started_at) AS max_started
+           FROM mixed_map_sync_runs WHERE source_key IS NOT NULL GROUP BY source_key
+       ) latest ON latest.source_key = r.source_key AND latest.max_started = r.started_at
+      ORDER BY r.started_at DESC`
+  );
+}
+
+export async function getSyncRunErrors(runId) {
+  return q(`SELECT * FROM mixed_map_sync_errors WHERE sync_run_id = ? ORDER BY created_at ASC`, [runId]);
 }
 
 export async function updateMapAdmin(mapKey, patch) {
@@ -247,8 +442,9 @@ export async function updateMapAdmin(mapKey, patch) {
     "name", "description", "thumbnail_url", "gamemode", "version",
     "public_visible", "voting_enabled", "token_enabled",
     "blacklisted_from_voting", "blacklisted_from_tokens",
+    "custom_description", "custom_thumbnail_url",
   ];
-  const jsonFields = ["authors", "tags", "objectives"];
+  const jsonFields = ["authors", "tags", "objectives", "custom_tags"];
   const sets = [];
   const params = [];
   for (const key of allowed) {

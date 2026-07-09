@@ -6,16 +6,35 @@
 <div class="row g-4">
   <div class="col-lg-8">
     <div class="card mb-4">
-      <% if (map.thumbnail_url) { %><img src="<%= map.thumbnail_url %>" class="card-img-top" style="max-height:280px;object-fit:cover;" alt=""><% } %>
+      <% if (map.display_thumbnail_url) { %><img src="<%= map.display_thumbnail_url %>" class="card-img-top" style="max-height:280px;object-fit:cover;" alt=""><% } %>
       <div class="card-body">
         <h3><%= map.name %> <small class="text-muted"><%= map.version || '' %></small></h3>
         <p class="text-muted"><%= map.gamemode || '—' %> · by <%= (map.authors||[]).join(', ') || 'Unknown' %></p>
-        <% if (map.description) { %><p><%= map.description %></p><% } %>
-        <% if ((map.objectives||[]).length) { %>
-          <div><strong>Objectives:</strong> <%= (map.objectives||[]).map(o => typeof o === 'string' ? o : (o.name||'')).join(', ') %></div>
+        <% if ((map.contributors||[]).length) { %><p class="text-muted small">Contributors: <%= map.contributors.join(', ') %></p><% } %>
+        <p><%= map.display_description %></p>
+        <% if ((map.display_tags||[]).length) { %>
+          <div class="mb-2"><% map.display_tags.forEach(function(tag){ %><span class="badge bg-secondary me-1"><%= tag %></span><% }) %></div>
+        <% } %>
+        <% if ((map.objectives_from_xml||[]).length) { %>
+          <div><strong>Objectives:</strong> <%= map.objectives_from_xml.join(', ') %></div>
+        <% } %>
+        <% if ((map.teams_from_xml||[]).length) { %>
+          <div><strong>Teams:</strong> <%= map.teams_from_xml.map(t => t.name).filter(Boolean).join(', ') %></div>
+        <% } %>
+        <% if (isAdmin && map.source_key) { %>
+          <hr>
+          <p class="small text-muted mb-0">Source: <%= map.source_display_name || map.source_key %> · Repo: <%= map.source_repo %> · Path: <code><%= map.source_path %></code></p>
         <% } %>
       </div>
     </div>
+
+    <% if ((map.screenshots_from_repo||[]).length) { %>
+      <div class="row g-2 mb-4">
+        <% map.screenshots_from_repo.forEach(function(url){ %>
+          <div class="col-md-4"><img src="<%= url %>" class="img-fluid rounded" alt="Screenshot"></div>
+        <% }) %>
+      </div>
+    <% } %>
 
     <div class="row g-3 mb-4">
       <div class="col-6 col-md-3"><div class="card"><div class="card-body text-center py-2"><div class="h5 mb-0"><%= map.times_played %></div><small class="text-muted">Times played</small></div></div></div>

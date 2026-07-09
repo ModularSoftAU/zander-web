@@ -8,10 +8,16 @@
  * those are intentionally excluded from Mixed.
  */
 
+import { createRequire } from "module";
+const require = createRequire(import.meta.url);
+const config = require("../../config.json");
+
 import { requireMixedAdmin } from "./auth.js";
 import * as mixed from "../../controllers/mixedController.js";
 import { generateLog } from "../common.js";
 import { broadcast } from "../../lib/mixedRealtime.js";
+import { getPublicSourcesInfo } from "../../lib/mixed/mapSyncConfig.js";
+import { syncAll, syncSource, SourceNotFoundError } from "../../services/mixed/mixedMapRepoSyncService.js";
 
 export default function mixedAdminRoutes(app) {
   const guard = (handler) => async (req, res) => {
@@ -47,6 +53,49 @@ export default function mixedAdminRoutes(app) {
     await mixed.resetMapRatings(req.params.mapKey);
     await generateLog(actorId(req), "reset", "mixed", `Reset ratings for map ${req.params.mapKey}`);
     return res.send({ success: true });
+  }));
+
+  // ── Map repo sync ───────────────────────────────────────────────────────
+  app.post("/api/admin/mixed/maps/sync", guard(async (req, res) => {
+    const summary = await syncAll({ triggeredBy: `admin:${actorId(req)}` });
+    await generateLog(actorId(req), "sync", "mixed", `${actorName(req)} triggered a full Mixed map repo sync`);
+    broadcast("MAP_SYNC_COMPLETED", summary);
+    return res.send({ success: true, data: summary });
+  }));
+
+  app.post("/api/admin/mixed/maps/sync/:sourceKey", guard(async (req, res) => {
+    try {
+      const result = await syncSource(req.params.sourceKey, { triggeredBy: `admin:${actorId(req)}` });
+      await generateLog(actorId(req), "sync", "mixed", `${actorName(req)} triggered a sync of Mixed map source ${req.params.sourceKey}`);
+      broadcast("MAP_SYNC_COMPLETED", { sources: [result] });
+      return res.send({ success: true, data: result });
+    } catch (err) {
+      if (err instanceof SourceNotFoundError) {
+        return res.status(404).send({ success: false, message: err.message });
+      }
+      throw err;
+    }
+  }));
+
+  app.get("/api/admin/mixed/maps/sync/status", guard(async (_req, res) => {
+    const runs = await mixed.getLatestSyncRunPerSource();
+    const conflicts = await mixed.listDuplicateConflicts();
+    const placeholders = await mixed.listPlaceholderMaps();
+    return res.send({ success: true, data: { runs, conflicts, placeholders } });
+  }));
+
+  app.get("/api/admin/mixed/maps/sync/sources", guard(async (_req, res) => {
+    return res.send({ success: true, data: getPublicSourcesInfo(config) });
+  }));
+
+  app.get("/api/admin/mixed/maps/sync/runs", guard(async (req, res) => {
+    const runs = await mixed.listSyncRuns({ sourceKey: req.query?.sourceKey, limit: Number(req.query?.limit) || 50 });
+    return res.send({ success: true, data: runs });
+  }));
+
+  app.get("/api/admin/mixed/maps/sync/runs/:id/errors", guard(async (req, res) => {
+    const errors = await mixed.getSyncRunErrors(Number(req.params.id));
+    return res.send({ success: true, data: errors });
   }));
 
   // ── Voting ──────────────────────────────────────────────────────────────

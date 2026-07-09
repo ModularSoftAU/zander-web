@@ -90,25 +90,32 @@ export default function mixedSiteRoutes(app, config, features) {
     }));
   });
 
+  const isAdminViewer = (req) => Array.isArray(req.session?.user?.permissions) &&
+    req.session.user.permissions.some((p) => ["*", "zander.web.*", "zander.web.mixed"].includes(String(p).toLowerCase()));
+
   // ── Maps ────────────────────────────────────────────────────────────────
   app.get("/mixed/maps", async (req, res) => {
     if (!guard(req, res)) return;
+    const isAdmin = isAdminViewer(req);
     const page = Math.max(1, parseInt(req.query.page, 10) || 1);
     const result = await mixed.listMaps({
       search: req.query.search, gamemode: req.query.gamemode, author: req.query.author,
+      sourceKey: isAdmin ? req.query.source : undefined,
       sort: req.query.sort || "last_played", order: req.query.order || "desc", page, limit: 24,
+      includeHidden: isAdmin, includeSourceInfo: isAdmin,
     });
     const settings = await mixed.getSettings();
     return render(res, "modules/mixed/maps", await base(req, {
       pageTitle: "Maps", pageDescription: "Browse Mixed maps, ratings and play stats.",
-      result, query: req.query, settings,
+      result, query: req.query, settings, isAdmin,
     }));
   });
 
   app.get("/mixed/maps/:mapKey", async (req, res) => {
     if (!guard(req, res)) return;
-    const map = await mixed.getMap(req.params.mapKey);
-    if (!map || !map.public_visible) {
+    const isAdmin = isAdminViewer(req);
+    const map = await mixed.getMap(req.params.mapKey, { includeSourceInfo: isAdmin });
+    if (!map || (!map.public_visible && !isAdmin)) {
       return res
         .status(404)
         .header("content-type", "text/html; charset=utf-8")
@@ -122,7 +129,7 @@ export default function mixedSiteRoutes(app, config, features) {
     ]);
     return render(res, "modules/mixed/map-detail", await base(req, {
       pageTitle: map.name, pageDescription: `${map.name} — map stats, ratings and match history.`,
-      map, recentMatches: matchesRes.matches, feedback, voteHistory,
+      map, recentMatches: matchesRes.matches, feedback, voteHistory, isAdmin,
     }));
   });
 
@@ -192,12 +199,7 @@ export default function mixedSiteRoutes(app, config, features) {
 
   // ── Servers ─────────────────────────────────────────────────────────────────
   app.get("/mixed/servers", async (req, res) => {
-    if (!guard(req, res)) return;
-    const servers = await mixed.listServers();
-    return render(res, "modules/mixed/servers", await base(req, {
-      pageTitle: "Servers", pageDescription: "Mixed server status and heartbeats.",
-      servers,
-    }));
+    return res.redirect("/mixed");
   });
 
   // ── Vote ────────────────────────────────────────────────────────────────────

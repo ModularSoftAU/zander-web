@@ -5,7 +5,7 @@
 <div class="row g-2">
   <% categories.forEach(function(c){ %>
     <div class="col-md-3 col-6">
-      <a href="/mixed/leaderboards/<%= c %>" class="btn btn-outline-primary w-100 text-capitalize"><%= c.replace(/_/g,' ') %></a>
+      <a href="/mixed/leaderboards/<%= c %>" class="btn mixed-tab-link w-100 text-capitalize"><%= c.replace(/_/g,' ') %></a>
     </div>
   <% }) %>
 </div>

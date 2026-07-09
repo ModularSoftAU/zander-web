@@ -12,21 +12,23 @@
   <div class="col-md-2"><button class="btn btn-sm btn-primary w-100">Search</button></div>
 </form>
 
-<div class="table-responsive">
-  <table class="table table-sm table-hover align-middle">
-    <thead><tr><th>Player</th><th>Lvl</th><th>XP</th><th>W</th><th>L</th><th>K/D</th><th>Obj</th><th>Last played</th></tr></thead>
-    <tbody>
-      <% result.players.forEach(function(p){ %>
-        <tr>
-          <td><a href="/mixed/players/<%= p.player_uuid %>"><%= p.username || p.player_uuid %></a></td>
-          <td><%= p.level %></td><td><%= p.total_xp %></td><td><%= p.wins %></td><td><%= p.losses %></td>
-          <td><%= (p.kills/Math.max(1,p.deaths)).toFixed(2) %></td><td><%= p.objectives %></td>
-          <td><%= p.last_seen_at ? moment(p.last_seen_at).fromNow() : '—' %></td>
-        </tr>
-      <% }) %>
-      <% if (!result.players.length) { %><tr><td colspan="8" class="text-muted text-center">No players found.</td></tr><% } %>
-    </tbody>
-  </table>
+<div class="card shadow-sm border-0">
+  <div class="table-responsive">
+    <table class="table table-sm table-hover align-middle mb-0">
+      <thead class="table-light"><tr><th>Player</th><th>Lvl</th><th>XP</th><th>W</th><th>L</th><th>K/D</th><th>Obj</th><th>Last played</th></tr></thead>
+      <tbody>
+        <% result.players.forEach(function(p){ %>
+          <tr class="mixed-list-item">
+            <td><a href="/mixed/players/<%= p.player_uuid %>"><%= p.username || p.player_uuid %></a></td>
+            <td><%= p.level %></td><td><%= p.total_xp %></td><td><%= p.wins %></td><td><%= p.losses %></td>
+            <td><%= (p.kills/Math.max(1,p.deaths)).toFixed(2) %></td><td><%= p.objectives %></td>
+            <td><%= p.last_seen_at ? moment(p.last_seen_at).fromNow() : '—' %></td>
+          </tr>
+        <% }) %>
+        <% if (!result.players.length) { %><tr><td colspan="8" class="text-muted text-center">No players found.</td></tr><% } %>
+      </tbody>
+    </table>
+  </div>
 </div>
 
 <% const totalPages = Math.max(1, Math.ceil(result.total / result.limit)); %>

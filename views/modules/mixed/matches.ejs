@@ -19,28 +19,30 @@
   <div class="col-md-1"><button class="btn btn-sm btn-primary w-100">Filter</button></div>
 </form>
 
-<div class="table-responsive">
-  <table class="table table-sm table-hover align-middle">
-    <thead><tr>
-      <th>Match</th><th>Map</th><th>Gamemode</th><th>Started</th><th>Duration</th><th>Winner</th><th>Players</th><th>Kills</th><th>Obj</th>
-    </tr></thead>
-    <tbody>
-      <% result.matches.forEach(function(m){ %>
-        <tr>
-          <td><a href="/mixed/matches/<%= m.match_id %>"><%= String(m.match_id).slice(0,8) %></a></td>
-          <td><%= m.map_name || m.map_key || '—' %></td>
-          <td><%= m.gamemode || '—' %></td>
-          <td><%= m.started_at ? moment(m.started_at).format('YYYY-MM-DD HH:mm') : '—' %></td>
-          <td><%= m.duration_seconds ? Math.round(m.duration_seconds/60)+'m' : '—' %></td>
-          <td><%= (m.winners||[]).join(', ') || '—' %></td>
-          <td><%= m.participants_count %></td>
-          <td><%= m.total_kills %></td>
-          <td><%= m.total_objectives %></td>
-        </tr>
-      <% }) %>
-      <% if (!result.matches.length) { %><tr><td colspan="9" class="text-muted text-center">No matches found.</td></tr><% } %>
-    </tbody>
-  </table>
+<div class="card shadow-sm border-0">
+  <div class="table-responsive">
+    <table class="table table-sm table-hover align-middle mb-0">
+      <thead class="table-light"><tr>
+        <th>Match</th><th>Map</th><th>Gamemode</th><th>Started</th><th>Duration</th><th>Winner</th><th>Players</th><th>Kills</th><th>Obj</th>
+      </tr></thead>
+      <tbody>
+        <% result.matches.forEach(function(m){ %>
+          <tr class="mixed-list-item">
+            <td><a href="/mixed/matches/<%= m.match_id %>"><%= String(m.match_id).slice(0,8) %></a></td>
+            <td><%= m.map_name || m.map_key || '—' %></td>
+            <td><%= m.gamemode || '—' %></td>
+            <td><%= m.started_at ? moment(m.started_at).format('YYYY-MM-DD HH:mm') : '—' %></td>
+            <td><%= m.duration_seconds ? Math.round(m.duration_seconds/60)+'m' : '—' %></td>
+            <td><%= (m.winners||[]).join(', ') || '—' %></td>
+            <td><%= m.participants_count %></td>
+            <td><%= m.total_kills %></td>
+            <td><%= m.total_objectives %></td>
+          </tr>
+        <% }) %>
+        <% if (!result.matches.length) { %><tr><td colspan="9" class="text-muted text-center">No matches found.</td></tr><% } %>
+      </tbody>
+    </table>
+  </div>
 </div>
 
 <% const totalPages = Math.max(1, Math.ceil(result.total / result.limit)); %>

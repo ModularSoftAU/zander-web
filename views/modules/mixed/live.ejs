@@ -25,33 +25,15 @@
   <% }) %>
 </div>
 
-<div class="card mt-4">
-  <div class="card-header"><strong>Live feed</strong></div>
-  <div class="card-body" id="liveFeed" style="max-height: 300px; overflow:auto;">
-    <div class="text-muted small">Connecting to live updates…</div>
-  </div>
-</div>
-
 <script>
-  // Subscribe to the Mixed SSE stream for kill / objective / match updates.
+  // Reload the page when a match starts/ends so the live cards stay current.
   (function(){
-    const feed = document.getElementById('liveFeed');
-    function add(text){
-      const el = document.createElement('div');
-      el.className = 'small border-bottom py-1';
-      el.textContent = new Date().toLocaleTimeString() + ' — ' + text;
-      feed.prepend(el);
-    }
     try {
       const es = new EventSource('/api/mixed/stream');
-      es.addEventListener('connected', () => { feed.innerHTML=''; add('Connected to live feed.'); });
-      ['PLAYER_DEATH','OBJECTIVE_EVENT','LIVE_FEED_EVENT','MATCH_STARTED','MATCH_ENDED','HEARTBEAT'].forEach(function(t){
-        es.addEventListener(t, function(e){
-          try { const d = JSON.parse(e.data); add(t + ': ' + JSON.stringify(d.payload).slice(0,160)); } catch(_){}
-          if (t === 'MATCH_ENDED' || t === 'MATCH_STARTED') setTimeout(()=>location.reload(), 3000);
-        });
+      ['MATCH_STARTED','MATCH_ENDED'].forEach(function(t){
+        es.addEventListener(t, function(){ setTimeout(()=>location.reload(), 3000); });
       });
-    } catch(e){ add('Live updates unavailable.'); }
+    } catch(e){}
   })();
 </script>
 

@@ -90,7 +90,7 @@ export default function mixedIngestionRoutes(app) {
   app.post("/api/mixed/stats/match", guard(async (req, res) => {
     const b = req.body || {};
     if (!b.match_id) return res.status(400).send({ success: false, message: "match_id is required." });
-    if (b.map_key) await mixed.upsertMap({ map_key: b.map_key, name: b.map_name, gamemode: b.gamemode });
+    if (b.map_key) await mixed.upsertPlaceholderMap(b.map_key, { name: b.map_name, gamemode: b.gamemode });
     const match = await mixed.upsertMatch(b);
     const players = Array.isArray(b.players) ? b.players : [];
     for (const p of players) {

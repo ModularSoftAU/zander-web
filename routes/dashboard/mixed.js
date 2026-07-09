@@ -12,6 +12,7 @@ import { hasPermission } from "../../api/common.js";
 import { adminViewData } from "../../admin/adminHelpers.js";
 import { getWebAnnouncement } from "../../controllers/announcementController.js";
 import * as mixed from "../../controllers/mixedController.js";
+import { getPublicSourcesInfo } from "../../lib/mixed/mapSyncConfig.js";
 import moment from "moment";
 
 export default function dashboardMixedRoute(app, config, features, lang) {
@@ -35,8 +36,28 @@ export default function dashboardMixedRoute(app, config, features, lang) {
 
   app.get("/dashboard/mixed/maps", async (req, res) => {
     if (!(await hasPermission(CAP, req, res, features))) return;
-    const result = await mixed.listMaps({ search: req.query.search, includeHidden: true, limit: 100 });
-    return send(res, await shell(req, "dashboard/mixed/maps", { pageTitle: "Mixed Maps", result, query: req.query }));
+    const [result, sourcesInfo, latestRuns, conflicts, placeholders] = await Promise.all([
+      mixed.listMaps({ search: req.query.search, includeHidden: true, includeSourceInfo: true, limit: 100 }),
+      Promise.resolve(getPublicSourcesInfo(config)),
+      mixed.listSyncRuns({ limit: 20 }),
+      mixed.listDuplicateConflicts(),
+      mixed.listPlaceholderMaps(),
+    ]);
+    return send(res, await shell(req, "dashboard/mixed/maps", {
+      pageTitle: "Mixed Maps", result, query: req.query,
+      sourcesInfo, latestRuns, conflicts, placeholders,
+    }));
+  });
+
+  app.get("/dashboard/mixed/maps/sync-runs/:id", async (req, res) => {
+    if (!(await hasPermission(CAP, req, res, features))) return;
+    const runId = Number(req.params.id);
+    const [runs, errors] = await Promise.all([
+      mixed.listSyncRuns({ limit: 200 }),
+      mixed.getSyncRunErrors(runId),
+    ]);
+    const run = runs.find((r) => r.id === runId) || null;
+    return send(res, await shell(req, "dashboard/mixed/sync-run-detail", { pageTitle: "Mixed Map Sync Run", run, errors }));
   });
 
   app.get("/dashboard/mixed/voting", async (req, res) => {

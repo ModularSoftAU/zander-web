@@ -358,6 +358,67 @@ input[type="email"]:focus, input[type="password"]:focus, input[type="text"]:focu
   text-decoration: underline;
 }
 
+.mixed-section-label {
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: #6f8ba4;
+}
+
+.mixed-tabs {
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  overflow-x: auto;
+  padding-bottom: 0.25rem;
+}
+
+.mixed-tabs::-webkit-scrollbar {
+  display: none;
+}
+
+.mixed-tab-link {
+  border-radius: 999px;
+  background-color: rgba(47, 80, 140, 0.08);
+  color: #2f508c;
+  font-weight: 600;
+  transition: all 0.2s ease;
+}
+
+.mixed-tab-link:hover,
+.mixed-tab-link.active {
+  background-color: #2f508c;
+  color: #fff;
+}
+
+.mixed-stat {
+  background: rgba(47, 80, 140, 0.08);
+  border-radius: 1rem;
+  padding: 1.25rem;
+}
+
+.mixed-stat-number {
+  font-size: clamp(1.75rem, 3.5vw, 2.25rem);
+  font-weight: 700;
+  color: #2f508c;
+}
+
+.mixed-stat-label {
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #6f8ba4;
+}
+
+.mixed-list-item {
+  transition: background-color 0.15s ease;
+}
+
+.mixed-list-item:hover {
+  background-color: rgba(47, 80, 140, 0.06);
+}
+
 .badge-soft-success {
   background-color: rgba(25, 135, 84, 0.18);
   color: #198754;
