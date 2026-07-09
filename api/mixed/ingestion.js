@@ -38,6 +38,9 @@ export default function mixedIngestionRoutes(app) {
     const b = req.body || {};
     if (!b.server_id) return res.status(400).send({ success: false, message: "server_id is required." });
     const server = await mixed.upsertServerHeartbeat(b);
+    console.info(
+      `[mixed:heartbeat] server=${b.server_id} players=${b.onlinePlayers ?? "?"}/${b.maxPlayers ?? "?"} match=${b.currentMatchId || "-"} map=${b.currentMapKey || "-"} queued=${b.queuedEvents ?? 0}`
+    );
     broadcast("HEARTBEAT", { server_id: b.server_id, server });
     return res.send({ success: true, data: server });
   }));
@@ -46,6 +49,7 @@ export default function mixedIngestionRoutes(app) {
     const b = req.body || {};
     if (!b.server_id) return res.status(400).send({ success: false, message: "server_id is required." });
     await mixed.markServerOffline(b.server_id);
+    console.info(`[mixed:heartbeat] server=${b.server_id} marked offline.`);
     broadcast("SERVER_OFFLINE", { server_id: b.server_id });
     return res.send({ success: true });
   }));

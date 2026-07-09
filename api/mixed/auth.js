@@ -7,8 +7,10 @@
  *   requireLinkedUser    — session user with a linked Minecraft account (uuid).
  *   requireMixedAdmin    — session user with the zander.web.mixed capability.
  *
- * The plugin API token lives in process.env.MIXED_PLUGIN_API_TOKEN and MUST NOT
- * be exposed to the frontend. The Stripe secret key is never read here.
+ * The plugin API token lives in process.env.MIXED_PLUGIN_API_TOKEN. For
+ * operational convenience, the app-wide process.env.apiKey is also accepted
+ * for ingestion requests when present. Neither value is exposed to the
+ * frontend. The Stripe secret key is never read here.
  */
 
 const ADMIN_NODES = ["zander.web.mixed", "zander.web.*", "*"];
@@ -18,17 +20,29 @@ const ADMIN_NODES = ["zander.web.mixed", "zander.web.*", "*"];
  * Returns true when authorised; otherwise sends a 401 and returns false.
  */
 export function requirePluginToken(req, res) {
-  const expected = process.env.MIXED_PLUGIN_API_TOKEN;
-  if (!expected) {
+  const acceptedTokens = [
+    process.env.MIXED_PLUGIN_API_TOKEN,
+    process.env.apiKey,
+  ].filter((value, index, arr) => value && arr.indexOf(value) === index);
+
+  if (!acceptedTokens.length) {
+    console.error("[mixed:auth] No plugin ingestion token is configured.");
     res.status(503).send({ success: false, message: "Mixed plugin API is not configured." });
     return false;
   }
+
   const header = req.headers["authorization"] || "";
   const token = header.startsWith("Bearer ") ? header.slice(7).trim() : null;
-  if (!token || token !== expected) {
+
+  if (!token || !acceptedTokens.includes(token)) {
+    const source = req.headers["x-server-id"] || req.ip || "unknown";
+    console.warn(
+      `[mixed:auth] Rejected ingestion request from ${source}: invalid or missing bearer token.`
+    );
     res.status(401).send({ success: false, message: "Invalid or missing plugin API token." });
     return false;
   }
+
   return true;
 }
 
