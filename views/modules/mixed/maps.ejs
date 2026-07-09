@@ -6,8 +6,8 @@
   <div class="col-md-2"><input class="form-control form-control-sm" name="author" placeholder="Author" value="<%= query.author || '' %>"></div>
   <div class="col-md-3">
     <select class="form-select form-select-sm" name="sort">
-      <% [['last_played','Last played'],['times_played','Times played'],['average_rating','Rating'],['average_duration','Duration'],['name','Name']].forEach(function(o){ %>
-        <option value="<%= o[0] %>" <%= (query.sort||'last_played')===o[0]?'selected':'' %>><%= o[1] %></option>
+      <% [["last_played", "Last played"], ["times_played", "Times played"], ["average_rating", "Rating"], ["average_duration", "Duration"], ["name", "Name"]].forEach(function(o){ %>
+        <option value="<%= o[0] %>" <%= (query.sort || "last_played") === o[0] ? "selected" : "" %>><%= o[1] %></option>
       <% }) %>
     </select>
   </div>
@@ -21,40 +21,16 @@
         <% if (map.thumbnail_url) { %><img src="<%= map.thumbnail_url %>" class="card-img-top" style="height:150px;object-fit:cover;" alt=""><% } %>
         <div class="card-body">
           <h5 class="card-title mb-1"><a href="/mixed/maps/<%= encodeURIComponent(map.map_key) %>" class="text-reset text-decoration-none"><%= map.name %></a></h5>
-          <p class="text-muted small mb-2"><%= map.gamemode || '—' %> · <%= (map.authors||[]).join(', ') || 'Unknown author' %></p>
+          <p class="text-muted small mb-2"><%= map.gamemode || "-" %> · <%= (map.authors || []).join(", ") || "Unknown author" %></p>
           <div class="d-flex justify-content-between small">
             <span><%= Number(map.average_overall || 0).toFixed(1) %>★ (<%= map.rating_count || 0 %>)</span>
             <span><%= map.times_played %> plays</span>
           </div>
         </div>
-        <% if (req.session && req.session.user && req.session.user.uuid && map.token_enabled && !map.blacklisted_from_tokens) { %>
-          <div class="card-footer d-flex gap-1">
-            <button class="btn btn-sm btn-outline-primary token-action" data-map="<%= map.map_key %>" data-action="nominate">Nominate (<%= settings.token_nominate_cost %>)</button>
-            <button class="btn btn-sm btn-outline-primary token-action" data-map="<%= map.map_key %>" data-action="set_next">Set next (<%= settings.token_set_next_cost %>)</button>
-            <button class="btn btn-sm btn-outline-primary token-action" data-map="<%= map.map_key %>" data-action="sponsor">Sponsor (<%= settings.token_sponsor_cost %>)</button>
-          </div>
-        <% } %>
       </div>
     </div>
   <% }) %>
   <% if (!result.maps.length) { %><div class="col-12"><div class="alert alert-secondary">No maps found.</div></div><% } %>
 </div>
-
-<script>
-  document.querySelectorAll('.token-action').forEach(function(btn){
-    btn.addEventListener('click', async function(){
-      btn.disabled = true;
-      try {
-        const r = await fetch('/api/mixed/map-tokens/request', {
-          method: 'POST', headers: {'Content-Type':'application/json'},
-          body: JSON.stringify({ map_key: btn.dataset.map, action_type: btn.dataset.action })
-        });
-        const j = await r.json();
-        alert(j.success ? 'Request submitted! Remaining tokens: ' + j.data.balance : (j.message || 'Failed'));
-      } catch(e){ alert('Request failed.'); }
-      btn.disabled = false;
-    });
-  });
-</script>
 
 <%- include("_bottom.ejs") %>

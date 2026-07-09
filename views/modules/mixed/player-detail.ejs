@@ -4,18 +4,15 @@
   <div class="col-lg-4">
     <div class="card mb-4"><div class="card-body text-center">
       <img src="https://crafatar.com/avatars/<%= player.player_uuid %>?size=80&overlay" class="mb-2" alt="" onerror="this.style.display='none'">
-      <h4 class="mb-0"><%= player.username || 'Player' %></h4>
+      <h4 class="mb-0"><%= player.username || "Player" %></h4>
       <div class="text-muted small mb-2"><%= player.player_uuid %></div>
       <% if (player.rank) { %><span class="badge bg-primary"><%= player.rank.display_name || player.rank.rank_key %></span><% } %>
       <hr>
       <div class="d-flex justify-content-around">
         <div><div class="h5 mb-0"><%= player.level %></div><small class="text-muted">Level</small></div>
         <div><div class="h5 mb-0"><%= player.total_xp %></div><small class="text-muted">XP</small></div>
-        <div><div class="h5 mb-0"><%= (player.kills/Math.max(1,player.deaths)).toFixed(2) %></div><small class="text-muted">K/D</small></div>
+        <div><div class="h5 mb-0"><%= (player.kills / Math.max(1, player.deaths)).toFixed(2) %></div><small class="text-muted">K/D</small></div>
       </div>
-      <% if (showTokens && player.tokenBalance) { %>
-        <hr><div><strong><%= player.tokenBalance.balance %></strong> Map Tokens</div>
-      <% } %>
     </div></div>
 
     <div class="card mb-4"><div class="card-body">
@@ -23,7 +20,7 @@
       <div class="d-flex justify-content-between"><span>Played</span><strong><%= player.matches_played %></strong></div>
       <div class="d-flex justify-content-between"><span>Wins</span><strong><%= player.wins %></strong></div>
       <div class="d-flex justify-content-between"><span>Losses</span><strong><%= player.losses %></strong></div>
-      <div class="d-flex justify-content-between"><span>Win rate</span><strong><%= player.matches_played ? Math.round(player.wins/player.matches_played*100) : 0 %>%</strong></div>
+      <div class="d-flex justify-content-between"><span>Win rate</span><strong><%= player.matches_played ? Math.round(player.wins / player.matches_played * 100) : 0 %>%</strong></div>
       <div class="d-flex justify-content-between"><span>Kills / Deaths / Assists</span><strong><%= player.kills %>/<%= player.deaths %>/<%= player.assists %></strong></div>
       <div class="d-flex justify-content-between"><span>Objectives</span><strong><%= player.objectives %></strong></div>
       <div class="d-flex justify-content-between"><span>Best killstreak</span><strong><%= player.best_killstreak %></strong></div>
@@ -35,8 +32,8 @@
     <ul class="list-group mb-4">
       <% player.recentMatches.forEach(function(m){ %>
         <a href="/mixed/matches/<%= m.match_id %>" class="list-group-item list-group-item-action d-flex justify-content-between">
-          <span><%= m.map_name || m.match_id %> <span class="badge <%= m.won ? 'bg-success' : 'bg-secondary' %>"><%= m.won ? 'Win' : 'Loss' %></span></span>
-          <span class="text-muted small"><%= m.kills %>K/<%= m.deaths %>D · <%= m.started_at ? moment(m.started_at).fromNow() : '' %></span>
+          <span><%= m.map_name || m.match_id %> <span class="badge <%= m.won ? 'bg-success' : 'bg-secondary' %>"><%= m.won ? "Win" : "Loss" %></span></span>
+          <span class="text-muted small"><%= m.kills %>K/<%= m.deaths %>D · <%= m.started_at ? moment(m.started_at).fromNow() : "" %></span>
         </a>
       <% }) %>
       <% if (!player.recentMatches.length) { %><li class="list-group-item text-muted">No matches yet.</li><% } %>
@@ -53,12 +50,11 @@
         </ul>
       </div>
       <div class="col-md-6">
-        <h5>Achievements</h5>
+        <h5>Recent form</h5>
         <ul class="list-group mb-4">
-          <% player.achievements.forEach(function(a){ %>
-            <li class="list-group-item d-flex justify-content-between"><span><%= a.name %></span><span class="badge bg-info text-dark"><%= a.rarity %></span></li>
-          <% }) %>
-          <% if (!player.achievements.length) { %><li class="list-group-item text-muted">None unlocked.</li><% } %>
+          <li class="list-group-item d-flex justify-content-between"><span>Recent matches tracked</span><strong><%= player.recentMatches.length %></strong></li>
+          <li class="list-group-item d-flex justify-content-between"><span>Wins</span><strong><%= player.recentMatches.filter((m) => m.won).length %></strong></li>
+          <li class="list-group-item d-flex justify-content-between"><span>Losses</span><strong><%= player.recentMatches.filter((m) => !m.won).length %></strong></li>
         </ul>
       </div>
     </div>

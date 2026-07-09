@@ -8,7 +8,6 @@
 
 import { getGlobalImage } from "../api/common.js";
 import { getWebAnnouncement } from "../controllers/announcementController.js";
-import { listStoreProducts } from "../api/mixed/store.js";
 import * as mixed from "../controllers/mixedController.js";
 import moment from "moment";
 
@@ -38,13 +37,9 @@ export default function mixedSiteRoutes(app, config, features) {
   app.get("/mixed", async (req, res) => {
     if (!guard(req, res)) return;
     const data = await mixed.landingData();
-    let tokenBalance = null;
-    if (req.session?.user?.uuid) {
-      tokenBalance = await mixed.getTokenBalance(mixed.normaliseUuid(req.session.user.uuid));
-    }
     return render(res, "modules/mixed/index", await base(req, {
       pageTitle: "Mixed", pageDescription: "Mixed — the public PGM stats portal, map browser, leaderboards and Map Token store.",
-      ...data, tokenBalance,
+      ...data,
     }));
   });
 
@@ -192,12 +187,7 @@ export default function mixedSiteRoutes(app, config, features) {
 
   // ── Achievements ────────────────────────────────────────────────────────────
   app.get("/mixed/achievements", async (req, res) => {
-    if (!guard(req, res)) return;
-    const achievements = await mixed.listAchievements();
-    return render(res, "modules/mixed/achievements", await base(req, {
-      pageTitle: "Achievements", pageDescription: "Mixed achievements and unlock counts.",
-      achievements,
-    }));
+    return res.redirect("/mixed");
   });
 
   // ── Servers ─────────────────────────────────────────────────────────────────
@@ -212,40 +202,16 @@ export default function mixedSiteRoutes(app, config, features) {
 
   // ── Vote ────────────────────────────────────────────────────────────────────
   app.get("/mixed/vote", async (req, res) => {
-    if (!guard(req, res)) return;
-    const [vote, settings] = await Promise.all([mixed.getCurrentVote(), mixed.getSettings()]);
-    return render(res, "modules/mixed/vote", await base(req, {
-      pageTitle: "Map Vote", pageDescription: "Vote on the next Mixed map.",
-      vote, settings,
-    }));
+    return res.redirect("/mixed");
   });
 
   // ── Map Tokens ────────────────────────────────────────────────────────────
   app.get("/mixed/map-tokens", async (req, res) => {
-    if (!guard(req, res)) return;
-    let balance = null, transactions = [], requests = [];
-    if (req.session?.user?.uuid) {
-      const uuid = mixed.normaliseUuid(req.session.user.uuid);
-      [balance, transactions, requests] = await Promise.all([
-        mixed.getTokenBalance(uuid),
-        mixed.getTokenTransactions(uuid, 100),
-        mixed.listPlayerMapRequests(uuid, 50),
-      ]);
-    }
-    return render(res, "modules/mixed/map-tokens", await base(req, {
-      pageTitle: "Map Tokens", pageDescription: "Your Map Token balance and history.",
-      balance, transactions, requests,
-    }));
+    return res.redirect("/webstore");
   });
 
   // ── Store ───────────────────────────────────────────────────────────────────
   app.get("/mixed/store", async (req, res) => {
-    if (!guard(req, res)) return;
-    const hasLinkedAccount = Boolean(req.session?.user?.uuid);
-    return render(res, "modules/mixed/store", await base(req, {
-      pageTitle: "Map Token Store", pageDescription: "Buy Map Tokens to nominate, boost and set Mixed maps.",
-      products: listStoreProducts(), hasLinkedAccount,
-      storeConfigured: Boolean(process.env.STRIPE_SECRET_KEY),
-    }));
+    return res.redirect("/webstore");
   });
 }
