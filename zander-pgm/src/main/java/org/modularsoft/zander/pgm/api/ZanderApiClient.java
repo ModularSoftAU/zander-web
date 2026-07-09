@@ -15,9 +15,10 @@ import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
 /**
- * Async REST client for zander-web. All calls run off the main thread via the
- * JDK {@link HttpClient} executor and never throw into the caller. Failed
- * generic events are pushed onto the {@link EventQueue} for later retry.
+ * Async REST client for zander-web Mixed ingestion endpoints. All calls run
+ * off the main thread via the JDK {@link HttpClient} executor and never throw
+ * into the caller. Failed generic events are pushed onto the
+ * {@link EventQueue} for later retry.
  */
 public class ZanderApiClient {
 
@@ -53,9 +54,13 @@ public class ZanderApiClient {
                 .uri(URI.create(config.baseUrl + path))
                 .timeout(Duration.ofSeconds(config.requestTimeoutSeconds))
                 .header("Content-Type", "application/json")
-                .header("Authorization", "Bearer " + config.token)
+                .header("Authorization", bearerToken(config.token))
                 .header("X-Server-Id", config.serverId)
                 .header("X-Plugin-Version", pluginVersion);
+    }
+
+    static String bearerToken(String token) {
+        return "Bearer " + token;
     }
 
     /** POST an arbitrary body to a path. Never throws; returns success flag. */

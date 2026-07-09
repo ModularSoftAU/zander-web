@@ -6,7 +6,7 @@ server:
 api:
   baseUrl: "https://zander-web.example.com"
   websocketUrl: "wss://zander-web.example.com/ws/mixed"
-  token: "change-me"
+  token: "change-me" # Must match zander-web MIXED_PLUGIN_API_TOKEN.
   connectTimeoutSeconds: 10
   requestTimeoutSeconds: 15
 

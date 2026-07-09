@@ -17,43 +17,45 @@ import java.util.stream.Collectors;
 public class ZpgmCommand implements CommandExecutor, TabCompleter {
 
     private static final List<String> ROOT = Arrays.asList(
-            "status", "reload", "reconnect", "flush", "debug", "vote", "maptokens", "rating");
+            "status", "reload", "reconnect", "flush", "debug", "vote", "maptokens", "tokens", "rating");
 
     private final ZanderPGMPlugin plugin;
+    private final MapTokensCommand mapTokensCommand;
 
     public ZpgmCommand(ZanderPGMPlugin plugin) {
         this.plugin = plugin;
+        this.mapTokensCommand = new MapTokensCommand(plugin);
     }
 
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
         if (!sender.hasPermission("zanderpgm.admin")) {
-            sender.sendMessage("§cYou do not have permission.");
+            sender.sendMessage("Â§cYou do not have permission.");
             return true;
         }
         if (args.length == 0) {
-            sender.sendMessage("§6/zpgm §7<" + String.join("|", ROOT) + ">");
+            sender.sendMessage("Â§6/zpgm Â§7<" + String.join("|", ROOT) + ">");
             return true;
         }
         switch (args[0].toLowerCase()) {
             case "status" -> status(sender);
             case "reload" -> {
                 plugin.reloadPluginConfig();
-                sender.sendMessage("§aConfig reloaded and connections refreshed.");
+                sender.sendMessage("Â§aConfig reloaded and connections refreshed.");
             }
             case "reconnect" -> {
                 plugin.ws().reconnect();
-                sender.sendMessage("§aReconnecting WebSocket...");
+                sender.sendMessage("Â§aReconnecting WebSocket...");
             }
             case "flush" -> {
                 plugin.flushQueue();
-                sender.sendMessage("§aFlushing queued events...");
+                sender.sendMessage("Â§aFlushing queued events...");
             }
             case "debug" -> debug(sender);
             case "vote" -> vote(sender, args);
-            case "maptokens" -> maptokens(sender, args);
+            case "maptokens", "tokens" -> maptokens(sender, args);
             case "rating" -> rating(sender, args);
-            default -> sender.sendMessage("§cUnknown subcommand.");
+            default -> sender.sendMessage("Â§cUnknown subcommand.");
         }
         return true;
     }
@@ -61,88 +63,77 @@ public class ZpgmCommand implements CommandExecutor, TabCompleter {
     private void status(CommandSender sender) {
         ZanderPGMConfig cfg = plugin.cfg();
         MatchIdentityService.Identity id = plugin.identity().current();
-        sender.sendMessage("§6=== ZanderPGM Status ===");
-        sender.sendMessage("§7Server ID: §f" + cfg.serverId);
-        sender.sendMessage("§7API base: §f" + cfg.baseUrl);
-        sender.sendMessage("§7REST reachable: " + yn(plugin.health().isRestReachable()));
-        sender.sendMessage("§7WebSocket: " + yn(plugin.ws().isConnected()));
-        sender.sendMessage("§7Queued events: §f" + plugin.queue().size()
-                + " §7(dropped: " + plugin.queue().droppedCount() + ")");
-        sender.sendMessage("§7Current match: §f" + (id != null ? id.matchId : "none"));
-        sender.sendMessage("§7Current map: §f" + (id != null ? id.mapName : "none"));
-        sender.sendMessage("§7Players online: §f" + Bukkit.getOnlinePlayers().size());
+        sender.sendMessage("Â§6=== ZanderPGM Status ===");
+        sender.sendMessage("Â§7Server ID: Â§f" + cfg.serverId);
+        sender.sendMessage("Â§7API base: Â§f" + cfg.baseUrl);
+        sender.sendMessage("Â§7REST reachable: " + yn(plugin.health().isRestReachable()));
+        sender.sendMessage("Â§7WebSocket: " + yn(plugin.ws().isConnected()));
+        sender.sendMessage("Â§7Queued events: Â§f" + plugin.queue().size()
+                + " Â§7(dropped: " + plugin.queue().droppedCount() + ")");
+        sender.sendMessage("Â§7Current match: Â§f" + (id != null ? id.matchId : "none"));
+        sender.sendMessage("Â§7Current map: Â§f" + (id != null ? id.mapName : "none"));
+        sender.sendMessage("Â§7Players online: Â§f" + Bukkit.getOnlinePlayers().size());
         String features = cfg.features.entrySet().stream()
                 .filter(java.util.Map.Entry::getValue)
                 .map(java.util.Map.Entry::getKey)
                 .collect(Collectors.joining(", "));
-        sender.sendMessage("§7Enabled features: §f" + features);
+        sender.sendMessage("Â§7Enabled features: Â§f" + features);
     }
 
     private void debug(CommandSender sender) {
         MatchIdentityService.Identity id = plugin.identity().current();
         if (id == null) {
-            sender.sendMessage("§eNo match loaded.");
+            sender.sendMessage("Â§eNo match loaded.");
             return;
         }
-        sender.sendMessage("§6=== Match Debug ===");
-        sender.sendMessage("§7Match ID: §f" + id.matchId);
-        sender.sendMessage("§7Map: §f" + id.mapName + " §7(" + id.mapKey + ") v" + id.mapVersion);
-        sender.sendMessage("§7Tracked players: §f" + plugin.stats().allPlayers().size());
-        sender.sendMessage("§7Players online: §f" + Bukkit.getOnlinePlayers().size());
+        sender.sendMessage("Â§6=== Match Debug ===");
+        sender.sendMessage("Â§7Match ID: Â§f" + id.matchId);
+        sender.sendMessage("Â§7Map: Â§f" + id.mapName + " Â§7(" + id.mapKey + ") v" + id.mapVersion);
+        sender.sendMessage("Â§7Tracked players: Â§f" + plugin.stats().allPlayers().size());
+        sender.sendMessage("Â§7Players online: Â§f" + Bukkit.getOnlinePlayers().size());
     }
 
     private void vote(CommandSender sender, String[] args) {
         if (args.length < 2) {
-            sender.sendMessage("§c/zpgm vote <start|end|status|cancel>");
+            sender.sendMessage("Â§c/zpgm vote <start|end|status|cancel>");
             return;
         }
         switch (args[1].toLowerCase()) {
             case "start" -> {
                 if (plugin.votes().start() != null) {
-                    sender.sendMessage("§aMap vote started.");
+                    sender.sendMessage("Â§aMap vote started.");
                 } else {
-                    sender.sendMessage("§cCould not start a vote (disabled or already active).");
+                    sender.sendMessage("Â§cCould not start a vote (disabled or already active).");
                 }
             }
             case "end" -> {
                 plugin.votes().end();
-                sender.sendMessage("§aMap vote ended.");
+                sender.sendMessage("Â§aMap vote ended.");
             }
             case "cancel" -> {
                 plugin.votes().cancel("admin");
-                sender.sendMessage("§aMap vote cancelled.");
+                sender.sendMessage("Â§aMap vote cancelled.");
             }
-            case "status" -> sender.sendMessage("§7Vote active: " + yn(plugin.votes().isActive()));
-            default -> sender.sendMessage("§c/zpgm vote <start|end|status|cancel>");
+            case "status" -> sender.sendMessage("Â§7Vote active: " + yn(plugin.votes().isActive()));
+            default -> sender.sendMessage("Â§c/zpgm vote <start|end|status|cancel>");
         }
     }
 
     private void maptokens(CommandSender sender, String[] args) {
-        if (args.length < 2) {
-            sender.sendMessage("§c/zpgm maptokens <status|clear>");
-            return;
-        }
-        switch (args[1].toLowerCase()) {
-            case "status" -> sender.sendMessage("§7Map tokens: §f" + plugin.tokens().status());
-            case "clear" -> {
-                plugin.tokens().clearOverride();
-                sender.sendMessage("§aCleared pending next-map override.");
-            }
-            default -> sender.sendMessage("§c/zpgm maptokens <status|clear>");
-        }
+        mapTokensCommand.handle(sender, args);
     }
 
     private void rating(CommandSender sender, String[] args) {
         if (args.length >= 2 && args[1].equalsIgnoreCase("reset")) {
             plugin.ratings().reset();
-            sender.sendMessage("§aRating session reset.");
+            sender.sendMessage("Â§aRating session reset.");
             return;
         }
-        sender.sendMessage("§c/zpgm rating reset <map>");
+        sender.sendMessage("Â§c/zpgm rating reset <map>");
     }
 
     private String yn(boolean b) {
-        return b ? "§ayes" : "§cno";
+        return b ? "Â§ayes" : "Â§cno";
     }
 
     @Override
@@ -153,8 +144,8 @@ public class ZpgmCommand implements CommandExecutor, TabCompleter {
         if (args.length == 2 && args[0].equalsIgnoreCase("vote")) {
             return Arrays.asList("start", "end", "status", "cancel");
         }
-        if (args.length == 2 && args[0].equalsIgnoreCase("maptokens")) {
-            return Arrays.asList("status", "clear");
+        if (args.length >= 2 && (args[0].equalsIgnoreCase("maptokens") || args[0].equalsIgnoreCase("tokens"))) {
+            return mapTokensCommand.tabComplete(args);
         }
         return List.of();
     }

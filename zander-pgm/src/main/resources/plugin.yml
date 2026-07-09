@@ -11,7 +11,7 @@ softdepend:
 commands:
   zpgm:
     description: Zander PGM admin command
-    usage: /zpgm <status|reload|reconnect|flush|debug|vote|maptokens>
+    usage: /zpgm <status|reload|reconnect|flush|debug|vote|maptokens|tokens>
     permission: zanderpgm.admin
   vote:
     description: Vote for the next Mixed map
@@ -46,4 +46,20 @@ permissions:
   zanderpgm.profile:
     default: true
   zanderpgm.rank.admin:
+    default: op
+  zanderpgm.maptokens.admin:
+    default: op
+  zanderpgm.maptokens.grant:
+    default: op
+  zanderpgm.maptokens.remove:
+    default: op
+  zanderpgm.maptokens.set:
+    default: op
+  zanderpgm.maptokens.balance.others:
+    default: op
+  zanderpgm.maptokens.history:
+    default: op
+  zanderpgm.maptokens.status:
+    default: op
+  zanderpgm.maptokens.clear:
     default: op

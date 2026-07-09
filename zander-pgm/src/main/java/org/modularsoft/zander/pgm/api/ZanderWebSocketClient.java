@@ -48,7 +48,7 @@ public class ZanderWebSocketClient {
         shuttingDown = false;
         try {
             http.newWebSocketBuilder()
-                    .header("Authorization", "Bearer " + config.token)
+                    .header("Authorization", ZanderApiClient.bearerToken(config.token))
                     .header("X-Server-Id", config.serverId)
                     .buildAsync(URI.create(config.websocketUrl), new Listener())
                     .whenComplete((ws, err) -> {

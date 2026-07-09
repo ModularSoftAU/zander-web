@@ -63,11 +63,12 @@ server:
   id: "mixed-1"
 api:
   baseUrl: "https://zander-web.example.com"
-  token: "<your token>"
+  token: "<value of zander-web MIXED_PLUGIN_API_TOKEN>"
 ```
 
 Feature flags under `features:` toggle every subsystem; token/vote/rating
-behaviour is tuned under `mapTokens:`, `mapVoting:` and `mapRatings:`.
+behaviour is tuned under `mapTokens:`, `mapVoting:` and `mapRatings:`. Mixed
+REST/WebSocket auth is always sent as `Authorization: Bearer <token>`.
 
 ## API endpoints expected in zander-web
 
@@ -127,6 +128,72 @@ players), and applies valid ones to the **next** match/vote — never interrupti
 a running match. Failures are reported back so zander-web can refund tokens when
 `refundIfFailed` is set. Lifecycle events: `MAP_REQUEST_RECEIVED / ACCEPTED /
 APPLIED / REJECTED / FAILED / REFUNDED`.
+
+## Map Tokens Commands
+
+Admin and console commands:
+
+- `/zpgm maptokens grant <player> <amount> [reason]`
+- `/zpgm maptokens remove <player> <amount> [reason]`
+- `/zpgm maptokens set <player> <amount> [reason]`
+- `/zpgm maptokens balance <player>`
+- `/zpgm maptokens history <player> [page]`
+- `/zpgm maptokens status`
+- `/zpgm maptokens clear`
+- `/zpgm tokens ...` works as an alias for the same subcommands
+
+Permissions:
+
+- `zanderpgm.maptokens.admin`
+- `zanderpgm.maptokens.grant`
+- `zanderpgm.maptokens.remove`
+- `zanderpgm.maptokens.set`
+- `zanderpgm.maptokens.balance.others`
+- `zanderpgm.maptokens.history`
+- `zanderpgm.maptokens.status`
+- `zanderpgm.maptokens.clear`
+
+Webstore package command examples:
+
+- `zpgm maptokens grant {name} 1 "Store: 1 Map Token"`
+- `zpgm maptokens grant {name} 3 "Store: 3 Map Tokens"`
+- `zpgm maptokens grant {name} 7 "Store: 7 Map Tokens"`
+- `zpgm maptokens grant {name} 20 "Store: 20 Map Tokens"`
+- `zpgm maptokens grant {name} 45 "Store: 45 Map Tokens"`
+
+Recommended store packages:
+
+- `1 Map Token - A$2`
+- `3 Map Tokens - A$5`
+- `7 Map Tokens - A$10`
+- `20 Map Tokens - A$25`
+- `45 Map Tokens - A$50`
+
+Rank bonus command examples:
+
+- `zpgm maptokens grant {name} 1 "Iron monthly Map Token bonus"`
+- `zpgm maptokens grant {name} 3 "Gold monthly Map Token bonus"`
+- `zpgm maptokens grant {name} 15 "Gold permanent Map Token bonus"`
+- `zpgm maptokens grant {name} 7 "Diamond monthly Map Token bonus"`
+- `zpgm maptokens grant {name} 35 "Diamond permanent Map Token bonus"`
+
+Rank token bonuses:
+
+- `Iron monthly: 1 token/month`
+- `Gold monthly: 3 tokens/month`
+- `Gold permanent: 15 tokens once`
+- `Diamond monthly: 7 tokens/month`
+- `Diamond permanent: 35 tokens once`
+
+Storage location:
+
+- `plugins/ZanderPGM/map-tokens/map-tokens.json`
+
+Troubleshooting:
+
+- If console grants fail for offline players, confirm the player has joined before so Bukkit has cached profile data.
+- If zander-web is offline, balances and history still persist locally and outbound Mixed events queue through the existing event transport.
+- `clear` only clears the pending next-map override; it does not change balances or delete history.
 
 ## How Map Voting works
 
