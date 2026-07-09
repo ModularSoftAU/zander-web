@@ -62,13 +62,14 @@ Edit `config.yml` after first run. At minimum set:
 server:
   id: "mixed-1"
 api:
-  baseUrl: "https://zander-web.example.com"
-  token: "<value of zander-web MIXED_PLUGIN_API_TOKEN>"
+  baseUrl: "https://craftingforchrist.net/api"
+  token: "<value of the zander-web API token>"
 ```
 
 Feature flags under `features:` toggle every subsystem; token/vote/rating
 behaviour is tuned under `mapTokens:`, `mapVoting:` and `mapRatings:`. Mixed
-REST/WebSocket auth is always sent as `Authorization: Bearer <token>`.
+REST/WebSocket auth is always sent as `Authorization: Bearer <token>`. The
+plugin accepts `api.baseUrl` as either `https://host` or `https://host/api`.
 
 ## API endpoints expected in zander-web
 

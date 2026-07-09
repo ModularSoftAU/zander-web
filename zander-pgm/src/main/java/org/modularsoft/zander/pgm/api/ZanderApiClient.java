@@ -51,7 +51,7 @@ public class ZanderApiClient {
 
     private HttpRequest.Builder request(String path) {
         return HttpRequest.newBuilder()
-                .uri(URI.create(config.baseUrl + path))
+                .uri(URI.create(resolveUrl(config.baseUrl, path)))
                 .timeout(Duration.ofSeconds(config.requestTimeoutSeconds))
                 .header("Content-Type", "application/json")
                 .header("Authorization", bearerToken(config.token))
@@ -61,6 +61,14 @@ public class ZanderApiClient {
 
     static String bearerToken(String token) {
         return "Bearer " + token;
+    }
+
+    static String resolveUrl(String baseUrl, String path) {
+        String normalizedBase = baseUrl.endsWith("/") ? baseUrl.substring(0, baseUrl.length() - 1) : baseUrl;
+        if (normalizedBase.endsWith("/api") && path.startsWith("/api/")) {
+            return normalizedBase.substring(0, normalizedBase.length() - 4) + path;
+        }
+        return normalizedBase + path;
     }
 
     /** POST an arbitrary body to a path. Never throws; returns success flag. */

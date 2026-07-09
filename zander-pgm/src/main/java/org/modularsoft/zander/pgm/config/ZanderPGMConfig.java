@@ -15,7 +15,7 @@ public class ZanderPGMConfig {
     public String environment = "production";
 
     // api.*
-    public String baseUrl = "https://zander-web.example.com";
+    public String baseUrl = "https://craftingforchrist.net/api";
     public String websocketUrl = "wss://zander-web.example.com/ws/mixed";
     public String token = "change-me";
     public int connectTimeoutSeconds = 10;
