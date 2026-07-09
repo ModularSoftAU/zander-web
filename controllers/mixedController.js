@@ -98,6 +98,17 @@ export async function updateSettings(patch) {
 // ---------------------------------------------------------------------------
 
 export async function upsertServerHeartbeat(data) {
+  const serverId = data.server_id || data.serverId;
+  const displayName = data.display_name || data.displayName || serverId;
+  const environment = data.environment || "production";
+  const currentMatchId = data.current_match_id || data.currentMatchId || null;
+  const currentMapKey = data.current_map_key || data.currentMapKey || null;
+  const currentMapName = data.current_map_name || data.currentMapName || null;
+  const playerCount = data.player_count ?? data.playerCount ?? data.onlinePlayers ?? 0;
+  const tps = data.tps ?? null;
+  const pgmVersion = data.pgm_version || data.pgmVersion || null;
+  const zanderPgmVersion = data.zander_pgm_version || data.zanderPgmVersion || null;
+
   await q(
     `INSERT INTO mixed_servers
        (server_id, display_name, environment, online, current_match_id,
@@ -118,14 +129,14 @@ export async function upsertServerHeartbeat(data) {
        last_heartbeat_at = NOW(),
        metadata = VALUES(metadata)`,
     [
-      data.server_id, data.display_name || data.server_id,
-      data.environment || "production", data.current_match_id || null,
-      data.current_map_key || null, data.current_map_name || null,
-      data.player_count || 0, data.tps ?? null, data.pgm_version || null,
-      data.zander_pgm_version || null, toJson(data.metadata),
+      serverId, displayName,
+      environment, currentMatchId,
+      currentMapKey, currentMapName,
+      playerCount, tps, pgmVersion,
+      zanderPgmVersion, toJson(data.metadata),
     ]
   );
-  return getServer(data.server_id);
+  return getServer(serverId);
 }
 
 export async function markServerOffline(serverId) {

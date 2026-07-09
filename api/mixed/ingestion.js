@@ -34,23 +34,27 @@ export default function mixedIngestionRoutes(app) {
     }
   };
 
+  const serverIdOf = (body = {}) => body.server_id || body.serverId || null;
+
   app.post("/api/mixed/servers/heartbeat", guard(async (req, res) => {
     const b = req.body || {};
-    if (!b.server_id) return res.status(400).send({ success: false, message: "server_id is required." });
+    const serverId = serverIdOf(b);
+    if (!serverId) return res.status(400).send({ success: false, message: "server_id is required." });
     const server = await mixed.upsertServerHeartbeat(b);
     console.info(
-      `[mixed:heartbeat] server=${b.server_id} players=${b.onlinePlayers ?? "?"}/${b.maxPlayers ?? "?"} match=${b.currentMatchId || "-"} map=${b.currentMapKey || "-"} queued=${b.queuedEvents ?? 0}`
+      `[mixed:heartbeat] server=${serverId} players=${b.onlinePlayers ?? b.playerCount ?? b.player_count ?? "?"}/${b.maxPlayers ?? "?"} match=${b.currentMatchId ?? b.current_match_id ?? "-"} map=${b.currentMapKey ?? b.current_map_key ?? "-"} queued=${b.queuedEvents ?? 0}`
     );
-    broadcast("HEARTBEAT", { server_id: b.server_id, server });
+    broadcast("HEARTBEAT", { server_id: serverId, server });
     return res.send({ success: true, data: server });
   }));
 
   app.post("/api/mixed/servers/offline", guard(async (req, res) => {
     const b = req.body || {};
-    if (!b.server_id) return res.status(400).send({ success: false, message: "server_id is required." });
-    await mixed.markServerOffline(b.server_id);
-    console.info(`[mixed:heartbeat] server=${b.server_id} marked offline.`);
-    broadcast("SERVER_OFFLINE", { server_id: b.server_id });
+    const serverId = serverIdOf(b);
+    if (!serverId) return res.status(400).send({ success: false, message: "server_id is required." });
+    await mixed.markServerOffline(serverId);
+    console.info(`[mixed:heartbeat] server=${serverId} marked offline.`);
+    broadcast("SERVER_OFFLINE", { server_id: serverId });
     return res.send({ success: true });
   }));
 
