@@ -25,15 +25,33 @@ export class SourceNotFoundError extends Error {
   }
 }
 
-/** Finds direct child map directories (containing map.xml) under mapsPath from a repo tree listing. */
+// Matches the map_key format the zander-pgm plugin already reports over
+// heartbeat/ingestion (lowercase, underscore-separated) so a map discovered
+// from live play and the same map discovered via repo sync resolve to one row.
+function slugifyMapKey(name) {
+  return String(name)
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "_")
+    .replace(/^_+|_+$/g, "") || "map";
+}
+
+/**
+ * Finds every map.xml under mapsPath, at any depth — real map repos vary
+ * between maps living at the repo root and maps nested under category
+ * folders (e.g. "CTW/Twisted Vines/map.xml"). The map's own directory name
+ * (immediately containing map.xml) becomes the map key, slugified.
+ */
 function listMapDirs(tree, mapsPath) {
-  const prefix = `${mapsPath}/`;
-  const re = new RegExp(`^${mapsPath.replace(/[/\\^$*+?.()|[\]{}]/g, "\\$&")}/([^/]+)/map\\.xml$`);
+  const basePrefix = mapsPath && mapsPath !== "." ? `${mapsPath.replace(/^\.?\/*/, "").replace(/\/$/, "")}/` : "";
   const dirs = [];
   for (const entry of tree) {
     if (entry.type !== "blob") continue;
-    const m = entry.path.match(re);
-    if (m) dirs.push({ mapKey: m[1], xmlPath: entry.path, dirPrefix: `${prefix}${m[1]}/` });
+    if (basePrefix && !entry.path.startsWith(basePrefix)) continue;
+    if (!entry.path.endsWith("/map.xml")) continue;
+    const dirPath = entry.path.slice(0, -"/map.xml".length);
+    const rawName = dirPath.split("/").pop();
+    dirs.push({ mapKey: slugifyMapKey(rawName), rawName, xmlPath: entry.path, dirPrefix: `${dirPath}/` });
   }
   return dirs;
 }
@@ -57,10 +75,10 @@ function discoverAssets(tree, dirPrefix, githubClient, repo, branch) {
   return { thumbnail, screenshots };
 }
 
-function buildMapRow(source, mapKey, xmlPath, parsedData, assets, commitSha) {
+function buildMapRow(source, mapKey, xmlPath, parsedData, assets, commitSha, rawName) {
   return {
     map_key: mapKey,
-    name: parsedData.name || mapKey,
+    name: parsedData.name || rawName || mapKey,
     version: parsedData.version,
     gamemode: parsedData.gamemode || MIXED_MAP_ADMIN_DEFAULTS.gamemode,
     gamemodes: parsedData.gamemodes?.length ? parsedData.gamemodes : MIXED_MAP_ADMIN_DEFAULTS.gamemodes,
@@ -193,7 +211,7 @@ async function runOneSource(source, ctx) {
         }
 
         const assets = discoverAssets(tree, dir.dirPrefix, githubClient, source.repo, source.branch);
-        const row = buildMapRow(source, decision.finalMapKey, dir.xmlPath, parsed.data, assets, commitSha);
+        const row = buildMapRow(source, decision.finalMapKey, dir.xmlPath, parsed.data, assets, commitSha, dir.rawName);
         await mixed.upsertMapFromRepoSync(row);
 
         seenMapKeys.set(dir.mapKey, { sourceKey: source.sourceKey, committedAt: source.committedAt });
