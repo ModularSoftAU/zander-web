@@ -12,6 +12,7 @@ import {
   getDiscordPunishmentsForProfile,
 } from "../controllers/discordPunishmentController.js";
 import { UserGetter } from "../controllers/userController.js";
+import { getLiveMatches as getMixedLiveMatches } from "../controllers/mixedController.js";
 
 import dashboardSiteRoutes from "./dashboard/index.js";
 import sessionRoutes from "./sessionRoutes.js";
@@ -88,6 +89,25 @@ export default function applicationSiteRoutes(
       ),
     });
 
+    // Advertise a live Mixed match on the homepage once it has enough
+    // players to be worth interrupting the hero section for.
+    const MIXED_HOMEPAGE_PLAYER_THRESHOLD = 6;
+    let mixedHighlight = null;
+    if (features.mixed) {
+      try {
+        const live = await getMixedLiveMatches();
+        const busiest = live.reduce(
+          (best, m) => (m.server_players > (best?.server_players || 0) ? m : best),
+          null
+        );
+        if (busiest && busiest.server_players >= MIXED_HOMEPAGE_PLAYER_THRESHOLD) {
+          mixedHighlight = busiest;
+        }
+      } catch (_) {
+        // Mixed data unavailable — homepage renders without the highlight.
+      }
+    }
+
     res.header("content-type", "text/html; charset=utf-8").send(
       await app.view("modules/index/index", {
       pageTitle: `${config.siteConfiguration.siteName}`,
@@ -100,6 +120,7 @@ export default function applicationSiteRoutes(
       jumboVideo: getJumboVideo(),
       statApiData: statApiData,
       announcementWeb: await getWebAnnouncement(),
+      mixedHighlight,
     }));
     return;
   });

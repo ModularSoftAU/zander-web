@@ -46,10 +46,13 @@ export default function mixedSiteRoutes(app, config, features) {
   // ── Live ────────────────────────────────────────────────────────────────
   app.get("/mixed/live", async (req, res) => {
     if (!guard(req, res)) return;
-    const live = await mixed.getLiveMatches();
+    const [live, servers] = await Promise.all([mixed.getLiveMatches(), mixed.listServers()]);
+    // Online servers with no running match — shown with their idle/queued map
+    // so the page doesn't just say "no active matches" with nothing else.
+    const idleServers = servers.filter((s) => s.online && !s.current_match_id);
     return render(res, "modules/mixed/live", await base(req, {
       pageTitle: "Live Matches", pageDescription: "Watch live Mixed matches across all connected servers.",
-      live,
+      live, idleServers,
     }));
   });
 

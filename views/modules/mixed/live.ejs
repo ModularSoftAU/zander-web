@@ -3,6 +3,23 @@
 <div id="liveContainer" class="row g-3">
   <% if (!live.length) { %>
     <div class="col-12"><div class="alert alert-secondary">No active matches right now.</div></div>
+    <% (idleServers || []).forEach(function(s){ %>
+      <div class="col-md-6">
+        <div class="card h-100">
+          <div class="card-header d-flex justify-content-between align-items-center">
+            <strong><%= s.display_name %></strong>
+            <span class="badge bg-secondary">Idle</span>
+          </div>
+          <div class="card-body">
+            <h5 class="text-reset"><%= s.current_map_name || s.current_map_key || 'Waiting for a map…' %></h5>
+            <p class="text-muted mb-2">Waiting for players to start a match</p>
+            <div class="d-flex justify-content-between small">
+              <span><i class="fas fa-users me-1"></i><%= s.player_count %> players</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    <% }) %>
   <% } %>
   <% live.forEach(function(m){ %>
     <div class="col-md-6">
