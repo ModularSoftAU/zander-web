@@ -136,7 +136,31 @@ export async function upsertServerHeartbeat(data) {
       zanderPgmVersion, toJson(data.metadata),
     ]
   );
+
+  // The plugin doesn't always call /api/mixed/stats/match on match start —
+  // ensure rows exist so /mixed/live (INNER JOINs mixed_matches) and
+  // /mixed/maps (reads mixed_maps) can find them. Never overwrites an
+  // existing map/match row's data — this only fills gaps.
+  if (currentMapKey) {
+    await upsertPlaceholderMap(currentMapKey, { name: currentMapName });
+  }
+  if (currentMatchId) {
+    await ensureMatchExists(currentMatchId, {
+      serverId, mapKey: currentMapKey, mapName: currentMapName,
+    });
+  }
+
   return getServer(serverId);
+}
+
+export async function ensureMatchExists(matchId, { serverId, mapKey, mapName } = {}) {
+  if (!matchId) return;
+  await q(
+    `INSERT INTO mixed_matches (match_id, server_id, map_key, map_name, status, started_at)
+     VALUES (?, ?, ?, ?, 'running', NOW())
+     ON DUPLICATE KEY UPDATE match_id = match_id`,
+    [matchId, serverId || null, mapKey || null, mapName || null]
+  );
 }
 
 export async function markServerOffline(serverId) {
