@@ -2,7 +2,8 @@
  * api/mixed/ingestion.js
  *
  * Plugin ingestion endpoints — data pushed FROM zander-pgm INTO zander-web.
- * Every endpoint requires Bearer-token authentication (MIXED_PLUGIN_API_TOKEN).
+ * Every endpoint requires the app-wide API key (process.env.apiKey), the same
+ * one used by every other internal integration — see api/mixed/auth.js.
  *
  *   POST /api/mixed/servers/heartbeat
  *   POST /api/mixed/servers/offline
@@ -58,7 +59,32 @@ export default function mixedIngestionRoutes(app) {
     return res.send({ success: true });
   }));
 
-  async function ingestEvent(e) {
+  // The plugin reports kill/death events with killer*/victim* naming; the
+  // events table stores the actor generically as player_uuid/target_uuid
+  // (player_uuid = killer, target_uuid = victim) so it works for non-kill
+  // event types too.
+  function normaliseEvent(e) {
+    const out = { ...e };
+    if (e.killerUuid || e.killer_uuid) {
+      out.player_uuid = e.killerUuid || e.killer_uuid;
+      out.username = e.killerUsername || e.killer_username;
+      out.target_uuid = e.victimUuid || e.victim_uuid;
+    }
+    out.map_key = e.mapKey || e.map_key || null;
+    out.assister_uuid = e.assisterUuid || e.assister_uuid || null;
+    out.assister_username = e.assisterUsername || e.assister_username || null;
+    out.is_projectile = e.isProjectile ?? e.is_projectile;
+    out.is_bow_kill = e.isBowKill ?? e.is_bow_kill;
+    out.team_kill = e.teamKill ?? e.team_kill;
+    out.objective_type = e.objectiveType || e.objective_type || null;
+    out.objective_id = e.objectiveId || e.objective_id || null;
+    out.objective_name = e.objectiveName || e.objective_name || null;
+    out.capture_time_seconds = e.captureTimeSeconds ?? e.capture_time_seconds ?? null;
+    return out;
+  }
+
+  async function ingestEvent(rawEvent) {
+    const e = normaliseEvent(rawEvent);
     if (!e || !e.match_id || !e.event_type) return;
     await mixed.insertMatchEvent(e);
     if (["PLAYER_DEATH", "OBJECTIVE_EVENT", "LIVE_FEED_EVENT"].includes(e.event_type)) {
@@ -96,7 +122,7 @@ export default function mixedIngestionRoutes(app) {
     for (const p of players) {
       if (mixed.isValidUuid(p.player_uuid)) {
         p.player_uuid = mixed.normaliseUuid(p.player_uuid);
-        await mixed.upsertMatchPlayer(b.match_id, p);
+        await mixed.upsertMatchPlayer(b.match_id, p, b.status === "ended" ? (b.map_key || null) : null);
       }
     }
     const type = b.status === "ended" ? "MATCH_ENDED" : b.status === "running" ? "MATCH_STARTED" : "MATCH_LOADED";

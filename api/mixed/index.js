@@ -5,7 +5,7 @@
  * middleware is registered so user/admin endpoints can read req.session.
  *
  * Auth model:
- *   - Ingestion endpoints require Bearer MIXED_PLUGIN_API_TOKEN.
+ *   - Ingestion endpoints require the app-wide API key (process.env.apiKey).
  *   - Public GET endpoints are open.
  *   - User endpoints require a logged-in user with a linked Minecraft account.
  *   - Admin endpoints require the zander.web.mixed capability.

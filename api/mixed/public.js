@@ -14,14 +14,17 @@
  *   GET  /api/mixed/maps/:mapKey/ratings
  *
  * Logged-in + linked Minecraft account required:
- *   POST /api/mixed/vote/cast
- *   POST /api/mixed/maps/:mapKey/ratings
  *   GET  /api/mixed/map-tokens
  *   POST /api/mixed/map-tokens/request
  *   POST /api/mixed/store/checkout
+ *
+ * Logged-in + linked Minecraft account OR zander-pgm plugin (in-game /vote,
+ * /maprate — identity comes from the request body in that case):
+ *   POST /api/mixed/vote/cast
+ *   POST /api/mixed/maps/:mapKey/ratings
  */
 
-import { requireLinkedUser } from "./auth.js";
+import { requireLinkedUser, requireLinkedUserOrPlugin } from "./auth.js";
 import { STORE_PRODUCTS } from "./store.js";
 import * as mixed from "../../controllers/mixedController.js";
 import { broadcast } from "../../lib/mixedRealtime.js";
@@ -150,45 +153,51 @@ export default function mixedPublicRoutes(app) {
   }));
 
   app.post("/api/mixed/vote/cast", wrap(async (req, res) => {
-    const user = requireLinkedUser(req, res);
-    if (!user) return;
-    const settings = await mixed.getSettings();
-    if (!settings.allow_web_voting) {
-      return res.status(403).send({ success: false, message: "Web voting is disabled." });
-    }
-    const { vote_id, map_key } = req.body || {};
-    if (!vote_id || !map_key) {
+    const auth = requireLinkedUserOrPlugin(req, res);
+    if (!auth) return;
+    const b = req.body || {};
+    const voteId = b.vote_id || b.voteId;
+    const mapKey = b.map_key || b.mapKey;
+    if (!voteId || !mapKey) {
       return res.status(400).send({ success: false, message: "vote_id and map_key required." });
     }
+    if (auth.source === "web") {
+      const settings = await mixed.getSettings();
+      if (!settings.allow_web_voting) {
+        return res.status(403).send({ success: false, message: "Web voting is disabled." });
+      }
+    }
     const result = await mixed.castVote({
-      voteId: vote_id, uuid: mixed.normaliseUuid(user.uuid),
-      username: user.username, mapKey: map_key, source: "web",
+      voteId, uuid: mixed.normaliseUuid(auth.uuid),
+      username: auth.username, mapKey,
+      source: auth.source === "plugin" ? "IN_GAME" : "web",
     });
     if (!result.ok) return res.status(409).send({ success: false, message: result.reason });
-    const vote = await mixed.getVote(vote_id);
-    broadcast("MAP_VOTE_CAST", { vote_id, map_key, vote });
+    const vote = await mixed.getVote(voteId);
+    broadcast("MAP_VOTE_CAST", { vote_id: voteId, map_key: mapKey, vote });
     return res.send({ success: true, data: vote });
   }));
 
   // ── Ratings ───────────────────────────────────────────────────────────────
   app.post("/api/mixed/maps/:mapKey/ratings", wrap(async (req, res) => {
-    const user = requireLinkedUser(req, res);
-    if (!user) return;
-    const { match_id, rating, feedback } = req.body || {};
-    const stars = intParam(rating);
-    if (!match_id) return res.status(400).send({ success: false, message: "match_id is required." });
+    const auth = requireLinkedUserOrPlugin(req, res);
+    if (!auth) return;
+    const b = req.body || {};
+    const matchId = b.match_id || b.matchId;
+    const stars = intParam(b.rating);
+    if (!matchId) return res.status(400).send({ success: false, message: "match_id is required." });
     if (!(stars >= 1 && stars <= 5)) {
       return res.status(400).send({ success: false, message: "rating must be 1–5." });
     }
-    const uuid = mixed.normaliseUuid(user.uuid);
-    if (!(await mixed.didPlayerPlayMatch(uuid, match_id))) {
+    const uuid = mixed.normaliseUuid(auth.uuid);
+    if (!(await mixed.didPlayerPlayMatch(uuid, matchId))) {
       return res.status(403).send({ success: false, message: "You can only rate maps from matches you played." });
     }
     const totals = await mixed.submitRating({
-      mapKey: req.params.mapKey, matchId: match_id, uuid,
-      username: user.username, rating: stars, feedback,
+      mapKey: req.params.mapKey, matchId, uuid,
+      username: auth.username, rating: stars, feedback: b.feedback,
     });
-    broadcast("MAP_RATING_SUBMITTED", { map_key: req.params.mapKey, match_id });
+    broadcast("MAP_RATING_SUBMITTED", { map_key: req.params.mapKey, match_id: matchId });
     return res.send({ success: true, data: totals });
   }));
 

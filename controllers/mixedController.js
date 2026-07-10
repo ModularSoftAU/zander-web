@@ -564,38 +564,160 @@ export async function getLiveMatches() {
   return rows.map((r) => ({ ...r, winners: parseJson(r.winners, []) }));
 }
 
-export async function upsertMatchPlayer(matchId, p) {
+export async function upsertMatchPlayer(matchId, p, mapKey = null) {
   await q(
     `INSERT INTO mixed_match_players
        (match_id, player_uuid, username, team_name, won, kills, deaths, assists,
-        objectives, damage_dealt, damage_taken, xp_earned, metadata)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        objectives, captures, wool_captures, flag_captures, core_leaks,
+        destroyable_damage, control_point_captures, best_killstreak,
+        longest_shot, furthest_bow_kill, damage_dealt, damage_taken, xp_earned, metadata)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
      ON DUPLICATE KEY UPDATE
        username = VALUES(username), team_name = VALUES(team_name), won = VALUES(won),
        kills = VALUES(kills), deaths = VALUES(deaths), assists = VALUES(assists),
-       objectives = VALUES(objectives), damage_dealt = VALUES(damage_dealt),
+       objectives = VALUES(objectives), captures = VALUES(captures),
+       wool_captures = VALUES(wool_captures), flag_captures = VALUES(flag_captures),
+       core_leaks = VALUES(core_leaks), destroyable_damage = VALUES(destroyable_damage),
+       control_point_captures = VALUES(control_point_captures),
+       best_killstreak = VALUES(best_killstreak), longest_shot = VALUES(longest_shot),
+       furthest_bow_kill = VALUES(furthest_bow_kill), damage_dealt = VALUES(damage_dealt),
        damage_taken = VALUES(damage_taken), xp_earned = VALUES(xp_earned),
        metadata = VALUES(metadata)`,
     [
       matchId, p.player_uuid, p.username || null, p.team_name || null,
       p.won ? 1 : 0, p.kills || 0, p.deaths || 0, p.assists || 0,
-      p.objectives || 0, p.damage_dealt || 0, p.damage_taken || 0,
-      p.xp_earned || 0, toJson(p.metadata),
+      p.objectives || 0, p.captures || 0, p.wool_captures || 0, p.flag_captures || 0,
+      p.core_leaks || 0, p.destroyable_damage || 0, p.control_point_captures || 0,
+      p.best_killstreak || 0, p.longest_shot || 0, p.furthest_bow_kill || 0,
+      p.damage_dealt || 0, p.damage_taken || 0, p.xp_earned || 0, toJson(p.metadata),
     ]
+  );
+
+  if (mapKey && isValidUuid(p.player_uuid)) {
+    await upsertMapPlayerTotals(mapKey, p);
+    if (p.kills) await updateMapRecord(mapKey, "most_kills_in_match", p.player_uuid, p.username, p.kills, matchId);
+  }
+}
+
+// Career per-map-per-player aggregates, additive across matches. Backs
+// "most kills on a map", "best K/D on a map" and "best killstreak on a map"
+// leaderboards (see getMapLeaderboard below).
+export async function upsertMapPlayerTotals(mapKey, p) {
+  await q(
+    `INSERT INTO mixed_map_player_totals
+       (map_key, player_uuid, username, matches_played, wins, losses, kills, deaths,
+        assists, objectives, captures, wool_captures, flag_captures, core_leaks,
+        destroyable_damage, control_point_captures, best_killstreak, longest_shot,
+        furthest_bow_kill, playtime_seconds)
+     VALUES (?, ?, ?, 1, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+     ON DUPLICATE KEY UPDATE
+       username = VALUES(username),
+       matches_played = matches_played + 1,
+       wins = wins + VALUES(wins),
+       losses = losses + VALUES(losses),
+       kills = kills + VALUES(kills),
+       deaths = deaths + VALUES(deaths),
+       assists = assists + VALUES(assists),
+       objectives = objectives + VALUES(objectives),
+       captures = captures + VALUES(captures),
+       wool_captures = wool_captures + VALUES(wool_captures),
+       flag_captures = flag_captures + VALUES(flag_captures),
+       core_leaks = core_leaks + VALUES(core_leaks),
+       destroyable_damage = destroyable_damage + VALUES(destroyable_damage),
+       control_point_captures = control_point_captures + VALUES(control_point_captures),
+       best_killstreak = GREATEST(best_killstreak, VALUES(best_killstreak)),
+       longest_shot = GREATEST(longest_shot, VALUES(longest_shot)),
+       furthest_bow_kill = GREATEST(furthest_bow_kill, VALUES(furthest_bow_kill)),
+       playtime_seconds = playtime_seconds + VALUES(playtime_seconds)`,
+    [
+      mapKey, p.player_uuid, p.username || null, p.won ? 1 : 0, p.won ? 0 : 1,
+      p.kills || 0, p.deaths || 0, p.assists || 0, p.objectives || 0,
+      p.captures || 0, p.wool_captures || 0, p.flag_captures || 0, p.core_leaks || 0,
+      p.destroyable_damage || 0, p.control_point_captures || 0, p.best_killstreak || 0,
+      p.longest_shot || 0, p.furthest_bow_kill || 0, p.playtime_seconds || 0,
+    ]
+  );
+}
+
+// Keeps the highest `value` seen for a (map, record_type) pair, attributing
+// it to whichever player/match produced it. Used for single-event records
+// like longest shot / furthest bow kill / most kills in one match.
+export async function updateMapRecord(mapKey, recordType, playerUuid, username, value, matchId) {
+  if (!mapKey || !recordType || !(value > 0)) return;
+  await q(
+    `INSERT INTO mixed_map_records (map_key, record_type, player_uuid, username, value, match_id, achieved_at)
+     VALUES (?, ?, ?, ?, ?, ?, NOW())
+     ON DUPLICATE KEY UPDATE
+       player_uuid = IF(VALUES(value) > value, VALUES(player_uuid), player_uuid),
+       username = IF(VALUES(value) > value, VALUES(username), username),
+       match_id = IF(VALUES(value) > value, VALUES(match_id), match_id),
+       achieved_at = IF(VALUES(value) > value, VALUES(achieved_at), achieved_at),
+       value = GREATEST(value, VALUES(value))`,
+    [mapKey, recordType, playerUuid || null, username || null, value, matchId || null]
+  );
+}
+
+export async function getMapRecords(mapKey) {
+  return q(`SELECT * FROM mixed_map_records WHERE map_key = ?`, [mapKey]);
+}
+
+// "most kills", "best K/D", "best killstreak" etc. on a given map.
+export async function getMapLeaderboard(mapKey, stat = "kills", limit = 10) {
+  const columns = {
+    kills: "kills",
+    wool_captures: "wool_captures",
+    flag_captures: "flag_captures",
+    core_leaks: "core_leaks",
+    destroyable_damage: "destroyable_damage",
+    control_point_captures: "control_point_captures",
+    best_killstreak: "best_killstreak",
+  };
+  if (stat === "kd") {
+    return q(
+      `SELECT *, kills / GREATEST(deaths, 1) AS kd
+         FROM mixed_map_player_totals
+        WHERE map_key = ? AND matches_played > 0
+        ORDER BY kd DESC LIMIT ?`,
+      [mapKey, limit]
+    );
+  }
+  const col = columns[stat];
+  if (!col) throw new Error(`Unknown leaderboard stat: ${stat}`);
+  return q(
+    `SELECT * FROM mixed_map_player_totals WHERE map_key = ? ORDER BY ${col} DESC LIMIT ?`,
+    [mapKey, limit]
   );
 }
 
 export async function insertMatchEvent(e) {
   await q(
     `INSERT INTO mixed_match_events
-       (match_id, server_id, event_type, player_uuid, target_uuid, team_name, occurred_at, payload)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+       (match_id, server_id, map_key, event_type, player_uuid, target_uuid,
+        assister_uuid, assister_username, team_name, cause, weapon, is_projectile,
+        is_bow_kill, distance, team_kill, objective_type, objective_id,
+        objective_name, action, capture_time_seconds, location, occurred_at, payload)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     [
-      e.match_id, e.server_id || null, e.event_type, e.player_uuid || null,
-      e.target_uuid || null, e.team_name || null,
+      e.match_id, e.server_id || null, e.map_key || null, e.event_type, e.player_uuid || null,
+      e.target_uuid || null, e.assister_uuid || null, e.assister_username || null,
+      e.team_name || null, e.cause || null, e.weapon || null,
+      e.is_projectile === undefined ? null : (e.is_projectile ? 1 : 0),
+      e.is_bow_kill === undefined ? null : (e.is_bow_kill ? 1 : 0),
+      e.distance ?? null,
+      e.team_kill === undefined ? null : (e.team_kill ? 1 : 0),
+      e.objective_type || null, e.objective_id || null, e.objective_name || null,
+      e.action || null, e.capture_time_seconds ?? null, toJson(e.location),
       e.occurred_at || new Date(), toJson(e.payload),
     ]
   );
+
+  // Kill/death records: longest shot and furthest bow kill on the map.
+  if (e.map_key && e.distance > 0 && e.player_uuid) {
+    await updateMapRecord(e.map_key, "longest_shot", e.player_uuid, e.username || null, e.distance, e.match_id);
+    if (e.is_bow_kill) {
+      await updateMapRecord(e.map_key, "furthest_bow_kill", e.player_uuid, e.username || null, e.distance, e.match_id);
+    }
+  }
 }
 
 // ---------------------------------------------------------------------------

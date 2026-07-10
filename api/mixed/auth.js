@@ -3,36 +3,33 @@
  *
  * Authentication helpers for the Mixed API surface.
  *
- *   requirePluginToken   — Bearer-token auth for zander-pgm ingestion endpoints.
- *   requireLinkedUser    — session user with a linked Minecraft account (uuid).
- *   requireMixedAdmin    — session user with the zander.web.mixed capability.
+ *   requirePluginToken       — Bearer-token auth for zander-pgm ingestion endpoints.
+ *   requireLinkedUser        — session user with a linked Minecraft account (uuid).
+ *   requireLinkedUserOrPlugin — session user OR zander-pgm plugin token (for routes
+ *                               that accept both web submissions and in-game
+ *                               submissions relayed by the plugin, e.g. /vote and
+ *                               /maprate). When authorised via the plugin token,
+ *                               the player identity is taken from the request body
+ *                               (the plugin already knows the acting player) rather
+ *                               than from a session.
+ *   requireMixedAdmin        — session user with the zander.web.mixed capability.
  *
- * The plugin API token lives in process.env.MIXED_PLUGIN_API_TOKEN. For
- * operational convenience, the app-wide process.env.apiKey is also accepted
- * for ingestion requests when present. Neither value is exposed to the
- * frontend. The Stripe secret key is never read here.
+ * The plugin authenticates with the same app-wide process.env.apiKey used by
+ * every other internal API integration (see api/common.js) — there is no
+ * separate Mixed-specific plugin token. It is never exposed to the frontend.
+ * The Stripe secret key is never read here.
  */
 
 const ADMIN_NODES = ["zander.web.mixed", "zander.web.*", "*"];
 
 /**
- * Verify the plugin ingestion token.
- * Prefer Authorization: Bearer <token>, but also accept the legacy
- * x-access-token header so older plugin builds can continue to ingest while
- * deployments catch up.
- * Returns true when authorised; otherwise sends a 401 and returns false.
+ * Check whether a request carries the app-wide API key, without sending any
+ * response. Prefers Authorization: Bearer <token>, but also accepts the
+ * legacy x-access-token header used elsewhere in this codebase.
  */
-export function requirePluginToken(req, res) {
-  const acceptedTokens = [
-    process.env.MIXED_PLUGIN_API_TOKEN,
-    process.env.apiKey,
-  ].filter((value, index, arr) => value && arr.indexOf(value) === index);
-
-  if (!acceptedTokens.length) {
-    console.error("[mixed:auth] No plugin ingestion token is configured.");
-    res.status(503).send({ success: false, message: "Mixed plugin API is not configured." });
-    return false;
-  }
+function hasValidPluginToken(req) {
+  const expected = process.env.apiKey;
+  if (!expected) return false;
 
   const authHeader = req.headers["authorization"] || "";
   const bearerToken = authHeader.startsWith("Bearer ")
@@ -43,7 +40,26 @@ export function requirePluginToken(req, res) {
     : null;
   const token = bearerToken || legacyToken;
 
-  if (!token || !acceptedTokens.includes(token)) {
+  return token === expected;
+}
+
+/**
+ * Verify the plugin request carries the app-wide API key.
+ * Returns true when authorised; otherwise sends a 401/503 and returns false.
+ */
+export function requirePluginToken(req, res) {
+  if (!process.env.apiKey) {
+    console.error("[mixed:auth] No API key (apiKey) is configured.");
+    res.status(503).send({ success: false, message: "Mixed plugin API is not configured." });
+    return false;
+  }
+
+  if (!hasValidPluginToken(req)) {
+    const authHeader = req.headers["authorization"] || "";
+    const bearerToken = authHeader.startsWith("Bearer ") ? authHeader.slice(7).trim() : null;
+    const legacyToken = typeof req.headers["x-access-token"] === "string"
+      ? req.headers["x-access-token"].trim()
+      : null;
     const source = req.headers["x-server-id"] || req.ip || "unknown";
     const presentedHeader = bearerToken
       ? "authorization-bearer"
@@ -53,9 +69,9 @@ export function requirePluginToken(req, res) {
           ? "authorization-non-bearer"
           : "none";
     console.warn(
-      `[mixed:auth] Rejected ingestion request from ${source}: invalid or missing plugin token (header=${presentedHeader}).`
+      `[mixed:auth] Rejected ingestion request from ${source}: invalid or missing API key (header=${presentedHeader}).`
     );
-    res.status(401).send({ success: false, message: "Invalid or missing plugin API token." });
+    res.status(401).send({ success: false, message: "Invalid or missing API key." });
     return false;
   }
 
@@ -80,6 +96,32 @@ export function requireLinkedUser(req, res) {
     return null;
   }
   return user;
+}
+
+/**
+ * Require either a linked web session OR a valid plugin request. Used by
+ * routes that accept both a browser-submitted vote/rating (session, identity
+ * from req.session.user) and an in-game one relayed by zander-pgm (API key,
+ * identity taken from the request body since the plugin already knows the
+ * acting player).
+ *
+ * Returns { uuid, username, source: "web" | "plugin" } when authorised,
+ * otherwise sends an error response and returns null.
+ */
+export function requireLinkedUserOrPlugin(req, res) {
+  if (hasValidPluginToken(req)) {
+    const uuid = req.body?.uuid;
+    const username = req.body?.username;
+    if (!uuid || !username) {
+      res.status(400).send({ success: false, message: "uuid and username are required." });
+      return null;
+    }
+    return { uuid, username, source: "plugin" };
+  }
+
+  const user = requireLinkedUser(req, res);
+  if (!user) return null;
+  return { uuid: user.uuid, username: user.username, source: "web" };
 }
 
 /** True if the session user holds the Mixed admin capability. */

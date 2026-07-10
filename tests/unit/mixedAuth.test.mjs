@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { requirePluginToken } from "../../api/mixed/auth.js";
+import { requirePluginToken, requireLinkedUserOrPlugin } from "../../api/mixed/auth.js";
 
 function createReplyDouble() {
   return {
@@ -17,19 +17,16 @@ function createReplyDouble() {
 }
 
 describe("requirePluginToken", () => {
-  const originalMixedToken = process.env.MIXED_PLUGIN_API_TOKEN;
   const originalApiKey = process.env.apiKey;
 
   afterEach(() => {
-    process.env.MIXED_PLUGIN_API_TOKEN = originalMixedToken;
     process.env.apiKey = originalApiKey;
     vi.restoreAllMocks();
   });
 
   it("accepts Authorization Bearer tokens", () => {
-    process.env.MIXED_PLUGIN_API_TOKEN = "mixed-secret";
-    process.env.apiKey = "";
-    const req = { headers: { authorization: "Bearer mixed-secret" }, ip: "127.0.0.1" };
+    process.env.apiKey = "shared-secret";
+    const req = { headers: { authorization: "Bearer shared-secret" }, ip: "127.0.0.1" };
     const res = createReplyDouble();
 
     expect(requirePluginToken(req, res)).toBe(true);
@@ -37,19 +34,8 @@ describe("requirePluginToken", () => {
   });
 
   it("accepts legacy x-access-token headers", () => {
-    process.env.MIXED_PLUGIN_API_TOKEN = "mixed-secret";
-    process.env.apiKey = "";
-    const req = { headers: { "x-access-token": "mixed-secret" }, ip: "127.0.0.1" };
-    const res = createReplyDouble();
-
-    expect(requirePluginToken(req, res)).toBe(true);
-    expect(res.statusCode).toBeNull();
-  });
-
-  it("accepts the global apiKey as a fallback token value", () => {
-    process.env.MIXED_PLUGIN_API_TOKEN = "";
-    process.env.apiKey = "global-secret";
-    const req = { headers: { authorization: "Bearer global-secret" }, ip: "127.0.0.1" };
+    process.env.apiKey = "shared-secret";
+    const req = { headers: { "x-access-token": "shared-secret" }, ip: "127.0.0.1" };
     const res = createReplyDouble();
 
     expect(requirePluginToken(req, res)).toBe(true);
@@ -57,25 +43,23 @@ describe("requirePluginToken", () => {
   });
 
   it("rejects non-bearer Authorization headers when no legacy token is provided", () => {
-    process.env.MIXED_PLUGIN_API_TOKEN = "mixed-secret";
-    process.env.apiKey = "";
+    process.env.apiKey = "shared-secret";
     const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
-    const req = { headers: { authorization: "mixed-secret" }, ip: "127.0.0.1" };
+    const req = { headers: { authorization: "shared-secret" }, ip: "127.0.0.1" };
     const res = createReplyDouble();
 
     expect(requirePluginToken(req, res)).toBe(false);
     expect(res.statusCode).toBe(401);
     expect(res.payload).toEqual({
       success: false,
-      message: "Invalid or missing plugin API token.",
+      message: "Invalid or missing API key.",
     });
     expect(warn).toHaveBeenCalledWith(
-      "[mixed:auth] Rejected ingestion request from 127.0.0.1: invalid or missing plugin token (header=authorization-non-bearer)."
+      "[mixed:auth] Rejected ingestion request from 127.0.0.1: invalid or missing API key (header=authorization-non-bearer)."
     );
   });
 
-  it("returns 503 when no plugin token is configured", () => {
-    process.env.MIXED_PLUGIN_API_TOKEN = "";
+  it("returns 503 when no API key is configured", () => {
     process.env.apiKey = "";
     const error = vi.spyOn(console, "error").mockImplementation(() => {});
     const req = { headers: {}, ip: "127.0.0.1" };
@@ -87,6 +71,61 @@ describe("requirePluginToken", () => {
       success: false,
       message: "Mixed plugin API is not configured.",
     });
-    expect(error).toHaveBeenCalledWith("[mixed:auth] No plugin ingestion token is configured.");
+    expect(error).toHaveBeenCalledWith("[mixed:auth] No API key (apiKey) is configured.");
+  });
+});
+
+describe("requireLinkedUserOrPlugin", () => {
+  const originalApiKey = process.env.apiKey;
+
+  afterEach(() => {
+    process.env.apiKey = originalApiKey;
+  });
+
+  it("authorises a plugin request and takes identity from the body", () => {
+    process.env.apiKey = "shared-secret";
+    const req = {
+      headers: { authorization: "Bearer shared-secret" },
+      body: { uuid: "abc-123", username: "Steve" },
+    };
+    const res = createReplyDouble();
+
+    const result = requireLinkedUserOrPlugin(req, res);
+    expect(result).toEqual({ uuid: "abc-123", username: "Steve", source: "plugin" });
+    expect(res.statusCode).toBeNull();
+  });
+
+  it("rejects a plugin request missing uuid/username in the body", () => {
+    process.env.apiKey = "shared-secret";
+    const req = {
+      headers: { authorization: "Bearer shared-secret" },
+      body: {},
+    };
+    const res = createReplyDouble();
+
+    expect(requireLinkedUserOrPlugin(req, res)).toBeNull();
+    expect(res.statusCode).toBe(400);
+  });
+
+  it("authorises a linked web session and takes identity from the session", () => {
+    process.env.apiKey = "shared-secret";
+    const req = {
+      headers: {},
+      body: {},
+      session: { user: { uuid: "def-456", username: "Alex" } },
+    };
+    const res = createReplyDouble();
+
+    const result = requireLinkedUserOrPlugin(req, res);
+    expect(result).toEqual({ uuid: "def-456", username: "Alex", source: "web" });
+  });
+
+  it("rejects an unauthenticated request with neither a token nor a session", () => {
+    process.env.apiKey = "shared-secret";
+    const req = { headers: {}, body: {} };
+    const res = createReplyDouble();
+
+    expect(requireLinkedUserOrPlugin(req, res)).toBeNull();
+    expect(res.statusCode).toBe(401);
   });
 });

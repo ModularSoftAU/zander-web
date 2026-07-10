@@ -54,7 +54,7 @@ The **Mixed** module (public PGM stats portal, `/mixed` + `/dashboard/mixed`, fe
 
 Permissions are dot-notation LuckPerms nodes (e.g. `zander.web.mixed`), checked via `hasPermission(node, req, res, features)` from `api/common.js` for dashboard routes, or module-local `requireXAdmin`/`guard()` wrappers for JSON APIs. Wildcards (`zander.web.*`, `*`) grant broader access — always check for both the specific node and its wildcard ancestors when writing new permission checks (see existing `isAdmin` checks in `routes/mixedRoutes.js` for the pattern). Full permission node reference is in `README.md`.
 
-Plugin-to-server ingestion endpoints (e.g. Mixed's `/api/mixed/*`) use a separate Bearer-token scheme (`MIXED_PLUGIN_API_TOKEN` / legacy `apiKey`), not session auth — see `api/mixed/auth.js`.
+Plugin-to-server ingestion endpoints (e.g. Mixed's `/api/mixed/*`) use the app-wide `apiKey` Bearer-token scheme, not session auth — see `api/mixed/auth.js`.
 
 ### Views
 

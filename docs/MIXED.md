@@ -38,11 +38,12 @@ not.
 ## How zander-pgm sends data
 
 All ingestion endpoints require a **Bearer token** in the `Authorization`
-header equal to `MIXED_PLUGIN_API_TOKEN`. The token is never exposed to the
-browser.
+header equal to the app-wide `apiKey` — the same token used by every other
+internal integration in this codebase. There is no separate Mixed-specific
+plugin token. It is never exposed to the browser.
 
 ```
-Authorization: Bearer <MIXED_PLUGIN_API_TOKEN>
+Authorization: Bearer <apiKey>
 ```
 
 Ingestion endpoints:
@@ -70,8 +71,8 @@ over SSE: `SERVER_ONLINE`, `HEARTBEAT`, `MATCH_LOADED/STARTED/ENDED`,
 
 ## Required API token setup
 
-1. Generate a long random string and set `MIXED_PLUGIN_API_TOKEN` in `.env`.
-2. Configure zander-pgm to send it as a Bearer token on every ingestion call.
+1. Ensure `apiKey` is set in `.env` (shared with the rest of the app's internal integrations).
+2. Configure zander-pgm's `api.token` to the same value; it is sent as a Bearer token on every ingestion call.
 
 ## How Map Tokens work
 
