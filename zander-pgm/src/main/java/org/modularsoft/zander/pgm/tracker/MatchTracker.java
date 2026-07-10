@@ -46,6 +46,7 @@ public class MatchTracker implements PGMHook.MatchLifecycleListener {
     @Override
     public void onMatchLoad(Object match) {
         if (!plugin.cfg().feature("matchLifecycle")) {
+            plugin.log().debug("onMatchLoad skipped: matchLifecycle feature disabled");
             return;
         }
         MatchIdentityService.Identity id = plugin.identity().update(match);
@@ -58,6 +59,7 @@ public class MatchTracker implements PGMHook.MatchLifecycleListener {
         dto.mapVersion = id.mapVersion;
         dto.mapAuthors = PGMUtils.mapAuthors(map);
         dto.maxPlayers = Bukkit.getMaxPlayers();
+        plugin.log().info("MATCH_LOADED " + id.matchId + " map=" + id.mapName + " (" + id.mapKey + ")");
         plugin.api().send(dto);
         plugin.ws().send(dto);
     }
@@ -65,6 +67,7 @@ public class MatchTracker implements PGMHook.MatchLifecycleListener {
     @Override
     public void onMatchStart(Object match) {
         if (!plugin.cfg().feature("matchLifecycle")) {
+            plugin.log().debug("onMatchStart skipped: matchLifecycle feature disabled");
             return;
         }
         MatchIdentityService.Identity id = plugin.identity().current();
@@ -80,6 +83,8 @@ public class MatchTracker implements PGMHook.MatchLifecycleListener {
         }
         dto.startedAt = matchStartMillis;
         dto.participants = PGMUtils.participantNames(match);
+        plugin.log().info("MATCH_STARTED " + (id != null ? id.matchId : "?")
+                + " participants=" + dto.participants.size());
         plugin.api().send(dto);
         plugin.ws().send(dto);
     }
@@ -87,6 +92,7 @@ public class MatchTracker implements PGMHook.MatchLifecycleListener {
     @Override
     public void onMatchFinish(Object match) {
         if (!plugin.cfg().feature("matchLifecycle")) {
+            plugin.log().debug("onMatchFinish skipped: matchLifecycle feature disabled");
             return;
         }
         MatchIdentityService.Identity id = plugin.identity().current();
@@ -109,20 +115,28 @@ public class MatchTracker implements PGMHook.MatchLifecycleListener {
         ended.winners = winners;
         ended.participants = new ArrayList<>();
         participants.forEach(u -> ended.participants.add(u.toString()));
+        plugin.log().info("MATCH_ENDED " + (id != null ? id.matchId : "?")
+                + " duration=" + duration + "s winners=" + winners
+                + " participants=" + participants.size());
         plugin.api().send(ended);
         plugin.ws().send(ended);
 
         // Match stats snapshot.
         MatchStats matchStats = buildMatchStats(id, duration, winners);
         plugin.snapshots().sendMatchSnapshot(matchStats);
+        int playerCount = 0;
         for (PlayerStats stats : plugin.stats().allPlayers()) {
             plugin.snapshots().sendPlayerSnapshot(id != null ? id.matchId : null, stats);
+            playerCount++;
         }
+        plugin.log().info("Sent match/player stat snapshots for " + playerCount + " player(s)");
 
         // Map stats snapshot.
         if (id != null) {
             MapStats mapStats = mapStatsTracker.recordMatch(id, duration, winners);
             plugin.snapshots().sendMapSnapshot(mapStats);
+        } else {
+            plugin.log().warn("Skipped map stats snapshot: no current match identity at finish");
         }
 
         // Post-match ratings + cooldown ticks.

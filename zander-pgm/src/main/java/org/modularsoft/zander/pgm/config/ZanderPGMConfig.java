@@ -21,6 +21,9 @@ public class ZanderPGMConfig {
     public int connectTimeoutSeconds = 10;
     public int requestTimeoutSeconds = 15;
 
+    // logging.*
+    public boolean debugLogging = false;
+
     // sync.*
     public int heartbeatSeconds = 30;
     public boolean retryFailedEvents = true;

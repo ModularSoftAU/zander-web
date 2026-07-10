@@ -78,8 +78,8 @@ public class ZanderPGMPlugin extends JavaPlugin {
     @Override
     public void onEnable() {
         saveDefaultConfig();
-        this.log = new SafeLogger(getLogger(), false);
         this.config = ConfigLoader.load(getConfig());
+        this.log = new SafeLogger(getLogger(), config.debugLogging);
 
         if (!validateConfig()) {
             log.error("Invalid configuration; disabling ZanderPGM.", null);
@@ -93,6 +93,7 @@ public class ZanderPGMPlugin extends JavaPlugin {
             getServer().getPluginManager().disablePlugin(this);
             return;
         }
+        log.info("PGM detected; hooking match lifecycle events.");
 
         initServices();
         registerCommands();
@@ -249,6 +250,7 @@ public class ZanderPGMPlugin extends JavaPlugin {
     public void reloadPluginConfig() {
         reloadConfig();
         this.config = ConfigLoader.load(getConfig());
+        this.log = new SafeLogger(getLogger(), config.debugLogging);
         ws.reconnect();
         log.info("Configuration reloaded.");
     }
@@ -294,6 +296,13 @@ public class ZanderPGMPlugin extends JavaPlugin {
         log.info("  Server: " + config.serverId + " (" + config.environment + ")");
         log.info("  API: " + config.baseUrl);
         log.info("  WebSocket: " + (config.feature("websocket") ? config.websocketUrl : "disabled"));
+        log.info("  Debug logging: " + (config.debugLogging ? "on" : "off (set logging.debug: true to see per-request detail)"));
+        log.info("  Feature flags: matchLifecycle=" + config.feature("matchLifecycle")
+                + " playerStats=" + config.feature("playerStats")
+                + " mapStats=" + config.feature("mapStats"));
+        if (config.isPlaceholderToken()) {
+            log.warn("api.token is still 'change-me' — matches/players/leaderboards will NOT reach zander-web until this is set.");
+        }
     }
 
     @Override

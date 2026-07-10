@@ -22,6 +22,8 @@ public final class ConfigLoader {
         cfg.connectTimeoutSeconds = c.getInt("api.connectTimeoutSeconds", cfg.connectTimeoutSeconds);
         cfg.requestTimeoutSeconds = c.getInt("api.requestTimeoutSeconds", cfg.requestTimeoutSeconds);
 
+        cfg.debugLogging = c.getBoolean("logging.debug", cfg.debugLogging);
+
         cfg.heartbeatSeconds = c.getInt("sync.heartbeatSeconds", cfg.heartbeatSeconds);
         cfg.retryFailedEvents = c.getBoolean("sync.retryFailedEvents", cfg.retryFailedEvents);
         cfg.retrySeconds = c.getInt("sync.retrySeconds", cfg.retrySeconds);

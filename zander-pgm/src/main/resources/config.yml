@@ -10,6 +10,11 @@ api:
   connectTimeoutSeconds: 10
   requestTimeoutSeconds: 15
 
+logging:
+  # Verbose logging for match lifecycle, stat/leaderboard sync and API calls.
+  # Turn on if matches/players/leaderboards aren't showing up on zander-web.
+  debug: false
+
 sync:
   heartbeatSeconds: 30
   retryFailedEvents: true

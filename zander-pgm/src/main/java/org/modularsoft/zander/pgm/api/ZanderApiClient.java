@@ -79,15 +79,25 @@ public class ZanderApiClient {
                     .POST(HttpRequest.BodyPublishers.ofString(JsonUtil.toJson(body)))
                     .build();
         } catch (Exception e) {
+            logger.warn("Failed to build POST " + path + ": " + e.getMessage());
             return CompletableFuture.completedFuture(false);
         }
+        logger.debug("POST " + path);
         return http.sendAsync(req, HttpResponse.BodyHandlers.ofString())
                 .handle((resp, err) -> {
-                    if (err != null || resp.statusCode() >= 300) {
+                    if (err != null) {
                         health.markRestFailure();
+                        logger.warn("POST " + path + " failed: " + err.getMessage());
+                        return false;
+                    }
+                    if (resp.statusCode() >= 300) {
+                        health.markRestFailure();
+                        logger.warn("POST " + path + " returned HTTP " + resp.statusCode()
+                                + ": " + truncate(resp.body()));
                         return false;
                     }
                     health.markRestSuccess();
+                    logger.debug("POST " + path + " succeeded (" + resp.statusCode() + ")");
                     return true;
                 });
     }
@@ -98,17 +108,34 @@ public class ZanderApiClient {
         try {
             req = request(path).GET().build();
         } catch (Exception e) {
+            logger.warn("Failed to build GET " + path + ": " + e.getMessage());
             return CompletableFuture.completedFuture(null);
         }
+        logger.debug("GET " + path);
         return http.sendAsync(req, HttpResponse.BodyHandlers.ofString())
                 .handle((resp, err) -> {
-                    if (err != null || resp.statusCode() >= 300) {
+                    if (err != null) {
                         health.markRestFailure();
+                        logger.warn("GET " + path + " failed: " + err.getMessage());
+                        return null;
+                    }
+                    if (resp.statusCode() >= 300) {
+                        health.markRestFailure();
+                        logger.warn("GET " + path + " returned HTTP " + resp.statusCode()
+                                + ": " + truncate(resp.body()));
                         return null;
                     }
                     health.markRestSuccess();
+                    logger.debug("GET " + path + " succeeded (" + resp.statusCode() + ")");
                     return resp.body();
                 });
+    }
+
+    private static String truncate(String body) {
+        if (body == null) {
+            return "";
+        }
+        return body.length() > 300 ? body.substring(0, 300) + "..." : body;
     }
 
     /**
@@ -118,8 +145,13 @@ public class ZanderApiClient {
     public void send(BridgeEvent event) {
         stamp(event);
         post("/api/mixed/events", event).thenAccept(ok -> {
-            if (!ok && config.retryFailedEvents) {
-                queue.offer(event);
+            if (!ok) {
+                if (config.retryFailedEvents) {
+                    logger.warn("Queuing " + event.type + " event for retry (queue size " + queue.size() + ")");
+                    queue.offer(event);
+                } else {
+                    logger.warn("Dropping " + event.type + " event (retryFailedEvents disabled)");
+                }
             }
         });
     }
