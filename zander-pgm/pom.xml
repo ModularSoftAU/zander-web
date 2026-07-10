@@ -46,14 +46,6 @@
         </dependency>
         -->
 
-        <!-- LuckPerms API is optional; wired via soft-dependency + reflection. -->
-        <dependency>
-            <groupId>net.luckperms</groupId>
-            <artifactId>api</artifactId>
-            <version>5.4</version>
-            <scope>provided</scope>
-        </dependency>
-
         <dependency>
             <groupId>com.google.code.gson</groupId>
             <artifactId>gson</artifactId>

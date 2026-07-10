@@ -68,7 +68,6 @@ public class ZanderPGMConfig {
     public boolean allowTokenBoosts = true;
     public int tokenBoostWeight = 2;
     public int mapVoteCooldownMatches = 5;
-    public int supporterVoteWeight = 1;
     public boolean showLiveResults = true;
     public boolean applyWinnerToNextMatch = true;
 

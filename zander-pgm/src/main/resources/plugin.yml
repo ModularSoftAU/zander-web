@@ -5,8 +5,6 @@ api-version: "1.21"
 author: ModularSoft
 depend:
   - PGM
-softdepend:
-  - LuckPerms
 
 commands:
   zpgm:
@@ -45,8 +43,6 @@ permissions:
     default: true
   zanderpgm.profile:
     default: true
-  zanderpgm.rank.admin:
-    default: op
   zanderpgm.maptokens.admin:
     default: op
   zanderpgm.maptokens.grant:

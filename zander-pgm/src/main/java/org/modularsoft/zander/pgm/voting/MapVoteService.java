@@ -11,7 +11,6 @@ import org.modularsoft.zander.pgm.api.dto.MapVoteCastEventDto;
 import org.modularsoft.zander.pgm.api.dto.MapVoteEndedEventDto;
 import org.modularsoft.zander.pgm.api.dto.MapVoteStartedEventDto;
 import org.modularsoft.zander.pgm.config.ZanderPGMConfig;
-import org.modularsoft.zander.pgm.entitlement.EntitlementService;
 import org.modularsoft.zander.pgm.pgm.MapRotationService;
 import org.modularsoft.zander.pgm.util.SafeLogger;
 
@@ -35,7 +34,6 @@ public class MapVoteService {
     private final ZanderApiClient api;
     private final ZanderWebSocketClient ws;
     private final MapRotationService rotation;
-    private final EntitlementService entitlements;
     private final SafeLogger logger;
 
     private final AtomicReference<MapVote> current = new AtomicReference<>();
@@ -44,13 +42,12 @@ public class MapVoteService {
 
     public MapVoteService(Plugin plugin, ZanderPGMConfig config, ZanderApiClient api,
                           ZanderWebSocketClient ws, MapRotationService rotation,
-                          EntitlementService entitlements, SafeLogger logger) {
+                          SafeLogger logger) {
         this.plugin = plugin;
         this.config = config;
         this.api = api;
         this.ws = ws;
         this.rotation = rotation;
-        this.entitlements = entitlements;
         this.logger = logger;
     }
 
@@ -137,9 +134,7 @@ public class MapVoteService {
             player.sendMessage("§cInvalid option: " + number);
             return false;
         }
-        int weight = config.supporterVoteWeight > 1 && entitlements.isSupporter(player.getUniqueId())
-                ? config.supporterVoteWeight : 1;
-        vote.cast(new MapVoteCast(player.getUniqueId(), player.getName(), number, weight, "IN_GAME"));
+        vote.cast(new MapVoteCast(player.getUniqueId(), player.getName(), number, 1, "IN_GAME"));
         player.sendMessage("§aVote recorded for §f" + option.mapName);
 
         MapVoteCastEventDto dto = new MapVoteCastEventDto();
@@ -147,7 +142,7 @@ public class MapVoteService {
         dto.uuid = player.getUniqueId().toString();
         dto.username = player.getName();
         dto.mapKey = option.mapKey;
-        dto.weight = weight;
+        dto.weight = 1;
         dto.source = "IN_GAME";
         api.send(dto);
         api.castVote(dto);

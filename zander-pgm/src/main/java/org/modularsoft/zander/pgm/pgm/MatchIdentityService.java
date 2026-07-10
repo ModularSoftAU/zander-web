@@ -1,5 +1,6 @@
 package org.modularsoft.zander.pgm.pgm;
 
+import java.util.UUID;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
@@ -25,11 +26,15 @@ public class MatchIdentityService {
     private final AtomicReference<Identity> current = new AtomicReference<>();
     private final AtomicReference<Identity> last = new AtomicReference<>();
 
-    /** Derive and store identity from a PGM match object (main thread). */
+    /**
+     * Derive and store identity from a PGM match object (main thread).
+     * PGM's own match id is not globally unique across server restarts, so a
+     * fresh UUID is minted per match instead of trusting {@code match.getId()}.
+     */
     public Identity update(Object match) {
         Object map = PGMUtils.getMap(match);
         Identity id = new Identity(
-                PGMUtils.matchId(match),
+                UUID.randomUUID().toString(),
                 PGMUtils.mapId(map),
                 PGMUtils.mapName(map),
                 PGMUtils.mapVersion(map));

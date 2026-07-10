@@ -26,7 +26,6 @@ for stats, profiles, leaderboards, maps, voting, ratings and store integration.
 - Tracks **objective events** (wool, flag, core, destroyable, control point).
 - Tracks **map stats** (times played, average duration, win rates).
 - Awards **XP / levels** and unlocks **achievements**.
-- Syncs **ranks / permission groups** (via LuckPerms) and generic **entitlements**.
 - Supports **Map Tokens**, **Map Voting** and **post-match Map Ratings + feedback**.
 - Emits **Discord hook** events to zander-web (zander-web decides what to post).
 
@@ -51,7 +50,6 @@ queued (bounded; oldest dropped when full) and retried, optionally in batches.
 
 - **Paper** 1.21+ (`paper-api`)
 - **PGM** (runtime, required)
-- **LuckPerms** (optional; rank→permission syncing is disabled without it)
 - Gson (shaded), JDK 17 `HttpClient`/`WebSocket`
 
 ## Config setup
@@ -83,9 +81,6 @@ POST /api/mixed/stats/match
 POST /api/mixed/stats/map
 POST /api/mixed/xp
 POST /api/mixed/achievements
-POST /api/mixed/ranks/sync
-GET  /api/mixed/ranks/player/{uuid}
-POST /api/mixed/entitlements/sync
 GET  /api/mixed/map-token-requests/pending
 POST /api/mixed/map-token-requests/:id/result
 GET  /api/mixed/vote/current
@@ -96,8 +91,8 @@ POST /api/mixed/maps/:mapKey/ratings
 WebSocket: `wss://.../ws/mixed`. Outbound: SERVER_ONLINE, HEARTBEAT, MATCH_*,
 PLAYER_DEATH, OBJECTIVE_EVENT, LIVE_FEED_EVENT, MAP_VOTE_*, MAP_RATING_*,
 MAP_REQUEST_*. Inbound: PING, REQUEST_STATUS, REQUEST_STATS_FLUSH,
-REQUEST_RANK_SYNC, REQUEST_ENTITLEMENT_SYNC, MAP_TOKEN_REQUEST, START_MAP_VOTE,
-CANCEL_MAP_VOTE, FORCE_END_MAP_VOTE. (Remote console commands are **not**
+MAP_TOKEN_REQUEST, START_MAP_VOTE, CANCEL_MAP_VOTE, FORCE_END_MAP_VOTE.
+(Remote console commands are **not**
 implemented in this initial version.)
 
 ## Commands
@@ -117,7 +112,7 @@ implemented in this initial version.)
 ## Permissions
 
 `zanderpgm.admin` (op), `zanderpgm.vote`, `zanderpgm.rate`, `zanderpgm.stats`,
-`zanderpgm.profile`, `zanderpgm.rank.admin`.
+`zanderpgm.profile`.
 
 ## How Map Tokens work
 
@@ -212,19 +207,6 @@ window, default 180s). One rating per player per match, updatable during the
 window. Optional feedback (max 300 chars) is stored in zander-web for
 admin review and optional public display. Only players who played the match may
 rate it.
-
-## How rank sync works
-
-On join, the player's rank is fetched from
-`GET /api/mixed/ranks/player/{uuid}` and the primary group is applied through
-LuckPerms (if present). Only the group / permission nodes are managed — never
-chat prefixes, suffixes, tags or formatting.
-
-## How entitlements work
-
-Generic, non-chat entitlement flags (cosmetic access, supporter perks, map vote
-weight, reserved slot, web-only profile badges) are tracked per player and
-synced to zander-web. Chat tags/formatting are never modelled.
 
 ## Building
 

@@ -164,18 +164,6 @@ public class ZanderApiClient {
         post("/api/mixed/achievements", dto);
     }
 
-    public CompletableFuture<String> fetchRank(String uuid) {
-        return get("/api/mixed/ranks/player/" + uuid);
-    }
-
-    public void ranksSync(Object dto) {
-        post("/api/mixed/ranks/sync", dto);
-    }
-
-    public void entitlementsSync(Object dto) {
-        post("/api/mixed/entitlements/sync", dto);
-    }
-
     public CompletableFuture<String> pendingMapTokenRequests() {
         return get("/api/mixed/map-token-requests/pending");
     }

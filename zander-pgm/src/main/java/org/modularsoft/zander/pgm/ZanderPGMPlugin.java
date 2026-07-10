@@ -19,15 +19,12 @@ import org.modularsoft.zander.pgm.command.VoteCommand;
 import org.modularsoft.zander.pgm.command.ZpgmCommand;
 import org.modularsoft.zander.pgm.config.ConfigLoader;
 import org.modularsoft.zander.pgm.config.ZanderPGMConfig;
-import org.modularsoft.zander.pgm.entitlement.EntitlementService;
 import org.modularsoft.zander.pgm.pgm.MapRotationService;
 import org.modularsoft.zander.pgm.pgm.MatchIdentityService;
 import org.modularsoft.zander.pgm.pgm.PGMHook;
 import org.modularsoft.zander.pgm.progression.AchievementService;
 import org.modularsoft.zander.pgm.progression.LevelService;
 import org.modularsoft.zander.pgm.progression.XpService;
-import org.modularsoft.zander.pgm.rank.PermissionGroupSync;
-import org.modularsoft.zander.pgm.rank.RankService;
 import org.modularsoft.zander.pgm.rating.MapRatingService;
 import org.modularsoft.zander.pgm.stats.LeaderboardService;
 import org.modularsoft.zander.pgm.stats.StatsAccumulator;
@@ -70,10 +67,6 @@ public class ZanderPGMPlugin extends JavaPlugin {
     private MapRotationService rotation;
     private PGMHook pgmHook;
     private TrackerRegistry trackers;
-
-    private PermissionGroupSync groupSync;
-    private RankService ranks;
-    private EntitlementService entitlements;
 
     private MapVoteService votes;
     private MapTokenService tokens;
@@ -149,11 +142,7 @@ public class ZanderPGMPlugin extends JavaPlugin {
         this.identity = new MatchIdentityService();
         this.rotation = new MapRotationService(log);
 
-        this.groupSync = new PermissionGroupSync(log);
-        this.ranks = new RankService(this, config, api, groupSync, log);
-        this.entitlements = new EntitlementService(config, api);
-
-        this.votes = new MapVoteService(this, config, api, ws, rotation, entitlements, log);
+        this.votes = new MapVoteService(this, config, api, ws, rotation, log);
         this.tokens = new MapTokenService(this, config, api, ws, rotation, votes, log);
         this.tokenPoller = new MapTokenRequestPoller(this, api, tokens, log);
         this.ratings = new MapRatingService(this, config, api, ws, log);
@@ -281,9 +270,6 @@ public class ZanderPGMPlugin extends JavaPlugin {
                     Bukkit.getScheduler().runTask(this, () -> snapshots.flushPlayerStats(id.matchId));
                 }
             }
-            case "REQUEST_RANK_SYNC" -> Bukkit.getScheduler().runTask(this,
-                    () -> Bukkit.getOnlinePlayers().forEach(p -> ranks.syncPlayer(p.getUniqueId())));
-            case "REQUEST_ENTITLEMENT_SYNC" -> log.debug("Entitlement sync requested (handled per-player on join).");
             case "MAP_TOKEN_REQUEST" -> handleInboundToken(message);
             case "START_MAP_VOTE" -> Bukkit.getScheduler().runTask(this, votes::start);
             case "CANCEL_MAP_VOTE" -> Bukkit.getScheduler().runTask(this, () -> votes.cancel("remote"));
@@ -308,7 +294,6 @@ public class ZanderPGMPlugin extends JavaPlugin {
         log.info("  Server: " + config.serverId + " (" + config.environment + ")");
         log.info("  API: " + config.baseUrl);
         log.info("  WebSocket: " + (config.feature("websocket") ? config.websocketUrl : "disabled"));
-        log.info("  LuckPerms: " + (groupSync.isAvailable() ? "present" : "absent"));
     }
 
     @Override
@@ -396,14 +381,6 @@ public class ZanderPGMPlugin extends JavaPlugin {
 
     public MapRotationService rotation() {
         return rotation;
-    }
-
-    public RankService ranks() {
-        return ranks;
-    }
-
-    public EntitlementService entitlements() {
-        return entitlements;
     }
 
     public MapVoteService votes() {

@@ -28,8 +28,6 @@ features:
   xp: true
   levels: true
   achievements: true
-  ranks: true
-  entitlements: true
   liveFeed: true
   discordHooks: true
   websocket: true
@@ -85,7 +83,6 @@ mapVoting:
   tokenBoostWeight: 2
   mapCooldownMatches: 5
   playerVoteWeight: 1
-  supporterVoteWeight: 1
   showLiveResults: true
   applyWinnerToNextMatch: true
 

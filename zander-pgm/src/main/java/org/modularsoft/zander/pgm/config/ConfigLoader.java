@@ -68,7 +68,6 @@ public final class ConfigLoader {
         cfg.allowTokenBoosts = c.getBoolean("mapVoting.allowTokenBoosts", cfg.allowTokenBoosts);
         cfg.tokenBoostWeight = c.getInt("mapVoting.tokenBoostWeight", cfg.tokenBoostWeight);
         cfg.mapVoteCooldownMatches = c.getInt("mapVoting.mapCooldownMatches", cfg.mapVoteCooldownMatches);
-        cfg.supporterVoteWeight = c.getInt("mapVoting.supporterVoteWeight", cfg.supporterVoteWeight);
         cfg.showLiveResults = c.getBoolean("mapVoting.showLiveResults", cfg.showLiveResults);
         cfg.applyWinnerToNextMatch = c.getBoolean("mapVoting.applyWinnerToNextMatch", cfg.applyWinnerToNextMatch);
 
