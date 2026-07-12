@@ -64,6 +64,24 @@ function parseJson(value, fallback = null) {
   }
 }
 
+function firstNonEmptyString(values = []) {
+  for (const value of values) {
+    if (typeof value !== "string") continue;
+    const trimmed = value.trim();
+    if (trimmed) return trimmed;
+  }
+  return null;
+}
+
+function normalisePeopleList(...lists) {
+  return [...new Set(
+    lists
+      .flat()
+      .map((value) => (typeof value === "string" ? value.trim() : ""))
+      .filter(Boolean)
+  )];
+}
+
 // ---------------------------------------------------------------------------
 // Settings
 // ---------------------------------------------------------------------------
@@ -211,10 +229,20 @@ export async function upsertMap(data) {
 function withDisplayFields(row) {
   const inferredTags = parseJson(row.inferred_tags, []);
   const customTags = parseJson(row.custom_tags, []);
+  const authors = normalisePeopleList(parseJson(row.authors, []));
+  const contributors = normalisePeopleList(parseJson(row.contributors, []));
+  const screenshots = parseJson(row.screenshots_from_repo, []);
+  const fallbackImage = firstNonEmptyString(screenshots);
+  const displayThumbnailUrl = row.custom_thumbnail_url || row.thumbnail_from_repo || row.thumbnail_url || fallbackImage || null;
   return {
     ...row,
+    authors,
+    contributors,
+    screenshots_from_repo: screenshots,
+    display_authors: authors.length ? authors : contributors,
     display_description: row.custom_description || row.description_from_xml || row.description || "No description available.",
-    display_thumbnail_url: row.custom_thumbnail_url || row.thumbnail_from_repo || row.thumbnail_url || null,
+    display_thumbnail_url: displayThumbnailUrl,
+    display_image_url: displayThumbnailUrl,
     display_tags: [...new Set([...(inferredTags || []), ...(customTags || [])])],
   };
 }

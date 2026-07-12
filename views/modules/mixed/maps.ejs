@@ -18,10 +18,10 @@
   <% result.maps.forEach(function(map){ %>
     <div class="col-md-4">
       <div class="card h-100">
-        <% if (map.display_thumbnail_url) { %><img src="<%= map.display_thumbnail_url %>" class="card-img-top" style="height:150px;object-fit:cover;" alt=""><% } %>
+        <% if (map.display_image_url) { %><img src="<%= map.display_image_url %>" class="card-img-top" style="height:150px;object-fit:cover;" alt="<%= map.name %>"><% } %>
         <div class="card-body">
           <h5 class="card-title mb-1"><a href="/mixed/maps/<%= encodeURIComponent(map.map_key) %>" class="text-reset text-decoration-none"><%= map.name %></a></h5>
-          <p class="text-muted small mb-2"><%= map.gamemode || "-" %> · <%= (map.authors || []).join(", ") || "Unknown author" %></p>
+          <p class="text-muted small mb-2"><%= map.gamemode || "-" %> - <%= (map.display_authors || []).join(", ") || "Unknown author" %></p>
           <div class="d-flex justify-content-between small">
             <span><%= Number(map.average_overall || 0).toFixed(1) %>★ (<%= map.rating_count || 0 %>)</span>
             <span><%= map.times_played %> plays</span>
