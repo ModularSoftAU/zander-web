@@ -1,79 +1,94 @@
 <%- include("_top.ejs") %>
 
-<!-- Server overview -->
-<div class="row g-3 mb-4">
-  <div class="col-md-3 col-6">
-    <div class="mixed-stat text-center">
-      <div class="mixed-stat-number"><%= servers.filter(s => s.online).length %></div>
-      <div class="mixed-stat-label">Servers online</div>
-    </div>
-  </div>
-  <div class="col-md-3 col-6">
-    <div class="mixed-stat text-center">
-      <div class="mixed-stat-number"><%= servers.reduce((a, s) => a + (s.player_count || 0), 0) %></div>
-      <div class="mixed-stat-label">Players in game</div>
-    </div>
-  </div>
-  <div class="col-md-3 col-6">
-    <div class="mixed-stat text-center">
-      <div class="mixed-stat-number"><%= featuredMaps.length %></div>
-      <div class="mixed-stat-label">Featured maps</div>
-    </div>
-  </div>
-  <div class="col-md-3 col-6">
-    <div class="mixed-stat text-center">
-      <div class="mixed-stat-number"><%= topLevel.length %></div>
-      <div class="mixed-stat-label">Tracked players</div>
-    </div>
-  </div>
-</div>
-
 <div class="row g-4">
   <div class="col-lg-7">
     <% if (liveMatch) { %>
-      <div class="card shadow-sm border-0 mb-4">
+      <div class="card shadow-sm border-0 mixed-map-detail-card mb-4">
         <div class="card-header bg-white d-flex justify-content-between align-items-center">
           <strong><i class="fas fa-circle text-success me-1" style="font-size:.6rem;"></i> Live now</strong>
           <a href="/mixed/live" class="btn btn-sm btn-outline-success">Watch live</a>
         </div>
         <div class="card-body">
           <h5 class="mb-1"><%= liveMatch.map_name || liveMatch.map_key %></h5>
-          <div class="text-muted"><%= liveMatch.server_name %> · <%= liveMatch.gamemode || "-" %> · <%= liveMatch.server_players %> players</div>
+          <div class="text-muted"><%= liveMatch.server_name %> - <%= liveMatch.gamemode || "-" %> - <%= liveMatch.server_players %> players</div>
         </div>
       </div>
     <% } %>
 
-    <h4>Recent matches</h4>
-    <div class="card shadow-sm border-0 mb-4">
-      <div class="list-group list-group-flush">
-        <% if (!recentMatches.length) { %><div class="list-group-item text-muted">No matches recorded yet.</div><% } %>
-        <% recentMatches.forEach(function(m){ %>
-          <a href="/mixed/matches/<%= m.match_id %>" class="list-group-item list-group-item-action mixed-list-item d-flex justify-content-between">
-            <span><strong><%= m.map_name || m.map_key || "Unknown" %></strong> <span class="text-muted small"><%= m.gamemode || "" %></span></span>
-            <span class="text-muted small"><%= m.started_at ? moment(m.started_at).fromNow() : "" %></span>
+    <div class="d-flex justify-content-between align-items-center mb-3">
+      <h4 class="mb-0">Recent matches</h4>
+      <a href="/mixed/matches" class="btn btn-sm btn-outline-secondary">View all</a>
+    </div>
+
+    <div class="row g-3 mb-4">
+      <% if (!recentMatches.length) { %>
+        <div class="col-12"><div class="card shadow-sm border-0"><div class="card-body text-muted">No matches recorded yet.</div></div></div>
+      <% } %>
+      <% recentMatches.forEach(function(m){ %>
+        <div class="col-12">
+          <a href="/mixed/matches/<%= m.match_id %>" class="mixed-map-link">
+            <div class="card shadow-sm border-0 mixed-map-card">
+              <div class="card-body py-3">
+                <div class="d-flex justify-content-between align-items-start gap-3">
+                  <div>
+                    <h5 class="mb-1 mixed-map-title">Match on <%= m.map_name || m.map_key || "Unknown map" %></h5>
+                    <div class="mixed-map-meta mb-0">
+                      <span class="mixed-map-mode"><%= m.gamemode || "-" %></span>
+                      <span><%= m.started_at ? moment(m.started_at).fromNow() : "" %></span>
+                    </div>
+                  </div>
+                  <div class="text-end small text-muted">
+                    <div><%= m.participants_count || 0 %> players</div>
+                    <div><%= m.total_kills || 0 %> kills</div>
+                  </div>
+                </div>
+              </div>
+            </div>
           </a>
-        <% }) %>
-      </div>
+        </div>
+      <% }) %>
     </div>
   </div>
 
   <div class="col-lg-5">
-    <h4>Featured maps</h4>
-    <div class="row g-2 mb-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+      <h4 class="mb-0">Featured maps</h4>
+      <a href="/mixed/maps" class="btn btn-sm btn-outline-secondary">View all</a>
+    </div>
+
+    <div class="row g-3 mb-4">
       <% featuredMaps.forEach(function(map){ %>
         <div class="col-12">
-          <a href="/mixed/maps/<%= encodeURIComponent(map.map_key) %>" class="text-decoration-none">
-            <div class="card shadow-sm border-0 mixed-list-item"><div class="card-body py-2 d-flex justify-content-between">
-              <span><strong class="text-reset"><%= map.name %></strong><br><span class="text-muted small"><%= map.gamemode || "" %></span></span>
-              <span class="text-muted small"><%= Number(map.average_overall || 0).toFixed(1) %>★ · <%= map.times_played %> plays</span>
-            </div></div>
-          </a>
+          <div class="card shadow-sm border-0 mixed-map-card">
+            <a href="/mixed/maps/<%= encodeURIComponent(map.map_key) %>" class="mixed-map-link">
+              <% if (map.display_image_url) { %>
+                <img src="<%= map.display_image_url %>" class="card-img-top mixed-map-image" alt="<%= map.name %>">
+              <% } else { %>
+                <div class="mixed-map-placeholder"></div>
+              <% } %>
+              <div class="card-body py-3">
+                <div class="d-flex justify-content-between align-items-start gap-3">
+                  <div>
+                    <h5 class="mb-1 mixed-map-title"><%= map.name %></h5>
+                    <div class="mixed-map-meta mb-0">
+                      <span class="mixed-map-mode"><%= map.gamemode || "-" %></span>
+                      <span><%= (map.display_authors || []).join(", ") || "Unknown author" %></span>
+                    </div>
+                  </div>
+                  <div class="text-end small text-muted">
+                    <div><%= Number(map.average_overall || 0).toFixed(1) %>★</div>
+                    <div><%= map.times_played %> plays</div>
+                  </div>
+                </div>
+              </div>
+            </a>
+          </div>
         </div>
       <% }) %>
     </div>
 
     <h4>Top players</h4>
-    <div class="card shadow-sm border-0 mb-4">
+    <div class="card shadow-sm border-0 mixed-table-card mb-4">
       <ol class="list-group list-group-numbered list-group-flush">
         <% topLevel.forEach(function(p){ %>
           <li class="list-group-item mixed-list-item d-flex justify-content-between">

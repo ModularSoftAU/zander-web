@@ -419,6 +419,191 @@ input[type="email"]:focus, input[type="password"]:focus, input[type="text"]:focu
   background-color: rgba(47, 80, 140, 0.06);
 }
 
+.mixed-map-card {
+  border: 1px solid rgba(47, 80, 140, 0.14);
+  border-radius: 1rem;
+  overflow: hidden;
+  transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
+}
+
+.mixed-map-card:hover {
+  transform: translateY(-2px);
+  border-color: rgba(47, 80, 140, 0.28);
+  box-shadow: 0 18px 36px rgba(34, 58, 102, 0.08);
+}
+
+.mixed-map-link {
+  display: block;
+  height: 100%;
+  color: inherit;
+  text-decoration: none;
+}
+
+.mixed-map-link:hover,
+.mixed-map-link:focus {
+  color: inherit;
+  text-decoration: none;
+}
+
+.mixed-map-image {
+  height: 170px;
+  object-fit: cover;
+  object-position: center;
+  background: linear-gradient(180deg, rgba(47, 80, 140, 0.12), rgba(47, 80, 140, 0.04));
+}
+
+.mixed-map-placeholder {
+  min-height: 170px;
+  background:
+    linear-gradient(135deg, rgba(47, 80, 140, 0.08), rgba(47, 80, 140, 0.02)),
+    repeating-linear-gradient(135deg, rgba(47, 80, 140, 0.05) 0, rgba(47, 80, 140, 0.05) 14px, transparent 14px, transparent 28px);
+}
+
+.mixed-map-title {
+  color: #223a66;
+}
+
+.mixed-map-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 0.85rem;
+  color: #5f7892;
+  font-size: 0.92rem;
+}
+
+.mixed-map-mode {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.2rem 0.6rem;
+  border-radius: 999px;
+  background: rgba(47, 80, 140, 0.08);
+  color: #2f508c;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.mixed-map-author {
+  min-width: 0;
+}
+
+.mixed-map-stats {
+  padding-top: 0.85rem;
+  margin-top: auto;
+  border-top: 1px solid rgba(47, 80, 140, 0.08);
+  color: #223a66;
+}
+
+.mixed-map-source {
+  margin-top: 0.85rem;
+  color: #6f8ba4;
+  font-size: 0.85rem;
+}
+
+.mixed-map-detail-card {
+  border: 1px solid rgba(47, 80, 140, 0.14);
+  border-radius: 1rem;
+  overflow: hidden;
+}
+
+.mixed-map-detail-image {
+  max-height: 360px;
+  object-fit: cover;
+  object-position: center;
+}
+
+.mixed-map-detail-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+  color: #5f7892;
+}
+
+.mixed-map-detail-section {
+  border-top: 1px solid rgba(47, 80, 140, 0.08);
+  margin-top: 1.25rem;
+  padding-top: 1rem;
+}
+
+.mixed-map-detail-source {
+  margin-top: 1.25rem;
+  padding: 0.9rem 1rem;
+  border-radius: 0.9rem;
+  background: rgba(47, 80, 140, 0.05);
+  color: #5f7892;
+}
+
+.mixed-table-card {
+  border: 1px solid rgba(47, 80, 140, 0.12);
+  border-radius: 1rem;
+  overflow: hidden;
+  box-shadow: 0 12px 28px rgba(34, 58, 102, 0.05);
+  margin-bottom: 1.5rem;
+}
+
+.mixed-table-card .table {
+  margin-bottom: 0;
+}
+
+.mixed-table-card .table thead th {
+  background: #f8fbff;
+  border-bottom: 1px solid rgba(47, 80, 140, 0.12);
+  color: #223a66;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.mixed-table-card .table tbody td {
+  vertical-align: middle;
+}
+
+.mixed-table-card .table tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+.mixed-table-card .table tbody tr:hover {
+  background-color: rgba(47, 80, 140, 0.04);
+}
+
+.mixed-table-card .dataTables_wrapper {
+  padding: 0;
+}
+
+.mixed-table-card .dataTables_filter,
+.mixed-table-card .dataTables_length,
+.mixed-table-card .dataTables_info {
+  display: none;
+}
+
+.mixed-table-card .dataTables_paginate {
+  padding: 0.9rem 1rem 1rem;
+  float: none !important;
+  text-align: center !important;
+}
+
+.mixed-table-card .paginate_button {
+  border-radius: 999px !important;
+  border: 0 !important;
+  margin: 0 0.15rem !important;
+}
+
+.mixed-table-card .paginate_button.current,
+.mixed-table-card .paginate_button.current:hover {
+  background: #2f508c !important;
+  color: #fff !important;
+}
+
+.mixed-table-card .paginate_button:hover {
+  background: rgba(47, 80, 140, 0.08) !important;
+  color: #2f508c !important;
+}
+
+.mixed-table-nav {
+  margin-top: 1rem;
+  margin-bottom: 1rem;
+}
+
 .badge-soft-success {
   background-color: rgba(25, 135, 84, 0.18);
   color: #198754;

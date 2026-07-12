@@ -552,14 +552,27 @@ export async function upsertMatch(data) {
 }
 
 export async function getMatch(matchId) {
-  const row = await one(`SELECT * FROM mixed_matches WHERE match_id = ?`, [matchId]);
+  const row = await one(
+    `SELECT mt.*,
+            COALESCE(mm.name, mt.map_name, mt.map_key) AS resolved_map_name,
+            COALESCE(mm.gamemode, mt.gamemode) AS resolved_gamemode
+       FROM mixed_matches mt
+       LEFT JOIN mixed_maps mm ON mm.map_key = mt.map_key
+      WHERE mt.match_id = ?`,
+    [matchId]
+  );
   if (!row) return null;
   row.winners = parseJson(row.winners, []);
   row.metadata = parseJson(row.metadata, {});
   const players = await q(
     `SELECT * FROM mixed_match_players WHERE match_id = ? ORDER BY kills DESC`, [matchId]
   );
-  return { ...row, players };
+  return {
+    ...row,
+    map_name: row.resolved_map_name || row.map_name || row.map_key,
+    gamemode: row.resolved_gamemode || row.gamemode,
+    players,
+  };
 }
 
 export async function getMatchEvents(matchId) {
@@ -578,34 +591,55 @@ export async function listMatches({
   const where = [];
   const params = [];
   if (mapKey) { where.push(`mt.map_key = ?`); params.push(mapKey); }
-  if (gamemode) { where.push(`mt.gamemode = ?`); params.push(gamemode); }
+  if (gamemode) { where.push(`COALESCE(mm.gamemode, mt.gamemode) = ?`); params.push(gamemode); }
   if (serverId) { where.push(`mt.server_id = ?`); params.push(serverId); }
   if (winner) { where.push(`JSON_SEARCH(mt.winners, 'one', ?) IS NOT NULL`); params.push(winner); }
   if (minDuration) { where.push(`mt.duration_seconds >= ?`); params.push(minDuration); }
   if (maxDuration) { where.push(`mt.duration_seconds <= ?`); params.push(maxDuration); }
   if (dateFrom) { where.push(`mt.started_at >= ?`); params.push(dateFrom); }
   if (dateTo) { where.push(`mt.started_at <= ?`); params.push(dateTo); }
-  if (search) { where.push(`(mt.map_name LIKE ? OR mt.match_id LIKE ?)`); params.push(`%${search}%`, `%${search}%`); }
+  if (search) {
+    where.push(`(COALESCE(mm.name, mt.map_name, mt.map_key) LIKE ? OR mt.match_id LIKE ?)`);
+    params.push(`%${search}%`, `%${search}%`);
+  }
 
   let joinPlayer = "";
   if (playerUuid) {
-    joinPlayer = `JOIN mixed_match_players mp ON mp.match_id = mt.match_id AND mp.player_uuid = ?`;
-    params.unshift(playerUuid); // player join param comes first
+    if (isValidUuid(playerUuid)) {
+      joinPlayer = `JOIN mixed_match_players mp ON mp.match_id = mt.match_id AND mp.player_uuid = ?`;
+      params.unshift(normaliseUuid(playerUuid));
+    } else {
+      joinPlayer = `JOIN mixed_match_players mp ON mp.match_id = mt.match_id AND mp.username LIKE ?`;
+      params.unshift(`%${playerUuid}%`);
+    }
   }
   const whereSql = where.length ? `WHERE ${where.join(" AND ")}` : "";
   const offset = (Math.max(1, page) - 1) * limit;
 
   const rows = await q(
-    `SELECT DISTINCT mt.* FROM mixed_matches mt ${joinPlayer} ${whereSql}
+    `SELECT DISTINCT mt.*,
+            COALESCE(mm.name, mt.map_name, mt.map_key) AS resolved_map_name,
+            COALESCE(mm.gamemode, mt.gamemode) AS resolved_gamemode
+       FROM mixed_matches mt
+       LEFT JOIN mixed_maps mm ON mm.map_key = mt.map_key
+       ${joinPlayer} ${whereSql}
      ORDER BY mt.started_at DESC LIMIT ? OFFSET ?`,
     [...params, limit, offset]
   );
   const totalRow = await one(
-    `SELECT COUNT(DISTINCT mt.match_id) AS total FROM mixed_matches mt ${joinPlayer} ${whereSql}`,
+    `SELECT COUNT(DISTINCT mt.match_id) AS total
+       FROM mixed_matches mt
+       LEFT JOIN mixed_maps mm ON mm.map_key = mt.map_key
+       ${joinPlayer} ${whereSql}`,
     params
   );
   return {
-    matches: rows.map((r) => ({ ...r, winners: parseJson(r.winners, []) })),
+    matches: rows.map((r) => ({
+      ...r,
+      map_name: r.resolved_map_name || r.map_name || r.map_key,
+      gamemode: r.resolved_gamemode || r.gamemode,
+      winners: parseJson(r.winners, []),
+    })),
     total: totalRow?.total || 0,
     page: Math.max(1, page),
     limit,
@@ -1424,8 +1458,18 @@ export async function landingData() {
   return {
     servers,
     liveMatch: live[0] || null,
-    featuredMaps: featuredMaps.map((r) => ({ ...r, authors: parseJson(r.authors, []) })),
-    recentMatches: recentMatches.map((r) => ({ ...r, winners: parseJson(r.winners, []) })),
+    featuredMaps: featuredMaps.map((r) => withDisplayFields({
+      ...r,
+      authors: parseJson(r.authors, []),
+      contributors: parseJson(r.contributors, []),
+      inferred_tags: parseJson(r.inferred_tags, []),
+      custom_tags: parseJson(r.custom_tags, []),
+      screenshots_from_repo: parseJson(r.screenshots_from_repo, []),
+    })),
+    recentMatches: recentMatches.map((r) => ({
+      ...r,
+      winners: parseJson(r.winners, []),
+    })),
     topLevel,
     latestAchievements: latestAch,
     currentVote,

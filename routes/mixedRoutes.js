@@ -33,6 +33,86 @@ export default function mixedSiteRoutes(app, config, features) {
     return false;
   }
 
+  function elapsedSeconds(match, event) {
+    if (Number.isFinite(event?.capture_time_seconds)) return event.capture_time_seconds;
+    if (!match?.started_at || !event?.occurred_at) return null;
+    const start = new Date(match.started_at).getTime();
+    const occurred = new Date(event.occurred_at).getTime();
+    if (!Number.isFinite(start) || !Number.isFinite(occurred)) return null;
+    return Math.max(0, Math.round((occurred - start) / 1000));
+  }
+
+  function formatElapsedLabel(totalSeconds) {
+    if (!(totalSeconds >= 0)) return null;
+    const minutes = Math.floor(totalSeconds / 60);
+    const seconds = totalSeconds % 60;
+    return `${minutes}:${String(seconds).padStart(2, "0")}`;
+  }
+
+  function eventUsername(event, role, playersByUuid) {
+    const payload = event?.payload || {};
+    if (role === "target") {
+      return playersByUuid.get(event?.target_uuid)
+        || payload.victimUsername
+        || payload.victim_username
+        || payload.targetUsername
+        || payload.target_username
+        || event?.target_uuid
+        || "Unknown player";
+    }
+    if (role === "assister") {
+      return playersByUuid.get(event?.assister_uuid)
+        || event?.assister_username
+        || payload.assisterUsername
+        || payload.assister_username
+        || null;
+    }
+    return playersByUuid.get(event?.player_uuid)
+      || event?.username
+      || payload.username
+      || payload.killerUsername
+      || payload.killer_username
+      || payload.playerUsername
+      || payload.player_username
+      || event?.player_uuid
+      || "System";
+  }
+
+  function formatTimelineEvent(match, event, playersByUuid) {
+    const type = String(event?.event_type || "").toUpperCase();
+    const actor = eventUsername(event, "actor", playersByUuid);
+    const target = eventUsername(event, "target", playersByUuid);
+    const assister = eventUsername(event, "assister", playersByUuid);
+    const payload = event?.payload || {};
+    const elapsed = formatElapsedLabel(elapsedSeconds(match, event));
+    const occurredLabel = event?.occurred_at ? moment(event.occurred_at).format("HH:mm:ss") : "";
+
+    let summary = type;
+    if (type === "PLAYER_DEATH") {
+      const weapon = event?.weapon || payload.weapon || payload.cause || event?.cause || null;
+      summary = `${actor} killed ${target}`;
+      if (assister) summary += ` with help from ${assister}`;
+      if (weapon) summary += ` using ${weapon}`;
+    } else if (type === "OBJECTIVE_EVENT") {
+      const objective = event?.objective_name || payload.objectiveName || payload.objective_name || event?.objective_id || "an objective";
+      const action = (event?.action || payload.action || "updated").toLowerCase().replace(/_/g, " ");
+      summary = `${actor} ${action} ${objective}`;
+    } else if (type === "LIVE_FEED_EVENT") {
+      summary = payload.message || payload.text || payload.description || `${actor} triggered a live event`;
+    } else if (type === "MATCH_STARTED") {
+      summary = `Match started on ${match.map_name || match.map_key || "this map"}`;
+    } else if (type === "MATCH_ENDED") {
+      summary = `Match ended${(match.winners || []).length ? ` - winner: ${(match.winners || []).join(", ")}` : ""}`;
+    }
+
+    return {
+      ...event,
+      elapsedLabel: elapsed,
+      occurredLabel,
+      summary,
+    };
+  }
+
   // ── Landing ───────────────────────────────────────────────────────────────
   app.get("/mixed", async (req, res) => {
     if (!guard(req, res)) return;
@@ -66,9 +146,12 @@ export default function mixedSiteRoutes(app, config, features) {
       page, limit: 25,
     });
     const [maps, servers] = await Promise.all([mixed.listMaps({ limit: 200 }), mixed.listServers()]);
+    const gamemodeOptions = [...new Set(
+      maps.maps.map((m) => m.gamemode).filter(Boolean)
+    )].sort((a, b) => a.localeCompare(b));
     return render(res, "modules/mixed/matches", await base(req, {
       pageTitle: "Match History", pageDescription: "Browse Mixed match history with filters.",
-      result, query: req.query, maps: maps.maps, servers,
+      result, query: req.query, maps: maps.maps, servers, gamemodeOptions,
     }));
   });
 
@@ -87,9 +170,24 @@ export default function mixedSiteRoutes(app, config, features) {
     ]);
     const isAdmin = Array.isArray(req.session?.user?.permissions) &&
       req.session.user.permissions.some((p) => ["*", "zander.web.*", "zander.web.mixed"].includes(String(p).toLowerCase()));
+    const playersByUuid = new Map((match.players || []).map((p) => [p.player_uuid, p.username]).filter(([, username]) => username));
+    const timeline = [
+      ...(match.started_at ? [{
+        event_type: "MATCH_STARTED",
+        occurred_at: match.started_at,
+        payload: {},
+      }] : []),
+      ...events,
+      ...(match.status === "ended" && match.ended_at ? [{
+        event_type: "MATCH_ENDED",
+        occurred_at: match.ended_at,
+        payload: {},
+      }] : []),
+    ].map((event) => formatTimelineEvent(match, event, playersByUuid));
     return render(res, "modules/mixed/match-detail", await base(req, {
-      pageTitle: `Match ${match.match_id}`, pageDescription: `Match detail for ${match.map_name || match.match_id}.`,
-      match, events, map, isAdmin,
+      pageTitle: `Match on ${match.map_name || match.map_key || match.match_id}`,
+      pageDescription: `Match detail for ${match.map_name || match.match_id}.`,
+      match, events, map, isAdmin, timeline,
     }));
   });
 

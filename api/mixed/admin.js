@@ -14,12 +14,14 @@ const config = require("../../config.json");
 
 import { requireMixedAdmin } from "./auth.js";
 import * as mixed from "../../controllers/mixedController.js";
+import { UserGetter } from "../../controllers/userController.js";
 import { generateLog } from "../common.js";
 import { broadcast } from "../../lib/mixedRealtime.js";
 import { getPublicSourcesInfo } from "../../lib/mixed/mapSyncConfig.js";
 import { syncAll, syncSource, SourceNotFoundError } from "../../services/mixed/mixedMapRepoSyncService.js";
 
 export default function mixedAdminRoutes(app) {
+  const users = new UserGetter();
   const guard = (handler) => async (req, res) => {
     if (!requireMixedAdmin(req, res)) return;
     try {
@@ -31,6 +33,31 @@ export default function mixedAdminRoutes(app) {
   };
   const actorId = (req) => req.session?.user?.userId || null;
   const actorName = (req) => req.session?.user?.username || "unknown";
+  const resolveLinkedTokenUser = async (body = {}) => {
+    const userId = Number.parseInt(body.user_id ?? body.userId, 10);
+    const username = String(body.username || "").trim();
+    let user = null;
+
+    if (Number.isInteger(userId) && userId > 0) {
+      user = await users.byUserId(userId);
+    } else if (username) {
+      user = await users.byUsername(username);
+    }
+
+    if (!user) {
+      return { ok: false, message: "Select a valid linked user." };
+    }
+    if (!user.uuid) {
+      return { ok: false, message: "That user must link their Minecraft account before using map tokens." };
+    }
+
+    return {
+      ok: true,
+      user,
+      uuid: mixed.normaliseUuid(user.uuid),
+      username: user.username || username || null,
+    };
+  };
 
   app.get("/api/admin/mixed/overview", guard(async (_req, res) => {
     return res.send({ success: true, data: await mixed.adminOverview() });
@@ -158,28 +185,59 @@ export default function mixedAdminRoutes(app) {
   }));
 
   app.post("/api/admin/mixed/map-tokens/grant", guard(async (req, res) => {
-    const { player_uuid, username, amount, reason } = req.body || {};
+    const { amount, reason } = req.body || {};
     const amt = Number.parseInt(amount, 10);
-    if (!mixed.isValidUuid(player_uuid) || !(amt > 0)) {
-      return res.status(400).send({ success: false, message: "Valid player_uuid and positive amount required." });
+    if (!(amt > 0)) {
+      return res.status(400).send({ success: false, message: "A positive amount is required." });
     }
-    const uuid = mixed.normaliseUuid(player_uuid);
-    await mixed.creditTokens({ uuid, username, amount: amt, type: "grant", reason: reason || "Admin grant" });
-    await generateLog(actorId(req), "grant", "mixed", `${actorName(req)} granted ${amt} Map Tokens to ${uuid} (${reason || "no reason"})`);
-    return res.send({ success: true, data: await mixed.getTokenBalance(uuid) });
+
+    const resolved = await resolveLinkedTokenUser(req.body || {});
+    if (!resolved.ok) {
+      return res.status(400).send({ success: false, message: resolved.message });
+    }
+
+    await mixed.creditTokens({
+      uuid: resolved.uuid,
+      username: resolved.username,
+      amount: amt,
+      type: "grant",
+      reason: reason || "Admin grant",
+    });
+    await generateLog(
+      actorId(req),
+      "grant",
+      "mixed",
+      `${actorName(req)} granted ${amt} Map Tokens to ${resolved.username} (${resolved.uuid}) (${reason || "no reason"})`
+    );
+    return res.send({ success: true, data: await mixed.getTokenBalance(resolved.uuid) });
   }));
 
   app.post("/api/admin/mixed/map-tokens/remove", guard(async (req, res) => {
-    const { player_uuid, amount, reason } = req.body || {};
+    const { amount, reason } = req.body || {};
     const amt = Number.parseInt(amount, 10);
-    if (!mixed.isValidUuid(player_uuid) || !(amt > 0)) {
-      return res.status(400).send({ success: false, message: "Valid player_uuid and positive amount required." });
+    if (!(amt > 0)) {
+      return res.status(400).send({ success: false, message: "A positive amount is required." });
     }
-    const uuid = mixed.normaliseUuid(player_uuid);
-    const result = await mixed.removeTokens({ uuid, amount: amt, type: "remove", reason: reason || "Admin removal" });
+
+    const resolved = await resolveLinkedTokenUser(req.body || {});
+    if (!resolved.ok) {
+      return res.status(400).send({ success: false, message: resolved.message });
+    }
+
+    const result = await mixed.removeTokens({
+      uuid: resolved.uuid,
+      amount: amt,
+      type: "remove",
+      reason: reason || "Admin removal",
+    });
     if (!result.ok) return res.status(400).send({ success: false, message: "Player has insufficient balance." });
-    await generateLog(actorId(req), "remove", "mixed", `${actorName(req)} removed ${amt} Map Tokens from ${uuid} (${reason || "no reason"})`);
-    return res.send({ success: true, data: await mixed.getTokenBalance(uuid) });
+    await generateLog(
+      actorId(req),
+      "remove",
+      "mixed",
+      `${actorName(req)} removed ${amt} Map Tokens from ${resolved.username} (${resolved.uuid}) (${reason || "no reason"})`
+    );
+    return res.send({ success: true, data: await mixed.getTokenBalance(resolved.uuid) });
   }));
 
   app.post("/api/admin/mixed/map-requests/:id/refund", guard(async (req, res) => {
@@ -202,41 +260,4 @@ export default function mixedAdminRoutes(app) {
     return res.send({ success: true });
   }));
 
-  // ── Ranks ───────────────────────────────────────────────────────────────
-  app.post("/api/admin/mixed/ranks/sync/:uuid", guard(async (req, res) => {
-    if (!mixed.isValidUuid(req.params.uuid)) {
-      return res.status(400).send({ success: false, message: "Invalid UUID." });
-    }
-    await mixed.markRankPendingSync(mixed.normaliseUuid(req.params.uuid));
-    return res.send({ success: true, message: "Rank queued for re-sync to zander-pgm." });
-  }));
-
-  // ── Entitlements ──────────────────────────────────────────────────────────
-  app.get("/api/admin/mixed/entitlements/:uuid", guard(async (req, res) => {
-    if (!mixed.isValidUuid(req.params.uuid)) {
-      return res.status(400).send({ success: false, message: "Invalid UUID." });
-    }
-    const entitlements = await mixed.getPlayerEntitlements(mixed.normaliseUuid(req.params.uuid));
-    return res.send({ success: true, data: entitlements });
-  }));
-
-  app.post("/api/admin/mixed/entitlements/:uuid", guard(async (req, res) => {
-    if (!mixed.isValidUuid(req.params.uuid)) {
-      return res.status(400).send({ success: false, message: "Invalid UUID." });
-    }
-    const { entitlement_key, expires_at, username } = req.body || {};
-    if (!entitlement_key) return res.status(400).send({ success: false, message: "entitlement_key required." });
-    await mixed.addEntitlement({
-      uuid: mixed.normaliseUuid(req.params.uuid), username,
-      entitlementKey: entitlement_key, expiresAt: expires_at || null,
-    });
-    await generateLog(actorId(req), "create", "mixed", `${actorName(req)} added entitlement ${entitlement_key} to ${req.params.uuid}`);
-    return res.send({ success: true });
-  }));
-
-  app.delete("/api/admin/mixed/entitlements/:uuid/:entitlementId", guard(async (req, res) => {
-    await mixed.removeEntitlement(mixed.normaliseUuid(req.params.uuid), Number(req.params.entitlementId));
-    await generateLog(actorId(req), "delete", "mixed", `${actorName(req)} removed entitlement #${req.params.entitlementId} from ${req.params.uuid}`);
-    return res.send({ success: true });
-  }));
 }

@@ -11,6 +11,8 @@
 import { hasPermission } from "../../api/common.js";
 import { adminViewData } from "../../admin/adminHelpers.js";
 import { getWebAnnouncement } from "../../controllers/announcementController.js";
+import db from "../../controllers/databaseController.js";
+import { getProfilePicture } from "../../controllers/userController.js";
 import * as mixed from "../../controllers/mixedController.js";
 import { getPublicSourcesInfo } from "../../lib/mixed/mapSyncConfig.js";
 import moment from "moment";
@@ -88,23 +90,43 @@ export default function dashboardMixedRoute(app, config, features, lang) {
     return send(res, await shell(req, "dashboard/mixed/map-tokens", { pageTitle: "Mixed Map Tokens", balances, settings, pending, query: req.query }));
   });
 
-  app.get("/dashboard/mixed/ranks", async (req, res) => {
+  app.get("/dashboard/mixed/user-search", async (req, res) => {
     if (!(await hasPermission(CAP, req, res, features))) return;
-    const [ranks, expiring] = await Promise.all([
-      mixed.listPlayerRanks({ search: req.query.search, limit: 200 }),
-      mixed.expiringRanks(7),
-    ]);
-    return send(res, await shell(req, "dashboard/mixed/ranks", { pageTitle: "Mixed Ranks", ranks, expiring, query: req.query }));
+
+    const q = String(req.query?.q || "").trim();
+    if (q.length < 2) return res.send({ results: [] });
+
+    try {
+      const rows = await new Promise((resolve, reject) => {
+        db.query(
+          `SELECT userId, username, uuid
+             FROM users
+            WHERE uuid IS NOT NULL
+              AND username LIKE ?
+            ORDER BY username ASC
+            LIMIT 8`,
+          [`${q}%`],
+          (error, results) => {
+            if (error) return reject(error);
+            resolve(results || []);
+          }
+        );
+      });
+
+      const results = await Promise.all(
+        rows.map(async (row) => ({
+          userId: row.userId,
+          username: row.username,
+          uuid: row.uuid,
+          avatarUrl: await getProfilePicture(row.username),
+        }))
+      );
+
+      return res.send({ results });
+    } catch (error) {
+      console.error("[dashboard/mixed] user-search error:", error);
+      if (!res.sent) return res.status(500).send({ results: [] });
+    }
   });
 
-  app.get("/dashboard/mixed/entitlements", async (req, res) => {
-    if (!(await hasPermission(CAP, req, res, features))) return;
-    let entitlements = [];
-    let lookupUuid = null;
-    if (req.query.uuid && mixed.isValidUuid(req.query.uuid)) {
-      lookupUuid = mixed.normaliseUuid(req.query.uuid);
-      entitlements = await mixed.getPlayerEntitlements(lookupUuid);
-    }
-    return send(res, await shell(req, "dashboard/mixed/entitlements", { pageTitle: "Mixed Entitlements", entitlements, lookupUuid, query: req.query }));
-  });
 }
