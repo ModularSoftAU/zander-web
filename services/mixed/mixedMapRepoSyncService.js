@@ -17,6 +17,7 @@ import { createGithubClient, GithubFetchError } from "../../lib/mixed/githubClie
 import { parseMapXml } from "../../lib/mixed/pgmMapXmlParser.js";
 
 const ASSET_EXTENSIONS = ["png", "jpg", "jpeg", "webp"];
+const THUMBNAIL_BASENAMES = ["thumbnail", "map", "overview", "image", "preview"];
 
 export class SourceNotFoundError extends Error {
   constructor(sourceKey) {
@@ -61,16 +62,39 @@ function discoverAssets(tree, dirPrefix, githubClient, repo, branch) {
   const filesInDir = new Set(tree.filter((e) => e.type === "blob" && e.path.startsWith(dirPrefix)).map((e) => e.path));
 
   let thumbnail = null;
-  for (const ext of ASSET_EXTENSIONS) {
-    const p = `${dirPrefix}thumbnail.${ext}`;
-    if (filesInDir.has(p)) { thumbnail = githubClient.buildRawUrl(repo, branch, p); break; }
+  for (const baseName of THUMBNAIL_BASENAMES) {
+    for (const ext of ASSET_EXTENSIONS) {
+      const p = `${dirPrefix}${baseName}.${ext}`;
+      if (filesInDir.has(p)) {
+        thumbnail = githubClient.buildRawUrl(repo, branch, p);
+        break;
+      }
+    }
+    if (thumbnail) break;
   }
 
   const screenshotPrefix = `${dirPrefix}screenshots/`;
-  const screenshots = [...filesInDir]
+  const rootImages = [...filesInDir]
+    .filter((p) => {
+      if (p.startsWith(screenshotPrefix)) return false;
+      if (p === `${dirPrefix}map.xml`) return false;
+      const relative = p.slice(dirPrefix.length);
+      if (relative.includes("/")) return false;
+      return ASSET_EXTENSIONS.some((ext) => p.toLowerCase().endsWith(`.${ext}`));
+    })
+    .sort();
+
+  const screenshotImages = [...filesInDir]
     .filter((p) => p.startsWith(screenshotPrefix) && ASSET_EXTENSIONS.some((ext) => p.toLowerCase().endsWith(`.${ext}`)))
-    .sort()
+    .sort();
+
+  const screenshots = [...new Set([
+    ...rootImages,
+    ...screenshotImages,
+  ])]
     .map((p) => githubClient.buildRawUrl(repo, branch, p));
+
+  if (!thumbnail && screenshots.length) thumbnail = screenshots[0];
 
   return { thumbnail, screenshots };
 }

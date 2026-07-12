@@ -6,7 +6,7 @@
   <div class="col-md-2"><input class="form-control form-control-sm" name="author" placeholder="Author" value="<%= query.author || '' %>"></div>
   <div class="col-md-3">
     <select class="form-select form-select-sm" name="sort">
-      <% [["last_played", "Last played"], ["times_played", "Times played"], ["average_rating", "Rating"], ["average_duration", "Duration"], ["name", "Name"]].forEach(function(o){ %>
+      <% [["last_played", "Last played"], ["times_played", "Times played"], ["average_rating", "Rating"], ["average_duration", "Duration"], ["name", "Name"], ["gamemode", "Gamemode"], ["author", "Author"]].forEach(function(o){ %>
         <option value="<%= o[0] %>" <%= (query.sort || "last_played") === o[0] ? "selected" : "" %>><%= o[1] %></option>
       <% }) %>
     </select>
@@ -48,5 +48,14 @@
     </div>
   <% } %>
 </div>
+
+<% const totalPages = Math.max(1, Math.ceil(result.total / result.limit)); %>
+<% if (totalPages > 1) { %>
+  <nav><ul class="pagination pagination-sm mt-4">
+    <% for (let p = 1; p <= totalPages && p <= 20; p++) { const qs = new URLSearchParams({...query, page: p}); %>
+      <li class="page-item <%= p===result.page?'active':'' %>"><a class="page-link" href="?<%= qs.toString() %>"><%= p %></a></li>
+    <% } %>
+  </ul></nav>
+<% } %>
 
 <%- include("_bottom.ejs") %>

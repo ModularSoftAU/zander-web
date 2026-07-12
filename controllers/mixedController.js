@@ -287,7 +287,13 @@ export async function listMaps({
   if (!includeHidden) where.push(`m.public_visible = 1`);
   if (search) { where.push(`m.name LIKE ?`); params.push(`%${search}%`); }
   if (gamemode) { where.push(`m.gamemode = ?`); params.push(gamemode); }
-  if (author) { where.push(`JSON_SEARCH(m.authors, 'one', ?) IS NOT NULL`); params.push(author); }
+  if (author) {
+    where.push(`(
+      JSON_SEARCH(m.authors, 'one', ?) IS NOT NULL
+      OR JSON_SEARCH(m.contributors, 'one', ?) IS NOT NULL
+    )`);
+    params.push(author, author);
+  }
   if (sourceKey && includeSourceInfo) { where.push(`m.source_key = ?`); params.push(sourceKey); }
 
   const sortMap = {
@@ -296,6 +302,8 @@ export async function listMaps({
     average_duration: "m.average_duration_seconds",
     last_played: "m.last_played_at",
     name: "m.name",
+    gamemode: "m.gamemode",
+    author: "COALESCE(JSON_UNQUOTE(JSON_EXTRACT(m.authors, '$[0]')), JSON_UNQUOTE(JSON_EXTRACT(m.contributors, '$[0]')), '')",
   };
   const sortCol = sortMap[sort] || "m.last_played_at";
   const dir = order === "asc" ? "ASC" : "DESC";
