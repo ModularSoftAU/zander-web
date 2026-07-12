@@ -576,6 +576,17 @@ export async function listMatches({
   };
 }
 
+export async function closeStaleMatches(maxAgeMinutes = 180) {
+  const rows = await q(
+    `UPDATE mixed_matches
+        SET status = 'ended', ended_at = NOW()
+      WHERE status IN ('loaded','running')
+        AND started_at < DATE_SUB(NOW(), INTERVAL ? MINUTE)`,
+    [maxAgeMinutes]
+  );
+  return rows.affectedRows || 0;
+}
+
 export async function getLiveMatches() {
   const rows = await q(
     `SELECT mt.*, s.display_name AS server_name, s.online AS server_online,

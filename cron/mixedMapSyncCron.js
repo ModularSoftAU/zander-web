@@ -6,6 +6,16 @@ const config = require("../config.json");
 const features = require("../features.json");
 
 if (features.mixed && config.mixed?.mapSync?.enabled) {
+  (async () => {
+    try {
+      const { syncAll } = await import("../services/mixed/mixedMapRepoSyncService.js");
+      const summary = await syncAll({ triggeredBy: "startup" });
+      console.info(`[mixed:mapSyncCron] startup sync status=${summary.status} found=${summary.summary.mapsFound} created=${summary.summary.mapsCreated} updated=${summary.summary.mapsUpdated} conflicts=${summary.summary.conflictsFound}`);
+    } catch (err) {
+      console.error("[mixed:mapSyncCron] startup sync failed:", err?.message || err);
+    }
+  })();
+
   const schedule = config.mixed.mapSync.cronSchedule || "0 * * * *";
   if (cron.validate(schedule)) {
     cron.schedule(schedule, async () => {
