@@ -105,8 +105,35 @@ export default function mixedIngestionRoutes(app) {
     return res.send({ success: true, data: { ingested: events.length } });
   }));
 
+  // The plugin sends this wrapped as a BridgeEvent: {type, matchId, stats: {uuid,
+  // username, matchesPlayed, xpEarned, ...}} with camelCase field names — same
+  // envelope shape as MATCH_STATS_SNAPSHOT (see normaliseMatchStats below).
+  function normalisePlayerStats(body) {
+    const s = body.stats || body;
+    return {
+      player_uuid: s.uuid || s.player_uuid,
+      username: s.username || null,
+      level: s.level ?? undefined,
+      total_xp: s.xpEarned ?? s.total_xp,
+      matches_played: s.matchesPlayed ?? s.matches_played,
+      wins: s.wins,
+      losses: s.losses,
+      kills: s.kills,
+      deaths: s.deaths,
+      assists: s.assists,
+      objectives: s.objectivesCaptured ?? s.objectives,
+      wool_captures: s.woolCaptures ?? s.wool_captures,
+      flag_captures: s.flagCaptures ?? s.flag_captures,
+      core_leaks: s.coreLeaks ?? s.core_leaks,
+      destroyable_damage: s.destroyableDamage ?? s.destroyable_damage,
+      control_point_captures: s.controlPointCaptures ?? s.control_point_captures,
+      best_killstreak: s.bestKillstreak ?? s.best_killstreak,
+      playtime_seconds: s.playtimeSeconds ?? s.playtime_seconds,
+    };
+  }
+
   app.post("/api/mixed/stats/player", guard(async (req, res) => {
-    const b = req.body || {};
+    const b = normalisePlayerStats(req.body || {});
     if (!mixed.isValidUuid(b.player_uuid)) {
       return res.status(400).send({ success: false, message: "Valid player_uuid is required." });
     }

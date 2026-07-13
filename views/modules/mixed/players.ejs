@@ -25,9 +25,9 @@
             <td><%= p.last_seen_at ? moment(p.last_seen_at).fromNow() : '—' %></td>
           </tr>
         <% }) %>
-        <% if (!result.players.length) { %><tr><td colspan="8" class="text-muted text-center">No players found.</td></tr><% } %>
       </tbody>
     </table>
+    <% if (!result.players.length) { %><div class="text-muted text-center py-3">No players found.</div><% } %>
   </div>
 </div>
 

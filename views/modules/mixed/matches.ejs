@@ -44,9 +44,9 @@
             <td><%= m.total_objectives %></td>
           </tr>
         <% }) %>
-        <% if (!result.matches.length) { %><tr><td colspan="9" class="text-muted text-center">No matches found.</td></tr><% } %>
       </tbody>
     </table>
+    <% if (!result.matches.length) { %><div class="text-muted text-center py-3">No matches found.</div><% } %>
   </div>
 </div>
 

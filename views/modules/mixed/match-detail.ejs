@@ -31,9 +31,9 @@
               <td><%= p.objectives %></td><td><%= p.xp_earned %></td>
             </tr>
           <% }) %>
-          <% if (!match.players.length) { %><tr><td colspan="7" class="text-muted text-center">No player rows.</td></tr><% } %>
         </tbody>
       </table>
+      <% if (!match.players.length) { %><div class="text-muted text-center py-3">No player rows.</div><% } %>
     </div>
   </div>
 
