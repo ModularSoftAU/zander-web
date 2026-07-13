@@ -62,14 +62,14 @@
           <div class="card shadow-sm border-0 mixed-map-card">
             <a href="/mixed/maps/<%= encodeURIComponent(map.map_key) %>" class="mixed-map-link">
               <% if (map.display_image_url) { %>
-                <img src="<%= map.display_image_url %>" class="card-img-top mixed-map-image" alt="<%= map.name %>">
+                <img src="<%= map.display_image_url %>" class="card-img-top mixed-map-image" alt="<%= map.display_name %>">
               <% } else { %>
                 <div class="mixed-map-placeholder"></div>
               <% } %>
               <div class="card-body py-3">
                 <div class="d-flex justify-content-between align-items-start gap-3">
                   <div>
-                    <h5 class="mb-1 mixed-map-title"><%= map.name %></h5>
+                    <h5 class="mb-1 mixed-map-title"><%= map.display_name %></h5>
                     <div class="mixed-map-meta mb-0">
                       <span class="mixed-map-mode"><%= map.gamemode || "-" %></span>
                       <span><%= (map.display_authors || []).join(", ") || "Unknown author" %></span>

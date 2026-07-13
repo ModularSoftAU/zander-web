@@ -63,6 +63,13 @@ export default function mixedAdminRoutes(app) {
     return res.send({ success: true, data: await mixed.adminOverview() });
   }));
 
+  app.post("/api/admin/mixed/matches/purge-empty", guard(async (req, res) => {
+    const maxAgeMinutes = Number(req.body?.maxAgeMinutes) || 180;
+    const result = await mixed.purgeEmptyMatches(maxAgeMinutes);
+    await generateLog(actorId(req), "delete", "mixed", `${actorName(req)} purged ${result.deleted} empty Mixed match(es)`);
+    return res.send({ success: true, data: result });
+  }));
+
   // ── Maps ────────────────────────────────────────────────────────────────
   app.patch("/api/admin/mixed/maps/:mapKey", guard(async (req, res) => {
     const map = await mixed.updateMapAdmin(req.params.mapKey, req.body || {});

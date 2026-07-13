@@ -20,12 +20,12 @@
       <div class="card h-100 mixed-map-card">
         <a href="/mixed/maps/<%= encodeURIComponent(map.map_key) %>" class="mixed-map-link">
           <% if (map.display_image_url) { %>
-            <img src="<%= map.display_image_url %>" class="card-img-top mixed-map-image" alt="<%= map.name %>">
+            <img src="<%= map.display_image_url %>" class="card-img-top mixed-map-image" alt="<%= map.display_name %>">
           <% } else { %>
             <div class="mixed-map-placeholder"></div>
           <% } %>
           <div class="card-body d-flex flex-column">
-            <h5 class="card-title mb-2 mixed-map-title"><%= map.name %></h5>
+            <h5 class="card-title mb-2 mixed-map-title"><%= map.display_name %></h5>
             <div class="mixed-map-meta">
               <span class="mixed-map-mode"><%= map.gamemode || "-" %></span>
               <span class="mixed-map-author"><%= (map.display_authors || []).join(", ") || "Unknown author" %></span>

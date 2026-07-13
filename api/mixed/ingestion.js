@@ -180,6 +180,15 @@ export default function mixedIngestionRoutes(app) {
         await mixed.upsertMatchPlayer(b.match_id, p, b.status === "ended" ? (b.map_key || null) : null);
       }
     }
+    if (b.status === "ended" && b.map_key) {
+      const winnerTeam = Array.isArray(b.winners) ? b.winners[0] : null;
+      await mixed.recordMapPlay(b.map_key, {
+        durationSeconds: b.duration_seconds || 0,
+        totalKills: b.total_kills || 0,
+        totalObjectives: b.total_objectives || 0,
+        winnerTeam,
+      });
+    }
     const type = b.status === "ended" ? "MATCH_ENDED" : b.status === "running" ? "MATCH_STARTED" : "MATCH_LOADED";
     broadcast(type, { match_id: b.match_id, match });
     return res.send({ success: true, data: match });

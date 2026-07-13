@@ -234,11 +234,21 @@ function withDisplayFields(row) {
   const screenshots = parseJson(row.screenshots_from_repo, []);
   const fallbackImage = firstNonEmptyString(screenshots);
   const displayThumbnailUrl = row.custom_thumbnail_url || row.thumbnail_from_repo || row.thumbnail_url || fallbackImage || null;
+  // Placeholder rows (discovered from live play, not yet matched to a repo
+  // sync) store the raw map_key as name until a sync fills in the real one —
+  // prettify that case instead of showing the slug verbatim.
+  const displayName = row.name && row.name !== row.map_key
+    ? row.name
+    : String(row.map_key || row.name || "")
+        .replace(/[_-]+/g, " ")
+        .replace(/\b\w/g, (c) => c.toUpperCase())
+        .trim() || row.name;
   return {
     ...row,
     authors,
     contributors,
     screenshots_from_repo: screenshots,
+    display_name: displayName,
     display_authors: authors.length ? authors : contributors,
     display_description: row.custom_description || row.description_from_xml || row.description || "No description available.",
     display_thumbnail_url: displayThumbnailUrl,
@@ -561,6 +571,52 @@ export async function upsertMatch(data) {
   return getMatch(data.match_id);
 }
 
+// Called once per completed match to bump the map browser's "times played"
+// counter and aggregate totals — nothing else in the ingestion pipeline
+// touches mixed_maps.times_played / mixed_map_totals.
+export async function recordMapPlay(mapKey, { durationSeconds = 0, totalKills = 0, totalObjectives = 0, winnerTeam = null } = {}) {
+  if (!mapKey) return;
+  const duration = Number(durationSeconds) || 0;
+
+  await q(
+    `UPDATE mixed_maps
+        SET times_played = times_played + 1,
+            last_played_at = NOW(),
+            average_duration_seconds = CASE
+              WHEN times_played = 0 THEN ?
+              ELSE ROUND((average_duration_seconds * times_played + ?) / (times_played + 1))
+            END
+      WHERE map_key = ?`,
+    [duration, duration, mapKey]
+  );
+
+  const initialWinCounts = winnerTeam ? toJson({ [winnerTeam]: 1 }) : toJson({});
+  await q(
+    `INSERT INTO mixed_map_totals
+       (map_key, times_played, total_duration_seconds, total_kills, total_objectives,
+        team_win_counts, fastest_match_seconds, longest_match_seconds, last_played_at)
+     VALUES (?, 1, ?, ?, ?, ?, ?, ?, NOW())
+     ON DUPLICATE KEY UPDATE
+       times_played = times_played + 1,
+       total_duration_seconds = total_duration_seconds + VALUES(total_duration_seconds),
+       total_kills = total_kills + VALUES(total_kills),
+       total_objectives = total_objectives + VALUES(total_objectives),
+       team_win_counts = IF(? IS NULL, team_win_counts, JSON_SET(
+         COALESCE(team_win_counts, JSON_OBJECT()),
+         CONCAT('$."', ?, '"'),
+         COALESCE(JSON_EXTRACT(team_win_counts, CONCAT('$."', ?, '"')), 0) + 1
+       )),
+       fastest_match_seconds = LEAST(COALESCE(fastest_match_seconds, VALUES(fastest_match_seconds)), VALUES(fastest_match_seconds)),
+       longest_match_seconds = GREATEST(COALESCE(longest_match_seconds, VALUES(longest_match_seconds)), VALUES(longest_match_seconds)),
+       last_played_at = NOW()`,
+    [
+      mapKey, duration, totalKills, totalObjectives, initialWinCounts,
+      duration || null, duration || null,
+      winnerTeam || null, winnerTeam || null, winnerTeam || null,
+    ]
+  );
+}
+
 export async function getMatch(matchId) {
   const row = await one(
     `SELECT mt.*,
@@ -665,6 +721,28 @@ export async function closeStaleMatches(maxAgeMinutes = 180) {
     [maxAgeMinutes]
   );
   return rows.affectedRows || 0;
+}
+
+// Removes matches that never got real stats written (participants_count = 0
+// and total_kills = 0) — leftover stub rows from ensureMatchExists() with no
+// followup /api/mixed/stats/match call. Only ever touches matches older than
+// maxAgeMinutes so an in-progress match isn't deleted from under a live game.
+export async function purgeEmptyMatches(maxAgeMinutes = 180) {
+  const rows = await q(
+    `SELECT match_id FROM mixed_matches
+      WHERE participants_count = 0 AND total_kills = 0
+        AND started_at < DATE_SUB(NOW(), INTERVAL ? MINUTE)`,
+    [maxAgeMinutes]
+  );
+  const matchIds = rows.map((r) => r.match_id);
+  if (!matchIds.length) return { deleted: 0, matchIds: [] };
+
+  const placeholders = matchIds.map(() => "?").join(",");
+  await q(`DELETE FROM mixed_match_events WHERE match_id IN (${placeholders})`, matchIds);
+  await q(`DELETE FROM mixed_match_players WHERE match_id IN (${placeholders})`, matchIds);
+  await q(`DELETE FROM mixed_map_ratings WHERE match_id IN (${placeholders})`, matchIds);
+  const result = await q(`DELETE FROM mixed_matches WHERE match_id IN (${placeholders})`, matchIds);
+  return { deleted: result.affectedRows || 0, matchIds };
 }
 
 export async function getLiveMatches() {

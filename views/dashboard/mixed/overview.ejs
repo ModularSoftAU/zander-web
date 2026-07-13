@@ -33,7 +33,10 @@
       </table>
     </div>
     <div class="col-lg-6">
-      <h5>Latest matches</h5>
+      <div class="d-flex justify-content-between align-items-center">
+        <h5>Latest matches</h5>
+        <button id="purgeEmptyMatchesBtn" class="btn btn-sm btn-outline-danger">Clean up empty matches</button>
+      </div>
       <table class="table table-sm">
         <thead><tr><th>Map</th><th>Status</th><th>Started</th></tr></thead>
         <tbody>
@@ -48,5 +51,20 @@
     </div>
   </div>
 </div></div></div>
+
+<script>
+  document.getElementById('purgeEmptyMatchesBtn')?.addEventListener('click', async function(){
+    if (!confirm('Delete matches older than 3 hours with 0 participants and 0 kills? This cannot be undone.')) return;
+    this.disabled = true; this.textContent = 'Cleaning up…';
+    try {
+      const r = await fetch('/api/admin/mixed/matches/purge-empty', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ maxAgeMinutes: 180 }) });
+      const j = await r.json();
+      notify(j.success, j.success ? `Deleted ${j.data.deleted} empty match(es).` : (j.message || 'Cleanup failed'));
+      if (j.success) setTimeout(() => location.reload(), 1200);
+    } finally {
+      this.disabled = false; this.textContent = 'Clean up empty matches';
+    }
+  });
+</script>
 
 <%- include("../../admin/_footer.ejs") %>

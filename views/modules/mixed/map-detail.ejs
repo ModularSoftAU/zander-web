@@ -6,9 +6,9 @@
 <div class="row g-4">
   <div class="col-lg-8">
     <div class="card mb-4 mixed-map-detail-card">
-      <% if (map.display_image_url) { %><img src="<%= map.display_image_url %>" class="card-img-top mixed-map-detail-image" alt="<%= map.name %>"><% } %>
+      <% if (map.display_image_url) { %><img src="<%= map.display_image_url %>" class="card-img-top mixed-map-detail-image" alt="<%= map.display_name %>"><% } %>
       <div class="card-body p-4">
-        <h3 class="mb-2"><%= map.name %> <small class="text-muted"><%= map.version || "" %></small></h3>
+        <h3 class="mb-2"><%= map.display_name %> <small class="text-muted"><%= map.version || "" %></small></h3>
         <div class="mixed-map-detail-meta">
           <span class="mixed-map-mode"><%= map.gamemode || "-" %></span>
           <span>by <%= (map.display_authors || []).join(", ") || "Unknown" %></span>
