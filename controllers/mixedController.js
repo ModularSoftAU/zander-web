@@ -524,28 +524,38 @@ export async function updateMapAdmin(mapKey, patch) {
 // ---------------------------------------------------------------------------
 
 export async function upsertMatch(data) {
+  const players = Array.isArray(data.players) ? data.players : null;
+  const participantsCount = data.participants_count ?? (players ? players.length : null);
+  const totalKills = data.total_kills ?? (players
+    ? players.reduce((sum, p) => sum + (Number(p.kills) || 0), 0)
+    : null);
+  const totalDeaths = data.total_deaths ?? (players
+    ? players.reduce((sum, p) => sum + (Number(p.deaths) || 0), 0)
+    : null);
+
   await q(
     `INSERT INTO mixed_matches
        (match_id, server_id, map_key, map_name, gamemode, status, started_at,
         ended_at, duration_seconds, winners, participants_count, total_kills,
         total_deaths, total_objectives, metadata)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, IFNULL(?, 0), IFNULL(?, 0), IFNULL(?, 0), IFNULL(?, 0), ?)
      ON DUPLICATE KEY UPDATE
        status = VALUES(status),
        ended_at = COALESCE(VALUES(ended_at), ended_at),
        duration_seconds = COALESCE(VALUES(duration_seconds), duration_seconds),
        winners = COALESCE(VALUES(winners), winners),
-       participants_count = VALUES(participants_count),
-       total_kills = VALUES(total_kills),
-       total_deaths = VALUES(total_deaths),
-       total_objectives = VALUES(total_objectives),
+       participants_count = COALESCE(?, participants_count),
+       total_kills = COALESCE(?, total_kills),
+       total_deaths = COALESCE(?, total_deaths),
+       total_objectives = COALESCE(?, total_objectives),
        metadata = COALESCE(VALUES(metadata), metadata)`,
     [
       data.match_id, data.server_id || null, data.map_key || null,
       data.map_name || null, data.gamemode || null, data.status || "loaded",
       data.started_at || null, data.ended_at || null, data.duration_seconds ?? null,
-      toJson(data.winners), data.participants_count || 0, data.total_kills || 0,
-      data.total_deaths || 0, data.total_objectives || 0, toJson(data.metadata),
+      toJson(data.winners), participantsCount, totalKills,
+      totalDeaths, data.total_objectives ?? null, toJson(data.metadata),
+      participantsCount, totalKills, totalDeaths, data.total_objectives ?? null,
     ]
   );
   return getMatch(data.match_id);

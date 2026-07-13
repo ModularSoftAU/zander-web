@@ -65,14 +65,16 @@ export default function mixedIngestionRoutes(app) {
   // event types too.
   function normaliseEvent(e) {
     const out = { ...e };
+    out.match_id = e.matchId || e.match_id;
+    out.event_type = e.type || e.event_type;
     if (e.killerUuid || e.killer_uuid) {
       out.player_uuid = e.killerUuid || e.killer_uuid;
-      out.username = e.killerUsername || e.killer_username;
+      out.username = e.killerName || e.killerUsername || e.killer_username;
       out.target_uuid = e.victimUuid || e.victim_uuid;
     }
     out.map_key = e.mapKey || e.map_key || null;
     out.assister_uuid = e.assisterUuid || e.assister_uuid || null;
-    out.assister_username = e.assisterUsername || e.assister_username || null;
+    out.assister_username = e.assisterName || e.assisterUsername || e.assister_username || null;
     out.is_projectile = e.isProjectile ?? e.is_projectile;
     out.is_bow_kill = e.isBowKill ?? e.is_bow_kill;
     out.team_kill = e.teamKill ?? e.team_kill;
@@ -113,13 +115,66 @@ export default function mixedIngestionRoutes(app) {
     return res.send({ success: true, data: player });
   }));
 
+  // The plugin sends this wrapped as a BridgeEvent: {type, serverId, ...,
+  // stats: {matchId, mapKey, participantCount, totalKills, playerStats: [...]}}
+  // with camelCase field names throughout. Normalise both the envelope and
+  // the per-player stats down to the snake_case shape the controllers expect.
+  function normaliseMatchStats(body) {
+    const s = body.stats || body;
+    const out = {
+      match_id: s.matchId || s.match_id,
+      server_id: body.serverId || body.server_id || s.serverId || s.server_id || null,
+      map_key: s.mapKey || s.map_key || null,
+      map_name: s.mapName || s.map_name || null,
+      gamemode: s.gamemode || null,
+      status: s.status || "ended",
+      started_at: toDate(s.startedAt ?? s.started_at),
+      ended_at: toDate(s.endedAt ?? s.ended_at),
+      duration_seconds: s.durationSeconds ?? s.duration_seconds ?? null,
+      winners: s.winnerTeams || s.winners || null,
+      participants_count: s.participantCount ?? s.participants_count,
+      total_kills: s.totalKills ?? s.total_kills,
+      total_deaths: s.totalDeaths ?? s.total_deaths,
+      total_objectives: s.totalObjectives ?? s.total_objectives,
+    };
+    const playerList = s.playerStats || s.players || [];
+    out.players = playerList.map((p) => ({
+      player_uuid: p.uuid || p.player_uuid,
+      username: p.username || null,
+      team_name: p.teamName || p.team_name || null,
+      won: p.won ?? false,
+      kills: p.kills || 0,
+      deaths: p.deaths || 0,
+      assists: p.assists || 0,
+      objectives: p.objectivesCaptured ?? p.objectives ?? 0,
+      captures: p.objectivesCaptured ?? p.captures ?? 0,
+      wool_captures: p.woolCaptures ?? p.wool_captures ?? 0,
+      flag_captures: p.flagCaptures ?? p.flag_captures ?? 0,
+      core_leaks: p.coreLeaks ?? p.core_leaks ?? 0,
+      destroyable_damage: p.destroyableDamage ?? p.destroyable_damage ?? 0,
+      control_point_captures: p.controlPointCaptures ?? p.control_point_captures ?? 0,
+      best_killstreak: p.bestKillstreak ?? p.best_killstreak ?? 0,
+      longest_shot: p.longestShot ?? p.longest_shot ?? 0,
+      furthest_bow_kill: p.furthestBowKill ?? p.furthest_bow_kill ?? 0,
+      damage_dealt: p.damageDealt ?? p.damage_dealt ?? 0,
+      damage_taken: p.damageTaken ?? p.damage_taken ?? 0,
+      xp_earned: p.xpEarned ?? p.xp_earned ?? 0,
+    }));
+    return out;
+  }
+
+  function toDate(ts) {
+    if (ts === undefined || ts === null) return null;
+    if (ts instanceof Date) return ts;
+    return new Date(Number(ts));
+  }
+
   app.post("/api/mixed/stats/match", guard(async (req, res) => {
-    const b = req.body || {};
+    const b = normaliseMatchStats(req.body || {});
     if (!b.match_id) return res.status(400).send({ success: false, message: "match_id is required." });
     if (b.map_key) await mixed.upsertPlaceholderMap(b.map_key, { name: b.map_name, gamemode: b.gamemode });
     const match = await mixed.upsertMatch(b);
-    const players = Array.isArray(b.players) ? b.players : [];
-    for (const p of players) {
+    for (const p of b.players) {
       if (mixed.isValidUuid(p.player_uuid)) {
         p.player_uuid = mixed.normaliseUuid(p.player_uuid);
         await mixed.upsertMatchPlayer(b.match_id, p, b.status === "ended" ? (b.map_key || null) : null);
