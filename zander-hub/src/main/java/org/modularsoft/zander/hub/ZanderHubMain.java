@@ -11,6 +11,7 @@ import org.modularsoft.zander.hub.events.HubPlayerJoin;
 import org.modularsoft.zander.hub.events.HubPlayerJoinChristmas;
 import org.modularsoft.zander.hub.events.HubPlayerLeave;
 import org.modularsoft.zander.hub.events.HubPlayerVoid;
+import org.modularsoft.zander.hub.events.ProxyMessaging;
 import org.modularsoft.zander.hub.gui.HubCompassItem;
 import org.modularsoft.zander.hub.protection.HubCreatureSpawnProtection;
 import org.modularsoft.zander.hub.protection.HubInteractionProtection;
@@ -19,6 +20,7 @@ import org.modularsoft.zander.hub.utils.CopyResources;
 
 public class ZanderHubMain extends JavaPlugin {
     public static ZanderHubMain plugin;
+    public static ProxyMessaging proxyMessaging;
 
     public void onEnable() {
         plugin = this;
@@ -32,9 +34,9 @@ public class ZanderHubMain extends JavaPlugin {
         ConfigurationManager.setupCompassConfig();
         ConfigurationManager.setupWelcomeFile();
 
+        proxyMessaging = new ProxyMessaging();
         this.getServer().getMessenger().registerOutgoingPluginChannel(this, "BungeeCord");
-        // this.getServer().getMessenger().registerIncomingPluginChannel(this,
-        // "BungeeCord", new PluginMessageChannel(this));
+        this.getServer().getMessenger().registerIncomingPluginChannel(this, "BungeeCord", proxyMessaging);
 
         // Init Message
         TextComponent enabledMessage = Component.empty()
