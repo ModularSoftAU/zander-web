@@ -110,8 +110,10 @@ export function requireLinkedUser(req, res) {
  */
 export function requireLinkedUserOrPlugin(req, res) {
   if (hasValidPluginToken(req)) {
-    const uuid = req.body?.uuid;
-    const username = req.body?.username;
+    // GET requests relayed by the plugin carry identity as query params
+    // rather than a JSON body.
+    const uuid = req.body?.uuid || req.query?.uuid;
+    const username = req.body?.username || req.query?.username;
     if (!uuid || !username) {
       res.status(400).send({ success: false, message: "uuid and username are required." });
       return null;

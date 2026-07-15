@@ -202,10 +202,13 @@ export default function mixedPublicRoutes(app) {
   }));
 
   // ── Map Tokens ────────────────────────────────────────────────────────────
+  // Both routes accept a linked web session OR a plugin-relayed request (the
+  // in-game token menu — spectators only, enforced plugin-side), matching the
+  // pattern already used for votes/ratings. See requireLinkedUserOrPlugin.
   app.get("/api/mixed/map-tokens", wrap(async (req, res) => {
-    const user = requireLinkedUser(req, res);
-    if (!user) return;
-    const uuid = mixed.normaliseUuid(user.uuid);
+    const auth = requireLinkedUserOrPlugin(req, res);
+    if (!auth) return;
+    const uuid = mixed.normaliseUuid(auth.uuid);
     const [balance, transactions, requests] = await Promise.all([
       mixed.getTokenBalance(uuid),
       mixed.getTokenTransactions(uuid, 100),
@@ -215,8 +218,8 @@ export default function mixedPublicRoutes(app) {
   }));
 
   app.post("/api/mixed/map-tokens/request", wrap(async (req, res) => {
-    const user = requireLinkedUser(req, res);
-    if (!user) return;
+    const auth = requireLinkedUserOrPlugin(req, res);
+    if (!auth) return;
     const { map_key, action_type } = req.body || {};
     const actions = { nominate: "token_nominate_cost", set_next: "token_set_next_cost", sponsor: "token_sponsor_cost" };
     if (!map_key || !actions[action_type]) {
@@ -229,7 +232,7 @@ export default function mixedPublicRoutes(app) {
     }
     const settings = await mixed.getSettings();
     const cost = settings[actions[action_type]] || 1;
-    const uuid = mixed.normaliseUuid(user.uuid);
+    const uuid = mixed.normaliseUuid(auth.uuid);
 
     const spend = await mixed.removeTokens({
       uuid, amount: cost, type: "spend",
@@ -239,7 +242,7 @@ export default function mixedPublicRoutes(app) {
       return res.status(402).send({ success: false, message: "Insufficient Map Token balance." });
     }
     const request = await mixed.createMapRequest({
-      uuid, username: user.username, mapKey: map_key, actionType: action_type, tokenCost: cost,
+      uuid, username: auth.username, mapKey: map_key, actionType: action_type, tokenCost: cost,
     });
     broadcast("MAP_REQUEST_RECEIVED", { request });
     return res.send({ success: true, data: { request, balance: spend.balance } });
