@@ -278,10 +278,8 @@ export default function mixedSiteRoutes(app, config, features) {
   // ── Leaderboards ───────────────────────────────────────────────────────────
   app.get("/mixed/leaderboards", async (req, res) => {
     if (!guard(req, res)) return;
-    return render(res, "modules/mixed/leaderboards", await base(req, {
-      pageTitle: "Leaderboards", pageDescription: "Mixed leaderboards across every stat category.",
-      categories: mixed.leaderboardCategories(),
-    }));
+    const [firstCategory] = mixed.leaderboardCategories();
+    return res.redirect(`/mixed/leaderboards/${firstCategory}`);
   });
 
   app.get("/mixed/leaderboards/:category", async (req, res) => {

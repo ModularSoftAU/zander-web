@@ -745,16 +745,29 @@ export async function purgeEmptyMatches(maxAgeMinutes = 180) {
   return { deleted: result.affectedRows || 0, matchIds };
 }
 
+// A server can only ever be running one match at a time, so "live" means
+// each online server's actual current_match_id — not every unclosed
+// loaded/running row for that server (old stale matches pile up there until
+// the stale-match cron closes them out, which would otherwise make one
+// server look like it's running several matches at once).
 export async function getLiveMatches() {
   const rows = await q(
     `SELECT mt.*, s.display_name AS server_name, s.online AS server_online,
-            s.player_count AS server_players, s.tps
-       FROM mixed_matches mt
-       JOIN mixed_servers s ON s.server_id = mt.server_id
+            s.player_count AS server_players, s.tps,
+            COALESCE(mm.name, mt.map_name, mt.map_key) AS resolved_map_name,
+            mm.thumbnail_from_repo, mm.custom_thumbnail_url, mm.thumbnail_url
+       FROM mixed_servers s
+       JOIN mixed_matches mt ON mt.match_id = s.current_match_id
+       LEFT JOIN mixed_maps mm ON mm.map_key = mt.map_key
       WHERE mt.status IN ('loaded','running') AND s.online = 1
       ORDER BY mt.started_at DESC`
   );
-  return rows.map((r) => ({ ...r, winners: parseJson(r.winners, []) }));
+  return rows.map((r) => ({
+    ...r,
+    winners: parseJson(r.winners, []),
+    display_map_name: r.resolved_map_name,
+    display_image_url: r.custom_thumbnail_url || r.thumbnail_from_repo || r.thumbnail_url || null,
+  }));
 }
 
 export async function upsertMatchPlayer(matchId, p, mapKey = null) {

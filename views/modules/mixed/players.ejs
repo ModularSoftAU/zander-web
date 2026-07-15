@@ -19,7 +19,12 @@
       <tbody>
         <% result.players.forEach(function(p){ %>
           <tr class="mixed-list-item">
-            <td><a href="/mixed/players/<%= p.player_uuid %>"><%= p.username || p.player_uuid %></a></td>
+            <td>
+              <a href="/mixed/players/<%= p.player_uuid %>" class="d-flex align-items-center gap-2 text-decoration-none">
+                <img src="https://crafatar.com/avatars/<%= p.player_uuid %>?size=24&overlay" width="24" height="24" class="rounded flex-shrink-0" alt="" onerror="this.style.display='none'">
+                <span><%= p.username || p.player_uuid %></span>
+              </a>
+            </td>
             <td><%= p.level %></td><td><%= p.total_xp %></td><td><%= p.wins %></td><td><%= p.losses %></td>
             <td><%= (p.kills/Math.max(1,p.deaths)).toFixed(2) %></td><td><%= p.objectives %></td>
             <td><%= p.last_seen_at ? moment(p.last_seen_at).fromNow() : '—' %></td>

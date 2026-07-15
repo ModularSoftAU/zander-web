@@ -39,8 +39,11 @@
           <strong><%= m.server_name %></strong>
           <span class="badge <%= m.server_online ? 'bg-success' : 'bg-secondary' %>"><%= m.server_online ? 'Online' : 'Offline' %></span>
         </div>
+        <% if (m.display_image_url) { %>
+          <img src="<%= m.display_image_url %>" class="card-img-top mixed-map-image" alt="<%= m.display_map_name %>">
+        <% } %>
         <div class="card-body">
-          <h5><a href="/mixed/matches/<%= m.match_id %>" class="text-reset text-decoration-none"><%= m.map_name || m.map_key %></a></h5>
+          <h5><a href="/mixed/matches/<%= m.match_id %>" class="text-reset text-decoration-none"><%= m.display_map_name %></a></h5>
           <p class="text-muted mb-2"><%= m.gamemode || "-" %> - Status: <%= m.status %></p>
           <div class="d-flex justify-content-between small">
             <span><i class="fas fa-users me-1"></i><%= m.server_players %> players</span>
