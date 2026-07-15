@@ -90,5 +90,36 @@
     "monthlyRoutineSlug": "monthly-top-voter",
     "monthlyProcessingNote": "Monthly rewards run automatically at 00:05 UTC on the 1st of each month. Use POST /admin/vote/monthly/process to trigger manually.",
     "tieRule": "All players sharing the highest vote count in a month are rewarded. Within a tie group, earliest last_vote_at wins positional priority."
+  },
+  "mixed": {
+    "mapSync": {
+      "enabled": false,
+      "provider": "github",
+      "githubOrg": "CraftingForChrist",
+      "githubTokenEnv": "MIXED_GITHUB_TOKEN",
+      "duplicateMapKeyStrategy": "conflict",
+      "assetUrlMode": "raw",
+      "cronSchedule": "0 * * * *",
+      "sources": [
+        {
+          "sourceKey": "primary",
+          "displayName": "Primary Maps",
+          "repo": "mixed-maps-primary",
+          "branch": "main",
+          "mapsPath": "maps",
+          "enabled": true,
+          "priority": 1
+        },
+        {
+          "sourceKey": "secondary",
+          "displayName": "Secondary Maps",
+          "repo": "mixed-maps-secondary",
+          "branch": "main",
+          "mapsPath": "maps",
+          "enabled": true,
+          "priority": 2
+        }
+      ]
+    }
   }
 }

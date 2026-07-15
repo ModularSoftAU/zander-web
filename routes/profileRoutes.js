@@ -30,6 +30,7 @@ import {
   deactivatePlatformConnection,
 } from "../controllers/watchController.js";
 import { checkAndReportNickname } from "../lib/discord/nicknameCheck.mjs";
+import * as mixed from "../controllers/mixedController.js";
 
 export default function profileSiteRoutes(
   app,
@@ -236,6 +237,21 @@ export default function profileSiteRoutes(
         }
 
         //
+        // Load Mixed stats for profile
+        //
+        let mixedProfile = null;
+        if (features.mixed !== false && profileData.uuid) {
+          try {
+            const mixedUuid = mixed.normaliseUuid(profileData.uuid);
+            if (mixedUuid) {
+              mixedProfile = await mixed.getPlayer(mixedUuid);
+            }
+          } catch (err) {
+            console.error("[PROFILE] Failed to load Mixed stats for profile", err);
+          }
+        }
+
+        //
         // Render the profile page
         //
         res.header("content-type", "text/html; charset=utf-8").send(
@@ -260,6 +276,7 @@ export default function profileSiteRoutes(
           contextPermissions: contextPermissions,
           platformConnections: profilePlatformConnections,
           profileBadges: profileBadges,
+          mixedProfile: mixedProfile,
         }));
         return;
       }

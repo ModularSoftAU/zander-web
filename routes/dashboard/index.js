@@ -1,4 +1,5 @@
 import { getMenuGroups } from "../../admin/pageRegistry.js";
+import { getUserPermissions } from "../../controllers/userController.js";
 
 import dashboardSiteRoute from "./dashboard.js";
 import dashboardServersSiteRoute from "./servers.js";
@@ -17,6 +18,7 @@ import dashboardBadgesRoute from "./badges.js";
 import dashboardFinanceRoute from "./finance.js";
 import dashboardWebstoreRoute from "./webstore.js";
 import dashboardRankCatalogRoute from "./rankCatalog.js";
+import dashboardMixedRoute from "./mixed.js";
 
 export default function dashboardSiteRoutes(
   app,
@@ -28,6 +30,34 @@ export default function dashboardSiteRoutes(
   features,
   lang
 ) {
+  const PERMISSION_REFRESH_INTERVAL_MS = 5 * 60 * 1000;
+
+  async function refreshDashboardSessionPermissions(req) {
+    if (!req.session?.user?.userId) {
+      return;
+    }
+
+    const lastRefreshedAt = Number(req.session.user.permissionsRefreshedAt || 0);
+    const isStale = !lastRefreshedAt || (Date.now() - lastRefreshedAt) > PERMISSION_REFRESH_INTERVAL_MS;
+    if (!isStale) {
+      return;
+    }
+
+    const refreshedPermissions = await getUserPermissions({
+      userId: req.session.user.userId,
+      username: req.session.user.username,
+      uuid: req.session.user.uuid,
+    });
+    const rankSlugs = refreshedPermissions.userRanks || [];
+
+    req.session.user.permissions = refreshedPermissions;
+    req.session.user.ranks = rankSlugs.map((rankSlug) => ({ rankSlug }));
+    req.session.user.isStaff = refreshedPermissions.some(
+      (permission) => permission && String(permission).trim().toLowerCase().startsWith("meta.staff.")
+    );
+    req.session.user.permissionsRefreshedAt = Date.now();
+  }
+
   /**
    * Attach admin menu data to every /dashboard/* request so that
    * _sidebar.ejs can read it from req.adminMenuGroups without requiring
@@ -37,6 +67,7 @@ export default function dashboardSiteRoutes(
    */
   app.addHook("preHandler", async (req) => {
     if (req.url && req.url.startsWith("/dashboard")) {
+      await refreshDashboardSessionPermissions(req);
       const perms = req.session?.user?.permissions ?? [];
       req.adminMenuGroups = getMenuGroups(perms, features);
     }
@@ -60,4 +91,5 @@ export default function dashboardSiteRoutes(
   dashboardFinanceRoute(app, fetch, config, db, features, lang);
   dashboardWebstoreRoute(app, fetch, config, db, features, lang);
   dashboardRankCatalogRoute(app, config, db, features, lang);
+  dashboardMixedRoute(app, config, features, lang);
 }

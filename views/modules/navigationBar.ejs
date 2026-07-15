@@ -43,6 +43,9 @@
                     <% if (features.events) { %>
                         <li class="nav-item"><a class="nav-link" href="/events">Events</a></li>
                     <% } %>
+                    <% if (features.mixed !== false) { %>
+                        <li class="nav-item"><a class="nav-link" href="/mixed">Mixed</a></li>
+                    <% } %>
                     <li class="nav-item"><a class="nav-link" href="/webstore">Webstore</a></li>
                     <li class="nav-item"><a class="nav-link" href="/rules">Rules</a></li>
                     <% if (features.support) { %>

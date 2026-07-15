@@ -41,6 +41,8 @@ import("./cron/userCodeExpiryCron.js");
 import("./cron/bridgeCleanupCron.js");
 import("./cron/cakeDayUserCheck.js");
 import("./cron/staffAuditReportCron.js");
+import("./cron/mixedMapSyncCron.js");
+import("./cron/mixedMatchStaleCron.js");
 import("./cron/schedulerCron.js");
 import("./cron/nicknameCheckCron.js");
 import("./cron/punishmentExpiryCron.js");
@@ -65,6 +67,11 @@ import apiRoutes from "./api/routes/index.js";
 import apiRedirectRoutes from "./api/internal_redirect/index.js";
 import webstoreWebhookRoutes from "./api/internal_redirect/webstore.js";
 import configApiRoute from "./api/routes/config.js";
+
+// Mixed module API (own auth: plugin Bearer token / session user / admin)
+import mixedApiRoutes from "./api/mixed/index.js";
+import mixedStripeWebhookRoutes from "./api/mixed/stripeWebhook.js";
+import mixedSiteRoutes from "./routes/mixedRoutes.js";
 
 // API token authentication
 import verifyToken from "./api/routes/verifyToken.js";
@@ -285,6 +292,9 @@ const buildApp = async () => {
     );
     try {
       webstoreWebhookRoutes(instance, config);
+      // Mixed Map Token fulfilment webhook (POST /api/stripe/webhook) —
+      // shares this raw-body scope for HMAC signature verification.
+      mixedStripeWebhookRoutes(instance);
     } catch (err) {
       return next(err);
     }
@@ -343,6 +353,17 @@ const buildApp = async () => {
         app.log.error(error);
       }
     }
+  });
+
+  // Mixed module API — registered AFTER session so user/admin endpoints can
+  // read req.session. Ingestion endpoints authenticate with a Bearer token.
+  await app.register((instance, options, next) => {
+    try {
+      mixedApiRoutes(instance, features);
+    } catch (err) {
+      return next(err);
+    }
+    next();
   });
 
   await app.register((instance, options, next) => {
