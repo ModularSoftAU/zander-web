@@ -16,6 +16,7 @@
         <module>zander-hub</module>
         <module>zander-auth</module>
         <module>zander-addon</module>
+        <module>zander-pgm</module>
     </modules>
 
     <properties>
