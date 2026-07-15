@@ -447,6 +447,29 @@ export async function listPlaceholderMaps() {
   return q(`SELECT * FROM mixed_maps WHERE discovered_from_server = 1 ORDER BY first_seen_at DESC`);
 }
 
+// Deletes placeholder rows (discovered_from_server = 1) — junk left behind
+// when a live match's map_key didn't match any synced repo map, often a
+// duplicate of a map that later synced correctly under a different slug.
+// Matches referencing the map_key keep their own map_name/map_key text
+// (see getMatch/listMatches COALESCE), so this is safe: it just removes the
+// standalone map-browser entry and its per-map aggregates, not match history.
+export async function purgePlaceholderMaps({ mapKeys } = {}) {
+  const rows = mapKeys?.length
+    ? await q(`SELECT map_key FROM mixed_maps WHERE discovered_from_server = 1 AND map_key IN (${mapKeys.map(() => "?").join(",")})`, mapKeys)
+    : await q(`SELECT map_key FROM mixed_maps WHERE discovered_from_server = 1`);
+  const keys = rows.map((r) => r.map_key);
+  if (!keys.length) return { deleted: 0, mapKeys: [] };
+
+  const placeholders = keys.map(() => "?").join(",");
+  await q(`DELETE FROM mixed_map_ratings WHERE map_key IN (${placeholders})`, keys);
+  await q(`DELETE FROM mixed_map_rating_totals WHERE map_key IN (${placeholders})`, keys);
+  await q(`DELETE FROM mixed_map_player_totals WHERE map_key IN (${placeholders})`, keys);
+  await q(`DELETE FROM mixed_map_records WHERE map_key IN (${placeholders})`, keys);
+  await q(`DELETE FROM mixed_map_totals WHERE map_key IN (${placeholders})`, keys);
+  const result = await q(`DELETE FROM mixed_maps WHERE map_key IN (${placeholders}) AND discovered_from_server = 1`, keys);
+  return { deleted: result.affectedRows || 0, mapKeys: keys };
+}
+
 export async function createSyncRun({ sourceKey, sourceDisplayName, sourceOrg, sourceRepo, sourceBranch, triggeredBy } = {}) {
   const res = await q(
     `INSERT INTO mixed_map_sync_runs

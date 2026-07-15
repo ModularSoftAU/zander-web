@@ -425,29 +425,6 @@ export const adminPages = [
     group: "Mixed",
     sortOrder: 94,
   },
-  {
-    slug: "mixed-ranks",
-    title: "Mixed Ranks",
-    menuTitle: "Ranks",
-    icon: "fa-solid fa-medal",
-    capability: "zander.web.mixed",
-    path: "/dashboard/mixed/ranks",
-    featureFlag: "mixed",
-    group: "Mixed",
-    sortOrder: 95,
-  },
-  {
-    slug: "mixed-entitlements",
-    title: "Mixed Entitlements",
-    menuTitle: "Entitlements",
-    icon: "fa-solid fa-key",
-    capability: "zander.web.mixed",
-    path: "/dashboard/mixed/entitlements",
-    featureFlag: "mixed",
-    group: "Mixed",
-    sortOrder: 96,
-  },
-
   // ── Community — Badges ─────────────────────────────────────────────────────
   {
     slug: "badges",

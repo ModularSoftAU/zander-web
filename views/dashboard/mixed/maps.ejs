@@ -65,13 +65,19 @@
 
   <% if ((placeholders || []).length) { %>
   <div class="card mb-4">
-    <div class="card-header"><strong>Placeholder maps (discovered from server)</strong></div>
+    <div class="card-header d-flex justify-content-between align-items-center">
+      <strong>Placeholder maps (discovered from server)</strong>
+      <button id="purgeAllPlaceholdersBtn" class="btn btn-sm btn-outline-danger">Remove all placeholders</button>
+    </div>
     <div class="card-body">
       <ul class="list-group list-group-flush">
         <% placeholders.forEach(function(p){ %>
-          <li class="list-group-item d-flex justify-content-between">
+          <li class="list-group-item d-flex justify-content-between align-items-center" data-placeholder-map="<%= p.map_key %>">
             <span><%= p.name %> <code class="small"><%= p.map_key %></code></span>
-            <span class="text-muted small">first seen <%= moment(p.first_seen_at).fromNow() %></span>
+            <span class="d-flex align-items-center gap-3">
+              <span class="text-muted small">first seen <%= moment(p.first_seen_at).fromNow() %></span>
+              <button class="btn btn-sm btn-outline-danger purge-one-placeholder" data-map="<%= p.map_key %>">Remove</button>
+            </span>
           </li>
         <% }) %>
       </ul>
@@ -140,6 +146,32 @@
       const r = await fetch('/api/admin/mixed/maps/'+encodeURIComponent(key)+'/ratings/reset', { method:'POST' });
       const j = await r.json(); notify(j.success, j.success?'Ratings reset.':(j.message||'Failed'));
     });
+  });
+
+  document.querySelectorAll('.purge-one-placeholder').forEach(function(b){
+    b.addEventListener('click', async function(){
+      const key = b.dataset.map;
+      if (!confirm('Remove placeholder map "'+key+'"? This does not affect match history.')) return;
+      const r = await fetch('/api/admin/mixed/maps/placeholders/purge', {
+        method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ mapKeys: [key] }),
+      });
+      const j = await r.json();
+      notify(j.success, j.success ? 'Placeholder removed.' : (j.message || 'Failed'));
+      if (j.success) setTimeout(() => location.reload(), 800);
+    });
+  });
+
+  document.getElementById('purgeAllPlaceholdersBtn')?.addEventListener('click', async function(){
+    if (!confirm('Remove ALL placeholder maps? This does not affect match history.')) return;
+    this.disabled = true; this.textContent = 'Removing…';
+    try {
+      const r = await fetch('/api/admin/mixed/maps/placeholders/purge', { method: 'POST' });
+      const j = await r.json();
+      notify(j.success, j.success ? `Removed ${j.data.deleted} placeholder map(s).` : (j.message || 'Failed'));
+      if (j.success) setTimeout(() => location.reload(), 800);
+    } finally {
+      this.disabled = false; this.textContent = 'Remove all placeholders';
+    }
   });
 
   document.getElementById('syncAllBtn')?.addEventListener('click', async function(){

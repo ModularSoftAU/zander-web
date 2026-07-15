@@ -111,6 +111,13 @@ export default function mixedAdminRoutes(app) {
     }
   }));
 
+  app.post("/api/admin/mixed/maps/placeholders/purge", guard(async (req, res) => {
+    const mapKeys = Array.isArray(req.body?.mapKeys) ? req.body.mapKeys : undefined;
+    const result = await mixed.purgePlaceholderMaps({ mapKeys });
+    await generateLog(actorId(req), "delete", "mixed", `${actorName(req)} removed ${result.deleted} placeholder map(s)`);
+    return res.send({ success: true, data: result });
+  }));
+
   app.get("/api/admin/mixed/maps/sync/status", guard(async (_req, res) => {
     const runs = await mixed.getLatestSyncRunPerSource();
     const conflicts = await mixed.listDuplicateConflicts();
