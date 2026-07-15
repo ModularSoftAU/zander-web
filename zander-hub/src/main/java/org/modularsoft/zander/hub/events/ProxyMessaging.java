@@ -43,7 +43,7 @@ public class ProxyMessaging implements PluginMessageListener {
         requester.sendPluginMessage(ZanderHubMain.plugin, CHANNEL, output.toByteArray());
 
         return future.orTimeout(TIMEOUT_SECONDS, TimeUnit.SECONDS)
-                .whenComplete((result, error) -> pendingServerList.remove(requester.getUniqueId()));
+                .whenComplete((result, error) -> pendingServerList.remove(requester.getUniqueId(), future));
     }
 
     /// Request the live player count for a specific server id.
@@ -59,7 +59,7 @@ public class ProxyMessaging implements PluginMessageListener {
         requester.sendPluginMessage(ZanderHubMain.plugin, CHANNEL, output.toByteArray());
 
         return future.orTimeout(TIMEOUT_SECONDS, TimeUnit.SECONDS)
-                .whenComplete((result, error) -> pendingPlayerCount.remove(key));
+                .whenComplete((result, error) -> pendingPlayerCount.remove(key, future));
     }
 
     @Override
