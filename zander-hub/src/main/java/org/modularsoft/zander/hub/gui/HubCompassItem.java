@@ -81,7 +81,7 @@ public class HubCompassItem implements Listener {
 
     private void buildAndShowGui(Player player, List<CompassServerEntry> permitted,
             CompletableFuture<List<String>> serverListFuture, List<CompletableFuture<Integer>> countFutures) {
-        List<String> liveServers = serverListFuture.getNow(null); // null => GetServers timed out, don't filter
+        List<String> liveServers = getIfCompletedSuccessfully(serverListFuture); // null => GetServers timed out, don't filter
 
         List<CompassServerEntry> visible = new ArrayList<>();
         List<Integer> counts = new ArrayList<>();
@@ -91,7 +91,7 @@ public class HubCompassItem implements Listener {
                 continue;
             }
             visible.add(entry);
-            counts.add(countFutures.get(i).getNow(null));
+            counts.add(getIfCompletedSuccessfully(countFutures.get(i)));
         }
 
         CompassInventoryHolder holder = new CompassInventoryHolder();
@@ -115,6 +115,13 @@ public class HubCompassItem implements Listener {
         }
 
         player.openInventory(inventory);
+    }
+
+    private static <T> T getIfCompletedSuccessfully(CompletableFuture<T> future) {
+        if (future.isCompletedExceptionally()) {
+            return null;
+        }
+        return future.getNow(null);
     }
 
     @EventHandler
