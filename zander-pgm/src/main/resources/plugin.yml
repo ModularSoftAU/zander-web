@@ -9,7 +9,7 @@ depend:
 commands:
   zpgm:
     description: Zander PGM admin command
-    usage: /zpgm <status|reload|reconnect|flush|debug|vote|maptokens|tokens>
+    usage: /zpgm <status|reload|reconnect|flush|debug|vote|maptokens status|maptokens clear>
     permission: zanderpgm.admin
   vote:
     description: Vote for the next Mixed map
@@ -31,6 +31,10 @@ commands:
     description: View the current/last map rating prompt
     usage: /maprating
     permission: zanderpgm.rate
+  maptoken:
+    description: Open the Map Token menu (spend a token to influence the next map)
+    usage: /maptoken
+    permission: zanderpgm.maptokens.use
 
 permissions:
   zanderpgm.admin:
@@ -45,17 +49,9 @@ permissions:
     default: true
   zanderpgm.maptokens.admin:
     default: op
-  zanderpgm.maptokens.grant:
-    default: op
-  zanderpgm.maptokens.remove:
-    default: op
-  zanderpgm.maptokens.set:
-    default: op
-  zanderpgm.maptokens.balance.others:
-    default: op
-  zanderpgm.maptokens.history:
-    default: op
   zanderpgm.maptokens.status:
     default: op
   zanderpgm.maptokens.clear:
     default: op
+  zanderpgm.maptokens.use:
+    default: true

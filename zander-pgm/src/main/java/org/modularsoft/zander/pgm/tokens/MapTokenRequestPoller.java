@@ -2,6 +2,7 @@ package org.modularsoft.zander.pgm.tokens;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
 import org.bukkit.Bukkit;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.scheduler.BukkitTask;
@@ -41,10 +42,12 @@ public class MapTokenRequestPoller {
                 return;
             }
             try {
-                JsonArray arr = JsonUtil.gson().fromJson(body, JsonArray.class);
-                if (arr == null) {
+                // The endpoint wraps the list in {success, data: [...]}, not a bare array.
+                JsonObject envelope = JsonUtil.gson().fromJson(body, JsonObject.class);
+                if (envelope == null || !envelope.has("data") || envelope.get("data").isJsonNull()) {
                     return;
                 }
+                JsonArray arr = envelope.getAsJsonArray("data");
                 for (JsonElement el : arr) {
                     MapTokenRequest req = JsonUtil.gson().fromJson(el, MapTokenRequest.class);
                     if (req != null) {

@@ -5,7 +5,9 @@ import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.modularsoft.zander.pgm.ZanderPGMPlugin;
+import org.modularsoft.zander.pgm.gui.MenuItems;
 import org.modularsoft.zander.pgm.rating.MapRatingService;
+import org.modularsoft.zander.pgm.rating.MapRatingSession;
 
 /** {@code /maprate <1-5> [feedback]} — rate the last map, optionally with feedback. */
 public class MapRateCommand implements CommandExecutor {
@@ -23,7 +25,12 @@ public class MapRateCommand implements CommandExecutor {
             return true;
         }
         if (args.length < 1) {
-            player.sendMessage("§cUsage: /maprate <1-5> [feedback]");
+            MapRatingSession session = plugin.ratings().current();
+            if (session != null) {
+                MenuItems.openRatingMenu(plugin, player, session.mapName);
+            } else {
+                player.sendMessage("§cUsage: /maprate <1-5> [feedback]");
+            }
             return true;
         }
         int rating;

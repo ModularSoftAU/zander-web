@@ -14,9 +14,12 @@ import org.modularsoft.zander.pgm.api.dto.ServerOfflineEvent;
 import org.modularsoft.zander.pgm.command.MapFeedbackCommand;
 import org.modularsoft.zander.pgm.command.MapRateCommand;
 import org.modularsoft.zander.pgm.command.MapRatingCommand;
+import org.modularsoft.zander.pgm.command.MapTokenCommand;
 import org.modularsoft.zander.pgm.command.MapVoteCommand;
 import org.modularsoft.zander.pgm.command.VoteCommand;
 import org.modularsoft.zander.pgm.command.ZpgmCommand;
+import org.modularsoft.zander.pgm.gui.MenuItemListener;
+import org.modularsoft.zander.pgm.gui.MenuListener;
 import org.modularsoft.zander.pgm.config.ConfigLoader;
 import org.modularsoft.zander.pgm.config.ZanderPGMConfig;
 import org.modularsoft.zander.pgm.pgm.MapRotationService;
@@ -97,6 +100,7 @@ public class ZanderPGMPlugin extends JavaPlugin {
 
         initServices();
         registerCommands();
+        registerListeners();
         startTasks();
 
         if (config.feature("websocket")) {
@@ -159,6 +163,12 @@ public class ZanderPGMPlugin extends JavaPlugin {
         bind("maprate", new MapRateCommand(this));
         bind("mapfeedback", new MapFeedbackCommand(this));
         bind("maprating", new MapRatingCommand(this));
+        bind("maptoken", new MapTokenCommand(this));
+    }
+
+    private void registerListeners() {
+        getServer().getPluginManager().registerEvents(new MenuListener(), this);
+        getServer().getPluginManager().registerEvents(new MenuItemListener(this), this);
     }
 
     private void bind(String name, org.bukkit.command.CommandExecutor executor) {

@@ -215,4 +215,58 @@ public class ZanderApiClient {
     public void submitRating(String mapKey, Object dto) {
         post("/api/mixed/maps/" + mapKey + "/ratings", dto);
     }
+
+    /**
+     * Fetch a player's Map Token balance from the authoritative web-side
+     * ledger (the same one shown on the dashboard / used at checkout).
+     * Identity is passed via query params since this is a GET relayed by
+     * the plugin's own API-key auth (see requireLinkedUserOrPlugin on
+     * zander-web) rather than a browser session.
+     */
+    public CompletableFuture<String> getMapTokens(String uuid, String username) {
+        String path = "/api/mixed/map-tokens?uuid=" + urlEncode(uuid) + "&username=" + urlEncode(username);
+        return get(path);
+    }
+
+    /** Self-service in-game equivalent of the web "Use Map Token" flow. */
+    public CompletableFuture<String> requestMapToken(String uuid, String username, String mapKey, String actionType) {
+        java.util.Map<String, String> body = new java.util.LinkedHashMap<>();
+        body.put("uuid", uuid);
+        body.put("username", username);
+        body.put("map_key", mapKey);
+        body.put("action_type", actionType);
+        return postForResult("/api/mixed/map-tokens/request", body);
+    }
+
+    /** Like {@link #post} but returns the response body (or null on failure) instead of a boolean. */
+    private CompletableFuture<String> postForResult(String path, Object body) {
+        HttpRequest req;
+        try {
+            req = request(path)
+                    .POST(HttpRequest.BodyPublishers.ofString(JsonUtil.toJson(body)))
+                    .build();
+        } catch (Exception e) {
+            logger.warn("Failed to build POST " + path + ": " + e.getMessage());
+            return CompletableFuture.completedFuture(null);
+        }
+        return http.sendAsync(req, HttpResponse.BodyHandlers.ofString())
+                .handle((resp, err) -> {
+                    if (err != null) {
+                        health.markRestFailure();
+                        logger.warn("POST " + path + " failed: " + err.getMessage());
+                        return null;
+                    }
+                    if (resp.statusCode() >= 300) {
+                        health.markRestFailure();
+                        logger.warn("POST " + path + " returned HTTP " + resp.statusCode() + ": " + truncate(resp.body()));
+                        return resp.body(); // callers need the error message body too
+                    }
+                    health.markRestSuccess();
+                    return resp.body();
+                });
+    }
+
+    private static String urlEncode(String value) {
+        return java.net.URLEncoder.encode(value == null ? "" : value, java.nio.charset.StandardCharsets.UTF_8);
+    }
 }

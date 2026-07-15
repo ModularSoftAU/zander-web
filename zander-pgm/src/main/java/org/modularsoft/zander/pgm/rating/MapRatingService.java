@@ -8,6 +8,7 @@ import org.modularsoft.zander.pgm.api.ZanderWebSocketClient;
 import org.modularsoft.zander.pgm.api.dto.MapRatingPromptedEventDto;
 import org.modularsoft.zander.pgm.api.dto.MapRatingSubmittedEventDto;
 import org.modularsoft.zander.pgm.config.ZanderPGMConfig;
+import org.modularsoft.zander.pgm.gui.MenuItems;
 import org.modularsoft.zander.pgm.util.SafeLogger;
 
 import java.util.ArrayList;
@@ -68,6 +69,8 @@ public class MapRatingService {
                 p.sendMessage("§eHow did you like §f" + session.mapName + "§e?");
                 p.sendMessage("§71 = Terrible  2 = Bad  3 = Okay  4 = Good  5 = Excellent");
                 p.sendMessage("§aUse §f/maprate <1-5> §aor §f/maprate <1-5> <feedback>");
+                p.sendMessage("§7(or right-click the §fRate this Map §7item in your inventory)");
+                MenuItems.giveIfAbsent(p, MenuItems.ratingItem(plugin));
             }
         }
     }
