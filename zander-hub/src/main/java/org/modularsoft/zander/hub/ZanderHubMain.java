@@ -29,6 +29,7 @@ public class ZanderHubMain extends JavaPlugin {
         ConfigurationManager.setupHubLocationsConfig();
         ConfigurationManager.setupMessagesConfig();
         ConfigurationManager.setupMiscConfig();
+        ConfigurationManager.setupCompassConfig();
         ConfigurationManager.setupWelcomeFile();
 
         this.getServer().getMessenger().registerOutgoingPluginChannel(this, "BungeeCord");
