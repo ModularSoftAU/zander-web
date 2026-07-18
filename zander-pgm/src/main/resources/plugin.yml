@@ -1,5 +1,5 @@
 name: ZanderPGM
-main: org.modularsoft.zander.pgm.ZanderPGMPlugin
+main: dev.anchorlight.zander.pgm.ZanderPGMPlugin
 version: ${project.version}
 api-version: "1.21"
 author: ModularSoft

@@ -22,3 +22,15 @@ compass:
       material: IRON_SWORD
       display: 'Mixed'
       lore: 'Play and Destroy your friends in Minigames.'
+    build:
+      material: BRICKS
+      display: 'Build'
+      lore: 'Click me to join our Build server.'
+    events:
+      material: FIREWORK_ROCKET
+      display: 'Events'
+      lore: 'Click me to join our Events server.'
+    creative:
+      material: GRASS_BLOCK
+      display: 'Creative'
+      lore: 'Click me to join our Creative server.'

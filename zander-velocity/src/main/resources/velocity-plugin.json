@@ -2,7 +2,7 @@
   "id": "zander-velocity",
   "name": "zander-velocity",
   "version": "1.2.0",
-  "main": "org.modularsoft.zander.velocity.ZanderVelocityMain",
+  "main": "dev.anchorlight.zander.velocity.ZanderVelocityMain",
   "authors": [
     "ModularSoft"
   ],

@@ -1,4 +1,4 @@
-main: org.modularsoft.zander.addon.ZanderAddonMain
+main: dev.anchorlight.zander.addon.ZanderAddonMain
 name: zander-addon
 version: ${project.version}
 author: ModularSoft
