@@ -14,16 +14,15 @@ import org.modularsoft.zander.pgm.util.TimeUtil;
 import org.modularsoft.zander.pgm.voting.MapVoteService;
 
 import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.List;
 import java.util.Map;
-import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * Handles local Map Token balances plus remote token-request application.
- * Balances are persisted locally so admin and console commands continue to work
- * even while zander-web is offline.
+ * Applies remote Map Token requests (nominate/set-next/sponsor) to the match
+ * rotation and vote service. Balances and transaction history live entirely
+ * on zander-web — this plugin never keeps its own copy of the ledger; see
+ * {@code ZanderApiClient#getMapTokens} / {@code #requestMapToken} for the
+ * balance read/spend path used by the in-game menu.
  */
 public class MapTokenService {
 
@@ -34,7 +33,6 @@ public class MapTokenService {
     private final MapRotationService rotation;
     private final MapVoteService voteService;
     private final SafeLogger logger;
-    private final MapTokenStorage storage;
 
     private final Map<String, Long> playerCooldowns = new ConcurrentHashMap<>();
     private final Map<String, Integer> mapCooldowns = new ConcurrentHashMap<>();
@@ -42,15 +40,6 @@ public class MapTokenService {
     public MapTokenService(Plugin plugin, ZanderPGMConfig config, ZanderApiClient api,
                            ZanderWebSocketClient ws, MapRotationService rotation,
                            MapVoteService voteService, SafeLogger logger) {
-        this(plugin, config, api, ws, rotation, voteService, logger,
-                new MapTokenStorage(plugin.getDataFolder().toPath()
-                        .resolve("map-tokens")
-                        .resolve("map-tokens.json")));
-    }
-
-    MapTokenService(Plugin plugin, ZanderPGMConfig config, ZanderApiClient api,
-                    ZanderWebSocketClient ws, MapRotationService rotation,
-                    MapVoteService voteService, SafeLogger logger, MapTokenStorage storage) {
         this.plugin = plugin;
         this.config = config;
         this.api = api;
@@ -58,16 +47,6 @@ public class MapTokenService {
         this.rotation = rotation;
         this.voteService = voteService;
         this.logger = logger;
-        this.storage = storage;
-        loadStorage();
-    }
-
-    private void loadStorage() {
-        try {
-            storage.load();
-        } catch (Exception e) {
-            logger.error("Failed to load Map Token storage", e);
-        }
     }
 
     /** Process a request end-to-end (validation happens on the main thread). */
@@ -87,104 +66,6 @@ public class MapTokenService {
             emit(req, "MAP_REQUEST_ACCEPTED", "ACCEPTED", null);
             apply(req);
         });
-    }
-
-    public synchronized MapTokenBalance getBalance(UUID playerUuid, String username) {
-        try {
-            MapTokenBalance balance = storage.getBalance(playerUuid, username);
-            if (username != null && !username.isBlank() && !username.equals(balance.username)) {
-                balance.username = username;
-                storage.saveBalance(balance);
-            }
-            return balance;
-        } catch (Exception e) {
-            logger.error("Failed to read Map Token balance", e);
-            throw new IllegalStateException("Storage read failure");
-        }
-    }
-
-    public synchronized MapTokenBalance findStoredBalanceByUsername(String username) {
-        try {
-            return storage.findByUsername(username);
-        } catch (Exception e) {
-            logger.error("Failed to search Map Token storage", e);
-            throw new IllegalStateException("Storage read failure");
-        }
-    }
-
-    public synchronized void refreshKnownUsername(UUID playerUuid, String username) {
-        try {
-            storage.updateUsernameIfPresent(playerUuid, username);
-        } catch (Exception e) {
-            logger.error("Failed to update known Map Token username", e);
-        }
-    }
-
-    public synchronized MapTokenBalance grantTokens(UUID playerUuid, String username, int amount,
-                                                    String reason, String actor, String source) {
-        validatePositive(amount, "Grant");
-        return applyBalanceChange(playerUuid, username, MapTokenTransactionType.GRANT, amount,
-                defaultReason(reason, "Manual grant"), actor, source, null);
-    }
-
-    public synchronized MapTokenBalance removeTokens(UUID playerUuid, String username, int amount,
-                                                     String reason, String actor, String source) {
-        validatePositive(amount, "Remove");
-        MapTokenBalance current = getBalance(playerUuid, username);
-        if (current.balance < amount) {
-            throw new IllegalStateException(displayName(current, username)
-                    + " only has " + current.balance + " Map Tokens. Cannot remove " + amount + ".");
-        }
-        return applyBalanceChange(playerUuid, username, MapTokenTransactionType.REMOVE, amount,
-                defaultReason(reason, "Manual removal"), actor, source, null);
-    }
-
-    public synchronized MapTokenBalance setTokens(UUID playerUuid, String username, int amount,
-                                                  String reason, String actor, String source) {
-        if (amount < 0) {
-            throw new IllegalArgumentException("Set amount must be 0 or greater.");
-        }
-        Map<String, Object> metadata = new LinkedHashMap<>();
-        metadata.put("mode", "ABSOLUTE");
-        return applyAbsoluteSet(playerUuid, username, amount,
-                defaultReason(reason, "Manual balance set"), actor, source, metadata);
-    }
-
-    public synchronized boolean spendTokens(UUID playerUuid, String username, int amount, String reason,
-                                            Map<String, Object> metadata) {
-        validatePositive(amount, "Spend");
-        MapTokenBalance current = getBalance(playerUuid, username);
-        if (current.balance < amount) {
-            return false;
-        }
-        applyBalanceChange(playerUuid, username, MapTokenTransactionType.SPEND, amount,
-                defaultReason(reason, "Map Token spend"), "SYSTEM", "SYSTEM", metadata);
-        return true;
-    }
-
-    public synchronized MapTokenBalance refundTokens(UUID playerUuid, String username, int amount, String reason,
-                                                     Map<String, Object> metadata) {
-        validatePositive(amount, "Refund");
-        return applyBalanceChange(playerUuid, username, MapTokenTransactionType.REFUND, amount,
-                defaultReason(reason, "Map Token refund"), "SYSTEM", "SYSTEM", metadata);
-    }
-
-    public synchronized List<MapTokenTransaction> getHistory(UUID playerUuid, int page, int pageSize) {
-        try {
-            return storage.getHistory(playerUuid, page, pageSize);
-        } catch (Exception e) {
-            logger.error("Failed to read Map Token history", e);
-            throw new IllegalStateException("Storage read failure");
-        }
-    }
-
-    public synchronized int historyCount(UUID playerUuid) {
-        try {
-            return storage.historyCount(playerUuid);
-        } catch (Exception e) {
-            logger.error("Failed to count Map Token history", e);
-            throw new IllegalStateException("Storage read failure");
-        }
     }
 
     private String validate(MapTokenRequest req) {
@@ -222,7 +103,7 @@ public class MapTokenService {
                     System.currentTimeMillis() + config.mapTokenPlayerCooldownMinutes * 60_000L);
             mapCooldowns.put(req.mapKey.toLowerCase(), config.mapTokenMapCooldownMatches);
             emit(req, "MAP_REQUEST_APPLIED", "APPLIED", null);
-            Bukkit.broadcastMessage("Â§6[Mixed] Â§e" + req.username + " used a Map Token for Â§f" + req.mapKey);
+            Bukkit.broadcastMessage("§6[Mixed] §e" + req.username + " used a Map Token for §f" + req.mapKey);
         } catch (Exception e) {
             fail(req, "Apply error: " + e.getMessage());
         }
@@ -289,163 +170,18 @@ public class MapTokenService {
         boolean hadOverride = rotation.nextMapOverride().isPresent();
         rotation.clearNextMapOverride();
         if (hadOverride) {
-            emitBalanceEvent("MAP_TOKEN_OVERRIDE_CLEARED", null, null, 0, 0, 0,
-                    "Pending next-map override cleared", actor, source);
+            MapTokensBalanceEventDto dto = new MapTokensBalanceEventDto("MAP_TOKEN_OVERRIDE_CLEARED");
+            dto.reason = "Pending next-map override cleared";
+            dto.actor = actor;
+            dto.source = source;
+            dto.createdAt = TimeUtil.isoNow();
+            if (api != null) {
+                api.send(dto);
+            }
+            if (ws != null) {
+                ws.send(dto);
+            }
         }
         return hadOverride;
-    }
-
-    private MapTokenBalance applyAbsoluteSet(UUID playerUuid, String username, int targetBalance,
-                                             String reason, String actor, String source,
-                                             Map<String, Object> metadata) {
-        MapTokenBalance current = getBalance(playerUuid, username);
-        int previousBalance = current.balance;
-        int delta = targetBalance - previousBalance;
-
-        current.balance = targetBalance;
-        current.username = username;
-        if (delta > 0) {
-            current.lifetimeEarned += delta;
-        } else if (delta < 0) {
-            current.lifetimeSpent += Math.abs(delta);
-        }
-
-        MapTokenTransaction tx = buildTransaction(playerUuid, username, MapTokenTransactionType.SET, Math.abs(delta),
-                previousBalance, targetBalance, reason, actor, source, metadata);
-        saveBalanceChange(current, tx);
-        emitBalanceEvent("MAP_TOKENS_SET", playerUuid, username, Math.abs(delta),
-                previousBalance, targetBalance, reason, actor, source);
-        return current.copy();
-    }
-
-    private MapTokenBalance applyBalanceChange(UUID playerUuid, String username, MapTokenTransactionType type,
-                                               int amount, String reason, String actor, String source,
-                                               Map<String, Object> metadata) {
-        MapTokenBalance current = getBalance(playerUuid, username);
-        int previousBalance = current.balance;
-        int newBalance = previousBalance;
-
-        switch (type) {
-            case GRANT, REFUND, WEBSTORE -> {
-                newBalance = previousBalance + amount;
-                current.lifetimeEarned += amount;
-            }
-            case REMOVE, SPEND -> {
-                if (previousBalance < amount) {
-                    throw new IllegalStateException(displayName(current, username)
-                            + " only has " + previousBalance + " Map Tokens. Cannot remove " + amount + ".");
-                }
-                newBalance = previousBalance - amount;
-                current.lifetimeSpent += amount;
-            }
-            case ADMIN, SYSTEM -> newBalance = previousBalance;
-            case SET -> throw new IllegalStateException("SET must use applyAbsoluteSet");
-        }
-
-        current.balance = newBalance;
-        current.username = username;
-
-        MapTokenTransaction tx = buildTransaction(playerUuid, username, type, amount, previousBalance, newBalance,
-                reason, actor, source, metadata);
-        saveBalanceChange(current, tx);
-        emitBalanceEvent(eventType(type), playerUuid, username, amount, previousBalance, newBalance,
-                reason, actor, source);
-        return current.copy();
-    }
-
-    private MapTokenTransaction buildTransaction(UUID playerUuid, String username, MapTokenTransactionType type,
-                                                 int amount, int previousBalance, int newBalance, String reason,
-                                                 String actor, String source, Map<String, Object> metadata) {
-        MapTokenTransaction tx = new MapTokenTransaction();
-        tx.transactionId = UUID.randomUUID().toString();
-        tx.playerUuid = playerUuid.toString();
-        tx.username = username;
-        tx.type = type;
-        tx.amount = amount;
-        tx.previousBalance = previousBalance;
-        tx.newBalance = newBalance;
-        tx.reason = reason;
-        tx.actor = actor;
-        tx.source = source;
-        tx.createdAt = System.currentTimeMillis();
-        if (metadata != null) {
-            tx.metadata.putAll(metadata);
-        }
-        if (type == MapTokenTransactionType.SET) {
-            tx.metadata.put("targetBalance", newBalance);
-        }
-        return tx;
-    }
-
-    private void saveBalanceChange(MapTokenBalance balance, MapTokenTransaction tx) {
-        try {
-            storage.saveBalanceAndTransaction(balance, tx);
-        } catch (Exception e) {
-            logger.error("Failed to persist Map Token change", e);
-            throw new IllegalStateException("Storage write failure");
-        }
-    }
-
-    private void emitBalanceEvent(String type, UUID playerUuid, String username, int amount, int previousBalance,
-                                  int newBalance, String reason, String actor, String source) {
-        if (api == null && ws == null) {
-            return;
-        }
-        MapTokensBalanceEventDto dto = new MapTokensBalanceEventDto(type);
-        dto.playerUuid = playerUuid != null ? playerUuid.toString() : null;
-        dto.username = username;
-        dto.transactionType = mapTransactionType(type);
-        dto.amount = amount;
-        dto.previousBalance = previousBalance;
-        dto.newBalance = newBalance;
-        dto.reason = reason;
-        dto.actor = actor;
-        dto.source = source;
-        dto.createdAt = TimeUtil.isoNow();
-        if (api != null) {
-            api.send(dto);
-        }
-        if (ws != null) {
-            ws.send(dto);
-        }
-    }
-
-    private static String mapTransactionType(String eventType) {
-        return switch (eventType) {
-            case "MAP_TOKENS_GRANTED" -> "GRANT";
-            case "MAP_TOKENS_REMOVED" -> "REMOVE";
-            case "MAP_TOKENS_SET" -> "SET";
-            case "MAP_TOKENS_SPENT" -> "SPEND";
-            case "MAP_TOKENS_REFUNDED" -> "REFUND";
-            default -> "SYSTEM";
-        };
-    }
-
-    private static String eventType(MapTokenTransactionType type) {
-        return switch (type) {
-            case GRANT, WEBSTORE -> "MAP_TOKENS_GRANTED";
-            case REMOVE -> "MAP_TOKENS_REMOVED";
-            case SET -> "MAP_TOKENS_SET";
-            case SPEND -> "MAP_TOKENS_SPENT";
-            case REFUND -> "MAP_TOKENS_REFUNDED";
-            case ADMIN, SYSTEM -> "MAP_TOKENS_SET";
-        };
-    }
-
-    private static void validatePositive(int amount, String label) {
-        if (amount <= 0) {
-            throw new IllegalArgumentException(label + " amount must be greater than 0.");
-        }
-    }
-
-    private static String defaultReason(String reason, String fallback) {
-        return reason == null || reason.isBlank() ? fallback : reason;
-    }
-
-    private static String displayName(MapTokenBalance balance, String fallback) {
-        if (balance.username != null && !balance.username.isBlank()) {
-            return balance.username;
-        }
-        return fallback != null && !fallback.isBlank() ? fallback : balance.playerUuid;
     }
 }

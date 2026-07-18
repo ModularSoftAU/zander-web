@@ -11,7 +11,9 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.time.Duration;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
 /**
@@ -202,6 +204,39 @@ public class ZanderApiClient {
 
     public void mapTokenResult(String id, Object dto) {
         post("/api/mixed/map-token-requests/" + id + "/result", dto);
+    }
+
+    /** Fetches a player's live Map Token balance from the web-side ledger. */
+    public CompletableFuture<String> getMapTokens(String uuid, String username) {
+        return get("/api/mixed/map-tokens/balance?uuid=" + uuid + "&username=" + username);
+    }
+
+    /** Submits a self-service Map Token spend (nominate/set_next/sponsor) against the web-side ledger. */
+    public CompletableFuture<String> requestMapToken(String uuid, String username, String mapKey, String actionType) {
+        Map<String, Object> body = new HashMap<>();
+        body.put("uuid", uuid);
+        body.put("username", username);
+        body.put("mapKey", mapKey);
+        body.put("action", actionType);
+        HttpRequest req;
+        try {
+            req = request("/api/mixed/map-tokens/request")
+                    .POST(HttpRequest.BodyPublishers.ofString(JsonUtil.toJson(body)))
+                    .build();
+        } catch (Exception e) {
+            logger.warn("Failed to build map token request: " + e.getMessage());
+            return CompletableFuture.completedFuture(null);
+        }
+        return http.sendAsync(req, HttpResponse.BodyHandlers.ofString())
+                .handle((resp, err) -> {
+                    if (err != null) {
+                        health.markRestFailure();
+                        logger.warn("Map token request failed: " + err.getMessage());
+                        return null;
+                    }
+                    health.markRestSuccess();
+                    return resp.body();
+                });
     }
 
     public CompletableFuture<String> currentVote() {

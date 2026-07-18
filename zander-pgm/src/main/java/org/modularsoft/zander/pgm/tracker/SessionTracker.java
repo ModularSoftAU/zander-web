@@ -31,7 +31,6 @@ public class SessionTracker implements Listener {
     public void onJoin(PlayerJoinEvent event) {
         Player p = event.getPlayer();
         joinTimes.put(p.getUniqueId(), System.currentTimeMillis());
-        plugin.tokens().refreshKnownUsername(p.getUniqueId(), p.getName());
 
         MatchIdentityService.Identity id = plugin.identity().current();
         PlayerJoinMatchEventDto dto = new PlayerJoinMatchEventDto();
