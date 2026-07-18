@@ -10,3 +10,6 @@ dependency-reduced-pom.xml
 .factorypath
 .project
 .settings/
+
+# git worktrees
+.worktrees/

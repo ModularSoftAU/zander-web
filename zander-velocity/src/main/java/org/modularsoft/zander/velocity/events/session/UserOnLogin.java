@@ -15,8 +15,6 @@ public class UserOnLogin {
     @Subscribe
     public void UserLoginEvent (PostLoginEvent event) {
         Player player = event.getPlayer();
-        String BaseAPIURL = ZanderVelocityMain.getConfig().getString(Route.from("BaseAPIURL"));
-        String APIKey = ZanderVelocityMain.getConfig().getString(Route.from("APIKey"));
         ZanderVelocityMain.getPrivateMessageService().updateNameCache(player.getUniqueId(), player.getUsername());
 
         ZanderVelocityMain.getProxy().getScheduler().buildTask(ZanderVelocityMain.getInstance(), () -> {

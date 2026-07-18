@@ -10,7 +10,6 @@
 
     <artifactId>zander-hub</artifactId>
 
-
     <repositories>
         <repository>
             <id>papermc</id>
