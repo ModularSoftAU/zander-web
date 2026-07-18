@@ -98,9 +98,11 @@ public class HubCompassItem implements Listener {
         Inventory inventory = Bukkit.createInventory(holder, 9, Component.text(COMPASS_TITLE));
         holder.inventory = inventory;
 
-        for (int slot = 0; slot < visible.size() && slot < 9; slot++) {
-            CompassServerEntry entry = visible.get(slot);
-            Integer count = counts.get(slot);
+        int[] slots = computeEvenlySpacedSlots(visible.size(), 9);
+        for (int i = 0; i < visible.size(); i++) {
+            int slot = slots[i];
+            CompassServerEntry entry = visible.get(i);
+            Integer count = counts.get(i);
             String countLine = count != null ? "Players online: " + count : "Players online: unavailable";
 
             ItemStack item = new ItemStack(entry.material());
@@ -115,6 +117,29 @@ public class HubCompassItem implements Listener {
         }
 
         player.openInventory(inventory);
+    }
+
+    /// Distributes {@code count} icons across a row of {@code rowSize} slots, centred and
+    /// evenly spaced (e.g. 3 icons in a 9-wide row land on slots 1, 4, 7).
+    private static int[] computeEvenlySpacedSlots(int count, int rowSize) {
+        if (count > rowSize) {
+            count = rowSize;
+        }
+        int[] slots = new int[count];
+        if (count == 0) {
+            return slots;
+        }
+        if (count == 1) {
+            slots[0] = rowSize / 2;
+            return slots;
+        }
+
+        double gap = (double) rowSize / count;
+        double margin = (rowSize - gap * (count - 1)) / 2.0;
+        for (int i = 0; i < count; i++) {
+            slots[i] = (int) Math.round(margin + gap * i);
+        }
+        return slots;
     }
 
     private static <T> T getIfCompletedSuccessfully(CompletableFuture<T> future) {
