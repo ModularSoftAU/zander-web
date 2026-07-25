@@ -89,7 +89,6 @@ public class HubCompassItem implements Listener {
         renderLoading(inventory, ConfigurationManager.getCompass().getServers());
         player.openInventory(inventory);
 
-        long timeoutMs = ZanderHubMain.plugin.getConfig().getLong("compass.request-timeout-ms", 1500L);
         ZanderHubMain.bridgeClient.requestServerList(player)
                 .whenComplete((response, error) -> Bukkit.getScheduler().runTask(ZanderHubMain.plugin, () -> {
                     if (!player.isOnline() || player.getOpenInventory().getTopInventory().getHolder() != holder) {
@@ -120,14 +119,10 @@ public class HubCompassItem implements Listener {
 
     private void renderUnavailable(Inventory inventory, List<CompassServerEntry> configured) {
         inventory.clear();
-        boolean hideInaccessible = ZanderHubMain.plugin.getConfig().getBoolean("compass.hide-inaccessible", true);
         Map<String, Integer> explicitSlots = explicitSlots(configured);
         List<String> ids = configured.stream().map(CompassServerEntry::id).toList();
         for (CompassSlotCalculator.SlotAssignment assignment : CompassSlotCalculator.assign(ids, explicitSlots, inventory.getSize())) {
             CompassServerEntry entry = configured.stream().filter(e -> e.id().equals(assignment.entryId())).findFirst().orElseThrow();
-            if (hideInaccessible) {
-                continue; // unknown accessibility while unavailable; treat conservatively as hidden
-            }
             inventory.setItem(assignment.slot(), buildIcon(entry, "UNAVAILABLE", null));
         }
     }
