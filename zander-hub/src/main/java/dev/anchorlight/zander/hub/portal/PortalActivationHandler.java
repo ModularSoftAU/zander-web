@@ -30,7 +30,7 @@ public class PortalActivationHandler {
         long now = System.currentTimeMillis();
 
         if (!portal.enabled()) {
-            send(player, "portals.messages.disabled-fallback", "<red>This portal is currently disabled.</red>");
+            send(player, "messages.portal.disabled", "<red>This portal is currently disabled.</red>");
             return;
         }
         if (sessions.isOnCooldown(player.getUniqueId(), portal.id(), now)) {
