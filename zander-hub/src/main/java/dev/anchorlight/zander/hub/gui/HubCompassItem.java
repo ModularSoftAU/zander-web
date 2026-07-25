@@ -19,7 +19,6 @@ import org.bukkit.persistence.PersistentDataType;
 import dev.anchorlight.zander.hub.ConfigurationManager;
 import dev.anchorlight.zander.hub.ZanderHubMain;
 import dev.anchorlight.zander.hub.configs.CompassConfig.CompassServerEntry;
-import dev.anchorlight.zander.hub.events.PluginMessageChannel;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -63,11 +62,11 @@ public class HubCompassItem implements Listener {
             }
         }
 
-        CompletableFuture<List<String>> serverListFuture = ZanderHubMain.proxyMessaging.requestServerList(player);
+        // TEMPORARY (Task 12 removed the legacy BungeeCord-channel proxyMessaging/PluginMessageChannel
+        // this relied on; Task 19 rewrites this whole class onto BridgeClient). Stubbed to keep the
+        // module compiling for intermediate tasks; not functional until Task 19.
+        CompletableFuture<List<String>> serverListFuture = CompletableFuture.completedFuture(null);
         List<CompletableFuture<Integer>> countFutures = new ArrayList<>();
-        for (CompassServerEntry entry : permitted) {
-            countFutures.add(ZanderHubMain.proxyMessaging.requestPlayerCount(player, entry.id()));
-        }
 
         List<CompletableFuture<?>> allFutures = new ArrayList<>();
         allFutures.add(serverListFuture);
@@ -180,6 +179,6 @@ public class HubCompassItem implements Listener {
         }
 
         player.sendMessage(Component.text("Sending you to " + serverId + "...", NamedTextColor.YELLOW));
-        PluginMessageChannel.connect(player, serverId);
+        // TEMPORARY: see comment in openCompassGui — Task 19 rewrites this onto BridgeClient.
     }
 }
