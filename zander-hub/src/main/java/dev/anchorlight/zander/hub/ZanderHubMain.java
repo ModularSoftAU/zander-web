@@ -5,13 +5,14 @@ import net.kyori.adventure.text.TextComponent;
 import net.kyori.adventure.text.format.NamedTextColor;
 import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.java.JavaPlugin;
+import org.bukkit.plugin.messaging.PluginMessageListener;
 import dev.anchorlight.zander.hub.commands.fly;
 import dev.anchorlight.zander.hub.events.HubBoosterPlate;
 import dev.anchorlight.zander.hub.events.HubPlayerJoin;
 import dev.anchorlight.zander.hub.events.HubPlayerJoinChristmas;
 import dev.anchorlight.zander.hub.events.HubPlayerLeave;
 import dev.anchorlight.zander.hub.events.HubPlayerVoid;
-import dev.anchorlight.zander.hub.events.ProxyMessaging;
+import dev.anchorlight.zander.hub.bridge.BridgeClient;
 import dev.anchorlight.zander.hub.gui.HubCompassItem;
 import dev.anchorlight.zander.hub.protection.HubCreatureSpawnProtection;
 import dev.anchorlight.zander.hub.protection.HubInteractionProtection;
@@ -21,7 +22,7 @@ import dev.anchorlight.zander.hub.utils.CopyResources;
 
 public class ZanderHubMain extends JavaPlugin {
     public static ZanderHubMain plugin;
-    public static ProxyMessaging proxyMessaging;
+    public static BridgeClient bridgeClient;
 
     public void onEnable() {
         plugin = this;
@@ -36,9 +37,10 @@ public class ZanderHubMain extends JavaPlugin {
         ConfigurationManager.setupCompassConfig();
         ConfigurationManager.setupWelcomeFile();
 
-        proxyMessaging = new ProxyMessaging();
-        this.getServer().getMessenger().registerOutgoingPluginChannel(this, "BungeeCord");
-        this.getServer().getMessenger().registerIncomingPluginChannel(this, "BungeeCord", proxyMessaging);
+        this.getServer().getMessenger().registerOutgoingPluginChannel(this, "zander:hub");
+        bridgeClient = new BridgeClient((player, bytes) -> player.sendPluginMessage(this, "zander:hub", bytes), 1500L);
+        this.getServer().getMessenger().registerIncomingPluginChannel(this, "zander:hub",
+                (channel, player, message) -> bridgeClient.onPluginMessageReceived(message));
 
         // Init Message
         TextComponent enabledMessage = Component.empty()
