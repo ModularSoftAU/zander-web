@@ -23,6 +23,17 @@ compass:
 messages:
   join: '&7%p% joined.'
   leave: '&7%p% left.'
+  portal:
+    disabled: "<red>This portal is currently disabled.</red>"
+    permission-denied: "<red>You do not have permission to use this portal.</red>"
+    server-permission-denied: "<red>You do not have access to that server.</red>"
+    unknown-server: "<red>That server is currently unknown to the network.</red>"
+    server-unavailable: "<red>That server is currently unavailable.</red>"
+    connection-started: "<yellow>Connecting you now...</yellow>"
+    connection-failed: "<red>Failed to connect, please try again.</red>"
+    cooldown: "<gray>Please wait before using this portal again.</gray>"
+    already-connected: "<gray>You are already connected to that server.</gray>"
+    local-teleport-failed: "<red>That destination is currently unavailable.</red>"
 misc:
   always_first_join: false
   slot_hub_compass: 4
@@ -43,3 +54,6 @@ dimensions:
     blocked: false
     message: "<red>The End is not available from the Hub.</red>"
     allow-bypass: true
+portals:
+  ignore-spectators: true
+  reentry-delay-ticks: 2
