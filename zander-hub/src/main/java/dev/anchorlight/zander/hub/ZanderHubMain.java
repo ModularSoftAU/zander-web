@@ -16,6 +16,7 @@ import dev.anchorlight.zander.hub.gui.HubCompassItem;
 import dev.anchorlight.zander.hub.protection.HubCreatureSpawnProtection;
 import dev.anchorlight.zander.hub.protection.HubInteractionProtection;
 import dev.anchorlight.zander.hub.protection.HubProtection;
+import dev.anchorlight.zander.hub.protection.dimension.DimensionProtectionListener;
 import dev.anchorlight.zander.hub.utils.CopyResources;
 
 public class ZanderHubMain extends JavaPlugin {
@@ -31,6 +32,7 @@ public class ZanderHubMain extends JavaPlugin {
         ConfigurationManager.setupHubLocationsConfig();
         ConfigurationManager.setupMessagesConfig();
         ConfigurationManager.setupMiscConfig();
+        ConfigurationManager.setupDimensionsConfig();
         ConfigurationManager.setupCompassConfig();
         ConfigurationManager.setupWelcomeFile();
 
@@ -56,6 +58,7 @@ public class ZanderHubMain extends JavaPlugin {
         pluginmanager.registerEvents(new HubPlayerJoinChristmas(this), this);
         // Hub Protection
         pluginmanager.registerEvents(new HubProtection(this), this);
+        pluginmanager.registerEvents(new DimensionProtectionListener(this), this);
         pluginmanager.registerEvents(new HubInteractionProtection(this), this);
         pluginmanager.registerEvents(new HubCreatureSpawnProtection(this), this);
 

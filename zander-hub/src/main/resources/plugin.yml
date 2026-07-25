@@ -20,3 +20,7 @@ permissions:
     default: op
   zanderhub.build:
     default: op
+  zanderhub.nether.bypass:
+    default: op
+  zanderhub.end.bypass:
+    default: op

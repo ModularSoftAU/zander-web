@@ -161,10 +161,4 @@ public class HubProtection implements Listener {
         event.setCancelled(true);
     }
 
-    // Block players from using portals to go to the Nether or End
-    @EventHandler(priority = EventPriority.HIGH)
-    public void noPortal(final PlayerPortalEvent event) {
-        event.setCancelled(true);
-    }
-
 }
