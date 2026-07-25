@@ -16,6 +16,7 @@ import dev.dejvokep.boostedyaml.settings.general.GeneralSettings;
 import dev.dejvokep.boostedyaml.settings.loader.LoaderSettings;
 import dev.dejvokep.boostedyaml.settings.updater.UpdaterSettings;
 import lombok.Getter;
+import dev.anchorlight.zander.velocity.bridge.HubBridgeListener;
 import dev.anchorlight.zander.velocity.commands.*;
 import dev.anchorlight.zander.velocity.commands.moderation.alert;
 import dev.anchorlight.zander.velocity.commands.moderation.clearchat;
@@ -74,6 +75,9 @@ public class ZanderVelocityMain {
         proxy.getEventManager().register(this, new UserOnSwitch());
         proxy.getEventManager().register(this, new UserSocialSpyEvent());
         proxy.getEventManager().register(this, new FreezeChatListener());
+
+        proxy.getChannelRegistrar().register(HubBridgeListener.CHANNEL);
+        proxy.getEventManager().register(this, new HubBridgeListener(proxy, logger, config));
 
         // Commands
         CommandManager commandManager = proxy.getCommandManager();
