@@ -34,3 +34,12 @@ hub:
   z: 0.5
   yaw: -180.0
   pitch: 0.0
+dimensions:
+  nether:
+    blocked: true
+    message: "<red>The Nether is not available from the Hub.</red>"
+    allow-bypass: true
+  end:
+    blocked: false
+    message: "<red>The End is not available from the Hub.</red>"
+    allow-bypass: true

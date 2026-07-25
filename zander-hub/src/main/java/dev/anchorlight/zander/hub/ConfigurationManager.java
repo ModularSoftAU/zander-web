@@ -4,6 +4,7 @@ import java.io.File;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
 import dev.anchorlight.zander.hub.configs.CompassConfig;
+import dev.anchorlight.zander.hub.configs.DimensionsConfig;
 import dev.anchorlight.zander.hub.configs.HubLocationsConfig;
 import dev.anchorlight.zander.hub.configs.MessagesConfig;
 import dev.anchorlight.zander.hub.configs.MiscConfig;
@@ -11,6 +12,7 @@ import dev.anchorlight.zander.hub.configs.MiscConfig;
 public final class ConfigurationManager {
     private static FileConfiguration welcomeFile;
     private static CompassConfig compassConfig;
+    private static DimensionsConfig dimensionsConfig;
     private static HubLocationsConfig hubLocationsConfig;
     private static MessagesConfig messagesConfig;
     private static MiscConfig miscConfig;
@@ -40,6 +42,13 @@ public final class ConfigurationManager {
         miscConfig = new MiscConfig(ZanderHubMain.plugin);
         miscConfig.setupSlotHubCompass();
         miscConfig.setupAlwaysFirstJoin();
+    }
+
+    public static void setupDimensionsConfig() {
+        if (dimensionsConfig != null)
+            throw new IllegalStateException("Already setup, ensure there's a single call");
+        dimensionsConfig = new DimensionsConfig(ZanderHubMain.plugin);
+        dimensionsConfig.setup();
     }
 
     public static void setupCompassConfig() {
@@ -75,6 +84,12 @@ public final class ConfigurationManager {
         if (miscConfig == null)
             throw new IllegalStateException("Missing setup, first run 'ConfigurationManager.setupMiscConfig'");
         return miscConfig;
+    }
+
+    public static DimensionsConfig getDimensions() {
+        if (dimensionsConfig == null)
+            throw new IllegalStateException("Missing setup, first run 'ConfigurationManager.setupDimensionsConfig'");
+        return dimensionsConfig;
     }
 
     public static CompassConfig getCompass() {
