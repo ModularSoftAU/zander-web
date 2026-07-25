@@ -1,4 +1,14 @@
 compass:
+  enabled: true
+  title: "<dark_aqua>Server Selector</dark_aqua>"
+  request-timeout-ms: 1500
+  hide-inaccessible: true
+  open-on:
+    right-click: true
+    left-click: false
+  locked-icon:
+    material: BARRIER
+    lore: "<red>You do not have access to this server.</red>"
   servers:
     build:
       material: STONE_BRICKS
