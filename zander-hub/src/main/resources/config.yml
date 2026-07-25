@@ -67,3 +67,6 @@ dimensions:
 portals:
   ignore-spectators: true
   reentry-delay-ticks: 2
+portal-wand:
+  material: BLAZE_ROD
+  display: "<gold>Portal Wand</gold>"
