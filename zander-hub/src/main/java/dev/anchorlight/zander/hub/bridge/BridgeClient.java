@@ -37,7 +37,11 @@ public class BridgeClient {
         String requestId = request.requestId();
         CompletableFuture<BridgeMessage> future = new CompletableFuture<>();
         pending.put(requestId, future);
-        sender.send(player, BridgeCodec.encode(request));
+        try {
+            sender.send(player, BridgeCodec.encode(request));
+        } catch (RuntimeException e) {
+            future.completeExceptionally(e);
+        }
         return (CompletableFuture<T>) future
                 .orTimeout(timeoutMs, TimeUnit.MILLISECONDS)
                 .whenComplete((result, error) -> pending.remove(requestId));

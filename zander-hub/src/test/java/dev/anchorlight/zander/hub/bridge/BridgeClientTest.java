@@ -47,6 +47,30 @@ class BridgeClientTest {
     }
 
     @Test
+    void encodeFailureCompletesFutureExceptionallyWithoutLeakingPendingEntry() {
+        java.util.concurrent.atomic.AtomicInteger sendCount = new java.util.concurrent.atomic.AtomicInteger();
+        BridgeClient client = new BridgeClient((player, bytes) -> sendCount.incrementAndGet(), 2000L);
+
+        // serverId longer than BridgeCodec.MAX_STRING_LENGTH forces BridgeCodec.encode to throw
+        // BridgeProtocolException synchronously, before the sender is ever invoked (mirrors the
+        // null-portalId bug from HubCompassItem.onClick).
+        String oversizedServerId = "x".repeat(BridgeCodec.MAX_STRING_LENGTH + 1);
+
+        CompletableFuture<BridgeMessage> future = client.sendConnectRequest(null, "portal-1", oversizedServerId);
+
+        assertTrue(future.isCompletedExceptionally(), "future should complete exceptionally instead of send() throwing");
+        ExecutionException ex = assertThrows(ExecutionException.class, () -> future.get(1, TimeUnit.SECONDS));
+        assertInstanceOf(BridgeProtocolException.class, ex.getCause());
+        assertEquals(0, sendCount.get(), "sender should never be invoked when encoding fails");
+
+        // A response arriving late for that same requestId must find no stale pending entry to
+        // resolve against (it would otherwise silently vanish into a completed future, but more
+        // importantly this proves the `pending` map was cleaned up via the whenComplete path).
+        assertDoesNotThrow(() -> client.onPluginMessageReceived(
+                BridgeCodec.encode(new BridgeMessage.ConnectStarted("does-not-matter", "survival"))));
+    }
+
+    @Test
     void connectRequestResolvesOnConnectStarted() throws Exception {
         java.util.concurrent.atomic.AtomicReference<byte[]> sent = new java.util.concurrent.atomic.AtomicReference<>();
         BridgeClient client = new BridgeClient((player, bytes) -> sent.set(bytes), 2000L);

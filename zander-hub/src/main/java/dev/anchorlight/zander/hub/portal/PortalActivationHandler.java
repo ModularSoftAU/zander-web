@@ -42,8 +42,6 @@ public class PortalActivationHandler {
             return;
         }
 
-        sessions.markTriggered(player.getUniqueId(), portal.id(), now, portal.cooldownMs());
-
         switch (portal.destination()) {
             case ServerPortalDestination server -> activateServer(player, portal, server);
             case LocationPortalDestination location -> activateLocation(player, portal, location);
@@ -54,6 +52,8 @@ public class PortalActivationHandler {
         if (!sessions.tryMarkConnectPending(player.getUniqueId())) {
             return; // a request is already in flight for this player
         }
+
+        sessions.markTriggered(player.getUniqueId(), portal.id(), System.currentTimeMillis(), portal.cooldownMs());
 
         send(player, "messages.portal.connection-started", "<yellow>Connecting you now...</yellow>");
 
@@ -81,6 +81,8 @@ public class PortalActivationHandler {
     }
 
     private void activateLocation(Player player, Portal portal, LocationPortalDestination destination) {
+        sessions.markTriggered(player.getUniqueId(), portal.id(), System.currentTimeMillis(), portal.cooldownMs());
+
         World world = Bukkit.getWorld(destination.world());
         if (world == null) {
             send(player, "messages.portal.local-teleport-failed", "<red>That destination is currently unavailable.</red>");

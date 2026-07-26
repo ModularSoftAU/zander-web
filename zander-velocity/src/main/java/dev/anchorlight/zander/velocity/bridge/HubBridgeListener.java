@@ -34,7 +34,7 @@ public class HubBridgeListener {
     private final boolean logMalformed;
     private final boolean logDeniedSources;
     private final RateLimiter rateLimiter;
-    private final java.util.Set<UUID> recentlyLoggedDenials = ConcurrentHashMap.newKeySet();
+    private final java.util.Set<String> recentlyLoggedDenials = ConcurrentHashMap.newKeySet();
     private final java.util.Set<UUID> recentlyLoggedMalformed = ConcurrentHashMap.newKeySet();
 
     public HubBridgeListener(ProxyServer proxy, Logger logger, YamlDocument config) {
@@ -60,8 +60,10 @@ public class HubBridgeListener {
         }
         String sourceServerName = source.getServerInfo().getName();
         if (!allowedSourceServers.contains(sourceServerName)) {
-            if (logDeniedSources) {
+            if (logDeniedSources && recentlyLoggedDenials.add(sourceServerName)) {
                 logger.warn("Rejected zander:hub message from unapproved source server '{}'", sourceServerName);
+                proxy.getScheduler().buildTask(this, () -> recentlyLoggedDenials.remove(sourceServerName))
+                        .delay(30, TimeUnit.SECONDS).schedule();
             }
             return;
         }

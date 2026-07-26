@@ -1,7 +1,6 @@
 compass:
   enabled: true
   title: "<dark_aqua>Server Selector</dark_aqua>"
-  request-timeout-ms: 1500
   hide-inaccessible: true
   open-on:
     right-click: true

@@ -103,8 +103,11 @@ public class HubCompassItem implements Listener {
     }
 
     private void renderLoading(Inventory inventory, List<CompassServerEntry> configured) {
-        for (CompassServerEntry entry : configured) {
-            inventory.setItem(configured.indexOf(entry) % inventory.getSize(), loadingIcon(entry));
+        Map<String, Integer> explicitSlots = explicitSlots(configured);
+        List<String> ids = configured.stream().map(CompassServerEntry::id).toList();
+        for (CompassSlotCalculator.SlotAssignment assignment : CompassSlotCalculator.assign(ids, explicitSlots, inventory.getSize())) {
+            CompassServerEntry entry = configured.stream().filter(e -> e.id().equals(assignment.entryId())).findFirst().orElseThrow();
+            inventory.setItem(assignment.slot(), loadingIcon(entry));
         }
     }
 
@@ -229,7 +232,7 @@ public class HubCompassItem implements Listener {
         }
 
         player.closeInventory();
-        ZanderHubMain.bridgeClient.sendConnectRequest(player, null, serverId)
+        ZanderHubMain.bridgeClient.sendConnectRequest(player, "", serverId)
                 .whenComplete((response, error) -> Bukkit.getScheduler().runTask(ZanderHubMain.plugin, () -> {
                     pendingConnect.remove(playerId);
                     if (!player.isOnline()) {
