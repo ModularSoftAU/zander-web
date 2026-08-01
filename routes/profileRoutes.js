@@ -30,6 +30,7 @@ import {
   deactivatePlatformConnection,
 } from "../controllers/watchController.js";
 import { checkAndReportNickname } from "../lib/discord/nicknameCheck.mjs";
+import { syncMemberRankRoles, stripAllTrackedRankRoles } from "../lib/discord/rankRoleSync.mjs";
 import * as mixed from "../controllers/mixedController.js";
 
 export default function profileSiteRoutes(
@@ -511,6 +512,8 @@ export default function profileSiteRoutes(
 
       req.session.user.discordID = discordUser.id;
 
+      await syncMemberRankRoles(req.session.user.userId);
+
       // Trigger nickname enforcement now that the account is linked
       if (features.discord?.events?.nicknameCheck && config.discord?.nicknameReportChannelId && config.discord?.guildId) {
         try {
@@ -568,8 +571,12 @@ export default function profileSiteRoutes(
     }
 
     try {
+      const discordIdBeingUnlinked = req.session.user.discordID;
       await unlinkDiscordAccount(req.session.user.userId);
       req.session.user.discordID = null;
+      if (discordIdBeingUnlinked) {
+        await stripAllTrackedRankRoles(discordIdBeingUnlinked);
+      }
       setBannerCookie("success", "Discord account disconnected.", res);
     } catch (error) {
       console.error("[PROFILE] Discord unlink failed", error);
