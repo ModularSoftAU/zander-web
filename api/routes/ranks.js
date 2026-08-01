@@ -4,6 +4,7 @@ import {
   getUserPermissions,
 } from "../../controllers/userController.js";
 import { luckpermsDb } from "../../controllers/databaseController.js";
+import { syncMemberRankRoles } from "../../lib/discord/rankRoleSync.mjs";
 
 const RANK_VIEW = "ranks";
 const USER_RANKS_VIEW = "userRanks";
@@ -555,6 +556,10 @@ export default function rankApiRoute(app, config, db, features, lang) {
         );
       }
 
+      if (player.userId) {
+        await syncMemberRankRoles(player.userId);
+      }
+
       return res.send({
         success: true,
         message: "Rank assigned successfully.",
@@ -598,6 +603,10 @@ export default function rankApiRoute(app, config, db, features, lang) {
             AND permission LIKE CONCAT('meta.group.', ?, '.title.%')`,
         [player.uuid, rankSlug]
       );
+
+      if (player.userId && result?.affectedRows > 0) {
+        await syncMemberRankRoles(player.userId);
+      }
 
       return res.send({
         success: true,
