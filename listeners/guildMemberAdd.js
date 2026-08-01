@@ -4,6 +4,8 @@ const require = createRequire(import.meta.url);
 const config = require("../config.json");
 const features = require("../features.json");
 import { checkAndReportNickname } from "../lib/discord/nicknameCheck.mjs";
+import { syncMemberRankRoles } from "../lib/discord/rankRoleSync.mjs";
+import { UserGetter } from "../controllers/userController.js";
 
 export class GuildMemberAddListener extends Listener {
   constructor(context, options) {
@@ -15,8 +17,16 @@ export class GuildMemberAddListener extends Listener {
   }
 
   async run(member) {
-    if (!features.discord?.events?.nicknameCheck) return;
     if (member.user.bot) return;
+
+    // Re-apply rank roles for returning linked members — Discord doesn't
+    // remember role state after a member leaves the server.
+    const linkedAccount = await new UserGetter().byDiscordId(member.user.id);
+    if (linkedAccount) {
+      await syncMemberRankRoles(linkedAccount.userId);
+    }
+
+    if (!features.discord?.events?.nicknameCheck) return;
 
     const reportChannelId = config.discord?.nicknameReportChannelId;
     if (!reportChannelId) return;
