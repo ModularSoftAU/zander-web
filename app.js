@@ -55,6 +55,7 @@ import("./cron/eventTemplateCron.js");
 import("./cron/announcementExpiryCron.js");
 import("./cron/webstoreCommandSyncCron.js");
 import("./cron/badgeLuckpermsSyncCron.js");
+import("./cron/rankDiscordRoleSyncCron.js");
 import("./cron/shopItemIndexCron.js");
 
 //
