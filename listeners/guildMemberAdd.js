@@ -21,9 +21,13 @@ export class GuildMemberAddListener extends Listener {
 
     // Re-apply rank roles for returning linked members — Discord doesn't
     // remember role state after a member leaves the server.
-    const linkedAccount = await new UserGetter().byDiscordId(member.user.id);
-    if (linkedAccount) {
-      await syncMemberRankRoles(linkedAccount.userId);
+    try {
+      const linkedAccount = await new UserGetter().byDiscordId(member.user.id);
+      if (linkedAccount) {
+        await syncMemberRankRoles(linkedAccount.userId);
+      }
+    } catch (error) {
+      console.error("[guildMemberAdd] Failed to sync rank roles for rejoining member:", error.message);
     }
 
     if (!features.discord?.events?.nicknameCheck) return;

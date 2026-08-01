@@ -55,6 +55,7 @@ async function reconcileRankDiscordRoles() {
 
     // Map: linked website userId -> Set of discordRoleIds they should have.
     const shouldHaveByUserId = new Map();
+    let anyRankHadMembers = false;
 
     for (const rank of ranks) {
       try {
@@ -64,11 +65,12 @@ async function reconcileRankDiscordRoles() {
           [`group.${rank.rankSlug}`]
         );
         if (lpRows.length === 0) continue;
+        anyRankHadMembers = true;
 
         const uuids = lpRows.map((r) => r.uuid);
         const placeholders = uuids.map(() => "?").join(", ");
         const webUsers = await queryDb(
-          `SELECT userId, discordId FROM users WHERE LOWER(uuid) IN (${placeholders}) AND discordId IS NOT NULL`,
+          `SELECT userId, discordId FROM users WHERE LOWER(REPLACE(uuid, '-', '')) IN (${placeholders}) AND discordId IS NOT NULL`,
           uuids
         );
 
@@ -81,6 +83,15 @@ async function reconcileRankDiscordRoles() {
       } catch (err) {
         console.error(`[rankRoleSync-cron] Error resolving members for rank ${rank.rankSlug}:`, err.message);
       }
+    }
+
+    // Circuit breaker: if every rank had LuckPerms members but NONE resolved to a
+    // linked website account, something is wrong with the uuid mapping (not "nobody
+    // is linked") — refuse to run the removal sweep rather than risk stripping every
+    // guild member's roles.
+    if (anyRankHadMembers && shouldHaveByUserId.size === 0) {
+      console.warn("[rankRoleSync-cron] LuckPerms ranks have members but none resolved to a linked account — skipping sweep (possible uuid mapping bug).");
+      return;
     }
 
     const guild = client.guilds.cache.get(guildId) || (await client.guilds.fetch(guildId).catch(() => null));

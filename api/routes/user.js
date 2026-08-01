@@ -10,6 +10,7 @@ import {
   setProfileUserAboutMe,
   setProfileUserInterests,
 } from "../../controllers/userController.js";
+import { syncMemberRankRoles } from "../../lib/discord/rankRoleSync.mjs";
 import {
   required,
   optional,
@@ -482,6 +483,10 @@ export default function userApiRoute(app, config, db, features, lang) {
       try {
         const success = await userLinkData.link(linkUserUUID, discordId);
         if (success) {
+          const linkedWebUser = await new UserGetter().byUUID(linkUserUUID);
+          if (linkedWebUser) {
+            await syncMemberRankRoles(linkedWebUser.userId);
+          }
           return res.send({
             success: true,
             alertType: "success",

@@ -99,6 +99,7 @@ export class ForceLinkCommand extends Command {
       warnings.push(
         `⚠️ \`${minecraftUsername}\` was previously linked to <@${mcUser.discordId}> — that link will be replaced.`,
       );
+      await stripAllTrackedRankRoles(mcUser.discordId);
     }
 
     // Execute the force link
