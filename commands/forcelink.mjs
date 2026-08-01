@@ -1,6 +1,7 @@
 import { Command } from "@sapphire/framework";
 import { Colors, EmbedBuilder, SlashCommandBuilder } from "discord.js";
 import { hasPermission } from "../lib/discord/permissions.mjs";
+import { syncMemberRankRoles, stripAllTrackedRankRoles } from "../lib/discord/rankRoleSync.mjs";
 import { UserGetter, getUserPermissions, linkDiscordAccount, unlinkDiscordAccount } from "../controllers/userController.js";
 import db from "../controllers/databaseController.js";
 
@@ -91,6 +92,7 @@ export class ForceLinkCommand extends Command {
       );
       // Clear the old link from the Discord user's previous MC account
       await unlinkDiscordAccount(existingDiscordLink.userId);
+      await stripAllTrackedRankRoles(targetDiscordUser.id);
     }
 
     if (mcUser.discordId && mcUser.discordId !== targetDiscordUser.id) {
@@ -102,6 +104,7 @@ export class ForceLinkCommand extends Command {
     // Execute the force link
     const discordHandle = targetDiscordUser.username;
     await linkDiscordAccount(mcUser.userId, targetDiscordUser.id, discordHandle);
+    await syncMemberRankRoles(mcUser.userId);
 
     // Mark account as registered if not already, and clean up any pending verify codes
     if (!mcUser.account_registered) {
