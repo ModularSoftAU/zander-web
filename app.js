@@ -1,3 +1,5 @@
+import "./instrument.mjs";
+import * as Sentry from "@sentry/node";
 import { createRequire } from "module";
 const require = createRequire(import.meta.url);
 
@@ -89,6 +91,10 @@ const buildApp = async () => {
   // event-loop ticks long enough for avvio to fire the default 10-second
   // timeout before route-registration plugins have a chance to complete.
   const app = fastify({ logger: config.debug, pluginTimeout: 120000 });
+
+  if (process.env.SENTRY_DSN) {
+    Sentry.setupFastifyErrorHandler(app);
+  }
 
   // When app errors, render the error on a page, do not provide JSON
   app.setNotFoundHandler(async function (req, res) {

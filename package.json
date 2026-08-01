@@ -35,6 +35,8 @@
     "@prisma/client": "^5.22.0",
     "@quixo3/prisma-session-store": "^3.1.19",
     "@sapphire/framework": "^4.7.2",
+    "@sentry/node": "^10.69.0",
+    "@sentry/profiling-node": "^10.69.0",
     "bcrypt": "^5.0.1",
     "cloudinary": "^2.10.0",
     "crypto": "^1.0.1",
