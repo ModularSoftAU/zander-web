@@ -11,8 +11,9 @@
 ## Global Constraints
 
 - Validate usernames against `^[A-Za-z0-9_]{3,16}$` before any network call; reject locally otherwise.
+- **Data source split (revised from the original single-source design):** current username, UUID, and avatar come from Mojang's official API (`api.mojang.com/users/profiles/minecraft/{username}` for the UUID/current-name, [Crafatar](https://crafatar.com) for the avatar image URL — a stable public URL keyed by UUID, no fetch needed). NameMC is queried **only** for the previous-names list (by UUID, not username — usernames change, UUIDs don't), since Mojang no longer publishes name-change history (that endpoint was removed in 2022). Do not add the third-party `namemc` npm package or any other unofficial NameMC wrapper as a dependency — keep our own minimal `cheerio`-based parser, scoped to just the previous-names section, per the "do not treat third-party unofficial NameMC wrappers as guaranteed stable dependencies" requirement.
 - Never attempt to bypass CAPTCHA/Cloudflare, never use browser automation, never perform reverse DNS (not applicable here but stated for clarity — no IP handling in this feature at all).
-- Distinguish exactly three outcomes with distinct copy: not-found profile, found-with-no-previous-names, and NameMC-unavailable (timeout/5xx/429/parse failure) — never conflate "unavailable" with "no history".
+- Distinguish exactly three outcomes with distinct copy: not-found profile (Mojang has no such username), found-with-no-previous-names, and unavailable (timeout/5xx/429/parse failure from either Mojang or NameMC) — never conflate "unavailable" with "no history". If Mojang resolves the username successfully but the NameMC previous-names step fails/times out, the overall result is `unavailable` (not a silent "no history"), since we cannot distinguish "genuinely no history" from "couldn't check" in that case.
 - Validation errors, cooldown messages, and internal errors are ephemeral; successful lookups are public by default (`publicResults` config, default `true`).
 - All NameMC-sourced text must be sanitized against `@everyone`/`@here`/role/user mentions and markdown injection before it reaches a Discord embed.
 - Cache and rate-limit state is in-memory (no Redis in this stack) — acceptable since the bot runs as a single process.
@@ -292,30 +293,29 @@ git commit -m "feat: add in-memory cache, dedup, and throttle for NameMC lookups
 
 ---
 
-### Task 4: NameMC lookup service
+### Task 4a: Mojang identity resolution
 
 **Files:**
-- Create: `lib/discord/nameMcLookup.mjs`
-- Test: `tests/unit/nameMcLookup.test.mjs`
+- Create: `lib/discord/mojangApi.mjs`
+- Test: `tests/unit/mojangApi.test.mjs`
 
 **Interfaces:**
-- Consumes: `node-fetch` (`fetch`), `cheerio`, `createNameMcCache` (Task 3).
+- Consumes: `node-fetch` (`fetch`).
 - Produces:
   - `isValidUsername(username: string): boolean` — tests `^[A-Za-z0-9_]{3,16}$`.
-  - `createNameMcLookupService({ requestTimeoutMs, cacheTtlMs, minIntervalMs, fetchImpl })` returning `{ lookupNameHistory(username: string): Promise<Result> }` where `Result` is one of:
-    - `{ status: "invalid" }`
-    - `{ status: "not_found" }`
-    - `{ status: "unavailable" }`
-    - `{ status: "found", currentName, uuid, previousNames: [{name, changedAt: Date|null}], profileUrl, avatarUrl }`
+  - `getAvatarUrl(uuid: string): string` — pure function, returns `` `https://crafatar.com/avatars/${uuid}?size=128&overlay` `` (no network call — Crafatar serves this directly from any valid UUID).
+  - `createMojangApiClient({ requestTimeoutMs, fetchImpl })` returning `{ resolveUsername(username: string): Promise<Result> }` where `Result` is one of:
+    - `{ status: "not_found" }` (Mojang returns 204/404 for an unknown username)
+    - `{ status: "unavailable" }` (timeout, non-2xx/404 status, or malformed JSON)
+    - `{ status: "found", uuid, currentName }` — `uuid` is the dashed form (`8-4-4-4-12`); Mojang's API returns it undashed, so this function inserts the dashes.
   - `fetchImpl` is injectable (defaults to `node-fetch`'s `fetch`) so tests never hit the real network.
-  - Internal-only (not exported): `parseProfileHtml(html: string): {currentName, uuid, previousNames, avatarUrl} | null` — isolates the `cheerio` selector logic so parsing can be tested against fixture HTML without going through the network/cache layers.
 
-- [ ] **Step 1: Write failing tests using fixture HTML**
+- [ ] **Step 1: Write failing tests**
 
 ```js
-// tests/unit/nameMcLookup.test.mjs
+// tests/unit/mojangApi.test.mjs
 import { describe, it, expect, vi } from "vitest";
-import { isValidUsername, createNameMcLookupService } from "../../lib/discord/nameMcLookup.mjs";
+import { isValidUsername, getAvatarUrl, createMojangApiClient } from "../../lib/discord/mojangApi.mjs";
 
 describe("isValidUsername", () => {
   it("accepts a valid username", () => {
@@ -332,16 +332,193 @@ describe("isValidUsername", () => {
   });
 });
 
+describe("getAvatarUrl", () => {
+  it("builds a Crafatar URL from a UUID with no network call", () => {
+    expect(getAvatarUrl("00000000-0000-0000-0000-000000000000")).toBe(
+      "https://crafatar.com/avatars/00000000-0000-0000-0000-000000000000?size=128&overlay"
+    );
+  });
+});
+
+describe("resolveUsername", () => {
+  it("resolves a valid username to a dashed uuid and current name", async () => {
+    const fetchImpl = vi.fn().mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: async () => ({ id: "00000000000000000000000000000000", name: "CurrentPlayer" }),
+    });
+    const client = createMojangApiClient({ requestTimeoutMs: 1000, fetchImpl });
+    const result = await client.resolveUsername("CurrentPlayer");
+    expect(result).toEqual({
+      status: "found",
+      uuid: "00000000-0000-0000-0000-000000000000",
+      currentName: "CurrentPlayer",
+    });
+  });
+
+  it("returns not_found for a 204 response", async () => {
+    const fetchImpl = vi.fn().mockResolvedValue({ ok: false, status: 204, json: async () => ({}) });
+    const client = createMojangApiClient({ requestTimeoutMs: 1000, fetchImpl });
+    const result = await client.resolveUsername("MissingPlayer");
+    expect(result).toEqual({ status: "not_found" });
+  });
+
+  it("returns not_found for a 404 response", async () => {
+    const fetchImpl = vi.fn().mockResolvedValue({ ok: false, status: 404, json: async () => ({}) });
+    const client = createMojangApiClient({ requestTimeoutMs: 1000, fetchImpl });
+    const result = await client.resolveUsername("MissingPlayer");
+    expect(result).toEqual({ status: "not_found" });
+  });
+
+  it("returns unavailable on a non-404/204 error status", async () => {
+    const fetchImpl = vi.fn().mockResolvedValue({ ok: false, status: 500, json: async () => ({}) });
+    const client = createMojangApiClient({ requestTimeoutMs: 1000, fetchImpl });
+    const result = await client.resolveUsername("ErrorPlayer");
+    expect(result).toEqual({ status: "unavailable" });
+  });
+
+  it("returns unavailable on 429", async () => {
+    const fetchImpl = vi.fn().mockResolvedValue({ ok: false, status: 429, json: async () => ({}) });
+    const client = createMojangApiClient({ requestTimeoutMs: 1000, fetchImpl });
+    const result = await client.resolveUsername("RateLimitedPlayer");
+    expect(result).toEqual({ status: "unavailable" });
+  });
+
+  it("returns unavailable when fetch throws (e.g. timeout)", async () => {
+    const fetchImpl = vi.fn().mockRejectedValue(new Error("timeout"));
+    const client = createMojangApiClient({ requestTimeoutMs: 1000, fetchImpl });
+    const result = await client.resolveUsername("TimeoutPlayer");
+    expect(result).toEqual({ status: "unavailable" });
+  });
+
+  it("returns unavailable when the JSON body is malformed", async () => {
+    const fetchImpl = vi.fn().mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: async () => {
+        throw new Error("invalid json");
+      },
+    });
+    const client = createMojangApiClient({ requestTimeoutMs: 1000, fetchImpl });
+    const result = await client.resolveUsername("BrokenPlayer");
+    expect(result).toEqual({ status: "unavailable" });
+  });
+});
+```
+
+Run: `npx vitest run tests/unit/mojangApi.test.mjs`
+Expected: FAIL — module not found.
+
+- [ ] **Step 2: Implement**
+
+```js
+// lib/discord/mojangApi.mjs
+import fetchDefault from "node-fetch";
+
+const USERNAME_PATTERN = /^[A-Za-z0-9_]{3,16}$/;
+const USER_AGENT = "ZanderBot/1.0 (+namehistory-lookup; contact: staff)";
+
+export function isValidUsername(username) {
+  return typeof username === "string" && USERNAME_PATTERN.test(username);
+}
+
+export function getAvatarUrl(uuid) {
+  return `https://crafatar.com/avatars/${uuid}?size=128&overlay`;
+}
+
+function insertDashes(undashedUuid) {
+  return [
+    undashedUuid.slice(0, 8),
+    undashedUuid.slice(8, 12),
+    undashedUuid.slice(12, 16),
+    undashedUuid.slice(16, 20),
+    undashedUuid.slice(20, 32),
+  ].join("-");
+}
+
+export function createMojangApiClient({ requestTimeoutMs, fetchImpl = fetchDefault }) {
+  async function resolveUsername(username) {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), requestTimeoutMs);
+    try {
+      const response = await fetchImpl(
+        `https://api.mojang.com/users/profiles/minecraft/${encodeURIComponent(username)}`,
+        { headers: { "User-Agent": USER_AGENT }, signal: controller.signal }
+      );
+
+      if (response.status === 204 || response.status === 404) {
+        return { status: "not_found" };
+      }
+      if (!response.ok) {
+        return { status: "unavailable" };
+      }
+
+      const body = await response.json();
+      if (!body?.id || !body?.name) {
+        return { status: "unavailable" };
+      }
+
+      return {
+        status: "found",
+        uuid: insertDashes(body.id),
+        currentName: body.name,
+      };
+    } catch {
+      return { status: "unavailable" };
+    } finally {
+      clearTimeout(timeout);
+    }
+  }
+
+  return { resolveUsername };
+}
+```
+
+- [ ] **Step 3: Run tests and verify pass**
+
+Run: `npx vitest run tests/unit/mojangApi.test.mjs`
+Expected: PASS (11 tests)
+
+- [ ] **Step 4: Commit**
+
+```bash
+git add lib/discord/mojangApi.mjs tests/unit/mojangApi.test.mjs
+git commit -m "feat: add Mojang API client for username/UUID resolution"
+```
+
+---
+
+### Task 4b: NameMC previous-names service
+
+**Files:**
+- Create: `lib/discord/nameMcLookup.mjs`
+- Test: `tests/unit/nameMcLookup.test.mjs`
+
+**Interfaces:**
+- Consumes: `node-fetch` (`fetch`), `cheerio`, `createNameMcCache` (Task 3).
+- Produces:
+  - `createNameMcPreviousNamesService({ requestTimeoutMs, cacheTtlMs, minIntervalMs, fetchImpl })` returning `{ fetchPreviousNames(uuid: string): Promise<Result> }` where `Result` is one of:
+    - `{ status: "not_found" }` (NameMC has no profile page for this UUID — treated as "no tracked history", not an error, since Mojang already confirmed the account exists)
+    - `{ status: "unavailable" }` (timeout, non-2xx/404 status, 429, or parse failure)
+    - `{ status: "found", previousNames: [{name, changedAt: Date|null}] }`
+  - `fetchImpl` is injectable (defaults to `node-fetch`'s `fetch`) so tests never hit the real network. Cache/dedup/throttle keys on `uuid` (not username) — NameMC is queried by UUID here.
+  - Internal-only (not exported): `parsePreviousNames(html: string): Array<{name, changedAt}> | null` — isolates the `cheerio` selector logic (returns `null` if the page doesn't look like a valid profile page at all, distinct from a valid profile with zero previous names which returns `[]`).
+
+- [ ] **Step 1: Write failing tests using fixture HTML**
+
+```js
+// tests/unit/nameMcLookup.test.mjs
+import { describe, it, expect, vi } from "vitest";
+import { createNameMcPreviousNamesService } from "../../lib/discord/nameMcLookup.mjs";
+
 const PROFILE_HTML_MULTIPLE_NAMES = `
 <html><body>
   <h1 class="mb-0">CurrentPlayer</h1>
   <div class="card-header">Name History</div>
   <div class="card-body">
-    <div class="row"><a href="/profile/00000000-0000-0000-0000-000000000000">CurrentPlayer</a></div>
     <div class="name-change-row" data-name="OriginalPlayer" data-changed-at="2025-01-04T00:00:00Z"></div>
     <div class="name-change-row" data-name="SecondPlayer" data-changed-at="2026-03-18T00:00:00Z"></div>
   </div>
-  <img class="card-img skin-2d" src="https://namemc.com/avatar/CurrentPlayer.png" />
 </body></html>
 `;
 
@@ -350,7 +527,6 @@ const PROFILE_HTML_NO_HISTORY = `
   <h1 class="mb-0">SoloPlayer</h1>
   <div class="card-header">Name History</div>
   <div class="card-body"></div>
-  <img class="card-img skin-2d" src="https://namemc.com/avatar/SoloPlayer.png" />
 </body></html>
 `;
 
@@ -363,79 +539,72 @@ function fakeFetch(responses) {
   });
 }
 
-describe("lookupNameHistory", () => {
-  it("returns invalid for a malformed username without calling fetch", async () => {
-    const fetchImpl = fakeFetch([]);
-    const service = createNameMcLookupService({ requestTimeoutMs: 1000, cacheTtlMs: 1000, minIntervalMs: 0, fetchImpl });
-    const result = await service.lookupNameHistory("bad name!");
-    expect(result).toEqual({ status: "invalid" });
-    expect(fetchImpl).not.toHaveBeenCalled();
-  });
+const UUID = "00000000-0000-0000-0000-000000000000";
 
+describe("fetchPreviousNames", () => {
   it("parses a profile with multiple previous names", async () => {
     const fetchImpl = fakeFetch([{ ok: true, status: 200, text: async () => PROFILE_HTML_MULTIPLE_NAMES }]);
-    const service = createNameMcLookupService({ requestTimeoutMs: 1000, cacheTtlMs: 1000, minIntervalMs: 0, fetchImpl });
-    const result = await service.lookupNameHistory("CurrentPlayer");
-    expect(result.status).toBe("found");
-    expect(result.currentName).toBe("CurrentPlayer");
-    expect(result.uuid).toBe("00000000-0000-0000-0000-000000000000");
-    expect(result.previousNames).toEqual([
-      { name: "OriginalPlayer", changedAt: new Date("2025-01-04T00:00:00Z") },
-      { name: "SecondPlayer", changedAt: new Date("2026-03-18T00:00:00Z") },
-    ]);
+    const service = createNameMcPreviousNamesService({ requestTimeoutMs: 1000, cacheTtlMs: 1000, minIntervalMs: 0, fetchImpl });
+    const result = await service.fetchPreviousNames(UUID);
+    expect(result).toEqual({
+      status: "found",
+      previousNames: [
+        { name: "OriginalPlayer", changedAt: new Date("2025-01-04T00:00:00Z") },
+        { name: "SecondPlayer", changedAt: new Date("2026-03-18T00:00:00Z") },
+      ],
+    });
   });
 
   it("parses a profile with no previous names", async () => {
     const fetchImpl = fakeFetch([{ ok: true, status: 200, text: async () => PROFILE_HTML_NO_HISTORY }]);
-    const service = createNameMcLookupService({ requestTimeoutMs: 1000, cacheTtlMs: 1000, minIntervalMs: 0, fetchImpl });
-    const result = await service.lookupNameHistory("SoloPlayer");
-    expect(result.status).toBe("found");
-    expect(result.previousNames).toEqual([]);
+    const service = createNameMcPreviousNamesService({ requestTimeoutMs: 1000, cacheTtlMs: 1000, minIntervalMs: 0, fetchImpl });
+    const result = await service.fetchPreviousNames(UUID);
+    expect(result).toEqual({ status: "found", previousNames: [] });
   });
 
   it("returns not_found for a 404 response", async () => {
     const fetchImpl = fakeFetch([{ ok: false, status: 404, text: async () => "" }]);
-    const service = createNameMcLookupService({ requestTimeoutMs: 1000, cacheTtlMs: 1000, minIntervalMs: 0, fetchImpl });
-    const result = await service.lookupNameHistory("MissingPlayer");
+    const service = createNameMcPreviousNamesService({ requestTimeoutMs: 1000, cacheTtlMs: 1000, minIntervalMs: 0, fetchImpl });
+    const result = await service.fetchPreviousNames(UUID);
     expect(result).toEqual({ status: "not_found" });
   });
 
   it("returns unavailable on a non-404 error status", async () => {
     const fetchImpl = fakeFetch([{ ok: false, status: 500, text: async () => "" }]);
-    const service = createNameMcLookupService({ requestTimeoutMs: 1000, cacheTtlMs: 1000, minIntervalMs: 0, fetchImpl });
-    const result = await service.lookupNameHistory("ErrorPlayer");
+    const service = createNameMcPreviousNamesService({ requestTimeoutMs: 1000, cacheTtlMs: 1000, minIntervalMs: 0, fetchImpl });
+    const result = await service.fetchPreviousNames(UUID);
     expect(result).toEqual({ status: "unavailable" });
   });
 
   it("returns unavailable on 429", async () => {
     const fetchImpl = fakeFetch([{ ok: false, status: 429, text: async () => "" }]);
-    const service = createNameMcLookupService({ requestTimeoutMs: 1000, cacheTtlMs: 1000, minIntervalMs: 0, fetchImpl });
-    const result = await service.lookupNameHistory("RateLimitedPlayer");
+    const service = createNameMcPreviousNamesService({ requestTimeoutMs: 1000, cacheTtlMs: 1000, minIntervalMs: 0, fetchImpl });
+    const result = await service.fetchPreviousNames(UUID);
     expect(result).toEqual({ status: "unavailable" });
   });
 
   it("returns unavailable when fetch throws (e.g. timeout)", async () => {
     const fetchImpl = vi.fn().mockRejectedValue(new Error("timeout"));
-    const service = createNameMcLookupService({ requestTimeoutMs: 1000, cacheTtlMs: 1000, minIntervalMs: 0, fetchImpl });
-    const result = await service.lookupNameHistory("TimeoutPlayer");
+    const service = createNameMcPreviousNamesService({ requestTimeoutMs: 1000, cacheTtlMs: 1000, minIntervalMs: 0, fetchImpl });
+    const result = await service.fetchPreviousNames(UUID);
     expect(result).toEqual({ status: "unavailable" });
   });
 
-  it("caches a found result and does not call fetch again for the same username", async () => {
+  it("caches a found result and does not call fetch again for the same uuid", async () => {
     const fetchImpl = fakeFetch([{ ok: true, status: 200, text: async () => PROFILE_HTML_NO_HISTORY }]);
-    const service = createNameMcLookupService({ requestTimeoutMs: 1000, cacheTtlMs: 60_000, minIntervalMs: 0, fetchImpl });
-    await service.lookupNameHistory("SoloPlayer");
-    const second = await service.lookupNameHistory("SoloPlayer");
+    const service = createNameMcPreviousNamesService({ requestTimeoutMs: 1000, cacheTtlMs: 60_000, minIntervalMs: 0, fetchImpl });
+    await service.fetchPreviousNames(UUID);
+    const second = await service.fetchPreviousNames(UUID);
     expect(fetchImpl).toHaveBeenCalledTimes(1);
     expect(second.status).toBe("found");
   });
 
-  it("deduplicates concurrent lookups for the same username", async () => {
+  it("deduplicates concurrent lookups for the same uuid", async () => {
     const fetchImpl = fakeFetch([{ ok: true, status: 200, text: async () => PROFILE_HTML_NO_HISTORY }]);
-    const service = createNameMcLookupService({ requestTimeoutMs: 1000, cacheTtlMs: 60_000, minIntervalMs: 0, fetchImpl });
+    const service = createNameMcPreviousNamesService({ requestTimeoutMs: 1000, cacheTtlMs: 60_000, minIntervalMs: 0, fetchImpl });
     const [a, b] = await Promise.all([
-      service.lookupNameHistory("SoloPlayer"),
-      service.lookupNameHistory("soloplayer"),
+      service.fetchPreviousNames(UUID),
+      service.fetchPreviousNames(UUID.toUpperCase()),
     ]);
     expect(fetchImpl).toHaveBeenCalledTimes(1);
     expect(a.status).toBe("found");
@@ -455,22 +624,13 @@ import * as cheerio from "cheerio";
 import fetchDefault from "node-fetch";
 import { createNameMcCache } from "./nameMcCache.mjs";
 
-const USERNAME_PATTERN = /^[A-Za-z0-9_]{3,16}$/;
 const USER_AGENT = "ZanderBot/1.0 (+namehistory-lookup; contact: staff)";
 
-export function isValidUsername(username) {
-  return typeof username === "string" && USERNAME_PATTERN.test(username);
-}
-
-export function parseProfileHtml(html) {
+export function parsePreviousNames(html) {
   const $ = cheerio.load(html);
 
   const currentName = $("h1.mb-0").first().text().trim();
   if (!currentName) return null;
-
-  const profileLink = $('a[href^="/profile/"]').first().attr("href") ?? "";
-  const uuidMatch = profileLink.match(/\/profile\/([0-9a-fA-F-]{32,36})/);
-  const uuid = uuidMatch ? uuidMatch[1] : null;
 
   const previousNames = [];
   $(".name-change-row").each((_, el) => {
@@ -484,19 +644,17 @@ export function parseProfileHtml(html) {
     }
   });
 
-  const avatarUrl = $("img.skin-2d").first().attr("src") ?? null;
-
-  return { currentName, uuid, previousNames, avatarUrl };
+  return previousNames;
 }
 
-export function createNameMcLookupService({ requestTimeoutMs, cacheTtlMs, minIntervalMs, fetchImpl = fetchDefault }) {
+export function createNameMcPreviousNamesService({ requestTimeoutMs, cacheTtlMs, minIntervalMs, fetchImpl = fetchDefault }) {
   const cache = createNameMcCache({ cacheTtlMs, minIntervalMs });
 
-  async function fetchProfile(username) {
+  async function fetchProfile(uuid) {
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), requestTimeoutMs);
     try {
-      const response = await fetchImpl(`https://namemc.com/profile/${encodeURIComponent(username)}`, {
+      const response = await fetchImpl(`https://namemc.com/profile/${encodeURIComponent(uuid)}`, {
         headers: { "User-Agent": USER_AGENT },
         signal: controller.signal,
       });
@@ -511,19 +669,12 @@ export function createNameMcLookupService({ requestTimeoutMs, cacheTtlMs, minInt
       }
 
       const html = await response.text();
-      const parsed = parseProfileHtml(html);
-      if (!parsed) {
+      const previousNames = parsePreviousNames(html);
+      if (previousNames === null) {
         return { status: "not_found" };
       }
 
-      return {
-        status: "found",
-        currentName: parsed.currentName,
-        uuid: parsed.uuid,
-        previousNames: parsed.previousNames,
-        profileUrl: `https://namemc.com/profile/${parsed.currentName}`,
-        avatarUrl: parsed.avatarUrl,
-      };
+      return { status: "found", previousNames };
     } catch {
       return { status: "unavailable" };
     } finally {
@@ -531,21 +682,188 @@ export function createNameMcLookupService({ requestTimeoutMs, cacheTtlMs, minInt
     }
   }
 
+  async function fetchPreviousNames(uuid) {
+    const cached = cache.getCached(uuid);
+    if (cached) return cached;
+
+    const result = await cache.dedupe(uuid, () => cache.throttle(() => fetchProfile(uuid)));
+
+    if (result.status === "found") {
+      cache.setCached(uuid, result);
+    }
+
+    return result;
+  }
+
+  return { fetchPreviousNames };
+}
+```
+
+- [ ] **Step 3: Run tests and verify pass**
+
+Run: `npx vitest run tests/unit/nameMcLookup.test.mjs`
+Expected: PASS (8 tests)
+
+- [ ] **Step 4: Commit**
+
+```bash
+git add lib/discord/nameMcLookup.mjs tests/unit/nameMcLookup.test.mjs
+git commit -m "feat: add NameMC previous-names service scoped to history only"
+```
+
+---
+
+### Task 4c: Name history lookup orchestrator
+
+**Files:**
+- Create: `lib/discord/nameHistoryLookup.mjs`
+- Test: `tests/unit/nameHistoryLookup.test.mjs`
+
+**Interfaces:**
+- Consumes: `isValidUsername`, `getAvatarUrl`, `createMojangApiClient` (Task 4a); `createNameMcPreviousNamesService` (Task 4b).
+- Produces: `createNameHistoryLookupService({ requestTimeoutMs, cacheTtlMs, minIntervalMs, fetchImpl })` returning `{ lookupNameHistory(username: string): Promise<Result> }` where `Result` is one of:
+  - `{ status: "invalid" }`
+  - `{ status: "not_found" }`
+  - `{ status: "unavailable" }`
+  - `{ status: "found", currentName, uuid, previousNames: [{name, changedAt}], profileUrl, avatarUrl }` — `profileUrl` is `` `https://namemc.com/profile/${uuid}` ``, `avatarUrl` is `getAvatarUrl(uuid)`.
+  This is the function `commands/namehistory.mjs` (Task 7) actually calls — it composes Task 4a and 4b and implements the Global-Constraints rule that a Mojang success + NameMC failure collapses to overall `unavailable`, and a NameMC `not_found` (valid Mojang account, no NameMC-tracked history) collapses to `found` with `previousNames: []`.
+
+- [ ] **Step 1: Write failing tests with injected mock clients**
+
+```js
+// tests/unit/nameHistoryLookup.test.mjs
+import { describe, it, expect, vi } from "vitest";
+import { createNameHistoryLookupService } from "../../lib/discord/nameHistoryLookup.mjs";
+
+function buildService({ mojangClient, nameMcService }) {
+  return createNameHistoryLookupService({
+    requestTimeoutMs: 1000,
+    cacheTtlMs: 1000,
+    minIntervalMs: 0,
+    mojangClient,
+    nameMcService,
+  });
+}
+
+describe("lookupNameHistory", () => {
+  it("returns invalid for a malformed username without calling either client", async () => {
+    const mojangClient = { resolveUsername: vi.fn() };
+    const nameMcService = { fetchPreviousNames: vi.fn() };
+    const service = buildService({ mojangClient, nameMcService });
+    const result = await service.lookupNameHistory("bad name!");
+    expect(result).toEqual({ status: "invalid" });
+    expect(mojangClient.resolveUsername).not.toHaveBeenCalled();
+    expect(nameMcService.fetchPreviousNames).not.toHaveBeenCalled();
+  });
+
+  it("returns not_found when Mojang has no such username", async () => {
+    const mojangClient = { resolveUsername: vi.fn().mockResolvedValue({ status: "not_found" }) };
+    const nameMcService = { fetchPreviousNames: vi.fn() };
+    const service = buildService({ mojangClient, nameMcService });
+    const result = await service.lookupNameHistory("MissingPlayer");
+    expect(result).toEqual({ status: "not_found" });
+    expect(nameMcService.fetchPreviousNames).not.toHaveBeenCalled();
+  });
+
+  it("returns unavailable when Mojang is unavailable", async () => {
+    const mojangClient = { resolveUsername: vi.fn().mockResolvedValue({ status: "unavailable" }) };
+    const nameMcService = { fetchPreviousNames: vi.fn() };
+    const service = buildService({ mojangClient, nameMcService });
+    const result = await service.lookupNameHistory("ErrorPlayer");
+    expect(result).toEqual({ status: "unavailable" });
+  });
+
+  it("returns found with previousNames when both steps succeed", async () => {
+    const uuid = "00000000-0000-0000-0000-000000000000";
+    const mojangClient = {
+      resolveUsername: vi.fn().mockResolvedValue({ status: "found", uuid, currentName: "CurrentPlayer" }),
+    };
+    const nameMcService = {
+      fetchPreviousNames: vi.fn().mockResolvedValue({
+        status: "found",
+        previousNames: [{ name: "OldPlayer", changedAt: new Date("2025-01-04T00:00:00Z") }],
+      }),
+    };
+    const service = buildService({ mojangClient, nameMcService });
+    const result = await service.lookupNameHistory("CurrentPlayer");
+    expect(result).toEqual({
+      status: "found",
+      currentName: "CurrentPlayer",
+      uuid,
+      previousNames: [{ name: "OldPlayer", changedAt: new Date("2025-01-04T00:00:00Z") }],
+      profileUrl: `https://namemc.com/profile/${uuid}`,
+      avatarUrl: `https://crafatar.com/avatars/${uuid}?size=128&overlay`,
+    });
+  });
+
+  it("returns found with empty previousNames when NameMC has no tracked history", async () => {
+    const uuid = "00000000-0000-0000-0000-000000000000";
+    const mojangClient = {
+      resolveUsername: vi.fn().mockResolvedValue({ status: "found", uuid, currentName: "SoloPlayer" }),
+    };
+    const nameMcService = { fetchPreviousNames: vi.fn().mockResolvedValue({ status: "not_found" }) };
+    const service = buildService({ mojangClient, nameMcService });
+    const result = await service.lookupNameHistory("SoloPlayer");
+    expect(result.status).toBe("found");
+    expect(result.previousNames).toEqual([]);
+  });
+
+  it("collapses a Mojang success + NameMC unavailable into overall unavailable", async () => {
+    const uuid = "00000000-0000-0000-0000-000000000000";
+    const mojangClient = {
+      resolveUsername: vi.fn().mockResolvedValue({ status: "found", uuid, currentName: "CurrentPlayer" }),
+    };
+    const nameMcService = { fetchPreviousNames: vi.fn().mockResolvedValue({ status: "unavailable" }) };
+    const service = buildService({ mojangClient, nameMcService });
+    const result = await service.lookupNameHistory("CurrentPlayer");
+    expect(result).toEqual({ status: "unavailable" });
+  });
+});
+```
+
+Run: `npx vitest run tests/unit/nameHistoryLookup.test.mjs`
+Expected: FAIL — module not found.
+
+- [ ] **Step 2: Implement**
+
+```js
+// lib/discord/nameHistoryLookup.mjs
+import { isValidUsername, getAvatarUrl, createMojangApiClient } from "./mojangApi.mjs";
+import { createNameMcPreviousNamesService } from "./nameMcLookup.mjs";
+
+export function createNameHistoryLookupService({
+  requestTimeoutMs,
+  cacheTtlMs,
+  minIntervalMs,
+  fetchImpl,
+  mojangClient = createMojangApiClient({ requestTimeoutMs, fetchImpl }),
+  nameMcService = createNameMcPreviousNamesService({ requestTimeoutMs, cacheTtlMs, minIntervalMs, fetchImpl }),
+}) {
   async function lookupNameHistory(username) {
     if (!isValidUsername(username)) {
       return { status: "invalid" };
     }
 
-    const cached = cache.getCached(username);
-    if (cached) return cached;
-
-    const result = await cache.dedupe(username, () => cache.throttle(() => fetchProfile(username)));
-
-    if (result.status === "found") {
-      cache.setCached(username, result);
+    const identity = await mojangClient.resolveUsername(username);
+    if (identity.status !== "found") {
+      return identity; // "not_found" or "unavailable"
     }
 
-    return result;
+    const history = await nameMcService.fetchPreviousNames(identity.uuid);
+    if (history.status === "unavailable") {
+      return { status: "unavailable" };
+    }
+
+    const previousNames = history.status === "found" ? history.previousNames : [];
+
+    return {
+      status: "found",
+      currentName: identity.currentName,
+      uuid: identity.uuid,
+      previousNames,
+      profileUrl: `https://namemc.com/profile/${identity.uuid}`,
+      avatarUrl: getAvatarUrl(identity.uuid),
+    };
   }
 
   return { lookupNameHistory };
@@ -554,14 +872,14 @@ export function createNameMcLookupService({ requestTimeoutMs, cacheTtlMs, minInt
 
 - [ ] **Step 3: Run tests and verify pass**
 
-Run: `npx vitest run tests/unit/nameMcLookup.test.mjs`
-Expected: PASS (13 tests)
+Run: `npx vitest run tests/unit/nameHistoryLookup.test.mjs`
+Expected: PASS (6 tests)
 
 - [ ] **Step 4: Commit**
 
 ```bash
-git add lib/discord/nameMcLookup.mjs tests/unit/nameMcLookup.test.mjs
-git commit -m "feat: add isolated NameMC lookup service with cache, dedup, and throttle"
+git add lib/discord/nameHistoryLookup.mjs tests/unit/nameHistoryLookup.test.mjs
+git commit -m "feat: compose Mojang identity and NameMC history into one lookup service"
 ```
 
 ---
@@ -811,7 +1129,7 @@ git commit -m "feat: add namehistory config and feature flag"
 - Test: `tests/unit/namehistoryCommand.test.mjs`
 
 **Interfaces:**
-- Consumes: `createNameMcLookupService`/`isValidUsername` (Task 4), `buildNameHistoryEmbedData`/`NOT_FOUND_MESSAGE`/`UNAVAILABLE_MESSAGE`/`createCooldownTracker` (Task 5), `config.discord.namehistory`, `features.discord.namehistory`.
+- Consumes: `isValidUsername` (Task 4a, re-used here for the pre-dispatch local check — the test in Step 1 asserts the lookup service is never called for an invalid username), `createNameHistoryLookupService` (Task 4c), `buildNameHistoryEmbedData`/`NOT_FOUND_MESSAGE`/`UNAVAILABLE_MESSAGE`/`createCooldownTracker` (Task 5), `config.discord.namehistory`, `features.discord.namehistory`.
 - Produces: exported `handleNameHistoryLookup(interaction, { lookupService, cooldownTracker, isAdmin })` — the shared, testable core (channel/cooldown/validation checks + reply construction) that both the `NameHistoryCommand` and `NhCommand` Sapphire classes call from their thin `chatInputRun`.
 
 - [ ] **Step 1: Write failing tests for the shared handler**
@@ -922,7 +1240,8 @@ Expected: FAIL — module not found.
 import { Command } from "@sapphire/framework";
 import { EmbedBuilder, PermissionFlagsBits, SlashCommandBuilder } from "discord.js";
 import { createRequire } from "module";
-import { createNameMcLookupService, isValidUsername } from "../lib/discord/nameMcLookup.mjs";
+import { isValidUsername } from "../lib/discord/mojangApi.mjs";
+import { createNameHistoryLookupService } from "../lib/discord/nameHistoryLookup.mjs";
 import {
   buildNameHistoryEmbedData,
   NOT_FOUND_MESSAGE,
@@ -941,7 +1260,7 @@ const CACHE_DURATION_MINUTES = NH_CONFIG.cacheDurationMinutes ?? 60;
 const REQUEST_TIMEOUT_SECONDS = NH_CONFIG.requestTimeoutSeconds ?? 10;
 const PUBLIC_RESULTS = NH_CONFIG.publicResults ?? true;
 
-const sharedLookupService = createNameMcLookupService({
+const sharedLookupService = createNameHistoryLookupService({
   requestTimeoutMs: REQUEST_TIMEOUT_SECONDS * 1000,
   cacheTtlMs: CACHE_DURATION_MINUTES * 60 * 1000,
   minIntervalMs: 500,
