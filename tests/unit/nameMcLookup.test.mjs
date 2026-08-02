@@ -20,6 +20,17 @@ const PROFILE_HTML_NO_HISTORY = `
 </body></html>
 `;
 
+// A valid profile page (has the current-name heading) but with markup that
+// no longer includes a recognizable "Name History" card at all — simulates
+// NameMC changing their page structure so the history section can't be
+// located, as opposed to genuinely having zero history entries.
+const PROFILE_HTML_BROKEN_HISTORY_MARKUP = `
+<html><body>
+  <h1 class="mb-0">MysteryPlayer</h1>
+  <div class="some-other-section">Unrelated content</div>
+</body></html>
+`;
+
 function fakeFetch(responses) {
   let call = 0;
   return vi.fn(async () => {
@@ -50,6 +61,13 @@ describe("fetchPreviousNames", () => {
     const service = createNameMcPreviousNamesService({ requestTimeoutMs: 1000, cacheTtlMs: 1000, minIntervalMs: 0, fetchImpl });
     const result = await service.fetchPreviousNames(UUID);
     expect(result).toEqual({ status: "found", previousNames: [] });
+  });
+
+  it("returns unavailable (not found-with-empty-history) when the name-history container is missing from a valid profile page", async () => {
+    const fetchImpl = fakeFetch([{ ok: true, status: 200, text: async () => PROFILE_HTML_BROKEN_HISTORY_MARKUP }]);
+    const service = createNameMcPreviousNamesService({ requestTimeoutMs: 1000, cacheTtlMs: 1000, minIntervalMs: 0, fetchImpl });
+    const result = await service.fetchPreviousNames(UUID);
+    expect(result).toEqual({ status: "unavailable" });
   });
 
   it("returns not_found for a 404 response", async () => {
