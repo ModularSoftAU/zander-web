@@ -38,31 +38,48 @@ export async function resolveOtherAccountsForIp(ipAddress, excludeUuid) {
   return accounts.filter((a) => a.uuid !== excludeUuid).map((a) => a.username);
 }
 
+// Fetches the raw per-uuid IP history and current status only — the
+// expensive "who else shares this IP" fan-out is deliberately NOT done
+// here. It's resolved per-page (see enrichUsernameRecords) once pagination
+// has narrowed the record set down to what's actually displayed, so a
+// player with hundreds of recorded IPs doesn't trigger hundreds of
+// concurrent queries against the shared db pool up front.
 export async function assembleUsernameResult({ uuid, username }) {
   const [history, status] = await Promise.all([
     getIpHistoryByUuid(uuid),
     getCurrentStatus(uuid),
   ]);
 
-  const records = await Promise.all(
-    history.map(async (record) => ({
-      ...record,
-      otherAccounts: await resolveOtherAccountsForIp(record.ip_address, uuid),
-    }))
-  );
-
-  return { username, uuid, status, records };
+  return { username, uuid, status, records: history };
 }
 
+// Enriches only the records for a single page with the per-IP
+// "other accounts" fan-out query.
+export async function enrichUsernameRecords(records, excludeUuid) {
+  return Promise.all(
+    records.map(async (record) => ({
+      ...record,
+      otherAccounts: await resolveOtherAccountsForIp(record.ip_address, excludeUuid),
+    }))
+  );
+}
+
+// Fetches the raw list of accounts sharing an IP only — the per-account
+// current-status fan-out is resolved per-page (see enrichIpRecords) for
+// the same resource-exhaustion reason as assembleUsernameResult above.
 export async function assembleIpResult(ipAddress) {
-  const accounts = await getAccountsByIp(ipAddress);
-  const records = await Promise.all(
-    accounts.map(async (account) => ({
+  return getAccountsByIp(ipAddress);
+}
+
+// Enriches only the records for a single page with the per-account
+// current-status query.
+export async function enrichIpRecords(records) {
+  return Promise.all(
+    records.map(async (account) => ({
       ...account,
       status: await getCurrentStatus(account.uuid),
     }))
   );
-  return records;
 }
 
 function toEmbed(pageData) {
@@ -74,12 +91,25 @@ function toEmbed(pageData) {
     .setFooter({ text: pageData.footer });
 }
 
-async function replyWithPages(interaction, pages, buildEmbedData, ...extraArgs) {
+// enrichPage(pageRecords) => Promise<enrichedRecords> — resolves the
+// expensive per-record fan-out queries for just the records on ONE page,
+// called lazily as pages are viewed and cached so revisiting a page
+// doesn't re-query.
+async function replyWithPages(interaction, pages, buildEmbedData, enrichPage, ...extraArgs) {
   let pageIndex = 0;
   const total = pages.length;
+  const enrichedCache = new Map();
 
-  const buildMessage = () => {
-    const embed = toEmbed(buildEmbedData(pages[pageIndex], pageIndex, total, ...extraArgs));
+  const getEnrichedPage = async (idx) => {
+    if (!enrichedCache.has(idx)) {
+      enrichedCache.set(idx, await enrichPage(pages[idx]));
+    }
+    return enrichedCache.get(idx);
+  };
+
+  const buildMessage = async () => {
+    const enrichedRecords = await getEnrichedPage(pageIndex);
+    const embed = toEmbed(buildEmbedData(enrichedRecords, pageIndex, total, ...extraArgs));
     const row = new ActionRowBuilder().addComponents(
       new ButtonBuilder().setCustomId("prev").setLabel("Previous").setStyle(ButtonStyle.Secondary).setDisabled(pageIndex === 0),
       new ButtonBuilder().setCustomId("next").setLabel("Next").setStyle(ButtonStyle.Secondary).setDisabled(pageIndex === total - 1)
@@ -87,7 +117,7 @@ async function replyWithPages(interaction, pages, buildEmbedData, ...extraArgs) 
     return { embeds: [embed], components: total > 1 ? [row] : [] };
   };
 
-  const message = await interaction.editReply(buildMessage());
+  const message = await interaction.editReply(await buildMessage());
   if (total <= 1) return;
 
   const collector = message.createMessageComponentCollector({
@@ -99,7 +129,7 @@ async function replyWithPages(interaction, pages, buildEmbedData, ...extraArgs) 
   collector.on("collect", async (i) => {
     if (i.customId === "prev") pageIndex = Math.max(0, pageIndex - 1);
     if (i.customId === "next") pageIndex = Math.min(total - 1, pageIndex + 1);
-    await i.update(buildMessage());
+    await i.update(await buildMessage());
   });
 
   collector.on("end", async () => {
@@ -155,25 +185,7 @@ export class IpCheckCommand extends Command {
         : interaction.options.getString("address");
 
     if (!allowed) {
-      await recordAuditLog({
-        discordUserId: interaction.user.id,
-        discordTag: interaction.user.tag,
-        permissionNode: PERMISSION_NODE,
-        queryType,
-        searchTarget: rawTarget,
-        resultCount: 0,
-        success: false,
-        guildId: interaction.guildId,
-        channelId: interaction.channelId,
-      });
-      await sendAuditEmbed(interaction.client, AUDIT_CHANNEL_ID, {
-        discordUserId: interaction.user.id,
-        discordTag: interaction.user.tag,
-        queryType,
-        searchTarget: rawTarget,
-        resultCount: 0,
-        success: false,
-      });
+      await this.audit(interaction, queryType, rawTarget, 0, false);
       return interaction.editReply({ content: DENIAL_MESSAGE });
     }
 
@@ -189,11 +201,13 @@ export class IpCheckCommand extends Command {
         await this.audit(interaction, queryType, rawTarget, result.records.length, true);
 
         const pages = paginate(result.records, PAGE_SIZE);
-        return replyWithPages(interaction, pages, buildUsernamePageEmbedData, {
-          username: result.username,
-          uuid: result.uuid,
-          status: result.status,
-        });
+        return replyWithPages(
+          interaction,
+          pages,
+          buildUsernamePageEmbedData,
+          (page) => enrichUsernameRecords(page, result.uuid),
+          { username: result.username, uuid: result.uuid, status: result.status }
+        );
       }
 
       const normalizedIp = normalizeIp(rawTarget);
@@ -205,7 +219,7 @@ export class IpCheckCommand extends Command {
       }
 
       const pages = paginate(records, PAGE_SIZE);
-      return replyWithPages(interaction, pages, buildIpPageEmbedData, normalizedIp);
+      return replyWithPages(interaction, pages, buildIpPageEmbedData, enrichIpRecords, normalizedIp);
     } catch (err) {
       if (err.message === "Invalid IP address") {
         await this.audit(interaction, queryType, rawTarget, 0, false);
@@ -217,25 +231,33 @@ export class IpCheckCommand extends Command {
     }
   }
 
+  // Audit logging must never be able to break the user-facing reply. Any
+  // failure here (DB error, oversized discord_tag column value, webhook
+  // failure, etc.) is logged and swallowed rather than propagated, so
+  // callers can always proceed straight to interaction.editReply(...).
   async audit(interaction, queryType, searchTarget, resultCount, success) {
-    await recordAuditLog({
-      discordUserId: interaction.user.id,
-      discordTag: interaction.user.tag,
-      permissionNode: PERMISSION_NODE,
-      queryType,
-      searchTarget,
-      resultCount,
-      success,
-      guildId: interaction.guildId,
-      channelId: interaction.channelId,
-    });
-    await sendAuditEmbed(interaction.client, AUDIT_CHANNEL_ID, {
-      discordUserId: interaction.user.id,
-      discordTag: interaction.user.tag,
-      queryType,
-      searchTarget,
-      resultCount,
-      success,
-    });
+    try {
+      await recordAuditLog({
+        discordUserId: interaction.user.id,
+        discordTag: interaction.user.tag,
+        permissionNode: PERMISSION_NODE,
+        queryType,
+        searchTarget,
+        resultCount,
+        success,
+        guildId: interaction.guildId,
+        channelId: interaction.channelId,
+      });
+      await sendAuditEmbed(interaction.client, AUDIT_CHANNEL_ID, {
+        discordUserId: interaction.user.id,
+        discordTag: interaction.user.tag,
+        queryType,
+        searchTarget,
+        resultCount,
+        success,
+      });
+    } catch (err) {
+      console.error("[ipcheck] Failed to record audit log:", err?.message ?? err);
+    }
   }
 }
