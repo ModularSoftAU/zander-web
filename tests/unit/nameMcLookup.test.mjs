@@ -31,6 +31,20 @@ const PROFILE_HTML_BROKEN_HISTORY_MARKUP = `
 </body></html>
 `;
 
+// Simulates a real-world markup drift: the "Name History" container
+// selector doesn't match (no .card-header with that exact text), but the
+// name-change rows are still present elsewhere in the document. The
+// container-detection fallback should still find and return these rows
+// rather than reporting "unavailable".
+const PROFILE_HTML_CONTAINER_MISMATCH_BUT_ROWS_PRESENT = `
+<html><body>
+  <h1 class="mb-0">DriftedPlayer</h1>
+  <div class="some-other-section">
+    <div class="name-change-row" data-name="OldPlayerName" data-changed-at="2024-11-02T00:00:00Z"></div>
+  </div>
+</body></html>
+`;
+
 function fakeFetch(responses) {
   let call = 0;
   return vi.fn(async () => {
@@ -68,6 +82,16 @@ describe("fetchPreviousNames", () => {
     const service = createNameMcPreviousNamesService({ requestTimeoutMs: 1000, cacheTtlMs: 1000, minIntervalMs: 0, fetchImpl });
     const result = await service.fetchPreviousNames(UUID);
     expect(result).toEqual({ status: "unavailable" });
+  });
+
+  it("falls back to global row search and still returns found when the container selector doesn't match but rows exist", async () => {
+    const fetchImpl = fakeFetch([{ ok: true, status: 200, text: async () => PROFILE_HTML_CONTAINER_MISMATCH_BUT_ROWS_PRESENT }]);
+    const service = createNameMcPreviousNamesService({ requestTimeoutMs: 1000, cacheTtlMs: 1000, minIntervalMs: 0, fetchImpl });
+    const result = await service.fetchPreviousNames(UUID);
+    expect(result).toEqual({
+      status: "found",
+      previousNames: [{ name: "OldPlayerName", changedAt: new Date("2024-11-02T00:00:00Z") }],
+    });
   });
 
   it("returns not_found for a 404 response", async () => {
