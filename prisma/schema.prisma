@@ -317,6 +317,38 @@ model gameSessions {
   server       String?   @db.Text
 }
 
+model player_ip_history {
+  id            Int      @id @default(autoincrement())
+  uuid          String   @db.VarChar(36)
+  ip_address    String   @db.VarChar(45)
+  first_seen_at DateTime
+  last_seen_at  DateTime
+  session_count Int      @default(0)
+  created_at    DateTime @default(now())
+  updated_at    DateTime @updatedAt
+
+  @@unique([uuid, ip_address], name: "player_ip_history_uuid_ip_unique")
+  @@index([uuid])
+  @@index([ip_address])
+}
+
+model ip_check_audit_log {
+  id                      Int      @id @default(autoincrement())
+  discord_user_id         String   @db.VarChar(32)
+  discord_tag             String   @db.VarChar(64)
+  permission_node_matched String?  @db.VarChar(128)
+  query_type              String   @db.VarChar(16)
+  search_target           String   @db.VarChar(255)
+  result_count            Int      @default(0)
+  success                 Boolean  @default(false)
+  guild_id                String?  @db.VarChar(32)
+  channel_id              String?  @db.VarChar(32)
+  created_at              DateTime @default(now())
+
+  @@index([discord_user_id])
+  @@index([created_at])
+}
+
 model announcements {
   announcementId     Int                  @id @default(autoincrement())
   enabled            Boolean              @default(true)
