@@ -40,7 +40,7 @@ describe("handleNameHistoryLookup", () => {
 
     await handleNameHistoryLookup(interaction, { lookupService, cooldownTracker, isAdmin: false });
 
-    expect(interaction._replies[0].content).toBe('No NameMC profile could be found for "MissingPlayer".');
+    expect(interaction._replies[0].content).toBe('No Minecraft account named "MissingPlayer" could be found.');
   });
 
   it("returns the unavailable message on unavailable status", async () => {
@@ -92,6 +92,16 @@ describe("handleNameHistoryLookup", () => {
     await handleNameHistoryLookup(interaction, { lookupService, cooldownTracker, isAdmin: true });
 
     expect(lookupService.lookupNameHistory).toHaveBeenCalled();
+  });
+
+  it("replies with a generic error message instead of hanging when the lookup service throws", async () => {
+    const lookupService = { lookupNameHistory: vi.fn().mockRejectedValue(new Error("boom")) };
+    const cooldownTracker = { isOnCooldown: () => false, recordUse: vi.fn() };
+    const interaction = fakeInteraction({ username: "CurrentPlayer" });
+
+    await handleNameHistoryLookup(interaction, { lookupService, cooldownTracker, isAdmin: false });
+
+    expect(interaction._replies[0].content).toMatch(/something went wrong/i);
   });
 
   it("replies with a disabled message and skips lookup when the feature flag is off", async () => {

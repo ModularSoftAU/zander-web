@@ -62,26 +62,33 @@ export async function handleNameHistoryLookup(
   await interaction.deferReply({ ephemeral: !PUBLIC_RESULTS });
   cooldownTracker.recordUse(interaction.user.id);
 
-  const result = await lookupService.lookupNameHistory(username);
+  try {
+    const result = await lookupService.lookupNameHistory(username);
 
-  if (result.status === "not_found") {
-    return interaction.editReply({ content: NOT_FOUND_MESSAGE(username) });
-  }
-  if (result.status === "unavailable") {
-    return interaction.editReply({ content: UNAVAILABLE_MESSAGE });
-  }
-  if (result.status === "invalid") {
-    return interaction.editReply({ content: "That is not a valid Minecraft username." });
-  }
+    if (result.status === "not_found") {
+      return await interaction.editReply({ content: NOT_FOUND_MESSAGE(username) });
+    }
+    if (result.status === "unavailable") {
+      return await interaction.editReply({ content: UNAVAILABLE_MESSAGE });
+    }
+    if (result.status === "invalid") {
+      return await interaction.editReply({ content: "That is not a valid Minecraft username." });
+    }
 
-  const data = buildNameHistoryEmbedData(result);
-  const embed = new EmbedBuilder()
-    .setTitle(data.title)
-    .addFields(data.fields)
-    .setFooter({ text: data.footer });
-  if (data.thumbnailUrl) embed.setThumbnail(data.thumbnailUrl);
+    const data = buildNameHistoryEmbedData(result);
+    const embed = new EmbedBuilder()
+      .setTitle(data.title)
+      .addFields(data.fields)
+      .setFooter({ text: data.footer });
+    if (data.thumbnailUrl) embed.setThumbnail(data.thumbnailUrl);
 
-  return interaction.editReply({ embeds: [embed] });
+    return await interaction.editReply({ embeds: [embed] });
+  } catch (err) {
+    console.error("[namehistory] Lookup failed:", err?.message ?? err);
+    return interaction.editReply({
+      content: "Something went wrong looking that up. Please try again later.",
+    });
+  }
 }
 
 function isInteractionAdmin(interaction) {
@@ -90,7 +97,7 @@ function isInteractionAdmin(interaction) {
 
 export class NameHistoryCommand extends Command {
   constructor(context, options) {
-    super(context, { ...options });
+    super(context, { ...options, name: "namehistory" });
   }
 
   registerApplicationCommands(registry) {
@@ -112,7 +119,7 @@ export class NameHistoryCommand extends Command {
 
 export class NhCommand extends Command {
   constructor(context, options) {
-    super(context, { ...options });
+    super(context, { ...options, name: "nh" });
   }
 
   registerApplicationCommands(registry) {
