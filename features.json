@@ -13,7 +13,8 @@
       "ipAutoDetect": true
     },
     "punishments": true,
-    "ipcheck": true
+    "ipcheck": true,
+    "namehistory": true
   },
   "server": true,
   "ranks": true,
