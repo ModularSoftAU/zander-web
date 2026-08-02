@@ -1,5 +1,6 @@
 import { hashEmail } from "../api/common.js";
 import db, { luckpermsDb } from "./databaseController.js";
+import { sanitizeForumHtml } from "../lib/htmlSanitize.js";
 
 export function UserGetter() {
   this.byUsername = function (username) {
@@ -493,6 +494,7 @@ export async function setProfileUserAboutMe(
   userId,
   social_aboutMe
 ) {
+  social_aboutMe = sanitizeForumHtml(social_aboutMe);
   db.query(
     `UPDATE users SET social_aboutMe=? WHERE userId=?;`,
     [social_aboutMe, userId],
