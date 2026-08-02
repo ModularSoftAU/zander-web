@@ -1,5 +1,6 @@
 import db, { luckpermsDb } from "./databaseController.js";
 import { hashEmail } from "../api/common.js";
+import { sanitizeForumHtml } from "../lib/htmlSanitize.js";
 
 function query(sql, params = []) {
   return new Promise((resolve, reject) => {
@@ -500,6 +501,7 @@ async function recalculateDiscussionMeta(discussionId) {
 }
 
 export async function createDiscussion({ categoryId, userId, title, content }) {
+  content = sanitizeForumHtml(content);
   const slug = await ensureUniqueDiscussionSlug(categoryId, title, null);
 
   const result = await query(
@@ -540,6 +542,7 @@ export async function updateDiscussion(discussionId, { title, content, editorUse
   }
 
   if (content !== undefined && content !== null) {
+    content = sanitizeForumHtml(content);
     const originalPost = await getOriginalPost(discussionId);
     if (originalPost && originalPost.content !== content) {
       await recordPostRevision(originalPost.postId, editorUserId, originalPost.content);
@@ -576,6 +579,7 @@ export async function moveDiscussion(discussionId, newCategoryId) {
 }
 
 export async function createReply({ discussionId, userId, content }) {
+  content = sanitizeForumHtml(content);
   const result = await query(
     `INSERT INTO forumPosts (discussionId, userId, content, isOriginal)
      VALUES (?, ?, ?, 0)`,
@@ -609,6 +613,7 @@ export async function getPostById(postId) {
 }
 
 export async function updatePost(postId, { content, editorUserId }) {
+  content = sanitizeForumHtml(content);
   const post = await getPostById(postId);
   if (!post) {
     return null;
