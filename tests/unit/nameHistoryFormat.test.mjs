@@ -24,6 +24,7 @@ describe("buildNameHistoryEmbedData", () => {
     const previousField = data.fields.find((f) => f.name === "Previous names");
     expect(previousField.value).toContain("OriginalPlayer");
     expect(previousField.value).toContain("SecondPlayer");
+    expect(data.footer).toContain("Mojang");
     expect(data.footer).toContain("NameMC");
     expect(data.thumbnailUrl).toBe("https://namemc.com/avatar/CurrentPlayer.png");
   });
@@ -57,13 +58,13 @@ describe("buildNameHistoryEmbedData", () => {
 describe("NOT_FOUND_MESSAGE / UNAVAILABLE_MESSAGE", () => {
   it("formats the not-found message with the username", () => {
     expect(NOT_FOUND_MESSAGE("ExamplePlayer")).toBe(
-      'No NameMC profile could be found for "ExamplePlayer".'
+      'No Minecraft account named "ExamplePlayer" could be found.'
     );
   });
 
   it("has a fixed unavailable message", () => {
     expect(UNAVAILABLE_MESSAGE).toBe(
-      "NameMC is currently unavailable, so this username could not be checked. Please try again later."
+      "The Minecraft account lookup service is currently unavailable, so this username could not be checked. Please try again later."
     );
   });
 });
