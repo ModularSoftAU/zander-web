@@ -893,8 +893,8 @@ git commit -m "feat: compose Mojang identity and NameMC history into one lookup 
 **Interfaces:**
 - Produces:
   - `buildNameHistoryEmbedData(result: FoundResult): {title, fields: [{name, value}], footer, thumbnailUrl}` where `result` is a `{status: "found", ...}` object from Task 4. Uses `sanitizeExternalText` (Task 2) on `currentName` and every previous name. If `previousNames` is empty, the "Previous names" field value is exactly `"No previous usernames were found on NameMC for this profile."`.
-  - `NOT_FOUND_MESSAGE(username)` → `` `No NameMC profile could be found for "${username}".` `` (username passed through `sanitizeExternalText`).
-  - `UNAVAILABLE_MESSAGE` → `"NameMC is currently unavailable, so this username could not be checked. Please try again later."`
+  - `NOT_FOUND_MESSAGE(username)` → `` `No Minecraft account named "${username}" could be found.` `` (username passed through `sanitizeExternalText`).
+  - `UNAVAILABLE_MESSAGE` → `"The Minecraft account lookup service is currently unavailable, so this username could not be checked. Please try again later."`
   - `createCooldownTracker(cooldownSeconds)` returning `{ isOnCooldown(discordUserId, isAdmin): boolean, recordUse(discordUserId): void }` — admins bypass the per-user cooldown when `isAdmin` is true; there is no bypass parameter for the global rate limiter (that lives entirely in Task 3/4 and is untouched by this tracker).
 
 - [ ] **Step 1: Write failing tests**
@@ -959,13 +959,13 @@ describe("buildNameHistoryEmbedData", () => {
 describe("NOT_FOUND_MESSAGE / UNAVAILABLE_MESSAGE", () => {
   it("formats the not-found message with the username", () => {
     expect(NOT_FOUND_MESSAGE("ExamplePlayer")).toBe(
-      'No NameMC profile could be found for "ExamplePlayer".'
+      'No Minecraft account named "ExamplePlayer" could be found.'
     );
   });
 
   it("has a fixed unavailable message", () => {
     expect(UNAVAILABLE_MESSAGE).toBe(
-      "NameMC is currently unavailable, so this username could not be checked. Please try again later."
+      "The Minecraft account lookup service is currently unavailable, so this username could not be checked. Please try again later."
     );
   });
 });
@@ -1034,17 +1034,17 @@ export function buildNameHistoryEmbedData(result) {
       { name: "Previous names", value: previousNamesText },
       { name: "Profile", value: result.profileUrl },
     ],
-    footer: `Source: NameMC · Retrieved ${new Date().toLocaleString("en-GB")}`,
+    footer: `Identity: Mojang · History: NameMC · Retrieved ${new Date().toLocaleString("en-GB")}`,
     thumbnailUrl: result.avatarUrl,
   };
 }
 
 export function NOT_FOUND_MESSAGE(username) {
-  return `No NameMC profile could be found for "${sanitizeExternalText(username)}".`;
+  return `No Minecraft account named "${sanitizeExternalText(username)}" could be found.`;
 }
 
 export const UNAVAILABLE_MESSAGE =
-  "NameMC is currently unavailable, so this username could not be checked. Please try again later.";
+  "The Minecraft account lookup service is currently unavailable, so this username could not be checked. Please try again later.";
 
 export function createCooldownTracker(cooldownSeconds) {
   const lastUse = new Map();
@@ -1174,7 +1174,7 @@ describe("handleNameHistoryLookup", () => {
 
     await handleNameHistoryLookup(interaction, { lookupService, cooldownTracker, isAdmin: false });
 
-    expect(interaction._replies[0].content).toBe('No NameMC profile could be found for "MissingPlayer".');
+    expect(interaction._replies[0].content).toBe('No Minecraft account named "MissingPlayer" could be found.');
   });
 
   it("returns the unavailable message on unavailable status", async () => {
@@ -1392,7 +1392,7 @@ Start the bot locally (`npm run dev`). Confirm `/namehistory` and `/nh` both app
 
 - [ ] **Step 2: Exercise the happy path**
 
-Run `/namehistory username:<a known Minecraft username with name history>`. Confirm: reply is public (not ephemeral) by default, embed shows current name, UUID, previous names with dates, profile link, avatar thumbnail, and a "Source: NameMC" footer. Run `/nh` with the same username and confirm an identical result.
+Run `/namehistory username:<a known Minecraft username with name history>`. Confirm: reply is public (not ephemeral) by default, embed shows current name, UUID, previous names with dates, profile link, avatar thumbnail, and an "Identity: Mojang · History: NameMC" footer. Run `/nh` with the same username and confirm an identical result.
 
 - [ ] **Step 3: Exercise edge cases**
 
@@ -1400,7 +1400,7 @@ Run with a username containing invalid characters (confirm ephemeral rejection, 
 
 - [ ] **Step 4: Confirm graceful degradation**
 
-Temporarily set `requestTimeoutSeconds` very low (e.g. `0.001`) in `config.json` and re-run the command; confirm the "NameMC is currently unavailable..." message appears rather than an unhandled error. Revert the config change afterward.
+Temporarily set `requestTimeoutSeconds` very low (e.g. `0.001`) in `config.json` and re-run the command; confirm the "The Minecraft account lookup service is currently unavailable..." message appears rather than an unhandled error. Revert the config change afterward.
 
 - [ ] **Step 5: Final commit (if any fixes were needed)**
 
