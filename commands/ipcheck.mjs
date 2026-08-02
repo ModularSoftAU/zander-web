@@ -100,9 +100,18 @@ async function replyWithPages(interaction, pages, buildEmbedData, enrichPage, ..
   const total = pages.length;
   const enrichedCache = new Map();
 
-  const getEnrichedPage = async (idx) => {
+  const getEnrichedPage = (idx) => {
     if (!enrichedCache.has(idx)) {
-      enrichedCache.set(idx, await enrichPage(pages[idx]));
+      // Cache the in-flight promise itself (not just the resolved value) so
+      // rapid double-clicks on pagination buttons that land on the same
+      // page don't double-issue the same enrichment queries. If it fails,
+      // evict it so a later retry can re-fetch instead of being stuck with
+      // a permanently-rejected cached promise.
+      const promise = enrichPage(pages[idx]).catch((err) => {
+        enrichedCache.delete(idx);
+        throw err;
+      });
+      enrichedCache.set(idx, promise);
     }
     return enrichedCache.get(idx);
   };
@@ -127,9 +136,25 @@ async function replyWithPages(interaction, pages, buildEmbedData, enrichPage, ..
   });
 
   collector.on("collect", async (i) => {
+    const previousPageIndex = pageIndex;
     if (i.customId === "prev") pageIndex = Math.max(0, pageIndex - 1);
     if (i.customId === "next") pageIndex = Math.min(total - 1, pageIndex + 1);
-    await i.update(await buildMessage());
+
+    try {
+      await i.update(await buildMessage());
+    } catch (err) {
+      pageIndex = previousPageIndex;
+      console.error("[ipcheck] Failed to load page:", err?.message ?? err);
+      try {
+        await i.update({ content: "Something went wrong loading that page. Please try again.", embeds: [], components: [] });
+      } catch {
+        try {
+          await i.followUp({ content: "Something went wrong loading that page. Please try again.", ephemeral: true });
+        } catch {
+          // give up silently — nothing more we can do with this interaction
+        }
+      }
+    }
   });
 
   collector.on("end", async () => {
