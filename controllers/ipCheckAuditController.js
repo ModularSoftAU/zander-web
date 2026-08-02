@@ -1,6 +1,7 @@
 import { EmbedBuilder, Colors } from "discord.js";
 import db from "./databaseController.js";
 import { maskIp } from "../lib/discord/ipCheckFormat.mjs";
+import { sanitizeExternalText } from "../lib/discord/textSanitize.mjs";
 
 export function recordAuditLog({
   discordUserId,
@@ -36,7 +37,9 @@ export async function sendAuditEmbed(client, auditChannelId, { discordUserId, di
     const channel = await client.channels.fetch(auditChannelId);
     if (!channel?.isTextBased?.()) return;
 
-    const displayTarget = queryType === "IP" ? maskIp(searchTarget) : searchTarget;
+    const displayTarget = sanitizeExternalText(
+      queryType === "IP" ? maskIp(searchTarget) : searchTarget
+    );
 
     const embed = new EmbedBuilder()
       .setTitle("IP Check Executed")

@@ -27,4 +27,10 @@ describe("sanitizeExternalText", () => {
   it("leaves a plain Minecraft username untouched aside from no-op escaping", () => {
     expect(sanitizeExternalText("ExamplePlayer")).toBe("ExamplePlayer");
   });
+
+  it("escapes markdown hyperlink syntax so a disguised link can't render", () => {
+    const result = sanitizeExternalText("[Click here](https://evil.example)");
+    expect(result).not.toMatch(/\[Click here\]\(https:\/\/evil\.example\)/);
+    expect(result).toBe("\\[Click here\\]\\(https://evil.example\\)");
+  });
 });

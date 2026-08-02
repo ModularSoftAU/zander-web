@@ -81,4 +81,23 @@ describe("sendAuditEmbed", () => {
     const [{ embeds }] = send.mock.calls[0];
     expect(JSON.stringify(embeds[0].toJSON())).toContain("ExamplePlayer");
   });
+
+  it("sanitizes an attacker-controlled username search target before it reaches the embed", async () => {
+    const send = vi.fn();
+    const client = {
+      channels: { fetch: vi.fn().mockResolvedValue({ isTextBased: () => true, send }) },
+    };
+    await sendAuditEmbed(client, "audit-channel", {
+      discordUserId: "123",
+      discordTag: "staff#0001",
+      queryType: "USERNAME",
+      searchTarget: "[Click here](https://evil.example) @everyone",
+      resultCount: 0,
+      success: false,
+    });
+    const [{ embeds }] = send.mock.calls[0];
+    const targetField = embeds[0].toJSON().fields.find((f) => f.name === "Target");
+    expect(targetField.value).not.toContain("@everyone");
+    expect(targetField.value).not.toMatch(/\[Click here\]\(https:\/\/evil\.example\)/);
+  });
 });
