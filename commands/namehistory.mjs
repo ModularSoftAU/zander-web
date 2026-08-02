@@ -34,7 +34,14 @@ function addNameHistoryOption(builder) {
   );
 }
 
-export async function handleNameHistoryLookup(interaction, { lookupService, cooldownTracker, isAdmin }) {
+export async function handleNameHistoryLookup(
+  interaction,
+  { lookupService, cooldownTracker, isAdmin, featureEnabled = features?.discord?.namehistory }
+) {
+  if (!featureEnabled) {
+    return interaction.reply({ content: "This command is currently disabled.", ephemeral: true });
+  }
+
   const username = interaction.options.getString("username");
 
   if (ALLOWED_CHANNEL_IDS.length > 0 && !ALLOWED_CHANNEL_IDS.includes(interaction.channelId)) {

@@ -12,6 +12,10 @@ function fakeInteraction({ username, channelId = "chan-1", userId = "user-1", is
       replies.push(payload);
       return payload;
     }),
+    reply: vi.fn(async (payload) => {
+      replies.push(payload);
+      return payload;
+    }),
     memberPermissions: { has: () => isAdmin },
     _replies: replies,
   };
@@ -88,5 +92,23 @@ describe("handleNameHistoryLookup", () => {
     await handleNameHistoryLookup(interaction, { lookupService, cooldownTracker, isAdmin: true });
 
     expect(lookupService.lookupNameHistory).toHaveBeenCalled();
+  });
+
+  it("replies with a disabled message and skips lookup when the feature flag is off", async () => {
+    const lookupService = { lookupNameHistory: vi.fn() };
+    const cooldownTracker = { isOnCooldown: () => false, recordUse: vi.fn() };
+    const interaction = fakeInteraction({ username: "CurrentPlayer" });
+
+    await handleNameHistoryLookup(interaction, {
+      lookupService,
+      cooldownTracker,
+      isAdmin: false,
+      featureEnabled: false,
+    });
+
+    expect(lookupService.lookupNameHistory).not.toHaveBeenCalled();
+    expect(interaction.deferReply).not.toHaveBeenCalled();
+    expect(interaction._replies[0].content).toBe("This command is currently disabled.");
+    expect(interaction._replies[0].ephemeral).toBe(true);
   });
 });
