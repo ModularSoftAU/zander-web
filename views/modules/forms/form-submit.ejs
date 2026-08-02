@@ -310,7 +310,6 @@
                 var res = await fetch('/api/upload/image', {
                     method: 'POST',
                     body: fd,
-                    headers: { 'x-access-token': <%- JSON.stringify(process.env.apiKey || '') %> },
                 });
                 var json = await res.json();
                 if (json.success) {

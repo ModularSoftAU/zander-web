@@ -67,6 +67,7 @@ import("./cron/shopItemIndexCron.js");
 // Site Routes
 import siteRoutes from "./routes/index.js";
 import apiRoutes from "./api/routes/index.js";
+import uploadApiRoute from "./api/routes/upload.js";
 import apiRedirectRoutes from "./api/internal_redirect/index.js";
 import webstoreWebhookRoutes from "./api/internal_redirect/webstore.js";
 import configApiRoute from "./api/routes/config.js";
@@ -226,6 +227,12 @@ const buildApp = async () => {
       message: `OK`,
     });
   });
+
+  // Browser image upload endpoint (/api/upload/image) — session-authenticated
+  // inside its own handler, not API-token-authenticated. Registered outside the
+  // verifyToken plugin so logged-in dashboard users / form submitters can upload
+  // images without the client needing to know the machine API key.
+  uploadApiRoute(app, config, db, features, lang);
 
   // Dashboard image upload — session-authenticated, not API-token-authenticated.
   // Kept outside the verifyToken plugin so logged-in dashboard users can upload
