@@ -58,6 +58,11 @@
         "can_view_history": "zander.discord.punish.history"
       },
       "requireDmSuccess": false
+    },
+    "ipcheck": {
+      "permissionNode": "zander.discord.ipcheck",
+      "auditChannelId": "",
+      "pageSize": 8
     }
   },
   "watch": {
