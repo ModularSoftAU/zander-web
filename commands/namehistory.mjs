@@ -14,6 +14,9 @@ const require = createRequire(import.meta.url);
 const config = require("../config.json");
 const features = require("../features.json");
 
+// On by default — only an explicit `false` in features.json disables it,
+// so a missing/stale key doesn't silently turn the command off.
+const NAMEHISTORY_ENABLED = features?.discord?.namehistory !== false;
 const NH_CONFIG = config?.discord?.namehistory ?? {};
 const ALLOWED_CHANNEL_IDS = NH_CONFIG.allowedChannelIds ?? [];
 const COOLDOWN_SECONDS = NH_CONFIG.cooldownSeconds ?? 10;
@@ -36,7 +39,7 @@ function addNameHistoryOption(builder) {
 
 export async function handleNameHistoryLookup(
   interaction,
-  { lookupService, cooldownTracker, isAdmin, featureEnabled = features?.discord?.namehistory }
+  { lookupService, cooldownTracker, isAdmin, featureEnabled = NAMEHISTORY_ENABLED }
 ) {
   if (!featureEnabled) {
     return interaction.reply({ content: "This command is currently disabled.", ephemeral: true });
@@ -101,7 +104,7 @@ export class NameHistoryCommand extends Command {
   }
 
   registerApplicationCommands(registry) {
-    if (!features?.discord?.namehistory) return;
+    if (!NAMEHISTORY_ENABLED) return;
     const builder = addNameHistoryOption(
       new SlashCommandBuilder().setName("namehistory").setDescription("Look up a Minecraft player's NameMC username history.")
     );
@@ -123,7 +126,7 @@ export class NhCommand extends Command {
   }
 
   registerApplicationCommands(registry) {
-    if (!features?.discord?.namehistory) return;
+    if (!NAMEHISTORY_ENABLED) return;
     const builder = addNameHistoryOption(
       new SlashCommandBuilder().setName("nh").setDescription("Alias for /namehistory.")
     );
