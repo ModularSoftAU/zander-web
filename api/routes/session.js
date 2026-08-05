@@ -1,6 +1,4 @@
 import { required } from "../common.js";
-import { normalizeIp } from "../../lib/discord/ipNormalize.mjs";
-import { recordIpSession } from "../../controllers/ipHistoryController.js";
 
 export default function sessionApiRoute(app, config, db, features, lang) {
   const baseEndpoint = "/api/session";
@@ -60,13 +58,6 @@ export default function sessionApiRoute(app, config, db, features, lang) {
           }
         );
       });
-
-      try {
-        const normalizedIp = normalizeIp(ipAddress);
-        await recordIpSession(uuid, normalizedIp);
-      } catch (ipError) {
-        console.error("[session/create] Failed to record IP history:", ipError.message);
-      }
 
       return res.send({
         success: true,

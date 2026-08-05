@@ -12,8 +12,7 @@
       "unverifiedReminder": true,
       "ipAutoDetect": true
     },
-    "punishments": true,
-    "ipcheck": true
+    "punishments": true
   },
   "server": true,
   "ranks": true,
