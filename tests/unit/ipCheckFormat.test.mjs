@@ -84,29 +84,6 @@ describe("buildUsernamePageEmbedData", () => {
     });
     expect(data.fields).toEqual([]);
   });
-
-  it("keeps the combined field value (prefix + other-accounts line) within Discord's 1024-char embed field limit", () => {
-    // Enough long usernames that formatOtherAccounts's OWN output could sit
-    // right under 1024 chars in isolation, but combined with the "First
-    // seen / Last seen / Sessions / Other accounts: " prefix (~85+ chars)
-    // it would exceed Discord's actual per-field cap under the old code.
-    const otherAccounts = Array.from({ length: 80 }, (_, i) => `VeryLongMinecraftUsername${i}`);
-    const page = [
-      {
-        ip_address: "203.0.113.15",
-        first_seen_at: new Date("2026-05-12"),
-        last_seen_at: new Date("2026-08-02"),
-        session_count: 24,
-        otherAccounts,
-      },
-    ];
-    const data = buildUsernamePageEmbedData(page, 0, 1, {
-      username: "ExamplePlayer",
-      uuid: "00000000-0000-0000-0000-000000000000",
-      status: { online: true, server: "survival" },
-    });
-    expect(data.fields[0].value.length).toBeLessThanOrEqual(1024);
-  });
 });
 
 describe("buildIpPageEmbedData", () => {

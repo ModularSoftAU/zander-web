@@ -63,13 +63,6 @@
       "permissionNode": "zander.discord.ipcheck",
       "auditChannelId": "",
       "pageSize": 8
-    },
-    "namehistory": {
-      "allowedChannelIds": [],
-      "cooldownSeconds": 10,
-      "cacheDurationMinutes": 60,
-      "requestTimeoutSeconds": 10,
-      "publicResults": true
     }
   },
   "watch": {

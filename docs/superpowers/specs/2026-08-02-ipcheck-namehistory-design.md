@@ -123,7 +123,7 @@ All in-memory (no Redis in this stack), scoped to the bot process:
 - Validates the username locally; on failure, ephemeral error, no NameMC call.
 - Checks per-user cooldown (ephemeral message if on cooldown, unless admin) and the configured allowed-channel list (empty list = any channel in the guild).
 - Calls `lookupNameHistory`; maps `not_found`/`unavailable`/`found` to the exact response text specified (including "No previous usernames were found..." vs a hard not-found vs unavailable message — these are distinct and must not be conflated).
-- On success, replies **non-ephemeral** by default (`publicResults` config, default `true`); embed includes current name, UUID, previous names with change dates, NameMC profile link, avatar, retrieval timestamp, and an "Identity: Mojang · History: NameMC" footer.
+- On success, replies **non-ephemeral** by default (`publicResults` config, default `true`); embed includes current name, UUID, previous names with change dates, NameMC profile link, avatar, retrieval timestamp, and a "Source: NameMC" footer.
 - All NameMC-sourced text (usernames) is sanitized against `@everyone`/`@here`/role/user mentions and markdown injection before being placed in the embed (small shared sanitize helper, reusable by both features).
 
 ### Config additions
