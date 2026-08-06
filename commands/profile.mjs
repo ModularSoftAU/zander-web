@@ -120,7 +120,7 @@ export class ProfileCommand extends Command {
         )
         .setColor(Colors.Red);
 
-      interaction.reply({
+      return interaction.reply({
         embeds: [noProfileEmbed],
       });
     } else {
@@ -199,7 +199,7 @@ export class ProfileCommand extends Command {
         // badges unavailable — profile still renders without them
       }
 
-      interaction.reply({ embeds: [embed] });
+      return interaction.reply({ embeds: [embed] });
     }
   }
 }
