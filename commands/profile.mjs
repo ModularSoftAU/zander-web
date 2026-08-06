@@ -2,7 +2,12 @@ import { Command, RegisterBehavior } from "@sapphire/framework";
 import { Colors, EmbedBuilder } from "discord.js";
 import moment from "moment";
 import fetch from "node-fetch";
-import { getProfilePicture } from "../controllers/userController.js";
+import {
+  getProfilePicture,
+  getUserStats,
+  getUserLastSession,
+  UserGetter,
+} from "../controllers/userController.js";
 import { resolveDiscordUserId } from "../lib/discord/resolveDiscordMember.mjs";
 
 export class ProfileCommand extends Command {
@@ -51,14 +56,9 @@ export class ProfileCommand extends Command {
       });
     }
 
-    const fetchURL = new URL(
-      `${process.env.siteAddress}/api/user/profile/get`
-    );
-
-    if (username) {
-      fetchURL.searchParams.set("username", username);
-    } else {
-      const resolvedDiscordId = await resolveDiscordUserId(interaction, {
+    let resolvedDiscordId = null;
+    if (!username) {
+      resolvedDiscordId = await resolveDiscordUserId(interaction, {
         discordUser,
         discordTag,
       });
@@ -70,24 +70,41 @@ export class ProfileCommand extends Command {
           ephemeral: true,
         });
       }
-
-      fetchURL.searchParams.set("discordId", resolvedDiscordId);
     }
 
-    let response;
+    // Looked up in-process (same as the web profile page) instead of an HTTP
+    // self-call to the bot's own siteAddress, which is unreliable when that
+    // outbound request can't complete (DNS/WAF/network hairpinning).
     let apiData;
     try {
-      response = await fetch(fetchURL, {
-        headers: { "x-access-token": process.env.apiKey },
-      });
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}`);
+      const userGetter = new UserGetter();
+      const userRecord = username
+        ? await userGetter.byUsername(username)
+        : await userGetter.byDiscordId(resolvedDiscordId);
+
+      if (!userRecord) {
+        apiData = { success: false };
+      } else {
+        const [profilePicture, profileStats, profileSession] = await Promise.all([
+          getProfilePicture(userRecord.username),
+          getUserStats(userRecord.userId),
+          getUserLastSession(userRecord.userId),
+        ]);
+
+        apiData = {
+          success: true,
+          data: {
+            profileData: userRecord,
+            profilePicture,
+            profileStats,
+            profileSession,
+          },
+        };
       }
-      apiData = await response.json();
     } catch (err) {
-      console.error("[profile command] API fetch failed:", err.message);
+      console.error("[profile command] Failed to look up profile:", err);
       return interaction.reply({
-        content: "Failed to reach the profile API. Please try again later.",
+        content: "Failed to look up the profile. Please try again later.",
         ephemeral: true,
       });
     }
@@ -108,7 +125,7 @@ export class ProfileCommand extends Command {
       });
     } else {
       let isLinked = apiData.data.profileData.discordId;
-      let profilePicture = await getProfilePicture(apiData.data.profileData.username);
+      let profilePicture = apiData.data.profilePicture;
 
       const embed = new EmbedBuilder();
 
