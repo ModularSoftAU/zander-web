@@ -105,7 +105,7 @@ export class ForceLinkCommand extends Command {
     // Execute the force link
     const discordHandle = targetDiscordUser.username;
     await linkDiscordAccount(mcUser.userId, targetDiscordUser.id, discordHandle);
-    await syncMemberRankRoles(mcUser.userId);
+    const syncResult = await syncMemberRankRoles(mcUser.userId);
 
     // Mark account as registered if not already, and clean up any pending verify codes
     if (!mcUser.account_registered) {
@@ -135,6 +135,34 @@ export class ForceLinkCommand extends Command {
 
     if (warnings.length > 0) {
       embed.addFields({ name: "Warnings", value: warnings.join("\n"), inline: false });
+    }
+
+    const roleSyncReasonLabels = {
+      FEATURE_DISABLED: "the `ranks` feature flag is disabled.",
+      NOT_LINKED: "no Discord account is linked (unexpected — link just succeeded).",
+      MEMBER_NOT_IN_GUILD: "they aren't a member of the configured guild.",
+      ERROR: `an error occurred (${syncResult?.error ?? "unknown"}).`,
+    };
+
+    if (!syncResult?.ok) {
+      embed.addFields({
+        name: "⚠️ Role Sync Skipped",
+        value: `No Discord roles were assigned because ${roleSyncReasonLabels[syncResult?.reason] ?? "of an unknown reason."}`,
+        inline: false,
+      });
+    } else if (!syncResult.toAdd.length && !syncResult.toRemove.length) {
+      embed.addFields({
+        name: "Role Sync",
+        value: syncResult.shouldHaveRoleIds.length
+          ? "Their Discord roles already matched their ranks — nothing to change."
+          : "No rank-mapped Discord role is configured for their current rank(s) (`meta.discordid` not set in LuckPerms), so nothing was assigned.",
+        inline: false,
+      });
+    } else {
+      const parts = [];
+      if (syncResult.toAdd.length) parts.push(`Added: ${syncResult.toAdd.map((id) => `<@&${id}>`).join(", ")}`);
+      if (syncResult.toRemove.length) parts.push(`Removed: ${syncResult.toRemove.map((id) => `<@&${id}>`).join(", ")}`);
+      embed.addFields({ name: "Role Sync", value: parts.join("\n"), inline: false });
     }
 
     return interaction.editReply({ embeds: [embed] });
