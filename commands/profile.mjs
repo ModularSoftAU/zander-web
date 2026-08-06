@@ -56,6 +56,16 @@ export class ProfileCommand extends Command {
       });
     }
 
+    // Acknowledge immediately — the DB/HTTP lookups below can take long enough
+    // to blow past Discord's 3s ack window, which causes a hard-to-diagnose
+    // "Interaction has already been acknowledged" error on the eventual reply.
+    try {
+      await interaction.deferReply();
+    } catch (error) {
+      console.error("Failed to defer profile command reply:", error);
+      return;
+    }
+
     let resolvedDiscordId = null;
     if (!username) {
       resolvedDiscordId = await resolveDiscordUserId(interaction, {
@@ -64,10 +74,9 @@ export class ProfileCommand extends Command {
       });
 
       if (!resolvedDiscordId) {
-        return interaction.reply({
+        return interaction.editReply({
           content:
             "Unable to resolve the provided Discord information to a linked account.",
-          ephemeral: true,
         });
       }
     }
@@ -103,9 +112,8 @@ export class ProfileCommand extends Command {
       }
     } catch (err) {
       console.error("[profile command] Failed to look up profile:", err);
-      return interaction.reply({
+      return interaction.editReply({
         content: "Failed to look up the profile. Please try again later.",
-        ephemeral: true,
       });
     }
 
@@ -120,7 +128,7 @@ export class ProfileCommand extends Command {
         )
         .setColor(Colors.Red);
 
-      return interaction.reply({
+      return interaction.editReply({
         embeds: [noProfileEmbed],
       });
     } else {
@@ -199,7 +207,7 @@ export class ProfileCommand extends Command {
         // badges unavailable — profile still renders without them
       }
 
-      return interaction.reply({ embeds: [embed] });
+      return interaction.editReply({ embeds: [embed] });
     }
   }
 }
