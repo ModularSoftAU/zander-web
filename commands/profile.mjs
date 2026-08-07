@@ -1,13 +1,14 @@
 import { Command, RegisterBehavior } from "@sapphire/framework";
 import { Colors, EmbedBuilder } from "discord.js";
 import moment from "moment";
-import fetch from "node-fetch";
 import {
   getProfilePicture,
   getUserStats,
   getUserLastSession,
   UserGetter,
 } from "../controllers/userController.js";
+import { getUserRanks } from "../services/profileService.js";
+import { getBadgesForUser } from "../controllers/badgeController.js";
 import { resolveDiscordUserId } from "../lib/discord/resolveDiscordMember.mjs";
 
 export class ProfileCommand extends Command {
@@ -94,10 +95,12 @@ export class ProfileCommand extends Command {
       if (!userRecord) {
         apiData = { success: false };
       } else {
-        const [profilePicture, profileStats, profileSession] = await Promise.all([
+        const [profilePicture, profileStats, profileSession, ranks, badges] = await Promise.all([
           getProfilePicture(userRecord.username),
           getUserStats(userRecord.userId),
           getUserLastSession(userRecord.userId),
+          getUserRanks(userRecord.username),
+          getBadgesForUser(userRecord.userId),
         ]);
 
         apiData = {
@@ -107,6 +110,8 @@ export class ProfileCommand extends Command {
             profilePicture,
             profileStats,
             profileSession,
+            ranks,
+            badges,
           },
         };
       }
@@ -182,29 +187,40 @@ export class ProfileCommand extends Command {
           }
         );
 
-      // Fetch and display badges
-      try {
-        const badgeRes = await fetch(
-          `${process.env.siteAddress}/api/badges/user/${encodeURIComponent(apiData.data.profileData.username)}`,
-          { headers: { "x-access-token": process.env.apiKey } }
-        );
-        const badgeData = await badgeRes.json();
+      // Discord embed field values are capped at 1024 chars — truncate the
+      // line list (rather than the count) so as many entries as possible
+      // are still shown in full.
+      const buildFieldValue = (lines) => {
+        const LIMIT = 1024;
+        const full = lines.join("\n");
+        if (full.length <= LIMIT) return full;
 
-        if (badgeData.success && badgeData.data && badgeData.data.length > 0) {
-          const MAX_SHOWN = 5;
-          const badges = badgeData.data;
-          const shown = badges.slice(0, MAX_SHOWN);
-          const extra = badges.length - shown.length;
-
-          const badgeLines = shown.map((b) => `🏅 ${b.name}`).join("\n");
-          const badgeValue = extra > 0
-            ? `${badgeLines}\n*+${extra} more — [view profile](${process.env.siteAddress}/profile/${apiData.data.profileData.username})*`
-            : badgeLines;
-
-          embed.addFields({ name: "Badges", value: badgeValue, inline: false });
+        const shown = [];
+        let length = 0;
+        for (const line of lines) {
+          const next = length + (shown.length ? 1 : 0) + line.length;
+          if (next > LIMIT - 20) break;
+          shown.push(line);
+          length = next;
         }
-      } catch (_) {
-        // badges unavailable — profile still renders without them
+        return `${shown.join("\n")}\n*+${lines.length - shown.length} more*`;
+      };
+
+      const ranks = apiData.data.ranks || [];
+      if (ranks.length > 0) {
+        const sorted = [...ranks].sort((a, b) => (b.priority ?? -Infinity) - (a.priority ?? -Infinity));
+        const rankLines = sorted.map((r) => {
+          const tags = [r.isStaff ? "Staff" : null, r.isDonator ? "Donator" : null].filter(Boolean);
+          const suffix = tags.length ? ` (${tags.join(", ")})` : "";
+          return `• ${r.displayName}${r.title ? ` — *${r.title}*` : ""}${suffix}`;
+        });
+        embed.addFields({ name: `Ranks (${ranks.length})`, value: buildFieldValue(rankLines), inline: false });
+      }
+
+      const badges = apiData.data.badges || [];
+      if (badges.length > 0) {
+        const badgeLines = badges.map((b) => `🏅 ${b.name}`);
+        embed.addFields({ name: `Badges (${badges.length})`, value: buildFieldValue(badgeLines), inline: false });
       }
 
       return interaction.editReply({ embeds: [embed] });
