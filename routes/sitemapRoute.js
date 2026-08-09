@@ -46,6 +46,7 @@ export default function sitemapRoutes(app, config, features) {
       { url: "/", priority: "1.0", changefreq: "daily" },
       { url: "/play", priority: "0.8", changefreq: "weekly" },
       { url: "/ranks", priority: "0.7", changefreq: "weekly" },
+      { url: "/finance", priority: "0.7", changefreq: "weekly" },
       { url: "/staff", priority: "0.6", changefreq: "weekly" },
       { url: "/apply", priority: "0.7", changefreq: "weekly" },
       { url: "/watch", priority: "0.7", changefreq: "daily" },

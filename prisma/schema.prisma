@@ -1093,14 +1093,18 @@ model financeAccounts {
 
 /// Hierarchical income / expense categories.
 model financeCategories {
-  categoryId  Int                      @id @default(autoincrement())
-  parentId    Int?
-  name        String                   @db.VarChar(100)
-  type        financeCategories_type   @default(expense)
-  color       String                   @default("#6c757d") @db.VarChar(7)
-  isActive    Int                      @default(1) @db.TinyInt
-  createdAt   DateTime                 @default(now())
-  updatedAt   DateTime                 @updatedAt
+  categoryId         Int                    @id @default(autoincrement())
+  parentId           Int?
+  name               String                 @db.VarChar(100)
+  type               financeCategories_type @default(expense)
+  color              String                 @default("#6c757d") @db.VarChar(7)
+  isActive           Int                    @default(1) @db.TinyInt
+  isPublic           Int                    @default(0) @db.TinyInt
+  publicName         String?                @db.VarChar(100)
+  publicDescription  String?                @db.VarChar(255)
+  publicSortOrder    Int                    @default(0)
+  createdAt          DateTime               @default(now())
+  updatedAt          DateTime               @updatedAt
 
   parent    financeCategories?   @relation("CategoryParent", fields: [parentId], references: [categoryId], onDelete: SetNull)
   children  financeCategories[]  @relation("CategoryParent")
@@ -1110,6 +1114,7 @@ model financeCategories {
   budgetEntries        financeOperationsBudget[]
 
   @@index([parentId])
+  @@index([isPublic])
 }
 
 /// Free-form tags that can be attached to transactions.

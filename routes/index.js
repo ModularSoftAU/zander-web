@@ -27,6 +27,7 @@ import watchSiteRoutes from "./watchRoutes.js";
 import sitemapRoutes from "./sitemapRoute.js";
 import voteSiteRoutes from "./voteRoutes.js";
 import eventsSiteRoutes from "./eventsRoutes.js";
+import financeRoutes from "./financeRoutes.js";
 import webstoreSiteRoutes from "./webstoreRoutes.js";
 import mixedSiteRoutes from "./mixedRoutes.js";
 import { getRankCatalogForPublicPage } from "../controllers/rankCatalogController.js";
@@ -54,6 +55,7 @@ export default function applicationSiteRoutes(
   sitemapRoutes(app, config, features);
   voteSiteRoutes(app, fetch, config, db, features, lang);
   eventsSiteRoutes(app, config, features);
+  financeRoutes(app, config, features);
   webstoreSiteRoutes(app, config, features);
   mixedSiteRoutes(app, config, features);
 

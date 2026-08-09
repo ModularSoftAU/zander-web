@@ -7,6 +7,7 @@
 
 import { prisma } from "./databaseController.js";
 import db from "./databaseController.js";
+import { getMonthlyPurchaseTotals } from "./webstoreController.js";
 
 // ---------------------------------------------------------------------------
 // Internal helper: wrap mysql2 pool query in a Promise
@@ -19,6 +20,65 @@ function queryDb(sql, params = []) {
       resolve(results || []);
     });
   });
+}
+
+function getMonthRange(year, month) {
+  const startDate = new Date(year, month - 1, 1);
+  const endDate = new Date(year, month, 0);
+  return { startDate, endDate };
+}
+
+function normaliseReportMonth(year, month) {
+  const parsedYear = parseInt(year, 10);
+  const parsedMonth = parseInt(month, 10);
+  if (!Number.isInteger(parsedYear) || !Number.isInteger(parsedMonth) || parsedMonth < 1 || parsedMonth > 12) {
+    throw new Error("Invalid report month.");
+  }
+  return { year: parsedYear, month: parsedMonth };
+}
+
+function getPublicCategoryDisplay(category) {
+  return {
+    name: (category.publicName || category.name || "").trim(),
+    description: (category.publicDescription || "").trim(),
+    sortOrder: Number.isInteger(category.publicSortOrder) ? category.publicSortOrder : 0,
+  };
+}
+
+function buildPublicCategoryGroups(categories, totalsByCategoryId) {
+  const grouped = new Map();
+
+  for (const category of categories) {
+    const cents = Number(totalsByCategoryId.get(category.categoryId) || 0);
+    const display = getPublicCategoryDisplay(category);
+    const key = JSON.stringify({
+      name: display.name,
+      description: display.description,
+      sortOrder: display.sortOrder,
+    });
+
+    if (!grouped.has(key)) {
+      grouped.set(key, {
+        key,
+        name: display.name,
+        description: display.description,
+        sortOrder: display.sortOrder,
+        totalCents: 0,
+        categoryIds: [],
+      });
+    }
+
+    const entry = grouped.get(key);
+    entry.totalCents += cents;
+    entry.categoryIds.push(category.categoryId);
+  }
+
+  return Array.from(grouped.values())
+    .filter((entry) => entry.totalCents > 0)
+    .sort((a, b) => {
+      if (a.sortOrder !== b.sortOrder) return a.sortOrder - b.sortOrder;
+      return a.name.localeCompare(b.name);
+    });
 }
 
 // =============================================================================
@@ -70,6 +130,10 @@ export async function updateCategory(id, data) {
   if (data.type !== undefined) update.type = data.type;
   if (data.color !== undefined) update.color = data.color;
   if (data.isActive !== undefined) update.isActive = data.isActive ? 1 : 0;
+  if (data.isPublic !== undefined) update.isPublic = data.isPublic ? 1 : 0;
+  if (data.publicName !== undefined) update.publicName = data.publicName?.trim() || null;
+  if (data.publicDescription !== undefined) update.publicDescription = data.publicDescription?.trim() || null;
+  if (data.publicSortOrder !== undefined) update.publicSortOrder = parseInt(data.publicSortOrder, 10) || 0;
   return prisma.financeCategories.update({ where: { categoryId: id }, data: update });
 }
 
@@ -258,6 +322,257 @@ export async function getBudgetVsActual(year, month) {
   );
 
   return results;
+}
+
+// =============================================================================
+// Public Finance Centre / Reports
+// =============================================================================
+
+export function getFinanceMonthlyGoalCents(config) {
+  return (
+    Number(config?.siteConfiguration?.webstore?.monthlyGoalCents) ||
+    Number(process.env.WEBSTORE_MONTHLY_GOAL_CENTS) ||
+    10000
+  );
+}
+
+export async function getPublicExpenseCategories() {
+  return prisma.financeCategories.findMany({
+    where: {
+      type: "expense",
+      isActive: 1,
+      isPublic: 1,
+    },
+    orderBy: [
+      { publicSortOrder: "asc" },
+      { publicName: "asc" },
+      { name: "asc" },
+    ],
+  });
+}
+
+export async function getPublicExpenseCategoryBreakdown(year, month) {
+  const { startDate, endDate } = getMonthRange(year, month);
+  const categories = await getPublicExpenseCategories();
+
+  if (!categories.length) {
+    return {
+      categories: [],
+      totalOperatingCostsCents: 0,
+      includedCategoryIds: [],
+      includedCategoryNames: [],
+    };
+  }
+
+  const categoryIds = categories.map((category) => category.categoryId);
+  const rows = await prisma.financeTransactions.groupBy({
+    by: ["categoryId"],
+    where: {
+      type: "expense",
+      categoryId: { in: categoryIds },
+      transactionDate: {
+        gte: startDate,
+        lte: endDate,
+      },
+    },
+    _sum: {
+      amountCents: true,
+    },
+  });
+
+  const totalsByCategoryId = new Map(
+    rows.map((row) => [row.categoryId, Number(row._sum.amountCents || 0)])
+  );
+
+  const groupedCategories = buildPublicCategoryGroups(categories, totalsByCategoryId);
+  const totalOperatingCostsCents = groupedCategories.reduce((sum, category) => sum + category.totalCents, 0);
+
+  return {
+    categories: groupedCategories,
+    totalOperatingCostsCents,
+    includedCategoryIds: categoryIds,
+    includedCategoryNames: categories.map((category) => category.name),
+  };
+}
+
+export async function buildPublicFinanceSnapshot({
+  year,
+  month,
+  monthlyGoalCents,
+  publicNote = null,
+}) {
+  const { startDate, endDate } = getMonthRange(year, month);
+  const [communitySupportCents, expenseBreakdown] = await Promise.all([
+    getMonthlyPurchaseTotals(startDate, endDate),
+    getPublicExpenseCategoryBreakdown(year, month),
+  ]);
+
+  const fundingProgressPercent = monthlyGoalCents > 0
+    ? Math.round((communitySupportCents / monthlyGoalCents) * 100)
+    : 0;
+
+  const remainingFundedByCfcCents = Math.max(expenseBreakdown.totalOperatingCostsCents - communitySupportCents, 0);
+  const aboveOperatingCostsCents = Math.max(communitySupportCents - expenseBreakdown.totalOperatingCostsCents, 0);
+  const netPositionCents = communitySupportCents - expenseBreakdown.totalOperatingCostsCents;
+
+  return {
+    year,
+    month,
+    monthKey: `${year}-${String(month).padStart(2, "0")}`,
+    monthLabel: new Date(year, month - 1, 1).toLocaleDateString("en-US", {
+      month: "long",
+      year: "numeric",
+    }),
+    fundingGoalCents: monthlyGoalCents,
+    communitySupportCents,
+    fundingProgressPercent,
+    operatingCostsCents: expenseBreakdown.totalOperatingCostsCents,
+    remainingFundedByCfcCents,
+    aboveOperatingCostsCents,
+    netPositionCents,
+    categories: expenseBreakdown.categories,
+    publicNote: publicNote?.trim() || null,
+    includedCategoryIds: expenseBreakdown.includedCategoryIds,
+    includedCategoryNames: expenseBreakdown.includedCategoryNames,
+  };
+}
+
+export async function getPublishedFinanceReports(limit = 12) {
+  const reports = await prisma.financeMonthlyReports.findMany({
+    where: { isPublished: 1 },
+    orderBy: [{ year: "desc" }, { month: "desc" }],
+    take: limit,
+  });
+
+  return reports.map((report) => {
+    const snapshot = report.reportData && typeof report.reportData === "object"
+      ? report.reportData
+      : null;
+
+    return {
+      ...report,
+      snapshot: snapshot || {
+        year: report.year,
+        month: report.month,
+        monthLabel: new Date(report.year, report.month - 1, 1).toLocaleDateString("en-US", {
+          month: "long",
+          year: "numeric",
+        }),
+        communitySupportCents: report.totalIncomeCents || 0,
+        operatingCostsCents: report.totalExpensesCents || 0,
+        netPositionCents: report.netAmountCents || 0,
+        publicNote: report.notes || null,
+        categories: [],
+        fundingGoalCents: 0,
+        fundingProgressPercent: 0,
+      },
+    };
+  });
+}
+
+export async function getFinanceReportRecord(year, month) {
+  const normalised = normaliseReportMonth(year, month);
+  return prisma.financeMonthlyReports.findUnique({
+    where: {
+      year_month: {
+        year: normalised.year,
+        month: normalised.month,
+      },
+    },
+  });
+}
+
+export async function getPublishedFinanceReportByMonth(year, month) {
+  const report = await getFinanceReportRecord(year, month);
+  if (!report || report.isPublished !== 1) return null;
+
+  const snapshot = report.reportData && typeof report.reportData === "object"
+    ? report.reportData
+    : null;
+
+  return {
+    ...report,
+    snapshot: snapshot || {
+      year: report.year,
+      month: report.month,
+      monthLabel: new Date(report.year, report.month - 1, 1).toLocaleDateString("en-US", {
+        month: "long",
+        year: "numeric",
+      }),
+      communitySupportCents: report.totalIncomeCents || 0,
+      operatingCostsCents: report.totalExpensesCents || 0,
+      netPositionCents: report.netAmountCents || 0,
+      publicNote: report.notes || null,
+      categories: [],
+      fundingGoalCents: 0,
+      fundingProgressPercent: 0,
+    },
+  };
+}
+
+export async function publishFinanceMonthlyReport({
+  year,
+  month,
+  monthlyGoalCents,
+  publicNote,
+  publishedByUserId,
+}) {
+  const normalised = normaliseReportMonth(year, month);
+  const existing = await getFinanceReportRecord(normalised.year, normalised.month);
+
+  if (existing?.isLocked) {
+    throw new Error("This report is locked and cannot be updated.");
+  }
+
+  const snapshot = await buildPublicFinanceSnapshot({
+    year: normalised.year,
+    month: normalised.month,
+    monthlyGoalCents,
+    publicNote,
+  });
+
+  return prisma.financeMonthlyReports.upsert({
+    where: {
+      year_month: {
+        year: normalised.year,
+        month: normalised.month,
+      },
+    },
+    update: {
+      totalIncomeCents: snapshot.communitySupportCents,
+      totalExpensesCents: snapshot.operatingCostsCents,
+      netAmountCents: snapshot.netPositionCents,
+      notes: snapshot.publicNote,
+      reportData: snapshot,
+      isPublished: 1,
+      publishedAt: new Date(),
+      publishedByUserId: parseInt(publishedByUserId, 10) || null,
+    },
+    create: {
+      year: normalised.year,
+      month: normalised.month,
+      totalIncomeCents: snapshot.communitySupportCents,
+      totalExpensesCents: snapshot.operatingCostsCents,
+      netAmountCents: snapshot.netPositionCents,
+      notes: snapshot.publicNote,
+      reportData: snapshot,
+      isPublished: 1,
+      isLocked: 0,
+      publishedAt: new Date(),
+      publishedByUserId: parseInt(publishedByUserId, 10) || null,
+    },
+  });
+}
+
+export async function lockFinanceMonthlyReport(year, month) {
+  const normalised = normaliseReportMonth(year, month);
+  const report = await getFinanceReportRecord(normalised.year, normalised.month);
+  if (!report) throw new Error("Report not found.");
+
+  return prisma.financeMonthlyReports.update({
+    where: { reportId: report.reportId },
+    data: { isLocked: 1 },
+  });
 }
 
 // =============================================================================

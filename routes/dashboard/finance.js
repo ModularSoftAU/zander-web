@@ -36,6 +36,12 @@ import {
   getBudgetVsActual,
   // Dashboard
   getFinanceDashboardData,
+  getFinanceMonthlyGoalCents,
+  buildPublicFinanceSnapshot,
+  getFinanceReportRecord,
+  getPublishedFinanceReports,
+  publishFinanceMonthlyReport,
+  lockFinanceMonthlyReport,
   // Helpers
   centsToDisplay,
 } from "../../controllers/financeController.js";
@@ -448,6 +454,99 @@ export default function dashboardFinanceRoute(app, fetch, config, db, features, 
   });
 
   // ===========================================================================
+  // Reports
+  // ===========================================================================
+
+  app.get("/dashboard/finance/reports", async function (req, res) {
+    if (!await hasPermission("zander.web.finance", req, res, features)) return;
+
+    try {
+      const now = new Date();
+      const selectedYear = parseInt(req.query.year, 10) || now.getFullYear();
+      const selectedMonth = parseInt(req.query.month, 10) || now.getMonth() + 1;
+      const monthlyGoalCents = getFinanceMonthlyGoalCents(config);
+
+      const [base, existingReport, publishedReports, previewData] = await Promise.all([
+        baseViewData(req, features),
+        getFinanceReportRecord(selectedYear, selectedMonth),
+        getPublishedFinanceReports(12),
+        req.query.preview === "1"
+          ? buildPublicFinanceSnapshot({
+            year: selectedYear,
+            month: selectedMonth,
+            monthlyGoalCents,
+            publicNote: req.query.publicNote || null,
+          })
+          : null,
+      ]);
+
+      res.header("content-type", "text/html; charset=utf-8").send(
+        await app.view("dashboard/finance/reports", {
+          pageTitle: "Finance - Reports",
+          config,
+          req,
+          features,
+          ...base,
+          selectedYear,
+          selectedMonth,
+          monthlyGoalCents,
+          existingReport,
+          publishedReports,
+          previewData,
+        })
+      );
+    } catch (error) {
+      console.error("[finance] GET /dashboard/finance/reports:", error);
+      setBannerCookie("danger", error.message, res);
+      return res.redirect("/dashboard/finance");
+    }
+  });
+
+  app.post("/dashboard/finance/reports/publish", async function (req, res) {
+    if (!await hasPermission("zander.web.finance", req, res, features)) return;
+    if (!canManageFinance(req)) {
+      setBannerCookie("danger", "You do not have permission to publish finance reports.", res);
+      return res.redirect("/dashboard/finance/reports");
+    }
+
+    try {
+      const { year, month, publicNote } = req.body || {};
+      await publishFinanceMonthlyReport({
+        year,
+        month,
+        monthlyGoalCents: getFinanceMonthlyGoalCents(config),
+        publicNote,
+        publishedByUserId: req.session?.user?.userId || 0,
+      });
+      setBannerCookie("success", "Finance report published.", res);
+    } catch (error) {
+      console.error("[finance] POST /dashboard/finance/reports/publish:", error);
+      setBannerCookie("danger", error.message, res);
+    }
+
+    return res.redirect(`/dashboard/finance/reports?year=${encodeURIComponent(req.body?.year || "")}&month=${encodeURIComponent(req.body?.month || "")}`);
+  });
+
+  app.post("/dashboard/finance/reports/lock", async function (req, res) {
+    if (!await hasPermission("zander.web.finance", req, res, features)) return;
+    if (!canManageFinance(req)) {
+      setBannerCookie("danger", "You do not have permission to lock finance reports.", res);
+      return res.redirect("/dashboard/finance/reports");
+    }
+
+    try {
+      const { year, month } = req.body || {};
+      await lockFinanceMonthlyReport(year, month);
+      setBannerCookie("success", "Finance report locked.", res);
+    } catch (error) {
+      console.error("[finance] POST /dashboard/finance/reports/lock:", error);
+      setBannerCookie("danger", error.message, res);
+    }
+
+    return res.redirect(`/dashboard/finance/reports?year=${encodeURIComponent(req.body?.year || "")}&month=${encodeURIComponent(req.body?.month || "")}`);
+  });
+
+  // ===========================================================================
   // Settings (categories only)
   // ===========================================================================
 
@@ -510,8 +609,28 @@ export default function dashboardFinanceRoute(app, fetch, config, db, features, 
     }
     const id = parseInt(req.params.id, 10);
     try {
-      const { parentId, name, type, color, isActive } = req.body || {};
-      await updateCategory(id, { parentId, name, type, color, isActive: isActive === "1" ? 1 : 0 });
+      const {
+        parentId,
+        name,
+        type,
+        color,
+        isActive,
+        isPublic,
+        publicName,
+        publicDescription,
+        publicSortOrder,
+      } = req.body || {};
+      await updateCategory(id, {
+        parentId,
+        name,
+        type,
+        color,
+        isActive: isActive === "1" ? 1 : 0,
+        isPublic: isPublic === "1" ? 1 : 0,
+        publicName,
+        publicDescription,
+        publicSortOrder,
+      });
       setBannerCookie("success", "Category updated.", res);
     } catch (error) {
       console.error("[finance] POST settings/categories/:id/edit:", error);
