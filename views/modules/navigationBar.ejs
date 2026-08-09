@@ -22,35 +22,59 @@
             <div class="collapse navbar-collapse" id="navbarmain">
                 <ul class="navbar-nav ms-auto">
                     <li class="nav-item"><a class="nav-link" href="/">Home</a></li>
-                    <% if (features.server) { %>
-                        <li class="nav-item"><a class="nav-link" href="/play">Play</a></li>
+
+                    <% if (features.server || features.mixed !== false || features.ranks || features.vote) { %>
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" id="navPlayDropdown" role="button" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Play</a>
+                            <div class="dropdown-menu" aria-labelledby="navPlayDropdown">
+                                <% if (features.server) { %>
+                                    <a class="dropdown-item" href="/play">Play</a>
+                                <% } %>
+                                <% if (features.mixed !== false) { %>
+                                    <a class="dropdown-item" href="/mixed">Mixed</a>
+                                <% } %>
+                                <% if (features.ranks) { %>
+                                    <a class="dropdown-item" href="/ranks">Ranks</a>
+                                <% } %>
+                                <% if (features.vote) { %>
+                                    <a class="dropdown-item" href="/vote">Vote</a>
+                                <% } %>
+                            </div>
+                        </li>
                     <% } %>
-                    <% if (features.report) { %>
-                        <li class="nav-item"><a class="nav-link" href="/report">Report</a></li>
+
+                    <% if (features.forums || features.events || features.applications) { %>
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" id="navCommunityDropdown" role="button" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Community</a>
+                            <div class="dropdown-menu" aria-labelledby="navCommunityDropdown">
+                                <% if (features.forums) { %>
+                                    <a class="dropdown-item" href="/forums">Forums</a>
+                                <% } %>
+                                <% if (features.events) { %>
+                                    <a class="dropdown-item" href="/events">Events</a>
+                                <% } %>
+                                <% if (features.applications) { %>
+                                    <a class="dropdown-item" href="/apply">Apply</a>
+                                <% } %>
+                            </div>
+                        </li>
                     <% } %>
-                    <% if (features.applications) { %>
-                        <li class="nav-item"><a class="nav-link" href="/apply">Apply</a></li>
-                    <% } %>
-                    <% if (features.ranks) { %>
-                        <li class="nav-item"><a class="nav-link" href="/ranks">Ranks</a></li>
-                    <% } %>
-                    <% if (features.forums) { %>
-                        <li class="nav-item"><a class="nav-link" href="/forums">Forums</a></li>
-                    <% } %>
-                    <% if (features.vote) { %>
-                        <li class="nav-item"><a class="nav-link" href="/vote">Vote</a></li>
-                    <% } %>
-                    <% if (features.events) { %>
-                        <li class="nav-item"><a class="nav-link" href="/events">Events</a></li>
-                    <% } %>
-                    <% if (features.mixed !== false) { %>
-                        <li class="nav-item"><a class="nav-link" href="/mixed">Mixed</a></li>
-                    <% } %>
+
                     <li class="nav-item"><a class="nav-link" href="/webstore">Webstore</a></li>
-                    <li class="nav-item"><a class="nav-link" href="/rules">Rules</a></li>
-                    <% if (features.support) { %>
-                        <li class="nav-item"><a class="nav-link" href="/support">Support</a></li>
-                    <% } %>
+
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="navHelpDropdown" role="button" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Help</a>
+                        <div class="dropdown-menu" aria-labelledby="navHelpDropdown">
+                            <a class="dropdown-item" href="/rules">Rules</a>
+                            <% if (features.report) { %>
+                                <a class="dropdown-item" href="/report">Report</a>
+                            <% } %>
+                            <% if (features.support) { %>
+                                <a class="dropdown-item" href="/support">Support</a>
+                            <% } %>
+                        </div>
+                    </li>
+
                     <% if (req.session?.user?.permissions?.includes('zander.web.dashboard') || req.session?.user?.permissions?.includes('zander.web.*') || req.session?.user?.permissions?.includes('*')) { %>
                         <li class="nav-item"><a class="nav-link" href="/dashboard">Dashboard</a></li>
                     <% } %>
