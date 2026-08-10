@@ -157,8 +157,10 @@ export function UserGetter() {
       `SELECT 1 FROM luckperms_players WHERE LOWER(username) = LOWER(?) LIMIT 1`;
 
     if (trimmedUuid) {
+      // LuckPerms MySQL stores uuid as VARCHAR(36) with dashes — compare
+      // directly, no UNHEX() (which would produce binary that never matches).
       luckPermsQuery =
-        `SELECT 1 FROM luckperms_players WHERE LOWER(username) = LOWER(?) OR uuid = UNHEX(REPLACE(?, '-', '')) LIMIT 1`;
+        `SELECT 1 FROM luckperms_players WHERE LOWER(username) = LOWER(?) OR LOWER(uuid) = LOWER(?) LIMIT 1`;
       luckPermsParams.push(trimmedUuid);
     }
 
@@ -193,10 +195,11 @@ export function UserGetter() {
       return userRows[0].uuid;
     }
 
-    // Check luckperms_players table
+    // Check luckperms_players table. LuckPerms MySQL stores uuid as
+    // VARCHAR(36) with dashes already — select it as-is, no HEX() needed.
     const luckPermsRows = await new Promise((resolve, reject) => {
       luckpermsDb.query(
-        `SELECT LOWER(HEX(uuid)) AS hexUuid FROM luckperms_players WHERE LOWER(username) = LOWER(?) LIMIT 1`,
+        `SELECT LOWER(uuid) AS uuid FROM luckperms_players WHERE LOWER(username) = LOWER(?) LIMIT 1`,
         [trimmedUsername],
         (error, results) => {
           if (error) return reject(error);
@@ -204,11 +207,8 @@ export function UserGetter() {
         }
       );
     });
-    if (luckPermsRows.length && luckPermsRows[0].hexUuid) {
-      const hex = luckPermsRows[0].hexUuid;
-      if (hex.length === 32) {
-        return `${hex.substring(0, 8)}-${hex.substring(8, 12)}-${hex.substring(12, 16)}-${hex.substring(16, 20)}-${hex.substring(20)}`.toLowerCase();
-      }
+    if (luckPermsRows.length && luckPermsRows[0].uuid) {
+      return luckPermsRows[0].uuid;
     }
 
     return null;

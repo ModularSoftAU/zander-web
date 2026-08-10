@@ -59,8 +59,12 @@ async function reconcileRankDiscordRoles() {
 
     for (const rank of ranks) {
       try {
+        // luckperms_user_permissions.uuid is a standard dashed VARCHAR(36),
+        // matching users.uuid's own dashed format directly (see
+        // lib/discord/rankRoleSync.mjs normalizeUuid / services/profileService.js
+        // getUserRanks for the same fix applied elsewhere).
         const lpRows = await queryLuckPermsDb(
-          `SELECT LOWER(HEX(uuid)) AS uuid FROM luckperms_user_permissions
+          `SELECT LOWER(uuid) AS uuid FROM luckperms_user_permissions
             WHERE permission = ? AND value = 1`,
           [`group.${rank.rankSlug}`]
         );
@@ -70,7 +74,7 @@ async function reconcileRankDiscordRoles() {
         const uuids = lpRows.map((r) => r.uuid);
         const placeholders = uuids.map(() => "?").join(", ");
         const webUsers = await queryDb(
-          `SELECT userId, discordId FROM users WHERE LOWER(REPLACE(uuid, '-', '')) IN (${placeholders}) AND discordId IS NOT NULL`,
+          `SELECT userId, discordId FROM users WHERE LOWER(uuid) IN (${placeholders}) AND discordId IS NOT NULL`,
           uuids
         );
 
