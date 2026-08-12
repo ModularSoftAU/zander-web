@@ -94,14 +94,24 @@
           <div class="card shadow-sm h-100">
             <div class="card-header d-flex justify-content-between align-items-center">
               <span class="fw-semibold"><i class="fa-solid fa-gauge fa-fw me-2 text-info"></i>Budget Template (this month)</span>
+              <% if (canManage) { %>
+                <button type="button" class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#addBudgetModal">
+                  <i class="fa-solid fa-plus me-1"></i>Add
+                </button>
+              <% } %>
             </div>
             <div class="card-body p-0">
               <% if (!budgetSummary || !budgetSummary.length) { %>
-                <div class="p-3 text-muted small">No budget template entries are configured yet.</div>
+                <div class="p-3 text-muted small">No budget template entries are configured yet.<% if (canManage) { %> Add one above.<% } %></div>
               <% } else { %>
                 <div class="table-responsive">
                   <table class="table table-sm align-middle mb-0">
-                    <thead><tr><th>Line Item</th><th class="text-end">Budget</th><th class="text-end">Actual</th></tr></thead>
+                    <thead>
+                      <tr>
+                        <th>Line Item</th><th class="text-end">Budget</th><th class="text-end">Actual</th>
+                        <% if (canManage) { %><th></th><% } %>
+                      </tr>
+                    </thead>
                     <tbody>
                       <% budgetSummary.forEach(function(b) {
                         const budgetStr = new Intl.NumberFormat('en-US', { style:'currency', currency: b.currency||'USD' }).format((b.monthlyBudgetCents||0)/100);
@@ -112,6 +122,26 @@
                           <td><%= b.label %></td>
                           <td class="text-end text-muted"><%= budgetStr %></td>
                           <td class="text-end fw-semibold <%= isOver ? 'text-danger' : '' %>"><%= actualStr %></td>
+                          <% if (canManage) { %>
+                            <td class="text-end">
+                              <div class="d-flex gap-1 justify-content-end">
+                                <button type="button" class="btn btn-sm btn-outline-warning"
+                                        data-bs-toggle="modal" data-bs-target="#editBudgetModal"
+                                        data-id="<%= b.budgetId %>"
+                                        data-category-id="<%= b.categoryId || '' %>"
+                                        data-label="<%= (b.label||'').replace(/"/g,'&quot;') %>"
+                                        data-amount="<%= ((b.monthlyBudgetCents||0)/100).toFixed(2) %>"
+                                        data-currency="<%= b.currency || 'USD' %>"
+                                        data-notes="<%= (b.notes||'').replace(/"/g,'&quot;') %>">
+                                  <i class="fa-solid fa-pen"></i>
+                                </button>
+                                <form method="post" action="/dashboard/finance/budget/<%= b.budgetId %>/delete" class="d-inline"
+                                      onsubmit="return confirm('Delete this budget entry?')">
+                                  <button type="submit" class="btn btn-sm btn-outline-danger"><i class="fa-solid fa-trash"></i></button>
+                                </form>
+                              </div>
+                            </td>
+                          <% } %>
                         </tr>
                       <% }) %>
                     </tbody>
@@ -128,3 +158,126 @@
   </div>
   <%- include("../../admin/_footer.ejs") %>
 </div>
+
+<% if (canManage) { %>
+  <%# Add Budget Modal -%>
+  <div class="modal fade" id="addBudgetModal" tabindex="-1" aria-labelledby="addBudgetModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <form method="post" action="/dashboard/finance/budget/create" class="budget-entry-form">
+          <input type="hidden" name="monthlyBudgetCents" class="budget-cents-input">
+          <div class="modal-header">
+            <h5 class="modal-title" id="addBudgetModalLabel">Add Budget Entry</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            <div class="mb-3">
+              <label for="addBudgetLabel" class="form-label fw-semibold">Line item <span class="text-danger">*</span></label>
+              <input type="text" class="form-control" id="addBudgetLabel" name="label" maxlength="100" required>
+            </div>
+            <div class="mb-3">
+              <label for="addBudgetCategoryId" class="form-label fw-semibold">Category</label>
+              <select class="form-select" id="addBudgetCategoryId" name="categoryId">
+                <option value="">— None —</option>
+                <% (categories || []).forEach(function(cat) { %>
+                  <option value="<%= cat.categoryId %>"><%= cat.name %></option>
+                <% }) %>
+              </select>
+            </div>
+            <div class="mb-3">
+              <label for="addBudgetAmount" class="form-label fw-semibold">Monthly budget <span class="text-danger">*</span></label>
+              <div class="input-group">
+                <span class="input-group-text">$</span>
+                <input type="number" class="form-control budget-amount-input" id="addBudgetAmount" required min="0.01" step="0.01" placeholder="0.00">
+              </div>
+            </div>
+            <div class="mb-3">
+              <label for="addBudgetCurrency" class="form-label fw-semibold">Currency</label>
+              <input type="text" class="form-control" id="addBudgetCurrency" name="currency" value="USD" maxlength="10">
+            </div>
+            <div class="mb-3">
+              <label for="addBudgetNotes" class="form-label fw-semibold">Notes</label>
+              <input type="text" class="form-control" id="addBudgetNotes" name="notes" maxlength="500">
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+            <button type="submit" class="btn btn-primary"><i class="fa-solid fa-check me-1"></i>Add</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <%# Edit Budget Modal -%>
+  <div class="modal fade" id="editBudgetModal" tabindex="-1" aria-labelledby="editBudgetModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <form method="post" id="editBudgetForm" action="/dashboard/finance/budget/__id__/edit" class="budget-entry-form">
+          <input type="hidden" name="monthlyBudgetCents" class="budget-cents-input">
+          <input type="hidden" name="isActive" value="1">
+          <div class="modal-header">
+            <h5 class="modal-title" id="editBudgetModalLabel">Edit Budget Entry</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            <div class="mb-3">
+              <label for="editBudgetLabel" class="form-label fw-semibold">Line item <span class="text-danger">*</span></label>
+              <input type="text" class="form-control" id="editBudgetLabel" name="label" maxlength="100" required>
+            </div>
+            <div class="mb-3">
+              <label for="editBudgetCategoryId" class="form-label fw-semibold">Category</label>
+              <select class="form-select" id="editBudgetCategoryId" name="categoryId">
+                <option value="">— None —</option>
+                <% (categories || []).forEach(function(cat) { %>
+                  <option value="<%= cat.categoryId %>"><%= cat.name %></option>
+                <% }) %>
+              </select>
+            </div>
+            <div class="mb-3">
+              <label for="editBudgetAmount" class="form-label fw-semibold">Monthly budget <span class="text-danger">*</span></label>
+              <div class="input-group">
+                <span class="input-group-text">$</span>
+                <input type="number" class="form-control budget-amount-input" id="editBudgetAmount" required min="0.01" step="0.01">
+              </div>
+            </div>
+            <div class="mb-3">
+              <label for="editBudgetCurrency" class="form-label fw-semibold">Currency</label>
+              <input type="text" class="form-control" id="editBudgetCurrency" name="currency" maxlength="10">
+            </div>
+            <div class="mb-3">
+              <label for="editBudgetNotes" class="form-label fw-semibold">Notes</label>
+              <input type="text" class="form-control" id="editBudgetNotes" name="notes" maxlength="500">
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+            <button type="submit" class="btn btn-primary"><i class="fa-solid fa-check me-1"></i>Save</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Convert the dollar-amount input to integer cents right before submit —
+    // the backend (createBudgetEntry/updateBudgetEntry) expects monthlyBudgetCents.
+    document.querySelectorAll('.budget-entry-form').forEach(function (form) {
+      form.addEventListener('submit', function () {
+        const dollars = parseFloat(form.querySelector('.budget-amount-input').value) || 0;
+        form.querySelector('.budget-cents-input').value = Math.round(dollars * 100);
+      });
+    });
+
+    document.getElementById('editBudgetModal')?.addEventListener('show.bs.modal', function (e) {
+      const btn = e.relatedTarget;
+      const form = document.getElementById('editBudgetForm');
+      form.action = '/dashboard/finance/budget/' + btn.dataset.id + '/edit';
+      document.getElementById('editBudgetLabel').value = btn.dataset.label || '';
+      document.getElementById('editBudgetCategoryId').value = btn.dataset.categoryId || '';
+      document.getElementById('editBudgetAmount').value = btn.dataset.amount || '';
+      document.getElementById('editBudgetCurrency').value = btn.dataset.currency || 'USD';
+      document.getElementById('editBudgetNotes').value = btn.dataset.notes || '';
+    });
+  </script>
+<% } %>

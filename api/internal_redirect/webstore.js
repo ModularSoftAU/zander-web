@@ -446,6 +446,33 @@ async function handleInvoicePaymentSucceeded(event, config) {
     await fulfillSubscriptionRenewal(subscription, grantCommands, { discordClient, guildId: config?.discord?.guildId });
   }
 
+  // --- Record renewal income in finance ledger ---
+  // (The initial payment is recorded by handleCheckoutCompleted; every
+  // subsequent renewal must be recorded here or it's invisible to the
+  // finance dashboard even though real money changed hands.)
+  try {
+    const account = await getDefaultWebstoreAccount();
+    if (account && typeof invoice.amount_paid === "number") {
+      const item = await findWebstoreItem(subscription.stripePriceId).catch(() => null);
+      const itemName = item?.displayName || subscription.stripePriceId;
+      const recipient = subscription.recipientMinecraftUsername || subscription.purchaserMinecraftUsername || "unknown";
+      await createTransaction({
+        type: "income",
+        amountCents: invoice.amount_paid,
+        currency: (invoice.currency || "usd").toUpperCase(),
+        accountId: account.accountId,
+        description: `${itemName} — ${recipient} (renewal)`,
+        notes: `Webstore subscription renewal. Purchase #${subscription.purchaseId}. Stripe subscription ${invoice.subscription}.`,
+        transactionDate: new Date().toISOString().slice(0, 10),
+        createdByUserId: 0,
+      });
+    } else if (!account) {
+      console.warn("[webstore] No finance account found — skipping renewal income record for subscription", invoice.subscription);
+    }
+  } catch (err) {
+    console.error("[webstore] Failed to record renewal income for subscription", invoice.subscription, err.message);
+  }
+
   const periodEndDate = stripeSub?.current_period_end
     ? new Date(stripeSub.current_period_end * 1000).toISOString().slice(0, 10)
     : "unknown";

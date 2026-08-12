@@ -101,9 +101,10 @@ export default function dashboardFinanceRoute(app, fetch, config, db, features, 
     if (!await hasPermission("zander.web.finance", req, res, features)) return;
 
     try {
-      const [base, dashData] = await Promise.all([
+      const [base, dashData, categories] = await Promise.all([
         baseViewData(req, features),
         getFinanceDashboardData(),
+        getCategories(),
       ]);
 
       res.header("content-type", "text/html; charset=utf-8").send(
@@ -114,6 +115,7 @@ export default function dashboardFinanceRoute(app, fetch, config, db, features, 
           features,
           ...base,
           ...dashData,
+          categories,
         })
       );
     } catch (error) {
@@ -121,6 +123,74 @@ export default function dashboardFinanceRoute(app, fetch, config, db, features, 
       setBannerCookie("danger", error.message, res);
       return res.redirect("/dashboard");
     }
+  });
+
+  // POST /dashboard/finance/budget/create
+  app.post("/dashboard/finance/budget/create", async function (req, res) {
+    if (!await hasPermission("zander.web.finance", req, res, features)) return;
+
+    if (!canManageFinance(req)) {
+      setBannerCookie("danger", "You do not have permission to manage budget entries.", res);
+      return res.redirect("/dashboard/finance");
+    }
+
+    try {
+      const { categoryId, label, monthlyBudgetCents, currency, notes } = req.body || {};
+      await createBudgetEntry({ categoryId, label, monthlyBudgetCents, currency, notes });
+      setBannerCookie("success", "Budget entry created.", res);
+    } catch (error) {
+      console.error("[finance] POST /dashboard/finance/budget/create:", error);
+      setBannerCookie("danger", error.message, res);
+    }
+    return res.redirect("/dashboard/finance");
+  });
+
+  // POST /dashboard/finance/budget/:budgetId/edit
+  app.post("/dashboard/finance/budget/:budgetId/edit", async function (req, res) {
+    if (!await hasPermission("zander.web.finance", req, res, features)) return;
+
+    const budgetId = parseInt(req.params.budgetId, 10);
+    if (!budgetId) return res.redirect("/dashboard/finance");
+
+    if (!canManageFinance(req)) {
+      setBannerCookie("danger", "You do not have permission to manage budget entries.", res);
+      return res.redirect("/dashboard/finance");
+    }
+
+    try {
+      const { categoryId, label, monthlyBudgetCents, currency, notes, isActive } = req.body || {};
+      await updateBudgetEntry(budgetId, {
+        categoryId, label, monthlyBudgetCents, currency, notes,
+        isActive: isActive === "1" ? 1 : 0,
+      });
+      setBannerCookie("success", "Budget entry updated.", res);
+    } catch (error) {
+      console.error("[finance] POST /dashboard/finance/budget/:budgetId/edit:", error);
+      setBannerCookie("danger", error.message, res);
+    }
+    return res.redirect("/dashboard/finance");
+  });
+
+  // POST /dashboard/finance/budget/:budgetId/delete
+  app.post("/dashboard/finance/budget/:budgetId/delete", async function (req, res) {
+    if (!await hasPermission("zander.web.finance", req, res, features)) return;
+
+    const budgetId = parseInt(req.params.budgetId, 10);
+    if (!budgetId) return res.redirect("/dashboard/finance");
+
+    if (!canManageFinance(req)) {
+      setBannerCookie("danger", "You do not have permission to manage budget entries.", res);
+      return res.redirect("/dashboard/finance");
+    }
+
+    try {
+      await deleteBudgetEntry(budgetId);
+      setBannerCookie("success", "Budget entry deleted.", res);
+    } catch (error) {
+      console.error("[finance] POST /dashboard/finance/budget/:budgetId/delete:", error);
+      setBannerCookie("danger", error.message, res);
+    }
+    return res.redirect("/dashboard/finance");
   });
 
   // ===========================================================================
@@ -167,26 +237,9 @@ export default function dashboardFinanceRoute(app, fetch, config, db, features, 
   // Budget
   // ===========================================================================
 
-  // GET /dashboard/finance/budget
+  // GET /dashboard/finance/budget — no dedicated page; budget management now
+  // lives inline on the main Finance page.
   app.get("/dashboard/finance/budget", async function (req, res) {
-    if (!await hasPermission("zander.web.finance", req, res, features)) return;
-    return redirectRetiredFinanceSection(res);
-  });
-
-  // POST /dashboard/finance/budget/create
-  app.post("/dashboard/finance/budget/create", async function (req, res) {
-    if (!await hasPermission("zander.web.finance", req, res, features)) return;
-    return redirectRetiredFinanceSection(res);
-  });
-
-  // POST /dashboard/finance/budget/:budgetId/edit
-  app.post("/dashboard/finance/budget/:budgetId/edit", async function (req, res) {
-    if (!await hasPermission("zander.web.finance", req, res, features)) return;
-    return redirectRetiredFinanceSection(res);
-  });
-
-  // POST /dashboard/finance/budget/:budgetId/delete
-  app.post("/dashboard/finance/budget/:budgetId/delete", async function (req, res) {
     if (!await hasPermission("zander.web.finance", req, res, features)) return;
     return redirectRetiredFinanceSection(res);
   });
