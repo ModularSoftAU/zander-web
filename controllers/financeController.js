@@ -285,43 +285,145 @@ export async function deleteBudgetEntry(id) {
   return prisma.financeOperationsBudget.delete({ where: { budgetId: id } });
 }
 
+// =============================================================================
+// Budget — per-month overrides / one-off items
+// =============================================================================
+// financeOperationsBudget is the standing template and never changes month to
+// month. financeOperationsBudgetMonthly holds this specific month's
+// deviations from it: an override (budgetItemId set) or a one-off item
+// (budgetItemId null). A month with no rows here just uses the template as-is.
+
+export async function getMonthlyBudgetRows(year, month) {
+  return prisma.financeOperationsBudgetMonthly.findMany({
+    where: { year: Number(year), month: Number(month) },
+    include: {
+      category: { select: { categoryId: true, name: true, color: true } },
+    },
+  });
+}
+
+export async function upsertMonthlyBudgetOverride({ year, month, budgetItemId, monthlyBudgetCents }) {
+  const template = await prisma.financeOperationsBudget.findUnique({ where: { budgetId: Number(budgetItemId) } });
+  if (!template) throw new Error("Template budget item not found.");
+
+  return prisma.financeOperationsBudgetMonthly.upsert({
+    where: {
+      year_month_budgetItemId: { year: Number(year), month: Number(month), budgetItemId: Number(budgetItemId) },
+    },
+    create: {
+      year: Number(year),
+      month: Number(month),
+      budgetItemId: Number(budgetItemId),
+      categoryId: template.categoryId,
+      label: template.label,
+      monthlyBudgetCents: parseInt(monthlyBudgetCents, 10) || 0,
+      currency: template.currency,
+    },
+    update: {
+      monthlyBudgetCents: parseInt(monthlyBudgetCents, 10) || 0,
+    },
+  });
+}
+
+export async function resetMonthlyBudgetOverride(year, month, budgetItemId) {
+  return prisma.financeOperationsBudgetMonthly.deleteMany({
+    where: { year: Number(year), month: Number(month), budgetItemId: Number(budgetItemId) },
+  });
+}
+
+export async function createOneOffBudgetItem({ year, month, categoryId, label, monthlyBudgetCents, currency, notes }) {
+  if (!label || !label.trim()) throw new Error("Budget label is required.");
+  return prisma.financeOperationsBudgetMonthly.create({
+    data: {
+      year: Number(year),
+      month: Number(month),
+      budgetItemId: null,
+      categoryId: categoryId ? parseInt(categoryId, 10) : null,
+      label: label.trim(),
+      monthlyBudgetCents: monthlyBudgetCents ? parseInt(monthlyBudgetCents, 10) : 0,
+      currency: (currency || "USD").toUpperCase().trim(),
+      notes: notes?.trim() || null,
+    },
+  });
+}
+
+export async function deleteMonthlyBudgetItem(monthlyBudgetItemId) {
+  return prisma.financeOperationsBudgetMonthly.delete({ where: { monthlyBudgetItemId: Number(monthlyBudgetItemId) } });
+}
+
+async function computeActualCents(categoryId, startDate, endDate) {
+  const conditions = ["type = 'expense'", "transactionDate >= ?", "transactionDate <= ?"];
+  const params = [startDate, endDate];
+  if (categoryId) {
+    conditions.push("categoryId = ?");
+    params.push(categoryId);
+  }
+  const rows = await queryDb(
+    `SELECT COALESCE(SUM(amountCents), 0) AS actualCents
+       FROM financeTransactions
+      WHERE ${conditions.join(" AND ")}`,
+    params
+  );
+  return rows[0]?.actualCents || 0;
+}
+
 export async function getBudgetVsActual(year, month) {
-  const entries = await getOperationsBudget();
+  const [templateEntries, monthlyRows] = await Promise.all([
+    getOperationsBudget(),
+    getMonthlyBudgetRows(year, month),
+  ]);
+
+  const overrideByBudgetItemId = new Map();
+  const oneOffRows = [];
+  for (const row of monthlyRows) {
+    if (row.budgetItemId) overrideByBudgetItemId.set(row.budgetItemId, row);
+    else oneOffRows.push(row);
+  }
 
   const startDate = new Date(year, month - 1, 1);
   const endDate = new Date(year, month, 0);
 
-  const results = await Promise.all(
-    entries.map(async (entry) => {
-      const conditions = [];
-      const params = [];
+  const templateResults = await Promise.all(
+    templateEntries.map(async (entry) => {
+      const override = overrideByBudgetItemId.get(entry.budgetId) || null;
+      const monthlyBudgetCents = override ? override.monthlyBudgetCents : entry.monthlyBudgetCents;
+      const actualCents = await computeActualCents(entry.categoryId, startDate, endDate);
 
-      conditions.push("type = 'expense'");
-      conditions.push("transactionDate >= ?");
-      params.push(startDate);
-      conditions.push("transactionDate <= ?");
-      params.push(endDate);
-
-      if (entry.categoryId) {
-        conditions.push("categoryId = ?");
-        params.push(entry.categoryId);
-      }
-
-      const rows = await queryDb(
-        `SELECT COALESCE(SUM(amountCents), 0) AS actualCents
-           FROM financeTransactions
-          WHERE ${conditions.join(" AND ")}`,
-        params
-      );
-
-      const actualCents = rows[0]?.actualCents || 0;
-      const varianceCents = entry.monthlyBudgetCents - actualCents;
-
-      return { ...entry, actualCents, varianceCents };
+      return {
+        ...entry,
+        monthlyBudgetCents,
+        templateMonthlyBudgetCents: entry.monthlyBudgetCents,
+        isOverridden: Boolean(override),
+        monthlyBudgetItemId: override?.monthlyBudgetItemId || null,
+        isOneOff: false,
+        actualCents,
+        varianceCents: monthlyBudgetCents - actualCents,
+      };
     })
   );
 
-  return results;
+  const oneOffResults = await Promise.all(
+    oneOffRows.map(async (row) => {
+      const actualCents = await computeActualCents(row.categoryId, startDate, endDate);
+      return {
+        budgetId: null,
+        monthlyBudgetItemId: row.monthlyBudgetItemId,
+        categoryId: row.categoryId,
+        category: row.category,
+        label: row.label,
+        monthlyBudgetCents: row.monthlyBudgetCents,
+        templateMonthlyBudgetCents: null,
+        currency: row.currency,
+        notes: row.notes,
+        isOverridden: false,
+        isOneOff: true,
+        actualCents,
+        varianceCents: row.monthlyBudgetCents - actualCents,
+      };
+    })
+  );
+
+  return [...templateResults, ...oneOffResults];
 }
 
 // =============================================================================

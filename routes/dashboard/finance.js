@@ -34,6 +34,10 @@ import {
   updateBudgetEntry,
   deleteBudgetEntry,
   getBudgetVsActual,
+  upsertMonthlyBudgetOverride,
+  resetMonthlyBudgetOverride,
+  createOneOffBudgetItem,
+  deleteMonthlyBudgetItem,
   // Dashboard
   getFinanceDashboardData,
   getFinanceMonthlyGoalCents,
@@ -101,10 +105,17 @@ export default function dashboardFinanceRoute(app, fetch, config, db, features, 
     if (!await hasPermission("zander.web.finance", req, res, features)) return;
 
     try {
-      const [base, dashData, categories] = await Promise.all([
+      const now = new Date();
+      const currentYear = now.getFullYear();
+      const currentMonth = now.getMonth() + 1;
+      const selectedYear = parseInt(req.query.year, 10) || currentYear;
+      const selectedMonth = parseInt(req.query.month, 10) || currentMonth;
+
+      const [base, dashData, categories, budgetSummary] = await Promise.all([
         baseViewData(req, features),
         getFinanceDashboardData(),
         getCategories(),
+        getBudgetVsActual(selectedYear, selectedMonth),
       ]);
 
       res.header("content-type", "text/html; charset=utf-8").send(
@@ -115,7 +126,12 @@ export default function dashboardFinanceRoute(app, fetch, config, db, features, 
           features,
           ...base,
           ...dashData,
+          budgetSummary,
           categories,
+          currentYear,
+          currentMonth,
+          selectedYear,
+          selectedMonth,
         })
       );
     } catch (error) {
@@ -123,6 +139,89 @@ export default function dashboardFinanceRoute(app, fetch, config, db, features, 
       setBannerCookie("danger", error.message, res);
       return res.redirect("/dashboard");
     }
+  });
+
+  // POST /dashboard/finance/budget/override — set/update this month's amount
+  // for a template line item, without touching the template itself.
+  app.post("/dashboard/finance/budget/override", async function (req, res) {
+    if (!await hasPermission("zander.web.finance", req, res, features)) return;
+
+    if (!canManageFinance(req)) {
+      setBannerCookie("danger", "You do not have permission to manage budget entries.", res);
+      return res.redirect("/dashboard/finance");
+    }
+
+    const { year, month, budgetItemId, monthlyBudgetCents } = req.body || {};
+    try {
+      await upsertMonthlyBudgetOverride({ year, month, budgetItemId, monthlyBudgetCents });
+      setBannerCookie("success", "Budget override saved for this month.", res);
+    } catch (error) {
+      console.error("[finance] POST /dashboard/finance/budget/override:", error);
+      setBannerCookie("danger", error.message, res);
+    }
+    return res.redirect(`/dashboard/finance?year=${encodeURIComponent(year)}&month=${encodeURIComponent(month)}`);
+  });
+
+  // POST /dashboard/finance/budget/override/reset — revert a line item back
+  // to the template amount for this month (deletes the override row).
+  app.post("/dashboard/finance/budget/override/reset", async function (req, res) {
+    if (!await hasPermission("zander.web.finance", req, res, features)) return;
+
+    if (!canManageFinance(req)) {
+      setBannerCookie("danger", "You do not have permission to manage budget entries.", res);
+      return res.redirect("/dashboard/finance");
+    }
+
+    const { year, month, budgetItemId } = req.body || {};
+    try {
+      await resetMonthlyBudgetOverride(year, month, budgetItemId);
+      setBannerCookie("success", "Reverted to the template amount for this month.", res);
+    } catch (error) {
+      console.error("[finance] POST /dashboard/finance/budget/override/reset:", error);
+      setBannerCookie("danger", error.message, res);
+    }
+    return res.redirect(`/dashboard/finance?year=${encodeURIComponent(year)}&month=${encodeURIComponent(month)}`);
+  });
+
+  // POST /dashboard/finance/budget/one-off/create — add a line item that
+  // only exists for this specific month, not part of the standing template.
+  app.post("/dashboard/finance/budget/one-off/create", async function (req, res) {
+    if (!await hasPermission("zander.web.finance", req, res, features)) return;
+
+    if (!canManageFinance(req)) {
+      setBannerCookie("danger", "You do not have permission to manage budget entries.", res);
+      return res.redirect("/dashboard/finance");
+    }
+
+    const { year, month, categoryId, label, monthlyBudgetCents, currency, notes } = req.body || {};
+    try {
+      await createOneOffBudgetItem({ year, month, categoryId, label, monthlyBudgetCents, currency, notes });
+      setBannerCookie("success", "One-off budget item added.", res);
+    } catch (error) {
+      console.error("[finance] POST /dashboard/finance/budget/one-off/create:", error);
+      setBannerCookie("danger", error.message, res);
+    }
+    return res.redirect(`/dashboard/finance?year=${encodeURIComponent(year)}&month=${encodeURIComponent(month)}`);
+  });
+
+  // POST /dashboard/finance/budget/one-off/:id/delete
+  app.post("/dashboard/finance/budget/one-off/:id/delete", async function (req, res) {
+    if (!await hasPermission("zander.web.finance", req, res, features)) return;
+
+    if (!canManageFinance(req)) {
+      setBannerCookie("danger", "You do not have permission to manage budget entries.", res);
+      return res.redirect("/dashboard/finance");
+    }
+
+    const { year, month } = req.body || {};
+    try {
+      await deleteMonthlyBudgetItem(req.params.id);
+      setBannerCookie("success", "One-off budget item deleted.", res);
+    } catch (error) {
+      console.error("[finance] POST /dashboard/finance/budget/one-off/:id/delete:", error);
+      setBannerCookie("danger", error.message, res);
+    }
+    return res.redirect(`/dashboard/finance?year=${encodeURIComponent(year)}&month=${encodeURIComponent(month)}`);
   });
 
   // POST /dashboard/finance/budget/create

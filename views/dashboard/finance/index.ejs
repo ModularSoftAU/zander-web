@@ -92,17 +92,44 @@
         <%# Budget Summary -%>
         <div class="col-lg-5">
           <div class="card shadow-sm h-100">
-            <div class="card-header d-flex justify-content-between align-items-center">
-              <span class="fw-semibold"><i class="fa-solid fa-gauge fa-fw me-2 text-info"></i>Budget Template (this month)</span>
+            <div class="card-header d-flex flex-wrap justify-content-between align-items-center gap-2">
+              <span class="fw-semibold"><i class="fa-solid fa-gauge fa-fw me-2 text-info"></i>Operations Budget</span>
               <% if (canManage) { %>
-                <button type="button" class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#addBudgetModal">
-                  <i class="fa-solid fa-plus me-1"></i>Add
-                </button>
+                <div class="d-flex gap-1">
+                  <button type="button" class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#oneOffBudgetModal">
+                    <i class="fa-solid fa-plus me-1"></i>One-off item
+                  </button>
+                  <button type="button" class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#addBudgetModal">
+                    <i class="fa-solid fa-plus me-1"></i>Template item
+                  </button>
+                </div>
               <% } %>
             </div>
             <div class="card-body p-0">
+              <%# Month/year selector — which month's effective budget is shown below -%>
+              <form method="get" action="/dashboard/finance" class="d-flex gap-2 align-items-end flex-wrap p-3 border-bottom">
+                <div>
+                  <label class="form-label form-label-sm mb-1">Year</label>
+                  <select name="year" class="form-select form-select-sm" style="width:auto">
+                    <% for (let y = currentYear + 1; y >= currentYear - 2; y--) { %>
+                      <option value="<%= y %>" <%= y === selectedYear ? 'selected' : '' %>><%= y %></option>
+                    <% } %>
+                  </select>
+                </div>
+                <div>
+                  <label class="form-label form-label-sm mb-1">Month</label>
+                  <select name="month" class="form-select form-select-sm" style="width:auto">
+                    <% const monthNames = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+                       for (let m = 1; m <= 12; m++) { %>
+                      <option value="<%= m %>" <%= m === selectedMonth ? 'selected' : '' %>><%= monthNames[m-1] %></option>
+                    <% } %>
+                  </select>
+                </div>
+                <button type="submit" class="btn btn-sm btn-secondary">View</button>
+              </form>
+
               <% if (!budgetSummary || !budgetSummary.length) { %>
-                <div class="p-3 text-muted small">No budget template entries are configured yet.<% if (canManage) { %> Add one above.<% } %></div>
+                <div class="p-3 text-muted small">No budget items are configured for this month yet.<% if (canManage) { %> Add a template item above.<% } %></div>
               <% } else { %>
                 <div class="table-responsive">
                   <table class="table table-sm align-middle mb-0">
@@ -115,30 +142,49 @@
                     <tbody>
                       <% budgetSummary.forEach(function(b) {
                         const budgetStr = new Intl.NumberFormat('en-US', { style:'currency', currency: b.currency||'USD' }).format((b.monthlyBudgetCents||0)/100);
+                        const templateStr = b.templateMonthlyBudgetCents !== null ? new Intl.NumberFormat('en-US', { style:'currency', currency: b.currency||'USD' }).format((b.templateMonthlyBudgetCents||0)/100) : null;
                         const actualStr = new Intl.NumberFormat('en-US', { style:'currency', currency: b.currency||'USD' }).format((b.actualCents||0)/100);
                         const isOver = (b.actualCents||0) > (b.monthlyBudgetCents||0);
                       %>
                         <tr class="<%= isOver ? 'table-danger' : '' %>">
-                          <td><%= b.label %></td>
+                          <td>
+                            <%= b.label %>
+                            <% if (b.isOneOff) { %>
+                              <span class="badge bg-info text-dark ms-1" title="Only exists for this month">One-off</span>
+                            <% } else if (b.isOverridden) { %>
+                              <span class="badge bg-warning text-dark ms-1" title="Template amount is <%= templateStr %> — overridden for this month">Custom</span>
+                            <% } %>
+                          </td>
                           <td class="text-end text-muted"><%= budgetStr %></td>
                           <td class="text-end fw-semibold <%= isOver ? 'text-danger' : '' %>"><%= actualStr %></td>
                           <% if (canManage) { %>
                             <td class="text-end">
                               <div class="d-flex gap-1 justify-content-end">
-                                <button type="button" class="btn btn-sm btn-outline-warning"
-                                        data-bs-toggle="modal" data-bs-target="#editBudgetModal"
-                                        data-id="<%= b.budgetId %>"
-                                        data-category-id="<%= b.categoryId || '' %>"
-                                        data-label="<%= (b.label||'').replace(/"/g,'&quot;') %>"
-                                        data-amount="<%= ((b.monthlyBudgetCents||0)/100).toFixed(2) %>"
-                                        data-currency="<%= b.currency || 'USD' %>"
-                                        data-notes="<%= (b.notes||'').replace(/"/g,'&quot;') %>">
-                                  <i class="fa-solid fa-pen"></i>
-                                </button>
-                                <form method="post" action="/dashboard/finance/budget/<%= b.budgetId %>/delete" class="d-inline"
-                                      onsubmit="return confirm('Delete this budget entry?')">
-                                  <button type="submit" class="btn btn-sm btn-outline-danger"><i class="fa-solid fa-trash"></i></button>
-                                </form>
+                                <% if (b.isOneOff) { %>
+                                  <form method="post" action="/dashboard/finance/budget/one-off/<%= b.monthlyBudgetItemId %>/delete" class="d-inline"
+                                        onsubmit="return confirm('Delete this one-off item?')">
+                                    <input type="hidden" name="year" value="<%= selectedYear %>">
+                                    <input type="hidden" name="month" value="<%= selectedMonth %>">
+                                    <button type="submit" class="btn btn-sm btn-outline-danger"><i class="fa-solid fa-trash"></i></button>
+                                  </form>
+                                <% } else { %>
+                                  <button type="button" class="btn btn-sm btn-outline-warning"
+                                          data-bs-toggle="modal" data-bs-target="#overrideBudgetModal"
+                                          data-budget-item-id="<%= b.budgetId %>"
+                                          data-label="<%= (b.label||'').replace(/"/g,'&quot;') %>"
+                                          data-amount="<%= ((b.monthlyBudgetCents||0)/100).toFixed(2) %>"
+                                          title="Override this month's amount">
+                                    <i class="fa-solid fa-pen"></i>
+                                  </button>
+                                  <% if (b.isOverridden) { %>
+                                    <form method="post" action="/dashboard/finance/budget/override/reset" class="d-inline">
+                                      <input type="hidden" name="year" value="<%= selectedYear %>">
+                                      <input type="hidden" name="month" value="<%= selectedMonth %>">
+                                      <input type="hidden" name="budgetItemId" value="<%= b.budgetId %>">
+                                      <button type="submit" class="btn btn-sm btn-outline-secondary" title="Reset to template amount"><i class="fa-solid fa-rotate-left"></i></button>
+                                    </form>
+                                  <% } %>
+                                <% } %>
                               </div>
                             </td>
                           <% } %>
@@ -259,9 +305,96 @@
     </div>
   </div>
 
+  <%# Override this month's amount for a template line item -%>
+  <div class="modal fade" id="overrideBudgetModal" tabindex="-1" aria-labelledby="overrideBudgetModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <form method="post" action="/dashboard/finance/budget/override" class="budget-entry-form">
+          <input type="hidden" name="year" value="<%= selectedYear %>">
+          <input type="hidden" name="month" value="<%= selectedMonth %>">
+          <input type="hidden" name="budgetItemId" id="overrideBudgetItemId">
+          <input type="hidden" name="monthlyBudgetCents" class="budget-cents-input">
+          <div class="modal-header">
+            <h5 class="modal-title" id="overrideBudgetModalLabel">Override amount for this month</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            <p class="text-muted small mb-3">
+              This only changes <strong id="overrideBudgetLabel"></strong>'s budget for
+              <%= monthNames[selectedMonth - 1] %> <%= selectedYear %>. The standing template is unaffected.
+            </p>
+            <div class="mb-3">
+              <label for="overrideBudgetAmount" class="form-label fw-semibold">Amount this month <span class="text-danger">*</span></label>
+              <div class="input-group">
+                <span class="input-group-text">$</span>
+                <input type="number" class="form-control budget-amount-input" id="overrideBudgetAmount" required min="0" step="0.01">
+              </div>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+            <button type="submit" class="btn btn-primary"><i class="fa-solid fa-check me-1"></i>Save</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <%# Add a one-off item that only exists for the selected month -%>
+  <div class="modal fade" id="oneOffBudgetModal" tabindex="-1" aria-labelledby="oneOffBudgetModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <form method="post" action="/dashboard/finance/budget/one-off/create" class="budget-entry-form">
+          <input type="hidden" name="year" value="<%= selectedYear %>">
+          <input type="hidden" name="month" value="<%= selectedMonth %>">
+          <input type="hidden" name="monthlyBudgetCents" class="budget-cents-input">
+          <div class="modal-header">
+            <h5 class="modal-title" id="oneOffBudgetModalLabel">Add one-off item — <%= monthNames[selectedMonth - 1] %> <%= selectedYear %></h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            <p class="text-muted small mb-3">This item will only appear in this month's budget — it's not added to the standing template.</p>
+            <div class="mb-3">
+              <label for="oneOffLabel" class="form-label fw-semibold">Line item <span class="text-danger">*</span></label>
+              <input type="text" class="form-control" id="oneOffLabel" name="label" maxlength="100" required>
+            </div>
+            <div class="mb-3">
+              <label for="oneOffCategoryId" class="form-label fw-semibold">Category</label>
+              <select class="form-select" id="oneOffCategoryId" name="categoryId">
+                <option value="">— None —</option>
+                <% (categories || []).forEach(function(cat) { %>
+                  <option value="<%= cat.categoryId %>"><%= cat.name %></option>
+                <% }) %>
+              </select>
+            </div>
+            <div class="mb-3">
+              <label for="oneOffAmount" class="form-label fw-semibold">Amount <span class="text-danger">*</span></label>
+              <div class="input-group">
+                <span class="input-group-text">$</span>
+                <input type="number" class="form-control budget-amount-input" id="oneOffAmount" required min="0.01" step="0.01" placeholder="0.00">
+              </div>
+            </div>
+            <div class="mb-3">
+              <label for="oneOffCurrency" class="form-label fw-semibold">Currency</label>
+              <input type="text" class="form-control" id="oneOffCurrency" name="currency" value="USD" maxlength="10">
+            </div>
+            <div class="mb-3">
+              <label for="oneOffNotes" class="form-label fw-semibold">Notes</label>
+              <input type="text" class="form-control" id="oneOffNotes" name="notes" maxlength="500">
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+            <button type="submit" class="btn btn-primary"><i class="fa-solid fa-check me-1"></i>Add</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
   <script>
     // Convert the dollar-amount input to integer cents right before submit —
-    // the backend (createBudgetEntry/updateBudgetEntry) expects monthlyBudgetCents.
+    // the backend expects monthlyBudgetCents.
     document.querySelectorAll('.budget-entry-form').forEach(function (form) {
       form.addEventListener('submit', function () {
         const dollars = parseFloat(form.querySelector('.budget-amount-input').value) || 0;
@@ -278,6 +411,13 @@
       document.getElementById('editBudgetAmount').value = btn.dataset.amount || '';
       document.getElementById('editBudgetCurrency').value = btn.dataset.currency || 'USD';
       document.getElementById('editBudgetNotes').value = btn.dataset.notes || '';
+    });
+
+    document.getElementById('overrideBudgetModal')?.addEventListener('show.bs.modal', function (e) {
+      const btn = e.relatedTarget;
+      document.getElementById('overrideBudgetItemId').value = btn.dataset.budgetItemId || '';
+      document.getElementById('overrideBudgetLabel').textContent = btn.dataset.label || '';
+      document.getElementById('overrideBudgetAmount').value = btn.dataset.amount || '';
     });
   </script>
 <% } %>

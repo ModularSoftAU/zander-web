@@ -607,8 +607,24 @@ export async function createSupportTicket(
         });
     });
 
+    const hasChannelColumn = await ensureDiscordChannelColumn();
+
+    // Insert the ticket row first (without a channel yet) so we know the
+    // ticketId before creating the Discord channel — that lets the channel
+    // be named ticket-<id> on creation instead of needing a rename call
+    // right after. Renaming after the fact used to leave channels stuck as
+    // "ticket-pending" whenever that second call hit Discord's channel-name
+    // rate limit (2 changes per 10 min).
+    const ticketId = await new Promise((resolve, reject) => {
+        db.query(
+            "INSERT INTO supportTickets (userId, categoryId, title) VALUES (?, ?, ?)",
+            [userId, categoryId, title],
+            (err, results) => (err ? reject(err) : resolve(results.insertId)),
+        );
+    });
+
     const channelCreationOptions = {
-        name: "ticket-pending",
+        name: `ticket-${ticketId}`,
         type: ChannelType.GuildText,
         permissionOverwrites,
         reason: `Support ticket for ${discordUserId ?? `user ${userId}`}`,
@@ -619,40 +635,27 @@ export async function createSupportTicket(
         channelCreationOptions.parent = targetParentId;
     }
 
-    const channel = await guild.channels.create(channelCreationOptions);
-
-    const hasChannelColumn = await ensureDiscordChannelColumn();
-
-    return new Promise((resolve, reject) => {
-        const query = hasChannelColumn
-            ? "INSERT INTO supportTickets (userId, categoryId, title, discordChannelId) VALUES (?, ?, ?, ?)"
-            : "INSERT INTO supportTickets (userId, categoryId, title) VALUES (?, ?, ?)";
-        const params = hasChannelColumn
-            ? [userId, categoryId, title, channel.id]
-            : [userId, categoryId, title];
-
-        db.query(query, params, async (err, results) => {
-            if (err) {
-                try {
-                    await channel.delete("Failed to persist support ticket");
-                } catch (cleanupError) {
-                    console.error("Failed to clean up orphaned ticket channel", cleanupError);
-                }
-                reject(err);
-                return;
-            }
-
-            const ticketId = results.insertId;
-
-            try {
-                await channel.setName(`ticket-${ticketId}`);
-            } catch (renameError) {
-                console.error("Failed to rename ticket channel", renameError);
-            }
-
-            resolve({ ticketId, channel });
+    let channel;
+    try {
+        channel = await guild.channels.create(channelCreationOptions);
+    } catch (channelError) {
+        await new Promise((resolve) => {
+            db.query("DELETE FROM supportTickets WHERE ticketId = ?", [ticketId], () => resolve());
         });
-    });
+        throw channelError;
+    }
+
+    if (hasChannelColumn) {
+        await new Promise((resolve, reject) => {
+            db.query(
+                "UPDATE supportTickets SET discordChannelId = ? WHERE ticketId = ?",
+                [channel.id, ticketId],
+                (err) => (err ? reject(err) : resolve()),
+            );
+        });
+    }
+
+    return { ticketId, channel };
 }
 
 export async function recreateTicketChannel(
@@ -1160,6 +1163,55 @@ export async function applyTicketParticipantPermissions(client, ticketId) {
     } catch (error) {
         console.error("applyTicketParticipantPermissions: failed to update channel permissions", error);
     }
+}
+
+/**
+ * One-off repair for tickets whose Discord channel is still stuck on the
+ * "ticket-pending" placeholder name (from before channel creation was
+ * changed to name the channel correctly up front). Renames each affected
+ * channel to ticket-<id>, spaced out to stay well under Discord's
+ * per-channel rename rate limit (2 changes per 10 min).
+ *
+ * @returns {Promise<{checked: number, renamed: number, failed: Array<{ticketId, error}>}>}
+ */
+export async function repairPendingTicketChannelNames(client) {
+    const hasChannelColumn = await ensureDiscordChannelColumn();
+    if (!hasChannelColumn || !client) {
+        return { checked: 0, renamed: 0, failed: [] };
+    }
+
+    const tickets = await new Promise((resolve, reject) => {
+        db.query(
+            "SELECT ticketId, discordChannelId FROM supportTickets WHERE discordChannelId IS NOT NULL",
+            (err, results) => (err ? reject(err) : resolve(results)),
+        );
+    });
+
+    let renamed = 0;
+    const failed = [];
+
+    for (const ticket of tickets) {
+        try {
+            const channel = await client.channels.fetch(ticket.discordChannelId);
+            if (!channel) continue;
+
+            const expectedName = `ticket-${ticket.ticketId}`;
+            if (channel.name === expectedName) continue;
+
+            await channel.setName(expectedName, "Repairing ticket channel name");
+            renamed++;
+            // Stay well clear of Discord's rename rate limit when repairing many at once.
+            await new Promise((resolve) => setTimeout(resolve, 1500));
+        } catch (error) {
+            console.error("repairPendingTicketChannelNames: failed to rename channel", {
+                ticketId: ticket.ticketId,
+                channelId: ticket.discordChannelId,
+            }, error);
+            failed.push({ ticketId: ticket.ticketId, error: error.message });
+        }
+    }
+
+    return { checked: tickets.length, renamed, failed };
 }
 
 export async function deleteTicketChannel(client, ticketId, reason = "Ticket closed") {

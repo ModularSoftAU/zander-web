@@ -83,7 +83,7 @@ export class SupportCommand extends Command {
       .addSubcommand((subcommand) =>
         subcommand
           .setName("add")
-          .setDescription("Add a user or role to the current ticket.")
+          .setDescription("Add a user or role(s) to the current ticket.")
           .addUserOption((option) =>
             option
               .setName("user")
@@ -94,11 +94,21 @@ export class SupportCommand extends Command {
               .setName("role")
               .setDescription("Discord role to grant access to the ticket")
           )
+          .addRoleOption((option) =>
+            option
+              .setName("role_two")
+              .setDescription("Second role to grant access to the ticket")
+          )
+          .addRoleOption((option) =>
+            option
+              .setName("role_three")
+              .setDescription("Third role to grant access to the ticket")
+          )
       )
       .addSubcommand((subcommand) =>
         subcommand
           .setName("remove")
-          .setDescription("Remove a user or role from the current ticket.")
+          .setDescription("Remove a user or role(s) from the current ticket.")
           .addUserOption((option) =>
             option
               .setName("user")
@@ -108,6 +118,16 @@ export class SupportCommand extends Command {
             option
               .setName("role")
               .setDescription("Discord role to remove from the ticket")
+          )
+          .addRoleOption((option) =>
+            option
+              .setName("role_two")
+              .setDescription("Second role to remove from the ticket")
+          )
+          .addRoleOption((option) =>
+            option
+              .setName("role_three")
+              .setDescription("Third role to remove from the ticket")
           )
       )
       .addSubcommand((subcommand) =>
@@ -201,9 +221,13 @@ export class SupportCommand extends Command {
 
     if (subcommand === "add") {
       const userOption = interaction.options.getUser("user");
-      const roleOption = interaction.options.getRole("role");
+      const roleOptions = [
+        interaction.options.getRole("role"),
+        interaction.options.getRole("role_two"),
+        interaction.options.getRole("role_three"),
+      ].filter((role, index, all) => role && all.findIndex((r) => r?.id === role.id) === index);
 
-      if (!userOption && !roleOption) {
+      if (!userOption && !roleOptions.length) {
         return interaction.reply({
           content: "Provide a user or role to add to this ticket.",
           ephemeral: true,
@@ -274,7 +298,7 @@ export class SupportCommand extends Command {
         }
       }
 
-      if (roleOption) {
+      for (const roleOption of roleOptions) {
         try {
           await addTicketGroupParticipant(ticketDetails.ticketId, {
             id: roleOption.id,
@@ -327,9 +351,13 @@ export class SupportCommand extends Command {
 
     if (subcommand === "remove") {
       const userOption = interaction.options.getUser("user");
-      const roleOption = interaction.options.getRole("role");
+      const roleOptions = [
+        interaction.options.getRole("role"),
+        interaction.options.getRole("role_two"),
+        interaction.options.getRole("role_three"),
+      ].filter((role, index, all) => role && all.findIndex((r) => r?.id === role.id) === index);
 
-      if (!userOption && !roleOption) {
+      if (!userOption && !roleOptions.length) {
         return interaction.reply({
           content: "Provide a user or role to remove from this ticket.",
           ephemeral: true,
@@ -390,7 +418,7 @@ export class SupportCommand extends Command {
         }
       }
 
-      if (roleOption) {
+      for (const roleOption of roleOptions) {
         try {
           await removeTicketGroupParticipant(ticketDetails.ticketId, roleOption.id);
           await removeTicketParticipantPermissions(interaction.client, ticketDetails.ticketId, {
