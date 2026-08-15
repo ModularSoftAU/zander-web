@@ -46,9 +46,17 @@ async function reconcileRankDiscordRoles() {
   if (!guildId) return;
 
   try {
-    const ranks = await queryDb(
-      `SELECT rankSlug, discordRoleId FROM ranks WHERE discordRoleId IS NOT NULL AND discordRoleId != ''`
+    // LuckPerms lives on a separate MySQL server, so this can't be read via
+    // the (cross-server, unreliable) `ranks` view — query luckpermsDb
+    // directly, scoped to server='global'/world='global' to match how the
+    // dashboard's rank config editor writes these nodes.
+    const rankRows = await queryLuckPermsDb(
+      `SELECT name AS rankSlug, SUBSTRING_INDEX(permission, '.', -1) AS discordRoleId
+         FROM luckperms_group_permissions
+        WHERE permission LIKE 'meta.discordid.%' AND value = 1
+          AND server = 'global' AND world = 'global'`
     );
+    const ranks = rankRows.filter((r) => r.discordRoleId);
     if (ranks.length === 0) return;
 
     const trackedRoleIds = ranks.map((r) => String(r.discordRoleId));
