@@ -76,38 +76,51 @@ function getAllRanksFromLuckPerms() {
         COALESCE(RIGHT(lpGroupDonator.permission, 1), '0')  AS isDonator,
         SUBSTRING_INDEX(lpMetaDiscordId.permission, '.', -1) AS discordRoleId
       FROM luckperms_groups lpGroups
+        -- Scoped to server='global'/world='global' to match how the rank
+        -- config editor writes these nodes (updateGroupNode() in
+        -- api/routes/ranks.js) — a contextual override on top of the global
+        -- node (e.g. server=events) would otherwise produce duplicate/
+        -- ambiguous rows for the same rank.
         LEFT JOIN luckperms_group_permissions lpGroupDisplayName
           ON lpGroups.name = lpGroupDisplayName.name
           AND lpGroupDisplayName.permission LIKE 'displayname.%'
           AND lpGroupDisplayName.value = 1
+          AND lpGroupDisplayName.server = 'global' AND lpGroupDisplayName.world = 'global'
         LEFT JOIN luckperms_group_permissions lpGroupWeight
           ON lpGroups.name = lpGroupWeight.name
           AND lpGroupWeight.permission LIKE 'weight.%'
           AND lpGroupWeight.value = 1
+          AND lpGroupWeight.server = 'global' AND lpGroupWeight.world = 'global'
         LEFT JOIN luckperms_group_permissions lpGroupPrefix
           ON lpGroups.name = lpGroupPrefix.name
           AND lpGroupPrefix.permission LIKE 'prefix.%'
           AND lpGroupPrefix.value = 1
+          AND lpGroupPrefix.server = 'global' AND lpGroupPrefix.world = 'global'
         LEFT JOIN luckperms_group_permissions lpGroupStaff
           ON lpGroups.name = lpGroupStaff.name
           AND lpGroupStaff.permission LIKE 'meta.staff.%'
           AND lpGroupStaff.value = 1
+          AND lpGroupStaff.server = 'global' AND lpGroupStaff.world = 'global'
         LEFT JOIN luckperms_group_permissions lpGroupDonator
           ON lpGroups.name = lpGroupDonator.name
           AND lpGroupDonator.permission LIKE 'meta.donator.%'
           AND lpGroupDonator.value = 1
+          AND lpGroupDonator.server = 'global' AND lpGroupDonator.world = 'global'
         LEFT JOIN luckperms_group_permissions lpMetaBadgeColour
           ON lpGroups.name = lpMetaBadgeColour.name
           AND lpMetaBadgeColour.permission LIKE 'meta.rankbadgecolour.%'
           AND lpMetaBadgeColour.value = 1
+          AND lpMetaBadgeColour.server = 'global' AND lpMetaBadgeColour.world = 'global'
         LEFT JOIN luckperms_group_permissions lpMetaTextColour
           ON lpGroups.name = lpMetaTextColour.name
           AND lpMetaTextColour.permission LIKE 'meta.ranktextcolour.%'
           AND lpMetaTextColour.value = 1
+          AND lpMetaTextColour.server = 'global' AND lpMetaTextColour.world = 'global'
         LEFT JOIN luckperms_group_permissions lpMetaDiscordId
           ON lpGroups.name = lpMetaDiscordId.name
           AND lpMetaDiscordId.permission LIKE 'meta.discordid.%'
           AND lpMetaDiscordId.value = 1
+          AND lpMetaDiscordId.server = 'global' AND lpMetaDiscordId.world = 'global'
       ORDER BY CAST(COALESCE(SUBSTRING_INDEX(lpGroupWeight.permission, '.', -1), 0) AS UNSIGNED) DESC,
                lpGroups.name ASC`,
       (error, results) => {

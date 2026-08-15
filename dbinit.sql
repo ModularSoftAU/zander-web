@@ -185,33 +185,47 @@ SELECT
     COALESCE(RIGHT(lpGroupDonator.permission, 1),'0') AS isDonator,
     REPLACE(COALESCE(SUBSTRING_INDEX(lpGroupDescription.permission, 'meta.rank_description.', -1), ''), '\\', '') AS rankDescription
 FROM cfcdev_luckperms.luckperms_groups lpGroups
+	-- Scoped to server='global'/world='global' to match how the dashboard's
+	-- rank config editor writes these nodes (see updateGroupNode() in
+	-- api/routes/ranks.js). Without this, a group with a contextual override
+	-- (e.g. a meta.discordid set with server=events on top of the global one)
+	-- produces duplicate/ambiguous rows for the same rank.
 	LEFT JOIN cfcdev_luckperms.luckperms_group_permissions lpGroupDisplayName ON lpGroups.name = lpGroupDisplayName.name
 		AND lpGroupDisplayName.permission LIKE 'displayname.%'
         AND lpGroupDisplayName.value = 1
+        AND lpGroupDisplayName.server = 'global' AND lpGroupDisplayName.world = 'global'
 	LEFT JOIN cfcdev_luckperms.luckperms_group_permissions lpGroupWeight ON lpGroups.name = lpGroupWeight.name
 		AND lpGroupWeight.permission LIKE 'weight.%'
         AND lpGroupWeight.value = 1
+        AND lpGroupWeight.server = 'global' AND lpGroupWeight.world = 'global'
 	LEFT JOIN cfcdev_luckperms.luckperms_group_permissions lpGroupPrefix ON lpGroups.name = lpGroupPrefix.name
 		AND lpGroupPrefix.permission LIKE 'prefix.%'
         AND lpGroupPrefix.value = 1
+        AND lpGroupPrefix.server = 'global' AND lpGroupPrefix.world = 'global'
 	LEFT JOIN cfcdev_luckperms.luckperms_group_permissions lpGroupStaff On lpGroups.name = lpGroupStaff.name
 		AND lpGroupStaff.permission LIKE 'meta.staff.%'
         AND lpGroupStaff.value = 1
+        AND lpGroupStaff.server = 'global' AND lpGroupStaff.world = 'global'
 	LEFT JOIN cfcdev_luckperms.luckperms_group_permissions lpGroupDonator On lpGroups.name = lpGroupDonator.name
 		AND lpGroupDonator.permission LIKE 'meta.donator.%'
         AND lpGroupDonator.value = 1
+        AND lpGroupDonator.server = 'global' AND lpGroupDonator.world = 'global'
 	LEFT JOIN cfcdev_luckperms.luckperms_group_permissions lpDiscordId ON lpGroups.name = lpDiscordId.name
 		AND lpDiscordId.permission LIKE 'meta.discordid.%'
         AND lpDiscordId.value = 1
+        AND lpDiscordId.server = 'global' AND lpDiscordId.world = 'global'
 	LEFT JOIN cfcdev_luckperms.luckperms_group_permissions lpGroupDescription ON lpGroups.name = lpGroupDescription.name
 		AND lpGroupDescription.permission LIKE 'meta.rank\_description.%'
         AND lpGroupDescription.value = 1
+        AND lpGroupDescription.server = 'global' AND lpGroupDescription.world = 'global'
 	LEFT JOIN cfcdev_luckperms.luckperms_group_permissions lpMetaBadgeColour ON lpGroups.name = lpMetaBadgeColour.name
 		AND lpMetaBadgeColour.permission LIKE 'meta.rankbadgecolour.%'
         AND lpMetaBadgeColour.value = 1
+        AND lpMetaBadgeColour.server = 'global' AND lpMetaBadgeColour.world = 'global'
 	LEFT JOIN cfcdev_luckperms.luckperms_group_permissions lpMetaTextColour ON lpGroups.name = lpMetaTextColour.name
 		AND lpMetaTextColour.permission LIKE 'meta.ranktextcolour.%'
-        AND lpMetaTextColour.value = 1;
+        AND lpMetaTextColour.value = 1
+        AND lpMetaTextColour.server = 'global' AND lpMetaTextColour.world = 'global';
 
 CREATE VIEW zanderdev.userRanks AS
 SELECT
