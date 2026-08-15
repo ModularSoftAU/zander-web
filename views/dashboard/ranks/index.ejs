@@ -186,6 +186,23 @@
                                     placeholder="Custom staff title or leave blank"
                                   >
                                 </div>
+                                <div class="col-12">
+                                  <label for="rankAssignExpiry" class="form-label">Expires</label>
+                                  <select class="form-select" id="rankAssignExpiry" disabled>
+                                    <option value="" selected>Never</option>
+                                    <option value="1">After 1 day</option>
+                                    <option value="7">After 7 days</option>
+                                    <option value="30">After 30 days</option>
+                                    <option value="90">After 90 days</option>
+                                    <option value="custom">Custom date…</option>
+                                  </select>
+                                  <input
+                                    type="datetime-local"
+                                    class="form-control mt-2 d-none"
+                                    id="rankAssignExpiryDate"
+                                    disabled
+                                  >
+                                </div>
                                 <div class="col-12 d-flex justify-content-between">
                                   <button type="submit" class="btn btn-primary" id="rankAssignSubmit" disabled>Assign rank</button>
                                   <button type="button" class="btn btn-outline-secondary" id="rankAssignReset" disabled>Reset</button>
@@ -560,6 +577,8 @@
     const assignForm = document.getElementById('rankAssignForm');
     const assignSelect = document.getElementById('rankAssignSelect');
     const assignTitle = document.getElementById('rankAssignTitle');
+    const assignExpiry = document.getElementById('rankAssignExpiry');
+    const assignExpiryDate = document.getElementById('rankAssignExpiryDate');
     const assignSubmit = document.getElementById('rankAssignSubmit');
     const assignReset = document.getElementById('rankAssignReset');
     const permissionForm = document.getElementById('rankPermissionForm');
@@ -572,6 +591,17 @@
       summaryContainer.querySelector('[data-summary="username"]').textContent = user.username;
       summaryContainer.querySelector('[data-summary="uuid"]').textContent = user.uuid || 'Unavailable';
       summaryContainer.querySelector('[data-summary="web-account"]').textContent = user.userId ? 'Linked' : 'Not linked';
+    }
+
+    function formatExpiryLabel(expiresAt) {
+      if (!expiresAt) return null;
+      const diffMs = expiresAt - Date.now();
+      if (diffMs <= 0) return 'expired';
+      const days = Math.round(diffMs / 86400000);
+      if (days < 1) return 'expires <1d';
+      if (days === 1) return 'expires in 1d';
+      if (days <= 60) return `expires in ${days}d`;
+      return `expires ${new Date(expiresAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}`;
     }
 
     function renderUserRanks(rankPayload) {
@@ -598,6 +628,15 @@
         name.className = 'rank-chip-name';
         name.textContent = rank.title ? `${rank.displayName} — ${rank.title}` : rank.displayName;
         chip.appendChild(name);
+
+        const expiryLabel = formatExpiryLabel(rank.expiresAt);
+        if (expiryLabel) {
+          const expiry = document.createElement('span');
+          expiry.className = 'rank-chip-expiry';
+          expiry.textContent = expiryLabel;
+          expiry.title = new Date(rank.expiresAt).toLocaleString();
+          chip.appendChild(expiry);
+        }
 
         if (!isDefault) {
           const removeButton = document.createElement('button');
@@ -636,6 +675,8 @@
       assignTitle.disabled = !hasAvailable;
       assignSubmit.disabled = !hasAvailable;
       assignReset.disabled = !hasAvailable;
+      if (assignExpiry) assignExpiry.disabled = !hasAvailable;
+      if (assignExpiryDate) assignExpiryDate.disabled = !hasAvailable;
     }
 
     function enablePermissionTools(enabled) {
@@ -698,6 +739,21 @@
       }
     }
 
+    function computeExpiresAt() {
+      if (!assignExpiry || !assignExpiry.value) return null;
+      if (assignExpiry.value === 'custom') {
+        if (!assignExpiryDate || !assignExpiryDate.value) return { error: 'Pick an expiry date.' };
+        const parsed = new Date(assignExpiryDate.value);
+        if (Number.isNaN(parsed.getTime()) || parsed.getTime() <= Date.now()) {
+          return { error: 'Expiry date must be in the future.' };
+        }
+        return { value: parsed.toISOString() };
+      }
+      const days = parseInt(assignExpiry.value, 10);
+      if (!days) return null;
+      return { value: new Date(Date.now() + days * 86400000).toISOString() };
+    }
+
     async function handleAssignSubmit(event) {
       event.preventDefault();
       if (!activeUser) return;
@@ -710,6 +766,13 @@
         alert('Select a rank to assign.');
         return;
       }
+
+      const expiry = computeExpiresAt();
+      if (expiry?.error) {
+        alert(expiry.error);
+        return;
+      }
+      if (expiry?.value) payload.expiresAt = expiry.value;
 
       assignSubmit.disabled = true;
 
@@ -737,6 +800,19 @@
     function resetAssignForm() {
       if (!assignForm) return;
       assignForm.reset();
+      if (assignExpiryDate) {
+        assignExpiryDate.value = '';
+        assignExpiryDate.classList.add('d-none');
+      }
+    }
+
+    if (assignExpiry) {
+      assignExpiry.addEventListener('change', () => {
+        if (!assignExpiryDate) return;
+        const isCustom = assignExpiry.value === 'custom';
+        assignExpiryDate.classList.toggle('d-none', !isCustom);
+        if (!isCustom) assignExpiryDate.value = '';
+      });
     }
 
     async function handlePermissionSubmit(event) {
@@ -966,6 +1042,17 @@
 
   .rank-chip-name {
     padding: 4px 12px;
+    white-space: nowrap;
+  }
+
+  .rank-chip-expiry {
+    display: inline-flex;
+    align-items: center;
+    padding: 4px 10px 4px 0;
+    margin-left: -8px;
+    font-size: 0.72rem;
+    font-weight: 500;
+    opacity: 0.85;
     white-space: nowrap;
   }
 

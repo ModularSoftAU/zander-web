@@ -73,7 +73,8 @@ async function reconcileRankDiscordRoles() {
         // getUserRanks for the same fix applied elsewhere).
         const lpRows = await queryLuckPermsDb(
           `SELECT LOWER(uuid) AS uuid FROM luckperms_user_permissions
-            WHERE permission = ? AND value = 1`,
+            WHERE permission = ? AND value = 1
+              AND (expiry IS NULL OR expiry = 0 OR expiry > UNIX_TIMESTAMP())`,
           [`group.${rank.rankSlug}`]
         );
         if (lpRows.length === 0) continue;

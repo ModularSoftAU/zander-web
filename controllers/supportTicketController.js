@@ -1827,7 +1827,8 @@ export async function getTicketMessages(ticketId, includeInternal = false) {
                         luckpermsDb.query(
                             `SELECT uuid, SUBSTRING_INDEX(permission, '.', -1) AS rankSlug
                                FROM luckperms_user_permissions
-                              WHERE uuid IN (?) AND permission LIKE 'group.%' AND value = 1`,
+                              WHERE uuid IN (?) AND permission LIKE 'group.%' AND value = 1
+                                AND (expiry IS NULL OR expiry = 0 OR expiry > UNIX_TIMESTAMP())`,
                             [uuids],
                             (err, results) => (err ? reject(err) : resolve(results)),
                         );
@@ -2005,7 +2006,8 @@ async function getUserGroupSlugs(uuid) {
         luckpermsDb.query(
             `SELECT SUBSTRING_INDEX(permission, '.', -1) AS rankSlug
                FROM luckperms_user_permissions
-              WHERE uuid = ? AND permission LIKE 'group.%' AND value = 1`,
+              WHERE uuid = ? AND permission LIKE 'group.%' AND value = 1
+                AND (expiry IS NULL OR expiry = 0 OR expiry > UNIX_TIMESTAMP())`,
             [uuid],
             (err, results) => (err ? reject(err) : resolve(results)),
         );

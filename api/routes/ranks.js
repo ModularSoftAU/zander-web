@@ -216,16 +216,21 @@ export default function rankApiRoute(app, config, db, features, lang) {
     );
   }
 
-  /** Every rank (with title, if set) the given LuckPerms player uuid directly holds. */
+  /** Every rank (with title and expiry, if set) the given LuckPerms player uuid directly holds. */
   async function getRanksForUuid(uuid) {
     const groupRows = await queryLuckPermsDb(
-      `SELECT SUBSTRING_INDEX(permission, '.', -1) AS rankSlug
+      `SELECT SUBSTRING_INDEX(permission, '.', -1) AS rankSlug, expiry
          FROM ${LUCKPERMS_USER_PERMISSIONS_TABLE}
-        WHERE uuid = ? AND permission LIKE 'group.%' AND value = 1`,
+        WHERE uuid = ? AND permission LIKE 'group.%' AND value = 1
+          AND (expiry IS NULL OR expiry = 0 OR expiry > UNIX_TIMESTAMP())`,
       [uuid]
     );
+    if (!groupRows.length) return [];
+    const expiresAtByRank = {};
+    for (const row of groupRows) {
+      expiresAtByRank[row.rankSlug] = row.expiry ? row.expiry * 1000 : null;
+    }
     const rankSlugs = groupRows.map((r) => r.rankSlug);
-    if (!rankSlugs.length) return [];
 
     const titleRows = await queryLuckPermsDb(
       `SELECT permission FROM ${LUCKPERMS_USER_PERMISSIONS_TABLE}
@@ -243,6 +248,7 @@ export default function rankApiRoute(app, config, db, features, lang) {
       rankSlugs.map((rankSlug) => ({
         ...rankRowFromMeta(rankSlug, metaMap),
         title: titleByGroup[rankSlug] || null,
+        expiresAt: expiresAtByRank[rankSlug] ?? null,
       }))
     );
   }
@@ -331,7 +337,9 @@ export default function rankApiRoute(app, config, db, features, lang) {
 
       if (rankSlug) {
         const memberRows = await queryLuckPermsDb(
-          `SELECT uuid FROM ${LUCKPERMS_USER_PERMISSIONS_TABLE} WHERE permission = ? AND value = 1`,
+          `SELECT uuid FROM ${LUCKPERMS_USER_PERMISSIONS_TABLE}
+            WHERE permission = ? AND value = 1
+              AND (expiry IS NULL OR expiry = 0 OR expiry > UNIX_TIMESTAMP())`,
           [`group.${rankSlug}`]
         );
         const uuids = memberRows.map((r) => r.uuid);
@@ -589,13 +597,25 @@ export default function rankApiRoute(app, config, db, features, lang) {
   app.post(`${baseEndpoint}/user/assign`, async function (req, res) {
     if (!isFeatureEnabled(features.ranks, res, lang)) return;
 
-    const { username, rankSlug, title } = req.body || {};
+    const { username, rankSlug, title, expiresAt } = req.body || {};
 
     if (!username || !rankSlug) {
       return res.send({
         success: false,
         message: "Username and rankSlug are required.",
       });
+    }
+
+    let expirySeconds = 0;
+    if (expiresAt) {
+      const parsed = new Date(expiresAt);
+      if (Number.isNaN(parsed.getTime())) {
+        return res.send({ success: false, message: "Invalid expiry date." });
+      }
+      if (parsed.getTime() <= Date.now()) {
+        return res.send({ success: false, message: "Expiry must be in the future." });
+      }
+      expirySeconds = Math.floor(parsed.getTime() / 1000);
     }
 
     try {
@@ -607,7 +627,9 @@ export default function rankApiRoute(app, config, db, features, lang) {
 
       const [existing] = await queryLuckPermsDb(
         `SELECT uuid FROM ${LUCKPERMS_USER_PERMISSIONS_TABLE}
-          WHERE uuid = ? AND permission = ? AND value = 1 LIMIT 1`,
+          WHERE uuid = ? AND permission = ? AND value = 1
+            AND (expiry IS NULL OR expiry = 0 OR expiry > UNIX_TIMESTAMP())
+          LIMIT 1`,
         [player.uuid, `group.${rankSlug}`]
       );
 
@@ -621,8 +643,8 @@ export default function rankApiRoute(app, config, db, features, lang) {
       await queryLuckPermsDb(
         `INSERT INTO ${LUCKPERMS_USER_PERMISSIONS_TABLE}
           (uuid, permission, value, server, world, expiry, contexts)
-        VALUES (?, ?, 1, 'global', 'global', 0, '[]')`,
-        [player.uuid, `group.${rankSlug}`]
+        VALUES (?, ?, 1, 'global', 'global', ?, '[]')`,
+        [player.uuid, `group.${rankSlug}`, expirySeconds]
       );
 
       await queryLuckPermsDb(

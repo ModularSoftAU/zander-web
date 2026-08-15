@@ -826,7 +826,8 @@ export async function getUserRanks(userData, userRanks = null) {
                FROM luckperms_user_permissions
               WHERE uuid = ?
                 AND (permission LIKE 'group.%' OR permission LIKE 'meta.group.%.title.%')
-                AND value = 1`,
+                AND value = 1
+                AND (expiry IS NULL OR expiry = 0 OR expiry > UNIX_TIMESTAMP())`,
             [rawUuid.toLowerCase()],
             function (lpErr, lpResults) {
               if (lpErr) return reject(lpErr);
