@@ -5,7 +5,7 @@ import {
   getPopupAnnouncements,
   getWebAnnouncement,
 } from "../controllers/announcementController.js";
-import { isFeatureWebRouteEnabled, getGlobalImage, getJumboVideo, hasPermission } from "../api/common.js";
+import { isFeatureWebRouteEnabled, getGlobalImage, getJumboVideo, hasPermission, isLoggedIn } from "../api/common.js";
 import { getTicketsAccessibleByUser } from "../controllers/supportTicketController.js";
 import { getStaffPageData } from "../controllers/staffController.js";
 import {
@@ -466,6 +466,10 @@ export default function applicationSiteRoutes(
   app.get("/shopdirectory", async function (req, res) {
     if (!await isFeatureWebRouteEnabled(app, features.shopdirectory, req, res, features)) return;
 
+    if (!isLoggedIn(req)) {
+      return res.redirect("/login?returnTo=/shopdirectory");
+    }
+
     res.header("content-type", "text/html; charset=utf-8").send(
       await app.view("shopdirectory", {
       pageTitle: `Shop Directory`,
@@ -482,6 +486,10 @@ export default function applicationSiteRoutes(
   // Proxy endpoint for client-side shop search (avoids exposing API key)
   app.get("/shopdirectory/search", async function (req, res) {
     if (!await isFeatureWebRouteEnabled(app, features.shopdirectory, req, res, features)) return;
+
+    if (!isLoggedIn(req)) {
+      return res.status(401).send({ success: false, message: "You must be logged in." });
+    }
 
     const material = req.query.material || "";
     const page = req.query.page || "1";
