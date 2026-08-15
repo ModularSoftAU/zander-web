@@ -669,6 +669,13 @@ export default function rankApiRoute(app, config, db, features, lang) {
       });
     }
 
+    if (rankSlug === "default") {
+      return res.send({
+        success: false,
+        message: "The default rank cannot be removed.",
+      });
+    }
+
     try {
       const player = await resolvePlayer(username);
 

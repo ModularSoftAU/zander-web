@@ -587,24 +587,30 @@
       rankCount.textContent = `${rankPayload.length} ${rankPayload.length === 1 ? 'rank' : 'ranks'}`;
 
       rankPayload.forEach((rank) => {
-        const pill = document.createElement('div');
-        pill.className = 'rank-pill d-flex align-items-center gap-2';
-        pill.style.setProperty('--rank-pill-bg', rank.rankBadgeColour || '#1f2937');
-        pill.style.setProperty('--rank-pill-text', rank.rankTextColour || '#ffffff');
-        pill.textContent = rank.displayName;
+        const isDefault = rank.rankSlug === 'default';
 
-        const removeButton = document.createElement('button');
-        removeButton.type = 'button';
-        removeButton.className = 'btn btn-sm btn-outline-danger ms-2';
-        removeButton.textContent = 'Remove';
-        removeButton.addEventListener('click', () => handleRankRemoval(rank.rankSlug));
+        const chip = document.createElement('div');
+        chip.className = 'rank-chip';
+        chip.style.setProperty('--rank-pill-bg', rank.rankBadgeColour || '#1f2937');
+        chip.style.setProperty('--rank-pill-text', rank.rankTextColour || '#ffffff');
 
-        const wrapper = document.createElement('div');
-        wrapper.className = 'd-flex align-items-center gap-2';
-        wrapper.appendChild(pill);
-        wrapper.appendChild(removeButton);
+        const name = document.createElement('span');
+        name.className = 'rank-chip-name';
+        name.textContent = rank.title ? `${rank.displayName} — ${rank.title}` : rank.displayName;
+        chip.appendChild(name);
 
-        rankList.appendChild(wrapper);
+        if (!isDefault) {
+          const removeButton = document.createElement('button');
+          removeButton.type = 'button';
+          removeButton.className = 'rank-chip-remove';
+          removeButton.setAttribute('aria-label', `Remove ${rank.displayName}`);
+          removeButton.title = `Remove ${rank.displayName}`;
+          removeButton.innerHTML = '&times;';
+          removeButton.addEventListener('click', () => handleRankRemoval(rank.rankSlug));
+          chip.appendChild(removeButton);
+        }
+
+        rankList.appendChild(chip);
       });
     }
 
@@ -671,6 +677,7 @@
 
     async function handleRankRemoval(rankSlug) {
       if (!activeUser) return;
+      if (rankSlug === 'default') return;
       if (!confirm(`Remove ${rankSlug} from ${activeUser.user.username}?`)) return;
 
       try {
@@ -926,9 +933,59 @@
 </div><!-- /#wpcontent -->
 
 <style>
+  .rank-pill {
+    display: inline-flex;
+    align-items: center;
+    background: var(--rank-pill-bg, #1f2937);
+    color: var(--rank-pill-text, #ffffff);
+    padding: 4px 12px;
+    border-radius: 999px;
+    font-weight: 600;
+    font-size: 0.85rem;
+    line-height: 1.4;
+    white-space: nowrap;
+  }
+
   .rank-pill-xs {
     font-size: 0.7rem;
     padding: 2px 8px;
+  }
+
+  /* "Direct ranks" chips — a rank pill with an attached remove button */
+  .rank-chip {
+    display: inline-flex;
+    align-items: stretch;
+    background: var(--rank-pill-bg, #1f2937);
+    color: var(--rank-pill-text, #ffffff);
+    border-radius: 999px;
+    font-weight: 600;
+    font-size: 0.85rem;
+    line-height: 1.4;
+    overflow: hidden;
+  }
+
+  .rank-chip-name {
+    padding: 4px 12px;
+    white-space: nowrap;
+  }
+
+  .rank-chip-remove {
+    all: unset;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 26px;
+    cursor: pointer;
+    font-size: 1rem;
+    font-weight: 700;
+    background: rgba(0, 0, 0, 0.15);
+    transition: background-color 0.15s ease;
+  }
+
+  .rank-chip-remove:hover,
+  .rank-chip-remove:focus-visible {
+    background: rgba(220, 53, 69, 0.75);
+    outline: none;
   }
 
   @media (max-width: 768px) {
