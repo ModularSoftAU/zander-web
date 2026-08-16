@@ -82,6 +82,14 @@ import verifyToken from "./api/routes/verifyToken.js";
 import { getGlobalImage } from "./api/common.js";
 import { client } from "./controllers/discordController.js";
 
+function isExpectedClientError(error, statusCode) {
+  if (typeof statusCode === "number" && statusCode >= 400 && statusCode < 500) {
+    return true;
+  }
+
+  return error?.code === "ERR_HTTP_HEADERS_SENT";
+}
+
 //
 // Application Boot
 //
@@ -94,7 +102,17 @@ const buildApp = async () => {
   const app = fastify({ logger: config.debug, pluginTimeout: 120000 });
 
   if (process.env.SENTRY_DSN) {
-    Sentry.setupFastifyErrorHandler(app);
+    Sentry.setupFastifyErrorHandler(app, {
+      shouldHandleError(error, _request, reply) {
+        if (isExpectedClientError(error, reply?.statusCode)) {
+          return false;
+        }
+
+        return typeof reply?.statusCode === "number"
+          ? reply.statusCode >= 500
+          : true;
+      },
+    });
   }
 
   // When app errors, render the error on a page, do not provide JSON
@@ -131,12 +149,27 @@ const buildApp = async () => {
       return;
     }
 
-    app.log.error(error);
-
     const statusCode =
       typeof error?.statusCode === "number" && error.statusCode >= 400
         ? error.statusCode
         : 500;
+
+    if (isExpectedClientError(error, statusCode)) {
+      app.log.info(
+        {
+          err: {
+            message: error?.message,
+            code: error?.code,
+            statusCode,
+          },
+          method: req.method,
+          url: req.url,
+        },
+        "request rejected"
+      );
+    } else {
+      app.log.error(error);
+    }
 
     res.status(statusCode);
 
