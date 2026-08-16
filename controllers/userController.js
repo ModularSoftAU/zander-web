@@ -690,26 +690,27 @@ export async function getUserPermissions(userData = {}) {
   }
 
   while (queuedRanks.length) {
-    const currentRank = queuedRanks.shift();
+    const currentBatch = queuedRanks.splice(0, queuedRanks.length);
+    const placeholders = currentBatch.map(() => "?").join(", ");
 
     try {
       const groupPermissions = await runLuckPermsQuery(
-        `SELECT permission
+        `SELECT name, permission
            FROM ${LUCKPERMS_GROUP_PERMISSIONS_TABLE}
-          WHERE name = ?
+          WHERE name IN (${placeholders})
             AND value = 1
             AND (expiry IS NULL OR expiry = 0 OR expiry > UNIX_TIMESTAMP())`,
-        [currentRank]
+        currentBatch
       );
 
-      groupPermissions.forEach(({ permission }) => {
+      groupPermissions.forEach(({ name, permission }) => {
         if (!permission) {
           return;
         }
 
         if (permission.startsWith("group.")) {
           const inherited = permission.substring("group.".length).trim();
-          if (inherited && inherited !== currentRank) {
+          if (inherited && inherited !== name) {
             queueRank(inherited);
           }
           return;
@@ -718,7 +719,10 @@ export async function getUserPermissions(userData = {}) {
         pushPermission(permission);
       });
     } catch (error) {
-      console.error(`[PERMISSIONS] Failed to fetch permissions for group '${currentRank}':`, error);
+      console.error(
+        `[PERMISSIONS] Failed to fetch permissions for groups [${currentBatch.join(", ")}]:`,
+        error
+      );
     }
   }
 

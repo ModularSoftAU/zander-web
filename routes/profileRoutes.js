@@ -159,11 +159,15 @@ export default function profileSiteRoutes(
         let contextPermissions = null;
 
         if (req.session.user) {
-          const userProfile = await userData.byUsername(
-            req.session.user.username
-          );
-          const perms = await getUserPermissions(userProfile);
-          contextPermissions = perms;
+          if (Array.isArray(req.session.user.permissions)) {
+            contextPermissions = req.session.user.permissions;
+          } else {
+            const userProfile = await userData.byUsername(
+              req.session.user.username
+            );
+            const perms = await getUserPermissions(userProfile);
+            contextPermissions = perms;
+          }
         } else {
           contextPermissions = null;
         }
