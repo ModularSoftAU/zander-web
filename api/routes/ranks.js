@@ -97,6 +97,27 @@ export default function rankApiRoute(app, config, db, features, lang) {
     });
   };
 
+  async function normalizeUserPermissionContexts(uuid, rankSlug = null) {
+    if (!uuid) return;
+
+    const conditions = ["uuid = ?", "contexts = '[]'"];
+    const params = [uuid];
+
+    if (rankSlug) {
+      conditions.push("(permission = ? OR permission LIKE CONCAT('meta.group.', ?, '.title.%'))");
+      params.push(`group.${rankSlug}`, rankSlug);
+    } else {
+      conditions.push("(permission LIKE 'group.%' OR permission LIKE 'meta.group.%.title.%')");
+    }
+
+    await queryLuckPermsDb(
+      `UPDATE ${LUCKPERMS_USER_PERMISSIONS_TABLE}
+          SET contexts = '{}'
+        WHERE ${conditions.join(" AND ")}`,
+      params
+    );
+  }
+
   async function resolvePlayer(username) {
     if (!username) {
       return null;
@@ -625,6 +646,8 @@ export default function rankApiRoute(app, config, db, features, lang) {
         return res.send({ success: false, message: "Player not found." });
       }
 
+      await normalizeUserPermissionContexts(player.uuid, rankSlug);
+
       const [existing] = await queryLuckPermsDb(
         `SELECT uuid FROM ${LUCKPERMS_USER_PERMISSIONS_TABLE}
           WHERE uuid = ? AND permission = ? AND value = 1
@@ -643,7 +666,7 @@ export default function rankApiRoute(app, config, db, features, lang) {
       await queryLuckPermsDb(
         `INSERT INTO ${LUCKPERMS_USER_PERMISSIONS_TABLE}
           (uuid, permission, value, server, world, expiry, contexts)
-        VALUES (?, ?, 1, 'global', 'global', ?, '[]')`,
+        VALUES (?, ?, 1, 'global', 'global', ?, '{}')`,
         [player.uuid, `group.${rankSlug}`, expirySeconds]
       );
 
@@ -658,7 +681,7 @@ export default function rankApiRoute(app, config, db, features, lang) {
         await queryLuckPermsDb(
           `INSERT INTO ${LUCKPERMS_USER_PERMISSIONS_TABLE}
             (uuid, permission, value, server, world, expiry, contexts)
-          VALUES (?, ?, 1, 'global', 'global', 0, '[]')`,
+          VALUES (?, ?, 1, 'global', 'global', 0, '{}')`,
           [player.uuid, `meta.group.${rankSlug}.title.${title.substring(0, 64)}`]
         );
       }
@@ -704,6 +727,8 @@ export default function rankApiRoute(app, config, db, features, lang) {
       if (!player || !player.uuid) {
         return res.send({ success: false, message: "Player not found." });
       }
+
+      await normalizeUserPermissionContexts(player.uuid, rankSlug);
 
       const result = await queryLuckPermsDb(
         `DELETE FROM ${LUCKPERMS_USER_PERMISSIONS_TABLE}
