@@ -1292,6 +1292,19 @@ a:focus {
 }
 
 /* Finance Centre - follows the public site's feature-card visual language. */
+.finance-page.section {
+  padding-top: 60px;
+}
+
+.finance-page .finance-intro {
+  margin-bottom: 48px !important;
+}
+
+.finance-page .finance-intro .lead {
+  color: #6f8ba4;
+  line-height: 1.65;
+}
+
 .finance-page h3,
 .finance-page h4 {
   color: #2f508c;
@@ -1335,6 +1348,14 @@ a:focus {
 }
 
 @media (max-width: 575.98px) {
+  .finance-page.section {
+    padding-top: 42px;
+  }
+
+  .finance-page .finance-intro {
+    margin-bottom: 36px !important;
+  }
+
   .finance-page .card-body {
     padding: 22px;
   }
