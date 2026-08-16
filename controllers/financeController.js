@@ -41,6 +41,16 @@ function normaliseBudgetIcon(iconName, iconImageUrl) {
   return { iconName: selectedIcon, iconImageUrl: imageUrl };
 }
 
+function normaliseBudgetLabel(label) {
+  return String(label || "")
+    .replace(/&amp;/gi, "&")
+    .replace(/&quot;/gi, '"')
+    .replace(/&#(?:39|x27);/gi, "'")
+    .replace(/&lt;/gi, "<")
+    .replace(/&gt;/gi, ">")
+    .trim();
+}
+
 function normaliseReportMonth(year, month) {
   const parsedYear = parseInt(year, 10);
   const parsedMonth = parseInt(month, 10);
@@ -271,7 +281,8 @@ export async function getAllBudgetEntries() {
 }
 
 export async function createBudgetEntry({ categoryId, label, monthlyBudgetCents, currency, cadence, annualMonth, iconName, iconImageUrl, notes }) {
-  if (!label || !label.trim()) throw new Error("Budget label is required.");
+  const normalisedLabel = normaliseBudgetLabel(label);
+  if (!normalisedLabel) throw new Error("Budget label is required.");
   const normalisedCadence = cadence === "annual" ? "annual" : "monthly";
   const normalisedAnnualMonth = normalisedCadence === "annual" ? parseInt(annualMonth, 10) : null;
   if (normalisedCadence === "annual" && (!Number.isInteger(normalisedAnnualMonth) || normalisedAnnualMonth < 1 || normalisedAnnualMonth > 12)) {
@@ -281,7 +292,7 @@ export async function createBudgetEntry({ categoryId, label, monthlyBudgetCents,
   return prisma.financeOperationsBudget.create({
     data: {
       categoryId: categoryId ? parseInt(categoryId, 10) : null,
-      label: label.trim(),
+      label: normalisedLabel,
       monthlyBudgetCents: monthlyBudgetCents ? parseInt(monthlyBudgetCents, 10) : 0,
       currency: (currency || "USD").toUpperCase().trim(),
       cadence: normalisedCadence,
@@ -295,7 +306,7 @@ export async function createBudgetEntry({ categoryId, label, monthlyBudgetCents,
 export async function updateBudgetEntry(id, data) {
   const update = {};
   if (data.categoryId !== undefined) update.categoryId = data.categoryId ? parseInt(data.categoryId, 10) : null;
-  if (data.label !== undefined) update.label = data.label.trim();
+  if (data.label !== undefined) update.label = normaliseBudgetLabel(data.label);
   if (data.monthlyBudgetCents !== undefined) update.monthlyBudgetCents = parseInt(data.monthlyBudgetCents, 10);
   if (data.currency !== undefined) update.currency = data.currency.toUpperCase().trim();
   if (data.cadence !== undefined) {
@@ -366,7 +377,8 @@ export async function resetMonthlyBudgetOverride(year, month, budgetItemId) {
 }
 
 export async function createOneOffBudgetItem({ year, month, categoryId, label, monthlyBudgetCents, currency, iconName, iconImageUrl, notes }) {
-  if (!label || !label.trim()) throw new Error("Budget label is required.");
+  const normalisedLabel = normaliseBudgetLabel(label);
+  if (!normalisedLabel) throw new Error("Budget label is required.");
   const icon = normaliseBudgetIcon(iconName, iconImageUrl);
   return prisma.financeOperationsBudgetMonthly.create({
     data: {
@@ -374,7 +386,7 @@ export async function createOneOffBudgetItem({ year, month, categoryId, label, m
       month: Number(month),
       budgetItemId: null,
       categoryId: categoryId ? parseInt(categoryId, 10) : null,
-      label: label.trim(),
+      label: normalisedLabel,
       monthlyBudgetCents: monthlyBudgetCents ? parseInt(monthlyBudgetCents, 10) : 0,
       currency: (currency || "USD").toUpperCase().trim(),
       ...icon,
@@ -430,6 +442,7 @@ export async function getBudgetVsActual(year, month) {
 
       return {
         ...entry,
+        label: normaliseBudgetLabel(entry.label),
         monthlyBudgetCents,
         templateMonthlyBudgetCents: entry.monthlyBudgetCents,
         isOverridden: Boolean(override),
@@ -449,7 +462,7 @@ export async function getBudgetVsActual(year, month) {
         monthlyBudgetItemId: row.monthlyBudgetItemId,
         categoryId: row.categoryId,
         category: row.category,
-        label: row.label,
+        label: normaliseBudgetLabel(row.label),
         monthlyBudgetCents: row.monthlyBudgetCents,
         templateMonthlyBudgetCents: null,
         currency: row.currency,
