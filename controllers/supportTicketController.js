@@ -1221,33 +1221,81 @@ export async function deleteTicketChannel(client, ticketId, reason = "Ticket clo
     }
 
     const ticket = await getTicketById(ticketId);
-    if (!ticket?.discordChannelId) {
+    const storedChannelId = ticket?.discordChannelId ? String(ticket.discordChannelId).trim() : "";
+    const canDeleteKnownChannel = Boolean(knownChannel && typeof knownChannel.delete === "function");
+
+    if (!storedChannelId && !canDeleteKnownChannel) {
         return false;
     }
 
-    if (!client && !knownChannel) {
+    if (!client && !canDeleteKnownChannel) {
         console.warn("deleteTicketChannel: Discord client unavailable; retaining channel link for retry", { ticketId });
         return false;
     }
 
-    try {
-        const channel = knownChannel?.id === ticket.discordChannelId
-            ? knownChannel
-            : await client.channels.fetch(ticket.discordChannelId);
-        if (channel) {
-            await channel.delete(reason);
+    const attemptedChannelIds = new Set();
+    const deleteTargets = [];
+
+    if (canDeleteKnownChannel) {
+        deleteTargets.push({
+            source: "known-channel",
+            getChannel: async () => knownChannel,
+        });
+    }
+
+    if (client && storedChannelId && knownChannel?.id !== storedChannelId) {
+        deleteTargets.push({
+            source: "stored-channel-id",
+            getChannel: async () => client.channels.fetch(storedChannelId),
+        });
+    }
+
+    for (const target of deleteTargets) {
+        let channel;
+        try {
+            channel = await target.getChannel();
+        } catch (fetchError) {
+            const isAlreadyDeleted = fetchError?.code === 10003 || fetchError?.status === 404;
+            if (isAlreadyDeleted) {
+                break;
+            }
+
+            console.error("deleteTicketChannel: failed to resolve Discord channel for deletion", {
+                ticketId,
+                channelId: storedChannelId || knownChannel?.id || null,
+                source: target.source,
+            }, fetchError);
+            continue;
         }
-    } catch (error) {
-        // Unknown Channel means Discord has already removed it, so clearing the
-        // stale database link is safe. Other failures must remain retryable.
-        const isAlreadyDeleted = error?.code === 10003 || error?.status === 404;
-        if (!isAlreadyDeleted) {
+
+        const resolvedChannelId = channel?.id ? String(channel.id).trim() : "";
+        if (!channel || attemptedChannelIds.has(resolvedChannelId || target.source)) {
+            continue;
+        }
+
+        attemptedChannelIds.add(resolvedChannelId || target.source);
+
+        try {
+            await channel.delete(reason);
+            break;
+        } catch (error) {
+            // Unknown Channel means Discord has already removed it, so clearing the
+            // stale database link is safe. Other failures must remain retryable.
+            const isAlreadyDeleted = error?.code === 10003 || error?.status === 404;
+            if (isAlreadyDeleted) {
+                break;
+            }
+
             console.error("deleteTicketChannel: failed to delete Discord channel; retaining link for retry", {
                 ticketId,
-                channelId: ticket.discordChannelId,
+                channelId: resolvedChannelId || storedChannelId || null,
+                source: target.source,
             }, error);
-            return false;
         }
+    }
+
+    if (!attemptedChannelIds.size) {
+        return false;
     }
 
     return new Promise((resolve) => {
