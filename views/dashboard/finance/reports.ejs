@@ -26,7 +26,7 @@
           <div class="card shadow-sm">
             <div class="card-header fw-semibold">Report Controls</div>
             <div class="card-body">
-              <form method="get" action="/dashboard/finance/reports" class="row g-3 mb-4">
+              <form action="/dashboard/finance/reports" class="row g-3 mb-4">
                 <div class="col-sm-6">
                   <label class="form-label fw-semibold">Year</label>
                   <input type="number" class="form-control" name="year" min="2020" max="2100" value="<%= selectedYear %>" required>
@@ -40,8 +40,10 @@
                   <textarea class="form-control" name="publicNote" rows="4" maxlength="2000" placeholder="Short community-facing summary."><%= req.query.publicNote || existingReport?.notes || '' %></textarea>
                 </div>
                 <div class="col-12 d-flex flex-wrap gap-2">
-                  <input type="hidden" name="preview" value="1">
-                  <button type="submit" class="btn btn-outline-primary">Preview Public Report</button>
+                  <button type="submit" class="btn btn-outline-primary" formmethod="get" formaction="/dashboard/finance/reports" name="preview" value="1">Preview Public Report</button>
+                  <% if (canManage) { %>
+                    <button type="submit" class="btn btn-primary" formmethod="post" formaction="/dashboard/finance/reports/publish" <%= reportIsLocked ? 'disabled' : '' %>><%= reportIsPublished ? 'Update Published Report' : 'Publish Report' %></button>
+                  <% } %>
                 </div>
               </form>
 
@@ -62,13 +64,6 @@
               <% } %>
 
               <% if (canManage) { %>
-                <form method="post" action="/dashboard/finance/reports/publish" class="mb-2">
-                  <input type="hidden" name="year" value="<%= selectedYear %>">
-                  <input type="hidden" name="month" value="<%= selectedMonth %>">
-                  <input type="hidden" name="publicNote" value="<%= req.query.publicNote || existingReport?.notes || '' %>">
-                  <button type="submit" class="btn btn-primary" <%= reportIsLocked ? 'disabled' : '' %>><%= reportIsPublished ? 'Update Published Report' : 'Publish Report' %></button>
-                </form>
-
                 <form method="post" action="/dashboard/finance/reports/lock">
                   <input type="hidden" name="year" value="<%= selectedYear %>">
                   <input type="hidden" name="month" value="<%= selectedMonth %>">
