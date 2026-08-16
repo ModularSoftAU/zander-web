@@ -17,6 +17,7 @@
         const fmtMoney = function(cents, currency) {
           return new Intl.NumberFormat('en-US', { style: 'currency', currency: currency || 'USD' }).format((cents || 0) / 100);
         };
+        const currencyOptions = ['USD', 'AUD', 'EUR', 'GBP', 'CAD'];
         const now = new Date();
         const monthLabel = now.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
       %>
@@ -239,7 +240,11 @@
             </div>
             <div class="mb-3">
               <label for="addBudgetCurrency" class="form-label fw-semibold">Currency</label>
-              <input type="text" class="form-control" id="addBudgetCurrency" name="currency" value="USD" maxlength="10">
+              <select class="form-select" id="addBudgetCurrency" name="currency">
+                <% currencyOptions.forEach(function(c) { %>
+                  <option value="<%= c %>" <%= c === 'USD' ? 'selected' : '' %>><%= c %></option>
+                <% }) %>
+              </select>
             </div>
             <div class="mb-3">
               <label for="addBudgetNotes" class="form-label fw-semibold">Notes</label>
@@ -289,7 +294,11 @@
             </div>
             <div class="mb-3">
               <label for="editBudgetCurrency" class="form-label fw-semibold">Currency</label>
-              <input type="text" class="form-control" id="editBudgetCurrency" name="currency" maxlength="10">
+              <select class="form-select" id="editBudgetCurrency" name="currency">
+                <% currencyOptions.forEach(function(c) { %>
+                  <option value="<%= c %>"><%= c %></option>
+                <% }) %>
+              </select>
             </div>
             <div class="mb-3">
               <label for="editBudgetNotes" class="form-label fw-semibold">Notes</label>
@@ -376,7 +385,11 @@
             </div>
             <div class="mb-3">
               <label for="oneOffCurrency" class="form-label fw-semibold">Currency</label>
-              <input type="text" class="form-control" id="oneOffCurrency" name="currency" value="USD" maxlength="10">
+              <select class="form-select" id="oneOffCurrency" name="currency">
+                <% currencyOptions.forEach(function(c) { %>
+                  <option value="<%= c %>" <%= c === 'USD' ? 'selected' : '' %>><%= c %></option>
+                <% }) %>
+              </select>
             </div>
             <div class="mb-3">
               <label for="oneOffNotes" class="form-label fw-semibold">Notes</label>

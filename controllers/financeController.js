@@ -686,28 +686,65 @@ export async function getFinanceDashboardData() {
   const currentYear = now.getFullYear();
   const currentMonth = now.getMonth() + 1;
   const startOfMonth = new Date(currentYear, currentMonth - 1, 1);
-  const endOfMonth = new Date(currentYear, currentMonth, 0);
+  const startOfNextMonth = new Date(currentYear, currentMonth, 1);
 
-  const [incomeRows, expenseRows, recentTransactions, budgetSummary] = await Promise.all([
+  const [incomeRows, expenseRows, webstoreIncomeCents, financeTransactions, recentPurchases, budgetSummary] = await Promise.all([
     queryDb(
       `SELECT COALESCE(SUM(amountCents), 0) AS total
          FROM financeTransactions
-        WHERE type = 'income' AND transactionDate >= ? AND transactionDate <= ?`,
-      [startOfMonth, endOfMonth]
+        WHERE type = 'income' AND transactionDate >= ? AND transactionDate < ?`,
+      [startOfMonth, startOfNextMonth]
     ),
     queryDb(
       `SELECT COALESCE(SUM(amountCents), 0) AS total
          FROM financeTransactions
-        WHERE type = 'expense' AND transactionDate >= ? AND transactionDate <= ?`,
-      [startOfMonth, endOfMonth]
+        WHERE type = 'expense' AND transactionDate >= ? AND transactionDate < ?`,
+      [startOfMonth, startOfNextMonth]
     ),
+    getMonthlyPurchaseTotals(startOfMonth, startOfNextMonth),
     getTransactions({ limit: 10, offset: 0 }),
+    queryDb(
+      `SELECT purchaseId, itemName, purchaseType, amountCents, currency, createdAt,
+              purchaserMinecraftUsername, recipientMinecraftUsername, isGift
+         FROM webstorePurchases
+        WHERE status IN ('paid', 'fulfilled')
+          AND createdAt >= ? AND createdAt < ?
+        ORDER BY createdAt DESC
+        LIMIT 10`,
+      [startOfMonth, startOfNextMonth]
+    ),
     getBudgetVsActual(currentYear, currentMonth),
   ]);
 
-  const totalIncomeCents = incomeRows[0]?.total || 0;
+  const financeIncomeCents = Number(incomeRows[0]?.total || 0);
+  const totalIncomeCents = financeIncomeCents + Number(webstoreIncomeCents || 0);
   const totalExpensesCents = expenseRows[0]?.total || 0;
   const netAmountCents = totalIncomeCents - totalExpensesCents;
+  const recentTransactions = [
+    ...(financeTransactions || []).map((tx) => ({
+      ...tx,
+      activityDate: tx.transactionDate || tx.createdAt,
+    })),
+    ...(recentPurchases || []).map((purchase) => ({
+      transactionId: `webstore-${purchase.purchaseId}`,
+      type: "income",
+      amountCents: purchase.amountCents,
+      currency: purchase.currency,
+      description: purchase.itemName || "Webstore purchase",
+      notes: purchase.isGift
+        ? `Gift purchase for ${purchase.recipientMinecraftUsername}`
+        : `Purchased by ${purchase.purchaserMinecraftUsername}`,
+      transactionDate: purchase.createdAt,
+      createdAt: purchase.createdAt,
+      category: { categoryId: null, name: "Stripe / Webstore", color: "#198754" },
+      activityDate: purchase.createdAt,
+      source: "webstore",
+      purchaseType: purchase.purchaseType,
+      isGift: purchase.isGift,
+    })),
+  ]
+    .sort((a, b) => new Date(b.activityDate) - new Date(a.activityDate))
+    .slice(0, 10);
 
   return {
     totalIncomeCents,
