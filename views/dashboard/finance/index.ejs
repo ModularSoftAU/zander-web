@@ -59,8 +59,8 @@
       <div class="row g-4 mb-4">
 
         <%# Recent Transactions -%>
-        <div class="col-lg-7">
-          <div class="card shadow-sm h-100">
+        <div class="col-12">
+          <div class="card shadow-sm">
             <div class="card-header d-flex justify-content-between align-items-center">
               <span class="fw-semibold"><i class="fa-solid fa-arrows-left-right fa-fw me-2 text-primary"></i>Recent Transactions</span>
             </div>
@@ -96,8 +96,8 @@
         </div>
 
         <%# Budget Summary -%>
-        <div class="col-lg-5">
-          <div class="card shadow-sm h-100">
+        <div class="col-12">
+          <div class="card shadow-sm">
             <div class="card-header d-flex flex-wrap justify-content-between align-items-center gap-2">
               <span class="fw-semibold"><i class="fa-solid fa-gauge fa-fw me-2 text-info"></i>Operations Budget</span>
               <% if (canManage) { %>
@@ -141,8 +141,12 @@
                   <table class="table table-sm align-middle mb-0">
                     <thead>
                       <tr>
-                        <th>Line Item</th><th>Type</th><th class="text-end">Budget</th><th class="text-end">Actual</th>
-                        <% if (canManage) { %><th></th><% } %>
+                        <th class="text-center" style="width:64px">Icon</th>
+                        <th>Line Item</th>
+                        <th style="width:190px">Type</th>
+                        <th class="text-end" style="width:130px">Budget</th>
+                        <th class="text-end" style="width:130px">Actual</th>
+                        <% if (canManage) { %><th class="text-end" style="width:140px">Actions</th><% } %>
                       </tr>
                     </thead>
                     <tbody>
@@ -153,18 +157,30 @@
                         const isOver = (b.actualCents||0) > (b.monthlyBudgetCents||0);
                       %>
                         <tr class="<%= isOver ? 'table-danger' : '' %>">
+                          <td class="text-center">
+                            <span class="d-inline-flex align-items-center justify-content-center rounded bg-light text-primary overflow-hidden"
+                                  style="width:38px;height:38px;">
+                              <% if (b.iconImageUrl) { %>
+                                <img src="<%= b.iconImageUrl %>" alt="" style="width:38px;height:38px;object-fit:cover;">
+                              <% } else { %>
+                                <i class="fa-solid fa-<%= b.iconName || 'receipt' %>" aria-hidden="true"></i>
+                              <% } %>
+                            </span>
+                          </td>
                           <td>
-                            <%= b.label %>
+                            <div class="fw-semibold"><%= b.label %></div>
+                            <% if (b.category) { %><div class="small text-muted"><%= b.category.name %></div><% } %>
                           </td>
                           <td>
                             <% if (b.isOneOff) { %>
                               <span class="badge bg-info text-dark" title="Only exists for this month">One-off</span>
                             <% } else if (b.cadence === 'annual') { %>
                               <span class="badge bg-primary">Annual · <%= monthNames[(b.annualMonth || 1) - 1] %></span>
-                            <% } else if (b.isOverridden) { %>
-                              <span class="badge bg-warning text-dark" title="Template amount is <%= templateStr %> — overridden for this month">Monthly override</span>
                             <% } else { %>
                               <span class="badge bg-secondary">Recurring</span>
+                            <% } %>
+                            <% if (b.isOverridden) { %>
+                              <span class="badge bg-warning text-dark ms-1" title="Template amount is <%= templateStr %> — overridden for this month">Override</span>
                             <% } %>
                           </td>
                           <td class="text-end text-muted"><%= budgetStr %></td>
