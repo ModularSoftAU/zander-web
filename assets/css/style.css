@@ -1291,6 +1291,55 @@ a:focus {
   border-top: 1px solid rgba(0, 0, 0, 0.05) !important;
 }
 
+/* Finance Centre - follows the public site's feature-card visual language. */
+.finance-page h3,
+.finance-page h4 {
+  color: #2f508c;
+}
+
+.finance-page .card,
+.finance-page .list-group {
+  border-radius: 15px;
+  box-shadow: 0 0 30px rgba(0, 42, 106, 0.1) !important;
+  overflow: hidden;
+}
+
+.finance-page .card-body {
+  padding: 28px;
+}
+
+.finance-page .finance-stat-card {
+  border-top: 4px solid #2f508c !important;
+}
+
+.finance-page .list-group-item {
+  border-color: rgba(0, 42, 106, 0.1);
+  color: #6f8ba4;
+}
+
+.finance-page .list-group-item h4 {
+  color: #222;
+}
+
+.finance-page .list-group-item .bg-light {
+  background: #f4f9fc !important;
+  color: #2f508c !important;
+}
+
+.finance-page .progress {
+  background: #e8f0f7;
+}
+
+.finance-page .progress-bar {
+  background-color: #2f508c !important;
+}
+
+@media (max-width: 575.98px) {
+  .finance-page .card-body {
+    padding: 22px;
+  }
+}
+
 .w-hours li {
   padding: 6px 0px;
   border-bottom: 1px solid rgba(0, 0, 0, 0.05);

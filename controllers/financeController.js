@@ -28,6 +28,19 @@ function getMonthRange(year, month) {
   return { startDate, endDate };
 }
 
+const BUDGET_ICON_NAMES = new Set([
+  "server", "cloud", "globe", "database", "shield-halved", "code",
+  "plug", "wifi", "hard-drive", "people-group", "tools", "receipt",
+]);
+
+function normaliseBudgetIcon(iconName, iconImageUrl) {
+  const selectedIcon = BUDGET_ICON_NAMES.has(iconName) ? iconName : null;
+  const imageUrl = typeof iconImageUrl === "string" && /^https:\/\//i.test(iconImageUrl.trim())
+    ? iconImageUrl.trim()
+    : null;
+  return { iconName: selectedIcon, iconImageUrl: imageUrl };
+}
+
 function normaliseReportMonth(year, month) {
   const parsedYear = parseInt(year, 10);
   const parsedMonth = parseInt(month, 10);
@@ -257,14 +270,23 @@ export async function getAllBudgetEntries() {
   });
 }
 
-export async function createBudgetEntry({ categoryId, label, monthlyBudgetCents, currency, notes }) {
+export async function createBudgetEntry({ categoryId, label, monthlyBudgetCents, currency, cadence, annualMonth, iconName, iconImageUrl, notes }) {
   if (!label || !label.trim()) throw new Error("Budget label is required.");
+  const normalisedCadence = cadence === "annual" ? "annual" : "monthly";
+  const normalisedAnnualMonth = normalisedCadence === "annual" ? parseInt(annualMonth, 10) : null;
+  if (normalisedCadence === "annual" && (!Number.isInteger(normalisedAnnualMonth) || normalisedAnnualMonth < 1 || normalisedAnnualMonth > 12)) {
+    throw new Error("A renewal month is required for annual budget items.");
+  }
+  const icon = normaliseBudgetIcon(iconName, iconImageUrl);
   return prisma.financeOperationsBudget.create({
     data: {
       categoryId: categoryId ? parseInt(categoryId, 10) : null,
       label: label.trim(),
       monthlyBudgetCents: monthlyBudgetCents ? parseInt(monthlyBudgetCents, 10) : 0,
       currency: (currency || "USD").toUpperCase().trim(),
+      cadence: normalisedCadence,
+      annualMonth: normalisedAnnualMonth,
+      ...icon,
       notes: notes?.trim() || null,
     },
   });
@@ -276,6 +298,16 @@ export async function updateBudgetEntry(id, data) {
   if (data.label !== undefined) update.label = data.label.trim();
   if (data.monthlyBudgetCents !== undefined) update.monthlyBudgetCents = parseInt(data.monthlyBudgetCents, 10);
   if (data.currency !== undefined) update.currency = data.currency.toUpperCase().trim();
+  if (data.cadence !== undefined) {
+    update.cadence = data.cadence === "annual" ? "annual" : "monthly";
+    update.annualMonth = update.cadence === "annual" ? parseInt(data.annualMonth, 10) : null;
+    if (update.cadence === "annual" && (!Number.isInteger(update.annualMonth) || update.annualMonth < 1 || update.annualMonth > 12)) {
+      throw new Error("A renewal month is required for annual budget items.");
+    }
+  }
+  if (data.iconName !== undefined || data.iconImageUrl !== undefined) {
+    Object.assign(update, normaliseBudgetIcon(data.iconName, data.iconImageUrl));
+  }
   if (data.notes !== undefined) update.notes = data.notes?.trim() || null;
   if (data.isActive !== undefined) update.isActive = data.isActive ? 1 : 0;
   return prisma.financeOperationsBudget.update({ where: { budgetId: id }, data: update });
@@ -318,6 +350,8 @@ export async function upsertMonthlyBudgetOverride({ year, month, budgetItemId, m
       label: template.label,
       monthlyBudgetCents: parseInt(monthlyBudgetCents, 10) || 0,
       currency: template.currency,
+      iconName: template.iconName,
+      iconImageUrl: template.iconImageUrl,
     },
     update: {
       monthlyBudgetCents: parseInt(monthlyBudgetCents, 10) || 0,
@@ -331,8 +365,9 @@ export async function resetMonthlyBudgetOverride(year, month, budgetItemId) {
   });
 }
 
-export async function createOneOffBudgetItem({ year, month, categoryId, label, monthlyBudgetCents, currency, notes }) {
+export async function createOneOffBudgetItem({ year, month, categoryId, label, monthlyBudgetCents, currency, iconName, iconImageUrl, notes }) {
   if (!label || !label.trim()) throw new Error("Budget label is required.");
+  const icon = normaliseBudgetIcon(iconName, iconImageUrl);
   return prisma.financeOperationsBudgetMonthly.create({
     data: {
       year: Number(year),
@@ -342,6 +377,7 @@ export async function createOneOffBudgetItem({ year, month, categoryId, label, m
       label: label.trim(),
       monthlyBudgetCents: monthlyBudgetCents ? parseInt(monthlyBudgetCents, 10) : 0,
       currency: (currency || "USD").toUpperCase().trim(),
+      ...icon,
       notes: notes?.trim() || null,
     },
   });
@@ -386,7 +422,10 @@ export async function getBudgetVsActual(year, month) {
   const templateResults = await Promise.all(
     templateEntries.map(async (entry) => {
       const override = overrideByBudgetItemId.get(entry.budgetId) || null;
-      const monthlyBudgetCents = override ? override.monthlyBudgetCents : entry.monthlyBudgetCents;
+      const appliesThisMonth = entry.cadence !== "annual" || entry.annualMonth === Number(month);
+      const monthlyBudgetCents = override
+        ? override.monthlyBudgetCents
+        : (appliesThisMonth ? entry.monthlyBudgetCents : 0);
       const actualCents = await computeActualCents(entry.categoryId, startDate, endDate);
 
       return {
@@ -414,6 +453,8 @@ export async function getBudgetVsActual(year, month) {
         monthlyBudgetCents: row.monthlyBudgetCents,
         templateMonthlyBudgetCents: null,
         currency: row.currency,
+        iconName: row.iconName,
+        iconImageUrl: row.iconImageUrl,
         notes: row.notes,
         isOverridden: false,
         isOneOff: true,
@@ -514,6 +555,8 @@ export async function getPublicOperationsBudgetBreakdown(year, month) {
       description: "",
       totalCents: 0,
       currency,
+      iconName: row.iconName || null,
+      iconImageUrl: row.iconImageUrl || null,
     };
 
     current.totalCents += totalCents;

@@ -19,7 +19,7 @@
   const hasPublicCategories = Array.isArray(currentMonth.categories) && currentMonth.categories.length > 0;
 %>
 
-<section class="section">
+<section class="section finance-page">
   <div class="container">
     <% if (req.cookies.alertType) { %>
       <%- include("../../partials/alert.ejs", {
@@ -47,7 +47,7 @@
 
       <div class="row g-3">
         <div class="col-sm-6 col-lg-3">
-          <div class="card h-100 shadow-sm border-0">
+          <div class="card finance-stat-card h-100 border-0">
             <div class="card-body">
               <div class="text-muted small text-uppercase fw-semibold mb-2">Community Support</div>
               <div class="fs-3 fw-bold"><%= fmtMoney(currentMonth.communitySupportCents) %></div>
@@ -55,7 +55,7 @@
           </div>
         </div>
         <div class="col-sm-6 col-lg-3">
-          <div class="card h-100 shadow-sm border-0">
+          <div class="card finance-stat-card h-100 border-0">
             <div class="card-body">
               <div class="text-muted small text-uppercase fw-semibold mb-2">Monthly Funding Goal</div>
               <div class="fs-3 fw-bold"><%= fmtMoney(currentMonth.fundingGoalCents) %></div>
@@ -63,7 +63,7 @@
           </div>
         </div>
         <div class="col-sm-6 col-lg-3">
-          <div class="card h-100 shadow-sm border-0">
+          <div class="card finance-stat-card h-100 border-0">
             <div class="card-body">
               <div class="text-muted small text-uppercase fw-semibold mb-2">Funding Progress</div>
               <div class="fs-3 fw-bold"><%= currentMonth.fundingProgressPercent %>%</div>
@@ -71,7 +71,7 @@
           </div>
         </div>
         <div class="col-sm-6 col-lg-3">
-          <div class="card h-100 shadow-sm border-0">
+          <div class="card finance-stat-card h-100 border-0">
             <div class="card-body">
               <div class="text-muted small text-uppercase fw-semibold mb-2">Operating Costs</div>
               <div class="fs-3 fw-bold"><%= hasOperatingCosts ? fmtMoney(currentMonth.operatingCostsCents, currentMonth.operatingCostsCurrency) : "Preparing" %></div>
@@ -147,18 +147,23 @@
     <section class="mb-5" aria-labelledby="finance-breakdown-heading">
       <h3 id="finance-breakdown-heading" class="h4 mb-3">Where Your Support Goes</h3>
       <% if (hasPublicCategories) { %>
-        <div class="row g-3 mb-3">
+        <div class="list-group shadow-sm mb-3">
           <% currentMonth.categories.forEach(function(category) { %>
-            <div class="col-md-6 col-xl-4">
-              <div class="card h-100 shadow-sm border-0">
-                <div class="card-body">
-                  <h4 class="h5 mb-2"><%= category.name %></h4>
-                  <% if (category.description) { %>
-                    <p class="text-muted mb-3"><%= category.description %></p>
-                  <% } %>
-                  <div class="fw-semibold"><%= fmtMoney(category.totalCents, category.currency) %> / month</div>
-                </div>
+            <div class="list-group-item d-flex flex-column flex-sm-row align-items-sm-center gap-3 p-3">
+              <div class="d-flex align-items-center justify-content-center rounded bg-light text-primary flex-shrink-0" style="width:56px;height:56px;">
+                <% if (category.iconImageUrl) { %>
+                  <img src="<%= category.iconImageUrl %>" alt="" class="rounded" style="width:56px;height:56px;object-fit:cover;">
+                <% } else { %>
+                  <i class="fa-solid fa-<%= category.iconName || 'receipt' %> fa-xl" aria-hidden="true"></i>
+                <% } %>
               </div>
+              <div class="flex-grow-1">
+                  <h4 class="h5 mb-1"><%= category.name %></h4>
+                  <% if (category.description) { %>
+                    <p class="text-muted mb-0"><%= category.description %></p>
+                  <% } %>
+              </div>
+              <div class="fw-semibold text-sm-end text-nowrap"><%= fmtMoney(category.totalCents, category.currency) %> / month</div>
             </div>
           <% }) %>
         </div>
@@ -192,7 +197,7 @@
           <h3 id="finance-support-heading" class="h4 mb-1">Support the Network</h3>
           <p class="text-muted mb-0">Financial support is one practical way to help keep Crafting For Christ running.</p>
         </div>
-        <a href="/webstore" class="btn btn-primary">Visit the Webstore</a>
+        <a href="/webstore" class="btn btn-main">Visit the Webstore</a>
       </div>
 
       <div class="row g-4">
@@ -204,8 +209,8 @@
                 Rank purchases help support ongoing network operation while also unlocking in-game perks and extras.
               </p>
               <div class="d-flex gap-2 flex-wrap">
-                <a href="/webstore" class="btn btn-primary btn-sm">Browse Webstore</a>
-                <a href="/ranks" class="btn btn-outline-secondary btn-sm">View Ranks</a>
+                <a href="/webstore" class="btn btn-main btn-sm">Browse Webstore</a>
+                <a href="/ranks" class="btn btn-solid-border btn-sm">View Ranks</a>
               </div>
             </div>
           </div>
@@ -218,7 +223,7 @@
                 Some ranks offer a monthly subscription, which is a simple way to support the network over time.
                 You can cancel whenever you need to.
               </p>
-              <a href="/webstore" class="btn btn-outline-primary btn-sm">See Subscription Options</a>
+              <a href="/webstore" class="btn btn-solid-border btn-sm">See Subscription Options</a>
             </div>
           </div>
         </div>
@@ -234,7 +239,7 @@
                 <li>Gifted subscriptions stay active for as long as the subscription remains active.</li>
                 <li>The purchaser manages any subscription changes or cancellations.</li>
               </ul>
-              <a href="/webstore" class="btn btn-outline-secondary btn-sm">Send a Gift</a>
+              <a href="/webstore" class="btn btn-solid-border btn-sm">Send a Gift</a>
             </div>
           </div>
         </div>
@@ -270,7 +275,7 @@
                       </div>
                     </div>
                   </div>
-                  <a href="/finance/reports/<%= snapshot.year %>/<%= String(snapshot.month).padStart(2, '0') %>" class="btn btn-outline-primary btn-sm">View Report</a>
+                  <a href="/finance/reports/<%= snapshot.year %>/<%= String(snapshot.month).padStart(2, '0') %>" class="btn btn-solid-border btn-sm">View Report</a>
                 </div>
               </div>
             </div>

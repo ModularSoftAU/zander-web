@@ -18,6 +18,11 @@
           return new Intl.NumberFormat('en-US', { style: 'currency', currency: currency || 'USD' }).format((cents || 0) / 100);
         };
         const currencyOptions = ['USD', 'AUD', 'EUR', 'GBP', 'CAD'];
+        const budgetIconOptions = [
+          ['server','Server'], ['cloud','Cloud'], ['globe','Website'], ['database','Database'],
+          ['shield-halved','Security'], ['code','Software'], ['plug','Services'], ['wifi','Network'],
+          ['hard-drive','Storage'], ['people-group','Community'], ['tools','Maintenance'], ['receipt','Billing']
+        ];
         const now = new Date();
         const monthLabel = now.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
       %>
@@ -154,6 +159,8 @@
                           <td>
                             <% if (b.isOneOff) { %>
                               <span class="badge bg-info text-dark" title="Only exists for this month">One-off</span>
+                            <% } else if (b.cadence === 'annual') { %>
+                              <span class="badge bg-primary">Annual · <%= monthNames[(b.annualMonth || 1) - 1] %></span>
                             <% } else if (b.isOverridden) { %>
                               <span class="badge bg-warning text-dark" title="Template amount is <%= templateStr %> — overridden for this month">Monthly override</span>
                             <% } else { %>
@@ -173,6 +180,21 @@
                                     <button type="submit" class="btn btn-sm btn-outline-danger"><i class="fa-solid fa-trash"></i></button>
                                   </form>
                                 <% } else { %>
+                                  <button type="button" class="btn btn-sm btn-outline-primary"
+                                          data-bs-toggle="modal" data-bs-target="#editBudgetModal"
+                                          data-id="<%= b.budgetId %>"
+                                          data-label="<%= (b.label||'').replace(/&/g,'&amp;').replace(/"/g,'&quot;') %>"
+                                          data-category-id="<%= b.categoryId || '' %>"
+                                          data-amount="<%= ((b.templateMonthlyBudgetCents||0)/100).toFixed(2) %>"
+                                          data-currency="<%= b.currency || 'USD' %>"
+                                          data-cadence="<%= b.cadence || 'monthly' %>"
+                                          data-annual-month="<%= b.annualMonth || '' %>"
+                                          data-icon-name="<%= b.iconName || '' %>"
+                                          data-icon-image-url="<%= b.iconImageUrl || '' %>"
+                                          data-notes="<%= (b.notes||'').replace(/&/g,'&amp;').replace(/"/g,'&quot;') %>"
+                                          title="Edit standing budget item">
+                                    <i class="fa-solid fa-gear"></i>
+                                  </button>
                                   <button type="button" class="btn btn-sm btn-outline-warning"
                                           data-bs-toggle="modal" data-bs-target="#overrideBudgetModal"
                                           data-budget-item-id="<%= b.budgetId %>"
@@ -236,7 +258,36 @@
               </select>
             </div>
             <div class="mb-3">
-              <label for="addBudgetAmount" class="form-label fw-semibold">Monthly budget <span class="text-danger">*</span></label>
+              <label for="addBudgetCadence" class="form-label fw-semibold">Type</label>
+              <select class="form-select budget-cadence-input" id="addBudgetCadence" name="cadence">
+                <option value="monthly">Monthly</option>
+                <option value="annual">Annual</option>
+              </select>
+            </div>
+            <div class="mb-3 budget-icon-editor">
+              <label for="addBudgetIcon" class="form-label fw-semibold">Icon</label>
+              <select class="form-select budget-icon-select" id="addBudgetIcon" name="iconName">
+                <option value="">No icon</option>
+                <% budgetIconOptions.forEach(function(icon) { %><option value="<%= icon[0] %>"><%= icon[1] %></option><% }) %>
+              </select>
+              <div class="d-flex align-items-center gap-2 mt-2">
+                <span class="budget-icon-preview d-none fs-4"></span>
+                <img class="budget-image-preview d-none rounded" alt="Budget icon preview" style="width:48px;height:48px;object-fit:cover;">
+                <label class="btn btn-sm btn-outline-secondary mb-0"><i class="fa-solid fa-upload me-1"></i>Upload icon<input type="file" class="budget-icon-file d-none" accept="image/png,image/jpeg,image/gif,image/webp"></label>
+                <button type="button" class="btn btn-sm btn-outline-danger budget-icon-image-remove d-none">Remove upload</button>
+                <span class="budget-icon-status small"></span>
+              </div>
+              <input type="hidden" name="iconImageUrl" class="budget-icon-image-url">
+              <div class="form-text">Uploaded images take priority over the selected icon.</div>
+            </div>
+            <div class="mb-3 budget-annual-month-field d-none">
+              <label for="addBudgetAnnualMonth" class="form-label fw-semibold">Renewal month</label>
+              <select class="form-select" id="addBudgetAnnualMonth" name="annualMonth">
+                <% monthNames.forEach(function(name, index) { %><option value="<%= index + 1 %>"><%= name %></option><% }) %>
+              </select>
+            </div>
+            <div class="mb-3">
+              <label for="addBudgetAmount" class="form-label fw-semibold">Budget amount <span class="text-danger">*</span></label>
               <div class="input-group">
                 <span class="input-group-text">$</span>
                 <input type="number" class="form-control budget-amount-input" id="addBudgetAmount" required min="0.01" step="0.01" placeholder="0.00">
@@ -290,7 +341,36 @@
               </select>
             </div>
             <div class="mb-3">
-              <label for="editBudgetAmount" class="form-label fw-semibold">Monthly budget <span class="text-danger">*</span></label>
+              <label for="editBudgetCadence" class="form-label fw-semibold">Type</label>
+              <select class="form-select budget-cadence-input" id="editBudgetCadence" name="cadence">
+                <option value="monthly">Monthly</option>
+                <option value="annual">Annual</option>
+              </select>
+            </div>
+            <div class="mb-3 budget-icon-editor">
+              <label for="editBudgetIcon" class="form-label fw-semibold">Icon</label>
+              <select class="form-select budget-icon-select" id="editBudgetIcon" name="iconName">
+                <option value="">No icon</option>
+                <% budgetIconOptions.forEach(function(icon) { %><option value="<%= icon[0] %>"><%= icon[1] %></option><% }) %>
+              </select>
+              <div class="d-flex align-items-center gap-2 mt-2">
+                <span class="budget-icon-preview d-none fs-4"></span>
+                <img class="budget-image-preview d-none rounded" alt="Budget icon preview" style="width:48px;height:48px;object-fit:cover;">
+                <label class="btn btn-sm btn-outline-secondary mb-0"><i class="fa-solid fa-upload me-1"></i>Upload icon<input type="file" class="budget-icon-file d-none" accept="image/png,image/jpeg,image/gif,image/webp"></label>
+                <button type="button" class="btn btn-sm btn-outline-danger budget-icon-image-remove d-none">Remove upload</button>
+                <span class="budget-icon-status small"></span>
+              </div>
+              <input type="hidden" name="iconImageUrl" class="budget-icon-image-url">
+              <div class="form-text">Uploaded images take priority over the selected icon.</div>
+            </div>
+            <div class="mb-3 budget-annual-month-field d-none">
+              <label for="editBudgetAnnualMonth" class="form-label fw-semibold">Renewal month</label>
+              <select class="form-select" id="editBudgetAnnualMonth" name="annualMonth">
+                <% monthNames.forEach(function(name, index) { %><option value="<%= index + 1 %>"><%= name %></option><% }) %>
+              </select>
+            </div>
+            <div class="mb-3">
+              <label for="editBudgetAmount" class="form-label fw-semibold">Budget amount <span class="text-danger">*</span></label>
               <div class="input-group">
                 <span class="input-group-text">$</span>
                 <input type="number" class="form-control budget-amount-input" id="editBudgetAmount" required min="0.01" step="0.01">
@@ -395,6 +475,22 @@
                 <% }) %>
               </select>
             </div>
+            <div class="mb-3 budget-icon-editor">
+              <label for="oneOffIcon" class="form-label fw-semibold">Icon</label>
+              <select class="form-select budget-icon-select" id="oneOffIcon" name="iconName">
+                <option value="">No icon</option>
+                <% budgetIconOptions.forEach(function(icon) { %><option value="<%= icon[0] %>"><%= icon[1] %></option><% }) %>
+              </select>
+              <div class="d-flex align-items-center gap-2 mt-2">
+                <span class="budget-icon-preview d-none fs-4"></span>
+                <img class="budget-image-preview d-none rounded" alt="Budget icon preview" style="width:48px;height:48px;object-fit:cover;">
+                <label class="btn btn-sm btn-outline-secondary mb-0"><i class="fa-solid fa-upload me-1"></i>Upload icon<input type="file" class="budget-icon-file d-none" accept="image/png,image/jpeg,image/gif,image/webp"></label>
+                <button type="button" class="btn btn-sm btn-outline-danger budget-icon-image-remove d-none">Remove upload</button>
+                <span class="budget-icon-status small"></span>
+              </div>
+              <input type="hidden" name="iconImageUrl" class="budget-icon-image-url">
+              <div class="form-text">Uploaded images take priority over the selected icon.</div>
+            </div>
             <div class="mb-3">
               <label for="oneOffNotes" class="form-label fw-semibold">Notes</label>
               <input type="text" class="form-control" id="oneOffNotes" name="notes" maxlength="500">
@@ -419,6 +515,70 @@
       });
     });
 
+    function updateAnnualMonthField(cadenceInput) {
+      const field = cadenceInput.closest('form').querySelector('.budget-annual-month-field');
+      if (!field) return;
+      const isAnnual = cadenceInput.value === 'annual';
+      field.classList.toggle('d-none', !isAnnual);
+      field.querySelector('select').required = isAnnual;
+    }
+
+    document.querySelectorAll('.budget-cadence-input').forEach(function (input) {
+      input.addEventListener('change', function () { updateAnnualMonthField(input); });
+      updateAnnualMonthField(input);
+    });
+
+    function refreshBudgetIconEditor(editor) {
+      const selected = editor.querySelector('.budget-icon-select').value;
+      const imageUrl = editor.querySelector('.budget-icon-image-url').value;
+      const iconPreview = editor.querySelector('.budget-icon-preview');
+      const imagePreview = editor.querySelector('.budget-image-preview');
+      const removeButton = editor.querySelector('.budget-icon-image-remove');
+
+      iconPreview.innerHTML = selected ? '<i class="fa-solid fa-' + selected + '"></i>' : '';
+      iconPreview.classList.toggle('d-none', !selected || Boolean(imageUrl));
+      imagePreview.src = imageUrl || '';
+      imagePreview.classList.toggle('d-none', !imageUrl);
+      removeButton.classList.toggle('d-none', !imageUrl);
+    }
+
+    document.querySelectorAll('.budget-icon-editor').forEach(function (editor) {
+      const select = editor.querySelector('.budget-icon-select');
+      const fileInput = editor.querySelector('.budget-icon-file');
+      const hiddenUrl = editor.querySelector('.budget-icon-image-url');
+      const status = editor.querySelector('.budget-icon-status');
+
+      select.addEventListener('change', function () { refreshBudgetIconEditor(editor); });
+      editor.querySelector('.budget-icon-image-remove').addEventListener('click', function () {
+        hiddenUrl.value = '';
+        status.textContent = '';
+        refreshBudgetIconEditor(editor);
+      });
+      fileInput.addEventListener('change', async function () {
+        const file = fileInput.files[0];
+        if (!file) return;
+        fileInput.value = '';
+        status.textContent = 'Uploading...';
+        status.className = 'budget-icon-status small text-muted';
+        const body = new FormData();
+        body.append('file', file, file.name);
+        body.append('folder', 'finance-budget-icons');
+        try {
+          const response = await fetch('/dashboard/upload/image', { method: 'POST', body });
+          const result = await response.json();
+          if (!result.success) throw new Error(result.message || 'Upload failed.');
+          hiddenUrl.value = result.data.url;
+          status.textContent = 'Uploaded';
+          status.className = 'budget-icon-status small text-success';
+          refreshBudgetIconEditor(editor);
+        } catch (error) {
+          status.textContent = error.message || 'Upload failed.';
+          status.className = 'budget-icon-status small text-danger';
+        }
+      });
+      refreshBudgetIconEditor(editor);
+    });
+
     document.getElementById('editBudgetModal')?.addEventListener('show.bs.modal', function (e) {
       const btn = e.relatedTarget;
       const form = document.getElementById('editBudgetForm');
@@ -427,6 +587,14 @@
       document.getElementById('editBudgetCategoryId').value = btn.dataset.categoryId || '';
       document.getElementById('editBudgetAmount').value = btn.dataset.amount || '';
       document.getElementById('editBudgetCurrency').value = btn.dataset.currency || 'USD';
+      document.getElementById('editBudgetCadence').value = btn.dataset.cadence || 'monthly';
+      document.getElementById('editBudgetAnnualMonth').value = btn.dataset.annualMonth || '1';
+      updateAnnualMonthField(document.getElementById('editBudgetCadence'));
+      document.getElementById('editBudgetIcon').value = btn.dataset.iconName || '';
+      const iconEditor = form.querySelector('.budget-icon-editor');
+      iconEditor.querySelector('.budget-icon-image-url').value = btn.dataset.iconImageUrl || '';
+      iconEditor.querySelector('.budget-icon-status').textContent = '';
+      refreshBudgetIconEditor(iconEditor);
       document.getElementById('editBudgetNotes').value = btn.dataset.notes || '';
     });
 

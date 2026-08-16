@@ -22,7 +22,7 @@
   }) : null;
 %>
 
-<section class="section">
+<section class="section finance-page">
   <div class="container">
     <div class="mb-4 text-center">
       <h2 class="mb-2"><%= snapshot.monthLabel %></h2>
@@ -71,16 +71,23 @@
       <div class="card-body">
         <h3 class="h4 mb-3">Expense Breakdown</h3>
         <% if (snapshot.categories && snapshot.categories.length) { %>
-          <div class="row g-3">
+          <div class="list-group">
             <% snapshot.categories.forEach(function(category) { %>
-              <div class="col-md-6 col-xl-4">
-                <div class="border rounded h-100 p-3">
-                  <h4 class="h5 mb-2"><%= category.name %></h4>
-                  <% if (category.description) { %>
-                    <p class="text-muted mb-3"><%= category.description %></p>
+              <div class="list-group-item d-flex flex-column flex-sm-row align-items-sm-center gap-3 p-3">
+                <div class="d-flex align-items-center justify-content-center rounded bg-light text-primary flex-shrink-0" style="width:56px;height:56px;">
+                  <% if (category.iconImageUrl) { %>
+                    <img src="<%= category.iconImageUrl %>" alt="" class="rounded" style="width:56px;height:56px;object-fit:cover;">
+                  <% } else { %>
+                    <i class="fa-solid fa-<%= category.iconName || 'receipt' %> fa-xl" aria-hidden="true"></i>
                   <% } %>
-                  <div class="fw-semibold"><%= fmtMoney(category.totalCents) %></div>
                 </div>
+                <div class="flex-grow-1">
+                  <h4 class="h5 mb-1"><%= category.name %></h4>
+                  <% if (category.description) { %>
+                    <p class="text-muted mb-0"><%= category.description %></p>
+                  <% } %>
+                </div>
+                <div class="fw-semibold text-sm-end text-nowrap"><%= fmtMoney(category.totalCents, category.currency) %></div>
               </div>
             <% }) %>
           </div>
