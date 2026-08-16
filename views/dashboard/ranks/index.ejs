@@ -68,7 +68,7 @@
                                       <span class="badge bg-danger">Staff</span>
                                     <% } %>
                                     <% if (Number(rank.isDonator) === 1) { %>
-                                      <span class="badge bg-warning text-dark">Donator</span>
+                                      <span class="badge bg-warning text-dark">Supporter</span>
                                     <% } %>
                                     <% if (!Number(rank.isStaff) && !Number(rank.isDonator)) { %>
                                       <span class="text-muted small">None</span>
@@ -348,7 +348,7 @@
                 </div>
                 <div class="form-check">
                   <input class="form-check-input" type="checkbox" value="1" id="rankConfigIsDonator" name="isDonator">
-                  <label class="form-check-label" for="rankConfigIsDonator">Donator</label>
+                  <label class="form-check-label" for="rankConfigIsDonator">Supporter</label>
                 </div>
               </div>
             </div>
@@ -416,7 +416,7 @@
       if (Number(rank.isDonator) === 1) {
         const badge = document.createElement('span');
         badge.className = 'badge bg-warning text-dark';
-        badge.textContent = 'Donator';
+        badge.textContent = 'Supporter';
         badges.push(badge);
       }
 

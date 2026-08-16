@@ -210,7 +210,7 @@ export class ProfileCommand extends Command {
       if (ranks.length > 0) {
         const sorted = [...ranks].sort((a, b) => (b.priority ?? -Infinity) - (a.priority ?? -Infinity));
         const rankLines = sorted.map((r) => {
-          const tags = [r.isStaff ? "Staff" : null, r.isDonator ? "Donator" : null].filter(Boolean);
+          const tags = [r.isStaff ? "Staff" : null, r.isDonator ? "Supporter" : null].filter(Boolean);
           const suffix = tags.length ? ` (${tags.join(", ")})` : "";
           return `• ${r.displayName}${r.title ? ` — *${r.title}*` : ""}${suffix}`;
         });

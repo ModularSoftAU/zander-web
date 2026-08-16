@@ -90,69 +90,83 @@
 
       <div class="forums-thread">
         <% posts.forEach(function(post) { %>
+          <% const isAuthor = currentUserId && post.user && currentUserId === post.user.userId; %>
           <article id="post-<%= post.postId %>" class="forums-post card shadow-sm mb-4 <%= post.isOriginal ? 'original-post' : '' %>">
             <div class="card-body">
-              <div class="forums-post-layout">
-                <div class="forums-post-author mb-2">
+              <div class="forums-post-header">
+                <div class="forums-post-author">
                   <% if (post.user) { %>
-                    <div class="d-flex align-items-center gap-2">
-                      <img src="<%= post.user.avatarUrl %>" alt="<%= post.user.username %> avatar" class="forums-avatar-inline rounded-circle" loading="lazy">
-                      <div>
-                        <div class="fw-semibold"><a href="/profile/<%= post.user.username %>"><%= post.user.username %></a></div>
+                    <img src="<%= post.user.avatarUrl %>" alt="<%= post.user.username %> avatar" class="forums-avatar-inline rounded-circle" loading="lazy">
+                    <div class="forums-post-author-details">
+                      <div class="forums-post-author-line">
+                        <a class="forums-post-username" href="/profile/<%= post.user.username %>"><%= post.user.username %></a>
                         <% if (post.user.ranks && post.user.ranks.length) { %>
-                          <div class="d-flex flex-wrap gap-1 mt-1">
+                          <div class="forums-post-ranks">
                             <% post.user.ranks.forEach(function(rank) { %>
-                              <span class="badge rounded-pill" style="background-color: <%= rank.badgeColour || '#1f2937' %>; color: <%= rank.textColour || '#ffffff' %>; font-size: 0.7rem;"><%= rank.displayName %></span>
+                              <span class="forums-post-rank" style="background-color: <%= rank.badgeColour || '#1f2937' %>; color: <%= rank.textColour || '#ffffff' %>;"><%= rank.displayName %></span>
                             <% }); %>
                           </div>
                         <% } %>
                       </div>
+                      <div class="forums-post-date">
+                        Posted <span data-relative-time="<%= new Date(post.createdAt).toISOString() %>"></span>
+                        <% if (post.updatedAt && new Date(post.updatedAt).getTime() !== new Date(post.createdAt).getTime()) { %>
+                          · <span class="edited-indicator" data-edited-time="<%= new Date(post.updatedAt).toISOString() %>">edited</span>
+                        <% } %>
+                      </div>
                     </div>
                   <% } else { %>
-                    <div class="fw-semibold">Unknown</div>
+                    <div class="forums-post-author-details"><span class="forums-post-username">Unknown</span></div>
                   <% } %>
                 </div>
-                <div class="forums-post-content">
-                  <div class="forums-post-meta d-flex justify-content-between align-items-start flex-wrap gap-2">
-                    <div class="text-muted small">
-                      Posted <span data-relative-time="<%= new Date(post.createdAt).toISOString() %>"></span>
-                      <% if (post.updatedAt && new Date(post.updatedAt).getTime() !== new Date(post.createdAt).getTime()) { %>
-                        · <span class="edited-indicator" data-edited-time="<%= new Date(post.updatedAt).toISOString() %>">edited</span>
-                      <% } %>
-                    </div>
-                    <div class="d-flex gap-2">
-                      <% const isAuthor = currentUserId && post.user && currentUserId === post.user.userId; %>
+              </div>
+              <div class="forums-post-content">
+                <% if (post.replyTo && post.replyTo.user) { %>
+                  <a href="#post-<%= post.replyTo.postId %>" class="forums-reply-context">
+                    <i class="fa-solid fa-reply" aria-hidden="true"></i>
+                    <span>Replying to <strong><%= post.replyTo.user.username %></strong></span>
+                    <i class="fa-solid fa-arrow-up-right-from-square forums-reply-context-link" aria-hidden="true"></i>
+                  </a>
+                <% } %>
+                <div class="forums-post-body">
+                  <%- post.content %>
+                </div>
+
+                <div class="forums-post-actions" aria-label="Post actions">
+                  <div class="forums-post-actions-primary">
                       <% if (canReply && post.user) { %>
-                        <button type="button" class="btn btn-sm btn-outline-primary forums-reply-action"
+                        <button type="button" class="forums-post-action forums-reply-action"
                                 data-reply-mode="reply" data-post-id="<%= post.postId %>" data-username="<%= post.user.username %>">
                           <i class="fa-solid fa-reply"></i> Reply
                         </button>
-                        <button type="button" class="btn btn-sm btn-outline-primary forums-reply-action"
+                        <button type="button" class="forums-post-action forums-reply-action"
                                 data-reply-mode="quote" data-post-id="<%= post.postId %>" data-username="<%= post.user.username %>">
                           <i class="fa-solid fa-quote-left"></i> Quote
                         </button>
                       <% } %>
+                  </div>
+                  <div class="forums-post-actions-secondary">
                       <% if (canModerate && post.revisions && post.revisions.length) { %>
-                        <a class="btn btn-sm btn-outline-secondary" href="/forums/post/<%= post.postId %>/revisions"><i class="fa-solid fa-clock-rotate-left"></i> History (<%= post.revisions.length %>)</a>
+                        <a class="forums-post-action" href="/forums/post/<%= post.postId %>/revisions"><i class="fa-solid fa-clock-rotate-left"></i> History (<%= post.revisions.length %>)</a>
                       <% } %>
                       <% if (post.isOriginal) { %>
                         <% if (canModerate || (currentUserId && currentUserId === discussion.createdBy)) { %>
-                          <a class="btn btn-sm btn-outline-secondary" href="/forums/discussion/<%= discussion.discussionId %>/edit"><i class="fa-solid fa-pen"></i> Edit</a>
+                          <a class="forums-post-action" href="/forums/discussion/<%= discussion.discussionId %>/edit"><i class="fa-solid fa-pen"></i> Edit</a>
                         <% } %>
                       <% } else { %>
                         <% if (canModerate || isAuthor) { %>
-                          <a class="btn btn-sm btn-outline-secondary" href="/forums/post/<%= post.postId %>/edit"><i class="fa-solid fa-pen"></i> Edit</a>
+                          <a class="forums-post-action" href="/forums/post/<%= post.postId %>/edit"><i class="fa-solid fa-pen"></i> Edit</a>
                         <% } %>
                         <% if (canModerate || isAuthor || canDeleteAnyPost) { %>
                           <form action="/forums/post/<%= post.postId %>/delete" method="post" class="d-inline" onsubmit="return confirm('Delete this reply?');">
-                            <button type="submit" class="btn btn-sm btn-outline-danger"><i class="fa-solid fa-trash"></i> Delete</button>
+                            <button type="submit" class="forums-post-action is-danger"><i class="fa-solid fa-trash"></i> Delete</button>
                           </form>
                         <% } %>
                       <% } %>
                       <% if (canReportContent && post.user) { %>
                         <button
                           type="button"
-                          class="btn btn-sm btn-outline-danger forums-report-button"
+                          class="forums-post-action is-danger forums-report-button"
                           data-bs-toggle="modal"
                           data-bs-target="#reportPostModal"
                           data-post-id="<%= post.postId %>"
@@ -163,17 +177,8 @@
                           <i class="fa-solid fa-flag"></i> Report
                         </button>
                       <% } %>
-                    </div>
                   </div>
-                  <% if (post.replyTo && post.replyTo.user) { %>
-                    <a href="#post-<%= post.replyTo.postId %>" class="forums-reply-context d-inline-flex align-items-center gap-1 mt-3">
-                      <i class="fa-solid fa-reply fa-sm"></i>
-                      Replying to <%= post.replyTo.user.username %>
-                    </a>
-                  <% } %>
-                  <div class="forums-post-body mt-3">
-                    <%- post.content %>
-                  </div>
+                </div>
 
                   <% if (post.isOriginal && typeof poll !== 'undefined' && poll) { %>
                     <div class="forums-poll mt-4">
@@ -399,7 +404,6 @@
                   <% } %>
                 </div>
               </div>
-            </div>
           </article>
         <% }); %>
       </div>
