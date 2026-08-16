@@ -230,6 +230,7 @@ model forumPosts {
   postId       Int                  @id @default(autoincrement())
   discussionId Int
   userId       Int
+  replyToPostId Int?
   content      String               @db.MediumText
   isOriginal   Int                  @default(0) @db.TinyInt
   createdAt    DateTime             @default(now())
@@ -237,6 +238,10 @@ model forumPosts {
 
   discussion   forumDiscussions     @relation(fields: [discussionId], references: [discussionId])
   revisions    forumPostRevisions[]
+  replyToPost  forumPosts?          @relation("ForumPostReplies", fields: [replyToPostId], references: [postId], onDelete: SetNull)
+  replies      forumPosts[]         @relation("ForumPostReplies")
+
+  @@index([replyToPostId])
 }
 
 model forumPostRevisions {

@@ -525,7 +525,12 @@ export class SupportCommand extends Command {
 
       if (state === "closed") {
         try {
-          await deleteTicketChannel(interaction.client, ticketDetails.ticketId, "Ticket closed from Discord");
+          await deleteTicketChannel(
+            interaction.client,
+            ticketDetails.ticketId,
+            "Ticket closed from Discord",
+            interaction.channel
+          );
         } catch (closeError) {
           console.error("ticket status: failed to close ticket channel", closeError);
         }
@@ -594,7 +599,18 @@ export class SupportCommand extends Command {
       }
 
       try {
-        await deleteTicketChannel(interaction.client, ticketDetails.ticketId, "Ticket closed from Discord");
+        const deleted = await deleteTicketChannel(
+          interaction.client,
+          ticketDetails.ticketId,
+          "Ticket closed from Discord",
+          interaction.channel
+        );
+        if (!deleted) {
+          await interaction.followUp({
+            content: "The ticket was closed, but the channel could not be deleted. Staff can retry the cleanup.",
+            ephemeral: true,
+          }).catch(() => {});
+        }
       } catch (closeError) {
         console.error("ticket close: failed to close ticket channel", closeError);
       }

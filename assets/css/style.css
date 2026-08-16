@@ -2606,6 +2606,33 @@ a:focus {
   font-style: italic;
 }
 
+.forums-reply-context {
+  color: #2f508c;
+  font-size: 0.82rem;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.forums-reply-context:hover {
+  color: #1c2f53;
+  text-decoration: underline;
+}
+
+.forums-post-body blockquote.forums-quoted-post,
+.note-editable blockquote.forums-quoted-post {
+  background: #f4f9fc;
+  border-left-color: #2f508c;
+  border-radius: 0 8px 8px 0;
+  font-style: normal;
+  margin: 1rem 0;
+  padding: 0.8rem 1rem;
+}
+
+.forums-post-body blockquote.forums-quoted-post p:last-child,
+.note-editable blockquote.forums-quoted-post p:last-child {
+  margin-bottom: 0;
+}
+
 /* Summernote wraps <li> content in <p> tags; Bootstrap's p margin-bottom
    makes bullet lists look double-spaced. Collapse it. */
 .forums-post-body ul li p,

@@ -1214,7 +1214,7 @@ export async function repairPendingTicketChannelNames(client) {
     return { checked: tickets.length, renamed, failed };
 }
 
-export async function deleteTicketChannel(client, ticketId, reason = "Ticket closed") {
+export async function deleteTicketChannel(client, ticketId, reason = "Ticket closed", knownChannel = null) {
     const hasChannelColumn = await ensureDiscordChannelColumn();
     if (!hasChannelColumn) {
         return false;
@@ -1225,19 +1225,28 @@ export async function deleteTicketChannel(client, ticketId, reason = "Ticket clo
         return false;
     }
 
-    if (!client) {
-        console.warn("deleteTicketChannel: Discord client unavailable; skipping channel removal", { ticketId });
-    } else {
-        try {
-            const channel = await client.channels.fetch(ticket.discordChannelId);
-            if (channel) {
-                await channel.delete(reason);
-            }
-        } catch (error) {
-            console.error("deleteTicketChannel: failed to delete Discord channel", {
+    if (!client && !knownChannel) {
+        console.warn("deleteTicketChannel: Discord client unavailable; retaining channel link for retry", { ticketId });
+        return false;
+    }
+
+    try {
+        const channel = knownChannel?.id === ticket.discordChannelId
+            ? knownChannel
+            : await client.channels.fetch(ticket.discordChannelId);
+        if (channel) {
+            await channel.delete(reason);
+        }
+    } catch (error) {
+        // Unknown Channel means Discord has already removed it, so clearing the
+        // stale database link is safe. Other failures must remain retryable.
+        const isAlreadyDeleted = error?.code === 10003 || error?.status === 404;
+        if (!isAlreadyDeleted) {
+            console.error("deleteTicketChannel: failed to delete Discord channel; retaining link for retry", {
                 ticketId,
                 channelId: ticket.discordChannelId,
             }, error);
+            return false;
         }
     }
 

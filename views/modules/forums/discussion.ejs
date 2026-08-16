@@ -122,6 +122,16 @@
                     </div>
                     <div class="d-flex gap-2">
                       <% const isAuthor = currentUserId && post.user && currentUserId === post.user.userId; %>
+                      <% if (canReply && post.user) { %>
+                        <button type="button" class="btn btn-sm btn-outline-primary forums-reply-action"
+                                data-reply-mode="reply" data-post-id="<%= post.postId %>" data-username="<%= post.user.username %>">
+                          <i class="fa-solid fa-reply"></i> Reply
+                        </button>
+                        <button type="button" class="btn btn-sm btn-outline-primary forums-reply-action"
+                                data-reply-mode="quote" data-post-id="<%= post.postId %>" data-username="<%= post.user.username %>">
+                          <i class="fa-solid fa-quote-left"></i> Quote
+                        </button>
+                      <% } %>
                       <% if (canModerate && post.revisions && post.revisions.length) { %>
                         <a class="btn btn-sm btn-outline-secondary" href="/forums/post/<%= post.postId %>/revisions"><i class="fa-solid fa-clock-rotate-left"></i> History (<%= post.revisions.length %>)</a>
                       <% } %>
@@ -155,6 +165,12 @@
                       <% } %>
                     </div>
                   </div>
+                  <% if (post.replyTo && post.replyTo.user) { %>
+                    <a href="#post-<%= post.replyTo.postId %>" class="forums-reply-context d-inline-flex align-items-center gap-1 mt-3">
+                      <i class="fa-solid fa-reply fa-sm"></i>
+                      Replying to <%= post.replyTo.user.username %>
+                    </a>
+                  <% } %>
                   <div class="forums-post-body mt-3">
                     <%- post.content %>
                   </div>
@@ -395,10 +411,15 @@
       <% } %>
 
       <% if (canReply) { %>
-        <div class="forums-card card shadow-sm mt-4">
+        <div class="forums-card card shadow-sm mt-4" id="forum-reply-composer">
           <div class="card-body">
-            <h5 class="mb-3">Post a reply</h5>
+            <h5 class="mb-3" id="forum-reply-heading">Post a reply</h5>
             <form action="/forums/discussion/<%= discussion.discussionId %>/<%= discussion.slug %>/reply" method="post">
+              <input type="hidden" name="replyToPostId" id="forum-reply-to-post-id" value="">
+              <div class="alert alert-light border d-none align-items-center justify-content-between gap-2 py-2 mb-3" id="forum-reply-target">
+                <span></span>
+                <button type="button" class="btn btn-sm btn-outline-secondary" id="forum-reply-target-clear">Cancel</button>
+              </div>
               <%- include("../../partials/summerNoteEditor.ejs", {
                 editorElementName: "discussionReply",
                 editorPOSTElementName: "content",
@@ -670,6 +691,72 @@
 
 <script>
   (() => {
+    const composer = document.getElementById('forum-reply-composer');
+    const replyToInput = document.getElementById('forum-reply-to-post-id');
+    const replyHeading = document.getElementById('forum-reply-heading');
+    const replyTarget = document.getElementById('forum-reply-target');
+    const replyTargetText = replyTarget?.querySelector('span');
+    const replyEditor = document.getElementById('discussionReply');
+
+    const escapeHtml = (value) => String(value || '')
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#039;');
+
+    const appendToReplyEditor = (html) => {
+      if (!replyEditor) return;
+      const $editor = window.jQuery ? window.jQuery(replyEditor) : null;
+      if ($editor?.data('summernote')) {
+        const existing = $editor.summernote('isEmpty') ? '' : $editor.summernote('code');
+        $editor.summernote('code', existing + html);
+        $editor.summernote('focus');
+      } else {
+        replyEditor.value = (replyEditor.value || '') + html;
+        replyEditor.focus();
+      }
+    };
+
+    const clearReplyTarget = () => {
+      if (!replyToInput) return;
+      replyToInput.value = '';
+      replyHeading.textContent = 'Post a reply';
+      replyTarget.classList.add('d-none');
+      replyTarget.classList.remove('d-flex');
+    };
+
+    document.querySelectorAll('.forums-reply-action').forEach((button) => {
+      button.addEventListener('click', () => {
+        if (!composer || !replyToInput) return;
+        const postId = button.dataset.postId;
+        const username = button.dataset.username || 'this user';
+        const mode = button.dataset.replyMode;
+        replyToInput.value = postId;
+        replyHeading.textContent = mode === 'quote' ? `Quote ${username}` : `Reply to ${username}`;
+        replyTargetText.textContent = `${mode === 'quote' ? 'Quoting' : 'Replying to'} ${username}'s post`;
+        replyTarget.classList.remove('d-none');
+        replyTarget.classList.add('d-flex');
+
+        if (mode === 'quote') {
+          const body = document.querySelector(`#post-${postId} .forums-post-body`);
+          const copy = body?.cloneNode(true);
+          copy?.querySelectorAll('blockquote, img, iframe, video, table').forEach((element) => element.remove());
+          let excerpt = (copy?.innerText || copy?.textContent || '').replace(/\s+/g, ' ').trim();
+          if (excerpt.length > 1000) excerpt = excerpt.slice(0, 997).trimEnd() + '...';
+          appendToReplyEditor(
+            `<blockquote class="forums-quoted-post"><p><strong>${escapeHtml(username)} wrote:</strong></p><p>${escapeHtml(excerpt)}</p></blockquote><p><br></p>`
+          );
+        } else {
+          appendToReplyEditor(`<p><strong>@${escapeHtml(username)}</strong>&nbsp;</p>`);
+        }
+
+        composer.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      });
+    });
+
+    document.getElementById('forum-reply-target-clear')?.addEventListener('click', clearReplyTarget);
+
     document.querySelectorAll('form[method="post"]:not([data-async])').forEach(form => {
       form.addEventListener('submit', () => {
         const btn = form.querySelector('button[type="submit"]');

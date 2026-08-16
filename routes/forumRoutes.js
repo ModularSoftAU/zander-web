@@ -811,11 +811,24 @@ export default function forumRoutes(
       );
     }
 
+    let replyToPostId = Number.parseInt(req.body.replyToPostId, 10) || null;
+    if (replyToPostId) {
+      const replyTarget = await getPostById(replyToPostId);
+      if (!replyTarget || replyTarget.discussionId !== discussionId) {
+        setBannerCookie("danger", "The post you are replying to could not be found.", res);
+        return res.redirect(
+          `/forums/discussion/${discussion.discussionId}/${discussion.slug}`
+        );
+      }
+    }
+
+    let createdPostId = null;
     try {
-      await createReply({
+      createdPostId = await createReply({
         discussionId,
         userId,
         content,
+        replyToPostId,
       });
 
       const baseUrl = getSiteBaseUrl(req);
@@ -846,7 +859,7 @@ export default function forumRoutes(
     }
 
     return res.redirect(
-      `/forums/discussion/${discussion.discussionId}/${discussion.slug}`
+      `/forums/discussion/${discussion.discussionId}/${discussion.slug}${createdPostId ? `#post-${createdPostId}` : ""}`
     );
   };
 

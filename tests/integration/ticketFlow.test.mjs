@@ -96,7 +96,7 @@ vi.mock("discord.js", async (importOriginal) => {
   };
 });
 
-const { startTicketFlow } = await import("../../lib/discord/ticketFlow.mjs");
+const { handleTicketCloseConfirmation, startTicketFlow } = await import("../../lib/discord/ticketFlow.mjs");
 
 function buildInteraction() {
   const modalEditReply = vi.fn().mockResolvedValue(undefined);
@@ -201,5 +201,61 @@ describe("startTicketFlow", () => {
     const interaction = buildInteraction();
     await startTicketFlow(interaction);
     expect(mockChannelSend).toHaveBeenCalledOnce();
+  });
+});
+
+describe("handleTicketCloseConfirmation", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    vi.useFakeTimers();
+    mockGetTicketDetailsByChannel.mockResolvedValue({
+      ticketId: 42,
+      categoryId: 1,
+      discordId: "discord-user-1",
+    });
+    mockGetUserIdByDiscordId.mockResolvedValue(7);
+  });
+
+  it("passes the current channel to deletion so close does not depend on a refetch", async () => {
+    const channel = {
+      id: "ch-1",
+      send: vi.fn().mockResolvedValue(undefined),
+      permissionOverwrites: {
+        cache: { has: vi.fn().mockReturnValue(false) },
+        edit: vi.fn(),
+      },
+    };
+    const interaction = {
+      customId: "support_ticket_close_confirm:ch-1",
+      channel,
+      client: { channels: { fetch: vi.fn() } },
+      user: { id: "discord-user-1", username: "testuser", toString: () => "@testuser" },
+      guild: {
+        members: {
+          fetch: vi.fn().mockResolvedValue({
+            permissions: { has: vi.fn().mockReturnValue(true) },
+            roles: { cache: { some: vi.fn().mockReturnValue(false) } },
+          }),
+        },
+      },
+      deferred: false,
+      replied: false,
+      isMessageComponent: () => true,
+      deferUpdate: vi.fn().mockResolvedValue(undefined),
+      editReply: vi.fn().mockResolvedValue(undefined),
+      followUp: vi.fn().mockResolvedValue(undefined),
+      reply: vi.fn().mockResolvedValue(undefined),
+    };
+
+    await handleTicketCloseConfirmation(interaction);
+    await vi.runAllTimersAsync();
+
+    expect(mockDeleteTicketChannel).toHaveBeenCalledWith(
+      interaction.client,
+      42,
+      "Ticket closed",
+      channel
+    );
+    vi.useRealTimers();
   });
 });
