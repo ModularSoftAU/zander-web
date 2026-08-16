@@ -136,7 +136,7 @@
                   <table class="table table-sm align-middle mb-0">
                     <thead>
                       <tr>
-                        <th>Line Item</th><th class="text-end">Budget</th><th class="text-end">Actual</th>
+                        <th>Line Item</th><th>Type</th><th class="text-end">Budget</th><th class="text-end">Actual</th>
                         <% if (canManage) { %><th></th><% } %>
                       </tr>
                     </thead>
@@ -150,10 +150,14 @@
                         <tr class="<%= isOver ? 'table-danger' : '' %>">
                           <td>
                             <%= b.label %>
+                          </td>
+                          <td>
                             <% if (b.isOneOff) { %>
-                              <span class="badge bg-info text-dark ms-1" title="Only exists for this month">One-off</span>
+                              <span class="badge bg-info text-dark" title="Only exists for this month">One-off</span>
                             <% } else if (b.isOverridden) { %>
-                              <span class="badge bg-warning text-dark ms-1" title="Template amount is <%= templateStr %> — overridden for this month">Custom</span>
+                              <span class="badge bg-warning text-dark" title="Template amount is <%= templateStr %> — overridden for this month">Monthly override</span>
+                            <% } else { %>
+                              <span class="badge bg-secondary">Recurring</span>
                             <% } %>
                           </td>
                           <td class="text-end text-muted"><%= budgetStr %></td>

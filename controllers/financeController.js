@@ -497,6 +497,38 @@ export async function getPublicExpenseCategoryBreakdown(year, month) {
   };
 }
 
+export async function getPublicOperationsBudgetBreakdown(year, month) {
+  const budgetRows = await getBudgetVsActual(year, month);
+  const grouped = new Map();
+
+  for (const row of budgetRows) {
+    const totalCents = Number(row.monthlyBudgetCents || 0);
+    if (totalCents <= 0) continue;
+
+    const name = (row.label || row.category?.name || "Operating cost").trim();
+    const currency = (row.currency || "USD").toUpperCase();
+    const key = JSON.stringify({ name, currency });
+    const current = grouped.get(key) || {
+      key,
+      name,
+      description: "",
+      totalCents: 0,
+      currency,
+    };
+
+    current.totalCents += totalCents;
+    grouped.set(key, current);
+  }
+
+  const categories = Array.from(grouped.values()).sort((a, b) => a.name.localeCompare(b.name));
+  const currencies = new Set(categories.map((category) => category.currency));
+  return {
+    categories,
+    totalOperatingCostsCents: categories.reduce((sum, category) => sum + category.totalCents, 0),
+    currency: currencies.size === 1 ? categories[0].currency : "USD",
+  };
+}
+
 export async function buildPublicFinanceSnapshot({
   year,
   month,
@@ -504,18 +536,18 @@ export async function buildPublicFinanceSnapshot({
   publicNote = null,
 }) {
   const { startDate, endDate } = getMonthRange(year, month);
-  const [communitySupportCents, expenseBreakdown] = await Promise.all([
+  const [communitySupportCents, budgetBreakdown] = await Promise.all([
     getMonthlyPurchaseTotals(startDate, endDate),
-    getPublicExpenseCategoryBreakdown(year, month),
+    getPublicOperationsBudgetBreakdown(year, month),
   ]);
 
   const fundingProgressPercent = monthlyGoalCents > 0
     ? Math.round((communitySupportCents / monthlyGoalCents) * 100)
     : 0;
 
-  const remainingFundedByCfcCents = Math.max(expenseBreakdown.totalOperatingCostsCents - communitySupportCents, 0);
-  const aboveOperatingCostsCents = Math.max(communitySupportCents - expenseBreakdown.totalOperatingCostsCents, 0);
-  const netPositionCents = communitySupportCents - expenseBreakdown.totalOperatingCostsCents;
+  const remainingFundedByCfcCents = Math.max(budgetBreakdown.totalOperatingCostsCents - communitySupportCents, 0);
+  const aboveOperatingCostsCents = Math.max(communitySupportCents - budgetBreakdown.totalOperatingCostsCents, 0);
+  const netPositionCents = communitySupportCents - budgetBreakdown.totalOperatingCostsCents;
 
   return {
     year,
@@ -528,14 +560,15 @@ export async function buildPublicFinanceSnapshot({
     fundingGoalCents: monthlyGoalCents,
     communitySupportCents,
     fundingProgressPercent,
-    operatingCostsCents: expenseBreakdown.totalOperatingCostsCents,
+    operatingCostsCents: budgetBreakdown.totalOperatingCostsCents,
+    operatingCostsCurrency: budgetBreakdown.currency,
     remainingFundedByCfcCents,
     aboveOperatingCostsCents,
     netPositionCents,
-    categories: expenseBreakdown.categories,
+    categories: budgetBreakdown.categories,
     publicNote: publicNote?.trim() || null,
-    includedCategoryIds: expenseBreakdown.includedCategoryIds,
-    includedCategoryNames: expenseBreakdown.includedCategoryNames,
+    includedCategoryIds: [],
+    includedCategoryNames: budgetBreakdown.categories.map((category) => category.name),
   };
 }
 
