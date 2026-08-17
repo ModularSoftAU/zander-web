@@ -84,4 +84,47 @@ describe("deleteTicketChannel", () => {
       expect.any(Function),
     );
   });
+
+  it("keeps the channel link when the real delete call fails", async () => {
+    mockDbQuery.mockImplementation((sql, params, callback) => {
+      if (typeof params === "function") {
+        callback = params;
+        params = [];
+      }
+
+      if (sql.includes("SHOW COLUMNS FROM supportTickets LIKE 'discordChannelId'")) {
+        callback(null, [{ Field: "discordChannelId" }]);
+        return;
+      }
+
+      if (sql === "SELECT * FROM supportTickets WHERE ticketId = ?") {
+        callback(null, [{ ticketId: 42, discordChannelId: "live-channel-id" }]);
+        return;
+      }
+
+      callback(new Error(`Unexpected query in test: ${sql}`));
+    });
+
+    const knownChannel = {
+      id: "live-channel-id",
+      delete: vi.fn().mockRejectedValue(Object.assign(new Error("Missing Permissions"), { code: 50013 })),
+    };
+
+    const client = {
+      channels: {
+        fetch: vi.fn(),
+      },
+    };
+
+    const { deleteTicketChannel } = await import("../../controllers/supportTicketController.js");
+    const deleted = await deleteTicketChannel(client, 42, "Ticket closed", knownChannel);
+
+    expect(deleted).toBe(false);
+    expect(knownChannel.delete).toHaveBeenCalledWith("Ticket closed");
+    expect(mockDbQuery).not.toHaveBeenCalledWith(
+      "UPDATE supportTickets SET discordChannelId = NULL WHERE ticketId = ?",
+      expect.anything(),
+      expect.any(Function),
+    );
+  });
 });

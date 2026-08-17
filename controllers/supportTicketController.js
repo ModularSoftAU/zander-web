@@ -1234,6 +1234,7 @@ export async function deleteTicketChannel(client, ticketId, reason = "Ticket clo
     }
 
     const attemptedChannelIds = new Set();
+    let channelDeleted = false;
     const deleteTargets = [];
 
     if (canDeleteKnownChannel) {
@@ -1257,6 +1258,7 @@ export async function deleteTicketChannel(client, ticketId, reason = "Ticket clo
         } catch (fetchError) {
             const isAlreadyDeleted = fetchError?.code === 10003 || fetchError?.status === 404;
             if (isAlreadyDeleted) {
+                channelDeleted = true;
                 break;
             }
 
@@ -1277,12 +1279,14 @@ export async function deleteTicketChannel(client, ticketId, reason = "Ticket clo
 
         try {
             await channel.delete(reason);
+            channelDeleted = true;
             break;
         } catch (error) {
             // Unknown Channel means Discord has already removed it, so clearing the
             // stale database link is safe. Other failures must remain retryable.
             const isAlreadyDeleted = error?.code === 10003 || error?.status === 404;
             if (isAlreadyDeleted) {
+                channelDeleted = true;
                 break;
             }
 
@@ -1294,7 +1298,7 @@ export async function deleteTicketChannel(client, ticketId, reason = "Ticket clo
         }
     }
 
-    if (!attemptedChannelIds.size) {
+    if (!channelDeleted) {
         return false;
     }
 
