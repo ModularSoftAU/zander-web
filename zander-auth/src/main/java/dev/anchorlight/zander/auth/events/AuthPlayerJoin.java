@@ -10,6 +10,7 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerJoinEvent;
 import dev.anchorlight.zander.auth.ZanderAuthMain;
+import dev.anchorlight.zander.auth.config.ZanderAuthConfig;
 import dev.anchorlight.zander.auth.model.user.UserAuth;
 
 public class AuthPlayerJoin implements Listener {
@@ -31,10 +32,12 @@ public class AuthPlayerJoin implements Listener {
                     .username(player.getDisplayName())
                     .build();
 
+            ZanderAuthConfig authConfig = ZanderAuthConfig.from(plugin.getYamlConfig());
+
             Request authUserReq = Request.builder()
-                    .setURL(plugin.getConfig().get("BaseAPIURL") + "/user/verify")
+                    .setURL(authConfig.baseApiUrl() + "/user/verify")
                     .setMethod(Request.Method.POST)
-                    .addHeader("x-access-token", String.valueOf(plugin.getConfig().get("APIKey")))
+                    .addHeader("x-access-token", authConfig.apiKey())
                     .setRequestBody(authUser.toString())
                     .build();
 
