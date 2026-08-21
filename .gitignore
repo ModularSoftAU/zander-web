@@ -13,3 +13,12 @@ dependency-reduced-pom.xml
 
 # git worktrees
 .worktrees/
+
+# graphify
+graphify-out/
+
+# build/compile logs
+compile_output.txt
+
+# VS Code
+.vscode/

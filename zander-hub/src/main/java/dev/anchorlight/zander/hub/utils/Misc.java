@@ -1,6 +1,6 @@
 package dev.anchorlight.zander.hub.utils;
 
-import de.myzelyam.api.vanish.VanishAPI;
+import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 
 /**
@@ -13,6 +13,8 @@ public final class Misc {
     }
 
     public static boolean isVanish(Player player) {
-        return (player != null && VanishAPI.isInvisible(player));
+        if (player == null || !Bukkit.getPluginManager().isPluginEnabled("PremiumVanish"))
+            return false;
+        return PremiumVanishBridge.isInvisible(player);
     }
 }

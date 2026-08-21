@@ -4,7 +4,7 @@ compass:
   hide-inaccessible: true
   open-on:
     right-click: true
-    left-click: false
+    left-click: true
   locked-icon:
     material: BARRIER
     lore: "<red>You do not have access to this server.</red>"

@@ -9,6 +9,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
+import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
@@ -69,6 +70,15 @@ public class PortalWandListener implements Listener {
             selections.setPos2(player.getUniqueId(), world, block.getX(), block.getY(), block.getZ());
             player.sendMessage(MM.deserialize("<yellow>Position 2 set: <white>" + world + " "
                     + block.getX() + ", " + block.getY() + ", " + block.getZ() + "</white></yellow>"));
+        }
+    }
+
+    /// Cancelling `PlayerInteractEvent` alone doesn't stop creative-mode instant
+    /// block breaking, which goes through this event instead.
+    @EventHandler
+    public void onBreak(BlockBreakEvent event) {
+        if (isWand(event.getPlayer().getInventory().getItemInMainHand())) {
+            event.setCancelled(true);
         }
     }
 }

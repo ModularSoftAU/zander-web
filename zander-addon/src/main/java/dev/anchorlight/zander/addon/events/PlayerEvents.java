@@ -6,6 +6,7 @@ import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
+import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
 import org.bukkit.event.player.PlayerInteractEvent;
@@ -34,7 +35,9 @@ public class PlayerEvents implements Listener {
         this.socialPaperKey = new NamespacedKey(plugin, "social_paper");
     }
 
-    @EventHandler
+    /// Runs at HIGH priority so items are given after other plugins
+    /// (e.g. zander-hub) clear the player's inventory on join.
+    @EventHandler(priority = EventPriority.HIGH)
     public void onPlayerJoin(PlayerJoinEvent event) {
         Player player = event.getPlayer();
         if (plugin.getConfig().getBoolean("policy-book.enabled", true)) {

@@ -1,6 +1,5 @@
 package dev.anchorlight.zander.hub.configs;
 
-import de.myzelyam.api.vanish.VanishAPI;
 import java.io.File;
 import java.io.IOException;
 import net.kyori.adventure.text.Component;
@@ -45,9 +44,9 @@ public class MessagesConfig {
         String textLegacyJoin = config.getString(fieldJoin);
         String textLegacyLeave = config.getString(fieldLeave);
 
-        if (this.plugin.getServer().getPluginManager().getPlugin("PremiumVanish") != null) {
+        if (this.plugin.getServer().getPluginManager().isPluginEnabled("PremiumVanish")) {
             updatePremiumVanish(textLegacyJoin, textLegacyLeave);
-            VanishAPI.reloadConfig();
+            dev.anchorlight.zander.hub.utils.PremiumVanishBridge.reloadConfig();
         }
     }
 
