@@ -1,3 +1,5 @@
+config-version: 1
+
 BaseAPIURL: "http://localhost:8080/api"
 APIKey: "KEY"
 MOTDTopLine: "&e&lMy &2&nMinecraft&r &6&oAUTH Server"

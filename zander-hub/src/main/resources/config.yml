@@ -1,3 +1,5 @@
+config-version: 1
+
 compass:
   servers:
     build:
