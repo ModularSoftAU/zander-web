@@ -35,3 +35,22 @@ policy-book:
 social-paper:
   enabled: false
   slot: 7
+
+# --- Shop Directory ---
+shop-directory:
+  enabled: false
+
+  selling-only: true
+  in-stock-only: true
+
+  results-per-page: 8
+
+  worlds:
+    - "world"
+
+  navigation:
+    enabled: true
+    arrival-distance: 5
+    update-interval-ticks: 10
+    compass: true
+    action-bar: true
