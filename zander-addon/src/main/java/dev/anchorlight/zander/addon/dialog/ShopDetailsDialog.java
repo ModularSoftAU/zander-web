@@ -44,15 +44,18 @@ public class ShopDetailsDialog {
     private final ShopDirectoryService directoryService;
     private final ShopNavigationService navigationService;
     private final ShopSearchResultsDialog resultsDialog;
+    private final ShopDirectoryDialog rootDialog;
 
     public ShopDetailsDialog(Plugin plugin,
                               ShopDirectoryService directoryService,
                               ShopNavigationService navigationService,
-                              ShopSearchResultsDialog resultsDialog) {
+                              ShopSearchResultsDialog resultsDialog,
+                              ShopDirectoryDialog rootDialog) {
         this.plugin = plugin;
         this.directoryService = directoryService;
         this.navigationService = navigationService;
         this.resultsDialog = resultsDialog;
+        this.rootDialog = rootDialog;
     }
 
     /**
@@ -67,10 +70,9 @@ public class ShopDetailsDialog {
             Optional<ShopDirectoryEntry> resolved = directoryService.resolve(shopId);
             if (resolved.isEmpty()) {
                 player.sendMessage(Component.text("That shop is no longer available.", NamedTextColor.RED));
-                // Practical simplification (§4): query/page state isn't threaded through this layer,
-                // so we fall back to a fresh "browse all" results view rather than re-showing the
-                // exact page the player came from.
-                resultsDialog.open(player, "", 0);
+                // Fall back to the root directory dialog rather than resetting the player's
+                // in-progress search/filter to an unfiltered, page-0 "browse all" view.
+                rootDialog.open(player);
                 return;
             }
             player.showDialog(buildDialog(resolved.get(), player));
@@ -118,7 +120,7 @@ public class ShopDetailsDialog {
 
         buttons.add(button("Back to Results", "Return to the shop directory",
                 (response, audience) -> onMainThread(audience,
-                        p -> resultsDialog.open(p, "", 0))));
+                        p -> rootDialog.open(p))));
 
         return Dialog.create(factory -> factory.empty()
                 .base(DialogBase.builder(Component.text("Shop Details"))
