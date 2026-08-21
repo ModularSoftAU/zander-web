@@ -25,7 +25,7 @@ public class PolicyService {
             String apiUrl = plugin.getYamlConfig().getString(Route.from("api-url"));
             try {
                 Request req = Request.builder()
-                        .setURL(apiUrl + "/config/policy")
+                        .setURL(apiUrl + "/api/config/policy")
                         .setMethod(Request.Method.GET)
                         .build();
 
@@ -74,7 +74,7 @@ public class PolicyService {
             String apiUrl = plugin.getYamlConfig().getString(Route.from("api-url"));
             try {
                 Request req = Request.builder()
-                        .setURL(apiUrl + "/config/social")
+                        .setURL(apiUrl + "/api/config/social")
                         .setMethod(Request.Method.GET)
                         .build();
 
