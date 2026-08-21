@@ -1,5 +1,14 @@
 package dev.anchorlight.zander.hub;
 
+import java.io.File;
+import java.io.IOException;
+import java.util.Objects;
+import dev.dejvokep.boostedyaml.YamlDocument;
+import dev.dejvokep.boostedyaml.dvs.versioning.BasicVersioning;
+import dev.dejvokep.boostedyaml.settings.dumper.DumperSettings;
+import dev.dejvokep.boostedyaml.settings.general.GeneralSettings;
+import dev.dejvokep.boostedyaml.settings.loader.LoaderSettings;
+import dev.dejvokep.boostedyaml.settings.updater.UpdaterSettings;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.TextComponent;
 import net.kyori.adventure.text.format.NamedTextColor;
@@ -21,12 +30,30 @@ import dev.anchorlight.zander.hub.utils.CopyResources;
 public class ZanderHubMain extends JavaPlugin {
     public static ZanderHubMain plugin;
     public static ProxyMessaging proxyMessaging;
+    private YamlDocument config;
 
     public void onEnable() {
         plugin = this;
 
-        CopyResources.mirror("config.yml");
         CopyResources.mirror("welcome.yml");
+
+        try {
+            config = YamlDocument.create(new File(getDataFolder(), "config.yml"),
+                    Objects.requireNonNull(getResource("config.yml")),
+                    GeneralSettings.DEFAULT,
+                    LoaderSettings.builder().setAutoUpdate(true).build(),
+                    DumperSettings.DEFAULT,
+                    UpdaterSettings.builder()
+                            .setVersioning(new BasicVersioning("config-version"))
+                            .setOptionSorting(UpdaterSettings.OptionSorting.SORT_BY_DEFAULTS)
+                            .build());
+            config.update();
+            config.save();
+        } catch (IOException e) {
+            getLogger().severe("Could not create or load plugin configuration: " + e.getMessage());
+            getServer().getPluginManager().disablePlugin(this);
+            return;
+        }
 
         ConfigurationManager.setupHubLocationsConfig();
         ConfigurationManager.setupMessagesConfig();
@@ -64,6 +91,10 @@ public class ZanderHubMain extends JavaPlugin {
 
         // Command Registry
         this.getCommand("fly").setExecutor(new fly());
+    }
+
+    public YamlDocument getYamlConfig() {
+        return config;
     }
 
     // load defaults from the embedded resource & don't override existing values

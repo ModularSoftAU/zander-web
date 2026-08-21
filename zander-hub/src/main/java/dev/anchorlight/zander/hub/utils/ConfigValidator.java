@@ -4,12 +4,13 @@ import java.util.function.Consumer;
 import net.kyori.adventure.text.TextComponent;
 import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 import org.bukkit.Bukkit;
-import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.plugin.java.JavaPlugin;
+import dev.dejvokep.boostedyaml.YamlDocument;
+import dev.dejvokep.boostedyaml.route.Route;
 import dev.anchorlight.zander.hub.ZanderHubMain;
 
 /**
- * Utility class providing validators for YAML fields in Bukkit config objects.
+ * Utility class providing validators for YAML fields in BoostedYAML config objects.
  */
 public final class ConfigValidator {
     private static final JavaPlugin plugin = ZanderHubMain.plugin;
@@ -46,17 +47,17 @@ public final class ConfigValidator {
 
     @FunctionalInterface
     public static interface Validator {
-        ValidationResult validate(FileConfiguration config, String field);
+        ValidationResult validate(YamlDocument config, Route field);
     }
 
     @FunctionalInterface
     public static interface ValidatorWithSetter<T> {
-        ValidationResult validate(FileConfiguration config, String field, Consumer<T> setter);
+        ValidationResult validate(YamlDocument config, Route field, Consumer<T> setter);
     }
 
     /// Validate `field` in `config` with custom `validator` function.
     /// When validator fails, `fallback` is used and instated in `config`
-    public static ValidationResult validateConfig(FileConfiguration config, String field,
+    public static ValidationResult validateConfig(YamlDocument config, Route field,
             Validator validator, Object fallback) {
         ValidationResult result = validator.validate(config, field);
         if (!result.isValid()) {
@@ -69,7 +70,7 @@ public final class ConfigValidator {
     }
 
     /// Overload for `validator` that want integration with setting values.
-    public static <T> ValidationResult validateConfig(FileConfiguration config, String field,
+    public static <T> ValidationResult validateConfig(YamlDocument config, Route field,
             ValidatorWithSetter<T> validator, Object fallback, Consumer<T> setter) {
         ValidationResult result = validator.validate(config, field, setter);
         if (!result.isValid()) {

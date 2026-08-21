@@ -1,7 +1,8 @@
 package dev.anchorlight.zander.hub.configs;
 
-import org.bukkit.configuration.file.FileConfiguration;
-import org.bukkit.plugin.java.JavaPlugin;
+import dev.dejvokep.boostedyaml.YamlDocument;
+import dev.dejvokep.boostedyaml.route.Route;
+import dev.anchorlight.zander.hub.ZanderHubMain;
 import static dev.anchorlight.zander.hub.utils.ConfigValidator.isValidBoolean;
 import static dev.anchorlight.zander.hub.utils.ConfigValidator.isValidHotbarSlot;
 import static dev.anchorlight.zander.hub.utils.ConfigValidator.validateConfig;
@@ -11,35 +12,44 @@ import static dev.anchorlight.zander.hub.utils.ConfigValidator.validateConfig;
  * Handles loading, validation, and access to managed data.
  */
 public class MiscConfig {
-    private final JavaPlugin plugin;
+    private final ZanderHubMain plugin;
 
     private int slotHubCompass; // * default 0
     private boolean alwaysFirstJoin; // * default false
 
-    public MiscConfig(JavaPlugin plugin) {
+    public MiscConfig(ZanderHubMain plugin) {
         this.plugin = plugin;
     }
 
     /// Configure the inventory slot for the hub compass.
     /// Validates the entry in server 'config.yml' with fallback.
     public void setupSlotHubCompass() {
-        FileConfiguration config = plugin.getConfig();
+        YamlDocument config = plugin.getYamlConfig();
         int fallback = 4;
-        String field = "misc.slot_hub_compass";
+        Route field = Route.from("misc", "slot_hub_compass");
         validateConfig(config, field, isValidHotbarSlot, fallback);
-        plugin.saveConfig(); // * save to external 'config.yml'
+        saveConfig(config); // * save to external 'config.yml'
         this.slotHubCompass = config.getInt(field);
     }
 
     /// Configure the setting for "always trigger first join".
     /// Validates the entry in server 'config.yml' with fallback.
     public void setupAlwaysFirstJoin() {
-        FileConfiguration config = plugin.getConfig();
+        YamlDocument config = plugin.getYamlConfig();
         boolean fallback = false;
-        String field = "misc.always_first_join";
+        Route field = Route.from("misc", "always_first_join");
         validateConfig(config, field, isValidBoolean, fallback);
-        plugin.saveConfig(); // * save to external 'config.yml'
+        saveConfig(config); // * save to external 'config.yml'
         this.alwaysFirstJoin = config.getBoolean(field);
+    }
+
+    /// Persist `config` to disk, logging (not throwing) on failure.
+    private void saveConfig(YamlDocument config) {
+        try {
+            config.save();
+        } catch (java.io.IOException e) {
+            plugin.getLogger().warning("Failed to save config.yml: " + e.getMessage());
+        }
     }
 
     /// Get the inventory slot for the hub compass.

@@ -5,9 +5,10 @@ import java.io.File;
 import java.io.IOException;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.TextComponent;
-import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
-import org.bukkit.plugin.java.JavaPlugin;
+import dev.dejvokep.boostedyaml.YamlDocument;
+import dev.dejvokep.boostedyaml.route.Route;
+import dev.anchorlight.zander.hub.ZanderHubMain;
 import static dev.anchorlight.zander.hub.utils.ConfigValidator.isValidJoinLeave;
 import static dev.anchorlight.zander.hub.utils.ConfigValidator.validateConfig;
 
@@ -16,31 +17,35 @@ import static dev.anchorlight.zander.hub.utils.ConfigValidator.validateConfig;
  * Handles loading, validation, and uniformity of managed data.
  */
 public class MessagesConfig {
-    private final JavaPlugin plugin;
+    private final ZanderHubMain plugin;
 
     private TextComponent textCompJoinTemplate;
     private TextComponent textCompLeaveTemplate;
 
-    public MessagesConfig(JavaPlugin plugin) {
+    public MessagesConfig(ZanderHubMain plugin) {
         this.plugin = plugin;
     }
 
     /// Configure the player join/leave messages.
     /// Validates the entries in server 'config.yml' with fallback.
     public void setupJoinLeave() {
-        FileConfiguration config = plugin.getConfig();
+        YamlDocument config = plugin.getYamlConfig();
 
         String fallbackJoin = "&7%p% <default join message>";
         String fallbackLeave = "&7%p% <default leave message>";
-        String fieldJoin = "messages.join";
-        String fieldLeave = "messages.leave";
+        Route fieldJoin = Route.from("messages", "join");
+        Route fieldLeave = Route.from("messages", "leave");
 
         validateConfig(config, fieldJoin, isValidJoinLeave, fallbackJoin,
                 template -> this.textCompJoinTemplate = template);
         validateConfig(config, fieldLeave, isValidJoinLeave, fallbackLeave,
                 template -> this.textCompLeaveTemplate = template);
 
-        plugin.saveConfig(); // * save to external 'config.yml'
+        try {
+            config.save(); // * save to external 'config.yml'
+        } catch (IOException e) {
+            this.plugin.getLogger().warning("Failed to save config.yml: " + e.getMessage());
+        }
 
         String textLegacyJoin = config.getString(fieldJoin);
         String textLegacyLeave = config.getString(fieldLeave);
