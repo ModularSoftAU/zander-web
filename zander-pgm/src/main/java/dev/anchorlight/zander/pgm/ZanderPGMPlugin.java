@@ -1,6 +1,12 @@
 package dev.anchorlight.zander.pgm;
 
 import com.google.gson.JsonObject;
+import dev.dejvokep.boostedyaml.YamlDocument;
+import dev.dejvokep.boostedyaml.settings.dumper.DumperSettings;
+import dev.dejvokep.boostedyaml.settings.general.GeneralSettings;
+import dev.dejvokep.boostedyaml.settings.loader.LoaderSettings;
+import dev.dejvokep.boostedyaml.settings.updater.UpdaterSettings;
+import dev.dejvokep.boostedyaml.dvs.versioning.BasicVersioning;
 import org.bukkit.Bukkit;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitTask;
@@ -37,8 +43,11 @@ import dev.anchorlight.zander.pgm.util.JsonUtil;
 import dev.anchorlight.zander.pgm.util.SafeLogger;
 import dev.anchorlight.zander.pgm.voting.MapVoteService;
 
+import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * ZanderPGM — PGM companion plugin for the Mixed server. Bridges PGM
@@ -49,6 +58,7 @@ import java.util.List;
 public class ZanderPGMPlugin extends JavaPlugin {
 
     private SafeLogger log;
+    private YamlDocument yamlConfig;
     private ZanderPGMConfig config;
 
     private ApiHealth health;
@@ -77,8 +87,24 @@ public class ZanderPGMPlugin extends JavaPlugin {
 
     @Override
     public void onEnable() {
-        saveDefaultConfig();
-        this.config = ConfigLoader.load(getConfig());
+        try {
+            this.yamlConfig = YamlDocument.create(new File(getDataFolder(), "config.yml"),
+                    Objects.requireNonNull(getResource("config.yml")),
+                    GeneralSettings.DEFAULT,
+                    LoaderSettings.builder().setAutoUpdate(true).build(),
+                    DumperSettings.DEFAULT,
+                    UpdaterSettings.builder()
+                            .setVersioning(new BasicVersioning("config-version"))
+                            .setOptionSorting(UpdaterSettings.OptionSorting.SORT_BY_DEFAULTS)
+                            .build());
+            yamlConfig.update();
+            yamlConfig.save();
+        } catch (IOException e) {
+            getLogger().severe("Could not create or load plugin configuration: " + e.getMessage());
+            getServer().getPluginManager().disablePlugin(this);
+            return;
+        }
+        this.config = ConfigLoader.load(yamlConfig);
         this.log = new SafeLogger(getLogger(), config.debugLogging);
 
         if (!validateConfig()) {
@@ -248,11 +274,20 @@ public class ZanderPGMPlugin extends JavaPlugin {
     }
 
     public void reloadPluginConfig() {
-        reloadConfig();
-        this.config = ConfigLoader.load(getConfig());
+        try {
+            yamlConfig.reload();
+        } catch (IOException e) {
+            log.error("Failed to reload configuration: " + e.getMessage(), e);
+            return;
+        }
+        this.config = ConfigLoader.load(yamlConfig);
         this.log = new SafeLogger(getLogger(), config.debugLogging);
         ws.reconnect();
         log.info("Configuration reloaded.");
+    }
+
+    public YamlDocument getYamlConfig() {
+        return yamlConfig;
     }
 
     // --- Inbound WebSocket control messages -----------------------------------
