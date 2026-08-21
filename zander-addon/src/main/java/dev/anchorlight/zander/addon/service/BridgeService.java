@@ -9,9 +9,11 @@ import dev.anchorlight.zander.addon.ZanderAddonMain;
 import dev.dejvokep.boostedyaml.route.Route;
 
 import java.net.URI;
+import java.net.URLEncoder;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -64,7 +66,8 @@ public class BridgeService {
     }
 
     private List<BridgeTask> pollTasks() throws Exception {
-        String url = apiBase() + "/api/bridge/processor/get?slug=" + serverSlug() + "&claim=true&limit=50";
+        String url = apiBase() + "/api/bridge/processor/get?slug="
+                + URLEncoder.encode(serverSlug(), StandardCharsets.UTF_8) + "&claim=true&limit=50";
 
         HttpRequest req = HttpRequest.newBuilder()
                 .uri(URI.create(url))

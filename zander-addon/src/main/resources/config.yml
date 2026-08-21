@@ -22,12 +22,6 @@ command-bridge:
 bridge:
   enabled: true
 
-# --- Policy API Server ---
-# Hosts a local HTTP endpoint for policy/social config — disable if not needed
-api-server:
-  enabled: false
-  port: 8080
-
 # --- Policy Book ---
 policy-book:
   enabled: false
