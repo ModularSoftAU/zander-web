@@ -94,13 +94,15 @@ public final class QuickShopIntegration {
     private static final String UNKNOWN_OWNER = "Unknown";
 
     private final Plugin quickShopPlugin;
+    private final Plugin owningPlugin;
     private final Logger logger;
     private final QuickShopAPI api;
 
     private Listener changeListener;
 
-    private QuickShopIntegration(Plugin quickShopPlugin, Logger logger, QuickShopAPI api) {
+    private QuickShopIntegration(Plugin quickShopPlugin, Plugin owningPlugin, Logger logger, QuickShopAPI api) {
         this.quickShopPlugin = quickShopPlugin;
+        this.owningPlugin = owningPlugin;
         this.logger = logger;
         this.api = api;
     }
@@ -108,8 +110,14 @@ public final class QuickShopIntegration {
     /**
      * Attempts to bind to the running QuickShop-Hikari instance. Returns empty if the plugin does
      * not expose a usable API (wrong version, disabled, relocated classes, ...). Never throws.
+     *
+     * @param quickShopPlugin the running QuickShop-Hikari plugin instance to bind to
+     * @param owningPlugin    Zander's own plugin instance; the {@link #registerChangeListener}
+     *                        listener is registered under this plugin (not {@code quickShopPlugin})
+     *                        so that QuickShop reloading/disabling independently of Zander does not
+     *                        silently tear down the listener along with it.
      */
-    public static Optional<QuickShopIntegration> tryInitialize(Plugin quickShopPlugin, Logger logger) {
+    public static Optional<QuickShopIntegration> tryInitialize(Plugin quickShopPlugin, Plugin owningPlugin, Logger logger) {
         // Throwable, not Exception: a version mismatch surfaces as NoSuchMethodError /
         // NoClassDefFoundError (Errors), which must never abort Zander's onEnable.
         try {
@@ -127,7 +135,7 @@ public final class QuickShopIntegration {
                 logger.warning("[ShopDirectory] QuickShop-Hikari is present but exposed no usable API instance.");
                 return Optional.empty();
             }
-            return Optional.of(new QuickShopIntegration(quickShopPlugin, logger, api));
+            return Optional.of(new QuickShopIntegration(quickShopPlugin, owningPlugin, logger, api));
         } catch (Throwable t) {
             logger.warning("[ShopDirectory] Failed to initialize QuickShop-Hikari integration: " + t);
             return Optional.empty();
@@ -223,10 +231,10 @@ public final class QuickShopIntegration {
     // --- internals: everything below converts QuickShop types into plain types -------------------
 
     private Plugin owningPlugin() {
-        // Listeners must belong to a plugin; Zander's own plugin instance is not handed to this
-        // class, so the QuickShop plugin owns them. HandlerList.unregisterAll(listener) still
-        // removes exactly our handlers, and QuickShop disabling tears them down with it.
-        return quickShopPlugin;
+        // Listeners belong to Zander's own plugin instance (not the QuickShop plugin) so that
+        // QuickShop reloading/disabling independently of Zander does not tear the listener down
+        // with it. HandlerList.unregisterAll(listener) still removes exactly our handlers.
+        return owningPlugin;
     }
 
     private ShopDirectoryEntry toEntry(Shop shop) {
