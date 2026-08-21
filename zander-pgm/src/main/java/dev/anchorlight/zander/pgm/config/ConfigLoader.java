@@ -35,7 +35,7 @@ public final class ConfigLoader {
         Section features = c.getSection(Route.from("features"));
         if (features != null) {
             for (String key : features.getRoutesAsStrings(false)) {
-                cfg.features.put(key, features.getBoolean(Route.from(key)));
+                cfg.features.put(key, features.getBoolean(Route.from(key), false));
             }
         }
 

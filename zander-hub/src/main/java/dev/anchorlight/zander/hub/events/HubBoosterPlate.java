@@ -25,7 +25,7 @@ public class HubBoosterPlate implements Listener {
         Location pplatelocation = new Location(location.getWorld(), location.getX(), location.getY(), location.getZ());
 
         if (pplatelocation.getBlock().getType() == Material.LIGHT_WEIGHTED_PRESSURE_PLATE) {
-            player.setVelocity(player.getLocation().getDirection().multiply(plugin.getYamlConfig().getInt(Route.from("velocitymultiplier"))));
+            player.setVelocity(player.getLocation().getDirection().multiply(plugin.getYamlConfig().getInt(Route.from("velocitymultiplier"), 3)));
             player.setVelocity(new Vector(player.getVelocity().getX(), 1.0D, player.getVelocity().getZ()));
             player.playSound(player.getLocation(), ENTITY_FIREWORK_ROCKET_SHOOT, 1f,1f);
         }
