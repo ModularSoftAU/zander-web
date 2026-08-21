@@ -19,14 +19,38 @@
             <id>jitpack.io</id>
             <url>https://jitpack.io</url>
         </repository>
+        <repository>
+            <id>codemc</id>
+            <url>https://repo.codemc.io/repository/maven-public/</url>
+        </repository>
     </repositories>
 
     <dependencies>
         <dependency>
             <groupId>io.papermc.paper</groupId>
             <artifactId>paper-api</artifactId>
-            <version>1.21.4-R0.1-SNAPSHOT</version>
+            <version>1.21.11-R0.1-SNAPSHOT</version>
             <scope>provided</scope>
+        </dependency>
+        <!--
+            QuickShop-Hikari (com.ghostchu:quickshop-bukkit, classifier "shaded") is the plugin's own
+            documented API dependency coordinate; served from CodeMC, not JitPack. Verified against
+            https://repo.codemc.io/repository/maven-public/com/ghostchu/quickshop-bukkit/maven-metadata.xml
+            (latest published release: 6.3.0.0) and the project's README "Hook into the API" section.
+            Compile-only: loaded from the server's own plugins/ folder at runtime, never shaded here.
+        -->
+        <dependency>
+            <groupId>com.ghostchu</groupId>
+            <artifactId>quickshop-bukkit</artifactId>
+            <version>6.3.0.0</version>
+            <classifier>shaded</classifier>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter</artifactId>
+            <version>5.10.2</version>
+            <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.projectlombok</groupId>
@@ -66,6 +90,14 @@
                 <version>3.11.0</version>
                 <configuration>
                     <release>21</release>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <version>3.2.5</version>
+                <configuration>
+                    <useModulePath>false</useModulePath>
                 </configuration>
             </plugin>
             <plugin>
