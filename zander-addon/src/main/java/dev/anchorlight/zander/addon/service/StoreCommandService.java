@@ -8,6 +8,7 @@ import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.scheduler.BukkitRunnable;
 import dev.anchorlight.zander.addon.ZanderAddonMain;
+import dev.dejvokep.boostedyaml.route.Route;
 
 import java.net.URI;
 import java.net.http.HttpClient;
@@ -191,15 +192,15 @@ public class StoreCommandService {
     }
 
     private String apiBase() {
-        String url = plugin.getConfig().getString("api-url", "");
+        String url = plugin.getYamlConfig().getString(Route.from("api-url"), "");
         return url.endsWith("/") ? url.substring(0, url.length() - 1) : url;
     }
 
     private String token() {
-        return plugin.getConfig().getString("api-key", "");
+        return plugin.getYamlConfig().getString(Route.from("api-key"), "");
     }
 
     private String serverSlug() {
-        return plugin.getConfig().getString("server-name", "survival");
+        return plugin.getYamlConfig().getString(Route.from("server-name"), "survival");
     }
 }

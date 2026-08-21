@@ -6,6 +6,7 @@ import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
 import com.sun.net.httpserver.HttpServer;
 import dev.anchorlight.zander.addon.ZanderAddonMain;
+import dev.dejvokep.boostedyaml.route.Route;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -21,7 +22,7 @@ public class PolicyApiServer {
     }
 
     public void start() {
-        int port = plugin.getConfig().getInt("api-server.port", 8080);
+        int port = plugin.getYamlConfig().getInt(Route.from("api-server", "port"), 8080);
         try {
             server = HttpServer.create(new InetSocketAddress(port), 0);
             server.createContext("/api/config/policy", new PolicyHandler());

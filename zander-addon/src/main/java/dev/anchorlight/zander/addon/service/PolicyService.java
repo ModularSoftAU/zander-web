@@ -7,6 +7,7 @@ import com.google.gson.reflect.TypeToken;
 import dev.anchorlight.zander.addon.ZanderAddonMain;
 import dev.anchorlight.zander.addon.model.PolicyConfig;
 import dev.anchorlight.zander.addon.model.SocialConfig;
+import dev.dejvokep.boostedyaml.route.Route;
 
 import java.lang.reflect.Type;
 import java.util.Map;
@@ -21,7 +22,7 @@ public class PolicyService {
 
     public CompletableFuture<PolicyConfig> fetchPolicyUrls() {
         return CompletableFuture.supplyAsync(() -> {
-            String apiUrl = plugin.getConfig().getString("api-url");
+            String apiUrl = plugin.getYamlConfig().getString(Route.from("api-url"));
             try {
                 Request req = Request.builder()
                         .setURL(apiUrl + "/config/policy")
@@ -70,7 +71,7 @@ public class PolicyService {
 
     public CompletableFuture<SocialConfig> fetchSocialLinks() {
         return CompletableFuture.supplyAsync(() -> {
-            String apiUrl = plugin.getConfig().getString("api-url");
+            String apiUrl = plugin.getYamlConfig().getString(Route.from("api-url"));
             try {
                 Request req = Request.builder()
                         .setURL(apiUrl + "/config/social")

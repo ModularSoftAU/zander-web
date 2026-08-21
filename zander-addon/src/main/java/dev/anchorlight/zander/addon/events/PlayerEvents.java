@@ -16,6 +16,7 @@ import org.bukkit.persistence.PersistentDataType;
 import dev.anchorlight.zander.addon.ZanderAddonMain;
 import dev.anchorlight.zander.addon.gui.PolicyGUI;
 import dev.anchorlight.zander.addon.gui.SocialGUI;
+import dev.dejvokep.boostedyaml.route.Route;
 
 import java.util.List;
 
@@ -37,16 +38,16 @@ public class PlayerEvents implements Listener {
     @EventHandler
     public void onPlayerJoin(PlayerJoinEvent event) {
         Player player = event.getPlayer();
-        if (plugin.getConfig().getBoolean("policy-book.enabled", true)) {
+        if (plugin.getYamlConfig().getBoolean(Route.from("policy-book", "enabled"), true)) {
             givePolicyBook(player);
         }
-        if (plugin.getConfig().getBoolean("social-paper.enabled", true)) {
+        if (plugin.getYamlConfig().getBoolean(Route.from("social-paper", "enabled"), true)) {
             giveSocialPaper(player);
         }
     }
 
     private void givePolicyBook(Player player) {
-        int slot = plugin.getConfig().getInt("policy-book.slot", 8);
+        int slot = plugin.getYamlConfig().getInt(Route.from("policy-book", "slot"), 8);
         ItemStack currentItem = player.getInventory().getItem(slot);
 
         // Only overwrite if slot is empty or already has our policy book
@@ -68,7 +69,7 @@ public class PlayerEvents implements Listener {
     }
 
     private void giveSocialPaper(Player player) {
-        int slot = plugin.getConfig().getInt("social-paper.slot", 7);
+        int slot = plugin.getYamlConfig().getInt(Route.from("social-paper", "slot"), 7);
         ItemStack currentItem = player.getInventory().getItem(slot);
 
         if (currentItem != null && currentItem.getType() != Material.AIR) {
