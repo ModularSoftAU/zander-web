@@ -1,5 +1,12 @@
 package dev.anchorlight.zander.addon;
 
+import dev.dejvokep.boostedyaml.YamlDocument;
+import dev.dejvokep.boostedyaml.dvs.versioning.BasicVersioning;
+import dev.dejvokep.boostedyaml.route.Route;
+import dev.dejvokep.boostedyaml.settings.dumper.DumperSettings;
+import dev.dejvokep.boostedyaml.settings.general.GeneralSettings;
+import dev.dejvokep.boostedyaml.settings.loader.LoaderSettings;
+import dev.dejvokep.boostedyaml.settings.updater.UpdaterSettings;
 import lombok.Getter;
 import org.bukkit.plugin.java.JavaPlugin;
 import dev.anchorlight.zander.addon.api.PolicyApiServer;
@@ -24,6 +31,10 @@ import dev.anchorlight.zander.addon.service.StoreCommandService;
 import dev.anchorlight.zander.addon.shop.ShopDirectoryConfig;
 import dev.anchorlight.zander.addon.shop.ShopDirectoryService;
 
+import java.io.File;
+import java.io.IOException;
+import java.util.Objects;
+
 public class ZanderAddonMain extends JavaPlugin {
     @Getter
     private static ZanderAddonMain instance;
@@ -38,6 +49,7 @@ public class ZanderAddonMain extends JavaPlugin {
     private PolicyApiServer apiServer;
     private ShopDirectoryService shopDirectoryService;
     private ShopNavigationService shopNavigationService;
+    private YamlDocument config;
 
     @Override
     public void onEnable() {
@@ -45,12 +57,30 @@ public class ZanderAddonMain extends JavaPlugin {
 
         saveDefaultConfig();
 
+        try {
+            config = YamlDocument.create(new File(getDataFolder(), "config.yml"),
+                    Objects.requireNonNull(getResource("config.yml")),
+                    GeneralSettings.DEFAULT,
+                    LoaderSettings.builder().setAutoUpdate(true).build(),
+                    DumperSettings.DEFAULT,
+                    UpdaterSettings.builder()
+                            .setVersioning(new BasicVersioning("config-version"))
+                            .setOptionSorting(UpdaterSettings.OptionSorting.SORT_BY_DEFAULTS)
+                            .build());
+            config.update();
+            config.save();
+        } catch (IOException e) {
+            getLogger().severe("Could not create or load plugin configuration: " + e.getMessage());
+            getServer().getPluginManager().disablePlugin(this);
+            return;
+        }
+
         this.policyService = new PolicyService(this);
         this.freezeService = new FreezeService();
         this.storeCommandService = new StoreCommandService(this);
         this.bridgeService = new BridgeService(this);
 
-        if (getConfig().getBoolean("api-server.enabled", false)) {
+        if (config.getBoolean(Route.from("api-server", "enabled"), false)) {
             this.apiServer = new PolicyApiServer(this);
             this.apiServer.start();
         }
@@ -62,15 +92,15 @@ public class ZanderAddonMain extends JavaPlugin {
         getServer().getPluginManager().registerEvents(new PlayerEvents(this, policyGUI, socialGUI), this);
         getServer().getPluginManager().registerEvents(new FreezeEvents(freezeService), this);
 
-        if (getConfig().getBoolean("command-bridge.enabled", true)) {
+        if (config.getBoolean(Route.from("command-bridge", "enabled"), true)) {
             storeCommandService.start();
             getServer().getPluginManager().registerEvents(new StoreCommandEvents(storeCommandService), this);
-            getLogger().info("Command bridge enabled for server: " + getConfig().getString("server-name", "survival"));
+            getLogger().info("Command bridge enabled for server: " + config.getString(Route.from("server-name"), "survival"));
         }
 
-        if (getConfig().getBoolean("bridge.enabled", true)) {
+        if (config.getBoolean(Route.from("bridge", "enabled"), true)) {
             bridgeService.start();
-            getLogger().info("Bridge processor enabled for server: " + getConfig().getString("server-name", "survival"));
+            getLogger().info("Bridge processor enabled for server: " + config.getString(Route.from("server-name"), "survival"));
         }
 
         PolicyCommand policyCommand = new PolicyCommand(this, policyService);
@@ -79,7 +109,7 @@ public class ZanderAddonMain extends JavaPlugin {
         getCommand("social").setExecutor(new SocialCommand(this, socialGUI));
         getCommand("freeze").setExecutor(new FreezeCommand(freezeService));
 
-        ShopDirectoryConfig shopDirectoryConfig = ShopDirectoryConfig.from(getConfig());
+        ShopDirectoryConfig shopDirectoryConfig = ShopDirectoryConfig.from(config);
         if (shopDirectoryConfig.enabled()) {
             this.shopDirectoryService = new ShopDirectoryService(this, shopDirectoryConfig);
             if (this.shopDirectoryService.start()) {
@@ -102,6 +132,10 @@ public class ZanderAddonMain extends JavaPlugin {
         }
 
         getLogger().info("Zander Addon has been enabled.");
+    }
+
+    public YamlDocument getYamlConfig() {
+        return config;
     }
 
     @Override

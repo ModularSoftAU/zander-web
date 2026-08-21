@@ -1,6 +1,7 @@
 package dev.anchorlight.zander.addon.shop;
 
-import org.bukkit.configuration.file.FileConfiguration;
+import dev.dejvokep.boostedyaml.YamlDocument;
+import dev.dejvokep.boostedyaml.route.Route;
 
 import java.util.List;
 
@@ -16,19 +17,18 @@ public record ShopDirectoryConfig(
         boolean compass,
         boolean actionBar
 ) {
-    public static ShopDirectoryConfig from(FileConfiguration config) {
-        String base = "shop-directory";
+    public static ShopDirectoryConfig from(YamlDocument config) {
         return new ShopDirectoryConfig(
-                config.getBoolean(base + ".enabled", false),
-                config.getBoolean(base + ".selling-only", true),
-                config.getBoolean(base + ".in-stock-only", true),
-                config.getInt(base + ".results-per-page", 8),
-                config.getStringList(base + ".worlds"),
-                config.getBoolean(base + ".navigation.enabled", true),
-                config.getInt(base + ".navigation.arrival-distance", 5),
-                config.getLong(base + ".navigation.update-interval-ticks", 10L),
-                config.getBoolean(base + ".navigation.compass", true),
-                config.getBoolean(base + ".navigation.action-bar", true)
+                config.getBoolean(Route.from("shop-directory", "enabled"), false),
+                config.getBoolean(Route.from("shop-directory", "selling-only"), true),
+                config.getBoolean(Route.from("shop-directory", "in-stock-only"), true),
+                config.getInt(Route.from("shop-directory", "results-per-page"), 8),
+                config.getStringList(Route.from("shop-directory", "worlds")),
+                config.getBoolean(Route.from("shop-directory", "navigation", "enabled"), true),
+                config.getInt(Route.from("shop-directory", "navigation", "arrival-distance"), 5),
+                config.getLong(Route.from("shop-directory", "navigation", "update-interval-ticks"), 10L),
+                config.getBoolean(Route.from("shop-directory", "navigation", "compass"), true),
+                config.getBoolean(Route.from("shop-directory", "navigation", "action-bar"), true)
         );
     }
 }
