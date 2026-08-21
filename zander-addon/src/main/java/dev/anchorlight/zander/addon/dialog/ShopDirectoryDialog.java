@@ -12,6 +12,7 @@ import io.papermc.paper.registry.data.dialog.action.DialogActionCallback;
 import io.papermc.paper.registry.data.dialog.body.DialogBody;
 import io.papermc.paper.registry.data.dialog.input.DialogInput;
 import io.papermc.paper.registry.data.dialog.type.DialogType;
+import net.kyori.adventure.audience.Audience;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.event.ClickCallback;
 import net.kyori.adventure.text.format.NamedTextColor;
@@ -124,10 +125,10 @@ public class ShopDirectoryDialog {
 
         List<ActionButton> buttons = List.of(
                 button("Search", "Search shops for the item you typed",
-                        (response, audience) -> {
+                        (response, audience) -> onMainThread(audience, player -> {
                             String query = response.getText(INPUT_KEY_QUERY);
-                            openResults(audience, query == null ? "" : query);
-                        }),
+                            openResults(player, query == null ? "" : query);
+                        })),
                 button("Browse All Shops", "Show every indexed shop",
                         (response, audience) -> openResults(audience, ""))
         );
@@ -145,10 +146,8 @@ public class ShopDirectoryDialog {
 
         List<ActionButton> buttons = List.of(
                 button("Stop Navigation", "Cancel the current navigation",
-                        (response, audience) -> onMainThread(audience, p -> {
-                            navigationService.cancel(p.getUniqueId());
-                            p.sendMessage(Component.text("Navigation stopped.", NamedTextColor.YELLOW));
-                        })),
+                        (response, audience) -> onMainThread(audience,
+                                p -> navigationService.cancel(p.getUniqueId()))),
                 button("Search Another Shop", "Open the shop search",
                         (response, audience) -> onMainThread(audience, this::showSearchDialog))
         );
@@ -208,7 +207,7 @@ public class ShopDirectoryDialog {
      * (or wiring was skipped because the feature is half-configured), the player is told
      * rather than hitting an NPE.
      */
-    private void openResults(net.kyori.adventure.audience.Audience audience, String query) {
+    private void openResults(Audience audience, String query) {
         onMainThread(audience, player -> {
             ResultsOpener opener = this.resultsOpener;
             if (opener == null) {
@@ -226,29 +225,40 @@ public class ShopDirectoryDialog {
      * touches Bukkit or the shop services is dispatched onto the main thread explicitly.
      * Already-main-thread callbacks run inline so behaviour stays synchronous where possible.
      */
-    private void onMainThread(net.kyori.adventure.audience.Audience audience, PlayerAction action) {
-        if (!(audience instanceof Player player)) {
-            return;
-        }
-        Runnable body = () -> {
-            try {
-                if (player.isOnline()) {
-                    action.run(player);
+    private void onMainThread(Audience audience, PlayerAction action) {
+        try {
+            if (!(audience instanceof Player player)) {
+                return;
+            }
+            Runnable body = () -> {
+                try {
+                    if (player.isOnline()) {
+                        action.run(player);
+                    }
+                } catch (Throwable t) {
+                    plugin.getLogger().log(Level.WARNING,
+                            "Shop Directory dialog action failed for " + player.getName(), t);
+                    try {
+                        player.sendMessage(Component.text("Something went wrong.", NamedTextColor.RED));
+                    } catch (Throwable ignored) {
+                        // player may be gone; nothing more to do
+                    }
                 }
-            } catch (Throwable t) {
-                plugin.getLogger().log(Level.WARNING,
-                        "Shop Directory dialog action failed for " + player.getName(), t);
+            };
+            if (Bukkit.isPrimaryThread()) {
+                body.run();
+            } else {
+                Bukkit.getScheduler().runTask(plugin, body);
+            }
+        } catch (Throwable t) {
+            plugin.getLogger().log(Level.WARNING, "Failed to dispatch Shop Directory dialog action", t);
+            if (audience instanceof Player player) {
                 try {
                     player.sendMessage(Component.text("Something went wrong.", NamedTextColor.RED));
                 } catch (Throwable ignored) {
                     // player may be gone; nothing more to do
                 }
             }
-        };
-        if (Bukkit.isPrimaryThread()) {
-            body.run();
-        } else {
-            Bukkit.getScheduler().runTask(plugin, body);
         }
     }
 
