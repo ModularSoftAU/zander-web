@@ -16,3 +16,12 @@ commands:
     description: Freeze a player.
     usage: /freeze <player>
     permission: zander.command.freeze
+  shops:
+    description: Find and navigate to a player shop.
+    usage: /shops [cancel]
+    permission: zander.shops
+
+permissions:
+  zander.shops:
+    description: Allows use of the shop directory.
+    default: true
