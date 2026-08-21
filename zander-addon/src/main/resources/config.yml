@@ -36,7 +36,7 @@ social-paper:
 shop-directory:
   enabled: false
 
-  selling-only: true
+  selling-only: false
   in-stock-only: true
 
   results-per-page: 8

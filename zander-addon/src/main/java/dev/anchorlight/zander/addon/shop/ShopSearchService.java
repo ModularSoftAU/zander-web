@@ -26,11 +26,23 @@ public final class ShopSearchService {
     public static List<ShopDirectoryEntry> search(List<ShopDirectoryEntry> index, String query,
                                                     ShopDirectoryConfig config, Location playerLocation,
                                                     String playerWorld) {
+        return search(index, query, config, playerLocation, playerWorld, null);
+    }
+
+    /**
+     * @param kindFilter when non-null, restricts results to that {@link ShopDirectoryEntry.ShopKind}
+     *                   in addition to the admin-configured {@code selling-only} filter.
+     */
+    public static List<ShopDirectoryEntry> search(List<ShopDirectoryEntry> index, String query,
+                                                    ShopDirectoryConfig config, Location playerLocation,
+                                                    String playerWorld,
+                                                    ShopDirectoryEntry.ShopKind kindFilter) {
         String normalizedQuery = normalize(query);
 
         return index.stream()
                 .filter(e -> config.worlds().isEmpty() || config.worlds().contains(e.world()))
                 .filter(e -> !config.sellingOnly() || e.kind() == ShopDirectoryEntry.ShopKind.SELLING)
+                .filter(e -> kindFilter == null || e.kind() == kindFilter)
                 .filter(e -> !config.inStockOnly() || e.stock() > 0)
                 .filter(e -> matches(normalizedQuery, e))
                 .sorted(Comparator.comparingDouble(ShopDirectoryEntry::price)

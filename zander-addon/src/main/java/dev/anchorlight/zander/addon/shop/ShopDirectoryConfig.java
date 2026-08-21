@@ -20,7 +20,7 @@ public record ShopDirectoryConfig(
     public static ShopDirectoryConfig from(YamlDocument config) {
         return new ShopDirectoryConfig(
                 config.getBoolean(Route.from("shop-directory", "enabled"), false),
-                config.getBoolean(Route.from("shop-directory", "selling-only"), true),
+                config.getBoolean(Route.from("shop-directory", "selling-only"), false),
                 config.getBoolean(Route.from("shop-directory", "in-stock-only"), true),
                 config.getInt(Route.from("shop-directory", "results-per-page"), 8),
                 config.getStringList(Route.from("shop-directory", "worlds")),

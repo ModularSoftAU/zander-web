@@ -78,10 +78,18 @@ public class ShopSearchResultsDialog {
      * message and the cause is logged.
      */
     public void open(Player player, String query, int page) {
+        open(player, query, page, null);
+    }
+
+    /**
+     * @param kindFilter when non-null, restricts results to shops of that kind (selling/buying);
+     *                   {@code null} shows both, subject to the admin {@code selling-only} setting.
+     */
+    public void open(Player player, String query, int page, ShopDirectoryEntry.ShopKind kindFilter) {
         try {
             List<ShopDirectoryEntry> results = ShopSearchService.search(
                     directoryService.currentIndex(), query, config,
-                    player.getLocation(), player.getWorld().getName());
+                    player.getLocation(), player.getWorld().getName(), kindFilter);
 
             int perPage = Math.max(1, config.resultsPerPage());
             int lastPage = Math.max(0, (results.size() - 1) / perPage);
@@ -92,7 +100,7 @@ public class ShopSearchResultsDialog {
             List<ShopDirectoryEntry> pageResults = results.subList(fromIndex, toIndex);
 
             player.showDialog(buildDialog(query, clampedPage, lastPage, results.size(), pageResults,
-                    player.getLocation()));
+                    player.getLocation(), fromIndex, kindFilter));
         } catch (Throwable t) {
             player.sendMessage(Component.text("Could not open shop search results.", NamedTextColor.RED));
             plugin.getLogger().log(Level.WARNING,
@@ -103,7 +111,8 @@ public class ShopSearchResultsDialog {
     // ---------------------------------------------------------------- builders
 
     private Dialog buildDialog(String query, int page, int lastPage, int totalResults,
-                                List<ShopDirectoryEntry> pageResults, Location viewerLocation) {
+                                List<ShopDirectoryEntry> pageResults, Location viewerLocation,
+                                int fromIndex, ShopDirectoryEntry.ShopKind kindFilter) {
         List<DialogBody> body = new ArrayList<>();
         List<ActionButton> buttons = new ArrayList<>();
 
@@ -114,27 +123,41 @@ public class ShopSearchResultsDialog {
                     totalResults + " shop" + (totalResults == 1 ? "" : "s") + " found. Page "
                             + (page + 1) + " of " + (lastPage + 1) + ".", NamedTextColor.GRAY)));
 
+            int index = fromIndex;
             for (ShopDirectoryEntry entry : pageResults) {
-                body.add(DialogBody.plainMessage(Component.text(
-                        entry.itemDisplayName() + " — " + formatPrice(entry.price())
-                                + " — " + entry.ownerDisplayName()
-                                + " — Stock: " + formatStock(entry.stock())
-                                + " — " + distanceLabel(entry, viewerLocation))));
-                buttons.add(button("View: " + entry.itemDisplayName(), "View shop details",
+                index++;
+                NamedTextColor kindColor = entry.kind() == ShopDirectoryEntry.ShopKind.SELLING
+                        ? NamedTextColor.GREEN : NamedTextColor.GOLD;
+                body.add(DialogBody.plainMessage(Component.text()
+                        .append(Component.text(index + ". ", NamedTextColor.DARK_GRAY))
+                        .append(Component.text(entry.itemDisplayName(), NamedTextColor.WHITE))
+                        .append(Component.text(" " + formatPrice(entry.price()) + " " + kindLabel(entry.kind()),
+                                kindColor))
+                        .build()));
+                body.add(DialogBody.plainMessage(Component.text()
+                        .append(Component.text("    " + entry.ownerDisplayName(), NamedTextColor.AQUA))
+                        .append(Component.text(" · Stock: " + formatStock(entry.stock())
+                                + " · " + distanceLabel(entry, viewerLocation), NamedTextColor.GRAY))
+                        .build()));
+                buttons.add(button("View #" + index + ": " + entry.itemDisplayName(), "View shop details",
                         (response, audience) -> onMainThread(audience,
                                 p -> openDetails(p, entry.shopId()))));
             }
         }
 
+        buttons.add(button("Filter: " + filterLabel(kindFilter), "Cycle between all shops, selling only, and buying only",
+                (response, audience) -> onMainThread(audience,
+                        p -> open(p, query, 0, nextFilter(kindFilter)))));
+
         if (page > 0) {
             buttons.add(button("Previous", "Go to the previous page",
                     (response, audience) -> onMainThread(audience,
-                            p -> open(p, query, page - 1))));
+                            p -> open(p, query, page - 1, kindFilter))));
         }
         if (page < lastPage) {
             buttons.add(button("Next", "Go to the next page",
                     (response, audience) -> onMainThread(audience,
-                            p -> open(p, query, page + 1))));
+                            p -> open(p, query, page + 1, kindFilter))));
         }
         buttons.add(button("Back", "Return to the shop directory",
                 (response, audience) -> onMainThread(audience, rootDialog::open)));
@@ -155,6 +178,25 @@ public class ShopSearchResultsDialog {
     }
 
     // ---------------------------------------------------------------- helpers
+
+    private static String kindLabel(ShopDirectoryEntry.ShopKind kind) {
+        return kind == ShopDirectoryEntry.ShopKind.SELLING ? "(Selling)" : "(Buying)";
+    }
+
+    private static String filterLabel(ShopDirectoryEntry.ShopKind kindFilter) {
+        if (kindFilter == null) {
+            return "All";
+        }
+        return kindFilter == ShopDirectoryEntry.ShopKind.SELLING ? "Selling" : "Buying";
+    }
+
+    /** Cycles All -> Selling -> Buying -> All. */
+    private static ShopDirectoryEntry.ShopKind nextFilter(ShopDirectoryEntry.ShopKind kindFilter) {
+        if (kindFilter == null) {
+            return ShopDirectoryEntry.ShopKind.SELLING;
+        }
+        return kindFilter == ShopDirectoryEntry.ShopKind.SELLING ? ShopDirectoryEntry.ShopKind.BUYING : null;
+    }
 
     private static String formatPrice(double price) {
         if (price == Math.floor(price)) {
