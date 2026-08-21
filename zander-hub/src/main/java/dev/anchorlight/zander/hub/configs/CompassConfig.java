@@ -1,9 +1,10 @@
 package dev.anchorlight.zander.hub.configs;
 
+import dev.anchorlight.zander.hub.ZanderHubMain;
+import dev.dejvokep.boostedyaml.YamlDocument;
+import dev.dejvokep.boostedyaml.block.implementation.Section;
+import dev.dejvokep.boostedyaml.route.Route;
 import org.bukkit.Material;
-import org.bukkit.configuration.ConfigurationSection;
-import org.bukkit.configuration.file.FileConfiguration;
-import org.bukkit.plugin.java.JavaPlugin;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -14,22 +15,22 @@ import java.util.List;
  * Handles loading, validation, and access to managed data.
  */
 public class CompassConfig {
-    private final JavaPlugin plugin;
+    private final ZanderHubMain plugin;
 
     private List<CompassServerEntry> servers = Collections.emptyList();
 
     public record CompassServerEntry(String id, Material material, String display, String lore) {
     }
 
-    public CompassConfig(JavaPlugin plugin) {
+    public CompassConfig(ZanderHubMain plugin) {
         this.plugin = plugin;
     }
 
     /// Configure the Navigation Compass' server entries.
     /// Validates each entry in server 'config.yml', skipping invalid ones with a warning.
     public void setupServers() {
-        FileConfiguration config = plugin.getConfig();
-        ConfigurationSection section = config.getConfigurationSection("compass.servers");
+        YamlDocument config = plugin.getYamlConfig();
+        Section section = config.getSection(Route.from("compass", "servers"));
         List<CompassServerEntry> parsed = new ArrayList<>();
 
         if (section == null) {
@@ -38,16 +39,16 @@ public class CompassConfig {
             return;
         }
 
-        for (String id : section.getKeys(false)) {
-            ConfigurationSection entry = section.getConfigurationSection(id);
+        for (String id : section.getRoutesAsStrings(false)) {
+            Section entry = section.getSection(Route.from(id));
             if (entry == null) {
                 plugin.getLogger().warning(String.format("Invalid 'compass.servers.%s' entry in config.yml, skipped", id));
                 continue;
             }
 
-            String materialName = entry.getString("material");
-            String display = entry.getString("display");
-            String lore = entry.getString("lore");
+            String materialName = entry.getString(Route.from("material"));
+            String display = entry.getString(Route.from("display"));
+            String lore = entry.getString(Route.from("lore"));
 
             if (materialName == null || display == null || lore == null) {
                 plugin.getLogger().warning(String.format(

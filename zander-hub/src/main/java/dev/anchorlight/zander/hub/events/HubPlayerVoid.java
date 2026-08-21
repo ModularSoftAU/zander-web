@@ -2,6 +2,7 @@ package dev.anchorlight.zander.hub.events;
 
 import dev.anchorlight.zander.hub.ConfigurationManager;
 import dev.anchorlight.zander.hub.ZanderHubMain;
+import dev.dejvokep.boostedyaml.route.Route;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.World;
@@ -24,7 +25,7 @@ public class HubPlayerVoid implements Listener {
         Location location = player.getLocation();
 
         World defaultworld = Bukkit.getServer().getWorlds().get(0);
-        World hubworld = Bukkit.getWorld(plugin.getConfig().getString("hub.world", defaultworld.getName()));
+        World hubworld = Bukkit.getWorld(plugin.getYamlConfig().getString(Route.from("hub", "world"), defaultworld.getName()));
         if (hubworld == null) {
             Bukkit.getLogger().warning(
                     "No world by the name of " + defaultworld.getName() + " was found! Assuming default world.");
