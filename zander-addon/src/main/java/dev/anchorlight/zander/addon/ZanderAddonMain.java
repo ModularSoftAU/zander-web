@@ -73,7 +73,9 @@ public class ZanderAddonMain extends JavaPlugin {
             getLogger().info("Bridge processor enabled for server: " + getConfig().getString("server-name", "survival"));
         }
 
-        getCommand("policy").setExecutor(new PolicyCommand(this, policyService));
+        PolicyCommand policyCommand = new PolicyCommand(this, policyService);
+        getCommand("policy").setExecutor(policyCommand);
+        getCommand("policy").setTabCompleter(policyCommand);
         getCommand("social").setExecutor(new SocialCommand(this, socialGUI));
         getCommand("freeze").setExecutor(new FreezeCommand(freezeService));
 

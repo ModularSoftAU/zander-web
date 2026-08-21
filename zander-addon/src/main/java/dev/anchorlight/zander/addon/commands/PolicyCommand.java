@@ -10,8 +10,10 @@ import org.bukkit.Bukkit;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
+import org.bukkit.command.TabCompleter;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import dev.anchorlight.zander.addon.ZanderAddonMain;
 import dev.anchorlight.zander.addon.service.PolicyService;
 
@@ -19,7 +21,9 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-public class PolicyCommand implements CommandExecutor {
+public class PolicyCommand implements CommandExecutor, TabCompleter {
+
+    private static final List<String> POLICY_TYPES = List.of("tos", "rules", "privacy", "refund");
     private final ZanderAddonMain plugin;
     private final PolicyService policyService;
 
@@ -79,6 +83,22 @@ public class PolicyCommand implements CommandExecutor {
         });
 
         return true;
+    }
+
+    @Override
+    public @Nullable List<String> onTabComplete(@NotNull CommandSender sender, @NotNull Command command, @NotNull String label, @NotNull String[] args) {
+        if (args.length != 1) {
+            return Collections.emptyList();
+        }
+
+        String partial = args[0].toLowerCase();
+        List<String> matches = new ArrayList<>();
+        for (String type : POLICY_TYPES) {
+            if (type.startsWith(partial)) {
+                matches.add(type);
+            }
+        }
+        return matches;
     }
 
     private void openBook(Player player, String title, String content) {
