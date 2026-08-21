@@ -114,8 +114,9 @@ public class ShopDetailsDialog {
                 "Location: " + coordinatesLabel(entry.location()), NamedTextColor.GRAY)));
 
         if (sameWorld) {
+            String shopId = entry.shopId();
             buttons.add(button("Guide Me", "Start navigation to this shop",
-                    (response, audience) -> onMainThread(audience, p -> startGuide(p, entry))));
+                    (response, audience) -> onMainThread(audience, p -> startGuide(p, shopId))));
         }
 
         buttons.add(button("Back to Results", "Return to the shop directory",
@@ -139,7 +140,20 @@ public class ShopDetailsDialog {
 
     // ---------------------------------------------------------------- helpers
 
-    private void startGuide(Player player, ShopDirectoryEntry entry) {
+    private void startGuide(Player player, String shopId) {
+        Optional<ShopDirectoryEntry> resolved = directoryService.resolve(shopId);
+        if (resolved.isEmpty()) {
+            player.sendMessage(Component.text("That shop is no longer available.", NamedTextColor.RED));
+            rootDialog.open(player);
+            return;
+        }
+        ShopDirectoryEntry entry = resolved.get();
+        if (!entry.world().equals(player.getWorld().getName())) {
+            player.sendMessage(Component.text(
+                    "This shop is in the " + entry.world() + " world.\nTravel there before starting navigation.",
+                    NamedTextColor.YELLOW));
+            return;
+        }
         navigationService.start(player, entry);
         player.sendMessage(Component.text(
                 "Navigating to " + entry.itemDisplayName() + ".", NamedTextColor.GREEN));

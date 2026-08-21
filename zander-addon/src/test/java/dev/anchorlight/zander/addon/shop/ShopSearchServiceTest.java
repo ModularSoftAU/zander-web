@@ -99,6 +99,19 @@ class ShopSearchServiceTest {
     }
 
     @Test
+    void emptyWorldsListAllowsAllWorlds() {
+        List<ShopDirectoryEntry> index = List.of(
+                entry("1", "Diamond", 10, 5, ShopDirectoryEntry.ShopKind.SELLING, "world", 0),
+                entry("2", "Diamond", 10, 5, ShopDirectoryEntry.ShopKind.SELLING, "creative", 0)
+        );
+        ShopDirectoryConfig config = new ShopDirectoryConfig(true, true, true, 8, List.of(), true, 5, 10L, true, true);
+        World mockWorld = getMockWorld("world");
+        Location playerLoc = new Location(mockWorld, 0, 64, 0);
+        List<ShopDirectoryEntry> results = ShopSearchService.search(index, "diamond", config, playerLoc, "world");
+        assertEquals(2, results.size());
+    }
+
+    @Test
     void sortsByPriceThenDistance() {
         List<ShopDirectoryEntry> index = List.of(
                 entry("far-cheap", "Diamond", 10, 5, ShopDirectoryEntry.ShopKind.SELLING, "world", 100),

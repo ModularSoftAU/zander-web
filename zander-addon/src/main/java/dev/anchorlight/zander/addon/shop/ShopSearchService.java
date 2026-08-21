@@ -29,7 +29,7 @@ public final class ShopSearchService {
         String normalizedQuery = normalize(query);
 
         return index.stream()
-                .filter(e -> config.worlds().contains(e.world()))
+                .filter(e -> config.worlds().isEmpty() || config.worlds().contains(e.world()))
                 .filter(e -> !config.sellingOnly() || e.kind() == ShopDirectoryEntry.ShopKind.SELLING)
                 .filter(e -> !config.inStockOnly() || e.stock() > 0)
                 .filter(e -> matches(normalizedQuery, e))

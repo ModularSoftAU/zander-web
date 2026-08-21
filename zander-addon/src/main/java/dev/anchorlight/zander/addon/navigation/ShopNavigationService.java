@@ -41,7 +41,7 @@ public class ShopNavigationService {
             tickTask.cancel();
             tickTask = null;
         }
-        sessions.keySet().forEach(this::cleanupOnQuit);
+        sessions.keySet().forEach(id -> cancel(id, false));
         sessions.clear();
     }
 
