@@ -20,8 +20,15 @@ commands:
     description: Find and navigate to a player shop.
     usage: /shops [cancel]
     permission: zander.shops
+  report:
+    description: Report a player to staff.
+    usage: /report
+    permission: zander.report
 
 permissions:
   zander.shops:
     description: Allows use of the shop directory.
+    default: true
+  zander.report:
+    description: Allows use of the report command.
     default: true

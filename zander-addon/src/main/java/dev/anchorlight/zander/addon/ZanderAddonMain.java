@@ -12,8 +12,10 @@ import org.bukkit.plugin.java.JavaPlugin;
 import dev.anchorlight.zander.addon.api.PolicyApiServer;
 import dev.anchorlight.zander.addon.commands.FreezeCommand;
 import dev.anchorlight.zander.addon.commands.PolicyCommand;
+import dev.anchorlight.zander.addon.commands.ReportCommand;
 import dev.anchorlight.zander.addon.commands.ShopDirectoryCommand;
 import dev.anchorlight.zander.addon.commands.SocialCommand;
+import dev.anchorlight.zander.addon.dialog.ReportDialog;
 import dev.anchorlight.zander.addon.dialog.ShopDetailsDialog;
 import dev.anchorlight.zander.addon.dialog.ShopDirectoryDialog;
 import dev.anchorlight.zander.addon.dialog.ShopSearchResultsDialog;
@@ -24,6 +26,7 @@ import dev.anchorlight.zander.addon.events.StoreCommandEvents;
 import dev.anchorlight.zander.addon.gui.PolicyGUI;
 import dev.anchorlight.zander.addon.gui.SocialGUI;
 import dev.anchorlight.zander.addon.navigation.ShopNavigationService;
+import dev.anchorlight.zander.addon.report.ReportService;
 import dev.anchorlight.zander.addon.service.BridgeService;
 import dev.anchorlight.zander.addon.service.FreezeService;
 import dev.anchorlight.zander.addon.service.PolicyService;
@@ -108,6 +111,11 @@ public class ZanderAddonMain extends JavaPlugin {
         getCommand("policy").setTabCompleter(policyCommand);
         getCommand("social").setExecutor(new SocialCommand(this, socialGUI));
         getCommand("freeze").setExecutor(new FreezeCommand(freezeService));
+
+        getServer().getMessenger().registerOutgoingPluginChannel(this, ReportService.RELAY_CHANNEL);
+        ReportService reportService = new ReportService(this);
+        ReportDialog reportDialog = new ReportDialog(this, reportService);
+        getCommand("report").setExecutor(new ReportCommand(reportDialog));
 
         ShopDirectoryConfig shopDirectoryConfig = ShopDirectoryConfig.from(config);
         if (shopDirectoryConfig.enabled()) {

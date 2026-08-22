@@ -75,6 +75,12 @@ public class ZanderVelocityMain {
         proxy.getEventManager().register(this, new UserSocialSpyEvent());
         proxy.getEventManager().register(this, new FreezeChatListener());
 
+        // /report now lives in zander-addon (Paper Dialog API isn't available on the proxy);
+        // this only relays the submitted report back out to zander.report.notify holders
+        // across every backend server.
+        proxy.getChannelRegistrar().register(ReportRelayListener.CHANNEL);
+        proxy.getEventManager().register(this, new ReportRelayListener(proxy));
+
         // Commands
         CommandManager commandManager = proxy.getCommandManager();
 
@@ -83,7 +89,6 @@ public class ZanderVelocityMain {
         commandManager.register(commandManager.metaBuilder("rules").build(), new rules());
         commandManager.register(commandManager.metaBuilder("website").build(), new website());
         commandManager.register(commandManager.metaBuilder("ping").build(), new ping());
-        commandManager.register(commandManager.metaBuilder("report").build(), new report());
         commandManager.register(commandManager.metaBuilder("clearchat").build(), new clearchat());
         commandManager.register(commandManager.metaBuilder("freezechat").build(), new freezechat());
         alert alertCommand = new alert();
