@@ -1,0 +1,15 @@
+\target
+.idea
+/target
+/.idea
+*.iml
+dependency-reduced-pom.xml
+
+# jdtls generation
+.classpath
+.factorypath
+.project
+.settings/
+
+# git worktrees
+.worktrees/

@@ -3,6 +3,11 @@ The web component of the Zander project that contains database, API and website.
 
 Documentation: [https://modularsoft.org/docs/products/zander](https://modularsoft.org/docs/products/zander)
 
+This repo is a monorepo with two projects:
+
+- **/** (root) — the Node.js web dashboard, API, and database (this document covers it)
+- **[agent/](agent/)** — the Java/Maven Minecraft plugins (`zander-addon`, `zander-auth`, `zander-hub`, `zander-velocity`, `zander-waterfall`) (see [agent/README.md](agent/README.md))
+
 ## Permissions
 
 All permission nodes follow dot-notation and are managed via LuckPerms. Wildcard support is available (e.g. `zander.web.*` grants all `zander.web.X` nodes). The special `*` node grants full access.

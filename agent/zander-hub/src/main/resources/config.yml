@@ -1,0 +1,24 @@
+velocitymultiplier: 3
+hub:
+  world: 'world'
+  x: 0.5
+  y: 33.0
+  z: 0.5
+  yaw: -180.0
+  pitch: 0.0
+messages:
+  join: '&7%p% joined.'
+  leave: '&7%p% left.'
+misc:
+  always_first_join: false
+  slot_hub_compass: 4
+compass:
+  servers:
+    survival:
+      material: IRON_PICKAXE
+      display: 'Survival'
+      lore: 'Click me to join our Survival server.'
+    mixed:
+      material: IRON_SWORD
+      display: 'Mixed'
+      lore: 'Play and Destroy your friends in Minigames.'
