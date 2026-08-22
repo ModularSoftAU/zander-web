@@ -50,3 +50,4 @@ shop-directory:
     update-interval-ticks: 10
     compass: true
     action-bar: true
+    sound: true

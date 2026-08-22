@@ -118,19 +118,18 @@ public class ShopDetailsDialog {
         if (sameWorld) {
             body.add(DialogBody.plainMessage(Component.text(
                     "Stock: " + formatStock(entry.stock())
-                            + "  |  Distance: " + distanceLabel(entry, player.getLocation()),
+                            + "  |  Distance: " + distanceLabel(entry, player.getLocation())
+                            + "  |  " + coordinatesLabel(entry.location()),
                     NamedTextColor.WHITE)));
         } else {
             body.add(DialogBody.plainMessage(Component.text(
-                    "Stock: " + formatStock(entry.stock()), NamedTextColor.WHITE)));
+                    "Stock: " + formatStock(entry.stock()) + "  |  World: " + entry.world()
+                            + "  |  " + coordinatesLabel(entry.location()),
+                    NamedTextColor.WHITE)));
             body.add(DialogBody.plainMessage(Component.text(
                     "This shop is in the " + entry.world() + " world.\nTravel there before starting navigation.",
                     NamedTextColor.YELLOW)));
         }
-
-        body.add(DialogBody.plainMessage(Component.text(
-                "World: " + entry.world() + "  |  Location: " + coordinatesLabel(entry.location()),
-                NamedTextColor.WHITE)));
 
         if (sameWorld) {
             String shopId = entry.shopId();

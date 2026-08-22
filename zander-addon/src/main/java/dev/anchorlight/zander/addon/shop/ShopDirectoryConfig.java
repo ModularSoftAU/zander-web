@@ -15,7 +15,8 @@ public record ShopDirectoryConfig(
         int arrivalDistance,
         long updateIntervalTicks,
         boolean compass,
-        boolean actionBar
+        boolean actionBar,
+        boolean sound
 ) {
     public static ShopDirectoryConfig from(YamlDocument config) {
         return new ShopDirectoryConfig(
@@ -28,7 +29,8 @@ public record ShopDirectoryConfig(
                 config.getInt(Route.from("shop-directory", "navigation", "arrival-distance"), 5),
                 config.getLong(Route.from("shop-directory", "navigation", "update-interval-ticks"), 10L),
                 config.getBoolean(Route.from("shop-directory", "navigation", "compass"), true),
-                config.getBoolean(Route.from("shop-directory", "navigation", "action-bar"), true)
+                config.getBoolean(Route.from("shop-directory", "navigation", "action-bar"), true),
+                config.getBoolean(Route.from("shop-directory", "navigation", "sound"), true)
         );
     }
 }

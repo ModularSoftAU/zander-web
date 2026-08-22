@@ -6,6 +6,7 @@ import dev.anchorlight.zander.addon.shop.ShopDirectoryService;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 import org.bukkit.Bukkit;
+import org.bukkit.Sound;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.scheduler.BukkitTask;
@@ -58,6 +59,10 @@ public class ShopNavigationService {
             player.setCompassTarget(target.location());
         }
         sessions.put(player.getUniqueId(), session);
+
+        if (config.sound()) {
+            player.playSound(player.getLocation(), Sound.ENTITY_EXPERIENCE_ORB_PICKUP, 1f, 1f);
+        }
     }
 
     public void cancel(UUID playerId) {
@@ -108,6 +113,9 @@ public class ShopNavigationService {
             if (session.hasArrived(player.getLocation(), config.arrivalDistance())) {
                 player.sendMessage(Component.text("✓ You've arrived at " + session.ownerDisplayName() + "'s "
                         + session.itemDisplayName() + " shop!", NamedTextColor.GREEN));
+                if (config.sound()) {
+                    player.playSound(player.getLocation(), Sound.UI_TOAST_CHALLENGE_COMPLETE, 1f, 1f);
+                }
                 cancel(session.playerId(), false);
                 continue;
             }

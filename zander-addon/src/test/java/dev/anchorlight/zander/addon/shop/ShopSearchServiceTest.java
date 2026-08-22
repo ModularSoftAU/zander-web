@@ -35,7 +35,7 @@ class ShopSearchServiceTest {
     }
 
     private ShopDirectoryConfig defaultConfig() {
-        return new ShopDirectoryConfig(true, true, true, 8, List.of("world"), true, 5, 10L, true, true);
+        return new ShopDirectoryConfig(true, true, true, 8, List.of("world"), true, 5, 10L, true, true, true);
     }
 
     @Test
@@ -104,7 +104,7 @@ class ShopSearchServiceTest {
                 entry("1", "Diamond", 10, 5, ShopDirectoryEntry.ShopKind.SELLING, "world", 0),
                 entry("2", "Diamond", 10, 5, ShopDirectoryEntry.ShopKind.SELLING, "creative", 0)
         );
-        ShopDirectoryConfig config = new ShopDirectoryConfig(true, true, true, 8, List.of(), true, 5, 10L, true, true);
+        ShopDirectoryConfig config = new ShopDirectoryConfig(true, true, true, 8, List.of(), true, 5, 10L, true, true, true);
         World mockWorld = getMockWorld("world");
         Location playerLoc = new Location(mockWorld, 0, 64, 0);
         List<ShopDirectoryEntry> results = ShopSearchService.search(index, "diamond", config, playerLoc, "world");
