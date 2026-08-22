@@ -135,8 +135,11 @@ public class ShopSearchResultsDialog {
             // A non-interactive divider button (no action) visually separates the search/filter
             // controls above from the clickable shop rows below - Paper Dialogs render body
             // text and buttons in separate sections, so this is the only way to put a visual
-            // break between two groups of buttons.
+            // break between two groups of buttons. Dialog buttons render in a 2-column grid
+            // (see columns(2) below), so this - and each shop row - is followed by a blank
+            // spacer to keep it on its own full-width line instead of pairing with a neighbor.
             buttons.add(ActionButton.builder(Component.text("- Results -", NamedTextColor.DARK_GRAY)).build());
+            buttons.add(spacer());
 
             for (ShopDirectoryEntry entry : pageResults) {
                 NamedTextColor kindColor = entry.kind() == ShopDirectoryEntry.ShopKind.SELLING
@@ -159,6 +162,7 @@ public class ShopSearchResultsDialog {
                                         p -> openDetails(p, entry.shopId(), query, page, kindFilter)),
                                 CLICK_OPTIONS))
                         .build());
+                buttons.add(spacer());
             }
         }
 
@@ -167,6 +171,8 @@ public class ShopSearchResultsDialog {
                 .maxLength(MAX_QUERY_LENGTH)
                 .build();
 
+        // Buttons render in a 2-column grid (columns(2) below). Search/Clear pair naturally on
+        // one row; Filter gets a spacer so it doesn't pair with the results divider that follows.
         List<ActionButton> topButtons = new ArrayList<>();
         topButtons.add(button("Search", "Search shops for the item you typed",
                 (response, audience) -> onMainThread(audience, player -> {
@@ -179,19 +185,27 @@ public class ShopSearchResultsDialog {
                 "Cycle between all shops, selling only, and buying only",
                 (response, audience) -> onMainThread(audience,
                         p -> open(p, query, 0, nextFilter(kindFilter)))));
+        topButtons.add(spacer());
 
         List<ActionButton> allButtons = new ArrayList<>(topButtons);
         allButtons.addAll(buttons);
 
-        if (page > 0) {
+        boolean hasPrevious = page > 0;
+        boolean hasNext = page < lastPage;
+        if (hasPrevious) {
             allButtons.add(button("Previous", "Go to the previous page",
                     (response, audience) -> onMainThread(audience,
                             p -> open(p, query, page - 1, kindFilter))));
         }
-        if (page < lastPage) {
+        if (hasNext) {
             allButtons.add(button("Next", "Go to the next page",
                     (response, audience) -> onMainThread(audience,
                             p -> open(p, query, page + 1, kindFilter))));
+        }
+        if (hasPrevious != hasNext) {
+            // only one of the two is present - pad it to its own row rather than pairing it
+            // with whatever comes next (nothing does today, but this keeps it robust).
+            allButtons.add(spacer());
         }
 
         return Dialog.create(factory -> factory.empty()
@@ -200,7 +214,7 @@ public class ShopSearchResultsDialog {
                         .inputs(List.of(queryInput))
                         .canCloseWithEscape(true)
                         .build())
-                .type(DialogType.multiAction(allButtons).columns(1).build()));
+                .type(DialogType.multiAction(allButtons).columns(2).build()));
     }
 
     private static ActionButton button(String label, String tooltip, DialogActionCallback callback) {
@@ -208,6 +222,11 @@ public class ShopSearchResultsDialog {
                 .tooltip(Component.text(tooltip))
                 .action(DialogAction.customClick(callback, CLICK_OPTIONS))
                 .build();
+    }
+
+    /** An empty, non-interactive button used to pad a row out to the full 2-column width. */
+    private static ActionButton spacer() {
+        return ActionButton.builder(Component.empty()).build();
     }
 
     // ---------------------------------------------------------------- helpers
