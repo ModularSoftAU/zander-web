@@ -9,12 +9,14 @@ import org.bukkit.Color;
 import org.bukkit.FireworkEffect;
 import org.bukkit.Location;
 import org.bukkit.Sound;
+import org.bukkit.attribute.Attribute;
 import org.bukkit.entity.Firework;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerLoginEvent;
+import org.bukkit.event.player.PlayerRespawnEvent;
 import org.bukkit.inventory.meta.FireworkMeta;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scoreboard.Scoreboard;
@@ -66,6 +68,13 @@ public class HubPlayerJoin implements Listener {
         Bukkit.getScheduler().runTaskLater(plugin, () -> scheduledLogin(player), ROUTINE_PLAYER_JOINED_DELAY);
     }
 
+    /// Also restore vitals on respawn, since the hub cancels damage/hunger-loss events
+    /// and has no natural way to bring a player back to full after they die and respawn.
+    @EventHandler
+    public void onPlayerRespawn(PlayerRespawnEvent event) {
+        restoreVitals(event.getPlayer());
+    }
+
     /// Set special permission depending on the player.
     private void setPermissions(Player player) {
         if (player.hasPermission("zander.hub.fly")) {
@@ -81,6 +90,19 @@ public class HubPlayerJoin implements Listener {
         player.getInventory().clear();
         player.getInventory().setHeldItemSlot(compassSlot);
         player.getInventory().setItem(compassSlot, NavigationCompassItem.createCompass());
+        restoreVitals(player);
+    }
+
+    /// Reset health, hunger, and fire so a player who arrives (or respawns) at less than full
+    /// vitals isn't stuck there — HubProtection cancels damage and hunger-loss events in the
+    /// hub, so nothing would otherwise bring these back up on their own.
+    private void restoreVitals(Player player) {
+        double maxHealth = player.getAttribute(Attribute.MAX_HEALTH).getValue();
+        player.setHealth(maxHealth);
+        player.setFoodLevel(20);
+        player.setSaturation(20f);
+        player.setExhaustion(0f);
+        player.setFireTicks(0);
     }
 
     /// Delayed login triggers (logic that's not immediate on login).

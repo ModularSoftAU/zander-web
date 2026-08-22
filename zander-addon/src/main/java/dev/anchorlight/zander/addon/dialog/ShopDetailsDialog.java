@@ -27,8 +27,9 @@ import java.util.logging.Level;
 
 /**
  * Single-shop details dialog, opened from {@link ShopSearchResultsDialog} when a player
- * clicks "View" on a search result. Offers a "Guide Me" navigation button (same-world only)
- * and a "Back to Results" button.
+ * clicks a search result row. Offers a "Guide Me" navigation button (same-world only)
+ * and a "Back to Results" button that returns the player to exactly the search/page/filter
+ * state they came from.
  *
  * <p>This class never touches QuickShop types directly; everything it needs comes
  * from {@link ShopDirectoryEntry} / {@link ShopDirectoryService} / {@link ShopNavigationService}.</p>
@@ -40,42 +41,44 @@ public class ShopDetailsDialog {
             .lifetime(Duration.ofMinutes(10))
             .build();
 
+    /** Widest a dialog element can be; used on body text so long lines never wrap mid-word. */
+    private static final int FULL_WIDTH = 1024;
+
     private final Plugin plugin;
     private final ShopDirectoryService directoryService;
     private final ShopNavigationService navigationService;
     private final ShopSearchResultsDialog resultsDialog;
-    private final ShopDirectoryDialog rootDialog;
 
     public ShopDetailsDialog(Plugin plugin,
                               ShopDirectoryService directoryService,
                               ShopNavigationService navigationService,
-                              ShopSearchResultsDialog resultsDialog,
-                              ShopDirectoryDialog rootDialog) {
+                              ShopSearchResultsDialog resultsDialog) {
         this.plugin = plugin;
         this.directoryService = directoryService;
         this.navigationService = navigationService;
         this.resultsDialog = resultsDialog;
-        this.rootDialog = rootDialog;
     }
 
     /**
      * Builds and shows the details dialog for {@code shopId}. Always re-resolves the shop via
-     * {@link ShopDirectoryService#resolve(String)} first (§4/§13) — a shop's price/stock/owner
-     * can change or the shop can be deleted between when a search result was shown and when the
-     * player clicks into details, so a stale passed-in entry is never trusted directly. Never
-     * throws; on any failure the player gets a plain chat message and the cause is logged.
+     * {@link ShopDirectoryService#resolve(String)} first — a shop's price/stock/owner can
+     * change or the shop can be deleted between when a search result was shown and when the
+     * player clicks into details, so a stale passed-in entry is never trusted directly.
+     *
+     * @param query      the search query the player found this shop under; threaded through so
+     *                   "Back to Results" returns to the same directory state.
+     * @param page       the 0-based results page the player found this shop on.
+     * @param kindFilter the shop-kind filter active when the player found this shop.
      */
-    public void open(Player player, String shopId) {
+    public void open(Player player, String shopId, String query, int page, ShopDirectoryEntry.ShopKind kindFilter) {
         try {
             Optional<ShopDirectoryEntry> resolved = directoryService.resolve(shopId);
             if (resolved.isEmpty()) {
-                player.sendMessage(Component.text("That shop is no longer available.", NamedTextColor.RED));
-                // Fall back to the root directory dialog rather than resetting the player's
-                // in-progress search/filter to an unfiltered, page-0 "browse all" view.
-                rootDialog.open(player);
+                player.sendMessage(Component.text("This shop is no longer available.", NamedTextColor.RED));
+                resultsDialog.open(player, query, page, kindFilter);
                 return;
             }
-            player.showDialog(buildDialog(resolved.get(), player));
+            player.showDialog(buildDialog(resolved.get(), player, query, page, kindFilter));
         } catch (Throwable t) {
             player.sendMessage(Component.text("Could not open shop details.", NamedTextColor.RED));
             plugin.getLogger().log(Level.WARNING,
@@ -85,50 +88,66 @@ public class ShopDetailsDialog {
 
     // ---------------------------------------------------------------- builders
 
-    private Dialog buildDialog(ShopDirectoryEntry entry, Player player) {
+    private Dialog buildDialog(ShopDirectoryEntry entry, Player player, String query, int page,
+                                ShopDirectoryEntry.ShopKind kindFilter) {
         List<DialogBody> body = new ArrayList<>();
         List<ActionButton> buttons = new ArrayList<>();
 
         boolean sameWorld = entry.world().equals(player.getWorld().getName());
 
-        body.add(DialogBody.plainMessage(Component.text(entry.itemDisplayName())));
+        // Shop owners can rename their item (e.g. an anvil-renamed "d"), so when the display
+        // name isn't obviously the material itself, show the real material too.
+        String materialName = materialName(entry);
+        String itemTitle = entry.itemDisplayName().equalsIgnoreCase(materialName)
+                ? entry.itemDisplayName()
+                : entry.itemDisplayName() + " (" + materialName + ")";
+
+        body.add(DialogBody.plainMessage(Component.text(itemTitle), FULL_WIDTH));
         body.add(DialogBody.plainMessage(Component.text(
-                "Seller: " + entry.ownerDisplayName(), NamedTextColor.GRAY)));
+                "Seller: " + entry.ownerDisplayName(), NamedTextColor.GRAY), FULL_WIDTH));
         body.add(DialogBody.plainMessage(Component.text(
-                "Price: " + formatPrice(entry.price()), NamedTextColor.GRAY)));
+                "Price: " + formatPrice(entry.price()) + "  |  Type: " + kindLabel(entry.kind()),
+                NamedTextColor.GRAY), FULL_WIDTH));
         body.add(DialogBody.plainMessage(Component.text(
-                "Stock: " + formatStock(entry.stock()), NamedTextColor.GRAY)));
+                "Stock: " + formatStock(entry.stock()), NamedTextColor.GRAY), FULL_WIDTH));
 
         if (sameWorld) {
             body.add(DialogBody.plainMessage(Component.text(
-                    "Distance: " + distanceLabel(entry, player.getLocation()), NamedTextColor.GRAY)));
+                    "Distance: " + distanceLabel(entry, player.getLocation()), NamedTextColor.GRAY), FULL_WIDTH));
         } else {
             body.add(DialogBody.plainMessage(Component.text(
                     "This shop is in the " + entry.world() + " world.\nTravel there before starting navigation.",
-                    NamedTextColor.YELLOW)));
+                    NamedTextColor.YELLOW), FULL_WIDTH));
         }
 
         body.add(DialogBody.plainMessage(Component.text(
-                "World: " + entry.world(), NamedTextColor.GRAY)));
-        body.add(DialogBody.plainMessage(Component.text(
-                "Location: " + coordinatesLabel(entry.location()), NamedTextColor.GRAY)));
+                "World: " + entry.world() + "  |  Location: " + coordinatesLabel(entry.location()),
+                NamedTextColor.GRAY), FULL_WIDTH));
 
         if (sameWorld) {
             String shopId = entry.shopId();
             buttons.add(button("Guide Me", "Start navigation to this shop",
-                    (response, audience) -> onMainThread(audience, p -> startGuide(p, shopId))));
+                    (response, audience) -> onMainThread(audience,
+                            p -> startGuide(p, shopId, query, page, kindFilter))));
         }
 
-        buttons.add(button("Back to Results", "Return to the shop directory",
-                (response, audience) -> onMainThread(audience,
-                        p -> rootDialog.open(p))));
+        // "Back to Results" is the exit action rather than a regular button: it's always
+        // rendered separately from Guide Me, so it stays easy to find regardless of how many
+        // other buttons are on screen.
+        ActionButton backButton = ActionButton.builder(Component.text("Back to Results"))
+                .tooltip(Component.text("Return to the shop directory"))
+                .action(DialogAction.customClick(
+                        (response, audience) -> onMainThread(audience,
+                                p -> resultsDialog.open(p, query, page, kindFilter)),
+                        CLICK_OPTIONS))
+                .build();
 
         return Dialog.create(factory -> factory.empty()
                 .base(DialogBase.builder(Component.text("Shop Details"))
                         .body(body)
                         .canCloseWithEscape(true)
                         .build())
-                .type(DialogType.multiAction(buttons).columns(1).build()));
+                .type(DialogType.multiAction(buttons).exitAction(backButton).columns(1).build()));
     }
 
     private static ActionButton button(String label, String tooltip, DialogActionCallback callback) {
@@ -140,11 +159,12 @@ public class ShopDetailsDialog {
 
     // ---------------------------------------------------------------- helpers
 
-    private void startGuide(Player player, String shopId) {
+    private void startGuide(Player player, String shopId, String query, int page,
+                             ShopDirectoryEntry.ShopKind kindFilter) {
         Optional<ShopDirectoryEntry> resolved = directoryService.resolve(shopId);
         if (resolved.isEmpty()) {
-            player.sendMessage(Component.text("That shop is no longer available.", NamedTextColor.RED));
-            rootDialog.open(player);
+            player.sendMessage(Component.text("This shop is no longer available.", NamedTextColor.RED));
+            resultsDialog.open(player, query, page, kindFilter);
             return;
         }
         ShopDirectoryEntry entry = resolved.get();
@@ -157,6 +177,26 @@ public class ShopDetailsDialog {
         navigationService.start(player, entry);
         player.sendMessage(Component.text(
                 "Navigating to " + entry.itemDisplayName() + ".", NamedTextColor.GREEN));
+    }
+
+    private static String kindLabel(ShopDirectoryEntry.ShopKind kind) {
+        return kind == ShopDirectoryEntry.ShopKind.SELLING ? "Selling" : "Buying";
+    }
+
+    /** Duplicated from {@link ShopSearchResultsDialog#materialName(ShopDirectoryEntry)}. */
+    private static String materialName(ShopDirectoryEntry entry) {
+        String[] words = entry.item().name().toLowerCase(java.util.Locale.ROOT).split("_");
+        StringBuilder sb = new StringBuilder();
+        for (String word : words) {
+            if (word.isEmpty()) {
+                continue;
+            }
+            if (sb.length() > 0) {
+                sb.append(' ');
+            }
+            sb.append(Character.toUpperCase(word.charAt(0))).append(word, 1, word.length());
+        }
+        return sb.toString();
     }
 
     /**

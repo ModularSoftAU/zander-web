@@ -116,9 +116,9 @@ public class ZanderAddonMain extends JavaPlugin {
                 this.shopNavigationService = new ShopNavigationService(this, shopDirectoryConfig, shopDirectoryService);
                 this.shopNavigationService.start();
 
-                ShopDirectoryDialog rootDialog = new ShopDirectoryDialog(this, shopDirectoryService, shopNavigationService, shopDirectoryConfig);
-                ShopSearchResultsDialog resultsDialog = new ShopSearchResultsDialog(this, shopDirectoryService, shopDirectoryConfig, rootDialog);
-                ShopDetailsDialog detailsDialog = new ShopDetailsDialog(this, shopDirectoryService, shopNavigationService, resultsDialog, rootDialog);
+                ShopDirectoryDialog rootDialog = new ShopDirectoryDialog(this, shopNavigationService, shopDirectoryConfig);
+                ShopSearchResultsDialog resultsDialog = new ShopSearchResultsDialog(this, shopDirectoryService, shopDirectoryConfig);
+                ShopDetailsDialog detailsDialog = new ShopDetailsDialog(this, shopDirectoryService, shopNavigationService, resultsDialog);
                 rootDialog.setResultsOpener(resultsDialog::open);
                 resultsDialog.setDetailsOpener(detailsDialog::open);
 
