@@ -17,6 +17,7 @@ import net.kyori.adventure.text.format.NamedTextColor;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
+import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.Plugin;
 
 import java.time.Duration;
@@ -99,19 +100,29 @@ public class ShopDetailsDialog {
                 ? entry.itemDisplayName()
                 : entry.itemDisplayName() + " (" + materialName + ")";
 
-        body.add(DialogBody.plainMessage(Component.text(itemTitle)));
+        // Shows the actual item icon. ActionButton has no icon support in the Paper Dialog API
+        // (text/tooltip only), so this only works here where there's a single item to show -
+        // it's not possible to pair an icon with each clickable row in the results list.
+        body.add(DialogBody.item(new ItemStack(entry.item()))
+                .showTooltip(false)
+                .build());
+
+        // Each plainMessage is its own block with its own vertical padding, so lines are grouped
+        // as few, wider lines rather than one field per line to keep the dialog compact.
+        body.add(DialogBody.plainMessage(Component.text(itemTitle, NamedTextColor.WHITE)));
         body.add(DialogBody.plainMessage(Component.text(
-                "Seller: " + entry.ownerDisplayName(), NamedTextColor.GRAY)));
-        body.add(DialogBody.plainMessage(Component.text(
-                "Price: " + formatPrice(entry.price()) + "  |  Type: " + kindLabel(entry.kind()),
-                NamedTextColor.GRAY)));
-        body.add(DialogBody.plainMessage(Component.text(
-                "Stock: " + formatStock(entry.stock()), NamedTextColor.GRAY)));
+                "Seller: " + entry.ownerDisplayName() + "  |  Price: " + formatPrice(entry.price())
+                        + "  |  Type: " + kindLabel(entry.kind()),
+                NamedTextColor.WHITE)));
 
         if (sameWorld) {
             body.add(DialogBody.plainMessage(Component.text(
-                    "Distance: " + distanceLabel(entry, player.getLocation()), NamedTextColor.GRAY)));
+                    "Stock: " + formatStock(entry.stock())
+                            + "  |  Distance: " + distanceLabel(entry, player.getLocation()),
+                    NamedTextColor.WHITE)));
         } else {
+            body.add(DialogBody.plainMessage(Component.text(
+                    "Stock: " + formatStock(entry.stock()), NamedTextColor.WHITE)));
             body.add(DialogBody.plainMessage(Component.text(
                     "This shop is in the " + entry.world() + " world.\nTravel there before starting navigation.",
                     NamedTextColor.YELLOW)));
@@ -119,7 +130,7 @@ public class ShopDetailsDialog {
 
         body.add(DialogBody.plainMessage(Component.text(
                 "World: " + entry.world() + "  |  Location: " + coordinatesLabel(entry.location()),
-                NamedTextColor.GRAY)));
+                NamedTextColor.WHITE)));
 
         if (sameWorld) {
             String shopId = entry.shopId();
