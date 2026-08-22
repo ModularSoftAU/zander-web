@@ -44,10 +44,10 @@ import java.util.logging.Logger;
  *
  * <p><b>Verified API surface</b> (QuickShop-Hikari {@code com.ghostchu:quickshop-bukkit:6.3.0.0}
  * classifier {@code shaded}; inspected with {@code jar tf} + {@code javap} against the jar in the
- * local Maven repository — the API classes are present unrelocated under
+ * local Maven repository - the API classes are present unrelocated under
  * {@code com/ghostchu/quickshop/api/}):
  * <ul>
- *   <li>Entry point: {@code com.ghostchu.quickshop.api.QuickShopProvider} — the QuickShop
+ *   <li>Entry point: {@code com.ghostchu.quickshop.api.QuickShopProvider} - the QuickShop
  *       {@link Plugin} instance implements it; {@code getApiInstance()} returns
  *       {@code com.ghostchu.quickshop.api.QuickShopAPI}. {@code QuickShopAPI.getInstance()} exists
  *       as a static fallback.</li>
@@ -72,16 +72,16 @@ import java.util.logging.Logger;
  *   </li>
  *   <li>Events (all extend {@code com.ghostchu.quickshop.api.event.AbstractQSEvent}, a Bukkit
  *       {@code Event}; the phased ones additionally extend {@code PhasedEvent} and fire once per
- *       {@code com.ghostchu.quickshop.api.event.Phase} — PRE / PRE_CANCELLABLE / MAIN / POST /
- *       RETRIEVE — so this class only reacts to {@code Phase.POST}):
+ *       {@code com.ghostchu.quickshop.api.event.Phase} - PRE / PRE_CANCELLABLE / MAIN / POST /
+ *       RETRIEVE - so this class only reacts to {@code Phase.POST}):
  *       <ul>
  *         <li>{@code event.management.ShopCreateEvent} (phased)</li>
  *         <li>{@code event.management.ShopDeleteEvent} (phased)</li>
  *         <li>{@code event.settings.type.ShopPriceEvent} (phased)</li>
  *         <li>{@code event.settings.type.ShopOwnerEvent} (phased)</li>
  *         <li>{@code event.settings.type.ShopTypeEnhancedEvent} (phased)</li>
- *         <li>{@code event.economy.ShopSuccessPurchaseEvent} (not phased — stock-affecting)</li>
- *         <li>{@code event.inventory.ShopInventoryChangedEvent} (not phased — stock-affecting)</li>
+ *         <li>{@code event.economy.ShopSuccessPurchaseEvent} (not phased - stock-affecting)</li>
+ *         <li>{@code event.inventory.ShopInventoryChangedEvent} (not phased - stock-affecting)</li>
  *       </ul>
  *   </li>
  * </ul>
@@ -144,7 +144,7 @@ public final class QuickShopIntegration {
 
     /**
      * Full enumeration of every shop, restricted to {@code allowedWorlds} (empty/null means all
-     * worlds). Expensive — intended only for the initial index build and the periodic safety
+     * worlds). Expensive - intended only for the initial index build and the periodic safety
      * refresh, never per player command.
      */
     public List<ShopDirectoryEntry> snapshotAllShops(Collection<String> allowedWorlds) {
@@ -318,7 +318,7 @@ public final class QuickShopIntegration {
     /**
      * Stock via QuickShop's own type-aware accessor. Unlimited shops report
      * {@link Integer#MAX_VALUE}. If the read fails (unusual container, chunk unloaded, custom
-     * inventory provider), this returns 0 rather than propagating — meaning such shops look
+     * inventory provider), this returns 0 rather than propagating - meaning such shops look
      * out-of-stock in the directory instead of breaking the whole snapshot.
      */
     private int stockOf(Shop shop) {

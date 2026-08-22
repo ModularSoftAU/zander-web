@@ -10,14 +10,14 @@
 
 ## Global Constraints
 
-- No test framework exists in `zander-hub` (no MockBukkit/JUnit). Verification is manual, in-game, per the approved spec — do not attempt to add automated tests as part of this plan.
-- Permission node for each server entry is always `bungeecord.server.<id>` (auto-derived, no config field) — matches the existing convention in the current click handler.
+- No test framework exists in `zander-hub` (no MockBukkit/JUnit). Verification is manual, in-game, per the approved spec - do not attempt to add automated tests as part of this plan.
+- Permission node for each server entry is always `bungeecord.server.<id>` (auto-derived, no config field) - matches the existing convention in the current click handler.
 - Config parsing failures must log a warning and skip the offending entry; they must never throw or block plugin startup (matches `ConfigValidator`/`MiscConfig` conventions already in the codebase).
-- Proxy request timeout is 3 seconds; a timeout must never hang the GUI open or crash — it degrades to "unavailable"/unfiltered behavior as specified.
+- Proxy request timeout is 3 seconds; a timeout must never hang the GUI open or crash - it degrades to "unavailable"/unfiltered behavior as specified.
 
 ---
 
-### Task 1: `CompassConfig` — config-driven server entries
+### Task 1: `CompassConfig` - config-driven server entries
 
 **Files:**
 - Create: `src/main/java/org/modularsoft/zander/hub/configs/CompassConfig.java`
@@ -186,7 +186,7 @@ git commit -m "feat: add config-driven Navigation Compass server entries"
 
 ---
 
-### Task 2: `ProxyMessaging` — GetServers / PlayerCount plugin messaging
+### Task 2: `ProxyMessaging` - GetServers / PlayerCount plugin messaging
 
 **Files:**
 - Create: `src/main/java/org/modularsoft/zander/hub/events/ProxyMessaging.java`
@@ -336,7 +336,7 @@ Expected: `BUILD SUCCESS`.
 
 - [ ] **Step 4: Manual verification against a running proxy**
 
-Deploy to a test Velocity + backend setup. Join the hub server and run (temporarily, e.g. from a throwaway debug command or breakpoint) `ZanderHubMain.proxyMessaging.requestServerList(player).thenAccept(System.out::println)` — confirm the console prints the real list of registered backend server ids within 3 seconds. This step has no persisted code; it's a manual smoke check before wiring the GUI in Task 3.
+Deploy to a test Velocity + backend setup. Join the hub server and run (temporarily, e.g. from a throwaway debug command or breakpoint) `ZanderHubMain.proxyMessaging.requestServerList(player).thenAccept(System.out::println)` - confirm the console prints the real list of registered backend server ids within 3 seconds. This step has no persisted code; it's a manual smoke check before wiring the GUI in Task 3.
 
 - [ ] **Step 5: Commit**
 
@@ -347,14 +347,14 @@ git commit -m "feat: add GetServers/PlayerCount proxy messaging support"
 
 ---
 
-### Task 3: Rewrite `HubCompassItem` — permission-gated, live-count GUI
+### Task 3: Rewrite `HubCompassItem` - permission-gated, live-count GUI
 
 **Files:**
 - Modify: `src/main/java/org/modularsoft/zander/hub/gui/HubCompassItem.java`
 
 **Interfaces:**
 - Consumes: `ConfigurationManager.getCompass().getServers()` → `List<CompassConfig.CompassServerEntry>` (Task 1); `ZanderHubMain.proxyMessaging.requestServerList(Player)` → `CompletableFuture<List<String>>` and `.requestPlayerCount(Player, String)` → `CompletableFuture<Integer>` (Task 2); `PluginMessageChannel.connect(Player, String)` (existing, unchanged).
-- Produces: nothing consumed elsewhere — this is the leaf/GUI layer.
+- Produces: nothing consumed elsewhere - this is the leaf/GUI layer.
 
 - [ ] **Step 1: Replace `HubCompassItem.java` entirely**
 

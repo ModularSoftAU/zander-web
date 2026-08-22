@@ -94,7 +94,7 @@ public class HubPlayerJoin implements Listener {
     }
 
     /// Reset health, hunger, and fire so a player who arrives (or respawns) at less than full
-    /// vitals isn't stuck there — HubProtection cancels damage and hunger-loss events in the
+    /// vitals isn't stuck there - HubProtection cancels damage and hunger-loss events in the
     /// hub, so nothing would otherwise bring these back up on their own.
     private void restoreVitals(Player player) {
         double maxHealth = player.getAttribute(Attribute.MAX_HEALTH).getValue();

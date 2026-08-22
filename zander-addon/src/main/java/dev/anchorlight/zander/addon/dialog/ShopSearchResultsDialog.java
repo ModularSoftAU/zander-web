@@ -28,7 +28,7 @@ import java.util.logging.Level;
 
 /**
  * The shop directory itself: a search box plus a paginated, filterable table of results.
- * This is what {@code /shops} shows immediately — there is no separate "search first" screen.
+ * This is what {@code /shops} shows immediately - there is no separate "search first" screen.
  *
  * <p>This class never touches QuickShop types directly; everything it needs comes
  * from {@link ShopDirectoryEntry} / {@link ShopDirectoryService} / {@link ShopSearchService}.</p>
@@ -39,13 +39,6 @@ public class ShopSearchResultsDialog {
     static final String INPUT_KEY_QUERY = "query";
 
     private static final int MAX_QUERY_LENGTH = 64;
-
-    /** Widest a dialog element can be; used on body text so long lines never wrap mid-word. */
-    private static final int FULL_WIDTH = 1024;
-
-    /** Narrower width for the search/filter/pagination controls, so they read as a compact
-     *  group distinct from the full-width shop rows below them. */
-    private static final int CONTROL_WIDTH = 300;
 
     private static final ClickCallback.Options CLICK_OPTIONS = ClickCallback.Options.builder()
             .uses(ClickCallback.UNLIMITED_USES)
@@ -131,28 +124,26 @@ public class ShopSearchResultsDialog {
         if (totalResults == 0) {
             body.add(DialogBody.plainMessage(query.isBlank()
                     ? Component.text("No shops are currently indexed.", NamedTextColor.GRAY)
-                    : Component.text("No shops found matching \"" + query + "\".", NamedTextColor.GRAY), FULL_WIDTH));
+                    : Component.text("No shops found matching \"" + query + "\".", NamedTextColor.GRAY)));
         } else {
             body.add(DialogBody.plainMessage(Component.text(
                     totalResults + " shop" + (totalResults == 1 ? "" : "s") + " found. Page "
-                            + (page + 1) + " of " + (lastPage + 1) + ".", NamedTextColor.GRAY), FULL_WIDTH));
+                            + (page + 1) + " of " + (lastPage + 1) + ".", NamedTextColor.GRAY)));
             body.add(DialogBody.plainMessage(Component.text(
-                    "Item | Price | Type | Player", NamedTextColor.DARK_GRAY), FULL_WIDTH));
+                    "Item | Price | Type | Player", NamedTextColor.DARK_GRAY)));
 
             // A non-interactive divider button (no action) visually separates the search/filter
-            // controls above from the full-width, clickable shop rows below — Paper Dialogs
-            // render body text and buttons in separate sections, so this is the only way to
-            // put a visual break between two groups of buttons.
-            buttons.add(ActionButton.builder(Component.text("— Results —", NamedTextColor.DARK_GRAY))
-                    .width(FULL_WIDTH)
-                    .build());
+            // controls above from the clickable shop rows below - Paper Dialogs render body
+            // text and buttons in separate sections, so this is the only way to put a visual
+            // break between two groups of buttons.
+            buttons.add(ActionButton.builder(Component.text("- Results -", NamedTextColor.DARK_GRAY)).build());
 
             for (ShopDirectoryEntry entry : pageResults) {
                 NamedTextColor kindColor = entry.kind() == ShopDirectoryEntry.ShopKind.SELLING
                         ? NamedTextColor.GREEN : NamedTextColor.GOLD;
                 // Shop owners can rename their item (e.g. an anvil-renamed "d"), so when the
                 // display name isn't obviously the material itself, show the real material
-                // alongside it — otherwise players can't tell what a cryptically-named row is.
+                // alongside it - otherwise players can't tell what a cryptically-named row is.
                 String materialName = materialName(entry);
                 String itemLabel = entry.itemDisplayName().equalsIgnoreCase(materialName)
                         ? entry.itemDisplayName()
@@ -163,7 +154,6 @@ public class ShopSearchResultsDialog {
                         + distanceLabel(entry, viewerLocation) + " · Click to view details";
                 buttons.add(ActionButton.builder(Component.text(label, kindColor))
                         .tooltip(Component.text(tooltip))
-                        .width(FULL_WIDTH)
                         .action(DialogAction.customClick(
                                 (response, audience) -> onMainThread(audience,
                                         p -> openDetails(p, entry.shopId(), query, page, kindFilter)),
@@ -178,15 +168,15 @@ public class ShopSearchResultsDialog {
                 .build();
 
         List<ActionButton> topButtons = new ArrayList<>();
-        topButtons.add(button("Search", "Search shops for the item you typed", CONTROL_WIDTH,
+        topButtons.add(button("Search", "Search shops for the item you typed",
                 (response, audience) -> onMainThread(audience, player -> {
                     String newQuery = response.getText(INPUT_KEY_QUERY);
                     open(player, newQuery == null ? "" : newQuery, 0, kindFilter);
                 })));
-        topButtons.add(button("Clear", "Clear the search and show all shops", CONTROL_WIDTH,
+        topButtons.add(button("Clear", "Clear the search and show all shops",
                 (response, audience) -> onMainThread(audience, player -> open(player, "", 0, null))));
         topButtons.add(button("Filter: " + filterLabel(kindFilter),
-                "Cycle between all shops, selling only, and buying only", CONTROL_WIDTH,
+                "Cycle between all shops, selling only, and buying only",
                 (response, audience) -> onMainThread(audience,
                         p -> open(p, query, 0, nextFilter(kindFilter)))));
 
@@ -194,12 +184,12 @@ public class ShopSearchResultsDialog {
         allButtons.addAll(buttons);
 
         if (page > 0) {
-            allButtons.add(button("Previous", "Go to the previous page", CONTROL_WIDTH,
+            allButtons.add(button("Previous", "Go to the previous page",
                     (response, audience) -> onMainThread(audience,
                             p -> open(p, query, page - 1, kindFilter))));
         }
         if (page < lastPage) {
-            allButtons.add(button("Next", "Go to the next page", CONTROL_WIDTH,
+            allButtons.add(button("Next", "Go to the next page",
                     (response, audience) -> onMainThread(audience,
                             p -> open(p, query, page + 1, kindFilter))));
         }
@@ -213,10 +203,9 @@ public class ShopSearchResultsDialog {
                 .type(DialogType.multiAction(allButtons).columns(1).build()));
     }
 
-    private static ActionButton button(String label, String tooltip, int width, DialogActionCallback callback) {
+    private static ActionButton button(String label, String tooltip, DialogActionCallback callback) {
         return ActionButton.builder(Component.text(label))
                 .tooltip(Component.text(tooltip))
-                .width(width)
                 .action(DialogAction.customClick(callback, CLICK_OPTIONS))
                 .build();
     }
@@ -274,7 +263,7 @@ public class ShopSearchResultsDialog {
     }
 
     /**
-     * Distance to the shop, or {@code "?"} when it cannot be computed (different world —
+     * Distance to the shop, or {@code "?"} when it cannot be computed (different world -
      * {@link Location#distance(Location)} throws {@link IllegalArgumentException}).
      */
     private static String distanceLabel(ShopDirectoryEntry entry, Location viewerLocation) {

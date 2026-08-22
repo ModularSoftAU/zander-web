@@ -7,7 +7,7 @@ import org.bukkit.entity.Player;
 import dev.anchorlight.zander.pgm.ZanderPGMPlugin;
 import dev.anchorlight.zander.pgm.rating.MapRatingService;
 
-/** {@code /maprate <1-5> [feedback]} — rate the last map, optionally with feedback. */
+/** {@code /maprate <1-5> [feedback]} - rate the last map, optionally with feedback. */
 public class MapRateCommand implements CommandExecutor {
 
     private final ZanderPGMPlugin plugin;

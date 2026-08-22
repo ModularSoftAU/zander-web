@@ -41,9 +41,6 @@ public class ShopDetailsDialog {
             .lifetime(Duration.ofMinutes(10))
             .build();
 
-    /** Widest a dialog element can be; used on body text so long lines never wrap mid-word. */
-    private static final int FULL_WIDTH = 1024;
-
     private final Plugin plugin;
     private final ShopDirectoryService directoryService;
     private final ShopNavigationService navigationService;
@@ -61,7 +58,7 @@ public class ShopDetailsDialog {
 
     /**
      * Builds and shows the details dialog for {@code shopId}. Always re-resolves the shop via
-     * {@link ShopDirectoryService#resolve(String)} first — a shop's price/stock/owner can
+     * {@link ShopDirectoryService#resolve(String)} first - a shop's price/stock/owner can
      * change or the shop can be deleted between when a search result was shown and when the
      * player clicks into details, so a stale passed-in entry is never trusted directly.
      *
@@ -102,27 +99,27 @@ public class ShopDetailsDialog {
                 ? entry.itemDisplayName()
                 : entry.itemDisplayName() + " (" + materialName + ")";
 
-        body.add(DialogBody.plainMessage(Component.text(itemTitle), FULL_WIDTH));
+        body.add(DialogBody.plainMessage(Component.text(itemTitle)));
         body.add(DialogBody.plainMessage(Component.text(
-                "Seller: " + entry.ownerDisplayName(), NamedTextColor.GRAY), FULL_WIDTH));
+                "Seller: " + entry.ownerDisplayName(), NamedTextColor.GRAY)));
         body.add(DialogBody.plainMessage(Component.text(
                 "Price: " + formatPrice(entry.price()) + "  |  Type: " + kindLabel(entry.kind()),
-                NamedTextColor.GRAY), FULL_WIDTH));
+                NamedTextColor.GRAY)));
         body.add(DialogBody.plainMessage(Component.text(
-                "Stock: " + formatStock(entry.stock()), NamedTextColor.GRAY), FULL_WIDTH));
+                "Stock: " + formatStock(entry.stock()), NamedTextColor.GRAY)));
 
         if (sameWorld) {
             body.add(DialogBody.plainMessage(Component.text(
-                    "Distance: " + distanceLabel(entry, player.getLocation()), NamedTextColor.GRAY), FULL_WIDTH));
+                    "Distance: " + distanceLabel(entry, player.getLocation()), NamedTextColor.GRAY)));
         } else {
             body.add(DialogBody.plainMessage(Component.text(
                     "This shop is in the " + entry.world() + " world.\nTravel there before starting navigation.",
-                    NamedTextColor.YELLOW), FULL_WIDTH));
+                    NamedTextColor.YELLOW)));
         }
 
         body.add(DialogBody.plainMessage(Component.text(
                 "World: " + entry.world() + "  |  Location: " + coordinatesLabel(entry.location()),
-                NamedTextColor.GRAY), FULL_WIDTH));
+                NamedTextColor.GRAY)));
 
         if (sameWorld) {
             String shopId = entry.shopId();
@@ -212,7 +209,7 @@ public class ShopDetailsDialog {
     }
 
     /**
-     * Duplicated from {@link ShopSearchResultsDialog#formatStock(int)} — same "Unlimited"
+     * Duplicated from {@link ShopSearchResultsDialog#formatStock(int)} - same "Unlimited"
      * special-case for the {@code Integer.MAX_VALUE} sentinel.
      */
     private static String formatStock(int stock) {
@@ -223,7 +220,7 @@ public class ShopDetailsDialog {
     }
 
     /**
-     * Distance to the shop, or {@code "?"} when it cannot be computed (different world —
+     * Distance to the shop, or {@code "?"} when it cannot be computed (different world -
      * {@link Location#distance(Location)} throws {@link IllegalArgumentException}).
      */
     private static String distanceLabel(ShopDirectoryEntry entry, Location viewerLocation) {

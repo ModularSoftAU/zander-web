@@ -15,7 +15,7 @@ import java.util.List;
 /**
  * Self-service "spend a Map Token" menu for spectators. Balance is read from
  * and spends are posted to the same web-side ledger the dashboard/store use
- * (see ZanderApiClient#getMapTokens / #requestMapToken) — the plugin never
+ * (see ZanderApiClient#getMapTokens / #requestMapToken) - the plugin never
  * maintains its own copy of this balance.
  */
 public class MapTokenMenu extends Menu {
@@ -43,7 +43,7 @@ public class MapTokenMenu extends Menu {
             setItem(NOMINATE_SLOT, actionItem(Material.PAPER, "§aNominate " + mapName,
                     "§7Add this map to the next vote."), e -> spend(plugin, (Player) e.getWhoClicked(), mapKey, "nominate"));
             setItem(SET_NEXT_SLOT, actionItem(Material.CLOCK, "§aSet " + mapName + " as next",
-                    "§7Skip voting — play this map next."), e -> spend(plugin, (Player) e.getWhoClicked(), mapKey, "set_next"));
+                    "§7Skip voting - play this map next."), e -> spend(plugin, (Player) e.getWhoClicked(), mapKey, "set_next"));
             setItem(SPONSOR_SLOT, actionItem(Material.GOLD_INGOT, "§aSponsor " + mapName,
                     "§7Guarantee this map wins the next vote."), e -> spend(plugin, (Player) e.getWhoClicked(), mapKey, "sponsor"));
         }
@@ -58,7 +58,7 @@ public class MapTokenMenu extends Menu {
 
     private void handleResult(Player player, String body) {
         if (body == null) {
-            player.sendMessage("§cCouldn't reach the server — try again in a moment.");
+            player.sendMessage("§cCouldn't reach the server - try again in a moment.");
             return;
         }
         try {

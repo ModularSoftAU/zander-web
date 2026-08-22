@@ -32,7 +32,7 @@ for stats, profiles, leaderboards, maps, voting, ratings and store integration.
 ## Integration with PGM
 
 PGM is a **required** dependency (`depend: [PGM]`). ZanderPGM integrates with PGM
-**reflectively** — PGM event classes are resolved by name and registered through
+**reflectively** - PGM event classes are resolved by name and registered through
 a Bukkit `EventExecutor`, and match/map details are read via reflection. This
 keeps the module compiling without the PGM artifact on the build classpath and
 degrades gracefully across PGM versions: unknown events are simply skipped. Death
@@ -120,7 +120,7 @@ Players buy/earn tokens on zander-web and spend them to influence map selection:
 nominate a map into the next vote (1), set the next match (3), or sponsor a
 featured vote option (5). zander-pgm polls zander-web for pending requests,
 validates them (map exists, enabled, not blacklisted, cooldowns, minimum
-players), and applies valid ones to the **next** match/vote — never interrupting
+players), and applies valid ones to the **next** match/vote - never interrupting
 a running match. Failures are reported back so zander-web can refund tokens when
 `refundIfFailed` is set. Lifecycle events: `MAP_REQUEST_RECEIVED / ACCEPTED /
 APPLIED / REJECTED / FAILED / REFUNDED`.
@@ -226,16 +226,16 @@ The shaded jar lands in `zander-pgm/target/` (and the aggregated
 1. Start server with PGM and zander-pgm.
 2. Confirm startup detects PGM.
 3. Confirm heartbeat reaches zander-web.
-4. Load a PGM map — confirm `MATCH_LOADED` is sent.
-5. Start match — confirm `MATCH_STARTED`.
-6. Kill a player — confirm `PLAYER_DEATH`.
-7. Complete an objective — confirm `OBJECTIVE_EVENT`.
-8. Finish match — confirm `MATCH_ENDED` + stats snapshots.
+4. Load a PGM map - confirm `MATCH_LOADED` is sent.
+5. Start match - confirm `MATCH_STARTED`.
+6. Kill a player - confirm `PLAYER_DEATH`.
+7. Complete an objective - confirm `OBJECTIVE_EVENT`.
+8. Finish match - confirm `MATCH_ENDED` + stats snapshots.
 9. Confirm players receive the `/maprate` prompt; submit `/maprate 5` and
    `/maprate 4 optional feedback`; confirm the rating event is sent.
 10. Start a vote, `/vote <number>`, confirm the vote event and that the winner
     becomes the next map.
 11. Receive a Map Token request from zander-web; confirm validation, apply/reject
     and result reporting.
-12. Stop zander-web — confirm events queue instead of crashing. Restart it —
+12. Stop zander-web - confirm events queue instead of crashing. Restart it -
     confirm the queue flushes.

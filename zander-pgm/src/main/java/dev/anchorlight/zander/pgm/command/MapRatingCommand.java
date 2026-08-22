@@ -6,7 +6,7 @@ import org.bukkit.command.CommandSender;
 import dev.anchorlight.zander.pgm.ZanderPGMPlugin;
 import dev.anchorlight.zander.pgm.rating.MapRatingSession;
 
-/** {@code /maprating} — show the current/last rating prompt and status. */
+/** {@code /maprating} - show the current/last rating prompt and status. */
 public class MapRatingCommand implements CommandExecutor {
 
     private final ZanderPGMPlugin plugin;

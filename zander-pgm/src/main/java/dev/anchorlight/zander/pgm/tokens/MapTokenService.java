@@ -20,7 +20,7 @@ import java.util.concurrent.ConcurrentHashMap;
 /**
  * Applies remote Map Token requests (nominate/set-next/sponsor) to the match
  * rotation and vote service. Balances and transaction history live entirely
- * on zander-web — this plugin never keeps its own copy of the ledger; see
+ * on zander-web - this plugin never keeps its own copy of the ledger; see
  * {@code ZanderApiClient#getMapTokens} / {@code #requestMapToken} for the
  * balance read/spend path used by the in-game menu.
  */

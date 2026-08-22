@@ -50,7 +50,7 @@ import java.util.List;
 import java.util.Objects;
 
 /**
- * ZanderPGM — PGM companion plugin for the Mixed server. Bridges PGM
+ * ZanderPGM - PGM companion plugin for the Mixed server. Bridges PGM
  * match/stat/objective events to zander-web over REST and WebSocket, and adds
  * Map Tokens, Map Voting and post-match Map Ratings. Contains no moderation,
  * punishment or chat-tag features by design.
@@ -336,7 +336,7 @@ public class ZanderPGMPlugin extends JavaPlugin {
                 + " playerStats=" + config.feature("playerStats")
                 + " mapStats=" + config.feature("mapStats"));
         if (config.isPlaceholderToken()) {
-            log.warn("api.token is still 'change-me' — matches/players/leaderboards will NOT reach zander-web until this is set.");
+            log.warn("api.token is still 'change-me' - matches/players/leaderboards will NOT reach zander-web until this is set.");
         }
     }
 

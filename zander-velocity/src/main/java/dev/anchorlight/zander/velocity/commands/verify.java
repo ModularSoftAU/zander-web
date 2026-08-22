@@ -76,7 +76,7 @@ public class verify implements SimpleCommand {
             return;
         }
 
-        // /verify <code> — submit the code in-game
+        // /verify <code> - submit the code in-game
         String code = args[0];
 
         if (!code.matches("[0-9]{6}")) {

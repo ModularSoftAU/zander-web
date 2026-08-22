@@ -70,7 +70,7 @@ public final class MenuItems {
         return TAG_VALUE_RATING.equals(tagOf(plugin, item));
     }
 
-    /** Preferred hotbar slot for menu items — only used if that slot is actually empty. */
+    /** Preferred hotbar slot for menu items - only used if that slot is actually empty. */
     private static final int PREFERRED_HOTBAR_SLOT = 8;
 
     /**
@@ -79,7 +79,7 @@ public final class MenuItems {
      * the last hotbar slot first (only if empty), then falls back to
      * {@link org.bukkit.inventory.PlayerInventory#addItem}, which itself only
      * fills empty slots and never displaces existing items (kits, compasses,
-     * etc.) — if the inventory is completely full the item is simply not given.
+     * etc.) - if the inventory is completely full the item is simply not given.
      */
     public static void giveIfAbsent(Player player, ItemStack item) {
         if (player.getInventory().containsAtLeast(item, 1)) {

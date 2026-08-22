@@ -12,7 +12,7 @@ import java.util.stream.Collectors;
 /**
  * Handles {@code /zpgm maptokens} and {@code /zpgm tokens}. Balance
  * management (grant/remove/set/balance/history) lives entirely on
- * zander-web now — the plugin no longer keeps its own copy of the ledger,
+ * zander-web now - the plugin no longer keeps its own copy of the ledger,
  * so those subcommands just point admins at the dashboard. Only match-facing
  * actions (status, clearing a pending override) stay here.
  */

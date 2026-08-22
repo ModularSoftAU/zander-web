@@ -6,7 +6,7 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import dev.anchorlight.zander.pgm.ZanderPGMPlugin;
 
-/** {@code /vote <number>} — cast an in-game map vote. */
+/** {@code /vote <number>} - cast an in-game map vote. */
 public class VoteCommand implements CommandExecutor {
 
     private final ZanderPGMPlugin plugin;

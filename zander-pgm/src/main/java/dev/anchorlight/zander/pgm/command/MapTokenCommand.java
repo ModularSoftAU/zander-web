@@ -7,7 +7,7 @@ import org.bukkit.entity.Player;
 import dev.anchorlight.zander.pgm.ZanderPGMPlugin;
 import dev.anchorlight.zander.pgm.gui.MenuItems;
 
-/** {@code /maptoken} — opens the self-service Map Token menu (same as right-clicking the item). */
+/** {@code /maptoken} - opens the self-service Map Token menu (same as right-clicking the item). */
 public class MapTokenCommand implements CommandExecutor {
 
     private final ZanderPGMPlugin plugin;

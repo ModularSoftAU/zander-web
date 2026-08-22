@@ -16,10 +16,10 @@ has no visibility into how many players are on each server. This spec adds:
 
 - Background/periodic refresh of counts while the GUI is open (counts are
   fetched once, at open time).
-- A distinct "private" flag/config field — visibility is uniformly
+- A distinct "private" flag/config field - visibility is uniformly
   permission-gated for every entry (see Permissions below), so there is no
   separate private/public distinction to model.
-- Automated tests beyond what already exists — this is a Bukkit/Velocity
+- Automated tests beyond what already exists - this is a Bukkit/Velocity
   plugin-messaging integration verified manually in-game.
 
 ## Components
@@ -54,10 +54,10 @@ Owns the incoming BungeeCord/Velocity plugin-messaging channel (the currently
 commented-out `registerIncomingPluginChannel` in `ZanderHubMain.onEnable`) and
 issues outbound requests:
 
-- `CompletableFuture<List<String>> requestServerList(Player requester)` — sends
+- `CompletableFuture<List<String>> requestServerList(Player requester)` - sends
   `GetServers`, resolves with the parsed comma-separated server id list.
 - `CompletableFuture<Integer> requestPlayerCount(Player requester, String serverId)`
-  — sends `PlayerCount` with `serverId` as target, resolves with the count.
+  - sends `PlayerCount` with `serverId` as target, resolves with the count.
 
 Since Bungee/Velocity plugin-message responses aren't correlated by a request
 ID, pending requests are tracked in a `Map<UUID, CompletableFuture<...>>` keyed
@@ -69,7 +69,7 @@ which holds because the GUI issues its batch of requests from a single click).
 
 ### 3. `HubCompassItem` (rewritten)
 
-- No more static shared `Inventory` — a new `Inventory` is built per GUI open.
+- No more static shared `Inventory` - a new `Inventory` is built per GUI open.
 - On interact:
   1. Filter `CompassConfig` entries to ones where
      `player.hasPermission("bungeecord.server." + id)` is true.
@@ -77,7 +77,7 @@ which holds because the GUI issues its batch of requests from a single click).
      `requestPlayerCount` per permitted entry, in parallel.
   3. If `requestServerList` resolved successfully, drop any permitted entry
      whose id isn't in the returned list (server no longer registered on the
-     proxy). If it timed out, skip this filtering step entirely — config +
+     proxy). If it timed out, skip this filtering step entirely - config +
      permission alone govern visibility for that open.
   4. Back on the main thread (`Bukkit.getScheduler().runTask`), build the
      inventory: one item per surviving entry, lore = configured lore + a

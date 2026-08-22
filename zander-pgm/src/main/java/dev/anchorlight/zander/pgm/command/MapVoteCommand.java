@@ -9,7 +9,7 @@ import dev.anchorlight.zander.pgm.voting.MapVoteOption;
 
 import java.util.Map;
 
-/** {@code /mapvote} — show the current vote and live tally. */
+/** {@code /mapvote} - show the current vote and live tally. */
 public class MapVoteCommand implements CommandExecutor {
 
     private final ZanderPGMPlugin plugin;

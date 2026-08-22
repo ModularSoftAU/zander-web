@@ -10,7 +10,7 @@ import dev.anchorlight.zander.pgm.rating.MapRatingService;
 import java.util.List;
 
 /**
- * "Rate this Map" menu — five star slots (1-5), wired straight to the same
+ * "Rate this Map" menu - five star slots (1-5), wired straight to the same
  * {@link MapRatingService#submit} used by {@code /maprate}, so participant
  * gating and the rating window are enforced identically either way.
  */

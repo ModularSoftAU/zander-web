@@ -14,7 +14,7 @@ import java.util.function.Consumer;
  * Minimal single-page inventory menu. Subclasses populate {@link #inventory}
  * in their constructor and register a click handler per slot via
  * {@link #setItem}. Dispatched by {@link MenuListener}, which every menu
- * implementation shares — there is no per-menu event registration.
+ * implementation shares - there is no per-menu event registration.
  */
 public abstract class Menu implements InventoryHolder {
 

@@ -30,7 +30,7 @@ import java.util.logging.Level;
  *
  * <p>When the player has no active navigation session, this immediately hands off to the
  * shop directory/search-results screen ({@code ShopSearchResultsDialog}) with an empty query
- * and page 0 — there is no separate "search first" screen. When the player does have an
+ * and page 0 - there is no separate "search first" screen. When the player does have an
  * active navigation session, this shows a summary panel with "Stop Navigation" /
  * "Search Another Shop" buttons instead.</p>
  *
@@ -55,7 +55,7 @@ public class ShopDirectoryDialog {
     /**
      * Opens the shop directory/search-results screen.
      *
-     * <p>Wired post-construction via {@link #setResultsOpener(ResultsOpener)} — typically
+     * <p>Wired post-construction via {@link #setResultsOpener(ResultsOpener)} - typically
      * {@code rootDialog.setResultsOpener(resultsDialog::open)}. Using a functional interface
      * rather than a direct field type keeps the root/results/details dialogs free of a
      * compile-time circular dependency.</p>
@@ -141,7 +141,7 @@ public class ShopDirectoryDialog {
 
     /**
      * Distance to the navigation target, or {@code "?"} when it cannot be computed
-     * (different world — {@link ShopNavigationSession#distanceTo(Location)} throws).
+     * (different world - {@link ShopNavigationSession#distanceTo(Location)} throws).
      */
     private static String distanceLabel(ShopNavigationSession session, Location viewerLocation) {
         try {

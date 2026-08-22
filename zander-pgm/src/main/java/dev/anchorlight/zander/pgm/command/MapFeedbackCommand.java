@@ -7,7 +7,7 @@ import org.bukkit.entity.Player;
 import dev.anchorlight.zander.pgm.ZanderPGMPlugin;
 import dev.anchorlight.zander.pgm.rating.MapRatingService;
 
-/** {@code /mapfeedback <feedback>} — attach feedback to an existing rating. */
+/** {@code /mapfeedback <feedback>} - attach feedback to an existing rating. */
 public class MapFeedbackCommand implements CommandExecutor {
 
     private final ZanderPGMPlugin plugin;
