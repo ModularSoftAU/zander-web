@@ -57,7 +57,7 @@
                   <% } %>
                 </dd>
                 <dt class="col-5">Email verified</dt>
-                <dd class="col-7"><%= user.email_verified ? "Yes" : (user.maskedEmail ? "No" : "—") %></dd>
+                <dd class="col-7"><%= user.maskedEmail ? (user.email_verified ? "Yes" : "No") : "—" %></dd>
                 <dt class="col-5">Registered</dt>
                 <dd class="col-7"><%= user.account_registered ? new Date(user.account_registered).toLocaleDateString() : "—" %></dd>
                 <dt class="col-5">Last website login</dt>
@@ -109,13 +109,21 @@
                     <button class="btn btn-sm btn-outline-secondary" id="changeEmailBtn">Change Email</button>
                   </div>
                 <% } %>
-                <% if (!user.hasPassword || !user.maskedEmail) { %>
-                  <p class="text-muted small mb-0">
-                    A password reset cannot be sent because this account does not have a configured
-                    website email and password.
-                  </p>
-                <% } else if (user.account_disabled) { %>
+                <% if (user.account_disabled) { %>
                   <p class="text-muted small mb-0">This account is disabled; password reset is unavailable.</p>
+                <% } else if (!user.maskedEmail && !user.hasPassword) { %>
+                  <p class="text-muted small mb-0">
+                    A password reset cannot be sent because this account has no email address and no
+                    website password configured.
+                  </p>
+                <% } else if (!user.maskedEmail) { %>
+                  <p class="text-muted small mb-0">
+                    A password reset cannot be sent because this account has no email address configured.
+                  </p>
+                <% } else if (!user.hasPassword) { %>
+                  <p class="text-muted small mb-0">
+                    A password reset cannot be sent because this account has no website password configured.
+                  </p>
                 <% } %>
               <% } %>
             </div>
