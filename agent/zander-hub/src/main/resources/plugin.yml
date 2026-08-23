@@ -1,4 +1,4 @@
-main: org.modularsoft.zander.hub.ZanderHubMain
+main: dev.anchorlight.zander.hub.ZanderHubMain
 name: zander-hub
 version: ${project.version}
 author: ModularSoft

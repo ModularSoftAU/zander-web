@@ -6,7 +6,7 @@ Zander Velocity provides a private messaging system with direct messages, reply 
 
 ### /message
 
-Aliases: `m`, `msg`, `w`, `whisper`, `tell`, `t`  
+Aliases: `m`, `msg`, `w`, `whisper`, `tell`, `t`
 Permission: `zander.command.message`
 
 Usage:
@@ -24,12 +24,12 @@ Behavior:
 - Respects the target's `/togglemessages` preference and ignore list.
 - Updates the reply mapping for both players when a message is sent.
 
-Sender sees: `To <target>: <message>`  
+Sender sees: `To <target>: <message>`
 Target sees: `From <sender>: <message>`
 
 ### /reply
 
-Alias: `r`  
+Alias: `r`
 Permission: `zander.command.reply`
 
 Usage:
@@ -47,7 +47,7 @@ Behavior:
 
 ### /ignore
 
-Aliases: `ignores`  
+Aliases: `ignores`
 Base permission: `zander.command.ignore`
 
 Subcommands:
@@ -67,7 +67,7 @@ Behavior:
 
 ### /togglemessages
 
-Alias: `toggle-messages`  
+Alias: `toggle-messages`
 Permission: `zander.command.togglemessages`
 
 Behavior:

@@ -1,8 +1,9 @@
-main: org.modularsoft.zander.addon.ZanderAddonMain
+main: dev.anchorlight.zander.addon.ZanderAddonMain
 name: zander-addon
 version: ${project.version}
 author: ModularSoft
-api-version: 1.21
+api-version: "1.21.11"
+softdepend: [QuickShop-Hikari]
 
 commands:
   policy:
@@ -11,3 +12,23 @@ commands:
   social:
     description: View our social media platforms.
     usage: /social
+  freeze:
+    description: Freeze a player.
+    usage: /freeze <player>
+    permission: zander.command.freeze
+  shops:
+    description: Find and navigate to a player shop.
+    usage: /shops [cancel]
+    permission: zander.shops
+  report:
+    description: Report a player to staff.
+    usage: /report
+    permission: zander.report
+
+permissions:
+  zander.shops:
+    description: Allows use of the shop directory.
+    default: true
+  zander.report:
+    description: Allows use of the report command.
+    default: true

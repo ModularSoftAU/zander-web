@@ -13,3 +13,10 @@ dependency-reduced-pom.xml
 
 # git worktrees
 .worktrees/
+
+# editor
+.vscode/
+
+# build/analysis output
+compile_output.txt
+graphify-out/
