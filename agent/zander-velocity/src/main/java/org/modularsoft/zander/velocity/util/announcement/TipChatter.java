@@ -51,8 +51,13 @@ public class TipChatter {
                     Component message = LegacyComponentSerializer.legacy(translate).deserialize(announcementTipPrefix + " " + colourMessageFormat);
 
                     if (link != null && !link.isEmpty()) {
+                        // Ensure the link starts with a protocol
+                        String finalLink = link;
+                        if (!link.startsWith("http://") && !link.startsWith("https://")) {
+                            finalLink = "https://" + link;
+                        }
                         // Set the click event and reassign the modified message to the variable
-                        message = message.clickEvent(ClickEvent.clickEvent(ClickEvent.Action.OPEN_URL, link));
+                        message = message.clickEvent(ClickEvent.openUrl(finalLink));
                     }
                     player.sendMessage(message);
                 });

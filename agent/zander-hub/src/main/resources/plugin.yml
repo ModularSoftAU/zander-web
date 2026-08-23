@@ -12,6 +12,12 @@ commands:
   connect:
     description: Connect to a Server.
     usage: /connect <server>
+  hall:
+    description: Hall of Supporters admin command.
+    usage: /hall
+  mystatue:
+    description: Customize your Hall of Supporters statue.
+    usage: /mystatue
 
 permissions:
   zander.fly:
