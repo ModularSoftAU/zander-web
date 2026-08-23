@@ -28,7 +28,6 @@ public class Heartbeat {
                 Response res = req.execute();
                 String json = res.getBody();
                 Boolean heartbeat = JsonPath.read(json, "$.success");
-                System.out.println("API Heartbeat Success");
 
                 // Check if the heartbeat is not successful
                 if (!heartbeat) {
@@ -40,9 +39,7 @@ public class Heartbeat {
                     });
                 }
             } catch (Exception e) {
-                // Handle exceptions here
-                e.printStackTrace();
-                ZanderVelocityMain.getLogger().error("API Heartbeat Failed, kicking all players until back online.");
+                ZanderVelocityMain.getLogger().error("API Heartbeat Failed, kicking all players until back online.", e);
 
                 // Kick all players
                 ZanderVelocityMain.getProxy().getAllPlayers().forEach(player -> {

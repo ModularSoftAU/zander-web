@@ -39,8 +39,6 @@ public class UserCommandSpyEvent {
             return;
         }
 
-        logger.info("Command spy: {} executed /{}", player.getUsername(), commandName);
-
         String BaseAPIURL = ZanderVelocityMain.getConfig().getString(Route.from("BaseAPIURL"));
         String APIKey = ZanderVelocityMain.getConfig().getString(Route.from("APIKey"));
         String server = player.getCurrentServer()
@@ -62,8 +60,7 @@ public class UserCommandSpyEvent {
                         .setRequestBody(commandSpy.toString())
                         .build();
 
-                Response commandSpyRes = commandSpyReq.execute();
-                logger.info("Response (" + commandSpyRes.getStatusCode() + "): " + commandSpyRes.getBody());
+                commandSpyReq.execute();
             } catch (Exception e) {
                 logger.error("Error sending command spy event for player {}", player.getUsername(), e);
             }

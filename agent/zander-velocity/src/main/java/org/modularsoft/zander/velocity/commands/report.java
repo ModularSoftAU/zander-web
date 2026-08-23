@@ -87,7 +87,7 @@ public class report implements SimpleCommand {
 
             } catch (Exception e) {
                 player.sendMessage(Component.text("An error has occurred. Is the API down?").color(NamedTextColor.RED));
-                System.out.println(e);
+                ZanderVelocityMain.getLogger().error("Error submitting report for player {}", player.getUsername(), e);
             }
         } else {
             source.sendMessage(Component.text("Only players can use this command.").color(NamedTextColor.RED));

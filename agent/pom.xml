@@ -6,7 +6,7 @@
 
     <groupId>org.modularsoft</groupId>
     <artifactId>zander</artifactId>
-    <version>1.0</version>
+    <version>1.4.0</version>
     <packaging>pom</packaging>
 
     <modules>
@@ -16,6 +16,7 @@
         <module>zander-hub</module>
         <module>zander-auth</module>
         <module>zander-addon</module>
+        <module>zander-pgm</module>
     </modules>
 
     <properties>
@@ -25,34 +26,35 @@
     <build>
         <defaultGoal>clean install</defaultGoal>
 
-<!--        <plugins>-->
-<!--            <plugin>-->
-<!--                <groupId>org.apache.maven.plugins</groupId>-->
-<!--                <artifactId>maven-shade-plugin</artifactId>-->
-<!--                <version>3.2.4</version>-->
-<!--                <configuration>-->
-<!--                    &lt;!&ndash; Place configurations here &ndash;&gt;-->
-<!--                </configuration>-->
-<!--                <executions>-->
-<!--                    <execution>-->
-<!--                        <phase>package</phase>-->
-<!--                        <goals>-->
-<!--                            <goal>shade</goal>-->
-<!--                        </goals>-->
-<!--                    </execution>-->
-<!--                </executions>-->
-<!--            </plugin>-->
-
-<!--            <plugin>-->
-<!--                <groupId>org.apache.maven.plugins</groupId>-->
-<!--                <artifactId>maven-compiler-plugin</artifactId>-->
-<!--                <version>3.8.1</version>-->
-<!--                <configuration>-->
-<!--                    <source>1.8</source>-->
-<!--                    <target>1.8</target>-->
-<!--                </configuration>-->
-<!--            </plugin>-->
-<!--        </plugins>-->
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-antrun-plugin</artifactId>
+                <version>3.1.0</version>
+                <executions>
+                    <execution>
+                        <id>copy-artifacts</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>run</goal>
+                        </goals>
+                        <configuration>
+                            <target>
+                                <mkdir dir="${maven.multiModuleProjectDirectory}/target/plugins" />
+                                <copy todir="${maven.multiModuleProjectDirectory}/target/plugins" flatten="true">
+                                    <fileset dir="${maven.multiModuleProjectDirectory}">
+                                        <include name="**/target/*.jar" />
+                                        <exclude name="target/**" />
+                                        <exclude name="**/target/original-*.jar" />
+                                        <exclude name="**/target/dependency-reduced-pom.xml" />
+                                    </fileset>
+                                </copy>
+                            </target>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
     </build>
 
     

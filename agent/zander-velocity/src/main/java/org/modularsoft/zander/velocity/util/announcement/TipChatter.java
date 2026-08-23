@@ -39,11 +39,6 @@ public class TipChatter {
                 String colourMessageFormat = JsonPath.read(json, "$.data[0].colourMessageFormat");
                 String link = JsonPath.read(json, "$.data[0].link");
 
-                // Log the color message format and link
-                logger.info("Announcement Tip: {}", colourMessageFormat);
-                logger.info("Link: {}", link);
-                logger.info("JSON: {}", json);
-
                 // Broadcast the message to all online players
                 ZanderVelocityMain.getProxy().getAllPlayers().forEach(player -> {
                     // Send the message to each player
@@ -51,15 +46,19 @@ public class TipChatter {
                     Component message = LegacyComponentSerializer.legacy(translate).deserialize(announcementTipPrefix + " " + colourMessageFormat);
 
                     if (link != null && !link.isEmpty()) {
+                        // Ensure the link starts with a protocol
+                        String finalLink = link;
+                        if (!link.startsWith("http://") && !link.startsWith("https://")) {
+                            finalLink = "https://" + link;
+                        }
                         // Set the click event and reassign the modified message to the variable
-                        message = message.clickEvent(ClickEvent.clickEvent(ClickEvent.Action.OPEN_URL, link));
+                        message = message.clickEvent(ClickEvent.openUrl(finalLink));
                     }
                     player.sendMessage(message);
                 });
             } catch (Exception e) {
                 // Handle exceptions here
                 logger.error("Announcement Tip Failed, will try again later.", e);
-                System.out.println("Announcement Tip Failed, will try again in " + interval + " minutes.");
             }
         }).repeat(interval, TimeUnit.MINUTES).schedule();
     }

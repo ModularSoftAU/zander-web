@@ -1,0 +1,57 @@
+name: ZanderPGM
+main: org.modularsoft.zander.pgm.ZanderPGMPlugin
+version: ${project.version}
+api-version: "1.21"
+author: ModularSoft
+depend:
+  - PGM
+
+commands:
+  zpgm:
+    description: Zander PGM admin command
+    usage: /zpgm <status|reload|reconnect|flush|debug|vote|maptokens status|maptokens clear>
+    permission: zanderpgm.admin
+  vote:
+    description: Vote for the next Mixed map
+    usage: /vote <number>
+    permission: zanderpgm.vote
+  mapvote:
+    description: View current Mixed map vote
+    usage: /mapvote
+    permission: zanderpgm.vote
+  maprate:
+    description: Rate the last Mixed map from 1 to 5
+    usage: /maprate <1-5> [feedback]
+    permission: zanderpgm.rate
+  mapfeedback:
+    description: Submit optional feedback for the last Mixed map
+    usage: /mapfeedback <feedback>
+    permission: zanderpgm.rate
+  maprating:
+    description: View the current/last map rating prompt
+    usage: /maprating
+    permission: zanderpgm.rate
+  maptoken:
+    description: Open the Map Token menu (spend a token to influence the next map)
+    usage: /maptoken
+    permission: zanderpgm.maptokens.use
+
+permissions:
+  zanderpgm.admin:
+    default: op
+  zanderpgm.vote:
+    default: true
+  zanderpgm.rate:
+    default: true
+  zanderpgm.stats:
+    default: true
+  zanderpgm.profile:
+    default: true
+  zanderpgm.maptokens.admin:
+    default: op
+  zanderpgm.maptokens.status:
+    default: op
+  zanderpgm.maptokens.clear:
+    default: op
+  zanderpgm.maptokens.use:
+    default: true
