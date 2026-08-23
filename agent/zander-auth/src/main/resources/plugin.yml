@@ -1,4 +1,4 @@
-main: org.modularsoft.zander.auth.ZanderAuthMain
+main: dev.anchorlight.zander.auth.ZanderAuthMain
 name: zander-auth
 version: ${project.version}
 author: ModularSoft

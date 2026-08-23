@@ -1,4 +1,4 @@
-main: org.modularsoft.zander.addon.ZanderAddonMain
+main: dev.anchorlight.zander.addon.ZanderAddonMain
 name: zander-addon
 version: ${project.version}
 author: ModularSoft
@@ -11,3 +11,7 @@ commands:
   social:
     description: View our social media platforms.
     usage: /social
+  freeze:
+    description: Freeze a player.
+    usage: /freeze <player>
+    permission: zander.command.freeze

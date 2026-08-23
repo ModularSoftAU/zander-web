@@ -3,13 +3,12 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <parent>
         <artifactId>zander</artifactId>
-        <groupId>org.modularsoft</groupId>
-        <version>1.0</version>
+        <groupId>dev.anchorlight</groupId>
+        <version>1.4.0</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
     <artifactId>zander-addon</artifactId>
-    <version>0.1.0</version>
 
     <repositories>
         <repository>
@@ -77,15 +76,15 @@
                     <relocations>
                         <relocation>
                             <pattern>io.github.ModularEnigma</pattern>
-                            <shadedPattern>org.modularsoft.zander.addon.libs.requests</shadedPattern>
+                            <shadedPattern>dev.anchorlight.zander.addon.libs.requests</shadedPattern>
                         </relocation>
                         <relocation>
                             <pattern>com.jayway.jsonpath</pattern>
-                            <shadedPattern>org.modularsoft.zander.addon.libs.jsonpath</shadedPattern>
+                            <shadedPattern>dev.anchorlight.zander.addon.libs.jsonpath</shadedPattern>
                         </relocation>
                         <relocation>
                             <pattern>com.google.gson</pattern>
-                            <shadedPattern>org.modularsoft.zander.addon.libs.gson</shadedPattern>
+                            <shadedPattern>dev.anchorlight.zander.addon.libs.gson</shadedPattern>
                         </relocation>
                     </relocations>
                     <filters>
