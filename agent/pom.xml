@@ -6,12 +6,15 @@
 
     <groupId>org.modularsoft</groupId>
     <artifactId>zander</artifactId>
-    <version>1.0</version>
+    <version>1.4.0</version>
     <packaging>pom</packaging>
 
     <modules>
+<<<<<<< HEAD
         <!-- <module>zander-waterfall</module> -->
             <!-- Decomissioned Waterfall in v1.3.0 -->
+=======
+>>>>>>> c463c2e9ee1b08497c6fc915d690ac74884a2da9
         <module>zander-velocity</module>
         <module>zander-hub</module>
         <module>zander-auth</module>

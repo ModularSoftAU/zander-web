@@ -11,3 +11,21 @@ commands:
   social:
     description: View our social media platforms.
     usage: /social
+<<<<<<< HEAD
+=======
+  pettrust:
+    description: Manage trust settings for tamed pets.
+    usage: /pettrust <trust|untrust|public|private|list|anchor|unanchor|help>
+    aliases: [ptrust]
+
+permissions:
+  zanderaddon.pettrust.use:
+    description: Allows players to manage trust for their own tamed pets.
+    default: true
+  zanderaddon.pettrust.admin:
+    description: Allows admins to manage trust for any tamed pet.
+    default: op
+  zanderaddon.pettrust.bypass:
+    description: Bypasses pet trust interaction restrictions entirely.
+    default: op
+>>>>>>> c463c2e9ee1b08497c6fc915d690ac74884a2da9

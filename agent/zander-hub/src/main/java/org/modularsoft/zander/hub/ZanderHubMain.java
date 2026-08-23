@@ -31,12 +31,20 @@ public class ZanderHubMain extends JavaPlugin {
         ConfigurationManager.setupHubLocationsConfig();
         ConfigurationManager.setupMessagesConfig();
         ConfigurationManager.setupMiscConfig();
+<<<<<<< HEAD
         ConfigurationManager.setupCompassConfig();
         ConfigurationManager.setupWelcomeFile();
 
         proxyMessaging = new ProxyMessaging();
         this.getServer().getMessenger().registerOutgoingPluginChannel(this, "BungeeCord");
         this.getServer().getMessenger().registerIncomingPluginChannel(this, "BungeeCord", proxyMessaging);
+=======
+        ConfigurationManager.setupWelcomeFile();
+
+        this.getServer().getMessenger().registerOutgoingPluginChannel(this, "BungeeCord");
+        // this.getServer().getMessenger().registerIncomingPluginChannel(this,
+        // "BungeeCord", new PluginMessageChannel(this));
+>>>>>>> c463c2e9ee1b08497c6fc915d690ac74884a2da9
 
         // Init Message
         TextComponent enabledMessage = Component.empty()

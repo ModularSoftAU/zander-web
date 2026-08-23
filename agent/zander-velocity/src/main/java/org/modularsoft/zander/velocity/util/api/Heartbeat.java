@@ -1,13 +1,35 @@
+<<<<<<< HEAD
 package org.modularsoft.zander.velocity.util.api;
+=======
+<<<<<<<< HEAD:agent/zander-waterfall/src/main/java/org/modularsoft/zander/waterfall/util/api/Heartbeat.java
+package org.modularsoft.zander.waterfall.util.api;
+========
+package org.modularsoft.zander.velocity.util.api;
+>>>>>>>> c463c2e9ee1b08497c6fc915d690ac74884a2da9:agent/zander-velocity/src/main/java/org/modularsoft/zander/velocity/util/api/Heartbeat.java
+>>>>>>> c463c2e9ee1b08497c6fc915d690ac74884a2da9
 
 import com.jayway.jsonpath.JsonPath;
 import dev.dejvokep.boostedyaml.route.Route;
 import io.github.ModularEnigma.Request;
 import io.github.ModularEnigma.Response;
+<<<<<<< HEAD
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 import org.modularsoft.zander.velocity.ZanderVelocityMain;
 
+=======
+<<<<<<<< HEAD:agent/zander-waterfall/src/main/java/org/modularsoft/zander/waterfall/util/api/Heartbeat.java
+import net.md_5.bungee.api.ProxyServer;
+import org.modularsoft.zander.waterfall.ConfigurationManager;
+========
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.format.NamedTextColor;
+import org.modularsoft.zander.velocity.ZanderVelocityMain;
+>>>>>>>> c463c2e9ee1b08497c6fc915d690ac74884a2da9:agent/zander-velocity/src/main/java/org/modularsoft/zander/velocity/util/api/Heartbeat.java
+
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+>>>>>>> c463c2e9ee1b08497c6fc915d690ac74884a2da9
 import java.util.concurrent.TimeUnit;
 
 public class Heartbeat {
@@ -15,7 +37,15 @@ public class Heartbeat {
         String BaseAPIURL = ZanderVelocityMain.getConfig().getString(Route.from("BaseAPIURL"));
         String APIKey = ZanderVelocityMain.getConfig().getString(Route.from("APIKey"));
 
+<<<<<<< HEAD
         ZanderVelocityMain.getProxy().getScheduler().buildTask(ZanderVelocityMain.getInstance(), () -> {
+=======
+        // Create a ScheduledExecutorService with a single thread
+        ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
+
+        // Schedule the task to run every 60 seconds
+        scheduler.scheduleAtFixedRate(() -> {
+>>>>>>> c463c2e9ee1b08497c6fc915d690ac74884a2da9
             try {
                 // Your existing code here
                 // GET request to link to rules.
@@ -51,6 +81,12 @@ public class Heartbeat {
                     player.disconnect(message);
                 });
             }
+<<<<<<< HEAD
         }).repeat(60, TimeUnit.SECONDS).schedule();
     }
 }
+=======
+        }, 0, 60, TimeUnit.SECONDS);
+    }
+}
+>>>>>>> c463c2e9ee1b08497c6fc915d690ac74884a2da9

@@ -11,6 +11,11 @@ import com.velocitypowered.api.plugin.annotation.DataDirectory;
 import com.velocitypowered.api.proxy.ProxyServer;
 import dev.dejvokep.boostedyaml.YamlDocument;
 import dev.dejvokep.boostedyaml.dvs.versioning.BasicVersioning;
+<<<<<<< HEAD
+=======
+import net.luckperms.api.LuckPerms;
+import net.luckperms.api.LuckPermsProvider;
+>>>>>>> c463c2e9ee1b08497c6fc915d690ac74884a2da9
 import dev.dejvokep.boostedyaml.settings.dumper.DumperSettings;
 import dev.dejvokep.boostedyaml.settings.general.GeneralSettings;
 import dev.dejvokep.boostedyaml.settings.loader.LoaderSettings;
@@ -26,7 +31,10 @@ import org.modularsoft.zander.velocity.events.session.UserOnLogin;
 import org.modularsoft.zander.velocity.events.session.UserOnSwitch;
 import org.modularsoft.zander.velocity.util.announcement.TipChatter;
 import org.modularsoft.zander.velocity.util.api.Heartbeat;
+<<<<<<< HEAD
 import org.modularsoft.zander.velocity.util.messaging.PrivateMessageService;
+=======
+>>>>>>> c463c2e9ee1b08497c6fc915d690ac74884a2da9
 import org.slf4j.Logger;
 
 import java.io.File;
@@ -42,7 +50,12 @@ import java.util.Optional;
         name = "zander-velocity",
         version = "1.2.0",
         dependencies = {
+<<<<<<< HEAD
                 @Dependency(id = "signedvelocity")
+=======
+                @Dependency(id = "signedvelocity"),
+                @Dependency(id = "luckperms", optional = false)
+>>>>>>> c463c2e9ee1b08497c6fc915d690ac74884a2da9
         }
 )
 public class ZanderVelocityMain {
@@ -53,6 +66,7 @@ public class ZanderVelocityMain {
     @Getter
     private static YamlDocument config;
     @Getter
+<<<<<<< HEAD
     private static Path dataDirectory;
     @Getter
     private static PrivateMessageService privateMessageService;
@@ -65,6 +79,19 @@ public class ZanderVelocityMain {
     public void onProxyInitialization(ProxyInitializeEvent event) {
         // Event Listeners
         proxy.getEventManager().register(this, new UserChatEvent());
+=======
+    private final CommandManager commandManager;
+    @Getter
+    private static LuckPerms luckPerms;
+
+    @Subscribe
+    public void onProxyInitialization(ProxyInitializeEvent event) {
+        // Get LuckPerms
+        luckPerms = LuckPermsProvider.get();
+
+        // Event Listeners
+        proxy.getEventManager().register(this, new UserChatEvent(luckPerms));
+>>>>>>> c463c2e9ee1b08497c6fc915d690ac74884a2da9
         proxy.getEventManager().register(this, new UserCommandSpyEvent());
         proxy.getEventManager().register(this, new UserOnDisconnect());
         proxy.getEventManager().register(this, new UserOnLogin());
@@ -83,6 +110,7 @@ public class ZanderVelocityMain {
         commandManager.register(commandManager.metaBuilder("report").build(), new report());
         commandManager.register(commandManager.metaBuilder("clearchat").build(), new clearchat());
         commandManager.register(commandManager.metaBuilder("freezechat").build(), new freezechat());
+<<<<<<< HEAD
         message messageCommand = new message();
         commandManager.register(commandManager.metaBuilder("message").build(), messageCommand);
         commandManager.register(commandManager.metaBuilder("m").build(), messageCommand);
@@ -103,6 +131,8 @@ public class ZanderVelocityMain {
         togglemessages toggleMessagesCommand = new togglemessages();
         commandManager.register(commandManager.metaBuilder("togglemessages").build(), toggleMessagesCommand);
         commandManager.register(commandManager.metaBuilder("toggle-messages").build(), toggleMessagesCommand);
+=======
+>>>>>>> c463c2e9ee1b08497c6fc915d690ac74884a2da9
 
         // Start the Heartbeat task
         Heartbeat.startHeartbeatTask();
@@ -121,8 +151,11 @@ public class ZanderVelocityMain {
         this.proxy = proxy;
         this.logger = logger;
         this.commandManager = commandManager;
+<<<<<<< HEAD
         this.dataDirectory = dataDirectory;
         instance = this;
+=======
+>>>>>>> c463c2e9ee1b08497c6fc915d690ac74884a2da9
 
         // Create configuration file
         try {
@@ -143,6 +176,9 @@ public class ZanderVelocityMain {
         }
 
         logger.info("Zander Proxy has started.");
+<<<<<<< HEAD
         privateMessageService = new PrivateMessageService(dataDirectory, logger);
+=======
+>>>>>>> c463c2e9ee1b08497c6fc915d690ac74884a2da9
     }
 }

@@ -12,6 +12,7 @@ messages:
 misc:
   always_first_join: false
   slot_hub_compass: 4
+<<<<<<< HEAD
 compass:
   servers:
     survival:
@@ -22,3 +23,5 @@ compass:
       material: IRON_SWORD
       display: 'Mixed'
       lore: 'Play and Destroy your friends in Minigames.'
+=======
+>>>>>>> c463c2e9ee1b08497c6fc915d690ac74884a2da9

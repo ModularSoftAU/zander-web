@@ -4,12 +4,20 @@
     <parent>
         <artifactId>zander</artifactId>
         <groupId>org.modularsoft</groupId>
+<<<<<<< HEAD
         <version>1.0</version>
+=======
+        <version>1.4.0</version>
+>>>>>>> c463c2e9ee1b08497c6fc915d690ac74884a2da9
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
     <artifactId>zander-addon</artifactId>
+<<<<<<< HEAD
     <version>0.1.0</version>
+=======
+    <version>1.4.0</version>
+>>>>>>> c463c2e9ee1b08497c6fc915d690ac74884a2da9
 
     <repositories>
         <repository>

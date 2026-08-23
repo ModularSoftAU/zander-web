@@ -11,6 +11,11 @@ import org.modularsoft.zander.velocity.ZanderVelocityMain;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+<<<<<<< HEAD
+=======
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+>>>>>>> c463c2e9ee1b08497c6fc915d690ac74884a2da9
 import java.util.concurrent.TimeUnit;
 
 public class TipChatter {
@@ -22,9 +27,18 @@ public class TipChatter {
         String BaseAPIURL = ZanderVelocityMain.getConfig().getString(Route.from("BaseAPIURL"));
         String APIKey = ZanderVelocityMain.getConfig().getString(Route.from("APIKey"));
         String announcementTipPrefix = ZanderVelocityMain.getConfig().getString(Route.from("announcementTipPrefix"));
+<<<<<<< HEAD
         int interval = ZanderVelocityMain.getConfig().getInt(Route.from("announcementTipInterval"));
 
         ZanderVelocityMain.getProxy().getScheduler().buildTask(ZanderVelocityMain.getInstance(), () -> {
+=======
+
+        // Create a ScheduledExecutorService with a single thread
+        ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
+
+        // Schedule the task to run every 10 seconds
+        scheduler.scheduleAtFixedRate(() -> {
+>>>>>>> c463c2e9ee1b08497c6fc915d690ac74884a2da9
             try {
                 // GET request to fetch Announcement Tip.
                 Request req = Request.builder()
@@ -59,8 +73,16 @@ public class TipChatter {
             } catch (Exception e) {
                 // Handle exceptions here
                 logger.error("Announcement Tip Failed, will try again later.", e);
+<<<<<<< HEAD
                 System.out.println("Announcement Tip Failed, will try again in " + interval + " minutes.");
             }
         }).repeat(interval, TimeUnit.MINUTES).schedule();
     }
 }
+=======
+                System.out.println("Announcement Tip Failed, will try again in " + ZanderVelocityMain.getConfig().getString(Route.from("announcementTipInterval")) + " minutes.");
+            }
+        }, 0, ZanderVelocityMain.getConfig().getInt(Route.from("announcementTipInterval")), TimeUnit.MINUTES);
+    }
+}
+>>>>>>> c463c2e9ee1b08497c6fc915d690ac74884a2da9

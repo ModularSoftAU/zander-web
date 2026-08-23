@@ -18,6 +18,7 @@ public class website implements SimpleCommand {
         String BaseAPIURL = ZanderVelocityMain.getConfig().getString(Route.from("BaseAPIURL"));
         String APIKey = ZanderVelocityMain.getConfig().getString(Route.from("APIKey"));
 
+<<<<<<< HEAD
         ZanderVelocityMain.getProxy().getScheduler().buildTask(ZanderVelocityMain.getInstance(), () -> {
             try {
                 Request req = Request.builder()
@@ -40,5 +41,28 @@ public class website implements SimpleCommand {
                 ZanderVelocityMain.getLogger().error("Error fetching website URL", e);
             }
         }).schedule();
+=======
+        try {
+            // GET request to link to discord.
+            Request req = Request.builder()
+                    .setURL(BaseAPIURL + "/web/configuration")
+                    .setMethod(Request.Method.GET)
+                    .addHeader("x-access-token", APIKey)
+                    .build();
+
+            Response res = req.execute();
+            String json = res.getBody();
+            String siteAddress = JsonPath.read(json, "$.data.siteAddress");
+
+            Component message = Component.text("For all information regarding the Network, visit our website: " + siteAddress)
+                    .color(NamedTextColor.YELLOW);
+            message = message.clickEvent(ClickEvent.clickEvent(ClickEvent.Action.OPEN_URL,siteAddress));
+            source.sendMessage(message);
+        } catch (Exception e) {
+            Component builder = Component.text("An error has occurred. Is the API down?").color(NamedTextColor.RED);
+            source.sendMessage(builder);
+            System.out.println(e);
+        }
+>>>>>>> c463c2e9ee1b08497c6fc915d690ac74884a2da9
     }
 }

@@ -1,10 +1,21 @@
+<<<<<<<< HEAD:agent/zander-waterfall/src/main/java/org/modularsoft/zander/waterfall/util/api/Heartbeat.java
 package org.modularsoft.zander.waterfall.util.api;
+========
+package org.modularsoft.zander.velocity.util.api;
+>>>>>>>> c463c2e9ee1b08497c6fc915d690ac74884a2da9:agent/zander-velocity/src/main/java/org/modularsoft/zander/velocity/util/api/Heartbeat.java
 
 import com.jayway.jsonpath.JsonPath;
+import dev.dejvokep.boostedyaml.route.Route;
 import io.github.ModularEnigma.Request;
 import io.github.ModularEnigma.Response;
+<<<<<<<< HEAD:agent/zander-waterfall/src/main/java/org/modularsoft/zander/waterfall/util/api/Heartbeat.java
 import net.md_5.bungee.api.ProxyServer;
 import org.modularsoft.zander.waterfall.ConfigurationManager;
+========
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.format.NamedTextColor;
+import org.modularsoft.zander.velocity.ZanderVelocityMain;
+>>>>>>>> c463c2e9ee1b08497c6fc915d690ac74884a2da9:agent/zander-velocity/src/main/java/org/modularsoft/zander/velocity/util/api/Heartbeat.java
 
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -12,6 +23,9 @@ import java.util.concurrent.TimeUnit;
 
 public class Heartbeat {
     public static void startHeartbeatTask() {
+        String BaseAPIURL = ZanderVelocityMain.getConfig().getString(Route.from("BaseAPIURL"));
+        String APIKey = ZanderVelocityMain.getConfig().getString(Route.from("APIKey"));
+
         // Create a ScheduledExecutorService with a single thread
         ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
 
@@ -21,9 +35,9 @@ public class Heartbeat {
                 // Your existing code here
                 // GET request to link to rules.
                 Request req = Request.builder()
-                        .setURL(ConfigurationManager.getConfig().get("BaseAPIURL") + "/heartbeat")
+                        .setURL(BaseAPIURL + "/heartbeat")
                         .setMethod(Request.Method.GET)
-                        .addHeader("x-access-token", String.valueOf(ConfigurationManager.getConfig().get("APIKey")))
+                        .addHeader("x-access-token", APIKey)
                         .build();
 
                 Response res = req.execute();
@@ -34,19 +48,22 @@ public class Heartbeat {
                 // Check if the heartbeat is not successful
                 if (!heartbeat) {
                     // Kick all players
-                    ProxyServer.getInstance().getPlayers().forEach(player -> {
-                        player.disconnect("API Heartbeat Failed, the server is temporarily offline.");
+                    ZanderVelocityMain.getProxy().getAllPlayers().forEach(player -> {
+                        Component message = Component.text("API Heartbeat Failed, the server is temporarily offline.")
+                                .color(NamedTextColor.RED);
+                        player.disconnect(message);
                     });
                 }
             } catch (Exception e) {
                 // Handle exceptions here
                 e.printStackTrace();
-
-                System.out.println("API Heartbeat Failed, kicking all players until back online.");
+                ZanderVelocityMain.getLogger().error("API Heartbeat Failed, kicking all players until back online.");
 
                 // Kick all players
-                ProxyServer.getInstance().getPlayers().forEach(player -> {
-                    player.disconnect("API Heartbeat Failed, the server is temporarily offline.");
+                ZanderVelocityMain.getProxy().getAllPlayers().forEach(player -> {
+                    Component message = Component.text("API Heartbeat Failed, the server is temporarily offline.")
+                            .color(NamedTextColor.RED);
+                    player.disconnect(message);
                 });
             }
         }, 0, 60, TimeUnit.SECONDS);

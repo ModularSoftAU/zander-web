@@ -3,13 +3,19 @@
 /target
 /.idea
 *.iml
+<<<<<<< HEAD
 dependency-reduced-pom.xml
+=======
+>>>>>>> c463c2e9ee1b08497c6fc915d690ac74884a2da9
 
 # jdtls generation
 .classpath
 .factorypath
 .project
 .settings/
+<<<<<<< HEAD
 
 # git worktrees
 .worktrees/
+=======
+>>>>>>> c463c2e9ee1b08497c6fc915d690ac74884a2da9

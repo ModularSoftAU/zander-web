@@ -3,14 +3,20 @@ package org.modularsoft.zander.hub;
 import java.io.File;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
+<<<<<<< HEAD
 import org.modularsoft.zander.hub.configs.CompassConfig;
+=======
+>>>>>>> c463c2e9ee1b08497c6fc915d690ac74884a2da9
 import org.modularsoft.zander.hub.configs.HubLocationsConfig;
 import org.modularsoft.zander.hub.configs.MessagesConfig;
 import org.modularsoft.zander.hub.configs.MiscConfig;
 
 public final class ConfigurationManager {
     private static FileConfiguration welcomeFile;
+<<<<<<< HEAD
     private static CompassConfig compassConfig;
+=======
+>>>>>>> c463c2e9ee1b08497c6fc915d690ac74884a2da9
     private static HubLocationsConfig hubLocationsConfig;
     private static MessagesConfig messagesConfig;
     private static MiscConfig miscConfig;
@@ -41,6 +47,7 @@ public final class ConfigurationManager {
         miscConfig.setupSlotHubCompass();
         miscConfig.setupAlwaysFirstJoin();
     }
+<<<<<<< HEAD
 
     public static void setupCompassConfig() {
         if (compassConfig != null)
@@ -48,6 +55,8 @@ public final class ConfigurationManager {
         compassConfig = new CompassConfig(ZanderHubMain.plugin);
         compassConfig.setupServers();
     }
+=======
+>>>>>>> c463c2e9ee1b08497c6fc915d690ac74884a2da9
 
     public static void setupWelcomeFile() {
         if (welcomeFile != null)
@@ -75,12 +84,15 @@ public final class ConfigurationManager {
         if (miscConfig == null)
             throw new IllegalStateException("Missing setup, first run 'ConfigurationManager.setupMiscConfig'");
         return miscConfig;
+<<<<<<< HEAD
     }
 
     public static CompassConfig getCompass() {
         if (compassConfig == null)
             throw new IllegalStateException("Missing setup, first run 'ConfigurationManager.setupCompassConfig'");
         return compassConfig;
+=======
+>>>>>>> c463c2e9ee1b08497c6fc915d690ac74884a2da9
     }
 
     public static FileConfiguration getWelcome() {
