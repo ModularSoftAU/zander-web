@@ -1,5 +1,6 @@
 import db, { luckpermsDb } from "./databaseController.js";
 import { hashEmail } from "../api/common.js";
+import { sanitizeForumHtml } from "../lib/htmlSanitize.js";
 
 function query(sql, params = []) {
   return new Promise((resolve, reject) => {
@@ -500,6 +501,7 @@ async function recalculateDiscussionMeta(discussionId) {
 }
 
 export async function createDiscussion({ categoryId, userId, title, content }) {
+  content = sanitizeForumHtml(content);
   const slug = await ensureUniqueDiscussionSlug(categoryId, title, null);
 
   const result = await query(
@@ -540,6 +542,7 @@ export async function updateDiscussion(discussionId, { title, content, editorUse
   }
 
   if (content !== undefined && content !== null) {
+    content = sanitizeForumHtml(content);
     const originalPost = await getOriginalPost(discussionId);
     if (originalPost && originalPost.content !== content) {
       await recordPostRevision(originalPost.postId, editorUserId, originalPost.content);
@@ -575,11 +578,12 @@ export async function moveDiscussion(discussionId, newCategoryId) {
   );
 }
 
-export async function createReply({ discussionId, userId, content }) {
+export async function createReply({ discussionId, userId, content, replyToPostId = null }) {
+  content = sanitizeForumHtml(content);
   const result = await query(
-    `INSERT INTO forumPosts (discussionId, userId, content, isOriginal)
-     VALUES (?, ?, ?, 0)`,
-    [discussionId, userId, content]
+    `INSERT INTO forumPosts (discussionId, userId, replyToPostId, content, isOriginal)
+     VALUES (?, ?, ?, ?, 0)`,
+    [discussionId, userId, replyToPostId || null, content]
   );
 
   const postId = result.insertId || result?.[0]?.insertId;
@@ -598,7 +602,7 @@ export async function createReply({ discussionId, userId, content }) {
 
 export async function getPostById(postId) {
   const [row] = await query(
-    `SELECT postId, discussionId, userId, content, isOriginal, createdAt, updatedAt
+    `SELECT postId, discussionId, userId, replyToPostId, content, isOriginal, createdAt, updatedAt
        FROM forumPosts
       WHERE postId = ?
       LIMIT 1`,
@@ -609,6 +613,7 @@ export async function getPostById(postId) {
 }
 
 export async function updatePost(postId, { content, editorUserId }) {
+  content = sanitizeForumHtml(content);
   const post = await getPostById(postId);
   if (!post) {
     return null;
@@ -858,7 +863,7 @@ async function fetchUserSummaries(userIds) {
 
 export async function getDiscussionPosts(discussionId) {
   const rows = await query(
-    `SELECT postId, discussionId, userId, content, isOriginal, createdAt, updatedAt
+    `SELECT postId, discussionId, userId, replyToPostId, content, isOriginal, createdAt, updatedAt
        FROM forumPosts
       WHERE discussionId = ?
       ORDER BY createdAt ASC, postId ASC`,
@@ -903,10 +908,17 @@ export async function getDiscussionPosts(discussionId) {
   });
 
   return rows.map((row) => {
+    const replyTarget = row.replyToPostId
+      ? rows.find((candidate) => candidate.postId === row.replyToPostId)
+      : null;
     return {
       ...row,
       isOriginal: !!row.isOriginal,
       user: userSummaries.get(row.userId) || null,
+      replyTo: replyTarget ? {
+        postId: replyTarget.postId,
+        user: userSummaries.get(replyTarget.userId) || null,
+      } : null,
       revisions: revisionsByPost.get(row.postId) || [],
     };
   });

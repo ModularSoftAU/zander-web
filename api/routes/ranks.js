@@ -4,17 +4,11 @@ import {
   getUserPermissions,
 } from "../../controllers/userController.js";
 import { luckpermsDb } from "../../controllers/databaseController.js";
+import { syncMemberRankRoles } from "../../lib/discord/rankRoleSync.mjs";
 
-const RANK_VIEW = "ranks";
-const USER_RANKS_VIEW = "userRanks";
 const LUCKPERMS_PLAYERS_TABLE = "luckperms_players";
 const LUCKPERMS_GROUP_PERMISSIONS_TABLE = "luckperms_group_permissions";
 const LUCKPERMS_USER_PERMISSIONS_TABLE = "luckperms_user_permissions";
-
-function stripUUID(uuid) {
-  if (!uuid) return null;
-  return String(uuid).replace(/-/g, '').toLowerCase();
-}
 
 function parseBoolean(value) {
   if (value === null || value === undefined) return null;
@@ -103,6 +97,27 @@ export default function rankApiRoute(app, config, db, features, lang) {
     });
   };
 
+  async function normalizeUserPermissionContexts(uuid, rankSlug = null) {
+    if (!uuid) return;
+
+    const conditions = ["uuid = ?", "contexts = '[]'"];
+    const params = [uuid];
+
+    if (rankSlug) {
+      conditions.push("(permission = ? OR permission LIKE CONCAT('meta.group.', ?, '.title.%'))");
+      params.push(`group.${rankSlug}`, rankSlug);
+    } else {
+      conditions.push("(permission LIKE 'group.%' OR permission LIKE 'meta.group.%.title.%')");
+    }
+
+    await queryLuckPermsDb(
+      `UPDATE ${LUCKPERMS_USER_PERMISSIONS_TABLE}
+          SET contexts = '{}'
+        WHERE ${conditions.join(" AND ")}`,
+      params
+    );
+  }
+
   async function resolvePlayer(username) {
     if (!username) {
       return null;
@@ -119,7 +134,7 @@ export default function rankApiRoute(app, config, db, features, lang) {
     );
 
     const [luckPermsUser] = await queryLuckPermsDb(
-      `SELECT username, LOWER(HEX(uuid)) AS uuid FROM ${LUCKPERMS_PLAYERS_TABLE} WHERE LOWER(username) = LOWER(?) LIMIT 1`,
+      `SELECT username, LOWER(uuid) AS uuid FROM ${LUCKPERMS_PLAYERS_TABLE} WHERE LOWER(username) = LOWER(?) LIMIT 1`,
       [trimmedUsername]
     );
 
@@ -127,15 +142,136 @@ export default function rankApiRoute(app, config, db, features, lang) {
       return null;
     }
 
-    // Normalise to 32-char hex (no dashes) so it matches the userRanks
-    // cross-DB view which stores uuid as LOWER(HEX(lp_binary_uuid)).
-    const uuidHex = luckPermsUser?.uuid ?? stripUUID(webUser?.uuid) ?? null;
+    // LuckPerms MySQL stores uuid as VARCHAR(36) with dashes — matches
+    // users.uuid's own dashed format directly, no HEX()/UNHEX() needed.
+    const uuid = luckPermsUser?.uuid ?? (webUser?.uuid ? webUser.uuid.toLowerCase() : null);
 
     return {
       userId: webUser?.userId ?? null,
       username: webUser?.username || luckPermsUser?.username || trimmedUsername,
-      uuid: uuidHex,
+      uuid,
     };
+  }
+
+  // LuckPerms lives on a separate MySQL server from the main app DB, so it
+  // cannot be joined via a cross-database SQL view (the `ranks`/`userRanks`
+  // views this file used to rely on) — every rank lookup below queries
+  // luckpermsDb and db independently and merges in JS, mirroring the
+  // proven-working pattern in services/profileService.js:getUserRanks.
+  // Nodes are read scoped to server='global'/world='global' to match what
+  // updateGroupNode() (below) writes.
+
+  const PREFIX_COLOUR_MAP = {
+    "0": "#000000", "1": "#0000AA", "2": "#00AA00", "3": "#00AAAA",
+    "4": "#AA0000", "5": "#AA00AA", "6": "#FFAA00", "7": "#AAAAAA",
+    "8": "#555555", "9": "#5555FF", "a": "#55FF55", "b": "#55FFFF",
+    "c": "#FF5555", "d": "#FF55FF", "e": "#FFFF55", "g": "#DDD605",
+  };
+  const DARK_PREFIX_CODES = new Set(["0", "1", "2", "3", "4", "5", "8", "9"]);
+
+  /** Map of rankSlug -> {displayName, priority, rankBadgeColour, rankTextColour, discordRoleId, isStaff, isDonator} for every LuckPerms group. */
+  async function getRankMetaMap() {
+    const rows = await queryLuckPermsDb(
+      `SELECT name, permission FROM ${LUCKPERMS_GROUP_PERMISSIONS_TABLE}
+        WHERE server = 'global' AND world = 'global'
+          AND value = 1
+          AND (
+            permission LIKE 'displayname.%'
+            OR permission LIKE 'weight.%'
+            OR permission LIKE 'prefix.%'
+            OR permission LIKE 'meta.rankbadgecolour.%'
+            OR permission LIKE 'meta.ranktextcolour.%'
+            OR permission LIKE 'meta.discordid.%'
+            OR permission LIKE 'meta.staff.%'
+            OR permission LIKE 'meta.donator.%'
+          )`
+    );
+
+    const meta = new Map();
+    for (const row of rows) {
+      const m = meta.get(row.name) || {};
+      const p = row.permission;
+      if (p.startsWith("displayname.")) m.displayName = p.slice("displayname.".length);
+      else if (p.startsWith("weight.")) m.priority = parseInt(p.slice("weight.".length), 10) || null;
+      else if (p.startsWith("prefix.")) m.prefix = p;
+      else if (p.startsWith("meta.rankbadgecolour.")) m.rankBadgeColour = "#" + p.slice("meta.rankbadgecolour.".length);
+      else if (p.startsWith("meta.ranktextcolour.")) m.rankTextColour = "#" + p.slice("meta.ranktextcolour.".length);
+      else if (p.startsWith("meta.discordid.")) m.discordRoleId = p.slice("meta.discordid.".length);
+      else if (p.startsWith("meta.staff.")) m.isStaff = parseInt(p.slice("meta.staff.".length), 10) || 0;
+      else if (p.startsWith("meta.donator.")) m.isDonator = parseInt(p.slice("meta.donator.".length), 10) || 0;
+      meta.set(row.name, m);
+    }
+
+    // Derive badge/text colour fallbacks from prefix when explicit meta is absent
+    for (const m of meta.values()) {
+      if (!m.rankBadgeColour && m.prefix) {
+        const code = m.prefix.match(/\[&(.)/)?.[1] || "";
+        m.rankBadgeColour = PREFIX_COLOUR_MAP[code] || "#FFFFFF";
+      }
+      if (!m.rankTextColour && m.prefix) {
+        const code = m.prefix.match(/\[&(.)/)?.[1] || "";
+        m.rankTextColour = DARK_PREFIX_CODES.has(code) ? "#FFFFFF" : "#000000";
+      }
+    }
+
+    return meta;
+  }
+
+  function rankRowFromMeta(rankSlug, metaMap) {
+    const m = metaMap.get(rankSlug) || {};
+    return mapRankRow({
+      rankSlug,
+      displayName: m.displayName || rankSlug,
+      priority: m.priority ?? null,
+      rankBadgeColour: m.rankBadgeColour || null,
+      rankTextColour: m.rankTextColour || null,
+      discordRoleId: m.discordRoleId || null,
+      isStaff: m.isStaff || 0,
+      isDonator: m.isDonator || 0,
+    });
+  }
+
+  function sortRankRows(rows) {
+    return [...rows].sort(
+      (a, b) => (b.priority ?? 0) - (a.priority ?? 0) || a.rankSlug.localeCompare(b.rankSlug)
+    );
+  }
+
+  /** Every rank (with title and expiry, if set) the given LuckPerms player uuid directly holds. */
+  async function getRanksForUuid(uuid) {
+    const groupRows = await queryLuckPermsDb(
+      `SELECT SUBSTRING_INDEX(permission, '.', -1) AS rankSlug, expiry
+         FROM ${LUCKPERMS_USER_PERMISSIONS_TABLE}
+        WHERE uuid = ? AND permission LIKE 'group.%' AND value = 1
+          AND (expiry IS NULL OR expiry = 0 OR expiry > UNIX_TIMESTAMP())`,
+      [uuid]
+    );
+    if (!groupRows.length) return [];
+    const expiresAtByRank = {};
+    for (const row of groupRows) {
+      expiresAtByRank[row.rankSlug] = row.expiry ? row.expiry * 1000 : null;
+    }
+    const rankSlugs = groupRows.map((r) => r.rankSlug);
+
+    const titleRows = await queryLuckPermsDb(
+      `SELECT permission FROM ${LUCKPERMS_USER_PERMISSIONS_TABLE}
+        WHERE uuid = ? AND permission LIKE 'meta.group.%.title.%' AND value = 1`,
+      [uuid]
+    );
+    const titleByGroup = {};
+    for (const row of titleRows) {
+      const match = row.permission.match(/^meta\.group\.(.+?)\.title\.(.+)$/);
+      if (match) titleByGroup[match[1]] = match[2];
+    }
+
+    const metaMap = await getRankMetaMap();
+    return sortRankRows(
+      rankSlugs.map((rankSlug) => ({
+        ...rankRowFromMeta(rankSlug, metaMap),
+        title: titleByGroup[rankSlug] || null,
+        expiresAt: expiresAtByRank[rankSlug] ?? null,
+      }))
+    );
   }
 
   function permissionMatch(permissions, node) {
@@ -190,21 +326,9 @@ export default function rankApiRoute(app, config, db, features, lang) {
   }
 
   async function getRankDirectory() {
-    const results = await queryDb(
-      `SELECT
-        rankSlug,
-        displayName,
-        priority,
-        rankBadgeColour,
-        rankTextColour,
-        discordRoleId,
-        isStaff,
-        isDonator
-      FROM ${RANK_VIEW}
-      ORDER BY CAST(COALESCE(priority, 0) AS UNSIGNED) DESC, rankSlug`
-    );
-
-    return results.map((row) => mapRankRow(row));
+    const groupRows = await queryLuckPermsDb(`SELECT name AS rankSlug FROM luckperms_groups`);
+    const metaMap = await getRankMetaMap();
+    return sortRankRows(groupRows.map((g) => rankRowFromMeta(g.rankSlug, metaMap)));
   }
 
   app.get(`${baseEndpoint}/get`, async function (req, res) {
@@ -223,28 +347,7 @@ export default function rankApiRoute(app, config, db, features, lang) {
           });
         }
 
-        const rows = await queryDb(
-          `SELECT
-              r.rankSlug,
-              r.displayName,
-              r.priority,
-              r.rankBadgeColour,
-              r.rankTextColour,
-              r.discordRoleId,
-              r.isStaff,
-              r.isDonator,
-              ur.title
-            FROM ${USER_RANKS_VIEW} ur
-              JOIN ${RANK_VIEW} r ON ur.rankSlug = r.rankSlug
-            WHERE ur.uuid = ?
-            ORDER BY CAST(COALESCE(r.priority, 0) AS UNSIGNED) DESC, r.rankSlug`,
-          [player.uuid]
-        );
-
-        const mapped = rows.map((row) => ({
-          ...mapRankRow(row),
-          title: row.title || null,
-        }));
+        const mapped = await getRanksForUuid(player.uuid);
 
         return res.send({
           success: true,
@@ -254,44 +357,66 @@ export default function rankApiRoute(app, config, db, features, lang) {
       }
 
       if (rankSlug) {
-        // Step 1: get rank members from main DB without luckperms JOIN
-        const mainRows = await queryDb(
-          `SELECT ur.uuid, ur.title,
-              r.displayName, r.rankBadgeColour, r.rankTextColour,
-              u.userId, u.username AS webUsername
-            FROM ${RANK_VIEW} r
-              JOIN ${USER_RANKS_VIEW} ur ON ur.rankSlug = r.rankSlug
-              LEFT JOIN users u ON ur.uuid = u.uuid
-            WHERE r.rankSlug = ?`,
-          [rankSlug]
+        const memberRows = await queryLuckPermsDb(
+          `SELECT uuid FROM ${LUCKPERMS_USER_PERMISSIONS_TABLE}
+            WHERE permission = ? AND value = 1
+              AND (expiry IS NULL OR expiry = 0 OR expiry > UNIX_TIMESTAMP())`,
+          [`group.${rankSlug}`]
         );
-
-        // Step 2: enrich missing usernames from luckperms_players
-        const uuidsNeedingName = mainRows
-          .filter((r) => !r.webUsername && r.uuid)
-          .map((r) => r.uuid);
-        const lpNames = {};
-        if (uuidsNeedingName.length) {
-          const placeholders = uuidsNeedingName.map(() => "UNHEX(?)").join(", ");
-          const lpRows = await queryLuckPermsDb(
-            `SELECT LOWER(HEX(uuid)) AS uuid, username FROM ${LUCKPERMS_PLAYERS_TABLE} WHERE uuid IN (${placeholders})`,
-            uuidsNeedingName
-          );
-          for (const { uuid, username } of lpRows) {
-            lpNames[uuid] = username;
-          }
+        const uuids = memberRows.map((r) => r.uuid);
+        if (!uuids.length) {
+          return res.send({ success: true, data: [] });
         }
 
-        const rows = mainRows
-          .map((r) => ({
-            userId: r.userId || null,
-            uuid: r.uuid,
-            username: r.webUsername || lpNames[r.uuid] || null,
-            displayName: r.displayName,
-            rankBadgeColour: r.rankBadgeColour,
-            rankTextColour: r.rankTextColour,
-            title: r.title,
-          }))
+        const placeholders = uuids.map(() => "?").join(", ");
+
+        const titleRows = await queryLuckPermsDb(
+          `SELECT uuid, permission FROM ${LUCKPERMS_USER_PERMISSIONS_TABLE}
+            WHERE uuid IN (${placeholders}) AND permission LIKE ? AND value = 1`,
+          [...uuids, `meta.group.${rankSlug}.title.%`]
+        );
+        const titleByUuid = {};
+        for (const row of titleRows) {
+          const match = row.permission.match(/\.title\.(.+)$/);
+          if (match) titleByUuid[row.uuid] = match[1];
+        }
+
+        // Resolve usernames — main DB first, then LuckPerms players table
+        // for uuids without a linked web account.
+        const webUsers = await queryDb(
+          `SELECT userId, uuid, username FROM users WHERE uuid IN (${placeholders})`,
+          uuids
+        );
+        const webByUuid = {};
+        for (const u of webUsers) webByUuid[u.uuid.toLowerCase()] = u;
+
+        const missingUuids = uuids.filter((uuid) => !webByUuid[uuid]);
+        const lpNames = {};
+        if (missingUuids.length) {
+          const missingPlaceholders = missingUuids.map(() => "?").join(", ");
+          const lpRows = await queryLuckPermsDb(
+            `SELECT LOWER(uuid) AS uuid, username FROM ${LUCKPERMS_PLAYERS_TABLE} WHERE LOWER(uuid) IN (${missingPlaceholders})`,
+            missingUuids
+          );
+          for (const { uuid, username } of lpRows) lpNames[uuid] = username;
+        }
+
+        const metaMap = await getRankMetaMap();
+        const rankMetaRow = rankRowFromMeta(rankSlug, metaMap);
+
+        const rows = uuids
+          .map((uuid) => {
+            const webUser = webByUuid[uuid];
+            return {
+              userId: webUser?.userId || null,
+              uuid,
+              username: webUser?.username || lpNames[uuid] || null,
+              displayName: rankMetaRow.displayName,
+              rankBadgeColour: rankMetaRow.rankBadgeColour,
+              rankTextColour: rankMetaRow.rankTextColour,
+              title: titleByUuid[uuid] || null,
+            };
+          })
           .sort((a, b) => (a.username || "").localeCompare(b.username || ""));
 
         return res.send({ success: true, data: rows });
@@ -328,28 +453,7 @@ export default function rankApiRoute(app, config, db, features, lang) {
         });
       }
 
-      const ranks = await queryDb(
-        `SELECT
-            r.rankSlug,
-            r.displayName,
-            r.priority,
-            r.rankBadgeColour,
-            r.rankTextColour,
-            r.discordRoleId,
-            r.isStaff,
-            r.isDonator,
-            ur.title
-          FROM ${USER_RANKS_VIEW} ur
-            JOIN ${RANK_VIEW} r ON ur.rankSlug = r.rankSlug
-          WHERE ur.uuid = ?
-          ORDER BY CAST(COALESCE(r.priority, 0) AS UNSIGNED) DESC, r.rankSlug`,
-        [player.uuid]
-      );
-
-      const mappedRanks = ranks.map((row) => ({
-        ...mapRankRow(row),
-        title: row.title || null,
-      }));
+      const mappedRanks = await getRanksForUuid(player.uuid);
 
       return res.send({
         success: true,
@@ -451,30 +555,41 @@ export default function rankApiRoute(app, config, db, features, lang) {
             COALESCE(RIGHT(lpGroupDonator.permission, 1), '0') AS isDonator,
             SUBSTRING_INDEX(lpMetaDiscordId.permission, '.', -1) AS discordRoleId
           FROM luckperms_groups lpGroups
+            -- Scoped to server='global'/world='global' to match what
+            -- updateGroupNode() (just above) writes — a contextual override
+            -- (e.g. server=events) would otherwise read back the wrong value.
             LEFT JOIN luckperms_group_permissions lpGroupDisplayName
               ON lpGroups.name = lpGroupDisplayName.name
               AND lpGroupDisplayName.permission LIKE 'displayname.%' AND lpGroupDisplayName.value = 1
+              AND lpGroupDisplayName.server = 'global' AND lpGroupDisplayName.world = 'global'
             LEFT JOIN luckperms_group_permissions lpGroupWeight
               ON lpGroups.name = lpGroupWeight.name
               AND lpGroupWeight.permission LIKE 'weight.%' AND lpGroupWeight.value = 1
+              AND lpGroupWeight.server = 'global' AND lpGroupWeight.world = 'global'
             LEFT JOIN luckperms_group_permissions lpGroupPrefix
               ON lpGroups.name = lpGroupPrefix.name
               AND lpGroupPrefix.permission LIKE 'prefix.%' AND lpGroupPrefix.value = 1
+              AND lpGroupPrefix.server = 'global' AND lpGroupPrefix.world = 'global'
             LEFT JOIN luckperms_group_permissions lpGroupStaff
               ON lpGroups.name = lpGroupStaff.name
               AND lpGroupStaff.permission LIKE 'meta.staff.%' AND lpGroupStaff.value = 1
+              AND lpGroupStaff.server = 'global' AND lpGroupStaff.world = 'global'
             LEFT JOIN luckperms_group_permissions lpGroupDonator
               ON lpGroups.name = lpGroupDonator.name
               AND lpGroupDonator.permission LIKE 'meta.donator.%' AND lpGroupDonator.value = 1
+              AND lpGroupDonator.server = 'global' AND lpGroupDonator.world = 'global'
             LEFT JOIN luckperms_group_permissions lpMetaBadgeColour
               ON lpGroups.name = lpMetaBadgeColour.name
               AND lpMetaBadgeColour.permission LIKE 'meta.rankbadgecolour.%' AND lpMetaBadgeColour.value = 1
+              AND lpMetaBadgeColour.server = 'global' AND lpMetaBadgeColour.world = 'global'
             LEFT JOIN luckperms_group_permissions lpMetaTextColour
               ON lpGroups.name = lpMetaTextColour.name
               AND lpMetaTextColour.permission LIKE 'meta.ranktextcolour.%' AND lpMetaTextColour.value = 1
+              AND lpMetaTextColour.server = 'global' AND lpMetaTextColour.world = 'global'
             LEFT JOIN luckperms_group_permissions lpMetaDiscordId
               ON lpGroups.name = lpMetaDiscordId.name
               AND lpMetaDiscordId.permission LIKE 'meta.discordid.%' AND lpMetaDiscordId.value = 1
+              AND lpMetaDiscordId.server = 'global' AND lpMetaDiscordId.world = 'global'
           WHERE lpGroups.name = ?
           LIMIT 1`,
         [rankSlug]
@@ -503,13 +618,25 @@ export default function rankApiRoute(app, config, db, features, lang) {
   app.post(`${baseEndpoint}/user/assign`, async function (req, res) {
     if (!isFeatureEnabled(features.ranks, res, lang)) return;
 
-    const { username, rankSlug, title } = req.body || {};
+    const { username, rankSlug, title, expiresAt } = req.body || {};
 
     if (!username || !rankSlug) {
       return res.send({
         success: false,
         message: "Username and rankSlug are required.",
       });
+    }
+
+    let expirySeconds = 0;
+    if (expiresAt) {
+      const parsed = new Date(expiresAt);
+      if (Number.isNaN(parsed.getTime())) {
+        return res.send({ success: false, message: "Invalid expiry date." });
+      }
+      if (parsed.getTime() <= Date.now()) {
+        return res.send({ success: false, message: "Expiry must be in the future." });
+      }
+      expirySeconds = Math.floor(parsed.getTime() / 1000);
     }
 
     try {
@@ -519,9 +646,13 @@ export default function rankApiRoute(app, config, db, features, lang) {
         return res.send({ success: false, message: "Player not found." });
       }
 
+      await normalizeUserPermissionContexts(player.uuid, rankSlug);
+
       const [existing] = await queryLuckPermsDb(
         `SELECT uuid FROM ${LUCKPERMS_USER_PERMISSIONS_TABLE}
-          WHERE uuid = UNHEX(?) AND permission = ? AND value = 1 LIMIT 1`,
+          WHERE uuid = ? AND permission = ? AND value = 1
+            AND (expiry IS NULL OR expiry = 0 OR expiry > UNIX_TIMESTAMP())
+          LIMIT 1`,
         [player.uuid, `group.${rankSlug}`]
       );
 
@@ -535,13 +666,13 @@ export default function rankApiRoute(app, config, db, features, lang) {
       await queryLuckPermsDb(
         `INSERT INTO ${LUCKPERMS_USER_PERMISSIONS_TABLE}
           (uuid, permission, value, server, world, expiry, contexts)
-        VALUES (UNHEX(?), ?, 1, 'global', 'global', 0, '[]')`,
-        [player.uuid, `group.${rankSlug}`]
+        VALUES (?, ?, 1, 'global', 'global', ?, '{}')`,
+        [player.uuid, `group.${rankSlug}`, expirySeconds]
       );
 
       await queryLuckPermsDb(
         `DELETE FROM ${LUCKPERMS_USER_PERMISSIONS_TABLE}
-          WHERE uuid = UNHEX(?)
+          WHERE uuid = ?
             AND permission LIKE CONCAT('meta.group.', ?, '.title.%')`,
         [player.uuid, rankSlug]
       );
@@ -550,9 +681,13 @@ export default function rankApiRoute(app, config, db, features, lang) {
         await queryLuckPermsDb(
           `INSERT INTO ${LUCKPERMS_USER_PERMISSIONS_TABLE}
             (uuid, permission, value, server, world, expiry, contexts)
-          VALUES (UNHEX(?), ?, 1, 'global', 'global', 0, '[]')`,
+          VALUES (?, ?, 1, 'global', 'global', 0, '{}')`,
           [player.uuid, `meta.group.${rankSlug}.title.${title.substring(0, 64)}`]
         );
+      }
+
+      if (player.userId) {
+        await syncMemberRankRoles(player.userId);
       }
 
       return res.send({
@@ -579,6 +714,13 @@ export default function rankApiRoute(app, config, db, features, lang) {
       });
     }
 
+    if (rankSlug === "default") {
+      return res.send({
+        success: false,
+        message: "The default rank cannot be removed.",
+      });
+    }
+
     try {
       const player = await resolvePlayer(username);
 
@@ -586,18 +728,24 @@ export default function rankApiRoute(app, config, db, features, lang) {
         return res.send({ success: false, message: "Player not found." });
       }
 
+      await normalizeUserPermissionContexts(player.uuid, rankSlug);
+
       const result = await queryLuckPermsDb(
         `DELETE FROM ${LUCKPERMS_USER_PERMISSIONS_TABLE}
-          WHERE uuid = UNHEX(?) AND permission = ?`,
+          WHERE uuid = ? AND permission = ?`,
         [player.uuid, `group.${rankSlug}`]
       );
 
       await queryLuckPermsDb(
         `DELETE FROM ${LUCKPERMS_USER_PERMISSIONS_TABLE}
-          WHERE uuid = UNHEX(?)
+          WHERE uuid = ?
             AND permission LIKE CONCAT('meta.group.', ?, '.title.%')`,
         [player.uuid, rankSlug]
       );
+
+      if (player.userId && result?.affectedRows > 0) {
+        await syncMemberRankRoles(player.userId);
+      }
 
       return res.send({
         success: true,

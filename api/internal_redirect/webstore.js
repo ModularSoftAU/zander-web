@@ -125,10 +125,6 @@ async function sendToWebhook(webhookUrl, title, fields, color = Colors.Green) {
   }
 }
 
-async function notifyStaff(config, title, fields, color = Colors.Green) {
-  await sendToWebhook(config?.discord?.webhooks?.staffChannel, title, fields, color);
-}
-
 async function notifyWebstore(config, title, fields, color = Colors.Green) {
   await sendToWebhook(config?.discord?.webhooks?.webstoreChannel, title, fields, color);
 }
@@ -387,24 +383,7 @@ async function handleCheckoutCompleted(event, config) {
     console.error("[webstore] Failed to record finance income for purchase", purchase.purchaseId, err.message);
   }
 
-  await Promise.all([
-    notifyStaff(
-      config,
-      `${purchase.itemName} Purchased`,
-      [
-        ["Player", purchase.recipientMinecraftUsername, true],
-        ["Type", purchase.purchaseType === "subscription" ? "Subscription" : "One-time", true],
-        [
-          "Amount",
-          `${(purchase.currency || "usd").toUpperCase()} ${(purchase.amountCents / 100).toFixed(2)}`,
-          true,
-        ],
-        ["Gifted", purchase.isGift ? "Yes" : "No", true],
-      ],
-      Colors.Green
-    ),
-    notifyPurchase(config, purchase),
-  ]);
+  await notifyPurchase(config, purchase);
 }
 
 // ---------------------------------------------------------------------------
@@ -467,6 +446,33 @@ async function handleInvoicePaymentSucceeded(event, config) {
     await fulfillSubscriptionRenewal(subscription, grantCommands, { discordClient, guildId: config?.discord?.guildId });
   }
 
+  // --- Record renewal income in finance ledger ---
+  // (The initial payment is recorded by handleCheckoutCompleted; every
+  // subsequent renewal must be recorded here or it's invisible to the
+  // finance dashboard even though real money changed hands.)
+  try {
+    const account = await getDefaultWebstoreAccount();
+    if (account && typeof invoice.amount_paid === "number") {
+      const item = await findWebstoreItem(subscription.stripePriceId).catch(() => null);
+      const itemName = item?.displayName || subscription.stripePriceId;
+      const recipient = subscription.recipientMinecraftUsername || subscription.purchaserMinecraftUsername || "unknown";
+      await createTransaction({
+        type: "income",
+        amountCents: invoice.amount_paid,
+        currency: (invoice.currency || "usd").toUpperCase(),
+        accountId: account.accountId,
+        description: `${itemName} — ${recipient} (renewal)`,
+        notes: `Webstore subscription renewal. Purchase #${subscription.purchaseId}. Stripe subscription ${invoice.subscription}.`,
+        transactionDate: new Date().toISOString().slice(0, 10),
+        createdByUserId: 0,
+      });
+    } else if (!account) {
+      console.warn("[webstore] No finance account found — skipping renewal income record for subscription", invoice.subscription);
+    }
+  } catch (err) {
+    console.error("[webstore] Failed to record renewal income for subscription", invoice.subscription, err.message);
+  }
+
   const periodEndDate = stripeSub?.current_period_end
     ? new Date(stripeSub.current_period_end * 1000).toISOString().slice(0, 10)
     : "unknown";
@@ -477,10 +483,7 @@ async function handleInvoicePaymentSucceeded(event, config) {
     ["Price ID", subscription.stripePriceId, false],
     ["Next Renewal", periodEndDate, true],
   ];
-  await Promise.all([
-    notifyStaff(config, "Subscription Renewed", renewalFields, Colors.Blue),
-    notifyWebstore(config, "🔄 Subscription Renewed", renewalFields, Colors.Blue),
-  ]);
+  await notifyWebstore(config, "🔄 Subscription Renewed", renewalFields, Colors.Blue);
 }
 
 // ---------------------------------------------------------------------------
@@ -527,10 +530,7 @@ async function handleInvoicePaymentFailed(event, config) {
     ["Price ID", subscription.stripePriceId, true],
     ["Attempt", String(invoice.attempt_count || 1), true],
   ];
-  await Promise.all([
-    notifyStaff(config, "Subscription Payment Failed", failedFields, Colors.Yellow),
-    notifyWebstore(config, "⚠️ Subscription Payment Failed", failedFields, Colors.Yellow),
-  ]);
+  await notifyWebstore(config, "⚠️ Subscription Payment Failed", failedFields, Colors.Yellow);
 }
 
 // ---------------------------------------------------------------------------
@@ -627,10 +627,7 @@ async function handleSubscriptionDeleted(event, config) {
     ["Reason", stripeSub.cancellation_details?.reason || "unknown", true],
     ["Revoke commands", String(revokeCommands.length), true],
   ];
-  await Promise.all([
-    notifyStaff(config, "Subscription Cancelled", cancelledFields, Colors.Red),
-    notifyWebstore(config, "❌ Subscription Cancelled", cancelledFields, Colors.Red),
-  ]);
+  await notifyWebstore(config, "❌ Subscription Cancelled", cancelledFields, Colors.Red);
 }
 
 // ---------------------------------------------------------------------------

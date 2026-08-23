@@ -8,7 +8,7 @@
  *   POST /webstore/checkout     — start a Stripe Checkout session
  *   GET  /webstore/thank-you    — post-payment landing page
  *   GET  /webstore/history      — authenticated purchase history
- *   GET  /give                  — "Support the Server" information page
+ *   GET  /give                  — legacy redirect to the Finance Centre support section
  */
 
 import {
@@ -22,7 +22,6 @@ import {
   createStripeCheckoutSession,
   findWebstoreItem,
   formatPrice,
-  getMonthlyPurchaseTotals,
   getPurchaseHistory,
   getPurchaseHistoryCount,
   getReceivedGifts,
@@ -162,11 +161,6 @@ export default function webstoreRoutes(app, config, features) {
 
     let recipientUsername;
     let isGift = false;
-
-    if (purchaseFor === "gift" && item.purchaseType === "subscription") {
-      setBannerCookie("warning", "Subscriptions cannot be gifted.", res);
-      return res.redirect("/webstore");
-    }
 
     if (purchaseFor === "gift") {
       const raw = typeof req.body?.recipientUsername === "string"
@@ -332,41 +326,9 @@ export default function webstoreRoutes(app, config, features) {
   });
 
   // -------------------------------------------------------------------------
-  // GET /give — "Support the Server" page with monthly goal bar
+  // GET /give — legacy entry point now redirected to the Finance Centre support section
   // -------------------------------------------------------------------------
   app.get("/give", async function (req, res) {
-    const now = new Date();
-    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1, 0, 0, 0, 0);
-    const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999);
-
-    const monthlyGoalCents =
-      Number(config?.siteConfiguration?.webstore?.monthlyGoalCents) ||
-      Number(process.env.WEBSTORE_MONTHLY_GOAL_CENTS) ||
-      10000; // default: $100.00
-
-    let raisedCents = 0;
-    try {
-      raisedCents = await getMonthlyPurchaseTotals(startOfMonth, endOfMonth);
-      console.log(`[webstore] give page loaded | raisedCents=${raisedCents} goalCents=${monthlyGoalCents} progress=${Math.min(100, Math.round((raisedCents / monthlyGoalCents) * 100))}%`);
-    } catch (err) {
-      console.error("[webstore] getMonthlyPurchaseTotals error:", err.message);
-    }
-
-    const progressPercent = monthlyGoalCents
-      ? Math.min(100, Math.round((raisedCents / monthlyGoalCents) * 100))
-      : 0;
-
-    return res.view("modules/give/index", {
-      pageTitle: "Support the Server",
-      pageDescription: `Support ${config.siteConfiguration.siteName} and keep the community going.`,
-      config,
-      req,
-      features,
-      globalImage: await getGlobalImage(),
-      announcementWeb: await getWebAnnouncement(),
-      monthlyGoalCents,
-      raisedCents,
-      progressPercent,
-    });
+    return res.redirect(301, "/finance#support");
   });
 }

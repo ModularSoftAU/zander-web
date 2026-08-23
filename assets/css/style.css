@@ -1291,6 +1291,76 @@ a:focus {
   border-top: 1px solid rgba(0, 0, 0, 0.05) !important;
 }
 
+/* Finance Centre - follows the public site's feature-card visual language. */
+.finance-page.section {
+  padding-top: 60px;
+}
+
+.finance-page .finance-intro {
+  margin-bottom: 48px !important;
+}
+
+.finance-page .finance-intro .lead {
+  color: #6f8ba4;
+  line-height: 1.65;
+}
+
+.finance-page h3,
+.finance-page h4 {
+  color: #2f508c;
+}
+
+.finance-page .card,
+.finance-page .list-group {
+  border-radius: 15px;
+  box-shadow: 0 0 30px rgba(0, 42, 106, 0.1) !important;
+  overflow: hidden;
+}
+
+.finance-page .card-body {
+  padding: 28px;
+}
+
+.finance-page .finance-stat-card {
+  border-top: 4px solid #2f508c !important;
+}
+
+.finance-page .list-group-item {
+  border-color: rgba(0, 42, 106, 0.1);
+  color: #6f8ba4;
+}
+
+.finance-page .list-group-item h4 {
+  color: #222;
+}
+
+.finance-page .list-group-item .bg-light {
+  background: #f4f9fc !important;
+  color: #2f508c !important;
+}
+
+.finance-page .progress {
+  background: #e8f0f7;
+}
+
+.finance-page .progress-bar {
+  background-color: #2f508c !important;
+}
+
+@media (max-width: 575.98px) {
+  .finance-page.section {
+    padding-top: 42px;
+  }
+
+  .finance-page .finance-intro {
+    margin-bottom: 36px !important;
+  }
+
+  .finance-page .card-body {
+    padding: 22px;
+  }
+}
+
 .w-hours li {
   padding: 6px 0px;
   border-bottom: 1px solid rgba(0, 0, 0, 0.05);
@@ -2512,16 +2582,82 @@ a:focus {
 
 .forums-thread .forums-post {
   border: none;
-  border-radius: 14px;
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 8px 28px rgba(15, 23, 42, 0.08) !important;
 }
 
 .forums-thread .forums-post.original-post {
   border-left: 4px solid #2f508c;
 }
 
+.forums-post .card-body {
+  padding: 0;
+}
+
+.forums-post-header {
+  background: linear-gradient(135deg, #f8fafc 0%, #f4f7fb 100%);
+  border-bottom: 1px solid #e5eaf1;
+  padding: 1rem 1.2rem;
+}
+
+.forums-post-author {
+  align-items: center;
+  display: flex;
+  gap: 0.8rem;
+  min-width: 0;
+}
+
+.forums-post-author-details {
+  min-width: 0;
+}
+
+.forums-post-author-line,
+.forums-post-ranks {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.forums-post-username {
+  color: #172033;
+  font-size: 1rem;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.forums-post-username:hover {
+  color: #2f508c;
+  text-decoration: underline;
+}
+
+.forums-post-rank {
+  border-radius: 999px;
+  font-size: 0.66rem;
+  font-weight: 700;
+  line-height: 1;
+  padding: 0.32rem 0.55rem;
+}
+
+.forums-post-date {
+  color: #6b7280;
+  font-size: 0.78rem;
+  margin-top: 0.25rem;
+}
+
+.forums-post-content {
+  padding: 1.2rem;
+}
+
 .forums-post-body {
-  font-size: 0.96rem;
-  line-height: 1.7;
+  color: #202938;
+  font-size: 1rem;
+  line-height: 1.72;
+}
+
+.forums-post-body > :last-child {
+  margin-bottom: 0;
 }
 
 .forums-post-body img {
@@ -2534,6 +2670,116 @@ a:focus {
   padding-left: 1rem;
   color: #475569;
   font-style: italic;
+}
+
+.forums-reply-context {
+  align-items: center;
+  background: #f2f6fc;
+  border: 1px solid #dce6f4;
+  border-radius: 8px;
+  color: #2f508c;
+  display: inline-flex;
+  font-size: 0.82rem;
+  font-weight: 600;
+  gap: 0.45rem;
+  margin-bottom: 1rem;
+  padding: 0.45rem 0.65rem;
+  text-decoration: none;
+}
+
+.forums-reply-context:hover {
+  background: #e9f0fa;
+  color: #1c2f53;
+}
+
+.forums-reply-context-link {
+  font-size: 0.65rem;
+  opacity: 0.6;
+}
+
+.forums-post-actions {
+  align-items: center;
+  border-top: 1px solid #e8ecf2;
+  display: flex;
+  justify-content: space-between;
+  margin-top: 1.25rem;
+  padding-top: 0.75rem;
+}
+
+.forums-post-actions-primary,
+.forums-post-actions-secondary {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+}
+
+.forums-post-action {
+  align-items: center;
+  background: transparent;
+  border: 0;
+  border-radius: 6px;
+  color: #526075;
+  display: inline-flex;
+  font-size: 0.76rem;
+  font-weight: 700;
+  gap: 0.35rem;
+  padding: 0.4rem 0.55rem;
+  text-decoration: none;
+}
+
+.forums-post-action:hover {
+  background: #edf3fb;
+  color: #24477f;
+}
+
+.forums-post-action.is-danger {
+  color: #b42335;
+}
+
+.forums-post-action.is-danger:hover {
+  background: #fff0f1;
+  color: #971c2c;
+}
+
+@media (max-width: 575.98px) {
+  .forums-post-header,
+  .forums-post-content {
+    padding: 1rem;
+  }
+
+  .forums-post-author-line {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .forums-post-actions {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 0.35rem;
+  }
+
+  .forums-post-actions-secondary {
+    border-top: 1px dashed #e1e6ed;
+    padding-top: 0.35rem;
+    width: 100%;
+  }
+}
+}
+
+.forums-post-body blockquote.forums-quoted-post,
+.note-editable blockquote.forums-quoted-post {
+  background: #f4f9fc;
+  border-left-color: #2f508c;
+  border-radius: 0 8px 8px 0;
+  font-style: normal;
+  margin: 1rem 0;
+  padding: 0.8rem 1rem;
+}
+
+.forums-post-body blockquote.forums-quoted-post p:last-child,
+.note-editable blockquote.forums-quoted-post p:last-child {
+  margin-bottom: 0;
 }
 
 /* Summernote wraps <li> content in <p> tags; Bootstrap's p margin-bottom

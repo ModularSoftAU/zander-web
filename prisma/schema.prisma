@@ -230,6 +230,7 @@ model forumPosts {
   postId       Int                  @id @default(autoincrement())
   discussionId Int
   userId       Int
+  replyToPostId Int?
   content      String               @db.MediumText
   isOriginal   Int                  @default(0) @db.TinyInt
   createdAt    DateTime             @default(now())
@@ -237,6 +238,10 @@ model forumPosts {
 
   discussion   forumDiscussions     @relation(fields: [discussionId], references: [discussionId])
   revisions    forumPostRevisions[]
+  replyToPost  forumPosts?          @relation("ForumPostReplies", fields: [replyToPostId], references: [postId], onDelete: SetNull)
+  replies      forumPosts[]         @relation("ForumPostReplies")
+
+  @@index([replyToPostId])
 }
 
 model forumPostRevisions {
@@ -1093,14 +1098,18 @@ model financeAccounts {
 
 /// Hierarchical income / expense categories.
 model financeCategories {
-  categoryId  Int                      @id @default(autoincrement())
-  parentId    Int?
-  name        String                   @db.VarChar(100)
-  type        financeCategories_type   @default(expense)
-  color       String                   @default("#6c757d") @db.VarChar(7)
-  isActive    Int                      @default(1) @db.TinyInt
-  createdAt   DateTime                 @default(now())
-  updatedAt   DateTime                 @updatedAt
+  categoryId         Int                    @id @default(autoincrement())
+  parentId           Int?
+  name               String                 @db.VarChar(100)
+  type               financeCategories_type @default(expense)
+  color              String                 @default("#6c757d") @db.VarChar(7)
+  isActive           Int                    @default(1) @db.TinyInt
+  isPublic           Int                    @default(0) @db.TinyInt
+  publicName         String?                @db.VarChar(100)
+  publicDescription  String?                @db.VarChar(255)
+  publicSortOrder    Int                    @default(0)
+  createdAt          DateTime               @default(now())
+  updatedAt          DateTime               @updatedAt
 
   parent    financeCategories?   @relation("CategoryParent", fields: [parentId], references: [categoryId], onDelete: SetNull)
   children  financeCategories[]  @relation("CategoryParent")
@@ -1108,8 +1117,10 @@ model financeCategories {
   transactions         financeTransactions[]
   vendors              financeVendors[]
   budgetEntries        financeOperationsBudget[]
+  monthlyBudgetEntries financeOperationsBudgetMonthly[]
 
   @@index([parentId])
+  @@index([isPublic])
 }
 
 /// Free-form tags that can be attached to transactions.
@@ -1279,6 +1290,10 @@ model financeOperationsBudget {
   label               String   @default("") @db.VarChar(150)
   monthlyBudgetCents  Int      @default(0)
   currency            String   @default("USD") @db.VarChar(3)
+  cadence             String   @default("monthly") @db.VarChar(10)
+  annualMonth         Int?     @db.TinyInt
+  iconName            String?  @db.VarChar(50)
+  iconImageUrl        String?  @db.VarChar(500)
   notes               String?  @db.Text
   isActive            Int      @default(1) @db.TinyInt
   createdAt           DateTime @default(now())
@@ -1287,7 +1302,36 @@ model financeOperationsBudget {
   vendor   financeVendors?    @relation(fields: [vendorId], references: [vendorId], onDelete: SetNull)
   category financeCategories? @relation(fields: [categoryId], references: [categoryId], onDelete: SetNull)
 
+  monthlyOverrides financeOperationsBudgetMonthly[]
+
   @@index([vendorId])
+  @@index([categoryId])
+}
+
+/// Per-month deviations from the financeOperationsBudget template: either an
+/// override of a template item's amount for one specific month
+/// (budgetItemId set), or a one-off item that only exists that month
+/// (budgetItemId null). A month with no rows here inherits the template as-is.
+model financeOperationsBudgetMonthly {
+  monthlyBudgetItemId Int      @id @default(autoincrement())
+  year                Int      @db.SmallInt
+  month               Int      @db.TinyInt
+  budgetItemId        Int?
+  categoryId          Int?
+  label               String   @default("") @db.VarChar(150)
+  monthlyBudgetCents  Int      @default(0)
+  currency            String   @default("USD") @db.VarChar(3)
+  iconName            String?  @db.VarChar(50)
+  iconImageUrl        String?  @db.VarChar(500)
+  notes               String?  @db.Text
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  budgetItem financeOperationsBudget? @relation(fields: [budgetItemId], references: [budgetId], onDelete: Cascade)
+  category   financeCategories?       @relation(fields: [categoryId], references: [categoryId], onDelete: SetNull)
+
+  @@unique([year, month, budgetItemId])
+  @@index([year, month])
   @@index([categoryId])
 }
 

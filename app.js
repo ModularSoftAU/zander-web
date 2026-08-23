@@ -1,3 +1,5 @@
+import "./instrument.mjs";
+import * as Sentry from "@sentry/node";
 import { createRequire } from "module";
 const require = createRequire(import.meta.url);
 
@@ -55,6 +57,7 @@ import("./cron/eventTemplateCron.js");
 import("./cron/announcementExpiryCron.js");
 import("./cron/webstoreCommandSyncCron.js");
 import("./cron/badgeLuckpermsSyncCron.js");
+import("./cron/rankDiscordRoleSyncCron.js");
 import("./cron/shopItemIndexCron.js");
 
 //
@@ -64,6 +67,7 @@ import("./cron/shopItemIndexCron.js");
 // Site Routes
 import siteRoutes from "./routes/index.js";
 import apiRoutes from "./api/routes/index.js";
+import uploadApiRoute from "./api/routes/upload.js";
 import apiRedirectRoutes from "./api/internal_redirect/index.js";
 import webstoreWebhookRoutes from "./api/internal_redirect/webstore.js";
 import configApiRoute from "./api/routes/config.js";
@@ -78,6 +82,14 @@ import verifyToken from "./api/routes/verifyToken.js";
 import { getGlobalImage } from "./api/common.js";
 import { client } from "./controllers/discordController.js";
 
+function isExpectedClientError(error, statusCode) {
+  if (typeof statusCode === "number" && statusCode >= 400 && statusCode < 500) {
+    return true;
+  }
+
+  return error?.code === "ERR_HTTP_HEADERS_SENT";
+}
+
 //
 // Application Boot
 //
@@ -88,6 +100,20 @@ const buildApp = async () => {
   // event-loop ticks long enough for avvio to fire the default 10-second
   // timeout before route-registration plugins have a chance to complete.
   const app = fastify({ logger: config.debug, pluginTimeout: 120000 });
+
+  if (process.env.SENTRY_DSN) {
+    Sentry.setupFastifyErrorHandler(app, {
+      shouldHandleError(error, _request, reply) {
+        if (isExpectedClientError(error, reply?.statusCode)) {
+          return false;
+        }
+
+        return typeof reply?.statusCode === "number"
+          ? reply.statusCode >= 500
+          : true;
+      },
+    });
+  }
 
   // When app errors, render the error on a page, do not provide JSON
   app.setNotFoundHandler(async function (req, res) {
@@ -123,12 +149,27 @@ const buildApp = async () => {
       return;
     }
 
-    app.log.error(error);
-
     const statusCode =
       typeof error?.statusCode === "number" && error.statusCode >= 400
         ? error.statusCode
         : 500;
+
+    if (isExpectedClientError(error, statusCode)) {
+      app.log.info(
+        {
+          err: {
+            message: error?.message,
+            code: error?.code,
+            statusCode,
+          },
+          method: req.method,
+          url: req.url,
+        },
+        "request rejected"
+      );
+    } else {
+      app.log.error(error);
+    }
 
     res.status(statusCode);
 
@@ -219,6 +260,12 @@ const buildApp = async () => {
       message: `OK`,
     });
   });
+
+  // Browser image upload endpoint (/api/upload/image) — session-authenticated
+  // inside its own handler, not API-token-authenticated. Registered outside the
+  // verifyToken plugin so logged-in dashboard users / form submitters can upload
+  // images without the client needing to know the machine API key.
+  uploadApiRoute(app, config, db, features, lang);
 
   // Dashboard image upload — session-authenticated, not API-token-authenticated.
   // Kept outside the verifyToken plugin so logged-in dashboard users can upload

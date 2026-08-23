@@ -68,7 +68,7 @@
                                       <span class="badge bg-danger">Staff</span>
                                     <% } %>
                                     <% if (Number(rank.isDonator) === 1) { %>
-                                      <span class="badge bg-warning text-dark">Donator</span>
+                                      <span class="badge bg-warning text-dark">Supporter</span>
                                     <% } %>
                                     <% if (!Number(rank.isStaff) && !Number(rank.isDonator)) { %>
                                       <span class="text-muted small">None</span>
@@ -184,6 +184,23 @@
                                     name="title"
                                     maxlength="64"
                                     placeholder="Custom staff title or leave blank"
+                                  >
+                                </div>
+                                <div class="col-12">
+                                  <label for="rankAssignExpiry" class="form-label">Expires</label>
+                                  <select class="form-select" id="rankAssignExpiry" disabled>
+                                    <option value="" selected>Never</option>
+                                    <option value="1">After 1 day</option>
+                                    <option value="7">After 7 days</option>
+                                    <option value="30">After 30 days</option>
+                                    <option value="90">After 90 days</option>
+                                    <option value="custom">Custom date…</option>
+                                  </select>
+                                  <input
+                                    type="datetime-local"
+                                    class="form-control mt-2 d-none"
+                                    id="rankAssignExpiryDate"
+                                    disabled
                                   >
                                 </div>
                                 <div class="col-12 d-flex justify-content-between">
@@ -331,7 +348,7 @@
                 </div>
                 <div class="form-check">
                   <input class="form-check-input" type="checkbox" value="1" id="rankConfigIsDonator" name="isDonator">
-                  <label class="form-check-label" for="rankConfigIsDonator">Donator</label>
+                  <label class="form-check-label" for="rankConfigIsDonator">Supporter</label>
                 </div>
               </div>
             </div>
@@ -399,7 +416,7 @@
       if (Number(rank.isDonator) === 1) {
         const badge = document.createElement('span');
         badge.className = 'badge bg-warning text-dark';
-        badge.textContent = 'Donator';
+        badge.textContent = 'Supporter';
         badges.push(badge);
       }
 
@@ -560,6 +577,8 @@
     const assignForm = document.getElementById('rankAssignForm');
     const assignSelect = document.getElementById('rankAssignSelect');
     const assignTitle = document.getElementById('rankAssignTitle');
+    const assignExpiry = document.getElementById('rankAssignExpiry');
+    const assignExpiryDate = document.getElementById('rankAssignExpiryDate');
     const assignSubmit = document.getElementById('rankAssignSubmit');
     const assignReset = document.getElementById('rankAssignReset');
     const permissionForm = document.getElementById('rankPermissionForm');
@@ -572,6 +591,17 @@
       summaryContainer.querySelector('[data-summary="username"]').textContent = user.username;
       summaryContainer.querySelector('[data-summary="uuid"]').textContent = user.uuid || 'Unavailable';
       summaryContainer.querySelector('[data-summary="web-account"]').textContent = user.userId ? 'Linked' : 'Not linked';
+    }
+
+    function formatExpiryLabel(expiresAt) {
+      if (!expiresAt) return null;
+      const diffMs = expiresAt - Date.now();
+      if (diffMs <= 0) return 'expired';
+      const days = Math.round(diffMs / 86400000);
+      if (days < 1) return 'expires <1d';
+      if (days === 1) return 'expires in 1d';
+      if (days <= 60) return `expires in ${days}d`;
+      return `expires ${new Date(expiresAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}`;
     }
 
     function renderUserRanks(rankPayload) {
@@ -587,24 +617,39 @@
       rankCount.textContent = `${rankPayload.length} ${rankPayload.length === 1 ? 'rank' : 'ranks'}`;
 
       rankPayload.forEach((rank) => {
-        const pill = document.createElement('div');
-        pill.className = 'rank-pill d-flex align-items-center gap-2';
-        pill.style.setProperty('--rank-pill-bg', rank.rankBadgeColour || '#1f2937');
-        pill.style.setProperty('--rank-pill-text', rank.rankTextColour || '#ffffff');
-        pill.textContent = rank.displayName;
+        const isDefault = rank.rankSlug === 'default';
 
-        const removeButton = document.createElement('button');
-        removeButton.type = 'button';
-        removeButton.className = 'btn btn-sm btn-outline-danger ms-2';
-        removeButton.textContent = 'Remove';
-        removeButton.addEventListener('click', () => handleRankRemoval(rank.rankSlug));
+        const chip = document.createElement('div');
+        chip.className = 'rank-chip';
+        chip.style.setProperty('--rank-pill-bg', rank.rankBadgeColour || '#1f2937');
+        chip.style.setProperty('--rank-pill-text', rank.rankTextColour || '#ffffff');
 
-        const wrapper = document.createElement('div');
-        wrapper.className = 'd-flex align-items-center gap-2';
-        wrapper.appendChild(pill);
-        wrapper.appendChild(removeButton);
+        const name = document.createElement('span');
+        name.className = 'rank-chip-name';
+        name.textContent = rank.title ? `${rank.displayName} — ${rank.title}` : rank.displayName;
+        chip.appendChild(name);
 
-        rankList.appendChild(wrapper);
+        const expiryLabel = formatExpiryLabel(rank.expiresAt);
+        if (expiryLabel) {
+          const expiry = document.createElement('span');
+          expiry.className = 'rank-chip-expiry';
+          expiry.textContent = expiryLabel;
+          expiry.title = new Date(rank.expiresAt).toLocaleString();
+          chip.appendChild(expiry);
+        }
+
+        if (!isDefault) {
+          const removeButton = document.createElement('button');
+          removeButton.type = 'button';
+          removeButton.className = 'rank-chip-remove';
+          removeButton.setAttribute('aria-label', `Remove ${rank.displayName}`);
+          removeButton.title = `Remove ${rank.displayName}`;
+          removeButton.innerHTML = '&times;';
+          removeButton.addEventListener('click', () => handleRankRemoval(rank.rankSlug));
+          chip.appendChild(removeButton);
+        }
+
+        rankList.appendChild(chip);
       });
     }
 
@@ -630,6 +675,8 @@
       assignTitle.disabled = !hasAvailable;
       assignSubmit.disabled = !hasAvailable;
       assignReset.disabled = !hasAvailable;
+      if (assignExpiry) assignExpiry.disabled = !hasAvailable;
+      if (assignExpiryDate) assignExpiryDate.disabled = !hasAvailable;
     }
 
     function enablePermissionTools(enabled) {
@@ -671,6 +718,7 @@
 
     async function handleRankRemoval(rankSlug) {
       if (!activeUser) return;
+      if (rankSlug === 'default') return;
       if (!confirm(`Remove ${rankSlug} from ${activeUser.user.username}?`)) return;
 
       try {
@@ -691,6 +739,21 @@
       }
     }
 
+    function computeExpiresAt() {
+      if (!assignExpiry || !assignExpiry.value) return null;
+      if (assignExpiry.value === 'custom') {
+        if (!assignExpiryDate || !assignExpiryDate.value) return { error: 'Pick an expiry date.' };
+        const parsed = new Date(assignExpiryDate.value);
+        if (Number.isNaN(parsed.getTime()) || parsed.getTime() <= Date.now()) {
+          return { error: 'Expiry date must be in the future.' };
+        }
+        return { value: parsed.toISOString() };
+      }
+      const days = parseInt(assignExpiry.value, 10);
+      if (!days) return null;
+      return { value: new Date(Date.now() + days * 86400000).toISOString() };
+    }
+
     async function handleAssignSubmit(event) {
       event.preventDefault();
       if (!activeUser) return;
@@ -703,6 +766,13 @@
         alert('Select a rank to assign.');
         return;
       }
+
+      const expiry = computeExpiresAt();
+      if (expiry?.error) {
+        alert(expiry.error);
+        return;
+      }
+      if (expiry?.value) payload.expiresAt = expiry.value;
 
       assignSubmit.disabled = true;
 
@@ -730,6 +800,19 @@
     function resetAssignForm() {
       if (!assignForm) return;
       assignForm.reset();
+      if (assignExpiryDate) {
+        assignExpiryDate.value = '';
+        assignExpiryDate.classList.add('d-none');
+      }
+    }
+
+    if (assignExpiry) {
+      assignExpiry.addEventListener('change', () => {
+        if (!assignExpiryDate) return;
+        const isCustom = assignExpiry.value === 'custom';
+        assignExpiryDate.classList.toggle('d-none', !isCustom);
+        if (!isCustom) assignExpiryDate.value = '';
+      });
     }
 
     async function handlePermissionSubmit(event) {
@@ -926,9 +1009,70 @@
 </div><!-- /#wpcontent -->
 
 <style>
+  .rank-pill {
+    display: inline-flex;
+    align-items: center;
+    background: var(--rank-pill-bg, #1f2937);
+    color: var(--rank-pill-text, #ffffff);
+    padding: 4px 12px;
+    border-radius: 999px;
+    font-weight: 600;
+    font-size: 0.85rem;
+    line-height: 1.4;
+    white-space: nowrap;
+  }
+
   .rank-pill-xs {
     font-size: 0.7rem;
     padding: 2px 8px;
+  }
+
+  /* "Direct ranks" chips — a rank pill with an attached remove button */
+  .rank-chip {
+    display: inline-flex;
+    align-items: stretch;
+    background: var(--rank-pill-bg, #1f2937);
+    color: var(--rank-pill-text, #ffffff);
+    border-radius: 999px;
+    font-weight: 600;
+    font-size: 0.85rem;
+    line-height: 1.4;
+    overflow: hidden;
+  }
+
+  .rank-chip-name {
+    padding: 4px 12px;
+    white-space: nowrap;
+  }
+
+  .rank-chip-expiry {
+    display: inline-flex;
+    align-items: center;
+    padding: 4px 10px 4px 0;
+    margin-left: -8px;
+    font-size: 0.72rem;
+    font-weight: 500;
+    opacity: 0.85;
+    white-space: nowrap;
+  }
+
+  .rank-chip-remove {
+    all: unset;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 26px;
+    cursor: pointer;
+    font-size: 1rem;
+    font-weight: 700;
+    background: rgba(0, 0, 0, 0.15);
+    transition: background-color 0.15s ease;
+  }
+
+  .rank-chip-remove:hover,
+  .rank-chip-remove:focus-visible {
+    background: rgba(220, 53, 69, 0.75);
+    outline: none;
   }
 
   @media (max-width: 768px) {

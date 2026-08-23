@@ -10,6 +10,7 @@ import {
   setProfileUserAboutMe,
   setProfileUserInterests,
 } from "../../controllers/userController.js";
+import { syncMemberRankRoles } from "../../lib/discord/rankRoleSync.mjs";
 import {
   required,
   optional,
@@ -99,21 +100,59 @@ export default function userApiRoute(app, config, db, features, lang) {
     const discordId = optional(req.query, "discordId");
     const userId = optional(req.query, "userId");
 
+    if (!username && !discordId && !userId) {
+      return res.status(400).send({
+        success: false,
+        message: "One of username, discordId, or userId is required.",
+      });
+    }
+
+    // Explicit column list — deliberately excludes password_hash.
+    const SAFE_COLUMNS = [
+      "userId",
+      "uuid",
+      "username",
+      "discordId",
+      "email",
+      "email_verified",
+      "email_verified_at",
+      "joined",
+      "profilePicture_type",
+      "profilePicture_email",
+      "account_registered",
+      "account_disabled",
+      "social_aboutMe",
+      "social_interests",
+      "social_discord",
+      "social_steam",
+      "social_twitch",
+      "social_youtube",
+      "social_twitter_x",
+      "social_instagram",
+      "social_reddit",
+      "social_spotify",
+      "audit_lastDiscordMessage",
+      "audit_lastDiscordVoice",
+      "audit_lastMinecraftLogin",
+      "audit_lastMinecraftMessage",
+      "audit_lastMinecraftPunishment",
+      "audit_lastDiscordPunishment",
+      "audit_lastWebsiteLogin",
+    ].join(", ");
+
     try {
       let dbQuery;
       let params = [];
 
       if (username) {
-        dbQuery = "SELECT * FROM users WHERE username=?";
+        dbQuery = `SELECT ${SAFE_COLUMNS} FROM users WHERE username=?`;
         params = [username];
       } else if (discordId) {
-        dbQuery = "SELECT * FROM users WHERE discordId=?";
+        dbQuery = `SELECT ${SAFE_COLUMNS} FROM users WHERE discordId=?`;
         params = [discordId];
-      } else if (userId) {
-        dbQuery = "SELECT * FROM users WHERE userId=?";
-        params = [userId];
       } else {
-        dbQuery = "SELECT * FROM users";
+        dbQuery = `SELECT ${SAFE_COLUMNS} FROM users WHERE userId=?`;
+        params = [userId];
       }
 
       const results = await new Promise((resolve, reject) => {
@@ -482,6 +521,10 @@ export default function userApiRoute(app, config, db, features, lang) {
       try {
         const success = await userLinkData.link(linkUserUUID, discordId);
         if (success) {
+          const linkedWebUser = await new UserGetter().byUUID(linkUserUUID);
+          if (linkedWebUser) {
+            await syncMemberRankRoles(linkedWebUser.userId);
+          }
           return res.send({
             success: true,
             alertType: "success",

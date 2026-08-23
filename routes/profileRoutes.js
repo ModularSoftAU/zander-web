@@ -30,6 +30,7 @@ import {
   deactivatePlatformConnection,
 } from "../controllers/watchController.js";
 import { checkAndReportNickname } from "../lib/discord/nicknameCheck.mjs";
+import { syncMemberRankRoles, stripAllTrackedRankRoles } from "../lib/discord/rankRoleSync.mjs";
 import * as mixed from "../controllers/mixedController.js";
 
 export default function profileSiteRoutes(
@@ -158,11 +159,15 @@ export default function profileSiteRoutes(
         let contextPermissions = null;
 
         if (req.session.user) {
-          const userProfile = await userData.byUsername(
-            req.session.user.username
-          );
-          const perms = await getUserPermissions(userProfile);
-          contextPermissions = perms;
+          if (Array.isArray(req.session.user.permissions)) {
+            contextPermissions = req.session.user.permissions;
+          } else {
+            const userProfile = await userData.byUsername(
+              req.session.user.username
+            );
+            const perms = await getUserPermissions(userProfile);
+            contextPermissions = perms;
+          }
         } else {
           contextPermissions = null;
         }
@@ -511,6 +516,8 @@ export default function profileSiteRoutes(
 
       req.session.user.discordID = discordUser.id;
 
+      await syncMemberRankRoles(req.session.user.userId);
+
       // Trigger nickname enforcement now that the account is linked
       if (features.discord?.events?.nicknameCheck && config.discord?.nicknameReportChannelId && config.discord?.guildId) {
         try {
@@ -568,8 +575,12 @@ export default function profileSiteRoutes(
     }
 
     try {
+      const discordIdBeingUnlinked = req.session.user.discordID;
       await unlinkDiscordAccount(req.session.user.userId);
       req.session.user.discordID = null;
+      if (discordIdBeingUnlinked) {
+        await stripAllTrackedRankRoles(discordIdBeingUnlinked);
+      }
       setBannerCookie("success", "Discord account disconnected.", res);
     } catch (error) {
       console.error("[PROFILE] Discord unlink failed", error);

@@ -1,5 +1,6 @@
 import { hashEmail } from "../api/common.js";
 import db, { luckpermsDb } from "./databaseController.js";
+import { sanitizeForumHtml } from "../lib/htmlSanitize.js";
 
 export function UserGetter() {
   this.byUsername = function (username) {
@@ -156,8 +157,10 @@ export function UserGetter() {
       `SELECT 1 FROM luckperms_players WHERE LOWER(username) = LOWER(?) LIMIT 1`;
 
     if (trimmedUuid) {
+      // LuckPerms MySQL stores uuid as VARCHAR(36) with dashes — compare
+      // directly, no UNHEX() (which would produce binary that never matches).
       luckPermsQuery =
-        `SELECT 1 FROM luckperms_players WHERE LOWER(username) = LOWER(?) OR uuid = UNHEX(REPLACE(?, '-', '')) LIMIT 1`;
+        `SELECT 1 FROM luckperms_players WHERE LOWER(username) = LOWER(?) OR LOWER(uuid) = LOWER(?) LIMIT 1`;
       luckPermsParams.push(trimmedUuid);
     }
 
@@ -192,10 +195,11 @@ export function UserGetter() {
       return userRows[0].uuid;
     }
 
-    // Check luckperms_players table
+    // Check luckperms_players table. LuckPerms MySQL stores uuid as
+    // VARCHAR(36) with dashes already — select it as-is, no HEX() needed.
     const luckPermsRows = await new Promise((resolve, reject) => {
       luckpermsDb.query(
-        `SELECT LOWER(HEX(uuid)) AS hexUuid FROM luckperms_players WHERE LOWER(username) = LOWER(?) LIMIT 1`,
+        `SELECT LOWER(uuid) AS uuid FROM luckperms_players WHERE LOWER(username) = LOWER(?) LIMIT 1`,
         [trimmedUsername],
         (error, results) => {
           if (error) return reject(error);
@@ -203,11 +207,8 @@ export function UserGetter() {
         }
       );
     });
-    if (luckPermsRows.length && luckPermsRows[0].hexUuid) {
-      const hex = luckPermsRows[0].hexUuid;
-      if (hex.length === 32) {
-        return `${hex.substring(0, 8)}-${hex.substring(8, 12)}-${hex.substring(12, 16)}-${hex.substring(16, 20)}-${hex.substring(20)}`.toLowerCase();
-      }
+    if (luckPermsRows.length && luckPermsRows[0].uuid) {
+      return luckPermsRows[0].uuid;
     }
 
     return null;
@@ -493,6 +494,7 @@ export async function setProfileUserAboutMe(
   userId,
   social_aboutMe
 ) {
+  social_aboutMe = sanitizeForumHtml(social_aboutMe);
   db.query(
     `UPDATE users SET social_aboutMe=? WHERE userId=?;`,
     [social_aboutMe, userId],
@@ -664,20 +666,12 @@ export async function getUserPermissions(userData = {}) {
     }
   }
 
-  if (!directRankOrder.length && userId) {
-    try {
-      const fallbackRanks = await runQuery(
-        `SELECT rankSlug
-           FROM userRanks
-          WHERE userId = ?`,
-        [userId]
-      );
-
-      fallbackRanks.forEach(({ rankSlug }) => queueRank(rankSlug, { direct: true }));
-    } catch (error) {
-      console.error("[PERMISSIONS] Failed to fetch fallback ranks from userRanks:", error);
-    }
-  }
+  // Note: no further fallback here — ensureUuid() above already tried
+  // resolving this user's uuid via the `users` table (and via LuckPerms'
+  // own players table by username), which is the only source the old
+  // `userRanks` view fallback could ever have matched against anyway (it
+  // joined luckperms_user_permissions.uuid = users.uuid). If uuidHex is
+  // still unset here, there's genuinely no uuid to resolve ranks from.
 
   if (!queuedRanks.length && uuidHex) {
     try {
@@ -696,26 +690,27 @@ export async function getUserPermissions(userData = {}) {
   }
 
   while (queuedRanks.length) {
-    const currentRank = queuedRanks.shift();
+    const currentBatch = queuedRanks.splice(0, queuedRanks.length);
+    const placeholders = currentBatch.map(() => "?").join(", ");
 
     try {
       const groupPermissions = await runLuckPermsQuery(
-        `SELECT permission
+        `SELECT name, permission
            FROM ${LUCKPERMS_GROUP_PERMISSIONS_TABLE}
-          WHERE name = ?
+          WHERE name IN (${placeholders})
             AND value = 1
             AND (expiry IS NULL OR expiry = 0 OR expiry > UNIX_TIMESTAMP())`,
-        [currentRank]
+        currentBatch
       );
 
-      groupPermissions.forEach(({ permission }) => {
+      groupPermissions.forEach(({ name, permission }) => {
         if (!permission) {
           return;
         }
 
         if (permission.startsWith("group.")) {
           const inherited = permission.substring("group.".length).trim();
-          if (inherited && inherited !== currentRank) {
+          if (inherited && inherited !== name) {
             queueRank(inherited);
           }
           return;
@@ -724,43 +719,22 @@ export async function getUserPermissions(userData = {}) {
         pushPermission(permission);
       });
     } catch (error) {
-      console.error(`[PERMISSIONS] Failed to fetch permissions for group '${currentRank}':`, error);
-    }
-  }
-
-  if (userId) {
-    try {
-      const fallbackPermissions = await runQuery(
-        `SELECT DISTINCT permission
-           FROM userPermissions
-          WHERE userId = ?`,
-        [userId]
+      console.error(
+        `[PERMISSIONS] Failed to fetch permissions for groups [${currentBatch.join(", ")}]:`,
+        error
       );
-
-      fallbackPermissions.forEach(({ permission }) => pushPermission(permission));
-    } catch (error) {
-      console.error("[PERMISSIONS] Failed to fetch fallback user permissions:", error);
     }
   }
 
-  // Fallback: also resolve group permissions via the rankPermissions view
-  // for all known groups, in case the direct group_permissions query missed any
-  if (queuedRankSet.size > 0) {
-    try {
-      const groupSlugs = Array.from(queuedRankSet);
-      const placeholders = groupSlugs.map(() => "?").join(", ");
-      const fallbackGroupPerms = await runQuery(
-        `SELECT DISTINCT permission
-           FROM rankPermissions
-          WHERE rankSlug IN (${placeholders})`,
-        groupSlugs
-      );
-
-      fallbackGroupPerms.forEach(({ permission }) => pushPermission(permission));
-    } catch (error) {
-      console.error("[PERMISSIONS] Failed to fetch fallback rank permissions:", error);
-    }
-  }
+  // Note: no further fallbacks here. Both the old `userPermissions` view
+  // fallback (keyed on users.uuid — the same uuid ensureUuid() already
+  // resolved, or failed to, above) and the old `rankPermissions` view
+  // fallback (the same luckperms_group_permissions data the while-loop
+  // above already fetches directly, minus the expiry filter it correctly
+  // applies) were redundant with — and, for the expiry case, actively less
+  // correct than — the direct LuckPerms queries already run above. LuckPerms
+  // lives on a separate MySQL server from the main app DB, so those views
+  // couldn't be joined cross-server reliably anyway.
 
   const permissions = Array.from(permissionSet);
   permissions.userRanks = directRankOrder;
@@ -813,11 +787,15 @@ export function convertSecondsToDuration(seconds) {
   return `${Math.floor(s / MONTH)} months`;
 }
 
+// LuckPerms lives on a separate MySQL server from the main app DB, so this
+// can't be read via the (cross-server, unreliable) `rankPermissions` view —
+// query luckpermsDb directly.
 export async function getRankPermissions(allRanks) {
   return new Promise((resolve) => {
-    db.query(
-      `SELECT DISTINCT permission FROM rankPermissions WHERE FIND_IN_SET(rankSlug, ?)`,
-      [allRanks.join()],
+    luckpermsDb.query(
+      `SELECT DISTINCT permission FROM luckperms_group_permissions
+        WHERE name IN (?) AND permission NOT LIKE 'group.%' AND value = 1`,
+      [allRanks],
       async function (err, results) {
         if (err) {
           throw err;
@@ -831,29 +809,62 @@ export async function getRankPermissions(allRanks) {
 }
 
 export async function getUserRanks(userData, userRanks = null) {
-  return new Promise((resolve) => {
-    // Call with just userData only get directly assigned Ranks
+  return new Promise((resolve, reject) => {
+    // Call with just userData only get directly assigned Ranks.
+    // LuckPerms lives on a separate MySQL server from the main app DB, so
+    // this can't be read via the (cross-server, unreliable) `userRanks`
+    // view — resolve the player's uuid from the main DB, then query
+    // luckpermsDb directly (mirrors services/profileService.js:getUserRanks).
     if (userRanks === null) {
       db.query(
-        `SELECT rankSlug, title FROM userRanks WHERE userId = ?`,
+        `SELECT uuid FROM users WHERE userId = ? LIMIT 1`,
         [userData.userId],
-        async function (err, results) {
-          if (err) {
-            throw err;
-          }
+        function (err, results) {
+          if (err) return reject(err);
 
-          let userRanks = results.map((a) => ({
-            ["rankSlug"]: a.rankSlug,
-            ["title"]: a.title,
-          }));
-          resolve(userRanks);
+          const rawUuid = results[0]?.uuid;
+          if (!rawUuid) return resolve([]);
+
+          luckpermsDb.query(
+            `SELECT SUBSTRING_INDEX(permission, '.', -1) AS rankSlug, permission
+               FROM luckperms_user_permissions
+              WHERE uuid = ?
+                AND (permission LIKE 'group.%' OR permission LIKE 'meta.group.%.title.%')
+                AND value = 1
+                AND (expiry IS NULL OR expiry = 0 OR expiry > UNIX_TIMESTAMP())`,
+            [rawUuid.toLowerCase()],
+            function (lpErr, lpResults) {
+              if (lpErr) return reject(lpErr);
+
+              const titleByGroup = {};
+              const rankSlugs = [];
+              for (const row of lpResults) {
+                if (row.permission.startsWith("meta.group.")) {
+                  const match = row.permission.match(/^meta\.group\.(.+?)\.title\.(.+)$/);
+                  if (match) titleByGroup[match[1]] = match[2];
+                } else {
+                  rankSlugs.push(row.rankSlug);
+                }
+              }
+
+              resolve(rankSlugs.map((rankSlug) => ({
+                rankSlug,
+                title: titleByGroup[rankSlug] || null,
+              })));
+            }
+          );
         }
       );
-      // Ranks were passed in meaning we are looking for nested ranks
+      // Ranks were passed in meaning we are looking for nested ranks.
+      // LuckPerms lives on a separate MySQL server from the main app DB, so
+      // this can't be read via the (cross-server, unreliable) `rankRanks`
+      // view — query luckpermsDb directly for group-inheritance edges.
     } else {
-      db.query(
-        `SELECT rankSlug FROM rankRanks WHERE FIND_IN_SET(parentRankSlug, ?)`,
-        [userRanks.join()],
+      luckpermsDb.query(
+        `SELECT SUBSTRING_INDEX(permission, '.', -1) AS rankSlug
+           FROM luckperms_group_permissions
+          WHERE name IN (?) AND permission LIKE 'group.%' AND value = 1`,
+        [userRanks],
         async function (err, results) {
           if (err) {
             throw err;

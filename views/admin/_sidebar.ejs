@@ -17,13 +17,25 @@
   const _currentPath = (typeof adminCurrentPath !== 'undefined' ? adminCurrentPath : null)
                     || (req && req.url ? req.url.split('?')[0] : '/dashboard');
 
-  /**
-   * Returns true if the given menu-item path should be highlighted as active.
-   * The dashboard root only matches exactly; all other items use a prefix match.
-   */
+  const _allPages = _menuGroups.flatMap(group => group.items);
+  const _activePage = _allPages
+    .filter(page => page.path === '/dashboard'
+      ? _currentPath === '/dashboard'
+      : _currentPath === page.path || _currentPath.startsWith(`${page.path}/`))
+    .sort((a, b) => b.path.length - a.path.length)[0];
+
+  // Keep the current module immediately below the primary dashboard links.
+  const _activeGroup = _menuGroups.find(group =>
+    group.group && group.items.some(page => page === _activePage)
+  );
+  const _orderedMenuGroups = [
+    ..._menuGroups.filter(group => !group.group),
+    ...(_activeGroup ? [_activeGroup] : []),
+    ..._menuGroups.filter(group => group.group && group !== _activeGroup),
+  ];
+
   function _isActive(pagePath) {
-    if (pagePath === '/dashboard') return _currentPath === '/dashboard';
-    return _currentPath.startsWith(pagePath);
+    return Boolean(_activePage && _activePage.path === pagePath);
   }
 %>
 
@@ -31,7 +43,7 @@
 <div id="adminmenuback" role="navigation" aria-label="Admin menu">
   <ul id="adminmenu" role="menubar">
 
-    <% for (const _group of _menuGroups) { %>
+    <% for (const _group of _orderedMenuGroups) { %>
 
       <% if (_group.group) { %>
         <!-- Section heading -->

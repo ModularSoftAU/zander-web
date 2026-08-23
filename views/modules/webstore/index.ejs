@@ -165,7 +165,6 @@
           const submitBtn        = document.getElementById("modalSubmitBtn");
           const selfRadio        = document.getElementById("purchaseForSelf");
           const giftRadio        = document.getElementById("purchaseForGift");
-          const giftRadioWrapper = document.getElementById("giftRadioWrapper");
           const giftSection      = document.getElementById("giftSection");
           const recipientInput   = document.getElementById("recipientUsername");
           const giftSuggestions  = document.getElementById("giftSuggestions");
@@ -192,13 +191,7 @@
             recipientInput.value = "";
             clearSuggestions();
 
-            // Subscriptions cannot be gifted — hide the gift option
             const isSubscription = type === "subscription";
-            giftRadioWrapper.classList.toggle("d-none", isSubscription);
-            if (isSubscription && giftRadio.checked) {
-              selfRadio.checked = true;
-              updateGiftSection();
-            }
 
             // Show subscription notice if applicable
             if (subscriptionNote) {

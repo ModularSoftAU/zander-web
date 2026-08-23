@@ -693,10 +693,12 @@ export default function forumRoutes(
         canModerate ? getAllCategoriesForAdmin() : Promise.resolve({ flat: [] }),
       ]);
 
+      // postPermission gates starting new discussions only — any signed-in
+      // user who can view the category may reply to an existing one.
       const canReply =
         !discussion.isLocked &&
         !discussion.isArchived &&
-        (userCanPostInCategory(category, req) || canModerate);
+        (isLoggedIn(req) || canModerate);
 
       const viewerUserId = req.session?.user?.userId || null;
       const poll = await getPollByDiscussionId(discussionId, viewerUserId).catch((err) => {
@@ -794,16 +796,8 @@ export default function forumRoutes(
       return res.redirect(`/login`);
     }
 
-    if (!userCanPostInCategory(category, req) && !userCanModerate(req)) {
-      setBannerCookie(
-        "danger",
-        "You do not have permission to reply in this category.",
-        res
-      );
-      return res.redirect(
-        `/forums/discussion/${discussion.discussionId}/${discussion.slug}`
-      );
-    }
+    // postPermission gates starting new discussions only — signed-in users
+    // (checked above) who can view this category may reply.
 
     const content = req.body.content || "";
     if (isContentEmpty(content)) {
@@ -817,11 +811,24 @@ export default function forumRoutes(
       );
     }
 
+    let replyToPostId = Number.parseInt(req.body.replyToPostId, 10) || null;
+    if (replyToPostId) {
+      const replyTarget = await getPostById(replyToPostId);
+      if (!replyTarget || replyTarget.discussionId !== discussionId) {
+        setBannerCookie("danger", "The post you are replying to could not be found.", res);
+        return res.redirect(
+          `/forums/discussion/${discussion.discussionId}/${discussion.slug}`
+        );
+      }
+    }
+
+    let createdPostId = null;
     try {
-      await createReply({
+      createdPostId = await createReply({
         discussionId,
         userId,
         content,
+        replyToPostId,
       });
 
       const baseUrl = getSiteBaseUrl(req);
@@ -852,7 +859,7 @@ export default function forumRoutes(
     }
 
     return res.redirect(
-      `/forums/discussion/${discussion.discussionId}/${discussion.slug}`
+      `/forums/discussion/${discussion.discussionId}/${discussion.slug}${createdPostId ? `#post-${createdPostId}` : ""}`
     );
   };
 

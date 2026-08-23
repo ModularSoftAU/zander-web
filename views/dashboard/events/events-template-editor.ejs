@@ -943,7 +943,6 @@ function setupImageUpload(hiddenId, fileId, uploadBtnId, manualId, previewId, st
             const res = await fetch('/api/upload/image', {
                 method: 'POST',
                 body: fd,
-                headers: { 'x-access-token': <%- JSON.stringify(process.env.apiKey || '') %> },
             });
             const json = await res.json();
             if (json.success) {

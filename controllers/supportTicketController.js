@@ -1,7 +1,7 @@
 import { createRequire } from "module";
 const require = createRequire(import.meta.url);
 const config = require("../config.json");
-import db from "./databaseController.js";
+import db, { luckpermsDb } from "./databaseController.js";
 import { ChannelType, PermissionFlagsBits } from "discord.js";
 import { hashEmail } from "../api/common.js";
 import { createNotificationsForUsers } from "./notificationController.js";
@@ -492,11 +492,22 @@ export async function createSupportCategory(name, description, discordCategoryId
   });
 }
 
+// LuckPerms lives on a separate MySQL server from the main app DB, so this
+// can't be read via the (cross-server, unreliable) `ranks` view — query
+// luckpermsDb directly, scoped to server='global'/world='global' to match
+// how the dashboard's rank config editor writes these nodes.
 export async function getLuckPermRankRoles() {
     try {
-        const ranks = await new Promise((resolve, reject) => {
-            db.query(
-                "SELECT rankSlug, displayName, discordRoleId, rankBadgeColour, rankTextColour FROM ranks WHERE discordRoleId IS NOT NULL AND discordRoleId != ''",
+        const rows = await new Promise((resolve, reject) => {
+            luckpermsDb.query(
+                `SELECT name, permission FROM luckperms_group_permissions
+                  WHERE server = 'global' AND world = 'global' AND value = 1
+                    AND (
+                      permission LIKE 'displayname.%'
+                      OR permission LIKE 'meta.discordid.%'
+                      OR permission LIKE 'meta.rankbadgecolour.%'
+                      OR permission LIKE 'meta.ranktextcolour.%'
+                    )`,
                 (error, results) => {
                     if (error) {
                         reject(error);
@@ -507,13 +518,26 @@ export async function getLuckPermRankRoles() {
             );
         });
 
-        return ranks.map((rank) => ({
-            id: rank.discordRoleId,
-            name: rank.displayName || rank.rankSlug,
-            rankSlug: rank.rankSlug,
-            badgeColor: rank.rankBadgeColour,
-            textColor: rank.rankTextColour,
-        }));
+        const meta = new Map();
+        for (const row of rows) {
+            const m = meta.get(row.name) || {};
+            const p = row.permission;
+            if (p.startsWith("displayname.")) m.displayName = p.slice("displayname.".length);
+            else if (p.startsWith("meta.discordid.")) m.discordRoleId = p.slice("meta.discordid.".length);
+            else if (p.startsWith("meta.rankbadgecolour.")) m.rankBadgeColour = "#" + p.slice("meta.rankbadgecolour.".length);
+            else if (p.startsWith("meta.ranktextcolour.")) m.rankTextColour = "#" + p.slice("meta.ranktextcolour.".length);
+            meta.set(row.name, m);
+        }
+
+        return [...meta.entries()]
+            .filter(([, m]) => m.discordRoleId)
+            .map(([rankSlug, m]) => ({
+                id: m.discordRoleId,
+                name: m.displayName || rankSlug,
+                rankSlug,
+                badgeColor: m.rankBadgeColour || null,
+                textColor: m.rankTextColour || null,
+            }));
     } catch (error) {
         console.error("getLuckPermRankRoles: failed to fetch rank Discord role mappings", error);
         return [];
@@ -583,8 +607,24 @@ export async function createSupportTicket(
         });
     });
 
+    const hasChannelColumn = await ensureDiscordChannelColumn();
+
+    // Insert the ticket row first (without a channel yet) so we know the
+    // ticketId before creating the Discord channel — that lets the channel
+    // be named ticket-<id> on creation instead of needing a rename call
+    // right after. Renaming after the fact used to leave channels stuck as
+    // "ticket-pending" whenever that second call hit Discord's channel-name
+    // rate limit (2 changes per 10 min).
+    const ticketId = await new Promise((resolve, reject) => {
+        db.query(
+            "INSERT INTO supportTickets (userId, categoryId, title) VALUES (?, ?, ?)",
+            [userId, categoryId, title],
+            (err, results) => (err ? reject(err) : resolve(results.insertId)),
+        );
+    });
+
     const channelCreationOptions = {
-        name: "ticket-pending",
+        name: `ticket-${ticketId}`,
         type: ChannelType.GuildText,
         permissionOverwrites,
         reason: `Support ticket for ${discordUserId ?? `user ${userId}`}`,
@@ -595,40 +635,27 @@ export async function createSupportTicket(
         channelCreationOptions.parent = targetParentId;
     }
 
-    const channel = await guild.channels.create(channelCreationOptions);
-
-    const hasChannelColumn = await ensureDiscordChannelColumn();
-
-    return new Promise((resolve, reject) => {
-        const query = hasChannelColumn
-            ? "INSERT INTO supportTickets (userId, categoryId, title, discordChannelId) VALUES (?, ?, ?, ?)"
-            : "INSERT INTO supportTickets (userId, categoryId, title) VALUES (?, ?, ?)";
-        const params = hasChannelColumn
-            ? [userId, categoryId, title, channel.id]
-            : [userId, categoryId, title];
-
-        db.query(query, params, async (err, results) => {
-            if (err) {
-                try {
-                    await channel.delete("Failed to persist support ticket");
-                } catch (cleanupError) {
-                    console.error("Failed to clean up orphaned ticket channel", cleanupError);
-                }
-                reject(err);
-                return;
-            }
-
-            const ticketId = results.insertId;
-
-            try {
-                await channel.setName(`ticket-${ticketId}`);
-            } catch (renameError) {
-                console.error("Failed to rename ticket channel", renameError);
-            }
-
-            resolve({ ticketId, channel });
+    let channel;
+    try {
+        channel = await guild.channels.create(channelCreationOptions);
+    } catch (channelError) {
+        await new Promise((resolve) => {
+            db.query("DELETE FROM supportTickets WHERE ticketId = ?", [ticketId], () => resolve());
         });
-    });
+        throw channelError;
+    }
+
+    if (hasChannelColumn) {
+        await new Promise((resolve, reject) => {
+            db.query(
+                "UPDATE supportTickets SET discordChannelId = ? WHERE ticketId = ?",
+                [channel.id, ticketId],
+                (err) => (err ? reject(err) : resolve()),
+            );
+        });
+    }
+
+    return { ticketId, channel };
 }
 
 export async function recreateTicketChannel(
@@ -1138,31 +1165,141 @@ export async function applyTicketParticipantPermissions(client, ticketId) {
     }
 }
 
-export async function deleteTicketChannel(client, ticketId, reason = "Ticket closed") {
+/**
+ * One-off repair for tickets whose Discord channel is still stuck on the
+ * "ticket-pending" placeholder name (from before channel creation was
+ * changed to name the channel correctly up front). Renames each affected
+ * channel to ticket-<id>, spaced out to stay well under Discord's
+ * per-channel rename rate limit (2 changes per 10 min).
+ *
+ * @returns {Promise<{checked: number, renamed: number, failed: Array<{ticketId, error}>}>}
+ */
+export async function repairPendingTicketChannelNames(client) {
+    const hasChannelColumn = await ensureDiscordChannelColumn();
+    if (!hasChannelColumn || !client) {
+        return { checked: 0, renamed: 0, failed: [] };
+    }
+
+    const tickets = await new Promise((resolve, reject) => {
+        db.query(
+            "SELECT ticketId, discordChannelId FROM supportTickets WHERE discordChannelId IS NOT NULL",
+            (err, results) => (err ? reject(err) : resolve(results)),
+        );
+    });
+
+    let renamed = 0;
+    const failed = [];
+
+    for (const ticket of tickets) {
+        try {
+            const channel = await client.channels.fetch(ticket.discordChannelId);
+            if (!channel) continue;
+
+            const expectedName = `ticket-${ticket.ticketId}`;
+            if (channel.name === expectedName) continue;
+
+            await channel.setName(expectedName, "Repairing ticket channel name");
+            renamed++;
+            // Stay well clear of Discord's rename rate limit when repairing many at once.
+            await new Promise((resolve) => setTimeout(resolve, 1500));
+        } catch (error) {
+            console.error("repairPendingTicketChannelNames: failed to rename channel", {
+                ticketId: ticket.ticketId,
+                channelId: ticket.discordChannelId,
+            }, error);
+            failed.push({ ticketId: ticket.ticketId, error: error.message });
+        }
+    }
+
+    return { checked: tickets.length, renamed, failed };
+}
+
+export async function deleteTicketChannel(client, ticketId, reason = "Ticket closed", knownChannel = null) {
     const hasChannelColumn = await ensureDiscordChannelColumn();
     if (!hasChannelColumn) {
         return false;
     }
 
     const ticket = await getTicketById(ticketId);
-    if (!ticket?.discordChannelId) {
+    const storedChannelId = ticket?.discordChannelId ? String(ticket.discordChannelId).trim() : "";
+    const canDeleteKnownChannel = Boolean(knownChannel && typeof knownChannel.delete === "function");
+
+    if (!storedChannelId && !canDeleteKnownChannel) {
         return false;
     }
 
-    if (!client) {
-        console.warn("deleteTicketChannel: Discord client unavailable; skipping channel removal", { ticketId });
-    } else {
+    if (!client && !canDeleteKnownChannel) {
+        console.warn("deleteTicketChannel: Discord client unavailable; retaining channel link for retry", { ticketId });
+        return false;
+    }
+
+    const attemptedChannelIds = new Set();
+    let channelDeleted = false;
+    const deleteTargets = [];
+
+    if (canDeleteKnownChannel) {
+        deleteTargets.push({
+            source: "known-channel",
+            getChannel: async () => knownChannel,
+        });
+    }
+
+    if (client && storedChannelId && knownChannel?.id !== storedChannelId) {
+        deleteTargets.push({
+            source: "stored-channel-id",
+            getChannel: async () => client.channels.fetch(storedChannelId),
+        });
+    }
+
+    for (const target of deleteTargets) {
+        let channel;
         try {
-            const channel = await client.channels.fetch(ticket.discordChannelId);
-            if (channel) {
-                await channel.delete(reason);
+            channel = await target.getChannel();
+        } catch (fetchError) {
+            const isAlreadyDeleted = fetchError?.code === 10003 || fetchError?.status === 404;
+            if (isAlreadyDeleted) {
+                channelDeleted = true;
+                break;
             }
-        } catch (error) {
-            console.error("deleteTicketChannel: failed to delete Discord channel", {
+
+            console.error("deleteTicketChannel: failed to resolve Discord channel for deletion", {
                 ticketId,
-                channelId: ticket.discordChannelId,
+                channelId: storedChannelId || knownChannel?.id || null,
+                source: target.source,
+            }, fetchError);
+            continue;
+        }
+
+        const resolvedChannelId = channel?.id ? String(channel.id).trim() : "";
+        if (!channel || attemptedChannelIds.has(resolvedChannelId || target.source)) {
+            continue;
+        }
+
+        attemptedChannelIds.add(resolvedChannelId || target.source);
+
+        try {
+            await channel.delete(reason);
+            channelDeleted = true;
+            break;
+        } catch (error) {
+            // Unknown Channel means Discord has already removed it, so clearing the
+            // stale database link is safe. Other failures must remain retryable.
+            const isAlreadyDeleted = error?.code === 10003 || error?.status === 404;
+            if (isAlreadyDeleted) {
+                channelDeleted = true;
+                break;
+            }
+
+            console.error("deleteTicketChannel: failed to delete Discord channel; retaining link for retry", {
+                ticketId,
+                channelId: resolvedChannelId || storedChannelId || null,
+                source: target.source,
             }, error);
         }
+    }
+
+    if (!channelDeleted) {
+        return false;
     }
 
     return new Promise((resolve) => {
@@ -1780,39 +1917,86 @@ export async function getTicketMessages(ticketId, includeInternal = false) {
     }
 
     if (uniqueUserIds.length > 0) {
-        userRanks = await new Promise((resolve) => {
-            db.query(
-                `SELECT ur.userId, ur.rankSlug, r.displayName, r.rankBadgeColour, r.rankTextColour, r.priority
-                 FROM userRanks ur
-                 LEFT JOIN ranks r ON ur.rankSlug = r.rankSlug
-                 WHERE ur.userId IN (?)
-                 ORDER BY CAST(r.priority AS SIGNED) DESC`,
-                [uniqueUserIds],
-                (err, results) => {
-                    if (err) {
-                        console.error("Failed to load ranks for ticket messages", err);
-                        resolve({});
-                        return;
+            // LuckPerms lives on a separate MySQL server from the main app
+            // DB, so this can't be read via the (cross-server, unreliable)
+            // `userRanks`/`ranks` views — resolve uuids from the main DB,
+            // then query luckpermsDb directly and join in JS.
+            userRanks = await (async () => {
+                try {
+                    const webUsers = await new Promise((resolve, reject) => {
+                        db.query(
+                            `SELECT userId, uuid FROM users WHERE userId IN (?) AND uuid IS NOT NULL`,
+                            [uniqueUserIds],
+                            (err, results) => (err ? reject(err) : resolve(results)),
+                        );
+                    });
+                    if (!webUsers.length) return {};
+
+                    const uuidToUserId = {};
+                    for (const u of webUsers) uuidToUserId[u.uuid.toLowerCase()] = u.userId;
+                    const uuids = Object.keys(uuidToUserId);
+
+                    const groupRows = await new Promise((resolve, reject) => {
+                        luckpermsDb.query(
+                            `SELECT uuid, SUBSTRING_INDEX(permission, '.', -1) AS rankSlug
+                               FROM luckperms_user_permissions
+                              WHERE uuid IN (?) AND permission LIKE 'group.%' AND value = 1
+                                AND (expiry IS NULL OR expiry = 0 OR expiry > UNIX_TIMESTAMP())`,
+                            [uuids],
+                            (err, results) => (err ? reject(err) : resolve(results)),
+                        );
+                    });
+                    if (!groupRows.length) return {};
+
+                    const rankSlugs = [...new Set(groupRows.map((r) => r.rankSlug))];
+                    const metaRows = await new Promise((resolve, reject) => {
+                        luckpermsDb.query(
+                            `SELECT name, permission FROM luckperms_group_permissions
+                              WHERE name IN (?) AND server = 'global' AND world = 'global' AND value = 1
+                                AND (
+                                  permission LIKE 'displayname.%'
+                                  OR permission LIKE 'weight.%'
+                                  OR permission LIKE 'meta.rankbadgecolour.%'
+                                  OR permission LIKE 'meta.ranktextcolour.%'
+                                )`,
+                            [rankSlugs],
+                            (err, results) => (err ? reject(err) : resolve(results)),
+                        );
+                    });
+
+                    const meta = {};
+                    for (const row of metaRows) {
+                        const m = meta[row.name] || (meta[row.name] = {});
+                        const p = row.permission;
+                        if (p.startsWith("displayname.")) m.displayName = p.slice("displayname.".length);
+                        else if (p.startsWith("weight.")) m.priority = parseInt(p.slice("weight.".length), 10) || 0;
+                        else if (p.startsWith("meta.rankbadgecolour.")) m.rankBadgeColour = "#" + p.slice("meta.rankbadgecolour.".length);
+                        else if (p.startsWith("meta.ranktextcolour.")) m.rankTextColour = "#" + p.slice("meta.ranktextcolour.".length);
                     }
 
                     const grouped = {};
-                    results.forEach((row) => {
-                        if (!grouped[row.userId]) grouped[row.userId] = [];
-                        grouped[row.userId].push({
+                    for (const row of groupRows) {
+                        const userId = uuidToUserId[row.uuid.toLowerCase()];
+                        if (!userId) continue;
+                        const m = meta[row.rankSlug] || {};
+                        if (!grouped[userId]) grouped[userId] = [];
+                        grouped[userId].push({
                             rankSlug: row.rankSlug,
-                            displayName: row.displayName || row.rankSlug,
-                            badgeColor: row.rankBadgeColour,
-                            textColor: row.rankTextColour,
-                            priority: Number(row.priority) || 0,
+                            displayName: m.displayName || row.rankSlug,
+                            badgeColor: m.rankBadgeColour || null,
+                            textColor: m.rankTextColour || null,
+                            priority: m.priority || 0,
                         });
-                    });
+                    }
                     Object.values(grouped).forEach((ranks) => {
                         ranks.sort((a, b) => (b.priority || 0) - (a.priority || 0));
                     });
-                    resolve(grouped);
-                },
-            );
-        });
+                    return grouped;
+                } catch (err) {
+                    console.error("Failed to load ranks for ticket messages", err);
+                    return {};
+                }
+            })();
     }
 
     const resolvedMessages = [];
@@ -1915,32 +2099,56 @@ export async function getTicketsByCategory(categoryId) {
     });
 }
 
-export async function getUserRoles(userId) {
-    return new Promise((resolve, reject) => {
-        db.query("SELECT discordRoleId FROM userRanks WHERE userId = ?", [userId], (err, results) => {
-            if (err) {
-                reject(err);
-            } else {
-                resolve(results.map(r => r.discordRoleId));
-            }
-        });
+// LuckPerms lives on a separate MySQL server from the main app DB, so these
+// can't be read via the (cross-server, unreliable) `userRanks` view —
+// resolve the user's uuid from the main DB, then query luckpermsDb directly.
+async function getUserUuidByUserId(userId) {
+    const rows = await new Promise((resolve, reject) => {
+        db.query(
+            "SELECT uuid FROM users WHERE userId = ? LIMIT 1",
+            [userId],
+            (err, results) => (err ? reject(err) : resolve(results)),
+        );
     });
+    return rows[0]?.uuid ? rows[0].uuid.toLowerCase() : null;
+}
+
+async function getUserGroupSlugs(uuid) {
+    if (!uuid) return [];
+    const rows = await new Promise((resolve, reject) => {
+        luckpermsDb.query(
+            `SELECT SUBSTRING_INDEX(permission, '.', -1) AS rankSlug
+               FROM luckperms_user_permissions
+              WHERE uuid = ? AND permission LIKE 'group.%' AND value = 1
+                AND (expiry IS NULL OR expiry = 0 OR expiry > UNIX_TIMESTAMP())`,
+            [uuid],
+            (err, results) => (err ? reject(err) : resolve(results)),
+        );
+    });
+    return rows.map((r) => r.rankSlug);
+}
+
+export async function getUserRoles(userId) {
+    const uuid = await getUserUuidByUserId(userId);
+    const rankSlugs = await getUserGroupSlugs(uuid);
+    if (!rankSlugs.length) return [];
+
+    const rows = await new Promise((resolve, reject) => {
+        luckpermsDb.query(
+            `SELECT SUBSTRING_INDEX(permission, '.', -1) AS discordRoleId
+               FROM luckperms_group_permissions
+              WHERE name IN (?) AND permission LIKE 'meta.discordid.%' AND value = 1
+                AND server = 'global' AND world = 'global'`,
+            [rankSlugs],
+            (err, results) => (err ? reject(err) : resolve(results)),
+        );
+    });
+    return rows.map((r) => r.discordRoleId).filter(Boolean);
 }
 
 export async function getUserRankSlugs(userId) {
-    return new Promise((resolve, reject) => {
-        db.query(
-            "SELECT rankSlug FROM userRanks WHERE userId = ?",
-            [userId],
-            (err, results) => {
-                if (err) {
-                    reject(err);
-                } else {
-                    resolve(results.map((r) => r.rankSlug));
-                }
-            },
-        );
-    });
+    const uuid = await getUserUuidByUserId(userId);
+    return getUserGroupSlugs(uuid);
 }
 
 export async function updateTicketStatus(ticketId, status) {

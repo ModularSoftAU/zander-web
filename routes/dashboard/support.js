@@ -3,6 +3,7 @@ import {
   isFeatureWebRouteEnabled,
   getGlobalImage,
   hasPermission,
+  setBannerCookie,
 } from "../../api/common.js";
 import { adminViewData } from "../../admin/adminHelpers.js";
 import { ActionRowBuilder, ButtonBuilder, ButtonStyle } from "discord.js";
@@ -23,6 +24,7 @@ import {
   updateSupportCategory,
   deleteTicketChannel,
   recreateTicketChannel,
+  repairPendingTicketChannelNames,
 } from "../../controllers/supportTicketController.js";
 import { hasPermission as hasPermissionNode } from "../../lib/discord/permissions.mjs";
 import { luckpermsDb } from "../../controllers/databaseController.js";
@@ -517,6 +519,27 @@ export default function supportDashboardRoutes(
       }
     }
   );
+
+  // One-off repair for ticket channels stuck on the "ticket-pending"
+  // placeholder name from before channel naming was fixed to happen on
+  // creation instead of via a rename call right after.
+  app.post("/dashboard/support/repair-channel-names", async function (req, res) {
+    const hasTicketsAccess = await requireTicketPermission(req, res);
+    if (hasTicketsAccess !== true) return hasTicketsAccess;
+
+    try {
+      const result = await repairPendingTicketChannelNames(client);
+      const message = result.failed.length
+        ? `Renamed ${result.renamed}/${result.checked} ticket channel(s). ${result.failed.length} failed — see server logs.`
+        : `Renamed ${result.renamed}/${result.checked} ticket channel(s).`;
+      setBannerCookie(result.failed.length ? "warning" : "success", message, res);
+    } catch (error) {
+      console.error("Failed to repair ticket channel names", error);
+      setBannerCookie("danger", "Failed to repair ticket channel names — see server logs.", res);
+    }
+
+    return res.redirect("/dashboard/support");
+  });
 
   app.post("/dashboard/support/ticket/:id/status", async function (req, res) {
     try {

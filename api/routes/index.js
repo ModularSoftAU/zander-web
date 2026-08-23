@@ -19,7 +19,6 @@ import formApiRoute from "./form.js";
 import voteApiRoute from "./vote.js";
 import commandBridgeApiRoute from "./commandBridge.js";
 import eventsApiRoute from "./events.js";
-import uploadApiRoute from "./upload.js";
 import badgeApiRoute from "./badges.js";
 import financeApiRoute from "./finance.js";
 
@@ -45,7 +44,6 @@ export default (app, client, moment, config, db, features, lang) => {
   voteApiRoute(app, config, db, features, lang);
   commandBridgeApiRoute(app, config, db, features, lang);
   eventsApiRoute(app, config, db, features, lang);
-  uploadApiRoute(app, config, db, features, lang);
   badgeApiRoute(app, config, db, features, lang);
   financeApiRoute(app, config, db, features, lang);
 
