@@ -814,66 +814,139 @@ export function convertSecondsToDuration(seconds) {
 }
 
 export async function getRankPermissions(allRanks) {
-  return new Promise((resolve) => {
-    db.query(
-      `SELECT DISTINCT permission FROM rankPermissions WHERE FIND_IN_SET(rankSlug, ?)`,
-      [allRanks.join()],
-      async function (err, results) {
-        if (err) {
-          throw err;
-        }
+  if (!Array.isArray(allRanks) || allRanks.length === 0) {
+    return [];
+  }
 
-        let rankPermissions = results.map((a) => a.permission);
-        resolve(rankPermissions);
-      }
-    );
-  });
+  const placeholders = allRanks.map(() => "?").join(", ");
+  const results = await runLuckPermsQuery(
+    `SELECT DISTINCT permission
+       FROM ${LUCKPERMS_GROUP_PERMISSIONS_TABLE}
+      WHERE name IN (${placeholders})
+        AND permission NOT LIKE 'group.%'
+        AND value = 1
+        AND (expiry IS NULL OR expiry = 0 OR expiry > UNIX_TIMESTAMP())`,
+    allRanks
+  );
+
+  return results.map((row) => row.permission).filter(Boolean);
 }
 
 export async function getUserRanks(userData, userRanks = null) {
-  return new Promise((resolve) => {
-    // Call with just userData only get directly assigned Ranks
-    if (userRanks === null) {
-      db.query(
-        `SELECT rankSlug, title FROM userRanks WHERE userId = ?`,
-        [userData.userId],
-        async function (err, results) {
-          if (err) {
-            throw err;
-          }
+  const resolveLuckPermsUuid = async (input) => {
+    if (typeof input === "string") {
+      const username = input.trim();
+      if (!username) return null;
 
-          let userRanks = results.map((a) => ({
-            ["rankSlug"]: a.rankSlug,
-            ["title"]: a.title,
-          }));
-          resolve(userRanks);
-        }
+      const localUsers = await runQuery(
+        `SELECT uuid FROM users WHERE LOWER(username) = LOWER(?) LIMIT 1`,
+        [username]
       );
-      // Ranks were passed in meaning we are looking for nested ranks
-    } else {
-      db.query(
-        `SELECT rankSlug FROM rankRanks WHERE FIND_IN_SET(parentRankSlug, ?)`,
-        [userRanks.join()],
-        async function (err, results) {
-          if (err) {
-            throw err;
-          }
+      if (localUsers.length && localUsers[0].uuid) {
+        return localUsers[0].uuid;
+      }
 
-          let childRanks = results.map((a) => a.rankSlug);
-          let allRanks = userRanks.concat(childRanks);
-          // Using a set of the array removes duplicates and prevents infinite loops
-          let removeDuplicates = [...new Set(allRanks)];
-
-          // If after removing duplicates the length of the new list is not longer than the old list we are done simply resolve
-          if (userRanks.length <= removeDuplicates.length) {
-            resolve(removeDuplicates);
-          } else {
-            resolve(getUserRanks(userData, removeDuplicates));
-          }
-        }
+      const lpUsers = await runLuckPermsQuery(
+        `SELECT uuid FROM ${LUCKPERMS_PLAYERS_TABLE} WHERE LOWER(username) = LOWER(?) LIMIT 1`,
+        [username]
       );
+      return lpUsers[0]?.uuid || null;
     }
-  });
+
+    if (input?.uuid) {
+      return input.uuid;
+    }
+
+    if (input?.userId) {
+      const users = await runQuery(
+        `SELECT uuid FROM users WHERE userId = ? LIMIT 1`,
+        [input.userId]
+      );
+      return users[0]?.uuid || null;
+    }
+
+    if (input?.username) {
+      return resolveLuckPermsUuid(input.username);
+    }
+
+    return null;
+  };
+
+  // Call with just userData only get directly assigned ranks.
+  if (userRanks === null) {
+    const rawUuid = await resolveLuckPermsUuid(userData);
+    if (!rawUuid) {
+      return [];
+    }
+
+    const [groupRows, titleRows] = await Promise.all([
+      runLuckPermsQuery(
+        `SELECT SUBSTRING_INDEX(permission, '.', -1) AS rankSlug
+           FROM ${LUCKPERMS_USER_PERMISSIONS_TABLE}
+          WHERE uuid = ?
+            AND permission LIKE 'group.%'
+            AND value = 1
+            AND (expiry IS NULL OR expiry = 0 OR expiry > UNIX_TIMESTAMP())
+          ORDER BY permission`,
+        [rawUuid]
+      ),
+      runLuckPermsQuery(
+        `SELECT permission
+           FROM ${LUCKPERMS_USER_PERMISSIONS_TABLE}
+          WHERE uuid = ?
+            AND permission LIKE 'meta.group.%.title.%'
+            AND value = 1
+            AND (expiry IS NULL OR expiry = 0 OR expiry > UNIX_TIMESTAMP())`,
+        [rawUuid]
+      ),
+    ]);
+
+    const titleByRankSlug = {};
+    for (const { permission } of titleRows) {
+      const [rankSlug, title] = String(permission || "")
+        .replace(/^meta\.group\./, "")
+        .split(/\.title\./);
+
+      if (rankSlug && title) {
+        titleByRankSlug[rankSlug] = title;
+      }
+    }
+
+    return groupRows.map((row) => ({
+      rankSlug: row.rankSlug,
+      title: titleByRankSlug[row.rankSlug] || null,
+    }));
+  }
+
+  if (!Array.isArray(userRanks) || userRanks.length === 0) {
+    return [];
+  }
+
+  const seen = new Set(userRanks.filter(Boolean));
+  const queue = [...seen];
+
+  while (queue.length) {
+    const batch = queue.splice(0, queue.length);
+    const placeholders = batch.map(() => "?").join(", ");
+    const childRows = await runLuckPermsQuery(
+      `SELECT SUBSTRING_INDEX(permission, '.', -1) AS rankSlug
+         FROM ${LUCKPERMS_GROUP_PERMISSIONS_TABLE}
+        WHERE name IN (${placeholders})
+          AND permission LIKE 'group.%'
+          AND value = 1
+          AND (expiry IS NULL OR expiry = 0 OR expiry > UNIX_TIMESTAMP())`,
+      batch
+    );
+
+    for (const { rankSlug } of childRows) {
+      if (rankSlug && !seen.has(rankSlug)) {
+        seen.add(rankSlug);
+        queue.push(rankSlug);
+      }
+    }
+  }
+
+  return [...seen];
 }
 
 export async function checkPermissions(username, permissionNode) {

@@ -5,9 +5,8 @@ import {
 } from "../../controllers/userController.js";
 import { luckpermsDb } from "../../controllers/databaseController.js";
 
-const RANK_VIEW = "ranks";
-const USER_RANKS_VIEW = "userRanks";
 const LUCKPERMS_PLAYERS_TABLE = "luckperms_players";
+const LUCKPERMS_GROUPS_TABLE = "luckperms_groups";
 const LUCKPERMS_GROUP_PERMISSIONS_TABLE = "luckperms_group_permissions";
 const LUCKPERMS_USER_PERMISSIONS_TABLE = "luckperms_user_permissions";
 
@@ -189,22 +188,102 @@ export default function rankApiRoute(app, config, db, features, lang) {
     );
   }
 
+  /**
+   * Query LuckPerms directly for all rank groups.
+   * Mirrors getAllRanksFromLuckPerms() in routes/dashboard/ranks.js —
+   * the `ranks`/`userRanks` cross-database views are unreliable and no
+   * longer relied upon.
+   */
   async function getRankDirectory() {
-    const results = await queryDb(
+    const results = await queryLuckPermsDb(
       `SELECT
-        rankSlug,
-        displayName,
-        priority,
-        rankBadgeColour,
-        rankTextColour,
-        discordRoleId,
-        isStaff,
-        isDonator
-      FROM ${RANK_VIEW}
-      ORDER BY CAST(COALESCE(priority, 0) AS UNSIGNED) DESC, rankSlug`
+        lpGroups.name AS rankSlug,
+        COALESCE(SUBSTRING_INDEX(lpGroupDisplayName.permission, '.', -1), lpGroups.name) AS displayName,
+        SUBSTRING_INDEX(lpGroupWeight.permission, '.', -1) AS priority,
+        COALESCE(
+          CONCAT('#', SUBSTRING_INDEX(lpMetaBadgeColour.permission, '.', -1)),
+          CASE LEFT(SUBSTRING_INDEX(lpGroupPrefix.permission, '[&', -1), 1)
+            WHEN '0' THEN '#000000' WHEN '1' THEN '#0000AA' WHEN '2' THEN '#00AA00'
+            WHEN '3' THEN '#00AAAA' WHEN '4' THEN '#AA0000' WHEN '5' THEN '#AA00AA'
+            WHEN '6' THEN '#FFAA00' WHEN '7' THEN '#AAAAAA' WHEN '8' THEN '#555555'
+            WHEN '9' THEN '#5555FF' WHEN 'a' THEN '#55FF55' WHEN 'b' THEN '#55FFFF'
+            WHEN 'c' THEN '#FF5555' WHEN 'd' THEN '#FF55FF' WHEN 'e' THEN '#FFFF55'
+            WHEN 'g' THEN '#DDD605' ELSE '#FFFFFF'
+          END
+        ) AS rankBadgeColour,
+        COALESCE(
+          CONCAT('#', SUBSTRING_INDEX(lpMetaTextColour.permission, '.', -1)),
+          CASE WHEN LEFT(SUBSTRING_INDEX(lpGroupPrefix.permission, '[&', -1), 1)
+            IN ('0','1','2','3','4','5','8','9') THEN '#FFFFFF' ELSE '#000000' END
+        ) AS rankTextColour,
+        COALESCE(RIGHT(lpGroupStaff.permission, 1), '0')   AS isStaff,
+        COALESCE(RIGHT(lpGroupDonator.permission, 1), '0') AS isDonator,
+        SUBSTRING_INDEX(lpMetaDiscordId.permission, '.', -1) AS discordRoleId
+      FROM ${LUCKPERMS_GROUPS_TABLE} lpGroups
+        LEFT JOIN ${LUCKPERMS_GROUP_PERMISSIONS_TABLE} lpGroupDisplayName
+          ON lpGroups.name = lpGroupDisplayName.name
+          AND lpGroupDisplayName.permission LIKE 'displayname.%' AND lpGroupDisplayName.value = 1
+        LEFT JOIN ${LUCKPERMS_GROUP_PERMISSIONS_TABLE} lpGroupWeight
+          ON lpGroups.name = lpGroupWeight.name
+          AND lpGroupWeight.permission LIKE 'weight.%' AND lpGroupWeight.value = 1
+        LEFT JOIN ${LUCKPERMS_GROUP_PERMISSIONS_TABLE} lpGroupPrefix
+          ON lpGroups.name = lpGroupPrefix.name
+          AND lpGroupPrefix.permission LIKE 'prefix.%' AND lpGroupPrefix.value = 1
+        LEFT JOIN ${LUCKPERMS_GROUP_PERMISSIONS_TABLE} lpGroupStaff
+          ON lpGroups.name = lpGroupStaff.name
+          AND lpGroupStaff.permission LIKE 'meta.staff.%' AND lpGroupStaff.value = 1
+        LEFT JOIN ${LUCKPERMS_GROUP_PERMISSIONS_TABLE} lpGroupDonator
+          ON lpGroups.name = lpGroupDonator.name
+          AND lpGroupDonator.permission LIKE 'meta.donator.%' AND lpGroupDonator.value = 1
+        LEFT JOIN ${LUCKPERMS_GROUP_PERMISSIONS_TABLE} lpMetaBadgeColour
+          ON lpGroups.name = lpMetaBadgeColour.name
+          AND lpMetaBadgeColour.permission LIKE 'meta.rankbadgecolour.%' AND lpMetaBadgeColour.value = 1
+        LEFT JOIN ${LUCKPERMS_GROUP_PERMISSIONS_TABLE} lpMetaTextColour
+          ON lpGroups.name = lpMetaTextColour.name
+          AND lpMetaTextColour.permission LIKE 'meta.ranktextcolour.%' AND lpMetaTextColour.value = 1
+        LEFT JOIN ${LUCKPERMS_GROUP_PERMISSIONS_TABLE} lpMetaDiscordId
+          ON lpGroups.name = lpMetaDiscordId.name
+          AND lpMetaDiscordId.permission LIKE 'meta.discordid.%' AND lpMetaDiscordId.value = 1
+      ORDER BY CAST(COALESCE(lpGroupWeight.permission, 0) AS UNSIGNED) DESC, lpGroups.name`
     );
 
     return results.map((row) => mapRankRow(row));
+  }
+
+  /**
+   * Fetch the rank slugs (+ optional titles) directly assigned to a player,
+   * by uuid (32-char hex, no dashes), from LuckPerms user permissions.
+   */
+  async function getUserRankSlugs(uuidHex) {
+    const [groupRows, titleRows] = await Promise.all([
+      queryLuckPermsDb(
+        `SELECT SUBSTRING_INDEX(permission, '.', -1) AS rankSlug
+          FROM ${LUCKPERMS_USER_PERMISSIONS_TABLE}
+          WHERE uuid = UNHEX(?) AND permission LIKE 'group.%' AND value = 1`,
+        [uuidHex]
+      ),
+      queryLuckPermsDb(
+        `SELECT permission
+          FROM ${LUCKPERMS_USER_PERMISSIONS_TABLE}
+          WHERE uuid = UNHEX(?) AND permission LIKE 'meta.group.%.title.%' AND value = 1`,
+        [uuidHex]
+      ),
+    ]);
+
+    const titleByRankSlug = {};
+    for (const { permission } of titleRows) {
+      const [rankSlug, title] = permission
+        .replace(/^meta\.group\./, "")
+        .split(/\.title\./);
+      if (rankSlug && title) {
+        titleByRankSlug[rankSlug] = title;
+      }
+    }
+
+    return groupRows.map((row) => ({
+      rankSlug: row.rankSlug,
+      title: titleByRankSlug[row.rankSlug] || null,
+    }));
   }
 
   app.get(`${baseEndpoint}/get`, async function (req, res) {
@@ -223,28 +302,19 @@ export default function rankApiRoute(app, config, db, features, lang) {
           });
         }
 
-        const rows = await queryDb(
-          `SELECT
-              r.rankSlug,
-              r.displayName,
-              r.priority,
-              r.rankBadgeColour,
-              r.rankTextColour,
-              r.discordRoleId,
-              r.isStaff,
-              r.isDonator,
-              ur.title
-            FROM ${USER_RANKS_VIEW} ur
-              JOIN ${RANK_VIEW} r ON ur.rankSlug = r.rankSlug
-            WHERE ur.uuid = ?
-            ORDER BY CAST(COALESCE(r.priority, 0) AS UNSIGNED) DESC, r.rankSlug`,
-          [player.uuid]
-        );
+        const directory = await getRankDirectory();
+        const directoryBySlug = new Map(directory.map((r) => [r.rankSlug, r]));
+        const userRankSlugs = await getUserRankSlugs(player.uuid);
 
-        const mapped = rows.map((row) => ({
-          ...mapRankRow(row),
-          title: row.title || null,
-        }));
+        const mapped = userRankSlugs
+          .filter(({ rankSlug: slug }) => directoryBySlug.has(slug))
+          .map(({ rankSlug: slug, title }) => ({
+            ...directoryBySlug.get(slug),
+            title,
+          }))
+          .sort(
+            (a, b) => (Number(b.priority) || 0) - (Number(a.priority) || 0)
+          );
 
         return res.send({
           success: true,
@@ -254,44 +324,74 @@ export default function rankApiRoute(app, config, db, features, lang) {
       }
 
       if (rankSlug) {
-        // Step 1: get rank members from main DB without luckperms JOIN
-        const mainRows = await queryDb(
-          `SELECT ur.uuid, ur.title,
-              r.displayName, r.rankBadgeColour, r.rankTextColour,
-              u.userId, u.username AS webUsername
-            FROM ${RANK_VIEW} r
-              JOIN ${USER_RANKS_VIEW} ur ON ur.rankSlug = r.rankSlug
-              LEFT JOIN users u ON ur.uuid = u.uuid
-            WHERE r.rankSlug = ?`,
-          [rankSlug]
+        const rank = await getRankDirectory().then((directory) =>
+          directory.find((r) => r.rankSlug === rankSlug)
         );
 
-        // Step 2: enrich missing usernames from luckperms_players
-        const uuidsNeedingName = mainRows
-          .filter((r) => !r.webUsername && r.uuid)
-          .map((r) => r.uuid);
-        const lpNames = {};
-        if (uuidsNeedingName.length) {
-          const placeholders = uuidsNeedingName.map(() => "UNHEX(?)").join(", ");
-          const lpRows = await queryLuckPermsDb(
-            `SELECT LOWER(HEX(uuid)) AS uuid, username FROM ${LUCKPERMS_PLAYERS_TABLE} WHERE uuid IN (${placeholders})`,
-            uuidsNeedingName
-          );
-          for (const { uuid, username } of lpRows) {
-            lpNames[uuid] = username;
-          }
+        // Step 1: get rank members directly from LuckPerms user permissions
+        const memberRows = await queryLuckPermsDb(
+          `SELECT LOWER(HEX(uuid)) AS uuid
+            FROM ${LUCKPERMS_USER_PERMISSIONS_TABLE}
+            WHERE permission = ? AND value = 1`,
+          [`group.${rankSlug}`]
+        );
+
+        if (!memberRows.length) {
+          return res.send({ success: true, data: [] });
         }
 
-        const rows = mainRows
-          .map((r) => ({
-            userId: r.userId || null,
-            uuid: r.uuid,
-            username: r.webUsername || lpNames[r.uuid] || null,
-            displayName: r.displayName,
-            rankBadgeColour: r.rankBadgeColour,
-            rankTextColour: r.rankTextColour,
-            title: r.title,
-          }))
+        const uuids = memberRows.map((r) => r.uuid);
+
+        // Step 2: titles for these members in this rank
+        const placeholders = uuids.map(() => "UNHEX(?)").join(", ");
+        const titleRows = await queryLuckPermsDb(
+          `SELECT LOWER(HEX(uuid)) AS uuid, permission
+            FROM ${LUCKPERMS_USER_PERMISSIONS_TABLE}
+            WHERE uuid IN (${placeholders})
+              AND permission LIKE CONCAT('meta.group.', ?, '.title.%')
+              AND value = 1`,
+          [...uuids, rankSlug]
+        );
+        const titleByUuid = {};
+        for (const { uuid, permission } of titleRows) {
+          const title = permission.split(".title.")[1];
+          if (title) titleByUuid[uuid] = title;
+        }
+
+        // Step 3: enrich usernames — prefer web `users` table, fall back to luckperms_players
+        // (users.uuid is stored dashed, LuckPerms uuids are hex-no-dashes, so compare stripped)
+        const webUsers = await queryDb(
+          `SELECT userId, username, uuid FROM users WHERE LOWER(REPLACE(uuid, '-', '')) IN (${uuids
+            .map(() => "?")
+            .join(", ")})`,
+          uuids
+        );
+        const webByUuid = new Map(
+          webUsers.map((u) => [stripUUID(u.uuid), u])
+        );
+
+        const lpRows = await queryLuckPermsDb(
+          `SELECT LOWER(HEX(uuid)) AS uuid, username FROM ${LUCKPERMS_PLAYERS_TABLE} WHERE uuid IN (${placeholders})`,
+          uuids
+        );
+        const lpNames = {};
+        for (const { uuid, username } of lpRows) {
+          lpNames[uuid] = username;
+        }
+
+        const rows = uuids
+          .map((uuid) => {
+            const webUser = webByUuid.get(uuid);
+            return {
+              userId: webUser?.userId || null,
+              uuid,
+              username: webUser?.username || lpNames[uuid] || null,
+              displayName: rank?.displayName || rankSlug,
+              rankBadgeColour: rank?.rankBadgeColour || null,
+              rankTextColour: rank?.rankTextColour || null,
+              title: titleByUuid[uuid] || null,
+            };
+          })
           .sort((a, b) => (a.username || "").localeCompare(b.username || ""));
 
         return res.send({ success: true, data: rows });
@@ -328,28 +428,17 @@ export default function rankApiRoute(app, config, db, features, lang) {
         });
       }
 
-      const ranks = await queryDb(
-        `SELECT
-            r.rankSlug,
-            r.displayName,
-            r.priority,
-            r.rankBadgeColour,
-            r.rankTextColour,
-            r.discordRoleId,
-            r.isStaff,
-            r.isDonator,
-            ur.title
-          FROM ${USER_RANKS_VIEW} ur
-            JOIN ${RANK_VIEW} r ON ur.rankSlug = r.rankSlug
-          WHERE ur.uuid = ?
-          ORDER BY CAST(COALESCE(r.priority, 0) AS UNSIGNED) DESC, r.rankSlug`,
-        [player.uuid]
-      );
+      const directory = await getRankDirectory();
+      const directoryBySlug = new Map(directory.map((r) => [r.rankSlug, r]));
+      const userRankSlugs = await getUserRankSlugs(player.uuid);
 
-      const mappedRanks = ranks.map((row) => ({
-        ...mapRankRow(row),
-        title: row.title || null,
-      }));
+      const mappedRanks = userRankSlugs
+        .filter(({ rankSlug: slug }) => directoryBySlug.has(slug))
+        .map(({ rankSlug: slug, title }) => ({
+          ...directoryBySlug.get(slug),
+          title,
+        }))
+        .sort((a, b) => (Number(b.priority) || 0) - (Number(a.priority) || 0));
 
       return res.send({
         success: true,
