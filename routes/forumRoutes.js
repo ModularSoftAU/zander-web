@@ -17,6 +17,7 @@ import {
   getPostRevisions,
   moveDiscussion,
   getAllCategoriesForAdmin,
+  nestPosts,
 } from "../controllers/forumController.js";
 import {
   validatePollInput,
@@ -715,7 +716,7 @@ export default function forumRoutes(
           activeCategory: category,
           category,
           discussion,
-          posts,
+          posts: nestPosts(posts),
           poll,
           moment,
           canReply,
@@ -817,11 +818,25 @@ export default function forumRoutes(
       );
     }
 
+    let parentPostId = null;
+    const parentPostIdRaw = req.body.parentPostId;
+    if (parentPostIdRaw) {
+      const parsed = Number(parentPostIdRaw);
+      if (Number.isInteger(parsed) && parsed > 0) {
+        const parentPost = await getPostById(parsed);
+        // Only accept a parent that actually belongs to this discussion.
+        if (parentPost && parentPost.discussionId === discussionId) {
+          parentPostId = parsed;
+        }
+      }
+    }
+
     try {
       await createReply({
         discussionId,
         userId,
         content,
+        parentPostId,
       });
 
       const baseUrl = getSiteBaseUrl(req);

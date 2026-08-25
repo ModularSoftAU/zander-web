@@ -1,7 +1,7 @@
 import { createRequire } from "module";
 const require = createRequire(import.meta.url);
 const config = require("../config.json");
-import db from "./databaseController.js";
+import db, { luckpermsDb } from "./databaseController.js";
 import { ChannelType, PermissionFlagsBits } from "discord.js";
 import { hashEmail } from "../api/common.js";
 import { createNotificationsForUsers } from "./notificationController.js";
@@ -494,14 +494,39 @@ export async function createSupportCategory(name, description, discordCategoryId
 
 export async function getLuckPermRankRoles() {
     try {
+        // Queries LuckPerms directly — the `ranks` cross-database view only
+        // ever worked when LuckPerms shared a MySQL server with the main DB,
+        // which is not true in production (LUCKPERMS_URL is a separate instance).
         const ranks = await new Promise((resolve, reject) => {
-            db.query(
-                "SELECT rankSlug, displayName, discordRoleId, rankBadgeColour, rankTextColour FROM ranks WHERE discordRoleId IS NOT NULL AND discordRoleId != ''",
+            luckpermsDb.query(
+                `SELECT
+                    lpGroups.name AS rankSlug,
+                    COALESCE(SUBSTRING_INDEX(lpGroupDisplayName.permission, '.', -1), lpGroups.name) AS displayName,
+                    SUBSTRING_INDEX(lpMetaDiscordId.permission, '.', -1) AS discordRoleId,
+                    CONCAT('#', SUBSTRING_INDEX(lpMetaBadgeColour.permission, '.', -1)) AS rankBadgeColour,
+                    CONCAT('#', SUBSTRING_INDEX(lpMetaTextColour.permission, '.', -1)) AS rankTextColour
+                  FROM luckperms_groups lpGroups
+                    JOIN luckperms_group_permissions lpMetaDiscordId
+                      ON lpGroups.name = lpMetaDiscordId.name
+                      AND lpMetaDiscordId.permission LIKE 'meta.discordid.%'
+                      AND lpMetaDiscordId.value = 1
+                    LEFT JOIN luckperms_group_permissions lpGroupDisplayName
+                      ON lpGroups.name = lpGroupDisplayName.name
+                      AND lpGroupDisplayName.permission LIKE 'displayname.%'
+                      AND lpGroupDisplayName.value = 1
+                    LEFT JOIN luckperms_group_permissions lpMetaBadgeColour
+                      ON lpGroups.name = lpMetaBadgeColour.name
+                      AND lpMetaBadgeColour.permission LIKE 'meta.rankbadgecolour.%'
+                      AND lpMetaBadgeColour.value = 1
+                    LEFT JOIN luckperms_group_permissions lpMetaTextColour
+                      ON lpGroups.name = lpMetaTextColour.name
+                      AND lpMetaTextColour.permission LIKE 'meta.ranktextcolour.%'
+                      AND lpMetaTextColour.value = 1`,
                 (error, results) => {
                     if (error) {
                         reject(error);
                     } else {
-                        resolve(results);
+                        resolve(results.filter((r) => r.discordRoleId && r.discordRoleId.trim()));
                     }
                 },
             );
@@ -1780,36 +1805,106 @@ export async function getTicketMessages(ticketId, includeInternal = false) {
     }
 
     if (uniqueUserIds.length > 0) {
+        // The `ranks`/`userRanks` cross-database views only ever worked when
+        // LuckPerms shared a MySQL server with the main DB, which is not true
+        // in production (LUCKPERMS_URL is a separate instance) — so this
+        // resolves userId -> uuid locally, then queries LuckPerms directly.
         userRanks = await new Promise((resolve) => {
             db.query(
-                `SELECT ur.userId, ur.rankSlug, r.displayName, r.rankBadgeColour, r.rankTextColour, r.priority
-                 FROM userRanks ur
-                 LEFT JOIN ranks r ON ur.rankSlug = r.rankSlug
-                 WHERE ur.userId IN (?)
-                 ORDER BY CAST(r.priority AS SIGNED) DESC`,
+                `SELECT userId, LOWER(REPLACE(uuid, '-', '')) AS uuidHex FROM users WHERE userId IN (?)`,
                 [uniqueUserIds],
-                (err, results) => {
+                (err, userRows) => {
                     if (err) {
-                        console.error("Failed to load ranks for ticket messages", err);
+                        console.error("Failed to load users for ticket message ranks", err);
                         resolve({});
                         return;
                     }
 
-                    const grouped = {};
-                    results.forEach((row) => {
-                        if (!grouped[row.userId]) grouped[row.userId] = [];
-                        grouped[row.userId].push({
-                            rankSlug: row.rankSlug,
-                            displayName: row.displayName || row.rankSlug,
-                            badgeColor: row.rankBadgeColour,
-                            textColor: row.rankTextColour,
-                            priority: Number(row.priority) || 0,
-                        });
+                    const uuidToUserId = {};
+                    userRows.forEach((r) => {
+                        if (r.uuidHex) uuidToUserId[r.uuidHex] = r.userId;
                     });
-                    Object.values(grouped).forEach((ranks) => {
-                        ranks.sort((a, b) => (b.priority || 0) - (a.priority || 0));
-                    });
-                    resolve(grouped);
+                    const uuids = Object.keys(uuidToUserId);
+                    if (!uuids.length) {
+                        resolve({});
+                        return;
+                    }
+
+                    luckpermsDb.query(
+                        `SELECT LOWER(HEX(uuid)) AS uuid, SUBSTRING_INDEX(permission, '.', -1) AS rankSlug
+                         FROM luckperms_user_permissions
+                         WHERE uuid IN (${uuids.map(() => "UNHEX(?)").join(", ")})
+                           AND permission LIKE 'group.%' AND value = 1`,
+                        uuids,
+                        (groupErr, groupRows) => {
+                            if (groupErr) {
+                                console.error("Failed to load ranks for ticket messages", groupErr);
+                                resolve({});
+                                return;
+                            }
+
+                            const rankSlugs = [...new Set(groupRows.map((g) => g.rankSlug))];
+                            if (!rankSlugs.length) {
+                                resolve({});
+                                return;
+                            }
+
+                            luckpermsDb.query(
+                                `SELECT
+                                    lpGroups.name AS rankSlug,
+                                    COALESCE(SUBSTRING_INDEX(lpGroupDisplayName.permission, '.', -1), lpGroups.name) AS displayName,
+                                    SUBSTRING_INDEX(lpGroupWeight.permission, '.', -1) AS priority,
+                                    CONCAT('#', SUBSTRING_INDEX(lpMetaBadgeColour.permission, '.', -1)) AS rankBadgeColour,
+                                    CONCAT('#', SUBSTRING_INDEX(lpMetaTextColour.permission, '.', -1)) AS rankTextColour
+                                  FROM luckperms_groups lpGroups
+                                    LEFT JOIN luckperms_group_permissions lpGroupDisplayName
+                                      ON lpGroups.name = lpGroupDisplayName.name
+                                      AND lpGroupDisplayName.permission LIKE 'displayname.%' AND lpGroupDisplayName.value = 1
+                                    LEFT JOIN luckperms_group_permissions lpGroupWeight
+                                      ON lpGroups.name = lpGroupWeight.name
+                                      AND lpGroupWeight.permission LIKE 'weight.%' AND lpGroupWeight.value = 1
+                                    LEFT JOIN luckperms_group_permissions lpMetaBadgeColour
+                                      ON lpGroups.name = lpMetaBadgeColour.name
+                                      AND lpMetaBadgeColour.permission LIKE 'meta.rankbadgecolour.%' AND lpMetaBadgeColour.value = 1
+                                    LEFT JOIN luckperms_group_permissions lpMetaTextColour
+                                      ON lpGroups.name = lpMetaTextColour.name
+                                      AND lpMetaTextColour.permission LIKE 'meta.ranktextcolour.%' AND lpMetaTextColour.value = 1
+                                  WHERE lpGroups.name IN (${rankSlugs.map(() => "?").join(", ")})`,
+                                rankSlugs,
+                                (rankErr, rankRows) => {
+                                    if (rankErr) {
+                                        console.error("Failed to load rank metadata for ticket messages", rankErr);
+                                        resolve({});
+                                        return;
+                                    }
+
+                                    const rankBySlug = {};
+                                    rankRows.forEach((r) => {
+                                        rankBySlug[r.rankSlug] = r;
+                                    });
+
+                                    const grouped = {};
+                                    groupRows.forEach((row) => {
+                                        const userId = uuidToUserId[row.uuid];
+                                        if (!userId) return;
+                                        const rank = rankBySlug[row.rankSlug];
+                                        if (!grouped[userId]) grouped[userId] = [];
+                                        grouped[userId].push({
+                                            rankSlug: row.rankSlug,
+                                            displayName: rank?.displayName || row.rankSlug,
+                                            badgeColor: rank?.rankBadgeColour || null,
+                                            textColor: rank?.rankTextColour || null,
+                                            priority: Number(rank?.priority) || 0,
+                                        });
+                                    });
+                                    Object.values(grouped).forEach((ranks) => {
+                                        ranks.sort((a, b) => (b.priority || 0) - (a.priority || 0));
+                                    });
+                                    resolve(grouped);
+                                },
+                            );
+                        },
+                    );
                 },
             );
         });

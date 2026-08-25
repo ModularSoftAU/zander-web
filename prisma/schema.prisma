@@ -232,6 +232,7 @@ model forumDiscussions {
 model forumPosts {
   postId       Int                  @id @default(autoincrement())
   discussionId Int
+  parentPostId Int?
   userId       Int
   content      String               @db.MediumText
   isOriginal   Int                  @default(0) @db.TinyInt
@@ -239,6 +240,8 @@ model forumPosts {
   updatedAt    DateTime             @updatedAt
 
   discussion   forumDiscussions     @relation(fields: [discussionId], references: [discussionId])
+  parentPost   forumPosts?          @relation("PostReplies", fields: [parentPostId], references: [postId])
+  replies      forumPosts[]         @relation("PostReplies")
   revisions    forumPostRevisions[]
 }
 

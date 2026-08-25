@@ -114,6 +114,7 @@ CREATE TABLE forumDiscussions (
 CREATE TABLE forumPosts (
     postId INT NOT NULL AUTO_INCREMENT,
     discussionId INT NOT NULL,
+    parentPostId INT NULL,
     userId INT NOT NULL,
     content MEDIUMTEXT NOT NULL,
     isOriginal TINYINT(1) DEFAULT 0,
@@ -122,8 +123,10 @@ CREATE TABLE forumPosts (
     PRIMARY KEY (postId),
     INDEX forumPosts_discussion_idx (discussionId),
     INDEX forumPosts_user_idx (userId),
+    INDEX forumPosts_parent_idx (parentPostId),
     CONSTRAINT fk_forumPosts_discussion FOREIGN KEY (discussionId) REFERENCES forumDiscussions(discussionId) ON DELETE CASCADE,
-    CONSTRAINT fk_forumPosts_user FOREIGN KEY (userId) REFERENCES users(userId) ON DELETE CASCADE
+    CONSTRAINT fk_forumPosts_user FOREIGN KEY (userId) REFERENCES users(userId) ON DELETE CASCADE,
+    CONSTRAINT fk_forumPosts_parent FOREIGN KEY (parentPostId) REFERENCES forumPosts(postId) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE forumPostRevisions (

@@ -90,8 +90,14 @@
 
       <div class="forums-thread">
         <% posts.forEach(function(post) { %>
-          <article id="post-<%= post.postId %>" class="forums-post card shadow-sm mb-4 <%= post.isOriginal ? 'original-post' : '' %>">
+          <article id="post-<%= post.postId %>" class="forums-post card shadow-sm mb-4 <%= post.isOriginal ? 'original-post' : '' %>" <% if (post.depth) { %>style="margin-left: <%= Math.min(post.depth, 6) * 2 %>rem;"<% } %>>
             <div class="card-body">
+              <% if (post.parentPostId && post.parentPostUsername) { %>
+                <div class="text-muted small mb-2">
+                  <i class="fa-solid fa-reply"></i> Replying to
+                  <a href="#post-<%= post.parentPostId %>">@<%= post.parentPostUsername %></a>
+                </div>
+              <% } %>
               <div class="forums-post-layout">
                 <div class="forums-post-author mb-2">
                   <% if (post.user) { %>
@@ -122,6 +128,16 @@
                     </div>
                     <div class="d-flex gap-2">
                       <% const isAuthor = currentUserId && post.user && currentUserId === post.user.userId; %>
+                      <% if (canReply) { %>
+                        <button
+                          type="button"
+                          class="btn btn-sm btn-outline-secondary forums-reply-to-button"
+                          data-post-id="<%= post.postId %>"
+                          data-username="<%= post.user ? post.user.username : 'Unknown' %>"
+                        >
+                          <i class="fa-solid fa-reply"></i> Reply
+                        </button>
+                      <% } %>
                       <% if (canModerate && post.revisions && post.revisions.length) { %>
                         <a class="btn btn-sm btn-outline-secondary" href="/forums/post/<%= post.postId %>/revisions"><i class="fa-solid fa-clock-rotate-left"></i> History (<%= post.revisions.length %>)</a>
                       <% } %>
@@ -395,10 +411,15 @@
       <% } %>
 
       <% if (canReply) { %>
-        <div class="forums-card card shadow-sm mt-4">
+        <div class="forums-card card shadow-sm mt-4" id="replyFormCard">
           <div class="card-body">
             <h5 class="mb-3">Post a reply</h5>
-            <form action="/forums/discussion/<%= discussion.discussionId %>/<%= discussion.slug %>/reply" method="post">
+            <div id="replyingToBanner" class="alert alert-secondary d-none d-flex justify-content-between align-items-center py-2">
+              <span>Replying to <strong id="replyingToUsername"></strong></span>
+              <button type="button" class="btn btn-sm btn-outline-secondary" id="cancelReplyToButton">Cancel</button>
+            </div>
+            <form action="/forums/discussion/<%= discussion.discussionId %>/<%= discussion.slug %>/reply" method="post" id="replyForm">
+              <input type="hidden" name="parentPostId" id="replyParentPostId" value="">
               <%- include("../../partials/summerNoteEditor.ejs", {
                 editorElementName: "discussionReply",
                 editorPOSTElementName: "content",
@@ -681,6 +702,37 @@
         }, 0);
       });
     });
+
+    // Wire up per-post "Reply" buttons to target the shared reply form.
+    const replyForm = document.getElementById('replyForm');
+    const replyParentPostId = document.getElementById('replyParentPostId');
+    const replyingToBanner = document.getElementById('replyingToBanner');
+    const replyingToUsername = document.getElementById('replyingToUsername');
+    const cancelReplyToButton = document.getElementById('cancelReplyToButton');
+
+    function setReplyTarget(postId, username) {
+      if (!replyForm) return;
+      replyParentPostId.value = postId;
+      replyingToUsername.textContent = '@' + username;
+      replyingToBanner.classList.remove('d-none');
+      document.getElementById('replyFormCard').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+
+    function clearReplyTarget() {
+      if (!replyForm) return;
+      replyParentPostId.value = '';
+      replyingToBanner.classList.add('d-none');
+    }
+
+    document.querySelectorAll('.forums-reply-to-button').forEach(btn => {
+      btn.addEventListener('click', () => {
+        setReplyTarget(btn.dataset.postId, btn.dataset.username);
+      });
+    });
+
+    if (cancelReplyToButton) {
+      cancelReplyToButton.addEventListener('click', clearReplyTarget);
+    }
 
     // Reload when the browser restores this page from the back-forward cache
     // (bfcache). Without this, submitting a form and being redirected back to

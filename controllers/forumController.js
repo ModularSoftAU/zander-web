@@ -575,11 +575,11 @@ export async function moveDiscussion(discussionId, newCategoryId) {
   );
 }
 
-export async function createReply({ discussionId, userId, content }) {
+export async function createReply({ discussionId, userId, content, parentPostId }) {
   const result = await query(
-    `INSERT INTO forumPosts (discussionId, userId, content, isOriginal)
-     VALUES (?, ?, ?, 0)`,
-    [discussionId, userId, content]
+    `INSERT INTO forumPosts (discussionId, parentPostId, userId, content, isOriginal)
+     VALUES (?, ?, ?, ?, 0)`,
+    [discussionId, parentPostId || null, userId, content]
   );
 
   const postId = result.insertId || result?.[0]?.insertId;
@@ -598,7 +598,7 @@ export async function createReply({ discussionId, userId, content }) {
 
 export async function getPostById(postId) {
   const [row] = await query(
-    `SELECT postId, discussionId, userId, content, isOriginal, createdAt, updatedAt
+    `SELECT postId, discussionId, parentPostId, userId, content, isOriginal, createdAt, updatedAt
        FROM forumPosts
       WHERE postId = ?
       LIMIT 1`,
@@ -858,7 +858,7 @@ async function fetchUserSummaries(userIds) {
 
 export async function getDiscussionPosts(discussionId) {
   const rows = await query(
-    `SELECT postId, discussionId, userId, content, isOriginal, createdAt, updatedAt
+    `SELECT postId, discussionId, parentPostId, userId, content, isOriginal, createdAt, updatedAt
        FROM forumPosts
       WHERE discussionId = ?
       ORDER BY createdAt ASC, postId ASC`,
@@ -902,14 +902,55 @@ export async function getDiscussionPosts(discussionId) {
     });
   });
 
+  const usernameByPostId = new Map(
+    rows.map((row) => [row.postId, userSummaries.get(row.userId)?.username || null])
+  );
+
   return rows.map((row) => {
     return {
       ...row,
       isOriginal: !!row.isOriginal,
       user: userSummaries.get(row.userId) || null,
       revisions: revisionsByPost.get(row.postId) || [],
+      parentPostUsername: row.parentPostId
+        ? usernameByPostId.get(row.parentPostId) || null
+        : null,
     };
   });
+}
+
+/**
+ * Orders a flat, chronologically-sorted post list into thread order —
+ * each reply immediately follows its parent (and its parent's replies),
+ * with a `depth` (capped) added for indentation. Posts whose parentPostId
+ * doesn't resolve within this list (e.g. the parent was deleted, or points
+ * outside the discussion) are treated as top-level.
+ */
+export function nestPosts(posts, { maxDepth = 6 } = {}) {
+  const byParentId = new Map();
+  const validPostIds = new Set(posts.map((post) => post.postId));
+
+  for (const post of posts) {
+    const parentId =
+      post.parentPostId && validPostIds.has(post.parentPostId)
+        ? post.parentPostId
+        : null;
+    if (!byParentId.has(parentId)) {
+      byParentId.set(parentId, []);
+    }
+    byParentId.get(parentId).push(post);
+  }
+
+  const ordered = [];
+  const visit = (parentId, depth) => {
+    for (const post of byParentId.get(parentId) || []) {
+      ordered.push({ ...post, depth: Math.min(depth, maxDepth) });
+      visit(post.postId, depth + 1);
+    }
+  };
+
+  visit(null, 0);
+  return ordered;
 }
 
 export async function getRecentDiscussions({

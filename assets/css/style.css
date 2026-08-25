@@ -2519,6 +2519,31 @@ a:focus {
   border-left: 4px solid #2f508c;
 }
 
+.forums-post-layout {
+  display: grid;
+  grid-template-columns: minmax(150px, 180px) minmax(0, 1fr);
+  gap: 1.5rem;
+}
+
+.forums-post-author {
+  min-width: 0;
+}
+
+.forums-post-content {
+  min-width: 0;
+}
+
+@media (max-width: 767.98px) {
+  .forums-post-layout {
+    grid-template-columns: 1fr;
+    gap: 0.75rem;
+  }
+
+  .forums-post-author {
+    margin-bottom: 0 !important;
+  }
+}
+
 .forums-post-body {
   font-size: 0.96rem;
   line-height: 1.7;
