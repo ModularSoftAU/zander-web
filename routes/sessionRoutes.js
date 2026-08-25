@@ -756,7 +756,7 @@ export default function sessionSiteRoute(
         return res.redirect(`/register`);
       }
 
-      if (existingUuidUser && existingUuidUser.account_registered) {
+      if (existingUuidUser && existingUuidUser.account_registered && existingUuidUser.password_hash) {
         setBannerCookie("danger", "An account already exists for this Minecraft player.", res);
         return res.redirect(`/register`);
       }
