@@ -919,40 +919,6 @@ export async function getDiscussionPosts(discussionId) {
   });
 }
 
-/**
- * Orders a flat, chronologically-sorted post list into thread order —
- * each reply immediately follows its parent (and its parent's replies),
- * with a `depth` (capped) added for indentation. Posts whose parentPostId
- * doesn't resolve within this list (e.g. the parent was deleted, or points
- * outside the discussion) are treated as top-level.
- */
-export function nestPosts(posts, { maxDepth = 6 } = {}) {
-  const byParentId = new Map();
-  const validPostIds = new Set(posts.map((post) => post.postId));
-
-  for (const post of posts) {
-    const parentId =
-      post.parentPostId && validPostIds.has(post.parentPostId)
-        ? post.parentPostId
-        : null;
-    if (!byParentId.has(parentId)) {
-      byParentId.set(parentId, []);
-    }
-    byParentId.get(parentId).push(post);
-  }
-
-  const ordered = [];
-  const visit = (parentId, depth) => {
-    for (const post of byParentId.get(parentId) || []) {
-      ordered.push({ ...post, depth: Math.min(depth, maxDepth) });
-      visit(post.postId, depth + 1);
-    }
-  };
-
-  visit(null, 0);
-  return ordered;
-}
-
 export async function getRecentDiscussions({
   categoryIds = [],
   page = 1,

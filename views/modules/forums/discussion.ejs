@@ -90,7 +90,7 @@
 
       <div class="forums-thread">
         <% posts.forEach(function(post) { %>
-          <article id="post-<%= post.postId %>" class="forums-post card shadow-sm mb-4 <%= post.isOriginal ? 'original-post' : '' %>" <% if (post.depth) { %>style="margin-left: <%= Math.min(post.depth, 6) * 2 %>rem;"<% } %>>
+          <article id="post-<%= post.postId %>" class="forums-post card shadow-sm mb-4 <%= post.isOriginal ? 'original-post' : '' %>">
             <div class="card-body">
               <% if (post.parentPostId && post.parentPostUsername) { %>
                 <div class="text-muted small mb-2">

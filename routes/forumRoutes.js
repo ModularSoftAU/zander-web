@@ -17,7 +17,6 @@ import {
   getPostRevisions,
   moveDiscussion,
   getAllCategoriesForAdmin,
-  nestPosts,
 } from "../controllers/forumController.js";
 import {
   validatePollInput,
@@ -716,7 +715,7 @@ export default function forumRoutes(
           activeCategory: category,
           category,
           discussion,
-          posts: nestPosts(posts),
+          posts,
           poll,
           moment,
           canReply,
