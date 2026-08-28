@@ -215,7 +215,16 @@ export class SupportCommand extends Command {
       const ticketDetails = await getTicketDetailsByChannel(interaction.channel.id);
 
       if (!ticketDetails) {
-        return interaction.editReply({ content: "This channel is not linked to a ticket." });
+        console.warn("ticket add: channel not linked to a ticket", {
+          channelId: interaction.channel.id,
+          channelName: interaction.channel.name,
+          parentId: interaction.channel.parentId,
+          guildId: interaction.guildId,
+        });
+        return interaction.editReply({
+          content:
+            "This channel is not linked to a ticket. Run this in the ticket's own channel — if you created the ticket on the website, its Discord channel may have failed to create (check the bot's permissions on the ticket category).",
+        });
       }
 
       const canAdd = await callerHasManageParticipants(interaction.user.id);

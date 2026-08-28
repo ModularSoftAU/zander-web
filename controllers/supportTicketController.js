@@ -2046,12 +2046,16 @@ export async function getTicketDetailsByChannel(channelId) {
 
     return new Promise((resolve, reject) => {
         db.query(
-            "SELECT t.*, u.discordId FROM supportTickets t JOIN users u ON t.userId = u.userId WHERE t.discordChannelId = ?",
+            "SELECT t.*, u.discordId FROM supportTickets t LEFT JOIN users u ON t.userId = u.userId WHERE t.discordChannelId = ?",
             [channelId],
             (err, results) => {
                 if (err) {
+                    console.error("getTicketDetailsByChannel: query failed", { channelId, message: err.message });
                     reject(err);
                 } else {
+                    if (!results.length) {
+                        console.warn("getTicketDetailsByChannel: no ticket linked to channel", { channelId });
+                    }
                     resolve(results[0]);
                 }
             }
