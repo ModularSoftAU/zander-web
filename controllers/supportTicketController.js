@@ -1153,17 +1153,33 @@ export async function applyTicketParticipantPermissions(client, ticketId) {
 
     const isSnowflake = (value) => Boolean(value) && /^\d{5,}$/.test(String(value).trim());
 
+    const botPerms = channel.permissionsFor?.(channel.guild?.members?.me);
+    const canManagePermissions = botPerms ? botPerms.has(PermissionFlagsBits.ManageRoles) : null;
+
     participants.users
         .map((user) => (user.discordId ? String(user.discordId).trim() : ""))
         .filter((id) => isSnowflake(id))
         .forEach((discordId) => {
             permissionUpdates.push(
-                channel.permissionOverwrites.edit(discordId, {
-                    ViewChannel: true,
-                    SendMessages: true,
-                    AttachFiles: true,
-                    ReadMessageHistory: true,
-                }),
+                channel.permissionOverwrites
+                    .edit(discordId, {
+                        ViewChannel: true,
+                        SendMessages: true,
+                        AttachFiles: true,
+                        ReadMessageHistory: true,
+                    })
+                    .catch((error) => {
+                        console.error("applyTicketParticipantPermissions: failed to grant user overwrite", {
+                            ticketId,
+                            channelId: channel.id,
+                            targetUserId: discordId,
+                            canManagePermissions,
+                            discordCode: error?.code,
+                            status: error?.status,
+                            message: error?.message,
+                        });
+                        throw error;
+                    }),
             );
         });
 
@@ -1177,20 +1193,46 @@ export async function applyTicketParticipantPermissions(client, ticketId) {
             return valid;
         })
         .forEach((roleId) => {
+            const role = channel.guild?.roles?.cache?.get(roleId);
+            const botHighest = channel.guild?.members?.me?.roles?.highest;
             permissionUpdates.push(
-                channel.permissionOverwrites.edit(roleId, {
-                    ViewChannel: true,
-                    SendMessages: true,
-                    AttachFiles: true,
-                    ReadMessageHistory: true,
-                }),
+                channel.permissionOverwrites
+                    .edit(roleId, {
+                        ViewChannel: true,
+                        SendMessages: true,
+                        AttachFiles: true,
+                        ReadMessageHistory: true,
+                    })
+                    .catch((error) => {
+                        console.error("applyTicketParticipantPermissions: failed to grant role overwrite", {
+                            ticketId,
+                            channelId: channel.id,
+                            targetRoleId: roleId,
+                            targetRoleName: role?.name ?? "(uncached)",
+                            targetRolePosition: role?.position ?? null,
+                            botHighestRole: botHighest?.name ?? null,
+                            botHighestPosition: botHighest?.position ?? null,
+                            botAboveTarget: role && botHighest ? botHighest.position > role.position : null,
+                            canManagePermissions,
+                            discordCode: error?.code,
+                            status: error?.status,
+                            message: error?.message,
+                        });
+                        throw error;
+                    }),
             );
         });
 
-    try {
-        await Promise.all(permissionUpdates);
-    } catch (error) {
-        console.error("applyTicketParticipantPermissions: failed to update channel permissions", error);
+    const results = await Promise.allSettled(permissionUpdates);
+    const failures = results.filter((r) => r.status === "rejected");
+    if (failures.length) {
+        const err = new Error(
+            `applyTicketParticipantPermissions: ${failures.length}/${results.length} channel permission update(s) failed for ticket ${ticketId}`,
+        );
+        err.cause = failures[0].reason;
+        err.discordCode = failures[0].reason?.code;
+        console.error(err.message, { discordCode: err.discordCode, canManagePermissions });
+        throw err;
     }
 }
 

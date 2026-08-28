@@ -846,7 +846,23 @@ export default function supportRoutes(
       }
 
       await addTicketUserParticipant(ticket.ticketId, user);
-      await applyTicketParticipantPermissions(client, ticket.ticketId);
+      try {
+        await applyTicketParticipantPermissions(client, ticket.ticketId);
+      } catch (permissionError) {
+        console.error("add-user: failed to apply participant permissions", {
+          ticketId: ticket.ticketId,
+          userId: user.userId,
+          discordId: user.discordId,
+          discordCode: permissionError?.discordCode ?? permissionError?.cause?.code,
+          message: permissionError?.message,
+        });
+        setBannerCookie(
+          "warning",
+          `Added to ticket, but Discord channel access could not be granted (${permissionError?.discordCode ?? permissionError?.cause?.code ?? "unknown"}). Check the bot's Manage Permissions on the ticket category.`,
+          res
+        );
+        return res.redirect(`/support/ticket/${ticket.ticketId}`);
+      }
       try {
         await createSupportTicketMessage(
           client,
@@ -916,7 +932,23 @@ export default function supportRoutes(
       }
 
       await addTicketGroupParticipant(ticket.ticketId, selectedRank);
-      await applyTicketParticipantPermissions(client, ticket.ticketId);
+      try {
+        await applyTicketParticipantPermissions(client, ticket.ticketId);
+      } catch (permissionError) {
+        console.error("add-group: failed to apply participant permissions", {
+          ticketId: ticket.ticketId,
+          roleId: selectedRank.id,
+          roleName: selectedRank.name,
+          discordCode: permissionError?.discordCode ?? permissionError?.cause?.code,
+          message: permissionError?.message,
+        });
+        setBannerCookie(
+          "warning",
+          `Group added, but Discord channel access could not be granted for ${selectedRank.name || selectedRank.rankSlug} (${permissionError?.discordCode ?? permissionError?.cause?.code ?? "unknown"}). Check the bot's Manage Permissions on the ticket category and that its role is above ${selectedRank.name || "that role"}.`,
+          res
+        );
+        return res.redirect(`/support/ticket/${ticket.ticketId}`);
+      }
       try {
         await createSupportTicketMessage(
           client,
