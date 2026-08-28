@@ -42,9 +42,6 @@ export default function mixedIngestionRoutes(app) {
     const serverId = serverIdOf(b);
     if (!serverId) return res.status(400).send({ success: false, message: "server_id is required." });
     const server = await mixed.upsertServerHeartbeat(b);
-    console.info(
-      `[mixed:heartbeat] server=${serverId} players=${b.onlinePlayers ?? b.playerCount ?? b.player_count ?? "?"}/${b.maxPlayers ?? "?"} match=${b.currentMatchId ?? b.current_match_id ?? "-"} map=${b.currentMapKey ?? b.current_map_key ?? "-"} queued=${b.queuedEvents ?? 0}`
-    );
     broadcast("HEARTBEAT", { server_id: serverId, server });
     return res.send({ success: true, data: server });
   }));

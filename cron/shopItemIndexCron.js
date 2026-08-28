@@ -71,8 +71,7 @@ async function indexNewShopItems() {
 
 async function runIndex(label) {
   try {
-    const n = await indexNewShopItems();
-    if (n > 0) console.log(`Shop item index: ${label} ${n} item(s)`);
+    await indexNewShopItems();
   } catch (err) {
     console.error("Shop item index error:", err);
   }

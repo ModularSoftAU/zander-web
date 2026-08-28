@@ -121,5 +121,14 @@
         }
       ]
     }
+  },
+  "wrapped": {
+    "enabled": true,
+    "periodStart": "11-15",
+    "periodEnd": "12-15",
+    "minemonitor": {
+      "//": "baseUrl of the MineMonitor deployment. Auth uses a MineMonitor 'Connections' token (scope: wrapped.read) set in .env as MINEMONITOR_CONNECTION_TOKEN.",
+      "baseUrl": "https://monitor.craftingforchrist.net"
+    }
   }
 }

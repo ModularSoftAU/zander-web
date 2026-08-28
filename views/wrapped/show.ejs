@@ -1,0 +1,310 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<meta name="robots" content="noindex" />
+<title><%= payload.user.username %>'s <%= payload.period.label %> Wrapped · <%= siteName %></title>
+<meta property="og:title" content="<%= payload.user.username %>'s <%= payload.period.label %> Wrapped" />
+<meta property="og:image" content="<%= cardUrl %>" />
+<style>
+  :root { color-scheme: dark; --gold:#ffd479; }
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  html, body { height: 100%; overflow: hidden; }
+  body {
+    font-family: "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background: #060a1f; color: #fff; user-select: none;
+  }
+  #stage { position: fixed; inset: 0; display: grid; place-items: center; }
+  .slide {
+    position: absolute; inset: 0; display: flex; flex-direction: column;
+    align-items: center; justify-content: center; gap: 18px;
+    padding: 64px 28px 90px; text-align: center;
+    opacity: 0; transform: scale(1.04) translateY(10px);
+    transition: opacity .5s ease, transform .5s ease; pointer-events: none;
+  }
+  .slide.active { opacity: 1; transform: none; pointer-events: auto; }
+  .slide[data-mood="rise"]   { background: radial-gradient(130% 100% at 50% 100%, #143d6b, #0a1330 65%, #060a1f); }
+  .slide[data-mood="pop"]    { background: radial-gradient(130% 100% at 50% 0%,   #3a1d6b, #0a1330 65%, #060a1f); }
+  .slide[data-mood="fanfare"]{ background: radial-gradient(130% 120% at 50% 40%,  #6b4a12, #1a1030 60%, #060a1f); }
+  .slide[data-mood="drum"]   { background: radial-gradient(130% 120% at 50% 40%,  #10403a, #101a30 60%, #060a1f); }
+  .slide[data-mood="chime"]  { background: radial-gradient(130% 100% at 50% 0%,   #1a2350, #0a1330 65%, #060a1f); }
+  .emoji { font-size: clamp(52px, 14vw, 92px); filter: drop-shadow(0 6px 20px rgba(0,0,0,.4)); }
+  .flavor { color: #c9d4ff; font-size: clamp(15px, 4.4vw, 19px); max-width: 22ch; }
+  .stat { font-size: clamp(40px, 13vw, 84px); font-weight: 800; line-height: 1.05; }
+  .sub { color: #aeb9de; font-size: clamp(14px, 4vw, 17px); }
+  .rank { margin-top: 6px; font-size: clamp(14px, 4vw, 17px); color: var(--gold); font-weight: 600; max-width: 24ch; }
+  .name { font-size: clamp(30px, 9vw, 52px); font-weight: 800; }
+  .kicker { letter-spacing: 3px; font-size: 12px; color: #b9a7ff; }
+
+  /* story-style segment progress */
+  #bars { position: fixed; top: 10px; left: 10px; right: 10px; display: flex; gap: 5px; z-index: 5; }
+  #bars .seg { flex: 1; height: 3px; border-radius: 3px; background: rgba(255,255,255,.22); overflow: hidden; }
+  #bars .seg > i { display: block; height: 100%; width: 0; background: #fff; }
+  #bars .seg.done > i { width: 100%; }
+  #bars .seg.active > i { width: 0; animation: fill var(--dur, 5s) linear forwards; }
+  @keyframes fill { to { width: 100%; } }
+
+  /* tap zones */
+  .zone { position: fixed; top: 0; bottom: 0; width: 34%; z-index: 4; }
+  .zone.left { left: 0; } .zone.right { right: 0; width: 66%; }
+
+  #hud { position: fixed; bottom: 14px; left: 0; right: 0; display: flex; justify-content: center; gap: 10px; z-index: 6; }
+  .chip { font: inherit; cursor: pointer; border: 0; border-radius: 999px; padding: 9px 16px;
+    background: rgba(255,255,255,.12); color: #fff; font-size: 13px; text-decoration: none; }
+  .chip.gold { background: var(--gold); color: #241a00; font-weight: 700; }
+
+  #share { display: flex; flex-direction: column; gap: 12px; align-items: center; margin-top: 10px; }
+  #share input { font: inherit; border: 0; border-radius: 8px; padding: 10px 12px; width: min(80vw, 340px);
+    background: rgba(255,255,255,.1); color: #fff; text-align: center; }
+  #share .row { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; }
+  .muted { color: #8a95bd; font-size: 12px; }
+  canvas { display: none; }
+</style>
+</head>
+<body>
+  <div id="bars"></div>
+  <div id="stage"></div>
+  <div class="zone left"  id="zprev"></div>
+  <div class="zone right" id="znext"></div>
+  <div id="hud">
+    <button class="chip" id="sound" type="button" aria-pressed="true">Sound: on</button>
+    <% if (!shared) { %><a class="chip" href="/">Exit</a><% } %>
+  </div>
+  <canvas id="cardcanvas" width="1200" height="630"></canvas>
+
+<script>
+(function () {
+  var P = <%- payloadJson %>;
+  var SHARED = <%= shared ? 'true' : 'false' %>;
+  var PREVIEW = <%= (typeof preview !== 'undefined' && preview) ? 'true' : 'false' %>;
+  var SHARE_URL = <%- JSON.stringify(typeof shareUrl !== 'undefined' ? shareUrl : null) %>;
+  var CARD_URL = <%- JSON.stringify(cardUrl) %>;
+  var SITE = <%- JSON.stringify(siteName) %>;
+  var s = P.stats || {};
+
+  function rankLine(block, unitPlural) {
+    if (!block || block.rank == null || block.total == null) return null;
+    return "You're #" + block.rank + " of " + block.total + " " + (unitPlural || "players");
+  }
+  function num(n) { return (n == null ? "0" : Number(n).toLocaleString()); }
+  function pct(v) {
+    if (v == null) return null;
+    return (v >= 0 ? "up " : "down ") + Math.abs(v) + "% vs " + (P.yoy && P.yoy.priorYear);
+  }
+
+  // ── build the slide list from the payload ──────────────────────────────
+  var slides = [];
+  slides.push({ mood: "chime", emoji: "✨", html:
+    '<div class="kicker">CRAFTING FOR CHRIST · WRAPPED</div>' +
+    '<div class="name">' + escapeHtml(P.user.username) + '</div>' +
+    '<div class="flavor">Here\'s your ' + P.period.label + ' on the server.</div>', dur: 3500 });
+
+  slides.push({ mood: "rise", emoji: "⛏️", flavor: "You spent this much time with us",
+    stat: s.playtime && s.playtime.display, rank: rankLine(s.playtime) });
+
+  if (s.sessions) slides.push({ mood: "chime", emoji: "🚪", flavor: "That was spread across",
+    stat: num(s.sessions.value) + " sessions",
+    sub: s.avgSession ? "about " + s.avgSession.display + " each" : null,
+    rank: rankLine(s.sessions, "players") });
+
+  if (s.tenure && s.tenure.firstSeen) slides.push({ mood: "chime", emoji: "🌱",
+    flavor: "You first showed up on",
+    stat: new Date(s.tenure.firstSeen).toLocaleDateString(undefined, { year: "numeric", month: "long", day: "numeric" }),
+    sub: s.tenure.days != null ? s.tenure.days + " days ago" : null });
+
+  if (s.mostActiveDay) slides.push({ mood: "pop", emoji: "🔥", flavor: "Your busiest day was",
+    stat: new Date(s.mostActiveDay.date + "T12:00:00").toLocaleDateString(undefined, { weekday: "long", month: "long", day: "numeric" }),
+    sub: fmtSecs(s.mostActiveDay.seconds) + " played" });
+
+  if (s.mostActiveMonth) slides.push({ mood: "pop", emoji: "📅", flavor: "Your biggest month was",
+    stat: monthLabel(s.mostActiveMonth.month), sub: fmtSecs(s.mostActiveMonth.seconds) + " played" });
+
+  if (s.discordMessages) slides.push({ mood: "pop", emoji: "💬", flavor: "Over in Discord you sent",
+    stat: num(s.discordMessages.value) + " messages", rank: rankLine(s.discordMessages, "chatters") });
+
+  if (s.discordReactions) slides.push({ mood: "pop", emoji: "👍", flavor: "And you reacted",
+    stat: num(s.discordReactions.value) + " times", rank: rankLine(s.discordReactions, "members") });
+
+  if (s.voiceMinutes) slides.push({ mood: "rise", emoji: "🎙️", flavor: "You spent",
+    stat: s.voiceMinutes.display + " in voice", rank: rankLine(s.voiceMinutes, "members") });
+
+  if (s.reputation) slides.push({ mood: "fanfare", emoji: "⭐", flavor: "Your reputation reached",
+    stat: "Level " + s.reputation.level,
+    sub: num(s.reputation.lifetime) + " lifetime reputation",
+    rank: rankLine(s.reputation, "members") });
+
+  if (s.topCommand) slides.push({ mood: "chime", emoji: "⌨️", flavor: "Your most-used command",
+    stat: s.topCommand.command, sub: "run " + num(s.topCommand.count) + " times" });
+
+  if (s.friend) slides.push({ mood: "chime", emoji: "🤝", flavor: "You and " + escapeHtml(s.friend.name),
+    stat: s.friend.minutes + " min in voice together", sub: "your top voice companion this year" });
+
+  if (P.yoy) {
+    var yy = [];
+    if (P.yoy.playtimePct != null) yy.push("playtime " + pct(P.yoy.playtimePct));
+    if (P.yoy.messagesPct != null) yy.push("messages " + pct(P.yoy.messagesPct));
+    if (P.yoy.voicePct != null) yy.push("voice " + pct(P.yoy.voicePct));
+    if (yy.length) slides.push({ mood: "pop", emoji: "📈", flavor: "Compared to last year",
+      stat: yy[0].charAt(0).toUpperCase() + yy[0].slice(1),
+      sub: yy.slice(1).join(" · ") || null });
+  }
+
+  slides.push({ mood: "drum", emoji: "🎭", flavor: "This year, you were a",
+    stat: (P.vibe && P.vibe.label) || "Steady Builder",
+    sub: (P.vibe && P.vibe.blurb) || "", final: true });
+
+  // ── render + navigation ───────────────────────────────────────────────
+  var stage = document.getElementById("stage");
+  var bars = document.getElementById("bars");
+  var idx = 0, timer = null, soundOn = true;
+
+  slides.forEach(function (sl, i) {
+    var d = document.createElement("div");
+    d.className = "slide"; d.dataset.mood = sl.mood;
+    var inner = sl.html
+      ? sl.html
+      : '<div class="emoji">' + (sl.emoji || "✨") + '</div>' +
+        (sl.flavor ? '<div class="flavor">' + sl.flavor + '</div>' : '') +
+        (sl.stat ? '<div class="stat">' + escapeHtml(String(sl.stat)) + '</div>' : '') +
+        (sl.sub ? '<div class="sub">' + escapeHtml(String(sl.sub)) + '</div>' : '') +
+        (sl.rank ? '<div class="rank">' + escapeHtml(sl.rank) + '</div>' : '');
+    d.innerHTML = inner;
+    if (sl.final) d.appendChild(buildShare());
+    stage.appendChild(d);
+
+    var seg = document.createElement("div");
+    seg.className = "seg"; seg.innerHTML = "<i></i>";
+    bars.appendChild(seg);
+  });
+
+  function show(n) {
+    if (n < 0) n = 0;
+    if (n >= slides.length) n = slides.length - 1;
+    idx = n;
+    var els = stage.children, segs = bars.children;
+    for (var i = 0; i < els.length; i++) {
+      els[i].classList.toggle("active", i === idx);
+      segs[i].classList.toggle("done", i < idx);
+      segs[i].classList.toggle("active", i === idx);
+    }
+    var dur = slides[idx].dur || 5000;
+    segs[idx].style.setProperty("--dur", dur + "ms");
+    sting(slides[idx].mood);
+    clearTimeout(timer);
+    if (idx < slides.length - 1) timer = setTimeout(function () { show(idx + 1); }, dur);
+  }
+  function next() { if (idx < slides.length - 1) show(idx + 1); }
+  function prev() { show(idx - 1); }
+
+  document.getElementById("znext").addEventListener("click", next);
+  document.getElementById("zprev").addEventListener("click", prev);
+  document.addEventListener("keydown", function (e) {
+    if (e.key === "ArrowRight" || e.key === " ") next();
+    if (e.key === "ArrowLeft") prev();
+  });
+
+  // ── minimal WebAudio stings (no asset files) ──────────────────────────
+  var actx = null;
+  function ensureAudio() {
+    if (!actx) { try { actx = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) {} }
+    if (actx && actx.state === "suspended") actx.resume();
+  }
+  document.addEventListener("pointerdown", ensureAudio, { once: true });
+
+  function tone(freq, dur, type, when, gain) {
+    if (!actx) return;
+    var o = actx.createOscillator(), g = actx.createGain();
+    o.type = type || "sine"; o.frequency.value = freq;
+    var t = actx.currentTime + (when || 0);
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.exponentialRampToValueAtTime(gain || 0.18, t + 0.02);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    o.connect(g); g.connect(actx.destination);
+    o.start(t); o.stop(t + dur + 0.05);
+  }
+  function sting(mood) {
+    if (!soundOn) return;
+    ensureAudio();
+    if (mood === "rise")    { tone(330, .18, "sine", 0); tone(495, .22, "sine", .12); }
+    else if (mood === "pop"){ tone(880, .09, "triangle", 0, .22); }
+    else if (mood === "fanfare") { tone(523, .16, "sawtooth", 0, .14); tone(659, .16, "sawtooth", .12, .14); tone(784, .3, "sawtooth", .24, .14); }
+    else if (mood === "drum") { tone(120, .3, "sine", 0, .3); tone(180, .2, "sine", .16, .2); }
+    else { tone(660, .12, "sine", 0, .14); }
+  }
+  var soundBtn = document.getElementById("sound");
+  soundBtn.addEventListener("click", function () {
+    soundOn = !soundOn;
+    soundBtn.textContent = "Sound: " + (soundOn ? "on" : "off");
+    soundBtn.setAttribute("aria-pressed", String(soundOn));
+    if (soundOn) sting(slides[idx].mood);
+  });
+
+  // ── share panel (final slide) ────────────────────────────────────────
+  function buildShare() {
+    var box = document.createElement("div");
+    box.id = "share";
+    if (PREVIEW || !SHARE_URL) {
+      box.innerHTML =
+        '<div class="row"><button class="chip" id="dlbtn" type="button">Download image</button></div>' +
+        '<div class="muted">' + (PREVIEW ? "Admin preview — not saved" : escapeHtml(SITE)) +
+        ' · Wrapped ' + P.period.label + '</div>';
+    } else {
+      box.innerHTML =
+        '<input readonly value="' + escapeAttr(SHARE_URL) + '" id="shareurl" />' +
+        '<div class="row">' +
+          '<button class="chip gold" id="copybtn" type="button">Copy link</button>' +
+          '<button class="chip" id="dlbtn" type="button">Download image</button>' +
+          (SHARED ? '' : '<a class="chip" href="' + escapeAttr(SHARE_URL) + '" target="_blank" rel="noopener">View as shared</a>') +
+        '</div>' +
+        '<div class="muted">' + escapeHtml(SITE) + ' · Wrapped ' + P.period.label + '</div>';
+    }
+    setTimeout(wireShare, 0);
+    return box;
+  }
+  function wireShare() {
+    var copy = document.getElementById("copybtn");
+    if (copy) copy.addEventListener("click", function () {
+      var i = document.getElementById("shareurl");
+      navigator.clipboard.writeText(i.value).then(function () {
+        copy.textContent = "Copied!"; setTimeout(function () { copy.textContent = "Copy link"; }, 1800);
+      }).catch(function () { i.select(); document.execCommand("copy"); });
+    });
+    var dl = document.getElementById("dlbtn");
+    if (dl) dl.addEventListener("click", downloadCard);
+  }
+  function downloadCard() {
+    fetch(CARD_URL).then(function (r) { return r.text(); }).then(function (svg) {
+      var img = new Image();
+      img.onload = function () {
+        var c = document.getElementById("cardcanvas");
+        var ctx = c.getContext("2d");
+        ctx.fillStyle = "#0a1330"; ctx.fillRect(0, 0, c.width, c.height);
+        ctx.drawImage(img, 0, 0, c.width, c.height);
+        var a = document.createElement("a");
+        a.download = (P.user.username || "wrapped") + "-wrapped-" + P.period.label + ".png";
+        a.href = c.toDataURL("image/png");
+        a.click();
+      };
+      img.src = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(svg);
+    });
+  }
+
+  // ── helpers ──────────────────────────────────────────────────────────
+  function escapeHtml(x) { return String(x).replace(/[&<>"]/g, function (c) {
+    return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]; }); }
+  function escapeAttr(x) { return escapeHtml(x).replace(/'/g, "&#39;"); }
+  function fmtSecs(sec) {
+    sec = Number(sec) || 0; var h = Math.floor(sec / 3600), m = Math.round((sec % 3600) / 60);
+    return h ? (h + "h " + m + "m") : (m + "m");
+  }
+  function monthLabel(ym) {
+    var p = String(ym).split("-"); if (p.length < 2) return ym;
+    return new Date(+p[0], +p[1] - 1, 1).toLocaleDateString(undefined, { month: "long", year: "numeric" });
+  }
+
+  show(0);
+})();
+</script>
+</body>
+</html>
