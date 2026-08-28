@@ -17,6 +17,8 @@ import {
   updateUserPassword,
   markEmailVerified,
   markAccountRegistered,
+  mergePlaceholderUser,
+  clearPlaceholderFlag,
   UserLinkGetter,
 } from "../controllers/userController.js";
 import { updateAudit_lastWebsiteLogin } from "../controllers/auditController.js";
@@ -746,11 +748,31 @@ export default function sessionSiteRoute(
         return res.redirect(`/register`);
       }
 
-      const existingUuidUser = await userGetter.byUUID(formattedUuid);
+      const existingUuidUserRaw = await userGetter.byUUID(formattedUuid);
+
+      // Placeholder ("ghost") rows are created by createUnlinkedUser when a
+      // Discord user opens a support ticket before linking a Minecraft
+      // account. They must not block a genuine registration for the same
+      // person — instead we merge them into the real account further down.
+      // A ghost can collide by UUID (rare) or, far more often, by a
+      // case-insensitive username match (the Thylakin bug).
+      const existingUuidUser =
+        existingUuidUserRaw && !existingUuidUserRaw.is_placeholder
+          ? existingUuidUserRaw
+          : null;
+
+      let placeholderUser =
+        existingUuidUserRaw && existingUuidUserRaw.is_placeholder
+          ? existingUuidUserRaw
+          : await userGetter.placeholderMatch(username, formattedUuid);
+
+      // A real (non-placeholder) username row still blocks registration.
+      const blockingUsername =
+        existingUsername && !existingUsername.is_placeholder ? existingUsername : null;
 
       if (
-        existingUsername &&
-        (!existingUuidUser || existingUsername.userId !== existingUuidUser.userId)
+        blockingUsername &&
+        (!existingUuidUser || blockingUsername.userId !== existingUuidUser.userId)
       ) {
         setBannerCookie("danger", "That username is already registered.", res);
         return res.redirect(`/register`);
@@ -799,6 +821,18 @@ export default function sessionSiteRoute(
           username,
         });
         userId = existingUuidUser.userId;
+      } else if (placeholderUser && placeholderUser.uuid === formattedUuid) {
+        // The ghost row already occupies this Minecraft UUID — promote it in
+        // place rather than creating a second row (which would hit the
+        // users.uuid UNIQUE constraint).
+        await updateLocalUserCredentials(placeholderUser.userId, {
+          email,
+          passwordHash,
+          username,
+        });
+        await clearPlaceholderFlag(placeholderUser.userId);
+        userId = placeholderUser.userId;
+        placeholderUser = null;
       } else {
         const newUser = await createLocalUser({
           uuid: formattedUuid,
@@ -807,6 +841,15 @@ export default function sessionSiteRoute(
           passwordHash,
         });
         userId = newUser.userId;
+      }
+
+      if (placeholderUser && placeholderUser.userId !== userId) {
+        try {
+          const mergeSummary = await mergePlaceholderUser(placeholderUser.userId, userId);
+          console.info("[SESSION] Merged placeholder user during registration", mergeSummary);
+        } catch (mergeError) {
+          logRouteError("merge placeholder user during registration", mergeError);
+        }
       }
 
       const verificationCode = await generateVerificationCode();

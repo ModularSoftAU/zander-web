@@ -1647,7 +1647,7 @@ export async function createUnlinkedUser(discordId, username) {
     // Truncate username to fit VARCHAR(16) column – Discord usernames can be up to 32 chars
     const safeName = username ? username.substring(0, 16) : "Unknown";
     return new Promise((resolve, reject) => {
-        db.query("INSERT INTO users (discordId, username, uuid) VALUES (?, ?, UUID())", [discordId, safeName], (err, results) => {
+        db.query("INSERT INTO users (discordId, username, uuid, is_placeholder) VALUES (?, ?, UUID(), 1)", [discordId, safeName], (err, results) => {
             if (err) {
                 reject(err);
             } else {

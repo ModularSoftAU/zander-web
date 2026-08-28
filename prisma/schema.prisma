@@ -134,6 +134,7 @@ model users {
   profilePicture_email         String?                    @db.VarChar(70)
   account_registered           DateTime?
   account_disabled             Boolean                    @default(false)
+  is_placeholder               Boolean                    @default(false)
   social_aboutMe               String?                    @db.MediumText
   social_interests             String?                    @db.VarChar(50)
   social_discord               String?                    @db.VarChar(32)

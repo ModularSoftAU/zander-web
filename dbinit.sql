@@ -16,6 +16,7 @@ CREATE TABLE users (
     profilePicture_email VARCHAR(70),
     account_registered DATETIME,
         account_disabled BOOLEAN DEFAULT 0,
+    is_placeholder BOOLEAN NOT NULL DEFAULT 0,
     social_aboutMe MEDIUMTEXT,
     social_interests VARCHAR(50),
     social_discord VARCHAR(32),
