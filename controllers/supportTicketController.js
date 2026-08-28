@@ -583,6 +583,23 @@ export async function createSupportTicket(
         },
     ];
 
+    // The bot must be able to see and post in the channel it just created —
+    // without an explicit overwrite the @everyone ViewChannel deny above can
+    // stop `channel.send` (the pinned opener embed) from working.
+    const botId = client?.user?.id;
+    if (botId) {
+        permissionOverwrites.push({
+            id: botId,
+            allow: [
+                PermissionFlagsBits.ViewChannel,
+                PermissionFlagsBits.SendMessages,
+                PermissionFlagsBits.EmbedLinks,
+                PermissionFlagsBits.AttachFiles,
+                PermissionFlagsBits.ReadMessageHistory,
+            ],
+        });
+    }
+
     if (discordUserId) {
         permissionOverwrites.push({
             id: discordUserId,
@@ -723,6 +740,20 @@ export async function recreateTicketChannel(
             deny: [PermissionFlagsBits.ViewChannel],
         },
     ];
+
+    const botId = client?.user?.id;
+    if (botId) {
+        permissionOverwrites.push({
+            id: botId,
+            allow: [
+                PermissionFlagsBits.ViewChannel,
+                PermissionFlagsBits.SendMessages,
+                PermissionFlagsBits.EmbedLinks,
+                PermissionFlagsBits.AttachFiles,
+                PermissionFlagsBits.ReadMessageHistory,
+            ],
+        });
+    }
 
     if (owner?.discordId) {
         permissionOverwrites.push({
