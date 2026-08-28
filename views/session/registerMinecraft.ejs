@@ -36,7 +36,14 @@
           <div class="flex-shrink-0 d-flex align-items-center justify-content-center rounded-circle bg-primary text-white fw-bold"
                style="width:36px;height:36px;font-size:16px;margin-top:2px;">1</div>
           <div class="flex-fill">
-            <h5 class="mb-2">Open Minecraft and join a verification server</h5>
+            <h5 class="mb-2">Get your code in Minecraft</h5>
+
+            <div class="alert alert-info d-flex gap-2 align-items-start py-2 px-3 mb-3" style="font-size:.875rem;">
+              <i class="fas fa-bolt mt-1 flex-shrink-0"></i>
+              <span><strong>Quickest way:</strong> join the main server as normal and run <code>/link</code> in chat. It replies with your 6-digit code straight away — skip to step&nbsp;3. The code lasts 5 minutes; run <code>/link</code> again for a new one.</span>
+            </div>
+
+            <p class="text-muted small mb-2"><strong>Banned from the main server?</strong> Use a verification server below instead — you'll be kicked with your code.</p>
 
             <div class="alert alert-warning d-flex gap-2 align-items-start py-2 px-3 mb-3" style="font-size:.875rem;">
               <i class="fas fa-exclamation-triangle mt-1 flex-shrink-0"></i>
@@ -211,10 +218,10 @@
 
       input.addEventListener('paste', function (e) {
         e.preventDefault();
-        var text = (e.clipboardData || window.clipboardData).getData('text').replace(/\D/g, '');
-        if (text.length >= 6) {
+        var text = (e.clipboardData || window.clipboardData).getData('text').replace(/\D/g, '').slice(0, inputs.length);
+        if (text.length >= 1) {
           inputs.forEach(function (inp, i) { inp.value = text[i] || ''; });
-          inputs[Math.min(5, text.length - 1)].focus();
+          inputs[Math.min(inputs.length - 1, text.length - 1)].focus();
           validate();
         }
       });

@@ -49,6 +49,12 @@ public class AuthPlayerJoin implements Listener {
 
             if (success) {
                 event.getPlayer().kickPlayer(ChatColor.GREEN + message);
+            } else if (message != null && message.toLowerCase().contains("already")
+                    && message.toLowerCase().contains("linked")) {
+                // Not a failure — the player is already linked and simply
+                // doesn't need to be on this auth-only server.
+                event.getPlayer().kickPlayer(ChatColor.GREEN
+                        + "You're already linked — no need to be here. You can rejoin the main server.");
             } else {
                 event.getPlayer().kickPlayer(ChatColor.RED + message);
             }
