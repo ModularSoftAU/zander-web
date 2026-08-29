@@ -2,12 +2,14 @@ package org.modularsoft.zander.addon;
 
 import lombok.Getter;
 import org.bukkit.plugin.java.JavaPlugin;
-import org.modularsoft.zander.addon.api.PolicyApiServer;
 import org.modularsoft.zander.addon.commands.PolicyCommand;
 import org.modularsoft.zander.addon.commands.SocialCommand;
 import org.modularsoft.zander.addon.events.PlayerEvents;
+import org.modularsoft.zander.addon.events.VoteRewardListener;
 import org.modularsoft.zander.addon.gui.PolicyGUI;
 import org.modularsoft.zander.addon.gui.SocialGUI;
+import org.modularsoft.zander.addon.service.BridgeService;
+import org.modularsoft.zander.addon.service.ExecutorBridgeTask;
 import org.modularsoft.zander.addon.service.PolicyService;
 
 public class ZanderAddonMain extends JavaPlugin {
@@ -15,7 +17,9 @@ public class ZanderAddonMain extends JavaPlugin {
     private static ZanderAddonMain instance;
     @Getter
     private PolicyService policyService;
-    private PolicyApiServer apiServer;
+    @Getter
+    private BridgeService bridgeService;
+    private ExecutorBridgeTask executorBridgeTask;
 
     @Override
     public void onEnable() {
@@ -24,11 +28,7 @@ public class ZanderAddonMain extends JavaPlugin {
         saveDefaultConfig();
 
         this.policyService = new PolicyService(this);
-
-        if (getConfig().getBoolean("api-server.enabled", true)) {
-            this.apiServer = new PolicyApiServer(this);
-            this.apiServer.start();
-        }
+        this.bridgeService = new BridgeService(this);
 
         PolicyGUI policyGUI = new PolicyGUI(this);
         SocialGUI socialGUI = new SocialGUI(this);
@@ -39,13 +39,22 @@ public class ZanderAddonMain extends JavaPlugin {
         getCommand("policy").setExecutor(new PolicyCommand(this, policyService));
         getCommand("social").setExecutor(new SocialCommand(this, socialGUI));
 
+        // Vote-reward command bridge: claim + run queued reward commands on join.
+        getServer().getPluginManager().registerEvents(new VoteRewardListener(this, bridgeService), this);
+
+        // Executor task queue: poll on a timer and run queued console commands.
+        long intervalTicks = Math.max(5L, getConfig().getLong("executor-bridge.poll-interval-seconds", 10L)) * 20L;
+        this.executorBridgeTask = new ExecutorBridgeTask(this, bridgeService);
+        this.executorBridgeTask.runTaskTimerAsynchronously(this, 20L * 10L, intervalTicks);
+        getLogger().info("Command bridge active (executor poll every " + (intervalTicks / 20L) + "s).");
+
         getLogger().info("Zander Addon has been enabled.");
     }
 
     @Override
     public void onDisable() {
-        if (this.apiServer != null) {
-            this.apiServer.stop();
+        if (this.executorBridgeTask != null) {
+            this.executorBridgeTask.cancel();
         }
         getLogger().info("Zander Addon has been disabled.");
     }
