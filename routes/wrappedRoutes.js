@@ -12,7 +12,7 @@
  */
 
 import { createRequire } from "module";
-import { readdirSync } from "fs";
+import { readdirSync, readFileSync } from "fs";
 import {
   getConfiguredWrappedPeriod,
   getOrBuildWrapped,
@@ -42,6 +42,44 @@ export default function wrappedSiteRoutes(app, client, fetch, moment, cfg, db, f
     } catch {
       return null;
     }
+  }
+
+  // ── self-contained card assets (data URIs so the browser canvas can export) ─
+  let logoDataUriCache;
+  function logoDataUri() {
+    if (logoDataUriCache !== undefined) return logoDataUriCache;
+    try {
+      const buf = readFileSync("./assets/images/siteLogo.png");
+      logoDataUriCache = "data:image/png;base64," + buf.toString("base64");
+    } catch {
+      logoDataUriCache = null;
+    }
+    return logoDataUriCache;
+  }
+
+  const avatarCache = new Map(); // uuid -> data URI | null
+  async function avatarDataUri(uuid) {
+    if (!uuid) return null;
+    if (avatarCache.has(uuid)) return avatarCache.get(uuid);
+    let out = null;
+    try {
+      const ctl = new AbortController();
+      const timer = setTimeout(() => ctl.abort(), 3500);
+      const r = await fetch(
+        `https://crafthead.net/avatar/${encodeURIComponent(uuid)}?scale=6`,
+        { signal: ctl.signal }
+      );
+      clearTimeout(timer);
+      if (r.ok) {
+        const b = Buffer.from(await r.arrayBuffer());
+        const type = r.headers.get("content-type") || "image/png";
+        out = `data:${type};base64,` + b.toString("base64");
+      }
+    } catch {
+      out = null;
+    }
+    avatarCache.set(uuid, out);
+    return out;
   }
 
   function requireLogin(req, res) {
@@ -128,9 +166,12 @@ export default function wrappedSiteRoutes(app, client, fetch, moment, cfg, db, f
   app.get("/wrapped/card/:shareId.svg", async function (req, res) {
     const run = await getWrappedRunByShareId(req.params.shareId);
     if (!run) return res.status(404).send("not found");
+    const [avatar] = await Promise.all([
+      avatarDataUri(run.payload?.user?.uuid || null),
+    ]);
     return res
       .header("content-type", "image/svg+xml; charset=utf-8")
       .header("cache-control", "public, max-age=3600")
-      .send(renderWrappedCard(run.payload));
+      .send(renderWrappedCard(run.payload, { logoDataUri: logoDataUri(), avatarDataUri: avatar }));
   });
 }

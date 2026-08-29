@@ -19,12 +19,12 @@
   #bg {
     position: fixed; inset: 0; z-index: 0;
     background-position: center; background-size: cover; background-repeat: no-repeat;
-    opacity: .22; transform: scale(1.06);
+    opacity: .5; transform: scale(1.06);
     filter: saturate(1.05);
   }
   #bg::after {
     content: ""; position: absolute; inset: 0;
-    background: radial-gradient(120% 90% at 50% 30%, rgba(6,10,31,.25), rgba(6,10,31,.72) 70%, rgba(6,10,31,.9));
+    background: radial-gradient(120% 90% at 50% 30%, rgba(6,10,31,.15), rgba(6,10,31,.5) 72%, rgba(6,10,31,.72));
   }
   #stage { position: fixed; inset: 0; z-index: 1; display: grid; place-items: center; }
   .slide {
@@ -35,13 +35,19 @@
     transition: opacity .5s ease, transform .5s ease; pointer-events: none;
   }
   .slide.active { opacity: 1; transform: none; pointer-events: auto; }
-  /* translucent so the shared background image reads through at the edges */
-  .slide[data-mood="rise"]   { background: radial-gradient(130% 100% at 50% 100%, rgba(20,61,107,.70), rgba(10,19,48,.82) 65%, rgba(6,10,31,.92)); }
-  .slide[data-mood="pop"]    { background: radial-gradient(130% 100% at 50% 0%,   rgba(58,29,107,.70), rgba(10,19,48,.82) 65%, rgba(6,10,31,.92)); }
-  .slide[data-mood="fanfare"]{ background: radial-gradient(130% 120% at 50% 40%,  rgba(107,74,18,.70), rgba(26,16,48,.82) 60%, rgba(6,10,31,.92)); }
-  .slide[data-mood="drum"]   { background: radial-gradient(130% 120% at 50% 40%,  rgba(16,64,58,.70), rgba(16,26,48,.82) 60%, rgba(6,10,31,.92)); }
-  .slide[data-mood="chime"]  { background: radial-gradient(130% 100% at 50% 0%,   rgba(26,35,80,.70), rgba(10,19,48,.82) 65%, rgba(6,10,31,.92)); }
+  /* light mood tint only — the shared background photo carries the visuals */
+  .slide[data-mood="rise"]   { background: radial-gradient(130% 100% at 50% 100%, rgba(20,61,107,.30), rgba(6,10,31,.55) 70%, rgba(6,10,31,.72)); }
+  .slide[data-mood="pop"]    { background: radial-gradient(130% 100% at 50% 0%,   rgba(58,29,107,.30), rgba(6,10,31,.55) 70%, rgba(6,10,31,.72)); }
+  .slide[data-mood="fanfare"]{ background: radial-gradient(130% 120% at 50% 40%,  rgba(107,74,18,.30), rgba(6,10,31,.55) 65%, rgba(6,10,31,.72)); }
+  .slide[data-mood="drum"]   { background: radial-gradient(130% 120% at 50% 40%,  rgba(16,64,58,.30), rgba(6,10,31,.55) 65%, rgba(6,10,31,.72)); }
+  .slide[data-mood="chime"]  { background: radial-gradient(130% 100% at 50% 0%,   rgba(26,35,80,.30), rgba(6,10,31,.55) 70%, rgba(6,10,31,.72)); }
+  .brandlogo { height: clamp(34px, 9vw, 46px); width: auto; opacity: .95; margin-bottom: 2px;
+    filter: drop-shadow(0 3px 12px rgba(0,0,0,.5)); }
+  .avatar { width: clamp(96px, 26vw, 132px); height: auto; border-radius: 16px;
+    image-rendering: pixelated; image-rendering: crisp-edges;
+    box-shadow: 0 10px 34px rgba(0,0,0,.5); }
   .emoji { font-size: clamp(52px, 14vw, 92px); filter: drop-shadow(0 6px 20px rgba(0,0,0,.4)); }
+  .stat, .name, .flavor, .sub, .rank, .kicker { text-shadow: 0 2px 14px rgba(0,0,0,.55); }
   .flavor { color: #c9d4ff; font-size: clamp(15px, 4.4vw, 19px); max-width: 22ch; }
   .stat { font-size: clamp(40px, 13vw, 84px); font-weight: 800; line-height: 1.05; }
   .sub { color: #aeb9de; font-size: clamp(14px, 4vw, 17px); }
@@ -103,6 +109,17 @@
   var CARD_URL = <%- JSON.stringify(cardUrl) %>;
   var SITE = <%- JSON.stringify(siteName) %>;
   var s = P.stats || {};
+  var AVATAR = P.user && P.user.uuid
+    ? "https://crafthead.net/avatar/" + encodeURIComponent(P.user.uuid) + "?scale=8"
+    : null;
+
+  var MONTHS = ["January","February","March","April","May","June",
+    "July","August","September","October","November","December"];
+  function dmy(dateish) {
+    var d = new Date(dateish);
+    if (isNaN(d.getTime())) return String(dateish);
+    return d.getUTCDate() + " " + MONTHS[d.getUTCMonth()] + " " + d.getUTCFullYear();
+  }
 
   function rankLine(block, unitPlural) {
     if (!block || block.rank == null || block.total == null) return null;
@@ -120,10 +137,13 @@
 
   // ── build the slide list from the payload ──────────────────────────────
   var slides = [];
-  slides.push({ mood: "chime", emoji: "✨", html:
-    '<div class="kicker">CRAFTING FOR CHRIST · WRAPPED</div>' +
+  slides.push({ mood: "chime", emoji: "✨", dur: 3800, html:
+    '<img class="brandlogo" src="/images/siteLogo.png" alt="" />' +
+    (AVATAR ? '<img class="avatar" src="' + escapeAttr(AVATAR) + '" alt="" ' +
+      'onerror="this.style.display=\'none\'" />' : '') +
+    '<div class="kicker">' + escapeHtml(SITE.toUpperCase()) + ' · WRAPPED</div>' +
     '<div class="name">' + escapeHtml(P.user.username) + '</div>' +
-    '<div class="flavor">Here\'s your ' + P.period.label + ' on the server.</div>', dur: 3500 });
+    '<div class="flavor">Here\'s your ' + P.period.label + ' on the server.</div>' });
 
   // Playtime + sessions come from Zander's own gameSessions data. When that
   // isn't populated (e.g. an event server not reporting sessions yet) these
@@ -138,9 +158,9 @@
     rank: rankLine(s.sessions, "players") });
 
   if (s.tenure && s.tenure.firstSeen) slides.push({ mood: "chime", emoji: "🌱",
-    flavor: "You first showed up on",
-    stat: new Date(s.tenure.firstSeen).toLocaleDateString(undefined, { year: "numeric", month: "long", day: "numeric" }),
-    sub: s.tenure.days != null ? s.tenure.days + " days ago" : null });
+    flavor: "You first joined us on",
+    stat: dmy(s.tenure.firstSeen),
+    sub: s.tenure.days != null ? Number(s.tenure.days).toLocaleString() + " days ago" : null });
 
   if (s.mostActiveDay) slides.push({ mood: "pop", emoji: "🔥", flavor: "Your busiest day was",
     stat: new Date(s.mostActiveDay.date + "T12:00:00").toLocaleDateString(undefined, { weekday: "long", month: "long", day: "numeric" }),
@@ -434,7 +454,7 @@
     box.id = "share";
     if (PREVIEW || !SHARE_URL) {
       box.innerHTML =
-        '<div class="row"><button class="chip" id="dlbtn" type="button">Download image</button></div>' +
+        '<div class="row"><button class="chip" id="dlbtn" type="button">Save summary image</button></div>' +
         '<div class="muted">' + (PREVIEW ? "Admin preview — not saved" : escapeHtml(SITE)) +
         ' · Wrapped ' + P.period.label + '</div>';
     } else {
@@ -442,7 +462,7 @@
         '<input readonly value="' + escapeAttr(SHARE_URL) + '" id="shareurl" />' +
         '<div class="row">' +
           '<button class="chip gold" id="copybtn" type="button">Copy link</button>' +
-          '<button class="chip" id="dlbtn" type="button">Download image</button>' +
+          '<button class="chip" id="dlbtn" type="button">Save summary image</button>' +
           (SHARED ? '' : '<a class="chip" href="' + escapeAttr(SHARE_URL) + '" target="_blank" rel="noopener">View as shared</a>') +
         '</div>' +
         '<div class="muted">' + escapeHtml(SITE) + ' · Wrapped ' + P.period.label + '</div>';
