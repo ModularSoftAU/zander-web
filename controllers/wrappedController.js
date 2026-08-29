@@ -27,49 +27,62 @@ export function generateShareId() {
 
 // ── Zander-side stats ──────────────────────────────────────────────────────
 
+// Hard ceiling on a single session's counted time. A Minecraft session realistically
+// never runs this long — anything longer is an unclosed/orphaned `sessionEnd IS NULL`
+// row that would otherwise count from its start all the way to "now".
+const SESSION_CAP_HOURS = 16;
+
+/**
+ * One derived row per session that overlaps the window:
+ *   cs       = in-window seconds, clamped to [start, end] AND capped at
+ *              SESSION_CAP_HOURS so orphaned rows can't inflate the total
+ *   winStart = the session start clamped to the window start
+ * Bind params (both call sites): [end, start, start, userId, end, start]
+ */
+const SESSION_SUBQUERY = `
+  SELECT
+    GREATEST(0, TIME_TO_SEC(TIMEDIFF(
+      LEAST(COALESCE(sessionEnd, NOW()), sessionStart + INTERVAL ${SESSION_CAP_HOURS} HOUR, ?),
+      GREATEST(sessionStart, ?)
+    ))) AS cs,
+    GREATEST(sessionStart, ?) AS winStart
+  FROM gameSessions
+  WHERE userId = ? AND sessionStart <= ? AND COALESCE(sessionEnd, NOW()) >= ?`;
+
 /**
  * All playtime/session metrics for one user, **fully clamped to the Wrapped
- * window [start, end]**:
- *   - session time is truncated to the in-window overlap
+ * window [start, end]** and capped per session:
+ *   - session time truncated to the in-window overlap, then capped
+ *   - only sessions that contributed real in-window time are counted
  *   - day / month buckets key off the clamped session start
- *   - "first seen" is the first activity *within* the window (not lifetime)
- *   - tenure is measured from that up to the window end (or now, if earlier)
- * Nothing outside the period contributes.
+ *   - "first seen" is the first counted activity within the window
+ *   - tenure runs from that to the window end (or now, if earlier)
  */
 export async function getZanderStatsForUser(userId, start, end) {
-  // In-window seconds for a session: TIMEDIFF(min(end, ?end), max(start, ?start)).
-  // Params for this fragment, in order: [end, start].
-  const CLAMPED = `TIME_TO_SEC(TIMEDIFF(
-    LEAST(COALESCE(sessionEnd, NOW()), ?), GREATEST(sessionStart, ?)
-  ))`;
-  // Any session overlapping the window. Params: [userId, end, start].
-  const OVERLAPS = `userId = ? AND sessionStart <= ? AND COALESCE(sessionEnd, NOW()) >= ?`;
+  const subParams = [end, start, start, userId, end, start];
 
   const [agg] = await q(
-    `SELECT COALESCE(SUM(${CLAMPED}), 0) AS seconds,
-            COUNT(*) AS sessions,
-            MIN(GREATEST(sessionStart, ?)) AS firstSeen
-       FROM gameSessions
-      WHERE ${OVERLAPS}`,
-    [end, start, start, userId, end, start]
+    `SELECT COALESCE(SUM(cs), 0) AS seconds,
+            SUM(cs > 0)          AS sessions,
+            MIN(CASE WHEN cs > 0 THEN winStart END) AS firstSeen
+       FROM (${SESSION_SUBQUERY}) t`,
+    subParams
   );
 
   const [dayRow] = await q(
-    `SELECT DATE_FORMAT(GREATEST(sessionStart, ?), '%Y-%m-%d') AS bucket,
-            SUM(${CLAMPED}) AS seconds
-       FROM gameSessions
-      WHERE ${OVERLAPS}
+    `SELECT DATE_FORMAT(winStart, '%Y-%m-%d') AS bucket, SUM(cs) AS seconds
+       FROM (${SESSION_SUBQUERY}) t
+      WHERE cs > 0
       GROUP BY bucket ORDER BY seconds DESC LIMIT 1`,
-    [start, end, start, userId, end, start]
+    subParams
   );
 
   const [monthRow] = await q(
-    `SELECT DATE_FORMAT(GREATEST(sessionStart, ?), '%Y-%m') AS bucket,
-            SUM(${CLAMPED}) AS seconds
-       FROM gameSessions
-      WHERE ${OVERLAPS}
+    `SELECT DATE_FORMAT(winStart, '%Y-%m') AS bucket, SUM(cs) AS seconds
+       FROM (${SESSION_SUBQUERY}) t
+      WHERE cs > 0
       GROUP BY bucket ORDER BY seconds DESC LIMIT 1`,
-    [start, end, start, userId, end, start]
+    subParams
   );
 
   const seconds = Number(agg?.seconds) || 0;
@@ -114,14 +127,19 @@ export async function getLinkedUsers() {
  * @returns {Promise<Map<number, { playtimeSeconds: number, sessions: number }>>}
  */
 export async function getZanderLeaderboardRaw(start, end) {
+  // Same clamp + per-session cap as getZanderStatsForUser, so ranks line up
+  // exactly with what each user sees on their own deck.
   const rows = await q(
-    `SELECT userId,
-            COALESCE(SUM(TIME_TO_SEC(TIMEDIFF(
-              LEAST(COALESCE(sessionEnd, NOW()), ?), GREATEST(sessionStart, ?)
-            ))), 0) AS seconds,
-            COUNT(*) AS sessions
-       FROM gameSessions
-      WHERE sessionStart <= ? AND COALESCE(sessionEnd, NOW()) >= ?
+    `SELECT userId, COALESCE(SUM(cs), 0) AS seconds, SUM(cs > 0) AS sessions
+       FROM (
+         SELECT userId,
+                GREATEST(0, TIME_TO_SEC(TIMEDIFF(
+                  LEAST(COALESCE(sessionEnd, NOW()), sessionStart + INTERVAL ${SESSION_CAP_HOURS} HOUR, ?),
+                  GREATEST(sessionStart, ?)
+                ))) AS cs
+           FROM gameSessions
+          WHERE sessionStart <= ? AND COALESCE(sessionEnd, NOW()) >= ?
+       ) t
       GROUP BY userId`,
     [end, start, end, start]
   );
