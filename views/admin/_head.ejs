@@ -32,10 +32,95 @@
 
   <!-- Admin skin (WordPress-inspired) -->
   <link rel="stylesheet" href="/css/admin.css">
-  <style>html { overflow-x: hidden; }</style>
+  <style>
+    html { overflow-x: hidden; }
+    /* Dashboard loading gate — stays up until the page has loaded and any
+       background API fetches have settled. */
+    #dash-loading {
+      position: fixed; inset: 0; z-index: 200000;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      gap: 14px; background: #f6f7f7; color: #50575e;
+      transition: opacity .35s ease;
+    }
+    #dash-loading.dl-hidden { opacity: 0; pointer-events: none; }
+    #dash-loading .dl-spinner {
+      width: 34px; height: 34px; border-radius: 50%;
+      border: 3px solid rgba(0,0,0,.12); border-top-color: #2271b1;
+      animation: dlspin .9s linear infinite;
+    }
+    #dash-loading .dl-text { font-size: 13px; letter-spacing: .3px; }
+    @keyframes dlspin { to { transform: rotate(360deg); } }
+    @media (prefers-color-scheme: dark) {
+      #dash-loading { background: #1d2327; color: #c3c4c7; }
+      #dash-loading .dl-spinner { border-color: rgba(255,255,255,.14); border-top-color: #72aee6; }
+    }
+  </style>
 
   <% if (typeof extraHead !== 'undefined' && extraHead) { %>
     <%- extraHead %>
   <% } %>
 </head>
 <body class="wp-admin">
+<div id="dash-loading" role="status" aria-live="polite">
+  <div class="dl-spinner"></div>
+  <div class="dl-text">Loading…</div>
+</div>
+<script>
+(function () {
+  var el = document.getElementById("dash-loading");
+  if (!el) return;
+
+  var inflight = 0, everFetched = false, domReady = false, killed = false, settle = null;
+
+  function hide() {
+    if (killed) return;
+    killed = true;
+    clearTimeout(settle);
+    el.classList.add("dl-hidden");
+    setTimeout(function () { if (el.parentNode) el.remove(); }, 400);
+  }
+  function show() { if (!killed) el.classList.remove("dl-hidden"); }
+  function maybeHide() {
+    if (killed || !domReady || inflight > 0) return;
+    clearTimeout(settle);
+    settle = setTimeout(hide, everFetched ? 400 : 120);
+  }
+
+  // Track background API calls so the gate waits for them.
+  var _fetch = window.fetch;
+  if (typeof _fetch === "function") {
+    window.fetch = function () {
+      everFetched = true;
+      inflight++;
+      clearTimeout(settle);
+      var p;
+      try { p = _fetch.apply(this, arguments); }
+      catch (e) { inflight = Math.max(0, inflight - 1); throw e; }
+      var settled = function () { inflight = Math.max(0, inflight - 1); maybeHide(); };
+      p.then(settled, settled);
+      return p;
+    };
+  }
+
+  document.addEventListener("DOMContentLoaded", function () {
+    // small grace so fetches kicked off on DOMContentLoaded register first
+    setTimeout(function () { domReady = true; maybeHide(); }, 200);
+  });
+  window.addEventListener("load", function () { domReady = true; maybeHide(); });
+
+  // Hard cap — a hung request must never trap the user.
+  setTimeout(hide, 12000);
+
+  // Let pages drive it explicitly if they need to.
+  window.dashLoading = {
+    show: show,
+    hide: hide,
+    during: function (promise) {
+      show();
+      var end = function () { maybeHide(); };
+      Promise.resolve(promise).then(end, end);
+      return promise;
+    },
+  };
+})();
+</script>
