@@ -20,11 +20,13 @@ import {
   markWrappedViewed,
 } from "../services/wrapped/wrappedService.js";
 import { renderWrappedCard } from "../lib/wrapped/card.js";
+import { getUserProfileRow } from "../controllers/wrappedController.js";
 import {
   pickGlobalBackground,
   musicUrl,
   logoDataUri,
   avatarDataUri,
+  resolveAvatarUrl,
 } from "../lib/wrapped/pageAssets.js";
 
 const require = createRequire(import.meta.url);
@@ -46,7 +48,16 @@ export default function wrappedSiteRoutes(app, client, fetch, moment, cfg, db, f
       .header("content-type", "text/html; charset=utf-8")
       .send(await app.view(view, data));
 
-  function deckData(run, { shared }) {
+  // The user's chosen profile picture (same rules as their player profile).
+  async function deckAvatarUrl(payloadUser) {
+    const row = (await getUserProfileRow(payloadUser?.userId)) || {
+      uuid: payloadUser?.uuid,
+      username: payloadUser?.username,
+    };
+    return resolveAvatarUrl(row);
+  }
+
+  function deckData(run, { shared, avatarUrl }) {
     return {
       payload: run.payload,
       payloadJson: JSON.stringify(run.payload),
@@ -55,6 +66,7 @@ export default function wrappedSiteRoutes(app, client, fetch, moment, cfg, db, f
       cardUrl: `/wrapped/card/${run.shareId}.svg`,
       bgImage: pickGlobalBackground(),
       musicUrl: musicUrl(),
+      avatarUrl: avatarUrl || null,
       siteName,
     };
   }
@@ -84,7 +96,8 @@ export default function wrappedSiteRoutes(app, client, fetch, moment, cfg, db, f
       const { run } = await getOrBuildWrapped(user);
       await markWrappedViewed(user.userId, period.year);
       if (req.session) delete req.session.wrappedPending;
-      return renderHtml(res, "wrapped/show", deckData(run, { shared: false }));
+      const avatarUrl = await deckAvatarUrl(run.payload?.user);
+      return renderHtml(res, "wrapped/show", deckData(run, { shared: false, avatarUrl }));
     } catch (err) {
       req.log?.error?.({ err }, "[WRAPPED] build failed");
       return res.status(500).header("content-type", "text/html; charset=utf-8")
@@ -113,14 +126,15 @@ export default function wrappedSiteRoutes(app, client, fetch, moment, cfg, db, f
       return res.status(404).header("content-type", "text/html; charset=utf-8")
         .send("<p>That Wrapped link isn't valid.</p>");
     }
-    return renderHtml(res, "wrapped/show", deckData(run, { shared: true }));
+    const avatarUrl = await deckAvatarUrl(run.payload?.user);
+    return renderHtml(res, "wrapped/show", deckData(run, { shared: true, avatarUrl }));
   });
 
   // ── Downloadable summary card ───────────────────────────────────────────
   app.get("/wrapped/card/:shareId.svg", async function (req, res) {
     const run = await getWrappedRunByShareId(req.params.shareId);
     if (!run) return res.status(404).send("not found");
-    const avatar = await avatarDataUri(run.payload?.user?.uuid || null, fetch);
+    const avatar = await avatarDataUri(await deckAvatarUrl(run.payload?.user), fetch);
     return res
       .header("content-type", "image/svg+xml; charset=utf-8")
       .header("cache-control", "public, max-age=3600")

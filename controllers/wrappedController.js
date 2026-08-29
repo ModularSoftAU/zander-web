@@ -132,6 +132,17 @@ export async function getZanderLeaderboardRaw(start, end) {
   return map;
 }
 
+/** uuid / username / profile-picture preference for a user — for the Wrapped avatar. */
+export async function getUserProfileRow(userId) {
+  if (!userId) return null;
+  const [row] = await q(
+    `SELECT userId, uuid, username, profilePicture_type, profilePicture_email
+       FROM users WHERE userId = ? LIMIT 1`,
+    [userId]
+  );
+  return row || null;
+}
+
 // ── Persisted runs ────────────────────────────────────────────────────────
 
 export async function getWrappedRun(userId, periodYear) {

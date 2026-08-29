@@ -44,9 +44,11 @@
   .slide[data-mood="chime"]  { background: radial-gradient(130% 100% at 50% 0%,   rgba(26,35,80,.30), rgba(6,10,31,.55) 70%, rgba(6,10,31,.72)); }
   .brandlogo { height: clamp(34px, 9vw, 46px); width: auto; opacity: .95; margin-bottom: 2px;
     filter: drop-shadow(0 3px 12px rgba(0,0,0,.5)); }
-  .avatar { width: clamp(96px, 26vw, 132px); height: auto; border-radius: 16px;
+  .avatar { width: clamp(96px, 26vw, 132px); height: clamp(96px, 26vw, 132px);
+    object-fit: cover; border-radius: 16px;
     image-rendering: pixelated; image-rendering: crisp-edges;
     box-shadow: 0 10px 34px rgba(0,0,0,.5); }
+  .avatar.photo { image-rendering: auto; }
   .emoji { font-size: clamp(52px, 14vw, 92px); filter: drop-shadow(0 6px 20px rgba(0,0,0,.4)); }
   .stat, .name, .flavor, .sub, .rank, .kicker { text-shadow: 0 2px 14px rgba(0,0,0,.55); }
   .flavor { color: #c9d4ff; font-size: clamp(15px, 4.4vw, 19px); max-width: 22ch; }
@@ -131,9 +133,12 @@
   var SITE = <%- JSON.stringify(siteName) %>;
   var BG = <%- JSON.stringify(typeof bgImage !== 'undefined' ? bgImage : null) %>;
   var s = P.stats || {};
-  var AVATAR = P.user && P.user.uuid
-    ? "https://crafthead.net/avatar/" + encodeURIComponent(P.user.uuid) + "?scale=8"
-    : null;
+  // Honour the user's profile-picture preference (resolved server-side); fall
+  // back to their skin head.
+  var AVATAR = <%- JSON.stringify(typeof avatarUrl !== 'undefined' && avatarUrl ? avatarUrl : null) %>
+    || (P.user && P.user.uuid
+      ? "https://crafthead.net/avatar/" + encodeURIComponent(P.user.uuid)
+      : null);
 
   var MONTHS = ["January","February","March","April","May","June",
     "July","August","September","October","November","December"];
@@ -179,8 +184,8 @@
   var slides = [];
   slides.push({ mood: "chime", emoji: "✨", dur: 3800, html:
     '<img class="brandlogo" src="/images/siteLogo.png" alt="" />' +
-    (AVATAR ? '<img class="avatar" src="' + escapeAttr(AVATAR) + '" alt="" ' +
-      'onerror="this.style.display=\'none\'" />' : '') +
+    (AVATAR ? '<img class="avatar' + (/gravatar\.com/.test(AVATAR) ? ' photo' : '') + '" ' +
+      'src="' + escapeAttr(AVATAR) + '" alt="" onerror="this.style.display=\'none\'" />' : '') +
     '<div class="kicker">' + escapeHtml(SITE.toUpperCase()) + ' · WRAPPED</div>' +
     '<div class="name">' + escapeHtml(P.user.username) + '</div>' +
     '<div class="flavor">Here\'s your ' + P.period.label + ' on the server.</div>' });
