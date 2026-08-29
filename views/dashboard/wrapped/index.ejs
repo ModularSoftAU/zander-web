@@ -97,6 +97,9 @@
       <form method="post" action="/dashboard/wrapped/rebuild-leaderboard" class="d-inline">
         <button class="btn btn-outline-secondary btn-sm">Rebuild leaderboard cache</button>
       </form>
+      <button type="button" id="mmTestBtn" class="btn btn-outline-secondary btn-sm">Test MineMonitor</button>
+      <pre id="mmTestOut" class="small bg-light border rounded p-2 mt-2 mb-0"
+           style="display:none; max-height:320px; overflow:auto; white-space:pre-wrap;"></pre>
     </div>
   </div>
 
@@ -173,6 +176,21 @@
   document.addEventListener('click', function (e) {
     if (!input.contains(e.target) && !box.contains(e.target)) hide();
   });
+
+  var mmBtn = document.getElementById('mmTestBtn');
+  var mmOut = document.getElementById('mmTestOut');
+  if (mmBtn && mmOut) {
+    mmBtn.addEventListener('click', function () {
+      var u = (input.value || '').trim();
+      if (!u) { mmOut.style.display = 'block'; mmOut.textContent = 'Enter a username above first.'; return; }
+      mmOut.style.display = 'block';
+      mmOut.textContent = 'Testing ' + u + ' …';
+      fetch('/dashboard/wrapped/minemonitor-test?username=' + encodeURIComponent(u), { credentials: 'include' })
+        .then(function (r) { return r.json(); })
+        .then(function (d) { mmOut.textContent = JSON.stringify(d, null, 2); })
+        .catch(function (e) { mmOut.textContent = 'Request failed: ' + e; });
+    });
+  }
 })();
 </script>
 

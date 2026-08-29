@@ -6,29 +6,35 @@ const require = createRequire(import.meta.url);
  * Thin client for MineMonitor's read-only Wrapped stats endpoint
  * (`GET /api/wrapped/stats/:uuid?start=&end=`).
  *
- * Config:
- *   - config.json → `wrapped.minemonitor.baseUrl`  (e.g. "https://monitor.craftingforchrist.net")
- *   - .env        → `MINEMONITOR_CONNECTION_TOKEN`  (a MineMonitor "Connections"
- *                                                    token with the `wrapped.read` scope)
+ * Config (either source works for the base URL):
+ *   - .env        → `MINEMONITOR_BASE_URL`           (preferred)
+ *   - config.json → `wrapped.minemonitor.baseUrl`
+ *   - .env        → `MINEMONITOR_CONNECTION_TOKEN`   (a MineMonitor "Connections"
+ *                                                     token with the `wrapped.read` scope)
  *
  * The endpoint is token-only and internal. If it's unreachable or
  * misconfigured we degrade gracefully: callers get `null` and the Wrapped
  * payload is built from Zander data alone (Discord slides omitted).
  */
 
+let _warnedMissing = false;
+
 function getConfig() {
-  let baseUrl = null;
-  let dateFormat = "date"; // "date" | "iso" | "epoch" | "epochms"
+  let baseUrl =
+    process.env.MINEMONITOR_BASE_URL || process.env.MINEMONITOR_URL || null;
+  let dateFormat = process.env.MINEMONITOR_DATE_FORMAT || "date"; // date | iso | epoch | epochms
   try {
     const config = require("../../config.json");
-    baseUrl = config?.wrapped?.minemonitor?.baseUrl ?? null;
-    dateFormat = config?.wrapped?.minemonitor?.dateFormat ?? dateFormat;
+    baseUrl = baseUrl || config?.wrapped?.minemonitor?.baseUrl || null;
+    if (!process.env.MINEMONITOR_DATE_FORMAT) {
+      dateFormat = config?.wrapped?.minemonitor?.dateFormat ?? dateFormat;
+    }
   } catch {
     /* config.json absent */
   }
   const token =
     process.env.MINEMONITOR_CONNECTION_TOKEN || process.env.MINEMONITOR_API_KEY || null;
-  return { baseUrl, token, dateFormat };
+  return { baseUrl: baseUrl ? String(baseUrl).trim() : null, token, dateFormat };
 }
 
 /** Render a Date for the MineMonitor query in the configured format. */
@@ -67,8 +73,13 @@ export function isMineMonitorConfigured() {
 export async function fetchWrappedStats(uuid, start, end, opts = {}) {
   const { baseUrl, token, dateFormat } = getConfig();
   if (!baseUrl || !token) {
-    // Expected, deliberate configuration — not an error. Wrapped is built from
-    // Zander data alone and the Discord/voice slides are simply omitted.
+    if (!_warnedMissing) {
+      _warnedMissing = true;
+      console.warn(
+        `[WRAPPED] MineMonitor not configured — Discord/voice slides disabled. ` +
+        `missing: ${[!baseUrl && "baseUrl (MINEMONITOR_BASE_URL / config.wrapped.minemonitor.baseUrl)", !token && "token (MINEMONITOR_CONNECTION_TOKEN)"].filter(Boolean).join(", ")}`
+      );
+    }
     return null;
   }
   if (!uuid) return null;
@@ -133,4 +144,54 @@ export async function fetchWrappedStats(uuid, start, end, opts = {}) {
   } finally {
     clearTimeout(timer);
   }
+}
+
+/**
+ * Verbose one-shot probe for the admin dashboard — never swallows anything.
+ * @returns {Promise<{ configured: boolean, missing: string[], url: string|null,
+ *   status: number|null, ok: boolean, rawBody: string|null, parsed: object|null,
+ *   error: string|null }>}
+ */
+export async function diagnoseMineMonitor(uuid, start, end) {
+  const { baseUrl, token, dateFormat } = getConfig();
+  const missing = [];
+  if (!baseUrl) missing.push("baseUrl");
+  if (!token) missing.push("token");
+  const out = {
+    configured: missing.length === 0,
+    missing,
+    url: null,
+    status: null,
+    ok: false,
+    rawBody: null,
+    parsed: null,
+    error: null,
+  };
+  if (!out.configured || !uuid) {
+    if (!uuid) out.error = "no uuid for that user (Minecraft account not linked?)";
+    return out;
+  }
+
+  out.url =
+    `${baseUrl.replace(/\/+$/, "")}/api/wrapped/stats/${encodeURIComponent(uuid)}` +
+    `?start=${encodeURIComponent(fmtDate(start, dateFormat))}` +
+    `&end=${encodeURIComponent(fmtDate(end, dateFormat))}`;
+
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 8000);
+  try {
+    const res = await fetch(out.url, {
+      headers: { Authorization: `Bearer ${token}`, Accept: "application/json" },
+      signal: controller.signal,
+    });
+    out.status = res.status;
+    out.ok = res.ok;
+    out.rawBody = (await res.text()).slice(0, 4000);
+    out.parsed = await fetchWrappedStats(uuid, start, end).catch(() => null);
+  } catch (err) {
+    out.error = err.message;
+  } finally {
+    clearTimeout(timer);
+  }
+  return out;
 }

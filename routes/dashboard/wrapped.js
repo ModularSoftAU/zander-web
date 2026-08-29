@@ -28,6 +28,7 @@ import {
   rebuildWrappedLeaderboard,
 } from "../../services/wrapped/wrappedService.js";
 import { renderWrappedCard } from "../../lib/wrapped/card.js";
+import { diagnoseMineMonitor } from "../../services/wrapped/minemonitorClient.js";
 import {
   pickGlobalBackground,
   pickGlobalBackgrounds,
@@ -74,6 +75,13 @@ export default function dashboardWrappedRoute(app, config, features, lang) {
     return { userId: row.userId, username: row.username, uuid: row.uuid };
   }
 
+  const periodSummary = (p) => ({
+    label: p.label,
+    start: new Date(p.start).toISOString(),
+    end: new Date(p.end).toISOString(),
+    enabled: p.enabled,
+  });
+
   // ── Player autocomplete for the preview field ─────────────────────────
   app.get("/dashboard/wrapped/user-search", async (req, res) => {
     if (!(await hasPermission(CAP, req, res, features))) return;
@@ -102,6 +110,27 @@ export default function dashboardWrappedRoute(app, config, features, lang) {
       console.error("[dashboard/wrapped] user-search error:", error);
       if (!res.sent) return res.status(500).send({ results: [] });
     }
+  });
+
+  // ── MineMonitor connectivity probe ───────────────────────────────────
+  app.get("/dashboard/wrapped/minemonitor-test", async (req, res) => {
+    if (!(await hasPermission(CAP, req, res, features))) return;
+    const user = await resolveUser(req.query.username);
+    const period = await getConfiguredWrappedPeriod();
+    if (!user) {
+      return res.send({ error: "Unknown username", period: periodSummary(period) });
+    }
+    const result = await diagnoseMineMonitor(
+      user.uuid || null,
+      new Date(period.start),
+      new Date(period.end)
+    );
+    return res.send({
+      username: user.username,
+      uuid: user.uuid || null,
+      period: periodSummary(period),
+      ...result,
+    });
   });
 
   // ── Settings + preview launcher ────────────────────────────────────────
