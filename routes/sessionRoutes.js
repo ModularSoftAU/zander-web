@@ -31,6 +31,25 @@ import {
 } from "../controllers/sessionController.js";
 import { sendMail } from "../controllers/emailController.js";
 import { checkRateLimit } from "../lib/rateLimiter.mjs";
+import { shouldPromptForWrapped } from "../services/wrapped/wrappedService.js";
+
+/**
+ * After login, nudge the user into their Wrapped once per period (mid-Nov →
+ * mid-Dec window, linked Minecraft account, not already generated). Returns
+ * true if it issued the redirect.
+ */
+async function wrappedLoginRedirect(req, res) {
+  try {
+    if (req.session?.user?.uuid && (await shouldPromptForWrapped(req.session.user))) {
+      req.session.wrappedPending = true;
+      res.redirect("/wrapped");
+      return true;
+    }
+  } catch (_) {
+    // Wrapped is non-critical — never block a login on it.
+  }
+  return false;
+}
 
 export default function sessionSiteRoute(
   app,
@@ -282,6 +301,7 @@ export default function sessionSiteRoute(
         delete req.session.returnTo;
         return res.redirect(returnTo);
       }
+      if (await wrappedLoginRedirect(req, res)) return;
       return res.redirect(`${process.env.siteAddress}/`);
     } catch (error) {
       logRouteError("local login attempt", error);
@@ -380,6 +400,7 @@ export default function sessionSiteRoute(
         delete req.session.returnTo;
         return res.redirect(returnTo);
       }
+      if (await wrappedLoginRedirect(req, res)) return;
       return res.redirect(`${process.env.siteAddress}/`);
     } catch (error) {
       logRouteError("discord OAuth callback", error);
