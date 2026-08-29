@@ -57,9 +57,11 @@
       <h5>Preview a user's Wrapped</h5>
       <p class="text-muted small mb-2">Builds the deck live and does <strong>not</strong> save a run.</p>
       <form method="post" action="/dashboard/wrapped/preview" target="_blank">
-        <div class="mb-2">
-          <input class="form-control form-control-sm" name="username" required
-                 value="<%= me %>" placeholder="Minecraft username">
+        <div class="mb-2 position-relative">
+          <input class="form-control form-control-sm" id="wrappedPreviewUser" name="username" required
+                 value="<%= me %>" placeholder="Start typing a username" autocomplete="off">
+          <div id="wrappedPreviewSuggest" class="list-group position-absolute w-100 shadow-sm"
+               style="z-index:1050; display:none; max-height:260px; overflow:auto;"></div>
         </div>
         <div class="row g-2 mb-2">
           <div class="col">
@@ -94,5 +96,55 @@
     </tbody>
   </table>
 </div></div></div>
+
+<script>
+(function () {
+  var input = document.getElementById('wrappedPreviewUser');
+  var box = document.getElementById('wrappedPreviewSuggest');
+  if (!input || !box) return;
+  var timer = null;
+
+  function hide() { box.style.display = 'none'; box.innerHTML = ''; }
+
+  function render(list) {
+    box.innerHTML = '';
+    if (!list.length) { hide(); return; }
+    list.forEach(function (u) {
+      var b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'list-group-item list-group-item-action d-flex align-items-center gap-2 py-1 px-2';
+      if (u.avatarUrl) {
+        var img = document.createElement('img');
+        img.src = u.avatarUrl; img.alt = ''; img.width = 24; img.height = 24;
+        img.className = 'rounded'; img.style.objectFit = 'cover';
+        b.appendChild(img);
+      }
+      var s = document.createElement('span');
+      s.textContent = u.username; s.className = 'small';
+      b.appendChild(s);
+      b.addEventListener('click', function () { input.value = u.username; hide(); });
+      box.appendChild(b);
+    });
+    box.style.display = 'block';
+  }
+
+  input.addEventListener('input', function () {
+    var q = input.value.trim();
+    clearTimeout(timer);
+    if (q.length < 2) { hide(); return; }
+    timer = setTimeout(function () {
+      fetch('/dashboard/wrapped/user-search?q=' + encodeURIComponent(q), { credentials: 'include' })
+        .then(function (r) { return r.json(); })
+        .then(function (d) { render(d.results || []); })
+        .catch(hide);
+    }, 200);
+  });
+
+  document.addEventListener('click', function (e) {
+    if (!input.contains(e.target) && !box.contains(e.target)) hide();
+  });
+})();
+</script>
+
 
 <%- include("../../admin/_footer.ejs") %>

@@ -23,6 +23,7 @@ import { renderWrappedCard } from "../lib/wrapped/card.js";
 import { getUserProfileRow } from "../controllers/wrappedController.js";
 import {
   pickGlobalBackground,
+  pickGlobalBackgrounds,
   musicUrl,
   logoDataUri,
   avatarDataUri,
@@ -65,6 +66,7 @@ export default function wrappedSiteRoutes(app, client, fetch, moment, cfg, db, f
       shareUrl: `${SITE()}/wrapped/s/${run.shareId}`,
       cardUrl: `/wrapped/card/${run.shareId}.svg`,
       bgImage: pickGlobalBackground(),
+      bgImages: pickGlobalBackgrounds(24),
       musicUrl: musicUrl(),
       avatarUrl: avatarUrl || null,
       siteName,

@@ -105,8 +105,14 @@
     <div class="spin"></div>
     <div class="msg">Preparing your Wrapped…</div>
   </div>
-  <% if (typeof bgImage !== 'undefined' && bgImage) { %>
-  <div id="bg" style="background-image:url('<%= bgImage %>')"></div>
+  <%
+    var _firstBg = (typeof bgImages !== 'undefined' && bgImages && bgImages[0])
+      || (typeof bgImage !== 'undefined' ? bgImage : null);
+  %>
+  <% if (_firstBg) { %>
+  <div id="bg" style="background-image:url('<%= _firstBg %>')"></div>
+  <% } else { %>
+  <div id="bg" style="display:none"></div>
   <% } %>
   <div id="bars"></div>
   <div id="stage"></div>
@@ -132,6 +138,26 @@
   var CARD_URL = <%- JSON.stringify(cardUrl) %>;
   var SITE = <%- JSON.stringify(siteName) %>;
   var BG = <%- JSON.stringify(typeof bgImage !== 'undefined' ? bgImage : null) %>;
+  var BGS = <%- JSON.stringify(typeof bgImages !== 'undefined' && bgImages ? bgImages : []) %>;
+  if (!BGS.length && BG) BGS = [BG];
+
+  // Swap the shared backdrop to a different global image on each slide.
+  var bgEl = document.getElementById("bg");
+  if (bgEl && BGS.length) bgEl.dataset.src = BGS[0]; // server already rendered BGS[0]
+  function applySlideBg(i) {
+    if (!bgEl || !BGS.length) return;
+    var url = BGS[((i % BGS.length) + BGS.length) % BGS.length];
+    if (bgEl.dataset.src === url) return;
+    bgEl.style.transition = "opacity .35s ease";
+    bgEl.style.opacity = "0";
+    setTimeout(function () {
+      bgEl.style.backgroundImage = "url('" + url + "')";
+      bgEl.dataset.src = url;
+      bgEl.style.opacity = "";
+    }, 180);
+    var nxt = BGS[(i + 1) % BGS.length];
+    if (nxt) { var p = new Image(); p.src = nxt; }
+  }
   var s = P.stats || {};
   // Honour the user's profile-picture preference (resolved server-side); fall
   // back to their skin head.
@@ -294,6 +320,7 @@
     }
     var dur = slides[idx].dur || 5000;
     segs[idx].style.setProperty("--dur", dur + "ms");
+    applySlideBg(idx);
     sting(slides[idx].mood);
     setMusicMood(slides[idx].mood);
     clearTimeout(timer);
@@ -532,19 +559,23 @@
     return (P.user.username || "wrapped").replace(/[^\w.-]+/g, "_") + "-wrapped-" + P.period.label;
   }
 
-  // The summary image is rasterised up-front (during boot) so the button click
-  // itself stays inside the user gesture — browsers block share()/downloads that
-  // happen several async hops after the tap.
-  var summary = { ready: false, pngBlob: null, pngUrl: null, svgBlob: null, svgUrl: null };
+  // The summary card is fetched up-front. The SVG itself is a complete, one-file
+  // summary image and always downloads; a PNG rasterisation is attempted as a
+  // bonus but never blocks (some browsers hang decoding an SVG with embedded
+  // <image>, so it's time-boxed).
+  var summary = { svgBlob: null, pngBlob: null, _p: null };
 
   function prepareSummary() {
     if (summary._p) return summary._p;
-    summary._p = fetch(CARD_URL)
+    summary._p = fetch(CARD_URL, { credentials: "same-origin" })
       .then(function (r) { if (!r.ok) throw new Error("card " + r.status); return r.text(); })
       .then(function (svgText) {
         summary.svgBlob = new Blob([svgText], { type: "image/svg+xml;charset=utf-8" });
-        summary.svgUrl = URL.createObjectURL(summary.svgBlob);
+        // Bonus PNG — capped at 3s so a stuck decode never wedges anything.
         return new Promise(function (resolve) {
+          var settled = false;
+          var finish = function () { if (!settled) { settled = true; resolve(); } };
+          setTimeout(finish, 3000);
           var img = new Image();
           img.onload = function () {
             try {
@@ -552,69 +583,54 @@
               var ctx = c.getContext("2d");
               ctx.fillStyle = "#0a1330"; ctx.fillRect(0, 0, c.width, c.height);
               ctx.drawImage(img, 0, 0, c.width, c.height);
-              if (c.toBlob) {
-                c.toBlob(function (b) {
-                  if (b) { summary.pngBlob = b; summary.pngUrl = URL.createObjectURL(b); }
-                  resolve();
-                }, "image/png");
-              } else {
-                summary.pngUrl = c.toDataURL("image/png");
-                resolve();
-              }
-            } catch (e) { resolve(); } // tainted / unsupported — SVG fallback stands
+              if (c.toBlob) { c.toBlob(function (b) { if (b) summary.pngBlob = b; finish(); }, "image/png"); }
+              else finish();
+            } catch (e) { finish(); }
           };
-          img.onerror = function () { resolve(); };
+          img.onerror = finish;
           img.src = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(svgText);
         });
       })
-      .catch(function () {})
-      .then(function () { summary.ready = true; });
+      .catch(function () {});
     return summary._p;
   }
 
-  // Runs synchronously from the click. Prefers PNG, falls back to the SVG blob
-  // (always works — no canvas), then Web Share / <a download> / open-in-tab.
+  function triggerDownload(blob, name) {
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement("a");
+    a.href = url; a.download = name; a.rel = "noopener";
+    document.body.appendChild(a); a.click();
+    setTimeout(function () { a.remove(); URL.revokeObjectURL(url); }, 1500);
+  }
+
   function saveSummary(btn) {
-    var flash = function (t) {
-      if (!btn) return;
-      var o = btn.getAttribute("data-label") || btn.textContent;
-      btn.setAttribute("data-label", o);
-      btn.textContent = t;
-      setTimeout(function () { btn.textContent = btn.getAttribute("data-label"); }, 2000);
+    var orig = btn ? (btn.getAttribute("data-orig") || btn.textContent) : "";
+    if (btn) btn.setAttribute("data-orig", orig);
+    var done = function (t) { if (btn) { btn.textContent = t; setTimeout(function () { btn.textContent = orig; }, 2200); } };
+
+    var deliver = function () {
+      var blob = summary.pngBlob || summary.svgBlob;
+      if (!blob) { try { window.open(CARD_URL, "_blank"); done("Opened"); } catch (e) { done("Couldn't save"); } return; }
+      var name = fileBase() + (summary.pngBlob ? ".png" : ".svg");
+
+      if (navigator.canShare) {
+        try {
+          var f = new File([blob], name, { type: blob.type || "image/png" });
+          if (navigator.canShare({ files: [f] })) {
+            navigator.share({ files: [f], title: "My " + P.period.label + " Wrapped" })
+              .then(function () { done("Shared"); })
+              .catch(function () { triggerDownload(blob, name); done("Saved"); });
+            return;
+          }
+        } catch (e) { /* fall through */ }
+      }
+      triggerDownload(blob, name);
+      done("Saved");
     };
 
-    if (!summary.ready) {
-      flash("Preparing…");
-      prepareSummary().then(function () { saveSummary(btn); });
-      return;
-    }
-
-    var blob = summary.pngBlob || summary.svgBlob;
-    var url  = summary.pngUrl  || summary.svgUrl;
-    var name = fileBase() + (summary.pngUrl ? ".png" : ".svg");
-
-    if (blob && navigator.canShare) {
-      try {
-        var f = new File([blob], name, { type: blob.type || "image/png" });
-        if (navigator.canShare({ files: [f] })) {
-          navigator.share({ files: [f], title: "My " + P.period.label + " Wrapped" })
-            .then(function () { flash("Shared"); }).catch(function () {});
-          return;
-        }
-      } catch (e) { /* fall through */ }
-    }
-
-    if (url) {
-      var a = document.createElement("a");
-      a.href = url; a.download = name; a.rel = "noopener";
-      document.body.appendChild(a); a.click();
-      setTimeout(function () { a.remove(); }, 0);
-      flash("Saved");
-      return;
-    }
-
-    try { window.open(CARD_URL, "_blank", "noopener"); flash("Opened image"); }
-    catch (e) { flash("Couldn't save"); }
+    if (summary.svgBlob || summary.pngBlob) { deliver(); return; }
+    if (btn) btn.textContent = "Preparing…";
+    prepareSummary().then(deliver);
   }
 
   // ── helpers ──────────────────────────────────────────────────────────
@@ -658,7 +674,8 @@
     prepareSummary();
 
     Promise.all([
-      preloadImage(BG),
+      preloadImage(BGS[0] || BG),
+      preloadImage(BGS[1] || null),
       preloadImage("/images/siteLogo.png"),
       preloadImage(AVATAR)
     ]).then(finish);

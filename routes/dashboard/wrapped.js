@@ -13,6 +13,7 @@ import { hasPermission } from "../../api/common.js";
 import { adminViewData } from "../../admin/adminHelpers.js";
 import { getWebAnnouncement } from "../../controllers/announcementController.js";
 import { UserGetter } from "../../controllers/userController.js";
+import db from "../../controllers/databaseController.js";
 import {
   getWrappedSettings,
   saveWrappedSettings,
@@ -28,11 +29,14 @@ import { configWrappedOptions } from "../../lib/wrapped/period.js";
 import { renderWrappedCard } from "../../lib/wrapped/card.js";
 import {
   pickGlobalBackground,
+  pickGlobalBackgrounds,
   musicUrl,
   logoDataUri,
   avatarDataUri,
   resolveAvatarUrl,
 } from "../../lib/wrapped/pageAssets.js";
+
+import moment from "moment";
 
 async function previewAvatarUrl(payloadUser) {
   const row = (await getUserProfileRow(payloadUser?.userId)) || {
@@ -41,7 +45,6 @@ async function previewAvatarUrl(payloadUser) {
   };
   return resolveAvatarUrl(row);
 }
-import moment from "moment";
 
 const CAP = "zander.web.wrapped";
 const MMDD = /^\d{2}-\d{2}$/;
@@ -67,6 +70,36 @@ export default function dashboardWrappedRoute(app, config, features, lang) {
     if (!row) return null;
     return { userId: row.userId, username: row.username, uuid: row.uuid };
   }
+
+  // ── Player autocomplete for the preview field ─────────────────────────
+  app.get("/dashboard/wrapped/user-search", async (req, res) => {
+    if (!(await hasPermission(CAP, req, res, features))) return;
+
+    const term = (req.query.q || "").trim();
+    if (term.length < 2) return res.send({ results: [] });
+
+    try {
+      const rows = await new Promise((resolve, reject) => {
+        db.query(
+          `SELECT userId, username, uuid, profilePicture_type, profilePicture_email
+             FROM users WHERE username LIKE ? ORDER BY username ASC LIMIT 8`,
+          [`${term}%`],
+          (err, results) => (err ? reject(err) : resolve(results || []))
+        );
+      });
+      const results = await Promise.all(
+        rows.map(async (row) => ({
+          userId: row.userId,
+          username: row.username,
+          avatarUrl: await resolveAvatarUrl(row),
+        }))
+      );
+      return res.send({ results });
+    } catch (error) {
+      console.error("[dashboard/wrapped] user-search error:", error);
+      if (!res.sent) return res.status(500).send({ results: [] });
+    }
+  });
 
   // ── Settings + preview launcher ────────────────────────────────────────
   app.get("/dashboard/wrapped", async (req, res) => {
@@ -152,6 +185,7 @@ export default function dashboardWrappedRoute(app, config, features, lang) {
         shareUrl: null,
         cardUrl: "/dashboard/wrapped/preview/card.svg",
         bgImage: pickGlobalBackground(),
+        bgImages: pickGlobalBackgrounds(24),
         musicUrl: musicUrl(),
         avatarUrl: await previewAvatarUrl(stash.payload?.user),
         siteName: config?.siteConfiguration?.siteName || "Crafting For Christ",
