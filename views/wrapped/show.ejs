@@ -15,7 +15,18 @@
     font-family: "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
     background: #060a1f; color: #fff; user-select: none;
   }
-  #stage { position: fixed; inset: 0; display: grid; place-items: center; }
+  /* site global background, shared behind every slide */
+  #bg {
+    position: fixed; inset: 0; z-index: 0;
+    background-position: center; background-size: cover; background-repeat: no-repeat;
+    opacity: .22; transform: scale(1.06);
+    filter: saturate(1.05);
+  }
+  #bg::after {
+    content: ""; position: absolute; inset: 0;
+    background: radial-gradient(120% 90% at 50% 30%, rgba(6,10,31,.25), rgba(6,10,31,.72) 70%, rgba(6,10,31,.9));
+  }
+  #stage { position: fixed; inset: 0; z-index: 1; display: grid; place-items: center; }
   .slide {
     position: absolute; inset: 0; display: flex; flex-direction: column;
     align-items: center; justify-content: center; gap: 18px;
@@ -24,11 +35,12 @@
     transition: opacity .5s ease, transform .5s ease; pointer-events: none;
   }
   .slide.active { opacity: 1; transform: none; pointer-events: auto; }
-  .slide[data-mood="rise"]   { background: radial-gradient(130% 100% at 50% 100%, #143d6b, #0a1330 65%, #060a1f); }
-  .slide[data-mood="pop"]    { background: radial-gradient(130% 100% at 50% 0%,   #3a1d6b, #0a1330 65%, #060a1f); }
-  .slide[data-mood="fanfare"]{ background: radial-gradient(130% 120% at 50% 40%,  #6b4a12, #1a1030 60%, #060a1f); }
-  .slide[data-mood="drum"]   { background: radial-gradient(130% 120% at 50% 40%,  #10403a, #101a30 60%, #060a1f); }
-  .slide[data-mood="chime"]  { background: radial-gradient(130% 100% at 50% 0%,   #1a2350, #0a1330 65%, #060a1f); }
+  /* translucent so the shared background image reads through at the edges */
+  .slide[data-mood="rise"]   { background: radial-gradient(130% 100% at 50% 100%, rgba(20,61,107,.70), rgba(10,19,48,.82) 65%, rgba(6,10,31,.92)); }
+  .slide[data-mood="pop"]    { background: radial-gradient(130% 100% at 50% 0%,   rgba(58,29,107,.70), rgba(10,19,48,.82) 65%, rgba(6,10,31,.92)); }
+  .slide[data-mood="fanfare"]{ background: radial-gradient(130% 120% at 50% 40%,  rgba(107,74,18,.70), rgba(26,16,48,.82) 60%, rgba(6,10,31,.92)); }
+  .slide[data-mood="drum"]   { background: radial-gradient(130% 120% at 50% 40%,  rgba(16,64,58,.70), rgba(16,26,48,.82) 60%, rgba(6,10,31,.92)); }
+  .slide[data-mood="chime"]  { background: radial-gradient(130% 100% at 50% 0%,   rgba(26,35,80,.70), rgba(10,19,48,.82) 65%, rgba(6,10,31,.92)); }
   .emoji { font-size: clamp(52px, 14vw, 92px); filter: drop-shadow(0 6px 20px rgba(0,0,0,.4)); }
   .flavor { color: #c9d4ff; font-size: clamp(15px, 4.4vw, 19px); max-width: 22ch; }
   .stat { font-size: clamp(40px, 13vw, 84px); font-weight: 800; line-height: 1.05; }
@@ -63,6 +75,9 @@
 </style>
 </head>
 <body>
+  <% if (typeof bgImage !== 'undefined' && bgImage) { %>
+  <div id="bg" style="background-image:url('<%= bgImage %>')"></div>
+  <% } %>
   <div id="bars"></div>
   <div id="stage"></div>
   <div class="zone left"  id="zprev"></div>
@@ -72,6 +87,12 @@
     <% if (!shared) { %><a class="chip" href="/">Exit</a><% } %>
   </div>
   <canvas id="cardcanvas" width="1200" height="630"></canvas>
+  <!-- Optional real music bed. Drop a file at assets/audio/wrapped-bed.(mp3|ogg)
+       to use it; otherwise a generative ambient bed plays instead. -->
+  <audio id="bgm" loop preload="auto" crossorigin="anonymous">
+    <source src="/audio/wrapped-bed.mp3" type="audio/mpeg" />
+    <source src="/audio/wrapped-bed.ogg" type="audio/ogg" />
+  </audio>
 
 <script>
 (function () {
@@ -85,8 +106,12 @@
 
   function rankLine(block, unitPlural) {
     if (!block || block.rank == null || block.total == null) return null;
+    // A rank among a field of all-zeros is noise — hide it when the user has
+    // no actual value for this stat (e.g. playtime source not wired up).
+    if (block.value != null && Number(block.value) <= 0) return null;
     return "You're #" + block.rank + " of " + block.total + " " + (unitPlural || "players");
   }
+  function hasVal(block) { return block && Number(block.value) > 0; }
   function num(n) { return (n == null ? "0" : Number(n).toLocaleString()); }
   function pct(v) {
     if (v == null) return null;
@@ -100,12 +125,16 @@
     '<div class="name">' + escapeHtml(P.user.username) + '</div>' +
     '<div class="flavor">Here\'s your ' + P.period.label + ' on the server.</div>', dur: 3500 });
 
-  slides.push({ mood: "rise", emoji: "⛏️", flavor: "You spent this much time with us",
-    stat: s.playtime && s.playtime.display, rank: rankLine(s.playtime) });
+  // Playtime + sessions come from Zander's own gameSessions data. When that
+  // isn't populated (e.g. an event server not reporting sessions yet) these
+  // read as "no time at all" / "0 sessions" — skip them entirely instead.
+  if (hasVal(s.playtime)) slides.push({ mood: "rise", emoji: "⛏️",
+    flavor: "You spent this much time with us",
+    stat: s.playtime.display, rank: rankLine(s.playtime) });
 
-  if (s.sessions) slides.push({ mood: "chime", emoji: "🚪", flavor: "That was spread across",
+  if (hasVal(s.sessions)) slides.push({ mood: "chime", emoji: "🚪", flavor: "That was spread across",
     stat: num(s.sessions.value) + " sessions",
-    sub: s.avgSession ? "about " + s.avgSession.display + " each" : null,
+    sub: (s.avgSession && Number(s.avgSession.value) > 0) ? "about " + s.avgSession.display + " each" : null,
     rank: rankLine(s.sessions, "players") });
 
   if (s.tenure && s.tenure.firstSeen) slides.push({ mood: "chime", emoji: "🌱",
@@ -120,13 +149,13 @@
   if (s.mostActiveMonth) slides.push({ mood: "pop", emoji: "📅", flavor: "Your biggest month was",
     stat: monthLabel(s.mostActiveMonth.month), sub: fmtSecs(s.mostActiveMonth.seconds) + " played" });
 
-  if (s.discordMessages) slides.push({ mood: "pop", emoji: "💬", flavor: "Over in Discord you sent",
+  if (hasVal(s.discordMessages)) slides.push({ mood: "pop", emoji: "💬", flavor: "Over in Discord you sent",
     stat: num(s.discordMessages.value) + " messages", rank: rankLine(s.discordMessages, "chatters") });
 
-  if (s.discordReactions) slides.push({ mood: "pop", emoji: "👍", flavor: "And you reacted",
+  if (hasVal(s.discordReactions)) slides.push({ mood: "pop", emoji: "👍", flavor: "And you reacted",
     stat: num(s.discordReactions.value) + " times", rank: rankLine(s.discordReactions, "members") });
 
-  if (s.voiceMinutes) slides.push({ mood: "rise", emoji: "🎙️", flavor: "You spent",
+  if (hasVal(s.voiceMinutes)) slides.push({ mood: "rise", emoji: "🎙️", flavor: "You spent",
     stat: s.voiceMinutes.display + " in voice", rank: rankLine(s.voiceMinutes, "members") });
 
   if (s.reputation) slides.push({ mood: "fanfare", emoji: "⭐", flavor: "Your reputation reached",
@@ -148,6 +177,15 @@
     if (yy.length) slides.push({ mood: "pop", emoji: "📈", flavor: "Compared to last year",
       stat: yy[0].charAt(0).toUpperCase() + yy[0].slice(1),
       sub: yy.slice(1).join(" · ") || null });
+  }
+
+  // Nothing but the opening slide made the cut — the data sources for this
+  // period aren't populated yet. Say so gracefully rather than showing an
+  // empty two-slide deck of zeros.
+  if (slides.length === 1) {
+    slides.push({ mood: "chime", emoji: "🌌", flavor: "Your story is still being written",
+      stat: "Check back soon",
+      sub: "We don't have enough activity logged for " + P.period.label + " yet." });
   }
 
   slides.push({ mood: "drum", emoji: "🎭", flavor: "This year, you were a",
@@ -191,6 +229,7 @@
     var dur = slides[idx].dur || 5000;
     segs[idx].style.setProperty("--dur", dur + "ms");
     sting(slides[idx].mood);
+    setMusicMood(slides[idx].mood);
     clearTimeout(timer);
     if (idx < slides.length - 1) timer = setTimeout(function () { show(idx + 1); }, dur);
   }
@@ -210,7 +249,10 @@
     if (!actx) { try { actx = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) {} }
     if (actx && actx.state === "suspended") actx.resume();
   }
-  document.addEventListener("pointerdown", ensureAudio, { once: true });
+  document.addEventListener("pointerdown", function () {
+    ensureAudio();
+    maybeStartMusic();
+  }, { once: true });
 
   function tone(freq, dur, type, when, gain) {
     if (!actx) return;
@@ -226,18 +268,164 @@
   function sting(mood) {
     if (!soundOn) return;
     ensureAudio();
+    maybeStartMusic();
     if (mood === "rise")    { tone(330, .18, "sine", 0); tone(495, .22, "sine", .12); }
     else if (mood === "pop"){ tone(880, .09, "triangle", 0, .22); }
     else if (mood === "fanfare") { tone(523, .16, "sawtooth", 0, .14); tone(659, .16, "sawtooth", .12, .14); tone(784, .3, "sawtooth", .24, .14); }
     else if (mood === "drum") { tone(120, .3, "sine", 0, .3); tone(180, .2, "sine", .16, .2); }
     else { tone(660, .12, "sine", 0, .14); }
   }
+
+  // ── music bed: real audio file if present, else generative ───────────
+  var music = { on: false, master: null, timer: null, step: 0 };
+  var bgm = document.getElementById("bgm");
+  var bgmTried = false, bgmActive = false;
+  function maybeStartMusic() {
+    if (!soundOn) return;
+    // Prefer a real track if one is deployed; fall back to the generative bed.
+    if (bgm && (bgmActive || !bgmTried)) {
+      bgmTried = true;
+      bgm.volume = 0.5;
+      var p = bgm.play();
+      if (p && p.then) {
+        p.then(function () { bgmActive = true; stopGenerative(); })
+         .catch(function () { if (actx && !music.on) startMusic(); });
+      }
+      return;
+    }
+    if (!bgmActive && actx && !music.on) startMusic();
+  }
+  // Generative arrangement: I–V–vi–IV in C, ~74 BPM, with pad + bass +
+  // arpeggio + soft pulse, a feedback delay for space, and a master filter
+  // that opens/closes with the current slide mood.
+  var TEMPO = 74, SIX = (60 / TEMPO) / 4; // seconds per 16th note
+  var PROG = [ // [chord tones (Hz), bass root (Hz)]
+    { c: [261.63, 329.63, 392.00], b: 130.81 }, // C
+    { c: [246.94, 293.66, 392.00], b: 196.00 }, // G/B-ish
+    { c: [220.00, 261.63, 329.63], b: 110.00 }, // Am
+    { c: [174.61, 261.63, 349.23], b: 174.61 }  // F
+  ];
+  var MOOD_CUTOFF = { chime: 1700, rise: 1500, pop: 2800, fanfare: 3400, drum: 1150 };
+
+  function startMusic() {
+    if (!actx || music.on) return;
+    music.on = true;
+    music.step = 0;
+
+    music.master = actx.createGain();
+    music.master.gain.setValueAtTime(0.0001, actx.currentTime);
+    music.master.gain.linearRampToValueAtTime(0.085, actx.currentTime + 3.5);
+    music.filter = actx.createBiquadFilter();
+    music.filter.type = "lowpass";
+    music.filter.frequency.value = 1700;
+    music.filter.Q.value = 0.7;
+    music.filter.connect(music.master);
+    music.master.connect(actx.destination);
+
+    // feedback delay send for a sense of space
+    music.delay = actx.createDelay(1.0);
+    music.delay.delayTime.value = 3 * SIX; // dotted-ish
+    music.fb = actx.createGain(); music.fb.gain.value = 0.32;
+    music.wet = actx.createGain(); music.wet.gain.value = 0.5;
+    music.delay.connect(music.fb); music.fb.connect(music.delay);
+    music.delay.connect(music.wet); music.wet.connect(music.filter);
+
+    music.nextTime = actx.currentTime + 0.08;
+    music.arpIdx = 0;
+    tick();
+  }
+
+  function voice(freq, t, dur, type, gain, sendWet) {
+    var o = actx.createOscillator(), g = actx.createGain();
+    o.type = type || "sine"; o.frequency.value = freq;
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.exponentialRampToValueAtTime(gain, t + 0.02);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    o.connect(g); g.connect(music.filter);
+    if (sendWet) g.connect(music.delay);
+    o.start(t); o.stop(t + dur + 0.05);
+  }
+
+  function scheduleStep(step16, t) {
+    var barStep = step16 % 16;
+    var chord = PROG[Math.floor(step16 / 16) % PROG.length];
+
+    // pad — swells in over each bar
+    if (barStep === 0) {
+      chord.c.forEach(function (f, i) {
+        var o = actx.createOscillator(), g = actx.createGain();
+        o.type = i === 0 ? "triangle" : "sine";
+        o.frequency.value = f; o.detune.value = (i - 1) * 5;
+        g.gain.setValueAtTime(0.0001, t);
+        g.gain.linearRampToValueAtTime(0.05, t + 1.6);
+        g.gain.exponentialRampToValueAtTime(0.0001, t + 16 * SIX + 0.4);
+        o.connect(g); g.connect(music.filter);
+        o.start(t); o.stop(t + 16 * SIX + 0.5);
+      });
+    }
+
+    // bass — beats 1 and 3
+    if (barStep === 0 || barStep === 8) {
+      voice(chord.b, t, 0.42, "sine", 0.14, false);
+      voice(chord.b, t, 0.42, "triangle", 0.05, false);
+    }
+
+    // soft pulse — every beat
+    if (barStep % 4 === 0) {
+      var k = actx.createOscillator(), kg = actx.createGain();
+      k.type = "sine"; k.frequency.setValueAtTime(120, t);
+      k.frequency.exponentialRampToValueAtTime(48, t + 0.12);
+      kg.gain.setValueAtTime(0.12, t);
+      kg.gain.exponentialRampToValueAtTime(0.0001, t + 0.16);
+      k.connect(kg); kg.connect(music.master);
+      k.start(t); k.stop(t + 0.2);
+    }
+
+    // arpeggio — every 8th note, climbing chord tones + octave
+    if (barStep % 2 === 0) {
+      var scale = chord.c.concat([chord.c[0] * 2, chord.c[1] * 2]);
+      var n = scale[music.arpIdx % scale.length]; music.arpIdx++;
+      voice(n, t, 0.28, "triangle", 0.045, true);
+    }
+  }
+
+  function tick() {
+    if (!music.on || !actx) return;
+    while (music.nextTime < actx.currentTime + 0.25) {
+      scheduleStep(music.step, music.nextTime);
+      music.step++;
+      music.nextTime += SIX;
+    }
+    music.timer = setTimeout(tick, 60);
+  }
+
+  function setMusicMood(mood) {
+    if (!music.on || !actx || !music.filter) return;
+    var target = MOOD_CUTOFF[mood] || 1700;
+    music.filter.frequency.cancelScheduledValues(actx.currentTime);
+    music.filter.frequency.setTargetAtTime(target, actx.currentTime, 0.7);
+  }
+
+  function stopGenerative() {
+    music.on = false;
+    clearTimeout(music.timer);
+    if (music.master && actx) {
+      music.master.gain.cancelScheduledValues(actx.currentTime);
+      music.master.gain.setTargetAtTime(0.0001, actx.currentTime, 0.7);
+    }
+  }
+  function stopMusic() {
+    stopGenerative();
+    if (bgm) { try { bgm.pause(); } catch (e) {} }
+  }
+
   var soundBtn = document.getElementById("sound");
   soundBtn.addEventListener("click", function () {
     soundOn = !soundOn;
     soundBtn.textContent = "Sound: " + (soundOn ? "on" : "off");
     soundBtn.setAttribute("aria-pressed", String(soundOn));
-    if (soundOn) sting(slides[idx].mood);
+    if (soundOn) { maybeStartMusic(); sting(slides[idx].mood); }
+    else stopMusic();
   });
 
   // ── share panel (final slide) ────────────────────────────────────────
@@ -271,23 +459,74 @@
       }).catch(function () { i.select(); document.execCommand("copy"); });
     });
     var dl = document.getElementById("dlbtn");
-    if (dl) dl.addEventListener("click", downloadCard);
+    if (dl) dl.addEventListener("click", function () { downloadCard(dl); });
   }
-  function downloadCard() {
-    fetch(CARD_URL).then(function (r) { return r.text(); }).then(function (svg) {
-      var img = new Image();
-      img.onload = function () {
-        var c = document.getElementById("cardcanvas");
-        var ctx = c.getContext("2d");
-        ctx.fillStyle = "#0a1330"; ctx.fillRect(0, 0, c.width, c.height);
-        ctx.drawImage(img, 0, 0, c.width, c.height);
-        var a = document.createElement("a");
-        a.download = (P.user.username || "wrapped") + "-wrapped-" + P.period.label + ".png";
-        a.href = c.toDataURL("image/png");
-        a.click();
-      };
-      img.src = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(svg);
-    });
+
+  function fileName() {
+    return (P.user.username || "wrapped").replace(/[^\w.-]+/g, "_") +
+      "-wrapped-" + P.period.label + ".png";
+  }
+
+  // Rasterise the server SVG card to PNG and hand it to the user by whatever
+  // path the browser actually supports: Web Share (mobile), <a download>, or
+  // opening the image in a new tab as a last resort so it can be long-pressed.
+  function downloadCard(btn) {
+    var label = btn ? btn.textContent : null;
+    var reset = function (txt) { if (btn) { btn.textContent = txt; setTimeout(function () { btn.textContent = label; }, 2200); } };
+    if (btn) btn.textContent = "Preparing…";
+
+    var openFallback = function () { try { window.open(CARD_URL, "_blank", "noopener"); reset("Opened image"); } catch (e) { reset("Couldn't save"); } };
+
+    fetch(CARD_URL).then(function (r) {
+      if (!r.ok) throw new Error("card " + r.status);
+      return r.text();
+    }).then(function (svg) {
+      return new Promise(function (resolve, reject) {
+        var img = new Image();
+        img.onload = function () { resolve(img); };
+        img.onerror = function () { reject(new Error("svg decode failed")); };
+        img.src = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(svg);
+      });
+    }).then(function (img) {
+      var c = document.getElementById("cardcanvas");
+      var ctx = c.getContext("2d");
+      ctx.fillStyle = "#0a1330"; ctx.fillRect(0, 0, c.width, c.height);
+      ctx.drawImage(img, 0, 0, c.width, c.height);
+      return new Promise(function (resolve) {
+        if (c.toBlob) c.toBlob(function (b) { resolve(b); }, "image/png");
+        else resolve(null);
+      }).then(function (blob) {
+        return { blob: blob, dataUrl: blob ? null : c.toDataURL("image/png") };
+      });
+    }).then(function (out) {
+      var name = fileName();
+
+      // 1) Native share sheet with the file (best on phones).
+      if (out.blob && navigator.canShare) {
+        try {
+          var f = new File([out.blob], name, { type: "image/png" });
+          if (navigator.canShare({ files: [f] })) {
+            return navigator.share({ files: [f], title: "My " + P.period.label + " Wrapped" })
+              .then(function () { reset("Shared"); })
+              .catch(function () { anchorSave(out, name, reset, openFallback); });
+          }
+        } catch (e) { /* fall through */ }
+      }
+      anchorSave(out, name, reset, openFallback);
+    }).catch(function () { openFallback(); });
+  }
+
+  function anchorSave(out, name, reset, openFallback) {
+    try {
+      var href = out.blob ? URL.createObjectURL(out.blob) : out.dataUrl;
+      var a = document.createElement("a");
+      a.href = href; a.download = name; a.rel = "noopener";
+      document.body.appendChild(a); a.click(); a.remove();
+      if (out.blob) setTimeout(function () { URL.revokeObjectURL(href); }, 4000);
+      reset("Saved");
+    } catch (e) {
+      openFallback();
+    }
   }
 
   // ── helpers ──────────────────────────────────────────────────────────

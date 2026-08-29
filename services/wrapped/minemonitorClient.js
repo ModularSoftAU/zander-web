@@ -54,7 +54,8 @@ export function isMineMonitorConfigured() {
 export async function fetchWrappedStats(uuid, start, end, opts = {}) {
   const { baseUrl, token } = getConfig();
   if (!baseUrl || !token) {
-    console.warn("[WRAPPED] MineMonitor not configured — skipping Discord/voice stats");
+    // Expected, deliberate configuration — not an error. Wrapped is built from
+    // Zander data alone and the Discord/voice slides are simply omitted.
     return null;
   }
   if (!uuid) return null;

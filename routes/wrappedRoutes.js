@@ -12,6 +12,7 @@
  */
 
 import { createRequire } from "module";
+import { readdirSync } from "fs";
 import {
   getConfiguredWrappedPeriod,
   getOrBuildWrapped,
@@ -28,6 +29,20 @@ const SITE = () => process.env.siteAddress || config?.siteConfiguration?.siteUrl
 
 export default function wrappedSiteRoutes(app, client, fetch, moment, cfg, db, features, lang) {
   const siteName = config?.siteConfiguration?.siteName || "Crafting For Christ";
+
+  // A random site "global" background image, as an absolute asset path so it
+  // resolves the same from /wrapped and /wrapped/s/:shareId. null when none.
+  function pickGlobalBackground() {
+    try {
+      const files = readdirSync("./assets/images/globalImages/").filter((f) =>
+        /\.(png|jpe?g|webp|gif|avif)$/i.test(f)
+      );
+      if (!files.length) return null;
+      return "/images/globalImages/" + files[Math.floor(Math.random() * files.length)];
+    } catch {
+      return null;
+    }
+  }
 
   function requireLogin(req, res) {
     if (req.session?.user?.userId) return true;
@@ -47,6 +62,7 @@ export default function wrappedSiteRoutes(app, client, fetch, moment, cfg, db, f
       shared: Boolean(shared),
       shareUrl: `${SITE()}/wrapped/s/${run.shareId}`,
       cardUrl: `/wrapped/card/${run.shareId}.svg`,
+      bgImage: pickGlobalBackground(),
       siteName,
     };
   }
@@ -64,7 +80,11 @@ export default function wrappedSiteRoutes(app, client, fetch, moment, cfg, db, f
     if (!req.query.start) {
       const pending = await shouldPromptForWrapped(user);
       if (pending) {
-        return renderHtml(res, "wrapped/intro", { siteName, year: period.label });
+        return renderHtml(res, "wrapped/intro", {
+          siteName,
+          year: period.label,
+          bgImage: pickGlobalBackground(),
+        });
       }
     }
 
