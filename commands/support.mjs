@@ -10,6 +10,7 @@ import {
   ActionRowBuilder,
   ChannelType,
   EmbedBuilder,
+  OverwriteType,
 } from "discord.js";
 import { startTicketFlow } from "../lib/discord/ticketFlow.mjs";
 import {
@@ -263,12 +264,16 @@ export class SupportCommand extends Command {
             }
             // Directly grant channel access using the Discord user ID from the slash command
             try {
-              await interaction.channel.permissionOverwrites.edit(userOption.id, {
-                ViewChannel: true,
-                SendMessages: true,
-                AttachFiles: true,
-                ReadMessageHistory: true,
-              });
+              await interaction.channel.permissionOverwrites.edit(
+                userOption.id,
+                {
+                  ViewChannel: true,
+                  SendMessages: true,
+                  AttachFiles: true,
+                  ReadMessageHistory: true,
+                },
+                { type: OverwriteType.Member },
+              );
             } catch (permError) {
               console.error("ticket add: failed to set channel permissions for user", {
                 targetUserId: userOption.id,
@@ -313,12 +318,16 @@ export class SupportCommand extends Command {
           }
           // Directly grant channel access using the Discord role ID from the slash command
           try {
-            await interaction.channel.permissionOverwrites.edit(roleOption.id, {
-              ViewChannel: true,
-              SendMessages: true,
-              AttachFiles: true,
-              ReadMessageHistory: true,
-            });
+            await interaction.channel.permissionOverwrites.edit(
+              roleOption.id,
+              {
+                ViewChannel: true,
+                SendMessages: true,
+                AttachFiles: true,
+                ReadMessageHistory: true,
+              },
+              { type: OverwriteType.Role },
+            );
           } catch (permError) {
             console.error("ticket add: failed to set channel permissions for role", {
               roleId: roleOption.id,

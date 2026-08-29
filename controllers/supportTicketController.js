@@ -2,7 +2,7 @@ import { createRequire } from "module";
 const require = createRequire(import.meta.url);
 const config = require("../config.json");
 import db, { luckpermsDb } from "./databaseController.js";
-import { ChannelType, PermissionFlagsBits } from "discord.js";
+import { ChannelType, PermissionFlagsBits, OverwriteType } from "discord.js";
 import { hashEmail } from "../api/common.js";
 import { createNotificationsForUsers } from "./notificationController.js";
 
@@ -1301,12 +1301,19 @@ export async function applyTicketParticipantPermissions(client, ticketId) {
         .forEach((discordId) => {
             permissionUpdates.push(
                 channel.permissionOverwrites
-                    .edit(discordId, {
-                        ViewChannel: true,
-                        SendMessages: true,
-                        AttachFiles: true,
-                        ReadMessageHistory: true,
-                    })
+                    .edit(
+                        discordId,
+                        {
+                            ViewChannel: true,
+                            SendMessages: true,
+                            AttachFiles: true,
+                            ReadMessageHistory: true,
+                        },
+                        // Explicit type: the target user may not be cached (never
+                        // seen by the bot), which otherwise fails with InvalidType
+                        // "Supplied parameter is not a User nor a Role".
+                        { type: OverwriteType.Member },
+                    )
                     .catch((error) => {
                         console.error("applyTicketParticipantPermissions: failed to grant user overwrite", {
                             ticketId,
@@ -1336,12 +1343,16 @@ export async function applyTicketParticipantPermissions(client, ticketId) {
             const botHighest = channel.guild?.members?.me?.roles?.highest;
             permissionUpdates.push(
                 channel.permissionOverwrites
-                    .edit(roleId, {
-                        ViewChannel: true,
-                        SendMessages: true,
-                        AttachFiles: true,
-                        ReadMessageHistory: true,
-                    })
+                    .edit(
+                        roleId,
+                        {
+                            ViewChannel: true,
+                            SendMessages: true,
+                            AttachFiles: true,
+                            ReadMessageHistory: true,
+                        },
+                        { type: OverwriteType.Role },
+                    )
                     .catch((error) => {
                         console.error("applyTicketParticipantPermissions: failed to grant role overwrite", {
                             ticketId,
@@ -1716,13 +1727,17 @@ export async function updateTicketCategory(client, ticketId, newCategoryId) {
         .filter((roleId) => isSnowflake(roleId))
         .forEach((roleId) => {
             permissionPromises.push(
-                channel.permissionOverwrites.edit(roleId, {
-                    ViewChannel: true,
-                    SendMessages: true,
-                    AttachFiles: true,
-                    ReadMessageHistory: true,
-                    ManageMessages: true,
-                }),
+                channel.permissionOverwrites.edit(
+                    roleId,
+                    {
+                        ViewChannel: true,
+                        SendMessages: true,
+                        AttachFiles: true,
+                        ReadMessageHistory: true,
+                        ManageMessages: true,
+                    },
+                    { type: OverwriteType.Role },
+                ),
             );
         });
 
