@@ -79,23 +79,40 @@ export async function fetchWrappedStats(uuid, start, end, opts = {}) {
       return null;
     }
 
-    const body = await res.json();
-    if (!body || body.ok === false) {
-      console.warn(`[WRAPPED] MineMonitor stats error body for ${uuid}:`, body?.error);
+    const raw = await res.json();
+    if (!raw || raw.ok === false || raw.success === false) {
+      console.warn(`[WRAPPED] MineMonitor stats error body for ${uuid}:`, raw?.error || raw?.message);
       return null;
     }
-
-    return {
-      uuid: body.uuid ?? uuid,
-      discordLinked: Boolean(body.discordLinked),
-      discordMessages: Number(body.discordMessages) || 0,
-      discordReactions: Number(body.discordReactions) || 0,
-      voiceSeconds: Number(body.voiceSeconds) || 0,
-      reputationLevel: body.reputationLevel ?? null,
-      lifetimeReputation: body.lifetimeReputation ?? null,
-      topCommand: body.topCommand ?? null,
-      topVoiceCompanion: body.topVoiceCompanion ?? null,
+    // Tolerate {..fields}, {data:{..}}, {stats:{..}} and camel/snake_case.
+    const b = raw.data && typeof raw.data === "object" ? raw.data
+      : raw.stats && typeof raw.stats === "object" ? raw.stats
+      : raw;
+    const pick = (...keys) => {
+      for (const k of keys) if (b[k] !== undefined && b[k] !== null) return b[k];
+      return undefined;
     };
+
+    const parsed = {
+      uuid: pick("uuid", "player_uuid", "playerUuid") ?? uuid,
+      discordLinked: Boolean(pick("discordLinked", "discord_linked", "linked")),
+      discordMessages: Number(pick("discordMessages", "discord_messages", "messages")) || 0,
+      discordReactions: Number(pick("discordReactions", "discord_reactions", "reactions")) || 0,
+      voiceSeconds:
+        Number(pick("voiceSeconds", "voice_seconds")) ||
+        Number(pick("voiceMinutes", "voice_minutes")) * 60 ||
+        0,
+      reputationLevel: pick("reputationLevel", "reputation_level", "repLevel") ?? null,
+      lifetimeReputation: pick("lifetimeReputation", "lifetime_reputation", "reputation", "rep") ?? null,
+      topCommand: pick("topCommand", "top_command") ?? null,
+      topVoiceCompanion: pick("topVoiceCompanion", "top_voice_companion") ?? null,
+    };
+
+    console.info(
+      `[WRAPPED] MineMonitor ${uuid}: linked=${parsed.discordLinked} msgs=${parsed.discordMessages} ` +
+      `reacts=${parsed.discordReactions} voiceSec=${parsed.voiceSeconds} rep=${parsed.reputationLevel}`
+    );
+    return parsed;
   } catch (err) {
     console.warn(`[WRAPPED] MineMonitor stats fetch failed for ${uuid}:`, err.message);
     return null;

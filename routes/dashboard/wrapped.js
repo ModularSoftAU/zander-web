@@ -24,6 +24,8 @@ import {
   getConfiguredWrappedPeriod,
   buildWrappedPreview,
   resolveWrappedPeriod,
+  getOrBuildWrapped,
+  rebuildWrappedLeaderboard,
 } from "../../services/wrapped/wrappedService.js";
 import { configWrappedOptions } from "../../lib/wrapped/period.js";
 import { renderWrappedCard } from "../../lib/wrapped/card.js";
@@ -161,12 +163,40 @@ export default function dashboardWrappedRoute(app, config, features, lang) {
     }
 
     try {
-      const payload = await buildWrappedPreview(user, { period });
+      const rebuildLeaderboard = b.refreshLeaderboard === "on" || b.refreshLeaderboard === "1";
+      const payload = await buildWrappedPreview(user, { period, rebuildLeaderboard });
       req.session.wrappedPreview = { payload, at: Date.now(), username: user.username };
       return res.redirect("/dashboard/wrapped/preview");
     } catch (err) {
       req.log?.error?.({ err }, "[WRAPPED] admin preview failed");
       return res.redirect("/dashboard/wrapped?error=Preview+build+failed");
+    }
+  });
+
+  // Force-regenerate a user's saved run (overwrites the frozen payload) and
+  // refresh the MineMonitor-backed rank cache first.
+  app.post("/dashboard/wrapped/regenerate", async (req, res) => {
+    if (!(await hasPermission(CAP, req, res, features))) return;
+    const user = await resolveUser((req.body || {}).username);
+    if (!user) return res.redirect("/dashboard/wrapped?error=Unknown+username");
+    try {
+      await getOrBuildWrapped(user, { force: true });
+      return res.redirect("/dashboard/wrapped?saved=1");
+    } catch (err) {
+      req.log?.error?.({ err }, "[WRAPPED] regenerate failed");
+      return res.redirect("/dashboard/wrapped?error=Regenerate+failed");
+    }
+  });
+
+  // Rebuild just the leaderboard/rank cache from MineMonitor for this period.
+  app.post("/dashboard/wrapped/rebuild-leaderboard", async (req, res) => {
+    if (!(await hasPermission(CAP, req, res, features))) return;
+    try {
+      await rebuildWrappedLeaderboard();
+      return res.redirect("/dashboard/wrapped?saved=1");
+    } catch (err) {
+      req.log?.error?.({ err }, "[WRAPPED] leaderboard rebuild failed");
+      return res.redirect("/dashboard/wrapped?error=Leaderboard+rebuild+failed");
     }
   });
 

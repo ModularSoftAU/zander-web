@@ -71,8 +71,21 @@
             <input class="form-control form-control-sm" name="previewEnd" placeholder="End MM-DD (optional)">
           </div>
         </div>
+        <div class="form-check form-check-inline small mb-2">
+          <input class="form-check-input" type="checkbox" id="refreshLeaderboard" name="refreshLeaderboard">
+          <label class="form-check-label" for="refreshLeaderboard">Refresh leaderboard from MineMonitor first (slow)</label>
+        </div>
         <div class="form-text mb-2">Leave the override dates blank to use the active period above.</div>
         <button class="btn btn-success btn-sm">Preview</button>
+      </form>
+
+      <hr>
+      <p class="text-muted small mb-1">
+        Saved runs are <strong>frozen</strong> at generation time. If MineMonitor was
+        connected afterwards, rebuild the rank cache and regenerate affected runs.
+      </p>
+      <form method="post" action="/dashboard/wrapped/rebuild-leaderboard" class="d-inline">
+        <button class="btn btn-outline-secondary btn-sm">Rebuild leaderboard cache</button>
       </form>
     </div>
   </div>
@@ -80,7 +93,7 @@
   <!-- ── Recent runs ──────────────────────────────────────────────────── -->
   <h5 class="mt-4">Runs this period (<%= period.year %>)</h5>
   <table class="table table-sm">
-    <thead><tr><th>User</th><th>Created</th><th>Viewed</th><th>Share link</th></tr></thead>
+    <thead><tr><th>User</th><th>Created</th><th>Viewed</th><th>Share link</th><th></th></tr></thead>
     <tbody>
       <% runs.forEach(function (r) { %>
         <tr>
@@ -88,10 +101,17 @@
           <td><%= moment(r.createdAt).format('MMM D, HH:mm') %></td>
           <td><%= r.viewedAt ? moment(r.viewedAt).format('MMM D, HH:mm') : '—' %></td>
           <td><a href="/wrapped/s/<%= r.shareId %>" target="_blank" rel="noopener"><%= r.shareId %></a></td>
+          <td>
+            <form method="post" action="/dashboard/wrapped/regenerate" class="d-inline"
+                  onsubmit="return confirm('Regenerate <%= r.username %>\'s Wrapped? This overwrites the frozen run.');">
+              <input type="hidden" name="username" value="<%= r.username %>">
+              <button class="btn btn-outline-secondary btn-sm py-0">Regenerate</button>
+            </form>
+          </td>
         </tr>
       <% }) %>
       <% if (!runs.length) { %>
-        <tr><td colspan="4" class="text-muted text-center">No runs generated yet this period.</td></tr>
+        <tr><td colspan="5" class="text-muted text-center">No runs generated yet this period.</td></tr>
       <% } %>
     </tbody>
   </table>

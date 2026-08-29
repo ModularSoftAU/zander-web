@@ -150,11 +150,17 @@ export async function buildWrappedPayload(user, opts = {}) {
   const [zander, mm, context, priorRun] = await Promise.all([
     getZanderStatsForUser(user.userId, start, end),
     user.uuid ? fetchWrappedStats(user.uuid, start, end) : Promise.resolve(null),
-    opts.context ? Promise.resolve(opts.context) : buildLeaderboardContext(period),
+    opts.context
+      ? Promise.resolve(opts.context)
+      : buildLeaderboardContext(period, { rebuild: Boolean(opts.force) }),
     getWrappedRun(user.userId, period.year - 1),
   ]);
 
   const discordLinked = Boolean(mm && mm.discordLinked);
+  // Emit the Discord/voice slides whenever MineMonitor returned data at all —
+  // don't gate on its `discordLinked` flag (MineMonitor's own link table can lag
+  // Zander's). The per-value `hasVal()` check on the page hides genuine zeroes.
+  const hasMM = mm !== null;
   const voiceMinutes = mm ? Math.round((mm.voiceSeconds || 0) / 60) : 0;
   const priorStats = priorRun?.payload?.stats ?? null;
 
@@ -185,13 +191,13 @@ export async function buildWrappedPayload(user, opts = {}) {
       tenure: { firstSeen: zander.firstSeen, days: zander.tenureDays },
       mostActiveDay: zander.mostActiveDay,
       mostActiveMonth: zander.mostActiveMonth,
-      discordMessages: discordLinked
+      discordMessages: hasMM
         ? statBlock(mm.discordMessages || 0, context.discordMessages, user.userId)
         : null,
-      discordReactions: discordLinked
+      discordReactions: hasMM
         ? statBlock(mm.discordReactions || 0, context.discordReactions, user.userId)
         : null,
-      voiceMinutes: discordLinked
+      voiceMinutes: hasMM
         ? statBlock(voiceMinutes, context.voiceMinutes, user.userId, {
             display: humanizeDuration(voiceMinutes * 60),
           })
@@ -216,10 +222,10 @@ export async function buildWrappedPayload(user, opts = {}) {
           priorYear: period.year - 1,
           playtimePct: pctChange(zander.playtimeSeconds, priorStats.playtime?.value ?? null),
           sessionsPct: pctChange(zander.sessions, priorStats.sessions?.value ?? null),
-          messagesPct: discordLinked
+          messagesPct: hasMM
             ? pctChange(mm.discordMessages || 0, priorStats.discordMessages?.value ?? null)
             : null,
-          voicePct: discordLinked
+          voicePct: hasMM
             ? pctChange(voiceMinutes, priorStats.voiceMinutes?.value ?? null)
             : null,
         }
@@ -256,10 +262,24 @@ export async function buildWrappedPayload(user, opts = {}) {
  * testing. `period` may be an explicit resolved period (e.g. from
  * `resolveWrappedPeriod` with custom bounds) to preview a not-yet-active window.
  */
-export async function buildWrappedPreview(user, { period } = {}) {
+export async function buildWrappedPreview(user, { period, rebuildLeaderboard = false } = {}) {
   const resolved = period || (await getConfiguredWrappedPeriod());
-  const { payload } = await buildWrappedPayload(user, { period: resolved, persist: false });
+  const context = rebuildLeaderboard
+    ? await buildLeaderboardContext(resolved, { rebuild: true })
+    : undefined;
+  const { payload } = await buildWrappedPayload(user, {
+    period: resolved,
+    persist: false,
+    context,
+  });
   return payload;
+}
+
+/** Refetch MineMonitor for every linked user and rewrite the period's rank cache. */
+export async function rebuildWrappedLeaderboard(period) {
+  const resolved = period || (await getConfiguredWrappedPeriod());
+  await buildLeaderboardContext(resolved, { rebuild: true });
+  return resolved;
 }
 
 /**

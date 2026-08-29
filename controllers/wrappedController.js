@@ -28,51 +28,54 @@ export function generateShareId() {
 // ── Zander-side stats ──────────────────────────────────────────────────────
 
 /**
- * Period-scoped playtime + session metrics plus lifetime tenure for one user.
- * Session time is clamped to [start, end] so a session straddling the window
- * boundary only contributes its in-window portion.
+ * All playtime/session metrics for one user, **fully clamped to the Wrapped
+ * window [start, end]**:
+ *   - session time is truncated to the in-window overlap
+ *   - day / month buckets key off the clamped session start
+ *   - "first seen" is the first activity *within* the window (not lifetime)
+ *   - tenure is measured from that up to the window end (or now, if earlier)
+ * Nothing outside the period contributes.
  */
 export async function getZanderStatsForUser(userId, start, end) {
-  const [agg] = await q(
-    `SELECT
-        COALESCE(SUM(TIME_TO_SEC(TIMEDIFF(
-          LEAST(COALESCE(sessionEnd, NOW()), ?), GREATEST(sessionStart, ?)
-        ))), 0) AS seconds,
-        COUNT(*) AS sessions
-      FROM gameSessions
-      WHERE userId = ?
-        AND sessionStart <= ?
-        AND COALESCE(sessionEnd, NOW()) >= ?`,
-    [end, start, userId, end, start]
-  );
+  // In-window seconds for a session: TIMEDIFF(min(end, ?end), max(start, ?start)).
+  // Params for this fragment, in order: [end, start].
+  const CLAMPED = `TIME_TO_SEC(TIMEDIFF(
+    LEAST(COALESCE(sessionEnd, NOW()), ?), GREATEST(sessionStart, ?)
+  ))`;
+  // Any session overlapping the window. Params: [userId, end, start].
+  const OVERLAPS = `userId = ? AND sessionStart <= ? AND COALESCE(sessionEnd, NOW()) >= ?`;
 
-  const [firstRow] = await q(
-    `SELECT MIN(sessionStart) AS firstSeen FROM gameSessions WHERE userId = ?`,
-    [userId]
+  const [agg] = await q(
+    `SELECT COALESCE(SUM(${CLAMPED}), 0) AS seconds,
+            COUNT(*) AS sessions,
+            MIN(GREATEST(sessionStart, ?)) AS firstSeen
+       FROM gameSessions
+      WHERE ${OVERLAPS}`,
+    [end, start, start, userId, end, start]
   );
-  const [userRow] = await q(`SELECT joined FROM users WHERE userId = ? LIMIT 1`, [userId]);
 
   const [dayRow] = await q(
-    `SELECT DATE(sessionStart) AS bucket,
-            SUM(TIME_TO_SEC(TIMEDIFF(COALESCE(sessionEnd, NOW()), sessionStart))) AS seconds
+    `SELECT DATE_FORMAT(GREATEST(sessionStart, ?), '%Y-%m-%d') AS bucket,
+            SUM(${CLAMPED}) AS seconds
        FROM gameSessions
-      WHERE userId = ? AND sessionStart BETWEEN ? AND ?
+      WHERE ${OVERLAPS}
       GROUP BY bucket ORDER BY seconds DESC LIMIT 1`,
-    [userId, start, end]
+    [start, end, start, userId, end, start]
   );
 
   const [monthRow] = await q(
-    `SELECT DATE_FORMAT(sessionStart, '%Y-%m') AS bucket,
-            SUM(TIME_TO_SEC(TIMEDIFF(COALESCE(sessionEnd, NOW()), sessionStart))) AS seconds
+    `SELECT DATE_FORMAT(GREATEST(sessionStart, ?), '%Y-%m') AS bucket,
+            SUM(${CLAMPED}) AS seconds
        FROM gameSessions
-      WHERE userId = ? AND sessionStart BETWEEN ? AND ?
+      WHERE ${OVERLAPS}
       GROUP BY bucket ORDER BY seconds DESC LIMIT 1`,
-    [userId, start, end]
+    [start, end, start, userId, end, start]
   );
 
   const seconds = Number(agg?.seconds) || 0;
   const sessions = Number(agg?.sessions) || 0;
-  const firstSeen = firstRow?.firstSeen || userRow?.joined || null;
+  const firstSeen = agg?.firstSeen || null;
+  const tenureAnchor = Math.min(Date.now(), new Date(end).getTime());
 
   return {
     playtimeSeconds: seconds,
@@ -80,12 +83,12 @@ export async function getZanderStatsForUser(userId, start, end) {
     avgSessionSeconds: sessions > 0 ? Math.round(seconds / sessions) : 0,
     firstSeen: firstSeen ? new Date(firstSeen).toISOString() : null,
     tenureDays: firstSeen
-      ? Math.max(0, Math.floor((Date.now() - new Date(firstSeen).getTime()) / 86400000))
+      ? Math.max(0, Math.floor((tenureAnchor - new Date(firstSeen).getTime()) / 86400000))
       : null,
-    mostActiveDay: dayRow
+    mostActiveDay: dayRow?.bucket
       ? { date: String(dayRow.bucket).slice(0, 10), seconds: Number(dayRow.seconds) || 0 }
       : null,
-    mostActiveMonth: monthRow
+    mostActiveMonth: monthRow?.bucket
       ? { month: String(monthRow.bucket), seconds: Number(monthRow.seconds) || 0 }
       : null,
   };
