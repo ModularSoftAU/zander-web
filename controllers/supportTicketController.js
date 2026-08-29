@@ -706,7 +706,7 @@ export async function createSupportTicket(
  * made. Runs on bot startup. `minAgeMinutes` guards against deleting a channel
  * whose row is still being written by an in-flight `createSupportTicket`.
  */
-export async function cleanupOrphanTicketChannels(client, { minAgeMinutes = 10 } = {}) {
+export async function cleanupOrphanTicketChannels(client, { minAgeMinutes = 10, dryRun = false } = {}) {
     const hasChannelColumn = await ensureDiscordChannelColumn();
     if (!hasChannelColumn || !client) return { scanned: 0, deleted: 0 };
 
@@ -773,6 +773,11 @@ export async function cleanupOrphanTicketChannels(client, { minAgeMinutes = 10 }
             )
         ) {
             skipped.push(`${ch.name} (${ch.id})`);
+            continue;
+        }
+
+        if (dryRun) {
+            console.info(`cleanupOrphanTicketChannels: [dry-run] would delete ${ch.name} (${ch.id})`);
             continue;
         }
 
