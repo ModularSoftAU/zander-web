@@ -18,15 +18,28 @@ const require = createRequire(import.meta.url);
 
 function getConfig() {
   let baseUrl = null;
+  let dateFormat = "date"; // "date" | "iso" | "epoch" | "epochms"
   try {
     const config = require("../../config.json");
     baseUrl = config?.wrapped?.minemonitor?.baseUrl ?? null;
+    dateFormat = config?.wrapped?.minemonitor?.dateFormat ?? dateFormat;
   } catch {
     /* config.json absent */
   }
   const token =
     process.env.MINEMONITOR_CONNECTION_TOKEN || process.env.MINEMONITOR_API_KEY || null;
-  return { baseUrl, token };
+  return { baseUrl, token, dateFormat };
+}
+
+/** Render a Date for the MineMonitor query in the configured format. */
+function fmtDate(d, format) {
+  switch (format) {
+    case "iso": return d.toISOString();
+    case "epoch": return String(Math.floor(d.getTime() / 1000));
+    case "epochms": return String(d.getTime());
+    case "date":
+    default: return d.toISOString().slice(0, 10); // YYYY-MM-DD
+  }
 }
 
 export function isMineMonitorConfigured() {
@@ -52,7 +65,7 @@ export function isMineMonitorConfigured() {
  * }>}
  */
 export async function fetchWrappedStats(uuid, start, end, opts = {}) {
-  const { baseUrl, token } = getConfig();
+  const { baseUrl, token, dateFormat } = getConfig();
   if (!baseUrl || !token) {
     // Expected, deliberate configuration — not an error. Wrapped is built from
     // Zander data alone and the Discord/voice slides are simply omitted.
@@ -62,7 +75,8 @@ export async function fetchWrappedStats(uuid, start, end, opts = {}) {
 
   const url =
     `${baseUrl.replace(/\/+$/, "")}/api/wrapped/stats/${encodeURIComponent(uuid)}` +
-    `?start=${encodeURIComponent(start.toISOString())}&end=${encodeURIComponent(end.toISOString())}`;
+    `?start=${encodeURIComponent(fmtDate(start, dateFormat))}` +
+    `&end=${encodeURIComponent(fmtDate(end, dateFormat))}`;
 
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), opts.timeoutMs ?? 8000);

@@ -123,12 +123,12 @@
     }
   },
   "wrapped": {
-    "enabled": true,
-    "periodStart": "11-15",
-    "periodEnd": "12-15",
+    "//": "The Wrapped period (enabled / start / end / rolling length) is configured in the dashboard (Dashboard > Wrapped), NOT here.",
     "minemonitor": {
       "//": "baseUrl of the MineMonitor deployment. Auth uses a MineMonitor 'Connections' token (scope: wrapped.read) set in .env as MINEMONITOR_CONNECTION_TOKEN.",
-      "baseUrl": "https://monitor.craftingforchrist.net"
+      "baseUrl": "https://monitor.craftingforchrist.net",
+      "//dateFormat": "How start/end are sent to MineMonitor: 'date' (YYYY-MM-DD, default), 'iso', 'epoch' (seconds), or 'epochms'.",
+      "dateFormat": "date"
     }
   }
 }

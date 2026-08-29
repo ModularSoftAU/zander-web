@@ -209,26 +209,31 @@ export async function listWrappedRuns(periodYear, limit = 25) {
 // ── Editable period settings (singleton row, id = 1) ──────────────────────
 
 export async function getWrappedSettings() {
-  const [row] = await q(`SELECT enabled, periodStart, periodEnd FROM wrappedSettings WHERE id = 1`);
+  const [row] = await q(
+    `SELECT enabled, periodStart, periodEnd, rollingMonths FROM wrappedSettings WHERE id = 1`
+  );
   return {
     enabled: row && row.enabled !== null ? Boolean(row.enabled) : null,
     periodStart: row?.periodStart ?? null,
     periodEnd: row?.periodEnd ?? null,
+    rollingMonths: row?.rollingMonths != null ? Number(row.rollingMonths) : null,
   };
 }
 
-export async function saveWrappedSettings({ enabled, periodStart, periodEnd }) {
+export async function saveWrappedSettings({ enabled, periodStart, periodEnd, rollingMonths }) {
   await q(
-    `INSERT INTO wrappedSettings (id, enabled, periodStart, periodEnd)
-       VALUES (1, ?, ?, ?)
+    `INSERT INTO wrappedSettings (id, enabled, periodStart, periodEnd, rollingMonths)
+       VALUES (1, ?, ?, ?, ?)
      ON DUPLICATE KEY UPDATE
        enabled = VALUES(enabled),
        periodStart = VALUES(periodStart),
-       periodEnd = VALUES(periodEnd)`,
+       periodEnd = VALUES(periodEnd),
+       rollingMonths = VALUES(rollingMonths)`,
     [
       enabled === null || enabled === undefined ? null : enabled ? 1 : 0,
       periodStart ?? null,
       periodEnd ?? null,
+      rollingMonths == null ? null : Math.max(1, Math.min(24, Number(rollingMonths) || 12)),
     ]
   );
   return getWrappedSettings();

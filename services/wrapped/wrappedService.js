@@ -1,7 +1,4 @@
-import {
-  resolveWrappedPeriod,
-  configWrappedOptions,
-} from "../../lib/wrapped/period.js";
+import { resolveWrappedPeriod } from "../../lib/wrapped/period.js";
 import { rankOf, pctChange, vibeLabel, humanizeDuration } from "../../lib/wrapped/derive.js";
 import { fetchWrappedStats, isMineMonitorConfigured } from "./minemonitorClient.js";
 import {
@@ -20,22 +17,23 @@ import {
 } from "../../controllers/wrappedController.js";
 
 /**
- * Resolve the active Wrapped period, layering the editable `wrappedSettings`
- * row over config.json over the built-in defaults. Async because it reads the
- * DB; every caller is already in an async context.
+ * Resolve the active Wrapped period from the editable `wrappedSettings` row
+ * (set via the dashboard), falling back to the built-in rolling-12-month
+ * default. Async because it reads the DB; every caller is already async.
  */
 export async function getConfiguredWrappedPeriod(now = new Date()) {
-  const cfg = configWrappedOptions();
+  // Period is driven entirely by the dashboard (wrappedSettings). No config.json.
   let db = {};
   try {
     db = await getWrappedSettings();
   } catch {
-    // settings table missing / DB down — fall back to config + defaults.
+    // settings table missing / DB down — fall back to the built-in rolling default.
   }
   return resolveWrappedPeriod(now, {
-    enabled: db.enabled ?? cfg.enabled,
-    periodStart: db.periodStart ?? cfg.periodStart,
-    periodEnd: db.periodEnd ?? cfg.periodEnd,
+    enabled: db.enabled ?? true,
+    periodStart: db.periodStart ?? null,
+    periodEnd: db.periodEnd ?? null,
+    rollingMonths: db.rollingMonths ?? undefined,
   });
 }
 
@@ -89,6 +87,14 @@ export async function buildLeaderboardContext(period, { rebuild = false } = {}) 
     getZanderLeaderboardRaw(start, end),
   ]);
 
+  // Rank only against users who were actually online/active during the period —
+  // not the whole account list. "Active" = has in-game time or sessions in the
+  // window (the ONLY thing that puts a user in zanderRaw).
+  const activeUsers = linkedUsers.filter((u) => {
+    const z = zanderRaw.get(Number(u.userId));
+    return z && (z.playtimeSeconds > 0 || z.sessions > 0);
+  });
+
   const ctx = {
     playtime: [],
     sessions: [],
@@ -101,12 +107,12 @@ export async function buildLeaderboardContext(period, { rebuild = false } = {}) 
   const mmEnabled = isMineMonitorConfigured();
 
   const mmStats = mmEnabled
-    ? await mapWithConcurrency(linkedUsers, 6, (u) =>
+    ? await mapWithConcurrency(activeUsers, 6, (u) =>
         fetchWrappedStats(u.uuid, start, end).catch(() => null)
       )
-    : linkedUsers.map(() => null);
+    : activeUsers.map(() => null);
 
-  linkedUsers.forEach((u, i) => {
+  activeUsers.forEach((u, i) => {
     const z = zanderRaw.get(Number(u.userId)) || { playtimeSeconds: 0, sessions: 0 };
     ctx.playtime.push({ userId: u.userId, value: z.playtimeSeconds });
     ctx.sessions.push({ userId: u.userId, value: z.sessions });

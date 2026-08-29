@@ -3,27 +3,43 @@ import { resolveWrappedPeriod } from "../../lib/wrapped/period.js";
 import { rankOf, pctChange, humanizeDuration, vibeLabel } from "../../lib/wrapped/derive.js";
 
 describe("resolveWrappedPeriod", () => {
-  it("is active inside the configured window", () => {
-    const p = resolveWrappedPeriod(new Date("2025-11-20T12:00:00Z"));
-    expect(p.year).toBe(2025);
-    expect(p.active).toBe(true);
-    expect(p.start.toISOString()).toBe("2025-11-15T00:00:00.000Z");
-    expect(p.end.toISOString()).toBe("2025-12-15T23:59:59.999Z");
+  it("defaults to a rolling 12 months ending today", () => {
+    const p = resolveWrappedPeriod(new Date("2026-08-01T12:00:00Z"));
+    expect(p.start.toISOString()).toBe("2025-08-01T00:00:00.000Z");
+    expect(p.end.toISOString()).toBe("2026-08-01T23:59:59.999Z");
+    expect(p.year).toBe(2026);
+    expect(p.active).toBe(true); // rolling window is always "active" while enabled
   });
 
-  it("is inactive outside the window", () => {
-    expect(resolveWrappedPeriod(new Date("2025-10-01T12:00:00Z")).active).toBe(false);
-    expect(resolveWrappedPeriod(new Date("2025-12-20T12:00:00Z")).active).toBe(false);
+  it("honours a custom rolling length", () => {
+    const p = resolveWrappedPeriod(new Date("2026-08-15T12:00:00Z"), { rollingMonths: 3 });
+    expect(p.start.toISOString()).toBe("2026-05-15T00:00:00.000Z");
+    expect(p.label).toBe("Last 3 months");
   });
 
-  it("honours custom bounds and the enabled flag", () => {
+  it("honours an MM-DD span within the current year", () => {
     const p = resolveWrappedPeriod(new Date("2025-06-15T12:00:00Z"), {
       periodStart: "06-01",
       periodEnd: "06-30",
     });
+    expect(p.start.toISOString()).toBe("2025-06-01T00:00:00.000Z");
+    expect(p.end.toISOString()).toBe("2025-06-30T23:59:59.999Z");
     expect(p.active).toBe(true);
-    const off = resolveWrappedPeriod(new Date("2025-11-20T12:00:00Z"), { enabled: false });
-    expect(off.active).toBe(false);
+  });
+
+  it("honours exact YYYY-MM-DD bounds", () => {
+    const p = resolveWrappedPeriod(new Date("2026-01-01T12:00:00Z"), {
+      periodStart: "2024-09-01",
+      periodEnd: "2025-09-01",
+    });
+    expect(p.start.toISOString()).toBe("2024-09-01T00:00:00.000Z");
+    expect(p.end.toISOString()).toBe("2025-09-01T23:59:59.999Z");
+    expect(p.year).toBe(2025);
+    expect(p.active).toBe(false); // now is past the fixed end
+  });
+
+  it("respects the enabled flag", () => {
+    expect(resolveWrappedPeriod(new Date(), { enabled: false }).active).toBe(false);
   });
 });
 

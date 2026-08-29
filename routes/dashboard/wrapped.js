@@ -27,7 +27,6 @@ import {
   getOrBuildWrapped,
   rebuildWrappedLeaderboard,
 } from "../../services/wrapped/wrappedService.js";
-import { configWrappedOptions } from "../../lib/wrapped/period.js";
 import { renderWrappedCard } from "../../lib/wrapped/card.js";
 import {
   pickGlobalBackground,
@@ -50,6 +49,8 @@ async function previewAvatarUrl(payloadUser) {
 
 const CAP = "zander.web.wrapped";
 const MMDD = /^\d{2}-\d{2}$/;
+const YMD = /^\d{4}-\d{2}-\d{2}$/;
+const isDate = (v) => MMDD.test(v) || YMD.test(v);
 
 export default function dashboardWrappedRoute(app, config, features, lang) {
   async function shell(req, view, extra) {
@@ -118,7 +119,6 @@ export default function dashboardWrappedRoute(app, config, features, lang) {
       await shell(req, "dashboard/wrapped/index", {
         pageTitle: "Wrapped",
         settings,
-        configDefaults: configWrappedOptions(),
         period,
         runs,
         saved: req.query.saved === "1",
@@ -134,14 +134,19 @@ export default function dashboardWrappedRoute(app, config, features, lang) {
     const b = req.body || {};
     const periodStart = String(b.periodStart || "").trim();
     const periodEnd = String(b.periodEnd || "").trim();
-    if ((periodStart && !MMDD.test(periodStart)) || (periodEnd && !MMDD.test(periodEnd))) {
-      return res.redirect("/dashboard/wrapped?error=Dates+must+be+MM-DD");
+    if ((periodStart && !isDate(periodStart)) || (periodEnd && !isDate(periodEnd))) {
+      return res.redirect("/dashboard/wrapped?error=Dates+must+be+MM-DD+or+YYYY-MM-DD");
+    }
+    const rmRaw = String(b.rollingMonths || "").trim();
+    if (rmRaw && !/^\d{1,2}$/.test(rmRaw)) {
+      return res.redirect("/dashboard/wrapped?error=Rolling+months+must+be+a+number");
     }
 
     await saveWrappedSettings({
       enabled: b.enabled === "on" || b.enabled === "1" || b.enabled === "true",
       periodStart: periodStart || null,
       periodEnd: periodEnd || null,
+      rollingMonths: rmRaw ? Number(rmRaw) : null,
     });
     return res.redirect("/dashboard/wrapped?saved=1");
   });
@@ -158,7 +163,7 @@ export default function dashboardWrappedRoute(app, config, features, lang) {
     let period;
     const ps = String(b.previewStart || "").trim();
     const pe = String(b.previewEnd || "").trim();
-    if (ps && pe && MMDD.test(ps) && MMDD.test(pe)) {
+    if (ps && pe && isDate(ps) && isDate(pe)) {
       period = resolveWrappedPeriod(new Date(), { enabled: true, periodStart: ps, periodEnd: pe });
     }
 
