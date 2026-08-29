@@ -757,23 +757,54 @@ export async function cleanupOrphanTicketChannels(client, { minAgeMinutes = 10 }
             ch.createdTimestamp < cutoff,
     );
 
+    const me = guild.members?.me ?? null;
     let deleted = 0;
+    const skipped = []; // channels we cannot touch — reported once, not per-channel
+
     for (const ch of candidates) {
+        // Don't even attempt the API call if the bot plainly can't manage this
+        // channel — that just produces a 50001/50013 error per restart.
+        const perms = me ? ch.permissionsFor(me) : null;
+        if (
+            perms &&
+            !(
+                perms.has(PermissionFlagsBits.ViewChannel) &&
+                perms.has(PermissionFlagsBits.ManageChannels)
+            )
+        ) {
+            skipped.push(`${ch.name} (${ch.id})`);
+            continue;
+        }
+
         try {
             await ch.delete("Orphaned ticket channel with no matching database row");
             deleted += 1;
             console.info(`cleanupOrphanTicketChannels: deleted orphan ${ch.name} (${ch.id})`);
         } catch (error) {
-            console.error(`cleanupOrphanTicketChannels: failed to delete ${ch.name} (${ch.id})`, error);
+            if (error?.code === 50001 || error?.code === 50013) {
+                skipped.push(`${ch.name} (${ch.id})`);
+            } else {
+                console.error(
+                    `cleanupOrphanTicketChannels: failed to delete ${ch.name} (${ch.id})`,
+                    error,
+                );
+            }
         }
     }
 
-    if (candidates.length) {
+    if (deleted) {
         console.info(
             `cleanupOrphanTicketChannels: ${deleted}/${candidates.length} orphan ticket channel(s) removed`,
         );
     }
-    return { scanned: candidates.length, deleted };
+    if (skipped.length) {
+        console.warn(
+            `cleanupOrphanTicketChannels: ${skipped.length} orphan ticket channel(s) left in place — ` +
+                `bot lacks View Channel + Manage Channels on them (grant access on the ticket category ` +
+                `or delete manually): ${skipped.sort().join(", ")}`,
+        );
+    }
+    return { scanned: candidates.length, deleted, skipped: skipped.length };
 }
 
 export async function recreateTicketChannel(

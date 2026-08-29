@@ -471,8 +471,9 @@ export default function profileSiteRoutes(
       });
 
       if (!tokenResponse.ok) {
+        const tokenErrorBody = await tokenResponse.text().catch(() => "");
         throw new Error(
-          `Failed to obtain Discord token (${tokenResponse.status} ${tokenResponse.statusText})`
+          `Failed to obtain Discord token (${tokenResponse.status} ${tokenResponse.statusText}) ${tokenErrorBody}`.trim()
         );
       }
 
@@ -546,12 +547,23 @@ export default function profileSiteRoutes(
 
       setBannerCookie("success", "Discord account connected!", res);
     } catch (error) {
-      console.error("[PROFILE] Discord link failed", error);
-      setBannerCookie(
-        "danger",
-        "We couldn't connect your Discord account. Please try again soon.",
-        res
-      );
+      console.error("[PROFILE] Discord link failed", {
+        userId: req.session?.user?.userId,
+        siteAddress: process.env.siteAddress,
+        redirectUri: `${process.env.siteAddress}/profile/social/discord/callback`,
+        message: error?.message,
+        stack: error?.stack,
+      });
+
+      const msg = String(error?.message || "");
+      let banner = "We couldn't connect your Discord account. Please try again soon.";
+      if (/obtain Discord token/i.test(msg)) {
+        banner =
+          "Discord rejected the sign-in (token exchange failed). This is a server configuration issue, not something you can fix — staff have been notified.";
+      } else if (/fetch Discord profile/i.test(msg)) {
+        banner = "Discord accepted the sign-in but wouldn't share your profile. Please try again shortly.";
+      }
+      setBannerCookie("danger", banner, res);
     }
 
     return res.redirect(redirectPath);
