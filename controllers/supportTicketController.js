@@ -625,52 +625,155 @@ export async function createSupportTicket(
         });
     });
 
+    const hasChannelColumn = await ensureDiscordChannelColumn();
+
+    // Persist the ticket row FIRST. A Discord API failure can then never leave an
+    // orphaned "ticket-pending" channel with no matching DB row (the bug that
+    // spammed `getTicketDetailsByChannel: no ticket linked to channel ...`).
+    const ticketId = await new Promise((resolve, reject) => {
+        db.query(
+            "INSERT INTO supportTickets (userId, categoryId, title) VALUES (?, ?, ?)",
+            [userId, categoryId, title],
+            (err, results) => (err ? reject(err) : resolve(results.insertId)),
+        );
+    });
+
+    // Create the Discord channel already named with the real ticket id, so a
+    // failure part-way through leaves an obviously-named, sweepable channel
+    // rather than a bare "ticket-pending".
     const channelCreationOptions = {
-        name: "ticket-pending",
+        name: `ticket-${ticketId}`,
         type: ChannelType.GuildText,
         permissionOverwrites,
-        reason: `Support ticket for ${discordUserId ?? `user ${userId}`}`,
+        reason: `Support ticket #${ticketId} for ${discordUserId ?? `user ${userId}`}`,
     };
-
-    // Set parent category if configured
     if (targetParentId) {
         channelCreationOptions.parent = targetParentId;
     }
 
-    const channel = await guild.channels.create(channelCreationOptions);
-
-    const hasChannelColumn = await ensureDiscordChannelColumn();
-
-    return new Promise((resolve, reject) => {
-        const query = hasChannelColumn
-            ? "INSERT INTO supportTickets (userId, categoryId, title, discordChannelId) VALUES (?, ?, ?, ?)"
-            : "INSERT INTO supportTickets (userId, categoryId, title) VALUES (?, ?, ?)";
-        const params = hasChannelColumn
-            ? [userId, categoryId, title, channel.id]
-            : [userId, categoryId, title];
-
-        db.query(query, params, async (err, results) => {
-            if (err) {
-                try {
-                    await channel.delete("Failed to persist support ticket");
-                } catch (cleanupError) {
-                    console.error("Failed to clean up orphaned ticket channel", cleanupError);
-                }
-                reject(err);
-                return;
-            }
-
-            const ticketId = results.insertId;
-
-            try {
-                await channel.setName(`ticket-${ticketId}`);
-            } catch (renameError) {
-                console.error("Failed to rename ticket channel", renameError);
-            }
-
-            resolve({ ticketId, channel });
+    let channel = null;
+    try {
+        channel = await guild.channels.create(channelCreationOptions);
+    } catch (channelError) {
+        console.error("createSupportTicket: Discord channel creation failed; ticket persisted without a channel", {
+            ticketId,
+            parentId: targetParentId,
+            discordCode: channelError?.code,
+            message: channelError?.message,
         });
+        // The row survives — staff can recreate the channel via ticket reopen.
+        return { ticketId, channel: null };
+    }
+
+    if (!hasChannelColumn) {
+        return { ticketId, channel };
+    }
+
+    // Link the channel back to the row. If this fails, delete the channel so it
+    // never dangles unlinked.
+    try {
+        await new Promise((resolve, reject) => {
+            db.query(
+                "UPDATE supportTickets SET discordChannelId = ? WHERE ticketId = ?",
+                [channel.id, ticketId],
+                (err) => (err ? reject(err) : resolve()),
+            );
+        });
+    } catch (linkError) {
+        console.error("createSupportTicket: failed to link channel to ticket; deleting channel", {
+            ticketId,
+            channelId: channel.id,
+            message: linkError?.message,
+        });
+        try {
+            await channel.delete("Failed to link ticket channel to database row");
+        } catch (cleanupError) {
+            console.error("createSupportTicket: failed to delete unlinked ticket channel", {
+                ticketId,
+                channelId: channel.id,
+            }, cleanupError);
+        }
+        return { ticketId, channel: null };
+    }
+
+    return { ticketId, channel };
+}
+
+/**
+ * Delete Discord channels that look like ticket channels (name `ticket-<n>` or
+ * the legacy `ticket-pending`) but have no matching `supportTickets` row linking
+ * them. These are the debris left by a create that failed after the channel was
+ * made. Runs on bot startup. `minAgeMinutes` guards against deleting a channel
+ * whose row is still being written by an in-flight `createSupportTicket`.
+ */
+export async function cleanupOrphanTicketChannels(client, { minAgeMinutes = 10 } = {}) {
+    const hasChannelColumn = await ensureDiscordChannelColumn();
+    if (!hasChannelColumn || !client) return { scanned: 0, deleted: 0 };
+
+    const guildId = config.discord?.guildId ?? process.env.DISCORD_GUILD_ID;
+    const categoryId = config.discord?.supportTicketCategoryId ?? process.env.SUPPORT_CATEGORY_ID ?? null;
+    if (!guildId) return { scanned: 0, deleted: 0 };
+
+    let guild;
+    try {
+        guild = await client.guilds.fetch(guildId);
+    } catch (error) {
+        console.error("cleanupOrphanTicketChannels: failed to fetch guild", error);
+        return { scanned: 0, deleted: 0 };
+    }
+
+    let channels;
+    try {
+        channels = await guild.channels.fetch();
+    } catch (error) {
+        console.error("cleanupOrphanTicketChannels: failed to fetch channels", error);
+        return { scanned: 0, deleted: 0 };
+    }
+
+    const linkedIds = await new Promise((resolve) => {
+        db.query(
+            "SELECT discordChannelId FROM supportTickets WHERE discordChannelId IS NOT NULL",
+            (err, rows) => {
+                if (err) {
+                    console.error("cleanupOrphanTicketChannels: failed to load linked channel ids", err);
+                    resolve(null);
+                    return;
+                }
+                resolve(new Set(rows.map((r) => String(r.discordChannelId))));
+            },
+        );
     });
+    if (!linkedIds) return { scanned: 0, deleted: 0 };
+
+    const cutoff = Date.now() - minAgeMinutes * 60 * 1000;
+    const candidates = [...channels.values()].filter(
+        (ch) =>
+            ch &&
+            ch.type === ChannelType.GuildText &&
+            /^ticket-(pending|\d+)$/.test(ch.name) &&
+            (!categoryId || ch.parentId === categoryId) &&
+            !linkedIds.has(String(ch.id)) &&
+            ch.createdTimestamp &&
+            ch.createdTimestamp < cutoff,
+    );
+
+    let deleted = 0;
+    for (const ch of candidates) {
+        try {
+            await ch.delete("Orphaned ticket channel with no matching database row");
+            deleted += 1;
+            console.info(`cleanupOrphanTicketChannels: deleted orphan ${ch.name} (${ch.id})`);
+        } catch (error) {
+            console.error(`cleanupOrphanTicketChannels: failed to delete ${ch.name} (${ch.id})`, error);
+        }
+    }
+
+    if (candidates.length) {
+        console.info(
+            `cleanupOrphanTicketChannels: ${deleted}/${candidates.length} orphan ticket channel(s) removed`,
+        );
+    }
+    return { scanned: candidates.length, deleted };
 }
 
 export async function recreateTicketChannel(

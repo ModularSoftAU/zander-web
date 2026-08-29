@@ -36,6 +36,15 @@ client.on("error", (error) => {
   console.error("Discord client error:", error);
 });
 
+client.once("ready", async () => {
+  try {
+    const { cleanupOrphanTicketChannels } = await import("./supportTicketController.js");
+    await cleanupOrphanTicketChannels(client);
+  } catch (error) {
+    console.error("Startup orphan ticket channel sweep failed:", error);
+  }
+});
+
 client.on("shardError", (error) => {
   console.error("A websocket connection encountered an error:", error);
 });

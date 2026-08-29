@@ -26,6 +26,30 @@ const COOLDOWN_MS =
   Math.max(1, Number(process.env.errorEmailCooldownMinutes) || 15) * 60 * 1000;
 const HOURLY_CAP = Math.max(1, Number(process.env.errorEmailHourlyCap) || 30);
 
+// Substrings (case-insensitive) that, if found anywhere in the message, mean
+// "don't email this". Node runtime warnings and known-noisy framework notices
+// are ignored by default; extend via errorEmailIgnore (comma-separated).
+const DEFAULT_IGNORE = [
+  "DeprecationWarning",
+  "ExperimentalWarning",
+  "[FSTDEP",
+  "--trace-deprecation",
+  "--trace-warnings",
+  "punycode",
+];
+const IGNORE = [
+  ...DEFAULT_IGNORE,
+  ...(process.env.errorEmailIgnore || "")
+    .split(",")
+    .map((s) => s.trim())
+    .filter(Boolean),
+].map((s) => s.toLowerCase());
+
+function isIgnored(text) {
+  const haystack = String(text).toLowerCase();
+  return IGNORE.some((needle) => haystack.includes(needle));
+}
+
 const HOSTNAME = os.hostname();
 const APP_ENV = process.env.NODE_ENV || "unknown";
 
@@ -131,6 +155,8 @@ export function reportError({ level = "error", source = "app", message, error, m
           ? `${err.name}: ${err.message}`
           : "(no message)";
     const stack = err?.stack;
+
+    if (isIgnored(stack ? `${text}\n${stack}` : text)) return;
 
     rollWindowIfNeeded();
 
