@@ -25,6 +25,12 @@ import {
 } from "../../services/wrapped/wrappedService.js";
 import { configWrappedOptions } from "../../lib/wrapped/period.js";
 import { renderWrappedCard } from "../../lib/wrapped/card.js";
+import {
+  pickGlobalBackground,
+  musicUrl,
+  logoDataUri,
+  avatarDataUri,
+} from "../../lib/wrapped/pageAssets.js";
 import moment from "moment";
 
 const CAP = "zander.web.wrapped";
@@ -135,6 +141,8 @@ export default function dashboardWrappedRoute(app, config, features, lang) {
         preview: true,
         shareUrl: null,
         cardUrl: "/dashboard/wrapped/preview/card.svg",
+        bgImage: pickGlobalBackground(),
+        musicUrl: musicUrl(),
         siteName: config?.siteConfiguration?.siteName || "Crafting For Christ",
       })
     );
@@ -144,8 +152,9 @@ export default function dashboardWrappedRoute(app, config, features, lang) {
     if (!(await hasPermission(CAP, req, res, features))) return;
     const stash = req.session?.wrappedPreview;
     if (!stash?.payload) return res.status(404).send("no preview");
+    const avatar = await avatarDataUri(stash.payload?.user?.uuid || null);
     return res
       .header("content-type", "image/svg+xml; charset=utf-8")
-      .send(renderWrappedCard(stash.payload));
+      .send(renderWrappedCard(stash.payload, { logoDataUri: logoDataUri(), avatarDataUri: avatar }));
   });
 }

@@ -232,6 +232,12 @@ export async function buildWrappedPayload(user, opts = {}) {
   }
 
   const existing = await getWrappedRun(user.userId, period.year);
+
+  // A generated Wrapped is frozen: once the run exists, its stats never change
+  // (even if playtime, ranks or MineMonitor data move afterwards). Only an
+  // explicit force rebuild — admin-only — overwrites it.
+  if (existing && !opts.force) return existing;
+
   const shareId = existing?.shareId || generateShareId();
 
   return upsertWrappedRun({
@@ -241,6 +247,7 @@ export async function buildWrappedPayload(user, opts = {}) {
     periodEnd: end,
     shareId,
     payload,
+    force: Boolean(opts.force),
   });
 }
 

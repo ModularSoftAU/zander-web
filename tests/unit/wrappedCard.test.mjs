@@ -25,8 +25,8 @@ describe("renderWrappedCard", () => {
     expect(svg).toContain("142h");
     expect(svg).toContain("/spawn");
     expect(svg).toContain("Chatty Grinder");
-    // first-join rendered as day month year
-    expect(svg).toContain("14 March 2021");
+    // first-join rendered as year month day
+    expect(svg).toContain("2021 March 14");
   });
 
   it("omits stats with no data instead of printing a dash", () => {

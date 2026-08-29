@@ -12,7 +12,6 @@
  */
 
 import { createRequire } from "module";
-import { readdirSync, readFileSync } from "fs";
 import {
   getConfiguredWrappedPeriod,
   getOrBuildWrapped,
@@ -21,6 +20,12 @@ import {
   markWrappedViewed,
 } from "../services/wrapped/wrappedService.js";
 import { renderWrappedCard } from "../lib/wrapped/card.js";
+import {
+  pickGlobalBackground,
+  musicUrl,
+  logoDataUri,
+  avatarDataUri,
+} from "../lib/wrapped/pageAssets.js";
 
 const require = createRequire(import.meta.url);
 const config = require("../config.json");
@@ -29,58 +34,6 @@ const SITE = () => process.env.siteAddress || config?.siteConfiguration?.siteUrl
 
 export default function wrappedSiteRoutes(app, client, fetch, moment, cfg, db, features, lang) {
   const siteName = config?.siteConfiguration?.siteName || "Crafting For Christ";
-
-  // A random site "global" background image, as an absolute asset path so it
-  // resolves the same from /wrapped and /wrapped/s/:shareId. null when none.
-  function pickGlobalBackground() {
-    try {
-      const files = readdirSync("./assets/images/globalImages/").filter((f) =>
-        /\.(png|jpe?g|webp|gif|avif)$/i.test(f)
-      );
-      if (!files.length) return null;
-      return "/images/globalImages/" + files[Math.floor(Math.random() * files.length)];
-    } catch {
-      return null;
-    }
-  }
-
-  // ── self-contained card assets (data URIs so the browser canvas can export) ─
-  let logoDataUriCache;
-  function logoDataUri() {
-    if (logoDataUriCache !== undefined) return logoDataUriCache;
-    try {
-      const buf = readFileSync("./assets/images/siteLogo.png");
-      logoDataUriCache = "data:image/png;base64," + buf.toString("base64");
-    } catch {
-      logoDataUriCache = null;
-    }
-    return logoDataUriCache;
-  }
-
-  const avatarCache = new Map(); // uuid -> data URI | null
-  async function avatarDataUri(uuid) {
-    if (!uuid) return null;
-    if (avatarCache.has(uuid)) return avatarCache.get(uuid);
-    let out = null;
-    try {
-      const ctl = new AbortController();
-      const timer = setTimeout(() => ctl.abort(), 3500);
-      const r = await fetch(
-        `https://crafthead.net/avatar/${encodeURIComponent(uuid)}?scale=6`,
-        { signal: ctl.signal }
-      );
-      clearTimeout(timer);
-      if (r.ok) {
-        const b = Buffer.from(await r.arrayBuffer());
-        const type = r.headers.get("content-type") || "image/png";
-        out = `data:${type};base64,` + b.toString("base64");
-      }
-    } catch {
-      out = null;
-    }
-    avatarCache.set(uuid, out);
-    return out;
-  }
 
   function requireLogin(req, res) {
     if (req.session?.user?.userId) return true;
@@ -101,6 +54,7 @@ export default function wrappedSiteRoutes(app, client, fetch, moment, cfg, db, f
       shareUrl: `${SITE()}/wrapped/s/${run.shareId}`,
       cardUrl: `/wrapped/card/${run.shareId}.svg`,
       bgImage: pickGlobalBackground(),
+      musicUrl: musicUrl(),
       siteName,
     };
   }
@@ -166,9 +120,7 @@ export default function wrappedSiteRoutes(app, client, fetch, moment, cfg, db, f
   app.get("/wrapped/card/:shareId.svg", async function (req, res) {
     const run = await getWrappedRunByShareId(req.params.shareId);
     if (!run) return res.status(404).send("not found");
-    const [avatar] = await Promise.all([
-      avatarDataUri(run.payload?.user?.uuid || null),
-    ]);
+    const avatar = await avatarDataUri(run.payload?.user?.uuid || null, fetch);
     return res
       .header("content-type", "image/svg+xml; charset=utf-8")
       .header("cache-control", "public, max-age=3600")

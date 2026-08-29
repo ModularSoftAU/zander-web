@@ -4,6 +4,7 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
 <meta name="robots" content="noindex" />
+<link rel="icon" href="/images/favicon.ico" />
 <title><%= payload.user.username %>'s <%= payload.period.label %> Wrapped · <%= siteName %></title>
 <meta property="og:title" content="<%= payload.user.username %>'s <%= payload.period.label %> Wrapped" />
 <meta property="og:image" content="<%= cardUrl %>" />
@@ -114,12 +115,11 @@
     <% if (!shared) { %><a class="chip" href="/">Exit</a><% } %>
   </div>
   <canvas id="cardcanvas" width="1200" height="630"></canvas>
-  <!-- Optional real music bed. Drop a file at assets/audio/wrapped-bed.(mp3|ogg)
-       to use it; otherwise a generative ambient bed plays instead. -->
-  <audio id="bgm" loop preload="auto" crossorigin="anonymous">
-    <source src="/audio/wrapped-bed.mp3" type="audio/mpeg" />
-    <source src="/audio/wrapped-bed.ogg" type="audio/ogg" />
-  </audio>
+  <!-- Real music bed, only when a file is actually deployed
+       (assets/audio/wrapped-bed.mp3|ogg). Otherwise a generative bed plays. -->
+  <% if (typeof musicUrl !== 'undefined' && musicUrl) { %>
+  <audio id="bgm" loop preload="auto" src="<%= musicUrl %>"></audio>
+  <% } %>
 
 <script>
 (function () {
@@ -140,7 +140,25 @@
   function dmy(dateish) {
     var d = new Date(dateish);
     if (isNaN(d.getTime())) return String(dateish);
-    return d.getUTCDate() + " " + MONTHS[d.getUTCMonth()] + " " + d.getUTCFullYear();
+    return d.getUTCFullYear() + " " + MONTHS[d.getUTCMonth()] + " " + d.getUTCDate();
+  }
+  function plur(n, w) { return n + " " + w + (n === 1 ? "" : "s"); }
+  function sinceJoin(dateish, fallbackDays) {
+    var d = new Date(dateish), now = new Date();
+    if (isNaN(d.getTime())) {
+      var fd = Number(fallbackDays) || 0;
+      return fd >= 1 ? plur(fd, "day") : "today";
+    }
+    var years = now.getUTCFullYear() - d.getUTCFullYear();
+    var months = now.getUTCMonth() - d.getUTCMonth();
+    var days = now.getUTCDate() - d.getUTCDate();
+    if (days < 0) months--;
+    if (months < 0) { months += 12; years--; }
+    if (years < 0) return "today";
+    if (years >= 1) return plur(years, "year") + (months ? ", " + plur(months, "month") : "");
+    if (months >= 1) return plur(months, "month");
+    var totalDays = Math.max(0, Math.round((now - d) / 86400000));
+    return totalDays >= 1 ? plur(totalDays, "day") : "today";
   }
 
   function rankLine(block, unitPlural) {
@@ -180,9 +198,10 @@
     rank: rankLine(s.sessions, "players") });
 
   if (s.tenure && s.tenure.firstSeen) slides.push({ mood: "chime", emoji: "🌱",
-    flavor: "You first joined us on",
-    stat: dmy(s.tenure.firstSeen),
-    sub: s.tenure.days != null ? Number(s.tenure.days).toLocaleString() + " days ago" : null });
+    flavor: "You've been part of the server for",
+    stat: sinceJoin(s.tenure.firstSeen, s.tenure.days),
+    sub: "since " + dmy(s.tenure.firstSeen) +
+      (s.tenure.days != null ? " · " + Number(s.tenure.days).toLocaleString() + " days" : "") });
 
   if (s.mostActiveDay) slides.push({ mood: "pop", emoji: "🔥", flavor: "Your busiest day was",
     stat: new Date(s.mostActiveDay.date + "T12:00:00").toLocaleDateString(undefined, { weekday: "long", month: "long", day: "numeric" }),
@@ -501,74 +520,96 @@
       }).catch(function () { i.select(); document.execCommand("copy"); });
     });
     var dl = document.getElementById("dlbtn");
-    if (dl) dl.addEventListener("click", function () { downloadCard(dl); });
+    if (dl) dl.addEventListener("click", function () { saveSummary(dl); });
   }
 
-  function fileName() {
-    return (P.user.username || "wrapped").replace(/[^\w.-]+/g, "_") +
-      "-wrapped-" + P.period.label + ".png";
+  function fileBase() {
+    return (P.user.username || "wrapped").replace(/[^\w.-]+/g, "_") + "-wrapped-" + P.period.label;
   }
 
-  // Rasterise the server SVG card to PNG and hand it to the user by whatever
-  // path the browser actually supports: Web Share (mobile), <a download>, or
-  // opening the image in a new tab as a last resort so it can be long-pressed.
-  function downloadCard(btn) {
-    var label = btn ? btn.textContent : null;
-    var reset = function (txt) { if (btn) { btn.textContent = txt; setTimeout(function () { btn.textContent = label; }, 2200); } };
-    if (btn) btn.textContent = "Preparing…";
+  // The summary image is rasterised up-front (during boot) so the button click
+  // itself stays inside the user gesture — browsers block share()/downloads that
+  // happen several async hops after the tap.
+  var summary = { ready: false, pngBlob: null, pngUrl: null, svgBlob: null, svgUrl: null };
 
-    var openFallback = function () { try { window.open(CARD_URL, "_blank", "noopener"); reset("Opened image"); } catch (e) { reset("Couldn't save"); } };
-
-    fetch(CARD_URL).then(function (r) {
-      if (!r.ok) throw new Error("card " + r.status);
-      return r.text();
-    }).then(function (svg) {
-      return new Promise(function (resolve, reject) {
-        var img = new Image();
-        img.onload = function () { resolve(img); };
-        img.onerror = function () { reject(new Error("svg decode failed")); };
-        img.src = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(svg);
-      });
-    }).then(function (img) {
-      var c = document.getElementById("cardcanvas");
-      var ctx = c.getContext("2d");
-      ctx.fillStyle = "#0a1330"; ctx.fillRect(0, 0, c.width, c.height);
-      ctx.drawImage(img, 0, 0, c.width, c.height);
-      return new Promise(function (resolve) {
-        if (c.toBlob) c.toBlob(function (b) { resolve(b); }, "image/png");
-        else resolve(null);
-      }).then(function (blob) {
-        return { blob: blob, dataUrl: blob ? null : c.toDataURL("image/png") };
-      });
-    }).then(function (out) {
-      var name = fileName();
-
-      // 1) Native share sheet with the file (best on phones).
-      if (out.blob && navigator.canShare) {
-        try {
-          var f = new File([out.blob], name, { type: "image/png" });
-          if (navigator.canShare({ files: [f] })) {
-            return navigator.share({ files: [f], title: "My " + P.period.label + " Wrapped" })
-              .then(function () { reset("Shared"); })
-              .catch(function () { anchorSave(out, name, reset, openFallback); });
-          }
-        } catch (e) { /* fall through */ }
-      }
-      anchorSave(out, name, reset, openFallback);
-    }).catch(function () { openFallback(); });
+  function prepareSummary() {
+    if (summary._p) return summary._p;
+    summary._p = fetch(CARD_URL)
+      .then(function (r) { if (!r.ok) throw new Error("card " + r.status); return r.text(); })
+      .then(function (svgText) {
+        summary.svgBlob = new Blob([svgText], { type: "image/svg+xml;charset=utf-8" });
+        summary.svgUrl = URL.createObjectURL(summary.svgBlob);
+        return new Promise(function (resolve) {
+          var img = new Image();
+          img.onload = function () {
+            try {
+              var c = document.getElementById("cardcanvas");
+              var ctx = c.getContext("2d");
+              ctx.fillStyle = "#0a1330"; ctx.fillRect(0, 0, c.width, c.height);
+              ctx.drawImage(img, 0, 0, c.width, c.height);
+              if (c.toBlob) {
+                c.toBlob(function (b) {
+                  if (b) { summary.pngBlob = b; summary.pngUrl = URL.createObjectURL(b); }
+                  resolve();
+                }, "image/png");
+              } else {
+                summary.pngUrl = c.toDataURL("image/png");
+                resolve();
+              }
+            } catch (e) { resolve(); } // tainted / unsupported — SVG fallback stands
+          };
+          img.onerror = function () { resolve(); };
+          img.src = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(svgText);
+        });
+      })
+      .catch(function () {})
+      .then(function () { summary.ready = true; });
+    return summary._p;
   }
 
-  function anchorSave(out, name, reset, openFallback) {
-    try {
-      var href = out.blob ? URL.createObjectURL(out.blob) : out.dataUrl;
-      var a = document.createElement("a");
-      a.href = href; a.download = name; a.rel = "noopener";
-      document.body.appendChild(a); a.click(); a.remove();
-      if (out.blob) setTimeout(function () { URL.revokeObjectURL(href); }, 4000);
-      reset("Saved");
-    } catch (e) {
-      openFallback();
+  // Runs synchronously from the click. Prefers PNG, falls back to the SVG blob
+  // (always works — no canvas), then Web Share / <a download> / open-in-tab.
+  function saveSummary(btn) {
+    var flash = function (t) {
+      if (!btn) return;
+      var o = btn.getAttribute("data-label") || btn.textContent;
+      btn.setAttribute("data-label", o);
+      btn.textContent = t;
+      setTimeout(function () { btn.textContent = btn.getAttribute("data-label"); }, 2000);
+    };
+
+    if (!summary.ready) {
+      flash("Preparing…");
+      prepareSummary().then(function () { saveSummary(btn); });
+      return;
     }
+
+    var blob = summary.pngBlob || summary.svgBlob;
+    var url  = summary.pngUrl  || summary.svgUrl;
+    var name = fileBase() + (summary.pngUrl ? ".png" : ".svg");
+
+    if (blob && navigator.canShare) {
+      try {
+        var f = new File([blob], name, { type: blob.type || "image/png" });
+        if (navigator.canShare({ files: [f] })) {
+          navigator.share({ files: [f], title: "My " + P.period.label + " Wrapped" })
+            .then(function () { flash("Shared"); }).catch(function () {});
+          return;
+        }
+      } catch (e) { /* fall through */ }
+    }
+
+    if (url) {
+      var a = document.createElement("a");
+      a.href = url; a.download = name; a.rel = "noopener";
+      document.body.appendChild(a); a.click();
+      setTimeout(function () { a.remove(); }, 0);
+      flash("Saved");
+      return;
+    }
+
+    try { window.open(CARD_URL, "_blank", "noopener"); flash("Opened image"); }
+    catch (e) { flash("Couldn't save"); }
   }
 
   // ── helpers ──────────────────────────────────────────────────────────
@@ -608,8 +649,8 @@
     var ld = document.getElementById("loading");
     if (ld) ld.addEventListener("click", finish); // tap to skip the wait
 
-    // Warm the summary card so "Save summary image" is instant later.
-    try { fetch(CARD_URL).catch(function () {}); } catch (e) {}
+    // Rasterise the summary image up-front so the button works in one tap.
+    prepareSummary();
 
     Promise.all([
       preloadImage(BG),

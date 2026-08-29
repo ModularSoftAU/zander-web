@@ -147,15 +147,17 @@ export async function getWrappedRunByShareId(shareId) {
   return row ? hydrateRun(row) : null;
 }
 
-export async function upsertWrappedRun({ userId, periodYear, periodStart, periodEnd, shareId, payload }) {
+export async function upsertWrappedRun({ userId, periodYear, periodStart, periodEnd, shareId, payload, force = false }) {
   const json = JSON.stringify(payload);
+  // First write wins — a generated run is immutable. `force` is the only path
+  // that overwrites an existing payload (admin regenerate).
+  const onDup = force
+    ? `ON DUPLICATE KEY UPDATE periodStart = VALUES(periodStart), periodEnd = VALUES(periodEnd), payload = VALUES(payload)`
+    : `ON DUPLICATE KEY UPDATE runId = runId`;
   await q(
     `INSERT INTO wrappedRuns (userId, periodYear, periodStart, periodEnd, shareId, payload)
        VALUES (?, ?, ?, ?, ?, ?)
-     ON DUPLICATE KEY UPDATE
-       periodStart = VALUES(periodStart),
-       periodEnd   = VALUES(periodEnd),
-       payload     = VALUES(payload)`,
+     ${onDup}`,
     [userId, periodYear, periodStart, periodEnd, shareId, json]
   );
   return getWrappedRun(userId, periodYear);
