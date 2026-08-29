@@ -3,14 +3,6 @@ import {
   getRecentDiscussions,
 } from "../controllers/forumController.js";
 
-function flattenCategories(categories, result = []) {
-  for (const cat of categories) {
-    result.push(cat);
-    if (cat.children?.length) flattenCategories(cat.children, result);
-  }
-  return result;
-}
-
 function escapeXml(str) {
   return String(str)
     .replace(/&/g, "&amp;")
@@ -59,9 +51,10 @@ export default function sitemapRoutes(app, config, features) {
 
     let forumUrls = [];
     try {
-      // Empty permissions = anonymous user; only publicly accessible content
-      const categories = await getCategoriesForUser([]);
-      const flat = flattenCategories(categories);
+      // Empty permissions = anonymous user; only publicly accessible content.
+      // getCategoriesForUser returns { tree, flat } — `flat` is already the
+      // permission-filtered, flattened list.
+      const { flat = [] } = await getCategoriesForUser([]);
       const categoryIds = flat.map((c) => c.categoryId);
 
       for (const cat of flat) {
