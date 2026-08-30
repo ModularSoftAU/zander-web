@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { resolveWrappedPeriod } from "../../lib/wrapped/period.js";
-import { rankOf, pctChange, humanizeDuration, vibeLabel } from "../../lib/wrapped/derive.js";
+import { rankOf, pctChange, humanizeDuration, vibeLabel, neighborhood } from "../../lib/wrapped/derive.js";
 
 describe("resolveWrappedPeriod", () => {
   it("defaults to a rolling 12 months ending today", () => {
@@ -57,6 +57,43 @@ describe("rankOf", () => {
   it("returns null for unknown user or empty set", () => {
     expect(rankOf(entries, 99)).toBeNull();
     expect(rankOf([], 1)).toBeNull();
+  });
+});
+
+describe("neighborhood", () => {
+  const entries = [
+    { userId: 1, value: 500 },
+    { userId: 2, value: 400 },
+    { userId: 3, value: 300 },
+    { userId: 4, value: 200 },
+    { userId: 5, value: 100 },
+  ];
+  const names = { 1: "Alex", 2: "Sam", 3: "Jamie", 4: "Chris", 5: "Pat" };
+
+  it("slices a window around the user with 'You' substituted", () => {
+    const nb = neighborhood(entries, 3, names, 1);
+    expect(nb.rank).toBe(3);
+    expect(nb.total).toBe(5);
+    expect(nb.rows).toEqual([
+      { rank: 2, name: "Sam", value: 400, you: false },
+      { rank: 3, name: "You", value: 300, you: true },
+      { rank: 4, name: "Chris", value: 200, you: false },
+    ]);
+  });
+
+  it("clamps the window at the top and bottom of the board", () => {
+    expect(neighborhood(entries, 1, names, 2).rows.map((r) => r.rank)).toEqual([1, 2, 3]);
+    expect(neighborhood(entries, 5, names, 2).rows.map((r) => r.rank)).toEqual([3, 4, 5]);
+  });
+
+  it("accepts a Map for names and falls back to 'Someone'", () => {
+    const nb = neighborhood(entries, 2, new Map([[1, "Alex"]]), 1);
+    expect(nb.rows.map((r) => r.name)).toEqual(["Alex", "You", "Someone"]);
+  });
+
+  it("returns null for an unknown user or empty set", () => {
+    expect(neighborhood(entries, 99, names)).toBeNull();
+    expect(neighborhood([], 1, names)).toBeNull();
   });
 });
 

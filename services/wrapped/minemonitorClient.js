@@ -147,6 +147,56 @@ export async function fetchWrappedStats(uuid, start, end, opts = {}) {
 }
 
 /**
+ * In-game "gaming buddies" for a Minecraft UUID — top players by shared
+ * session-overlap time in the period (MineMonitor
+ * `GET /api/wrapped/buddies/ingame/:uuid`). Degrades to `null` exactly like
+ * `fetchWrappedStats`.
+ *
+ * @param {string} uuid
+ * @param {Date} start
+ * @param {Date} end
+ * @param {{ timeoutMs?: number }} [opts]
+ * @returns {Promise<null | Array<{ uuid: string, name: string | null, seconds: number }>>}
+ */
+export async function fetchWrappedBuddiesIngame(uuid, start, end, opts = {}) {
+  const { baseUrl, token, dateFormat } = getConfig();
+  if (!baseUrl || !token || !uuid) return null;
+
+  const url =
+    `${baseUrl.replace(/\/+$/, "")}/api/wrapped/buddies/ingame/${encodeURIComponent(uuid)}` +
+    `?start=${encodeURIComponent(fmtDate(start, dateFormat))}` +
+    `&end=${encodeURIComponent(fmtDate(end, dateFormat))}`;
+
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), opts.timeoutMs ?? 8000);
+  try {
+    const res = await fetch(url, {
+      headers: { Authorization: `Bearer ${token}`, Accept: "application/json" },
+      signal: controller.signal,
+    });
+    if (!res.ok) {
+      console.warn(`[WRAPPED] MineMonitor ingame buddies ${res.status} for ${uuid}`);
+      return null;
+    }
+    const raw = await res.json();
+    if (!raw || raw.ok === false) return null;
+    const list = Array.isArray(raw.buddies) ? raw.buddies : Array.isArray(raw) ? raw : [];
+    return list
+      .map((b) => ({
+        uuid: b.uuid ?? b.player_uuid ?? null,
+        name: b.name ?? b.displayName ?? null,
+        seconds: Number(b.seconds ?? b.overlapSeconds ?? 0) || 0,
+      }))
+      .filter((b) => b.seconds > 0);
+  } catch (err) {
+    console.warn(`[WRAPPED] MineMonitor ingame buddies fetch failed for ${uuid}:`, err.message);
+    return null;
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+/**
  * Verbose one-shot probe for the admin dashboard — never swallows anything.
  * @returns {Promise<{ configured: boolean, missing: string[], url: string|null,
  *   status: number|null, ok: boolean, rawBody: string|null, parsed: object|null,

@@ -28,6 +28,8 @@ import {
   rebuildWrappedLeaderboard,
 } from "../../services/wrapped/wrappedService.js";
 import { renderWrappedCard } from "../../lib/wrapped/card.js";
+import { buildWrappedSlides } from "../../lib/wrapped/slides.js";
+import { renderWrappedSlideCard } from "../../lib/wrapped/slideCard.js";
 import { diagnoseMineMonitor } from "../../services/wrapped/minemonitorClient.js";
 import {
   pickGlobalBackground,
@@ -244,10 +246,12 @@ export default function dashboardWrappedRoute(app, config, features, lang) {
       await app.view("wrapped/show", {
         payload: stash.payload,
         payloadJson: JSON.stringify(stash.payload),
+        slidesJson: JSON.stringify(buildWrappedSlides(stash.payload)),
         shared: true,
         preview: true,
         shareUrl: null,
         cardUrl: "/dashboard/wrapped/preview/card.svg",
+        cardBase: "/dashboard/wrapped/preview/card",
         bgImage: pickGlobalBackground(),
         bgImages: pickGlobalBackgrounds(24),
         musicUrl: musicUrl(),
@@ -265,5 +269,23 @@ export default function dashboardWrappedRoute(app, config, features, lang) {
     return res
       .header("content-type", "image/svg+xml; charset=utf-8")
       .send(renderWrappedCard(stash.payload, { logoDataUri: logoDataUri(), avatarDataUri: avatar }));
+  });
+
+  app.get("/dashboard/wrapped/preview/card/s/:slide.svg", async (req, res) => {
+    if (!(await hasPermission(CAP, req, res, features))) return;
+    const stash = req.session?.wrappedPreview;
+    if (!stash?.payload) return res.status(404).send("no preview");
+    const slide = buildWrappedSlides(stash.payload).find((x) => x.key === req.params.slide);
+    if (!slide) return res.status(404).send("no such slide");
+    const avatar = await avatarDataUri(await previewAvatarUrl(stash.payload?.user));
+    return res.header("content-type", "image/svg+xml; charset=utf-8").send(
+      renderWrappedSlideCard(slide, {
+        user: stash.payload?.user,
+        period: stash.payload?.period,
+        siteName: config?.siteConfiguration?.siteName || "Crafting For Christ",
+        logoDataUri: logoDataUri(),
+        avatarDataUri: avatar,
+      })
+    );
   });
 }

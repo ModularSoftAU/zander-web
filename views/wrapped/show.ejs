@@ -57,6 +57,16 @@
   .sub { color: #aeb9de; font-size: clamp(14px, 4vw, 17px); }
   .rank { margin-top: 6px; font-size: clamp(14px, 4vw, 17px); color: var(--gold); font-weight: 600; max-width: 24ch; }
   .name { font-size: clamp(30px, 9vw, 52px); font-weight: 800; }
+
+  /* leaderboard-neighbourhood slide */
+  .lbwrap { display: flex; flex-direction: column; gap: 6px; margin-top: 8px; width: min(86vw, 360px); }
+  .lbrow { display: flex; align-items: center; gap: 10px; padding: 8px 12px; border-radius: 10px;
+    background: rgba(255,255,255,.08); font-size: clamp(14px, 4vw, 17px); }
+  .lbrow.you { background: var(--gold); color: #241a00; font-weight: 700; }
+  .lbrank { width: 3ch; text-align: right; opacity: .8; }
+  .lbrow.you .lbrank { opacity: 1; }
+  .lbname { flex: 1; text-align: left; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .lbval { opacity: .85; font-variant-numeric: tabular-nums; }
   .kicker { letter-spacing: 3px; font-size: 12px; color: #b9a7ff; }
 
   /* story-style segment progress */
@@ -121,6 +131,7 @@
   <div class="zone right" id="znext"></div>
   <div id="hud">
     <button class="chip" id="sound" type="button" aria-pressed="true">Sound: on</button>
+    <% if (typeof cardBase !== 'undefined' && cardBase) { %><button class="chip" id="saveslide" type="button">Save slide</button><% } %>
     <% if (!shared) { %><a class="chip" href="/">Exit</a><% } %>
   </div>
   <canvas id="cardcanvas" width="1200" height="630"></canvas>
@@ -137,6 +148,11 @@
   var PREVIEW = <%= (typeof preview !== 'undefined' && preview) ? 'true' : 'false' %>;
   var SHARE_URL = <%- JSON.stringify(typeof shareUrl !== 'undefined' ? shareUrl : null) %>;
   var CARD_URL = <%- JSON.stringify(cardUrl) %>;
+  // Base for per-slide story cards: CARD_BASE + "/s/" + slide.key + ".svg"
+  var CARD_BASE = <%- JSON.stringify(typeof cardBase !== 'undefined' ? cardBase : null) %>;
+  // Slide descriptors, built server-side (lib/wrapped/slides.js) so the deck and
+  // the downloadable per-slide cards always match.
+  var SLIDES = <%- typeof slidesJson !== 'undefined' ? slidesJson : '[]' %>;
   var SITE = <%- JSON.stringify(siteName) %>;
   var BG = <%- JSON.stringify(typeof bgImage !== 'undefined' ? bgImage : null) %>;
   var BGS = <%- JSON.stringify(typeof bgImages !== 'undefined' && bgImages ? bgImages : []) %>;
@@ -224,87 +240,46 @@
     return (v >= 0 ? "up " : "down ") + Math.abs(v) + "% vs " + (P.yoy && P.yoy.priorYear);
   }
 
-  // ── build the slide list from the payload ──────────────────────────────
-  var slides = [];
-  slides.push({ mood: "chime", emoji: "✨", dur: 3800, html:
-    '<img class="brandlogo" src="/images/siteLogo.png" alt="" />' +
-    (AVATAR ? '<img class="avatar' + (/gravatar\.com/.test(AVATAR) ? ' photo' : '') + '" ' +
-      'src="' + escapeAttr(AVATAR) + '" alt="" onerror="this.style.display=\'none\'" />' : '') +
-    '<div class="kicker">' + escapeHtml(SITE.toUpperCase()) + ' · WRAPPED</div>' +
-    '<div class="name">' + escapeHtml(P.user.username) + '</div>' +
-    '<div class="flavor">Here\'s your ' + P.period.label + ' on the server.</div>' });
-
-  // Playtime + sessions come from Zander's own gameSessions data. When that
-  // isn't populated (e.g. an event server not reporting sessions yet) these
-  // read as "no time at all" / "0 sessions" — skip them entirely instead.
-  if (hasVal(s.playtime)) slides.push({ mood: "rise", emoji: "⛏️",
-    flavor: "You spent this much time with us",
-    stat: s.playtime.display, rank: rankLine(s.playtime) });
-
-  if (hasVal(s.sessions)) slides.push({ mood: "chime", emoji: "🚪", flavor: "That was spread across",
-    stat: num(s.sessions.value) + " sessions",
-    sub: (s.avgSession && Number(s.avgSession.value) > 0) ? "about " + s.avgSession.display + " each" : null,
-    rank: rankLine(s.sessions, "players") });
-
-  if (s.tenure && s.tenure.firstSeen) {
-    var joinedOn = dmy(s.tenure.firstSeen);
-    slides.push({ mood: "chime", emoji: "🌱",
-      flavor: "You've been part of the server for",
-      stat: sinceJoin(s.tenure.firstSeen, s.tenure.days),
-      sub: (joinedOn ? "since " + joinedOn : null) });
+  function neighborsHtml(title, nb) {
+    var rows = nb.rows.map(function (r) {
+      return '<div class="lbrow' + (r.you ? ' you' : '') + '">' +
+        '<span class="lbrank">#' + r.rank + '</span>' +
+        '<span class="lbname">' + escapeHtml(r.name) + '</span>' +
+        '<span class="lbval">' + escapeHtml(r.displayValue != null ? r.displayValue : r.value) + '</span></div>';
+    }).join('');
+    return '<div class="emoji">🏆</div>' +
+      '<div class="flavor">' + escapeHtml(title) + '</div>' +
+      '<div class="lbwrap">' + rows + '</div>' +
+      '<div class="rank">You\'re #' + nb.rank + ' of ' + nb.total + '</div>';
   }
 
-  if (s.mostActiveDay && weekdayLabel(s.mostActiveDay.date)) {
-    slides.push({ mood: "pop", emoji: "🔥", flavor: "Your busiest day was",
-      stat: weekdayLabel(s.mostActiveDay.date),
-      sub: fmtSecs(s.mostActiveDay.seconds) + " played" });
+  function titleHtml() {
+    return '<img class="brandlogo" src="/images/siteLogo.png" alt="" />' +
+      (AVATAR ? '<img class="avatar' + (/gravatar\.com/.test(AVATAR) ? ' photo' : '') + '" ' +
+        'src="' + escapeAttr(AVATAR) + '" alt="" onerror="this.style.display=\'none\'" />' : '') +
+      '<div class="kicker">' + escapeHtml(SITE.toUpperCase()) + ' · WRAPPED</div>' +
+      '<div class="name">' + escapeHtml(P.user.username) + '</div>' +
+      '<div class="flavor">Here\'s your ' + escapeHtml(P.period.label) + ' on the server.</div>';
   }
 
-  if (s.mostActiveMonth) slides.push({ mood: "pop", emoji: "📅", flavor: "Your biggest month was",
-    stat: monthLabel(s.mostActiveMonth.month), sub: fmtSecs(s.mostActiveMonth.seconds) + " played" });
-
-  if (hasVal(s.discordMessages)) slides.push({ mood: "pop", emoji: "💬", flavor: "Over in Discord you sent",
-    stat: num(s.discordMessages.value) + " messages", rank: rankLine(s.discordMessages, "chatters") });
-
-  if (hasVal(s.discordReactions)) slides.push({ mood: "pop", emoji: "👍", flavor: "And you reacted",
-    stat: num(s.discordReactions.value) + " times", rank: rankLine(s.discordReactions, "members") });
-
-  if (hasVal(s.voiceMinutes)) slides.push({ mood: "rise", emoji: "🎙️", flavor: "You spent",
-    stat: s.voiceMinutes.display + " in voice", rank: rankLine(s.voiceMinutes, "members") });
-
-  if (s.reputation) slides.push({ mood: "fanfare", emoji: "⭐", flavor: "Your reputation reached",
-    stat: "Level " + s.reputation.level,
-    sub: num(s.reputation.lifetime) + " lifetime reputation",
-    rank: rankLine(s.reputation, "members") });
-
-  if (s.topCommand) slides.push({ mood: "chime", emoji: "⌨️", flavor: "Your most-used command",
-    stat: s.topCommand.command, sub: "run " + num(s.topCommand.count) + " times" });
-
-  if (s.friend) slides.push({ mood: "chime", emoji: "🤝", flavor: "You and " + escapeHtml(s.friend.name),
-    stat: s.friend.minutes + " min in voice together", sub: "your top voice companion this year" });
-
-  if (P.yoy) {
-    var yy = [];
-    if (P.yoy.playtimePct != null) yy.push("playtime " + pct(P.yoy.playtimePct));
-    if (P.yoy.messagesPct != null) yy.push("messages " + pct(P.yoy.messagesPct));
-    if (P.yoy.voicePct != null) yy.push("voice " + pct(P.yoy.voicePct));
-    if (yy.length) slides.push({ mood: "pop", emoji: "📈", flavor: "Compared to last year",
-      stat: yy[0].charAt(0).toUpperCase() + yy[0].slice(1),
-      sub: yy.slice(1).join(" · ") || null });
+  function genericHtml(sl) {
+    var stat = sl.kind === "vibe" ? sl.label : sl.stat;
+    var sub = sl.kind === "vibe" ? sl.blurb : sl.sub;
+    return '<div class="emoji">' + (sl.emoji || "✨") + '</div>' +
+      (sl.flavor ? '<div class="flavor">' + escapeHtml(sl.flavor) + '</div>' : '') +
+      (stat ? '<div class="stat">' + escapeHtml(String(stat)) + '</div>' : '') +
+      (sub ? '<div class="sub">' + escapeHtml(String(sub)) + '</div>' : '') +
+      (sl.rank ? '<div class="rank">' + escapeHtml(sl.rank) + '</div>' : '');
   }
 
-  // Nothing but the opening slide made the cut — the data sources for this
-  // period aren't populated yet. Say so gracefully rather than showing an
-  // empty two-slide deck of zeros.
-  if (slides.length === 1) {
-    slides.push({ mood: "chime", emoji: "🌌", flavor: "Your story is still being written",
-      stat: "Check back soon",
-      sub: "We don't have enough activity logged for " + P.period.label + " yet." });
-  }
-
-  slides.push({ mood: "drum", emoji: "🎭", flavor: "This year, you were a",
-    stat: (P.vibe && P.vibe.label) || "Steady Builder",
-    sub: (P.vibe && P.vibe.blurb) || "", final: true });
+  // ── slide list (built server-side; see lib/wrapped/slides.js) ──────────
+  var slides = Array.isArray(SLIDES) && SLIDES.length ? SLIDES : [
+    { key: "intro", kind: "title", mood: "chime", dur: 3800 },
+    { key: "vibe", kind: "vibe", mood: "drum", emoji: "🎭",
+      flavor: "This year, you were a",
+      label: (P.vibe && P.vibe.label) || "Steady Builder",
+      blurb: (P.vibe && P.vibe.blurb) || "" }
+  ];
 
   // ── render + navigation ───────────────────────────────────────────────
   var stage = document.getElementById("stage");
@@ -314,15 +289,11 @@
   slides.forEach(function (sl, i) {
     var d = document.createElement("div");
     d.className = "slide"; d.dataset.mood = sl.mood;
-    var inner = sl.html
-      ? sl.html
-      : '<div class="emoji">' + (sl.emoji || "✨") + '</div>' +
-        (sl.flavor ? '<div class="flavor">' + sl.flavor + '</div>' : '') +
-        (sl.stat ? '<div class="stat">' + escapeHtml(String(sl.stat)) + '</div>' : '') +
-        (sl.sub ? '<div class="sub">' + escapeHtml(String(sl.sub)) + '</div>' : '') +
-        (sl.rank ? '<div class="rank">' + escapeHtml(sl.rank) + '</div>' : '');
+    var inner = sl.kind === "title" ? titleHtml()
+      : sl.kind === "board" ? neighborsHtml(sl.title, sl.neighbors)
+      : genericHtml(sl);
     d.innerHTML = inner;
-    if (sl.final) d.appendChild(buildShare());
+    if (sl.kind === "vibe") d.appendChild(buildShare());
     stage.appendChild(d);
 
     var seg = document.createElement("div");
@@ -581,31 +552,33 @@
     return (P.user.username || "wrapped").replace(/[^\w.-]+/g, "_") + "-wrapped-" + P.period.label;
   }
 
-  // The summary card is fetched up-front. The SVG itself is a complete, one-file
-  // summary image and always downloads; a PNG rasterisation is attempted as a
-  // bonus but never blocks (some browsers hang decoding an SVG with embedded
-  // <image>, so it's time-boxed).
-  var summary = { svgBlob: null, pngBlob: null, _p: null };
+  // Card fetch + rasterise, generic over any Wrapped card URL: the 1200×630
+  // summary card and the 1080×1920 per-slide story cards. The SVG itself is a
+  // complete, one-file image and always downloads; a PNG raster is attempted as
+  // a bonus but time-boxed (some browsers hang decoding an SVG with an embedded
+  // <image>), so a stuck decode never wedges the button.
+  var cardCache = {};
 
-  function prepareSummary() {
-    if (summary._p) return summary._p;
-    summary._p = fetch(CARD_URL, { credentials: "same-origin" })
+  function getCard(url, w, h) {
+    var c = cardCache[url] || (cardCache[url] = { svgBlob: null, pngBlob: null, _p: null });
+    if (c._p) return c._p;
+    c._p = fetch(url, { credentials: "same-origin" })
       .then(function (r) { if (!r.ok) throw new Error("card " + r.status); return r.text(); })
       .then(function (svgText) {
-        summary.svgBlob = new Blob([svgText], { type: "image/svg+xml;charset=utf-8" });
-        // Bonus PNG — capped at 3s so a stuck decode never wedges anything.
+        c.svgBlob = new Blob([svgText], { type: "image/svg+xml;charset=utf-8" });
         return new Promise(function (resolve) {
           var settled = false;
-          var finish = function () { if (!settled) { settled = true; resolve(); } };
-          setTimeout(finish, 3000);
+          var finish = function () { if (!settled) { settled = true; resolve(c); } };
+          setTimeout(finish, 3500);
           var img = new Image();
           img.onload = function () {
             try {
-              var c = document.getElementById("cardcanvas");
-              var ctx = c.getContext("2d");
-              ctx.fillStyle = "#0a1330"; ctx.fillRect(0, 0, c.width, c.height);
-              ctx.drawImage(img, 0, 0, c.width, c.height);
-              if (c.toBlob) { c.toBlob(function (b) { if (b) summary.pngBlob = b; finish(); }, "image/png"); }
+              var cv = document.createElement("canvas");
+              cv.width = w; cv.height = h;
+              var ctx = cv.getContext("2d");
+              ctx.fillStyle = "#060a1f"; ctx.fillRect(0, 0, w, h);
+              ctx.drawImage(img, 0, 0, w, h);
+              if (cv.toBlob) cv.toBlob(function (b) { if (b) c.pngBlob = b; finish(); }, "image/png");
               else finish();
             } catch (e) { finish(); }
           };
@@ -613,8 +586,8 @@
           img.src = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(svgText);
         });
       })
-      .catch(function () {});
-    return summary._p;
+      .catch(function () { return c; });
+    return c._p;
   }
 
   function triggerDownload(blob, name) {
@@ -625,15 +598,15 @@
     setTimeout(function () { a.remove(); URL.revokeObjectURL(url); }, 1500);
   }
 
-  function saveSummary(btn) {
+  function saveCard(url, nameBase, btn, w, h) {
     var orig = btn ? (btn.getAttribute("data-orig") || btn.textContent) : "";
     if (btn) btn.setAttribute("data-orig", orig);
     var done = function (t) { if (btn) { btn.textContent = t; setTimeout(function () { btn.textContent = orig; }, 2200); } };
 
-    var deliver = function () {
-      var blob = summary.pngBlob || summary.svgBlob;
-      if (!blob) { try { window.open(CARD_URL, "_blank"); done("Opened"); } catch (e) { done("Couldn't save"); } return; }
-      var name = fileBase() + (summary.pngBlob ? ".png" : ".svg");
+    var deliver = function (c) {
+      var blob = (c && (c.pngBlob || c.svgBlob)) || null;
+      if (!blob) { try { window.open(url, "_blank"); done("Opened"); } catch (e) { done("Couldn't save"); } return; }
+      var name = nameBase + (c.pngBlob ? ".png" : ".svg");
 
       if (navigator.canShare) {
         try {
@@ -650,9 +623,18 @@
       done("Saved");
     };
 
-    if (summary.svgBlob || summary.pngBlob) { deliver(); return; }
-    if (btn) btn.textContent = "Preparing…";
-    prepareSummary().then(deliver);
+    var cached = cardCache[url];
+    if (btn && !(cached && cached.svgBlob)) btn.textContent = "Preparing…";
+    getCard(url, w, h).then(deliver);
+  }
+
+  function saveSummary(btn) { return saveCard(CARD_URL, fileBase(), btn, 1200, 630); }
+
+  function saveCurrentSlide(btn) {
+    if (!CARD_BASE) return;
+    var k = slides[idx] && slides[idx].key;
+    if (!k) return;
+    saveCard(CARD_BASE + "/s/" + encodeURIComponent(k) + ".svg", fileBase() + "-" + k, btn, 1080, 1920);
   }
 
   // ── helpers ──────────────────────────────────────────────────────────
@@ -693,7 +675,9 @@
     if (ld) ld.addEventListener("click", finish); // tap to skip the wait
 
     // Rasterise the summary image up-front so the button works in one tap.
-    prepareSummary();
+    if (CARD_URL) getCard(CARD_URL, 1200, 630);
+    var _ssBtn = document.getElementById("saveslide");
+    if (_ssBtn) _ssBtn.addEventListener("click", function () { saveCurrentSlide(_ssBtn); });
 
     Promise.all([
       preloadImage(BGS[0] || BG),

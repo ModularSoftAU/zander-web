@@ -1,6 +1,10 @@
 import { resolveWrappedPeriod } from "../../lib/wrapped/period.js";
-import { rankOf, pctChange, vibeLabel, humanizeDuration } from "../../lib/wrapped/derive.js";
-import { fetchWrappedStats, isMineMonitorConfigured } from "./minemonitorClient.js";
+import { rankOf, pctChange, vibeLabel, humanizeDuration, neighborhood } from "../../lib/wrapped/derive.js";
+import {
+  fetchWrappedStats,
+  fetchWrappedBuddiesIngame,
+  isMineMonitorConfigured,
+} from "./minemonitorClient.js";
 import {
   generateShareId,
   getZanderStatsForUser,
@@ -102,7 +106,11 @@ export async function buildLeaderboardContext(period, { rebuild = false } = {}) 
     discordReactions: [],
     voiceMinutes: [],
     reputationLifetime: [],
+    // userId -> display name, so leaderboard-neighbourhood slides can name the
+    // players immediately above/below you without another lookup.
+    names: {},
   };
+  for (const u of activeUsers) ctx.names[u.userId] = u.username;
 
   const mmEnabled = isMineMonitorConfigured();
 
@@ -153,14 +161,18 @@ export async function buildWrappedPayload(user, opts = {}) {
   const start = new Date(period.start);
   const end = new Date(period.end);
 
-  const [zander, mm, context, priorRun] = await Promise.all([
+  const [zander, mm, context, priorRun, ingameBuddies] = await Promise.all([
     getZanderStatsForUser(user.userId, start, end),
     user.uuid ? fetchWrappedStats(user.uuid, start, end) : Promise.resolve(null),
     opts.context
       ? Promise.resolve(opts.context)
       : buildLeaderboardContext(period, { rebuild: Boolean(opts.force) }),
     getWrappedRun(user.userId, period.year - 1),
+    user.uuid ? fetchWrappedBuddiesIngame(user.uuid, start, end) : Promise.resolve(null),
   ]);
+
+  const nameById = context.names || {};
+  const topIngameBuddy = Array.isArray(ingameBuddies) && ingameBuddies[0] ? ingameBuddies[0] : null;
 
   const discordLinked = Boolean(mm && mm.discordLinked);
   // Emit the Discord/voice slides whenever MineMonitor returned data at all —
@@ -188,6 +200,7 @@ export async function buildWrappedPayload(user, opts = {}) {
     stats: {
       playtime: statBlock(zander.playtimeSeconds, context.playtime, user.userId, {
         display: humanizeDuration(zander.playtimeSeconds),
+        neighbors: neighborhood(context.playtime, user.userId, nameById),
       }),
       sessions: statBlock(zander.sessions, context.sessions, user.userId),
       avgSession: {
@@ -198,7 +211,9 @@ export async function buildWrappedPayload(user, opts = {}) {
       mostActiveDay: zander.mostActiveDay,
       mostActiveMonth: zander.mostActiveMonth,
       discordMessages: hasMM
-        ? statBlock(mm.discordMessages || 0, context.discordMessages, user.userId)
+        ? statBlock(mm.discordMessages || 0, context.discordMessages, user.userId, {
+            neighbors: neighborhood(context.discordMessages, user.userId, nameById),
+          })
         : null,
       discordReactions: hasMM
         ? statBlock(mm.discordReactions || 0, context.discordReactions, user.userId)
@@ -220,6 +235,12 @@ export async function buildWrappedPayload(user, opts = {}) {
         ? {
             name: mm.topVoiceCompanion.displayName || "a mystery friend",
             minutes: Math.round((mm.topVoiceCompanion.seconds || 0) / 60),
+          }
+        : null,
+      ingameFriend: topIngameBuddy
+        ? {
+            name: topIngameBuddy.name || "another player",
+            minutes: Math.round((topIngameBuddy.seconds || 0) / 60),
           }
         : null,
     },

@@ -20,6 +20,8 @@ import {
   markWrappedViewed,
 } from "../services/wrapped/wrappedService.js";
 import { renderWrappedCard } from "../lib/wrapped/card.js";
+import { buildWrappedSlides } from "../lib/wrapped/slides.js";
+import { renderWrappedSlideCard } from "../lib/wrapped/slideCard.js";
 import { getUserProfileRow } from "../controllers/wrappedController.js";
 import {
   pickGlobalBackground,
@@ -59,12 +61,16 @@ export default function wrappedSiteRoutes(app, client, fetch, moment, cfg, db, f
   }
 
   function deckData(run, { shared, avatarUrl }) {
+    const slides = buildWrappedSlides(run.payload);
     return {
       payload: run.payload,
       payloadJson: JSON.stringify(run.payload),
+      slides,
+      slidesJson: JSON.stringify(slides),
       shared: Boolean(shared),
       shareUrl: `${SITE()}/wrapped/s/${run.shareId}`,
       cardUrl: `/wrapped/card/${run.shareId}.svg`,
+      cardBase: `/wrapped/card/${run.shareId}`,
       bgImage: pickGlobalBackground(),
       bgImages: pickGlobalBackgrounds(24),
       musicUrl: musicUrl(),
@@ -130,6 +136,27 @@ export default function wrappedSiteRoutes(app, client, fetch, moment, cfg, db, f
     }
     const avatarUrl = await deckAvatarUrl(run.payload?.user);
     return renderHtml(res, "wrapped/show", deckData(run, { shared: true, avatarUrl }));
+  });
+
+  // ── Downloadable per-slide card (1080×1920, story format) ───────────────
+  app.get("/wrapped/card/:shareId/s/:slide.svg", async function (req, res) {
+    const run = await getWrappedRunByShareId(req.params.shareId);
+    if (!run) return res.status(404).send("not found");
+    const slide = buildWrappedSlides(run.payload).find((x) => x.key === req.params.slide);
+    if (!slide) return res.status(404).send("no such slide");
+    const avatar = await avatarDataUri(await deckAvatarUrl(run.payload?.user), fetch);
+    return res
+      .header("content-type", "image/svg+xml; charset=utf-8")
+      .header("cache-control", "public, max-age=3600")
+      .send(
+        renderWrappedSlideCard(slide, {
+          user: run.payload?.user,
+          period: run.payload?.period,
+          siteName,
+          logoDataUri: logoDataUri(),
+          avatarDataUri: avatar,
+        })
+      );
   });
 
   // ── Downloadable summary card ───────────────────────────────────────────
