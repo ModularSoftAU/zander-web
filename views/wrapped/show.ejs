@@ -59,16 +59,18 @@
   .name { font-size: clamp(30px, 9vw, 52px); font-weight: 800; }
 
   /* leaderboard-neighbourhood slide */
-  .lbwrap { display: flex; flex-direction: column; gap: 6px; margin-top: 8px; width: min(86vw, 360px); }
-  .lbrow { display: flex; align-items: center; gap: 10px; padding: 8px 12px; border-radius: 10px;
+  .lbwrap { display: flex; flex-direction: column; gap: 7px; margin-top: 10px; width: min(88vw, 380px); }
+  .lbrow { display: flex; align-items: center; gap: 12px; padding: 9px 14px; border-radius: 10px;
     background: rgba(255,255,255,.08); font-size: clamp(14px, 4vw, 17px); }
   .lbrow.you { background: var(--gold); color: #241a00; font-weight: 700; }
-  .lbrank { width: 3ch; text-align: right; opacity: .8; }
+  .lbrank { flex: 0 0 auto; min-width: 3.6ch; text-align: right; opacity: .7;
+    font-variant-numeric: tabular-nums; }
   .lbrow.you .lbrank { opacity: 1; }
-  .lbav { width: 26px; height: 26px; border-radius: 6px; object-fit: cover; flex: 0 0 auto;
+  .lbav { width: 28px; height: 28px; border-radius: 6px; object-fit: cover; flex: 0 0 auto;
     image-rendering: pixelated; image-rendering: crisp-edges; background: rgba(255,255,255,.12); }
-  .lbname { flex: 1; text-align: left; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .lbval { opacity: .85; font-variant-numeric: tabular-nums; }
+  .lbname { flex: 1 1 auto; min-width: 0; text-align: left; overflow: hidden;
+    text-overflow: ellipsis; white-space: nowrap; }
+  .lbval { flex: 0 0 auto; opacity: .85; font-variant-numeric: tabular-nums; }
   .kicker { letter-spacing: 3px; font-size: 12px; color: #b9a7ff; }
 
   /* story-style segment progress */
@@ -573,7 +575,7 @@
         return new Promise(function (resolve) {
           var settled = false;
           var finish = function () { if (!settled) { settled = true; resolve(c); } };
-          setTimeout(finish, 3500);
+          setTimeout(finish, 6000);
           var img = new Image();
           img.onload = function () {
             try {

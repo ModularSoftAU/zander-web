@@ -18,7 +18,13 @@ import {
   readLeaderboardCache,
   writeLeaderboardCache,
   getWrappedSettings,
+  getUserProfileRow,
 } from "../../controllers/wrappedController.js";
+import { resolveAvatarUrl } from "../../lib/wrapped/pageAssets.js";
+
+// Bump when the cached leaderboard context shape changes so stale caches
+// (missing `avatars`, `uuids`, …) are rebuilt instead of served.
+const LEADERBOARD_CONTEXT_VERSION = 2;
 
 /**
  * Resolve the active Wrapped period from the editable `wrappedSettings` row
@@ -80,7 +86,9 @@ async function mapWithConcurrency(items, limit, fn) {
 export async function buildLeaderboardContext(period, { rebuild = false } = {}) {
   if (!rebuild) {
     const cached = await readLeaderboardCache(period.year);
-    if (cached) return cached.data;
+    if (cached && cached.data && cached.data.version === LEADERBOARD_CONTEXT_VERSION) {
+      return cached.data;
+    }
   }
 
   const start = new Date(period.start);
@@ -106,16 +114,22 @@ export async function buildLeaderboardContext(period, { rebuild = false } = {}) 
     discordReactions: [],
     voiceMinutes: [],
     reputationLifetime: [],
-    // userId -> display name / uuid, so leaderboard-neighbourhood slides can
-    // name and show a face for the players immediately above/below you without
-    // another lookup.
+    version: LEADERBOARD_CONTEXT_VERSION,
+    // Per-user display data for leaderboard-neighbourhood slides — name + the
+    // *resolved* profile-picture URL (honours each user's Craftatar/Gravatar
+    // preference, same as their profile page), so every row shows a face.
     names: {},
     uuids: {},
+    avatars: {},
   };
   for (const u of activeUsers) {
     ctx.names[u.userId] = u.username;
     if (u.uuid) ctx.uuids[u.userId] = u.uuid;
   }
+  const resolvedAvatars = await Promise.all(activeUsers.map((u) => resolveAvatarUrl(u)));
+  activeUsers.forEach((u, i) => {
+    if (resolvedAvatars[i]) ctx.avatars[u.userId] = resolvedAvatars[i];
+  });
 
   const mmEnabled = isMineMonitorConfigured();
 
@@ -177,14 +191,22 @@ export async function buildWrappedPayload(user, opts = {}) {
   ]);
 
   const nameById = context.names || {};
-  // userId -> skin-head avatar URL, for the faces on leaderboard-neighbourhood
-  // slides. Same source the deck uses for its own fallback avatar.
-  const avatarById = {};
+  // userId -> avatar URL for the faces on leaderboard-neighbourhood slides.
+  // Prefer each user's resolved profile picture (context.avatars); fall back to
+  // their skin head by UUID.
+  const avatarById = { ...(context.avatars || {}) };
   for (const [id, uuid] of Object.entries(context.uuids || {})) {
-    if (uuid) avatarById[id] = `https://crafthead.net/avatar/${encodeURIComponent(uuid)}`;
+    if (uuid && !avatarById[id]) {
+      avatarById[id] = `https://crafthead.net/avatar/${encodeURIComponent(uuid)}`;
+    }
   }
-  if (user.uuid && !avatarById[user.userId]) {
-    avatarById[user.userId] = `https://crafthead.net/avatar/${encodeURIComponent(user.uuid)}`;
+  // The current user might not be in `activeUsers` (e.g. Discord-only activity),
+  // so resolve their own avatar directly the same way their profile page does.
+  if (!avatarById[user.userId]) {
+    const profileRow =
+      (await getUserProfileRow(user.userId)) || { uuid: user.uuid, username: user.username };
+    const own = await resolveAvatarUrl(profileRow);
+    if (own) avatarById[user.userId] = own;
   }
   const topIngameBuddy = Array.isArray(ingameBuddies) && ingameBuddies[0] ? ingameBuddies[0] : null;
 
@@ -235,6 +257,7 @@ export async function buildWrappedPayload(user, opts = {}) {
       voiceMinutes: hasMM
         ? statBlock(voiceMinutes, context.voiceMinutes, user.userId, {
             display: humanizeDuration(voiceMinutes * 60),
+            channelName: mm?.topVoiceChannel?.name || null,
             neighbors: neighborhood(context.voiceMinutes, user.userId, nameById, 2, avatarById),
           })
         : null,

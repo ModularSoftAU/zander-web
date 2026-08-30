@@ -34,7 +34,7 @@ const richPayload = {
       },
     },
     discordReactions: { value: 88, rank: 4, total: 15 },
-    voiceMinutes: { value: 120, display: "2h", rank: 2, total: 10 },
+    voiceMinutes: { value: 120, display: "2h", rank: 2, total: 10, channelName: "General VC" },
     reputation: { value: 900, level: 7, lifetime: 3120, rank: 6, total: 30 },
     topCommand: { command: "/spawn", count: 42 },
     friend: { name: "Robin", minutes: 55 },
@@ -106,6 +106,7 @@ describe("buildWrappedslides", () => {
       ],
     };
     const slides = buildWrappedSlides(p);
+    expect(slides.find((s) => s.key === "voiceMinutes").sub).toBe("most of it in General VC");
     const voiceBoard = slides.find((s) => s.key === "voiceBoard");
     const repBoard = slides.find((s) => s.key === "reputationBoard");
     expect(voiceBoard.neighbors.rows.map((r) => r.displayValue)).toEqual(["3h 20m", "2h", "1h 30m"]);

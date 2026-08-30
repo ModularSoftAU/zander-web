@@ -30,6 +30,7 @@ import {
   logoDataUri,
   avatarDataUri,
   resolveAvatarUrl,
+  globalBackgroundDataUri,
 } from "../lib/wrapped/pageAssets.js";
 
 const require = createRequire(import.meta.url);
@@ -155,6 +156,7 @@ export default function wrappedSiteRoutes(app, client, fetch, moment, cfg, db, f
           siteName,
           logoDataUri: logoDataUri(),
           avatarDataUri: avatar,
+          backgroundDataUri: globalBackgroundDataUri(),
         })
       );
   });
@@ -167,6 +169,12 @@ export default function wrappedSiteRoutes(app, client, fetch, moment, cfg, db, f
     return res
       .header("content-type", "image/svg+xml; charset=utf-8")
       .header("cache-control", "public, max-age=3600")
-      .send(renderWrappedCard(run.payload, { logoDataUri: logoDataUri(), avatarDataUri: avatar }));
+      .send(
+        renderWrappedCard(run.payload, {
+          logoDataUri: logoDataUri(),
+          avatarDataUri: avatar,
+          backgroundDataUri: globalBackgroundDataUri(),
+        })
+      );
   });
 }

@@ -38,6 +38,7 @@ import {
   logoDataUri,
   avatarDataUri,
   resolveAvatarUrl,
+  globalBackgroundDataUri,
 } from "../../lib/wrapped/pageAssets.js";
 
 import moment from "moment";
@@ -268,7 +269,13 @@ export default function dashboardWrappedRoute(app, config, features, lang) {
     const avatar = await avatarDataUri(await previewAvatarUrl(stash.payload?.user));
     return res
       .header("content-type", "image/svg+xml; charset=utf-8")
-      .send(renderWrappedCard(stash.payload, { logoDataUri: logoDataUri(), avatarDataUri: avatar }));
+      .send(
+        renderWrappedCard(stash.payload, {
+          logoDataUri: logoDataUri(),
+          avatarDataUri: avatar,
+          backgroundDataUri: globalBackgroundDataUri(),
+        })
+      );
   });
 
   app.get("/dashboard/wrapped/preview/card/s/:slide.svg", async (req, res) => {
@@ -285,6 +292,7 @@ export default function dashboardWrappedRoute(app, config, features, lang) {
         siteName: config?.siteConfiguration?.siteName || "Crafting For Christ",
         logoDataUri: logoDataUri(),
         avatarDataUri: avatar,
+        backgroundDataUri: globalBackgroundDataUri(),
       })
     );
   });

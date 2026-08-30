@@ -22,14 +22,19 @@
   <meta name="robots" content="<%= typeof pageRobots !== 'undefined' && pageRobots ? pageRobots : 'index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1' %>">
   <link rel="canonical" href="<%= config.siteConfiguration.siteUrl %><%= req.url.split('?')[0] %>">
   <link rel="manifest" href="/manifest.webmanifest">
+  <link rel="icon" type="image/png" href="/images/siteLogo.png">
   <link rel="apple-touch-icon" href="/images/siteLogo.png">
 
   <!-- Open Graph / Facebook -->
   <meta property="og:type" content="website">
+  <meta property="og:site_name" content="<%= config.siteConfiguration.siteName %>">
   <meta property="og:url" content="<%= config.siteConfiguration.siteUrl %><%= req.url.split('?')[0] %>">
   <meta property="og:title" content="<%= pageTitle %>">
   <meta property="og:description" content="<%= pageDescription %> // <%= config.siteConfiguration.tagline %>">
   <meta property="og:image" content="<%= config.siteConfiguration.siteUrl %>/images/meta-siteLogo.png">
+  <meta property="og:image:width" content="264">
+  <meta property="og:image:height" content="372">
+  <meta property="og:image:alt" content="<%= config.siteConfiguration.siteName %> logo">
 
   <meta property="og:locale" content="en_AU">
 
@@ -39,6 +44,7 @@
   <meta property="twitter:title" content="<%= pageTitle %>">
   <meta property="twitter:description" content="<%= pageDescription %>">
   <meta property="twitter:image" content="<%= config.siteConfiguration.siteUrl %>/images/meta-siteLogo.png">
+  <meta property="twitter:image:alt" content="<%= config.siteConfiguration.siteName %> logo">
 
   <%# Structured data (JSON-LD). Routes that call lib/seo/jsonLd.buildGraph pass a
       ready, <script>-safe string (or an array of them) as `pageJsonLd`, which

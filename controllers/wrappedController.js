@@ -85,9 +85,18 @@ export async function getZanderStatsForUser(userId, start, end) {
     subParams
   );
 
+  // Tenure / "been part of the server for …" is the player's *all-time* first
+  // session — NOT their first session inside the Wrapped window (which is what
+  // `agg.firstSeen` is, and why the rolling-12-month period made long-time
+  // members read as "11 months").
+  const [tenureRow] = await q(
+    `SELECT MIN(sessionStart) AS firstSeen FROM gameSessions WHERE userId = ?`,
+    [userId]
+  );
+
   const seconds = Number(agg?.seconds) || 0;
   const sessions = Number(agg?.sessions) || 0;
-  const firstSeen = agg?.firstSeen || null;
+  const firstSeen = tenureRow?.firstSeen || agg?.firstSeen || null;
   const tenureAnchor = Math.min(Date.now(), new Date(end).getTime());
 
   return {
@@ -113,7 +122,7 @@ export async function getZanderStatsForUser(userId, start, end) {
  */
 export async function getLinkedUsers() {
   return q(
-    `SELECT userId, username, uuid
+    `SELECT userId, username, uuid, profilePicture_type, profilePicture_email
        FROM users
       WHERE uuid IS NOT NULL AND uuid <> ''
         AND is_placeholder = 0
