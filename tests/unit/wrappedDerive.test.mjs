@@ -109,11 +109,18 @@ describe("pctChange", () => {
 });
 
 describe("humanizeDuration", () => {
-  it("formats seconds into h/m", () => {
+  it("formats short spans in h/m/s", () => {
     expect(humanizeDuration(0)).toBe("no time at all");
+    expect(humanizeDuration(45)).toBe("45s");
     expect(humanizeDuration(90)).toBe("1m");
     expect(humanizeDuration(3660)).toBe("1h 1m");
     expect(humanizeDuration(7200)).toBe("2h");
+  });
+  it("rolls hours up into days and months (largest two units)", () => {
+    expect(humanizeDuration(144000)).toBe("1d 16h"); // 40h
+    expect(humanizeDuration(90000)).toBe("1d 1h"); // 25h
+    expect(humanizeDuration(2 * 86400)).toBe("2d");
+    expect(humanizeDuration(30 * 86400 + 3 * 86400 + 5 * 3600)).toBe("1mo 3d 5h");
   });
 });
 

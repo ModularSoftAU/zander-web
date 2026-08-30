@@ -71,7 +71,7 @@ describe("buildWrappedslides", () => {
 
   it("pre-formats board row values and rank lines", () => {
     const board = buildWrappedSlides(richPayload).find((s) => s.key === "playtimeBoard");
-    expect(board.neighbors.rows.map((r) => r.displayValue)).toEqual(["50h 0m", "40h 0m", "30h 0m"]);
+    expect(board.neighbors.rows.map((r) => r.displayValue)).toEqual(["2d 2h", "1d 16h", "1d 6h"]);
     const playtime = buildWrappedSlides(richPayload).find((s) => s.key === "playtime");
     expect(playtime.rank).toBe("You're #3 of 20 players");
   });

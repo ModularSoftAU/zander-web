@@ -13,6 +13,14 @@
 <section class="section">
   <div class="container">
 
+    <div class="mb-4">
+      <p class="lead">
+        Ranks on <%= config.siteConfiguration.siteName %> are optional purchases that unlock in-game
+        perks. Below is every rank, its perks and its price. Pick a rank, complete checkout, and the
+        perks are applied to your account automatically.
+      </p>
+    </div>
+
     <% if (ranksError) { %>
       <div class="alert alert-warning"><%= ranksError %></div>
     <% } else if (!rankCategories || !rankCategories.length) { %>
@@ -97,6 +105,16 @@
 
       <% }) %>
 
+    <% } %>
+
+    <% if (typeof rankFaq !== 'undefined' && rankFaq && rankFaq.length) { %>
+    <div class="mt-5">
+      <h2 class="h4 mb-3">Ranks FAQ</h2>
+      <% rankFaq.forEach(function (item) { %>
+      <h3 class="h6 mb-1"><%= item.q %></h3>
+      <p><%= item.a %></p>
+      <% }) %>
+    </div>
     <% } %>
   </div>
 </section>
