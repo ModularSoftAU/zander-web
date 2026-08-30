@@ -2,6 +2,7 @@ import { resolveWrappedPeriod } from "../../lib/wrapped/period.js";
 import { rankOf, pctChange, vibeLabel, humanizeDuration, neighborhood } from "../../lib/wrapped/derive.js";
 import {
   fetchWrappedStats,
+  fetchWrappedLeaderboard,
   fetchWrappedBuddiesIngame,
   isMineMonitorConfigured,
 } from "./minemonitorClient.js";
@@ -61,27 +62,12 @@ export const WRAPPED_PAYLOAD_VERSION = 1;
 
 // ── Leaderboard context (per period, cached) ──────────────────────────────
 
-async function mapWithConcurrency(items, limit, fn) {
-  const results = new Array(items.length);
-  let cursor = 0;
-  async function worker() {
-    while (cursor < items.length) {
-      const i = cursor++;
-      results[i] = await fn(items[i], i);
-    }
-  }
-  await Promise.all(Array.from({ length: Math.min(limit, items.length) }, worker));
-  return results;
-}
-
 /**
- * Build (or read from cache) the ranking context for a period: for every
- * linked user, their value for each rankable stat. Stored as sorted-agnostic
- * `{ userId, value }[]` arrays; `rankOf` does the ordering.
- *
- * The MineMonitor fan-out is the expensive part (one request per linked
- * user), which is exactly why this is computed once per period and cached in
- * `wrappedLeaderboardCache`.
+ * Build (or read from cache) the ranking context for a period: everyone's
+ * value for each rankable stat, as sort-agnostic `{ userId, value }[]` arrays
+ * (`rankOf` / `neighborhood` do the ordering). In-game stats come from Zander's
+ * own gameSessions; Discord/voice/reputation come from four MineMonitor
+ * `/leaderboard` calls. Cached in `wrappedLeaderboardCache` per period.
  */
 export async function buildLeaderboardContext(period, { rebuild = false } = {}) {
   if (!rebuild) {
@@ -122,37 +108,73 @@ export async function buildLeaderboardContext(period, { rebuild = false } = {}) 
     uuids: {},
     avatars: {},
   };
+
+  const userById = new Map(linkedUsers.map((u) => [Number(u.userId), u]));
+  const userByDiscordId = new Map(
+    linkedUsers.filter((u) => u.discordId).map((u) => [String(u.discordId), u])
+  );
+  const userByUuid = new Map(
+    linkedUsers.filter((u) => u.uuid).map((u) => [String(u.uuid).toLowerCase(), u])
+  );
+
+  // ── In-game ranking: Zander's own gameSessions data ──
   for (const u of activeUsers) {
-    ctx.names[u.userId] = u.username;
-    if (u.uuid) ctx.uuids[u.userId] = u.uuid;
-  }
-  const resolvedAvatars = await Promise.all(activeUsers.map((u) => resolveAvatarUrl(u)));
-  activeUsers.forEach((u, i) => {
-    if (resolvedAvatars[i]) ctx.avatars[u.userId] = resolvedAvatars[i];
-  });
-
-  const mmEnabled = isMineMonitorConfigured();
-
-  const mmStats = mmEnabled
-    ? await mapWithConcurrency(activeUsers, 6, (u) =>
-        fetchWrappedStats(u.uuid, start, end).catch(() => null)
-      )
-    : activeUsers.map(() => null);
-
-  activeUsers.forEach((u, i) => {
     const z = zanderRaw.get(Number(u.userId)) || { playtimeSeconds: 0, sessions: 0 };
     ctx.playtime.push({ userId: u.userId, value: z.playtimeSeconds });
     ctx.sessions.push({ userId: u.userId, value: z.sessions });
+  }
 
-    const mm = mmStats[i];
-    if (mm) {
-      ctx.discordMessages.push({ userId: u.userId, value: mm.discordMessages || 0 });
-      ctx.discordReactions.push({ userId: u.userId, value: mm.discordReactions || 0 });
-      ctx.voiceMinutes.push({ userId: u.userId, value: Math.round((mm.voiceSeconds || 0) / 60) });
-      if (mm.lifetimeReputation !== null && mm.lifetimeReputation !== undefined) {
-        ctx.reputationLifetime.push({ userId: u.userId, value: mm.lifetimeReputation });
+  // ── Discord / voice / reputation ranking ──
+  // ONE call per stat to MineMonitor's /leaderboard endpoint — NOT a per-user
+  // fan-out of /stats (that froze "Rebuild leaderboard cache" on a large
+  // playerbase). Rows are keyed by Discord id; map to a Zander userId where we
+  // know one, else keep a synthetic "d:<id>" key so ranks stay correct even for
+  // members without a website account.
+  if (isMineMonitorConfigured()) {
+    const [msgs, reacts, voice, rep] = await Promise.all([
+      fetchWrappedLeaderboard("messages", start, end),
+      fetchWrappedLeaderboard("reactions", start, end),
+      fetchWrappedLeaderboard("voiceSeconds", start, end),
+      fetchWrappedLeaderboard("reputation", start, end),
+    ]);
+
+    const ingest = (list, dest, xform = (v) => v) => {
+      for (const e of list || []) {
+        const mapped =
+          userByDiscordId.get(e.discordUserId) ||
+          (e.minecraftUuid && userByUuid.get(String(e.minecraftUuid).toLowerCase()));
+        const key = mapped ? mapped.userId : `d:${e.discordUserId}`;
+        dest.push({ userId: key, value: xform(e.value) });
+        if (ctx.names[key] == null) {
+          ctx.names[key] = mapped ? mapped.username : e.displayName || "Someone";
+        }
       }
+    };
+
+    ingest(msgs, ctx.discordMessages);
+    ingest(reacts, ctx.discordReactions);
+    ingest(voice, ctx.voiceMinutes, (sec) => Math.round((sec || 0) / 60));
+    ingest(rep, ctx.reputationLifetime);
+  }
+
+  // ── name / uuid / avatar for every *real* Zander user referenced above ──
+  const referencedIds = new Set();
+  for (const arr of [
+    ctx.playtime, ctx.sessions, ctx.discordMessages,
+    ctx.discordReactions, ctx.voiceMinutes, ctx.reputationLifetime,
+  ]) {
+    for (const e of arr) {
+      if (/^\d+$/.test(String(e.userId))) referencedIds.add(Number(e.userId));
     }
+  }
+  const referenced = [...referencedIds].map((id) => userById.get(id)).filter(Boolean);
+  for (const u of referenced) {
+    ctx.names[u.userId] = u.username;
+    if (u.uuid) ctx.uuids[u.userId] = u.uuid;
+  }
+  const avatars = await Promise.all(referenced.map((u) => resolveAvatarUrl(u)));
+  referenced.forEach((u, i) => {
+    if (avatars[i]) ctx.avatars[u.userId] = avatars[i];
   });
 
   await writeLeaderboardCache(period.year, ctx);

@@ -148,6 +148,56 @@ export async function fetchWrappedStats(uuid, start, end, opts = {}) {
 }
 
 /**
+ * Full ranked list for one MineMonitor-owned stat over the period
+ * (`GET /api/wrapped/leaderboard/:stat`). One call replaces a per-user fan-out
+ * of `/stats` requests when building the leaderboard cache.
+ *
+ * @param {"messages"|"reactions"|"voiceSeconds"|"reputation"} stat
+ * @param {Date} start
+ * @param {Date} end
+ * @returns {Promise<null | Array<{ discordUserId: string, displayName: string|null, value: number, rank: number }>>}
+ */
+export async function fetchWrappedLeaderboard(stat, start, end, opts = {}) {
+  const { baseUrl, token, dateFormat } = getConfig();
+  if (!baseUrl || !token) return null;
+
+  const url =
+    `${baseUrl.replace(/\/+$/, "")}/api/wrapped/leaderboard/${encodeURIComponent(stat)}` +
+    `?start=${encodeURIComponent(fmtDate(start, dateFormat))}` +
+    `&end=${encodeURIComponent(fmtDate(end, dateFormat))}`;
+
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), opts.timeoutMs ?? 20000);
+  try {
+    const res = await fetch(url, {
+      headers: { Authorization: `Bearer ${token}`, Accept: "application/json" },
+      signal: controller.signal,
+    });
+    if (!res.ok) {
+      console.warn(`[WRAPPED] MineMonitor leaderboard ${stat} ${res.status}`);
+      return null;
+    }
+    const raw = await res.json();
+    if (!raw || raw.ok === false) return null;
+    const list = Array.isArray(raw.leaderboard) ? raw.leaderboard : Array.isArray(raw) ? raw : [];
+    return list
+      .map((e) => ({
+        discordUserId: String(e.discordUserId ?? e.discord_user_id ?? e.userId ?? ""),
+        minecraftUuid: e.minecraftUuid ?? e.minecraft_uuid ?? null,
+        displayName: e.displayName ?? e.display_name ?? null,
+        value: Number(e.value ?? 0) || 0,
+        rank: Number(e.rank ?? 0) || 0,
+      }))
+      .filter((e) => e.discordUserId);
+  } catch (err) {
+    console.warn(`[WRAPPED] MineMonitor leaderboard ${stat} fetch failed:`, err.message);
+    return null;
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+/**
  * In-game "gaming buddies" for a Minecraft UUID — top players by shared
  * session-overlap time in the period (MineMonitor
  * `GET /api/wrapped/buddies/ingame/:uuid`). Degrades to `null` exactly like

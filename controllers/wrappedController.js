@@ -122,7 +122,7 @@ export async function getZanderStatsForUser(userId, start, end) {
  */
 export async function getLinkedUsers() {
   return q(
-    `SELECT userId, username, uuid, profilePicture_type, profilePicture_email
+    `SELECT userId, username, uuid, discordId, profilePicture_type, profilePicture_email
        FROM users
       WHERE uuid IS NOT NULL AND uuid <> ''
         AND is_placeholder = 0
