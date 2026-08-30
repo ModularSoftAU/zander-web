@@ -132,6 +132,7 @@ export async function fetchWrappedStats(uuid, start, end, opts = {}) {
       topCommand: pick("topCommand", "top_command") ?? null,
       topVoiceCompanion: pick("topVoiceCompanion", "top_voice_companion") ?? null,
       topVoiceChannel: pick("topVoiceChannel", "top_voice_channel") ?? null,
+      minecraftStats: pick("minecraftStats", "minecraft_stats", "mcStats") ?? null,
     };
 
     console.info(

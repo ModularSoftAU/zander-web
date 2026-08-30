@@ -36,6 +36,12 @@ const richPayload = {
     discordReactions: { value: 88, rank: 4, total: 15 },
     voiceMinutes: { value: 120, display: "2h", rank: 2, total: 10, channelName: "General VC" },
     reputation: { value: 900, level: 7, lifetime: 3120, rank: 6, total: 30 },
+    minecraft: {
+      sinceTracking: false, since: null,
+      blocksMined: 12345, mobsKilled: 678, distanceCm: 4_200_000,
+      breadCrafted: 90, fishCaught: 33,
+      topBlock: { block: "minecraft:deepslate", count: 4000 },
+    },
     topCommand: { command: "/spawn", count: 42 },
     friend: { name: "Robin", minutes: 55 },
     ingameFriend: { name: "Casey", minutes: 130 },
@@ -58,6 +64,7 @@ describe("buildWrappedslides", () => {
       "tenure",
       "mostActiveDay",
       "mostActiveMonth",
+      "blocksMined", "topBlock", "mobsKilled", "distance", "bread", "fish",
       "discordMessages", "messagesBoard",
       "discordReactions",
       "voiceMinutes",
@@ -116,6 +123,36 @@ describe("buildWrappedslides", () => {
     const keys = slides.map((s) => s.key);
     expect(keys.indexOf("voiceBoard")).toBe(keys.indexOf("voiceMinutes") + 1);
     expect(keys.indexOf("reputationBoard")).toBe(keys.indexOf("reputation") + 1);
+  });
+
+  it("builds the vanilla MC-stat slides from the minecraft block", () => {
+    const byKey = Object.fromEntries(buildWrappedSlides(richPayload).map((s) => [s.key, s]));
+    expect(byKey.blocksMined.stat).toBe("12,345 blocks");
+    expect(byKey.topBlock.stat).toBe("Deepslate");
+    expect(byKey.topBlock.sub).toBe("4,000 of them");
+    expect(byKey.mobsKilled.stat).toBe("678 mobs");
+    expect(byKey.distance.stat).toBe("42 km"); // 4,200,000 cm
+    expect(byKey.distance.sub).toContain("42,000 blocks");
+    expect(byKey.bread.stat).toBe("90 loaves of bread");
+    expect(byKey.fish.stat).toBe("33 fish");
+  });
+
+  it("notes 'since we started counting' when the MC stats have no baseline", () => {
+    const p = JSON.parse(JSON.stringify(richPayload));
+    p.stats.minecraft.sinceTracking = true;
+    const slides = buildWrappedSlides(p);
+    expect(slides.find((s) => s.key === "blocksMined").sub).toBe("since we started counting");
+    expect(slides.find((s) => s.key === "topBlock").sub).toBe("4,000 of them · since we started counting");
+  });
+
+  it("skips MC slides whose value is zero", () => {
+    const p = JSON.parse(JSON.stringify(richPayload));
+    p.stats.minecraft = { sinceTracking: false, since: null, blocksMined: 5, mobsKilled: 0, distanceCm: 0, breadCrafted: 0, fishCaught: 0, topBlock: null };
+    const keys = buildWrappedSlides(p).map((s) => s.key);
+    expect(keys).toContain("blocksMined");
+    expect(keys).not.toContain("mobsKilled");
+    expect(keys).not.toContain("topBlock");
+    expect(keys).not.toContain("distance");
   });
 
   it("falls back to a 'still being written' slide when nothing qualifies", () => {

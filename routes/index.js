@@ -36,6 +36,7 @@ import {
   webPageNode,
   breadcrumbNode,
   faqNode,
+  howToNode,
   itemListNode,
 } from "../lib/seo/jsonLd.js";
 import { rankCatalogSchema } from "../lib/seo/rankSchema.js";

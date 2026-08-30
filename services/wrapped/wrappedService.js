@@ -268,6 +268,8 @@ export async function buildWrappedPayload(user, opts = {}) {
       tenure: { firstSeen: zander.firstSeen, days: zander.tenureDays },
       mostActiveDay: zander.mostActiveDay,
       mostActiveMonth: zander.mostActiveMonth,
+      // MineMonitor snapshot-diff of vanilla MC stats (blocks/mobs/distance/…).
+      minecraft: mm?.minecraftStats || null,
       discordMessages: hasMM
         ? statBlock(mm.discordMessages || 0, context.discordMessages, user.userId, {
             neighbors: neighborhood(context.discordMessages, user.userId, nameById, 2, avatarById),
