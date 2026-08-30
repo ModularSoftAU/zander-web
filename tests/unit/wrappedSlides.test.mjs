@@ -87,6 +87,36 @@ describe("buildWrappedslides", () => {
     expect(keys).toEqual(["intro", "playtime", "vibe"]);
   });
 
+  it("emits voice + reputation board slides with formatted values and avatars", () => {
+    const p = JSON.parse(JSON.stringify(richPayload));
+    p.stats.voiceMinutes.neighbors = {
+      rank: 2, total: 10,
+      rows: [
+        { rank: 1, name: "Alex", value: 200, avatar: "https://cdn/a.png", you: false },
+        { rank: 2, name: "You", value: 120, avatar: "https://cdn/me.png", you: true },
+        { rank: 3, name: "Sam", value: 90, avatar: null, you: false },
+      ],
+    };
+    p.stats.reputation.neighbors = {
+      rank: 6, total: 30,
+      rows: [
+        { rank: 5, name: "Jo", value: 1000, avatar: null, you: false },
+        { rank: 6, name: "You", value: 900, avatar: null, you: true },
+        { rank: 7, name: "Kai", value: 800, avatar: null, you: false },
+      ],
+    };
+    const slides = buildWrappedSlides(p);
+    const voiceBoard = slides.find((s) => s.key === "voiceBoard");
+    const repBoard = slides.find((s) => s.key === "reputationBoard");
+    expect(voiceBoard.neighbors.rows.map((r) => r.displayValue)).toEqual(["3h 20m", "2h", "1h 30m"]);
+    expect(voiceBoard.neighbors.rows[0].avatar).toBe("https://cdn/a.png");
+    expect(repBoard.neighbors.rows.map((r) => r.displayValue)).toEqual(["1,000 rep", "900 rep", "800 rep"]);
+    // each board sits right after its stat slide
+    const keys = slides.map((s) => s.key);
+    expect(keys.indexOf("voiceBoard")).toBe(keys.indexOf("voiceMinutes") + 1);
+    expect(keys.indexOf("reputationBoard")).toBe(keys.indexOf("reputation") + 1);
+  });
+
   it("falls back to a 'still being written' slide when nothing qualifies", () => {
     const keys = buildWrappedSlides({ period: richPayload.period, user: richPayload.user, stats: {} }).map((s) => s.key);
     expect(keys).toEqual(["intro", "empty", "vibe"]);

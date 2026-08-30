@@ -978,6 +978,20 @@ a:focus {
   margin-top: 10px;
 }
 
+/* Site logo is a portrait wordmark (264x372) — bound it by height in the
+   header and footer so it doesn't blow out the layout. */
+.navbar-brand img {
+  height: 52px;
+  width: auto;
+  max-width: none;
+}
+
+.widget .logo img,
+.footer .logo img {
+  max-height: 88px;
+  width: auto;
+}
+
 .dropdown .dropdown-menu {
   position: absolute;
   display: block;

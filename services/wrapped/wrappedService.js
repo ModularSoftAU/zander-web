@@ -106,11 +106,16 @@ export async function buildLeaderboardContext(period, { rebuild = false } = {}) 
     discordReactions: [],
     voiceMinutes: [],
     reputationLifetime: [],
-    // userId -> display name, so leaderboard-neighbourhood slides can name the
-    // players immediately above/below you without another lookup.
+    // userId -> display name / uuid, so leaderboard-neighbourhood slides can
+    // name and show a face for the players immediately above/below you without
+    // another lookup.
     names: {},
+    uuids: {},
   };
-  for (const u of activeUsers) ctx.names[u.userId] = u.username;
+  for (const u of activeUsers) {
+    ctx.names[u.userId] = u.username;
+    if (u.uuid) ctx.uuids[u.userId] = u.uuid;
+  }
 
   const mmEnabled = isMineMonitorConfigured();
 
@@ -172,6 +177,15 @@ export async function buildWrappedPayload(user, opts = {}) {
   ]);
 
   const nameById = context.names || {};
+  // userId -> skin-head avatar URL, for the faces on leaderboard-neighbourhood
+  // slides. Same source the deck uses for its own fallback avatar.
+  const avatarById = {};
+  for (const [id, uuid] of Object.entries(context.uuids || {})) {
+    if (uuid) avatarById[id] = `https://crafthead.net/avatar/${encodeURIComponent(uuid)}`;
+  }
+  if (user.uuid && !avatarById[user.userId]) {
+    avatarById[user.userId] = `https://crafthead.net/avatar/${encodeURIComponent(user.uuid)}`;
+  }
   const topIngameBuddy = Array.isArray(ingameBuddies) && ingameBuddies[0] ? ingameBuddies[0] : null;
 
   const discordLinked = Boolean(mm && mm.discordLinked);
@@ -200,7 +214,7 @@ export async function buildWrappedPayload(user, opts = {}) {
     stats: {
       playtime: statBlock(zander.playtimeSeconds, context.playtime, user.userId, {
         display: humanizeDuration(zander.playtimeSeconds),
-        neighbors: neighborhood(context.playtime, user.userId, nameById),
+        neighbors: neighborhood(context.playtime, user.userId, nameById, 2, avatarById),
       }),
       sessions: statBlock(zander.sessions, context.sessions, user.userId),
       avgSession: {
@@ -212,7 +226,7 @@ export async function buildWrappedPayload(user, opts = {}) {
       mostActiveMonth: zander.mostActiveMonth,
       discordMessages: hasMM
         ? statBlock(mm.discordMessages || 0, context.discordMessages, user.userId, {
-            neighbors: neighborhood(context.discordMessages, user.userId, nameById),
+            neighbors: neighborhood(context.discordMessages, user.userId, nameById, 2, avatarById),
           })
         : null,
       discordReactions: hasMM
@@ -221,11 +235,13 @@ export async function buildWrappedPayload(user, opts = {}) {
       voiceMinutes: hasMM
         ? statBlock(voiceMinutes, context.voiceMinutes, user.userId, {
             display: humanizeDuration(voiceMinutes * 60),
+            neighbors: neighborhood(context.voiceMinutes, user.userId, nameById, 2, avatarById),
           })
         : null,
       reputation:
         mm && mm.reputationLevel !== null && mm.reputationLevel !== undefined
           ? statBlock(mm.lifetimeReputation || 0, context.reputationLifetime, user.userId, {
+              neighbors: neighborhood(context.reputationLifetime, user.userId, nameById, 2, avatarById),
               level: mm.reputationLevel,
               lifetime: mm.lifetimeReputation || 0,
             })

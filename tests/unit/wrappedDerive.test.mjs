@@ -75,10 +75,22 @@ describe("neighborhood", () => {
     expect(nb.rank).toBe(3);
     expect(nb.total).toBe(5);
     expect(nb.rows).toEqual([
-      { rank: 2, name: "Sam", value: 400, you: false },
-      { rank: 3, name: "You", value: 300, you: true },
-      { rank: 4, name: "Chris", value: 200, you: false },
+      { rank: 2, name: "Sam", value: 400, avatar: null, you: false },
+      { rank: 3, name: "You", value: 300, avatar: null, you: true },
+      { rank: 4, name: "Chris", value: 200, avatar: null, you: false },
     ]);
+  });
+
+  it("attaches avatars from avatarById (including the 'You' row)", () => {
+    const avatars = { 2: "https://cdn/av/sam.png", 3: "https://cdn/av/me.png", 4: "https://cdn/av/chris.png" };
+    const nb = neighborhood(entries, 3, names, 1, avatars);
+    expect(nb.rows.map((r) => r.avatar)).toEqual([
+      "https://cdn/av/sam.png",
+      "https://cdn/av/me.png",
+      "https://cdn/av/chris.png",
+    ]);
+    // missing avatar -> null, never undefined
+    expect(neighborhood(entries, 3, names, 1, { 3: "x" }).rows[0].avatar).toBeNull();
   });
 
   it("clamps the window at the top and bottom of the board", () => {

@@ -65,6 +65,8 @@
   .lbrow.you { background: var(--gold); color: #241a00; font-weight: 700; }
   .lbrank { width: 3ch; text-align: right; opacity: .8; }
   .lbrow.you .lbrank { opacity: 1; }
+  .lbav { width: 26px; height: 26px; border-radius: 6px; object-fit: cover; flex: 0 0 auto;
+    image-rendering: pixelated; image-rendering: crisp-edges; background: rgba(255,255,255,.12); }
   .lbname { flex: 1; text-align: left; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .lbval { opacity: .85; font-variant-numeric: tabular-nums; }
   .kicker { letter-spacing: 3px; font-size: 12px; color: #b9a7ff; }
@@ -244,6 +246,8 @@
     var rows = nb.rows.map(function (r) {
       return '<div class="lbrow' + (r.you ? ' you' : '') + '">' +
         '<span class="lbrank">#' + r.rank + '</span>' +
+        (r.avatar ? '<img class="lbav" src="' + escapeAttr(r.avatar) + '" alt="" ' +
+          'onerror="this.style.visibility=\'hidden\'" />' : '') +
         '<span class="lbname">' + escapeHtml(r.name) + '</span>' +
         '<span class="lbval">' + escapeHtml(r.displayValue != null ? r.displayValue : r.value) + '</span></div>';
     }).join('');
@@ -605,27 +609,22 @@
 
     var deliver = function (c) {
       var blob = (c && (c.pngBlob || c.svgBlob)) || null;
-      if (!blob) { try { window.open(url, "_blank"); done("Opened"); } catch (e) { done("Couldn't save"); } return; }
-      var name = nameBase + (c.pngBlob ? ".png" : ".svg");
-
-      if (navigator.canShare) {
-        try {
-          var f = new File([blob], name, { type: blob.type || "image/png" });
-          if (navigator.canShare({ files: [f] })) {
-            navigator.share({ files: [f], title: "My " + P.period.label + " Wrapped" })
-              .then(function () { done("Shared"); })
-              .catch(function () { triggerDownload(blob, name); done("Saved"); });
-            return;
-          }
-        } catch (e) { /* fall through */ }
+      if (!blob) {
+        // Last resort: open the card URL in a new tab so the user still gets it.
+        try { window.open(url, "_blank", "noopener"); done("Opened"); }
+        catch (e) { done("Couldn't save"); }
+        return;
       }
-      triggerDownload(blob, name);
+      // Always download. navigator.share() was unreliable here — after the SVG
+      // rasterise wait the click's user-activation has lapsed, so the share
+      // sheet could hang without resolving.
+      triggerDownload(blob, nameBase + (c.pngBlob ? ".png" : ".svg"));
       done("Saved");
     };
 
     var cached = cardCache[url];
     if (btn && !(cached && cached.svgBlob)) btn.textContent = "Preparing…";
-    getCard(url, w, h).then(deliver);
+    getCard(url, w, h).then(deliver, function () { deliver(cardCache[url]); });
   }
 
   function saveSummary(btn) { return saveCard(CARD_URL, fileBase(), btn, 1200, 630); }
