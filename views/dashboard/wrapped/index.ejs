@@ -99,22 +99,25 @@
           Last preview: <%= preview.username %><% if (preview.demo) { %> <span class="badge bg-secondary">demo</span><% } %>
         </div>
         <a href="/dashboard/wrapped/preview" target="_blank" rel="noopener">Open deck</a>
-        &nbsp;·&nbsp;
-        <a href="/dashboard/wrapped/preview/card.svg" target="_blank" rel="noopener">Open summary image (SVG)</a>
         <div class="mt-1 text-muted">
-          The SVG opens straight in the browser — right-click &rarr; <em>Save image as…</em>.
-          The deck's <em>Save summary image</em> button converts it to PNG.
+          For a <strong>PNG</strong> of the 1080×1920 summary card, open the deck and use
+          <em>Save summary image</em> (it downloads a <code>.png</code>). The links below
+          just render the card in the browser for a quick look.
         </div>
-        <% if (preview.slides && preview.slides.length) { %>
-        <details class="mt-1">
-          <summary class="text-muted" style="cursor:pointer;">Per-slide story cards (1080×1920)</summary>
-          <div class="d-flex flex-wrap gap-2 mt-1">
-            <% preview.slides.forEach(function (k) { %>
-              <a href="/dashboard/wrapped/preview/card/s/<%= encodeURIComponent(k) %>.svg" target="_blank" rel="noopener"><%= k %></a>
-            <% }) %>
-          </div>
-        </details>
-        <% } %>
+        <div class="mt-1">
+          <a href="/dashboard/wrapped/preview/card.svg" target="_blank" rel="noopener">Preview summary card</a>
+          <% if (preview.slides && preview.slides.length) { %>
+          &nbsp;·&nbsp;
+          <details class="d-inline">
+            <summary class="d-inline text-muted" style="cursor:pointer;">per-slide cards</summary>
+            <span class="d-inline-flex flex-wrap gap-2 ms-1">
+              <% preview.slides.forEach(function (k) { %>
+                <a href="/dashboard/wrapped/preview/card/s/<%= encodeURIComponent(k) %>.svg" target="_blank" rel="noopener"><%= k %></a>
+              <% }) %>
+            </span>
+          </details>
+          <% } %>
+        </div>
       </div>
       <% } %>
 

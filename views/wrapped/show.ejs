@@ -560,11 +560,12 @@
     return (P.user.username || "wrapped").replace(/[^\w.-]+/g, "_") + "-wrapped-" + P.period.label;
   }
 
-  // Card fetch + rasterise, generic over any Wrapped card URL: the 1200×630
-  // summary card and the 1080×1920 per-slide story cards. The SVG itself is a
-  // complete, one-file image and always downloads; a PNG raster is attempted as
-  // a bonus but time-boxed (some browsers hang decoding an SVG with an embedded
-  // <image>), so a stuck decode never wedges the button.
+  // Card fetch + rasterise to PNG, for the summary card and the per-slide story
+  // cards. The server sends SVG; we draw it to a canvas and export a PNG. The
+  // SVG is loaded via a Blob URL (NOT a data: URI) so a big embedded avatar /
+  // background can't blow past the data-URI length ceiling — that was what made
+  // the summary card's PNG conversion flaky. A 10s guard means a stuck decode
+  // never wedges the button; svgBlob is only ever an internal last resort.
   var cardCache = {};
 
   function getCard(url, w, h) {
@@ -574,28 +575,55 @@
       .then(function (r) { if (!r.ok) throw new Error("card " + r.status); return r.text(); })
       .then(function (svgText) {
         c.svgBlob = new Blob([svgText], { type: "image/svg+xml;charset=utf-8" });
+        var blobUrl = URL.createObjectURL(c.svgBlob);
         return new Promise(function (resolve) {
           var settled = false;
-          var finish = function () { if (!settled) { settled = true; resolve(c); } };
-          setTimeout(finish, 6000);
+          var finish = function () {
+            if (settled) return;
+            settled = true;
+            try { URL.revokeObjectURL(blobUrl); } catch (e) {}
+            resolve(c);
+          };
+          setTimeout(finish, 10000);
+
           var img = new Image();
-          img.onload = function () {
+          img.decoding = "sync";
+          var draw = function () {
             try {
               var cv = document.createElement("canvas");
               cv.width = w; cv.height = h;
               var ctx = cv.getContext("2d");
               ctx.fillStyle = "#060a1f"; ctx.fillRect(0, 0, w, h);
               ctx.drawImage(img, 0, 0, w, h);
-              if (cv.toBlob) cv.toBlob(function (b) { if (b) c.pngBlob = b; finish(); }, "image/png");
-              else finish();
+              if (cv.toBlob) {
+                cv.toBlob(function (b) { if (b && b.size) c.pngBlob = b; finish(); }, "image/png");
+              } else {
+                try { c.pngDataUrl = cv.toDataURL("image/png"); } catch (e) {}
+                finish();
+              }
             } catch (e) { finish(); }
           };
+          img.onload = function () {
+            if (img.decode) img.decode().then(draw, draw);
+            else draw();
+          };
           img.onerror = finish;
-          img.src = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(svgText);
+          img.src = blobUrl;
         });
       })
       .catch(function () { return c; });
     return c._p;
+  }
+
+  function dataUrlToBlob(dataUrl) {
+    try {
+      var parts = dataUrl.split(",");
+      var mime = (parts[0].match(/:(.*?);/) || [])[1] || "image/png";
+      var bin = atob(parts[1]);
+      var arr = new Uint8Array(bin.length);
+      for (var i = 0; i < bin.length; i++) arr[i] = bin.charCodeAt(i);
+      return new Blob([arr], { type: mime });
+    } catch (e) { return null; }
   }
 
   function triggerDownload(blob, name) {
@@ -611,24 +639,29 @@
     if (btn) btn.setAttribute("data-orig", orig);
     var done = function (t) { if (btn) { btn.textContent = t; setTimeout(function () { btn.textContent = orig; }, 2200); } };
 
-    var deliver = function (c) {
-      var blob = (c && (c.pngBlob || c.svgBlob)) || null;
-      if (!blob) {
-        // Last resort: open the card URL in a new tab so the user still gets it.
-        try { window.open(url, "_blank", "noopener"); done("Opened"); }
-        catch (e) { done("Couldn't save"); }
+    var deliver = function (c, isRetry) {
+      var png = (c && c.pngBlob) || (c && c.pngDataUrl && dataUrlToBlob(c.pngDataUrl));
+      if (png) {
+        triggerDownload(png, nameBase + ".png");
+        done("Saved PNG");
         return;
       }
-      // Always download. navigator.share() was unreliable here — after the SVG
-      // rasterise wait the click's user-activation has lapsed, so the share
-      // sheet could hang without resolving.
-      triggerDownload(blob, nameBase + (c.pngBlob ? ".png" : ".svg"));
-      done("Saved");
+      if (!isRetry) {
+        // One clean retry — drop the cache entry and rasterise fresh.
+        delete cardCache[url];
+        done("Retrying…");
+        getCard(url, w, h).then(function (c2) { deliver(c2, true); }, function () { deliver(cardCache[url], true); });
+        return;
+      }
+      // PNG genuinely failed. Open the card in a tab as an escape hatch — never
+      // hand back an .svg download.
+      try { window.open(url, "_blank", "noopener"); done("Opened in tab"); }
+      catch (e) { done("PNG failed"); }
     };
 
     var cached = cardCache[url];
-    if (btn && !(cached && cached.svgBlob)) btn.textContent = "Preparing…";
-    getCard(url, w, h).then(deliver, function () { deliver(cardCache[url]); });
+    if (btn && !(cached && cached.pngBlob)) btn.textContent = "Preparing…";
+    getCard(url, w, h).then(function (c) { deliver(c, false); }, function () { deliver(cardCache[url], false); });
   }
 
   function saveSummary(btn) { return saveCard(CARD_URL, fileBase(), btn, 1080, 1920); }
