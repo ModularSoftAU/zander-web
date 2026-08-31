@@ -25,7 +25,7 @@ import { resolveAvatarUrl } from "../../lib/wrapped/pageAssets.js";
 
 // Bump when the cached leaderboard context shape changes so stale caches
 // (missing `avatars`, `uuids`, …) are rebuilt instead of served.
-const LEADERBOARD_CONTEXT_VERSION = 2;
+const LEADERBOARD_CONTEXT_VERSION = 3;
 
 /**
  * Resolve the active Wrapped period from the editable `wrappedSettings` row
@@ -100,6 +100,7 @@ export async function buildLeaderboardContext(period, { rebuild = false } = {}) 
     discordReactions: [],
     voiceMinutes: [],
     reputationLifetime: [],
+    shopPurchases: [],
     version: LEADERBOARD_CONTEXT_VERSION,
     // Per-user display data for leaderboard-neighbourhood slides — name + the
     // *resolved* profile-picture URL (honours each user's Craftatar/Gravatar
@@ -131,11 +132,12 @@ export async function buildLeaderboardContext(period, { rebuild = false } = {}) 
   // know one, else keep a synthetic "d:<id>" key so ranks stay correct even for
   // members without a website account.
   if (isMineMonitorConfigured()) {
-    const [msgs, reacts, voice, rep] = await Promise.all([
+    const [msgs, reacts, voice, rep, shops] = await Promise.all([
       fetchWrappedLeaderboard("messages", start, end),
       fetchWrappedLeaderboard("reactions", start, end),
       fetchWrappedLeaderboard("voiceSeconds", start, end),
       fetchWrappedLeaderboard("reputation", start, end),
+      fetchWrappedLeaderboard("shopPurchases", start, end),
     ]);
 
     const ingest = (list, dest, xform = (v) => v) => {
@@ -143,7 +145,14 @@ export async function buildLeaderboardContext(period, { rebuild = false } = {}) 
         const mapped =
           userByDiscordId.get(e.discordUserId) ||
           (e.minecraftUuid && userByUuid.get(String(e.minecraftUuid).toLowerCase()));
-        const key = mapped ? mapped.userId : `d:${e.discordUserId}`;
+        // shopPurchases is the first UUID-native ranked stat: an unlinked buyer
+        // has discordUserId === '' — key by uuid so they don't all collapse
+        // onto a single "d:" key and scramble every rank.
+        const key = mapped
+          ? mapped.userId
+          : e.discordUserId
+            ? `d:${e.discordUserId}`
+            : `u:${String(e.minecraftUuid).toLowerCase()}`;
         dest.push({ userId: key, value: xform(e.value) });
         if (ctx.names[key] == null) {
           ctx.names[key] = mapped ? mapped.username : e.displayName || "Someone";
@@ -155,6 +164,7 @@ export async function buildLeaderboardContext(period, { rebuild = false } = {}) 
     ingest(reacts, ctx.discordReactions);
     ingest(voice, ctx.voiceMinutes, (sec) => Math.round((sec || 0) / 60));
     ingest(rep, ctx.reputationLifetime);
+    ingest(shops, ctx.shopPurchases);
   }
 
   // ── name / uuid / avatar for every *real* Zander user referenced above ──
@@ -246,6 +256,7 @@ export async function buildWrappedPayload(user, opts = {}) {
     voiceMinutes,
     sessions: zander.sessions,
     topCommand: mm?.topCommand?.command || null,
+    shopPurchases: mm?.shopStats?.purchases || 0,
   });
 
   const payload = {
@@ -294,6 +305,17 @@ export async function buildWrappedPayload(user, opts = {}) {
             })
           : null,
       topCommand: mm?.topCommand || null,
+      // Player-shop purchases (UUID-native — works with no Discord link).
+      shopPurchases: mm?.shopStats
+        ? statBlock(mm.shopStats.purchases || 0, context.shopPurchases, user.userId, {
+            neighbors: neighborhood(context.shopPurchases, user.userId, nameById, 2, avatarById),
+            totalSpent: mm.shopStats.totalSpent || 0,
+            topItem: mm.shopStats.topItem || null,
+            topOwner: mm.shopStats.topOwner || null,
+            since: mm.shopStats.since || null,
+            sinceTracking: Boolean(mm.shopStats.sinceTracking),
+          })
+        : null,
       friend: mm?.topVoiceCompanion
         ? {
             name: mm.topVoiceCompanion.displayName || "a mystery friend",
@@ -317,6 +339,9 @@ export async function buildWrappedPayload(user, opts = {}) {
             : null,
           voicePct: hasMM
             ? pctChange(voiceMinutes, priorStats.voiceMinutes?.value ?? null)
+            : null,
+          shopPct: mm?.shopStats
+            ? pctChange(mm.shopStats.purchases || 0, priorStats.shopPurchases?.value ?? null)
             : null,
         }
       : null,

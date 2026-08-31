@@ -133,6 +133,7 @@ export async function fetchWrappedStats(uuid, start, end, opts = {}) {
       topVoiceCompanion: pick("topVoiceCompanion", "top_voice_companion") ?? null,
       topVoiceChannel: pick("topVoiceChannel", "top_voice_channel") ?? null,
       minecraftStats: pick("minecraftStats", "minecraft_stats", "mcStats") ?? null,
+      shopStats: pick("shopStats", "shop_stats") ?? null,
     };
 
     console.info(
@@ -189,7 +190,7 @@ export async function fetchWrappedLeaderboard(stat, start, end, opts = {}) {
         value: Number(e.value ?? 0) || 0,
         rank: Number(e.rank ?? 0) || 0,
       }))
-      .filter((e) => e.discordUserId);
+      .filter((e) => e.discordUserId || e.minecraftUuid);
   } catch (err) {
     console.warn(`[WRAPPED] MineMonitor leaderboard ${stat} fetch failed:`, err.message);
     return null;

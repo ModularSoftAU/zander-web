@@ -107,6 +107,27 @@ describe("neighborhood", () => {
     expect(neighborhood(entries, 99, names)).toBeNull();
     expect(neighborhood([], 1, names)).toBeNull();
   });
+
+  it("ranks a numeric user against a mix of numeric, 'd:' and 'u:' rows without collision", () => {
+    // The regression guard for the shop-stat key fix: unlinked buyers keyed by
+    // uuid ("u:<uuid>") must each count as a distinct row, not collapse onto a
+    // single "d:" bucket.
+    const mixed = [
+      { userId: "u:aaaa", value: 500 },
+      { userId: "d:111", value: 400 },
+      { userId: 7, value: 300 }, // the viewing user
+      { userId: "u:bbbb", value: 200 },
+      { userId: "u:cccc", value: 100 },
+    ];
+    const nb = neighborhood(mixed, 7, { 7: "ignored" }, 1);
+    expect(nb.total).toBe(5); // no collision — five separate rows
+    expect(nb.rank).toBe(3);
+    expect(nb.rows.map((r) => [r.rank, r.you])).toEqual([
+      [2, false],
+      [3, true],
+      [4, false],
+    ]);
+  });
 });
 
 describe("pctChange", () => {

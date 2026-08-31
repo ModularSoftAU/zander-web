@@ -36,6 +36,13 @@ const richPayload = {
     discordReactions: { value: 88, rank: 4, total: 15 },
     voiceMinutes: { value: 120, display: "2h", rank: 2, total: 10, channelName: "General VC" },
     reputation: { value: 900, level: 7, lifetime: 3120, rank: 6, total: 30 },
+    shopPurchases: {
+      value: 42, rank: 3, total: 40,
+      totalSpent: 1234.5,
+      topItem: { itemId: "minecraft:diamond", count: 15 },
+      topOwner: { uuid: "o-1", name: "ShopkeeperSue", count: 9 },
+      since: null, sinceTracking: false,
+    },
     minecraft: {
       sinceTracking: false, since: null,
       blocksMined: 12345, mobsKilled: 678, distanceCm: 4_200_000,
@@ -69,6 +76,7 @@ describe("buildWrappedslides", () => {
       "discordReactions",
       "voiceMinutes",
       "reputation",
+      "shopPurchases", "shopOwner",
       "topCommand",
       "friend",
       "ingameFriend",
@@ -153,6 +161,38 @@ describe("buildWrappedslides", () => {
     expect(keys).not.toContain("mobsKilled");
     expect(keys).not.toContain("topBlock");
     expect(keys).not.toContain("distance");
+  });
+
+  it("builds the shop-purchase slides (stat + favourite shopkeeper)", () => {
+    const byKey = Object.fromEntries(buildWrappedSlides(richPayload).map((s) => [s.key, s]));
+    expect(byKey.shopPurchases.stat).toBe("42 purchases");
+    expect(byKey.shopPurchases.sub).toContain("Diamond");
+    expect(byKey.shopPurchases.rank).toBe("You're #3 of 40 shoppers");
+    expect(byKey.shopOwner.stat).toBe("ShopkeeperSue");
+    expect(byKey.shopOwner.sub).toBe("9 buys from their shop");
+  });
+
+  it("shop slide notes 'since we started counting' when tracking is partial", () => {
+    const p = JSON.parse(JSON.stringify(richPayload));
+    p.stats.shopPurchases.sinceTracking = true;
+    p.stats.shopPurchases.since = "2026-03-14T00:00:00.000Z";
+    const sp = buildWrappedSlides(p).find((s) => s.key === "shopPurchases");
+    expect(sp.sub).toContain("since we started counting in March 2026");
+  });
+
+  it("emits a shopBoard when a neighbourhood is present", () => {
+    const p = JSON.parse(JSON.stringify(richPayload));
+    p.stats.shopPurchases.neighbors = {
+      rank: 3, total: 40,
+      rows: [
+        { rank: 2, name: "Kai", value: 50, avatar: null, you: false },
+        { rank: 3, name: "You", value: 42, avatar: null, you: true },
+        { rank: 4, name: "Lee", value: 30, avatar: null, you: false },
+      ],
+    };
+    const board = buildWrappedSlides(p).find((s) => s.key === "shopBoard");
+    expect(board.kind).toBe("board");
+    expect(board.neighbors.rows.map((r) => r.displayValue)).toEqual(["50 buys", "42 buys", "30 buys"]);
   });
 
   it("falls back to a 'still being written' slide when nothing qualifies", () => {
