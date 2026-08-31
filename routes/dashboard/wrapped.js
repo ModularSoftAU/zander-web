@@ -29,6 +29,7 @@ import {
 } from "../../services/wrapped/wrappedService.js";
 import { renderWrappedCard } from "../../lib/wrapped/card.js";
 import { buildWrappedSlides } from "../../lib/wrapped/slides.js";
+import { buildDemoWrappedPayload } from "../../lib/wrapped/demoPayload.js";
 import { renderWrappedSlideCard } from "../../lib/wrapped/slideCard.js";
 import { diagnoseMineMonitor } from "../../services/wrapped/minemonitorClient.js";
 import {
@@ -145,6 +146,7 @@ export default function dashboardWrappedRoute(app, config, features, lang) {
       getConfiguredWrappedPeriod(),
     ]);
     const runs = await listWrappedRuns(period.year, 30);
+    const stash = req.session?.wrappedPreview;
 
     return send(
       res,
@@ -156,8 +158,34 @@ export default function dashboardWrappedRoute(app, config, features, lang) {
         saved: req.query.saved === "1",
         error: req.query.error || null,
         me: req.session?.user?.username || "",
+        preview: stash?.payload
+          ? {
+              username: stash.username || "preview",
+              demo: Boolean(stash.payload.demo),
+              // one link per slide so the per-slide story cards can be eyeballed
+              slides: buildWrappedSlides(stash.payload).map((s) => s.key),
+            }
+          : null,
       })
     );
+  });
+
+  // ── Demo preview: a fully-populated fake payload, no MineMonitor needed ──
+  app.post("/dashboard/wrapped/demo", async (req, res) => {
+    if (!(await hasPermission(CAP, req, res, features))) return;
+    let period;
+    const ps = String((req.body || {}).previewStart || "").trim();
+    const pe = String((req.body || {}).previewEnd || "").trim();
+    if (ps && pe && isDate(ps) && isDate(pe)) {
+      period = resolveWrappedPeriod(new Date(), { enabled: true, periodStart: ps, periodEnd: pe });
+    }
+    const payload = buildDemoWrappedPayload({
+      siteName: config?.siteConfiguration?.siteName || "Crafting For Christ",
+      username: req.session?.user?.username || "DemoPlayer",
+      period: period || (await getConfiguredWrappedPeriod()),
+    });
+    req.session.wrappedPreview = { payload, at: Date.now(), username: `${payload.user.username} (demo)` };
+    return res.redirect("/dashboard/wrapped/preview");
   });
 
   app.post("/dashboard/wrapped/settings", async (req, res) => {
