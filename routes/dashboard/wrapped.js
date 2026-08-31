@@ -299,6 +299,7 @@ export default function dashboardWrappedRoute(app, config, features, lang) {
       .header("content-type", "image/svg+xml; charset=utf-8")
       .send(
         renderWrappedCard(stash.payload, {
+          siteName: config?.siteConfiguration?.siteName || "Crafting For Christ",
           logoDataUri: logoDataUri(),
           avatarDataUri: avatar,
           backgroundDataUri: globalBackgroundDataUri(),

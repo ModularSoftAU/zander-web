@@ -631,7 +631,7 @@
     getCard(url, w, h).then(deliver, function () { deliver(cardCache[url]); });
   }
 
-  function saveSummary(btn) { return saveCard(CARD_URL, fileBase(), btn, 1200, 630); }
+  function saveSummary(btn) { return saveCard(CARD_URL, fileBase(), btn, 1080, 1920); }
 
   function saveCurrentSlide(btn) {
     if (!CARD_BASE) return;
@@ -678,7 +678,7 @@
     if (ld) ld.addEventListener("click", finish); // tap to skip the wait
 
     // Rasterise the summary image up-front so the button works in one tap.
-    if (CARD_URL) getCard(CARD_URL, 1200, 630);
+    if (CARD_URL) getCard(CARD_URL, 1080, 1920);
     var _ssBtn = document.getElementById("saveslide");
     if (_ssBtn) _ssBtn.addEventListener("click", function () { saveCurrentSlide(_ssBtn); });
 

@@ -171,6 +171,7 @@ export default function wrappedSiteRoutes(app, client, fetch, moment, cfg, db, f
       .header("cache-control", "public, max-age=3600")
       .send(
         renderWrappedCard(run.payload, {
+          siteName,
           logoDataUri: logoDataUri(),
           avatarDataUri: avatar,
           backgroundDataUri: globalBackgroundDataUri(),

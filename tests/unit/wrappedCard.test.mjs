@@ -11,22 +11,32 @@ const payload = {
     discordMessages: { value: 412 },
     voiceMinutes: { display: "3h 56m", value: 236 },
     reputation: { level: 7 },
-    topCommand: { command: "/spawn" },
+    topCommand: { command: "spawn" },
+    minecraft: {
+      blocksMined: 128455, mobsKilled: 4210, distanceCm: 61_500_000,
+      breadCrafted: 312, fishCaught: 188,
+      topBlock: { block: "minecraft:deepslate", count: 41230 },
+    },
+    shopPurchases: { value: 74, topItem: { itemId: "minecraft:oak_planks", count: 22 } },
   },
   vibe: { label: "Chatty Grinder" },
 };
 
 describe("renderWrappedCard", () => {
-  it("produces a 1200x630 svg recapping the stats that have data", () => {
+  it("produces a 1080x1920 (story-format) svg recapping the stats that have data", () => {
     const svg = renderWrappedCard(payload);
     expect(svg.startsWith("<svg")).toBe(true);
-    expect(svg).toContain('width="1200"');
-    expect(svg).toContain('height="630"');
+    expect(svg).toContain('width="1080"');
+    expect(svg).toContain('height="1920"');
     expect(svg).toContain("142h");
     expect(svg).toContain("/spawn");
     expect(svg).toContain("Chatty Grinder");
-    // first-join rendered as year month day
-    expect(svg).toContain("2021 March 14");
+    expect(svg).toContain("2021 March 14"); // tenure
+    // new stats now recapped on the card
+    expect(svg).toContain("128,455"); // blocks mined
+    expect(svg).toContain("Deepslate"); // favourite block
+    expect(svg).toContain("615 km"); // distance
+    expect(svg).toContain("Oak Planks"); // shop top item
   });
 
   it("omits stats with no data instead of printing a dash", () => {
