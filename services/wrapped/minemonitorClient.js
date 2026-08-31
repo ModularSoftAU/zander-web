@@ -200,6 +200,57 @@ export async function fetchWrappedLeaderboard(stat, start, end, opts = {}) {
 }
 
 /**
+ * Top miners of one block for the period (MineMonitor
+ * `GET /api/wrapped/block-leaderboard/:blockId`). Same null-on-any-failure
+ * contract as its siblings.
+ *
+ * @param {string} blockId e.g. "minecraft:deepslate"
+ * @returns {Promise<null | { blockId: string, total: number, excludedNoBaseline: number,
+ *   rows: Array<{ rank: number, uuid: string, name: string|null, value: number }> }>}
+ */
+export async function fetchBlockLeaderboard(blockId, start, end, opts = {}) {
+  const { baseUrl, token, dateFormat } = getConfig();
+  if (!baseUrl || !token || !blockId) return null;
+
+  const url =
+    `${baseUrl.replace(/\/+$/, "")}/api/wrapped/block-leaderboard/${encodeURIComponent(blockId)}` +
+    `?start=${encodeURIComponent(fmtDate(start, dateFormat))}` +
+    `&end=${encodeURIComponent(fmtDate(end, dateFormat))}`;
+
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), opts.timeoutMs ?? 15000);
+  try {
+    const res = await fetch(url, {
+      headers: { Authorization: `Bearer ${token}`, Accept: "application/json" },
+      signal: controller.signal,
+    });
+    if (!res.ok) {
+      console.warn(`[WRAPPED] MineMonitor block-leaderboard ${blockId} ${res.status}`);
+      return null;
+    }
+    const raw = await res.json();
+    if (!raw || raw.ok === false) return null;
+    const rows = Array.isArray(raw.rows) ? raw.rows : [];
+    return {
+      blockId: raw.blockId || blockId,
+      total: Number(raw.total) || 0,
+      excludedNoBaseline: Number(raw.excludedNoBaseline) || 0,
+      rows: rows.map((r) => ({
+        rank: Number(r.rank) || 0,
+        uuid: r.uuid || null,
+        name: r.name ?? null,
+        value: Number(r.value) || 0,
+      })),
+    };
+  } catch (err) {
+    console.warn(`[WRAPPED] MineMonitor block-leaderboard ${blockId} fetch failed:`, err.message);
+    return null;
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+/**
  * In-game "gaming buddies" for a Minecraft UUID — top players by shared
  * session-overlap time in the period (MineMonitor
  * `GET /api/wrapped/buddies/ingame/:uuid`). Degrades to `null` exactly like

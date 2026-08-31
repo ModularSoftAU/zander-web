@@ -49,6 +49,14 @@ const richPayload = {
       breadCrafted: 90, fishCaught: 33,
       topBlock: { block: "minecraft:deepslate", count: 4000 },
     },
+    topBlockBoard: {
+      blockId: "minecraft:deepslate", rank: 2, total: 17, excludedNoBaseline: 3,
+      rows: [
+        { rank: 1, name: "Digby", value: 9000, avatar: "https://cdn/d.png", you: false },
+        { rank: 2, name: "You", value: 4000, avatar: null, you: true },
+        { rank: 3, name: "Mole", value: 2500, avatar: null, you: false },
+      ],
+    },
     topCommand: { command: "/spawn", count: 42 },
     friend: { name: "Robin", minutes: 55 },
     ingameFriend: { name: "Casey", minutes: 130 },
@@ -71,7 +79,7 @@ describe("buildWrappedslides", () => {
       "tenure",
       "mostActiveDay",
       "mostActiveMonth",
-      "blocksMined", "topBlock", "mobsKilled", "distance", "bread", "fish",
+      "blocksMined", "topBlock", "topBlockBoard", "mobsKilled", "distance", "bread", "fish",
       "discordMessages", "messagesBoard",
       "discordReactions",
       "voiceMinutes",
@@ -193,6 +201,27 @@ describe("buildWrappedslides", () => {
     const board = buildWrappedSlides(p).find((s) => s.key === "shopBoard");
     expect(board.kind).toBe("board");
     expect(board.neighbors.rows.map((r) => r.displayValue)).toEqual(["50 buys", "42 buys", "30 buys"]);
+  });
+
+  it("pairs a topBlockBoard slide right after topBlock", () => {
+    const slides = buildWrappedSlides(richPayload);
+    const keys = slides.map((s) => s.key);
+    expect(keys.indexOf("topBlockBoard")).toBe(keys.indexOf("topBlock") + 1);
+    const board = slides.find((s) => s.key === "topBlockBoard");
+    expect(board.title).toBe("Who else was chasing Deepslate");
+    expect(board.neighbors.rank).toBe(2);
+    expect(board.neighbors.total).toBe(17);
+    expect(board.neighbors.rows.map((r) => r.displayValue)).toEqual(["9,000", "4,000", "2,500"]);
+    expect(board.neighbors.rows.find((r) => r.you).name).toBe("You");
+  });
+
+  it("topBlockBoard omits the rank line when the viewer isn't in the top 5", () => {
+    const p = JSON.parse(JSON.stringify(richPayload));
+    p.stats.topBlockBoard.rank = null;
+    p.stats.topBlockBoard.rows = p.stats.topBlockBoard.rows.map((r) => ({ ...r, you: false, name: r.name === "You" ? "Ghost" : r.name }));
+    const board = buildWrappedSlides(p).find((s) => s.key === "topBlockBoard");
+    expect(board.neighbors.rank).toBeNull();
+    expect(board.neighbors.total).toBe(17);
   });
 
   it("falls back to a 'still being written' slide when nothing qualifies", () => {

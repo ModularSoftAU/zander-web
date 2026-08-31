@@ -3,6 +3,7 @@ import { rankOf, pctChange, vibeLabel, humanizeDuration, neighborhood } from "..
 import {
   fetchWrappedStats,
   fetchWrappedLeaderboard,
+  fetchBlockLeaderboard,
   fetchWrappedBuddiesIngame,
   isMineMonitorConfigured,
 } from "./minemonitorClient.js";
@@ -191,6 +192,69 @@ export async function buildLeaderboardContext(period, { rebuild = false } = {}) 
   return ctx;
 }
 
+/**
+ * Fetch (or read from the leaderboard-cache blob) the top-5 miners of one
+ * block for the period. Filled lazily — a run needs only its own user's top
+ * block. Stored under `cache.data.blocks[<blockId>]`; the write re-reads and
+ * merges so a concurrent run's blocks aren't clobbered.
+ */
+async function getBlockBoard(period, blockId) {
+  if (!blockId || !isMineMonitorConfigured()) return null;
+  const start = new Date(period.start);
+  const end = new Date(period.end);
+  const ANY_AGE = Number.MAX_SAFE_INTEGER;
+
+  const cached = await readLeaderboardCache(period.year, ANY_AGE);
+  const existing = (cached && cached.data && cached.data.blocks) || {};
+  if (existing[blockId]) return existing[blockId];
+
+  const board = await fetchBlockLeaderboard(blockId, start, end);
+  if (!board) return null;
+
+  const fresh = await readLeaderboardCache(period.year, ANY_AGE);
+  if (fresh && fresh.data && fresh.data.version === LEADERBOARD_CONTEXT_VERSION) {
+    fresh.data.blocks = { ...(fresh.data.blocks || {}), [blockId]: board };
+    await writeLeaderboardCache(period.year, fresh.data);
+  }
+  return board;
+}
+
+/**
+ * Shape the block board for the deck: a top-5 board (not a ±2 neighbourhood —
+ * seeing who out-mined you is the reveal). Rows get a local avatar where the
+ * UUID maps to a Zander account, else a skin head; name falls back to
+ * MineMonitor's latestName. `rank` is the viewing user's position only when
+ * they land in the top 5 (else null — the slide shows "N miners in total").
+ */
+async function buildTopBlockBoard(period, blockId, user, context, avatarById) {
+  const board = await getBlockBoard(period, blockId);
+  if (!board || !Array.isArray(board.rows) || board.rows.length === 0) return null;
+
+  const uuidToUserId = {};
+  for (const [uid, uu] of Object.entries(context.uuids || {})) {
+    if (uu) uuidToUserId[String(uu).toLowerCase()] = uid;
+  }
+  const myUuid = user.uuid ? String(user.uuid).toLowerCase() : null;
+
+  const rows = board.rows.map((r) => {
+    const key = r.uuid ? String(r.uuid).toLowerCase() : null;
+    const mappedId = key ? uuidToUserId[key] : null;
+    const you = Boolean(myUuid && key === myUuid);
+    const avatar =
+      (mappedId && avatarById[mappedId]) ||
+      (r.uuid ? `https://crafthead.net/avatar/${encodeURIComponent(r.uuid)}` : null);
+    return { rank: r.rank, name: you ? "You" : r.name || "Someone", value: r.value, avatar, you };
+  });
+  const mine = rows.find((r) => r.you);
+  return {
+    blockId,
+    rank: mine ? mine.rank : null,
+    total: board.total,
+    excludedNoBaseline: board.excludedNoBaseline,
+    rows,
+  };
+}
+
 // ── Payload assembly ─────────────────────────────────────────────────────
 
 function statBlock(value, ctxEntries, userId, extra = {}) {
@@ -242,6 +306,12 @@ export async function buildWrappedPayload(user, opts = {}) {
   }
   const topIngameBuddy = Array.isArray(ingameBuddies) && ingameBuddies[0] ? ingameBuddies[0] : null;
 
+  // "Who else mined that block" — top-5 board for the player's own top block.
+  const topBlockId = mm?.minecraftStats?.topBlock?.block || null;
+  const topBlockBoard = topBlockId
+    ? await buildTopBlockBoard(period, topBlockId, user, context, avatarById)
+    : null;
+
   const discordLinked = Boolean(mm && mm.discordLinked);
   // Emit the Discord/voice slides whenever MineMonitor returned data at all —
   // don't gate on its `discordLinked` flag (MineMonitor's own link table can lag
@@ -281,6 +351,8 @@ export async function buildWrappedPayload(user, opts = {}) {
       mostActiveMonth: zander.mostActiveMonth,
       // MineMonitor snapshot-diff of vanilla MC stats (blocks/mobs/distance/…).
       minecraft: mm?.minecraftStats || null,
+      // Top-5 miners of the player's top block (paired with the topBlock slide).
+      topBlockBoard,
       discordMessages: hasMM
         ? statBlock(mm.discordMessages || 0, context.discordMessages, user.userId, {
             neighbors: neighborhood(context.discordMessages, user.userId, nameById, 2, avatarById),

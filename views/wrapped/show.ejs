@@ -253,10 +253,12 @@
         '<span class="lbname">' + escapeHtml(r.name) + '</span>' +
         '<span class="lbval">' + escapeHtml(r.displayValue != null ? r.displayValue : r.value) + '</span></div>';
     }).join('');
+    var rankLine = (nb.rank != null && nb.total != null)
+      ? '<div class="rank">You\'re #' + nb.rank + ' of ' + nb.total + '</div>'
+      : (nb.total != null ? '<div class="rank">' + nb.total + ' miners in total</div>' : '');
     return '<div class="emoji">🏆</div>' +
       '<div class="flavor">' + escapeHtml(title) + '</div>' +
-      '<div class="lbwrap">' + rows + '</div>' +
-      '<div class="rank">You\'re #' + nb.rank + ' of ' + nb.total + '</div>';
+      '<div class="lbwrap">' + rows + '</div>' + rankLine;
   }
 
   function titleHtml() {
