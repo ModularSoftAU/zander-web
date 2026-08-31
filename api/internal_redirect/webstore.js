@@ -125,10 +125,6 @@ async function sendToWebhook(webhookUrl, title, fields, color = Colors.Green) {
   }
 }
 
-async function notifyStaff(config, title, fields, color = Colors.Green) {
-  await sendToWebhook(config?.discord?.webhooks?.staffChannel, title, fields, color);
-}
-
 async function notifyWebstore(config, title, fields, color = Colors.Green) {
   await sendToWebhook(config?.discord?.webhooks?.webstoreChannel, title, fields, color);
 }
@@ -387,24 +383,7 @@ async function handleCheckoutCompleted(event, config) {
     console.error("[webstore] Failed to record finance income for purchase", purchase.purchaseId, err.message);
   }
 
-  await Promise.all([
-    notifyStaff(
-      config,
-      `${purchase.itemName} Purchased`,
-      [
-        ["Player", purchase.recipientMinecraftUsername, true],
-        ["Type", purchase.purchaseType === "subscription" ? "Subscription" : "One-time", true],
-        [
-          "Amount",
-          `${(purchase.currency || "usd").toUpperCase()} ${(purchase.amountCents / 100).toFixed(2)}`,
-          true,
-        ],
-        ["Gifted", purchase.isGift ? "Yes" : "No", true],
-      ],
-      Colors.Green
-    ),
-    notifyPurchase(config, purchase),
-  ]);
+  await notifyPurchase(config, purchase);
 }
 
 // ---------------------------------------------------------------------------
@@ -477,10 +456,7 @@ async function handleInvoicePaymentSucceeded(event, config) {
     ["Price ID", subscription.stripePriceId, false],
     ["Next Renewal", periodEndDate, true],
   ];
-  await Promise.all([
-    notifyStaff(config, "Subscription Renewed", renewalFields, Colors.Blue),
-    notifyWebstore(config, "🔄 Subscription Renewed", renewalFields, Colors.Blue),
-  ]);
+  await notifyWebstore(config, "🔄 Subscription Renewed", renewalFields, Colors.Blue);
 }
 
 // ---------------------------------------------------------------------------
@@ -527,10 +503,7 @@ async function handleInvoicePaymentFailed(event, config) {
     ["Price ID", subscription.stripePriceId, true],
     ["Attempt", String(invoice.attempt_count || 1), true],
   ];
-  await Promise.all([
-    notifyStaff(config, "Subscription Payment Failed", failedFields, Colors.Yellow),
-    notifyWebstore(config, "⚠️ Subscription Payment Failed", failedFields, Colors.Yellow),
-  ]);
+  await notifyWebstore(config, "⚠️ Subscription Payment Failed", failedFields, Colors.Yellow);
 }
 
 // ---------------------------------------------------------------------------
@@ -627,10 +600,7 @@ async function handleSubscriptionDeleted(event, config) {
     ["Reason", stripeSub.cancellation_details?.reason || "unknown", true],
     ["Revoke commands", String(revokeCommands.length), true],
   ];
-  await Promise.all([
-    notifyStaff(config, "Subscription Cancelled", cancelledFields, Colors.Red),
-    notifyWebstore(config, "❌ Subscription Cancelled", cancelledFields, Colors.Red),
-  ]);
+  await notifyWebstore(config, "❌ Subscription Cancelled", cancelledFields, Colors.Red);
 }
 
 // ---------------------------------------------------------------------------
