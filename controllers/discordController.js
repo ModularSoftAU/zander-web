@@ -46,7 +46,10 @@ client.once("ready", async () => {
 });
 
 client.on("shardError", (error) => {
-  console.error("A websocket connection encountered an error:", error);
+  // Transient Discord gateway hiccup (e.g. HTTP 503 on connect). discord.js
+  // reconnects automatically — warn, don't page. Fatal cases surface via
+  // 'error' / 'shardDisconnect' / 'invalidated' instead.
+  console.warn("Discord gateway shard error (auto-reconnecting):", error?.message || error);
 });
 
 client.login(process.env.discordAPIKey);
