@@ -287,6 +287,16 @@ export const adminPages = [
     group: "System",
     sortOrder: 74,
   },
+  {
+    slug: "wrapped",
+    title: "Wrapped",
+    menuTitle: "Wrapped",
+    icon: "fa-solid fa-gift",
+    capability: "zander.web.wrapped",
+    path: "/dashboard/wrapped",
+    group: "System",
+    sortOrder: 74.5,
+  },
 
   // ── Webstore group ─────────────────────────────────────────────────────────
   {
@@ -414,6 +424,17 @@ export const adminPages = [
     group: "Mixed",
     sortOrder: 94,
   },
+  // ── Community — Users ──────────────────────────────────────────────────────
+  {
+    slug: "users",
+    title: "Users",
+    menuTitle: "Users",
+    icon: "fa-solid fa-users",
+    capability: "zander.web.users",
+    path: "/dashboard/users",
+    group: "Community",
+    sortOrder: 22.5,
+  },
   // ── Community — Badges ─────────────────────────────────────────────────────
   {
     slug: "badges",
@@ -500,6 +521,13 @@ export const adminSubPages = [
     parent: "badges",
     path: "/dashboard/badges/assign",
     capability: "zander.web.badges",
+  },
+  {
+    slug: "users-detail",
+    title: "User Details",
+    parent: "users",
+    path: "/dashboard/users/",
+    capability: "zander.web.users",
   },
 
   // Finance sub-pages

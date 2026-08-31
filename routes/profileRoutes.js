@@ -20,6 +20,7 @@ import {
   getUserPunishments,
 } from "../services/profileService.js";
 import { getBadgesForUser } from "../controllers/badgeController.js";
+import { retryDeferredDiscordRoles } from "../controllers/webstoreController.js";
 import {
   getDiscordPunishmentsForProfile,
   hasActiveWebBan,
@@ -476,8 +477,9 @@ export default function profileSiteRoutes(
       });
 
       if (!tokenResponse.ok) {
+        const tokenErrorBody = await tokenResponse.text().catch(() => "");
         throw new Error(
-          `Failed to obtain Discord token (${tokenResponse.status} ${tokenResponse.statusText})`
+          `Failed to obtain Discord token (${tokenResponse.status} ${tokenResponse.statusText}) ${tokenErrorBody}`.trim()
         );
       }
 
@@ -518,6 +520,18 @@ export default function profileSiteRoutes(
 
       await syncMemberRankRoles(req.session.user.userId);
 
+      // Grant any Discord roles from past webstore purchases that were deferred
+      // because this account wasn't linked yet.
+      try {
+        await retryDeferredDiscordRoles({
+          userId: req.session.user.userId,
+          discordClient: client,
+          guildId: config.discord?.guildId,
+        });
+      } catch (roleErr) {
+        console.error("[PROFILE] Deferred webstore role retry after Discord link failed:", roleErr.message);
+      }
+
       // Trigger nickname enforcement now that the account is linked
       if (features.discord?.events?.nicknameCheck && config.discord?.nicknameReportChannelId && config.discord?.guildId) {
         try {
@@ -553,12 +567,23 @@ export default function profileSiteRoutes(
 
       setBannerCookie("success", "Discord account connected!", res);
     } catch (error) {
-      console.error("[PROFILE] Discord link failed", error);
-      setBannerCookie(
-        "danger",
-        "We couldn't connect your Discord account. Please try again soon.",
-        res
-      );
+      console.error("[PROFILE] Discord link failed", {
+        userId: req.session?.user?.userId,
+        siteAddress: process.env.siteAddress,
+        redirectUri: `${process.env.siteAddress}/profile/social/discord/callback`,
+        message: error?.message,
+        stack: error?.stack,
+      });
+
+      const msg = String(error?.message || "");
+      let banner = "We couldn't connect your Discord account. Please try again soon.";
+      if (/obtain Discord token/i.test(msg)) {
+        banner =
+          "Discord rejected the sign-in (token exchange failed). This is a server configuration issue, not something you can fix — staff have been notified.";
+      } else if (/fetch Discord profile/i.test(msg)) {
+        banner = "Discord accepted the sign-in but wouldn't share your profile. Please try again shortly.";
+      }
+      setBannerCookie("danger", banner, res);
     }
 
     return res.redirect(redirectPath);

@@ -1,15 +1,28 @@
 # Zander Addon Configuration
 
-# --- API Server Settings ---
-# Enable the built-in API server
-# If enabled, this server will host the /api/config/policy endpoint
-api-server:
-  enabled: true
-  port: 8080
-
 # --- Plugin Settings ---
-# The base URL for the API (where the plugin fetches policy URLs from)
+# Base URL of the Zander web API. The plugin fetches policy and social links
+# from <api-url>/config/policy and <api-url>/config/social (public, no token).
+# Do not include a trailing slash.
 api-url: "https://craftingforchrist.net/api"
+
+# API key sent as the x-access-token header on authenticated bridge calls.
+# Must match the `apiKey` value in the web app's .env. Required for
+# vote-rewards and executor-bridge below.
+api-key: "CHANGEME"
+
+# This server's identifier, used to target queued commands at this server.
+# Matches the serverName / slug used when commands are queued on the web side.
+server-name: "hub"
+
+# --- Command bridge ---
+# Always active:
+#  - on player join, claims and runs queued vote-reward commands
+#    (POST <api-url>/command-bridge/claim, then /complete and /fail)
+#  - polls the executor task queue on the interval below and runs queued
+#    console commands targeted at this server (GET <api-url>/bridge/processor/get)
+executor-bridge:
+  poll-interval-seconds: 10
 
 # Settings for the in-game policy book
 policy-book:

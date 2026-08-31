@@ -78,7 +78,13 @@
                                 <% punishments.forEach((p) => { %>
                                 <tr>
                                     <td><%= p.id %></td>
-                                    <td><%= p.target_username || p.target_player_id || '—' %></td>
+                                    <td>
+                                        <% if (p.target_username && p.target_player_id) { %>
+                                            <a href="/dashboard/users/<%= p.target_player_id %>"><%= p.target_username %></a>
+                                        <% } else { %>
+                                            <%= p.target_username || p.target_player_id || '—' %>
+                                        <% } %>
+                                    </td>
                                     <td>
                                         <% if (p.type === 'WARN') { %>
                                             <span class="badge bg-warning text-dark">Warning</span>

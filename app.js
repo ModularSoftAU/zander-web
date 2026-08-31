@@ -14,6 +14,12 @@ process.on("uncaughtException", (error) => {
   console.error("[UNCAUGHT EXCEPTION]", error);
 });
 
+// Fan every console.error / console.warn (and the two handlers above) out to a
+// throttled email to the system admin. No-op unless adminErrorEmail + smtpHost
+// are set in .env. Installed early so nothing logged during boot is missed.
+import { installGlobalErrorReporting, reportError } from "./controllers/errorReporterController.js";
+installGlobalErrorReporting();
+
 const packageData = require("./package.json");
 import moment from "moment";
 import fetch from "node-fetch";
@@ -169,6 +175,14 @@ const buildApp = async () => {
       );
     } else {
       app.log.error(error);
+      // pino's app.log.error bypasses the console patch, so mail 5xx explicitly.
+      if (statusCode >= 500) {
+        reportError({
+          source: "fastify",
+          error,
+          meta: { method: req.method, url: req.url, statusCode },
+        });
+      }
     }
 
     res.status(statusCode);

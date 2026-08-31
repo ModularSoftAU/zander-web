@@ -134,6 +134,7 @@ model users {
   profilePicture_email         String?                    @db.VarChar(70)
   account_registered           DateTime?
   account_disabled             Boolean                    @default(false)
+  is_placeholder               Boolean                    @default(false)
   social_aboutMe               String?                    @db.MediumText
   social_interests             String?                    @db.VarChar(50)
   social_discord               String?                    @db.VarChar(32)
@@ -154,6 +155,9 @@ model users {
 
   emailVerifications           userEmailVerifications[]
   passwordResets               userPasswordResets[]
+
+  @@index([username])
+  @@index([discordId])
 }
 
 model userEmailVerifications {
@@ -229,6 +233,7 @@ model forumDiscussions {
 model forumPosts {
   postId       Int                  @id @default(autoincrement())
   discussionId Int
+  parentPostId Int?
   userId       Int
   replyToPostId Int?
   content      String               @db.MediumText
@@ -237,6 +242,8 @@ model forumPosts {
   updatedAt    DateTime             @updatedAt
 
   discussion   forumDiscussions     @relation(fields: [discussionId], references: [discussionId])
+  parentPost   forumPosts?          @relation("PostReplies", fields: [parentPostId], references: [postId])
+  replies      forumPosts[]         @relation("PostReplies")
   revisions    forumPostRevisions[]
   replyToPost  forumPosts?          @relation("ForumPostReplies", fields: [replyToPostId], references: [postId], onDelete: SetNull)
   replies      forumPosts[]         @relation("ForumPostReplies")

@@ -18,16 +18,23 @@
   <meta name="keywords" content="<%= config.siteConfiguration.keywords %>">
   <meta name="author" content="<%= config.siteConfiguration.siteName %>">
   <meta name="theme-color" content="#2f508c">
+  <%# GEO: let search + AI answer engines quote and preview freely unless a page opts out %>
+  <meta name="robots" content="<%= typeof pageRobots !== 'undefined' && pageRobots ? pageRobots : 'index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1' %>">
   <link rel="canonical" href="<%= config.siteConfiguration.siteUrl %><%= req.url.split('?')[0] %>">
   <link rel="manifest" href="/manifest.webmanifest">
+  <link rel="icon" type="image/png" href="/images/siteLogo.png">
   <link rel="apple-touch-icon" href="/images/siteLogo.png">
 
   <!-- Open Graph / Facebook -->
   <meta property="og:type" content="website">
+  <meta property="og:site_name" content="<%= config.siteConfiguration.siteName %>">
   <meta property="og:url" content="<%= config.siteConfiguration.siteUrl %><%= req.url.split('?')[0] %>">
   <meta property="og:title" content="<%= pageTitle %>">
   <meta property="og:description" content="<%= pageDescription %> // <%= config.siteConfiguration.tagline %>">
   <meta property="og:image" content="<%= config.siteConfiguration.siteUrl %>/images/meta-siteLogo.png">
+  <meta property="og:image:width" content="264">
+  <meta property="og:image:height" content="372">
+  <meta property="og:image:alt" content="<%= config.siteConfiguration.siteName %> logo">
 
   <meta property="og:locale" content="en_AU">
 
@@ -37,9 +44,19 @@
   <meta property="twitter:title" content="<%= pageTitle %>">
   <meta property="twitter:description" content="<%= pageDescription %>">
   <meta property="twitter:image" content="<%= config.siteConfiguration.siteUrl %>/images/meta-siteLogo.png">
+  <meta property="twitter:image:alt" content="<%= config.siteConfiguration.siteName %> logo">
 
+  <%# Structured data (JSON-LD). Routes that call lib/seo/jsonLd.buildGraph pass a
+      ready, <script>-safe string (or an array of them) as `pageJsonLd`, which
+      already carries the Organization + WebSite nodes. Pages that don't opt in
+      still get a base Organization + WebSite graph so every URL names the
+      site's canonical entity for generative engines. %>
   <% if (typeof pageJsonLd !== 'undefined' && pageJsonLd) { %>
-  <script type="application/ld+json"><%= pageJsonLd %></script>
+    <% (Array.isArray(pageJsonLd) ? pageJsonLd : [pageJsonLd]).forEach(function (block) { %>
+  <script type="application/ld+json"><%- typeof block === 'string' ? block : JSON.stringify(block) %></script>
+    <% }) %>
+  <% } else { %>
+  <script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"Organization","@id":"<%= config.siteConfiguration.siteUrl %>/#organization","name":<%- JSON.stringify(String(config.siteConfiguration.siteName || '')) %>,"url":"<%= config.siteConfiguration.siteUrl %>","description":<%- JSON.stringify(String(config.siteConfiguration.tagline || '')) %>,"logo":{"@type":"ImageObject","url":"<%= config.siteConfiguration.siteUrl %>/images/siteLogo.png"}<% var _sa = Object.values(config.siteConfiguration.platforms || {}).filter(function (v) { return typeof v === 'string' && /^https?:\/\//i.test(v); }); if (config.siteConfiguration.email) { %>,"email":<%- JSON.stringify(String(config.siteConfiguration.email)) %><% } if (_sa.length) { %>,"sameAs":<%- JSON.stringify(_sa) %><% } %>},{"@type":"WebSite","@id":"<%= config.siteConfiguration.siteUrl %>/#website","name":<%- JSON.stringify(String(config.siteConfiguration.siteName || '')) %>,"url":"<%= config.siteConfiguration.siteUrl %>","inLanguage":"en","publisher":{"@id":"<%= config.siteConfiguration.siteUrl %>/#organization"}}]}</script>
   <% } %>
 
   <script src="https://code.jquery.com/jquery-3.5.1.min.js" integrity="sha384-ZvpUoO/+PpLXR1lu4jmpXWu80pZlYUAfxl5NsBMWOEPSjUn/6Z/hRTt8+pR6L4N2" crossorigin="anonymous"></script>

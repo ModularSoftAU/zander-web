@@ -103,6 +103,19 @@ async function syncPurchaseStatuses() {
 
   for (const { purchaseId } of purchases) {
     try {
+      // Skip purchases that have already settled (avoids re-writing 'fulfilled'
+      // every tick for old purchases that still carry a 'deferred' run).
+      const [pRow] = await new Promise((resolve, reject) => {
+        db.query(
+          "SELECT status FROM webstorePurchases WHERE purchaseId = ? LIMIT 1",
+          [purchaseId],
+          (err, results) => (err ? reject(err) : resolve(results))
+        );
+      });
+      if (pRow && (pRow.status === "fulfilled" || pRow.status === "failed" || pRow.status === "refunded")) {
+        continue;
+      }
+
       const rows = await new Promise((resolve, reject) => {
         db.query(
           "SELECT status FROM webstoreCommandRuns WHERE purchaseId = ?",
@@ -114,14 +127,17 @@ async function syncPurchaseStatuses() {
       if (!rows.length) continue;
 
       const statuses = rows.map((r) => r.status);
-      const allCompleted = statuses.every((s) => s === "completed");
+      // 'deferred' (discord_role for a not-yet-linked recipient) counts as
+      // settled and NOT a failure — the paid content delivered; the role is
+      // re-driven when they link (webstoreController.retryDeferredDiscordRoles).
+      const allSettledOk = statuses.every((s) => s === "completed" || s === "deferred");
       const anyFailed = statuses.some((s) => s === "failed");
       const anyPending = statuses.some((s) => s === "queued" || s === "processing");
 
-      if (allCompleted) {
+      if (allSettledOk) {
         await updatePurchaseStatus(purchaseId, "fulfilled");
       } else if (anyFailed && !anyPending) {
-        // All runs have settled but at least one failed — mark purchase failed
+        // All runs have settled but at least one genuinely failed
         await updatePurchaseStatus(purchaseId, "failed");
       }
       // Otherwise leave the purchase as 'paid' while commands are still running

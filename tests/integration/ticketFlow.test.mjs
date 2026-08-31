@@ -53,20 +53,25 @@ vi.mock("discord.js", async (importOriginal) => {
     ...actual,
     SapphireClient: class { constructor() {} },
     EmbedBuilder: class {
-      setTitle() { return this; }
-      setDescription() { return this; }
-      setColor() { return this; }
-      addFields() { return this; }
+      setTitle(v) { this.title = v; return this; }
+      setDescription(v) { this.description = v; return this; }
+      setColor(v) { this.color = v; return this; }
+      addFields(...v) { this.fields = (this.fields || []).concat(v); return this; }
       setTimestamp() { return this; }
     },
-    ActionRowBuilder: class { addComponents() { return this; } },
+    ActionRowBuilder: class {
+      addComponents(...components) {
+        this.components = (this.components || []).concat(components);
+        return this;
+      }
+    },
     ButtonBuilder: class {
-      setCustomId() { return this; }
-      setLabel() { return this; }
-      setStyle() { return this; }
-      setURL() { return this; }
-      setDisabled() { return this; }
-      setEmoji() { return this; }
+      setCustomId(v) { this.customId = v; return this; }
+      setLabel(v) { this.label = v; return this; }
+      setStyle(v) { this.style = v; return this; }
+      setURL(v) { this.url = v; return this; }
+      setDisabled(v) { this.disabled = v; return this; }
+      setEmoji(v) { this.emoji = v; return this; }
     },
     ButtonStyle: { Link: 5, Danger: 4, Secondary: 2 },
     PermissionFlagsBits: {
@@ -201,6 +206,25 @@ describe("startTicketFlow", () => {
     const interaction = buildInteraction();
     await startTicketFlow(interaction);
     expect(mockChannelSend).toHaveBeenCalledOnce();
+  });
+
+  it("posts the opener embed and a Close Ticket button to the channel", async () => {
+    mockGetUserIdByDiscordId.mockResolvedValue(7);
+    const interaction = buildInteraction();
+    await startTicketFlow(interaction);
+
+    const payload = mockChannelSend.mock.calls.at(-1)?.[0];
+    expect(payload).toBeTruthy();
+
+    // The opener embed, carrying the ticket subject.
+    expect(Array.isArray(payload.embeds)).toBe(true);
+    expect(payload.embeds[0].title).toContain("Test Subject");
+
+    // A Close Ticket button in the action row.
+    const buttons = payload.components.flatMap((row) => row.components || []);
+    const closeButton = buttons.find((b) => b.customId === "support_ticket_close");
+    expect(closeButton).toBeTruthy();
+    expect(closeButton.label).toBe("Close Ticket");
   });
 });
 

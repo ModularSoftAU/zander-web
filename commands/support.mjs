@@ -10,6 +10,7 @@ import {
   ActionRowBuilder,
   ChannelType,
   EmbedBuilder,
+  OverwriteType,
 } from "discord.js";
 import { startTicketFlow } from "../lib/discord/ticketFlow.mjs";
 import {
@@ -239,7 +240,16 @@ export class SupportCommand extends Command {
       const ticketDetails = await getTicketDetailsByChannel(interaction.channel.id);
 
       if (!ticketDetails) {
-        return interaction.editReply({ content: "This channel is not linked to a ticket." });
+        console.warn("ticket add: channel not linked to a ticket", {
+          channelId: interaction.channel.id,
+          channelName: interaction.channel.name,
+          parentId: interaction.channel.parentId,
+          guildId: interaction.guildId,
+        });
+        return interaction.editReply({
+          content:
+            "This channel is not linked to a ticket. Run this in the ticket's own channel — if you created the ticket on the website, its Discord channel may have failed to create (check the bot's permissions on the ticket category).",
+        });
       }
 
       const canAdd = await callerHasManageParticipants(interaction.user.id);
@@ -278,15 +288,27 @@ export class SupportCommand extends Command {
             }
             // Directly grant channel access using the Discord user ID from the slash command
             try {
-              await interaction.channel.permissionOverwrites.edit(userOption.id, {
-                ViewChannel: true,
-                SendMessages: true,
-                AttachFiles: true,
-                ReadMessageHistory: true,
-              });
+              await interaction.channel.permissionOverwrites.edit(
+                userOption.id,
+                {
+                  ViewChannel: true,
+                  SendMessages: true,
+                  AttachFiles: true,
+                  ReadMessageHistory: true,
+                },
+                { type: OverwriteType.Member },
+              );
             } catch (permError) {
-              console.error("ticket add: failed to set channel permissions for user", permError);
-              additions.push(`Warning: could not grant ${userOption.tag} channel access.`);
+              console.error("ticket add: failed to set channel permissions for user", {
+                targetUserId: userOption.id,
+                channelId: interaction.channel.id,
+                discordCode: permError?.code,
+                status: permError?.status,
+                message: permError?.message,
+              });
+              additions.push(
+                `Warning: could not grant ${userOption.tag} channel access (${permError?.code ?? permError?.message ?? "unknown error"}).`
+              );
             }
             await interaction.channel.send(`✅ ${interaction.user.tag} added ${userOption.tag} to this ticket.`);
           } catch (userAddError) {
@@ -320,28 +342,53 @@ export class SupportCommand extends Command {
           }
           // Directly grant channel access using the Discord role ID from the slash command
           try {
-            await interaction.channel.permissionOverwrites.edit(roleOption.id, {
-              ViewChannel: true,
-              SendMessages: true,
-              AttachFiles: true,
-              ReadMessageHistory: true,
-            });
+            await interaction.channel.permissionOverwrites.edit(
+              roleOption.id,
+              {
+                ViewChannel: true,
+                SendMessages: true,
+                AttachFiles: true,
+                ReadMessageHistory: true,
+              },
+              { type: OverwriteType.Role },
+            );
           } catch (permError) {
-            console.error("ticket add: failed to set channel permissions for role", permError);
-            additions.push(`Warning: could not grant ${roleOption.name} channel access.`);
+            console.error("ticket add: failed to set channel permissions for role", {
+              roleId: roleOption.id,
+              roleName: roleOption.name,
+              channelId: interaction.channel.id,
+              discordCode: permError?.code,
+              status: permError?.status,
+              message: permError?.message,
+            });
+            additions.push(
+              `Warning: could not grant ${roleOption.name} channel access (${permError?.code ?? permError?.message ?? "unknown error"}).`
+            );
           }
           await interaction.channel.send(`✅ ${interaction.user.tag} added ${roleOption.name} to this ticket.`);
         } catch (roleAddError) {
-          console.error("ticket add: failed to add role participant", roleAddError);
-          additions.push(`Failed to add role ${roleOption.name}`);
+          console.error("ticket add: failed to add role participant", {
+            roleId: roleOption.id,
+            roleName: roleOption.name,
+            discordCode: roleAddError?.code,
+            message: roleAddError?.message,
+            stack: roleAddError?.stack,
+          });
+          additions.push(`Failed to add role ${roleOption.name} (${roleAddError?.code ?? roleAddError?.message ?? "unknown error"})`);
         }
       }
 
       try {
         await applyTicketParticipantPermissions(interaction.client, ticketDetails.ticketId);
       } catch (permissionError) {
-        console.error("ticket add: failed to apply participant permissions", permissionError);
-        additions.push("Warning: could not refresh channel permissions.");
+        console.error("ticket add: failed to apply participant permissions", {
+          ticketId: ticketDetails.ticketId,
+          discordCode: permissionError?.discordCode ?? permissionError?.cause?.code,
+          message: permissionError?.message,
+        });
+        additions.push(
+          `Warning: could not refresh channel permissions (${permissionError?.discordCode ?? permissionError?.cause?.code ?? "unknown"}). Check the bot's Manage Permissions on the ticket category.`
+        );
       }
 
       return interaction.editReply({

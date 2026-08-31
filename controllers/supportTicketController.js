@@ -2,7 +2,7 @@ import { createRequire } from "module";
 const require = createRequire(import.meta.url);
 const config = require("../config.json");
 import db, { luckpermsDb } from "./databaseController.js";
-import { ChannelType, PermissionFlagsBits } from "discord.js";
+import { ChannelType, PermissionFlagsBits, OverwriteType } from "discord.js";
 import { hashEmail } from "../api/common.js";
 import { createNotificationsForUsers } from "./notificationController.js";
 
@@ -582,6 +582,23 @@ export async function createSupportTicket(
         },
     ];
 
+    // The bot must be able to see and post in the channel it just created —
+    // without an explicit overwrite the @everyone ViewChannel deny above can
+    // stop `channel.send` (the pinned opener embed) from working.
+    const botId = client?.user?.id;
+    if (botId) {
+        permissionOverwrites.push({
+            id: botId,
+            allow: [
+                PermissionFlagsBits.ViewChannel,
+                PermissionFlagsBits.SendMessages,
+                PermissionFlagsBits.EmbedLinks,
+                PermissionFlagsBits.AttachFiles,
+                PermissionFlagsBits.ReadMessageHistory,
+            ],
+        });
+    }
+
     if (discordUserId) {
         permissionOverwrites.push({
             id: discordUserId,
@@ -609,12 +626,9 @@ export async function createSupportTicket(
 
     const hasChannelColumn = await ensureDiscordChannelColumn();
 
-    // Insert the ticket row first (without a channel yet) so we know the
-    // ticketId before creating the Discord channel — that lets the channel
-    // be named ticket-<id> on creation instead of needing a rename call
-    // right after. Renaming after the fact used to leave channels stuck as
-    // "ticket-pending" whenever that second call hit Discord's channel-name
-    // rate limit (2 changes per 10 min).
+    // Persist the ticket row FIRST. A Discord API failure can then never leave an
+    // orphaned "ticket-pending" channel with no matching DB row (the bug that
+    // spammed `getTicketDetailsByChannel: no ticket linked to channel ...`).
     const ticketId = await new Promise((resolve, reject) => {
         db.query(
             "INSERT INTO supportTickets (userId, categoryId, title) VALUES (?, ?, ?)",
@@ -623,29 +637,40 @@ export async function createSupportTicket(
         );
     });
 
+    // Create the Discord channel already named with the real ticket id, so a
+    // failure part-way through leaves an obviously-named, sweepable channel
+    // rather than a bare "ticket-pending".
     const channelCreationOptions = {
         name: `ticket-${ticketId}`,
         type: ChannelType.GuildText,
         permissionOverwrites,
-        reason: `Support ticket for ${discordUserId ?? `user ${userId}`}`,
+        reason: `Support ticket #${ticketId} for ${discordUserId ?? `user ${userId}`}`,
     };
-
-    // Set parent category if configured
     if (targetParentId) {
         channelCreationOptions.parent = targetParentId;
     }
 
-    let channel;
+    let channel = null;
     try {
         channel = await guild.channels.create(channelCreationOptions);
     } catch (channelError) {
-        await new Promise((resolve) => {
-            db.query("DELETE FROM supportTickets WHERE ticketId = ?", [ticketId], () => resolve());
+        console.error("createSupportTicket: Discord channel creation failed; ticket persisted without a channel", {
+            ticketId,
+            parentId: targetParentId,
+            discordCode: channelError?.code,
+            message: channelError?.message,
         });
-        throw channelError;
+        // The row survives — staff can recreate the channel via ticket reopen.
+        return { ticketId, channel: null };
     }
 
-    if (hasChannelColumn) {
+    if (!hasChannelColumn) {
+        return { ticketId, channel };
+    }
+
+    // Link the channel back to the row. If this fails, delete the channel so it
+    // never dangles unlinked.
+    try {
         await new Promise((resolve, reject) => {
             db.query(
                 "UPDATE supportTickets SET discordChannelId = ? WHERE ticketId = ?",
@@ -653,9 +678,137 @@ export async function createSupportTicket(
                 (err) => (err ? reject(err) : resolve()),
             );
         });
+    } catch (linkError) {
+        console.error("createSupportTicket: failed to link channel to ticket; deleting channel", {
+            ticketId,
+            channelId: channel.id,
+            message: linkError?.message,
+        });
+        try {
+            await channel.delete("Failed to link ticket channel to database row");
+        } catch (cleanupError) {
+            console.error("createSupportTicket: failed to delete unlinked ticket channel", {
+                ticketId,
+                channelId: channel.id,
+            }, cleanupError);
+        }
+        return { ticketId, channel: null };
     }
 
     return { ticketId, channel };
+}
+
+/**
+ * Delete Discord channels that look like ticket channels (name `ticket-<n>` or
+ * the legacy `ticket-pending`) but have no matching `supportTickets` row linking
+ * them. These are the debris left by a create that failed after the channel was
+ * made. Runs on bot startup. `minAgeMinutes` guards against deleting a channel
+ * whose row is still being written by an in-flight `createSupportTicket`.
+ */
+export async function cleanupOrphanTicketChannels(client, { minAgeMinutes = 10, dryRun = false } = {}) {
+    const hasChannelColumn = await ensureDiscordChannelColumn();
+    if (!hasChannelColumn || !client) return { scanned: 0, deleted: 0 };
+
+    const guildId = config.discord?.guildId ?? process.env.DISCORD_GUILD_ID;
+    const categoryId = config.discord?.supportTicketCategoryId ?? process.env.SUPPORT_CATEGORY_ID ?? null;
+    if (!guildId) return { scanned: 0, deleted: 0 };
+
+    let guild;
+    try {
+        guild = await client.guilds.fetch(guildId);
+    } catch (error) {
+        console.error("cleanupOrphanTicketChannels: failed to fetch guild", error);
+        return { scanned: 0, deleted: 0 };
+    }
+
+    let channels;
+    try {
+        channels = await guild.channels.fetch();
+    } catch (error) {
+        console.error("cleanupOrphanTicketChannels: failed to fetch channels", error);
+        return { scanned: 0, deleted: 0 };
+    }
+
+    const linkedIds = await new Promise((resolve) => {
+        db.query(
+            "SELECT discordChannelId FROM supportTickets WHERE discordChannelId IS NOT NULL",
+            (err, rows) => {
+                if (err) {
+                    console.error("cleanupOrphanTicketChannels: failed to load linked channel ids", err);
+                    resolve(null);
+                    return;
+                }
+                resolve(new Set(rows.map((r) => String(r.discordChannelId))));
+            },
+        );
+    });
+    if (!linkedIds) return { scanned: 0, deleted: 0 };
+
+    const cutoff = Date.now() - minAgeMinutes * 60 * 1000;
+    const candidates = [...channels.values()].filter(
+        (ch) =>
+            ch &&
+            ch.type === ChannelType.GuildText &&
+            /^ticket-(pending|\d+)$/.test(ch.name) &&
+            (!categoryId || ch.parentId === categoryId) &&
+            !linkedIds.has(String(ch.id)) &&
+            ch.createdTimestamp &&
+            ch.createdTimestamp < cutoff,
+    );
+
+    const me = guild.members?.me ?? null;
+    let deleted = 0;
+    const skipped = []; // channels we cannot touch — reported once, not per-channel
+
+    for (const ch of candidates) {
+        // Don't even attempt the API call if the bot plainly can't manage this
+        // channel — that just produces a 50001/50013 error per restart.
+        const perms = me ? ch.permissionsFor(me) : null;
+        if (
+            perms &&
+            !(
+                perms.has(PermissionFlagsBits.ViewChannel) &&
+                perms.has(PermissionFlagsBits.ManageChannels)
+            )
+        ) {
+            skipped.push(`${ch.name} (${ch.id})`);
+            continue;
+        }
+
+        if (dryRun) {
+            console.info(`cleanupOrphanTicketChannels: [dry-run] would delete ${ch.name} (${ch.id})`);
+            continue;
+        }
+
+        try {
+            await ch.delete("Orphaned ticket channel with no matching database row");
+            deleted += 1;
+            console.info(`cleanupOrphanTicketChannels: deleted orphan ${ch.name} (${ch.id})`);
+        } catch (error) {
+            if (error?.code === 50001 || error?.code === 50013) {
+                skipped.push(`${ch.name} (${ch.id})`);
+            } else {
+                console.error(
+                    `cleanupOrphanTicketChannels: failed to delete ${ch.name} (${ch.id})`,
+                    error,
+                );
+            }
+        }
+    }
+
+    if (deleted) {
+        console.info(
+            `cleanupOrphanTicketChannels: ${deleted}/${candidates.length} orphan ticket channel(s) removed`,
+        );
+    }
+    if (skipped.length) {
+        console.warn(
+            `cleanupOrphanTicketChannels: ${skipped.length} orphan ticket channel(s) left in place — ` +
+                `bot lacks View Channel + Manage Channels on them (grant access on the ticket category ` +
+                `or delete manually): ${skipped.sort().join(", ")}`,
+        );
+    }
+    return { scanned: candidates.length, deleted, skipped: skipped.length };
 }
 
 export async function recreateTicketChannel(
@@ -725,6 +878,20 @@ export async function recreateTicketChannel(
             deny: [PermissionFlagsBits.ViewChannel],
         },
     ];
+
+    const botId = client?.user?.id;
+    if (botId) {
+        permissionOverwrites.push({
+            id: botId,
+            allow: [
+                PermissionFlagsBits.ViewChannel,
+                PermissionFlagsBits.SendMessages,
+                PermissionFlagsBits.EmbedLinks,
+                PermissionFlagsBits.AttachFiles,
+                PermissionFlagsBits.ReadMessageHistory,
+            ],
+        });
+    }
 
     if (owner?.discordId) {
         permissionOverwrites.push({
@@ -1124,17 +1291,40 @@ export async function applyTicketParticipantPermissions(client, ticketId) {
 
     const isSnowflake = (value) => Boolean(value) && /^\d{5,}$/.test(String(value).trim());
 
+    const botPerms = channel.permissionsFor?.(channel.guild?.members?.me);
+    const canManagePermissions = botPerms ? botPerms.has(PermissionFlagsBits.ManageRoles) : null;
+
     participants.users
         .map((user) => (user.discordId ? String(user.discordId).trim() : ""))
         .filter((id) => isSnowflake(id))
         .forEach((discordId) => {
             permissionUpdates.push(
-                channel.permissionOverwrites.edit(discordId, {
-                    ViewChannel: true,
-                    SendMessages: true,
-                    AttachFiles: true,
-                    ReadMessageHistory: true,
-                }),
+                channel.permissionOverwrites
+                    .edit(
+                        discordId,
+                        {
+                            ViewChannel: true,
+                            SendMessages: true,
+                            AttachFiles: true,
+                            ReadMessageHistory: true,
+                        },
+                        // Explicit type: the target user may not be cached (never
+                        // seen by the bot), which otherwise fails with InvalidType
+                        // "Supplied parameter is not a User nor a Role".
+                        { type: OverwriteType.Member },
+                    )
+                    .catch((error) => {
+                        console.error("applyTicketParticipantPermissions: failed to grant user overwrite", {
+                            ticketId,
+                            channelId: channel.id,
+                            targetUserId: discordId,
+                            canManagePermissions,
+                            discordCode: error?.code,
+                            status: error?.status,
+                            message: error?.message,
+                        });
+                        throw error;
+                    }),
             );
         });
 
@@ -1148,20 +1338,50 @@ export async function applyTicketParticipantPermissions(client, ticketId) {
             return valid;
         })
         .forEach((roleId) => {
+            const role = channel.guild?.roles?.cache?.get(roleId);
+            const botHighest = channel.guild?.members?.me?.roles?.highest;
             permissionUpdates.push(
-                channel.permissionOverwrites.edit(roleId, {
-                    ViewChannel: true,
-                    SendMessages: true,
-                    AttachFiles: true,
-                    ReadMessageHistory: true,
-                }),
+                channel.permissionOverwrites
+                    .edit(
+                        roleId,
+                        {
+                            ViewChannel: true,
+                            SendMessages: true,
+                            AttachFiles: true,
+                            ReadMessageHistory: true,
+                        },
+                        { type: OverwriteType.Role },
+                    )
+                    .catch((error) => {
+                        console.error("applyTicketParticipantPermissions: failed to grant role overwrite", {
+                            ticketId,
+                            channelId: channel.id,
+                            targetRoleId: roleId,
+                            targetRoleName: role?.name ?? "(uncached)",
+                            targetRolePosition: role?.position ?? null,
+                            botHighestRole: botHighest?.name ?? null,
+                            botHighestPosition: botHighest?.position ?? null,
+                            botAboveTarget: role && botHighest ? botHighest.position > role.position : null,
+                            canManagePermissions,
+                            discordCode: error?.code,
+                            status: error?.status,
+                            message: error?.message,
+                        });
+                        throw error;
+                    }),
             );
         });
 
-    try {
-        await Promise.all(permissionUpdates);
-    } catch (error) {
-        console.error("applyTicketParticipantPermissions: failed to update channel permissions", error);
+    const results = await Promise.allSettled(permissionUpdates);
+    const failures = results.filter((r) => r.status === "rejected");
+    if (failures.length) {
+        const err = new Error(
+            `applyTicketParticipantPermissions: ${failures.length}/${results.length} channel permission update(s) failed for ticket ${ticketId}`,
+        );
+        err.cause = failures[0].reason;
+        err.discordCode = failures[0].reason?.code;
+        console.error(err.message, { discordCode: err.discordCode, canManagePermissions });
+        throw err;
     }
 }
 
@@ -1616,13 +1836,17 @@ export async function updateTicketCategory(client, ticketId, newCategoryId) {
         .filter((roleId) => isSnowflake(roleId))
         .forEach((roleId) => {
             permissionPromises.push(
-                channel.permissionOverwrites.edit(roleId, {
-                    ViewChannel: true,
-                    SendMessages: true,
-                    AttachFiles: true,
-                    ReadMessageHistory: true,
-                    ManageMessages: true,
-                }),
+                channel.permissionOverwrites.edit(
+                    roleId,
+                    {
+                        ViewChannel: true,
+                        SendMessages: true,
+                        AttachFiles: true,
+                        ReadMessageHistory: true,
+                        ManageMessages: true,
+                    },
+                    { type: OverwriteType.Role },
+                ),
             );
         });
 
@@ -1759,7 +1983,7 @@ export async function createUnlinkedUser(discordId, username) {
     // Truncate username to fit VARCHAR(16) column – Discord usernames can be up to 32 chars
     const safeName = username ? username.substring(0, 16) : "Unknown";
     return new Promise((resolve, reject) => {
-        db.query("INSERT INTO users (discordId, username, uuid) VALUES (?, ?, UUID())", [discordId, safeName], (err, results) => {
+        db.query("INSERT INTO users (discordId, username, uuid, is_placeholder) VALUES (?, ?, UUID(), 1)", [discordId, safeName], (err, results) => {
             if (err) {
                 reject(err);
             } else {
@@ -2062,12 +2286,16 @@ export async function getTicketDetailsByChannel(channelId) {
 
     return new Promise((resolve, reject) => {
         db.query(
-            "SELECT t.*, u.discordId FROM supportTickets t JOIN users u ON t.userId = u.userId WHERE t.discordChannelId = ?",
+            "SELECT t.*, u.discordId FROM supportTickets t LEFT JOIN users u ON t.userId = u.userId WHERE t.discordChannelId = ?",
             [channelId],
             (err, results) => {
                 if (err) {
+                    console.error("getTicketDetailsByChannel: query failed", { channelId, message: err.message });
                     reject(err);
                 } else {
+                    if (!results.length) {
+                        console.warn("getTicketDetailsByChannel: no ticket linked to channel", { channelId });
+                    }
                     resolve(results[0]);
                 }
             }

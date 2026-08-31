@@ -36,8 +36,20 @@ client.on("error", (error) => {
   console.error("Discord client error:", error);
 });
 
+client.once("ready", async () => {
+  try {
+    const { cleanupOrphanTicketChannels } = await import("./supportTicketController.js");
+    await cleanupOrphanTicketChannels(client);
+  } catch (error) {
+    console.error("Startup orphan ticket channel sweep failed:", error);
+  }
+});
+
 client.on("shardError", (error) => {
-  console.error("A websocket connection encountered an error:", error);
+  // Transient Discord gateway hiccup (e.g. HTTP 503 on connect). discord.js
+  // reconnects automatically — warn, don't page. Fatal cases surface via
+  // 'error' / 'shardDisconnect' / 'invalidated' instead.
+  console.warn("Discord gateway shard error (auto-reconnecting):", error?.message || error);
 });
 
 client.login(process.env.discordAPIKey);

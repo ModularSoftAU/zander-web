@@ -79,6 +79,7 @@ public class ZanderVelocityMain {
         commandManager.register(commandManager.metaBuilder("discord").build(), new discord());
         commandManager.register(commandManager.metaBuilder("rules").build(), new rules());
         commandManager.register(commandManager.metaBuilder("website").build(), new website());
+        commandManager.register(commandManager.metaBuilder("link").build(), new link());
         commandManager.register(commandManager.metaBuilder("ping").build(), new ping());
         commandManager.register(commandManager.metaBuilder("report").build(), new report());
         commandManager.register(commandManager.metaBuilder("clearchat").build(), new clearchat());

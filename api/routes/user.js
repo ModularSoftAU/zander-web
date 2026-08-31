@@ -417,6 +417,21 @@ export default function userApiRoute(app, config, db, features, lang) {
       const now = new Date();
       const codeExpiry = new Date(now.getTime() + 5 * 60000);
 
+      // Only one valid code should exist per player at a time — drop any
+      // previous (still-unexpired) code for this UUID before issuing a new
+      // one. This also clears the way for the INSERT below, since
+      // userVerifyLink.uuid is UNIQUE.
+      await new Promise((resolve, reject) => {
+        db.query(
+          `DELETE FROM userVerifyLink WHERE uuid = ?`,
+          [uuid],
+          function (error, results) {
+            if (error) return reject(error);
+            resolve(results);
+          }
+        );
+      });
+
       await new Promise((resolve, reject) => {
         db.query(
           `INSERT INTO userVerifyLink (uuid, username, linkCode, codeExpiry) VALUES (?, ?, ?, ?)`,
@@ -462,9 +477,24 @@ export default function userApiRoute(app, config, db, features, lang) {
       });
 
       if (!row) {
+        // Distinguish "wrong code" from "right code, but too late" so the
+        // player knows whether to re-check for typos or just run /link again.
+        const expiredRow = await new Promise((resolve, reject) => {
+          db.query(
+            `SELECT verifyId FROM userVerifyLink WHERE uuid = ? AND linkCode = ? AND codeExpiry <= NOW()`,
+            [uuid, code],
+            function (error, results) {
+              if (error) return reject(error);
+              resolve(results && results.length ? results[0] : null);
+            }
+          );
+        });
+
         return res.send({
           success: false,
-          message: "Invalid or expired code.",
+          message: expiredRow
+            ? "That code has expired. Run /link again to get a new one."
+            : "That code doesn't match. Double-check it for typos.",
         });
       }
 
@@ -509,10 +539,24 @@ export default function userApiRoute(app, config, db, features, lang) {
       const linkUser = await userLinkData.getUserByCode(verifyCode);
 
       if (!linkUser) {
+        // Tell an expired code apart from a genuinely wrong one.
+        const expiredRow = await new Promise((resolve, reject) => {
+          db.query(
+            `SELECT verifyId FROM userVerifyLink WHERE linkCode = ? AND codeExpiry <= NOW()`,
+            [verifyCode],
+            function (error, results) {
+              if (error) return reject(error);
+              resolve(results && results.length ? results[0] : null);
+            }
+          );
+        });
+
         return res.send({
           success: false,
           alertType: "warning",
-          alertContent: `No verification code matches, please try again.`,
+          alertContent: expiredRow
+            ? `That code has expired. Run /link in-game again to get a new one.`
+            : `That code doesn't match. Check it for typos and try again.`,
         });
       }
 

@@ -376,7 +376,39 @@ export function removeHtmlTags(html) {
   return html.replace(/<(?!\/?(a)\b)[^<]*?>/gi, "");
 }
 
+function verifyCodeIsActive(code) {
+  return new Promise((resolve, reject) => {
+    db.query(
+      `SELECT 1 FROM userVerifyLink WHERE linkCode = ? AND codeExpiry > NOW() LIMIT 1`,
+      [String(code)],
+      (error, results) => {
+        if (error) return reject(error);
+        resolve(Array.isArray(results) && results.length > 0);
+      }
+    );
+  });
+}
+
 export async function generateVerifyCode() {
-  const code = Math.floor(Math.random() * 900000) + 100000;
-  return code;
+  // 6-digit code space is 900,000 wide and only a handful are ever active
+  // at once, so a collision is very unlikely — but an active duplicate would
+  // let one player's code verify another's account, so retry a few times if
+  // the generated code is already in use.
+  for (let attempt = 0; attempt < 10; attempt++) {
+    const code = Math.floor(Math.random() * 900000) + 100000;
+
+    try {
+      if (!(await verifyCodeIsActive(code))) {
+        return code;
+      }
+    } catch (error) {
+      // If we can't check for collisions, fall back to the raw code rather
+      // than failing the whole verification request.
+      console.error("generateVerifyCode: collision check failed", error);
+      return code;
+    }
+  }
+
+  // Extremely unlikely: 10 straight collisions. Return a fresh code anyway.
+  return Math.floor(Math.random() * 900000) + 100000;
 }
