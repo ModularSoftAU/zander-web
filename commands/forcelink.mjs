@@ -2,6 +2,7 @@ import { Command } from "@sapphire/framework";
 import { Colors, EmbedBuilder, SlashCommandBuilder } from "discord.js";
 import { hasPermission } from "../lib/discord/permissions.mjs";
 import { UserGetter, getUserPermissions, linkDiscordAccount, unlinkDiscordAccount } from "../controllers/userController.js";
+import { retryDeferredDiscordRoles } from "../controllers/webstoreController.js";
 import db from "../controllers/databaseController.js";
 
 const PERMISSION_NODE = "zander.discord.forcelink";
@@ -102,6 +103,17 @@ export class ForceLinkCommand extends Command {
     // Execute the force link
     const discordHandle = targetDiscordUser.username;
     await linkDiscordAccount(mcUser.userId, targetDiscordUser.id, discordHandle);
+
+    // Grant any webstore Discord roles that were deferred while unlinked.
+    try {
+      await retryDeferredDiscordRoles({
+        userId: mcUser.userId,
+        discordClient: this.container.client,
+        guildId: interaction.guildId,
+      });
+    } catch (roleErr) {
+      warnings.push(`⚠️ Could not re-run deferred webstore roles: ${roleErr.message}`);
+    }
 
     // Mark account as registered if not already, and clean up any pending verify codes
     if (!mcUser.account_registered) {

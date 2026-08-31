@@ -20,6 +20,7 @@ import {
   getUserPunishments,
 } from "../services/profileService.js";
 import { getBadgesForUser } from "../controllers/badgeController.js";
+import { retryDeferredDiscordRoles } from "../controllers/webstoreController.js";
 import {
   getDiscordPunishmentsForProfile,
   hasActiveWebBan,
@@ -511,6 +512,18 @@ export default function profileSiteRoutes(
       );
 
       req.session.user.discordID = discordUser.id;
+
+      // Grant any Discord roles from past webstore purchases that were deferred
+      // because this account wasn't linked yet.
+      try {
+        await retryDeferredDiscordRoles({
+          userId: req.session.user.userId,
+          discordClient: client,
+          guildId: config.discord?.guildId,
+        });
+      } catch (roleErr) {
+        console.error("[PROFILE] Deferred webstore role retry after Discord link failed:", roleErr.message);
+      }
 
       // Trigger nickname enforcement now that the account is linked
       if (features.discord?.events?.nicknameCheck && config.discord?.nicknameReportChannelId && config.discord?.guildId) {

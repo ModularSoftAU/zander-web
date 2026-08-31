@@ -627,21 +627,24 @@ export async function executeDiscordRoleCommands({
 
   if (!discordId) {
     console.warn(
-      `[webstore] discord_role ${action}: no Discord account linked for "${recipientMinecraftUsername}" — skipping role commands`
+      `[webstore] discord_role ${action}: no Discord account linked for "${recipientMinecraftUsername}" — deferring role commands until they link`
     );
+    // 'deferred', not 'failed': the rest of the purchase still delivered, and
+    // retryDeferredDiscordRoles() re-drives these when the recipient links their
+    // Discord account.
     for (const cmd of roleCmds) {
       await query(
         `INSERT INTO webstoreCommandRuns
            (purchaseId, stripeSubscriptionId, action, commandTemplate,
             resolvedCommand, executorTaskId, status, attempts, lastError)
-         VALUES (?, ?, ?, ?, ?, NULL, 'failed', 1, ?)`,
+         VALUES (?, ?, ?, ?, ?, NULL, 'deferred', 0, ?)`,
         [
           purchaseId,
           stripeSubscriptionId || null,
           action,
           cmd.commandTemplate,
-          `discord_role:${cmd.commandTemplate}`,
-          `No Discord account linked for username "${recipientMinecraftUsername}"`,
+          `discord_role:${action}:${cmd.commandTemplate.trim()}`,
+          `Recipient "${recipientMinecraftUsername}" has no linked Discord account — deferred until they link`,
         ]
       );
     }
@@ -693,6 +696,77 @@ export async function executeDiscordRoleCommands({
       ]
     );
   }
+}
+
+/**
+ * Re-drive `discord_role` command runs that were left `deferred` because the
+ * recipient had no linked Discord account at purchase time. Call this after a
+ * user links their Discord account.
+ *
+ * @param {object} opts
+ * @param {number} opts.userId       the Zander user who just linked Discord
+ * @param {object} opts.discordClient Discord.js / Sapphire client
+ * @param {string} opts.guildId       Discord guild ID (config.discord.guildId)
+ * @returns {Promise<{processed:number, completed:number, failed:number}>}
+ */
+export async function retryDeferredDiscordRoles({ userId, discordClient, guildId }) {
+  const result = { processed: 0, completed: 0, failed: 0 };
+  if (!userId || !discordClient || !guildId) return result;
+
+  const userRows = await query(
+    "SELECT userId, username, discordId FROM users WHERE userId = ? LIMIT 1",
+    [userId]
+  );
+  const user = userRows?.[0];
+  if (!user?.discordId || !user?.username) return result;
+
+  // Deferred discord_role runs for purchases whose *recipient* is this user.
+  const runs = await query(
+    `SELECT cr.commandRunId, cr.action, cr.commandTemplate
+       FROM webstoreCommandRuns cr
+       JOIN webstorePurchases p ON p.purchaseId = cr.purchaseId
+      WHERE cr.status = 'deferred'
+        AND cr.resolvedCommand LIKE 'discord_role:%'
+        AND LOWER(p.recipientMinecraftUsername) = LOWER(?)`,
+    [user.username]
+  );
+  if (!runs.length) return result;
+
+  let member = null;
+  try {
+    const guild = discordClient?.guilds?.cache?.get(guildId) || (await discordClient.guilds.fetch(guildId));
+    member = guild ? await guild.members.fetch(user.discordId).catch(() => null) : null;
+  } catch {
+    member = null;
+  }
+
+  for (const run of runs) {
+    result.processed++;
+    const roleId = String(run.commandTemplate || "").trim();
+    let status = "completed";
+    let lastError = null;
+    try {
+      if (!member) throw new Error(`Guild member not found for Discord ID ${user.discordId}`);
+      if (run.action === "revoke") await member.roles.remove(roleId);
+      else await member.roles.add(roleId);
+    } catch (err) {
+      status = "failed";
+      lastError = err.message;
+      console.error(
+        `[webstore] retryDeferredDiscordRoles: ${run.action} role ${roleId} for ${user.username}:`,
+        err.message
+      );
+    }
+    await updateCommandRunStatus(run.commandRunId, status, lastError);
+    if (status === "completed") result.completed++;
+    else result.failed++;
+  }
+
+  console.info(
+    `[webstore] retryDeferredDiscordRoles for ${user.username}: ` +
+      `${result.completed} granted, ${result.failed} failed of ${result.processed}`
+  );
+  return result;
 }
 
 // ---------------------------------------------------------------------------
@@ -942,10 +1016,13 @@ export async function resetExecutorTask(executorTaskId) {
  * determine whether to mark them fulfilled or failed.
  */
 export async function getPurchasesWithPendingCommandRuns() {
+  // 'deferred' is included so a purchase whose only outstanding run is a
+  // deferred discord_role still gets rolled up to 'fulfilled' (the rollup
+  // no-ops once the purchase status has settled).
   return query(
     `SELECT DISTINCT purchaseId
      FROM webstoreCommandRuns
-     WHERE status IN ('queued', 'processing')`,
+     WHERE status IN ('queued', 'processing', 'deferred')`,
     []
   );
 }
