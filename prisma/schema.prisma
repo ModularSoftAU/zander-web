@@ -246,7 +246,7 @@ model forumPosts {
   replies      forumPosts[]         @relation("PostReplies")
   revisions    forumPostRevisions[]
   replyToPost  forumPosts?          @relation("ForumPostReplies", fields: [replyToPostId], references: [postId], onDelete: SetNull)
-  replies      forumPosts[]         @relation("ForumPostReplies")
+  replyToReplies forumPosts[]       @relation("ForumPostReplies")
 
   @@index([replyToPostId])
 }
