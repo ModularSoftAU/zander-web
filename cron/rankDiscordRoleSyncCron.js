@@ -112,7 +112,18 @@ async function reconcileRankDiscordRoles() {
       console.warn("[rankRoleSync-cron] Guild not found. Skipping.");
       return;
     }
-    await guild.members.fetch();
+    try {
+      await guild.members.fetch({ time: 120_000 });
+    } catch (err) {
+      // "Members didn't arrive in time" — almost always the GuildMembers
+      // privileged intent being disabled, or a slow chunk on a large guild.
+      // Skip this run rather than surfacing it as a fatal reconciliation error.
+      console.warn(
+        "[rankRoleSync-cron] Could not fetch guild members (%s). Skipping this run — check the GuildMembers privileged intent.",
+        err?.message || err
+      );
+      return;
+    }
 
     // Build discordId -> should-have role set for a fast lookup while sweeping all members.
     const shouldHaveByDiscordId = new Map();
