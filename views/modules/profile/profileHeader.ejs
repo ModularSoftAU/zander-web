@@ -46,6 +46,67 @@
                             <span>Hasn't joined the server yet</span>
                         <% } %>
                     </div>
+
+                    <%
+                        const fh = (typeof friendsData !== "undefined" && friendsData) ? friendsData : null;
+                        const rel = fh && fh.relationship ? fh.relationship : null;
+                        const uname = encodeURIComponent(profileApiData.username);
+                    %>
+                    <% if (fh && rel && (fh.canAct || rel.blockedByMe)) { %>
+                        <div class="d-flex flex-wrap align-items-center gap-2 mt-3 profile-friend-actions">
+                            <% if (rel.blockedByMe) { %>
+                                <form action="/profile/<%= uname %>/unblock" method="post" class="m-0">
+                                    <button type="submit" class="btn btn-sm btn-outline-light">
+                                        <i class="fa-solid fa-user-slash me-1"></i>Unblock
+                                    </button>
+                                </form>
+                            <% } else if (rel.isFriend) { %>
+                                <div class="dropdown">
+                                    <button class="btn btn-sm btn-success dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                        <i class="fa-solid fa-user-check me-1"></i>Friends
+                                    </button>
+                                    <ul class="dropdown-menu">
+                                        <li>
+                                            <form action="/profile/<%= uname %>/friend/remove" method="post" class="m-0">
+                                                <button type="submit" class="dropdown-item text-danger">Remove friend</button>
+                                            </form>
+                                        </li>
+                                    </ul>
+                                </div>
+                                <form action="/profile/<%= uname %>/block" method="post" class="m-0">
+                                    <button type="submit" class="btn btn-sm btn-outline-light">Block</button>
+                                </form>
+                            <% } else if (rel.pendingIncoming) { %>
+                                <form action="/profile/<%= uname %>/friend/accept" method="post" class="m-0">
+                                    <button type="submit" class="btn btn-sm btn-success">
+                                        <i class="fa-solid fa-check me-1"></i>Accept
+                                    </button>
+                                </form>
+                                <form action="/profile/<%= uname %>/friend/decline" method="post" class="m-0">
+                                    <button type="submit" class="btn btn-sm btn-outline-light">Decline</button>
+                                </form>
+                                <form action="/profile/<%= uname %>/block" method="post" class="m-0">
+                                    <button type="submit" class="btn btn-sm btn-outline-light">Block</button>
+                                </form>
+                            <% } else if (rel.pendingOutgoing) { %>
+                                <button type="button" class="btn btn-sm btn-outline-light" disabled>
+                                    <i class="fa-solid fa-clock me-1"></i>Request Sent
+                                </button>
+                                <form action="/profile/<%= uname %>/block" method="post" class="m-0">
+                                    <button type="submit" class="btn btn-sm btn-outline-light">Block</button>
+                                </form>
+                            <% } else { %>
+                                <form action="/profile/<%= uname %>/friend/request" method="post" class="m-0">
+                                    <button type="submit" class="btn btn-sm btn-primary">
+                                        <i class="fa-solid fa-user-plus me-1"></i>Add Friend
+                                    </button>
+                                </form>
+                                <form action="/profile/<%= uname %>/block" method="post" class="m-0">
+                                    <button type="submit" class="btn btn-sm btn-outline-light">Block</button>
+                                </form>
+                            <% } %>
+                        </div>
+                    <% } %>
                 </div>
             </div>
         </div>

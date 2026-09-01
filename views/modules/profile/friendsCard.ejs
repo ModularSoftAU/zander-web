@@ -1,0 +1,63 @@
+<%
+  // Expects: friendsData { friendCount, friends: [{username, avatarUrl}], listHidden }
+  //          profileOwnerUsername
+  const fd = friendsData || {};
+  const fcFriends = Array.isArray(fd.friends) ? fd.friends : [];
+  const fcCount = typeof fd.friendCount === "number" ? fd.friendCount : fcFriends.length;
+%>
+<div class="card shadow-sm border-0 mb-4">
+  <div class="card-body p-4">
+    <h5 class="card-title text-uppercase text-muted mb-3">Friends (<%= fcCount %>)</h5>
+
+    <% if (fcFriends.length === 0) { %>
+      <p class="text-muted small mb-0">No friends to show yet.</p>
+    <% } else { %>
+      <div class="d-flex flex-wrap gap-2">
+        <% fcFriends.forEach(function (f) { %>
+          <a href="/profile/<%= encodeURIComponent(f.username) %>"
+             title="<%= f.username %>"
+             class="d-inline-block">
+            <img src="<%= f.avatarUrl %>" alt="<%= f.username %>"
+                 width="44" height="44" loading="lazy"
+                 class="rounded-circle border">
+          </a>
+        <% }) %>
+      </div>
+
+      <% if (fcCount > fcFriends.length) { %>
+        <a href="/profile/<%= encodeURIComponent(profileOwnerUsername) %>/friends"
+           class="d-inline-block mt-3 small fw-semibold text-decoration-none">
+          View all <%= fcCount %> friends
+        </a>
+      <% } else { %>
+        <a href="/profile/<%= encodeURIComponent(profileOwnerUsername) %>/friends"
+           class="d-inline-block mt-3 small text-muted text-decoration-none">
+          View friends
+        </a>
+      <% } %>
+    <% } %>
+  </div>
+</div>
+
+<%
+  const mutual = fd.mutual;
+%>
+<% if (mutual && mutual.total > 0) { %>
+  <div class="card shadow-sm border-0 mb-4">
+    <div class="card-body p-4">
+      <h5 class="card-title text-uppercase text-muted mb-3">
+        <%= mutual.total %> Friend<%= mutual.total === 1 ? "" : "s" %> in Common
+      </h5>
+      <div class="d-flex flex-wrap gap-2">
+        <% mutual.friends.forEach(function (f) { %>
+          <a href="/profile/<%= encodeURIComponent(f.username) %>"
+             title="<%= f.username %>" class="d-inline-block">
+            <img src="<%= f.avatarUrl %>" alt="<%= f.username %>"
+                 width="36" height="36" loading="lazy"
+                 class="rounded-circle border">
+          </a>
+        <% }) %>
+      </div>
+    </div>
+  </div>
+<% } %>

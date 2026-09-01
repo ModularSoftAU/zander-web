@@ -33,6 +33,28 @@ import {
 import { checkAndReportNickname } from "../lib/discord/nicknameCheck.mjs";
 import { syncMemberRankRoles, stripAllTrackedRankRoles } from "../lib/discord/rankRoleSync.mjs";
 import * as mixed from "../controllers/mixedController.js";
+import {
+  FriendActionError,
+  sendFriendRequest,
+  acceptFriendRequest,
+  declineFriendRequest,
+  removeFriend,
+  blockUser,
+  unblockUser,
+  getFriends,
+  getRelationship,
+  getPendingIncoming,
+  getPendingOutgoing,
+  getPrivacySettings,
+  setPrivacySettings,
+} from "../controllers/friendController.js";
+import {
+  getCachedFriendCount,
+  getCachedMutualFriends,
+  invalidateFriendCaches,
+} from "../lib/friendsCache.mjs";
+import { resolveAvatarUrl } from "../lib/avatarHelpers.js";
+import { createNotificationsForUsers } from "../controllers/notificationController.js";
 
 export default function profileSiteRoutes(
   app,
@@ -234,6 +256,89 @@ export default function profileSiteRoutes(
               })()
             : Promise.resolve(null);
 
+        const viewerId = req.session?.user?.userId || null;
+        const friendsDataPromise =
+          features.friends === false
+            ? Promise.resolve(null)
+            : (async () => {
+                try {
+                  const [prefs, relationship] = await Promise.all([
+                    getPrivacySettings(profileData.userId),
+                    viewerId
+                      ? getRelationship(viewerId, profileData.userId)
+                      : Promise.resolve(null),
+                  ]);
+                  const isOwner = !!viewerId && viewerId === profileData.userId;
+                  const blockedMe = !!relationship?.blockedMe;
+                  const blockedByMe = !!relationship?.blockedByMe;
+
+                  // friendsListVisible governs the owner's own profile surface
+                  // only — a hidden list still shows on friends' lists elsewhere.
+                  const listHidden =
+                    (!isOwner && !prefs.friendsListVisible) || blockedMe;
+
+                  const friendCount = await getCachedFriendCount(
+                    profileData.userId
+                  );
+
+                  const friends = listHidden
+                    ? []
+                    : await Promise.all(
+                        (
+                          await getFriends(profileData.userId, { viewerId })
+                        )
+                          .slice(0, 12)
+                          .map(async (f) => ({
+                            ...f,
+                            avatarUrl: await resolveAvatarUrl(f),
+                          }))
+                      );
+
+                  // Mutual friends: a derived disclosure — never a side channel
+                  // into a list the viewer can't see. Suppress entirely when the
+                  // list is hidden, when either party blocks the other, on your
+                  // own profile, for anonymous viewers, and on a zero result.
+                  let mutual = null;
+                  if (
+                    viewerId &&
+                    !isOwner &&
+                    !blockedMe &&
+                    !blockedByMe &&
+                    prefs.friendsListVisible
+                  ) {
+                    const m = await getCachedMutualFriends(
+                      viewerId,
+                      profileData.userId,
+                      { limit: 8 }
+                    );
+                    if (m.total > 0) {
+                      mutual = {
+                        total: m.total,
+                        friends: await Promise.all(
+                          m.friends.map(async (f) => ({
+                            ...f,
+                            avatarUrl: await resolveAvatarUrl(f),
+                          }))
+                        ),
+                      };
+                    }
+                  }
+
+                  return {
+                    relationship,
+                    isOwner,
+                    listHidden,
+                    friendCount,
+                    friends,
+                    mutual,
+                    canAct: !!viewerId && !isOwner && !blockedMe,
+                  };
+                } catch (err) {
+                  console.error("[PROFILE] Failed to load friends data", err);
+                  return null;
+                }
+              })();
+
         const [
           globalImage,
           announcementWeb,
@@ -248,6 +353,7 @@ export default function profileSiteRoutes(
           profilePlatformConnections,
           profileBadges,
           mixedProfile,
+          friendsData,
         ] = await Promise.all([
           getGlobalImage(),
           getWebAnnouncement(),
@@ -262,6 +368,7 @@ export default function profileSiteRoutes(
           platformConnectionsPromise,
           badgesPromise,
           mixedProfilePromise,
+          friendsDataPromise,
         ]);
 
         const appealTicketsByKey = (appealTicketsRaw || []).reduce((acc, ticket) => {
@@ -301,6 +408,7 @@ export default function profileSiteRoutes(
           platformConnections: profilePlatformConnections,
           profileBadges: profileBadges,
           mixedProfile: mixedProfile,
+          friendsData: friendsData,
         }));
         return;
       }
@@ -390,6 +498,14 @@ export default function profileSiteRoutes(
             return {};
           });
 
+        const privacySettingsPromise =
+          features.friends === false
+            ? Promise.resolve(null)
+            : getPrivacySettings(profileData.userId).catch((err) => {
+                console.error("[PROFILE] Failed to load privacy settings", err);
+                return null;
+              });
+
         const [
           globalImage,
           announcementWeb,
@@ -398,6 +514,7 @@ export default function profileSiteRoutes(
           profileStats,
           profileSession,
           platformConnections,
+          privacySettings,
         ] = await Promise.all([
           getGlobalImage(),
           getWebAnnouncement(),
@@ -406,6 +523,7 @@ export default function profileSiteRoutes(
           getUserStats(profileData.userId),
           getUserLastSession(profileData.userId),
           platformConnectionsPromise,
+          privacySettingsPromise,
         ]);
 
         //
@@ -426,6 +544,7 @@ export default function profileSiteRoutes(
           profileSession: profileSession,
           moment: moment,
           platformConnections: platformConnections,
+          privacySettings: privacySettings,
         }));
         return;
       }
@@ -913,4 +1032,317 @@ export default function profileSiteRoutes(
     return res.redirect(getProfileEditorRedirect(req));
   });
 
+  // ---------------------------------------------------------------------------
+  // Friends, blocking, privacy
+  //
+  // Session-authed (actor is req.session.user) and rate-limited the same way as
+  // the OAuth connect handlers above. These deliberately live here, NEXT TO the
+  // social-disconnect handlers, and NOT in api/routes/* — that bundle is mounted
+  // inside the machine-token (verifyToken) plugin scope.
+  // ---------------------------------------------------------------------------
+
+  const friendsEnabled = () => features.friends !== false;
+
+  const requireLogin = (req, res, verb) => {
+    if (isLoggedIn(req)) return true;
+    setBannerCookie("warning", `You need to sign in to ${verb}.`, res);
+    res.redirect("/login");
+    return false;
+  };
+
+  // Resolve :username -> user row, or send the shared 404 and return null.
+  async function resolveProfileTarget(req, res) {
+    const target = await getUserByUsername(req.params.username);
+    if (!target) {
+      res
+        .status(404)
+        .header("content-type", "text/html; charset=utf-8")
+        .send(
+          await app.view("session/notFound", {
+            pageTitle: `404: Player Not Found`,
+            config,
+            req,
+            res,
+            features,
+            globalImage: await getGlobalImage(),
+            announcementWeb: await getWebAnnouncement(),
+          })
+        );
+      return null;
+    }
+    return target;
+  }
+
+  async function withAvatars(rows) {
+    return Promise.all(
+      (rows || []).map(async (r) => ({ ...r, avatarUrl: await resolveAvatarUrl(r) }))
+    );
+  }
+
+  const backToProfile = (req) => `/profile/${req.params.username}`;
+
+  // --- friend request -------------------------------------------------------
+  app.post("/profile/:username/friend/request", async function (req, res) {
+    if (!friendsEnabled()) return res.redirect(backToProfile(req));
+    if (!requireLogin(req, res, "send a friend request")) return;
+    if (!checkRateLimit(req, res, { windowMs: 60_000, max: 20 })) return;
+
+    const target = await resolveProfileTarget(req, res);
+    if (!target) return;
+
+    const actorId = req.session.user.userId;
+    try {
+      const result = await sendFriendRequest(actorId, target.userId, {
+        source: "web",
+        message: typeof req.body?.message === "string" ? req.body.message : null,
+      });
+      invalidateFriendCaches(actorId, target.userId);
+
+      if (result.status === "accepted") {
+        setBannerCookie("success", `You are now friends with ${target.username}.`, res);
+      } else {
+        // Same wording whether the request is pending, silently declined by a
+        // privacy setting, or silently dropped by a block — never a tell.
+        setBannerCookie("success", "Friend request sent.", res);
+      }
+
+      if (result.status === "pending") {
+        const prefs = await getPrivacySettings(target.userId);
+        if (prefs.notifyFriendRequest) {
+          await createNotificationsForUsers([target.userId], {
+            notificationType: "friend_request",
+            title: "New friend request",
+            message: `${req.session.user.username} sent you a friend request.`,
+            url: "/profile/friends/requests",
+          });
+        }
+      }
+    } catch (err) {
+      if (err instanceof FriendActionError) {
+        setBannerCookie("danger", err.message, res);
+      } else {
+        console.error("[PROFILE] friend request failed", err);
+        setBannerCookie("danger", "We couldn't send that friend request. Please try again soon.", res);
+      }
+    }
+    return res.redirect(backToProfile(req));
+  });
+
+  // --- accept -------------------------------------------------------------
+  app.post("/profile/:username/friend/accept", async function (req, res) {
+    if (!friendsEnabled()) return res.redirect(backToProfile(req));
+    if (!requireLogin(req, res, "accept a friend request")) return;
+    if (!checkRateLimit(req, res, { windowMs: 60_000, max: 30 })) return;
+
+    const target = await resolveProfileTarget(req, res);
+    if (!target) return;
+
+    const actorId = req.session.user.userId;
+    try {
+      const { ok } = await acceptFriendRequest(actorId, target.userId);
+      invalidateFriendCaches(actorId, target.userId);
+      if (ok) {
+        setBannerCookie("success", `You are now friends with ${target.username}.`, res);
+        await createNotificationsForUsers([target.userId], {
+          notificationType: "friend_accept",
+          title: "Friend request accepted",
+          message: `${req.session.user.username} accepted your friend request.`,
+          url: `/profile/${req.session.user.username}`,
+        });
+      } else {
+        setBannerCookie("warning", "That friend request is no longer available.", res);
+      }
+    } catch (err) {
+      console.error("[PROFILE] friend accept failed", err);
+      setBannerCookie("danger", "We couldn't accept that request. Please try again soon.", res);
+    }
+    return res.redirect(backToProfile(req));
+  });
+
+  // --- decline ----------------------------------------------------------
+  app.post("/profile/:username/friend/decline", async function (req, res) {
+    if (!friendsEnabled()) return res.redirect(backToProfile(req));
+    if (!requireLogin(req, res, "decline a friend request")) return;
+    if (!checkRateLimit(req, res, { windowMs: 60_000, max: 30 })) return;
+
+    const target = await resolveProfileTarget(req, res);
+    if (!target) return;
+
+    try {
+      await declineFriendRequest(req.session.user.userId, target.userId);
+      // No notification on decline.
+      setBannerCookie("success", "Friend request declined.", res);
+    } catch (err) {
+      console.error("[PROFILE] friend decline failed", err);
+      setBannerCookie("danger", "We couldn't decline that request. Please try again soon.", res);
+    }
+    return res.redirect(backToProfile(req));
+  });
+
+  // --- remove ---------------------------------------------------------
+  app.post("/profile/:username/friend/remove", async function (req, res) {
+    if (!friendsEnabled()) return res.redirect(backToProfile(req));
+    if (!requireLogin(req, res, "remove a friend")) return;
+    if (!checkRateLimit(req, res, { windowMs: 60_000, max: 30 })) return;
+
+    const target = await resolveProfileTarget(req, res);
+    if (!target) return;
+
+    const actorId = req.session.user.userId;
+    try {
+      await removeFriend(actorId, target.userId);
+      invalidateFriendCaches(actorId, target.userId);
+      setBannerCookie("success", `Removed ${target.username} from your friends.`, res);
+    } catch (err) {
+      console.error("[PROFILE] friend remove failed", err);
+      setBannerCookie("danger", "We couldn't update your friends list. Please try again soon.", res);
+    }
+    return res.redirect(backToProfile(req));
+  });
+
+  // --- block --------------------------------------------------------
+  app.post("/profile/:username/block", async function (req, res) {
+    if (!friendsEnabled()) return res.redirect(backToProfile(req));
+    if (!requireLogin(req, res, "block a player")) return;
+    if (!checkRateLimit(req, res, { windowMs: 60_000, max: 20 })) return;
+
+    const target = await resolveProfileTarget(req, res);
+    if (!target) return;
+
+    const actorId = req.session.user.userId;
+    try {
+      await blockUser(actorId, target.userId, {
+        source: "web",
+        reason: typeof req.body?.reason === "string" ? req.body.reason : null,
+      });
+      invalidateFriendCaches(actorId, target.userId);
+      setBannerCookie("success", `You have blocked ${target.username}.`, res);
+    } catch (err) {
+      if (err instanceof FriendActionError) {
+        setBannerCookie("danger", err.message, res);
+      } else {
+        console.error("[PROFILE] block failed", err);
+        setBannerCookie("danger", "We couldn't block that player. Please try again soon.", res);
+      }
+    }
+    return res.redirect(backToProfile(req));
+  });
+
+  // --- unblock ----------------------------------------------------
+  app.post("/profile/:username/unblock", async function (req, res) {
+    if (!friendsEnabled()) return res.redirect(backToProfile(req));
+    if (!requireLogin(req, res, "unblock a player")) return;
+    if (!checkRateLimit(req, res, { windowMs: 60_000, max: 20 })) return;
+
+    const target = await resolveProfileTarget(req, res);
+    if (!target) return;
+
+    try {
+      await unblockUser(req.session.user.userId, target.userId);
+      setBannerCookie("success", `You have unblocked ${target.username}.`, res);
+    } catch (err) {
+      console.error("[PROFILE] unblock failed", err);
+      setBannerCookie("danger", "We couldn't unblock that player. Please try again soon.", res);
+    }
+    return res.redirect(backToProfile(req));
+  });
+
+  // --- full friends list -----------------------------------------
+  app.get("/profile/:username/friends", async function (req, res) {
+    if (!friendsEnabled()) return res.redirect(backToProfile(req));
+
+    const target = await resolveProfileTarget(req, res);
+    if (!target) return;
+
+    const viewerId = req.session?.user?.userId || null;
+    const isOwner = viewerId && viewerId === target.userId;
+
+    const [prefs, relationship] = await Promise.all([
+      getPrivacySettings(target.userId),
+      viewerId ? getRelationship(viewerId, target.userId) : Promise.resolve(null),
+    ]);
+
+    // Hidden list: nobody but the owner sees it. Blocked-by-owner: same.
+    const hidden =
+      (!isOwner && !prefs.friendsListVisible) ||
+      (relationship && relationship.blockedMe);
+
+    const friends = hidden
+      ? []
+      : await withAvatars(await getFriends(target.userId, { viewerId }));
+
+    return res
+      .header("content-type", "text/html; charset=utf-8")
+      .send(
+        await app.view("modules/profile/friendsList", {
+          pageTitle: `${target.username}'s Friends`,
+          config,
+          req,
+          features,
+          globalImage: await getGlobalImage(),
+          announcementWeb: await getWebAnnouncement(),
+          profileOwner: target,
+          friends,
+          hidden,
+          isOwner,
+        })
+      );
+  });
+
+  // --- my incoming / outgoing requests --------------------------
+  app.get("/profile/friends/requests", async function (req, res) {
+    if (!friendsEnabled()) return res.redirect("/profile");
+    if (!requireLogin(req, res, "view your friend requests")) return;
+
+    const userId = req.session.user.userId;
+    const [incoming, outgoing] = await Promise.all([
+      getPendingIncoming(userId).then(withAvatars),
+      getPendingOutgoing(userId).then(withAvatars),
+    ]);
+
+    return res
+      .header("content-type", "text/html; charset=utf-8")
+      .send(
+        await app.view("modules/profile/friendRequests", {
+          pageTitle: `Friend Requests`,
+          config,
+          req,
+          features,
+          globalImage: await getGlobalImage(),
+          announcementWeb: await getWebAnnouncement(),
+          incoming,
+          outgoing,
+        })
+      );
+  });
+
+  // --- privacy settings ----------------------------------------
+  app.post("/profile/settings/privacy", async function (req, res) {
+    if (!friendsEnabled()) return res.redirect(getProfileEditorRedirect(req));
+    if (!requireLogin(req, res, "update your privacy settings")) return;
+    if (!checkRateLimit(req, res, { windowMs: 60_000, max: 30 })) return;
+
+    const body = req.body || {};
+    const patch = {};
+    for (const key of ["allowMessagesFrom", "allowFriendRequests"]) {
+      if (typeof body[key] === "string" && body[key]) patch[key] = body[key];
+    }
+    // Unchecked checkboxes are simply absent from the POST body.
+    for (const key of ["friendsListVisible", "notifyFriendJoin", "notifyFriendRequest"]) {
+      patch[key] = body[key] === "on" || body[key] === "true" || body[key] === "1";
+    }
+
+    try {
+      await setPrivacySettings(req.session.user.userId, patch);
+      setBannerCookie("success", "Privacy settings saved.", res);
+    } catch (err) {
+      if (err instanceof FriendActionError) {
+        setBannerCookie("danger", err.message, res);
+      } else {
+        console.error("[PROFILE] privacy update failed", err);
+        setBannerCookie("danger", "We couldn't save your privacy settings. Please try again soon.", res);
+      }
+    }
+    return res.redirect(getProfileEditorRedirect(req));
+  });
 }

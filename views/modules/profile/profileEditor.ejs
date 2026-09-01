@@ -45,6 +45,13 @@
                         <i class="fa-solid fa-plug me-2"></i>Connected Accounts
                     </a>
                 </li>
+                <% if (typeof privacySettings !== "undefined" && privacySettings) { %>
+                    <li class="nav-item" role="presentation">
+                        <a class="nav-link profile-tab-link" id="privacy-tab" data-bs-toggle="tab" href="#privacy" role="tab" aria-controls="privacy" aria-selected="false">
+                            <i class="fa-solid fa-user-shield me-2"></i>Privacy
+                        </a>
+                    </li>
+                <% } %>
             </ul>
 
             <div class="tab-content pt-4" id="profileEditorTabsContent">
@@ -259,6 +266,44 @@
                         <% } %>
                     </div>
                 </div>
+
+                <% if (typeof privacySettings !== "undefined" && privacySettings) { %>
+                    <div class="tab-pane fade" id="privacy" role="tabpanel" aria-labelledby="privacy-tab">
+                        <form action="/profile/settings/privacy" method="post" class="row g-4" style="max-width: 640px;">
+                            <div class="col-12">
+                                <label for="allowFriendRequests" class="form-label fw-semibold">Who can send me friend requests</label>
+                                <select class="form-select" name="allowFriendRequests" id="allowFriendRequests">
+                                    <% ["everyone", "friends", "none"].forEach(function (opt) { %>
+                                        <option value="<%= opt %>" <%= privacySettings.allowFriendRequests === opt ? "selected" : "" %>><%= opt.charAt(0).toUpperCase() + opt.slice(1) %></option>
+                                    <% }) %>
+                                </select>
+                            </div>
+                            <div class="col-12">
+                                <label for="allowMessagesFrom" class="form-label fw-semibold">Who can send me direct messages in-game</label>
+                                <select class="form-select" name="allowMessagesFrom" id="allowMessagesFrom">
+                                    <% ["everyone", "friends", "none"].forEach(function (opt) { %>
+                                        <option value="<%= opt %>" <%= privacySettings.allowMessagesFrom === opt ? "selected" : "" %>><%= opt.charAt(0).toUpperCase() + opt.slice(1) %></option>
+                                    <% }) %>
+                                </select>
+                            </div>
+                            <div class="col-12 form-check ms-2">
+                                <input class="form-check-input" type="checkbox" name="friendsListVisible" id="friendsListVisible" <%= privacySettings.friendsListVisible ? "checked" : "" %>>
+                                <label class="form-check-label" for="friendsListVisible">Show my friends list on my public profile</label>
+                            </div>
+                            <div class="col-12 form-check ms-2">
+                                <input class="form-check-input" type="checkbox" name="notifyFriendRequest" id="notifyFriendRequest" <%= privacySettings.notifyFriendRequest ? "checked" : "" %>>
+                                <label class="form-check-label" for="notifyFriendRequest">Notify me when I receive a friend request</label>
+                            </div>
+                            <div class="col-12 form-check ms-2">
+                                <input class="form-check-input" type="checkbox" name="notifyFriendJoin" id="notifyFriendJoin" <%= privacySettings.notifyFriendJoin ? "checked" : "" %>>
+                                <label class="form-check-label" for="notifyFriendJoin">Alert me in-game when a friend joins</label>
+                            </div>
+                            <div class="col-12">
+                                <button type="submit" class="btn btn-main">Save Privacy Settings</button>
+                            </div>
+                        </form>
+                    </div>
+                <% } %>
             </div>
         </div>
     </div>

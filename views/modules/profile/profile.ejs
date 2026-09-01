@@ -475,6 +475,13 @@
         </div>
 
         <div class="col-lg-4">
+            <% if (typeof friendsData !== "undefined" && friendsData && !friendsData.listHidden) { %>
+                <%- include("../../modules/profile/friendsCard.ejs", {
+                    friendsData: friendsData,
+                    profileOwnerUsername: profileApiData.username
+                }) %>
+            <% } %>
+
             <div class="card shadow-sm border-0 mb-4">
                 <div class="card-body p-4">
                     <h5 class="card-title text-uppercase text-muted mb-3">Member Since</h5>

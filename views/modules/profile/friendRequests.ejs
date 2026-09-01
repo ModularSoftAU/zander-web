@@ -1,0 +1,79 @@
+<%- include("../../modules/header.ejs", {
+    pageTitle: pageTitle,
+    pageDescription: config.siteConfiguration.tagline
+}) %>
+
+<%- include("../../modules/navigationBar.ejs") %>
+
+<div class="container py-5">
+    <h1 class="h3 mb-4">Friend Requests</h1>
+
+    <% if (req.cookies.alertType) { %>
+        <div class="mb-4">
+            <%- include("../../partials/alert.ejs", {
+                alertType: req.cookies.alertType,
+                content: req.cookies.alertContent
+            }) %>
+        </div>
+    <% } %>
+
+    <div class="row g-4">
+        <div class="col-lg-6">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body p-4">
+                    <h5 class="card-title text-uppercase text-muted mb-3">Incoming</h5>
+                    <% if (!incoming || incoming.length === 0) { %>
+                        <p class="text-muted small mb-0">No incoming requests.</p>
+                    <% } else { %>
+                        <ul class="list-unstyled mb-0">
+                            <% incoming.forEach(function (r) { %>
+                                <li class="d-flex align-items-center gap-3 py-2 border-bottom">
+                                    <img src="<%= r.avatarUrl %>" alt="<%= r.username %>" width="40" height="40" class="rounded-circle border">
+                                    <div class="flex-grow-1 min-w-0">
+                                        <a href="/profile/<%= encodeURIComponent(r.username) %>" class="fw-semibold text-decoration-none"><%= r.username %></a>
+                                        <% if (r.message) { %>
+                                            <div class="small text-muted text-truncate"><%= r.message %></div>
+                                        <% } %>
+                                    </div>
+                                    <form action="/profile/<%= encodeURIComponent(r.username) %>/friend/accept" method="post" class="m-0">
+                                        <button type="submit" class="btn btn-sm btn-success">Accept</button>
+                                    </form>
+                                    <form action="/profile/<%= encodeURIComponent(r.username) %>/friend/decline" method="post" class="m-0">
+                                        <button type="submit" class="btn btn-sm btn-outline-secondary">Decline</button>
+                                    </form>
+                                </li>
+                            <% }) %>
+                        </ul>
+                    <% } %>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-6">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body p-4">
+                    <h5 class="card-title text-uppercase text-muted mb-3">Sent</h5>
+                    <% if (!outgoing || outgoing.length === 0) { %>
+                        <p class="text-muted small mb-0">No pending sent requests.</p>
+                    <% } else { %>
+                        <ul class="list-unstyled mb-0">
+                            <% outgoing.forEach(function (r) { %>
+                                <li class="d-flex align-items-center gap-3 py-2 border-bottom">
+                                    <img src="<%= r.avatarUrl %>" alt="<%= r.username %>" width="40" height="40" class="rounded-circle border">
+                                    <div class="flex-grow-1 min-w-0">
+                                        <a href="/profile/<%= encodeURIComponent(r.username) %>" class="fw-semibold text-decoration-none"><%= r.username %></a>
+                                    </div>
+                                    <form action="/profile/<%= encodeURIComponent(r.username) %>/friend/remove" method="post" class="m-0">
+                                        <button type="submit" class="btn btn-sm btn-outline-secondary">Cancel</button>
+                                    </form>
+                                </li>
+                            <% }) %>
+                        </ul>
+                    <% } %>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<%- include("../../modules/footer.ejs") %>

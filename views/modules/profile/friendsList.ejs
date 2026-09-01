@@ -1,0 +1,41 @@
+<%- include("../../modules/header.ejs", {
+    pageTitle: pageTitle,
+    pageDescription: config.siteConfiguration.tagline
+}) %>
+
+<%- include("../../modules/navigationBar.ejs") %>
+
+<div class="container py-5">
+    <div class="d-flex align-items-center justify-content-between mb-4">
+        <h1 class="h3 mb-0"><%= profileOwner.username %>'s Friends</h1>
+        <a href="/profile/<%= encodeURIComponent(profileOwner.username) %>" class="btn btn-sm btn-outline-secondary">
+            <i class="fa-solid fa-arrow-left me-1"></i>Back to profile
+        </a>
+    </div>
+
+    <% if (hidden) { %>
+        <div class="alert alert-secondary mb-0">This player's friends list is private.</div>
+    <% } else if (!friends || friends.length === 0) { %>
+        <div class="alert alert-secondary mb-0">
+            <%= isOwner ? "You have no friends added yet." : "No friends to show." %>
+        </div>
+    <% } else { %>
+        <div class="row row-cols-2 row-cols-sm-3 row-cols-md-4 row-cols-lg-6 g-3">
+            <% friends.forEach(function (f) { %>
+                <div class="col">
+                    <a href="/profile/<%= encodeURIComponent(f.username) %>"
+                       class="card border-0 shadow-sm text-decoration-none h-100 text-center">
+                        <div class="card-body p-3">
+                            <img src="<%= f.avatarUrl %>" alt="<%= f.username %>"
+                                 width="64" height="64" loading="lazy"
+                                 class="rounded-circle border mb-2">
+                            <div class="small fw-semibold text-truncate"><%= f.username %></div>
+                        </div>
+                    </a>
+                </div>
+            <% }) %>
+        </div>
+    <% } %>
+</div>
+
+<%- include("../../modules/footer.ejs") %>
