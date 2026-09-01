@@ -29,6 +29,8 @@ dotenv.config();
 import fastify from "fastify";
 import fastifySession from "@fastify/session";
 import fastifyCookie from "@fastify/cookie";
+import fastifyCsrf from "@fastify/csrf-protection";
+import fastifyHelmet from "@fastify/helmet";
 import { FastifyPrismaSessionStore } from "./lib/fastifyPrismaSessionStore.js";
 
 const config = require("./config.json");
@@ -129,6 +131,33 @@ const buildApp = async () => {
       },
     });
   }
+
+  // Security response headers. CSP is intentionally report-only for now: the
+  // EJS templates use inline <script>/<style> and the assets/js/lib/ vendor
+  // bundles would trip a strict policy. Tighten to enforcing once violations
+  // are triaged from the report stream.
+  await app.register(fastifyHelmet, {
+    contentSecurityPolicy: {
+      useDefaults: true,
+      reportOnly: true,
+      directives: {
+        "default-src": ["'self'"],
+        "script-src": ["'self'", "'unsafe-inline'", "'unsafe-eval'", "https:"],
+        "style-src": ["'self'", "'unsafe-inline'", "https:"],
+        "img-src": ["'self'", "data:", "blob:", "https:"],
+        "font-src": ["'self'", "data:", "https:"],
+        "connect-src": ["'self'", "https:"],
+        "media-src": ["'self'", "data:", "blob:", "https:"],
+        "frame-ancestors": ["'self'"],
+        "upgrade-insecure-requests": null,
+      },
+    },
+    // The site embeds cross-origin images/media (CDNs, avatars); keep these
+    // permissive so helmet's defaults don't break existing pages.
+    crossOriginEmbedderPolicy: false,
+    crossOriginResourcePolicy: false,
+    crossOriginOpenerPolicy: false,
+  });
 
   // When app errors, render the error on a page, do not provide JSON
   app.setNotFoundHandler(async function (req, res) {
@@ -435,6 +464,73 @@ const buildApp = async () => {
       return next(err);
     }
     next();
+  });
+
+  // ── CSRF protection ──────────────────────────────────────────────────────
+  // Registered here — after the session plugin and after every token-authed
+  // surface (the JSON API bundle behind verifyToken, the Mixed ingestion
+  // endpoints, the raw-body Stripe webhook scope). Those authenticate with a
+  // Bearer token / HMAC signature, for which a CSRF token is meaningless; they
+  // sit in earlier encapsulation contexts and are untouched. Only siteRoutes
+  // (registered next — site + dashboard, session-cookie auth) inherits the
+  // enforcement hook below.
+  //
+  // Double-submit-cookie mode (no sessionPlugin option): the secret rides in a
+  // dedicated cookie, so issuing a token does not force a Prisma session write
+  // on every anonymous GET (cf. the rolling:false note above).
+  await app.register(fastifyCsrf, {
+    cookieKey: "_csrf",
+    cookieOpts: {
+      path: "/",
+      sameSite: "lax",
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+    },
+    getToken: (req) =>
+      (req.body && typeof req.body === "object" && req.body._csrf) ||
+      req.headers["x-csrf-token"] ||
+      req.headers["csrf-token"] ||
+      (req.query && req.query._csrf) ||
+      undefined,
+  });
+
+  const CSRF_PROTECTED_METHODS = new Set(["POST", "PUT", "PATCH", "DELETE"]);
+
+  // Issue a token on every non-mutating request so the onSend hook can surface
+  // it (meta tag + /js/csrf.js distributor). Not regenerated on mutating
+  // requests, so an in-flight form/fetch validates against the cookie the
+  // client already holds.
+  app.addHook("onRequest", async (req, reply) => {
+    if (!CSRF_PROTECTED_METHODS.has(req.method)) {
+      try {
+        req.csrfToken = reply.generateCsrf();
+      } catch {
+        req.csrfToken = null;
+      }
+    }
+  });
+
+  app.addHook("preHandler", (req, reply, done) => {
+    if (!CSRF_PROTECTED_METHODS.has(req.method)) return done();
+    return app.csrfProtection(req, reply, done);
+  });
+
+  // Inject <meta name="csrf-token"> + the distributor shim into every HTML
+  // response, so every form and same-origin fetch/XHR carries the token
+  // without editing each individual <form> tag.
+  app.addHook("onSend", async (req, reply, payload) => {
+    if (typeof payload !== "string") return payload;
+    const contentType = String(reply.getHeader("content-type") || "");
+    if (!contentType.includes("text/html")) return payload;
+    if (!req.csrfToken) return payload;
+    if (payload.includes('name="csrf-token"') || !payload.includes("</head>")) {
+      return payload;
+    }
+    const escaped = String(req.csrfToken).replace(/"/g, "&quot;");
+    const inject =
+      `<meta name="csrf-token" content="${escaped}">` +
+      `<script src="/js/csrf.js" defer></script>`;
+    return payload.replace("</head>", inject + "</head>");
   });
 
   await app.register((instance, options, next) => {
