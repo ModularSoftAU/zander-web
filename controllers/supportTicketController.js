@@ -17,6 +17,7 @@
 export * from "../services/support/categories.js";
 export * from "../services/support/users.js";
 export * from "../services/support/participants.js";
+export * from "../services/support/messages.js";
 export * from "../services/support/channels.js";
 export * from "../services/support/status.js";
 export * from "../services/support/tickets.js";
