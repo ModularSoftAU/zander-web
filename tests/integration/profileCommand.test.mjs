@@ -11,13 +11,28 @@ vi.mock("@sapphire/framework", () => ({
   RegisterBehavior: { BulkOverwrite: 1 },
 }));
 
+// The command looks profiles up in-process via userController / profileService /
+// badgeController (no HTTP self-call), so those are the collaborators to stub.
+const byUsername = vi.fn();
+const byDiscordId = vi.fn();
 vi.mock("../../controllers/userController.js", () => ({
+  UserGetter: class {
+    byUsername = byUsername;
+    byDiscordId = byDiscordId;
+  },
   getProfilePicture: vi.fn().mockResolvedValue("https://example.com/avatar.png"),
+  getUserStats: vi.fn().mockResolvedValue({ totalLogins: 10, totalPlaytime: "5h" }),
+  getUserLastSession: vi.fn().mockResolvedValue({ isOnline: false, lastOnlineDiff: null }),
+}));
+vi.mock("../../services/profileService.js", () => ({
+  getUserRanks: vi.fn().mockResolvedValue([]),
+}));
+vi.mock("../../controllers/badgeController.js", () => ({
+  getBadgesForUser: vi.fn().mockResolvedValue([]),
 }));
 vi.mock("../../lib/discord/resolveDiscordMember.mjs", () => ({
   resolveDiscordUserId: vi.fn(),
 }));
-vi.mock("node-fetch", () => ({ default: vi.fn() }));
 vi.mock("discord.js", async (importOriginal) => {
   const actual = await importOriginal();
   return {
@@ -37,114 +52,97 @@ vi.mock("discord.js", async (importOriginal) => {
 });
 
 import { resolveDiscordUserId } from "../../lib/discord/resolveDiscordMember.mjs";
-import fetch from "node-fetch";
 const { ProfileCommand } = await import("../../commands/profile.mjs");
 
 function buildInteraction({ username = null, discordUser = null, discordTag = null } = {}) {
   return {
     options: {
-      getString: (key) => key === "username" ? username : key === "discord_tag" ? discordTag : null,
-      getUser: (key) => key === "discord_user" ? discordUser : null,
+      getString: (key) => (key === "username" ? username : key === "discord_tag" ? discordTag : null),
+      getUser: (key) => (key === "discord_user" ? discordUser : null),
     },
     user: { id: "caller-123" },
     reply: vi.fn().mockResolvedValue(undefined),
+    deferReply: vi.fn().mockResolvedValue(undefined),
+    editReply: vi.fn().mockResolvedValue(undefined),
   };
 }
-
-const successfulProfile = {
-  success: true,
-  data: {
-    profileData: {
-      username: "TestPlayer",
-      discordId: null,
-      joined: "2022-01-01T00:00:00Z",
-    },
-    profileSession: { isOnline: false, lastOnlineDiff: null },
-    profileStats: { totalLogins: 10, totalPlaytime: "5h" },
-  },
-};
 
 describe("profile command", () => {
   let cmd;
 
   beforeEach(() => {
     vi.clearAllMocks();
-    process.env.siteAddress = "http://localhost:3000";
     cmd = new ProfileCommand({ name: "profile" }, {});
   });
 
-  it("replies with guidance when no arguments are given", async () => {
+  it("replies with guidance when no arguments are given (before deferring)", async () => {
     const interaction = buildInteraction();
     await cmd.chatInputRun(interaction);
+    expect(interaction.deferReply).not.toHaveBeenCalled();
     expect(interaction.reply).toHaveBeenCalledWith(
       expect.objectContaining({ ephemeral: true, content: expect.stringContaining("Please provide") })
     );
   });
 
-  it("shows 'not linked' embed when Discord user lookup returns no profile", async () => {
+  it("defers, then shows 'not linked' embed when a Discord lookup finds no account", async () => {
     vi.mocked(resolveDiscordUserId).mockResolvedValue("discord-id-999");
-    vi.mocked(fetch).mockResolvedValue({ ok: true, json: async () => ({ success: false }) });
+    byDiscordId.mockResolvedValue(null);
 
     const interaction = buildInteraction({ discordUser: { id: "discord-id-999" } });
     await cmd.chatInputRun(interaction);
 
-    expect(interaction.reply).toHaveBeenCalledOnce();
-    const embed = interaction.reply.mock.calls[0][0].embeds?.[0];
-    expect(embed._desc).toContain("not linked");
+    expect(interaction.deferReply).toHaveBeenCalledOnce();
+    const embed = interaction.editReply.mock.calls.at(-1)[0].embeds?.[0];
+    expect(embed._desc).toContain("not linked to a website account");
   });
 
-  it("shows generic error when username lookup returns no profile", async () => {
-    vi.mocked(fetch).mockResolvedValue({ ok: true, json: async () => ({ success: false }) });
+  it("shows the generic 'does not exist' embed when a username lookup finds no account", async () => {
+    byUsername.mockResolvedValue(null);
 
     const interaction = buildInteraction({ username: "NonExistentPlayer" });
     await cmd.chatInputRun(interaction);
 
-    const embed = interaction.reply.mock.calls[0][0].embeds?.[0];
+    const embed = interaction.editReply.mock.calls.at(-1)[0].embeds?.[0];
     expect(embed._desc).not.toContain("not linked");
     expect(embed._desc).toContain("does not exist");
   });
 
-  it("shows 'unable to resolve' when Discord ID cannot be resolved", async () => {
+  it("editReplies 'Unable to resolve' when the Discord info can't be resolved to an account", async () => {
     vi.mocked(resolveDiscordUserId).mockResolvedValue(null);
     const interaction = buildInteraction({ discordUser: { id: "bad-id" } });
     await cmd.chatInputRun(interaction);
-    expect(interaction.reply).toHaveBeenCalledWith(
-      expect.objectContaining({ ephemeral: true, content: expect.stringContaining("Unable to resolve") })
+
+    expect(interaction.deferReply).toHaveBeenCalledOnce();
+    expect(interaction.editReply).toHaveBeenCalledWith(
+      expect.objectContaining({ content: expect.stringContaining("Unable to resolve") })
     );
   });
 
-  it("shows 'Failed to reach API' on fetch network error", async () => {
+  it("editReplies a failure notice when the profile lookup throws", async () => {
     vi.mocked(resolveDiscordUserId).mockResolvedValue("discord-id-1");
-    vi.mocked(fetch).mockRejectedValue(new Error("Network error"));
+    byDiscordId.mockRejectedValue(new Error("DB down"));
 
     const interaction = buildInteraction({ discordUser: { id: "discord-id-1" } });
     await cmd.chatInputRun(interaction);
-    expect(interaction.reply).toHaveBeenCalledWith(
-      expect.objectContaining({ ephemeral: true, content: expect.stringContaining("Failed to reach") })
+
+    expect(interaction.editReply).toHaveBeenCalledWith(
+      expect.objectContaining({ content: expect.stringContaining("Failed to look up the profile") })
     );
   });
 
-  it("shows 'Failed to reach API' on non-OK HTTP response", async () => {
-    vi.mocked(resolveDiscordUserId).mockResolvedValue("discord-id-2");
-    vi.mocked(fetch).mockResolvedValue({ ok: false, status: 503 });
-
-    const interaction = buildInteraction({ discordUser: { id: "discord-id-2" } });
-    await cmd.chatInputRun(interaction);
-    expect(interaction.reply).toHaveBeenCalledWith(
-      expect.objectContaining({ ephemeral: true, content: expect.stringContaining("Failed to reach") })
-    );
-  });
-
-  it("renders profile embed on successful username lookup", async () => {
-    vi.mocked(fetch)
-      .mockResolvedValueOnce({ ok: true, json: async () => successfulProfile })
-      .mockResolvedValueOnce({ ok: true, json: async () => ({ success: false }) }); // badges
+  it("renders the profile embed on a successful username lookup", async () => {
+    byUsername.mockResolvedValue({
+      username: "TestPlayer",
+      userId: 42,
+      discordId: null,
+      joined: "2022-01-01T00:00:00Z",
+    });
 
     const interaction = buildInteraction({ username: "TestPlayer" });
     await cmd.chatInputRun(interaction);
 
-    expect(interaction.reply).toHaveBeenCalledOnce();
-    const callArg = interaction.reply.mock.calls[0][0];
+    expect(interaction.editReply).toHaveBeenCalledOnce();
+    const callArg = interaction.editReply.mock.calls[0][0];
     expect(callArg.embeds).toBeDefined();
     expect(callArg.embeds.length).toBeGreaterThan(0);
   });
