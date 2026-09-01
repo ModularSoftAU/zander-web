@@ -3,7 +3,6 @@ const require = createRequire(import.meta.url);
 const config = require("../config.json");
 import db, { luckpermsDb } from "./databaseController.js";
 import { ChannelType, PermissionFlagsBits, OverwriteType } from "discord.js";
-import { hashEmail } from "../api/common.js";
 import { createNotificationsForUsers } from "./notificationController.js";
 
 // Phase 7 decomposition: category data access now lives in services/support/.
@@ -24,6 +23,17 @@ import {
   getCategoryPermissions,
   getLuckPermRankRoles,
 } from "../services/support/categories.js";
+import { buildAvatarUrl } from "../services/support/internal.js";
+import {
+  getUserIdByDiscordId,
+  getUserById,
+  findUserByIdentifier,
+  searchUsersByUsername,
+  searchLinkedUsers,
+  createUnlinkedUser,
+  getUserRoles,
+  getUserRankSlugs,
+} from "../services/support/users.js";
 
 let discordChannelColumnCheck;
 let ticketParticipantTableCheck;
@@ -289,26 +299,6 @@ async function ensureTicketMessageTypeColumn() {
 
     return ticketMessageTypeColumnCheck;
 }
-
-async function buildAvatarUrl(profile) {
-    if (!profile) return null;
-
-    try {
-        if (profile.profilePicture_type === "GRAVATAR" && profile.profilePicture_email) {
-            const emailHash = await hashEmail(profile.profilePicture_email);
-            return `https://gravatar.com/avatar/${emailHash}?size=200`;
-        }
-
-        if (profile.profilePicture_type === "CRAFTATAR" && profile.uuid) {
-            return `https://crafthead.net/helm/${profile.uuid}`;
-        }
-    } catch (avatarError) {
-        console.error("buildAvatarUrl: failed to build avatar", avatarError);
-    }
-
-    return null;
-}
-
 
 export async function createSupportTicket(
     client,
@@ -1496,18 +1486,6 @@ export async function notifyTicketStatusChange(ticketId, status, actor) {
     });
 }
 
-export async function getUserIdByDiscordId(discordId) {
-    return new Promise((resolve, reject) => {
-        db.query("SELECT userId FROM users WHERE discordId = ?", [discordId], (err, results) => {
-            if (err) {
-                reject(err);
-            } else {
-                resolve(results[0] ? results[0].userId : null);
-            }
-        });
-    });
-}
-
 export async function updateTicketCategory(client, ticketId, newCategoryId) {
     const hasChannelColumn = await ensureDiscordChannelColumn();
 
@@ -1595,114 +1573,6 @@ export async function updateTicketCategory(client, ticketId, newCategoryId) {
     }
 
     return { changed: true, previousCategoryId, nextCategoryId: newCategoryId };
-}
-
-export async function getUserById(userId) {
-    if (!userId) return null;
-
-    return new Promise((resolve) => {
-        db.query(
-            "SELECT userId, username, discordId, profilePicture_type, profilePicture_email, uuid FROM users WHERE userId = ? LIMIT 1",
-            [userId],
-            (err, results) => {
-                if (err) {
-                    console.error("getUserById: failed to lookup user", err);
-                    resolve(null);
-                } else {
-                    resolve(results?.[0] || null);
-                }
-            },
-        );
-    });
-}
-
-export async function findUserByIdentifier(identifier) {
-    const lookup = identifier?.trim();
-    if (!lookup) return null;
-
-    return new Promise((resolve, reject) => {
-        db.query(
-            "SELECT userId, username, discordId FROM users WHERE LOWER(username) = LOWER(?) OR userId = ? OR discordId = ? LIMIT 1",
-            [lookup, lookup, lookup],
-            (err, results) => {
-                if (err) {
-                    reject(err);
-                } else {
-                    resolve(results[0] || null);
-                }
-            },
-        );
-    });
-}
-
-export async function searchUsersByUsername(query) {
-    const term = query?.trim();
-    if (!term || term.length < 2) return [];
-
-    return new Promise((resolve) => {
-        db.query(
-            "SELECT userId, username, profilePicture_type, profilePicture_email, uuid FROM users WHERE username LIKE ? ORDER BY username ASC LIMIT 8",
-            [`${term}%`],
-            async (err, results) => {
-                if (err) {
-                    console.error("searchUsersByUsername: failed to run query", err);
-                    resolve([]);
-                    return;
-                }
-
-                const enriched = await Promise.all(
-                    results.map(async (row) => ({
-                        ...row,
-                        avatarUrl: await buildAvatarUrl(row),
-                    })),
-                );
-                resolve(enriched);
-            },
-        );
-    });
-}
-
-export async function searchLinkedUsers(query) {
-    const term = query?.trim();
-    if (!term || term.length < 2) return [];
-
-    return new Promise((resolve) => {
-        db.query(
-            "SELECT userId, username, discordId, profilePicture_type, profilePicture_email, uuid FROM users WHERE username LIKE ? AND discordId IS NOT NULL ORDER BY username ASC LIMIT 8",
-            [`${term}%`],
-            async (err, results) => {
-                if (err) {
-                    console.error("searchLinkedUsers: failed to run query", err);
-                    resolve([]);
-                    return;
-                }
-
-                const enriched = await Promise.all(
-                    results.map(async (row) => ({
-                        userId: row.userId,
-                        username: row.username,
-                        discordId: row.discordId,
-                        avatarUrl: await buildAvatarUrl(row),
-                    })),
-                );
-                resolve(enriched);
-            },
-        );
-    });
-}
-
-export async function createUnlinkedUser(discordId, username) {
-    // Truncate username to fit VARCHAR(16) column – Discord usernames can be up to 32 chars
-    const safeName = username ? username.substring(0, 16) : "Unknown";
-    return new Promise((resolve, reject) => {
-        db.query("INSERT INTO users (discordId, username, uuid, is_placeholder) VALUES (?, ?, UUID(), 1)", [discordId, safeName], (err, results) => {
-            if (err) {
-                reject(err);
-            } else {
-                resolve(results.insertId);
-            }
-        });
-    });
 }
 
 export async function getTicketsByUserId(userId) {
@@ -2039,58 +1909,6 @@ export async function getTicketsByCategory(categoryId) {
     });
 }
 
-// LuckPerms lives on a separate MySQL server from the main app DB, so these
-// can't be read via the (cross-server, unreliable) `userRanks` view —
-// resolve the user's uuid from the main DB, then query luckpermsDb directly.
-async function getUserUuidByUserId(userId) {
-    const rows = await new Promise((resolve, reject) => {
-        db.query(
-            "SELECT uuid FROM users WHERE userId = ? LIMIT 1",
-            [userId],
-            (err, results) => (err ? reject(err) : resolve(results)),
-        );
-    });
-    return rows[0]?.uuid ? rows[0].uuid.toLowerCase() : null;
-}
-
-async function getUserGroupSlugs(uuid) {
-    if (!uuid) return [];
-    const rows = await new Promise((resolve, reject) => {
-        luckpermsDb.query(
-            `SELECT SUBSTRING_INDEX(permission, '.', -1) AS rankSlug
-               FROM luckperms_user_permissions
-              WHERE uuid = ? AND permission LIKE 'group.%' AND value = 1
-                AND (expiry IS NULL OR expiry = 0 OR expiry > UNIX_TIMESTAMP())`,
-            [uuid],
-            (err, results) => (err ? reject(err) : resolve(results)),
-        );
-    });
-    return rows.map((r) => r.rankSlug);
-}
-
-export async function getUserRoles(userId) {
-    const uuid = await getUserUuidByUserId(userId);
-    const rankSlugs = await getUserGroupSlugs(uuid);
-    if (!rankSlugs.length) return [];
-
-    const rows = await new Promise((resolve, reject) => {
-        luckpermsDb.query(
-            `SELECT SUBSTRING_INDEX(permission, '.', -1) AS discordRoleId
-               FROM luckperms_group_permissions
-              WHERE name IN (?) AND permission LIKE 'meta.discordid.%' AND value = 1
-                AND server = 'global' AND world = 'global'`,
-            [rankSlugs],
-            (err, results) => (err ? reject(err) : resolve(results)),
-        );
-    });
-    return rows.map((r) => r.discordRoleId).filter(Boolean);
-}
-
-export async function getUserRankSlugs(userId) {
-    const uuid = await getUserUuidByUserId(userId);
-    return getUserGroupSlugs(uuid);
-}
-
 export async function updateTicketStatus(ticketId, status) {
     return new Promise((resolve, reject) => {
         db.query("UPDATE supportTickets SET status = ? WHERE ticketId = ?", [status, ticketId], (err, results) => {
@@ -2154,4 +1972,16 @@ export {
   getCategoryById,
   getCategoryPermissions,
   getLuckPermRankRoles,
+};
+
+// ── Re-exports: user lookups (services/support/users.js) ─────────────────────
+export {
+  getUserIdByDiscordId,
+  getUserById,
+  findUserByIdentifier,
+  searchUsersByUsername,
+  searchLinkedUsers,
+  createUnlinkedUser,
+  getUserRoles,
+  getUserRankSlugs,
 };
