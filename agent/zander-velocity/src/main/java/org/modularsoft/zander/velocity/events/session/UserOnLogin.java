@@ -20,9 +20,6 @@ public class UserOnLogin {
         ZanderVelocityMain.getPrivateMessageService().updateNameCache(player.getUniqueId(), player.getUsername());
 
         ZanderVelocityMain.getProxy().getScheduler().buildTask(ZanderVelocityMain.getInstance(), () -> {
-            String BaseAPIURL = ZanderVelocityMain.getConfig().getString(Route.from("BaseAPIURL"));
-            String APIKey = ZanderVelocityMain.getConfig().getString(Route.from("APIKey"));
-
             try {
                 //
                 // Send User Creation API POST for new user

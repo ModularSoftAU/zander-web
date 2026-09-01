@@ -119,6 +119,60 @@ export default function sessionApiRoute(app, config, db, features, lang) {
     }
   });
 
+  app.post(baseEndpoint + "/vanish", async function (req, res) {
+    const uuid = required(req.body, "uuid", res);
+    if (res.sent) return;
+    const hiddenRaw = required(req.body, "hidden", res);
+    if (res.sent) return;
+
+    // Accept boolean, numeric or string forms from the proxy payload.
+    const hidden =
+      hiddenRaw === true ||
+      hiddenRaw === 1 ||
+      hiddenRaw === "1" ||
+      String(hiddenRaw).toLowerCase() === "true";
+
+    try {
+      const result = await new Promise((resolve, reject) => {
+        db.query(
+          `
+            UPDATE gameSessions
+            JOIN users ON gameSessions.userId = users.userId
+            SET gameSessions.hidden = ?
+            WHERE users.uuid = ?
+                AND gameSessions.sessionEnd IS NULL
+                AND gameSessions.sessionId > 0;
+          `,
+          [hidden ? 1 : 0, uuid],
+          function (error, results) {
+            if (error) {
+              reject(error);
+            } else {
+              resolve(results);
+            }
+          }
+        );
+      });
+
+      return res.send({
+        success: true,
+        message: `Vanish state for ${uuid} set to ${hidden ? "hidden" : "visible"}.`,
+        data: {
+          hidden,
+          sessionsUpdated: result?.affectedRows ?? 0,
+        },
+      });
+    } catch (error) {
+      console.error(error);
+      if (!res.sent) {
+        return res.status(500).send({
+          success: false,
+          message: `${error}`,
+        });
+      }
+    }
+  });
+
   app.post(baseEndpoint + "/switch", async function (req, res) {
     const uuid = required(req.body, "uuid", res);
     if (res.sent) return;

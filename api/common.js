@@ -123,7 +123,7 @@ function normalisePermissionNode(value) {
   return String(value).trim().toLowerCase();
 }
 
-function hasSpecificPermission(permissionArray, node) {
+export function hasSpecificPermission(permissionArray, node) {
   if (!node) {
     return true;
   }

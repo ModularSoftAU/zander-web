@@ -327,6 +327,9 @@ model gameSessions {
   sessionEnd   DateTime?
   ipAddress    String?   @db.VarChar(45)
   server       String?   @db.Text
+  hidden       Boolean   @default(false)
+
+  @@index([userId, hidden, sessionStart])
 }
 
 model announcements {

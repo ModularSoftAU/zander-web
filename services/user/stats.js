@@ -54,10 +54,16 @@ export function convertSecondsToDuration(seconds) {
   return `${Math.floor(s / MONTH)} months`;
 }
 
-export async function getUserLastSession(userId) {
+export async function getUserLastSession(userId, { includeHidden = false } = {}) {
+  // Hidden sessions belong to a currently-vanished player. For every public
+  // presence surface the vanished player must look exactly like an offline one,
+  // so we resolve against their most recent *visible* session instead. Staff
+  // tooling can opt back in with { includeHidden: true }.
+  const hiddenFilter = includeHidden ? "" : "AND hidden = 0 ";
+
   return new Promise((resolve, reject) => {
     db.query(
-      `SELECT * FROM gameSessions WHERE userId=? ORDER BY sessionStart DESC LIMIT 1;`,
+      `SELECT * FROM gameSessions WHERE userId=? ${hiddenFilter}ORDER BY sessionStart DESC LIMIT 1;`,
       [userId],
       async function (err, results) {
         if (err) {

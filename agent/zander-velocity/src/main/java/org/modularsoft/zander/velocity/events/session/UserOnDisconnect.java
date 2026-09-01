@@ -21,6 +21,9 @@ public class UserOnDisconnect {
         boolean isConnected = isConnected(ZanderVelocityMain.getProxy(), player.getUsername());
         if (isConnected) return;
 
+        // Clear vanish bookkeeping so a later login re-reports from scratch.
+        org.modularsoft.zander.velocity.util.api.VanishReporter.forget(player.getUniqueId());
+
         ZanderVelocityMain.getProxy().getScheduler().buildTask(ZanderVelocityMain.getInstance(), () -> {
             //
             // Destroy Session API POST

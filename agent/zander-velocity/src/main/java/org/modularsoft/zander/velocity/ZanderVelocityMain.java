@@ -26,6 +26,7 @@ import org.modularsoft.zander.velocity.events.session.UserOnLogin;
 import org.modularsoft.zander.velocity.events.session.UserOnSwitch;
 import org.modularsoft.zander.velocity.util.announcement.TipChatter;
 import org.modularsoft.zander.velocity.util.api.Heartbeat;
+import org.modularsoft.zander.velocity.util.api.VanishReporter;
 import org.modularsoft.zander.velocity.util.messaging.PrivateMessageService;
 import org.slf4j.Logger;
 
@@ -107,6 +108,9 @@ public class ZanderVelocityMain {
 
         // Start the Heartbeat task
         Heartbeat.startHeartbeatTask();
+
+        // Keep the web app's hidden-session flag in step with live vanish state
+        VanishReporter.startVanishReporterTask();
 
         // Start the Announcement Tip task
         TipChatter.startAnnouncementTipTask();
