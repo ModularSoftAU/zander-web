@@ -15,8 +15,9 @@ import db from "../../controllers/databaseController.js";
 import { hashEmail } from "../../api/common.js";
 import { createNotificationsForUsers } from "../../controllers/notificationController.js";
 // Runtime-only imports (called inside notifyTicketParticipants, never at module
-// init) — the tickets.js <-> internal.js cycle is safe under ESM.
-import { getTicketById, getTicketParticipants } from "./tickets.js";
+// init) — these cycles are safe under ESM.
+import { getTicketById } from "./tickets.js";
+import { getTicketParticipants } from "./participants.js";
 
 let discordChannelColumnCheck;
 let ticketParticipantTableCheck;
