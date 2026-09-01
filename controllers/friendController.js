@@ -200,6 +200,32 @@ export async function getPendingOutgoing(userId) {
   );
 }
 
+/**
+ * Accepted friends of `userId` who currently have an open, NON-hidden game
+ * session — i.e. genuinely online and not vanished. Reuses the same
+ * sessionEnd/hidden/staleness predicates as getUserLastSession so a vanished
+ * friend is indistinguishable from an offline one.
+ */
+export async function getOnlineFriends(userId) {
+  const id = toId(userId);
+  if (!id) return [];
+  return runQuery(
+    `SELECT u.userId, u.username, u.uuid, MAX(gs.server) AS server
+       FROM userFriendships f
+       JOIN users u
+         ON u.userId = CASE WHEN f.requesterId = ? THEN f.addresseeId ELSE f.requesterId END
+       JOIN gameSessions gs ON gs.userId = u.userId
+      WHERE f.status = 'accepted'
+        AND (f.requesterId = ? OR f.addresseeId = ?)
+        AND gs.sessionEnd IS NULL
+        AND gs.hidden = 0
+        AND gs.sessionStart >= (NOW() - INTERVAL 24 HOUR)
+      GROUP BY u.userId, u.username, u.uuid
+      ORDER BY u.username ASC`,
+    [id, id, id]
+  );
+}
+
 export async function getUndeliveredRequests(userId) {
   const id = toId(userId);
   if (!id) return [];
