@@ -10,10 +10,8 @@ export async function updateAudit_lastMinecraftLogin(auditDateTime, username) {
     db.query(
       `UPDATE users SET audit_lastMinecraftLogin=? WHERE userId=?;`,
       [auditDateTime, userAudit.userId],
-      function (error, results, fields) {
-        if (error) {
-          reject(error);
-        }
+      (error) => {
+        if (error) console.error("[AUDIT] Failed to update last Minecraft login:", error);
       }
     );
   }
@@ -28,10 +26,8 @@ export async function updateAudit_lastMinecraftMessage(auditDateTime, username) 
   db.query(
     `UPDATE users SET audit_lastMinecraftMessage=? WHERE userId=?;`,
     [auditDateTime, userAudit.userId],
-    function (error, results, fields) {
-      if (error) {
-        reject(error);
-      }
+    (error) => {
+      if (error) console.error("[AUDIT] Failed to update last Minecraft message:", error);
     }
   );
 }
@@ -45,10 +41,8 @@ export async function updateAudit_lastWebsiteLogin(auditDateTime, username) {
   db.query(
     `UPDATE users SET audit_lastWebsiteLogin=? WHERE userId=?;`,
     [auditDateTime, userAudit.userId],
-    function (error, results, fields) {
-      if (error) {
-        reject(error);
-      }
+    (error) => {
+      if (error) console.error("[AUDIT] Failed to update last website login:", error);
     }
   );
 }
@@ -61,10 +55,8 @@ export async function updateAudit_lastDiscordMessage(auditDateTime, discordId) {
     db.query(
       `UPDATE users SET audit_lastDiscordMessage=? WHERE userId=?;`,
       [auditDateTime, userAudit.userId],
-      function (error, results, fields) {
-        if (error) {
-          reject(error);
-        }
+      (error) => {
+        if (error) console.error("[AUDIT] Failed to update last Discord message:", error);
       }
     );
   } else {
@@ -80,10 +72,8 @@ export async function updateAudit_lastDiscordVoice(auditDateTime, discordId) {
     db.query(
       `UPDATE users SET audit_lastDiscordVoice=? WHERE userId=?;`,
       [auditDateTime, userAudit.userId],
-      function (error, results, fields) {
-        if (error) {
-          reject(error);
-        }
+      (error) => {
+        if (error) console.error("[AUDIT] Failed to update last Discord voice:", error);
       }
     );
   } else {
