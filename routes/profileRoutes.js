@@ -150,12 +150,8 @@ export default function profileSiteRoutes(
         }
 
         //
-        // Grab user reports (direct DB query, no HTTP self-call)
-        //
-        const profileReportsApiData = await getReportsByReporterId(profileData.userId);
-
-        //
-        // Get user context for display permissions
+        // Get user context for display permissions. Must resolve before the
+        // punishments fetches below, which are gated on it.
         //
         let contextPermissions = null;
 
@@ -166,96 +162,118 @@ export default function profileSiteRoutes(
             const userProfile = await userData.byUsername(
               req.session.user.username
             );
-            const perms = await getUserPermissions(userProfile);
-            contextPermissions = perms;
+            contextPermissions = await getUserPermissions(userProfile);
           }
-        } else {
-          contextPermissions = null;
         }
 
-        //
-        // Grab user punishments (direct DB query, no HTTP self-call)
-        //
-        let profilePunishmentsApiData = { success: true, data: [] };
-        let discordPunishmentsData = [];
         const isViewingOwnProfile =
           req.session.user && req.session.user.username === username;
-        if (
+        const canViewPunishments =
           isViewingOwnProfile ||
           (contextPermissions &&
-            contextPermissions.includes("zander.web.punishments"))
-        ) {
-          profilePunishmentsApiData = await getUserPunishments(username);
+            contextPermissions.includes("zander.web.punishments"));
+        const canAppeal = isViewingOwnProfile;
 
-          // Also fetch Discord punishments for this user
-          try {
-            discordPunishmentsData = await getDiscordPunishmentsForProfile({
+        //
+        // Everything below is independent of everything else here — fire it all
+        // at once. Each fetch that previously had its own try/catch keeps a
+        // per-promise catch so one failing section degrades rather than 500ing
+        // the whole page; the rest stay uncaught, matching prior behaviour.
+        //
+        const punishmentsPromise = canViewPunishments
+          ? getUserPunishments(username)
+          : Promise.resolve({ success: true, data: [] });
+
+        const discordPunishmentsPromise = canViewPunishments
+          ? getDiscordPunishmentsForProfile({
               discordUserId: profileData.discordId || null,
               playerId: profileData.userId || null,
-            });
-          } catch (err) {
-            console.error("[PROFILE] Failed to fetch Discord punishments:", err);
-          }
-        }
+            }).catch((err) => {
+              console.error("[PROFILE] Failed to fetch Discord punishments:", err);
+              return [];
+            })
+          : Promise.resolve([]);
 
-        const canAppeal = isViewingOwnProfile;
-        let appealTicketsByKey = {};
-        if (canAppeal) {
-          const userRankSlugs =
-            req.session.user.ranks?.map((rank) => rank.rankSlug) || [];
-          const tickets = await getTicketsAccessibleByUser(
-            req.session.user.userId,
-            userRankSlugs
-          );
-          appealTicketsByKey = (tickets || []).reduce((acc, ticket) => {
-            if (ticket.status === "closed") {
-              return acc;
+        const appealTicketsPromise = canAppeal
+          ? getTicketsAccessibleByUser(
+              req.session.user.userId,
+              req.session.user.ranks?.map((rank) => rank.rankSlug) || []
+            )
+          : Promise.resolve([]);
+
+        const platformConnectionsPromise = getPlatformConnectionsByUserId(
+          profileData.userId
+        )
+          .then((connRows) => {
+            const out = {};
+            for (const row of connRows) {
+              if (row.is_active) out[row.platform] = row;
             }
-            const match = String(ticket.title || "").match(/Appeal #([^\s]+)/);
-            if (match && match[1]) {
-              acc[match[1]] = ticket.ticketId;
-            }
-            return acc;
-          }, {});
-        }
+            return out;
+          })
+          .catch((err) => {
+            console.error("[PROFILE] Failed to load platform connections for profile", err);
+            return {};
+          });
 
-        //
-        // Load platform connections for social links
-        //
-        let profilePlatformConnections = {};
-        try {
-          const connRows = await getPlatformConnectionsByUserId(profileData.userId);
-          for (const row of connRows) {
-            if (row.is_active) profilePlatformConnections[row.platform] = row;
-          }
-        } catch (err) {
-          console.error("[PROFILE] Failed to load platform connections for profile", err);
-        }
-
-        //
-        // Load badges for profile
-        //
-        let profileBadges = [];
-        try {
-          profileBadges = await getBadgesForUser(profileData.userId);
-        } catch (err) {
+        const badgesPromise = getBadgesForUser(profileData.userId).catch((err) => {
           console.error("[PROFILE] Failed to load badges for profile", err);
-        }
+          return [];
+        });
 
-        //
-        // Load Mixed stats for profile
-        //
-        let mixedProfile = null;
-        if (features.mixed !== false && profileData.uuid) {
-          try {
-            const mixedUuid = mixed.normaliseUuid(profileData.uuid);
-            if (mixedUuid) {
-              mixedProfile = await mixed.getPlayer(mixedUuid);
-            }
-          } catch (err) {
-            console.error("[PROFILE] Failed to load Mixed stats for profile", err);
+        const mixedProfilePromise =
+          features.mixed !== false && profileData.uuid
+            ? (async () => {
+                try {
+                  const mixedUuid = mixed.normaliseUuid(profileData.uuid);
+                  return mixedUuid ? await mixed.getPlayer(mixedUuid) : null;
+                } catch (err) {
+                  console.error("[PROFILE] Failed to load Mixed stats for profile", err);
+                  return null;
+                }
+              })()
+            : Promise.resolve(null);
+
+        const [
+          globalImage,
+          announcementWeb,
+          profilePicture,
+          profileRanks,
+          profileStats,
+          profileSession,
+          profileReportsApiData,
+          profilePunishmentsApiData,
+          discordPunishmentsData,
+          appealTicketsRaw,
+          profilePlatformConnections,
+          profileBadges,
+          mixedProfile,
+        ] = await Promise.all([
+          getGlobalImage(),
+          getWebAnnouncement(),
+          getProfilePicture(profileData.username),
+          getUserRanks(profileData.username),
+          getUserStats(profileData.userId),
+          getUserLastSession(profileData.userId),
+          getReportsByReporterId(profileData.userId),
+          punishmentsPromise,
+          discordPunishmentsPromise,
+          appealTicketsPromise,
+          platformConnectionsPromise,
+          badgesPromise,
+          mixedProfilePromise,
+        ]);
+
+        const appealTicketsByKey = (appealTicketsRaw || []).reduce((acc, ticket) => {
+          if (ticket.status === "closed") {
+            return acc;
           }
-        }
+          const match = String(ticket.title || "").match(/Appeal #([^\s]+)/);
+          if (match && match[1]) {
+            acc[match[1]] = ticket.ticketId;
+          }
+          return acc;
+        }, {});
 
         //
         // Render the profile page
@@ -266,18 +284,18 @@ export default function profileSiteRoutes(
           config: config,
           req: req,
           features: features,
-          globalImage: await getGlobalImage(),
-          announcementWeb: await getWebAnnouncement(),
-          profilePicture: await getProfilePicture(profileData.username),
+          globalImage: globalImage,
+          announcementWeb: announcementWeb,
+          profilePicture: profilePicture,
           profileApiData: profileData,
-          profileRanks: await getUserRanks(profileData.username),
+          profileRanks: profileRanks,
           profileReportsApiData: profileReportsApiData,
           profilePunishmentsApiData: profilePunishmentsApiData,
           discordPunishmentsData: discordPunishmentsData,
           appealTicketsByKey: appealTicketsByKey,
           canAppeal: canAppeal,
-          profileStats: await getUserStats(profileData.userId),
-          profileSession: await getUserLastSession(profileData.userId),
+          profileStats: profileStats,
+          profileSession: profileSession,
           moment: moment,
           contextPermissions: contextPermissions,
           platformConnections: profilePlatformConnections,
@@ -353,17 +371,42 @@ export default function profileSiteRoutes(
         }
 
         //
-        // Load platform connections for the editor
+        // Independent fetches — run concurrently. Platform connections keeps a
+        // per-promise catch so a failure there degrades to an empty map rather
+        // than 500ing the editor.
         //
-        let platformConnections = {};
-        try {
-          const connRows = await getPlatformConnectionsByUserId(profileData.userId);
-          for (const row of connRows) {
-            platformConnections[row.platform] = row;
-          }
-        } catch (err) {
-          console.error("[PROFILE] Failed to load platform connections", err);
-        }
+        const platformConnectionsPromise = getPlatformConnectionsByUserId(
+          profileData.userId
+        )
+          .then((connRows) => {
+            const out = {};
+            for (const row of connRows) {
+              out[row.platform] = row;
+            }
+            return out;
+          })
+          .catch((err) => {
+            console.error("[PROFILE] Failed to load platform connections", err);
+            return {};
+          });
+
+        const [
+          globalImage,
+          announcementWeb,
+          profilePicture,
+          profileRanks,
+          profileStats,
+          profileSession,
+          platformConnections,
+        ] = await Promise.all([
+          getGlobalImage(),
+          getWebAnnouncement(),
+          getProfilePicture(profileData.username),
+          getUserRanks(profileData.username),
+          getUserStats(profileData.userId),
+          getUserLastSession(profileData.userId),
+          platformConnectionsPromise,
+        ]);
 
         //
         // Render the profile page
@@ -374,13 +417,13 @@ export default function profileSiteRoutes(
           config: config,
           req: req,
           features: features,
-          globalImage: await getGlobalImage(),
-          announcementWeb: await getWebAnnouncement(),
-          profilePicture: await getProfilePicture(profileData.username),
+          globalImage: globalImage,
+          announcementWeb: announcementWeb,
+          profilePicture: profilePicture,
           profileApiData: profileData,
-          profileRanks: await getUserRanks(profileData.username),
-          profileStats: await getUserStats(profileData.userId),
-          profileSession: await getUserLastSession(profileData.userId),
+          profileRanks: profileRanks,
+          profileStats: profileStats,
+          profileSession: profileSession,
           moment: moment,
           platformConnections: platformConnections,
         }));
