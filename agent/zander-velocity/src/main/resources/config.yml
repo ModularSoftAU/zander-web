@@ -1,4 +1,4 @@
-config-version: 2
+config-version: 3
 
 BaseAPIURL: "http://localhost:8080/api"
 APIKey: "KEY"
@@ -10,3 +10,8 @@ announcementTipInterval: 10
 # Friends system: announce to a player's friends when they join the network.
 # Server switches never trigger this; vanished players are never announced.
 FriendsJoinAlerts: true
+
+# When true, a staff member coming OUT of vanish retro-fires a join alert to
+# their friends (via the VanishReporter poll). Off by default — coming back
+# from vanish normally should not read as a fresh join.
+FriendsJoinAlertsOnUnvanish: false

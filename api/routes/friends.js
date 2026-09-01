@@ -41,6 +41,13 @@ setInterval(() => {
   for (const [k, b] of actorBuckets) if (now > b.resetAt) actorBuckets.delete(k);
 }, 60_000).unref?.();
 
+// The one-shot legacy importer (Velocity FriendImporter) sends this header. It
+// already holds the machine token, and a bulk migration legitimately exceeds the
+// per-player limits — dropping rows there would lose real user data.
+function isInternalImport(req) {
+  return req.headers?.["x-friends-import"] === "1";
+}
+
 function limitByActor(uuid, res, { key, windowMs, max }) {
   const now = Date.now();
   const k = `${key}:${uuid}`;
@@ -138,7 +145,8 @@ export default function friendsApiRoute(app, config, db, features, lang) {
     if (res.sent) return;
     const targetName = required(req.body, "targetName", res);
     if (res.sent) return;
-    if (!limitByActor(uuid, res, { key: "friend_request", windowMs: HOUR, max: 10 })) return;
+    if (!isInternalImport(req) &&
+        !limitByActor(uuid, res, { key: "friend_request", windowMs: HOUR, max: 10 })) return;
 
     try {
       const pair = await resolveActorAndTarget(uuid, targetName, res);
@@ -323,7 +331,8 @@ export default function friendsApiRoute(app, config, db, features, lang) {
     if (res.sent) return;
     const targetName = required(req.body, "targetName", res);
     if (res.sent) return;
-    if (!limitByActor(uuid, res, { key: "block_add", windowMs: DAY, max: 30 })) return;
+    if (!isInternalImport(req) &&
+        !limitByActor(uuid, res, { key: "block_add", windowMs: DAY, max: 30 })) return;
 
     try {
       const pair = await resolveActorAndTarget(uuid, targetName, res);

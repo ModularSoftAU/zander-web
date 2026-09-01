@@ -136,6 +136,18 @@ describe("actor-UUID rate limiting", () => {
     expect(other.payload.success).toBe(true);
   });
 
+  it("skips the limit entirely for the internal importer (x-friends-import: 1)", async () => {
+    const handler = build().get("POST /api/blocks/add");
+    for (let i = 0; i < 40; i++) {
+      const res = makeRes();
+      await handler(
+        { headers: { "x-friends-import": "1" }, body: { uuid: "uuid-v1", targetName: "target" } },
+        res
+      );
+      expect(res.statusCode, `import call ${i + 1}`).toBe(200);
+    }
+  });
+
   it("allows 30 blocks per day then 429s the 31st", async () => {
     const handler = build().get("POST /api/blocks/add");
     for (let i = 0; i < 30; i++) {

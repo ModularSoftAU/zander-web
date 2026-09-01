@@ -30,7 +30,11 @@ import java.util.stream.Collectors;
  * <p>Suppressed for: vanished joiners, any block relationship, and friends whose
  * {@code notifyFriendJoin} is off. The whole thing is gated on
  * {@link VanishStatusResolver#isPresenceSafe()} — if vanish state can't be
- * trusted, nothing is published. Unvanishing never retro-fires an alert.</p>
+ * trusted, nothing is published.</p>
+ *
+ * <p>By default unvanishing does not retro-fire an alert. {@code VanishReporter}
+ * calls {@link #announce(Player)} on an unvanish transition only when
+ * {@code FriendsJoinAlertsOnUnvanish} is enabled in config (default false).</p>
  */
 public class FriendJoinAlert {
 
@@ -42,13 +46,9 @@ public class FriendJoinAlert {
         if (event.getPreviousServer() != null) {
             return;
         }
-
-        boolean enabled = ZanderVelocityMain.getConfig()
-                .getBoolean(Route.from("FriendsJoinAlerts"), true);
-        if (!enabled) {
+        if (!joinAlertsEnabled()) {
             return;
         }
-
         // If we can't determine vanish state at all, publish nothing.
         if (!VanishStatusResolver.isPresenceSafe()) {
             return;
@@ -62,50 +62,65 @@ public class FriendJoinAlert {
             if (stillOn.isEmpty()) {
                 return;
             }
-            Player online = stillOn.get();
-
             // Re-check vanish right before sending, regardless of the delay.
-            if (!VanishStatusResolver.isPresenceSafe() || VanishStatusResolver.isVanished(online)) {
+            announce(stillOn.get());
+        }).delay(DELAY_SECONDS, TimeUnit.SECONDS).schedule();
+    }
+
+    public static boolean joinAlertsEnabled() {
+        return ZanderVelocityMain.getConfig().getBoolean(Route.from("FriendsJoinAlerts"), true);
+    }
+
+    /**
+     * Broadcast "<joiner> joined the network." to the joiner's online friends,
+     * applying every suppression rule. Safe to call from any thread; performs a
+     * final vanish re-check itself. Shared by the join listener and the
+     * opt-in unvanish path in VanishReporter.
+     */
+    public static void announce(Player joiner) {
+        if (joiner == null || !joinAlertsEnabled()) {
+            return;
+        }
+        if (!VanishStatusResolver.isPresenceSafe() || VanishStatusResolver.isVanished(joiner)) {
+            return;
+        }
+
+        try {
+            FriendService fs = ZanderVelocityMain.getFriendService();
+            List<String> friendNames = fs.getFriends(joiner.getUniqueId()); // fail-open
+            if (friendNames.isEmpty()) {
                 return;
             }
+            Set<String> friendSet = friendNames.stream()
+                    .map(n -> n.toLowerCase(Locale.ROOT))
+                    .collect(Collectors.toSet());
 
-            try {
-                FriendService fs = ZanderVelocityMain.getFriendService();
-                List<String> friendNames = fs.getFriends(joiner.getUniqueId()); // fail-open
-                if (friendNames.isEmpty()) {
-                    return;
+            for (Player recipient : ZanderVelocityMain.getProxy().getAllPlayers()) {
+                if (recipient.getUniqueId().equals(joiner.getUniqueId())) {
+                    continue;
                 }
-                Set<String> friendSet = friendNames.stream()
-                        .map(n -> n.toLowerCase(Locale.ROOT))
-                        .collect(Collectors.toSet());
-
-                for (Player recipient : ZanderVelocityMain.getProxy().getAllPlayers()) {
-                    if (recipient.getUniqueId().equals(joiner.getUniqueId())) {
-                        continue;
-                    }
-                    if (!friendSet.contains(recipient.getUsername().toLowerCase(Locale.ROOT))) {
-                        continue;
-                    }
-
-                    // Their preference. Missing settings -> fail closed, no alert.
-                    Optional<FriendService.Settings> prefs = fs.getSettings(recipient.getUniqueId());
-                    if (prefs.isEmpty() || !prefs.get().notifyFriendJoin()) {
-                        continue;
-                    }
-
-                    // Block relationship either way -> no alert. isBlocked fails closed.
-                    if (fs.isBlocked(recipient.getUniqueId(), joiner.getUsername())
-                            || fs.isBlocked(joiner.getUniqueId(), recipient.getUsername())) {
-                        continue;
-                    }
-
-                    recipient.sendMessage(Component.text(joiner.getUsername() + " joined the network.")
-                            .color(NamedTextColor.GREEN));
+                if (!friendSet.contains(recipient.getUsername().toLowerCase(Locale.ROOT))) {
+                    continue;
                 }
-            } catch (Exception e) {
-                ZanderVelocityMain.getLogger().warn("[friends] join alert failed for "
-                        + joiner.getUsername(), e);
+
+                // Their preference. Missing settings -> fail closed, no alert.
+                Optional<FriendService.Settings> prefs = fs.getSettings(recipient.getUniqueId());
+                if (prefs.isEmpty() || !prefs.get().notifyFriendJoin()) {
+                    continue;
+                }
+
+                // Block relationship either way -> no alert. isBlocked fails closed.
+                if (fs.isBlocked(recipient.getUniqueId(), joiner.getUsername())
+                        || fs.isBlocked(joiner.getUniqueId(), recipient.getUsername())) {
+                    continue;
+                }
+
+                recipient.sendMessage(Component.text(joiner.getUsername() + " joined the network.")
+                        .color(NamedTextColor.GREEN));
             }
-        }).delay(DELAY_SECONDS, TimeUnit.SECONDS).schedule();
+        } catch (Exception e) {
+            ZanderVelocityMain.getLogger().warn("[friends] join alert failed for "
+                    + joiner.getUsername(), e);
+        }
     }
 }

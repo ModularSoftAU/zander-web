@@ -5,6 +5,7 @@ import dev.dejvokep.boostedyaml.route.Route;
 import io.github.ModularEnigma.Request;
 import io.github.ModularEnigma.Response;
 import org.modularsoft.zander.velocity.ZanderVelocityMain;
+import org.modularsoft.zander.velocity.events.session.FriendJoinAlert;
 import org.modularsoft.zander.velocity.model.session.SessionVanish;
 import org.modularsoft.zander.velocity.util.messaging.VanishStatusResolver;
 
@@ -28,6 +29,8 @@ public class VanishReporter {
 
     private static final long INTERVAL_SECONDS = 10;
     private static final Map<UUID, Boolean> lastReported = new ConcurrentHashMap<>();
+    /** Last vanish value actually observed each tick — drives unvanish-transition detection. */
+    private static final Map<UUID, Boolean> lastObserved = new ConcurrentHashMap<>();
 
     private VanishReporter() {
     }
@@ -39,16 +42,28 @@ public class VanishReporter {
                 return;
             }
 
+            boolean retroOnUnvanish = ZanderVelocityMain.getConfig()
+                    .getBoolean(dev.dejvokep.boostedyaml.route.Route.from("FriendsJoinAlertsOnUnvanish"), false);
+
             for (Player player : ZanderVelocityMain.getProxy().getAllPlayers()) {
                 boolean vanished = VanishStatusResolver.isVanished(player);
                 Boolean previous = lastReported.get(player.getUniqueId());
                 if (previous == null || previous.booleanValue() != vanished) {
                     report(player.getUniqueId(), player.getUsername(), vanished);
                 }
+
+                // Opt-in: when a player unvanishes (true -> false), retro-fire a
+                // join alert to their friends. Off by default.
+                Boolean seen = lastObserved.put(player.getUniqueId(), vanished);
+                if (retroOnUnvanish && Boolean.TRUE.equals(seen) && !vanished) {
+                    FriendJoinAlert.announce(player);
+                }
             }
 
             // Drop bookkeeping for players who have since left.
             lastReported.keySet().removeIf(
+                    uuid -> ZanderVelocityMain.getProxy().getPlayer(uuid).isEmpty());
+            lastObserved.keySet().removeIf(
                     uuid -> ZanderVelocityMain.getProxy().getPlayer(uuid).isEmpty());
         }).repeat(INTERVAL_SECONDS, TimeUnit.SECONDS).schedule();
     }

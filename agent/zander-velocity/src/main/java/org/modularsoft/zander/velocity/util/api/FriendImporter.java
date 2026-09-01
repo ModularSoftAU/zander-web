@@ -28,13 +28,17 @@ import java.util.Map;
  * per-actor rate limits). The JSON file is left in place afterwards — its
  * {@code nameCache} is still used at runtime.</p>
  *
- * <p><b>If a single row fails to import</b> (unknown target name, API rejection,
- * or the actor tripping the 30-blocks/day limit mid-import) that row is logged to
- * {@code friends-import-failures.log} and skipped; the rest of the import
- * continues and the marker is still written. Nothing is retried automatically —
- * an operator replays the failure log by hand. A player whose row failed simply
- * keeps no block for that pair until then; their DMs are not silently opened,
- * because the messaging path fails closed on unknown state.</p>
+ * <p>The import POSTs carry {@code x-friends-import: 1}, which the API honours
+ * (alongside the machine token it already holds) to skip the per-actor rate
+ * limits — a bulk migration legitimately exceeds them.</p>
+ *
+ * <p><b>If a single row still fails to import</b> (unknown target name, or an API
+ * rejection) that row is logged to {@code friends-import-failures.log} and
+ * skipped; the rest of the import continues and the marker is still written.
+ * Nothing is retried automatically — an operator replays the failure log by
+ * hand. A player whose row failed simply keeps no block for that pair until
+ * then; their DMs are not silently opened, because the messaging path fails
+ * closed on unknown state.</p>
  */
 public final class FriendImporter {
 
@@ -141,6 +145,9 @@ public final class FriendImporter {
                     .setURL(url)
                     .setMethod(Request.Method.POST)
                     .addHeader("x-access-token", apiKey)
+                    // Bypass the per-actor rate limits: a bulk one-shot migration
+                    // legitimately exceeds them and must not drop rows.
+                    .addHeader("x-friends-import", "1")
                     .setRequestBody(body.toString())
                     .build()
                     .execute();
