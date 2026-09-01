@@ -38,6 +38,7 @@
   },
 
   "mixed": true,
+  "friends": true,
 
   "smDiscord": true,
   "smFacebook": true,

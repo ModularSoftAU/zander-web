@@ -116,6 +116,35 @@ enum supportTickets_status {
   in_progress @map("in-progress")
 }
 
+enum userFriendships_status {
+  pending
+  accepted
+  declined
+}
+
+enum userFriendships_source {
+  web
+  game
+  discord
+}
+
+enum userBlocks_source {
+  web
+  game
+}
+
+enum userPrivacySettings_allowMessagesFrom {
+  everyone
+  friends
+  none
+}
+
+enum userPrivacySettings_allowFriendRequests {
+  everyone
+  friends
+  none
+}
+
 // =============================================================================
 // Models
 // =============================================================================
@@ -246,7 +275,7 @@ model forumPosts {
   replies      forumPosts[]         @relation("PostReplies")
   revisions    forumPostRevisions[]
   replyToPost  forumPosts?          @relation("ForumPostReplies", fields: [replyToPostId], references: [postId], onDelete: SetNull)
-  replies      forumPosts[]         @relation("ForumPostReplies")
+  replyToPostChildren forumPosts[]  @relation("ForumPostReplies")
 
   @@index([replyToPostId])
 }
@@ -697,6 +726,48 @@ model pushSubscriptions {
   auth           String   @db.VarChar(128)
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
+}
+
+// =============================================================================
+// Friends System
+// =============================================================================
+
+model userFriendships {
+  friendshipId Int                    @id @default(autoincrement())
+  requesterId  Int
+  addresseeId  Int
+  status       userFriendships_status  @default(pending)
+  source       userFriendships_source  @default(web)
+  message      String?                 @db.VarChar(140)
+  requestedAt  DateTime                @default(now())
+  respondedAt  DateTime?
+  deliveredAt  DateTime?
+
+  @@unique([requesterId, addresseeId])
+  @@index([addresseeId, status])
+  @@index([requesterId, status])
+}
+
+model userBlocks {
+  blockId   Int                @id @default(autoincrement())
+  blockerId Int
+  blockedId Int
+  source    userBlocks_source  @default(web)
+  reason    String?            @db.VarChar(255)
+  createdAt DateTime           @default(now())
+
+  @@unique([blockerId, blockedId])
+  @@index([blockedId])
+}
+
+model userPrivacySettings {
+  userId              Int                                     @id
+  allowMessagesFrom   userPrivacySettings_allowMessagesFrom    @default(everyone)
+  allowFriendRequests userPrivacySettings_allowFriendRequests  @default(everyone)
+  friendsListVisible  Boolean                                 @default(true)
+  notifyFriendJoin    Boolean                                 @default(true)
+  notifyFriendRequest Boolean                                 @default(true)
+  updatedAt           DateTime                                @updatedAt
 }
 
 // =============================================================================
