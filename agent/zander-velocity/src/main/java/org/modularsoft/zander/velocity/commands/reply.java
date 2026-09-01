@@ -54,11 +54,8 @@ public class reply implements SimpleCommand {
             player.sendMessage(Component.text("You cannot message yourself.").color(NamedTextColor.RED));
             return;
         }
-        if (messageService.isMessagesDisabled(target.getUniqueId())) {
-            player.sendMessage(Component.text("That player is not accepting private messages.").color(NamedTextColor.RED));
-            return;
-        }
-        if (messageService.isIgnoring(target.getUniqueId(), player.getUniqueId())) {
+        if (messageService.isMessagesDisabled(target.getUniqueId(), player.getUniqueId())
+                || messageService.isIgnoring(target.getUniqueId(), player.getUniqueId())) {
             player.sendMessage(Component.text("You cannot message that player.").color(NamedTextColor.RED));
             return;
         }

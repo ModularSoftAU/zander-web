@@ -1,4 +1,4 @@
-config-version: 1
+config-version: 2
 
 BaseAPIURL: "http://localhost:8080/api"
 APIKey: "KEY"
@@ -6,3 +6,7 @@ APIKey: "KEY"
 announcementMOTDTopLine: "&e&lMy &2&nMinecraft&r &6&oServer"
 announcementTipPrefix: "&7&l[&6&lTIP&7&l]&r "
 announcementTipInterval: 10
+
+# Friends system: announce to a player's friends when they join the network.
+# Server switches never trigger this; vanished players are never announced.
+FriendsJoinAlerts: true

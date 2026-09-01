@@ -51,11 +51,10 @@ public class message implements SimpleCommand {
             player.sendMessage(Component.text("You cannot message yourself.").color(NamedTextColor.RED));
             return;
         }
-        if (messageService.isMessagesDisabled(target.getUniqueId())) {
-            player.sendMessage(Component.text("That player is not accepting private messages.").color(NamedTextColor.RED));
-            return;
-        }
-        if (messageService.isIgnoring(target.getUniqueId(), player.getUniqueId())) {
+        // One generic refusal for both "messages disabled" and "you are blocked"
+        // — a blocked sender must not be able to tell the two apart.
+        if (messageService.isMessagesDisabled(target.getUniqueId(), player.getUniqueId())
+                || messageService.isIgnoring(target.getUniqueId(), player.getUniqueId())) {
             player.sendMessage(Component.text("You cannot message that player.").color(NamedTextColor.RED));
             return;
         }

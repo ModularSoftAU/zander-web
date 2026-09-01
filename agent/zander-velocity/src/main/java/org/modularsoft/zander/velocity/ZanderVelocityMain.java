@@ -21,6 +21,7 @@ import org.modularsoft.zander.velocity.commands.moderation.clearchat;
 import org.modularsoft.zander.velocity.commands.moderation.freezechat;
 import org.modularsoft.zander.velocity.events.*;
 import org.modularsoft.zander.velocity.events.moderation.FreezeChatListener;
+import org.modularsoft.zander.velocity.events.session.FriendJoinAlert;
 import org.modularsoft.zander.velocity.events.session.UserOnDisconnect;
 import org.modularsoft.zander.velocity.events.session.UserOnLogin;
 import org.modularsoft.zander.velocity.events.session.UserOnSwitch;
@@ -74,6 +75,7 @@ public class ZanderVelocityMain {
         proxy.getEventManager().register(this, new UserOnLogin());
         proxy.getEventManager().register(this, new UserOnProxyPing(this));
         proxy.getEventManager().register(this, new UserOnSwitch());
+        proxy.getEventManager().register(this, new FriendJoinAlert());
         proxy.getEventManager().register(this, new UserSocialSpyEvent());
         proxy.getEventManager().register(this, new FreezeChatListener());
 
@@ -120,6 +122,9 @@ public class ZanderVelocityMain {
 
         // Keep the web app's hidden-session flag in step with live vanish state
         VanishReporter.startVanishReporterTask();
+
+        // One-shot migration of legacy private-messages.json into the friends API
+        org.modularsoft.zander.velocity.util.api.FriendImporter.runOnce();
 
         // Start the Announcement Tip task
         TipChatter.startAnnouncementTipTask();

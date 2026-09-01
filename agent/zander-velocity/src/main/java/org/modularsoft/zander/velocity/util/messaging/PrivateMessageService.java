@@ -4,6 +4,8 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.velocitypowered.api.proxy.Player;
 import com.velocitypowered.api.proxy.ProxyServer;
+import org.modularsoft.zander.velocity.ZanderVelocityMain;
+import org.modularsoft.zander.velocity.util.api.FriendService;
 import org.slf4j.Logger;
 
 import java.io.IOException;
@@ -79,72 +81,97 @@ public class PrivateMessageService {
         }
     }
 
+    // -------------------------------------------------------------------
+    // Messaging preferences + ignore list.
+    //
+    // These used to persist to private-messages.json. They are now a thin
+    // facade over the friends API (the single source of truth) — this cache
+    // holds only the name cache and last-conversation map. FriendService keeps
+    // its own short-TTL cache, so these stay cheap for online players.
+    // -------------------------------------------------------------------
+
+    private FriendService friends() {
+        return ZanderVelocityMain.getFriendService();
+    }
+
+    /** Coarse check with no sender context: true unless the recipient allows everyone. */
     public boolean isMessagesDisabled(UUID uuid) {
-        if (uuid == null) {
+        if (uuid == null || friends() == null) {
             return false;
         }
-        synchronized (lock) {
-            return Boolean.TRUE.equals(data.messagesDisabled.get(uuid.toString()));
+        return friends().getSettings(uuid)
+                .map(s -> !"everyone".equalsIgnoreCase(s.allowMessagesFrom()))
+                .orElse(true); // fail closed
+    }
+
+    /** Sender-aware check — resolves the "friends" case with a friendship lookup. */
+    public boolean isMessagesDisabled(UUID recipient, UUID sender) {
+        if (recipient == null || friends() == null) {
+            return false;
         }
+        Optional<FriendService.Settings> maybe = friends().getSettings(recipient);
+        if (maybe.isEmpty()) {
+            return true; // fail closed
+        }
+        String mode = maybe.get().allowMessagesFrom();
+        if ("everyone".equalsIgnoreCase(mode)) {
+            return false;
+        }
+        if ("none".equalsIgnoreCase(mode)) {
+            return true;
+        }
+        // "friends"
+        String senderName = sender != null ? getCachedName(sender).orElse(null) : null;
+        return senderName == null || !friends().isFriend(recipient, senderName);
     }
 
     public void setMessagesDisabled(UUID uuid, boolean disabled) {
-        if (uuid == null) {
+        if (uuid == null || friends() == null) {
             return;
         }
-        synchronized (lock) {
-            String key = uuid.toString();
-            if (disabled) {
-                data.messagesDisabled.put(key, true);
-            } else {
-                data.messagesDisabled.remove(key);
-            }
-            save();
-        }
+        friends().updateSettings(uuid,
+                Map.of("allowMessagesFrom", disabled ? "none" : "everyone"));
+        friends().invalidate(uuid);
     }
 
     public boolean isIgnoring(UUID owner, UUID target) {
-        if (owner == null || target == null) {
+        if (owner == null || target == null || friends() == null) {
             return false;
         }
-        synchronized (lock) {
-            Set<String> ignores = data.ignoreList.get(owner.toString());
-            return ignores != null && ignores.contains(target.toString());
-        }
+        String targetName = getCachedName(target).orElse(null);
+        // Fail closed: if we can't resolve the name we cannot prove they are NOT
+        // blocked, and FriendService.isBlocked itself fails closed.
+        return targetName == null || friends().isBlocked(owner, targetName);
     }
 
     public boolean addIgnore(UUID owner, UUID target) {
-        if (owner == null || target == null) {
+        if (owner == null || target == null || friends() == null) {
             return false;
         }
-        synchronized (lock) {
-            Set<String> ignores = data.ignoreList.computeIfAbsent(owner.toString(), key -> new HashSet<>());
-            boolean added = ignores.add(target.toString());
-            if (added) {
-                save();
-            }
-            return added;
+        String targetName = getCachedName(target).orElse(null);
+        if (targetName == null) {
+            return false;
         }
+        FriendService.ApiResult r = friends().addBlock(owner, targetName);
+        if (r.success()) {
+            friends().invalidate(owner);
+        }
+        return r.success();
     }
 
     public boolean removeIgnore(UUID owner, UUID target) {
-        if (owner == null || target == null) {
+        if (owner == null || target == null || friends() == null) {
             return false;
         }
-        synchronized (lock) {
-            Set<String> ignores = data.ignoreList.get(owner.toString());
-            if (ignores == null) {
-                return false;
-            }
-            boolean removed = ignores.remove(target.toString());
-            if (removed) {
-                if (ignores.isEmpty()) {
-                    data.ignoreList.remove(owner.toString());
-                }
-                save();
-            }
-            return removed;
+        String targetName = getCachedName(target).orElse(null);
+        if (targetName == null) {
+            return false;
         }
+        FriendService.ApiResult r = friends().removeBlock(owner, targetName);
+        if (r.success()) {
+            friends().invalidate(owner);
+        }
+        return r.success();
     }
 
     public Set<UUID> getIgnoreList(UUID owner) {
