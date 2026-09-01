@@ -630,13 +630,19 @@ export class SupportCommand extends Command {
             { messageType: "status" }
           );
         }
-
-        await interaction.channel.send(`🔒 Ticket closed by ${username}. This channel will now close.`);
       } catch (statusError) {
         console.error("ticket close: failed to update ticket state", statusError);
         return interaction.editReply({
           content: "Failed to close ticket. Please try again.",
         });
+      }
+
+      // Best-effort channel announcement — the ticket is already closed, so a
+      // missing-access / deleted channel here must not fail the whole command.
+      try {
+        await interaction.channel.send(`🔒 Ticket closed by ${username}. This channel will now close.`);
+      } catch (announceError) {
+        console.warn("ticket close: could not post close notice to channel", announceError?.message || announceError);
       }
 
       try {
