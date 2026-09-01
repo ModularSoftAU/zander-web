@@ -25,6 +25,7 @@ import org.modularsoft.zander.velocity.events.session.UserOnDisconnect;
 import org.modularsoft.zander.velocity.events.session.UserOnLogin;
 import org.modularsoft.zander.velocity.events.session.UserOnSwitch;
 import org.modularsoft.zander.velocity.util.announcement.TipChatter;
+import org.modularsoft.zander.velocity.util.api.FriendService;
 import org.modularsoft.zander.velocity.util.api.Heartbeat;
 import org.modularsoft.zander.velocity.util.api.VanishReporter;
 import org.modularsoft.zander.velocity.util.messaging.PrivateMessageService;
@@ -57,6 +58,8 @@ public class ZanderVelocityMain {
     private static Path dataDirectory;
     @Getter
     private static PrivateMessageService privateMessageService;
+    @Getter
+    private static FriendService friendService;
     @Getter
     private final CommandManager commandManager;
     @Getter
@@ -98,9 +101,15 @@ public class ZanderVelocityMain {
         commandManager.register(commandManager.metaBuilder("reply").build(), replyCommand);
         commandManager.register(commandManager.metaBuilder("r").build(), replyCommand);
 
-        ignore ignoreCommand = new ignore();
-        commandManager.register(commandManager.metaBuilder("ignore").build(), ignoreCommand);
-        commandManager.register(commandManager.metaBuilder("ignores").build(), ignoreCommand);
+        // Friends system. /block supersedes /ignore; the ignore aliases stay
+        // wired to the same handler (with a deprecation log line) so muscle
+        // memory keeps working.
+        commandManager.register(commandManager.metaBuilder("friend").build(), new friend());
+        block blockCommand = new block();
+        commandManager.register(
+                commandManager.metaBuilder("block").aliases("unblock", "ignore", "ignores").build(),
+                blockCommand);
+        commandManager.register(commandManager.metaBuilder("settings").build(), new settings());
 
         togglemessages toggleMessagesCommand = new togglemessages();
         commandManager.register(commandManager.metaBuilder("togglemessages").build(), toggleMessagesCommand);
@@ -149,5 +158,6 @@ public class ZanderVelocityMain {
 
         logger.info("Zander Proxy has started.");
         privateMessageService = new PrivateMessageService(dataDirectory, logger);
+        friendService = new FriendService(logger);
     }
 }

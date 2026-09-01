@@ -386,7 +386,9 @@ export default function friendsApiRoute(app, config, db, features, lang) {
     }
   });
 
-  app.patch("/api/settings", async function (req, res) {
+  // PATCH per the documented contract; POST is an alias because the proxy's
+  // HTTP client only speaks GET/POST.
+  const updateSettingsHandler = async function (req, res) {
     if (!featureGuard(res)) return;
     const uuid = required(req.body, "uuid", res);
     if (res.sent) return;
@@ -410,5 +412,8 @@ export default function friendsApiRoute(app, config, db, features, lang) {
     } catch (err) {
       return fail(res, err, "Could not update settings.");
     }
-  });
+  };
+
+  app.patch("/api/settings", updateSettingsHandler);
+  app.post("/api/settings", updateSettingsHandler);
 }
