@@ -27,6 +27,20 @@ All permission nodes follow dot-notation and are managed via LuckPerms. Wildcard
 | `zander.web.vault` | Access vault management |
 | `zander.web.bridge` | Manage bridge/integrations |
 | `zander.web.badges` | Access the badge management dashboard (create, edit, assign, delete badges) |
+| `zander.web.users.blocks` | View the read-only blocks panel on a user's dashboard detail page (also granted by `zander.web.users.manage`) |
+
+### Friends (in-game commands)
+
+| Permission Node | Description |
+|---|---|
+| `zander.command.friend` | Use `/friend` |
+| `zander.command.friend.add` | `/friend add` |
+| `zander.command.friend.accept` | `/friend accept` and `/friend deny` |
+| `zander.command.friend.remove` | `/friend remove` |
+| `zander.command.friend.list` | `/friend list` and `/friend requests` |
+| `zander.command.block` | Use `/block`, `/unblock` (and the deprecated `/ignore` aliases) |
+| `zander.command.settings` | Use `/settings` |
+| `zander.friends.vanish.see` | See true presence for vanished friends in `/friend list` (staff) |
 
 ### Events
 

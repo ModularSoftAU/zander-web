@@ -622,6 +622,24 @@ export async function getBlocks(blockerId) {
   );
 }
 
+/**
+ * Who has blocked `userId`. Staff-only (support "why can't I message X"
+ * tickets); the blocked party is never shown this.
+ */
+export async function getBlockedBy(userId) {
+  const id = toId(userId);
+  if (!id) return [];
+  return runQuery(
+    `SELECT b.blockId, b.blockerId, b.reason, b.source, b.createdAt,
+            u.username, u.uuid
+       FROM userBlocks b
+       JOIN users u ON u.userId = b.blockerId
+      WHERE b.blockedId = ?
+      ORDER BY b.createdAt DESC`,
+    [id]
+  );
+}
+
 function writeBlockAudit(actorId, targetId, action, source) {
   const verb = action === "add" ? "blocked" : "unblocked";
   return runQuery(

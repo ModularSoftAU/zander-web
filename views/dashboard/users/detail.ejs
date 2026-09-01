@@ -151,6 +151,67 @@
         </div>
       </div>
 
+      <% if (typeof canViewBlocks !== "undefined" && canViewBlocks) { %>
+        <%
+          const fmtBlockDate = (d) => {
+            try { return new Date(d).toISOString().slice(0, 10); } catch (e) { return ""; }
+          };
+        %>
+        <div class="row g-3 mt-1">
+          <div class="col-12 col-lg-6">
+            <div class="card shadow-sm border-0">
+              <div class="card-header bg-white">
+                <h5 class="card-title mb-0">Blocks Made <span class="badge bg-secondary ms-1"><%= blocksMade.length %></span></h5>
+              </div>
+              <div class="card-body">
+                <p class="text-muted small">Players this user has blocked. Read-only.</p>
+                <% if (!blocksMade.length) { %>
+                  <div class="text-muted small">None.</div>
+                <% } else { %>
+                  <% blocksMade.forEach((b) => { %>
+                    <div class="d-flex justify-content-between align-items-start py-2 border-bottom">
+                      <div>
+                        <a href="/dashboard/users/<%= b.blockedId %>" class="fw-semibold text-decoration-none"><%= b.username %></a>
+                        <div class="text-muted small">
+                          <%= fmtBlockDate(b.createdAt) %> &middot; via <%= b.source %>
+                          <% if (b.reason) { %>&middot; <span class="fst-italic"><%= b.reason %></span><% } %>
+                        </div>
+                      </div>
+                    </div>
+                  <% }) %>
+                <% } %>
+              </div>
+            </div>
+          </div>
+
+          <div class="col-12 col-lg-6">
+            <div class="card shadow-sm border-0">
+              <div class="card-header bg-white">
+                <h5 class="card-title mb-0">Blocked By <span class="badge bg-secondary ms-1"><%= blockedByOthers.length %></span></h5>
+              </div>
+              <div class="card-body">
+                <p class="text-muted small">Players who have blocked this user — answers "why can't I message X" tickets.</p>
+                <% if (!blockedByOthers.length) { %>
+                  <div class="text-muted small">None.</div>
+                <% } else { %>
+                  <% blockedByOthers.forEach((b) => { %>
+                    <div class="d-flex justify-content-between align-items-start py-2 border-bottom">
+                      <div>
+                        <a href="/dashboard/users/<%= b.blockerId %>" class="fw-semibold text-decoration-none"><%= b.username %></a>
+                        <div class="text-muted small">
+                          <%= fmtBlockDate(b.createdAt) %> &middot; via <%= b.source %>
+                          <% if (b.reason) { %>&middot; <span class="fst-italic"><%= b.reason %></span><% } %>
+                        </div>
+                      </div>
+                    </div>
+                  <% }) %>
+                <% } %>
+              </div>
+            </div>
+          </div>
+        </div>
+      <% } %>
+
     </div><!-- /.wrap -->
   </div><!-- /#wpbody-content -->
 

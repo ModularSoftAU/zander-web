@@ -22,10 +22,12 @@ import {
 } from "../../api/common.js";
 import { getWebAnnouncement } from "../../controllers/announcementController.js";
 import { maskEmail, hasPermissionSilent } from "../../controllers/userAccountState.js";
+import { getBlocks, getBlockedBy } from "../../controllers/friendController.js";
 
 const VIEW_PERMISSION = "zander.web.users";
 const EMAIL_PERMISSION = "zander.web.users.email";
 const MANAGE_PERMISSION = "zander.web.users.manage";
+const BLOCKS_PERMISSION = "zander.web.users.blocks";
 
 async function proxyToApi(fetch, method, path, body) {
   const res = await fetch(`${process.env.siteAddress}${path}`, {
@@ -152,6 +154,22 @@ export default function dashboardUsersRoute(app, fetch, config, db, features, la
     const sessionPermissions = req.session?.user?.permissions;
     const canRevealEmail = hasPermissionSilent(EMAIL_PERMISSION, sessionPermissions);
     const canManage = hasPermissionSilent(MANAGE_PERMISSION, sessionPermissions);
+    const canViewBlocks =
+      features.friends !== false &&
+      (hasPermissionSilent(BLOCKS_PERMISSION, sessionPermissions) || canManage);
+
+    let blocksMade = [];
+    let blockedByOthers = [];
+    if (canViewBlocks) {
+      try {
+        [blocksMade, blockedByOthers] = await Promise.all([
+          getBlocks(userId),
+          getBlockedBy(userId),
+        ]);
+      } catch (error) {
+        console.error("[dashboard/users] Failed to load blocks panel:", error);
+      }
+    }
 
     const [globalImage, announcementWeb] = await Promise.all([getGlobalImage(), getWebAnnouncement()]);
     res.header("content-type", "text/html; charset=utf-8").send(
@@ -163,6 +181,9 @@ export default function dashboardUsersRoute(app, fetch, config, db, features, la
         user: { ...user, maskedEmail: maskEmail(user.email) },
         canRevealEmail,
         canManage,
+        canViewBlocks,
+        blocksMade,
+        blockedByOthers,
         globalImage,
         announcementWeb,
       })

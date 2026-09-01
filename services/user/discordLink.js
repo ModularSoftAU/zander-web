@@ -41,6 +41,97 @@ async function repointUserReferences(fromUserId, toUserId) {
     [toUserId, fromUserId]
   );
   await runQuery(`DELETE FROM supportTicketParticipants WHERE userId = ?`, [fromUserId]);
+
+  await foldFriendGraph(fromUserId, toUserId);
+}
+
+/*
+    Fold the placeholder's friendships, blocks and privacy row into the
+    surviving account.
+
+    Friendship and block rows carry the user id in TWO columns and both have a
+    unique index on the ordered pair, so a blind UPDATE would either create a
+    self-referential row or collide with a relationship the survivor already
+    holds. For each placeholder row we therefore either repoint it (survivor has
+    no relationship with the other party yet) or drop it as a duplicate. Without
+    this, merging a placeholder that has friendships orphans them.
+*/
+async function foldFriendGraph(fromUserId, toUserId) {
+  // ---- friendships ----
+  const placeholderFriendships = await runQuery(
+    `SELECT friendshipId, requesterId, addresseeId FROM userFriendships
+      WHERE requesterId = ? OR addresseeId = ?`,
+    [fromUserId, fromUserId]
+  );
+  const survivorFriendships = await runQuery(
+    `SELECT requesterId, addresseeId FROM userFriendships
+      WHERE requesterId = ? OR addresseeId = ?`,
+    [toUserId, toUserId]
+  );
+  const survivorFriendOf = new Set(
+    survivorFriendships.map((r) =>
+      r.requesterId === toUserId ? r.addresseeId : r.requesterId
+    )
+  );
+
+  for (const row of placeholderFriendships) {
+    const other =
+      row.requesterId === fromUserId ? row.addresseeId : row.requesterId;
+
+    if (other === toUserId || survivorFriendOf.has(other)) {
+      // Pairs with the survivor (would self-loop), or the survivor already has
+      // a relationship with this person — drop the placeholder's row.
+      await runQuery(`DELETE FROM userFriendships WHERE friendshipId = ?`, [
+        row.friendshipId,
+      ]);
+    } else {
+      await runQuery(
+        `UPDATE userFriendships SET requesterId = ? WHERE friendshipId = ? AND requesterId = ?`,
+        [toUserId, row.friendshipId, fromUserId]
+      );
+      await runQuery(
+        `UPDATE userFriendships SET addresseeId = ? WHERE friendshipId = ? AND addresseeId = ?`,
+        [toUserId, row.friendshipId, fromUserId]
+      );
+      survivorFriendOf.add(other);
+    }
+  }
+
+  // ---- blocks (one-directional; the pair is ordered) ----
+  const placeholderBlocks = await runQuery(
+    `SELECT blockId, blockerId, blockedId FROM userBlocks
+      WHERE blockerId = ? OR blockedId = ?`,
+    [fromUserId, fromUserId]
+  );
+  const survivorBlocks = await runQuery(
+    `SELECT blockerId, blockedId FROM userBlocks
+      WHERE blockerId = ? OR blockedId = ?`,
+    [toUserId, toUserId]
+  );
+  const survivorBlockPairs = new Set(
+    survivorBlocks.map((r) => `${r.blockerId}:${r.blockedId}`)
+  );
+
+  for (const row of placeholderBlocks) {
+    const newBlocker = row.blockerId === fromUserId ? toUserId : row.blockerId;
+    const newBlocked = row.blockedId === fromUserId ? toUserId : row.blockedId;
+
+    if (
+      newBlocker === newBlocked ||
+      survivorBlockPairs.has(`${newBlocker}:${newBlocked}`)
+    ) {
+      await runQuery(`DELETE FROM userBlocks WHERE blockId = ?`, [row.blockId]);
+    } else {
+      await runQuery(
+        `UPDATE userBlocks SET blockerId = ?, blockedId = ? WHERE blockId = ?`,
+        [newBlocker, newBlocked, row.blockId]
+      );
+      survivorBlockPairs.add(`${newBlocker}:${newBlocked}`);
+    }
+  }
+
+  // ---- privacy settings: the survivor's own row wins ----
+  await runQuery(`DELETE FROM userPrivacySettings WHERE userId = ?`, [fromUserId]);
 }
 
 /*
