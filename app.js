@@ -105,7 +105,16 @@ const buildApp = async () => {
   // take 60+ seconds while registering Discord slash commands, which can delay
   // event-loop ticks long enough for avvio to fire the default 10-second
   // timeout before route-registration plugins have a chance to complete.
-  const app = fastify({ logger: config.debug, pluginTimeout: 120000 });
+  const app = fastify({
+    logger: config.debug,
+    pluginTimeout: 120000,
+    // Behind a reverse proxy: trust a bounded number of hops so req.ip / req.protocol
+    // reflect the real client rather than the proxy. Prefer a hop count (or CIDR list)
+    // over blanket `true`. Defaults to 1 (single proxy in front of the app).
+    trustProxy: process.env.TRUSTED_PROXY_HOPS
+      ? Number(process.env.TRUSTED_PROXY_HOPS)
+      : 1,
+  });
 
   if (process.env.SENTRY_DSN) {
     Sentry.setupFastifyErrorHandler(app, {
@@ -383,7 +392,8 @@ const buildApp = async () => {
     secret: process.env.sessionCookieSecret,
     store: sessionStore,
     cookie: {
-      secure: false,
+      // Secure-on in production (HTTPS); off in dev so local http still works.
+      secure: process.env.NODE_ENV === "production",
       maxAge: 86400000 * 7, // 7 days default
       httpOnly: true,
       sameSite: "lax",
