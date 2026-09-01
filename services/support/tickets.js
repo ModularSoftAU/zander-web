@@ -2,7 +2,7 @@ import { createRequire } from "module";
 const require = createRequire(import.meta.url);
 const config = require("../../config.json");
 import db, { luckpermsDb } from "../../controllers/databaseController.js";
-import { ChannelType, PermissionFlagsBits, OverwriteType } from "discord.js";
+import { ChannelType, PermissionFlagsBits } from "discord.js";
 import { createNotificationsForUsers } from "../../controllers/notificationController.js";
 
 // Phase 7 decomposition: ticket CRUD / messages / participants / channels /
@@ -33,8 +33,6 @@ import {
   ensureDiscordChannelColumn,
   ensureTicketParticipantTable,
   ensureTicketMessageInternalColumn,
-  ensureTicketLockColumn,
-  ensureTicketEscalationColumn,
   ensureTicketMessageTypeColumn,
 } from "./internal.js";
 import { getUserById } from "./users.js";
@@ -368,114 +366,6 @@ export async function createSupportTicketMessage(
             resolve(results.insertId);
         });
     });
-}
-
-export async function notifyTicketStatusChange(ticketId, status, actor) {
-    const ticket = await getTicketById(ticketId);
-    if (!ticket) return;
-
-    const target = buildTicketNotificationTarget(ticket);
-    const actorName = actor?.name || "Staff";
-    const statusLabel = status || ticket.status || "updated";
-    const title = `Status updated for ${target.label}`;
-    const message = `${actorName} set the status to ${statusLabel}.`;
-
-    await notifyTicketParticipants({
-        ticket,
-        actorUserId: actor?.userId ?? null,
-        notificationType: "status",
-        title,
-        message,
-    });
-}
-
-export async function updateTicketCategory(client, ticketId, newCategoryId) {
-    const hasChannelColumn = await ensureDiscordChannelColumn();
-
-    const ticket = await getTicketById(ticketId);
-    if (!ticket) {
-        throw new Error("Ticket not found");
-    }
-
-    const previousCategoryId = ticket.categoryId;
-    if (previousCategoryId === newCategoryId) {
-        return { changed: false, previousCategoryId, nextCategoryId: newCategoryId };
-    }
-
-    const [previousPermissions, nextPermissions] = await Promise.all([
-        getCategoryPermissions(previousCategoryId),
-        getCategoryPermissions(newCategoryId),
-    ]);
-
-    await new Promise((resolve, reject) => {
-        db.query(
-            "UPDATE supportTickets SET categoryId = ? WHERE ticketId = ?",
-            [newCategoryId, ticketId],
-            (err) => {
-                if (err) {
-                    reject(err);
-                } else {
-                    resolve();
-                }
-            },
-        );
-    });
-
-    if (!hasChannelColumn || !client || !ticket.discordChannelId) {
-        return { changed: true, previousCategoryId, nextCategoryId: newCategoryId };
-    }
-
-    let channel;
-    try {
-        channel = await client.channels.fetch(ticket.discordChannelId);
-    } catch (channelError) {
-        console.error("updateTicketCategory: failed to fetch Discord channel", channelError);
-        return { changed: true, previousCategoryId, nextCategoryId: newCategoryId };
-    }
-
-    if (!channel) {
-        return { changed: true, previousCategoryId, nextCategoryId: newCategoryId };
-    }
-
-    const permissionPromises = [];
-    const isSnowflake = (value) => Boolean(value) && /^\d{5,}$/.test(String(value).trim());
-
-    previousPermissions
-        .filter((roleId) => roleId && !nextPermissions.includes(roleId))
-        .forEach((roleId) => {
-            if (!isSnowflake(roleId)) return;
-            permissionPromises.push(
-                channel.permissionOverwrites.delete(roleId).catch((error) => {
-                    console.error("updateTicketCategory: failed to remove old role permission", { roleId, ticketId }, error);
-                }),
-            );
-        });
-
-    nextPermissions
-        .filter((roleId) => isSnowflake(roleId))
-        .forEach((roleId) => {
-            permissionPromises.push(
-                channel.permissionOverwrites.edit(
-                    roleId,
-                    {
-                        ViewChannel: true,
-                        SendMessages: true,
-                        AttachFiles: true,
-                        ReadMessageHistory: true,
-                        ManageMessages: true,
-                    },
-                    { type: OverwriteType.Role },
-                ),
-            );
-        });
-
-    try {
-        await Promise.all(permissionPromises);
-    } catch (permissionError) {
-        console.error("updateTicketCategory: failed to update Discord permissions", permissionError);
-    }
-
-    return { changed: true, previousCategoryId, nextCategoryId: newCategoryId };
 }
 
 export async function getTicketsByUserId(userId) {
@@ -812,49 +702,4 @@ export async function getTicketsByCategory(categoryId) {
     });
 }
 
-export async function updateTicketStatus(ticketId, status) {
-    return new Promise((resolve, reject) => {
-        db.query("UPDATE supportTickets SET status = ? WHERE ticketId = ?", [status, ticketId], (err, results) => {
-            if (err) {
-                reject(err);
-            } else {
-                resolve(results);
-            }
-        });
-    });
-}
-
-export async function setTicketLockState(ticketId, isLocked) {
-    const hasLockColumn = await ensureTicketLockColumn();
-    if (!hasLockColumn) return null;
-
-    return new Promise((resolve, reject) => {
-        db.query("UPDATE supportTickets SET isLocked = ? WHERE ticketId = ?", [isLocked ? 1 : 0, ticketId], (err, results) => {
-            if (err) {
-                reject(err);
-            } else {
-                resolve(results);
-            }
-        });
-    });
-}
-
-export async function setTicketEscalationState(ticketId, isEscalated) {
-    const hasEscalationColumn = await ensureTicketEscalationColumn();
-    if (!hasEscalationColumn) return null;
-
-    return new Promise((resolve, reject) => {
-        db.query(
-            "UPDATE supportTickets SET isEscalated = ? WHERE ticketId = ?",
-            [isEscalated ? 1 : 0, ticketId],
-            (err, results) => {
-                if (err) {
-                    reject(err);
-                } else {
-                    resolve(results);
-                }
-            },
-        );
-    });
-}
 
