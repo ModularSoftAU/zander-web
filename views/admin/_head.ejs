@@ -62,7 +62,7 @@
   <% } %>
 </head>
 <body class="wp-admin">
-<div id="dash-loading" role="status" aria-live="polite">
+<div id="dash-loading" class="dl-hidden" role="status" aria-live="polite" aria-hidden="true">
   <div class="dl-spinner"></div>
   <div class="dl-text">Loading…</div>
 </div>
@@ -71,46 +71,61 @@
   var el = document.getElementById("dash-loading");
   if (!el) return;
 
-  var inflight = 0, everFetched = false, domReady = false, killed = false, settle = null;
+  // The gate is HIDDEN by default. It only appears if a page fires a background
+  // fetch before it has finished loading, and it always tears itself down once
+  // those fetches settle (or after a short hard cap). It must never be able to
+  // leave the user staring at a blank screen.
+  var inflight = 0, domReady = false, killed = false, settle = null, hardCap = null;
 
   function hide() {
     if (killed) return;
     killed = true;
     clearTimeout(settle);
+    clearTimeout(hardCap);
     el.classList.add("dl-hidden");
+    el.setAttribute("aria-hidden", "true");
     setTimeout(function () { if (el.parentNode) el.remove(); }, 400);
   }
-  function show() { if (!killed) el.classList.remove("dl-hidden"); }
+  function show() {
+    if (killed) return;
+    el.classList.remove("dl-hidden");
+    el.setAttribute("aria-hidden", "false");
+    // Whenever the gate is shown, guarantee it comes back down.
+    clearTimeout(hardCap);
+    hardCap = setTimeout(hide, 3500);
+  }
   function maybeHide() {
     if (killed || !domReady || inflight > 0) return;
     clearTimeout(settle);
-    settle = setTimeout(hide, everFetched ? 400 : 120);
+    settle = setTimeout(hide, 250);
   }
 
-  // Track background API calls so the gate waits for them.
+  // Track background API calls. Only reveal the gate if one is still in flight
+  // before the page has settled — a page that fetches nothing never sees it.
   var _fetch = window.fetch;
   if (typeof _fetch === "function") {
     window.fetch = function () {
-      everFetched = true;
       inflight++;
-      clearTimeout(settle);
+      if (!domReady) show();
       var p;
       try { p = _fetch.apply(this, arguments); }
-      catch (e) { inflight = Math.max(0, inflight - 1); throw e; }
+      catch (e) { inflight = Math.max(0, inflight - 1); maybeHide(); throw e; }
       var settled = function () { inflight = Math.max(0, inflight - 1); maybeHide(); };
-      p.then(settled, settled);
+      Promise.resolve(p).then(settled, settled);
       return p;
     };
   }
 
-  document.addEventListener("DOMContentLoaded", function () {
-    // small grace so fetches kicked off on DOMContentLoaded register first
-    setTimeout(function () { domReady = true; maybeHide(); }, 200);
-  });
-  window.addEventListener("load", function () { domReady = true; maybeHide(); });
+  function onReady() { domReady = true; maybeHide(); }
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", onReady);
+  } else {
+    onReady();
+  }
+  window.addEventListener("load", onReady);
 
-  // Hard cap — a hung request must never trap the user.
-  setTimeout(hide, 12000);
+  // Absolute backstop, independent of any event firing.
+  setTimeout(function () { domReady = true; maybeHide(); }, 3500);
 
   // Let pages drive it explicitly if they need to.
   window.dashLoading = {
