@@ -978,6 +978,18 @@ a:focus {
   margin-top: 10px;
 }
 
+.navbar-brand img {
+  height: 45px;
+  width: auto;
+  max-width: 100%;
+}
+
+@media (max-width: 767px) {
+  .navbar-brand img {
+    height: 36px;
+  }
+}
+
 .dropdown .dropdown-menu {
   position: absolute;
   display: block;
