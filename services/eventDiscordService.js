@@ -51,6 +51,36 @@ export function htmlToMarkdown(html) {
 }
 
 /**
+ * Prepare a banner URL for use as a Discord Guild Scheduled Event cover image.
+ *
+ * discord.js fetches the URL and re-encodes the bytes, but `DataResolver`
+ * hard-labels every buffer as `data:image/jpg` regardless of the real format.
+ * Discord sniffs PNG/JPEG fine, but silently drops WebP/GIF/AVIF covers — so an
+ * event banner uploaded as `.webp` (which the uploader allows) renders in embeds
+ * and the dashboard yet never appears on the Discord event itself.
+ *
+ * Cloudinary can bake a guaranteed-compatible asset for us: inject a
+ * transformation segment after `/upload/` that forces JPEG and clamps the
+ * dimensions to Discord's recommended cover size. Non-Cloudinary URLs are passed
+ * through unchanged (best effort — upload your banners as PNG/JPEG).
+ */
+export function toDiscordCoverImage(url) {
+  if (!url || typeof url !== "string") return null;
+
+  const marker = "/image/upload/";
+  const idx = url.indexOf(marker);
+  if (!url.includes("res.cloudinary.com") || idx === -1) return url;
+
+  const transform = "f_jpg,q_auto,c_limit,w_1280,h_512";
+  const after = url.slice(idx + marker.length);
+
+  // Don't double-apply if a transform is already present.
+  if (after.startsWith(transform)) return url;
+
+  return `${url.slice(0, idx + marker.length)}${transform}/${after}`;
+}
+
+/**
  * Build an embed for an event announcement/publication.
  */
 function buildEventEmbed(event) {
@@ -256,14 +286,25 @@ export async function createGuildScheduledEvent(event, guildId) {
   };
 
   if (event.bannerUrl) {
-    try {
-      eventData.image = event.bannerUrl;
-    } catch {
-      // Banner URL may not be a supported format; continue without it
-    }
+    eventData.image = toDiscordCoverImage(event.bannerUrl);
   }
 
-  const guildEvent = await guild.scheduledEvents.create(eventData);
+  let guildEvent;
+  try {
+    guildEvent = await guild.scheduledEvents.create(eventData);
+  } catch (err) {
+    // A bad/unreachable cover image must not stop the event being created.
+    if (eventData.image) {
+      console.error(
+        `[EventDiscord] Guild event create failed with cover image, retrying without it:`,
+        err.message
+      );
+      delete eventData.image;
+      guildEvent = await guild.scheduledEvents.create(eventData);
+    } else {
+      throw err;
+    }
+  }
 
   await updateSyncStatus(event.eventId, "discord", "ok", null, {
     discordGuildEventId: guildEvent.id,
@@ -314,13 +355,26 @@ export async function editGuildScheduledEvent(event, guildId, guildEventId) {
   };
 
   if (event.bannerUrl) {
-    editData.image = event.bannerUrl;
+    editData.image = toDiscordCoverImage(event.bannerUrl);
   } else {
     // Explicitly clear the image if bannerUrl was removed
     editData.image = null;
   }
 
-  await guildEvent.edit(editData);
+  try {
+    await guildEvent.edit(editData);
+  } catch (err) {
+    if (editData.image) {
+      console.error(
+        `[EventDiscord] Guild event edit failed with cover image, retrying without it:`,
+        err.message
+      );
+      delete editData.image;
+      await guildEvent.edit(editData);
+    } else {
+      throw err;
+    }
+  }
 
   await logEventAudit(
     event.eventId,

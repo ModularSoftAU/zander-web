@@ -142,7 +142,7 @@ async function ensureNotificationTable() {
           "  INDEX idx_user_notifications_user (userId),\n" +
           "  INDEX idx_user_notifications_unread (userId, isRead),\n" +
           "  INDEX idx_user_notifications_ticket (ticketId)\n" +
-          ")",
+          ") DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci",
         (err) => {
           if (err) {
             console.error("Failed to ensure userNotifications table", err);
