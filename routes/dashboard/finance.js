@@ -38,6 +38,14 @@ import {
   resetMonthlyBudgetOverride,
   createOneOffBudgetItem,
   deleteMonthlyBudgetItem,
+  // Accounts & reconciliation
+  getAccounts,
+  createAccount,
+  updateAccount,
+  getAccountsWithReconciliation,
+  setAccountBalance,
+  getAccountBalanceHistory,
+  deleteAccountBalance,
   // Dashboard
   getFinanceDashboardData,
   getFinanceMonthlyGoalCents,
@@ -111,11 +119,20 @@ export default function dashboardFinanceRoute(app, fetch, config, db, features, 
       const selectedYear = parseInt(req.query.year, 10) || currentYear;
       const selectedMonth = parseInt(req.query.month, 10) || currentMonth;
 
-      const [base, dashData, categories, budgetSummary] = await Promise.all([
+      // Reconcile balances as of the end of the selected month, but never past
+      // today (a future month-end just means "as of now").
+      const selectedMonthEnd = new Date(selectedYear, selectedMonth, 0, 23, 59, 59, 999);
+      const reconcileAsOf = selectedMonthEnd > now ? now : selectedMonthEnd;
+
+      const [base, dashData, categories, budgetSummary, accountReconciliation] = await Promise.all([
         baseViewData(req, features),
         getFinanceDashboardData(),
         getCategories(),
         getBudgetVsActual(selectedYear, selectedMonth),
+        getAccountsWithReconciliation({ asOf: reconcileAsOf }).catch((err) => {
+          console.error("[finance] account reconciliation load failed:", err.message);
+          return [];
+        }),
       ]);
 
       res.header("content-type", "text/html; charset=utf-8").send(
@@ -128,6 +145,8 @@ export default function dashboardFinanceRoute(app, fetch, config, db, features, 
           ...dashData,
           budgetSummary,
           categories,
+          accountReconciliation,
+          reconcileAsOf,
           currentYear,
           currentMonth,
           selectedYear,
@@ -138,6 +157,116 @@ export default function dashboardFinanceRoute(app, fetch, config, db, features, 
       console.error("[finance] GET /dashboard/finance:", error);
       setBannerCookie("danger", error.message, res);
       return res.redirect("/dashboard");
+    }
+  });
+
+  // ===========================================================================
+  // Accounts & balance reconciliation
+  // ===========================================================================
+
+  function backToFinance(req, res) {
+    const { year, month } = req.body || {};
+    const qs =
+      year && month
+        ? `?year=${encodeURIComponent(year)}&month=${encodeURIComponent(month)}`
+        : "";
+    return res.redirect(`/dashboard/finance${qs}#accounts`);
+  }
+
+  // POST /dashboard/finance/accounts/create
+  app.post("/dashboard/finance/accounts/create", async function (req, res) {
+    if (!await hasPermission("zander.web.finance", req, res, features)) return;
+    if (!canManageFinance(req)) {
+      setBannerCookie("danger", "You do not have permission to manage finance accounts.", res);
+      return backToFinance(req, res);
+    }
+    try {
+      const { name, accountType, currency, openingBalanceCents, notes } = req.body || {};
+      await createAccount({ name, accountType, currency, openingBalanceCents, notes });
+      setBannerCookie("success", "Account created.", res);
+    } catch (error) {
+      console.error("[finance] POST /dashboard/finance/accounts/create:", error);
+      setBannerCookie("danger", error.message, res);
+    }
+    return backToFinance(req, res);
+  });
+
+  // POST /dashboard/finance/accounts/:accountId/edit
+  app.post("/dashboard/finance/accounts/:accountId/edit", async function (req, res) {
+    if (!await hasPermission("zander.web.finance", req, res, features)) return;
+    if (!canManageFinance(req)) {
+      setBannerCookie("danger", "You do not have permission to manage finance accounts.", res);
+      return backToFinance(req, res);
+    }
+    const accountId = parseInt(req.params.accountId, 10);
+    if (!accountId) return backToFinance(req, res);
+    try {
+      const { name, accountType, currency, openingBalanceCents, notes, isActive } = req.body || {};
+      await updateAccount(accountId, {
+        name, accountType, currency, openingBalanceCents, notes,
+        isActive: isActive === "1" || isActive === "on" ? 1 : 0,
+      });
+      setBannerCookie("success", "Account updated.", res);
+    } catch (error) {
+      console.error("[finance] POST /dashboard/finance/accounts/:accountId/edit:", error);
+      setBannerCookie("danger", error.message, res);
+    }
+    return backToFinance(req, res);
+  });
+
+  // POST /dashboard/finance/accounts/:accountId/balance — record a statement balance
+  app.post("/dashboard/finance/accounts/:accountId/balance", async function (req, res) {
+    if (!await hasPermission("zander.web.finance", req, res, features)) return;
+    if (!canManageFinance(req)) {
+      setBannerCookie("danger", "You do not have permission to reconcile finance accounts.", res);
+      return backToFinance(req, res);
+    }
+    const accountId = parseInt(req.params.accountId, 10);
+    if (!accountId) return backToFinance(req, res);
+    try {
+      const { asOfDate, balanceCents, note, source } = req.body || {};
+      await setAccountBalance({
+        accountId,
+        asOfDate,
+        balanceCents,
+        note,
+        source,
+        createdByUserId: req.session?.user?.userId || 0,
+      });
+      setBannerCookie("success", "Balance recorded.", res);
+    } catch (error) {
+      console.error("[finance] POST /dashboard/finance/accounts/:accountId/balance:", error);
+      setBannerCookie("danger", error.message, res);
+    }
+    return backToFinance(req, res);
+  });
+
+  // POST /dashboard/finance/accounts/balance/:balanceId/delete
+  app.post("/dashboard/finance/accounts/balance/:balanceId/delete", async function (req, res) {
+    if (!await hasPermission("zander.web.finance", req, res, features)) return;
+    if (!canManageFinance(req)) {
+      setBannerCookie("danger", "You do not have permission to reconcile finance accounts.", res);
+      return backToFinance(req, res);
+    }
+    try {
+      await deleteAccountBalance(req.params.balanceId);
+      setBannerCookie("success", "Balance record deleted.", res);
+    } catch (error) {
+      console.error("[finance] POST /dashboard/finance/accounts/balance/:balanceId/delete:", error);
+      setBannerCookie("danger", error.message, res);
+    }
+    return backToFinance(req, res);
+  });
+
+  // GET /dashboard/finance/accounts/:accountId/history — JSON balance history
+  app.get("/dashboard/finance/accounts/:accountId/history", async function (req, res) {
+    if (!await hasPermission("zander.web.finance", req, res, features)) return;
+    try {
+      const history = await getAccountBalanceHistory(req.params.accountId, req.query.limit);
+      return res.send({ success: true, history });
+    } catch (error) {
+      console.error("[finance] GET /dashboard/finance/accounts/:accountId/history:", error);
+      return res.status(500).send({ success: false, message: error.message });
     }
   });
 

@@ -1101,6 +1101,25 @@ model financeAccounts {
   transactions         financeTransactions[]          @relation("AccountTransactions")
   transfersTo          financeTransactions[]          @relation("AccountTransfersTo")
   payments             financePayments[]
+  balances             financeAccountBalances[]
+}
+
+/// Dated snapshots of the real balance reported by Stripe / the bank, recorded
+/// by staff so the transaction ledger can be reconciled for the monthly report.
+model financeAccountBalances {
+  balanceId        Int      @id @default(autoincrement())
+  accountId        Int
+  asOfDate         DateTime @db.Date
+  balanceCents     Int      @default(0)
+  source           String   @default("manual") @db.VarChar(20)
+  note             String?  @db.VarChar(255)
+  createdByUserId  Int      @default(0)
+  createdAt        DateTime @default(now())
+
+  account          financeAccounts @relation(fields: [accountId], references: [accountId], onDelete: Cascade)
+
+  @@index([accountId])
+  @@index([accountId, asOfDate])
 }
 
 /// Hierarchical income / expense categories.

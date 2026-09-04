@@ -116,6 +116,180 @@ export async function getDefaultWebstoreAccount() {
   );
 }
 
+const ACCOUNT_TYPES = new Set(["bank", "credit_card", "paypal", "stripe", "crypto", "other"]);
+
+function normaliseAccountType(value) {
+  const v = String(value || "").trim().toLowerCase();
+  return ACCOUNT_TYPES.has(v) ? v : "bank";
+}
+
+function toCents(value) {
+  if (value === null || value === undefined || value === "") return 0;
+  // Accept either a plain integer cents value or a decimal currency string.
+  const str = String(value).trim().replace(/[$,\s]/g, "");
+  if (/^-?\d+$/.test(str) && !String(value).includes(".")) return parseInt(str, 10);
+  const num = Number(str);
+  if (Number.isNaN(num)) return 0;
+  return Math.round(num * 100);
+}
+
+/** All accounts, most recently created first is not useful here — order by name. */
+export async function getAccounts({ activeOnly = false } = {}) {
+  return prisma.financeAccounts.findMany({
+    where: activeOnly ? { isActive: 1 } : undefined,
+    orderBy: [{ isActive: "desc" }, { name: "asc" }],
+  });
+}
+
+export async function createAccount({ name, accountType, currency, openingBalanceCents, notes }) {
+  const trimmedName = String(name || "").trim();
+  if (!trimmedName) throw new Error("Account name is required.");
+
+  return prisma.financeAccounts.create({
+    data: {
+      name: trimmedName.slice(0, 150),
+      accountType: normaliseAccountType(accountType),
+      currency: (currency || "USD").toUpperCase().trim().slice(0, 3),
+      openingBalanceCents: toCents(openingBalanceCents),
+      notes: notes?.trim() || null,
+    },
+  });
+}
+
+export async function updateAccount(accountId, data) {
+  const id = parseInt(accountId, 10);
+  if (!id) throw new Error("Invalid account.");
+
+  const update = {};
+  if (data.name !== undefined) {
+    const trimmed = String(data.name || "").trim();
+    if (!trimmed) throw new Error("Account name is required.");
+    update.name = trimmed.slice(0, 150);
+  }
+  if (data.accountType !== undefined) update.accountType = normaliseAccountType(data.accountType);
+  if (data.currency !== undefined) update.currency = (data.currency || "USD").toUpperCase().trim().slice(0, 3);
+  if (data.openingBalanceCents !== undefined) update.openingBalanceCents = toCents(data.openingBalanceCents);
+  if (data.notes !== undefined) update.notes = data.notes?.trim() || null;
+  if (data.isActive !== undefined) update.isActive = data.isActive ? 1 : 0;
+
+  return prisma.financeAccounts.update({ where: { accountId: id }, data: update });
+}
+
+/**
+ * Balance implied by the transaction ledger for one account, as of `asOf`
+ * (inclusive). openingBalanceCents + income − expenses, plus transfers in,
+ * minus transfers out.
+ */
+export async function getLedgerBalanceCents(accountId, asOf = new Date()) {
+  const id = parseInt(accountId, 10);
+  if (!id) return 0;
+  const asOfDate = asOf instanceof Date ? asOf : new Date(asOf);
+
+  const [account, rows, transferInRows] = await Promise.all([
+    prisma.financeAccounts.findUnique({ where: { accountId: id } }),
+    queryDb(
+      `SELECT
+         COALESCE(SUM(CASE WHEN type = 'income'   THEN amountCents ELSE 0 END), 0) AS incomeCents,
+         COALESCE(SUM(CASE WHEN type = 'expense'  THEN amountCents ELSE 0 END), 0) AS expenseCents,
+         COALESCE(SUM(CASE WHEN type = 'transfer' THEN amountCents ELSE 0 END), 0) AS transferOutCents
+       FROM financeTransactions
+       WHERE accountId = ? AND transactionDate <= ?`,
+      [id, asOfDate]
+    ),
+    queryDb(
+      `SELECT COALESCE(SUM(amountCents), 0) AS transferInCents
+         FROM financeTransactions
+        WHERE toAccountId = ? AND type = 'transfer' AND transactionDate <= ?`,
+      [id, asOfDate]
+    ),
+  ]);
+
+  const opening = account?.openingBalanceCents || 0;
+  const income = Number(rows[0]?.incomeCents || 0);
+  const expense = Number(rows[0]?.expenseCents || 0);
+  const transferOut = Number(rows[0]?.transferOutCents || 0);
+  const transferIn = Number(transferInRows[0]?.transferInCents || 0);
+
+  return opening + income - expense - transferOut + transferIn;
+}
+
+/** Most recent recorded statement balance for an account on or before `asOf`. */
+export async function getLatestRecordedBalance(accountId, asOf = null) {
+  const id = parseInt(accountId, 10);
+  if (!id) return null;
+  return prisma.financeAccountBalances.findFirst({
+    where: {
+      accountId: id,
+      ...(asOf ? { asOfDate: { lte: asOf instanceof Date ? asOf : new Date(asOf) } } : {}),
+    },
+    orderBy: [{ asOfDate: "desc" }, { balanceId: "desc" }],
+  });
+}
+
+/**
+ * Accounts decorated with ledger balance, latest recorded statement balance
+ * and the variance between them — the data the reconciliation panel renders.
+ * `asOf` lets the caller reconcile to a month-end when preparing a report.
+ */
+export async function getAccountsWithReconciliation({ asOf = new Date(), activeOnly = false } = {}) {
+  const accounts = await getAccounts({ activeOnly });
+  const asOfDate = asOf instanceof Date ? asOf : new Date(asOf);
+
+  return Promise.all(
+    accounts.map(async (account) => {
+      const [ledgerBalanceCents, recorded] = await Promise.all([
+        getLedgerBalanceCents(account.accountId, asOfDate),
+        getLatestRecordedBalance(account.accountId, asOfDate),
+      ]);
+      const recordedBalanceCents = recorded ? recorded.balanceCents : null;
+      return {
+        ...account,
+        ledgerBalanceCents,
+        recordedBalanceCents,
+        recordedAsOfDate: recorded ? recorded.asOfDate : null,
+        recordedNote: recorded ? recorded.note : null,
+        recordedSource: recorded ? recorded.source : null,
+        varianceCents: recordedBalanceCents === null ? null : recordedBalanceCents - ledgerBalanceCents,
+      };
+    })
+  );
+}
+
+export async function setAccountBalance({ accountId, asOfDate, balanceCents, note, source, createdByUserId }) {
+  const id = parseInt(accountId, 10);
+  if (!id) throw new Error("Invalid account.");
+  const account = await prisma.financeAccounts.findUnique({ where: { accountId: id } });
+  if (!account) throw new Error("Account not found.");
+  if (!asOfDate) throw new Error("An 'as of' date is required.");
+
+  return prisma.financeAccountBalances.create({
+    data: {
+      accountId: id,
+      asOfDate: new Date(asOfDate),
+      balanceCents: toCents(balanceCents),
+      source: String(source || "manual").trim().slice(0, 20) || "manual",
+      note: note?.trim()?.slice(0, 255) || null,
+      createdByUserId: parseInt(createdByUserId, 10) || 0,
+    },
+  });
+}
+
+export async function getAccountBalanceHistory(accountId, limit = 24) {
+  const id = parseInt(accountId, 10);
+  if (!id) return [];
+  return prisma.financeAccountBalances.findMany({
+    where: { accountId: id },
+    orderBy: [{ asOfDate: "desc" }, { balanceId: "desc" }],
+    take: Math.min(parseInt(limit, 10) || 24, 100),
+  });
+}
+
+export async function deleteAccountBalance(balanceId) {
+  const id = parseInt(balanceId, 10);
+  if (!id) throw new Error("Invalid balance record.");
+  return prisma.financeAccountBalances.delete({ where: { balanceId: id } });
+}
+
 // =============================================================================
 // Categories
 // =============================================================================

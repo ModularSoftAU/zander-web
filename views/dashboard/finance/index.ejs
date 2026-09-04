@@ -56,6 +56,133 @@
         </div>
       </div>
 
+      <%# Account Balances & Reconciliation -%>
+      <%
+        const reconcileAsOfLabel = reconcileAsOf
+          ? new Date(reconcileAsOf).toLocaleDateString('en-AU', { day: 'numeric', month: 'short', year: 'numeric' })
+          : '';
+        const accountTypeLabels = {
+          bank: 'Bank', stripe: 'Stripe', paypal: 'PayPal',
+          credit_card: 'Credit card', crypto: 'Crypto', other: 'Other'
+        };
+        const accountTypeOptions = Object.keys(accountTypeLabels);
+        const isoDate = function (d) {
+          const dt = d ? new Date(d) : new Date();
+          return dt.toISOString().slice(0, 10);
+        };
+      %>
+      <div class="row g-3 mb-4" id="accounts">
+        <div class="col-12">
+          <div class="card shadow-sm">
+            <div class="card-header d-flex flex-wrap justify-content-between align-items-center gap-2">
+              <span class="fw-semibold">
+                <i class="fa-solid fa-scale-balanced fa-fw me-2 text-primary"></i>Account Balances &amp; Reconciliation
+              </span>
+              <div class="d-flex align-items-center gap-2">
+                <span class="text-muted small">Ledger as of <%= reconcileAsOfLabel %></span>
+                <% if (canManage) { %>
+                  <button type="button" class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#addAccountModal">
+                    <i class="fa-solid fa-plus me-1"></i>Add account
+                  </button>
+                <% } %>
+              </div>
+            </div>
+            <div class="card-body p-0">
+              <% if (!accountReconciliation || !accountReconciliation.length) { %>
+                <div class="p-3 text-muted small">
+                  No accounts yet. Add your Stripe and bank accounts to start reconciling balances for the monthly report.
+                </div>
+              <% } else { %>
+                <div class="table-responsive">
+                  <table class="table table-sm align-middle mb-0">
+                    <thead class="table-light">
+                      <tr>
+                        <th>Account</th>
+                        <th class="text-end">Ledger balance</th>
+                        <th class="text-end">Recorded balance</th>
+                        <th class="text-end">Variance</th>
+                        <th class="text-end">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <% accountReconciliation.forEach(function (acc) {
+                        const cur = acc.currency || 'USD';
+                        const hasRecorded = acc.recordedBalanceCents !== null && acc.recordedBalanceCents !== undefined;
+                        const variance = acc.varianceCents;
+                        const reconciled = hasRecorded && variance === 0;
+                      %>
+                        <tr>
+                          <td>
+                            <div class="fw-semibold">
+                              <%= acc.name %>
+                              <% if (!acc.isActive) { %><span class="badge bg-secondary ms-1">Inactive</span><% } %>
+                            </div>
+                            <div class="text-muted" style="font-size:0.75rem;">
+                              <%= accountTypeLabels[acc.accountType] || acc.accountType %> · <%= cur %>
+                            </div>
+                          </td>
+                          <td class="text-end"><%= fmtMoney(acc.ledgerBalanceCents, cur) %></td>
+                          <td class="text-end">
+                            <% if (hasRecorded) { %>
+                              <div><%= fmtMoney(acc.recordedBalanceCents, cur) %></div>
+                              <div class="text-muted" style="font-size:0.75rem;">
+                                as of <%= new Date(acc.recordedAsOfDate).toLocaleDateString('en-AU', { day:'numeric', month:'short', year:'numeric' }) %>
+                              </div>
+                            <% } else { %>
+                              <span class="text-muted small">Not recorded</span>
+                            <% } %>
+                          </td>
+                          <td class="text-end">
+                            <% if (!hasRecorded) { %>
+                              <span class="text-muted">—</span>
+                            <% } else if (reconciled) { %>
+                              <span class="badge bg-success"><i class="fa-solid fa-check me-1"></i>Reconciled</span>
+                            <% } else { %>
+                              <span class="fw-semibold <%= variance > 0 ? 'text-success' : 'text-danger' %>">
+                                <%= variance > 0 ? '+' : '−' %><%= fmtMoney(Math.abs(variance), cur) %>
+                              </span>
+                            <% } %>
+                          </td>
+                          <td class="text-end text-nowrap">
+                            <% if (canManage) { %>
+                              <button type="button" class="btn btn-sm btn-primary js-set-balance"
+                                      data-bs-toggle="modal" data-bs-target="#setBalanceModal"
+                                      data-account-id="<%= acc.accountId %>"
+                                      data-account-name="<%= acc.name %>"
+                                      data-currency="<%= cur %>"
+                                      data-ledger="<%= (acc.ledgerBalanceCents / 100).toFixed(2) %>">
+                                <i class="fa-solid fa-pen-to-square me-1"></i>Set balance
+                              </button>
+                              <button type="button" class="btn btn-sm btn-outline-secondary js-edit-account"
+                                      data-bs-toggle="modal" data-bs-target="#editAccountModal"
+                                      data-account-id="<%= acc.accountId %>"
+                                      data-name="<%= acc.name %>"
+                                      data-account-type="<%= acc.accountType %>"
+                                      data-currency="<%= cur %>"
+                                      data-opening="<%= (acc.openingBalanceCents / 100).toFixed(2) %>"
+                                      data-notes="<%= acc.notes || '' %>"
+                                      data-active="<%= acc.isActive ? 1 : 0 %>">
+                                <i class="fa-solid fa-gear"></i>
+                              </button>
+                            <% } else { %>
+                              <span class="text-muted small">—</span>
+                            <% } %>
+                          </td>
+                        </tr>
+                      <% }) %>
+                    </tbody>
+                  </table>
+                </div>
+                <div class="p-2 px-3 text-muted" style="font-size:0.75rem;">
+                  Ledger balance = opening balance + income − expenses ± transfers, up to <%= reconcileAsOfLabel %>.
+                  Record the balance shown by Stripe / the bank to reconcile before publishing the monthly report.
+                </div>
+              <% } %>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <div class="row g-4 mb-4">
 
         <%# Recent Transactions -%>
@@ -619,6 +746,191 @@
       document.getElementById('overrideBudgetItemId').value = btn.dataset.budgetItemId || '';
       document.getElementById('overrideBudgetLabel').textContent = btn.dataset.label || '';
       document.getElementById('overrideBudgetAmount').value = btn.dataset.amount || '';
+    });
+  </script>
+
+  <%# ── Add Account Modal ─────────────────────────────────────────────── -%>
+  <div class="modal fade" id="addAccountModal" tabindex="-1" aria-labelledby="addAccountModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <form method="post" action="/dashboard/finance/accounts/create">
+          <input type="hidden" name="year" value="<%= selectedYear %>">
+          <input type="hidden" name="month" value="<%= selectedMonth %>">
+          <div class="modal-header">
+            <h5 class="modal-title" id="addAccountModalLabel">Add Account</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            <div class="mb-3">
+              <label for="addAccountName" class="form-label fw-semibold">Name <span class="text-danger">*</span></label>
+              <input type="text" class="form-control" id="addAccountName" name="name" maxlength="150" required placeholder="e.g. Stripe, Community Bank">
+            </div>
+            <div class="row g-2">
+              <div class="col-7 mb-3">
+                <label for="addAccountType" class="form-label fw-semibold">Type</label>
+                <select class="form-select" id="addAccountType" name="accountType">
+                  <% accountTypeOptions.forEach(function (t) { %>
+                    <option value="<%= t %>"><%= accountTypeLabels[t] %></option>
+                  <% }) %>
+                </select>
+              </div>
+              <div class="col-5 mb-3">
+                <label for="addAccountCurrency" class="form-label fw-semibold">Currency</label>
+                <select class="form-select" id="addAccountCurrency" name="currency">
+                  <% currencyOptions.forEach(function (c) { %>
+                    <option value="<%= c %>" <%= c === 'USD' ? 'selected' : '' %>><%= c %></option>
+                  <% }) %>
+                </select>
+              </div>
+            </div>
+            <div class="mb-3">
+              <label for="addAccountOpening" class="form-label fw-semibold">Opening balance</label>
+              <div class="input-group">
+                <span class="input-group-text">$</span>
+                <input type="number" step="0.01" class="form-control" id="addAccountOpening" name="openingBalanceCents" placeholder="0.00">
+              </div>
+              <div class="form-text">The balance before any recorded transactions. Leave at 0 if unsure.</div>
+            </div>
+            <div class="mb-3">
+              <label for="addAccountNotes" class="form-label fw-semibold">Notes</label>
+              <input type="text" class="form-control" id="addAccountNotes" name="notes" maxlength="500">
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+            <button type="submit" class="btn btn-primary"><i class="fa-solid fa-check me-1"></i>Add account</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <%# ── Edit Account Modal ────────────────────────────────────────────── -%>
+  <div class="modal fade" id="editAccountModal" tabindex="-1" aria-labelledby="editAccountModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <form method="post" id="editAccountForm" action="/dashboard/finance/accounts/__id__/edit">
+          <input type="hidden" name="year" value="<%= selectedYear %>">
+          <input type="hidden" name="month" value="<%= selectedMonth %>">
+          <div class="modal-header">
+            <h5 class="modal-title" id="editAccountModalLabel">Edit Account</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            <div class="mb-3">
+              <label for="editAccountName" class="form-label fw-semibold">Name <span class="text-danger">*</span></label>
+              <input type="text" class="form-control" id="editAccountName" name="name" maxlength="150" required>
+            </div>
+            <div class="row g-2">
+              <div class="col-7 mb-3">
+                <label for="editAccountType" class="form-label fw-semibold">Type</label>
+                <select class="form-select" id="editAccountType" name="accountType">
+                  <% accountTypeOptions.forEach(function (t) { %>
+                    <option value="<%= t %>"><%= accountTypeLabels[t] %></option>
+                  <% }) %>
+                </select>
+              </div>
+              <div class="col-5 mb-3">
+                <label for="editAccountCurrency" class="form-label fw-semibold">Currency</label>
+                <select class="form-select" id="editAccountCurrency" name="currency">
+                  <% currencyOptions.forEach(function (c) { %>
+                    <option value="<%= c %>"><%= c %></option>
+                  <% }) %>
+                </select>
+              </div>
+            </div>
+            <div class="mb-3">
+              <label for="editAccountOpening" class="form-label fw-semibold">Opening balance</label>
+              <div class="input-group">
+                <span class="input-group-text">$</span>
+                <input type="number" step="0.01" class="form-control" id="editAccountOpening" name="openingBalanceCents">
+              </div>
+            </div>
+            <div class="mb-3">
+              <label for="editAccountNotes" class="form-label fw-semibold">Notes</label>
+              <input type="text" class="form-control" id="editAccountNotes" name="notes" maxlength="500">
+            </div>
+            <div class="form-check">
+              <input class="form-check-input" type="checkbox" value="1" id="editAccountActive" name="isActive">
+              <label class="form-check-label" for="editAccountActive">Active</label>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+            <button type="submit" class="btn btn-primary"><i class="fa-solid fa-check me-1"></i>Save</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <%# ── Set Balance (reconcile) Modal ─────────────────────────────────── -%>
+  <div class="modal fade" id="setBalanceModal" tabindex="-1" aria-labelledby="setBalanceModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <form method="post" id="setBalanceForm" action="/dashboard/finance/accounts/__id__/balance">
+          <input type="hidden" name="year" value="<%= selectedYear %>">
+          <input type="hidden" name="month" value="<%= selectedMonth %>">
+          <input type="hidden" name="source" value="manual">
+          <div class="modal-header">
+            <h5 class="modal-title" id="setBalanceModalLabel">Record balance</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            <p class="text-muted small mb-3">
+              Enter the balance <strong id="setBalanceAccountName">this account</strong> actually shows
+              (Stripe dashboard, bank statement). It is stored as a dated reading and compared against the ledger.
+            </p>
+            <div class="mb-3">
+              <label for="setBalanceAsOf" class="form-label fw-semibold">As of date <span class="text-danger">*</span></label>
+              <input type="date" class="form-control" id="setBalanceAsOf" name="asOfDate" required value="<%= isoDate(reconcileAsOf) %>">
+            </div>
+            <div class="mb-3">
+              <label for="setBalanceAmount" class="form-label fw-semibold">Balance <span class="text-danger">*</span></label>
+              <div class="input-group">
+                <span class="input-group-text">$</span>
+                <input type="number" step="0.01" class="form-control" id="setBalanceAmount" name="balanceCents" required placeholder="0.00">
+              </div>
+              <div class="form-text">Ledger balance for comparison: <span id="setBalanceLedgerHint">—</span></div>
+            </div>
+            <div class="mb-3">
+              <label for="setBalanceNote" class="form-label fw-semibold">Note</label>
+              <input type="text" class="form-control" id="setBalanceNote" name="note" maxlength="255" placeholder="e.g. Stripe end-of-month statement">
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+            <button type="submit" class="btn btn-primary"><i class="fa-solid fa-check me-1"></i>Record balance</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    document.getElementById('setBalanceModal')?.addEventListener('show.bs.modal', function (e) {
+      const btn = e.relatedTarget;
+      if (!btn) return;
+      const form = document.getElementById('setBalanceForm');
+      form.action = '/dashboard/finance/accounts/' + btn.dataset.accountId + '/balance';
+      document.getElementById('setBalanceAccountName').textContent = btn.dataset.accountName || 'this account';
+      document.getElementById('setBalanceLedgerHint').textContent =
+        (btn.dataset.currency || 'USD') + ' ' + (btn.dataset.ledger || '0.00');
+      document.getElementById('setBalanceAmount').value = '';
+      document.getElementById('setBalanceNote').value = '';
+    });
+
+    document.getElementById('editAccountModal')?.addEventListener('show.bs.modal', function (e) {
+      const btn = e.relatedTarget;
+      if (!btn) return;
+      const form = document.getElementById('editAccountForm');
+      form.action = '/dashboard/finance/accounts/' + btn.dataset.accountId + '/edit';
+      document.getElementById('editAccountName').value = btn.dataset.name || '';
+      document.getElementById('editAccountType').value = btn.dataset.accountType || 'bank';
+      document.getElementById('editAccountCurrency').value = btn.dataset.currency || 'USD';
+      document.getElementById('editAccountOpening').value = btn.dataset.opening || '0.00';
+      document.getElementById('editAccountNotes').value = btn.dataset.notes || '';
+      document.getElementById('editAccountActive').checked = btn.dataset.active === '1';
     });
   </script>
 <% } %>
