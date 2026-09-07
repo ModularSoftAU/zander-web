@@ -771,8 +771,16 @@ export async function buildPublicFinanceSnapshot({
     getPublicOperationsBudgetBreakdown(year, month),
   ]);
 
-  const fundingProgressPercent = monthlyGoalCents > 0
-    ? Math.round((communitySupportCents / monthlyGoalCents) * 100)
+  // The funding goal is what it actually costs to keep the servers running this
+  // month. Fall back to the configured goal only when no public operating costs
+  // have been budgeted yet.
+  const fallbackGoalCents = Number(monthlyGoalCents) || 0;
+  const fundingGoalCents = budgetBreakdown.totalOperatingCostsCents > 0
+    ? budgetBreakdown.totalOperatingCostsCents
+    : fallbackGoalCents;
+
+  const fundingProgressPercent = fundingGoalCents > 0
+    ? Math.round((communitySupportCents / fundingGoalCents) * 100)
     : 0;
 
   const remainingFundedByCfcCents = Math.max(budgetBreakdown.totalOperatingCostsCents - communitySupportCents, 0);
@@ -787,7 +795,8 @@ export async function buildPublicFinanceSnapshot({
       month: "long",
       year: "numeric",
     }),
-    fundingGoalCents: monthlyGoalCents,
+    fundingGoalCents,
+    fundingGoalCurrency: budgetBreakdown.currency,
     communitySupportCents,
     fundingProgressPercent,
     operatingCostsCents: budgetBreakdown.totalOperatingCostsCents,

@@ -48,7 +48,8 @@
               </form>
 
               <div class="small text-muted mb-3">
-                Monthly funding goal for previews and reports: <strong><%= fmtMoney(monthlyGoalCents) %></strong>
+                The monthly funding goal is calculated from the published operating costs for the selected month.
+                Fallback goal when no operating costs are budgeted: <strong><%= fmtMoney(monthlyGoalCents) %></strong>
               </div>
 
               <% if (existingReport) { %>

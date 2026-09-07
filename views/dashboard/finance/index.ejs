@@ -378,7 +378,7 @@
 <% if (canManage) { %>
   <%# Add Budget Modal -%>
   <div class="modal fade" id="addBudgetModal" tabindex="-1" aria-labelledby="addBudgetModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
+    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
       <div class="modal-content">
         <form method="post" action="/dashboard/finance/budget/create" class="budget-entry-form">
           <input type="hidden" name="monthlyBudgetCents" class="budget-cents-input">
@@ -460,7 +460,7 @@
 
   <%# Edit Budget Modal -%>
   <div class="modal fade" id="editBudgetModal" tabindex="-1" aria-labelledby="editBudgetModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
+    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
       <div class="modal-content">
         <form method="post" id="editBudgetForm" action="/dashboard/finance/budget/__id__/edit" class="budget-entry-form">
           <input type="hidden" name="monthlyBudgetCents" class="budget-cents-input">
@@ -543,7 +543,7 @@
 
   <%# Override this month's amount for a template line item -%>
   <div class="modal fade" id="overrideBudgetModal" tabindex="-1" aria-labelledby="overrideBudgetModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
+    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
       <div class="modal-content">
         <form method="post" action="/dashboard/finance/budget/override" class="budget-entry-form">
           <input type="hidden" name="year" value="<%= selectedYear %>">
@@ -578,7 +578,7 @@
 
   <%# Add a one-off item that only exists for the selected month -%>
   <div class="modal fade" id="oneOffBudgetModal" tabindex="-1" aria-labelledby="oneOffBudgetModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
+    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
       <div class="modal-content">
         <form method="post" action="/dashboard/finance/budget/one-off/create" class="budget-entry-form">
           <input type="hidden" name="year" value="<%= selectedYear %>">
@@ -751,7 +751,7 @@
 
   <%# ── Add Account Modal ─────────────────────────────────────────────── -%>
   <div class="modal fade" id="addAccountModal" tabindex="-1" aria-labelledby="addAccountModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
+    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
       <div class="modal-content">
         <form method="post" action="/dashboard/finance/accounts/create">
           <input type="hidden" name="year" value="<%= selectedYear %>">
@@ -766,7 +766,7 @@
               <input type="text" class="form-control" id="addAccountName" name="name" maxlength="150" required placeholder="e.g. Stripe, Community Bank">
             </div>
             <div class="row g-2">
-              <div class="col-7 mb-3">
+              <div class="col-12 col-sm-7 mb-3">
                 <label for="addAccountType" class="form-label fw-semibold">Type</label>
                 <select class="form-select" id="addAccountType" name="accountType">
                   <% accountTypeOptions.forEach(function (t) { %>
@@ -774,7 +774,7 @@
                   <% }) %>
                 </select>
               </div>
-              <div class="col-5 mb-3">
+              <div class="col-12 col-sm-5 mb-3">
                 <label for="addAccountCurrency" class="form-label fw-semibold">Currency</label>
                 <select class="form-select" id="addAccountCurrency" name="currency">
                   <% currencyOptions.forEach(function (c) { %>
@@ -807,7 +807,7 @@
 
   <%# ── Edit Account Modal ────────────────────────────────────────────── -%>
   <div class="modal fade" id="editAccountModal" tabindex="-1" aria-labelledby="editAccountModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
+    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
       <div class="modal-content">
         <form method="post" id="editAccountForm" action="/dashboard/finance/accounts/__id__/edit">
           <input type="hidden" name="year" value="<%= selectedYear %>">
@@ -822,7 +822,7 @@
               <input type="text" class="form-control" id="editAccountName" name="name" maxlength="150" required>
             </div>
             <div class="row g-2">
-              <div class="col-7 mb-3">
+              <div class="col-12 col-sm-7 mb-3">
                 <label for="editAccountType" class="form-label fw-semibold">Type</label>
                 <select class="form-select" id="editAccountType" name="accountType">
                   <% accountTypeOptions.forEach(function (t) { %>
@@ -830,7 +830,7 @@
                   <% }) %>
                 </select>
               </div>
-              <div class="col-5 mb-3">
+              <div class="col-12 col-sm-5 mb-3">
                 <label for="editAccountCurrency" class="form-label fw-semibold">Currency</label>
                 <select class="form-select" id="editAccountCurrency" name="currency">
                   <% currencyOptions.forEach(function (c) { %>
@@ -866,7 +866,7 @@
 
   <%# ── Set Balance (reconcile) Modal ─────────────────────────────────── -%>
   <div class="modal fade" id="setBalanceModal" tabindex="-1" aria-labelledby="setBalanceModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
+    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
       <div class="modal-content">
         <form method="post" id="setBalanceForm" action="/dashboard/finance/accounts/__id__/balance">
           <input type="hidden" name="year" value="<%= selectedYear %>">
