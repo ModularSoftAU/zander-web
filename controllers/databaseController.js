@@ -76,6 +76,50 @@ export const prisma = prismaBase.$extends({
 });
 
 // ---------------------------------------------------------------------------
+// Deadlock retry
+// ---------------------------------------------------------------------------
+
+/** MySQL errors that mean "this transaction lost a lock race — just retry it". */
+const RETRYABLE_LOCK_ERRORS = new Set(["ER_LOCK_DEADLOCK", "ER_LOCK_WAIT_TIMEOUT"]);
+
+/**
+ * Run `fn` and retry it if InnoDB rolls it back for a deadlock or lock-wait
+ * timeout.  InnoDB picks a victim and rolls its transaction back entirely, so
+ * a retry is safe — but ONLY when `fn` opens and commits its own transaction
+ * and holds no state from a previous attempt.  Never wrap a partially applied
+ * transaction, and never wrap work with non-DB side effects (Discord messages,
+ * outbound HTTP), which would be repeated on each attempt.
+ *
+ * Backs off with jitter so two deadlocking callers don't collide again.
+ *
+ * @param {() => Promise<T>} fn         Self-contained transactional work.
+ * @param {{ attempts?: number, baseDelayMs?: number, label?: string }} [opts]
+ * @returns {Promise<T>}
+ * @template T
+ */
+export async function withDeadlockRetry(fn, opts = {}) {
+  const { attempts = 3, baseDelayMs = 50, label = "transaction" } = opts;
+  let lastErr;
+
+  for (let attempt = 1; attempt <= attempts; attempt++) {
+    try {
+      return await fn();
+    } catch (err) {
+      if (!RETRYABLE_LOCK_ERRORS.has(err?.code) || attempt === attempts) throw err;
+      lastErr = err;
+      const delay = baseDelayMs * 2 ** (attempt - 1) * (0.5 + Math.random());
+      console.warn(
+        `[db] ${err.code} on ${label} (attempt ${attempt}/${attempts}), ` +
+        `retrying in ${Math.round(delay)}ms`
+      );
+      await new Promise((r) => setTimeout(r, delay));
+    }
+  }
+
+  throw lastErr;
+}
+
+// ---------------------------------------------------------------------------
 // Health tracking
 // ---------------------------------------------------------------------------
 

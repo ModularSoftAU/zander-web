@@ -11,7 +11,7 @@
  * is stats, maps, players, voting, ratings, tokens and entitlements only.
  */
 
-import pool from "./databaseController.js";
+import pool, { withDeadlockRetry } from "./databaseController.js";
 
 // Promise-based query helper over the shared mysql2 pool.
 const conn = pool.promise();
@@ -1115,9 +1115,30 @@ export async function getTokenBalance(uuid) {
  * Returns true if credited, false if the session was already processed.
  */
 export async function creditTokens({ uuid, username, amount, type = "grant", reason, stripeSessionId, stripePaymentIntentId, metadata }) {
+  return withDeadlockRetry(() => creditTokensOnce({
+    uuid, username, amount, type, reason, stripeSessionId, stripePaymentIntentId, metadata,
+  }), { label: `creditTokens(${uuid})` });
+}
+
+/**
+ * One attempt of creditTokens.  Locks `mixed_map_token_balances` BEFORE
+ * touching `mixed_map_token_transactions` — the same order removeTokens() uses.
+ * Taking these two tables in a consistent order across all writers is what
+ * keeps concurrent credit/spend on the same player from deadlocking.
+ */
+async function creditTokensOnce({ uuid, username, amount, type, reason, stripeSessionId, stripePaymentIntentId, metadata }) {
   const cx = await conn.getConnection();
   try {
     await cx.beginTransaction();
+    await cx.query(
+      `INSERT INTO mixed_map_token_balances (player_uuid, username, balance, lifetime_earned)
+       VALUES (?, ?, ?, ?)
+       ON DUPLICATE KEY UPDATE
+         balance = balance + VALUES(balance),
+         lifetime_earned = lifetime_earned + VALUES(lifetime_earned),
+         username = COALESCE(VALUES(username), username)`,
+      [uuid, username || null, amount, amount]
+    );
     try {
       await cx.query(
         `INSERT INTO mixed_map_token_transactions
@@ -1128,20 +1149,13 @@ export async function creditTokens({ uuid, username, amount, type = "grant", rea
       );
     } catch (err) {
       if (err && err.code === "ER_DUP_ENTRY") {
+        // Already processed this Stripe session — rolling back also undoes the
+        // balance increment applied above, so no tokens are double-credited.
         await cx.rollback();
-        return false; // already processed this Stripe session
+        return false;
       }
       throw err;
     }
-    await cx.query(
-      `INSERT INTO mixed_map_token_balances (player_uuid, username, balance, lifetime_earned)
-       VALUES (?, ?, ?, ?)
-       ON DUPLICATE KEY UPDATE
-         balance = balance + VALUES(balance),
-         lifetime_earned = lifetime_earned + VALUES(lifetime_earned),
-         username = COALESCE(VALUES(username), username)`,
-      [uuid, username || null, amount, amount]
-    );
     await cx.commit();
     return true;
   } catch (err) {
@@ -1153,6 +1167,13 @@ export async function creditTokens({ uuid, username, amount, type = "grant", rea
 }
 
 export async function removeTokens({ uuid, amount, reason, type = "remove", metadata }) {
+  return withDeadlockRetry(
+    () => removeTokensOnce({ uuid, amount, reason, type, metadata }),
+    { label: `removeTokens(${uuid})` }
+  );
+}
+
+async function removeTokensOnce({ uuid, amount, reason, type, metadata }) {
   const cx = await conn.getConnection();
   try {
     await cx.beginTransaction();
@@ -1302,6 +1323,15 @@ export async function endVote(voteId, { status = "ended", winningMapKey } = {}) 
 }
 
 export async function castVote({ voteId, uuid, username, mapKey, weight = 1, source = "web" }) {
+  return withDeadlockRetry(
+    () => castVoteOnce({ voteId, uuid, username, mapKey, weight, source }),
+    { label: `castVote(${voteId})` }
+  );
+}
+
+// Concurrent voters all contend for the same mixed_map_vote_options counter
+// row, so a lost lock race here is expected under load rather than a bug.
+async function castVoteOnce({ voteId, uuid, username, mapKey, weight, source }) {
   const cx = await conn.getConnection();
   try {
     await cx.beginTransaction();

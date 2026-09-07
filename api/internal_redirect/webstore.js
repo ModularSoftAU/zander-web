@@ -488,9 +488,15 @@ async function handleInvoicePaymentSucceeded(event, config) {
 
 // ---------------------------------------------------------------------------
 // Handler: invoice.payment_failed
-// Marks the subscription past_due.  We do NOT revoke immediately — Stripe will
-// retry and ultimately fire customer.subscription.deleted if all retries fail.
+// Marks the subscription past_due.  On the first couple of failures we wait —
+// Stripe retries and will fire customer.subscription.deleted if it gives up.
+// Once the invoice has failed FAILURE_REVOKE_THRESHOLD times we stop waiting
+// and revoke the rank ourselves, so a player cannot keep a paid rank for the
+// full length of Stripe's retry schedule on a card that will never clear.
 // ---------------------------------------------------------------------------
+
+/** Failed payment attempts on one invoice before we revoke the rank. */
+const FAILURE_REVOKE_THRESHOLD = 3;
 
 async function handleInvoicePaymentFailed(event, config) {
   const invoice = event.data.object;
@@ -516,21 +522,58 @@ async function handleInvoicePaymentFailed(event, config) {
     return;
   }
 
-  await updateSubscriptionStatus(invoice.subscription, "past_due");
+  const attemptCount = Number(invoice.attempt_count) || 1;
+  const shouldRevoke =
+    attemptCount >= FAILURE_REVOKE_THRESHOLD &&
+    subscription.status !== "unpaid" &&
+    subscription.status !== "cancelled" &&
+    subscription.status !== "expired";
+
+  await updateSubscriptionStatus(invoice.subscription, shouldRevoke ? "unpaid" : "past_due");
+
+  // Revoke the rank once the invoice has failed enough times.  Subscriptions
+  // already in a revoked state are skipped so a repeated failure on the same
+  // subscription does not enqueue duplicate revoke commands.
+  let revokeCommands = [];
+  if (shouldRevoke) {
+    ({ revokeCommands } = await getCommandsByPriceId(subscription.stripePriceId));
+    if (revokeCommands.length > 0) {
+      await revokeSubscription(subscription, revokeCommands, {
+        discordClient,
+        guildId: config?.discord?.guildId,
+      });
+    }
+  }
 
   await recordWebhookEvent({
     stripeEventId: event.id,
     purchaseId: subscription.purchaseId,
     eventType: event.type,
-    payload: { subscriptionId: invoice.subscription, attempt_count: invoice.attempt_count },
+    payload: {
+      subscriptionId: invoice.subscription,
+      attempt_count: attemptCount,
+      revoked: shouldRevoke,
+      revokeCommands: revokeCommands.length,
+    },
   });
 
   const failedFields = [
     ["Player", subscription.recipientMinecraftUsername, true],
     ["Price ID", subscription.stripePriceId, true],
-    ["Attempt", String(invoice.attempt_count || 1), true],
+    ["Attempt", String(attemptCount), true],
   ];
-  await notifyWebstore(config, "⚠️ Subscription Payment Failed", failedFields, Colors.Yellow);
+
+  if (shouldRevoke) {
+    failedFields.push(["Revoke commands", String(revokeCommands.length), true]);
+    await notifyWebstore(
+      config,
+      `❌ Subscription Revoked — ${attemptCount} Failed Payments`,
+      failedFields,
+      Colors.Red
+    );
+  } else {
+    await notifyWebstore(config, "⚠️ Subscription Payment Failed", failedFields, Colors.Yellow);
+  }
 }
 
 // ---------------------------------------------------------------------------
