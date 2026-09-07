@@ -322,9 +322,9 @@ export default function dashboardFinanceRoute(app, fetch, config, db, features, 
       return res.redirect("/dashboard/finance");
     }
 
-    const { year, month, categoryId, label, monthlyBudgetCents, currency, iconName, iconImageUrl, notes } = req.body || {};
+    const { year, month, categoryId, label, publicDescription, monthlyBudgetCents, currency, iconName, iconImageUrl, notes } = req.body || {};
     try {
-      await createOneOffBudgetItem({ year, month, categoryId, label, monthlyBudgetCents, currency, iconName, iconImageUrl, notes });
+      await createOneOffBudgetItem({ year, month, categoryId, label, publicDescription, monthlyBudgetCents, currency, iconName, iconImageUrl, notes });
       setBannerCookie("success", "One-off budget item added.", res);
     } catch (error) {
       console.error("[finance] POST /dashboard/finance/budget/one-off/create:", error);
@@ -363,8 +363,8 @@ export default function dashboardFinanceRoute(app, fetch, config, db, features, 
     }
 
     try {
-      const { categoryId, label, monthlyBudgetCents, currency, cadence, annualMonth, iconName, iconImageUrl, notes } = req.body || {};
-      await createBudgetEntry({ categoryId, label, monthlyBudgetCents, currency, cadence, annualMonth, iconName, iconImageUrl, notes });
+      const { categoryId, label, publicDescription, monthlyBudgetCents, currency, cadence, annualMonth, iconName, iconImageUrl, notes } = req.body || {};
+      await createBudgetEntry({ categoryId, label, publicDescription, monthlyBudgetCents, currency, cadence, annualMonth, iconName, iconImageUrl, notes });
       setBannerCookie("success", "Budget entry created.", res);
     } catch (error) {
       console.error("[finance] POST /dashboard/finance/budget/create:", error);
@@ -386,9 +386,9 @@ export default function dashboardFinanceRoute(app, fetch, config, db, features, 
     }
 
     try {
-      const { categoryId, label, monthlyBudgetCents, currency, cadence, annualMonth, iconName, iconImageUrl, notes, isActive } = req.body || {};
+      const { categoryId, label, publicDescription, monthlyBudgetCents, currency, cadence, annualMonth, iconName, iconImageUrl, notes, isActive } = req.body || {};
       await updateBudgetEntry(budgetId, {
-        categoryId, label, monthlyBudgetCents, currency, cadence, annualMonth, iconName, iconImageUrl, notes,
+        categoryId, label, publicDescription, monthlyBudgetCents, currency, cadence, annualMonth, iconName, iconImageUrl, notes,
         isActive: isActive === "1" ? 1 : 0,
       });
       setBannerCookie("success", "Budget entry updated.", res);

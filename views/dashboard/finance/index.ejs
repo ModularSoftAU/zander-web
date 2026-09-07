@@ -327,6 +327,7 @@
                                           data-bs-toggle="modal" data-bs-target="#editBudgetModal"
                                           data-id="<%= b.budgetId %>"
                                           data-label="<%= (b.label||'').replace(/&/g,'&amp;').replace(/"/g,'&quot;') %>"
+                                          data-public-description="<%= (b.publicDescription||'').replace(/&/g,'&amp;').replace(/"/g,'&quot;') %>"
                                           data-category-id="<%= b.categoryId || '' %>"
                                           data-amount="<%= ((b.templateMonthlyBudgetCents||0)/100).toFixed(2) %>"
                                           data-currency="<%= b.currency || 'USD' %>"
@@ -390,6 +391,11 @@
             <div class="mb-3">
               <label for="addBudgetLabel" class="form-label fw-semibold">Line item <span class="text-danger">*</span></label>
               <input type="text" class="form-control" id="addBudgetLabel" name="label" maxlength="100" required>
+            </div>
+            <div class="mb-3">
+              <label for="addBudgetDescription" class="form-label fw-semibold">Public description</label>
+              <textarea class="form-control" id="addBudgetDescription" name="publicDescription" rows="2" maxlength="300" placeholder="Shown under this line item on the public finance page."></textarea>
+              <div class="form-text">Optional. Leave blank to show just the line item name.</div>
             </div>
             <div class="mb-3">
               <label for="addBudgetCategoryId" class="form-label fw-semibold">Category</label>
@@ -473,6 +479,11 @@
             <div class="mb-3">
               <label for="editBudgetLabel" class="form-label fw-semibold">Line item <span class="text-danger">*</span></label>
               <input type="text" class="form-control" id="editBudgetLabel" name="label" maxlength="100" required>
+            </div>
+            <div class="mb-3">
+              <label for="editBudgetDescription" class="form-label fw-semibold">Public description</label>
+              <textarea class="form-control" id="editBudgetDescription" name="publicDescription" rows="2" maxlength="300" placeholder="Shown under this line item on the public finance page."></textarea>
+              <div class="form-text">Optional. Leave blank to show just the line item name.</div>
             </div>
             <div class="mb-3">
               <label for="editBudgetCategoryId" class="form-label fw-semibold">Category</label>
@@ -593,6 +604,11 @@
             <div class="mb-3">
               <label for="oneOffLabel" class="form-label fw-semibold">Line item <span class="text-danger">*</span></label>
               <input type="text" class="form-control" id="oneOffLabel" name="label" maxlength="100" required>
+            </div>
+            <div class="mb-3">
+              <label for="oneOffDescription" class="form-label fw-semibold">Public description</label>
+              <textarea class="form-control" id="oneOffDescription" name="publicDescription" rows="2" maxlength="300" placeholder="Shown under this line item on the public finance page."></textarea>
+              <div class="form-text">Optional. Leave blank to show just the line item name.</div>
             </div>
             <div class="mb-3">
               <label for="oneOffCategoryId" class="form-label fw-semibold">Category</label>
@@ -727,6 +743,7 @@
       const form = document.getElementById('editBudgetForm');
       form.action = '/dashboard/finance/budget/' + btn.dataset.id + '/edit';
       document.getElementById('editBudgetLabel').value = btn.dataset.label || '';
+      document.getElementById('editBudgetDescription').value = btn.dataset.publicDescription || '';
       document.getElementById('editBudgetCategoryId').value = btn.dataset.categoryId || '';
       document.getElementById('editBudgetAmount').value = btn.dataset.amount || '';
       document.getElementById('editBudgetCurrency').value = btn.dataset.currency || 'USD';

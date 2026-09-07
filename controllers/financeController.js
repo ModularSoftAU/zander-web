@@ -51,6 +51,13 @@ function normaliseBudgetLabel(label) {
     .trim();
 }
 
+// Public-facing blurb shown under the line item on /finance. Same entity
+// unescaping as the label, capped to the column width.
+function normaliseBudgetPublicDescription(value) {
+  const cleaned = normaliseBudgetLabel(value);
+  return cleaned ? cleaned.slice(0, 300) : null;
+}
+
 function normaliseReportMonth(year, month) {
   const parsedYear = parseInt(year, 10);
   const parsedMonth = parseInt(month, 10);
@@ -454,7 +461,7 @@ export async function getAllBudgetEntries() {
   });
 }
 
-export async function createBudgetEntry({ categoryId, label, monthlyBudgetCents, currency, cadence, annualMonth, iconName, iconImageUrl, notes }) {
+export async function createBudgetEntry({ categoryId, label, publicDescription, monthlyBudgetCents, currency, cadence, annualMonth, iconName, iconImageUrl, notes }) {
   const normalisedLabel = normaliseBudgetLabel(label);
   if (!normalisedLabel) throw new Error("Budget label is required.");
   const normalisedCadence = cadence === "annual" ? "annual" : "monthly";
@@ -467,6 +474,7 @@ export async function createBudgetEntry({ categoryId, label, monthlyBudgetCents,
     data: {
       categoryId: categoryId ? parseInt(categoryId, 10) : null,
       label: normalisedLabel,
+      publicDescription: normaliseBudgetPublicDescription(publicDescription),
       monthlyBudgetCents: monthlyBudgetCents ? parseInt(monthlyBudgetCents, 10) : 0,
       currency: (currency || "USD").toUpperCase().trim(),
       cadence: normalisedCadence,
@@ -481,6 +489,7 @@ export async function updateBudgetEntry(id, data) {
   const update = {};
   if (data.categoryId !== undefined) update.categoryId = data.categoryId ? parseInt(data.categoryId, 10) : null;
   if (data.label !== undefined) update.label = normaliseBudgetLabel(data.label);
+  if (data.publicDescription !== undefined) update.publicDescription = normaliseBudgetPublicDescription(data.publicDescription);
   if (data.monthlyBudgetCents !== undefined) update.monthlyBudgetCents = parseInt(data.monthlyBudgetCents, 10);
   if (data.currency !== undefined) update.currency = data.currency.toUpperCase().trim();
   if (data.cadence !== undefined) {
@@ -533,6 +542,7 @@ export async function upsertMonthlyBudgetOverride({ year, month, budgetItemId, m
       budgetItemId: Number(budgetItemId),
       categoryId: template.categoryId,
       label: template.label,
+      publicDescription: template.publicDescription,
       monthlyBudgetCents: parseInt(monthlyBudgetCents, 10) || 0,
       currency: template.currency,
       iconName: template.iconName,
@@ -550,7 +560,7 @@ export async function resetMonthlyBudgetOverride(year, month, budgetItemId) {
   });
 }
 
-export async function createOneOffBudgetItem({ year, month, categoryId, label, monthlyBudgetCents, currency, iconName, iconImageUrl, notes }) {
+export async function createOneOffBudgetItem({ year, month, categoryId, label, publicDescription, monthlyBudgetCents, currency, iconName, iconImageUrl, notes }) {
   const normalisedLabel = normaliseBudgetLabel(label);
   if (!normalisedLabel) throw new Error("Budget label is required.");
   const icon = normaliseBudgetIcon(iconName, iconImageUrl);
@@ -561,6 +571,7 @@ export async function createOneOffBudgetItem({ year, month, categoryId, label, m
       budgetItemId: null,
       categoryId: categoryId ? parseInt(categoryId, 10) : null,
       label: normalisedLabel,
+      publicDescription: normaliseBudgetPublicDescription(publicDescription),
       monthlyBudgetCents: monthlyBudgetCents ? parseInt(monthlyBudgetCents, 10) : 0,
       currency: (currency || "USD").toUpperCase().trim(),
       ...icon,
@@ -637,6 +648,7 @@ export async function getBudgetVsActual(year, month) {
         categoryId: row.categoryId,
         category: row.category,
         label: normaliseBudgetLabel(row.label),
+        publicDescription: row.publicDescription,
         monthlyBudgetCents: row.monthlyBudgetCents,
         templateMonthlyBudgetCents: null,
         currency: row.currency,
@@ -735,13 +747,19 @@ export async function getPublicOperationsBudgetBreakdown(year, month) {
 
     const name = (row.label || row.category?.name || "Operating cost").trim();
     const currency = (row.currency || "USD").toUpperCase();
-    const key = JSON.stringify({ name, currency });
+    // One-off and overridden month rows are always a single-month amount; only
+    // an untouched annual template item is billed yearly.
+    const cadence = (!row.isOneOff && !row.isOverridden && row.cadence === "annual") ? "annual" : "monthly";
+    const description = (row.publicDescription || "").trim();
+    const key = JSON.stringify({ name, description, currency, cadence });
     const current = grouped.get(key) || {
       key,
       name,
-      description: "",
+      description,
       totalCents: 0,
       currency,
+      cadence,
+      annualMonth: cadence === "annual" ? (row.annualMonth || null) : null,
       iconName: row.iconName || null,
       iconImageUrl: row.iconImageUrl || null,
     };
