@@ -88,7 +88,14 @@ export default function applicationApiRoute(app, config, db, features, lang) {
 
     const applicationType = optional(req.body, "applicationType") || "external";
     const redirectUrl = optional(req.body, "redirectUrl");
-    const linkedFormId = optional(req.body, "linkedFormId");
+    const rawLinkedFormId = optional(req.body, "linkedFormId");
+    const linkedFormId =
+      rawLinkedFormId === "" ||
+      rawLinkedFormId === null ||
+      rawLinkedFormId === undefined ||
+      Number.isNaN(Number(rawLinkedFormId))
+        ? null
+        : Number(rawLinkedFormId);
 
     let applicationCreatedLang = lang.applications.applicationCreated;
 
@@ -167,7 +174,14 @@ export default function applicationApiRoute(app, config, db, features, lang) {
 
     const applicationType = optional(req.body, "applicationType") || "external";
     const redirectUrl = optional(req.body, "redirectUrl");
-    const linkedFormId = optional(req.body, "linkedFormId");
+    const rawLinkedFormId = optional(req.body, "linkedFormId");
+    const linkedFormId =
+      rawLinkedFormId === "" ||
+      rawLinkedFormId === null ||
+      rawLinkedFormId === undefined ||
+      Number.isNaN(Number(rawLinkedFormId))
+        ? null
+        : Number(rawLinkedFormId);
 
     let applicationEditedLang = lang.applications.applicationEdited;
 
